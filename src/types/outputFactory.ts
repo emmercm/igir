@@ -1,4 +1,3 @@
-// eslint-disable-next-line max-classes-per-file
 import path, { ParsedPath } from 'node:path';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
