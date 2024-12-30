@@ -85,7 +85,6 @@ export default class CandidatePatchGenerator extends Module {
               // Possibly generate multiple new Parents for the ReleaseCandidates
               for (const releaseCandidate of releaseCandidates) {
                 if (seenGames.has(releaseCandidate.getGame())) {
-                  // eslint-disable-next-line no-continue
                   continue;
                 }
 

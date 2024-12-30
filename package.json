@@ -124,7 +124,7 @@
     "@typescript-eslint/parser": "8.18.2",
     "auto-changelog": "2.5.0",
     "caxa": "3.0.1",
-    "eslint": "8.57.1",
+    "eslint": "9.9.1",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-jest": "28.10.0",
