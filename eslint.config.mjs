@@ -29,6 +29,8 @@ export default [
     'plugin:prettier/recommended', // MUST BE LAST!
   ),
   {
+    files: ['**/*.ts'],
+
     plugins: {
       '@typescript-eslint': typescriptEslint,
       'simple-import-sort': simpleImportSort,
@@ -42,7 +44,6 @@ export default [
         project: './tsconfig.json',
       },
       sourceType: 'module',
-      ecmaVersion: 5,
 
       globals: {
         ...jest.environments.globals.globals,
