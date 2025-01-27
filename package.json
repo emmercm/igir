@@ -72,7 +72,7 @@
     "@fast-csv/parse": "5.0.2",
     "@gplane/cue": "0.2.0",
     "@node-rs/crc32": "1.10.4",
-    "7zip-min": "1.4.5",
+    "7zip-min": "2.0.0",
     "archiver": "7.0.1",
     "async": "3.2.6",
     "async-mutex": "0.5.0",
