@@ -63,7 +63,9 @@ export default class File implements FileProps {
   readonly patch?: Patch;
 
   protected constructor(fileProps: FileProps) {
-    this.filePath = path.normalize(fileProps.filePath);
+    this.filePath = URLPoly.canParse(fileProps.filePath)
+      ? fileProps.filePath
+      : path.normalize(fileProps.filePath);
     this.size = fileProps.size ?? 0;
     this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
