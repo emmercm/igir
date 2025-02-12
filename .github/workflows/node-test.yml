@@ -73,7 +73,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu, macos, windows ]
-        node-version: [ lts, 18, 16.7.0 ]
+        node-version: [ lts, 18, 16.14.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -101,7 +101,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ lts, 18, 16.7.0 ]
+        node-version: [ lts, 18, 16.14.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts, 18, 16.7.0 ]
+        node-version: [ lts, 18, 16.14.0 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
