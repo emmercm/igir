@@ -271,7 +271,14 @@ export default class Igir {
     }
 
     const cachePathCandidates = [
-      path.join(path.resolve(Package.DIRECTORY), defaultFileName),
+      // Path to the interpreted JS/TS file
+      process.argv.length >= 2 && path.extname(process.argv[1]).match(/\.(js|cjs|mjs|ts)/) !== null
+        ? path.join(path.dirname(process.argv[1]), defaultFileName)
+        : '',
+      // Path to the compiled Bun binary
+      process.versions.bun && path.basename(process.execPath) !== 'bun'
+        ? path.join(path.dirname(process.execPath), defaultFileName)
+        : '',
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
     ]
