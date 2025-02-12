@@ -1,4 +1,4 @@
-import packageJson from '../../package.json' with { type: 'json' };
+import packageJson from '../../package.json' assert { type: 'json' };
 
 /**
  * A static class of globals that are parsed from `package.json` at startup, to be used widely.
