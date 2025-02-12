@@ -118,7 +118,7 @@ export default class Cache<V> {
   public async delete(key: string | RegExp): Promise<void> {
     let keysToDelete: string[];
     if (key instanceof RegExp) {
-      keysToDelete = [...this.keys().keys()].filter((k) => k.match(key));
+      keysToDelete = [...this.keys().keys()].filter((k) => k.match(key) !== null);
     } else {
       keysToDelete = [key];
     }

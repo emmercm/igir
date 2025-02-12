@@ -50,8 +50,8 @@ export default class MovedROMDeleter extends Module {
         existSemaphore.runExclusive(async () => fsPoly.exists(filePath)),
       ),
     );
-    const existingFilePaths = filePathsToDelete.filter((filePath, idx) =>
-      existingFilePathsCheck.at(idx),
+    const existingFilePaths = filePathsToDelete.filter(
+      (filePath, idx) => existingFilePathsCheck.at(idx) === true,
     );
 
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);

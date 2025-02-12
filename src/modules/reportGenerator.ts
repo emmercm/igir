@@ -41,7 +41,7 @@ export default class ReportGenerator extends Module {
           .map(async (datsStatus) => datsStatus.toCsv(this.options)),
       )
     )
-      .filter((csv) => csv)
+      .filter((csv) => csv.length > 0)
       .map((csv, idx) => {
         // Strip the CSV header from everything except the first file
         if (idx === 0) {
@@ -86,7 +86,9 @@ export default class ReportGenerator extends Module {
     if (!(await FsPoly.exists(reportPathDir))) {
       await FsPoly.mkdir(reportPathDir, { recursive: true });
     }
-    const rows = [...matchedFileCsvs, duplicateCsv, unusedCsv, cleanedCsv].filter((csv) => csv);
+    const rows = [...matchedFileCsvs, duplicateCsv, unusedCsv, cleanedCsv].filter(
+      (csv) => csv.length > 0,
+    );
     await FsPoly.writeFile(reportPath, rows.join('\n'));
     this.progressBar.logTrace(
       `wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`,

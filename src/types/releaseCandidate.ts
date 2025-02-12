@@ -66,7 +66,9 @@ export default class ReleaseCandidate {
    * Returns true if any {@link ROMWithFiles} input {@link File} has a {@link Patch} attached to it.
    */
   isPatched(): boolean {
-    return this.getRomsWithFiles().some((romWithFiles) => romWithFiles.getInputFile().getPatch());
+    return this.getRomsWithFiles().some(
+      (romWithFiles) => romWithFiles.getInputFile().getPatch() !== undefined,
+    );
   }
 
   // Immutable setters

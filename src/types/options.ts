@@ -497,7 +497,7 @@ export default class Options implements OptionsProps {
 
     return pattern
       .split(/\r?\n/)
-      .filter((line) => line.length)
+      .filter((line) => line.length > 0)
       .map((line) => {
         const flagsMatch = line.match(/^\/(.+)\/([a-z]*)$/);
         if (flagsMatch !== null) {
@@ -666,6 +666,7 @@ export default class Options implements OptionsProps {
       Defaults.MAX_FS_THREADS,
       async (file: string): Promise<boolean> => {
         if (!(await fsPoly.exists(file)) && URLPoly.canParse(file)) {
+          // Treat URLs as files (and not directories)
           return true;
         }
 
