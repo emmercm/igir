@@ -507,7 +507,7 @@ export default class ArgumentsParser {
       })
       .check((checkArgv) => {
         const needClean = ['clean-exclude', 'clean-backup', 'clean-dry-run'].filter(
-          (option) => checkArgv[option],
+          (option) => checkArgv[option] !== undefined,
         );
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
@@ -533,7 +533,9 @@ export default class ArgumentsParser {
         type: 'boolean',
       })
       .check((checkArgv) => {
-        const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
+        const needZip = ['zip-exclude', 'zip-dat-name'].filter(
+          (option) => checkArgv[option] !== undefined,
+        );
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
           throw new ExpectedError(
             `Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`,
@@ -554,7 +556,7 @@ export default class ArgumentsParser {
         implies: 'symlink',
       })
       .check((checkArgv) => {
-        const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
+        const needLinkCommand = ['symlink'].filter((option) => checkArgv[option] !== undefined);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
           throw new ExpectedError(
             `Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`,

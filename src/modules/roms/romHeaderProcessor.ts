@@ -76,7 +76,9 @@ export default class ROMHeaderProcessor extends Module {
       }),
     );
 
-    const headeredRomsCount = parsedFiles.filter((romFile) => romFile.getFileHeader()).length;
+    const headeredRomsCount = parsedFiles.filter(
+      (romFile) => romFile.getFileHeader() !== undefined,
+    ).length;
     this.progressBar.logTrace(
       `found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount !== 1 ? 's' : ''}`,
     );

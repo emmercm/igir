@@ -363,7 +363,7 @@ export default class CandidateGenerator extends Module {
     ) {
       return new Map(
         romsAndInputFiles
-          .filter(([, inputFiles]) => inputFiles.length)
+          .filter(([, inputFiles]) => inputFiles.length > 0)
           .map(([rom, inputFiles]) => [rom, inputFiles[0]]),
       );
     }

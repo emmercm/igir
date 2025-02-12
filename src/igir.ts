@@ -210,7 +210,7 @@ export default class Igir {
           dir2DatPath ? `dir2dat: ${dir2DatPath}` : undefined,
           fixdatPath ? `Fixdat: ${fixdatPath}` : undefined,
         ]
-          .filter((line) => line)
+          .filter((line) => line !== undefined && line.length > 0)
           .join('\n'),
       );
 
@@ -275,7 +275,7 @@ export default class Igir {
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
     ]
-      .filter((filePath) => filePath && !filePath.startsWith(os.tmpdir()))
+      .filter((filePath) => filePath.length > 0 && !filePath.startsWith(os.tmpdir()))
       .reduce(ArrayPoly.reduceUnique(), []);
 
     // Next, try to use an already existing path
@@ -381,7 +381,7 @@ export default class Igir {
         )
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         // Should be enabled for this DAT
-        .filter((bitmask) => datMinimumRomBitmask & ChecksumBitmask[bitmask])
+        .filter((bitmask) => (datMinimumRomBitmask & ChecksumBitmask[bitmask]) > 0)
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
           this.logger.trace(
@@ -403,7 +403,7 @@ export default class Igir {
         )
         .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
         // Should be enabled for this DAT
-        .filter((bitmask) => datMinimumDiskBitmask & ChecksumBitmask[bitmask])
+        .filter((bitmask) => (datMinimumDiskBitmask & ChecksumBitmask[bitmask]) > 0)
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
           this.logger.trace(
