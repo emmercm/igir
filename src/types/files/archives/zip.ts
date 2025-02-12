@@ -160,7 +160,7 @@ export default class Zip extends Archive {
 
     // Finalize writing the zip file
     await zipFile.finalize();
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       // We are writing to a file, so we want to wait on the 'close' event which indicates the file
       // descriptor has been closed. 'finished' will also fire before 'close' does.
       writeStream.on('close', resolve);

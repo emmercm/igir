@@ -113,7 +113,7 @@
     "@types/figlet": "1.7.0",
     "@types/jest": "29.5.14",
     "@types/micromatch": "4.0.9",
-    "@types/node": "20.17.10",
+    "@types/node": "22.13.1",
     "@types/semver": "7.5.8",
     "@types/tar": "6.1.13",
     "@types/unzipper": "0.10.10",
@@ -155,6 +155,6 @@
     "node": ">=16.7.0"
   },
   "volta": {
-    "node": "22.12.0"
+    "node": "22.13.1"
   }
 }
