@@ -210,19 +210,19 @@ export default class Internationalization {
   public static readonly REGION_CODES = this.REGION_OPTIONS.map((regionOption) =>
     regionOption.region.toUpperCase(),
   )
-    .filter((region) => region)
+    .filter((region) => region.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
   public static readonly REGION_NAMES = this.REGION_OPTIONS.map((regionOption) => regionOption.long)
-    .filter((region) => region)
+    .filter((region) => region.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
   public static readonly LANGUAGES = this.REGION_OPTIONS.map((regionOption) =>
     regionOption.language.toUpperCase(),
   )
-    .filter((language) => language)
+    .filter((language) => language.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 }

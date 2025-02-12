@@ -68,7 +68,7 @@ export default class FileCache {
         .filter((cacheKey) => cacheKey.endsWith(`|${ValueType.INODE}`))
         .map((cacheKey) => [cacheKey, cacheKey.split('|')[1]])
         // Don't delete the key if it's for a disk that isn't mounted right now
-        .filter(([, filePath]) => FsPoly.diskResolved(filePath))
+        .filter(([, filePath]) => FsPoly.diskResolved(filePath) !== undefined)
         // Only process a reasonably sized subset of the keys
         .sort(() => Math.random() - 0.5)
         .slice(0, Defaults.MAX_FS_THREADS);
@@ -180,10 +180,10 @@ export default class FileCache {
 
         const cachedEntries = cached.value as ArchiveEntryProps<T>[];
         const existingBitmask =
-          (cachedEntries.every((props) => props.crc32) ? ChecksumBitmask.CRC32 : 0) |
-          (cachedEntries.every((props) => props.md5) ? ChecksumBitmask.MD5 : 0) |
-          (cachedEntries.every((props) => props.sha1) ? ChecksumBitmask.SHA1 : 0) |
-          (cachedEntries.every((props) => props.sha256) ? ChecksumBitmask.SHA256 : 0);
+          (cachedEntries.every((props) => props.crc32 !== undefined) ? ChecksumBitmask.CRC32 : 0) |
+          (cachedEntries.every((props) => props.md5 !== undefined) ? ChecksumBitmask.MD5 : 0) |
+          (cachedEntries.every((props) => props.sha1 !== undefined) ? ChecksumBitmask.SHA1 : 0) |
+          (cachedEntries.every((props) => props.sha256 !== undefined) ? ChecksumBitmask.SHA256 : 0);
         const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
         // We need checksums that haven't been cached yet
         return remainingBitmask > 0;

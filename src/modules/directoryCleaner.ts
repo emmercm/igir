@@ -124,7 +124,9 @@ export default class DirectoryCleaner extends Module {
         existSemaphore.runExclusive(async () => fsPoly.exists(filePath)),
       ),
     );
-    const existingFilePaths = filePaths.filter((filePath, idx) => existingFilePathsCheck.at(idx));
+    const existingFilePaths = filePaths.filter(
+      (filePath, idx) => existingFilePathsCheck.at(idx) === true,
+    );
     if (existingFilePaths.length > 0) {
       this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     }
