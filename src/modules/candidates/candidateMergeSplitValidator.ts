@@ -42,7 +42,7 @@ export default class CandidateMergeSplitValidator extends Module {
 
     const releaseCandidatesIndexed = [...parentsToCandidates.values()]
       .flat()
-      .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)
+      .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length > 0)
       .reduce((map, releaseCandidate) => {
         map.set(releaseCandidate.getGame().getName(), releaseCandidate);
         return map;
@@ -51,7 +51,7 @@ export default class CandidateMergeSplitValidator extends Module {
     // For every Game that has ReleaseCandidate(s) with files
     const missingGames = [...parentsToCandidates.values()]
       .flat()
-      .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length)
+      .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length > 0)
       .map((releaseCandidate) => releaseCandidate.getGame())
       .reduce(ArrayPoly.reduceUnique(), [])
       .flatMap((game) => {
@@ -73,7 +73,7 @@ export default class CandidateMergeSplitValidator extends Module {
             .map((deviceRef) => datGamesIndexed.get(deviceRef.getName()))
             .filter((deviceGame) => deviceGame !== undefined)
             // Dependent device has ROM files
-            .filter((deviceGame) => deviceGame.getRoms().length)
+            .filter((deviceGame) => deviceGame.getRoms().length > 0)
             .map((deviceGame) => {
               const deviceReleaseCandidate = releaseCandidatesIndexed.get(deviceGame.getName());
               if (deviceReleaseCandidate) {

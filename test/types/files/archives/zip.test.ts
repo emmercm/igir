@@ -32,7 +32,7 @@ describe('createArchive', () => {
     expect.assertions(2);
 
     // Given a temp ROM file copied from fixtures
-    const rom = (await findRoms(input)).find((file) => file.getSize());
+    const rom = (await findRoms(input)).find((file) => file.getSize() > 0);
     if (!rom) {
       throw new Error('no ROM of a non-zero size was found');
     }

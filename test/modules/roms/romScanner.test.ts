@@ -118,12 +118,12 @@ describe('multiple files', () => {
 
     const entriesWithMd5 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
-      .filter((file) => file.getMd5());
+      .filter((file) => file.getMd5() !== undefined);
     expect(entriesWithMd5).toHaveLength(0);
 
     const extensionsWithSha1 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
-      .filter((file) => file.getSha1())
+      .filter((file) => file.getSha1() !== undefined)
       .map((file) => {
         const match = file.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
         return match ? match[1] : undefined;
@@ -135,7 +135,7 @@ describe('multiple files', () => {
 
     const entriesWithSha256 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
-      .filter((file) => file.getSha256());
+      .filter((file) => file.getSha256() !== undefined);
     expect(entriesWithSha256).toHaveLength(0);
   });
 

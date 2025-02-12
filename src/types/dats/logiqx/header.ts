@@ -97,7 +97,7 @@ export default class Header implements HeaderOptions {
         author: this.author,
         url: this.url,
         comment: this.comment,
-      }).filter(([, val]) => val),
+      }).filter(([, val]) => val !== undefined),
     );
   }
 

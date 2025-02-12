@@ -88,10 +88,12 @@ export default class CandidateWriter extends Module {
     const parentsToWritableCandidates = new Map(
       [...parentsToCandidates.entries()]
         // The parent has candidates
-        .filter(([, releaseCandidates]) => releaseCandidates.length)
+        .filter(([, releaseCandidates]) => releaseCandidates.length > 0)
         // At least some candidates have files
         .filter(([, releaseCandidates]) =>
-          releaseCandidates.some((releaseCandidate) => releaseCandidate.getRomsWithFiles().length),
+          releaseCandidates.some(
+            (releaseCandidate) => releaseCandidate.getRomsWithFiles().length > 0,
+          ),
         ),
     );
 
