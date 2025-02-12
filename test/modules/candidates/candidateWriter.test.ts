@@ -53,21 +53,18 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   if (!(await fsPoly.exists(dirPath))) {
     return [];
   }
+
   return Promise.all(
     (await fsPoly.walk(dirPath)).sort().map(async (filePath) => {
-      let stats: Stats;
-      try {
-        stats = await fs.promises.lstat(filePath);
-        // Hard-code properties that can change with file reads
-        stats.atime = new Date(0);
-        stats.atimeMs = 0;
-        // Hard-code properties that can change with hard-linking
-        stats.ctime = new Date(0);
-        stats.ctimeMs = 0;
-        stats.nlink = 0;
-      } catch {
-        stats = new Stats();
-      }
+      const stats = await fs.promises.lstat(filePath);
+      // Hard-code properties that can change with file reads
+      stats.atime = new Date(0);
+      stats.atimeMs = 0;
+      // Hard-code properties that can change with hard-linking
+      stats.ctime = new Date(0);
+      stats.ctimeMs = 0;
+      stats.nlink = 0;
+
       return [filePath.replace(path.normalize(dirPath) + path.sep, ''), stats];
     }),
   );
