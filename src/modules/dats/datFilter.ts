@@ -109,7 +109,7 @@ export default class DATFilter extends Module {
         this.options.getOnlyUnverified() && game.isVerified(),
         this.options.getNoBad() && game.isBad(),
         this.options.getOnlyBad() && !game.isBad(),
-      ].filter((val) => val).length === 0
+      ].filter((val) => val === true).length === 0
     );
   }
 

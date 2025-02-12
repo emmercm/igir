@@ -497,7 +497,7 @@ export default class Options implements OptionsProps {
 
     return pattern
       .split(/\r?\n/)
-      .filter((line) => line.length)
+      .filter((line) => line.length > 0)
       .map((line) => {
         const flagsMatch = line.match(/^\/(.+)\/([a-z]*)$/);
         if (flagsMatch !== null) {

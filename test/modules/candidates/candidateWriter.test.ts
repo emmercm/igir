@@ -687,7 +687,9 @@ describe('zip', () => {
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
         romFilesBefore
           .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] => statsTuple.every((val) => val))
+          .filter((statsTuple): statsTuple is [Stats, Stats] =>
+            statsTuple.every((val) => val !== undefined),
+          )
           .forEach(([statsBefore, statsAfter]) => {
             // File wasn't deleted, ensure it wasn't touched
             expect(statsAfter).toEqual(statsBefore);
@@ -1397,7 +1399,9 @@ describe('extract', () => {
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
         romFilesBefore
           .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] => statsTuple.every((val) => val))
+          .filter((statsTuple): statsTuple is [Stats, Stats] =>
+            statsTuple.every((val) => val !== undefined),
+          )
           .forEach(([statsBefore, statsAfter]) => {
             // File wasn't deleted, ensure it wasn't touched
             expect(statsAfter).toEqual(statsBefore);
@@ -1943,7 +1947,9 @@ describe('raw', () => {
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
         romFilesBefore
           .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] => statsTuple.every((val) => val))
+          .filter((statsTuple): statsTuple is [Stats, Stats] =>
+            statsTuple.every((val) => val !== undefined),
+          )
           .forEach(([statsBefore, statsAfter]) => {
             // File wasn't deleted, ensure it wasn't touched
             expect(statsAfter).toEqual(statsBefore);

@@ -67,7 +67,7 @@ export default class SevenZip extends Archive {
             } else {
               // https://github.com/onikienko/7zip-min/issues/70
               // If `7zip-min.list()` failed to parse the entry name then ignore it
-              resolve(result.filter((entry) => entry.name));
+              resolve(result.filter((entry) => entry.name !== undefined && entry.name.length > 0));
             }
           });
         }),

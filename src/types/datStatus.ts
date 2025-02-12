@@ -44,7 +44,6 @@ export default class DATStatus {
 
   private readonly allRomTypesToGames = new Map<ROMType, Game[]>();
 
-  // eslint-disable-next-line no-spaced-func
   private readonly foundRomTypesToReleaseCandidates = new Map<
     ROMType,
     (ReleaseCandidate | undefined)[]
@@ -183,7 +182,11 @@ export default class DATStatus {
    */
   toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
-      .filter((type) => this.allRomTypesToGames.get(type)?.length)
+      .filter(
+        (type) =>
+          this.allRomTypesToGames.has(type) &&
+          (this.allRomTypesToGames.get(type) as Game[]).length > 0,
+      )
       .map((type) => {
         const found = this.foundRomTypesToReleaseCandidates.get(type) ?? [];
         const all = (this.allRomTypesToGames.get(type) ?? [])
@@ -217,7 +220,7 @@ export default class DATStatus {
 
         return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
-      .filter((str) => str)
+      .filter((str) => str.length > 0)
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 
@@ -253,7 +256,7 @@ export default class DATStatus {
         }
 
         const foundReleaseCandidate = foundReleaseCandidates.find(
-          (rc) => rc && rc.getGame().equals(game),
+          (rc) => rc !== undefined && rc.getGame().equals(game),
         );
         if (foundReleaseCandidate !== undefined || game.getRoms().length === 0) {
           status = GameStatus.FOUND;

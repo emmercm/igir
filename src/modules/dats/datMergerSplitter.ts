@@ -129,7 +129,7 @@ export default class DATMergerSplitter extends Module {
         // the child.
         if (!biosGame.isBios()) {
           biosGame = biosGame.withProps({
-            rom: biosGame.getRoms().filter((rom) => rom.getBios()),
+            rom: biosGame.getRoms().filter((rom) => rom.getBios() !== undefined),
           });
         }
 
