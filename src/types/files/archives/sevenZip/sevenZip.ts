@@ -58,7 +58,19 @@ export default class SevenZip extends Archive {
      *  it will return no files but also no error. Try to prevent that behavior.
      */
     const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(async () => {
-      return _7z.list(this.getFilePath());
+      try {
+        return await _7z.list(this.getFilePath());
+      } catch (error) {
+        let message: string;
+        if (error instanceof Error) {
+          message = error.message;
+        } else if (typeof error === 'string') {
+          message = error;
+        } else {
+          message = 'failed to list files in archive';
+        }
+        throw new Error(message.replace(/\n\n+/g, '\n').replace(/^/gm, '   ').trim());
+      }
     });
 
     return async.mapLimit(
