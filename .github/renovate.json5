@@ -65,9 +65,7 @@
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
       minimumReleaseAge: '7 days',
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time',
-      prCreation: 'immediate',
-      automerge: true
+      schedule: 'at any time'
     },
 
     // Group any/all package files in the docs/ directory
@@ -82,9 +80,7 @@
       commitMessageAction: 'pin',
       groupName: 'dependency ranges',
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time',
-      prCreation: 'immediate',
-      automerge: true,
+      schedule: 'at any time'
     },
 
     // Disable automatic merging of GitHub Actions major version updates
@@ -121,6 +117,16 @@
         rollback: {
           prPriority: 10,
         },
+      },
+
+      // Update chdman, maxcso immediately
+      {
+        groupName: null,
+        matchPackageNames: [
+          'chdman',
+          'maxcso'
+        ],
+        schedule: 'at any time'
       },
 
       // Dev dependencies
