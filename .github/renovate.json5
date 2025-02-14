@@ -126,7 +126,8 @@
           'chdman',
           'maxcso'
         ],
-        schedule: 'at any time'
+        schedule: 'at any time',
+        minimumReleaseAge: '0 hours'
       },
 
       // Dev dependencies
