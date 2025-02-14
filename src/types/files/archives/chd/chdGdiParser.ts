@@ -40,7 +40,9 @@ export default class ChdGdiParser {
       return await this.parseGdi(archive, gdiFilePath, binRawFilePaths, checksumBitmask);
     } finally {
       await FsPoly.rm(gdiFilePath, { force: true });
-      await Promise.all(binRawFilePaths.map(async (file) => FsPoly.rm(file, { force: true })));
+      await async.mapLimit(binRawFilePaths, Defaults.MAX_FS_THREADS, async (file: string) =>
+        FsPoly.rm(file, { force: true }),
+      );
     }
   }
 

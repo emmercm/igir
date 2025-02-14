@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import async from 'async';
 import { Semaphore } from 'async-mutex';
 import { isNotJunk } from 'junk';
 import trash from 'trash';
@@ -119,10 +120,10 @@ export default class DirectoryCleaner extends Module {
 
     // ...but if that doesn't work, delete the leftovers
     const existSemaphore = new Semaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
-    const existingFilePathsCheck = await Promise.all(
-      filePaths.map(async (filePath) =>
-        existSemaphore.runExclusive(async () => fsPoly.exists(filePath)),
-      ),
+    const existingFilePathsCheck = await async.mapLimit(
+      filePaths,
+      Defaults.MAX_FS_THREADS,
+      async (filePath: string) => existSemaphore.runExclusive(async () => fsPoly.exists(filePath)),
     );
     const existingFilePaths = filePaths.filter(
       (filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -149,38 +150,36 @@ export default class DirectoryCleaner extends Module {
 
   private async backupFiles(backupDir: string, filePaths: string[]): Promise<void> {
     const semaphore = new Semaphore(this.options.getWriterThreads());
-    await Promise.all(
-      filePaths.map(async (filePath) => {
-        await semaphore.runExclusive(async () => {
-          let backupPath = path.join(backupDir, path.basename(filePath));
-          let increment = 0;
-          while (await fsPoly.exists(backupPath)) {
-            increment += 1;
-            const { name, ext } = path.parse(filePath);
-            backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
-          }
+    await async.mapLimit(filePaths, Defaults.MAX_FS_THREADS, async (filePath: string) => {
+      await semaphore.runExclusive(async () => {
+        let backupPath = path.join(backupDir, path.basename(filePath));
+        let increment = 0;
+        while (await fsPoly.exists(backupPath)) {
+          increment += 1;
+          const { name, ext } = path.parse(filePath);
+          backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
+        }
 
-          this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
-          const backupPathDir = path.dirname(backupPath);
-          if (!(await fsPoly.exists(backupPathDir))) {
-            await fsPoly.mkdir(backupPathDir, { recursive: true });
-          }
-          try {
-            await fsPoly.mv(filePath, backupPath);
-          } catch (error) {
-            this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
-          }
-          this.progressBar.incrementProgress();
-        });
-      }),
-    );
+        this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
+        const backupPathDir = path.dirname(backupPath);
+        if (!(await fsPoly.exists(backupPathDir))) {
+          await fsPoly.mkdir(backupPathDir, { recursive: true });
+        }
+        try {
+          await fsPoly.mv(filePath, backupPath);
+        } catch (error) {
+          this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
+        }
+        this.progressBar.incrementProgress();
+      });
+    });
   }
 
   private static async getEmptyDirs(dirsToClean: string | string[]): Promise<string[]> {
     if (Array.isArray(dirsToClean)) {
       return (
-        await Promise.all(
-          dirsToClean.map(async (dirToClean) => DirectoryCleaner.getEmptyDirs(dirToClean)),
+        await async.mapLimit(dirsToClean, Defaults.MAX_FS_THREADS, async (dirToClean: string) =>
+          DirectoryCleaner.getEmptyDirs(dirToClean),
         )
       )
         .flat()
@@ -195,15 +194,13 @@ export default class DirectoryCleaner extends Module {
     // Categorize the subdirectories and files
     const subDirs: string[] = [];
     const subFiles: string[] = [];
-    await Promise.all(
-      subPaths.map(async (subPath) => {
-        if (await fsPoly.isDirectory(subPath)) {
-          subDirs.push(subPath);
-        } else {
-          subFiles.push(subPath);
-        }
-      }),
-    );
+    await async.mapLimit(subPaths, Defaults.MAX_FS_THREADS, async (subPath: string) => {
+      if (await fsPoly.isDirectory(subPath)) {
+        subDirs.push(subPath);
+      } else {
+        subFiles.push(subPath);
+      }
+    });
 
     // If there are no subdirectories or files, this directory is empty
     if (subDirs.length === 0 && subFiles.length === 0) {
@@ -211,6 +208,10 @@ export default class DirectoryCleaner extends Module {
     }
 
     // Otherwise, recurse and look for empty subdirectories
-    return (await Promise.all(subDirs.map(async (subDir) => this.getEmptyDirs(subDir)))).flat();
+    return (
+      await async.mapLimit(subDirs, Defaults.MAX_FS_THREADS, async (subDir: string) =>
+        this.getEmptyDirs(subDir),
+      )
+    ).flat();
   }
 }

@@ -1,5 +1,8 @@
+import async from 'async';
+
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DriveSemaphore from '../../driveSemaphore.js';
+import Defaults from '../../globals/defaults.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import File from '../../types/files/file.js';
 import FileFactory from '../../types/files/fileFactory.js';
@@ -47,8 +50,10 @@ export default class ROMHeaderProcessor extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
     this.progressBar.reset(filesThatNeedProcessing);
 
-    const parsedFiles = await Promise.all(
-      inputRomFiles.map(async (inputFile) => {
+    const parsedFiles = await async.mapLimit(
+      inputRomFiles,
+      Defaults.MAX_FS_THREADS,
+      async (inputFile: File) => {
         if (!this.fileNeedsProcessing(inputFile)) {
           return inputFile;
         }
@@ -73,7 +78,7 @@ export default class ROMHeaderProcessor extends Module {
 
           return fileWithHeader;
         });
-      }),
+      },
     );
 
     const headeredRomsCount = parsedFiles.filter(

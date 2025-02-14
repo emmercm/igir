@@ -1,4 +1,4 @@
-import { Semaphore } from 'async-mutex';
+import async from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
@@ -44,11 +44,10 @@ export default class MovedROMDeleter extends Module {
       datsToWrittenFiles,
     );
 
-    const existSemaphore = new Semaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
-    const existingFilePathsCheck = await Promise.all(
-      filePathsToDelete.map(async (filePath) =>
-        existSemaphore.runExclusive(async () => fsPoly.exists(filePath)),
-      ),
+    const existingFilePathsCheck = await async.mapLimit(
+      filePathsToDelete,
+      Defaults.MAX_FS_THREADS,
+      async (filePath: string) => fsPoly.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
       (filePath, idx) => existingFilePathsCheck.at(idx) === true,

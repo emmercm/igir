@@ -4,17 +4,17 @@ import os from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
 
+import async from 'async';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
 
+import Defaults from '../globals/defaults.js';
 import ExpectedError from '../types/expectedError.js';
 
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
-  static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
-
   // Assume that all drives we're reading from or writing to were already mounted at startup
   private static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
 
@@ -93,10 +93,8 @@ export default class FsPoly {
       .map((filePath) => path.join(dirPath, filePath));
 
     return (
-      await Promise.all(
-        readDir.map(async (filePath) =>
-          (await this.isDirectory(filePath)) ? filePath : undefined,
-        ),
+      await async.mapLimit(readDir, Defaults.MAX_FS_THREADS, async (filePath: string) =>
+        (await this.isDirectory(filePath)) ? filePath : undefined,
       )
     ).filter((childDir) => childDir !== undefined);
   }
