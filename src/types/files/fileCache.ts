@@ -1,3 +1,5 @@
+import async from 'async';
+
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Timer from '../../timer.js';
@@ -66,15 +68,17 @@ export default class FileCache {
     Timer.setTimeout(async () => {
       const cacheKeyFilePaths = [...this.cache.keys()]
         .filter((cacheKey) => cacheKey.endsWith(`|${ValueType.INODE}`))
-        .map((cacheKey) => [cacheKey, cacheKey.split('|')[1]])
+        .map((cacheKey): [string, string] => [cacheKey, cacheKey.split('|')[1]])
         // Don't delete the key if it's for a disk that isn't mounted right now
         .filter(([, filePath]) => FsPoly.diskResolved(filePath) !== undefined)
         // Only process a reasonably sized subset of the keys
         .sort(() => Math.random() - 0.5)
         .slice(0, Defaults.MAX_FS_THREADS);
 
-      await Promise.all(
-        cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
+      await async.eachLimit(
+        cacheKeyFilePaths,
+        Defaults.MAX_FS_THREADS,
+        async ([cacheKey, filePath]) => {
           if (!(await FsPoly.exists(filePath))) {
             // Delete the related cache keys
             const inode = (await this.cache.get(cacheKey))?.value as number;
@@ -83,7 +87,7 @@ export default class FileCache {
             // Delete the inode key from the cache
             await this.cache.delete(cacheKey);
           }
-        }),
+        },
       );
     }, 5000);
   }
