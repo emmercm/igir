@@ -40,6 +40,9 @@ export default async (): Promise<Config> => {
       // END https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
     },
 
+    // Fix import attributes not working with Babel
+    coverageProvider: 'v8',
+
     // Don't run any compiled versions of the tests, if they exist
     modulePathIgnorePatterns: ['<rootDir>/dist/'],
     // Don't report coverage on the test directory
