@@ -21,10 +21,10 @@ concurrency:
 jobs:
   npm-exec-test:
     if: github.event.action != 'closed'
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu, macos, windows ]
+        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest ]
     steps:
       - uses: volta-cli/action@v4
       - env:
