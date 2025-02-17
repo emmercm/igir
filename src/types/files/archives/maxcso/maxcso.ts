@@ -12,7 +12,7 @@ export default abstract class Maxcso extends Archive {
     const size = (await maxcso.header(this.getFilePath())).uncompressedSize;
     let crc32: string | undefined;
     if (checksumBitmask === ChecksumBitmask.NONE || checksumBitmask & ChecksumBitmask.CRC32) {
-      crc32 = await maxcso.uncompressedCrc32(this.getFilePath());
+      crc32 = await maxcso.uncompressedCrc32({ inputFilename: this.getFilePath() });
     }
 
     return [
