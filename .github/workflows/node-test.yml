@@ -83,8 +83,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - if: ${{ matrix.os == 'macos' }}
-        run: brew install --overwrite sdl2
       - if: ${{ matrix.os == 'ubuntu' }}
         run: |
           sudo apt-get update
