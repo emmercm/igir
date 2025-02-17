@@ -114,7 +114,7 @@ jobs:
                 ls -alh igir "${BIN_OUTPUT}"
                 echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
-          - os: macos-14
+          - os: macos-15
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
