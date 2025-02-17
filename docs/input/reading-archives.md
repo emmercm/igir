@@ -22,7 +22,7 @@ Igir supports most common archive formats:
 | `.zipx`                                                          | ✅                    | ❌ `7za`                                       | ❌                                         |
 
 <small>
-<sup>1</sup> requires you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
+<sup>1</sup> may require you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
 </small>
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
