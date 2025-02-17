@@ -33,7 +33,7 @@ async function copyFixturesToTemp(
 
   // Set up the input directory
   const inputTemp = path.join(temp, 'input');
-  await fsPoly.copyDir('./test/fixtures', inputTemp);
+  await fsPoly.copyDir(path.join('test', 'fixtures'), inputTemp);
 
   // Set up the output directory
   const outputTemp = path.join(temp, 'output');
