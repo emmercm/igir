@@ -16,6 +16,7 @@ import ROM from '../../types/dats/rom.js';
 import Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import File from '../../types/files/file.js';
+import { ChecksumProps } from '../../types/files/fileChecksums.js';
 import Options from '../../types/options.js';
 import Module from '../module.js';
 
@@ -96,7 +97,7 @@ export default class DATGameInferrer extends Module {
       ].join('\n'),
     });
 
-    let remainingRomFiles = romFiles;
+    let remainingRomFiles = DATGameInferrer.enrichLikeFiles(romFiles);
     let gameNamesToRomFiles: [string, File[]][] = [];
 
     // For each inference strategy
@@ -145,6 +146,70 @@ export default class DATGameInferrer extends Module {
       .filter(ArrayPoly.filterUniqueMapped((game) => game.hashCode()));
 
     return new LogiqxDAT(header, games);
+  }
+
+  /**
+   * Different types of archives will return different checksums when quick scanning. This will
+   * result in files that are actually the same having different hash codes.
+   * Look for files that are the same, combine all known checksums, and enrich files with all
+   * known checksum information.
+   */
+  private static enrichLikeFiles(files: File[]): File[] {
+    const crc32Map = this.combineLikeChecksums(files, (file) =>
+      file.getCrc32() !== undefined && file.getSize() > 0
+        ? `${file.getCrc32()}|${file.getSize()}`
+        : undefined,
+    );
+    const md5Map = this.combineLikeChecksums(files, (file) => file.getMd5());
+    const sha1Map = this.combineLikeChecksums(files, (file) => file.getSha1());
+    const sha256Map = this.combineLikeChecksums(files, (file) => file.getSha256());
+
+    return files.map((file) => {
+      let enrichedFile = file;
+
+      [
+        crc32Map.get(`${file.getCrc32()}|${file.getSize()}`),
+        md5Map.get(file.getMd5() ?? ''),
+        sha1Map.get(file.getSha1() ?? ''),
+        sha256Map.get(file.getSha256() ?? ''),
+      ]
+        .filter((checksumProps) => checksumProps !== undefined)
+        .forEach((checksumProps) => {
+          enrichedFile = enrichedFile.withProps(checksumProps);
+        });
+
+      return enrichedFile;
+    });
+  }
+
+  private static combineLikeChecksums(
+    files: File[],
+    keyFunc: (file: File) => string | undefined,
+  ): Map<string, ChecksumProps> {
+    const crc32Map = files.reduce((map, romFile) => {
+      const key = keyFunc(romFile);
+      if (key === undefined) {
+        return map;
+      }
+      if (!map.has(key)) {
+        map.set(key, [romFile]);
+      } else {
+        map.get(key)?.push(romFile);
+      }
+      return map;
+    }, new Map<string, File[]>());
+    return new Map(
+      [...crc32Map].map(([key, romFiles]) => {
+        const checksums: ChecksumProps = {};
+        romFiles.forEach((romFile) => {
+          checksums.crc32 = romFile.getCrc32() ?? checksums.crc32;
+          checksums.md5 = romFile.getMd5() ?? checksums.md5;
+          checksums.sha1 = romFile.getSha1() ?? checksums.sha1;
+          checksums.sha256 = romFile.getSha256() ?? checksums.sha256;
+        });
+        return [key, checksums];
+      }),
+    );
   }
 
   private static getGameName(file: File): string {

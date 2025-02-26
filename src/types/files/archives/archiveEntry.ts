@@ -254,6 +254,13 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
+  withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {
+    return new ArchiveEntry({
+      ...this,
+      ...props,
+    });
+  }
+
   withPatch(patch: Patch): ArchiveEntry<A> {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;

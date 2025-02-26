@@ -79,7 +79,7 @@ describe('getArchiveEntries', () => {
     [
       './test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso',
       'GameCube-240pSuite-1.19.iso',
-      '5bc2ce5b',
+      '5eb3d183',
     ],
   ])(
     'should enumerate the single file archive: %s',
