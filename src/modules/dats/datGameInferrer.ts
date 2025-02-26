@@ -153,6 +153,13 @@ export default class DATGameInferrer extends Module {
     if (file instanceof ArchiveEntry) {
       // If the file is from an archive, assume the game name is the archive's filename
       fileName = file.getArchive().getFilePath();
+
+      // If the file is using its correct extension, then slice it off and
+      // return the result as the game name
+      const extIdx = fileName.lastIndexOf(file.getArchive().getExtension());
+      if (extIdx !== -1) {
+        return path.basename(fileName.slice(0, extIdx)).trim();
+      }
     }
 
     return (

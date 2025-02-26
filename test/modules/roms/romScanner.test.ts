@@ -55,7 +55,7 @@ it('should not throw on bad archives', async () => {
 
 describe('multiple files', () => {
   it('should scan multiple files with no exclusions', async () => {
-    const expectedRomFiles = 94;
+    const expectedRomFiles = 97;
     await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(
       expectedRomFiles,
     );
@@ -71,7 +71,7 @@ describe('multiple files', () => {
   });
 
   test.each([
-    [{ input: [path.join('test', 'fixtures', 'roms')] }, 137],
+    [{ input: [path.join('test', 'fixtures', 'roms')] }, 143],
     [{ input: [path.join('test', 'fixtures', 'roms', '7z')] }, 12],
     [{ input: [path.join('test', 'fixtures', 'roms', 'gz')] }, 14],
     [{ input: [path.join('test', 'fixtures', 'roms', 'rar')] }, 12],
@@ -107,11 +107,7 @@ describe('multiple files', () => {
     const extensionsWithoutCrc32 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
       .filter((file) => !file.getCrc32())
-      .map((file) => {
-        const match = file.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-        return match ? match[1] : undefined;
-      })
-      .filter((ext) => ext !== undefined)
+      .map((file) => file.getArchive().getExtension())
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
     expect(extensionsWithoutCrc32).toEqual(['.chd', '.tar.gz']);
@@ -124,14 +120,10 @@ describe('multiple files', () => {
     const extensionsWithSha1 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
       .filter((file) => file.getSha1() !== undefined)
-      .map((file) => {
-        const match = file.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
-        return match ? match[1] : undefined;
-      })
-      .filter((ext) => ext !== undefined)
+      .map((file) => file.getArchive().getExtension())
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort();
-    expect(extensionsWithSha1).toEqual(['.chd']);
+    expect(extensionsWithSha1).toEqual(['.chd', '.gcz', '.rvz', '.wia']);
 
     const entriesWithSha256 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
@@ -142,19 +134,19 @@ describe('multiple files', () => {
   it('should scan multiple files with some file exclusions', async () => {
     await expect(
       createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan(),
-    ).resolves.toHaveLength(77);
+    ).resolves.toHaveLength(80);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom'],
       ).scan(),
-    ).resolves.toHaveLength(77);
+    ).resolves.toHaveLength(80);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip'],
       ).scan(),
-    ).resolves.toHaveLength(66);
+    ).resolves.toHaveLength(69);
   });
 
   it('should scan multiple files with every file excluded', async () => {

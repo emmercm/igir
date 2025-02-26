@@ -68,8 +68,8 @@
     <description>UMD</description>
     <rom name="UMD.iso" size="4096" crc="e90f7cf5" md5="ad8d77b7012f9ea808e2c1f5cdc25839" sha1="9cef9e2161dfd7dbdfd63a774d66c7f2c801b453" status="verified"/>
   </machine>
-  <machine name="GameCube NKit ISO">
-    <description>GameCube NKit ISO</description>
-    <rom name="GameCube NKit ISO.nkit.iso" size="1459978240" crc="5bc2ce5b" status="verified"/>
+  <machine name="GameCube-240pSuite-1.19">
+    <description>GameCube-240pSuite-1.19</description>
+    <rom name="GameCube-240pSuite-1.19.iso" size="1671168" crc="5eb3d183" md5="f86ae9d9f55c00af3d8b564e9106d813" sha1="c37c47c7b5c052ce955af3df504ea1c665887a0f"/>
   </machine>
 </datafile>
