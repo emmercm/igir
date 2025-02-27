@@ -50,7 +50,7 @@ describe('getSize', () => {
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 11],
     ['./test/fixtures/roms/zip/loremipsum.zip', 11],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', 1_459_978_240],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', 1_671_168],
   ])('%s', (filePath, expectedSize) => {
     it("should get the file's size", async () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
@@ -139,7 +139,7 @@ describe('getCrc32', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b'],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', '5eb3d183'],
   ])('should hash the full archive entry: %s', async (filePath, expectedCrc) => {
     const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
@@ -181,7 +181,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b'],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', '5eb3d183'],
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedCrc) => {
@@ -253,7 +253,7 @@ describe('getMd5', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '74362ca7d47e67e2d3e62f6283ecf879'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '1ea102719a2fc3b767df0d2d367a8371'],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedMd5) => {
     const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
       filePath,
@@ -300,7 +300,7 @@ describe('getMd5WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '74362ca7d47e67e2d3e62f6283ecf879'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '1ea102719a2fc3b767df0d2d367a8371'],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedMd5) => {
@@ -386,7 +386,7 @@ describe('getSha1', () => {
       '3882fcc1c94579a47a213224c572c006d62867f0',
     ],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha1) => {
     const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
       filePath,
@@ -439,7 +439,7 @@ describe('getSha1WithoutHeader', () => {
       '3882fcc1c94579a47a213224c572c006d62867f0',
     ],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedSha1) => {
@@ -576,7 +576,7 @@ describe('getSha256', () => {
       'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4',
     ],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha256) => {
     const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
       filePath,
@@ -674,7 +674,7 @@ describe('getSha256WithoutHeader', () => {
       'c83ea05dc94aa8e158ecdbf84af91d971574712d73e0ea82f25dee7eaf88a9d4',
     ],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', undefined],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedSha256) => {

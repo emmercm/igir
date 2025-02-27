@@ -5,6 +5,9 @@ import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Chd from '../../../../src/types/files/archives/chd/chd.js';
+import Gcz from '../../../../src/types/files/archives/dolphin/gcz.js';
+import Rvz from '../../../../src/types/files/archives/dolphin/rvz.js';
+import Wia from '../../../../src/types/files/archives/dolphin/wia.js';
 import Cso from '../../../../src/types/files/archives/maxcso/cso.js';
 import Dax from '../../../../src/types/files/archives/maxcso/dax.js';
 import Zso from '../../../../src/types/files/archives/maxcso/zso.js';
@@ -36,6 +39,9 @@ describe('getArchiveEntries', () => {
       ...Cso.getExtensions(),
       ...Dax.getExtensions(),
       ...Zso.getExtensions(),
+      ...Gcz.getExtensions(),
+      ...Rvz.getExtensions(),
+      ...Wia.getExtensions(),
       ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ]),
@@ -70,7 +76,11 @@ describe('getArchiveEntries', () => {
     ['./test/fixtures/roms/tar/unknown.tar.gz', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/zip/unknown.zip', 'unknown.rom', '377a7727'],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b.iso', '5bc2ce5b'],
+    [
+      './test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso',
+      'GameCube-240pSuite-1.19.iso',
+      '5eb3d183',
+    ],
   ])(
     'should enumerate the single file archive: %s',
     async (filePath, expectedEntryPath, expectedCrc) => {

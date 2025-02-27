@@ -124,6 +124,7 @@
         groupName: null,
         matchPackageNames: [
           'chdman',
+          'dolphin-tool',
           'maxcso'
         ],
         schedule: 'at any time',

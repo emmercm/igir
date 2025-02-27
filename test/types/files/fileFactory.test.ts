@@ -20,7 +20,7 @@ describe('filesFrom', () => {
     ['test/fixtures/roms/gz/three.gz', 1],
     ['test/fixtures/roms/gz/two.gz', 1],
     ['test/fixtures/roms/gz/unknown.gz', 1],
-    ['test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', 1],
+    ['test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', 1],
     ['test/fixtures/roms/rar/fizzbuzz.rar', 1],
     ['test/fixtures/roms/rar/foobar.rar', 1],
     ['test/fixtures/roms/rar/loremipsum.rar', 1],
