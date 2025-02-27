@@ -48,7 +48,7 @@ Wario Land II (USA, Europe) (SGB Enhanced)
 --filter-language [languages..]
 ```
 
-Languages are two-letter codes, and multiple languages can be specified with commas between them. See the `--help` message for the full list of understood languages.
+Languages are two-letter codes, and multiple languages can be specified with commas between them. See the `--help` message for the full list of supported languages.
 
 If a game doesn’t have language information specified, it will be inferred from the region.
 
@@ -80,7 +80,7 @@ A game can have many languages, and all of them are considered during filtering.
 --filter-region [regions..]
 ```
 
-Regions are two or three-letter codes, and you can specify multiple regions with commas between them. See the `--help` message for the full list of understood regions.
+Regions are two or three-letter codes, and you can specify multiple regions with commas between them. See the `--help` message for the full list of supported regions.
 
 Here are some example game names that Igir can parse regions from:
 
