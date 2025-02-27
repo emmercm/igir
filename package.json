@@ -80,7 +80,7 @@
     "chdman": "0.274.2",
     "class-transformer": "0.5.1",
     "cli-progress": "3.12.0",
-    "dolphin-tool": "^0.2412.2",
+    "dolphin-tool": "^0.2412.3",
     "fast-glob": "3.3.3",
     "fast-xml-parser": "4.5.1",
     "figlet": "1.8.0",
