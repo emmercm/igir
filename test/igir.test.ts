@@ -208,7 +208,10 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
-        [`${path.join('One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso`, '5bc2ce5b'],
+        [
+          `${path.join('One', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
+          '5eb3d183',
+        ],
         [`${path.join('One', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('One', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
         [`${path.join('One', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
@@ -278,7 +281,7 @@ describe('with explicit DATs', () => {
         ['CD-ROM.chd|CD-ROM.cue', 'xxxxxxxx'],
         // Fizzbuzz.nes is explicitly missing!
         ['Foobar.lnx', 'b22c9747'],
-        ['GameCube NKit ISO.nkit.iso|GameCube NKit ISO.iso', '5bc2ce5b'],
+        ['GameCube-240pSuite-1.19.gcz|GameCube-240pSuite-1.19.iso', '5eb3d183'],
         ['GD-ROM.chd|GD-ROM.gdi', 'f16f621c'],
         ['GD-ROM.chd|track01.bin', '9796ed9a'],
         ['GD-ROM.chd|track02.raw', 'abc178d5'],
@@ -307,7 +310,7 @@ describe('with explicit DATs', () => {
         path.join(outputTemp, 'one.rom'),
         path.join(outputTemp, 'rom', 'two.rom'),
         path.join(outputTemp, 'zip', 'three.zip'),
-        path.join(outputTemp, 'cso', 'four.rvz'),
+        path.join(outputTemp, 'cso', 'four.wud'),
       ];
       await Promise.all(
         junkFiles.map(async (junkFile) => {
@@ -346,16 +349,16 @@ describe('with explicit DATs', () => {
         [`${path.join('chd', 'One', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
         [`${path.join('chd', 'One', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
         [`${path.join('chd', 'One', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
-        [path.join('cso', 'four.rvz'), '00000000'], // explicitly not deleted, there were no input files with the extension "cso"
+        [path.join('cso', 'four.wud'), '00000000'], // explicitly not deleted, there were no input files with the extension "cso"
+        [
+          `${path.join('gcz', 'One', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
+          '5eb3d183',
+        ],
         [
           `${path.join('gz', 'Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`,
           '8beffd94',
         ],
         [`${path.join('gz', 'Patchable', 'Best.gz')}|best.rom`, '1e3d78cf'],
-        [
-          `${path.join('iso', 'One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso`,
-          '5bc2ce5b',
-        ],
         [path.join('iso', 'One', 'UMD.iso'), 'e90f7cf5'],
         [path.join('lnx', 'One', 'Foobar.lnx'), 'b22c9747'],
         [
@@ -536,6 +539,7 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'fds_joypad_test.fds'), '1e58456d'],
         [path.join('igir combined', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('igir combined', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('igir combined', 'GameCube-240pSuite-1.19.iso'), '5eb3d183'],
         [path.join('igir combined', 'GD-ROM', 'GD-ROM.gdi'), 'f16f621c'],
         [path.join('igir combined', 'GD-ROM', 'track01.bin'), '9796ed9a'],
         [path.join('igir combined', 'GD-ROM', 'track02.raw'), 'abc178d5'],
@@ -585,6 +589,7 @@ describe('with explicit DATs', () => {
         path.join('chd', 'GD-ROM.chd'),
         path.join('cso', 'UMD.cso'),
         'foobar.lnx',
+        path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
         path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
@@ -740,6 +745,10 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'CD-ROM.zip')}|CD-ROM.cue`, '4ce39e73'],
         [`${path.join('One', 'Fizzbuzz.zip')}|Fizzbuzz.nes`, '370517b5'],
         [`${path.join('One', 'Foobar.zip')}|Foobar.lnx`, 'b22c9747'],
+        [
+          `${path.join('One', 'GameCube-240pSuite-1.19.zip')}|GameCube-240pSuite-1.19.iso`,
+          '5eb3d183',
+        ],
         [`${path.join('One', 'GD-ROM.zip')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('One', 'GD-ROM.zip')}|track01.bin`, '9796ed9a'],
         [`${path.join('One', 'GD-ROM.zip')}|track02.raw`, 'abc178d5'],
@@ -849,6 +858,7 @@ describe('with explicit DATs', () => {
         [`One.zip|${path.join('CD-ROM', 'CD-ROM.cue')}`, '4ce39e73'],
         ['One.zip|Fizzbuzz.nes', '370517b5'],
         ['One.zip|Foobar.lnx', 'b22c9747'],
+        ['One.zip|GameCube-240pSuite-1.19.iso', '5eb3d183'],
         [`One.zip|${path.join('GD-ROM', 'GD-ROM.gdi')}`, 'f16f621c'],
         [`One.zip|${path.join('GD-ROM', 'track01.bin')}`, '9796ed9a'],
         [`One.zip|${path.join('GD-ROM', 'track02.raw')}`, 'abc178d5'],
@@ -947,8 +957,8 @@ describe('with explicit DATs', () => {
         ],
         [`${path.join('One', 'Foobar.lnx')} -> ${path.join('<input>', 'foobar.lnx')}`, 'b22c9747'],
         [
-          `${path.join('One', 'GameCube NKit ISO.nkit.iso')}|GameCube NKit ISO.iso -> ${path.join('<input>', 'nkit', '5bc2ce5b.nkit.iso')}|GameCube NKit ISO.iso`,
-          '5bc2ce5b',
+          `${path.join('One', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso -> ${path.join('<input>', 'gcz', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
+          '5eb3d183',
         ],
         [
           `${path.join('One', 'GD-ROM.chd')}|GD-ROM.gdi -> ${path.join('<input>', 'chd', 'GD-ROM.chd')}|GD-ROM.gdi`,
@@ -1107,6 +1117,7 @@ describe('with explicit DATs', () => {
         [path.join('One', 'CD-ROM', 'CD-ROM.cue'), '4ce39e73'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('One', 'GameCube-240pSuite-1.19.iso'), '5eb3d183'],
         [path.join('One', 'GD-ROM', 'GD-ROM.gdi'), 'f16f621c'],
         [path.join('One', 'GD-ROM', 'track01.bin'), '9796ed9a'],
         [path.join('One', 'GD-ROM', 'track02.raw'), 'abc178d5'],
@@ -1275,7 +1286,6 @@ describe('with inferred DATs', () => {
         ['2048.chd|', 'xxxxxxxx'], // hard disk
         ['3708F2C.rom', '20891c9f'],
         ['4096.chd|', 'xxxxxxxx'], // hard disk
-        ['5bc2ce5b.nkit.iso|5bc2ce5b.iso', '5bc2ce5b'],
         ['612644F.rom', 'f7591b29'],
         ['65D1206.rom', '20323455'],
         ['92C85C9.rom', '06692159'],
@@ -1297,6 +1307,7 @@ describe('with inferred DATs', () => {
         ['four.rom', '1cf3ca74'],
         ['fourfive.zip|five.rom', '3e5daf67'],
         ['fourfive.zip|four.rom', '1cf3ca74'],
+        ['GameCube-240pSuite-1.19.gcz|GameCube-240pSuite-1.19.iso', '5eb3d183'],
         ['GD-ROM.chd|GD-ROM.gdi', 'f16f621c'],
         ['GD-ROM.chd|track01.bin', '9796ed9a'],
         ['GD-ROM.chd|track02.raw', 'abc178d5'],
@@ -1371,6 +1382,7 @@ describe('with inferred DATs', () => {
         ['four.rom', '1cf3ca74'],
         [path.join('fourfive', 'five.rom'), '3e5daf67'],
         [path.join('fourfive', 'four.rom'), '1cf3ca74'],
+        ['GameCube-240pSuite-1.19.iso', '5eb3d183'],
         [path.join('GD-ROM', 'GD-ROM.gdi'), 'f16f621c'],
         [path.join('GD-ROM', 'track01.bin'), '9796ed9a'],
         [path.join('GD-ROM', 'track02.raw'), 'abc178d5'],
@@ -1396,6 +1408,7 @@ describe('with inferred DATs', () => {
         path.join('cso', 'UMD.cso'),
         'empty.rom',
         'foobar.lnx',
+        path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
         path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
@@ -1454,22 +1467,23 @@ describe('with inferred DATs', () => {
         ['CD-ROM.zip|CD-ROM (Track 3).bin', 'a320af40'],
         ['CD-ROM.zip|CD-ROM.cue', '4ce39e73'],
         ['color_test.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
-        ['diagnostic_test_cartridge.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+        ['diagnostic_test_cartridge.a78.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['empty.zip|empty.rom', '00000000'],
-        ['fds_joypad_test.zip|fds_joypad_test.fds', '1e58456d'],
+        ['fds_joypad_test.fds.zip|fds_joypad_test.fds', '1e58456d'],
         ['five.zip|five.rom', '3e5daf67'],
         ['fizzbuzz.zip|fizzbuzz.nes', '370517b5'],
         ['foobar.zip|foobar.lnx', 'b22c9747'],
         ['four.zip|four.rom', '1cf3ca74'],
         ['fourfive.zip|five.rom', '3e5daf67'],
         ['fourfive.zip|four.rom', '1cf3ca74'],
+        ['GameCube-240pSuite-1.19.zip|GameCube-240pSuite-1.19.iso', '5eb3d183'],
         ['GD-ROM.zip|GD-ROM.gdi', 'f16f621c'],
         ['GD-ROM.zip|track01.bin', '9796ed9a'],
         ['GD-ROM.zip|track02.raw', 'abc178d5'],
         ['GD-ROM.zip|track03.bin', '61a363f1'],
         ['GD-ROM.zip|track04.bin', 'fc5ff5a0'],
         ['KDULVQN.zip|KDULVQN.rom', 'b1c303e4'],
-        ['LCDTestROM.zip|LCDTestROM.lnx', '2d251538'],
+        ['LCDTestROM.lnx.zip|LCDTestROM.lnx', '2d251538'],
         ['loremipsum.zip|loremipsum.rom', '70856527'],
         ['one.zip|one.rom', 'f817a89f'],
         ['onetwothree.zip|one.rom', 'f817a89f'],
@@ -1513,10 +1527,6 @@ describe('with inferred DATs', () => {
           '20891c9f',
         ],
         [`4096.chd| -> ${path.join('..', 'input', 'roms', 'chd', '4096.chd|')}`, 'xxxxxxxx'], // hard disk
-        [
-          `5bc2ce5b.nkit.iso|5bc2ce5b.iso -> ${path.join('..', 'input', 'roms', 'nkit', '5bc2ce5b.nkit.iso')}|5bc2ce5b.iso`,
-          '5bc2ce5b',
-        ],
         [
           `612644F.rom -> ${path.join('..', 'input', 'roms', 'patchable', '612644F.rom')}`,
           'f7591b29',
@@ -1585,6 +1595,10 @@ describe('with inferred DATs', () => {
         [
           `fourfive.zip|four.rom -> ${path.join('..', 'input', 'roms', 'zip', 'fourfive.zip')}|four.rom`,
           '1cf3ca74',
+        ],
+        [
+          `GameCube-240pSuite-1.19.gcz|GameCube-240pSuite-1.19.iso -> ${path.join('..', 'input', 'roms', 'gcz', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
+          '5eb3d183',
         ],
         [
           `GD-ROM.chd|GD-ROM.gdi -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|GD-ROM.gdi')}`,
@@ -1737,6 +1751,7 @@ describe('with inferred DATs', () => {
         'CD-ROM (Track 3).bin',
         'CD-ROM.cue',
         'GD-ROM.gdi',
+        'GameCube-240pSuite-1.19.iso',
         'KDULVQN.rom',
         'LCDTestROM.lnx',
         'UMD.iso',

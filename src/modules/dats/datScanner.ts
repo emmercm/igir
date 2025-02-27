@@ -69,7 +69,7 @@ export default class DATScanner extends Scanner {
     const datFiles = await this.getUniqueFilesFromPaths(
       datFilePaths,
       this.options.getReaderThreads(),
-      ChecksumBitmask.NONE,
+      ChecksumBitmask.CRC32,
     );
     this.progressBar.reset(datFiles.length);
 

@@ -60,6 +60,9 @@ export default abstract class Scanner extends Module {
     threads: number,
     checksumBitmask: number,
   ): Promise<File[]> {
+    if (checksumBitmask === ChecksumBitmask.NONE) {
+      throw new Error('must provide ChecksumBitmask when getting unique files');
+    }
     const foundFiles = await this.getFilesFromPaths(filePaths, threads, checksumBitmask);
     return foundFiles.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
   }

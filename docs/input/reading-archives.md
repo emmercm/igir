@@ -11,9 +11,11 @@ Igir supports most common archive formats:
 | `.7z`                                                            | ✅                    | ❌ `7za`                                       | ❌                                         |
 | `.chd`                                                           | ❌ SHA1               | ❌ `chdman`<sup>1</sup>                        | ❌                                         |
 | `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ `maxcso`                                    | ⚠️ CRC32 only                             |
+| `.gcz`                                                           | ❌                    | ❌ `dolphin-tool`                              | ⚠️ CRC32, MD5, and SHA1 only              |
 | `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ `7za`                                       | ❌                                         |
 | `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                       | ✅                                         |
 | `.rar`                                                           | ✅                    | ✅                                             | ❌                                         |
+| `.rvz`, `.wia`                                                   | ❌                    | ❌ `dolphin-tool`                              | ⚠️ CRC32, MD5, and SHA1 only              |
 | `.tar`                                                           | ❌                    | ✅                                             | ✅ ≤64MiB                                  |
 | `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅ ≤64MiB                                  |
 | `.z01`                                                           | ✅                    | ❌ `7za`                                       | ❌                                         |

@@ -35,7 +35,7 @@ export default class PatchScanner extends Scanner {
     const patchFiles = await this.getUniqueFilesFromPaths(
       patchFilePaths,
       this.options.getReaderThreads(),
-      ChecksumBitmask.NONE,
+      ChecksumBitmask.CRC32,
     );
     this.progressBar.reset(patchFiles.length);
 
