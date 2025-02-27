@@ -56,4 +56,4 @@ Igir has a `--writer-threads <threads>` option to limit the number of files bein
 
 Swiss supports ISOs in the trimmed [NKit format](https://wiki.gbatemp.net/wiki/NKit), which can save significant space on your SD card. Some games such as Animal Crossing can be compressed as small as 28MB, while other games such as Wave Race: Blue Storm don't compress much at all.
 
-Igir can read the original ISO's CRC32 information stored in `.nkit.iso` files, which means it can match files to DATs (as long as you don't raise the minimum checksum level!). However, Igir can't extract NKit ISOs, you'll need to use Nanook's [NKit tool](https://wiki.gbatemp.net/wiki/NKit#Download) instead.
+Igir can read the original ISO's CRC32 information stored in `.nkit.iso` files, which means it can match files to DATs (as long as you don't raise the [minimum checksum level](../../roms/matching.md#manually-using-other-checksum-algorithms)!). However, Igir can't extract NKit ISOs, you'll need to use Nanook's [NKit tool](https://wiki.gbatemp.net/wiki/NKit#Download) instead.
