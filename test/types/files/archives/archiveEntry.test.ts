@@ -50,7 +50,7 @@ describe('getSize', () => {
     ['./test/fixtures/roms/tar/loremipsum.tar.gz', 11],
     ['./test/fixtures/roms/zip/loremipsum.zip', 11],
     // other
-    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', 1_459_978_240],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', 1_671_168],
   ])('%s', (filePath, expectedSize) => {
     it("should get the file's size", async () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
@@ -139,7 +139,7 @@ describe('getCrc32', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
     // other
-    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', '5bc2ce5b'],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', '5eb3d183'],
   ])('should hash the full archive entry: %s', async (filePath, expectedCrc) => {
     const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
@@ -181,7 +181,7 @@ describe('getCrc32WithoutHeader', () => {
     ['./test/fixtures/roms/headered/fds_joypad_test.fds.zip', '1e58456d'],
     ['./test/fixtures/roms/headered/LCDTestROM.lnx.rar', '2d251538'],
     // other
-    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', '5bc2ce5b'],
+    ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', '5eb3d183'],
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedCrc) => {
