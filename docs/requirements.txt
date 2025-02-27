@@ -10,7 +10,7 @@ mdx-truly-sane-lists==1.3
 # Requires:
 # macOS:
 #   brew install cairo
-#   sudo ln -s /opt/homebrew/Cellar/cairo/*/lib/libcairo.2.dylib /usr/local/lib/
+#   (sudo rm /usr/local/lib/libcairo.2.dylib || true) && sudo ln -s /opt/homebrew/Cellar/cairo/*/lib/libcairo.2.dylib /usr/local/lib/
 # Linux: sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
 Pillow==11.1.0
 CairoSVG==2.7.1
