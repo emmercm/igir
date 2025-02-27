@@ -94,8 +94,6 @@ export default abstract class Scanner extends Module {
       }
       return filesFromPath;
     } catch (error) {
-      // TODO(cemmer): DEBUG!
-      console.log('SCANNER ERROR', error);
       this.progressBar.logError(`${filePath}: failed to parse file: ${error}`);
       return [];
     }
