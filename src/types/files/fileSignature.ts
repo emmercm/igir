@@ -103,7 +103,19 @@ export default class FileSignature {
     lnx: new FileSignature('.lnx', [{ value: Buffer.from('LYNX') }]),
 
     // Nintendo - Nintendo 3DS
+    // TODO(cemmer): .3ds/.cci
+    // @see https://www.3dbrew.org/wiki/3DSX_Format
     '3dsx': new FileSignature('.3dsx', [{ value: Buffer.from('3DSX') }]),
+    // @see https://www.3dbrew.org/wiki/CIA
+    // @see http://problemkaputt.de/gbatek-3ds-files-title-installation-archive-cia.htm
+    cia: new FileSignature('.cia', [
+      { value: Buffer.from('20200000', 'hex') }, // usual archive header size
+      { offset: 0x04, value: Buffer.from('0000', 'hex') }, // type
+      { offset: 0x06, value: Buffer.from('0000', 'hex') }, // version
+    ]),
+    // @see https://www.3dbrew.org/wiki/NCCH
+    // TODO(cemmer): .cfa
+    // TODO(cemmer): .cxi
 
     // Nintendo - Nintendo 64
     // @see http://n64dev.org/romformats.html
@@ -122,12 +134,14 @@ export default class FileSignature {
     gw: new FileSignature('.bin', [{ value: Buffer.from('main.bs') }]),
 
     // Nintendo - GameCube
+    // TODO(cemmer): .gcm
     // @see https://github.com/dolphin-emu/dolphin/blob/1f5e100a0e6dd4f9ab3784fd6373d452054d08bf/Source/Core/DiscIO/CompressedBlob.h#L25 (reversed)
     gcz: new FileSignature('.gcz', [{ value: Buffer.from('01C00BB1', 'hex') }]),
     // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
     nkit_iso: new FileSignature('.nkit.iso', [{ offset: 0x2_00, value: Buffer.from('NKIT') }]),
     // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
     rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]), // "RVZ\x01"
+    // TODO(cemmer): .tgc
     wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]), // "WIA\x01"
 
     // Nintendo - Game Boy
@@ -203,12 +217,64 @@ export default class FileSignature {
     smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\x00\x01ME DOCTOR SF 3') }]), // Game Doctor SF3?
     smc_gd3_2: new FileSignature('.smc', [{ value: Buffer.from('GAME DOCTOR SF 3') }]), // Game Doctor SF3/SF6/SF7
 
+    // Nintendo - Switch
+    // @see https://switchbrew.org/wiki/NCA
+    nca_0: new FileSignature('.nca', [{ offset: 0x2_00, value: Buffer.from('NCA0') }]),
+    nca_1: new FileSignature('.nca', [{ offset: 0x2_00, value: Buffer.from('NCA1') }]),
+    nca_2: new FileSignature('.nca', [{ offset: 0x2_00, value: Buffer.from('NCA2') }]),
+    nca_3: new FileSignature('.nca', [{ offset: 0x2_00, value: Buffer.from('NCA3') }]),
+    // @see https://github.com/nicoboss/nsz?tab=readme-ov-file#ncz
+    ncz: new FileSignature('.ncz', [{ offset: 0x40_00, value: Buffer.from('NCZSECTN') }]),
+    // @see https://switchbrew.org/wiki/NRO
+    nro: new FileSignature('.nro', [{ offset: 0x10, value: Buffer.from('NRO0') }]),
+    // @see https://switchbrew.org/wiki/NSO
+    nso: new FileSignature('.nso', [{ value: Buffer.from('NSO0') }]),
+    // @see https://switchbrew.org/wiki/NCA_Format#PFS0
+    nsp: new FileSignature('.nsp', [{ value: Buffer.from('PFS0') }]),
+    // Note: .nsz is the same signature as .nsp
+    // @see https://switchbrew.org/wiki/XCI
+    xci: new FileSignature('.xci', [
+      { offset: 0x1_00, value: Buffer.from('HEAD') }, // magic
+      { offset: 0x1_08, value: Buffer.from('FFFFFFFF', 'hex') }, // BackupAreaStartPageAddress
+    ]),
+    // Note: .xcz is the same signature as .xci
+    // @see https://github.com/Xpl0itR/ZcaTool?tab=readme-ov-file#zca-header
+    zca: new FileSignature('.zca', [{ value: Buffer.from('ZCA0') }]),
+
     // Nintendo - Wii
+    // @see http://wiibrew.org/wiki/CCF_archive
+    ccf: new FileSignature('.ccf', [{ value: Buffer.from('CCF\x00') }]),
+    // @see http://wiibrew.org/wiki/VFF
+    vff: new FileSignature('.vff', [{ value: Buffer.from('VFF ') }]),
+    // @see http://wiibrew.org/wiki/WAD_files
+    wad_installable_ib: new FileSignature('.wad', [
+      { value: Buffer.from('\x00\x00\x00\x20') }, // header size
+      { offset: 0x04, value: Buffer.from('ib') },
+      { offset: 0x06, value: Buffer.from('\x00\x00') }, // WAD version
+      { offset: 0x0c, value: Buffer.from('\x00\x00\x00\x00') }, // reserved
+    ]),
+    wad_installable_is: new FileSignature('.wad', [
+      { value: Buffer.from('\x00\x00\x00\x20') }, // header size
+      { offset: 0x04, value: Buffer.from('Is') },
+      { offset: 0x06, value: Buffer.from('\x00\x00') }, // WAD version
+      { offset: 0x0c, value: Buffer.from('\x00\x00\x00\x00') }, // reserved
+    ]),
+    wad_backup: new FileSignature('.wad', [
+      { value: Buffer.from('\x00\x00\x00\x70') }, // header size
+      { offset: 0x04, value: Buffer.from('Bk') },
+      { offset: 0x06, value: Buffer.from('\x00\x01') }, // WAD version
+      { offset: 0x6e, value: Buffer.from('\x00\x00') }, // reserved
+    ]),
     // @see https://wit.wiimm.de/info/wdf.html
     wdf: new FileSignature('.wdf', [{ value: Buffer.from('WII\x01DISC') }]),
 
     // Nintendo - Wii U
-    // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25
+    // @see https://gbatemp.net/threads/the-different-wiiu-games-formats-and-how-to-convert-them.449212/post-6845070
+    // TODO(cemmer): .rpx
+    // Note: .wua doesn't appear to have any consistent signature
+    wud: new FileSignature('.wud', [{ value: Buffer.from('WUP-') }]),
+    // TODO(cemmer): .wup
+    // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25-L26
     wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\x2E\xD0\x99\x10') }]),
 
     // Sega - 32X
