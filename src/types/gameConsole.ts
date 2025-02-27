@@ -789,13 +789,17 @@ export default class GameConsole {
       retrodeck: 'n64dd',
       romm: 'nintendo-64dd',
     }),
-    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds', '.3dsx'], {
-      batocera: '3ds',
-      emulationstation: 'n3ds',
-      jelos: '3ds',
-      retrodeck: 'n3ds',
-      romm: '3ds',
-    }),
+    new GameConsole(
+      /(\W|^)3DS(\W|$)|Nintendo 3DS/i,
+      ['.3ds', '.3dsx', '.cci', '.cia', '.cfa', '.cxi'],
+      {
+        batocera: '3ds',
+        emulationstation: 'n3ds',
+        jelos: '3ds',
+        retrodeck: 'n3ds',
+        romm: '3ds',
+      },
+    ),
     new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], {
       batocera: 'nds',
       emulationstation: 'nds',
@@ -880,7 +884,7 @@ export default class GameConsole {
         twmenu: 'snes',
       },
     ),
-    new GameConsole(/Switch/i, ['.nca', '.nro', '.nso', '.nsp', '.xci'], {
+    new GameConsole(/Switch/i, ['.nca', '.nro', '.nso', '.nsp', '.nsz', '.xci', '.xcz', '.zca'], {
       emulationstation: 'switch',
       retrodeck: 'switch',
       romm: 'switch',
@@ -909,7 +913,7 @@ export default class GameConsole {
         romm: 'wii',
       },
     ),
-    new GameConsole(/Wii ?U/i, ['.rpx', '.wua', '.wud', '.wux'], {
+    new GameConsole(/Wii ?U/i, ['.rpx', '.wua', '.wud', '.wup', '.wux'], {
       batocera: 'wiiu',
       emulationstation: 'wiiu',
       jelos: 'wiiu',
