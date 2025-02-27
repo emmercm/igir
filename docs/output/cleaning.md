@@ -24,9 +24,21 @@ The golden rule of the `igir clean` command is it will _not_ delete files in any
 
 In practical terms, this means:
 
-**1. If no file was written (i.e. no input file matched any ROM in any [DAT](../dats/introduction.md)), then `igir clean` will not delete any files.**
+1. **If no file was written (i.e. no input file matched any ROM in any [DAT](../dats/introduction.md)), then `igir clean` will not delete any files.**
+2. **If [tokens](tokens.md) are used with the `--output <path>` option, only subdirectories that are written to will be considered for cleaning.**
 
-**2. If [tokens](tokens.md) are used with the `--output <path>` option, only subdirectories that are written to will be considered for cleaning.**
+  !!! warning
+
+      This behavior is different for [`--dir-*` options](path-options.md). For example, if:
+
+      - Your input directory only includes Game Boy (`.gb`) ROMs
+        - And you specify the [`--dir-dat-name` option](path-options.md#append-dat-name) such that these ROMs will be written to `<output>/Nintendo - Game Boy/*.gb`
+      - And your output directory already has NES ROMs at `<output>/Nintendo - Nintendo Etertainment System/*.nes`
+      - And you specify the `igir clean` command
+
+      Then those NES ROMs will be deleted. This is because the entire `--output <path>` will be considered for cleaning, and no tokens were provided.
+
+      When in doubt, you can provide the [`--clean-dry-run` option](#dry-run) to see what files would be deleted without actually deleting them.
 
 For example, if the output directory is specified as `--output "games/{mister}"`, and only Game Boy Color games are found in `--input <path>`, then only the `games/Gameboy/` directory would be considered for cleaning. Other directories that may already exist such as `games/GBA/` and `games/NES/` would _not_ be considered for cleaning, as Igir did not write there.
 

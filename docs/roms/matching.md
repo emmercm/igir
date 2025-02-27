@@ -36,7 +36,7 @@ For example, if you provide all of these DATs at once with the [`--dat <path>` o
 
 A number of archives formats require the extraction of files to calculate their checksums, and this extraction can greatly increase scanning time and add hard drive wear & tear. Igir's default settings will give you the best chance of matching input files to DATs, but there may be situations where you want to make scanning faster.
 
-The `--input-checksum-quick` option will prevent the extraction of archives (either in memory _or_ using temporary files) to calculate checksums of files contained inside. This means that Igir will rely solely on the information available in the archive's file directory. Non-archive files will still have their checksum calculated as normal. See the [archive formats](../input/reading-archives.md) page for more information about what file types contain what checksum information.
+The `--input-checksum-quick` option will prevent any extraction of archives (both in memory _and_ using temporary files) to calculate checksums of files contained inside. This means that Igir will rely solely on the information available in the archive's file directory. Non-archive files will still have their checksum calculated as normal. See the [archive formats](../input/reading-archives.md) page for more information about what file types contain what checksum information.
 
 !!! warning
 
