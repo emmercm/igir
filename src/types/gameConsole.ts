@@ -44,6 +44,7 @@ interface OutputTokens {
   onion?: string;
 
   // Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
+  // @see https://openfpga-cores-inventory.github.io/analogue-pocket/
   pocket?: string;
 
   // RetroDECK ROMs go in the /roms/{retrodeck} directory:
@@ -51,7 +52,7 @@ interface OutputTokens {
   retrodeck?: string;
 
   // RomM ROMs go in the /romm/library/{romm} directory:
-  // @see https://github.com/rommapp/romm/wiki/Supported-Platforms
+  // @see https://docs.romm.app/latest/Platforms-and-Players/Supported-Platforms/
   romm?: string;
 
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
@@ -471,6 +472,20 @@ export default class GameConsole {
       {
         emulationstation: 'supracan',
         batocera: 'supracan',
+      },
+    ),
+    // GamePark
+    new GameConsole(/GP2X/i, [], {
+      romm: 'gp2x',
+    }),
+    new GameConsole(
+      /GP32/i,
+      [
+        /* '.smc' */
+      ],
+      {
+        batocera: 'gp32',
+        romm: 'gp32',
       },
     ),
     // GCE

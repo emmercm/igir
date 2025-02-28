@@ -186,7 +186,7 @@ export default class OutputFactory {
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new ExpectedError(
-        `failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`,
+        `failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')} for ${outputRomFilename ?? inputRomPath ?? game?.getName()}`,
       );
     }
 
