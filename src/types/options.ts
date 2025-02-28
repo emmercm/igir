@@ -703,9 +703,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      return (await fsPoly.walk(inputPath, walkCallback)).map((filePath) =>
-        path.normalize(filePath),
-      );
+      return fsPoly.walk(inputPath, walkCallback);
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -725,9 +723,7 @@ export default class Options implements OptionsProps {
     }
 
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathEscaped, { onlyFiles: true })).map((filePath) =>
-      path.normalize(filePath),
-    );
+    const paths = await fg(inputPathEscaped, { onlyFiles: true });
     if (paths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
@@ -963,7 +959,6 @@ export default class Options implements OptionsProps {
     );
 
     return (await Options.scanPaths(outputDirs, walkCallback, false))
-      .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
       .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath))
       .sort();

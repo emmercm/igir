@@ -4164,7 +4164,7 @@ describe('options', () => {
           'report.csv',
         ])
         .getReportOutput(),
-    ).toEqual(path.resolve('report.csv'));
+    ).toEqual('report.csv');
     expect(
       argumentsParser
         .parse([

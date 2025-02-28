@@ -19,10 +19,9 @@ function scanUpPathForFile(filePath: string, fileName: string): string | undefin
   return undefined;
 }
 
-const PACKAGE_JSON_PATH = scanUpPathForFile(
-  url.fileURLToPath(new URL('.', import.meta.url)),
-  'package.json',
-) as string;
+const PACKAGE_JSON_PATH = path.resolve(
+  scanUpPathForFile(url.fileURLToPath(new URL('.', import.meta.url)), 'package.json') as string,
+);
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH).toString());
 
 /**

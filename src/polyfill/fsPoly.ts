@@ -125,10 +125,11 @@ export default class FsPoly {
   }
 
   static async hardlink(target: string, link: string): Promise<void> {
+    const targetResolved = path.resolve(target);
     try {
-      return await fs.promises.link(target, link);
+      return await fs.promises.link(targetResolved, link);
     } catch (error) {
-      if (this.onDifferentDrives(target, link)) {
+      if (this.onDifferentDrives(targetResolved, link)) {
         throw new ExpectedError(`can't hard link files on different drives: ${error}`);
       }
       throw error;
@@ -234,18 +235,15 @@ export default class FsPoly {
   }
 
   static makeLegal(filePath: string, pathSep = path.sep): string {
-    let replaced = filePath
+    const replaced = filePath
       // Make the filename Windows legal
       .replace(/:/g, ';')
       // Make the filename everything else legal
       .replace(/[<>:"|?*]/g, '_')
       // Normalize the path separators
-      .replace(/[\\/]/g, pathSep);
-
-    // Fix Windows drive letter
-    if (replaced.match(/^[a-z];[\\/]/i) !== null) {
-      replaced = replaced.replace(/^([a-z]);\\/i, '$1:\\');
-    }
+      .replace(/[\\/]/g, pathSep)
+      // Revert the Windows drive letter
+      .replace(/^([a-z]);\\/i, '$1:\\');
 
     return replaced;
   }
@@ -420,6 +418,10 @@ export default class FsPoly {
     return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
+  /**
+   * Note: {@param target} should be processed with `path.resolve()` to create absolute path
+   * symlinks
+   */
   static async symlink(target: PathLike, link: PathLike): Promise<void> {
     return util.promisify(fs.symlink)(target, link);
   }

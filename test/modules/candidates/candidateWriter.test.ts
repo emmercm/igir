@@ -65,7 +65,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       stats.ctimeMs = 0;
       stats.nlink = 0;
 
-      return [filePath.replace(path.normalize(dirPath) + path.sep, ''), stats];
+      return [filePath.replace(dirPath + path.sep, ''), stats];
     }),
   );
 }

@@ -132,9 +132,7 @@ describe('getArchiveEntries', () => {
 
     for (const [idx, entry] of entries.entries()) {
       const expectedEntry = expectedEntries[idx];
-      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(
-        path.normalize(expectedEntry[0]),
-      );
+      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntry[0]);
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
     }
   });
