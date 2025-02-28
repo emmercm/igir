@@ -68,6 +68,10 @@ jobs:
                 echo '```text'
                 ls -alh igir "${BIN_OUTPUT}"
                 echo '```'
+                echo
+                echo '```text'
+                ./igir --help
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
             arch: arm/v7
@@ -83,6 +87,10 @@ jobs:
               {
                 echo '```text'
                 ls -alh igir "${BIN_OUTPUT}"
+                echo '```'
+                echo
+                echo '```text'
+                ./igir --help
                 echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: ubuntu-latest
@@ -100,6 +108,10 @@ jobs:
                 echo '```text'
                 ls -alh igir "${BIN_OUTPUT}"
                 echo '```'
+                echo
+                echo '```text'
+                ./igir --help
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-13
             build: |
@@ -112,6 +124,10 @@ jobs:
               {
                 echo '```text'
                 ls -alh igir "${BIN_OUTPUT}"
+                echo '```'
+                echo
+                echo '```text'
+                ./igir --help
                 echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-15
@@ -126,6 +142,10 @@ jobs:
                 echo '```text'
                 ls -alh igir "${BIN_OUTPUT}"
                 echo '```'
+                echo
+                echo '```text'
+                ./igir --help
+                echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: windows-latest
             build: |
@@ -135,9 +155,13 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-              echo "``````text"  >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
               Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
               Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
+              .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
               echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
     steps:
       # Setup and install
