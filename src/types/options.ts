@@ -365,15 +365,19 @@ export default class Options implements OptionsProps {
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
 
-    this.input = options?.input ?? [];
-    this.inputExclude = options?.inputExclude ?? [];
+    this.input = (options?.input ?? []).map((inputPath) => path.normalize(inputPath));
+    this.inputExclude = (options?.inputExclude ?? []).map((inputExcludePath) =>
+      path.normalize(inputExcludePath),
+    );
     this.inputChecksumQuick = options?.inputChecksumQuick ?? false;
     this.inputChecksumMin = options?.inputChecksumMin;
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = options?.dat ?? [];
-    this.datExclude = options?.datExclude ?? [];
+    this.dat = (options?.dat ?? []).map((datPath) => path.normalize(datPath));
+    this.datExclude = (options?.datExclude ?? []).map((datExcludePath) =>
+      path.normalize(datExcludePath),
+    );
     this.datNameRegex = options?.datNameRegex ?? '';
     this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
     this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
@@ -381,7 +385,7 @@ export default class Options implements OptionsProps {
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
-    this.patch = options?.patch ?? [];
+    this.patch = (options?.patch ?? []).map((patchPath) => path.normalize(patchPath));
     this.patchExclude = options?.patchExclude ?? [];
 
     this.output = options?.output ?? '';
@@ -398,7 +402,9 @@ export default class Options implements OptionsProps {
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
 
-    this.cleanExclude = options?.cleanExclude ?? [];
+    this.cleanExclude = (options?.cleanExclude ?? []).map((cleanExcludePath) =>
+      path.normalize(cleanExcludePath),
+    );
     this.cleanBackup = options?.cleanBackup;
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
