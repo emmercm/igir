@@ -1237,17 +1237,13 @@ export default class Options implements OptionsProps {
 
   getDir2DatOutput(): string {
     return fsPoly.makeLegal(
-      path.resolve(
-        this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
-      ),
+      this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
 
   getFixdatOutput(): string {
     return fsPoly.makeLegal(
-      path.resolve(
-        this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
-      ),
+      this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
 
