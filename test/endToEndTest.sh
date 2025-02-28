@@ -29,7 +29,8 @@ test_igir() {
     --dat test/fixtures/dats/* \
     --input test/fixtures/roms/* \
     --input-exclude test/fixtures/roms/discs/* \
-    --output "${temp}"
+    --output "${temp}" \
+    -vvv
   ls -al "${temp}"/*
   rm -rf "${temp}"
 }
