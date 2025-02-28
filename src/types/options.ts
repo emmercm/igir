@@ -373,15 +373,19 @@ export default class Options implements OptionsProps {
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
 
-    this.input = options?.input ?? [];
-    this.inputExclude = options?.inputExclude ?? [];
+    this.input = (options?.input ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.inputExclude = (options?.inputExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
     this.inputChecksumQuick = options?.inputChecksumQuick ?? false;
     this.inputChecksumMin = options?.inputChecksumMin;
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = options?.dat ?? [];
-    this.datExclude = options?.datExclude ?? [];
+    this.dat = (options?.dat ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.datExclude = (options?.datExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
     this.datNameRegex = options?.datNameRegex ?? '';
     this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
     this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
@@ -389,10 +393,12 @@ export default class Options implements OptionsProps {
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
-    this.patch = options?.patch ?? [];
-    this.patchExclude = options?.patchExclude ?? [];
+    this.patch = (options?.patch ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.patchExclude = (options?.patchExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, ''),
+    );
 
-    this.output = options?.output;
+    this.output = options?.output?.replace(/[\\/]/g, path.sep);
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
     this.dirDatDescription = options?.dirDatDescription ?? false;
@@ -406,8 +412,10 @@ export default class Options implements OptionsProps {
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
 
-    this.cleanExclude = options?.cleanExclude ?? [];
-    this.cleanBackup = options?.cleanBackup;
+    this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
+    this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipExclude = options?.zipExclude ?? '';
@@ -467,17 +475,17 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
-    this.dir2datOutput = options?.dir2datOutput;
+    this.dir2datOutput = options?.dir2datOutput?.replace(/[\\/]/g, path.sep);
 
-    this.fixdatOutput = options?.fixdatOutput;
+    this.fixdatOutput = options?.fixdatOutput?.replace(/[\\/]/g, path.sep);
 
-    this.reportOutput = options?.reportOutput ?? process.cwd();
+    this.reportOutput = (options?.reportOutput ?? process.cwd()).replace(/[\\/]/g, path.sep);
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
-    this.tempDir = options?.tempDir ?? Temp.getTempDir();
+    this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replace(/[\\/]/g, path.sep);
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
