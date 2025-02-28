@@ -72,20 +72,20 @@ async function runFixdatCreator(
 
   await expect(fsPoly.exists(fixdatPath)).resolves.toEqual(true);
 
-  const fixdat = (
-    await new DATScanner(
-      new Options({
-        ...optionsProps,
-        dat: [fixdatPath],
-      }),
-      new ProgressBarFake(),
-      new FileFactory(new FileCache()),
-    ).scan()
-  )[0];
-
-  await fsPoly.rm(fixdatPath, { force: true });
-
-  return fixdat;
+  try {
+    return (
+      await new DATScanner(
+        new Options({
+          ...optionsProps,
+          dat: [fixdatPath],
+        }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache()),
+      ).scan()
+    )[0];
+  } finally {
+    await fsPoly.rm(fixdatPath, { force: true });
+  }
 }
 
 it('should do nothing if the option is false', async () => {

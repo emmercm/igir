@@ -158,6 +158,10 @@ export interface OptionsProps {
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
 
+  readonly dir2datOutput?: string;
+
+  readonly fixdatOutput?: string;
+
   readonly reportOutput?: string;
 
   readonly datThreads?: number;
@@ -210,7 +214,7 @@ export default class Options implements OptionsProps {
 
   readonly patchExclude: string[];
 
-  readonly output: string;
+  readonly output?: string;
 
   readonly dirMirror: boolean;
 
@@ -342,6 +346,10 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly dir2datOutput?: string;
+
+  readonly fixdatOutput?: string;
+
   readonly reportOutput: string;
 
   readonly datThreads: number;
@@ -388,7 +396,7 @@ export default class Options implements OptionsProps {
     this.patch = (options?.patch ?? []).map((patchPath) => path.normalize(patchPath));
     this.patchExclude = options?.patchExclude ?? [];
 
-    this.output = options?.output ?? '';
+    this.output = options?.output;
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
     this.dirDatDescription = options?.dirDatDescription ?? false;
@@ -465,7 +473,11 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
-    this.reportOutput = options?.reportOutput ?? '';
+    this.dir2datOutput = options?.dir2datOutput;
+
+    this.fixdatOutput = options?.fixdatOutput;
+
+    this.reportOutput = options?.reportOutput ?? process.cwd();
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
@@ -870,17 +882,17 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(): string {
-    return this.shouldWrite() ? this.output : this.getTempDir();
+    return this.output ?? (this.shouldWrite() ? '' : this.getTempDir());
   }
 
   /**
    * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
    */
   getOutputDirRoot(): string {
-    const outputSplit = path.normalize(this.getOutput()).split(/[\\/]/);
+    const outputSplit = this.getOutput().split(/[\\/]/);
     for (let i = 0; i < outputSplit.length; i += 1) {
       if (outputSplit[i].match(/\{[a-zA-Z]+\}/) !== null) {
-        return path.normalize(outputSplit.slice(0, i).join(path.sep));
+        return outputSplit.slice(0, i).join(path.sep);
       }
     }
     return outputSplit.join(path.sep);
@@ -1224,6 +1236,18 @@ export default class Options implements OptionsProps {
     return this.preferParent;
   }
 
+  getDir2DatOutput(): string {
+    return fsPoly.makeLegal(
+      this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
+    );
+  }
+
+  getFixdatOutput(): string {
+    return fsPoly.makeLegal(
+      this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
+    );
+  }
+
   getReportOutput(): string {
     let { reportOutput } = this;
 
@@ -1236,7 +1260,7 @@ export default class Options implements OptionsProps {
       });
     }
 
-    return fsPoly.makeLegal(path.resolve(reportOutput));
+    return fsPoly.makeLegal(reportOutput);
   }
 
   getDatThreads(): number {

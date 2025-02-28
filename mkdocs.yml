@@ -1,4 +1,4 @@
-site_name: igir
+site_name: Igir
 # https://github.com/mkdocs/mkdocs/issues/1783: site_url required for sitemap.xml
 site_url: https://igir.io
 site_author: Christian Emmer
