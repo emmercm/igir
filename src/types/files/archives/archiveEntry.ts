@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { Readable } from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
