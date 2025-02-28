@@ -48,7 +48,7 @@ describe('getSize', () => {
     it("should get the file's size", async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        const tempFile = await fsPoly.mktemp(path.join(tempDir, 'file'));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
 
         const fileLink = await File.fileOf({ filePath: tempFile });
@@ -62,11 +62,11 @@ describe('getSize', () => {
     it("should get the hard link's target size: %s", async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        const tempFile = await fsPoly.mktemp(path.join(tempDir, 'file'));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
 
         const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
-        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+        await fsPoly.hardlink(tempFile, tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);
@@ -78,7 +78,7 @@ describe('getSize', () => {
     it("should get the absolute symlink's target size: %s", async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        const tempFile = await fsPoly.mktemp(path.join(tempDir, 'file'));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
 
         const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
@@ -94,7 +94,7 @@ describe('getSize', () => {
     it("should get the relative symlink's target size: %s", async () => {
       const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
+        const tempFile = await fsPoly.mktemp(path.join(tempDir, 'file'));
         await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
 
         const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));

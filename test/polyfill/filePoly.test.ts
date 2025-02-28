@@ -81,7 +81,7 @@ describe('getSize', () => {
       const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
       await fsPoly.copyFile(filePath, tempFile);
       const tempLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
-      await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+      await fsPoly.hardlink(tempFile, tempLink);
 
       const file = await filePoly.fileFrom(tempLink, 'r');
       try {

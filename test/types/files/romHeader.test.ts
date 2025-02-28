@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -47,8 +49,11 @@ describe('headerFromFileStream', () => {
   it('should not get a file header for dummy files', async () => {
     const headeredRoms = await new ROMScanner(
       new Options({
-        input: ['./test/fixtures/roms/!(headered){,/}*'],
-        inputExclude: ['./test/fixtures/roms/chd', './test/fixtures/roms/nkit'],
+        input: [path.join('test', 'fixtures', 'roms', '!(headered){,/}*')],
+        inputExclude: [
+          path.join('test', 'fixtures', 'roms', 'chd'),
+          path.join('test', 'fixtures', 'roms', 'nkit'),
+        ],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache()),

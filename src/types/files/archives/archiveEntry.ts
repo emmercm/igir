@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { Readable } from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
@@ -29,9 +28,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       filePath: archiveEntryProps.archive.getFilePath(),
     });
     this.archive = archiveEntryProps.archive;
-    this.entryPath = archiveEntryProps.entryPath
-      ? path.normalize(archiveEntryProps.entryPath)
-      : archiveEntryProps.entryPath;
+    this.entryPath = archiveEntryProps.entryPath;
   }
 
   static async entryOf<A extends Archive>(
