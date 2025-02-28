@@ -4209,7 +4209,7 @@ describe('options', () => {
       argumentsParser
         .parse(['report', '--dat', os.devNull, '--report-output', 'report.csv'])
         .getReportOutput(),
-    ).toEqual(path.resolve('report.csv'));
+    ).toEqual('report.csv');
     expect(
       argumentsParser
         .parse([
