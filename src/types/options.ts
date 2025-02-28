@@ -158,6 +158,10 @@ export interface OptionsProps {
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
 
+  readonly dir2datOutput?: string;
+
+  readonly fixdatOutput?: string;
+
   readonly reportOutput?: string;
 
   readonly datThreads?: number;
@@ -210,7 +214,7 @@ export default class Options implements OptionsProps {
 
   readonly patchExclude: string[];
 
-  readonly output: string;
+  readonly output?: string;
 
   readonly dirMirror: boolean;
 
@@ -342,6 +346,10 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly dir2datOutput?: string;
+
+  readonly fixdatOutput?: string;
+
   readonly reportOutput: string;
 
   readonly datThreads: number;
@@ -384,7 +392,7 @@ export default class Options implements OptionsProps {
     this.patch = options?.patch ?? [];
     this.patchExclude = options?.patchExclude ?? [];
 
-    this.output = options?.output ?? '';
+    this.output = options?.output;
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
     this.dirDatDescription = options?.dirDatDescription ?? false;
@@ -459,7 +467,11 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
-    this.reportOutput = options?.reportOutput ?? '';
+    this.dir2datOutput = options?.dir2datOutput;
+
+    this.fixdatOutput = options?.fixdatOutput;
+
+    this.reportOutput = options?.reportOutput ?? process.cwd();
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
@@ -868,7 +880,7 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(): string {
-    return this.shouldWrite() ? this.output : this.getTempDir();
+    return this.output ?? (this.shouldWrite() ? '' : this.getTempDir());
   }
 
   /**
@@ -1221,6 +1233,22 @@ export default class Options implements OptionsProps {
 
   getPreferParent(): boolean {
     return this.preferParent;
+  }
+
+  getDir2DatOutput(): string {
+    return fsPoly.makeLegal(
+      path.resolve(
+        this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
+      ),
+    );
+  }
+
+  getFixdatOutput(): string {
+    return fsPoly.makeLegal(
+      path.resolve(
+        this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
+      ),
+    );
   }
 
   getReportOutput(): string {
