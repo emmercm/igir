@@ -10,7 +10,7 @@ export default abstract class Archive {
   private readonly filePath: string;
 
   constructor(filePath: string) {
-    this.filePath = filePath;
+    this.filePath = filePath.replace(/[\\/]/g, path.sep);
   }
 
   protected abstract new(filePath: string): Archive;
