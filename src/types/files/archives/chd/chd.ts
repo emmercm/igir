@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import util from 'node:util';
 
 import { Mutex } from 'async-mutex';
-import chdman, { CHDInfo, CHDType } from 'chdman';
+import chdman, { CHDInfo, ChdmanBinaryPreference, CHDType } from 'chdman';
 import { Memoize } from 'typescript-memoize';
 
 import Temp from '../../../../globals/temp.js';
@@ -124,11 +124,13 @@ export default class Chd extends Archive {
         await chdman.extractRaw({
           inputFilename: this.getFilePath(),
           outputFilename: this.tempSingletonFilePath,
+          binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
         });
       } else if (info.type === CHDType.HARD_DISK) {
         await chdman.extractHd({
           inputFilename: this.getFilePath(),
           outputFilename: this.tempSingletonFilePath,
+          binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
         });
       } else if (info.type === CHDType.CD_ROM) {
         const cueFile = `${this.tempSingletonFilePath}.cue`;
@@ -137,6 +139,7 @@ export default class Chd extends Archive {
           inputFilename: this.getFilePath(),
           outputFilename: cueFile,
           outputBinFilename: this.tempSingletonFilePath,
+          binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
         });
         await FsPoly.rm(cueFile, { force: true });
       } else if (info.type === CHDType.GD_ROM) {
@@ -144,6 +147,7 @@ export default class Chd extends Archive {
         await chdman.extractCd({
           inputFilename: this.getFilePath(),
           outputFilename: this.tempSingletonFilePath,
+          binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
         });
         // Apply TOSEC-style CRLF line separators to the .gdi file
         await util.promisify(fs.writeFile)(
@@ -156,6 +160,7 @@ export default class Chd extends Archive {
         await chdman.extractDvd({
           inputFilename: this.getFilePath(),
           outputFilename: this.tempSingletonFilePath,
+          binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
         });
       } else {
         throw new ExpectedError(`couldn't detect CHD type for: ${this.getFilePath()}`);
@@ -208,6 +213,9 @@ export default class Chd extends Archive {
 
   @Memoize()
   async getInfo(): Promise<CHDInfo> {
-    return chdman.info({ inputFilename: this.getFilePath() });
+    return chdman.info({
+      inputFilename: this.getFilePath(),
+      binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
+    });
   }
 }
