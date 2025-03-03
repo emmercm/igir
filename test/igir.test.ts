@@ -21,7 +21,6 @@ import ProgressBarFake from './console/progressBarFake.js';
 
 interface TestOutput {
   outputFilesAndCrcs: string[][];
-  cwdFilesAndCrcs: string[][];
   movedFiles: string[];
   cleanedFiles: string[];
 }
@@ -45,21 +44,6 @@ async function copyFixturesToTemp(
     // Delete the temp files
     await fsPoly.rm(inputTemp, { recursive: true });
     await fsPoly.rm(outputTemp, { force: true, recursive: true });
-  }
-}
-
-async function chdir<T>(dir: string, runnable: () => T | Promise<T>): Promise<T> {
-  const cwd = process.cwd();
-
-  if (!(await fsPoly.exists(dir))) {
-    await fsPoly.mkdir(dir, { recursive: true });
-  }
-  process.chdir(dir);
-
-  try {
-    return await runnable();
-  } finally {
-    process.chdir(cwd);
   }
 }
 
@@ -89,76 +73,59 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options(optionsProps);
 
-  const tempCwd = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'cwd'));
-  return chdir(tempCwd, async () => {
-    const inputFilesBefore = (
-      await Promise.all(options.getInputPaths().map(async (inputPath) => fsPoly.walk(inputPath)))
-    )
-      .flat()
-      .reduce(ArrayPoly.reduceUnique(), []);
-    const outputFilesBefore =
-      options.getOutput() !== Temp.getTempDir()
-        ? await fsPoly.walk(options.getOutputDirRoot())
-        : []; // the output dir is a parent of the input dir, ignore all output
+  const inputFilesBefore = (
+    await Promise.all(options.getInputPaths().map(async (inputPath) => fsPoly.walk(inputPath)))
+  )
+    .flat()
+    .reduce(ArrayPoly.reduceUnique(), []);
+  const outputFilesBefore =
+    options.getOutput() !== Temp.getTempDir() ? await fsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
 
-    await new Igir(options, new Logger(LogLevel.NEVER)).main();
+  await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
-    const outputFilesAndCrcs =
-      options.getOutput() !== Temp.getTempDir()
-        ? (
-            await Promise.all(
-              options
-                .getInputPaths()
-                .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot())),
-            )
+  const outputFilesAndCrcs =
+    options.getOutput() !== Temp.getTempDir()
+      ? (
+          await Promise.all(
+            options
+              .getInputPaths()
+              .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot())),
           )
-            .flat()
-            .filter(
-              (tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx,
-            )
-            .sort((a, b) => a[0].localeCompare(b[0]))
-        : []; // the output dir is a parent of the input dir, ignore all output
-    const cwdFilesAndCrcs = (
-      await Promise.all(
-        options.getInputPaths().map(async (inputPath) => walkWithCrc(inputPath, tempCwd)),
-      )
-    )
-      .flat()
-      .map(([cwdPath, crc]) => [path.join(tempCwd, cwdPath), crc])
-      .sort((a, b) => a[0].localeCompare(b[0]));
+        )
+          .flat()
+          .filter((tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx)
+          .sort((a, b) => a[0].localeCompare(b[0]))
+      : // The output dir defaulted to the temp dir because we aren't writing ROMs, ignore all output
+        [];
 
-    const inputFilesAfter = (
-      await Promise.all(options.getInputPaths().map(async (inputPath) => fsPoly.walk(inputPath)))
-    )
-      .flat()
-      .reduce(ArrayPoly.reduceUnique(), []);
-    const movedFiles = inputFilesBefore
-      .filter((filePath) => !inputFilesAfter.includes(filePath))
-      .map((filePath) => {
-        let replaced = filePath;
-        options.getInputPaths().forEach((inputPath) => {
-          replaced = replaced.replace(inputPath + path.sep, '');
-        });
-        return replaced;
-      })
-      .sort();
+  const inputFilesAfter = (
+    await Promise.all(options.getInputPaths().map(async (inputPath) => fsPoly.walk(inputPath)))
+  )
+    .flat()
+    .reduce(ArrayPoly.reduceUnique(), []);
+  const movedFiles = inputFilesBefore
+    .filter((filePath) => !inputFilesAfter.includes(filePath))
+    .map((filePath) => {
+      let replaced = filePath;
+      options.getInputPaths().forEach((inputPath) => {
+        replaced = replaced.replace(inputPath + path.sep, '');
+      });
+      return replaced;
+    })
+    .sort();
 
-    const outputFilesAfter =
-      options.getOutput() !== Temp.getTempDir()
-        ? await fsPoly.walk(options.getOutputDirRoot())
-        : []; // the output dir is a parent of the input dir, ignore all output
-    const cleanedFiles = outputFilesBefore
-      .filter((filePath) => !outputFilesAfter.includes(filePath))
-      .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
-      .sort();
+  const outputFilesAfter =
+    options.getOutput() !== Temp.getTempDir() ? await fsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
+  const cleanedFiles = outputFilesBefore
+    .filter((filePath) => !outputFilesAfter.includes(filePath))
+    .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
+    .sort();
 
-    return {
-      outputFilesAndCrcs,
-      cwdFilesAndCrcs,
-      movedFiles,
-      cleanedFiles,
-    };
-  });
+  return {
+    outputFilesAndCrcs,
+    movedFiles,
+    cleanedFiles,
+  };
 }
 
 describe('with explicit DATs', () => {
@@ -253,7 +220,6 @@ describe('with explicit DATs', () => {
           'dfaebe28',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -297,7 +263,6 @@ describe('with explicit DATs', () => {
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
         ['UMD.iso', 'e90f7cf5'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -412,7 +377,6 @@ describe('with explicit DATs', () => {
         ],
         [`${path.join('zip', 'One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toEqual([
         path.join('rom', 'two.rom'),
@@ -459,7 +423,6 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -503,7 +466,6 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -582,7 +544,6 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
         [path.join('igir combined', 'UMD.iso'), 'e90f7cf5'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
         path.join('chd', '2048.chd'),
         path.join('chd', '4096.chd'),
@@ -656,7 +617,6 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -697,7 +657,6 @@ describe('with explicit DATs', () => {
           '70856527',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
         path.join('fizzbuzz.zip'),
         path.join('foobar.zip'),
@@ -797,7 +756,6 @@ describe('with explicit DATs', () => {
           'dfaebe28',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -883,7 +841,6 @@ describe('with explicit DATs', () => {
         [`${path.join('Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
         [`${path.join('Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1077,7 +1034,6 @@ describe('with explicit DATs', () => {
           'dfaebe28',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1181,7 +1137,6 @@ describe('with explicit DATs', () => {
           'caaaf550',
         ],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1194,11 +1149,11 @@ describe('with explicit DATs', () => {
         dat: [path.join(inputTemp, 'dats')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
-        reportOutput: 'report.csv',
+        reportOutput: path.join(outputTemp, 'report.csv'),
       });
 
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
-      expect(result.cwdFilesAndCrcs).toHaveLength(1);
+      expect(result.outputFilesAndCrcs).toHaveLength(1);
+      expect(result.outputFilesAndCrcs[0][0]).toEqual('report.csv');
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1224,14 +1179,11 @@ describe('with explicit DATs', () => {
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(
-        /^Headerless[\\/]Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/,
-      );
+      expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
-      expect(writtenFixdats[1]).toMatch(/^One[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1246,10 +1198,11 @@ describe('with explicit DATs', () => {
         output: outputTemp,
         dirDatName: true,
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
-        reportOutput: 'report.csv',
+        fixdatOutput: outputTemp,
+        reportOutput: path.join(outputTemp, 'report.csv'),
       });
 
-      const writtenFixdats = result.cwdFilesAndCrcs
+      const writtenFixdats = result.outputFilesAndCrcs
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
@@ -1258,10 +1211,10 @@ describe('with explicit DATs', () => {
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
-      expect(writtenFixdats[0]).toMatch(/[\\/]Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
-      expect(writtenFixdats[1]).toMatch(/[\\/]One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
@@ -1327,7 +1280,6 @@ describe('with inferred DATs', () => {
         ['UMD.cso|UMD.iso', 'e90f7cf5'],
         ['unknown.rom', '377a7727'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1341,7 +1293,7 @@ describe('with inferred DATs', () => {
       await runIgir({
         commands: ['move', 'test'],
         input: [inputDir],
-        output: '{inputDirname}',
+        output: inputDir,
       });
 
       await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
@@ -1402,7 +1354,6 @@ describe('with inferred DATs', () => {
         ['UMD.iso', 'e90f7cf5'],
         ['unknown.rom', '377a7727'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
         path.join('chd', 'GD-ROM.chd'),
         path.join('cso', 'UMD.cso'),
@@ -1495,7 +1446,6 @@ describe('with inferred DATs', () => {
         ['UMD.zip|UMD.iso', 'e90f7cf5'],
         ['unknown.zip|unknown.rom', '377a7727'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1661,7 +1611,6 @@ describe('with inferred DATs', () => {
         ],
         [`unknown.rom -> ${path.join('..', 'input', 'roms', 'raw', 'unknown.rom')}`, '377a7727'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
@@ -1685,7 +1634,6 @@ describe('with inferred DATs', () => {
         ['LCDTestROM.lyx', '42583855'],
         ['speed_test_v51.sfc', '8beffd94'],
       ]);
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toEqual([
         'LCDTestROM.lnx.rar',
         'allpads.nes',
@@ -1711,22 +1659,23 @@ describe('with inferred DATs', () => {
         output: outputTemp,
         dirDatName: true,
         fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        dir2datOutput: outputTemp,
       });
 
-      const writtenDir2Dats = result.cwdFilesAndCrcs
+      expect(result.outputFilesAndCrcs).toHaveLength(1);
+      const writtenDir2Dats = result.outputFilesAndCrcs
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
       // Only the "roms" input path was provided
       expect(writtenDir2Dats).toHaveLength(1);
-      expect(writtenDir2Dats[0]).toMatch(/[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
-      expect(result.outputFilesAndCrcs).toHaveLength(0);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
 
       const dats = await new DATScanner(
-        new Options({ dat: writtenDir2Dats }),
+        new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache()),
       ).scan();
@@ -1788,6 +1737,7 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        dir2datOutput: outputTemp,
       });
 
       const writtenDir2Dats = result.outputFilesAndCrcs
@@ -1796,9 +1746,8 @@ describe('with inferred DATs', () => {
 
       // Only the "roms" input path was provided
       expect(writtenDir2Dats).toHaveLength(1);
-      expect(writtenDir2Dats[0]).toMatch(/^roms[\\/]roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
+      expect(writtenDir2Dats[0]).toMatch(/^roms \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
-      expect(result.cwdFilesAndCrcs).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
     });
