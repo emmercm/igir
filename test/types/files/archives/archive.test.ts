@@ -97,33 +97,33 @@ describe('getArchiveEntries', () => {
     [
       './test/fixtures/roms/7z/onetwothree.7z',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/rar/onetwothree.rar',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/tar/onetwothree.tar.gz',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/zip/onetwothree.zip',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {

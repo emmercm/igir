@@ -107,7 +107,7 @@ export default class DATGameInferrer extends Module {
       this.inferRawFiles,
     ];
     for (const inferFunction of inferFunctions) {
-      // Infer the games and their files)
+      // Infer the games and their files
       const result = await inferFunction.bind(this)(remainingRomFiles);
 
       // Update the list of results
