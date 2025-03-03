@@ -395,7 +395,7 @@ export default class Options implements OptionsProps {
 
     this.patch = (options?.patch ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
     this.patchExclude = (options?.patchExclude ?? []).map((filePath) =>
-      filePath.replace(/[\\/]/g, ''),
+      filePath.replace(/[\\/]/g, path.sep),
     );
 
     this.output = options?.output?.replace(/[\\/]/g, path.sep);
