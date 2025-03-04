@@ -56,8 +56,8 @@ test.each([
 });
 
 it('should not throw on non-MAME executables', async () => {
-  const echo = await which('echo');
-  await expect(createDatScanner({ dat: [echo] }).scan()).resolves.toHaveLength(0);
+  const executable = await which(process.platform === 'win32' ? 'ping.exe' : 'echo');
+  await expect(createDatScanner({ dat: [executable] }).scan()).resolves.toHaveLength(0);
 });
 
 describe('multiple files', () => {

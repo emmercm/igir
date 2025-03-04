@@ -743,8 +743,8 @@ export default class Options implements OptionsProps {
     }
 
     // Otherwise, process it as a glob pattern
-    const paths = await fg(inputPathEscaped, { onlyFiles: true });
-    if (paths.length === 0) {
+    const globbedPaths = await fg(inputPathEscaped, { onlyFiles: true });
+    if (globbedPaths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
         walkCallback(1);
@@ -752,8 +752,11 @@ export default class Options implements OptionsProps {
       }
       return [];
     }
-    walkCallback(paths.length);
-    return paths;
+    walkCallback(globbedPaths.length);
+    if (process.platform === 'win32') {
+      return globbedPaths.map((globbedPath) => globbedPath.replace(/[\\/]/g, path.sep));
+    }
+    return globbedPaths;
   }
 
   /**
