@@ -186,7 +186,7 @@ export default class OutputFactory {
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new ExpectedError(
-        `failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')}`,
+        `failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')} for ${outputRomFilename ?? inputRomPath ?? game?.getName()}`,
       );
     }
 
@@ -545,6 +545,14 @@ export default class OutputFactory {
           oldExtMatch[1]
         : // The input file has no extension, get the canonical extension from the {@link Archive}
           inputFile.getArchive().getExtension();
+
+    // If we got a filename with 2+ extensions, but the additional extensions
+    // are actually part of the game's name, then just use the last extension
+    const oldExtSub = oldExt.split('.').slice(0, -1).join('.');
+    if (oldExtSub.length > 0 && game.getName().endsWith(oldExtSub)) {
+      return game.getName().slice(0, game.getName().lastIndexOf(oldExtSub)) + oldExt;
+    }
+
     return game.getName() + oldExt;
   }
 

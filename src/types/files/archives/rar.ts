@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import async from 'async';
 import { Mutex } from 'async-mutex';
-import unrar, { FileHeader } from 'node-unrar-js';
+import { createExtractorFromFile, FileHeader } from 'node-unrar-js/dist/index.js';
 
 import Defaults from '../../../globals/defaults.js';
 import ExpectedError from '../../expectedError.js';
@@ -25,7 +25,7 @@ export default class Rar extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
-    const rar = await unrar.createExtractorFromFile({
+    const rar = await createExtractorFromFile({
       filepath: this.getFilePath(),
     });
     return async.mapLimit(
@@ -53,7 +53,7 @@ export default class Rar extends Archive {
      * prevent that behavior.
      */
     await Rar.EXTRACT_MUTEX.runExclusive(async () => {
-      const rar = await unrar.createExtractorFromFile({
+      const rar = await createExtractorFromFile({
         filepath: this.getFilePath(),
         targetPath: path.dirname(extractedFilePath),
         filenameTransform: () => path.basename(extractedFilePath),

@@ -158,6 +158,10 @@ export interface OptionsProps {
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
 
+  readonly dir2datOutput?: string;
+
+  readonly fixdatOutput?: string;
+
   readonly reportOutput?: string;
 
   readonly datThreads?: number;
@@ -210,7 +214,7 @@ export default class Options implements OptionsProps {
 
   readonly patchExclude: string[];
 
-  readonly output: string;
+  readonly output?: string;
 
   readonly dirMirror: boolean;
 
@@ -342,6 +346,10 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly dir2datOutput?: string;
+
+  readonly fixdatOutput?: string;
+
   readonly reportOutput: string;
 
   readonly datThreads: number;
@@ -365,15 +373,19 @@ export default class Options implements OptionsProps {
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
 
-    this.input = options?.input ?? [];
-    this.inputExclude = options?.inputExclude ?? [];
+    this.input = (options?.input ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.inputExclude = (options?.inputExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
     this.inputChecksumQuick = options?.inputChecksumQuick ?? false;
     this.inputChecksumMin = options?.inputChecksumMin;
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = options?.dat ?? [];
-    this.datExclude = options?.datExclude ?? [];
+    this.dat = (options?.dat ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.datExclude = (options?.datExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
     this.datNameRegex = options?.datNameRegex ?? '';
     this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
     this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
@@ -381,10 +393,12 @@ export default class Options implements OptionsProps {
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
-    this.patch = options?.patch ?? [];
-    this.patchExclude = options?.patchExclude ?? [];
+    this.patch = (options?.patch ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.patchExclude = (options?.patchExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
 
-    this.output = options?.output ?? '';
+    this.output = options?.output?.replace(/[\\/]/g, path.sep);
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
     this.dirDatDescription = options?.dirDatDescription ?? false;
@@ -398,8 +412,10 @@ export default class Options implements OptionsProps {
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
 
-    this.cleanExclude = options?.cleanExclude ?? [];
-    this.cleanBackup = options?.cleanBackup;
+    this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
+    this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipExclude = options?.zipExclude ?? '';
@@ -459,13 +475,17 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
-    this.reportOutput = options?.reportOutput ?? '';
+    this.dir2datOutput = options?.dir2datOutput?.replace(/[\\/]/g, path.sep);
+
+    this.fixdatOutput = options?.fixdatOutput?.replace(/[\\/]/g, path.sep);
+
+    this.reportOutput = (options?.reportOutput ?? process.cwd()).replace(/[\\/]/g, path.sep);
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
-    this.tempDir = options?.tempDir ?? Temp.getTempDir();
+    this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replace(/[\\/]/g, path.sep);
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
@@ -497,7 +517,7 @@ export default class Options implements OptionsProps {
 
     return pattern
       .split(/\r?\n/)
-      .filter((line) => line.length)
+      .filter((line) => line.length > 0)
       .map((line) => {
         const flagsMatch = line.match(/^\/(.+)\/([a-z]*)$/);
         if (flagsMatch !== null) {
@@ -666,6 +686,7 @@ export default class Options implements OptionsProps {
       Defaults.MAX_FS_THREADS,
       async (file: string): Promise<boolean> => {
         if (!(await fsPoly.exists(file)) && URLPoly.canParse(file)) {
+          // Treat URLs as files (and not directories)
           return true;
         }
 
@@ -702,9 +723,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await fsPoly.isDirectory(inputPath)) {
-      return (await fsPoly.walk(inputPath, walkCallback)).map((filePath) =>
-        path.normalize(filePath),
-      );
+      return fsPoly.walk(inputPath, walkCallback);
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -724,10 +743,8 @@ export default class Options implements OptionsProps {
     }
 
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathEscaped, { onlyFiles: true })).map((filePath) =>
-      path.normalize(filePath),
-    );
-    if (paths.length === 0) {
+    const globbedPaths = await fg(inputPathEscaped, { onlyFiles: true });
+    if (globbedPaths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
         walkCallback(1);
@@ -735,8 +752,11 @@ export default class Options implements OptionsProps {
       }
       return [];
     }
-    walkCallback(paths.length);
-    return paths;
+    walkCallback(globbedPaths.length);
+    if (process.platform === 'win32') {
+      return globbedPaths.map((globbedPath) => globbedPath.replace(/[\\/]/g, path.sep));
+    }
+    return globbedPaths;
   }
 
   /**
@@ -867,17 +887,17 @@ export default class Options implements OptionsProps {
   }
 
   getOutput(): string {
-    return this.shouldWrite() ? this.output : this.getTempDir();
+    return this.output ?? (this.shouldWrite() ? '' : this.getTempDir());
   }
 
   /**
    * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
    */
   getOutputDirRoot(): string {
-    const outputSplit = path.normalize(this.getOutput()).split(/[\\/]/);
+    const outputSplit = this.getOutput().split(/[\\/]/);
     for (let i = 0; i < outputSplit.length; i += 1) {
       if (outputSplit[i].match(/\{[a-zA-Z]+\}/) !== null) {
-        return path.normalize(outputSplit.slice(0, i).join(path.sep));
+        return outputSplit.slice(0, i).join(path.sep);
       }
     }
     return outputSplit.join(path.sep);
@@ -962,7 +982,6 @@ export default class Options implements OptionsProps {
     );
 
     return (await Options.scanPaths(outputDirs, walkCallback, false))
-      .map((filePath) => path.normalize(filePath))
       .filter((filePath) => !writtenFilesNormalized.has(filePath))
       .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath))
       .sort();
@@ -1222,6 +1241,18 @@ export default class Options implements OptionsProps {
     return this.preferParent;
   }
 
+  getDir2DatOutput(): string {
+    return fsPoly.makeLegal(
+      this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
+    );
+  }
+
+  getFixdatOutput(): string {
+    return fsPoly.makeLegal(
+      this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
+    );
+  }
+
   getReportOutput(): string {
     let { reportOutput } = this;
 
@@ -1234,7 +1265,7 @@ export default class Options implements OptionsProps {
       });
     }
 
-    return fsPoly.makeLegal(path.resolve(reportOutput));
+    return fsPoly.makeLegal(reportOutput);
   }
 
   getDatThreads(): number {

@@ -1,5 +1,3 @@
-import fsPoly from '../polyfill/fsPoly.js';
-
 /**
  * A static class of globals that are determined at startup, to be used widely.
  */
@@ -51,7 +49,7 @@ export default class Defaults {
   /**
    * Max {@link fs} highWaterMark chunk size to read and write at a time.
    */
-  static readonly FILE_READING_CHUNK_SIZE = fsPoly.FILE_READING_CHUNK_SIZE;
+  static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
 
   /**
    * Max size of file contents to store in memory vs. temp files.

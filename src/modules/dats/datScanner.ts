@@ -2,9 +2,11 @@ import * as child_process from 'node:child_process';
 import path from 'node:path';
 
 import { parse } from '@fast-csv/parse';
+import async from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DriveSemaphore from '../../driveSemaphore.js';
+import Defaults from '../../globals/defaults.js';
 import bufferPoly from '../../polyfill/bufferPoly.js';
 import fsPoly from '../../polyfill/fsPoly.js';
 import CMProParser, { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
@@ -67,7 +69,7 @@ export default class DATScanner extends Scanner {
     const datFiles = await this.getUniqueFilesFromPaths(
       datFilePaths,
       this.options.getReaderThreads(),
-      ChecksumBitmask.NONE,
+      ChecksumBitmask.CRC32,
     );
     this.progressBar.reset(datFiles.length);
 
@@ -88,29 +90,27 @@ export default class DATScanner extends Scanner {
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
     return (
-      await Promise.all(
-        datFiles.map(async (datFile) => {
-          if (!datFile.isURL()) {
-            return datFile;
-          }
+      await async.mapLimit(datFiles, Defaults.MAX_FS_THREADS, async (datFile: File) => {
+        if (!datFile.isURL()) {
+          return datFile;
+        }
 
-          try {
-            this.progressBar.logTrace(`${datFile.toString()}: downloading`);
-            // TODO(cemmer): these never get deleted?
-            const downloadedDatFile = await datFile.downloadToTempPath('dat');
-            this.progressBar.logTrace(
-              `${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`,
-            );
-            return await this.getFilesFromPaths(
-              [downloadedDatFile.getFilePath()],
-              this.options.getReaderThreads(),
-              ChecksumBitmask.NONE,
-            );
-          } catch (error) {
-            throw new ExpectedError(`failed to download '${datFile.toString()}': ${error}`);
-          }
-        }),
-      )
+        try {
+          this.progressBar.logTrace(`${datFile.toString()}: downloading`);
+          // TODO(cemmer): these never get deleted?
+          const downloadedDatFile = await datFile.downloadToTempPath('dat');
+          this.progressBar.logTrace(
+            `${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`,
+          );
+          return await this.getFilesFromPaths(
+            [downloadedDatFile.getFilePath()],
+            this.options.getReaderThreads(),
+            ChecksumBitmask.NONE,
+          );
+        } catch (error) {
+          throw new ExpectedError(`failed to download '${datFile.toString()}': ${error}`);
+        }
+      })
     ).flat();
   }
 

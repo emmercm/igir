@@ -5,6 +5,9 @@ import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Chd from '../../../../src/types/files/archives/chd/chd.js';
+import Gcz from '../../../../src/types/files/archives/dolphin/gcz.js';
+import Rvz from '../../../../src/types/files/archives/dolphin/rvz.js';
+import Wia from '../../../../src/types/files/archives/dolphin/wia.js';
 import Cso from '../../../../src/types/files/archives/maxcso/cso.js';
 import Dax from '../../../../src/types/files/archives/maxcso/dax.js';
 import Zso from '../../../../src/types/files/archives/maxcso/zso.js';
@@ -36,6 +39,9 @@ describe('getArchiveEntries', () => {
       ...Cso.getExtensions(),
       ...Dax.getExtensions(),
       ...Zso.getExtensions(),
+      ...Gcz.getExtensions(),
+      ...Rvz.getExtensions(),
+      ...Wia.getExtensions(),
       ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ]),
@@ -70,7 +76,11 @@ describe('getArchiveEntries', () => {
     ['./test/fixtures/roms/tar/unknown.tar.gz', 'unknown.rom', '377a7727'],
     ['./test/fixtures/roms/zip/unknown.zip', 'unknown.rom', '377a7727'],
     // other
-    ['./test/fixtures/roms/nkit/5bc2ce5b.nkit.iso', '5bc2ce5b.iso', '5bc2ce5b'],
+    [
+      './test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso',
+      'GameCube-240pSuite-1.19.iso',
+      '5eb3d183',
+    ],
   ])(
     'should enumerate the single file archive: %s',
     async (filePath, expectedEntryPath, expectedCrc) => {
@@ -87,33 +97,33 @@ describe('getArchiveEntries', () => {
     [
       './test/fixtures/roms/7z/onetwothree.7z',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/rar/onetwothree.rar',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/tar/onetwothree.tar.gz',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/zip/onetwothree.zip',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
@@ -122,9 +132,7 @@ describe('getArchiveEntries', () => {
 
     for (const [idx, entry] of entries.entries()) {
       const expectedEntry = expectedEntries[idx];
-      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(
-        path.normalize(expectedEntry[0]),
-      );
+      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntry[0]);
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
     }
   });

@@ -83,6 +83,8 @@ export default class ArgumentsParser {
     const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
+    const groupDir2Dat = 'dir2dat command options:';
+    const groupFixdat = 'fixdat command options:';
     const groupReport = 'report command options:';
     const groupHelpDebug = 'Help & debug options:';
 
@@ -507,7 +509,7 @@ export default class ArgumentsParser {
       })
       .check((checkArgv) => {
         const needClean = ['clean-exclude', 'clean-backup', 'clean-dry-run'].filter(
-          (option) => checkArgv[option],
+          (option) => checkArgv[option] !== undefined,
         );
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
@@ -533,7 +535,9 @@ export default class ArgumentsParser {
         type: 'boolean',
       })
       .check((checkArgv) => {
-        const needZip = ['zip-exclude', 'zip-dat-name'].filter((option) => checkArgv[option]);
+        const needZip = ['zip-exclude', 'zip-dat-name'].filter(
+          (option) => checkArgv[option] !== undefined,
+        );
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
           throw new ExpectedError(
             `Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`,
@@ -554,7 +558,7 @@ export default class ArgumentsParser {
         implies: 'symlink',
       })
       .check((checkArgv) => {
-        const needLinkCommand = ['symlink'].filter((option) => checkArgv[option]);
+        const needLinkCommand = ['symlink'].filter((option) => checkArgv[option] !== undefined);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
           throw new ExpectedError(
             `Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`,
@@ -826,9 +830,45 @@ export default class ArgumentsParser {
         implies: 'single',
       })
 
+      .option('dir2dat-output', {
+        group: groupDir2Dat,
+        description: 'dir2dat output directory',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const needDir2Dat = ['dir2dat-output'].filter((option) => checkArgv[option] !== undefined);
+        if (!checkArgv._.includes('dir2dat') && needDir2Dat.length > 0) {
+          // TODO(cememr): print help message
+          throw new ExpectedError(
+            `Missing required command for option${needDir2Dat.length !== 1 ? 's' : ''} ${needDir2Dat.join(', ')}: fixdat`,
+          );
+        }
+        return true;
+      })
+
+      .option('fixdat-output', {
+        group: groupFixdat,
+        description: 'Fixdat output directory',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+      })
+      .check((checkArgv) => {
+        const needFixdat = ['fixdat-output'].filter((option) => checkArgv[option] !== undefined);
+        if (!checkArgv._.includes('fixdat') && needFixdat.length > 0) {
+          // TODO(cememr): print help message
+          throw new ExpectedError(
+            `Missing required command for option${needFixdat.length !== 1 ? 's' : ''} ${needFixdat.join(', ')}: fixdat`,
+          );
+        }
+        return true;
+      })
+
       .option('report-output', {
         group: groupReport,
-        description: 'Report output location (formatted with moment.js)',
+        description: 'Report output file location (formatted with moment.js)',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,

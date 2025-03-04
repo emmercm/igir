@@ -62,7 +62,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm run package . igir"
+                "npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -78,7 +78,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm run package -- . igir"
+                "npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -94,7 +94,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm run package -- . igir"
+                "npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -108,19 +108,21 @@ jobs:
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               npm run package -- . igir
+              ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
                 ls -alh igir "${BIN_OUTPUT}"
                 echo '```'
               } >> "${GITHUB_STEP_SUMMARY}"
-          - os: macos-14
+          - os: macos-15
             build: |
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               npm run package -- . igir
+              ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -135,9 +137,13 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-              echo "``````text"  >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
               Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
               Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
+              .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
               echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
     steps:
       # Setup and install

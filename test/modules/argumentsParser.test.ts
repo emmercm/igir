@@ -263,6 +263,10 @@ describe('options', () => {
     expect(options.getPreferRetail()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
 
+    expect(options.getDir2DatOutput()).toEqual(options.getOutput());
+
+    expect(options.getFixdatOutput()).toEqual(options.getOutput());
+
     expect(options.getDatThreads()).toEqual(3);
     expect(options.getReaderThreads()).toEqual(8);
     expect(options.getWriterThreads()).toEqual(4);
@@ -4146,31 +4150,70 @@ describe('options', () => {
     ).toEqual(false);
   });
 
-  it('should parse "report-output"', () => {
+  it('should parse "dir2dat-output"', () => {
+    expect(argumentsParser.parse(['dir2dat', '--input', os.devNull]).getDir2DatOutput()).toEqual(
+      process.cwd(),
+    );
     expect(
       argumentsParser
-        .parse(['report', '--input', os.devNull, '--dat', os.devNull])
-        .getReportOutput(),
-    ).toMatch(/igir_[0-9]{4}-[0-9]{2}-[0-9]{2}/);
+        .parse(['copy', 'dir2dat', '--input', os.devNull, '--output', os.tmpdir()])
+        .getDir2DatOutput(),
+    ).toEqual(os.tmpdir());
+    expect(
+      argumentsParser
+        .parse(['dir2dat', '--input', os.devNull, '--dir2dat-output', os.tmpdir()])
+        .getDir2DatOutput(),
+    ).toEqual(os.tmpdir());
+  });
+
+  it('should parse "fixdat-output"', () => {
+    expect(
+      argumentsParser
+        .parse(['fixdat', '--input', os.devNull, '--dat', os.devNull])
+        .getFixdatOutput(),
+    ).toEqual(process.cwd());
     expect(
       argumentsParser
         .parse([
-          'report',
+          'copy',
+          'fixdat',
+          '--input',
+          os.devNull,
+          '--output',
+          os.tmpdir(),
+          '--dat',
+          os.devNull,
+        ])
+        .getFixdatOutput(),
+    ).toEqual(os.tmpdir());
+    expect(
+      argumentsParser
+        .parse([
+          'fixdat',
           '--input',
           os.devNull,
           '--dat',
           os.devNull,
-          '--report-output',
-          'report.csv',
+          '--fixdat-output',
+          os.tmpdir(),
         ])
+        .getFixdatOutput(),
+    ).toEqual(os.tmpdir());
+  });
+
+  it('should parse "report-output"', () => {
+    expect(argumentsParser.parse(['report', '--dat', os.devNull]).getReportOutput()).toMatch(
+      /igir_[0-9]{4}-[0-9]{2}-[0-9]{2}/,
+    );
+    expect(
+      argumentsParser
+        .parse(['report', '--dat', os.devNull, '--report-output', 'report.csv'])
         .getReportOutput(),
-    ).toEqual(path.resolve('report.csv'));
+    ).toEqual('report.csv');
     expect(
       argumentsParser
         .parse([
           'report',
-          '--input',
-          os.devNull,
           '--dat',
           os.devNull,
           '--report-output',

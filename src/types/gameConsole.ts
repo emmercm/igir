@@ -44,6 +44,7 @@ interface OutputTokens {
   onion?: string;
 
   // Analogue Pocket ROMs go in the /Assets/{pocket}/common/ directory
+  // @see https://openfpga-cores-inventory.github.io/analogue-pocket/
   pocket?: string;
 
   // RetroDECK ROMs go in the /roms/{retrodeck} directory:
@@ -51,7 +52,7 @@ interface OutputTokens {
   retrodeck?: string;
 
   // RomM ROMs go in the /romm/library/{romm} directory:
-  // @see https://github.com/rommapp/romm/wiki/Supported-Platforms
+  // @see https://docs.romm.app/latest/Platforms-and-Players/Supported-Platforms/
   romm?: string;
 
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
@@ -473,6 +474,20 @@ export default class GameConsole {
         batocera: 'supracan',
       },
     ),
+    // GamePark
+    new GameConsole(/GP2X/i, [], {
+      romm: 'gp2x',
+    }),
+    new GameConsole(
+      /GP32/i,
+      [
+        /* '.smc' */
+      ],
+      {
+        batocera: 'gp32',
+        romm: 'gp32',
+      },
+    ),
     // GCE
     new GameConsole(/Vectrex/i, ['.gam', '.vc', '.vec'], {
       batocera: 'vectrex',
@@ -790,13 +805,17 @@ export default class GameConsole {
       retrodeck: 'n64dd',
       romm: 'nintendo-64dd',
     }),
-    new GameConsole(/(\W|^)3DS(\W|$)|Nintendo 3DS/i, ['.3ds', '.3dsx'], {
-      batocera: '3ds',
-      emulationstation: 'n3ds',
-      jelos: '3ds',
-      retrodeck: 'n3ds',
-      romm: '3ds',
-    }),
+    new GameConsole(
+      /(\W|^)3DS(\W|$)|Nintendo 3DS/i,
+      ['.3ds', '.3dsx', '.cci', '.cia', '.cfa', '.cxi'],
+      {
+        batocera: '3ds',
+        emulationstation: 'n3ds',
+        jelos: '3ds',
+        retrodeck: 'n3ds',
+        romm: '3ds',
+      },
+    ),
     new GameConsole(/(\W|^)NDS(\W|$)|Nintendo DS/i, ['.nds'], {
       batocera: 'nds',
       emulationstation: 'nds',
@@ -881,7 +900,7 @@ export default class GameConsole {
         twmenu: 'snes',
       },
     ),
-    new GameConsole(/Switch/i, ['.nca', '.nro', '.nso', '.nsp', '.xci'], {
+    new GameConsole(/Switch/i, ['.nca', '.nro', '.nso', '.nsp', '.nsz', '.xci', '.xcz', '.zca'], {
       emulationstation: 'switch',
       retrodeck: 'switch',
       romm: 'switch',
@@ -910,7 +929,7 @@ export default class GameConsole {
         romm: 'wii',
       },
     ),
-    new GameConsole(/Wii ?U/i, ['.rpx', '.wua', '.wud', '.wux'], {
+    new GameConsole(/Wii ?U/i, ['.rpx', '.wua', '.wud', '.wup', '.wux'], {
       batocera: 'wiiu',
       emulationstation: 'wiiu',
       jelos: 'wiiu',

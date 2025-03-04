@@ -7,7 +7,6 @@ import Game from '../types/dats/game.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
-import OutputFactory from '../types/outputFactory.js';
 import ReleaseCandidate from '../types/releaseCandidate.js';
 import Module from './module.js';
 
@@ -37,9 +36,7 @@ export default class Dir2DatCreator extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.reset(1);
 
-    const datDir = this.options.shouldWrite()
-      ? OutputFactory.getDir(this.options, dat)
-      : process.cwd();
+    const datDir = this.options.getDir2DatOutput();
     if (!(await fsPoly.exists(datDir))) {
       await fsPoly.mkdir(datDir, { recursive: true });
     }

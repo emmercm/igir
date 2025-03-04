@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import _7z, { Result } from '7zip-min';
+import _7z from '7zip-min';
 import async from 'async';
 import { Mutex } from 'async-mutex';
 
@@ -57,26 +57,26 @@ export default class SevenZip extends Archive {
      * WARN(cemmer): {@link _7z.list} seems to have issues with any amount of real concurrency,
      *  it will return no files but also no error. Try to prevent that behavior.
      */
-    const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(
-      async () =>
-        new Promise<Result[]>((resolve, reject) => {
-          _7z.list(this.getFilePath(), (err, result) => {
-            if (err) {
-              const msg = err.toString().replace(/\n\n+/g, '\n').replace(/^/gm, '   ').trim();
-              reject(msg);
-            } else {
-              // https://github.com/onikienko/7zip-min/issues/70
-              // If `7zip-min.list()` failed to parse the entry name then ignore it
-              resolve(result.filter((entry) => entry.name));
-            }
-          });
-        }),
-    );
+    const filesIn7z = await SevenZip.LIST_MUTEX.runExclusive(async () => {
+      try {
+        return await _7z.list(this.getFilePath());
+      } catch (error) {
+        let message: string;
+        if (error instanceof Error) {
+          message = error.message;
+        } else if (typeof error === 'string') {
+          message = error;
+        } else {
+          message = 'failed to list files in archive';
+        }
+        throw new Error(message.replace(/\n\n+/g, '\n').replace(/^/gm, '   ').trim());
+      }
+    });
 
     return async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (result: Result): Promise<ArchiveEntry<this>> => {
+      async (result: _7z.ListItem): Promise<ArchiveEntry<this>> => {
         return ArchiveEntry.entryOf(
           {
             archive: this,
@@ -95,28 +95,18 @@ export default class SevenZip extends Archive {
     const tempDir = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), '7z'));
     try {
       let tempFile = path.join(tempDir, entryPath);
-      await new Promise<void>((resolve, reject) => {
-        _7z.cmd(
-          [
-            // _7z.unpack() flags
-            'x',
-            this.getFilePath(),
-            '-y',
-            `-o${tempDir}`,
-            // https://github.com/onikienko/7zip-min/issues/71
-            // Extract only the single archive entry
-            entryPath,
-            '-r',
-          ],
-          (err) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
-            }
-          },
-        );
-      });
+
+      await _7z.cmd([
+        // _7z.unpack() flags
+        'x',
+        this.getFilePath(),
+        '-y',
+        `-o${tempDir}`,
+        // https://github.com/onikienko/7zip-min/issues/71
+        // Extract only the single archive entry
+        entryPath,
+        '-r',
+      ]);
 
       // https://github.com/onikienko/7zip-min/issues/86
       // Fix `7zip-min.list()` returning unicode entry names as � on Windows

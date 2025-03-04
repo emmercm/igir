@@ -4,17 +4,17 @@ import os from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
 
+import async from 'async';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
 
+import Defaults from '../globals/defaults.js';
 import ExpectedError from '../types/expectedError.js';
 
 export type FsWalkCallback = (increment: number) => void;
 
 export default class FsPoly {
-  static readonly FILE_READING_CHUNK_SIZE = 64 * 1024; // 64KiB, Node.js v22 default
-
   // Assume that all drives we're reading from or writing to were already mounted at startup
   private static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
 
@@ -93,10 +93,8 @@ export default class FsPoly {
       .map((filePath) => path.join(dirPath, filePath));
 
     return (
-      await Promise.all(
-        readDir.map(async (filePath) =>
-          (await this.isDirectory(filePath)) ? filePath : undefined,
-        ),
+      await async.mapLimit(readDir, Defaults.MAX_FS_THREADS, async (filePath: string) =>
+        (await this.isDirectory(filePath)) ? filePath : undefined,
       )
     ).filter((childDir) => childDir !== undefined);
   }
@@ -127,10 +125,11 @@ export default class FsPoly {
   }
 
   static async hardlink(target: string, link: string): Promise<void> {
+    const targetResolved = path.resolve(target);
     try {
-      return await fs.promises.link(target, link);
+      return await fs.promises.link(targetResolved, link);
     } catch (error) {
-      if (this.onDifferentDrives(target, link)) {
+      if (this.onDifferentDrives(targetResolved, link)) {
         throw new ExpectedError(`can't hard link files on different drives: ${error}`);
       }
       throw error;
@@ -236,18 +235,15 @@ export default class FsPoly {
   }
 
   static makeLegal(filePath: string, pathSep = path.sep): string {
-    let replaced = filePath
+    const replaced = filePath
       // Make the filename Windows legal
       .replace(/:/g, ';')
       // Make the filename everything else legal
       .replace(/[<>:"|?*]/g, '_')
       // Normalize the path separators
-      .replace(/[\\/]/g, pathSep);
-
-    // Fix Windows drive letter
-    if (replaced.match(/^[a-z];[\\/]/i) !== null) {
-      replaced = replaced.replace(/^([a-z]);\\/i, '$1:\\');
-    }
+      .replace(/[\\/]/g, pathSep)
+      // Revert the Windows drive letter
+      .replace(/^([a-z]);\\/i, '$1:\\');
 
     return replaced;
   }
@@ -422,6 +418,10 @@ export default class FsPoly {
     return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
 
+  /**
+   * Note: {@param target} should be processed with `path.resolve()` to create absolute path
+   * symlinks
+   */
   static async symlink(target: PathLike, link: PathLike): Promise<void> {
     return util.promisify(fs.symlink)(target, link);
   }

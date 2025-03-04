@@ -68,12 +68,13 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
-        os: [ ubuntu, macos, windows ]
-        node-version: [ lts, 18, 16.7.0 ]
+        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-latest ]
+        node-version: [ lts, 18 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -83,9 +84,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - if: ${{ matrix.os == 'macos' }}
-        run: brew install --overwrite sdl2
-      - if: ${{ matrix.os == 'ubuntu' }}
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
@@ -101,7 +100,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ lts, 18, 16.7.0 ]
+        node-version: [ lts, 18, ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -122,10 +121,10 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu, macos, windows ]
+        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-latest ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -143,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts, 18, 16.7.0 ]
+        node-version: [ lts, 18 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4

@@ -4,6 +4,9 @@ import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
 import Chd from './archives/chd/chd.js';
+import Gcz from './archives/dolphin/gcz.js';
+import Rvz from './archives/dolphin/rvz.js';
+import Wia from './archives/dolphin/wia.js';
 import Cso from './archives/maxcso/cso.js';
 import Dax from './archives/maxcso/dax.js';
 import Zso from './archives/maxcso/zso.js';
@@ -99,14 +102,20 @@ export default class FileFactory {
       archive = new ZipSpanned(filePath);
     } else if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new ZipX(filePath);
-    } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Chd(filePath);
     } else if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Cso(filePath);
     } else if (Dax.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Dax(filePath);
     } else if (Zso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new Zso(filePath);
+    } else if (Gcz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Gcz(filePath);
+    } else if (Rvz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Rvz(filePath);
+    } else if (Wia.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Wia(filePath);
+    } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      archive = new Chd(filePath);
     } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new NkitIso(filePath);
     } else {
@@ -157,6 +166,9 @@ export default class FileFactory {
       ...Cso.getExtensions(),
       ...Dax.getExtensions(),
       ...Zso.getExtensions(),
+      ...Gcz.getExtensions(),
+      ...Rvz.getExtensions(),
+      ...Wia.getExtensions(),
       ...Chd.getExtensions(),
       ...NkitIso.getExtensions(),
     ].some((ext) => filePath.toLowerCase().endsWith(ext));

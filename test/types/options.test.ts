@@ -4,7 +4,7 @@ import Options from '../../src/types/options.js';
 
 describe('getOutputDirRoot', () => {
   test.each([
-    ['', '.'],
+    ['', ''],
     ['.', '.'],
     ['root', 'root'],
     ['foo/bar', path.join('foo', 'bar')],
@@ -12,8 +12,8 @@ describe('getOutputDirRoot', () => {
     ['games/{mister}/', 'games'],
     ['Roms/{onion}/', 'Roms'],
     ['roms/{batocera}/', 'roms'],
-    ['{datName}', '.'],
-    ['{datDescription}', '.'],
+    ['{datName}', ''],
+    ['{datDescription}', ''],
   ])('should find the root dir: %s', (output, expectedPath) => {
     expect(new Options({ commands: ['copy'], output }).getOutputDirRoot()).toEqual(expectedPath);
   });
