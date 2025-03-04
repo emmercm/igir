@@ -29,9 +29,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       filePath: archiveEntryProps.archive.getFilePath(),
     });
     this.archive = archiveEntryProps.archive;
-    this.entryPath = archiveEntryProps.entryPath
-      ? path.normalize(archiveEntryProps.entryPath)
-      : archiveEntryProps.entryPath;
+    this.entryPath = archiveEntryProps.entryPath.replace(/[\\/]/g, path.sep);
   }
 
   static async entryOf<A extends Archive>(

@@ -45,7 +45,6 @@ export default class DATGameInferrer extends Module {
 
     const normalizedInputPaths = this.options
       .getInputPaths()
-      .map((inputPath) => path.normalize(inputPath))
       // Try to strip out glob patterns
       .map((inputPath) => inputPath.replace(/([\\/][?*]+)+$/, ''));
 
@@ -108,7 +107,7 @@ export default class DATGameInferrer extends Module {
       this.inferRawFiles,
     ];
     for (const inferFunction of inferFunctions) {
-      // Infer the games and their files)
+      // Infer the games and their files
       const result = await inferFunction.bind(this)(remainingRomFiles);
 
       // Update the list of results

@@ -722,7 +722,7 @@ export default class CandidateWriter extends Module {
     }
 
     const linkPath = outputRomFile.getFilePath();
-    let targetPath = path.resolve(inputRomFile.getFilePath());
+    let targetPath = inputRomFile.getFilePath();
     if (this.options.getSymlink() && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       targetPath = await fsPoly.symlinkRelativePath(targetPath, linkPath);

@@ -68,7 +68,7 @@ describe('getSize', () => {
         await fsPoly.copyFile(filePath, tempFile);
 
         const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
-        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+        await fsPoly.hardlink(tempFile, tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);

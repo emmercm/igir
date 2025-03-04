@@ -56,19 +56,19 @@ test.each([
 });
 
 it('should not throw on non-MAME executables', async () => {
-  const echo = await which('echo');
-  await expect(createDatScanner({ dat: [echo] }).scan()).resolves.toHaveLength(0);
+  const executable = await which(process.platform === 'win32' ? 'ping.exe' : 'echo');
+  await expect(createDatScanner({ dat: [executable] }).scan()).resolves.toHaveLength(0);
 });
 
 describe('multiple files', () => {
   const totalDatFiles = 12;
 
   test.each([
-    [[path.join(path.resolve(), 'test', 'fixtures', 'dats')]],
+    [[path.join(process.cwd(), 'test', 'fixtures', 'dats')]],
     [['test/fixtures/dats']],
     [['test/fixtures/dats/**']],
     [['test/fixtures/dats/**', 'test/fixtures/**/*.dat']],
-    [[path.join(path.resolve(), 'test', 'fixtures', '**', '*.{dat,txt,zip}')]],
+    [[path.join(process.cwd(), 'test', 'fixtures', '**', '*.{dat,txt,zip}')]],
     [['test/fixtures/**/*.{dat,txt,zip}']],
     [['test/fixtures/**/*.{dat,txt,zip}', 'test/fixtures/**/*.{dat,txt,zip}']],
   ])('no files are path excluded: %s', async (dat) => {
@@ -142,7 +142,7 @@ describe('multiple files', () => {
 
 describe('single files', () => {
   test.each([
-    path.join(path.resolve(), 'test', 'fixtures', 'dats', 'one.*'),
+    path.join(process.cwd(), 'test', 'fixtures', 'dats', 'one.*'),
     'test/fixtures/dats/one.*',
     'test/fixtures/*/one.dat',
     'test/fixtures/dats/one.dat',
