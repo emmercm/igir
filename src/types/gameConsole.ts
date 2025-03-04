@@ -560,6 +560,7 @@ export default class GameConsole {
       jelos: 'msx',
       mister: 'MSX1',
       onion: 'MSX',
+      pocket: 'msx',
       retrodeck: 'msx',
       romm: 'msx',
     }),
