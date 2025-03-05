@@ -10,10 +10,86 @@ describe('canSymlink', () => {
   });
 });
 
+describe('exists', () => {
+  it('should return false for a non-existent file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await expect(fsPoly.exists(tempFile)).resolves.toEqual(false);
+  });
+
+  it('should return true for a directory', async () => {
+    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      await expect(fsPoly.exists(tempDir)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should return true for a plain file', async () => {
+    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await fsPoly.touch(tempFile);
+    try {
+      await expect(fsPoly.isDirectory(tempFile)).resolves.toEqual(false);
+    } finally {
+      await fsPoly.rm(tempFile);
+    }
+  });
+
+  it('should return true for a symlink', async () => {
+    const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
+    const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
+
+    try {
+      await fsPoly.touch(tempFileTarget);
+      await fsPoly.symlink(tempFileTarget, tempFileLink);
+      await expect(fsPoly.exists(tempFileLink)).resolves.toEqual(true);
+      await expect(fsPoly.exists(tempFileTarget)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempFileTarget, { force: true });
+      await fsPoly.rm(tempFileLink, { force: true });
+    }
+  });
+
+  it('should return true for a broken symlink', async () => {
+    const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
+    const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
+
+    try {
+      await fsPoly.touch(tempFileTarget);
+      await fsPoly.symlink(tempFileTarget, tempFileLink);
+      await fsPoly.rm(tempFileTarget);
+      await expect(fsPoly.exists(tempFileLink)).resolves.toEqual(true);
+      await expect(fsPoly.exists(tempFileTarget)).resolves.toEqual(false);
+    } finally {
+      await fsPoly.rm(tempFileTarget, { force: true });
+      await fsPoly.rm(tempFileLink, { force: true });
+    }
+  });
+
+  it('should return true for a hardlink', async () => {
+    const tempFileTarget = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
+    const tempFileLink = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
+
+    try {
+      await fsPoly.touch(tempFileTarget);
+      await fsPoly.hardlink(tempFileTarget, tempFileLink);
+      await expect(fsPoly.exists(tempFileLink)).resolves.toEqual(true);
+      await expect(fsPoly.exists(tempFileTarget)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempFileTarget, { force: true });
+      await fsPoly.rm(tempFileLink, { force: true });
+    }
+  });
+});
+
 describe('isDirectory', () => {
   it('should return true for a directory', async () => {
     const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
-    await expect(fsPoly.isDirectory(tempDir)).resolves.toEqual(true);
+    try {
+      await expect(fsPoly.isDirectory(tempDir)).resolves.toEqual(true);
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
+    }
   });
 
   it('should return false for a file', async () => {
