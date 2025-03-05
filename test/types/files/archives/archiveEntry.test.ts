@@ -2,7 +2,6 @@ import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
-import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
@@ -733,29 +732,45 @@ describe('getSha256WithoutHeader', () => {
 });
 
 describe('extractEntryToFile', () => {
-  it('should throw on invalid entry paths', async () => {
+  it('should extract', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(
+    const scannedFiles = await new ROMScanner(
       new Options({
-        input: [
-          './test/fixtures/roms/7z',
-          './test/fixtures/roms/gz',
-          './test/fixtures/roms/rar',
-          './test/fixtures/roms/tar',
-          './test/fixtures/roms/zip',
+        input: [path.join('test', 'fixtures', 'roms')],
+        inputExclude: [
+          // We may not know the extracted file size of CHDs
+          path.join('test', 'fixtures', 'roms', 'chd'),
+          // Can't extract NKit files
+          path.join('test', 'fixtures', 'roms', 'nkit'),
         ],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    const archives = archiveEntries
-      .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
-      .map((entry) => entry.getArchive())
-      .reduce(ArrayPoly.reduceUnique(), []);
-    expect(archives).toHaveLength(28);
+    const archiveEntries = scannedFiles.filter(
+      (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
+    );
 
-    for (const archive of archives) {
-      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
+    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      for (const archiveEntry of archiveEntries) {
+        const tempFilePath = await fsPoly.mktemp(
+          path.join(tempDir, path.basename(archiveEntry.getExtractedFilePath())),
+        );
+        await archiveEntry.extractToFile(tempFilePath);
+
+        const tempFile = await File.fileOf(
+          { filePath: tempFilePath },
+          archiveEntry.getChecksumBitmask(),
+        );
+        expect(tempFile.getSize()).toEqual(archiveEntry.getSize());
+        expect(tempFile.getCrc32()).toEqual(archiveEntry.getCrc32());
+        expect(tempFile.getMd5()).toEqual(archiveEntry.getMd5());
+        expect(tempFile.getSha1()).toEqual(archiveEntry.getSha1());
+        expect(tempFile.getSha256()).toEqual(archiveEntry.getSha256());
+      }
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
     }
   });
 });
@@ -763,58 +778,73 @@ describe('extractEntryToFile', () => {
 describe('copyToTempFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(
+    const scannedFiles = await new ROMScanner(
       new Options({
-        input: [
-          './test/fixtures/roms/7z',
-          './test/fixtures/roms/gz',
-          './test/fixtures/roms/rar',
-          './test/fixtures/roms/tar',
-          './test/fixtures/roms/zip',
+        input: [path.join('test', 'fixtures', 'roms')],
+        inputExclude: [
+          // We may not know the extracted file size of CHDs
+          path.join('test', 'fixtures', 'roms', 'chd'),
+          // Can't extract NKit files
+          path.join('test', 'fixtures', 'roms', 'nkit'),
         ],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    expect(archiveEntries).toHaveLength(37);
+    const archiveEntries = scannedFiles.filter(
+      (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
+    );
 
-    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
-    for (const archiveEntry of archiveEntries) {
-      await archiveEntry.extractToTempFile(async (tempFile) => {
-        await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
-        expect(tempFile).not.toEqual(archiveEntry.getFilePath());
-      });
+    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      for (const archiveEntry of archiveEntries) {
+        await archiveEntry.extractToTempFile(async (tempFilePath) => {
+          const tempFile = await File.fileOf(
+            { filePath: tempFilePath },
+            archiveEntry.getChecksumBitmask(),
+          );
+          expect(tempFile.getSize()).toEqual(archiveEntry.getSize());
+          expect(tempFile.getCrc32()).toEqual(archiveEntry.getCrc32());
+          expect(tempFile.getMd5()).toEqual(archiveEntry.getMd5());
+          expect(tempFile.getSha1()).toEqual(archiveEntry.getSha1());
+          expect(tempFile.getSha256()).toEqual(archiveEntry.getSha256());
+        });
+      }
+    } finally {
+      await fsPoly.rm(tempDir, { recursive: true });
     }
-    await fsPoly.rm(temp, { recursive: true });
   });
 });
 
 describe('createReadStream', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(
+    const scannedFiles = await new ROMScanner(
       new Options({
-        input: [
-          './test/fixtures/roms/7z',
-          './test/fixtures/roms/gz',
-          './test/fixtures/roms/rar',
-          './test/fixtures/roms/tar',
-          './test/fixtures/roms/zip',
+        input: [path.join('test', 'fixtures', 'roms')],
+        inputExclude: [
+          // Can't extract NKit files
+          path.join('test', 'fixtures', 'roms', 'nkit'),
         ],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    expect(archiveEntries).toHaveLength(37);
+    const archiveEntries = scannedFiles.filter(
+      (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
+    );
 
     const temp = await fsPoly.mkdtemp(Temp.getTempDir());
-    for (const archiveEntry of archiveEntries) {
-      await archiveEntry.createReadStream(async (stream) => {
-        const contents = (await bufferPoly.fromReadable(stream)).toString();
-        expect(contents).toBeTruthy();
-      });
+    try {
+      for (const archiveEntry of archiveEntries) {
+        await archiveEntry.createReadStream(async (stream) => {
+          const contents = (await bufferPoly.fromReadable(stream)).toString();
+          expect(contents).toBeTruthy();
+        });
+      }
+    } finally {
+      await fsPoly.rm(temp, { recursive: true });
     }
-    await fsPoly.rm(temp, { recursive: true });
   });
 });
 

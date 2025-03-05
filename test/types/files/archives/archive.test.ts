@@ -1,6 +1,8 @@
 import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
+import ROMScanner from '../../../../src/modules/roms/romScanner.js';
+import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import fsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
@@ -22,6 +24,8 @@ import Tar from '../../../../src/types/files/archives/tar.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import FileCache from '../../../../src/types/files/fileCache.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
+import Options from '../../../../src/types/options.js';
+import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('getArchiveEntries', () => {
   test.each([
@@ -134,6 +138,34 @@ describe('getArchiveEntries', () => {
       const expectedEntry = expectedEntries[idx];
       expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntry[0]);
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
+    }
+  });
+});
+
+describe('extractEntryToFile', () => {
+  it('should throw on invalid entry paths', async () => {
+    // Note: this will only return valid archives with at least one file
+    const archiveEntries = await new ROMScanner(
+      new Options({
+        input: [
+          './test/fixtures/roms/7z',
+          './test/fixtures/roms/gz',
+          './test/fixtures/roms/rar',
+          './test/fixtures/roms/tar',
+          './test/fixtures/roms/zip',
+        ],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
+    const archives = archiveEntries
+      .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
+      .map((entry) => entry.getArchive())
+      .reduce(ArrayPoly.reduceUnique(), []);
+    expect(archives).toHaveLength(28);
+
+    for (const archive of archives) {
+      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
     }
   });
 });
