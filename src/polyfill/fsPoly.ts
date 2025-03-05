@@ -117,7 +117,7 @@ export default class FsPoly {
 
   static async exists(pathLike: PathLike): Promise<boolean> {
     try {
-      await fs.promises.access(pathLike);
+      await fs.promises.lstat(pathLike);
       return true;
     } catch {
       return false;
