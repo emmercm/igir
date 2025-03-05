@@ -82,23 +82,22 @@ export default class DATScanner extends Scanner {
   }
 
   private async downloadDats(datFiles: File[]): Promise<File[]> {
-    if (!datFiles.some((datFile) => datFile.isURL())) {
+    const datUrlFiles = datFiles.filter((datFile) => datFile.isURL());
+    if (datUrlFiles.length === 0) {
       return datFiles;
     }
 
-    this.progressBar.logTrace('downloading DATs from URLs');
+    this.progressBar.logTrace(
+      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length !== 1 ? 's' : ''} from URL${datUrlFiles.length !== 1 ? 's' : ''}`,
+    );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
     return (
       await async.mapLimit(datFiles, Defaults.MAX_FS_THREADS, async (datFile: File) => {
-        if (!datFile.isURL()) {
-          return datFile;
-        }
-
         try {
           this.progressBar.logTrace(`${datFile.toString()}: downloading`);
           // TODO(cemmer): these never get deleted?
-          const downloadedDatFile = await datFile.downloadToTempPath('dat');
+          const downloadedDatFile = await datFile.downloadToTempPath();
           this.progressBar.logTrace(
             `${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`,
           );
@@ -466,7 +465,7 @@ export default class DATScanner extends Scanner {
     const games = rows.map((row) => {
       const rom = new ROM({
         name: row.name,
-        size: Number.parseInt(row.size ?? '0', 10),
+        size: Number.parseInt(row.size !== undefined && row.size.length > 0 ? row.size : '0', 10),
         crc32: row.crc,
         md5: row.md5,
         sha1: row.sha1,
