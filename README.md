@@ -61,7 +61,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.0.2
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.1.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -227,8 +227,14 @@ One game, one ROM (1G1R) options:
       --prefer-retail      Prefer retail releases (see --only-retail)                [boolean]
       --prefer-parent      Prefer parent ROMs over clones                            [boolean]
 
+dir2dat command options:
+      --dir2dat-output  dir2dat output directory                                      [string]
+
+fixdat command options:
+      --fixdat-output  Fixdat output directory                                        [string]
+
 report command options:
-      --report-output  Report output location (formatted with moment.js)
+      --report-output  Report output file location (formatted with moment.js)
                                     [string] [default: "./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
 
 Help & debug options:
