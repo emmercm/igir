@@ -56,6 +56,8 @@ export default class File implements FileProps {
 
   readonly sha256WithoutHeader?: string;
 
+  readonly isUrl: boolean;
+
   readonly symlinkSource?: string;
 
   readonly fileHeader?: ROMHeader;
@@ -63,9 +65,9 @@ export default class File implements FileProps {
   readonly patch?: Patch;
 
   protected constructor(fileProps: FileProps) {
-    this.filePath = URLPoly.canParse(fileProps.filePath)
-      ? fileProps.filePath
-      : fileProps.filePath.replace(/[\\/]/g, path.sep);
+    const isUrl = URLPoly.canParse(fileProps.filePath);
+
+    this.filePath = isUrl ? fileProps.filePath : fileProps.filePath.replace(/[\\/]/g, path.sep);
     this.size = fileProps.size ?? 0;
     this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
@@ -88,6 +90,7 @@ export default class File implements FileProps {
       ?.toLowerCase()
       .replace(/^0x/, '')
       .padStart(64, '0');
+    this.isUrl = isUrl;
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
     this.patch = fileProps.patch;
@@ -253,7 +256,7 @@ export default class File implements FileProps {
   }
 
   isURL(): boolean {
-    return URLPoly.canParse(this.getFilePath());
+    return this.isUrl;
   }
 
   public getChecksumBitmask(): number {
@@ -442,10 +445,14 @@ export default class File implements FileProps {
     });
   }
 
-  async downloadToTempPath(tempPrefix: string): Promise<File> {
+  async downloadToTempPath(): Promise<File> {
     if (await fsPoly.exists(this.getFilePath())) {
       return this;
     }
+
+    const lastUrlSegment = new URL(this.getFilePath()).pathname.split('/').slice(-1).at(0);
+    const tempPrefix =
+      lastUrlSegment !== undefined ? fsPoly.makeLegal(decodeURIComponent(lastUrlSegment)) : 'temp';
 
     const filePath = await fsPoly.mktemp(path.join(Temp.getTempDir(), tempPrefix));
     return this.downloadToPath(filePath);
@@ -525,9 +532,12 @@ export default class File implements FileProps {
    * A string hash code to uniquely identify this {@link File}.
    */
   hashCode(): string {
-    return (
-      this.getSha256() ?? this.getSha1() ?? this.getMd5() ?? `${this.getCrc32()}|${this.getSize()}`
-    );
+    return this.isURL()
+      ? this.getFilePath()
+      : (this.getSha256() ??
+          this.getSha1() ??
+          this.getMd5() ??
+          `${this.getCrc32()}|${this.getSize()}`);
   }
 
   equals(other: File): boolean {
