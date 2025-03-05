@@ -40,6 +40,24 @@ export default class Zip extends Archive {
       archive.files.filter((entryFile) => entryFile.type === 'File'),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile: ZipFile): Promise<ArchiveEntry<this>> => {
+        // We have to filter these out here because `Entry.stream()` will fail, and even though it
+        // will emit a catchable error, the stream will never be released
+        if (entryFile.compressionMethod === 12) {
+          throw new ExpectedError("BZip2 isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod === 14) {
+          throw new ExpectedError("LZMA isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod === 20 || entryFile.compressionMethod === 93) {
+          throw new ExpectedError("Zstandard isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod === 98) {
+          throw new ExpectedError("PPMd isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod !== 0 && entryFile.compressionMethod !== 8) {
+          throw new ExpectedError('only STORE and DEFLATE methods are supported for .zip files');
+        }
+
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
           const entryStream = entryFile
