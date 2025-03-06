@@ -4,7 +4,7 @@ import { Semaphore } from 'async-mutex';
 
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import Parent from '../../types/dats/parent.js';
@@ -110,7 +110,7 @@ export default class CandidateGenerator extends Module {
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: generated ${fsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
+      `${dat.getNameShort()}: generated ${FsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
     );
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done generating candidates`);
@@ -201,7 +201,7 @@ export default class CandidateGenerator extends Module {
             // Note: we're delaying checksum calculations for now,
             // {@link CandidateArchiveFileHasher} will handle it later
             inputFile = new ArchiveFile(inputFile.getArchive(), {
-              size: await fsPoly.size(inputFile.getFilePath()),
+              size: await FsPoly.size(inputFile.getFilePath()),
               checksumBitmask: inputFile.getChecksumBitmask(),
             });
           } catch (error) {

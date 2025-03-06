@@ -1,5 +1,5 @@
-import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
@@ -61,7 +61,7 @@ export default class UPSPatch extends Patch {
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new ExpectedError(
-          `UPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
+          `UPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
         );
       }
       await Patch.readUpsUint(patchFile); // target size
@@ -73,14 +73,14 @@ export default class UPSPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
   ): Promise<void> {
     // TODO(cemmer): we don't actually need a temp file, we're not modifying the input
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
+      const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await fsPoly.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+      await FsPoly.copyFile(tempRomFile, outputRomPath);
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
         await UPSPatch.applyPatch(patchFile, sourceFile, targetFile);
@@ -92,9 +92,9 @@ export default class UPSPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: FilePoly,
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    sourceFile: IOFile,
+    targetFile: IOFile,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const relativeOffset = await Patch.readUpsUint(patchFile);
@@ -109,7 +109,7 @@ export default class UPSPatch extends Patch {
     }
   }
 
-  private static async readPatchBlock(patchFile: FilePoly, sourceFile: FilePoly): Promise<Buffer> {
+  private static async readPatchBlock(patchFile: IOFile, sourceFile: IOFile): Promise<Buffer> {
     const buffer: Buffer[] = [];
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {

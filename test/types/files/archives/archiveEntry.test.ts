@@ -3,7 +3,7 @@ import path from 'node:path';
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
-import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
@@ -60,14 +60,14 @@ describe('getSize', () => {
     });
 
     it("should get the hard link's target size", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
         // Make a copy of the original file to ensure it's on the same drive
         const tempFile = path.join(tempDir, `file_${path.basename(filePath)}`);
-        await fsPoly.copyFile(filePath, tempFile);
+        await FsPoly.copyFile(filePath, tempFile);
 
         const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
-        await fsPoly.hardlink(tempFile, tempLink);
+        await FsPoly.hardlink(tempFile, tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
@@ -75,15 +75,15 @@ describe('getSize', () => {
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the absolute symlink's target size", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
-        await fsPoly.symlink(path.resolve(filePath), tempLink);
+        await FsPoly.symlink(path.resolve(filePath), tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
@@ -91,15 +91,15 @@ describe('getSize', () => {
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the relative symlink's target size", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
-        await fsPoly.symlink(await fsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
+        await FsPoly.symlink(await FsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
@@ -107,7 +107,7 @@ describe('getSize', () => {
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
   });
@@ -751,10 +751,10 @@ describe('extractEntryToFile', () => {
       (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
     );
 
-    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       for (const archiveEntry of archiveEntries) {
-        const tempFilePath = await fsPoly.mktemp(
+        const tempFilePath = await FsPoly.mktemp(
           path.join(tempDir, path.basename(archiveEntry.getExtractedFilePath())),
         );
         await archiveEntry.extractToFile(tempFilePath);
@@ -770,7 +770,7 @@ describe('extractEntryToFile', () => {
         expect(tempFile.getSha256()).toEqual(archiveEntry.getSha256());
       }
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await FsPoly.rm(tempDir, { recursive: true });
     }
   });
 });
@@ -795,7 +795,7 @@ describe('copyToTempFile', () => {
       (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
     );
 
-    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       for (const archiveEntry of archiveEntries) {
         await archiveEntry.extractToTempFile(async (tempFilePath) => {
@@ -811,7 +811,7 @@ describe('copyToTempFile', () => {
         });
       }
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await FsPoly.rm(tempDir, { recursive: true });
     }
   });
 });
@@ -834,7 +834,7 @@ describe('createReadStream', () => {
       (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
     );
 
-    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
+    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       for (const archiveEntry of archiveEntries) {
         await archiveEntry.createReadStream(async (stream) => {
@@ -843,7 +843,7 @@ describe('createReadStream', () => {
         });
       }
     } finally {
-      await fsPoly.rm(temp, { recursive: true });
+      await FsPoly.rm(temp, { recursive: true });
     }
   });
 });

@@ -3,7 +3,7 @@ import async from 'async';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
@@ -47,7 +47,7 @@ export default class MovedROMDeleter extends Module {
     const existingFilePathsCheck = await async.mapLimit(
       filePathsToDelete,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => fsPoly.exists(filePath),
+      async (filePath: string) => FsPoly.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
       (filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -70,7 +70,7 @@ export default class MovedROMDeleter extends Module {
       await Promise.all(
         filePathChunk.map(async (filePath) => {
           try {
-            await fsPoly.rm(filePath, { force: true });
+            await FsPoly.rm(filePath, { force: true });
           } catch (error) {
             this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
           }

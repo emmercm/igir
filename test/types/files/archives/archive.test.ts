@@ -3,7 +3,7 @@ import path from 'node:path';
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
-import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Chd from '../../../../src/types/files/archives/chd/chd.js';
@@ -50,7 +50,7 @@ describe('getArchiveEntries', () => {
       ...NkitIso.getExtensions(),
     ]),
   ])("should throw when the file doesn't exist: %s", async (extension) => {
-    const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
+    const tempFile = (await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
     await expect(new FileFactory(new FileCache()).filesFrom(tempFile)).rejects.toThrow();
   });
 

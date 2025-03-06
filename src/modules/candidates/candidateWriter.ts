@@ -7,7 +7,7 @@ import ElasticSemaphore from '../../elasticSemaphore.js';
 import Defaults from '../../globals/defaults.js';
 import KeyedMutex from '../../keyedMutex.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Parent from '../../types/dats/parent.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
@@ -175,8 +175,8 @@ export default class CandidateWriter extends Module {
 
   private static async ensureOutputDirExists(outputFilePath: string): Promise<void> {
     const outputDir = path.dirname(outputFilePath);
-    if (!(await fsPoly.exists(outputDir))) {
-      await fsPoly.mkdir(outputDir, { recursive: true });
+    if (!(await FsPoly.exists(outputDir))) {
+      await FsPoly.mkdir(outputDir, { recursive: true });
     }
   }
 
@@ -208,7 +208,7 @@ export default class CandidateWriter extends Module {
     const outputZip = inputToOutputZipEntries[0][1].getArchive();
 
     // If the output file already exists, see if we need to do anything
-    if (await fsPoly.exists(outputZip.getFilePath())) {
+    if (await FsPoly.exists(outputZip.getFilePath())) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
         this.progressBar.logDebug(
           `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
@@ -371,7 +371,7 @@ export default class CandidateWriter extends Module {
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
     this.progressBar.logInfo(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${fsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
+      `${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
     );
 
     try {
@@ -423,7 +423,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${fsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`,
+      `${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -474,7 +474,7 @@ export default class CandidateWriter extends Module {
     const outputFilePath = outputRomFile.getFilePath();
 
     // If the output file already exists, see if we need to do anything
-    if (!this.options.getOverwrite() && (await fsPoly.exists(outputFilePath))) {
+    if (!this.options.getOverwrite() && (await FsPoly.exists(outputFilePath))) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
         this.progressBar.logDebug(
           `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: not overwriting existing file`,
@@ -567,13 +567,13 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.logInfo(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: moving file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
+        `${dat.getNameShort()}: ${releaseCandidate.getName()}: moving file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
       );
 
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-        await fsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
+        await FsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
         CandidateWriter.FILE_PATH_MOVES.set(inputRomFile.getFilePath(), outputFilePath);
         return true;
       } catch (error) {
@@ -592,15 +592,15 @@ export default class CandidateWriter extends Module {
     outputFilePath: string,
   ): Promise<boolean> {
     this.progressBar.logInfo(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${fsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
+      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
     );
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-      const tempRawFile = await fsPoly.mktemp(outputFilePath);
+      const tempRawFile = await FsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile);
-      await fsPoly.mv(tempRawFile, outputFilePath);
+      await FsPoly.mv(tempRawFile, outputFilePath);
       return true;
     } catch (error) {
       this.progressBar.logError(
@@ -725,11 +725,11 @@ export default class CandidateWriter extends Module {
     let targetPath = inputRomFile.getFilePath();
     if (this.options.getSymlink() && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
-      targetPath = await fsPoly.symlinkRelativePath(targetPath, linkPath);
+      targetPath = await FsPoly.symlinkRelativePath(targetPath, linkPath);
     }
 
     // If the output file already exists, see if we need to do anything
-    if (await fsPoly.exists(linkPath)) {
+    if (await FsPoly.exists(linkPath)) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
         this.progressBar.logDebug(
           `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing file`,
@@ -755,7 +755,7 @@ export default class CandidateWriter extends Module {
         }
       }
 
-      await fsPoly.rm(linkPath, { force: true });
+      await FsPoly.rm(linkPath, { force: true });
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
@@ -803,12 +803,12 @@ export default class CandidateWriter extends Module {
         this.progressBar.logInfo(
           `${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`,
         );
-        await fsPoly.symlink(targetPath, linkPath);
+        await FsPoly.symlink(targetPath, linkPath);
       } else {
         this.progressBar.logInfo(
           `${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`,
         );
-        await fsPoly.hardlink(targetPath, linkPath);
+        await FsPoly.hardlink(targetPath, linkPath);
       }
       return true;
     } catch (error) {
@@ -823,20 +823,20 @@ export default class CandidateWriter extends Module {
     linkPath: string,
     expectedTargetPath: string,
   ): Promise<string | undefined> {
-    if (!(await fsPoly.exists(linkPath))) {
+    if (!(await FsPoly.exists(linkPath))) {
       return "doesn't exist";
     }
 
-    if (!(await fsPoly.isSymlink(linkPath))) {
+    if (!(await FsPoly.isSymlink(linkPath))) {
       return 'is not a symlink';
     }
 
-    const existingSourcePath = await fsPoly.readlink(linkPath);
+    const existingSourcePath = await FsPoly.readlink(linkPath);
     if (path.normalize(existingSourcePath) !== path.normalize(expectedTargetPath)) {
       return `has the target path '${existingSourcePath}', expected '${expectedTargetPath}`;
     }
 
-    if (!(await fsPoly.exists(await fsPoly.readlinkResolved(linkPath)))) {
+    if (!(await FsPoly.exists(await FsPoly.readlinkResolved(linkPath)))) {
       return `has the target path '${existingSourcePath}' which doesn't exist`;
     }
 
@@ -847,12 +847,12 @@ export default class CandidateWriter extends Module {
     linkPath: string,
     inputRomPath: string,
   ): Promise<string | undefined> {
-    if (!(await fsPoly.exists(linkPath))) {
+    if (!(await FsPoly.exists(linkPath))) {
       return "doesn't exist";
     }
 
-    const targetInode = await fsPoly.inode(linkPath);
-    const sourceInode = await fsPoly.inode(inputRomPath);
+    const targetInode = await FsPoly.inode(linkPath);
+    const sourceInode = await FsPoly.inode(inputRomPath);
     if (targetInode !== sourceInode) {
       return `references a different file than '${inputRomPath}'`;
     }

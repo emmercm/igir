@@ -1,4 +1,4 @@
-import FilePoly from '../../polyfill/filePoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -80,10 +80,10 @@ export default class APSN64Patch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
       await APSN64Patch.applyPatch(patchFile, targetFile);
@@ -92,7 +92,7 @@ export default class APSN64Patch extends Patch {
     }
   }
 
-  private static async applyPatch(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+  private static async applyPatch(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const offset = (await patchFile.readNext(4)).readUInt32LE();
       const size = (await patchFile.readNext(1)).readUInt8();

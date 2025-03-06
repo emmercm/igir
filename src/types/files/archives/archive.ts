@@ -2,7 +2,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 
 import Temp from '../../../globals/temp.js';
-import fsPoly from '../../../polyfill/fsPoly.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -29,23 +29,23 @@ export default abstract class Archive {
     entryPath: string,
     callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
-    const tempFile = await fsPoly.mktemp(
+    const tempFile = await FsPoly.mktemp(
       path.join(
         Temp.getTempDir(),
-        fsPoly.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
+        FsPoly.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
       ),
     );
 
     const tempDir = path.dirname(tempFile);
-    if (!(await fsPoly.exists(tempDir))) {
-      await fsPoly.mkdir(tempDir, { recursive: true });
+    if (!(await FsPoly.exists(tempDir))) {
+      await FsPoly.mkdir(tempDir, { recursive: true });
     }
 
     try {
       await this.extractEntryToFile(entryPath, tempFile);
       return await callback(tempFile);
     } finally {
-      await fsPoly.rm(tempFile, { force: true });
+      await FsPoly.rm(tempFile, { force: true });
     }
   }
 

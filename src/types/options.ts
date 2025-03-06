@@ -14,7 +14,7 @@ import LogLevel from '../console/logLevel.js';
 import Defaults from '../globals/defaults.js';
 import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
+import FsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
@@ -685,13 +685,13 @@ export default class Options implements OptionsProps {
       globbedPaths,
       Defaults.MAX_FS_THREADS,
       async (file: string): Promise<boolean> => {
-        if (!(await fsPoly.exists(file)) && URLPoly.canParse(file)) {
+        if (!(await FsPoly.exists(file)) && URLPoly.canParse(file)) {
           // Treat URLs as files (and not directories)
           return true;
         }
 
         try {
-          return !(await fsPoly.isDirectory(file));
+          return !(await FsPoly.isDirectory(file));
         } catch {
           // Assume errors mean the path doesn't exist
           return false;
@@ -722,12 +722,12 @@ export default class Options implements OptionsProps {
     }
 
     // Glob the contents of directories
-    if (await fsPoly.isDirectory(inputPath)) {
-      return fsPoly.walk(inputPath, walkCallback);
+    if (await FsPoly.isDirectory(inputPath)) {
+      return FsPoly.walk(inputPath, walkCallback);
     }
 
     // If the file exists, don't process it as a glob pattern
-    if (await fsPoly.exists(inputPath)) {
+    if (await FsPoly.exists(inputPath)) {
       walkCallback(1);
       return [inputPath];
     }
@@ -771,7 +771,7 @@ export default class Options implements OptionsProps {
     const pathsSplit = globPattern.split(/[\\/]/);
     for (let i = 0; i < pathsSplit.length; i += 1) {
       const subPath = pathsSplit.slice(0, i + 1).join('/');
-      if (subPath !== '' && !(await fsPoly.exists(subPath))) {
+      if (subPath !== '' && !(await FsPoly.exists(subPath))) {
         const dirname = pathsSplit.slice(0, i).join('/');
         if (dirname === '') {
           // fg won't let you escape empty strings
@@ -1242,13 +1242,13 @@ export default class Options implements OptionsProps {
   }
 
   getDir2DatOutput(): string {
-    return fsPoly.makeLegal(
+    return FsPoly.makeLegal(
       this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
 
   getFixdatOutput(): string {
-    return fsPoly.makeLegal(
+    return FsPoly.makeLegal(
       this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
@@ -1265,7 +1265,7 @@ export default class Options implements OptionsProps {
       });
     }
 
-    return fsPoly.makeLegal(reportOutput);
+    return FsPoly.makeLegal(reportOutput);
   }
 
   getDatThreads(): number {

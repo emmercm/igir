@@ -2,9 +2,12 @@ import fs, { OpenMode, PathLike } from 'node:fs';
 import { FileHandle } from 'node:fs/promises';
 
 import Defaults from '../globals/defaults.js';
-import fsPoly from './fsPoly.js';
+import FsPoly from './fsPoly.js';
 
-export default class FilePoly {
+/**
+ * A wrapper for readable and writable files
+ */
+export default class IOFile {
   private readonly pathLike: PathLike;
 
   private readonly fd: FileHandle;
@@ -24,8 +27,11 @@ export default class FilePoly {
     this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Defaults.FILE_READING_CHUNK_SIZE));
   }
 
-  static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<FilePoly> {
-    return new FilePoly(
+  /**
+   * Return a new {@link IOFile} from a {@param pathLike}, with the {@param flags} mode.
+   */
+  static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<IOFile> {
+    return new IOFile(
       pathLike,
       await fs.promises.open(
         pathLike,
@@ -37,13 +43,18 @@ export default class FilePoly {
          */
         flags.toString().startsWith('a') ? 'r+' : flags,
       ),
-      await fsPoly.size(pathLike),
+      await FsPoly.size(pathLike),
     );
   }
 
-  static async fileOfSize(pathLike: string, flags: OpenMode, size: number): Promise<FilePoly> {
-    if (await fsPoly.exists(pathLike)) {
-      await fsPoly.rm(pathLike, { force: true });
+  /**
+   * Return a new {@link IOFile} of size {@param size} from a {@param pathLike}, with the
+   * {@param flags} mode. If the {@param pathLike} already exists, the existing file will be
+   * deleted.
+   */
+  static async fileOfSize(pathLike: string, flags: OpenMode, size: number): Promise<IOFile> {
+    if (await FsPoly.exists(pathLike)) {
+      await FsPoly.rm(pathLike, { force: true });
     }
 
     const write = await this.fileFrom(pathLike, 'wx');
@@ -62,6 +73,9 @@ export default class FilePoly {
     return this.pathLike;
   }
 
+  /**
+   * @returns if the seek position of the file has reached the end
+   */
   isEOF(): boolean {
     return this.getPosition() >= this.getSize();
   }
@@ -74,24 +88,41 @@ export default class FilePoly {
     return this.size;
   }
 
+  /**
+   * Seek to a specific {@param position} in the file
+   */
   seek(position: number): void {
     this.readPosition = position;
   }
 
+  /**
+   * Seek to the current position plus {@param size}
+   */
   skipNext(size: number): void {
     this.readPosition += size;
   }
 
+  /**
+   * @returns the next {@param size} bytes from the current seek position, without changing the
+   * seek position
+   */
   async peekNext(size: number): Promise<Buffer> {
     return this.readAt(this.readPosition, size);
   }
 
+  /**
+   * @returns the next {@param size} bytes from the current seek position, also incrementing the
+   * seek position the same amount
+   */
   async readNext(size: number): Promise<Buffer> {
     const result = await this.readAt(this.readPosition, size);
     this.readPosition += size;
     return result;
   }
 
+  /**
+   * @returns bytes of size {@param size} at the seek position {@param offset}
+   */
   async readAt(offset: number, size: number): Promise<Buffer> {
     if (size > this.tempBuffer.length) {
       this.tempBuffer = Buffer.allocUnsafe(size);
@@ -119,12 +150,18 @@ export default class FilePoly {
     return Buffer.from(this.tempBuffer.subarray(0, bytesRead));
   }
 
+  /**
+   * Write {@param buffer} to the current seek position
+   */
   async write(buffer: Buffer): Promise<number> {
     const bytesWritten = await this.writeAt(buffer, this.readPosition);
     this.readPosition += buffer.length;
     return bytesWritten;
   }
 
+  /**
+   * Write {@param buffer} at the seek position {@param offset}
+   */
   async writeAt(buffer: Buffer, offset: number): Promise<number> {
     const { bytesWritten } = await this.fd.write(buffer, 0, buffer.length, offset);
 
@@ -143,6 +180,9 @@ export default class FilePoly {
     return bytesWritten;
   }
 
+  /**
+   * Close the underlying file handle
+   */
   async close(): Promise<void> {
     return this.fd.close();
   }

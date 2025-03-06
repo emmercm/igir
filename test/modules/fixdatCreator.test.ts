@@ -1,6 +1,6 @@
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
-import fsPoly from '../../src/polyfill/fsPoly.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
 import DAT from '../../src/types/dats/dat.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
@@ -70,7 +70,7 @@ async function runFixdatCreator(
     return undefined;
   }
 
-  await expect(fsPoly.exists(fixdatPath)).resolves.toEqual(true);
+  await expect(FsPoly.exists(fixdatPath)).resolves.toEqual(true);
 
   try {
     return (
@@ -84,7 +84,7 @@ async function runFixdatCreator(
       ).scan()
     )[0];
   } finally {
-    await fsPoly.rm(fixdatPath, { force: true });
+    await FsPoly.rm(fixdatPath, { force: true });
   }
 }
 

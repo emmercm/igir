@@ -1,3 +1,6 @@
+/**
+ * A collection of static array utility functions.
+ */
 export default class ArrayPoly {
   /**
    * Filter elements in an array to only unique values, using the result of a mapper function to

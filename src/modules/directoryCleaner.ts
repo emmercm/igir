@@ -9,7 +9,7 @@ import trash from 'trash';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -123,7 +123,7 @@ export default class DirectoryCleaner extends Module {
     const existingFilePathsCheck = await async.mapLimit(
       filePaths,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => existSemaphore.runExclusive(async () => fsPoly.exists(filePath)),
+      async (filePath: string) => existSemaphore.runExclusive(async () => FsPoly.exists(filePath)),
     );
     const existingFilePaths = filePaths.filter(
       (filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -139,7 +139,7 @@ export default class DirectoryCleaner extends Module {
       await Promise.all(
         filePathsChunk.map(async (filePath) => {
           try {
-            await fsPoly.rm(filePath, { force: true });
+            await FsPoly.rm(filePath, { force: true });
           } catch (error) {
             this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
           }
@@ -154,7 +154,7 @@ export default class DirectoryCleaner extends Module {
       await semaphore.runExclusive(async () => {
         let backupPath = path.join(backupDir, path.basename(filePath));
         let increment = 0;
-        while (await fsPoly.exists(backupPath)) {
+        while (await FsPoly.exists(backupPath)) {
           increment += 1;
           const { name, ext } = path.parse(filePath);
           backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
@@ -162,11 +162,11 @@ export default class DirectoryCleaner extends Module {
 
         this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
         const backupPathDir = path.dirname(backupPath);
-        if (!(await fsPoly.exists(backupPathDir))) {
-          await fsPoly.mkdir(backupPathDir, { recursive: true });
+        if (!(await FsPoly.exists(backupPathDir))) {
+          await FsPoly.mkdir(backupPathDir, { recursive: true });
         }
         try {
-          await fsPoly.mv(filePath, backupPath);
+          await FsPoly.mv(filePath, backupPath);
         } catch (error) {
           this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
         }
@@ -195,7 +195,7 @@ export default class DirectoryCleaner extends Module {
     const subDirs: string[] = [];
     const subFiles: string[] = [];
     await async.mapLimit(subPaths, Defaults.MAX_FS_THREADS, async (subPath: string) => {
-      if (await fsPoly.isDirectory(subPath)) {
+      if (await FsPoly.isDirectory(subPath)) {
         subDirs.push(subPath);
       } else {
         subFiles.push(subPath);

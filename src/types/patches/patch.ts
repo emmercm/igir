@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import FilePoly from '../../polyfill/filePoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 
@@ -55,7 +55,7 @@ export default abstract class Patch {
 
   abstract createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void>;
 
-  protected static async readUpsUint(fp: FilePoly): Promise<number> {
+  protected static async readUpsUint(fp: IOFile): Promise<number> {
     let data = 0;
     let shift = 1;
 
@@ -73,7 +73,7 @@ export default abstract class Patch {
     return data;
   }
 
-  static async readVcdiffUintFromFile(fp: FilePoly): Promise<number> {
+  static async readVcdiffUintFromFile(fp: IOFile): Promise<number> {
     let num = 0;
 
     while (!fp.isEOF()) {

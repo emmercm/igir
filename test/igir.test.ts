@@ -7,7 +7,7 @@ import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
 import DATScanner from '../src/modules/dats/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
-import fsPoly from '../src/polyfill/fsPoly.js';
+import FsPoly from '../src/polyfill/fsPoly.js';
 import FileCache from '../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
@@ -28,11 +28,11 @@ interface TestOutput {
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
-  const temp = await fsPoly.mkdtemp(Temp.getTempDir());
+  const temp = await FsPoly.mkdtemp(Temp.getTempDir());
 
   // Set up the input directory
   const inputTemp = path.join(temp, 'input');
-  await fsPoly.copyDir(path.join('test', 'fixtures'), inputTemp);
+  await FsPoly.copyDir(path.join('test', 'fixtures'), inputTemp);
 
   // Set up the output directory
   const outputTemp = path.join(temp, 'output');
@@ -42,15 +42,15 @@ async function copyFixturesToTemp(
     await callback(inputTemp, outputTemp);
   } finally {
     // Delete the temp files
-    await fsPoly.rm(inputTemp, { recursive: true });
-    await fsPoly.rm(outputTemp, { force: true, recursive: true });
+    await FsPoly.rm(inputTemp, { recursive: true });
+    await FsPoly.rm(outputTemp, { force: true, recursive: true });
   }
 }
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
   return (
     await Promise.all(
-      (await fsPoly.walk(outputDir)).map(async (filePath) => {
+      (await FsPoly.walk(outputDir)).map(async (filePath) => {
         try {
           return await new FileFactory(new FileCache()).filesFrom(filePath);
         } catch {
@@ -74,12 +74,12 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options(optionsProps);
 
   const inputFilesBefore = (
-    await Promise.all(options.getInputPaths().map(async (inputPath) => fsPoly.walk(inputPath)))
+    await Promise.all(options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath)))
   )
     .flat()
     .reduce(ArrayPoly.reduceUnique(), []);
   const outputFilesBefore =
-    options.getOutput() !== Temp.getTempDir() ? await fsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
+    options.getOutput() !== Temp.getTempDir() ? await FsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
 
   await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
@@ -99,7 +99,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
         [];
 
   const inputFilesAfter = (
-    await Promise.all(options.getInputPaths().map(async (inputPath) => fsPoly.walk(inputPath)))
+    await Promise.all(options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath)))
   )
     .flat()
     .reduce(ArrayPoly.reduceUnique(), []);
@@ -115,7 +115,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     .sort();
 
   const outputFilesAfter =
-    options.getOutput() !== Temp.getTempDir() ? await fsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
+    options.getOutput() !== Temp.getTempDir() ? await FsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
   const cleanedFiles = outputFilesBefore
     .filter((filePath) => !outputFilesAfter.includes(filePath))
     .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
@@ -279,12 +279,12 @@ describe('with explicit DATs', () => {
       ];
       await Promise.all(
         junkFiles.map(async (junkFile) => {
-          await fsPoly.touch(junkFile);
-          expect(await fsPoly.exists(junkFile)).toEqual(true);
+          await FsPoly.touch(junkFile);
+          expect(await FsPoly.exists(junkFile)).toEqual(true);
         }),
       );
 
-      const inputFiles = await fsPoly.walk(inputTemp);
+      const inputFiles = await FsPoly.walk(inputTemp);
       await Promise.all(inputFiles.map(async (inputFile) => fs.promises.chmod(inputFile, '0444')));
 
       // When running igir with the clean command
@@ -389,11 +389,11 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
-      const inputFiles = await fsPoly.walk(inputDir);
+      const inputFiles = await FsPoly.walk(inputDir);
       const inputHardlinks = await Promise.all(
         inputFiles.map(async (inputFile) => {
           const symlink = `${inputFile}.symlink`;
-          await fsPoly.hardlink(inputFile, symlink);
+          await FsPoly.hardlink(inputFile, symlink);
           return symlink;
         }),
       );
@@ -432,11 +432,11 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
-      const inputFiles = await fsPoly.walk(inputDir);
+      const inputFiles = await FsPoly.walk(inputDir);
       const inputSymlinks = await Promise.all(
         inputFiles.map(async (inputFile) => {
           const symlink = `${inputFile}.symlink`;
-          await fsPoly.symlink(inputFile, symlink);
+          await FsPoly.symlink(inputFile, symlink);
           return symlink;
         }),
       );
@@ -587,7 +587,7 @@ describe('with explicit DATs', () => {
           path.join(inputTemp, 'roms', 'zip', 'loremipsum.zip'),
         ].map(async (inputFile) => {
           const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '');
-          await fsPoly.mv(inputFile, junkFile);
+          await FsPoly.mv(inputFile, junkFile);
           return junkFile;
         }),
       );

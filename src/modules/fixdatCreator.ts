@@ -4,7 +4,7 @@ import moment from 'moment';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Package from '../globals/package.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Header from '../types/dats/logiqx/header.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -60,8 +60,8 @@ export default class FixdatCreator extends Module {
     }
 
     const fixdatDir = this.options.getFixdatOutput();
-    if (!(await fsPoly.exists(fixdatDir))) {
-      await fsPoly.mkdir(fixdatDir, { recursive: true });
+    if (!(await FsPoly.exists(fixdatDir))) {
+      await FsPoly.mkdir(fixdatDir, { recursive: true });
     }
 
     // Construct a new DAT header
@@ -90,7 +90,7 @@ export default class FixdatCreator extends Module {
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
     this.progressBar.logInfo(`${originalDat.getNameShort()}: writing fixdat to '${fixdatPath}'`);
-    await fsPoly.writeFile(fixdatPath, fixdatContents);
+    await FsPoly.writeFile(fixdatPath, fixdatContents);
 
     this.progressBar.logTrace(`${originalDat.getNameShort()}: done generating a fixdat`);
     return fixdatPath;
