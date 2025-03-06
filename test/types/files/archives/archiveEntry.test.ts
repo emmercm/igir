@@ -4,7 +4,6 @@ import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
 import FsPoly from '../../../../src/polyfill/fsPoly.js';
-import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
@@ -747,9 +746,7 @@ describe('extractEntryToFile', () => {
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    const archiveEntries = scannedFiles.filter(
-      (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
-    );
+    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
@@ -791,9 +788,7 @@ describe('copyToTempFile', () => {
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    const archiveEntries = scannedFiles.filter(
-      (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
-    );
+    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
@@ -830,9 +825,7 @@ describe('createReadStream', () => {
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    const archiveEntries = scannedFiles.filter(
-      (entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry,
-    );
+    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
     const temp = await FsPoly.mkdtemp(Temp.getTempDir());
     try {

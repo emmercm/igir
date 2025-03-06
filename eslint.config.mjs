@@ -45,13 +45,13 @@ export default [
           checksVoidReturn: false,
         },
       ],
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-enum-comparison': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-      '@typescript-eslint/restrict-template-expressions': 'warn',
+      '@typescript-eslint/restrict-template-expressions': [
+        'error',
+        {
+          allow: ['unknown'],
+          allowNever: true,
+        },
+      ],
       '@typescript-eslint/unbound-method': [
         'error',
         {

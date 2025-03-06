@@ -20,7 +20,7 @@ export default class MameDAT extends DAT {
 
   @Expose()
   @Type(() => Machine)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | Machine | Machine[] }) => value ?? [])
   private readonly machine?: Machine | Machine[];
 
   constructor(machine: Machine | Machine[]) {

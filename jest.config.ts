@@ -12,9 +12,20 @@ export default async (): Promise<Config> => {
     ].map(async (moduleName) => {
       const modulePath = path.join('node_modules', moduleName);
       const packagePath = path.join(modulePath, 'package.json');
-      const packageJson = JSON.parse((await fs.promises.readFile(packagePath)).toString());
+      const packageJson = JSON.parse((await fs.promises.readFile(packagePath)).toString()) as {
+        main: string | undefined;
+        exports:
+          | {
+              '.': {
+                import: string;
+              };
+            }
+          | undefined;
+      };
 
-      packageJson.main = packageJson.main ?? packageJson.exports['.'].import;
+      packageJson.main =
+        packageJson.main ??
+        (packageJson.exports !== undefined ? packageJson.exports['.'].import : undefined);
       delete packageJson.exports;
 
       await fs.promises.writeFile(packagePath, JSON.stringify(packageJson, undefined, 2));

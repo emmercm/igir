@@ -242,7 +242,7 @@ export default class DATGameInferrer extends Module {
 
     // For archives, assume the entire archive is one game
     const archivePathsToArchiveEntries = romFiles
-      .filter((file) => file instanceof ArchiveEntry)
+      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
       .reduce((map, file) => {
         const archivePath = file.getFilePath();
         if (!map.has(archivePath)) {

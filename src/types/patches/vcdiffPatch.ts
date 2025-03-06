@@ -392,7 +392,7 @@ class VcdiffCache {
     copyAddressesData: Buffer,
     copyAddressesOffset: number,
     here: number,
-    mode: number,
+    mode: VcdiffCopyAddressMode,
   ): [number, number] {
     let addr: number;
     let readValue: number;

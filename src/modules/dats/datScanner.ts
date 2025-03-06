@@ -219,10 +219,10 @@ export default class DATScanner extends Scanner {
         });
 
         let output = '';
-        proc.stdout.on('data', (chunk) => {
+        proc.stdout.on('data', (chunk: Buffer) => {
           output += chunk.toString();
         });
-        proc.stderr.on('data', (chunk) => {
+        proc.stderr.on('data', (chunk: Buffer) => {
           output += chunk.toString();
         });
 
@@ -507,7 +507,7 @@ export default class DATScanner extends Scanner {
               row.sha256.match(/^[0-9a-f]{64}$/) !== null),
         )
         .on('error', reject)
-        .on('data', (row) => {
+        .on('data', (row: SmdbRow) => {
           rows.push(row);
         })
         .on('end', () => resolve(rows));

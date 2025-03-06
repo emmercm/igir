@@ -5,7 +5,6 @@ import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
-import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import File from '../types/files/file.js';
@@ -117,9 +116,7 @@ export default class MovedROMDeleter extends Module {
         }
 
         const unmovedArchiveEntries = inputFilesForPath
-          .filter(
-            (inputFile): inputFile is ArchiveEntry<Archive> => inputFile instanceof ArchiveEntry,
-          )
+          .filter((inputFile) => inputFile instanceof ArchiveEntry)
           .filter((inputEntry) => {
             if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
               // If the input archive was written as a raw archive, then consider it moved

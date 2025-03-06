@@ -26,11 +26,9 @@ const PACKAGE_JSON = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH).toString()) a
   name: string;
   homepage: string;
   version: string;
-  engines:
-    | {
-        node: string;
-      }
-    | undefined;
+  engines: {
+    node: string;
+  };
 };
 
 /**

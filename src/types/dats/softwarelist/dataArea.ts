@@ -14,7 +14,7 @@ export default class DataArea {
 
   @Expose()
   @Type(() => ROM)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | ROM | ROM[] }) => value ?? [])
   readonly rom?: ROM | ROM[];
 
   constructor(rom: ROM | ROM[]) {

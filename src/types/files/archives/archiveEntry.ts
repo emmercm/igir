@@ -141,7 +141,14 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   // Property getters
 
-  getArchive(): A {
+  /**
+   * Note: we're using type `Archive` here instead of `A` because otherwise TypeScript v5.7 will
+   * think this is an `any`:
+   * <code>
+   * (File instanceof ArchiveEntry).getArchive()
+   * </code>
+   */
+  getArchive(): Archive {
     return this.archive;
   }
 

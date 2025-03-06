@@ -58,7 +58,7 @@ export default abstract class Scanner extends Module {
   protected async getUniqueFilesFromPaths(
     filePaths: string[],
     threads: number,
-    checksumBitmask: number,
+    checksumBitmask: ChecksumBitmask,
   ): Promise<File[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       throw new Error('must provide ChecksumBitmask when getting unique files');

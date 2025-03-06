@@ -205,7 +205,7 @@ export default class CandidateWriter extends Module {
     }
 
     // Prep the single output file
-    const outputZip = inputToOutputZipEntries[0][1].getArchive();
+    const outputZip = inputToOutputZipEntries[0][1].getArchive() as Zip;
 
     // If the output file already exists, see if we need to do anything
     if (await FsPoly.exists(outputZip.getFilePath())) {

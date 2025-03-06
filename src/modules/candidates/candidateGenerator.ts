@@ -285,7 +285,7 @@ export default class CandidateGenerator extends Module {
     // Group this Game's ROMs by the input Archives that contain them
     const inputArchivesToRoms = romsAndInputFiles.reduce((map, [rom, files]) => {
       files
-        .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+        .filter((file) => file instanceof ArchiveEntry)
         .map((archive): Archive => archive.getArchive())
         .forEach((archive) => {
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
@@ -657,7 +657,7 @@ export default class CandidateGenerator extends Module {
     const archiveEntryHashCodes = new Set(
       inputFiles
         .filter((entry) => entry.getFilePath() === archive.getFilePath())
-        .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+        .filter((file) => file instanceof ArchiveEntry)
         .map((entry) => entry.hashCode()),
     );
 

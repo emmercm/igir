@@ -108,7 +108,7 @@ export default class BPSPatch extends Patch {
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const blockHeader = await Patch.readUpsUint(patchFile);
-      const action = blockHeader & 3;
+      const action = (blockHeader & 3) as BPSAction;
       const length = (blockHeader >> 2) + 1;
 
       if (action === BPSAction.SOURCE_READ) {

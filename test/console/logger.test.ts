@@ -14,7 +14,7 @@ class LoggerSpy {
     this.stream = new PassThrough();
     this.spy = new Promise((resolve) => {
       const buffers: Uint8Array[] = [];
-      this.stream.on('data', (chunk) => {
+      this.stream.on('data', (chunk: Buffer) => {
         buffers.push(chunk);
       });
       this.stream.on('end', () => {
