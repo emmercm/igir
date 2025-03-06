@@ -1,4 +1,4 @@
-import FilePoly from '../../polyfill/filePoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -63,10 +63,10 @@ export default class NinjaPatch extends Patch {
   private async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
       while (!patchFile.isEOF()) {
@@ -77,7 +77,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private async applyCommand(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+  private async applyCommand(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     const command = (await patchFile.readNext(1)).readUInt8();
 
     if (command === NinjaCommand.TERMINATE) {
@@ -89,7 +89,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private async applyCommandOpen(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+  private async applyCommandOpen(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     const multiFile = (await patchFile.readNext(1)).readUInt8();
     if (multiFile > 0) {
       throw new ExpectedError(
@@ -137,7 +137,7 @@ export default class NinjaPatch extends Patch {
     }
   }
 
-  private static async applyCommandXor(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+  private static async applyCommandXor(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     const offsetLength = (await patchFile.readNext(1)).readUInt8();
     const offset = (await patchFile.readNext(offsetLength)).readUIntLE(0, offsetLength);
     targetFile.seek(offset);

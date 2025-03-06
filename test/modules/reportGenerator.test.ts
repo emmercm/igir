@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
-import fsPoly from '../../src/polyfill/fsPoly.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
@@ -114,7 +114,7 @@ async function wrapReportGenerator(
   datStatuses: DATStatus[],
   callback: (contents: string) => void | Promise<void>,
 ): Promise<void> {
-  const reportOutput = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'report.csv'));
+  const reportOutput = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'report.csv'));
   const options = new Options({
     ...optionsProps,
     reportOutput,
@@ -130,7 +130,7 @@ async function wrapReportGenerator(
     const contents = (await fs.promises.readFile(reportOutput)).toString();
     await callback(contents);
   } finally {
-    await fsPoly.rm(reportOutput);
+    await FsPoly.rm(reportOutput);
   }
 }
 

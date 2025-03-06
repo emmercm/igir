@@ -1,7 +1,7 @@
 import path, { ParsedPath } from 'node:path';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
 import Game from './dats/game.js';
@@ -124,7 +124,7 @@ export default class OutputFactory {
     let output = options.getOutput();
 
     // Replace all {token}s in the output path
-    output = fsPoly.makeLegal(
+    output = FsPoly.makeLegal(
       OutputFactory.replaceTokensInOutputPath(
         options,
         output,
@@ -162,7 +162,7 @@ export default class OutputFactory {
       output = path.join(output, dirLetter);
     }
 
-    return fsPoly.makeLegal(output);
+    return FsPoly.makeLegal(output);
   }
 
   private static replaceTokensInOutputPath(

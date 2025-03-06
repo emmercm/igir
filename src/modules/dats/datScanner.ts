@@ -8,7 +8,7 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DriveSemaphore from '../../driveSemaphore.js';
 import Defaults from '../../globals/defaults.js';
 import bufferPoly from '../../polyfill/bufferPoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import CMProParser, { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
 import DAT from '../../types/dats/dat.js';
 import DATObject, { DATObjectProps } from '../../types/dats/datObject.js';
@@ -153,7 +153,7 @@ export default class DATScanner extends Scanner {
     if (
       !dat &&
       !(datFile instanceof ArchiveEntry) &&
-      (await fsPoly.isExecutable(datFile.getFilePath()))
+      (await FsPoly.isExecutable(datFile.getFilePath()))
     ) {
       dat = await this.parseMameListxml(datFile);
     }
@@ -200,7 +200,7 @@ export default class DATScanner extends Scanner {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${datFile.toString()}: ${fsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`,
+      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`,
     );
 
     return dat;
@@ -273,7 +273,7 @@ export default class DATScanner extends Scanner {
 
   private parseXmlDat(datFile: File, fileContents: string): DAT | undefined {
     this.progressBar.logTrace(
-      `${datFile.toString()}: attempting to parse ${fsPoly.sizeReadable(fileContents.length)} of XML`,
+      `${datFile.toString()}: attempting to parse ${FsPoly.sizeReadable(fileContents.length)} of XML`,
     );
 
     let datObject: DATObjectProps;

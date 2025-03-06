@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
 import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
-import fsPoly from '../../src/polyfill/fsPoly.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -27,8 +27,8 @@ async function runOutputCleaner(
   writtenFilePathsToExclude: string[],
 ): Promise<CleanResult> {
   // Copy the fixture files to a temp directory
-  const tempInputDir = await fsPoly.mkdtemp(Temp.getTempDir());
-  await fsPoly.copyDir(ROM_FIXTURES_DIR, tempInputDir);
+  const tempInputDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  await FsPoly.copyDir(ROM_FIXTURES_DIR, tempInputDir);
 
   try {
     const writtenRomFilesToExclude = await Promise.all(
@@ -37,7 +37,7 @@ async function runOutputCleaner(
       ),
     );
 
-    const before = await fsPoly.walk(tempInputDir);
+    const before = await FsPoly.walk(tempInputDir);
     expect(before.length).toBeGreaterThan(0);
 
     const cleanedPaths = (
@@ -53,13 +53,13 @@ async function runOutputCleaner(
       .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
       .sort();
 
-    const after = await fsPoly.walk(tempInputDir);
+    const after = await FsPoly.walk(tempInputDir);
     const remainingPaths = after
       .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
       .sort();
 
     const movedPaths =
-      optionsProps.cleanBackup !== undefined ? await fsPoly.walk(optionsProps.cleanBackup) : [];
+      optionsProps.cleanBackup !== undefined ? await FsPoly.walk(optionsProps.cleanBackup) : [];
 
     return {
       cleanedPaths,
@@ -67,12 +67,12 @@ async function runOutputCleaner(
       movedPaths,
     };
   } finally {
-    await fsPoly.rm(tempInputDir, { recursive: true, force: true });
+    await FsPoly.rm(tempInputDir, { recursive: true, force: true });
   }
 }
 
 it('should delete nothing if nothing written', async () => {
-  const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
+  const existingFiles = (await FsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const { remainingPaths } = await runOutputCleaner({}, [], []);
@@ -80,7 +80,7 @@ it('should delete nothing if nothing written', async () => {
 });
 
 it('should delete nothing if no excess files', async () => {
-  const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
+  const existingFiles = (await FsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const { remainingPaths } = await runOutputCleaner({}, [], existingFiles);
@@ -134,7 +134,7 @@ it('should delete everything if all unmatched and nothing excluded', async () =>
 });
 
 it('should move everything if all unmatched and nothing excluded', async () => {
-  const tempMoveDir = await fsPoly.mkdtemp(Temp.getTempDir());
+  const tempMoveDir = await FsPoly.mkdtemp(Temp.getTempDir());
   try {
     const { cleanedPaths, remainingPaths, movedPaths } = await runOutputCleaner(
       {
@@ -147,12 +147,12 @@ it('should move everything if all unmatched and nothing excluded', async () => {
     expect(remainingPaths).toHaveLength(0);
     expect(movedPaths).toHaveLength(cleanedPaths.length);
   } finally {
-    await fsPoly.rm(tempMoveDir, { recursive: true, force: true });
+    await FsPoly.rm(tempMoveDir, { recursive: true, force: true });
   }
 });
 
 it('should delete nothing if all unmatched but doing a dry run', async () => {
-  const existingFiles = (await fsPoly.walk(ROM_FIXTURES_DIR))
+  const existingFiles = (await FsPoly.walk(ROM_FIXTURES_DIR))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .sort();
   const { remainingPaths } = await runOutputCleaner(
@@ -166,22 +166,22 @@ it('should delete nothing if all unmatched but doing a dry run', async () => {
 });
 
 it('should delete hard links', async () => {
-  const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
   try {
     const filesDir = path.join(tempDir, 'files');
-    await fsPoly.mkdir(filesDir);
+    await FsPoly.mkdir(filesDir);
     const linksDir = path.join(tempDir, 'links');
-    await fsPoly.mkdir(linksDir);
+    await FsPoly.mkdir(linksDir);
 
-    const tempFileOne = await fsPoly.mktemp(path.join(filesDir, 'one'));
-    await fsPoly.touch(tempFileOne);
-    const tempLinkOne = await fsPoly.mktemp(path.join(linksDir, 'one'));
-    await fsPoly.hardlink(tempFileOne, tempLinkOne);
+    const tempFileOne = await FsPoly.mktemp(path.join(filesDir, 'one'));
+    await FsPoly.touch(tempFileOne);
+    const tempLinkOne = await FsPoly.mktemp(path.join(linksDir, 'one'));
+    await FsPoly.hardlink(tempFileOne, tempLinkOne);
 
-    const tempFileTwo = await fsPoly.mktemp(path.join(filesDir, 'two'));
-    await fsPoly.touch(tempFileTwo);
-    const tempLinkTwo = await fsPoly.mktemp(path.join(linksDir, 'two'));
-    await fsPoly.hardlink(tempFileTwo, tempLinkTwo);
+    const tempFileTwo = await FsPoly.mktemp(path.join(filesDir, 'two'));
+    await FsPoly.touch(tempFileTwo);
+    const tempLinkTwo = await FsPoly.mktemp(path.join(linksDir, 'two'));
+    await FsPoly.hardlink(tempFileTwo, tempLinkTwo);
 
     await new DirectoryCleaner(
       new Options({
@@ -190,7 +190,7 @@ it('should delete hard links', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = await fsPoly.walk(tempDir);
+    const remainingPaths = await FsPoly.walk(tempDir);
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
@@ -199,27 +199,27 @@ it('should delete hard links', async () => {
       tempLinkOne,
     ]);
   } finally {
-    await fsPoly.rm(tempDir, { recursive: true });
+    await FsPoly.rm(tempDir, { recursive: true });
   }
 });
 
 it('should delete symlinks', async () => {
-  const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
   try {
     const filesDir = path.join(tempDir, 'files');
-    await fsPoly.mkdir(filesDir);
+    await FsPoly.mkdir(filesDir);
     const linksDir = path.join(tempDir, 'links');
-    await fsPoly.mkdir(linksDir);
+    await FsPoly.mkdir(linksDir);
 
-    const tempFileOne = await fsPoly.mktemp(path.join(filesDir, 'one'));
-    await fsPoly.touch(tempFileOne);
-    const tempLinkOne = await fsPoly.mktemp(path.join(linksDir, 'one'));
-    await fsPoly.symlink(tempFileOne, tempLinkOne);
+    const tempFileOne = await FsPoly.mktemp(path.join(filesDir, 'one'));
+    await FsPoly.touch(tempFileOne);
+    const tempLinkOne = await FsPoly.mktemp(path.join(linksDir, 'one'));
+    await FsPoly.symlink(tempFileOne, tempLinkOne);
 
-    const tempFileTwo = await fsPoly.mktemp(path.join(filesDir, 'two'));
-    await fsPoly.touch(tempFileTwo);
-    const tempLinkTwo = await fsPoly.mktemp(path.join(linksDir, 'two'));
-    await fsPoly.symlink(tempFileTwo, tempLinkTwo);
+    const tempFileTwo = await FsPoly.mktemp(path.join(filesDir, 'two'));
+    await FsPoly.touch(tempFileTwo);
+    const tempLinkTwo = await FsPoly.mktemp(path.join(linksDir, 'two'));
+    await FsPoly.symlink(tempFileTwo, tempLinkTwo);
 
     await new DirectoryCleaner(
       new Options({
@@ -228,7 +228,7 @@ it('should delete symlinks', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = await fsPoly.walk(tempDir);
+    const remainingPaths = await FsPoly.walk(tempDir);
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
@@ -237,6 +237,6 @@ it('should delete symlinks', async () => {
       tempLinkOne,
     ]);
   } finally {
-    await fsPoly.rm(tempDir, { recursive: true });
+    await FsPoly.rm(tempDir, { recursive: true });
   }
 });

@@ -1,4 +1,4 @@
-import FilePoly from '../../polyfill/filePoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -45,12 +45,12 @@ export default class IPSPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
     offsetSize: number,
     eofString: string,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
       await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
@@ -60,8 +60,8 @@ export default class IPSPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    targetFile: IOFile,
     offsetSize: number,
     eofString: string,
   ): Promise<void> {

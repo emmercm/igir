@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
 import Defaults from '../../../globals/defaults.js';
-import fsPoly from '../../../polyfill/fsPoly.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
@@ -55,7 +55,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       : archiveEntryProps.sha256;
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
-    if (await fsPoly.exists(archiveEntryProps.archive.getFilePath())) {
+    if (await FsPoly.exists(archiveEntryProps.archive.getFilePath())) {
       // Calculate size
       finalSize = finalSize ?? 0;
 
@@ -92,8 +92,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSha256WithoutHeader = headerlessChecksums.sha256;
       }
 
-      if (await fsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {
-        finalSymlinkSource = await fsPoly.readlink(archiveEntryProps.archive.getFilePath());
+      if (await FsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {
+        finalSymlinkSource = await FsPoly.readlink(archiveEntryProps.archive.getFilePath());
       }
     } else {
       finalSize = finalSize ?? 0;

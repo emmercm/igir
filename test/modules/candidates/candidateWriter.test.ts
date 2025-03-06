@@ -15,7 +15,7 @@ import PatchScanner from '../../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import fsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly from '../../../src/polyfill/fsPoly.js';
 import DAT from '../../../src/types/dats/dat.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
@@ -32,30 +32,30 @@ async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
   // Set up the input directory
-  const inputTemp = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
-  await fsPoly.copyDir('./test/fixtures', inputTemp);
+  const inputTemp = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+  await FsPoly.copyDir('./test/fixtures', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
-  const outputTemp = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'output'));
-  await fsPoly.rm(outputTemp, { force: true, recursive: true });
+  const outputTemp = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'output'));
+  await FsPoly.rm(outputTemp, { force: true, recursive: true });
 
   try {
     // Call the callback
     await callback(inputTemp, outputTemp);
   } finally {
     // Delete the temp files
-    await fsPoly.rm(inputTemp, { recursive: true });
-    await fsPoly.rm(outputTemp, { force: true, recursive: true });
+    await FsPoly.rm(inputTemp, { recursive: true });
+    await FsPoly.rm(outputTemp, { force: true, recursive: true });
   }
 }
 
 async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
-  if (!(await fsPoly.exists(dirPath))) {
+  if (!(await FsPoly.exists(dirPath))) {
     return [];
   }
 
   return Promise.all(
-    (await fsPoly.walk(dirPath)).sort().map(async (filePath) => {
+    (await FsPoly.walk(dirPath)).sort().map(async (filePath) => {
       const stats = await fs.promises.lstat(filePath);
       // Hard-code properties that can change with file reads
       stats.atime = new Date(0);
@@ -333,8 +333,8 @@ describe('zip', () => {
       await Promise.all(
         outputFilesBefore.map(async ([filePath]) => {
           const resolvedPath = path.join(outputTemp, filePath);
-          await fsPoly.rm(resolvedPath);
-          await fsPoly.touch(resolvedPath);
+          await FsPoly.rm(resolvedPath);
+          await FsPoly.touch(resolvedPath);
         }),
       );
 
@@ -939,8 +939,8 @@ describe('extract', () => {
       await Promise.all(
         outputFilesBefore.map(async ([filePath]) => {
           const resolvedPath = path.join(outputTemp, filePath);
-          await fsPoly.rm(resolvedPath);
-          await fsPoly.touch(resolvedPath);
+          await FsPoly.rm(resolvedPath);
+          await FsPoly.touch(resolvedPath);
         }),
       );
 
@@ -1557,8 +1557,8 @@ describe('raw', () => {
       await Promise.all(
         outputFilesBefore.map(async ([filePath]) => {
           const resolvedPath = path.join(outputTemp, filePath);
-          await fsPoly.rm(resolvedPath);
-          await fsPoly.touch(resolvedPath);
+          await FsPoly.rm(resolvedPath);
+          await FsPoly.touch(resolvedPath);
         }),
       );
 
@@ -2135,8 +2135,8 @@ describe('link', () => {
       await Promise.all(
         outputFilesBefore.map(async ([filePath]) => {
           const resolvedPath = path.join(outputTemp, filePath);
-          await fsPoly.rm(resolvedPath);
-          await fsPoly.touch(resolvedPath);
+          await FsPoly.rm(resolvedPath);
+          await FsPoly.touch(resolvedPath);
         }),
       );
 
@@ -2188,8 +2188,8 @@ describe('link', () => {
       await Promise.all(
         outputFilesBefore.map(async ([filePath]) => {
           const resolvedPath = path.join(outputTemp, filePath);
-          await fsPoly.rm(resolvedPath);
-          await fsPoly.touch(resolvedPath);
+          await FsPoly.rm(resolvedPath);
+          await FsPoly.touch(resolvedPath);
         }),
       );
 
@@ -2241,9 +2241,9 @@ describe('link', () => {
         const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
         const outputPathResolved = path.resolve(
           path.dirname(outputPathAbsolute),
-          await fsPoly.readlink(outputPathAbsolute),
+          await FsPoly.readlink(outputPathAbsolute),
         );
-        await expect(fsPoly.exists(outputPathResolved)).resolves.toEqual(true);
+        await expect(FsPoly.exists(outputPathResolved)).resolves.toEqual(true);
         expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
       }
     });

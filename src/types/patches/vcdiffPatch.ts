@@ -1,5 +1,5 @@
-import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -122,7 +122,7 @@ class VcdiffHeader {
     this.codeTable = codeTable;
   }
 
-  static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffHeader> {
+  static async fromFilePoly(patchFile: IOFile): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
       await patchFile.close();
@@ -209,7 +209,7 @@ class VcdiffWindow {
     this.copyAddressesData = copyAddressesData;
   }
 
-  static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffWindow> {
+  static async fromFilePoly(patchFile: IOFile): Promise<VcdiffWindow> {
     const winIndicator = (await patchFile.readNext(1)).readUInt8();
     let sourceSegmentSize = 0;
     let sourceSegmentPosition = 0;
@@ -278,7 +278,7 @@ class VcdiffWindow {
   }
 
   async writeAddData(
-    targetFile: FilePoly,
+    targetFile: IOFile,
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
@@ -294,7 +294,7 @@ class VcdiffWindow {
   }
 
   async writeRunData(
-    targetFile: FilePoly,
+    targetFile: IOFile,
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
@@ -313,8 +313,8 @@ class VcdiffWindow {
   }
 
   async writeCopyData(
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    sourceFile: IOFile,
+    targetFile: IOFile,
     targetWindowPosition: number,
     size: number,
     copyCache: VcdiffCache,
@@ -454,15 +454,15 @@ export default class VcdiffPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
   ): Promise<void> {
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
+      const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await fsPoly.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+      await FsPoly.copyFile(tempRomFile, outputRomPath);
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
         await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
@@ -474,9 +474,9 @@ export default class VcdiffPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: FilePoly,
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    sourceFile: IOFile,
+    targetFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
   ): Promise<void> {
@@ -500,8 +500,8 @@ export default class VcdiffPatch extends Patch {
   }
 
   private static async applyPatchWindow(
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    sourceFile: IOFile,
+    targetFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
     targetWindowPosition: number,

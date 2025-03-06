@@ -1,5 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Parent from '../../types/dats/parent.js';
 import Options, { PreferRevision } from '../../types/options.js';
@@ -62,7 +62,7 @@ export default class CandidatePreferer extends Module {
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const filteredCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: filtered to ${fsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
+      `${dat.getNameShort()}: filtered to ${FsPoly.sizeReadable(size)} of ${filteredCandidates.toLocaleString()} candidate${filteredCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
     );
 
     this.progressBar.logTrace(`${dat.getNameShort()}: done preferring candidates`);

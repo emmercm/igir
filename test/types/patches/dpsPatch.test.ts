@@ -1,16 +1,16 @@
 import path from 'node:path';
 
 import Temp from '../../../src/globals/temp.js';
-import fsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly from '../../../src/polyfill/fsPoly.js';
 import File from '../../../src/types/files/file.js';
 import DPSPatch from '../../../src/types/patches/dpsPatch.js';
 
 // TODO(cemmer): igir.test.ts test fixtures
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await fsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
-  await fsPoly.mkdir(path.dirname(temp), { recursive: true });
-  await fsPoly.writeFile(temp, contents);
+  const temp = await FsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
+  await FsPoly.mkdir(path.dirname(temp), { recursive: true });
+  await FsPoly.writeFile(temp, contents);
   return File.fileOf({ filePath: temp });
 }
 

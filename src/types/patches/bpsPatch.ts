@@ -1,5 +1,5 @@
-import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
@@ -64,7 +64,7 @@ export default class BPSPatch extends Patch {
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new ExpectedError(
-          `BPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
+          `BPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
         );
       }
       await Patch.readUpsUint(patchFile); // target size
@@ -81,10 +81,10 @@ export default class BPSPatch extends Patch {
   private async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
   ): Promise<void> {
     return inputRomFile.extractToTempFilePoly('r', async (inputRomFilePoly) => {
-      const targetFile = await FilePoly.fileOfSize(
+      const targetFile = await IOFile.fileOfSize(
         outputRomPath,
         'r+',
         this.getSizeAfter() as number,
@@ -99,9 +99,9 @@ export default class BPSPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: FilePoly,
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    sourceFile: IOFile,
+    targetFile: IOFile,
   ): Promise<void> {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;

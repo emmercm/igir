@@ -1,5 +1,5 @@
-import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -16,7 +16,7 @@ class PPFHeader {
     this.undoDataAvailable = undoDataAvailable;
   }
 
-  static async fromFilePoly(inputRomFile: File, patchFile: FilePoly): Promise<PPFHeader> {
+  static async fromFilePoly(inputRomFile: File, patchFile: IOFile): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
     if (!header.startsWith(PPFHeader.FILE_SIGNATURE.toString())) {
       throw new ExpectedError(`PPF patch header is invalid: ${patchFile.getPathLike()}`);
@@ -36,7 +36,7 @@ class PPFHeader {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
         throw new ExpectedError(
-          `PPF patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
+          `PPF patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
         );
       }
       blockCheckEnabled = true;
@@ -81,11 +81,11 @@ export default class PPFPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
     header: PPFHeader,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
       while (!patchFile.isEOF()) {
@@ -97,8 +97,8 @@ export default class PPFPatch extends Patch {
   }
 
   private static async applyPatchBlock(
-    patchFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    targetFile: IOFile,
     header: PPFHeader,
   ): Promise<void> {
     const peek = (await patchFile.peekNext(18)).toString();

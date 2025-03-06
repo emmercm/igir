@@ -196,7 +196,6 @@ export default [
     files: [
       'test/**/*.ts',
       // TODO(cemmer)
-      'src/polyfill/**/*.ts',
       'src/types/files/**/*.ts',
       'src/types/patches/**/*.ts',
     ],

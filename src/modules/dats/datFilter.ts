@@ -1,5 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
@@ -57,7 +57,7 @@ export default class DATFilter extends Module {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${filteredDat.getNameShort()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${fsPoly.sizeReadable(size)})`,
+      `${filteredDat.getNameShort()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${FsPoly.sizeReadable(size)})`,
     );
 
     this.progressBar.logTrace(`${filteredDat.getNameShort()}: done filtering DAT`);

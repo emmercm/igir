@@ -6,7 +6,7 @@ import { Mutex } from 'async-mutex';
 
 import Defaults from '../../../../globals/defaults.js';
 import Temp from '../../../../globals/temp.js';
-import fsPoly from '../../../../polyfill/fsPoly.js';
+import FsPoly from '../../../../polyfill/fsPoly.js';
 import ExpectedError from '../../../expectedError.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -92,7 +92,7 @@ export default class SevenZip extends Archive {
   }
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
-    const tempDir = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), '7z'));
+    const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), '7z'));
     try {
       let tempFile = path.join(tempDir, entryPath);
 
@@ -110,8 +110,8 @@ export default class SevenZip extends Archive {
 
       // https://github.com/onikienko/7zip-min/issues/86
       // Fix `7zip-min.list()` returning unicode entry names as � on Windows
-      if (process.platform === 'win32' && !(await fsPoly.exists(tempFile))) {
-        const files = await fsPoly.walk(tempDir);
+      if (process.platform === 'win32' && !(await FsPoly.exists(tempFile))) {
+        const files = await FsPoly.walk(tempDir);
         if (files.length === 0) {
           throw new ExpectedError('failed to extract any files');
         } else if (files.length > 1) {
@@ -120,9 +120,9 @@ export default class SevenZip extends Archive {
         [tempFile] = files;
       }
 
-      await fsPoly.mv(tempFile, extractedFilePath);
+      await FsPoly.mv(tempFile, extractedFilePath);
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true, force: true });
+      await FsPoly.rm(tempDir, { recursive: true, force: true });
     }
   }
 }

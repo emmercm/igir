@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -37,8 +37,8 @@ export default class Dir2DatCreator extends Module {
     this.progressBar.reset(1);
 
     const datDir = this.options.getDir2DatOutput();
-    if (!(await fsPoly.exists(datDir))) {
-      await fsPoly.mkdir(datDir, { recursive: true });
+    if (!(await FsPoly.exists(datDir))) {
+      await FsPoly.mkdir(datDir, { recursive: true });
     }
     const datPath = path.join(datDir, dat.getFilename());
 
@@ -69,7 +69,7 @@ export default class Dir2DatCreator extends Module {
 
     this.progressBar.logInfo(`${datFromCandidates.getNameShort()}: creating dir2dat '${datPath}'`);
     const datContents = datFromCandidates.toXmlDat();
-    await fsPoly.writeFile(datPath, datContents);
+    await FsPoly.writeFile(datPath, datContents);
 
     this.progressBar.logTrace(`${datFromCandidates.getNameShort()}: done writing dir2dat`);
     return datPath;

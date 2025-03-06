@@ -7,7 +7,7 @@ import async from 'async';
 import unzipper, { Entry, File as ZipFile } from 'unzipper';
 
 import Defaults from '../../../globals/defaults.js';
-import fsPoly from '../../../polyfill/fsPoly.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
 import Timer from '../../../timer.js';
 import ExpectedError from '../../expectedError.js';
@@ -95,8 +95,8 @@ export default class Zip extends Archive {
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const extractedDir = path.dirname(extractedFilePath);
-    if (!(await fsPoly.exists(extractedDir))) {
-      await fsPoly.mkdir(extractedDir, { recursive: true });
+    if (!(await FsPoly.exists(extractedDir))) {
+      await FsPoly.mkdir(extractedDir, { recursive: true });
     }
 
     return this.extractEntryToStream(
@@ -153,7 +153,7 @@ export default class Zip extends Archive {
   async createArchive(inputToOutput: [File, ArchiveEntry<Zip>][]): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
-    const tempZipFile = await fsPoly.mktemp(this.getFilePath());
+    const tempZipFile = await FsPoly.mktemp(this.getFilePath());
     const writeStream = fs.createWriteStream(tempZipFile);
 
     // Start writing the zip file
@@ -172,7 +172,7 @@ export default class Zip extends Archive {
       await Zip.addArchiveEntries(zipFile, inputToOutput);
     } catch (error) {
       zipFile.abort();
-      await fsPoly.rm(tempZipFile, { force: true });
+      await FsPoly.rm(tempZipFile, { force: true });
       throw error;
     }
 
@@ -184,7 +184,7 @@ export default class Zip extends Archive {
       writeStream.on('close', resolve);
     });
 
-    return fsPoly.mv(tempZipFile, this.getFilePath());
+    return FsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(
