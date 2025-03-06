@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
+import eslint from '@eslint/js';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import jest from 'eslint-plugin-jest';
@@ -14,8 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
   baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
+  recommendedConfig: eslint.configs.recommended,
+  allConfig: eslint.configs.all,
 });
 
 export default [
@@ -42,6 +42,8 @@ export default [
       '@typescript-eslint/no-misused-promises': [
         'error',
         {
+          // Allow passing async functions to places that don't explicitly accept them, such as
+          // setTimeout()
           checksVoidReturn: false,
         },
       ],
@@ -230,6 +232,8 @@ export default [
       'jest/expect-expect': 'off',
     },
   },
+
+  // Ignore JSDoc requirements for some files
   {
     files: [
       'test/**/*.ts',
@@ -237,7 +241,6 @@ export default [
       'src/types/files/**/*.ts',
       'src/types/patches/**/*.ts',
     ],
-
     rules: {
       'jsdoc/require-jsdoc': 'off',
     },
