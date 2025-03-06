@@ -39,7 +39,12 @@ export default [
       },
     },
     rules: {
-      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {
+          checksVoidReturn: false,
+        },
+      ],
       '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-enum-comparison': 'warn',
@@ -56,7 +61,7 @@ export default [
     },
   },
   {
-    files: [__filename],
+    ignores: ['**/*.ts'],
     ...tseslint.configs.disableTypeChecked,
   },
 
