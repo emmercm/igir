@@ -101,10 +101,10 @@ export default class DATGameInferrer extends Module {
 
     // For each inference strategy
     const inferFunctions = [
-      this.inferArchiveEntries,
-      this.inferBinCueFiles,
-      this.inferGdiFiles,
-      this.inferRawFiles,
+      this.inferArchiveEntries.bind(this),
+      this.inferBinCueFiles.bind(this),
+      this.inferGdiFiles.bind(this),
+      this.inferRawFiles.bind(this),
     ];
     for (const inferFunction of inferFunctions) {
       // Infer the games and their files

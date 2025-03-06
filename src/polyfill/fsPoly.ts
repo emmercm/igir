@@ -395,7 +395,7 @@ export default class FsPoly {
    */
   static async readlink(pathLike: PathLike): Promise<string> {
     if (!(await this.isSymlink(pathLike))) {
-      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike}`);
+      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
     return fs.promises.readlink(pathLike);
   }
@@ -405,7 +405,7 @@ export default class FsPoly {
    */
   static readlinkSync(pathLike: PathLike): string {
     if (!this.isSymlinkSync(pathLike)) {
-      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike}`);
+      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
     return fs.readlinkSync(pathLike);
   }
@@ -437,7 +437,7 @@ export default class FsPoly {
    */
   static async realpath(pathLike: PathLike): Promise<string> {
     if (!(await this.exists(pathLike))) {
-      throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike}`);
+      throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike.toString()}`);
     }
     return fs.promises.realpath(pathLike);
   }

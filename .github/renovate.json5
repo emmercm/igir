@@ -156,6 +156,7 @@
       {
         // Group ESLint together so files can be fixed automatically
         matchPackagePatterns: [
+          'typescript-eslint',
           '^@typescript-eslint',
           '^eslint',
         ],

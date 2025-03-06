@@ -5,6 +5,7 @@ import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
+import Archive from '../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
@@ -118,7 +119,7 @@ describe('multiple files', () => {
     expect(entriesWithMd5).toHaveLength(0);
 
     const extensionsWithSha1 = scannedFiles
-      .filter((file) => file instanceof ArchiveEntry)
+      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
       .filter((file) => file.getSha1() !== undefined)
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayPoly.reduceUnique(), [])

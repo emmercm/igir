@@ -19,13 +19,13 @@ class PPFHeader {
   static async fromFilePoly(inputRomFile: File, patchFile: IOFile): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
     if (!header.startsWith(PPFHeader.FILE_SIGNATURE.toString())) {
-      throw new ExpectedError(`PPF patch header is invalid: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(`PPF patch header is invalid: ${patchFile.getPathLike().toString()}`);
     }
     const encoding = (await patchFile.readNext(1)).readUInt8();
     const version = encoding + 1;
     if (!header.endsWith(`${version}0`)) {
       throw new ExpectedError(
-        `PPF patch header has an invalid version: ${patchFile.getPathLike()}`,
+        `PPF patch header has an invalid version: ${patchFile.getPathLike().toString()}`,
       );
     }
     patchFile.skipNext(50); // description
@@ -36,7 +36,7 @@ class PPFHeader {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
         throw new ExpectedError(
-          `PPF patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
+          `PPF patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
       blockCheckEnabled = true;
@@ -46,7 +46,9 @@ class PPFHeader {
       undoDataAvailable = (await patchFile.readNext(1)).readUInt8() === 0x01;
       patchFile.skipNext(1); // dummy
     } else {
-      throw new ExpectedError(`PPF v${version} isn't supported: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(
+        `PPF v${version} isn't supported: ${patchFile.getPathLike().toString()}`,
+      );
     }
     if (blockCheckEnabled) {
       patchFile.skipNext(1024);

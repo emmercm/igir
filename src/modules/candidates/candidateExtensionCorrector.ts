@@ -183,7 +183,7 @@ export default class CandidateExtensionCorrector extends Module {
         romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
       } catch (error) {
         this.progressBar.logError(
-          `${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`,
+          `${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile().toString()}': ${error}`,
         );
       }
       if (romSignature) {

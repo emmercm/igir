@@ -140,7 +140,7 @@ export default class MovedROMDeleter extends Module {
           this.progressBar.logWarn(
             `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries
               .sort()
-              .map((entry) => `  ${entry}`)
+              .map((entry) => `  ${entry.toString()}`)
               .join('\n')}`,
           );
           return undefined;

@@ -48,7 +48,7 @@ export default class APSN64Patch extends Patch {
         targetSize = (await patchFile.readNext(4)).readUInt32LE();
       } else {
         throw new ExpectedError(
-          `APS (N64) patch type ${patchType} isn't supported: ${patchFile.getPathLike()}`,
+          `APS (N64) patch type ${patchType} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
     });
@@ -69,7 +69,7 @@ export default class APSN64Patch extends Patch {
         patchFile.seek(78);
       } else {
         throw new ExpectedError(
-          `APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike()}`,
+          `APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
 

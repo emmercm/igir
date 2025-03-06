@@ -131,7 +131,7 @@ export default class DriveSemaphore {
   }
 
   private static getDiskForFile(file: File | string): string {
-    const filePath = file instanceof File ? file.getFilePath() : (file as string);
+    const filePath = file instanceof File ? file.getFilePath() : file;
     const filePathNormalized = filePath.replace(/[\\/]/g, path.sep);
 
     // Try to get the path of the drive this file is on

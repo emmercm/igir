@@ -61,7 +61,7 @@ export default class UPSPatch extends Patch {
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new ExpectedError(
-          `UPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike()}`,
+          `UPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
       await Patch.readUpsUint(patchFile); // target size
@@ -124,7 +124,7 @@ export default class UPSPatch extends Patch {
     }
 
     throw new ExpectedError(
-      `UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike()}`,
+      `UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike().toString()}`,
     );
   }
 }
