@@ -60,7 +60,7 @@ export default class FileChecksums {
       const sha256 =
         checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
-      stream.on('data', (chunk) => {
+      stream.on('data', (chunk: Buffer) => {
         if (checksumBitmask & ChecksumBitmask.CRC32) {
           crc = crc32(chunk, crc);
         }

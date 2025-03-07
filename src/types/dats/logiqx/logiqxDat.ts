@@ -13,18 +13,18 @@ import Header from './header.js';
  */
 export default class LogiqxDAT extends DAT {
   @Expose()
-  @Transform(({ value }) => value || undefined)
+  @Type(() => Header)
   private readonly header: Header;
 
   @Expose()
   @Type(() => Game)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
   private readonly game?: Game | Game[];
 
   // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what pleasuredome Datfiles use
   @Expose()
   @Type(() => Machine)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | Machine | Machine[] }) => value ?? [])
   private readonly machine?: Machine | Machine[];
 
   constructor(header: Header, games: Game | Game[]) {

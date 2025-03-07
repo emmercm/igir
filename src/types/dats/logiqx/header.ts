@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 import ClrMamePro from './clrMamePro.js';
 
@@ -70,7 +70,6 @@ export default class Header implements HeaderOptions {
 
   @Type(() => ClrMamePro)
   @Expose({ name: 'clrmamepro' })
-  @Transform(({ value }) => value || undefined)
   readonly clrMamePro?: ClrMamePro;
 
   constructor(options?: HeaderOptions) {

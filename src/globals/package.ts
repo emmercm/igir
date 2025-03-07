@@ -22,7 +22,14 @@ function scanUpPathForFile(filePath: string, fileName: string): string | undefin
 const PACKAGE_JSON_PATH = path.resolve(
   scanUpPathForFile(url.fileURLToPath(new URL('.', import.meta.url)), 'package.json') as string,
 );
-const PACKAGE_JSON = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH).toString());
+const PACKAGE_JSON = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH).toString()) as {
+  name: string;
+  homepage: string;
+  version: string;
+  engines: {
+    node: string;
+  };
+};
 
 /**
  * A static class of globals that are parsed from `package.json` at startup, to be used widely.

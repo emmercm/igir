@@ -146,10 +146,10 @@ logger.info(`Output: ${FsPoly.sizeReadable(await FsPoly.size(output))}`);
 
 const proc = child_process.spawn(output, ['--help'], { windowsHide: true });
 let procOutput = '';
-proc.stdout.on('data', (chunk) => {
+proc.stdout.on('data', (chunk: Buffer) => {
   procOutput += chunk.toString();
 });
-proc.stderr.on('data', (chunk) => {
+proc.stderr.on('data', (chunk: Buffer) => {
   procOutput += chunk.toString();
 });
 await new Promise((resolve, reject) => {

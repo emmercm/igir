@@ -244,7 +244,10 @@ export default class ArgumentsParser {
         description: 'The minimum checksum level to calculate and use for matching',
         choices: Object.keys(ChecksumBitmask)
           .filter((bitmask) => Number.isNaN(Number(bitmask)))
-          .filter((bitmask) => ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] > 0)
+          .filter(
+            (bitmask) =>
+              ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] !== ChecksumBitmask.NONE,
+          )
           .map((bitmask) => bitmask.toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -255,7 +258,10 @@ export default class ArgumentsParser {
         description: 'The maximum checksum level to calculate and use for matching',
         choices: Object.keys(ChecksumBitmask)
           .filter((bitmask) => Number.isNaN(Number(bitmask)))
-          .filter((bitmask) => ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] > 0)
+          .filter(
+            (bitmask) =>
+              ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] !== ChecksumBitmask.NONE,
+          )
           .map((bitmask) => bitmask.toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,

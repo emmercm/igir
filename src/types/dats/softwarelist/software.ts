@@ -10,7 +10,7 @@ import Part from './part.js';
 export default class Software extends Game {
   @Expose()
   @Type(() => Part)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | Part | Part[] }) => value ?? [])
   readonly part?: Part | Part[];
 
   constructor(part: Part | Part[]) {

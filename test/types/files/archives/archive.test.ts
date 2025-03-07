@@ -159,7 +159,7 @@ describe('extractEntryToFile', () => {
       new FileFactory(new FileCache()),
     ).scan();
     const archives = archiveEntries
-      .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
+      .filter((entry) => entry instanceof ArchiveEntry)
       .map((entry) => entry.getArchive())
       .reduce(ArrayPoly.reduceUnique(), []);
     expect(archives).toHaveLength(28);

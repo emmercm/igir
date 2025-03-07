@@ -17,7 +17,7 @@ export default class SoftwareListDAT extends DAT {
 
   @Expose()
   @Type(() => Software)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | Software | Software[] }) => value ?? [])
   readonly software?: Software | Software[];
 
   constructor(software: Software | Software[]) {

@@ -78,7 +78,7 @@ export default class NinjaPatch extends Patch {
   }
 
   private async applyCommand(patchFile: IOFile, targetFile: IOFile): Promise<void> {
-    const command = (await patchFile.readNext(1)).readUInt8();
+    const command = (await patchFile.readNext(1)).readUInt8() as NinjaCommand;
 
     if (command === NinjaCommand.TERMINATE) {
       // Nothing

@@ -126,7 +126,9 @@ class VcdiffHeader {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
       await patchFile.close();
-      throw new ExpectedError(`Vcdiff patch header is invalid: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(
+        `Vcdiff patch header is invalid: ${patchFile.getPathLike().toString()}`,
+      );
     }
     patchFile.skipNext(1); // version
 
@@ -144,7 +146,7 @@ class VcdiffHeader {
          */
         await patchFile.close();
         throw new ExpectedError(
-          `unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`,
+          `unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike().toString()}`,
         );
       }
     }
@@ -155,7 +157,7 @@ class VcdiffHeader {
       if (codeTableLength) {
         await patchFile.close();
         throw new ExpectedError(
-          `can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`,
+          `can't parse Vcdiff application-defined code table: ${patchFile.getPathLike().toString()}`,
         );
       }
     }
@@ -390,7 +392,7 @@ class VcdiffCache {
     copyAddressesData: Buffer,
     copyAddressesOffset: number,
     here: number,
-    mode: number,
+    mode: VcdiffCopyAddressMode,
   ): [number, number] {
     let addr: number;
     let readValue: number;

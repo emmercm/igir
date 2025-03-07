@@ -14,7 +14,7 @@ export default class Part {
 
   @Expose()
   @Type(() => DataArea)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | DataArea | DataArea[] }) => value ?? [])
   readonly dataarea?: DataArea | DataArea[];
 
   constructor(dataarea: DataArea | DataArea[]) {

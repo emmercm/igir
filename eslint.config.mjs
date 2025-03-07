@@ -2,19 +2,20 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
+import eslint from '@eslint/js';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import jest from 'eslint-plugin-jest';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import unicorn from 'eslint-plugin-unicorn';
+import tseslint from 'typescript-eslint';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
   baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
+  recommendedConfig: eslint.configs.recommended,
+  allConfig: eslint.configs.all,
 });
 
 export default [
@@ -23,11 +24,49 @@ export default [
   },
   ...compat.extends(
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-type-checked',
     'plugin:jsdoc/recommended-typescript-error',
     'plugin:jest/recommended',
     'plugin:prettier/recommended', // MUST BE LAST!
   ),
+
+  // plugin:@typescript-eslint/recommended-type-checked
+  {
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {
+          // Allow passing async functions to places that don't explicitly accept them, such as
+          // setTimeout()
+          checksVoidReturn: false,
+        },
+      ],
+      '@typescript-eslint/restrict-template-expressions': [
+        'error',
+        {
+          allow: ['unknown'],
+          allowNever: true,
+        },
+      ],
+      '@typescript-eslint/unbound-method': [
+        'error',
+        {
+          ignoreStatic: true,
+        },
+      ],
+    },
+  },
+  {
+    ignores: ['**/*.ts'],
+    ...tseslint.configs.disableTypeChecked,
+  },
+
   {
     files: ['**/*.ts'],
 
@@ -41,7 +80,8 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
+        projectService: true,
+        tsconfigRootDir: __dirname,
       },
       sourceType: 'module',
 
@@ -192,6 +232,8 @@ export default [
       'jest/expect-expect': 'off',
     },
   },
+
+  // Ignore JSDoc requirements for some files
   {
     files: [
       'test/**/*.ts',
@@ -199,7 +241,6 @@ export default [
       'src/types/files/**/*.ts',
       'src/types/patches/**/*.ts',
     ],
-
     rules: {
       'jsdoc/require-jsdoc': 'off',
     },

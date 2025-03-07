@@ -64,7 +64,7 @@ try {
 // Start the main process
 try {
   new EndOfLifeChecker(logger).check(process.version);
-  new UpdateChecker(logger).check();
+  void new UpdateChecker(logger).check();
 
   await new Igir(options, logger).main();
   ProgressBarCLI.stop();

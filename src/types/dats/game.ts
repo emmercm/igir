@@ -117,17 +117,17 @@ export default class Game implements GameProps {
 
   @Expose()
   @Type(() => Release)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | Release | Release[] }) => value ?? [])
   readonly release?: Release | Release[];
 
   @Expose()
   @Type(() => ROM)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | ROM | ROM[] }) => value ?? [])
   readonly rom?: ROM | ROM[];
 
   @Expose()
   @Type(() => Disk)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | Disk | Disk[] }) => value ?? [])
   readonly disk?: Disk | Disk[];
 
   constructor(props?: GameProps) {

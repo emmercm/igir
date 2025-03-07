@@ -98,7 +98,7 @@ export default class File implements FileProps {
 
   static async fileOf(
     fileProps: FileProps,
-    checksumBitmask: number = ChecksumBitmask.NONE,
+    checksumBitmask: ChecksumBitmask = ChecksumBitmask.NONE,
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
@@ -136,7 +136,7 @@ export default class File implements FileProps {
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
         finalSha256WithHeader = headeredChecksums.sha256 ?? finalSha256WithHeader;
       }
-      if (fileProps.fileHeader && checksumBitmask) {
+      if (fileProps.fileHeader && checksumBitmask !== ChecksumBitmask.NONE) {
         const headerlessChecksums = await FileChecksums.hashFile(
           fileProps.filePath,
           checksumBitmask,

@@ -205,7 +205,7 @@ export default class CandidateWriter extends Module {
     }
 
     // Prep the single output file
-    const outputZip = inputToOutputZipEntries[0][1].getArchive();
+    const outputZip = inputToOutputZipEntries[0][1].getArchive() as Zip;
 
     // If the output file already exists, see if we need to do anything
     if (await FsPoly.exists(outputZip.getFilePath())) {
@@ -465,7 +465,7 @@ export default class CandidateWriter extends Module {
 
       if (!wasMoved) {
         this.progressBar.logDebug(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`,
+          `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
         );
         return;
       }
@@ -716,7 +716,7 @@ export default class CandidateWriter extends Module {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
       this.progressBar.logDebug(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile}: input and output file is the same, skipping`,
+        `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
       );
       return;
     }

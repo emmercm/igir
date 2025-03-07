@@ -11,7 +11,7 @@ import SoftwareListDAT from './softwareListDat.js';
 export default class SoftwareListsDAT extends DAT {
   @Expose()
   @Type(() => SoftwareListDAT)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | SoftwareListDAT | SoftwareListDAT[] }) => value ?? [])
   readonly softwarelist?: SoftwareListDAT | SoftwareListDAT[];
 
   /**

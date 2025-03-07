@@ -373,8 +373,8 @@ export default class FileSignature {
         resolve(header);
       };
 
-      stream.on('data', (chunk) => {
-        chunks.push(Buffer.from(chunk));
+      stream.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
 
         // Stop reading when we get enough data, trigger a 'close' event
         if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {

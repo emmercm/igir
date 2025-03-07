@@ -38,7 +38,7 @@ export default class Chd extends Archive {
     return Chd.getExtensions()[0];
   }
 
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
+  async getArchiveEntries(checksumBitmask: ChecksumBitmask): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
 
     if (checksumBitmask === ChecksumBitmask.NONE) {

@@ -13,7 +13,7 @@ export interface MachineProps extends GameProps {
 export default class Machine extends Game implements MachineProps {
   @Expose({ name: 'device_ref' })
   @Type(() => DeviceRef)
-  @Transform(({ value }) => value || [])
+  @Transform(({ value }: { value: undefined | DeviceRef | DeviceRef[] }) => value ?? [])
   readonly deviceRef?: DeviceRef | DeviceRef[];
 
   constructor(props?: MachineProps) {

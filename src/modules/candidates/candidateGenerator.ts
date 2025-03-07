@@ -285,7 +285,7 @@ export default class CandidateGenerator extends Module {
     // Group this Game's ROMs by the input Archives that contain them
     const inputArchivesToRoms = romsAndInputFiles.reduce((map, [rom, files]) => {
       files
-        .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+        .filter((file) => file instanceof ArchiveEntry)
         .map((archive): Archive => archive.getArchive())
         .forEach((archive) => {
           // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
@@ -335,17 +335,17 @@ export default class CandidateGenerator extends Module {
       })
       // Filter out Archives with excess entries
       .filter((archive) => {
-        const unusedEntryPaths = this.findArchiveUnusedEntryPaths(
+        const unusedEntries = this.findArchiveUnusedEntryPaths(
           archive,
           romsAndInputFiles.flatMap(([, inputFiles]) => inputFiles),
           indexedFiles,
         );
-        if (unusedEntryPaths.length > 0) {
+        if (unusedEntries.length > 0) {
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntryPaths.map((entryPath) => `  ${entryPath}`).join('\n')}`,
+            `${dat.getNameShort()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
           );
         }
-        return unusedEntryPaths.length === 0;
+        return unusedEntries.length === 0;
       });
 
     const archiveWithEveryRom = filteredArchivesWithEveryRom.at(0);
@@ -617,14 +617,14 @@ export default class CandidateGenerator extends Module {
       .filter(ArrayPoly.filterUniqueMapped((archive) => archive.getFilePath()));
 
     for (const inputArchive of inputArchives) {
-      const unusedEntryPaths = this.findArchiveUnusedEntryPaths(
+      const unusedEntries = this.findArchiveUnusedEntryPaths(
         inputArchive,
         inputArchiveEntries,
         indexedFiles,
       );
-      if (unusedEntryPaths.length > 0) {
+      if (unusedEntries.length > 0) {
         this.progressBar.logTrace(
-          `${dat.getNameShort()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntryPaths.map((entryPath) => `  ${entryPath}`).join('\n')}`,
+          `${dat.getNameShort()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
         );
         return true;
       }
@@ -657,7 +657,7 @@ export default class CandidateGenerator extends Module {
     const archiveEntryHashCodes = new Set(
       inputFiles
         .filter((entry) => entry.getFilePath() === archive.getFilePath())
-        .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
+        .filter((file) => file instanceof ArchiveEntry)
         .map((entry) => entry.hashCode()),
     );
 

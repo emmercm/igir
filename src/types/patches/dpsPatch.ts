@@ -74,7 +74,7 @@ export default class DPSPatch extends Patch {
         data = await patchFile.readNext(dataLength);
       } else {
         throw new ExpectedError(
-          `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike()}`,
+          `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
 

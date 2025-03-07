@@ -14,7 +14,7 @@ export default class ProgressBarCLISpy {
 
   constructor(logLevel = LogLevel.ALWAYS) {
     this.stream = new PassThrough();
-    this.stream.on('data', (line) => {
+    this.stream.on('data', (line: Buffer) => {
       if (line.toString() === '\n') {
         return;
       }
