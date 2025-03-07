@@ -52,6 +52,8 @@ export default class DATFilter extends Module {
     });
     const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
 
+    // TODO(cemmer): warning if every game was filtered out?
+
     const size = filteredDat
       .getGames()
       .flatMap((game) => game.getRoms())

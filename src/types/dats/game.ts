@@ -263,20 +263,6 @@ export default class Game implements GameProps {
   }
 
   /**
-   * Is this game explicitly NTSC?
-   */
-  isNTSC(): boolean {
-    return this.name.match(/\(NTSC\)/i) !== null;
-  }
-
-  /**
-   * Is this game explicitly PAL?
-   */
-  isPAL(): boolean {
-    return this.name.match(/\(PAL[a-z0-9 ]*\)/i) !== null;
-  }
-
-  /**
    * Is this game aftermarket (released after the last known console release)?
    */
   isAftermarket(): boolean {

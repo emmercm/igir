@@ -79,15 +79,15 @@ Once DATs have been generated from input files, they are processed the same as a
 
 - **Parent/clone information may be [inferred](processing.md#parentclone-inference) from game names.**
 
-    If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), or [TOSEC](https://www.tosecdev.org/tosec-naming-convention)), then parent/clone information can be inferred for [1G1R preferences](../roms/filtering-preferences.md).
+    If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), [TOSEC](https://www.tosecdev.org/tosec-naming-convention), or [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools)), then parent/clone information can be inferred for [1G1R preferences](../roms/filtering-preferences.md).
 
     Parent/clone information also allows for [merging & splitting](../usage/arcade.md) of ROM sets.
 
-- **[ROM filter options](../roms/filtering-preferences.md) can be applied.**
+- **[ROM filter & preference options](../roms/filtering-preferences.md) can be applied.**
 
-  If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), or [TOSEC](https://www.tosecdev.org/tosec-naming-convention)) that contains region, language, or other tags, then [ROM filter options](../roms/filtering-preferences.md) can be applied.
+  If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), [TOSEC](https://www.tosecdev.org/tosec-naming-convention), or [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools)) that contains region, language, or other tags, then [ROM filter & preference options](../roms/filtering-preferences.md) can be applied.
 
-- **Filename extensions can be corrected.**
+- **Filename extensions will be corrected by default.**
 
     See [ROM Output Options](../output/options.md#fixing-rom-extensions) for more information.
 

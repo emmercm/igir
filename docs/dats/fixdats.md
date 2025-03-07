@@ -54,3 +54,7 @@ ROMs-Sorted/
 ├── Nintendo - Game Boy Advance (20230414-173400) fixdat.dat
 └── Nintendo - Game Boy Color (20230414-173400) fixdat.dat
 ```
+
+!!! info
+
+    Fixdats are affected by [filter & preference (1G1R) options](../roms/filtering-preferences.md). This is because those options are applied to all DATs _before_ [ROM matching](../roms/matching.md) happens.

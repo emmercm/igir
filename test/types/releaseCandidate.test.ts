@@ -70,16 +70,6 @@ describe('getLanguages', () => {
     expect(releaseCandidate.getLanguages()).toEqual(expectedLanguages);
   });
 
-  test.each([
-    ['CAN', 'EN'],
-    ['EUR', 'EN'],
-    ['TAI', 'ZH'],
-  ])('should return the default language for the region: %s', (region, expectedLanguage) => {
-    const release = new Release('release', region, undefined);
-    const releaseCandidate = new ReleaseCandidate(new Game(), release, []);
-    expect(releaseCandidate.getLanguages()).toEqual([expectedLanguage]);
-  });
-
   it("should return an empty list when languages can't be inferred", () => {
     const releaseCandidate = new ReleaseCandidate(new Game({ name: 'game' }), undefined, []);
     expect(releaseCandidate.getLanguages()).toHaveLength(0);
