@@ -5,7 +5,6 @@
 When using DATs (the [`--dat <path>` option](../dats/processing.md#scanning-for-dats)), the `igir report` [command](../commands.md) can report on:
 
 - `FOUND`: what ROMs were found, and where their files are on disk
-- `IGNORED`: what ROMs were ignored (due to [`--single` 1G1R rules](../roms/filtering-preferences.md))
 - `MISSING`: what ROMs were wanted, but weren't found
 - `DUPLICATE`: what input files _did_ match to a ROM but weren't used when writing
 - `UNUSED`: what input files didn't match to any ROM

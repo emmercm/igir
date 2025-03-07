@@ -22,9 +22,6 @@ export enum GameStatus {
   FOUND = 1,
   // Only some of the Game's ROMs were found
   INCOMPLETE,
-  // The Game was ignored due to 1G1R rules, and it is unknown if there was a matching
-  // ReleaseCandidate
-  IGNORED,
   // The Game wanted to be written, but there was no matching ReleaseCandidate
   MISSING,
   // The input file was not used in any ReleaseCandidate, but a duplicate file was
@@ -51,8 +48,6 @@ export default class DATStatus {
 
   private readonly incompleteRomTypesToReleaseCandidates = new Map<ROMType, ReleaseCandidate[]>();
 
-  private readonly ignoredHashCodesToGames = new Map<string, Game>();
-
   constructor(
     dat: DAT,
     options: Options,
@@ -64,7 +59,7 @@ export default class DATStatus {
     [...parentsToReleaseCandidates.entries()]
       .filter(([, releaseCandidates]) => releaseCandidates.every((rc) => !rc.isPatched()))
       .forEach(([parent, releaseCandidates]) => {
-        parent.getGames().forEach((game, gameIdx) => {
+        parent.getGames().forEach((game) => {
           DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
           const gameReleaseCandidates = releaseCandidates
@@ -95,18 +90,6 @@ export default class DATStatus {
               gameReleaseCandidate,
             );
             return;
-          }
-
-          // When running in 1G1R mode, if no ReleaseCandidate was found for this Game (would have
-          // already returned above), and:
-          //  1. This Parent has at least one ReleaseCandidate, then one of the other Games must
-          //      have a ReleaseCandidate, so this Game should be considered IGNORED
-          //  2. This parent has zero ReleaseCandidates and this Game is not the first Game, then
-          //      consider this Game IGNORED (only the first Game should be considered MISSING)
-          // We can't know if this Game had matching input files, they would have already been
-          // discarded, so those files will be reported as UNUSED.
-          if (options.getSingle() && (releaseCandidates.length > 0 || gameIdx > 0)) {
-            this.ignoredHashCodesToGames.set(game.hashCode(), game);
           }
         });
       });
@@ -189,9 +172,7 @@ export default class DATStatus {
       )
       .map((type) => {
         const found = this.foundRomTypesToReleaseCandidates.get(type) ?? [];
-        const all = (this.allRomTypesToGames.get(type) ?? [])
-          // Do not report ignored 1G1R games in the CLI total
-          .filter((game) => !this.ignoredHashCodesToGames.has(game.hashCode()));
+        const all = this.allRomTypesToGames.get(type) ?? [];
 
         if (!options.usingDats()) {
           return `${found.length.toLocaleString()} ${type}`;
@@ -243,10 +224,6 @@ export default class DATStatus {
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         let status = GameStatus.MISSING;
-
-        if (this.ignoredHashCodesToGames.has(game.hashCode())) {
-          status = GameStatus.IGNORED;
-        }
 
         const incompleteReleaseCandidate = incompleteReleaseCandidates.find((rc) =>
           rc.getGame().equals(game),
