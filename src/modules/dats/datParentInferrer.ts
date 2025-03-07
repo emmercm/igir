@@ -97,6 +97,9 @@ export default class DATParentInferrer extends Module {
         // ***** Retail types *****
         .replace(/\(Alt( [a-z0-9. ]*)?\)/i, '')
         .replace(/\([^)]*Collector's Edition\)/i, '')
+        .replace(/\(Digital Release\)/i, '')
+        .replace(/\(Disney Classic Games\)/i, '')
+        .replace(/\(Evercade\)/i, '')
         .replace(/\(Extra Box\)/i, '')
         .replace(/ - European Version/i, '')
         .replace(/\(Fukkokuban\)/i, '') // "reprint"
@@ -114,10 +117,12 @@ export default class DATParentInferrer extends Module {
         .replace(/\(Renkaban\)/i, '') // "cheap edition"
         .replace(/\(Reprint\)/i, '')
         .replace(/\(Rerelease\)/i, '')
-        .replace(/\(Rev[a-z0-9. ]*\)/i, '')
+        .replace(/\(Retro-Bit\)/i, '')
+        .replace(/\(Rev[a-z0-9. -]*\)/i, '')
         .replace(/\([^)]*Seisanban\)/i, '') // "production version"
         .replace(/\(Shotenban\)/i, '') // "bookstore edition"
         .replace(/\(Special Pack\)/i, '')
+        .replace(/\(Steam\)/i, '')
         .replace(/\(Switch Online\)/i, '')
         .replace(/\([^)]+ the Best\)/i, '')
         .replace(/\([^)]*Taiouban[^)]*\)/i, '') // "compatible version"
@@ -134,6 +139,7 @@ export default class DATParentInferrer extends Module {
         .replace(Game.DEMO_REGEX, '')
         .replace(/\(Hack\)/i, '')
         .replace(/\(Homebrew[a-z0-9. ]*\)/i, '')
+        .replace(/\(Kiosk[^)]*\)/i, '')
         .replace(/\(Not for Resale\)/i, '')
         .replace(/\(PD\)/i, '') // "public domain"
         .replace(/\(Pirate[a-z0-9. ]*\)/i, '')
@@ -159,7 +165,7 @@ export default class DATParentInferrer extends Module {
         .replace(/\[t[0-9]*\]/, '')
         .replace(/\[T[+-][^\]]+\]/, '')
         .replace(/\[x\]/, '')
-        .replace(/\(Wxn\)/, '')
+        .replace(/\(Wxn\)/i, '')
         .replace(/\((SC-3000|SG-1000|SF-7000|GG2SMS|MSX2SMS|SG2GG)\)/, '') // GoodSMS
         .replace(/\[(v|eb|eba|ebb|f125|f126)\]/, '') // GoodGBA
         .replace(/\((IQue|MB|MB2GBA)\)/, '') // GoodGBA

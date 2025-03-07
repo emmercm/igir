@@ -17,7 +17,6 @@ import CandidateGenerator from './modules/candidates/candidateGenerator.js';
 import CandidateMergeSplitValidator from './modules/candidates/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidates/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidates/candidatePostProcessor.js';
-import CandidatePreferer from './modules/candidates/candidatePreferer.js';
 import CandidateValidator from './modules/candidates/candidateValidator.js';
 import CandidateWriter from './modules/candidates/candidateWriter.js';
 import DATCombiner from './modules/dats/datCombiner.js';
@@ -25,6 +24,7 @@ import DATFilter from './modules/dats/datFilter.js';
 import DATGameInferrer from './modules/dats/datGameInferrer.js';
 import DATMergerSplitter from './modules/dats/datMergerSplitter.js';
 import DATParentInferrer from './modules/dats/datParentInferrer.js';
+import DATPreferer from './modules/dats/datPreferer.js';
 import DATScanner from './modules/dats/datScanner.js';
 import Dir2DatCreator from './modules/dir2DatCreator.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
@@ -148,59 +148,56 @@ export default class Igir {
         ProgressBarSymbol.WAITING,
         dat.getParents().length,
       );
-
-      const datWithParents = new DATParentInferrer(this.options, progressBar).infer(dat);
-      const mergedSplitDat = new DATMergerSplitter(this.options, progressBar).merge(datWithParents);
-      const filteredDat = new DATFilter(this.options, progressBar).filter(mergedSplitDat);
+      const processedDat = this.processDAT(progressBar, dat);
 
       // Generate and filter ROM candidates
       const parentsToCandidates = await this.generateCandidates(
         progressBar,
         fileFactory,
-        filteredDat,
+        processedDat,
         indexedRoms,
         patches,
       );
       romOutputDirs = [
         ...romOutputDirs,
-        ...this.getCandidateOutputDirs(filteredDat, parentsToCandidates),
+        ...this.getCandidateOutputDirs(processedDat, parentsToCandidates),
       ];
 
       // Write the output files
       const writerResults = await new CandidateWriter(this.options, progressBar).write(
-        filteredDat,
+        processedDat,
         parentsToCandidates,
       );
       movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
-      datsToWrittenFiles.set(filteredDat, writerResults.wrote);
+      datsToWrittenFiles.set(processedDat, writerResults.wrote);
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar).create(
-        filteredDat,
+        processedDat,
         parentsToCandidates,
       );
       if (dir2DatPath) {
-        datsToWrittenFiles.set(filteredDat, [
-          ...(datsToWrittenFiles.get(filteredDat) ?? []),
+        datsToWrittenFiles.set(processedDat, [
+          ...(datsToWrittenFiles.get(processedDat) ?? []),
           await File.fileOf({ filePath: dir2DatPath }),
         ]);
       }
 
       // Write a fixdat
       const fixdatPath = await new FixdatCreator(this.options, progressBar).create(
-        filteredDat,
+        processedDat,
         parentsToCandidates,
       );
       if (fixdatPath) {
-        datsToWrittenFiles.set(filteredDat, [
-          ...(datsToWrittenFiles.get(filteredDat) ?? []),
+        datsToWrittenFiles.set(processedDat, [
+          ...(datsToWrittenFiles.get(processedDat) ?? []),
           await File.fileOf({ filePath: fixdatPath }),
         ]);
       }
 
       // Write the output report
       const datStatus = new StatusGenerator(this.options, progressBar).generate(
-        filteredDat,
+        processedDat,
         parentsToCandidates,
       );
       datsStatuses.push(datStatus);
@@ -271,7 +268,7 @@ export default class Igir {
     }
 
     const cachePathCandidates = [
-      path.join(path.resolve(Package.DIRECTORY), defaultFileName),
+      path.join(Package.DIRECTORY, defaultFileName),
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
     ]
@@ -486,6 +483,13 @@ export default class Igir {
     return patches;
   }
 
+  private processDAT(progressBar: ProgressBar, dat: DAT): DAT {
+    const datWithParents = new DATParentInferrer(this.options, progressBar).infer(dat);
+    const mergedSplitDat = new DATMergerSplitter(this.options, progressBar).merge(datWithParents);
+    const filteredDat = new DATFilter(this.options, progressBar).filter(mergedSplitDat);
+    return new DATPreferer(this.options, progressBar).prefer(filteredDat);
+  }
+
   private async generateCandidates(
     progressBar: ProgressBar,
     fileFactory: FileFactory,
@@ -504,16 +508,11 @@ export default class Igir {
       patches,
     );
 
-    const preferredCandidates = new CandidatePreferer(this.options, progressBar).prefer(
-      dat,
-      patchedCandidates,
-    );
-
     const extensionCorrectedCandidates = await new CandidateExtensionCorrector(
       this.options,
       progressBar,
       fileFactory,
-    ).correct(dat, preferredCandidates);
+    ).correct(dat, patchedCandidates);
 
     // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
     //  for efficiency
