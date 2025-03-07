@@ -64,19 +64,23 @@ export default class DATParentInferrer extends Module {
   }
 
   private static stripGameRegionAndLanguage(name: string): string {
+    let strippedName = name
+      // ***** Regions *****
+      .replace(
+        new RegExp(`\\(((${Internationalization.REGION_CODES.join('|')})[,+-]? ?)+\\)`, 'i'),
+        '',
+      )
+      .replace(
+        new RegExp(`\\(((${Internationalization.REGION_NAMES.join('|')})[,+-]? ?)+\\)`, 'i'),
+        '',
+      )
+      .replace(/\(Latin America\)/i, '');
+    Internationalization.REGION_REGEX.forEach((regex) => {
+      strippedName = strippedName.replace(regex, '');
+    });
+    // ***** Languages *****
     return (
-      name
-        // ***** Regions *****
-        .replace(
-          new RegExp(`\\(((${Internationalization.REGION_CODES.join('|')})[,+-]? ?)+\\)`, 'i'),
-          '',
-        )
-        .replace(
-          new RegExp(`\\(((${Internationalization.REGION_NAMES.join('|')})[,+-]? ?)+\\)`, 'i'),
-          '',
-        )
-        .replace(/\(Latin America\)/i, '')
-        // ***** Languages *****
+      strippedName
         .replace(
           new RegExp(`\\(((${Internationalization.LANGUAGES.join('|')})[,+-]? ?)+\\)`, 'i'),
           '',
@@ -99,11 +103,13 @@ export default class DATParentInferrer extends Module {
         .replace(/\([^)]*Genteiban\)/i, '') // "limited edition"
         .replace(/\(Limited[^)]+Edition\)/i, '')
         .replace(/\(Limited Run Games\)/i, '')
+        .replace(/\(LodgeNet\)/i, '')
         .replace(/\(Made in [^)]+\)/i, '')
         .replace(/\(Major Wave\)/i, '')
         .replace(/\((Midway Classics)\)/i, '')
         .replace(/\([^)]*Premium [^)]+\)/i, '')
         .replace(/\([^)]*Preview Disc\)/i, '')
+        .replace(/\(QUByte Classics\)/i, '')
         .replace(/\(Recalled\)/i, '')
         .replace(/\(Renkaban\)/i, '') // "cheap edition"
         .replace(/\(Reprint\)/i, '')
@@ -112,9 +118,11 @@ export default class DATParentInferrer extends Module {
         .replace(/\([^)]*Seisanban\)/i, '') // "production version"
         .replace(/\(Shotenban\)/i, '') // "bookstore edition"
         .replace(/\(Special Pack\)/i, '')
+        .replace(/\(Switch Online\)/i, '')
         .replace(/\([^)]+ the Best\)/i, '')
         .replace(/\([^)]*Taiouban[^)]*\)/i, '') // "compatible version"
         .replace(/\([^)]*Tokubetsu-?ban[^)]*\)/i, '') // "special edition"
+        .replace(/\([^)]*Virtual Console\)/i, '')
         // ***** Non-retail types *****
         .replace(/\([0-9]{4}-[0-9]{2}-[0-9]{2}\)/, '') // YYYY-MM-DD
         .replace(/\(Aftermarket[a-z0-9. ]*\)/i, '')
@@ -151,6 +159,20 @@ export default class DATParentInferrer extends Module {
         .replace(/\[t[0-9]*\]/, '')
         .replace(/\[T[+-][^\]]+\]/, '')
         .replace(/\[x\]/, '')
+        .replace(/\(Wxn\)/, '')
+        .replace(/\((SC-3000|SG-1000|SF-7000|GG2SMS|MSX2SMS|SG2GG)\)/, '') // GoodSMS
+        .replace(/\[(v|eb|eba|ebb|f125|f126)\]/, '') // GoodGBA
+        .replace(/\((IQue|MB|MB2GBA)\)/, '') // GoodGBA
+        .replace(/\[(C|S|BF)\]/, '') // GoodGBx
+        .replace(/\((1|4|5|8|F|B|J-Cart|SN|REVXB|REVSC02|MP|MD Bundle|Alt Music)\)/, '') // GoodGen
+        .replace(/\[(c|x)\]/, '') // GoodGen
+        .replace(
+          /\((RU|PC10|VS|Aladdin|Sachen|KC|FamiStudio|PRG0|PRG1|FDS Hack|GBA E-reader|E-GC|J-GC)\)/,
+          '',
+        ) // GoodNES
+        .replace(/\[(FDS|FCN|U)\]/, '') // GoodNES
+        .replace(/\((BS|ST|NP|NSS)\)/, '') // GoodSNES
+        .replace(/\((Beta-WIP|Debug Version|GC|Save|Save-PAL|Z64-Save)\)/, '') // GoodN64
         // ***** TOSEC *****
         .replace(
           /\((AE|AL|AS|AT|AU|BA|BE|BG|BR|CA|CH|CL|CN|CS|CY|CZ|DE|DK|EE|EG|ES|EU|FI|FR|GB|GR|HK|HR|HU|ID|IE|IL|IN|IR|IS|IT|JO|JP|KR|LT|LU|LV|MN|MX|MY|NL|NO|NP|NZ|OM|PE|PH|PL|PT|QA|RO|RU|SE|SG|SI|SK|TH|TR|TW|US|VN|YU|ZA)\)/,

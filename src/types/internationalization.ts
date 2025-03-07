@@ -219,6 +219,10 @@ export default class Internationalization {
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
+  public static readonly REGION_REGEX = this.REGION_OPTIONS.map(
+    (regionOptions) => regionOptions.regex,
+  ).filter((regex) => regex !== undefined);
+
   public static readonly LANGUAGES = this.REGION_OPTIONS.map((regionOption) =>
     regionOption.language.toUpperCase(),
   )
