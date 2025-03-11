@@ -181,6 +181,13 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   Dungeon Master (1987)(FTL)[cr 42-Crew]
   ```
 
+- **Enhancement chips**: games that contain `(Enhancement Chip)` in their name, e.g.:
+
+  ```text
+  DSP1 B (World) (Enhancement Chip)
+  Super Game Boy SGB-CPU (World) (Enhancement Chip)
+  ```
+
 - **Fixed**: games that contain `[f]` or `[f#]` in their name, e.g.:
 
   ```text
