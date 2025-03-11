@@ -65,7 +65,7 @@ export interface GameProps {
   // readonly board?: string,
   // readonly rebuildTo?: string,
   // readonly year?: string,
-  // readonly manufacturer?: string,
+  readonly manufacturer?: string;
   readonly release?: Release | Release[];
   readonly rom?: ROM | ROM[];
   readonly disk?: Disk | Disk[];
@@ -113,7 +113,9 @@ export default class Game implements GameProps {
   // readonly board?: string;
   // readonly rebuildto?: string;
   // readonly year?: string;
-  // readonly manufacturer?: string;
+
+  @Expose({ name: 'manufacturer' })
+  readonly manufacturer?: string;
 
   @Expose()
   @Type(() => Release)
@@ -140,6 +142,7 @@ export default class Game implements GameProps {
     this.romOf = props?.romOf;
     this.sampleOf = props?.sampleOf;
     this.genre = props?.genre;
+    this.manufacturer = props?.manufacturer;
     this.release = props?.release;
     this.rom = props?.rom;
     this.disk = props?.disk;
@@ -196,6 +199,10 @@ export default class Game implements GameProps {
 
   getGenre(): string | undefined {
     return this.genre;
+  }
+
+  getManufacturer(): string | undefined {
+    return this.manufacturer;
   }
 
   getReleases(): Release[] {
@@ -298,6 +305,13 @@ export default class Game implements GameProps {
    */
   isBeta(): boolean {
     return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
+  }
+
+  /**
+   * Is this game an unlicensed bootleg?
+   */
+  isBootleg(): boolean {
+    return this.manufacturer?.toLowerCase().includes('bootleg') ?? false;
   }
 
   /**
@@ -449,10 +463,14 @@ export default class Game implements GameProps {
   }
 
   /**
-   * Does this game have a community hack?
+   * Does this game have a hack?
    */
   hasHack(): boolean {
-    return this.name.match(/\(Hack\)/i) !== null || this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null;
+    return (
+      this.name.match(/\(Hack\)/i) !== null ||
+      this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null ||
+      (this.manufacturer?.toLowerCase().includes('hack') ?? false)
+    );
   }
 
   /**
@@ -479,6 +497,7 @@ export default class Game implements GameProps {
       !this.isBad() &&
       // Doesn't have their own dedicated filter
       !this.isAlpha() &&
+      !this.isBootleg() &&
       !this.isCracked() &&
       !this.isEnhancementChip() &&
       !this.isFixed() &&
