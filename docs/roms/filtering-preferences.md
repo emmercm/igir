@@ -173,6 +173,8 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   Sword (Alpha) (PD) [C]
   ```
 
+- **Bootleg**: games that contain `bootleg` in their manufacturer
+
 - **Cracked**: games that contain `[cr]` or `[cr *]` in their name, e.g.:
 
   ```text
@@ -230,7 +232,7 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   Final Fantasy Legend II (U) [T+Fre]
   ```
 
-- **Games with hacks**: games that contain `(Hack)` or `[h*]` in their name, e.g.:
+- **Games with hacks**: games that contain `(Hack)` or `[h*]` in their name, or `hack` in their manufacturer, e.g.:
 
   ```text
   Kirby's Dream Land 2 (U) [S][h1] (Sound Test)
