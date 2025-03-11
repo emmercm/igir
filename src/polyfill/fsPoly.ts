@@ -85,11 +85,29 @@ export default class FsPoly {
   }
 
   /**
-   * Copy {@param src} to {@param dest}, ensuring {@param dest} is writable.
+   * Copy {@param src} to {@param dest}, overwriting any existing file, and ensuring {@param dest}
+   * is writable.
    */
-  static async copyFile(src: string, dest: string): Promise<void> {
+  static async copyFile(src: string, dest: string, attempt = 1): Promise<void> {
     const previouslyExisted = await this.exists(src);
-    await fs.promises.copyFile(src, dest);
+
+    try {
+      await fs.promises.copyFile(src, dest);
+    } catch (error) {
+      // These are the same error codes that `graceful-fs` catches
+      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+        throw error;
+      }
+
+      // Backoff with jitter
+      if (attempt >= 5) {
+        throw error;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
+      });
+      return this.copyFile(src, dest, attempt + 1);
+    }
 
     // Ensure the destination file is writable
     const stat = await this.stat(dest);
@@ -361,12 +379,26 @@ export default class FsPoly {
    * Move the file {@param oldPath} to {@param newPath}, retrying failures.
    */
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
+    // Can't rename across drives
+    if (this.onDifferentDrives(oldPath, newPath)) {
+      await this.copyFile(oldPath, newPath);
+      await this.rm(oldPath, { force: true });
+      return;
+    }
+
     try {
       return await fs.promises.rename(oldPath, newPath);
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
       if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
         throw error;
+      }
+
+      // Can't rename across drives
+      if (!['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+        await this.copyFile(oldPath, newPath);
+        await this.rm(oldPath, { force: true });
+        return;
       }
 
       // Backoff with jitter
