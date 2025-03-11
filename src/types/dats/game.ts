@@ -338,6 +338,13 @@ export default class Game implements GameProps {
   }
 
   /**
+   * Is this game an enhancement chip? Primarily for SNES
+   */
+  isEnhancementChip(): boolean {
+    return this.name.match(/\(Enhancement Chip\)/i) !== null;
+  }
+
+  /**
    * Is this game "fixed" (altered to run better in emulation)?
    */
   isFixed(): boolean {
@@ -460,22 +467,25 @@ export default class Game implements GameProps {
    */
   isRetail(): boolean {
     return (
-      !this.isAftermarket() &&
-      !this.isAlpha() &&
-      !this.isBad() &&
-      !this.isBeta() &&
-      !this.isCracked() &&
+      // Has their own dedicated filters
       !this.isDebug() &&
       !this.isDemo() &&
-      !this.isFixed() &&
+      !this.isBeta() &&
+      !this.isSample() &&
+      !this.isPrototype() &&
+      !this.isProgram() &&
+      !this.isAftermarket() &&
       !this.isHomebrew() &&
+      !this.isBad() &&
+      // Doesn't have their own dedicated filter
+      !this.isAlpha() &&
+      !this.isCracked() &&
+      !this.isEnhancementChip() &&
+      !this.isFixed() &&
       !this.isMIA() &&
       !this.isOverdump() &&
       !this.isPendingDump() &&
       !this.isPirated() &&
-      !this.isProgram() &&
-      !this.isPrototype() &&
-      !this.isSample() &&
       !this.isTranslated() &&
       !this.hasBungFix() &&
       !this.hasHack() &&
