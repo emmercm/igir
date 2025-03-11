@@ -19,7 +19,15 @@ export type FsWalkCallback = (increment: number) => void;
  */
 export default class FsPoly {
   // Assume that all drives we're reading from or writing to were already mounted at startup
-  private static readonly DRIVES = nodeDiskInfo.getDiskInfoSync();
+  // https://github.com/cristiammercado/node-disk-info/issues/36
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  private static readonly DRIVES = (() => {
+    try {
+      return nodeDiskInfo.getDiskInfoSync();
+    } catch {
+      return [];
+    }
+  })();
 
   /**
    * @param dirPath the path to a temporary directory
@@ -148,7 +156,7 @@ export default class FsPoly {
   @Memoize()
   private static disksSync(): string[] {
     return (
-      FsPoly.DRIVES.filter((drive) => drive.available > 0)
+      this.DRIVES.filter((drive) => drive.available > 0)
         .map((drive) => drive.mounted)
         .filter((mountPath) => mountPath !== '/')
         // Sort by mount points with the deepest number of subdirectories first
