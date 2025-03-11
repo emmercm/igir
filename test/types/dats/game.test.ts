@@ -158,6 +158,37 @@ describe('isDemo', () => {
   });
 });
 
+describe('isEnhancementChip', () => {
+  test.each([
+    // No-Intro 2025/02/12
+    ['CX4 (World) (Enhancement Chip)'],
+    ['DSP1 B (World) (Enhancement Chip)'],
+    ['DSP2 (World) (Enhancement Chip)'],
+    ['DSP3 (Japan) (Enhancement Chip)'],
+    ['DSP4 (World) (Enhancement Chip)'],
+    ['ST010 (Japan, USA) (Enhancement Chip)'],
+    ['ST011 (Japan) (Enhancement Chip)'],
+    ['ST018 (Japan) (Enhancement Chip)'],
+    ['Super Game Boy 2 SGB2-CPU (Japan) (Enhancement Chip)'],
+    ['Super Game Boy SGB-CPU (World) (Enhancement Chip)'],
+  ])('should evaluate true: %s', (name) => {
+    expect(new Game({ name }).isEnhancementChip()).toEqual(true);
+    expect(new Game({ name }).isBios()).toEqual(false);
+    expect(new Game({ name }).isRetail()).toEqual(false);
+  });
+
+  test.each([
+    // No-Intro 2025/02/12
+    ['Legend of Zelda, The - A Link to the Past (Europe)'],
+    ['Super Mario Kart (Europe)'],
+    ['Super Metroid (Europe) (En,Fr,De)'],
+  ])('should evaluate false: %s', (name) => {
+    expect(new Game({ name }).isEnhancementChip()).toEqual(false);
+    expect(new Game({ name }).isBios()).toEqual(false);
+    expect(new Game({ name }).isRetail()).toEqual(true);
+  });
+});
+
 describe('isFixed', () => {
   test.each([
     ['Black Bass - Lure Fishing (U) [C][f1]', true],
