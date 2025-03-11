@@ -121,6 +121,32 @@ describe('isBeta', () => {
   });
 });
 
+describe('isBootleg', () => {
+  test.each([
+    // mame0260
+    [new Game({ name: '1942abl', cloneOf: '1942', manufacturer: 'bootleg' })],
+    [new Game({ name: 'abattle', cloneOf: 'astrof', manufacturer: 'bootleg? (Sidam)' })],
+    [new Game({ name: 'acombat3', cloneOf: 'astrof', manufacturer: 'bootleg (Proel)' })],
+    [new Game({ name: 'aladmdb', manufacturer: 'bootleg / Sega' })],
+    [new Game({ name: 'goldnpke', cloneOf: 'goldnpkr', manufacturer: 'Intercoast (bootleg)' })],
+    [new Game({ name: 'm4hslo', manufacturer: '(bootleg)' })],
+    [new Game({ name: 'mtwinsb', cloneOf: 'mtwins', manufacturer: 'David Inc. (bootleg)' })],
+  ])('should evaluate true: %s', (game) => {
+    expect(game.isBootleg()).toEqual(true);
+    expect(game.isRetail()).toEqual(false);
+  });
+
+  test.each([
+    // mame0260
+    [new Game({ name: 'puckman', manufacturer: 'Namco' })],
+    [new Game({ name: 'galaga', manufacturer: 'Namco' })],
+    [new Game({ name: 'ghouls', manufacturer: 'Capcom' })],
+  ])('should evaluate false: %s', (game) => {
+    expect(game.isBootleg()).toEqual(false);
+    expect(game.isRetail()).toEqual(true);
+  });
+});
+
 describe('isCracked', () => {
   test.each([
     ['Grand Prix 500 2 (1990)(Microids)(FR)(Disk 1 of 2)[cr]', true],
@@ -319,13 +345,31 @@ describe('hasBungFix', () => {
 
 describe('hasHack', () => {
   test.each([
-    ['Smurfs, The (UE) (V1.0) (M4) [h1]', true],
-    ['Space Invasion (Unl) [C][hIR]', true],
-    ['Super Mario 4 (Unl) [p1][h1C]', true],
-    ['Survival Kids (U) [C][!]', false],
-  ])('%s', (name, expected) => {
-    expect(new Game({ name }).hasHack()).toEqual(expected);
-    expect(new Game({ name }).isRetail()).toEqual(!expected);
+    // GoodTools
+    [new Game({ name: 'Smurfs, The (UE) (V1.0) (M4) [h1]' })],
+    [new Game({ name: 'Space Invasion (Unl) [C][hIR]' })],
+    [new Game({ name: 'Super Mario 4 (Unl) [p1][h1C]' })],
+    // mame0260
+    [new Game({ name: '1942h', cloneOf: '1942', manufacturer: 'hack (Two Bit Score)' })],
+    [new Game({ name: 'arbv2', cloneOf: 'arb', manufacturer: 'hack (Steve Braid)' })],
+    [new Game({ name: 'hangly', cloneOf: 'puckman', manufacturer: 'hack (Igleck)' })],
+    [new Game({ name: 'komemokos', cloneOf: 'puckman', manufacturer: 'hack' })],
+    [new Game({ name: 'm4andycp10_a', cloneOf: 'm4andycp', manufacturer: 'hack?' })],
+  ])('should evaluate true: %s', (game) => {
+    expect(game.hasHack()).toEqual(true);
+    expect(game.isRetail()).toEqual(false);
+  });
+
+  test.each([
+    // GoodTools
+    [new Game({ name: 'Survival Kids (U) [C][!]' })],
+    // mame0260
+    [new Game({ name: '1942', manufacturer: 'Capcom' })],
+    [new Game({ name: 'arb', manufacturer: 'AVE Micro Systems' })],
+    [new Game({ name: 'puckman', manufacturer: 'Namco' })],
+  ])('should evaluate false: %s', (game) => {
+    expect(game.hasHack()).toEqual(false);
+    expect(game.isRetail()).toEqual(true);
   });
 });
 
