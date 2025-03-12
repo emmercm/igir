@@ -53,14 +53,14 @@ enum GameType {
  */
 export interface GameProps {
   readonly name?: string;
-  readonly category?: string;
+  readonly category?: string | string[];
   readonly description?: string;
   // readonly sourceFile?: string,
   readonly bios?: 'yes' | 'no';
   readonly device?: 'yes' | 'no';
   readonly cloneOf?: string;
   readonly romOf?: string;
-  readonly sampleOf?: string;
+  // readonly sampleOf?: string;
   readonly genre?: string;
   // readonly board?: string,
   // readonly rebuildTo?: string,
@@ -84,7 +84,8 @@ export default class Game implements GameProps {
    * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
    */
   @Expose()
-  readonly category: string;
+  @Transform(({ value }: { value: undefined | string | string[] }) => value ?? [])
+  readonly category: string | string[];
 
   @Expose()
   readonly description: string;
@@ -103,8 +104,8 @@ export default class Game implements GameProps {
   @Expose({ name: 'romof' })
   readonly romOf?: string;
 
-  @Expose({ name: 'sampleof' })
-  readonly sampleOf?: string;
+  // @Expose({ name: 'sampleof' })
+  // readonly sampleOf?: string;
 
   // This is non-standard, but libretro uses it
   @Expose({ name: 'genre' })
@@ -114,38 +115,37 @@ export default class Game implements GameProps {
   // readonly rebuildto?: string;
   // readonly year?: string;
 
-  @Expose({ name: 'manufacturer' })
+  @Expose()
   readonly manufacturer?: string;
 
   @Expose()
   @Type(() => Release)
   @Transform(({ value }: { value: undefined | Release | Release[] }) => value ?? [])
-  readonly release?: Release | Release[];
+  readonly release: Release | Release[];
 
   @Expose()
   @Type(() => ROM)
   @Transform(({ value }: { value: undefined | ROM | ROM[] }) => value ?? [])
-  readonly rom?: ROM | ROM[];
+  readonly rom: ROM | ROM[];
 
   @Expose()
   @Type(() => Disk)
   @Transform(({ value }: { value: undefined | Disk | Disk[] }) => value ?? [])
-  readonly disk?: Disk | Disk[];
+  readonly disk: Disk | Disk[];
 
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
-    this.category = props?.category ?? '';
+    this.category = props?.category ?? [];
     this.description = props?.description ?? '';
     this.bios = props?.bios ?? this.bios;
     this.device = props?.device ?? this.device;
     this.cloneOf = props?.cloneOf;
     this.romOf = props?.romOf;
-    this.sampleOf = props?.sampleOf;
     this.genre = props?.genre;
     this.manufacturer = props?.manufacturer;
-    this.release = props?.release;
-    this.rom = props?.rom;
-    this.disk = props?.disk;
+    this.release = props?.release ?? [];
+    this.rom = props?.rom ?? [];
+    this.disk = props?.disk ?? [];
   }
 
   /**
@@ -164,8 +164,17 @@ export default class Game implements GameProps {
       description: {
         _: this.getDescription(),
       },
+      category: this.getCategories().map((category) => ({ _: category })),
+      ...(this.getManufacturer() !== undefined
+        ? {
+            manufacturer: {
+              _: this.getManufacturer(),
+            },
+          }
+        : {}),
       release: this.getReleases().map((release) => release.toXmlDatObj()),
       rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
+      disk: this.getDisks().map((disk) => disk.toXmlDatObj()),
     };
   }
 
@@ -175,8 +184,11 @@ export default class Game implements GameProps {
     return this.name;
   }
 
-  getCategory(): string {
-    return this.category;
+  getCategories(): string[] {
+    if (Array.isArray(this.category)) {
+      return this.category;
+    }
+    return [this.category];
   }
 
   getDescription(): string {
@@ -209,30 +221,21 @@ export default class Game implements GameProps {
     if (Array.isArray(this.release)) {
       return this.release;
     }
-    if (this.release) {
-      return [this.release];
-    }
-    return [];
+    return [this.release];
   }
 
   getRoms(): ROM[] {
     if (Array.isArray(this.rom)) {
       return this.rom;
     }
-    if (this.rom) {
-      return [this.rom];
-    }
-    return [];
+    return [this.rom];
   }
 
   getDisks(): Disk[] {
     if (Array.isArray(this.disk)) {
       return this.disk;
     }
-    if (this.disk) {
-      return [this.disk];
-    }
-    return [];
+    return [this.disk];
   }
 
   // Computed getters
@@ -348,7 +351,10 @@ export default class Game implements GameProps {
    * Is this game a demo?
    */
   isDemo(): boolean {
-    return this.name.match(Game.DEMO_REGEX) !== null || this.getCategory() === 'Demos';
+    return (
+      this.name.match(Game.DEMO_REGEX) !== null ||
+      this.getCategories().some((category) => category.toLowerCase() === 'demos')
+    );
   }
 
   /**
@@ -412,7 +418,7 @@ export default class Game implements GameProps {
   isProgram(): boolean {
     return (
       this.name.match(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i) !== null ||
-      this.getCategory() === 'Applications'
+      this.getCategories().some((category) => category.toLowerCase() === 'applications')
     );
   }
 
@@ -422,7 +428,7 @@ export default class Game implements GameProps {
   isPrototype(): boolean {
     return (
       this.name.match(/\([^)]*Proto[a-z0-9. ]*\)/i) !== null ||
-      this.getCategory() === 'Preproduction'
+      this.getCategories().some((category) => category.toLowerCase() === 'preproduction')
     );
   }
 

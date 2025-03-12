@@ -119,6 +119,7 @@ export interface OptionsProps {
   readonly filterRegexExclude?: string;
   readonly filterLanguage?: string[];
   readonly filterRegion?: string[];
+  readonly filterCategoryRegex?: string;
   readonly noBios?: boolean;
   readonly onlyBios?: boolean;
   readonly noDevice?: boolean;
@@ -198,13 +199,13 @@ export default class Options implements OptionsProps {
 
   readonly datExclude: string[];
 
-  readonly datNameRegex: string;
+  readonly datNameRegex?: string;
 
-  readonly datNameRegexExclude: string;
+  readonly datNameRegexExclude?: string;
 
-  readonly datDescriptionRegex: string;
+  readonly datDescriptionRegex?: string;
 
-  readonly datDescriptionRegexExclude: string;
+  readonly datDescriptionRegexExclude?: string;
 
   readonly datCombine: boolean;
 
@@ -264,13 +265,15 @@ export default class Options implements OptionsProps {
 
   readonly allowIncompleteSets: boolean;
 
-  readonly filterRegex: string;
+  readonly filterRegex?: string;
 
-  readonly filterRegexExclude: string;
+  readonly filterRegexExclude?: string;
 
   readonly filterLanguage: string[];
 
   readonly filterRegion: string[];
+
+  readonly filterCategoryRegex?: string;
 
   readonly noBios: boolean;
 
@@ -328,9 +331,9 @@ export default class Options implements OptionsProps {
 
   readonly single: boolean;
 
-  readonly preferGameRegex: string;
+  readonly preferGameRegex?: string;
 
-  readonly preferRomRegex: string;
+  readonly preferRomRegex?: string;
 
   readonly preferVerified: boolean;
 
@@ -386,10 +389,10 @@ export default class Options implements OptionsProps {
     this.datExclude = (options?.datExclude ?? []).map((filePath) =>
       filePath.replace(/[\\/]/g, path.sep),
     );
-    this.datNameRegex = options?.datNameRegex ?? '';
-    this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
-    this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
-    this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude ?? '';
+    this.datNameRegex = options?.datNameRegex;
+    this.datNameRegexExclude = options?.datNameRegexExclude;
+    this.datDescriptionRegex = options?.datDescriptionRegex;
+    this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude;
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
@@ -432,10 +435,11 @@ export default class Options implements OptionsProps {
     this.allowExcessSets = options?.allowExcessSets ?? false;
     this.allowIncompleteSets = options?.allowIncompleteSets ?? false;
 
-    this.filterRegex = options?.filterRegex ?? '';
-    this.filterRegexExclude = options?.filterRegexExclude ?? '';
+    this.filterRegex = options?.filterRegex;
+    this.filterRegexExclude = options?.filterRegexExclude;
     this.filterLanguage = options?.filterLanguage ?? [];
     this.filterRegion = options?.filterRegion ?? [];
+    this.filterCategoryRegex = options?.filterCategoryRegex;
     this.noBios = options?.noBios ?? false;
     this.onlyBios = options?.onlyBios ?? false;
     this.noDevice = options?.noDevice ?? false;
@@ -465,8 +469,8 @@ export default class Options implements OptionsProps {
     this.onlyBad = options?.onlyBad ?? false;
 
     this.single = options?.single ?? false;
-    this.preferGameRegex = options?.preferGameRegex ?? '';
-    this.preferRomRegex = options?.preferRomRegex ?? '';
+    this.preferGameRegex = options?.preferGameRegex;
+    this.preferRomRegex = options?.preferRomRegex;
     this.preferVerified = options?.preferVerified ?? false;
     this.preferGood = options?.preferGood ?? false;
     this.preferLanguage = options?.preferLanguage ?? [];
@@ -517,8 +521,8 @@ export default class Options implements OptionsProps {
 
   // Helpers
 
-  private static getRegex(pattern: string): RegExp[] | undefined {
-    if (!pattern.trim()) {
+  private static getRegex(pattern: string | undefined): RegExp[] | undefined {
+    if (pattern === undefined || !pattern.trim()) {
       return undefined;
     }
 
@@ -1096,6 +1100,10 @@ export default class Options implements OptionsProps {
       return new Set(Options.filterUniqueUpper(this.filterRegion));
     }
     return new Set();
+  }
+
+  getFilterCategoryRegex(): RegExp[] | undefined {
+    return Options.getRegex(this.filterCategoryRegex);
   }
 
   getNoBios(): boolean {

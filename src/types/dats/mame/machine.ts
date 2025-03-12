@@ -14,7 +14,7 @@ export default class Machine extends Game implements MachineProps {
   @Expose({ name: 'device_ref' })
   @Type(() => DeviceRef)
   @Transform(({ value }: { value: undefined | DeviceRef | DeviceRef[] }) => value ?? [])
-  readonly deviceRef?: DeviceRef | DeviceRef[];
+  readonly deviceRef: DeviceRef | DeviceRef[];
 
   constructor(props?: MachineProps) {
     super(props);
@@ -25,10 +25,7 @@ export default class Machine extends Game implements MachineProps {
     if (Array.isArray(this.deviceRef)) {
       return this.deviceRef;
     }
-    if (this.deviceRef) {
-      return [this.deviceRef];
-    }
-    return [];
+    return [this.deviceRef];
   }
 
   // Immutable setters

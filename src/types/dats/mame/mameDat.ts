@@ -21,11 +21,11 @@ export default class MameDAT extends DAT {
   @Expose()
   @Type(() => Machine)
   @Transform(({ value }: { value: undefined | Machine | Machine[] }) => value ?? [])
-  private readonly machine?: Machine | Machine[];
+  private readonly machine: Machine | Machine[];
 
-  constructor(machine: Machine | Machine[]) {
+  constructor(machine?: Machine | Machine[]) {
     super();
-    this.machine = machine;
+    this.machine = machine ?? [];
     this.generateGameNamesToParents();
   }
 
@@ -47,12 +47,8 @@ export default class MameDAT extends DAT {
 
   getGames(): Game[] {
     if (Array.isArray(this.machine)) {
-      if (this.machine.length > 0) {
-        return this.machine;
-      }
-    } else if (this.machine) {
-      return [this.machine];
+      return this.machine;
     }
-    return [];
+    return [this.machine];
   }
 }

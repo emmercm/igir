@@ -11,7 +11,7 @@ export default class Software extends Game {
   @Expose()
   @Type(() => Part)
   @Transform(({ value }: { value: undefined | Part | Part[] }) => value ?? [])
-  readonly part?: Part | Part[];
+  readonly part: Part | Part[];
 
   constructor(part: Part | Part[]) {
     super();
@@ -22,10 +22,7 @@ export default class Software extends Game {
     if (Array.isArray(this.part)) {
       return this.part;
     }
-    if (this.part) {
-      return [this.part];
-    }
-    return [];
+    return [this.part];
   }
 
   getRoms(): ROM[] {
