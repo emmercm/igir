@@ -3140,19 +3140,37 @@ describe('options', () => {
     ).toBeUndefined();
     expect(
       argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', '[a-z]'])
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--filter-category-regex',
+          '[a-z]',
+        ])
         .getFilterCategoryRegex()
         ?.some((regex) => regex.test('lower')),
     ).toEqual(true);
     expect(
       argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', '[a-z]'])
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--filter-category-regex',
+          '[a-z]',
+        ])
         .getFilterCategoryRegex()
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
     expect(
       argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', '/[a-z]/i'])
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--filter-category-regex',
+          '/[a-z]/i',
+        ])
         .getFilterCategoryRegex()
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(true);
@@ -3160,6 +3178,8 @@ describe('options', () => {
       argumentsParser
         .parse([
           ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
           '--filter-category-regex',
           '/[a-z]/i',
           '--filter-category-regex',
@@ -3175,31 +3195,61 @@ describe('options', () => {
       await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
-          .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', tempFile])
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
           .getFilterCategoryRegex()
           ?.some((regex) => regex.test('')),
       ).toEqual(false);
       expect(
         argumentsParser
-          .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', tempFile])
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
           .getFilterCategoryRegex()
           ?.some((regex) => regex.test('lower')),
       ).toEqual(true);
       expect(
         argumentsParser
-          .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', tempFile])
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
           .getFilterCategoryRegex()
           ?.some((regex) => regex.test('UPPER')),
       ).toEqual(true);
       expect(
         argumentsParser
-          .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', tempFile])
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
           .getFilterCategoryRegex()
           ?.some((regex) => regex.test('007')),
       ).toEqual(true);
       expect(
         argumentsParser
-          .parse([...dummyCommandAndRequiredArgs, '--filter-category-regex', tempFile])
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
           .getFilterCategoryRegex()
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
