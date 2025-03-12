@@ -502,10 +502,17 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Return an object of all options.
+   */
+  toObject(): { [key: string]: unknown } {
+    return instanceToPlain(this);
+  }
+
+  /**
    * Return a JSON representation of all options.
    */
   toString(): string {
-    return JSON.stringify(instanceToPlain(this));
+    return JSON.stringify(this.toObject());
   }
 
   // Helpers
@@ -649,7 +656,11 @@ export default class Options implements OptionsProps {
   }
 
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.input, walkCallback, this.shouldWrite() || !this.shouldReport());
+    return Options.scanPaths(
+      this.input,
+      walkCallback,
+      this.shouldWrite() || !(this.shouldReport() || this.shouldFixdat()),
+    );
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {

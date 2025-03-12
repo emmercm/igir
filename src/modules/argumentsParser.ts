@@ -191,16 +191,9 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .check((checkArgv) => {
-        const needInput = [
-          'copy',
-          'move',
-          'link',
-          'extract',
-          'zip',
-          'test',
-          'dir2dat',
-          'fixdat',
-        ].filter((command) => checkArgv._.includes(command));
+        const needInput = ['copy', 'move', 'link', 'extract', 'zip', 'test', 'dir2dat'].filter(
+          (command) => checkArgv._.includes(command),
+        );
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
@@ -848,7 +841,7 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('dir2dat') && needDir2Dat.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needDir2Dat.length !== 1 ? 's' : ''} ${needDir2Dat.join(', ')}: fixdat`,
+            `Missing required command for option${needDir2Dat.length !== 1 ? 's' : ''} ${needDir2Dat.join(', ')}: dir2dat`,
           );
         }
         return true;

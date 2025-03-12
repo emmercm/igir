@@ -128,6 +128,6 @@ export default class Header implements HeaderOptions {
    * Return a string representation of this {@link Header}.
    */
   toString(): string {
-    return JSON.stringify(this, undefined, '  ').replace(/\n +/g, ' ');
+    return JSON.stringify(this, undefined, 2);
   }
 }

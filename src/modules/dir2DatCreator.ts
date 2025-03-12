@@ -4,6 +4,7 @@ import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
+import IgirHeader from '../types/dats/igirHeader.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
 import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
@@ -36,12 +37,6 @@ export default class Dir2DatCreator extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.reset(1);
 
-    const datDir = this.options.getDir2DatOutput();
-    if (!(await FsPoly.exists(datDir))) {
-      await FsPoly.mkdir(datDir, { recursive: true });
-    }
-    const datPath = path.join(datDir, dat.getFilename());
-
     // It is possible that the {@link ROM} embedded within {@link ReleaseCandidate}s has been
     // manipulated, such as from {@link CandidateExtensionCorrector}. Use the {@link Game}s and
     // {@link ROM}s from the {@link ReleaseCandidate}s instead of the original {@link DAT}.
@@ -65,13 +60,21 @@ export default class Dir2DatCreator extends Module {
         return game.withProps({ rom: roms });
       },
     );
-    const datFromCandidates = new LogiqxDAT(dat.getHeader(), gamesFromCandidates);
 
-    this.progressBar.logInfo(`${datFromCandidates.getNameShort()}: creating dir2dat '${datPath}'`);
-    const datContents = datFromCandidates.toXmlDat();
-    await FsPoly.writeFile(datPath, datContents);
+    const dir2datDir = this.options.getDir2DatOutput();
+    if (!(await FsPoly.exists(dir2datDir))) {
+      await FsPoly.mkdir(dir2datDir, { recursive: true });
+    }
 
-    this.progressBar.logTrace(`${datFromCandidates.getNameShort()}: done writing dir2dat`);
-    return datPath;
+    // Construct a new DAT and write it to the output dir
+    const header = new IgirHeader('dir2dat', dat, this.options);
+    const dir2dat = new LogiqxDAT(header, gamesFromCandidates);
+    const dir2datContents = dir2dat.toXmlDat();
+    const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
+    this.progressBar.logInfo(`${dir2dat.getNameShort()}: creating dir2dat '${dir2datPath}'`);
+    await FsPoly.writeFile(dir2datPath, dir2datContents);
+
+    this.progressBar.logTrace(`${dir2dat.getNameShort()}: done writing dir2dat`);
+    return dir2datPath;
   }
 }

@@ -298,9 +298,6 @@ describe('options', () => {
     expect(() => argumentsParser.parse(['dir2dat', '--output', os.devNull])).toThrow(
       /missing required argument/i,
     );
-    expect(() => argumentsParser.parse(['fixdat', '--output', os.devNull])).toThrow(
-      /missing required argument/i,
-    );
     await expect(
       argumentsParser
         .parse(['copy', '--input', 'nonexistentfile', '--output', os.devNull])
