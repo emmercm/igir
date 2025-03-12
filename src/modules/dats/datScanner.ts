@@ -427,7 +427,6 @@ export default class DATScanner extends Scanner {
         device: undefined,
         cloneOf: game.cloneof,
         romOf: game.romof,
-        sampleOf: undefined,
         genre: game.genre?.toString(),
         release: undefined,
         rom: roms,

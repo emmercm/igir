@@ -224,6 +224,7 @@ describe('options', () => {
     expect(options.getFilterRegexExclude()).toBeUndefined();
     expect(options.getFilterLanguage().size).toEqual(0);
     expect(options.getFilterRegion().size).toEqual(0);
+    expect(options.getFilterCategoryRegex()).toBeUndefined();
     expect(options.getNoBios()).toEqual(false);
     expect(options.getOnlyBios()).toEqual(false);
     expect(options.getNoDevice()).toEqual(false);
@@ -3131,6 +3132,130 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,usa'])
         .getFilterRegion(),
     ).toEqual(new Set(['USA']));
+  });
+
+  it('should parse "filter-category-regex"', async () => {
+    expect(
+      argumentsParser.parse(dummyCommandAndRequiredArgs).getFilterCategoryRegex(),
+    ).toBeUndefined();
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--filter-category-regex',
+          '[a-z]',
+        ])
+        .getFilterCategoryRegex()
+        ?.some((regex) => regex.test('lower')),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--filter-category-regex',
+          '[a-z]',
+        ])
+        .getFilterCategoryRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--filter-category-regex',
+          '/[a-z]/i',
+        ])
+        .getFilterCategoryRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--filter-category-regex',
+          '/[a-z]/i',
+          '--filter-category-regex',
+          '[0-9]',
+        ])
+        .getFilterCategoryRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(false);
+
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    try {
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      expect(
+        argumentsParser
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
+          .getFilterCategoryRegex()
+          ?.some((regex) => regex.test('')),
+      ).toEqual(false);
+      expect(
+        argumentsParser
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
+          .getFilterCategoryRegex()
+          ?.some((regex) => regex.test('lower')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
+          .getFilterCategoryRegex()
+          ?.some((regex) => regex.test('UPPER')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
+          .getFilterCategoryRegex()
+          ?.some((regex) => regex.test('007')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([
+            ...dummyCommandAndRequiredArgs,
+            '--dat',
+            os.devNull,
+            '--filter-category-regex',
+            tempFile,
+          ])
+          .getFilterCategoryRegex()
+          ?.some((regex) => regex.test('@!#?@!')),
+      ).toEqual(false);
+    } finally {
+      await FsPoly.rm(tempFile);
+    }
   });
 
   it('should parse "no-bios"', () => {

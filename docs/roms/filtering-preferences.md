@@ -24,7 +24,7 @@ Multiple filter options can be specified at once.
 --filter-regex <pattern|filename>, --filter-regex-exclude <pattern|filename>
 ```
 
-Only include or exclude games based if their DAT name (or filename if not using DATs) matches a regular expression.
+Only include or exclude games based on if their DAT name (or filename if not using DATs) matches a regular expression.
 
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 
@@ -117,6 +117,18 @@ Spain:
 ```
 
 A game can only have one primary region. The first region detected is what is used.
+
+### Category filter
+
+```text
+--filter-category-regex <pattern|filename>
+```
+
+Only include games whose category matches the provided regular expression.
+
+!!! warning
+
+    This options requires that the DATs you use include category information. Not every DAT release group includes category information (e.g. MAME, TOSEC), and not every release group includes category in every version of their DATs (e.g. No-Intro). Games without categories will always be filtered out by this option!
 
 ### BIOS
 

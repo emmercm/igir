@@ -503,7 +503,7 @@ export default class ArgumentsParser {
       })
       .option('clean-backup', {
         group: groupRomClean,
-        description: 'Move cleaned files to a directory for backup',
+        description: 'Directory to move cleaned files to (instead of being recycled)',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -687,6 +687,14 @@ export default class ArgumentsParser {
           );
         }
         return true;
+      })
+      .option('filter-category-regex', {
+        group: groupRomFiltering,
+        description: 'Regular expression of categories to filter to',
+        type: 'string',
+        coerce: ArgumentsParser.readRegexFile,
+        requiresArg: true,
+        implies: 'dat',
       });
     [
       ['bios', 'BIOS files'],
