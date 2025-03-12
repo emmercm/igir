@@ -15,7 +15,7 @@ export default class Part {
   @Expose()
   @Type(() => DataArea)
   @Transform(({ value }: { value: undefined | DataArea | DataArea[] }) => value ?? [])
-  readonly dataarea?: DataArea | DataArea[];
+  readonly dataarea: DataArea | DataArea[];
 
   constructor(dataarea: DataArea | DataArea[]) {
     this.dataarea = dataarea;
@@ -25,9 +25,6 @@ export default class Part {
     if (Array.isArray(this.dataarea)) {
       return this.dataarea;
     }
-    if (this.dataarea) {
-      return [this.dataarea];
-    }
-    return [];
+    return [this.dataarea];
   }
 }

@@ -84,6 +84,10 @@ export default class DATFilter extends Module {
           this.options.getFilterRegexExclude()?.some((regex) => regex.test(game.getName())),
         this.noLanguageAllowed(game),
         this.regionNotAllowed(game),
+        this.options.getFilterCategoryRegex() &&
+          !this.options
+            .getFilterCategoryRegex()
+            ?.some((regex) => game.getCategories().some((category) => regex.test(category))),
         this.options.getNoBios() && game.isBios(),
         this.options.getOnlyBios() && !game.isBios(),
         this.options.getNoDevice() && game.isDevice(),

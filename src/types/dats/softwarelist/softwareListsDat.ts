@@ -12,7 +12,13 @@ export default class SoftwareListsDAT extends DAT {
   @Expose()
   @Type(() => SoftwareListDAT)
   @Transform(({ value }: { value: undefined | SoftwareListDAT | SoftwareListDAT[] }) => value ?? [])
-  readonly softwarelist?: SoftwareListDAT | SoftwareListDAT[];
+  readonly softwarelist: SoftwareListDAT | SoftwareListDAT[];
+
+  constructor() {
+    super();
+    this.softwarelist = [];
+    this.generateGameNamesToParents();
+  }
 
   /**
    * Construct a {@link SoftwareListsDAT} from a generic object, such as one from reading an XML
@@ -40,10 +46,7 @@ export default class SoftwareListsDAT extends DAT {
     if (Array.isArray(this.softwarelist)) {
       return this.softwarelist;
     }
-    if (this.softwarelist) {
-      return [this.softwarelist];
-    }
-    return [];
+    return [this.softwarelist];
   }
 
   getGames(): Game[] {

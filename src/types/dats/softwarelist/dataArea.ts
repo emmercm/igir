@@ -15,7 +15,7 @@ export default class DataArea {
   @Expose()
   @Type(() => ROM)
   @Transform(({ value }: { value: undefined | ROM | ROM[] }) => value ?? [])
-  readonly rom?: ROM | ROM[];
+  readonly rom: ROM | ROM[];
 
   constructor(rom: ROM | ROM[]) {
     this.rom = rom;
@@ -25,9 +25,6 @@ export default class DataArea {
     if (Array.isArray(this.rom)) {
       return this.rom;
     }
-    if (this.rom) {
-      return [this.rom];
-    }
-    return [];
+    return [this.rom];
   }
 }
