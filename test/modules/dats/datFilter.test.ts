@@ -513,6 +513,7 @@ describe('region filter', () => {
 describe('category', () => {
   const games: Game[][] = [
     [
+      // Nintendo - Super Nintendo Entertainment System (20240317-134803).dat
       new Game({
         name: 'Gargoyles (USA) (Proto) (1994-07-19)',
         category: ['Games', 'Preproduction'],
