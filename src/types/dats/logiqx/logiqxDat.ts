@@ -19,13 +19,13 @@ export default class LogiqxDAT extends DAT {
   @Expose()
   @Type(() => Game)
   @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
-  private readonly game: Game | Game[];
+  private readonly game?: Game | Game[];
 
   // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what pleasuredome Datfiles use
   @Expose()
   @Type(() => Machine)
   @Transform(({ value }: { value: undefined | Machine | Machine[] }) => value ?? [])
-  private readonly machine: Machine | Machine[];
+  private readonly machine?: Machine | Machine[];
 
   constructor(header: Header, games: Game | Game[]) {
     super();
@@ -52,22 +52,22 @@ export default class LogiqxDAT extends DAT {
   }
 
   getGames(): Game[] {
-    // First, prefer non-empty arrays
-    if (Array.isArray(this.game) && this.game.length > 0) {
-      return this.game;
-    }
-    if (Array.isArray(this.machine) && this.machine.length > 0) {
-      return this.machine;
-    }
-
-    // Then, prefer empty arrays
     if (Array.isArray(this.game)) {
-      return this.game;
-    }
-    if (Array.isArray(this.machine)) {
-      return this.machine;
+      if (this.game.length > 0) {
+        return this.game;
+      }
+    } else if (this.game) {
+      return [this.game];
     }
 
-    return [this.game];
+    if (Array.isArray(this.machine)) {
+      if (this.machine.length > 0) {
+        return this.machine;
+      }
+    } else if (this.machine) {
+      return [this.machine];
+    }
+
+    return [];
   }
 }
