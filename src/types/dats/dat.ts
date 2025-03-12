@@ -175,6 +175,19 @@ export default abstract class DAT {
    * Return a short string representation of this {@link DAT}.
    */
   toString(): string {
-    return `{"header": ${this.getHeader().toString()}, "games": ${this.getGames().length}}`;
+    return JSON.stringify(
+      {
+        header: this.getHeader(),
+        games: this.getGames().length,
+        gamesSize: FsPoly.sizeReadable(
+          this.getGames()
+            .flatMap((game) => game.getRoms())
+            .reduce((sum, rom) => sum + rom.getSize(), 0),
+          2,
+        ),
+      },
+      undefined,
+      2,
+    );
   }
 }

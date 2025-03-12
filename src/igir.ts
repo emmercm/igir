@@ -216,7 +216,11 @@ export default class Igir {
         (sum, rcs) => sum + rcs.length,
         0,
       );
-      if (totalReleaseCandidates > 0) {
+      if (
+        totalReleaseCandidates > 0 ||
+        this.options.shouldDir2Dat() ||
+        this.options.shouldFixdat()
+      ) {
         progressBar.freeze();
       } else {
         progressBar.delete();
