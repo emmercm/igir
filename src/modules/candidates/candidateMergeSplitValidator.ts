@@ -58,12 +58,13 @@ export default class CandidateMergeSplitValidator extends Module {
         let missingDependencies: string[] = [];
 
         // Validate dependent parent was found
+        const cloneOf = game.getCloneOf();
         if (
           this.options.getMergeRoms() === MergeMode.SPLIT &&
-          game.isClone() &&
-          !releaseCandidatesIndexed.has(game.getParent())
+          cloneOf !== undefined &&
+          !releaseCandidatesIndexed.has(cloneOf)
         ) {
-          missingDependencies = [game.getParent(), ...missingDependencies];
+          missingDependencies = [cloneOf, ...missingDependencies];
         }
 
         // Validate dependent devices were found

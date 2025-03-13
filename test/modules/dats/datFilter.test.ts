@@ -148,12 +148,12 @@ it('should not re-elect a new parent if not filtered out', () => {
     'Legend of Zelda, The (Europe)',
     'Legend of Zelda, The (Europe) (Rev 1) (Virtual Console)',
   ]);
-  expect(filteredDat.getGames().at(0)?.getParent()).toEqual('');
+  expect(filteredDat.getGames().at(0)?.getCloneOf()).toBeUndefined();
   expect(
     filteredDat
       .getGames()
       .slice(1)
-      .every((game) => game.getParent() === 'Legend of Zelda, The (Europe) (Rev 1)'),
+      .every((game) => game.getCloneOf() === 'Legend of Zelda, The (Europe) (Rev 1)'),
   ).toEqual(true);
 });
 
@@ -186,12 +186,12 @@ it('should not leave children abandoned', () => {
     'Legend of Zelda, The (USA) (GameCube Edition)',
     'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
   ]);
-  expect(filteredDat.getGames().at(0)?.getParent()).toEqual('');
+  expect(filteredDat.getGames().at(0)?.getCloneOf()).toBeUndefined();
   expect(
     filteredDat
       .getGames()
       .slice(1)
-      .every((game) => game.getParent() === 'Legend of Zelda, The (USA)'),
+      .every((game) => game.getCloneOf() === 'Legend of Zelda, The (USA)'),
   ).toEqual(true);
 });
 
@@ -562,9 +562,9 @@ describe('category', () => {
 describe('bios', () => {
   it('option is false', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
-      buildGameWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
-      buildGameWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isBios: 'no' }),
+      buildGameWithRegionLanguage('two', 'USA', 'EN', { isBios: 'yes' }),
+      buildGameWithRegionLanguage('three', 'USA', 'EN', { isBios: 'no' }),
     ];
     expectFilteredDAT({ noBios: false }, parentsTogames, 3);
     expectFilteredDAT({ onlyBios: false }, parentsTogames, 3);
@@ -572,8 +572,8 @@ describe('bios', () => {
 
   it('all games are BIOS', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { bios: 'yes' }),
-      buildGameWithRegionLanguage('two [BIOS]', 'USA', 'EN', { bios: 'no' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isBios: 'yes' }),
+      buildGameWithRegionLanguage('two [BIOS]', 'USA', 'EN', { isBios: 'no' }),
     ];
     expectFilteredDAT({ noBios: true }, parentsTogames, 0);
     expectFilteredDAT({ onlyBios: true }, parentsTogames, 2);
@@ -581,9 +581,9 @@ describe('bios', () => {
 
   it('some games are BIOS', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
-      buildGameWithRegionLanguage('two', 'USA', 'EN', { bios: 'yes' }),
-      buildGameWithRegionLanguage('three', 'USA', 'EN', { bios: 'no' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isBios: 'no' }),
+      buildGameWithRegionLanguage('two', 'USA', 'EN', { isBios: 'yes' }),
+      buildGameWithRegionLanguage('three', 'USA', 'EN', { isBios: 'no' }),
     ];
     expectFilteredDAT({ noBios: true }, parentsTogames, 2);
     expectFilteredDAT({ onlyBios: true }, parentsTogames, 1);
@@ -591,8 +591,8 @@ describe('bios', () => {
 
   it('no games are BIOS', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { bios: 'no' }),
-      buildGameWithRegionLanguage('two', 'USA', 'EN', { bios: 'no' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isBios: 'no' }),
+      buildGameWithRegionLanguage('two', 'USA', 'EN', { isBios: 'no' }),
     ];
     expectFilteredDAT({ noBios: true }, parentsTogames, 2);
     expectFilteredDAT({ onlyBios: true }, parentsTogames, 0);
@@ -602,9 +602,9 @@ describe('bios', () => {
 describe('device', () => {
   it('option is false', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
-      buildGameWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
-      buildGameWithRegionLanguage('three', 'USA', 'EN', { device: 'no' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isDevice: 'no' }),
+      buildGameWithRegionLanguage('two', 'USA', 'EN', { isDevice: 'yes' }),
+      buildGameWithRegionLanguage('three', 'USA', 'EN', { isDevice: 'no' }),
     ];
     expectFilteredDAT({ noDevice: false }, parentsTogames, 3);
     expectFilteredDAT({ onlyDevice: false }, parentsTogames, 3);
@@ -612,8 +612,8 @@ describe('device', () => {
 
   it('all games are device', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { device: 'yes' }),
-      buildGameWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isDevice: 'yes' }),
+      buildGameWithRegionLanguage('two', 'USA', 'EN', { isDevice: 'yes' }),
     ];
     expectFilteredDAT({ noDevice: true }, parentsTogames, 0);
     expectFilteredDAT({ onlyDevice: true }, parentsTogames, 2);
@@ -621,9 +621,9 @@ describe('device', () => {
 
   it('some games are device', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
-      buildGameWithRegionLanguage('two', 'USA', 'EN', { device: 'yes' }),
-      buildGameWithRegionLanguage('three', 'USA', 'EN', { device: 'no' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isDevice: 'no' }),
+      buildGameWithRegionLanguage('two', 'USA', 'EN', { isDevice: 'yes' }),
+      buildGameWithRegionLanguage('three', 'USA', 'EN', { isDevice: 'no' }),
     ];
     expectFilteredDAT({ noDevice: true }, parentsTogames, 2);
     expectFilteredDAT({ onlyDevice: true }, parentsTogames, 1);
@@ -631,8 +631,8 @@ describe('device', () => {
 
   it('no games are device', () => {
     const parentsTogames = [
-      buildGameWithRegionLanguage('one', 'USA', 'EN', { device: 'no' }),
-      buildGameWithRegionLanguage('two', 'USA', 'EN', { device: 'no' }),
+      buildGameWithRegionLanguage('one', 'USA', 'EN', { isDevice: 'no' }),
+      buildGameWithRegionLanguage('two', 'USA', 'EN', { isDevice: 'no' }),
     ];
     expectFilteredDAT({ noDevice: true }, parentsTogames, 2);
     expectFilteredDAT({ onlyDevice: true }, parentsTogames, 0);

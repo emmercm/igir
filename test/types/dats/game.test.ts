@@ -7,11 +7,11 @@ describe('isBios', () => {
     ['[BIOS] Nintendo Game Boy Boot ROM (World) (Rev 1)', true],
     ['Tetris (World) (Rev 1)', false],
   ])('%s', (name, expected) => {
-    expect(new Game({ name }).isBios()).toEqual(expected);
+    expect(new Game({ name }).getIsBios()).toEqual(expected);
   });
 
   test.each([true, false])('option: %s', (bios) => {
-    expect(new Game({ bios: bios ? 'yes' : 'no' }).isBios()).toEqual(bios);
+    expect(new Game({ isBios: bios ? 'yes' : 'no' }).getIsBios()).toEqual(bios);
   });
 });
 
@@ -199,7 +199,7 @@ describe('isEnhancementChip', () => {
     ['Super Game Boy SGB-CPU (World) (Enhancement Chip)'],
   ])('should evaluate true: %s', (name) => {
     expect(new Game({ name }).isEnhancementChip()).toEqual(true);
-    expect(new Game({ name }).isBios()).toEqual(false);
+    expect(new Game({ name }).getIsBios()).toEqual(false);
     expect(new Game({ name }).isRetail()).toEqual(false);
   });
 
@@ -210,7 +210,7 @@ describe('isEnhancementChip', () => {
     ['Super Metroid (Europe) (En,Fr,De)'],
   ])('should evaluate false: %s', (name) => {
     expect(new Game({ name }).isEnhancementChip()).toEqual(false);
-    expect(new Game({ name }).isBios()).toEqual(false);
+    expect(new Game({ name }).getIsBios()).toEqual(false);
     expect(new Game({ name }).isRetail()).toEqual(true);
   });
 });

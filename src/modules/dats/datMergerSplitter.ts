@@ -111,23 +111,24 @@ export default class DATMergerSplitter extends Module {
     // Non-'full' types expect BIOS files to be in their own set
     if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED) {
       games = games.map((game) => {
-        if (!game.getBios()) {
+        const romOf = game.getRomOf();
+        if (!romOf) {
           // This game doesn't use an external BIOS
           return game;
         }
 
-        let biosGame = gameNamesToGames.get(game.getBios());
+        let biosGame = gameNamesToGames.get(romOf);
         if (!biosGame) {
           // Invalid romOf attribute, external BIOS not found
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${game.getName()} references an invalid BIOS: ${game.getBios()}`,
+            `${dat.getNameShort()}: ${game.getName()} references an invalid BIOS: ${romOf}`,
           );
           return game;
         }
         // If the referenced `romOf` game is not a BIOS, then it must be a parent game.
         // Reduce the non-BIOS parent to only its BIOS ROMs, so that they can be excluded from
         // the child.
-        if (!biosGame.isBios()) {
+        if (!biosGame.getIsBios()) {
           biosGame = biosGame.withProps({
             rom: biosGame.getRoms().filter((rom) => rom.getBios() !== undefined),
           });
@@ -145,16 +146,17 @@ export default class DATMergerSplitter extends Module {
       this.options.getMergeRoms() === MergeMode.MERGED
     ) {
       games = games.map((game) => {
-        if (!game.getParent()) {
+        const cloneOf = game.getCloneOf();
+        if (!cloneOf) {
           // This game doesn't have a parent
           return game;
         }
 
-        const parentGame = gameNamesToGames.get(game.getParent());
+        const parentGame = gameNamesToGames.get(cloneOf);
         if (!parentGame) {
           // Invalid cloneOf attribute, parent not found
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${game.getName()} references an invalid parent: ${game.getParent()}`,
+            `${dat.getNameShort()}: ${game.getName()} references an invalid parent: ${cloneOf}`,
           );
           return game;
         }

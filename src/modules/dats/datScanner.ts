@@ -174,7 +174,7 @@ export default class DATScanner extends Scanner {
     //  file which only has one game for every BIOS file, even though there are 90+ consoles.
     if (
       dat.getGames().length === 1 &&
-      dat.getGames()[0].isBios() &&
+      dat.getGames()[0].getIsBios() &&
       dat.getGames()[0].getRoms().length > 10
     ) {
       const game = dat.getGames()[0];
@@ -419,12 +419,12 @@ export default class DATScanner extends Scanner {
         name: gameName,
         category: undefined,
         description: game.description,
-        bios:
+        isBios:
           cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro' &&
           cmproDat.clrmamepro?.name?.toLowerCase() === 'system'
             ? 'yes'
             : 'no',
-        device: undefined,
+        isDevice: undefined,
         cloneOf: game.cloneof,
         romOf: game.romof,
         genre: game.genre?.toString(),

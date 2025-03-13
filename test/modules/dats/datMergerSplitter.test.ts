@@ -4943,7 +4943,7 @@ describe('MAME v0.258', () => {
     // ***** BIOSes *****
     new Machine({
       name: 'aristmk6',
-      bios: 'yes',
+      isBios: 'yes',
       description: 'MK6 System Software/Setchips',
       rom: [
         new ROM({
@@ -5630,7 +5630,7 @@ describe('MAME v0.258', () => {
     }),
     new Machine({
       name: 'lindbios',
-      bios: 'yes',
+      isBios: 'yes',
       description: 'Sega Lindbergh BIOS',
       rom: [
         new ROM({
@@ -5698,24 +5698,24 @@ describe('MAME v0.258', () => {
     }),
 
     // ***** Devices *****
-    new Machine({ name: '93c46_16', device: 'yes' }),
-    new Machine({ name: '93c56_16', device: 'yes' }),
+    new Machine({ name: '93c46_16', isDevice: 'yes' }),
+    new Machine({ name: '93c56_16', isDevice: 'yes' }),
     new Machine({
       name: 'alps_3255190x',
-      device: 'yes',
+      isDevice: 'yes',
       description: 'ALPS 32551901/32551902 Floppy Drive',
       deviceRef: [new DeviceRef('speaker'), new DeviceRef('flopsnd')],
     }),
-    new Machine({ name: 'ay8910', device: 'yes' }),
+    new Machine({ name: 'ay8910', isDevice: 'yes' }),
     new Machine({
       name: 'c1530',
-      device: 'yes',
+      isDevice: 'yes',
       description: 'Commodore 1530 Datassette',
       deviceRef: new DeviceRef('cassette_image'),
     }),
     new Machine({
       name: 'c1541',
-      device: 'yes',
+      isDevice: 'yes',
       description: 'Commodore 1541 Disk Drive',
       rom: [
         new ROM({
@@ -5804,38 +5804,38 @@ describe('MAME v0.258', () => {
         new DeviceRef('floppy_connector'),
       ],
     }),
-    new Machine({ name: 'c64_expansion_slot', device: 'yes' }),
-    new Machine({ name: 'c64h156', device: 'yes' }),
-    new Machine({ name: 'cassette_image', device: 'yes' }),
-    new Machine({ name: 'cbm_iec', device: 'yes' }),
-    new Machine({ name: 'cbm_iec_slot', device: 'yes' }),
-    new Machine({ name: 'discrete', device: 'yes' }),
-    new Machine({ name: 'floppy_connector', device: 'yes' }),
-    new Machine({ name: 'flopsnd', device: 'yes' }),
-    new Machine({ name: 'generic_latch_8', device: 'yes' }),
-    new Machine({ name: 'gfxdecode', device: 'yes' }),
-    new Machine({ name: 'hc259', device: 'yes' }),
-    new Machine({ name: 'hd38820', device: 'yes' }),
-    new Machine({ name: 'ipt_merge_all_hi', device: 'yes' }),
-    new Machine({ name: 'ipt_merge_any_hi', device: 'yes' }),
-    new Machine({ name: 'ls259', device: 'yes' }),
-    new Machine({ name: 'm6502', device: 'yes' }),
-    new Machine({ name: 'm6510', device: 'yes' }),
-    new Machine({ name: 'm68000', device: 'yes' }),
-    new Machine({ name: 'mb8843', device: 'yes' }),
-    new Machine({ name: 'mb8844', device: 'yes' }),
-    new Machine({ name: 'mc6809e', device: 'yes' }),
-    new Machine({ name: 'mos6522', device: 'yes' }),
-    new Machine({ name: 'mos6526', device: 'yes' }),
-    new Machine({ name: 'mos6567', device: 'yes' }),
-    new Machine({ name: 'mos6581', device: 'yes' }),
-    new Machine({ name: 'namco', device: 'yes' }),
-    new Machine({ name: 'namco_05xx_starfield', device: 'yes' }),
-    new Machine({ name: 'namco_15xx', device: 'yes' }),
-    new Machine({ name: 'namco06', device: 'yes' }),
+    new Machine({ name: 'c64_expansion_slot', isDevice: 'yes' }),
+    new Machine({ name: 'c64h156', isDevice: 'yes' }),
+    new Machine({ name: 'cassette_image', isDevice: 'yes' }),
+    new Machine({ name: 'cbm_iec', isDevice: 'yes' }),
+    new Machine({ name: 'cbm_iec_slot', isDevice: 'yes' }),
+    new Machine({ name: 'discrete', isDevice: 'yes' }),
+    new Machine({ name: 'floppy_connector', isDevice: 'yes' }),
+    new Machine({ name: 'flopsnd', isDevice: 'yes' }),
+    new Machine({ name: 'generic_latch_8', isDevice: 'yes' }),
+    new Machine({ name: 'gfxdecode', isDevice: 'yes' }),
+    new Machine({ name: 'hc259', isDevice: 'yes' }),
+    new Machine({ name: 'hd38820', isDevice: 'yes' }),
+    new Machine({ name: 'ipt_merge_all_hi', isDevice: 'yes' }),
+    new Machine({ name: 'ipt_merge_any_hi', isDevice: 'yes' }),
+    new Machine({ name: 'ls259', isDevice: 'yes' }),
+    new Machine({ name: 'm6502', isDevice: 'yes' }),
+    new Machine({ name: 'm6510', isDevice: 'yes' }),
+    new Machine({ name: 'm68000', isDevice: 'yes' }),
+    new Machine({ name: 'mb8843', isDevice: 'yes' }),
+    new Machine({ name: 'mb8844', isDevice: 'yes' }),
+    new Machine({ name: 'mc6809e', isDevice: 'yes' }),
+    new Machine({ name: 'mos6522', isDevice: 'yes' }),
+    new Machine({ name: 'mos6526', isDevice: 'yes' }),
+    new Machine({ name: 'mos6567', isDevice: 'yes' }),
+    new Machine({ name: 'mos6581', isDevice: 'yes' }),
+    new Machine({ name: 'namco', isDevice: 'yes' }),
+    new Machine({ name: 'namco_05xx_starfield', isDevice: 'yes' }),
+    new Machine({ name: 'namco_15xx', isDevice: 'yes' }),
+    new Machine({ name: 'namco06', isDevice: 'yes' }),
     new Machine({
       name: 'namco51',
-      device: 'yes',
+      isDevice: 'yes',
       description: 'Namco 51xx',
       rom: new ROM({
         name: '51xx.bin',
@@ -5847,7 +5847,7 @@ describe('MAME v0.258', () => {
     }),
     new Machine({
       name: 'namco54',
-      device: 'yes',
+      isDevice: 'yes',
       description: 'Namco 54xx',
       rom: new ROM({
         name: '54xx.bin',
@@ -5867,7 +5867,7 @@ describe('MAME v0.258', () => {
     }),
     new Machine({
       name: 'neogeo',
-      bios: 'yes',
+      isBios: 'yes',
       description: 'Neo-Geo MV-6',
       rom: [
         new ROM({
@@ -6142,34 +6142,34 @@ describe('MAME v0.258', () => {
         new DeviceRef('software_list'),
       ],
     }),
-    new Machine({ name: 'neogeo_cart_slot', device: 'yes' }),
-    new Machine({ name: 'neogeo_control_port', device: 'yes' }),
-    new Machine({ name: 'neogeo_joy', device: 'yes' }),
-    new Machine({ name: 'neosprite_opt', device: 'yes' }),
-    new Machine({ name: 'netlist_sound', device: 'yes' }),
-    new Machine({ name: 'ng_memcard', device: 'yes' }),
-    new Machine({ name: 'nl_stream_in', device: 'yes' }),
-    new Machine({ name: 'nl_stream_out', device: 'yes' }),
-    new Machine({ name: 'ns16550', device: 'yes' }),
-    new Machine({ name: 'palette', device: 'yes' }),
-    new Machine({ name: 'pet_datassette_port', device: 'yes' }),
-    new Machine({ name: 'pet_user_port', device: 'yes' }),
-    new Machine({ name: 'pls100', device: 'yes' }),
-    new Machine({ name: 'pwm_display', device: 'yes' }),
-    new Machine({ name: 'quickload', device: 'yes' }),
-    new Machine({ name: 'ram', device: 'yes' }),
-    new Machine({ name: 'screen', device: 'yes' }),
-    new Machine({ name: 'sh4le', device: 'yes' }),
-    new Machine({ name: 'speaker', device: 'yes' }),
-    new Machine({ name: 'speaker_sound_device', device: 'yes' }),
-    new Machine({ name: 'timer', device: 'yes' }),
-    new Machine({ name: 'tmap038', device: 'yes' }),
-    new Machine({ name: 'vcs_control_port', device: 'yes' }),
-    new Machine({ name: 'vcs_joystick', device: 'yes' }),
-    new Machine({ name: 'watchdog', device: 'yes' }),
-    new Machine({ name: 'ym2610', device: 'yes' }),
-    new Machine({ name: 'ymz280b', device: 'yes' }),
-    new Machine({ name: 'z80', device: 'yes' }),
+    new Machine({ name: 'neogeo_cart_slot', isDevice: 'yes' }),
+    new Machine({ name: 'neogeo_control_port', isDevice: 'yes' }),
+    new Machine({ name: 'neogeo_joy', isDevice: 'yes' }),
+    new Machine({ name: 'neosprite_opt', isDevice: 'yes' }),
+    new Machine({ name: 'netlist_sound', isDevice: 'yes' }),
+    new Machine({ name: 'ng_memcard', isDevice: 'yes' }),
+    new Machine({ name: 'nl_stream_in', isDevice: 'yes' }),
+    new Machine({ name: 'nl_stream_out', isDevice: 'yes' }),
+    new Machine({ name: 'ns16550', isDevice: 'yes' }),
+    new Machine({ name: 'palette', isDevice: 'yes' }),
+    new Machine({ name: 'pet_datassette_port', isDevice: 'yes' }),
+    new Machine({ name: 'pet_user_port', isDevice: 'yes' }),
+    new Machine({ name: 'pls100', isDevice: 'yes' }),
+    new Machine({ name: 'pwm_display', isDevice: 'yes' }),
+    new Machine({ name: 'quickload', isDevice: 'yes' }),
+    new Machine({ name: 'ram', isDevice: 'yes' }),
+    new Machine({ name: 'screen', isDevice: 'yes' }),
+    new Machine({ name: 'sh4le', isDevice: 'yes' }),
+    new Machine({ name: 'speaker', isDevice: 'yes' }),
+    new Machine({ name: 'speaker_sound_device', isDevice: 'yes' }),
+    new Machine({ name: 'timer', isDevice: 'yes' }),
+    new Machine({ name: 'tmap038', isDevice: 'yes' }),
+    new Machine({ name: 'vcs_control_port', isDevice: 'yes' }),
+    new Machine({ name: 'vcs_joystick', isDevice: 'yes' }),
+    new Machine({ name: 'watchdog', isDevice: 'yes' }),
+    new Machine({ name: 'ym2610', isDevice: 'yes' }),
+    new Machine({ name: 'ymz280b', isDevice: 'yes' }),
+    new Machine({ name: 'z80', isDevice: 'yes' }),
   ]);
 
   it('should full-non-merged', () => {
@@ -6877,8 +6877,8 @@ describe('MAME v0.258', () => {
     ]);
 
     // No change to BIOS or devices
-    expect(result.getGames().filter((game) => game.isBios())).toHaveLength(3);
-    expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
+    expect(result.getGames().filter((game) => game.getIsBios())).toHaveLength(3);
+    expect(result.getGames().filter((game) => game.getIsDevice())).toHaveLength(65);
     expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
     expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
   });
@@ -7363,8 +7363,8 @@ describe('MAME v0.258', () => {
     ]);
 
     // No change to BIOS or devices
-    expect(result.getGames().filter((game) => game.isBios())).toHaveLength(3);
-    expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
+    expect(result.getGames().filter((game) => game.getIsBios())).toHaveLength(3);
+    expect(result.getGames().filter((game) => game.getIsDevice())).toHaveLength(65);
     expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
     expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
   });
@@ -7676,8 +7676,8 @@ describe('MAME v0.258', () => {
     ]);
 
     // No change to BIOS or devices
-    expect(result.getGames().filter((game) => game.isBios())).toHaveLength(3);
-    expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
+    expect(result.getGames().filter((game) => game.getIsBios())).toHaveLength(3);
+    expect(result.getGames().filter((game) => game.getIsDevice())).toHaveLength(65);
     expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
     expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
   });
@@ -7955,8 +7955,8 @@ describe('MAME v0.258', () => {
     expect(gameNamesToRomNames.has('nebulbee')).toEqual(false);
 
     // No change to BIOS or devices
-    expect(result.getGames().filter((game) => game.isBios())).toHaveLength(3);
-    expect(result.getGames().filter((game) => game.isDevice())).toHaveLength(65);
+    expect(result.getGames().filter((game) => game.getIsBios())).toHaveLength(3);
+    expect(result.getGames().filter((game) => game.getIsDevice())).toHaveLength(65);
     expect(gameNamesToRomNames.get('aristmk6')).toHaveLength(96);
     expect(gameNamesToRomNames.get('neogeo')).toHaveLength(34);
   });
@@ -8245,7 +8245,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
       ],
     }),
     new Game({
-      bios: 'yes',
+      isBios: 'yes',
       name: 'neogeo',
       description: 'Neo Geo',
       rom: [

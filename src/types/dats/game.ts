@@ -52,23 +52,61 @@ enum GameType {
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export interface GameProps {
+  // ********** OFFICIAL LOGIQX FIELDS **********
+  // @see http://www.logiqx.com/Dats/datafile.dtd
+
   readonly name?: string;
-  readonly category?: string | string[];
-  readonly description?: string;
-  // readonly sourceFile?: string,
-  readonly bios?: 'yes' | 'no';
-  readonly device?: 'yes' | 'no';
+  // readonly sourceFile?: string;
+  readonly isBios?: 'yes' | 'no';
   readonly cloneOf?: string;
   readonly romOf?: string;
   // readonly sampleOf?: string;
-  readonly genre?: string;
-  // readonly board?: string,
-  // readonly rebuildTo?: string,
-  // readonly year?: string,
-  readonly manufacturer?: string;
+  // readonly board?: string;
+  // readonly rebuildTo?: string;
+  // readonly year?: string;
   readonly release?: Release | Release[];
+  // readonly biosset?: unknown;
   readonly rom?: ROM | ROM[];
   readonly disk?: Disk | Disk[];
+  // readonly sample?: unknown;
+  // readonly archive?: unknown;
+
+  // ********** NO-INTRO FIELDS **********
+  // @see https://datomatic.no-intro.org/stuff/schema_nointro_datfile_v3.xsd
+
+  // @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
+  readonly category?: string | string[];
+  readonly description?: string;
+  readonly id?: string;
+  readonly cloneOfId?: string;
+
+  // ********** MAME FIELDS **********
+
+  readonly isDevice?: 'yes' | 'no';
+  // readonly mechanical?: 'yes' | 'no';
+  // readonly runnable?: 'yes' | 'no';
+  readonly manufacturer?: string;
+  // readonly deviceRef: DeviceRef | DeviceRef[];
+  // readonly chip?: unknown;
+  // readonly display?: unknown;
+  // readonly sound?: unknown;
+  // readonly condition?: unknown;
+  // readonly input?: unknown;
+  // readonly dipswitch?: unknown;
+  // readonly configuration?: unknown;
+  // readonly port?: unknown;
+  // readonly adjuster?: unknown;
+  // readonly driver?: unknown;
+  // readonly feature?: unknown;
+  // readonly devices?: unknown;
+  // readonly slot?: unknown;
+  // readonly softwarelist?: unknown;
+  // readonly ramoption?: 'yes' | 'no';
+
+  // ********** LIBRETRO FIELDS **********
+  // @see https://github.com/libretro/libretro-database/tree/master/metadat/genre
+
+  readonly genre?: string;
 }
 
 /**
@@ -79,44 +117,14 @@ export default class Game implements GameProps {
   @Expose()
   readonly name: string;
 
-  /**
-   * This is non-standard, but Redump uses it:
-   * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
-   */
-  @Expose()
-  @Transform(({ value }: { value: undefined | string | string[] }) => value ?? [])
-  readonly category: string | string[];
-
-  @Expose()
-  readonly description: string;
-
   @Expose({ name: 'isbios' })
-  readonly bios: 'yes' | 'no' = 'no';
-
-  @Expose({ name: 'isdevice' })
-  readonly device: 'yes' | 'no' = 'no';
+  readonly isBios: 'yes' | 'no' = 'no';
 
   @Expose({ name: 'cloneof' })
   readonly cloneOf?: string;
 
-  // TODO(cemmer): support cloneofid
-
   @Expose({ name: 'romof' })
   readonly romOf?: string;
-
-  // @Expose({ name: 'sampleof' })
-  // readonly sampleOf?: string;
-
-  // This is non-standard, but libretro uses it
-  @Expose({ name: 'genre' })
-  readonly genre?: string;
-
-  // readonly board?: string;
-  // readonly rebuildto?: string;
-  // readonly year?: string;
-
-  @Expose()
-  readonly manufacturer?: string;
 
   @Expose()
   @Type(() => Release)
@@ -133,19 +141,46 @@ export default class Game implements GameProps {
   @Transform(({ value }: { value: undefined | Disk | Disk[] }) => value ?? [])
   readonly disk: Disk | Disk[];
 
+  @Expose()
+  @Transform(({ value }: { value: undefined | string | string[] }) => value ?? [])
+  readonly category: string | string[];
+
+  @Expose()
+  readonly description: string;
+
+  @Expose()
+  readonly id?: string;
+
+  @Expose({ name: 'cloneofid' })
+  readonly cloneOfId?: string;
+
+  @Expose({ name: 'isdevice' })
+  readonly isDevice: 'yes' | 'no' = 'no';
+
+  @Expose({ name: 'genre' })
+  readonly genre?: string;
+
+  @Expose()
+  readonly manufacturer?: string;
+
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
-    this.category = props?.category ?? [];
-    this.description = props?.description ?? '';
-    this.bios = props?.bios ?? this.bios;
-    this.device = props?.device ?? this.device;
+    this.isBios = props?.isBios ?? this.isBios;
     this.cloneOf = props?.cloneOf;
     this.romOf = props?.romOf;
-    this.genre = props?.genre;
-    this.manufacturer = props?.manufacturer;
     this.release = props?.release ?? [];
     this.rom = props?.rom ?? [];
     this.disk = props?.disk ?? [];
+
+    this.category = props?.category ?? [];
+    this.description = props?.description ?? '';
+    this.id = props?.id;
+    this.cloneOfId = props?.cloneOfId;
+
+    this.isDevice = props?.isDevice ?? this.isDevice;
+    this.manufacturer = props?.manufacturer;
+
+    this.genre = props?.genre;
   }
 
   /**
@@ -154,21 +189,23 @@ export default class Game implements GameProps {
   toXmlDatObj(parentNames: Set<string>): object {
     return {
       $: {
-        name: this.getName(),
-        isbios: this.isBios() ? 'yes' : undefined,
-        isdevice: this.isDevice() ? 'yes' : undefined,
+        name: this.name,
+        isbios: this.getIsBios() ? 'yes' : undefined,
         cloneof:
-          this.getParent() && parentNames.has(this.getParent()) ? this.getParent() : undefined,
-        romof: this.getBios() && parentNames.has(this.getBios()) ? this.getBios() : undefined,
+          this.cloneOf !== undefined && parentNames.has(this.cloneOf) ? this.cloneOf : undefined,
+        romof: this.romOf && parentNames.has(this.romOf) ? this.romOf : undefined,
+        id: this.id,
+        cloneofid: this.cloneOfId,
+        isdevice: this.getIsDevice() ? 'yes' : undefined,
       },
       description: {
-        _: this.getDescription(),
+        _: this.description,
       },
       category: this.getCategories().map((category) => ({ _: category })),
-      ...(this.getManufacturer() !== undefined
+      ...(this.manufacturer !== undefined
         ? {
             manufacturer: {
-              _: this.getManufacturer(),
+              _: this.manufacturer,
             },
           }
         : {}),
@@ -191,30 +228,22 @@ export default class Game implements GameProps {
     return [this.category];
   }
 
-  getDescription(): string {
-    return this.description;
-  }
-
   /**
    * Is this game a collection of BIOS file(s).
    */
-  isBios(): boolean {
-    return this.bios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
+  getIsBios(): boolean {
+    return this.isBios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
   }
 
   /**
    * Is this game a MAME "device"?
    */
-  isDevice(): boolean {
-    return this.device === 'yes';
+  getIsDevice(): boolean {
+    return this.isDevice === 'yes';
   }
 
   getGenre(): string | undefined {
     return this.genre;
-  }
-
-  getManufacturer(): string | undefined {
-    return this.manufacturer;
   }
 
   getReleases(): Release[] {
@@ -236,6 +265,22 @@ export default class Game implements GameProps {
       return this.disk;
     }
     return [this.disk];
+  }
+
+  getCloneOf(): string | undefined {
+    return this.cloneOf;
+  }
+
+  getRomOf(): string | undefined {
+    return this.romOf;
+  }
+
+  getId(): string | undefined {
+    return this.id;
+  }
+
+  getCloneOfId(): string | undefined {
+    return this.cloneOfId;
   }
 
   // Computed getters
@@ -520,7 +565,7 @@ export default class Game implements GameProps {
 
   getGameType(): GameType {
     // NOTE(cemmer): priority here matters!
-    if (this.isBios()) {
+    if (this.getIsBios()) {
       return GameType.BIOS;
     }
     if (this.isVerified()) {
@@ -548,7 +593,7 @@ export default class Game implements GameProps {
     if (this.isDemo()) {
       return GameType.DEMO;
     }
-    if (this.isDevice()) {
+    if (this.getIsDevice()) {
       return GameType.DEVICE;
     }
     if (this.isFixed()) {
@@ -602,15 +647,7 @@ export default class Game implements GameProps {
    * Is this game a clone?
    */
   isClone(): boolean {
-    return this.getParent() !== '';
-  }
-
-  getParent(): string {
-    return this.cloneOf ?? '';
-  }
-
-  getBios(): string {
-    return this.romOf ?? '';
+    return this.getCloneOf() !== undefined || this.getCloneOfId() !== undefined;
   }
 
   // Internationalization
