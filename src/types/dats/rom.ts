@@ -8,11 +8,20 @@ import { ChecksumProps } from '../files/fileChecksums.js';
 type ROMStatus = 'baddump' | 'nodump' | 'good';
 
 export interface ROMProps extends ChecksumProps {
+  // ********** OFFICIAL LOGIQX FIELDS **********
+  // @see http://www.logiqx.com/Dats/datafile.dtd
+
   readonly name: string;
   readonly size: number;
   readonly status?: ROMStatus;
   readonly merge?: string;
   readonly bios?: string;
+
+  // ********** NO-INTRO FIELDS **********
+  // @see https://datomatic.no-intro.org/stuff/schema_nointro_datfile_v3.xsd
+
+  // readonly serial?: string;
+  // readonly header?: string;
 }
 
 /**

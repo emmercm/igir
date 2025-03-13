@@ -10,8 +10,6 @@ import Header from './logiqx/header.js';
  */
 export default class IgirHeader extends Header {
   constructor(datType: string, originalDat: DAT, options: Options) {
-    super();
-
     const inputOptions = Object.entries(options.toObject()).filter(
       ([key, value]) =>
         (['merge-', 'exclude-', 'filter-', 'no-', 'only-', 'single', 'prefer-'].some((start) =>
@@ -26,7 +24,7 @@ export default class IgirHeader extends Header {
     const inputOptionsString = JSON.stringify(Object.fromEntries(inputOptions), undefined, 2);
 
     const date = moment().format('YYYYMMDD-HHmmss');
-    return new Header({
+    super({
       name: `${originalDat.getHeader().getName().trim()} ${datType}`.trim(),
       description: `${originalDat.getHeader().getDescription()?.trim()} ${datType}`.trim(),
       version: date,

@@ -27,7 +27,7 @@ function givenDAT(): DAT {
       }),
       new Game({
         name: 'bios with one ROM and one release',
-        bios: 'yes',
+        isBios: 'yes',
         release: [new Release('USA', 'USA', 'EN')],
         rom: new ROM({ name: 'three.rom', size: 0, crc32: '00000003' }),
       }),

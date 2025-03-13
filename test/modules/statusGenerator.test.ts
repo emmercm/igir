@@ -32,7 +32,7 @@ const games = [
   }),
   new Game({
     name: gameNameBios,
-    bios: 'yes',
+    isBios: 'yes',
     rom: new ROM({ name: 'bios.rom', size: 123, crc32: '11111111' }),
   }),
   new Game({
@@ -53,7 +53,7 @@ const games = [
   }),
   new Game({
     name: gameNameDevice,
-    device: 'yes',
+    isDevice: 'yes',
     // (a game can't count as "missing" if it has no ROMs)
   }),
 ];

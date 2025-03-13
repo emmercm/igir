@@ -23,34 +23,68 @@ export default abstract class DAT {
    */
   protected generateGameNamesToParents(): this {
     const gameNamesToParents: Map<string, Parent> = new Map();
+    const gameIdsToParents: Map<string, Parent> = new Map();
 
     // Find all parents
-    this.getGames()
-      .filter((game) => game.isParent())
-      .forEach((game: Game) => {
-        const parent = gameNamesToParents.get(game.getName());
-        if (parent) {
+    this.getGames().forEach((game: Game) => {
+      if (game.getCloneOfId() !== undefined) {
+        // Is a clone
+        return;
+      }
+      const id = game.getId();
+      if (id !== undefined) {
+        const parent = gameIdsToParents.get(id);
+        if (parent === undefined) {
+          gameIdsToParents.set(id, new Parent(game));
+        } else {
           // Two games have the same name, assume this one is a clone
           parent.addChild(game);
-        } else {
-          gameNamesToParents.set(game.getName(), new Parent(game));
         }
-      });
+        return;
+      }
+
+      if (game.getCloneOf() !== undefined) {
+        // Is a clone
+        return;
+      }
+      const parent = gameNamesToParents.get(game.getName());
+      if (parent === undefined) {
+        gameNamesToParents.set(game.getName(), new Parent(game));
+      } else {
+        // Two games have the same name, assume this one is a clone
+        parent.addChild(game);
+      }
+    });
 
     // Find all clones
-    this.getGames()
-      .filter((game) => game.isClone())
-      .forEach((game: Game) => {
-        const parent = gameNamesToParents.get(game.getParent());
+    this.getGames().forEach((game: Game) => {
+      const cloneOfId = game.getCloneOfId();
+      if (cloneOfId !== undefined) {
+        const id = game.getId();
+        const parent = gameIdsToParents.get(cloneOfId);
+        if (parent) {
+          parent.addChild(game);
+        } else if (id !== undefined) {
+          // The DAT is bad, the game is referencing a parent that doesn't exist
+          gameIdsToParents.set(cloneOfId, new Parent(game));
+        }
+        return;
+      }
+
+      const cloneOf = game.getCloneOf();
+      if (cloneOf !== undefined) {
+        const parent = gameNamesToParents.get(cloneOf);
         if (parent) {
           parent.addChild(game);
         } else {
           // The DAT is bad, the game is referencing a parent that doesn't exist
-          gameNamesToParents.set(game.getName(), new Parent(game));
+          gameNamesToParents.set(cloneOf, new Parent(game));
         }
-      });
+        return;
+      }
+    });
 
-    this.parents = [...gameNamesToParents.values()];
+    this.parents = [...gameIdsToParents.values(), ...gameNamesToParents.values()];
 
     return this;
   }

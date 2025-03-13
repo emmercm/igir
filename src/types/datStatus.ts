@@ -115,10 +115,10 @@ export default class DATStatus {
 
   private static pushValueIntoMap<T>(map: Map<ROMType, T[]>, game: Game, value: T): void {
     DATStatus.append(map, ROMType.GAME, value);
-    if (game.isBios()) {
+    if (game.getIsBios()) {
       DATStatus.append(map, ROMType.BIOS, value);
     }
-    if (game.isDevice()) {
+    if (game.getIsDevice()) {
       DATStatus.append(map, ROMType.DEVICE, value);
     }
     if (game.isRetail()) {
@@ -255,7 +255,7 @@ export default class DATStatus {
           status,
           filePaths,
           foundReleaseCandidate?.isPatched() ?? false,
-          game.isBios(),
+          game.getIsBios(),
           game.isRetail(),
           game.isUnlicensed(),
           game.isDebug(),

@@ -95,7 +95,7 @@ describe('device refs', () => {
     new Machine({
       name: 'screen',
       rom: new ROM(),
-      device: 'yes',
+      isDevice: 'yes',
     }),
   ]);
 
@@ -106,7 +106,7 @@ describe('device refs', () => {
     const parentsToCandidates = new Map(
       [...(await datToCandidates(dat)).entries()]
         // Remove all candidates for devices
-        .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().isDevice())),
+        .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().getIsDevice())),
     );
 
     const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
@@ -126,7 +126,7 @@ describe('device refs', () => {
     const parentsToCandidates = new Map(
       [...(await datToCandidates(dat)).entries()]
         // Remove all candidates for devices
-        .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().isDevice())),
+        .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().getIsDevice())),
     );
 
     const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(

@@ -201,7 +201,7 @@ describe('single files', () => {
         'snes',
         'Nintendo - Super Nintendo Entertainment System (20240317-134803).dat',
       ),
-      3952,
+      1883,
       3952,
       3953,
     ],
@@ -223,6 +223,7 @@ describe('single files', () => {
       const dats = await createDatScanner({ dat: [datPath] }).scan();
       expect(dats).toHaveLength(1);
       const dat = dats[0];
+      expect(dat.getParents().length).toBeLessThanOrEqual(dat.getGames().length);
       expect(dat.getParents()).toHaveLength(expectedParents);
       expect(dat.getGames()).toHaveLength(expectedGames);
       expect(dat.getGames().flatMap((game) => game.getRoms())).toHaveLength(expectedRoms);

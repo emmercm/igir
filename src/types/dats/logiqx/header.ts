@@ -5,6 +5,9 @@ import { Expose, Type } from 'class-transformer';
 import ClrMamePro from './clrMamePro.js';
 
 interface HeaderOptions {
+  // ********** OFFICIAL LOGIQX FIELDS **********
+  // @see http://www.logiqx.com/Dats/datafile.dtd
+
   /**
    * "Name of the emulator without a version number. This field is used by the
    * update feature of the CMPro profiler."
@@ -40,7 +43,13 @@ interface HeaderOptions {
   readonly url?: string;
   readonly comment?: string;
   readonly clrMamePro?: ClrMamePro;
-  // readonly romCenter?: RomCenter;
+  // readonly romCenter?: unknown;
+
+  // ********** NO-INTRO FIELDS **********
+  // @see https://datomatic.no-intro.org/stuff/schema_nointro_datfile_v3.xsd
+
+  // readonly id?: string;
+  // readonly subset?: string;
 }
 
 /**
