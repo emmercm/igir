@@ -118,7 +118,7 @@ export default class DATParentInferrer extends Module {
         .replace(/\(Reprint\)/i, '')
         .replace(/\(Rerelease\)/i, '')
         .replace(/\(Retro-Bit\)/i, '')
-        .replace(/\(Rev[a-z0-9. -]*\)/i, '')
+        .replace(/\((Rev|Version)\s*[a-z0-9.-]*\)/i, '')
         .replace(/\([^)]*Seisanban\)/i, '') // "production version"
         .replace(/\(Shotenban\)/i, '') // "bookstore edition"
         .replace(/\(Special Pack\)/i, '')
@@ -217,7 +217,7 @@ export default class DATParentInferrer extends Module {
         // Sega - Mega Drive / Genesis
         .replace(/\(MP\)/i, '') // "MegaPlay version"
         // Sega - Sega/Mega CD
-        .replace(/\(RE-?[0-9]*\)/, '')
+        .replace(/\(RE?-?[0-9]*\)/, '')
         // Sony - PlayStation 1
         .replace(/\(EDC\)/i, '') // copy protection
         .replace(/\(PSone Books\)/i, '')

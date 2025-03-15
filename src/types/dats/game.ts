@@ -287,14 +287,14 @@ export default class Game implements GameProps {
 
   getRevision(): number {
     // Numeric revision
-    const revNumberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
-    if (revNumberMatches && revNumberMatches?.length >= 2 && !Number.isNaN(revNumberMatches[1])) {
-      return Number(revNumberMatches[1]);
+    const revNumberMatches = this.getName().match(/\((Rev|Version)\s*([0-9.]+)\)/i);
+    if (revNumberMatches && revNumberMatches.length >= 3 && !Number.isNaN(revNumberMatches[1])) {
+      return Number(revNumberMatches[2]);
     }
 
     // Letter revision
     const revLetterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
-    if (revLetterMatches && revLetterMatches?.length >= 2) {
+    if (revLetterMatches && revLetterMatches.length >= 2) {
       return (
         (revLetterMatches[1].toUpperCase().codePointAt(0) as number) -
         ('A'.codePointAt(0) as number) +
@@ -304,14 +304,19 @@ export default class Game implements GameProps {
 
     // TOSEC versions
     const versionMatches = this.getName().match(/\Wv([0-9]+\.[0-9]+)\W/i);
-    if (versionMatches && versionMatches?.length >= 2 && !Number.isNaN(versionMatches[1])) {
+    if (versionMatches && versionMatches.length >= 2 && !Number.isNaN(versionMatches[1])) {
       return Number(versionMatches[1]);
     }
 
     // Ring code revision
-    const ringCodeMatches = this.getName().match(/\(RE([0-9]+)\)/i);
-    if (ringCodeMatches && ringCodeMatches?.length >= 2 && !Number.isNaN(ringCodeMatches[1])) {
-      return Number(ringCodeMatches[1]);
+    const ringCodeMatches = this.getName().match(/\(RE?-?([0-9]*)\)/i);
+    if (ringCodeMatches && ringCodeMatches.length >= 2) {
+      if (ringCodeMatches[1] === '') {
+        // Redump doesn't always include a number
+        return 1;
+      } else if (!Number.isNaN(ringCodeMatches[1])) {
+        return Number(ringCodeMatches[1]);
+      }
     }
 
     return 0;
@@ -329,6 +334,13 @@ export default class Game implements GameProps {
    */
   isAlpha(): boolean {
     return this.name.match(/\(Alpha[a-z0-9. ]*\)/i) !== null;
+  }
+
+  /**
+   * Is this game an alternate release?
+   */
+  isAlternate(): boolean {
+    return this.name.match(/\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i) !== null;
   }
 
   /**
