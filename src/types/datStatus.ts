@@ -135,7 +135,7 @@ export default class DATStatus {
   }
 
   getDATName(): string {
-    return this.dat.getNameShort();
+    return this.dat.getName();
   }
 
   getInputFiles(): File[] {

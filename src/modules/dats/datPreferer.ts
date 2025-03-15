@@ -23,24 +23,24 @@ export default class DATPreferer extends Module {
   prefer(dat: DAT): DAT {
     if (!this.options.getSingle()) {
       this.progressBar.logTrace(
-        `${dat.getNameShort()}: not running in single/1G1R mode, not preferring games`,
+        `${dat.getName()}: not running in single/1G1R mode, not preferring games`,
       );
       return dat;
     }
 
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no games to prefer`);
+      this.progressBar.logTrace(`${dat.getName()}: no games to prefer`);
       return dat;
     }
 
     // Return early if there aren't any games
     if (dat.getParents().reduce((sum, parent) => sum + parent.getGames().length, 0) === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parent has games, not preferring games`);
+      this.progressBar.logTrace(`${dat.getName()}: no parent has games, not preferring games`);
       return dat;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: preferring DAT games`);
+    this.progressBar.logTrace(`${dat.getName()}: preferring DAT games`);
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PREFERRING);
     this.progressBar.reset(dat.getParents().length);
 
@@ -53,7 +53,7 @@ export default class DATPreferer extends Module {
           return undefined;
         }
         this.progressBar.logTrace(
-          `${dat.getNameShort()}: ${parent.getName()} (parent): ${parent.getGames().length.toLocaleString()} game${parent.getGames().length !== 1 ? 's' : ''} before preferring`,
+          `${dat.getName()}: ${parent.getName()} (parent): ${parent.getGames().length.toLocaleString()} game${parent.getGames().length !== 1 ? 's' : ''} before preferring`,
         );
 
         const preferredGame = parent
@@ -70,10 +70,10 @@ export default class DATPreferer extends Module {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${preferredDat.getNameShort()}: preferred to ${preferredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${preferredGames.length !== 1 ? 's' : ''} (${FsPoly.sizeReadable(size)})`,
+      `${preferredDat.getName()}: preferred to ${preferredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${preferredGames.length !== 1 ? 's' : ''} (${FsPoly.sizeReadable(size)})`,
     );
 
-    this.progressBar.logTrace(`${preferredDat.getNameShort()}: done preferring DAT games`);
+    this.progressBar.logTrace(`${preferredDat.getName()}: done preferring DAT games`);
     return preferredDat;
   }
 

@@ -34,11 +34,11 @@ export default class CandidateCombiner extends Module {
     }
 
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to make patched candidates for`);
+      this.progressBar.logTrace(`${dat.getName()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: generating consolidated candidate`);
+    this.progressBar.logTrace(`${dat.getName()}: generating consolidated candidate`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_COMBINING);
     this.progressBar.reset(parentsToCandidates.size);
 
@@ -53,7 +53,7 @@ export default class CandidateCombiner extends Module {
   }
 
   private static buildGame(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): Game {
-    const name = dat.getNameShort();
+    const name = dat.getName();
 
     const roms = [...parentsToCandidates.values()]
       .flat()
@@ -92,7 +92,7 @@ export default class CandidateCombiner extends Module {
         }
 
         // Combine all output ArchiveEntry to a single archive of the DAT name
-        let outputEntry = outputFile.withFilePath(dat.getNameShort());
+        let outputEntry = outputFile.withFilePath(dat.getName());
 
         // If the game has multiple ROMs, then group them in a folder in the archive
         if (releaseCandidate.getGame().getRoms().length > 1) {

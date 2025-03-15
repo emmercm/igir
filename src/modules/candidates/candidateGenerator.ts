@@ -47,14 +47,14 @@ export default class CandidateGenerator extends Module {
    */
   async generate(dat: DAT, indexedFiles: IndexedFiles): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (indexedFiles.getFiles().length === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no input ROMs to make candidates from`);
+      this.progressBar.logTrace(`${dat.getName()}: no input ROMs to make candidates from`);
       return new Map(dat.getParents().map((parent) => [parent, []]));
     }
 
     const output = new Map<Parent, ReleaseCandidate[]>();
     const parents = dat.getParents();
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: generating candidates`);
+    this.progressBar.logTrace(`${dat.getName()}: generating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.reset(parents.length);
 
@@ -89,12 +89,12 @@ export default class CandidateGenerator extends Module {
             }
 
             this.progressBar.logTrace(
-              `${dat.getNameShort()}: ${game.getName()}: found ${foundCandidates.toLocaleString()} candidate${foundCandidates !== 1 ? 's' : ''}`,
+              `${dat.getName()}: ${game.getName()}: found ${foundCandidates.toLocaleString()} candidate${foundCandidates !== 1 ? 's' : ''}`,
             );
           }
 
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${parent.getName()} (parent): found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`,
+            `${dat.getName()}: ${parent.getName()} (parent): found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`,
           );
           output.set(parent, releaseCandidates);
 
@@ -110,10 +110,10 @@ export default class CandidateGenerator extends Module {
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: generated ${FsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
+      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
     );
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done generating candidates`);
+    this.progressBar.logTrace(`${dat.getName()}: done generating candidates`);
     return output;
   }
 
@@ -164,7 +164,7 @@ export default class CandidateGenerator extends Module {
         ) {
           // ...then forget the input file's header, so that we don't later remove it
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`,
+            `${dat.getName()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`,
           );
           inputFile = inputFile.withoutFileHeader();
         }
@@ -184,7 +184,7 @@ export default class CandidateGenerator extends Module {
         ) {
           // ...then we can't use this file
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`,
+            `${dat.getName()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`,
           );
           return [rom, undefined];
         }
@@ -205,7 +205,7 @@ export default class CandidateGenerator extends Module {
               checksumBitmask: inputFile.getChecksumBitmask(),
             });
           } catch (error) {
-            this.progressBar.logWarn(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+            this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${error}`);
             return [rom, undefined];
           }
         }
@@ -218,7 +218,7 @@ export default class CandidateGenerator extends Module {
           const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
           return [rom, romWithFiles];
         } catch (error) {
-          this.progressBar.logError(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+          this.progressBar.logError(`${dat.getName()}: ${game.getName()}: ${error}`);
           return [rom, undefined];
         }
       }),
@@ -342,7 +342,7 @@ export default class CandidateGenerator extends Module {
         );
         if (unusedEntries.length > 0) {
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
+            `${dat.getName()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
           );
         }
         return unusedEntries.length === 0;
@@ -373,7 +373,7 @@ export default class CandidateGenerator extends Module {
     return new Map(
       romsAndInputFiles.map(([rom, inputFiles]) => {
         this.progressBar.logTrace(
-          `${dat.getNameShort()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
+          `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
         );
         let archiveEntry = inputFiles.find(
           (inputFile) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath(),
@@ -460,7 +460,7 @@ export default class CandidateGenerator extends Module {
     try {
       outputPathParsed = OutputFactory.getPath(this.options, dat, game, release, rom, inputFile);
     } catch (error) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: ${game.getName()}: ${error}`);
+      this.progressBar.logTrace(`${dat.getName()}: ${game.getName()}: ${error}`);
       return undefined;
     }
     const outputFilePath = outputPathParsed.format();
@@ -510,7 +510,7 @@ export default class CandidateGenerator extends Module {
     foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
   ): void {
-    let message = `${dat.getNameShort()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
+    let message = `${dat.getName()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
     if (release?.getRegion()) {
       message += ` (${release?.getRegion()})`;
     }
@@ -554,7 +554,7 @@ export default class CandidateGenerator extends Module {
         .reduce(ArrayPoly.reduceUnique(), []);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
-        let message = `${dat.getNameShort()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
+        let message = `${dat.getName()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
         conflictedInputFiles.forEach((conflictedInputFile) => {
           message += `\n  ${conflictedInputFile}`;
         });
@@ -624,7 +624,7 @@ export default class CandidateGenerator extends Module {
       );
       if (unusedEntries.length > 0) {
         this.progressBar.logTrace(
-          `${dat.getNameShort()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
+          `${dat.getName()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
         );
         return true;
       }

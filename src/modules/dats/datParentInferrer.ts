@@ -22,17 +22,17 @@ export default class DATParentInferrer extends Module {
    */
   infer(dat: DAT): DAT {
     if (dat.hasParentCloneInfo() && !this.options.getDatIgnoreParentClone()) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: DAT has parent/clone info, skipping`);
+      this.progressBar.logTrace(`${dat.getName()}: DAT has parent/clone info, skipping`);
       return dat;
     }
 
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no games to process`);
+      this.progressBar.logTrace(`${dat.getName()}: no games to process`);
       return dat;
     }
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
     this.progressBar.reset(dat.getGames().length);
@@ -56,7 +56,7 @@ export default class DATParentInferrer extends Module {
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
     const inferredDat = new LogiqxDAT(dat.getHeader(), newGames);
     this.progressBar.logTrace(
-      `${inferredDat.getNameShort()}: grouped to ${inferredDat.getParents().length.toLocaleString()} parent${inferredDat.getParents().length !== 1 ? 's' : ''}`,
+      `${inferredDat.getName()}: grouped to ${inferredDat.getParents().length.toLocaleString()} parent${inferredDat.getParents().length !== 1 ? 's' : ''}`,
     );
 
     this.progressBar.logTrace('done inferring parents');

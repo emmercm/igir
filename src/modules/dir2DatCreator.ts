@@ -33,7 +33,7 @@ export default class Dir2DatCreator extends Module {
       return undefined;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: writing dir2dat`);
+    this.progressBar.logTrace(`${dat.getName()}: writing dir2dat`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.reset(1);
 
@@ -71,10 +71,10 @@ export default class Dir2DatCreator extends Module {
     const dir2dat = new LogiqxDAT(header, gamesFromCandidates);
     const dir2datContents = dir2dat.toXmlDat();
     const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
-    this.progressBar.logInfo(`${dir2dat.getNameShort()}: creating dir2dat '${dir2datPath}'`);
+    this.progressBar.logInfo(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);
     await FsPoly.writeFile(dir2datPath, dir2datContents);
 
-    this.progressBar.logTrace(`${dir2dat.getNameShort()}: done writing dir2dat`);
+    this.progressBar.logTrace(`${dir2dat.getName()}: done writing dir2dat`);
     return dir2datPath;
   }
 }
