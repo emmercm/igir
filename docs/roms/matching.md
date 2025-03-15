@@ -12,7 +12,7 @@ By default, Igir will use CRC32 + filesize to match input files to ROMs found in
 
 Some DAT release groups do not include every checksum for every file. For example, CHDs in MAME DATs only include SHA1 checksums and nothing else, not even filesize information.
 
-And some DAT release groups do not include filesize information for every file, preventing a safe use of CRC32. For example, not every [Hardware Target Game Database SMDB](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) includes file sizes, but they typically include all the normal checksums.
+Some DAT release groups do not include filesize information for every file, preventing a safe use of CRC32. For example, not every [Hardware Target Game Database SMDB](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) includes file sizes, but they typically include all the normal checksums.
 
 !!! warning
 
@@ -62,7 +62,7 @@ igir [commands..] [options] --input-checksum-min SHA256
 
 This option defines the _minimum_ checksum that will be used based on digest size (below). If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above), but never lower.
 
-The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives (see "quick scanning" above).
+The reason you might want to do this is to have a higher confidence that found files _exactly_ match ROMs in DATs. Keep in mind that explicitly enabling non-CRC32 checksums will _greatly_ slow down scanning of files within archives (see `--input-checksum-quick` above).
 
 Here is a table that shows the keyspace for each checksum algorithm, where the higher number of bits reduces the chances of collisions:
 

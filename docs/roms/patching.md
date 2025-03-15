@@ -42,7 +42,7 @@ Not all patch types are created equal. Here are some tables of some existing for
 | `.rup` (NINJA 2.0)              | ⚠️ only single file patches, only raw/binary file type | ❌ uses MD5              |                                                                                                                    |
 | `.rxl` (ROM eXtension Library)  | ❌                                                      | ❌                       | RXL will probably never be supported, it is used to inject files at manually specified locations into ROMs.        |
 
-If you have a choice in patch format, choose one that contains CRC32 checksums in the patch file contents.
+If you have a choice in patch format, choose one that contains CRC32 checksums in the patch file contents (e.g. choose `.bps` over `.ips` if possible).
 
 ## ROM checksums
 

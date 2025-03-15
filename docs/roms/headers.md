@@ -34,10 +34,10 @@ Some emulators cannot parse ROMs with headers and instead need a "headerless" ve
 
 | Console                        | Header        | Headered<br/>Extension | Headerless<br/>Extension |
 |--------------------------------|---------------|------------------------|--------------------------|
-| Atari 7800                     | A78           | `.a78`                 | N/A                      |
+| Atari 7800                     | A78           | `.a78`                 | (no change)              |
 | Atari Lynx                     | LNX           | `.lnx`                 | `.lyx`                   |
-| Nintendo - NES                 | iNES, NES 2.0 | `.nes`                 | N/A                      |
-| Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | N/A                      |
+| Nintendo - NES                 | iNES, NES 2.0 | `.nes`                 | (no change)              |
+| Nintendo - Famicom Disk System | fsNES/FDS     | `.fds`                 | (no change)              |
 | Nintendo - SNES                | SMC           | `.smc`                 | `.sfc`                   |
 
 For every console that Igir can understand the headers for, it can also remove them with the `--remove-headers` option. This only makes sense for the consoles above with different "headerless" extensions, so you have to specify the extensions like this:

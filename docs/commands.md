@@ -63,6 +63,16 @@ After performing one of the ROM writing commands (above), verify that the file w
 - `extract test` tests that each ROM file written has the correct size & checksum
 - `zip test` tests that the `.zip` file has all the correct archive entry sizes & checksums, and contains no excess entries
 
+## DAT writing
+
+### `dir2dat`
+
+Creates a DAT from scanned ROM files. See the [dir2dat page](dats/dir2dat.md) for more information.
+
+### `fixdat`
+
+Creates a DAT from missing ROM files. See the [fixdat page](dats/fixdats.md) for more information.
+
 ## File manipulation
 
 ### `clean`

@@ -63,7 +63,7 @@ Igir uses the following rules when creating dir2dat DAT files:
     | `--input "ROMs/SNES/*"`    | `SNES`   |
     | `--input "ROMs/SNES/**/*"` | `SNES`   |
 
-- **Archive files will be treated as a single game, with every archive entry being a separate ROM.**
+- **Archive files will be treated as a single game, with every archive entry being a separate ROM file.**
 
     This is consistent with how the [`igir zip` command](../output/writing-archives.md) works, and with what [MAME expects](../usage/arcade.md).
 
