@@ -422,6 +422,36 @@ describe('revisions', () => {
       name: 'World Cup Golf - Professional Edition (Europe) (1S)',
       cloneOf: 'World Cup Golf - In Hyatt Dorado Beach (Japan) (En,Ja)',
     }),
+    // Game with Redump-style revisions
+    new Game({ name: 'Eternal Champions - Challenge from the Dark Side (USA)' }),
+    new Game({
+      name: 'Eternal Champions - Challenge from the Dark Side (USA) (RE)',
+      cloneOf: 'Eternal Champions - Challenge from the Dark Side (USA)',
+    }),
+    new Game({
+      name: 'Eternal Champions - Challenge from the Dark Side (USA) (Beta) (1995-05-11)',
+      cloneOf: 'Eternal Champions - Challenge from the Dark Side (USA)',
+    }),
+    // Game with Redump-style revisions
+    new Game({ name: 'Bug! (Europe)' }),
+    new Game({ name: 'Bug! (USA)', cloneOf: 'Bug! (Europe)' }),
+    new Game({ name: 'Bug! (USA) (Demo) (1S)', cloneOf: 'Bug! (Europe)' }),
+    new Game({ name: 'Bug! (USA) (Demo) (3S)', cloneOf: 'Bug! (Europe)' }),
+    new Game({ name: 'Bug! (USA) (R)', cloneOf: 'Bug! (Europe)' }),
+    // Game with Redump-style versions
+    new Game({ name: "Bram Stoker's Dracula (USA) (Alt 2)" }),
+    new Game({
+      name: "Bram Stoker's Dracula (USA)",
+      cloneOf: "Bram Stoker's Dracula (USA) (Alt 2)",
+    }),
+    new Game({
+      name: "Bram Stoker's Dracula (USA) (Version 2.0)",
+      cloneOf: "Bram Stoker's Dracula (USA) (Alt 2)",
+    }),
+    new Game({
+      name: "Bram Stoker's Dracula (USA) (Alt 1)",
+      cloneOf: "Bram Stoker's Dracula (USA) (Alt 2)",
+    }),
     // Game without any revisions
     new Game({
       name: 'Super Metroid (Europe) (En,Fr,De)',
@@ -452,6 +482,9 @@ describe('revisions', () => {
       'Donkey Kong Country (USA) (Rev 2)',
       'Star Fox (USA) (Rev 2)',
       'World Cup Golf - Professional Edition (USA) (RE2)',
+      'Eternal Champions - Challenge from the Dark Side (USA) (RE)',
+      'Bug! (USA) (R)',
+      "Bram Stoker's Dracula (USA) (Version 2.0)",
       'Super Metroid (Europe) (En,Fr,De)',
     ]);
   });
@@ -466,6 +499,9 @@ describe('revisions', () => {
       'Donkey Kong Country (Europe) (En,Fr,De)',
       'Star Fox (Japan)',
       'World Cup Golf - In Hyatt Dorado Beach (Japan) (En,Ja)',
+      'Eternal Champions - Challenge from the Dark Side (USA)',
+      'Bug! (Europe)',
+      "Bram Stoker's Dracula (USA) (Alt 2)",
       'Super Metroid (Europe) (En,Fr,De)',
     ]);
   });
