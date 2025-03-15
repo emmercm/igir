@@ -1,6 +1,6 @@
 # Installation
 
-Igir is supported on :fontawesome-brands-windows: Windows, :fontawesome-brands-apple: macOS,:fontawesome-brands-linux: Linux, and every other operating system that [Node.js](https://nodejs.org) supports.
+Igir is supported on :fontawesome-brands-windows: Windows, :fontawesome-brands-apple: macOS, :fontawesome-brands-linux: Linux, and every other operating system that [Node.js](https://nodejs.org) supports.
 
 There are a few different installation options offered for Igir with varying levels of technical complexity. Every option will require some baseline understanding of command-line interfaces (CLIs).
 
@@ -25,7 +25,7 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
 
 !!! tip
 
-    You can alias the `npx` command in your macOS or Linux [dotfiles](https://missing.csail.mit.edu/2019/dotfiles/) like this:
+    You can alias the Igir `npx` command in your macOS or Linux [dotfiles](https://missing.csail.mit.edu/2019/dotfiles/) like this:
 
     === ":fontawesome-brands-apple: macOS"
 
@@ -56,7 +56,13 @@ brew tap emmercm/igir
 brew install igir
 ```
 
-You can then update Igir with _either_ of these commands
+and then run Igir as if it were any other executable:
+
+```shell
+igir copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+```
+
+Igir can then be updated with _either_ of these commands
 
 ```shell
 # Update every Homebrew package

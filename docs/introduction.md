@@ -6,9 +6,9 @@ From [Wikipedia](https://en.wikipedia.org/wiki/ROM_image):
 
 > A ROM image, or ROM file, is a computer file which contains a copy of the data from a read-only memory chip, often from a video game cartridge, or used to contain a computer's firmware, or from an arcade game's main board. The term is frequently used in the context of emulation, whereby older games or firmware are copied to ROM files on modern computers and can, using a piece of software known as an emulator, be run on a different device than which they were designed for.
 
-ROMs are complete copies of game data stored in cartridges or on discs.
+ROMs are complete copies of game data stored on ROM chips (in cartridges or in arcade cabinets) or on discs.
 
-A game may consist of multiple ROMs. For example, arcade cabinets, which contain multiple chips, or disc-based games that have multiple tracks on the disc.
+A game may consist of multiple ROMs. For example, arcade cabinets frequently contain multiple chips, and disc-based games that have multiple tracks on the disc.
 
 ## What is a ROM manager?
 
@@ -27,9 +27,9 @@ Most ROM managers rely on [DATs](dats/introduction.md), files that catalog every
 
 Igir is a ROM manager for the modern age.
 
-Most ROM managers are only built for Windows, and some offer workarounds for running on macOS and Linux. Most of these managers have confusing GUIs that make batch-able, repeatable actions difficult. Igir is a command line tool that works on any OS.
+Most ROM managers are only built for Windows, though some offer workarounds for running on macOS and Linux. Most of these managers have confusing GUIs that make batch-able, repeatable actions difficult. Igir is a command line tool that works on any OS.
 
-In addition, Igir has features that aren't found in any other ROM managers, such as [ROM patching](roms/patching.md).
+In addition, Igir has features that aren't found in any other ROM managers, such as [ROM patching](roms/patching.md) and [ROM extension correction](output/options.md#fixing-rom-extensions).
 
 !!! info
 

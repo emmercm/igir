@@ -4,7 +4,7 @@ Igir has many options available to fit almost any use case, but the number of op
 
 ## Primary ROM library
 
-I have a 4TiB external hard drive that I use as my source of truth where I store all of my DATs, ROMs, and patches. In general, I'm more interested in cartridge-based consoles. Optical-based ROMs can take up a significant amount of space.
+I have a 4TiB external hard drive that I use as my source of truth where I store all of my DATs, ROMs, and patches. In general, I'm more interested in cartridge-based consoles for space-saving reasons, but I have some optical-based ROMs.
 
 The file tree in that hard drive looks like this:
 

@@ -9,7 +9,7 @@ Igir supports most common archive formats:
 | Extension                                                        | Contains file CRC32s | Igir can extract without a third-party binary | Igir can checksum without temporary files |
 |------------------------------------------------------------------|----------------------|-----------------------------------------------|-------------------------------------------|
 | `.7z`                                                            | ✅                    | ❌ `7za`                                       | ❌                                         |
-| `.chd`                                                           | ❌ SHA1               | ❌ `chdman`<sup>1</sup>                        | ❌                                         |
+| `.chd`                                                           | ❌ SHA1               | ❌ `chdman`<sup>1</sup>                        | ⚠️ SHA1 only for hard drive images        |
 | `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ `maxcso`                                    | ⚠️ CRC32 only                             |
 | `.gcz`                                                           | ❌                    | ❌ `dolphin-tool`                              | ⚠️ CRC32, MD5, and SHA1 only              |
 | `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ `7za`                                       | ❌                                         |
@@ -29,7 +29,7 @@ Igir supports most common archive formats:
 
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 
-By default, Igir uses CRC32 information to [match ROMs](../roms/matching.md) to DAT entries. If an archive already contains CRC32 information for each file, then Igir doesn't need to extract each file and compute its CRC32. This can save a lot of time on large archives.
+By default, Igir uses CRC32 information to [match ROMs](../roms/matching.md) to DAT entries. If an archive already contains CRC32 information for each file, then Igir doesn't need to extract any file to compute its CRC32. This can save a lot of time on large archives.
 
 This is why you should use the [`igir zip` command](../output/writing-archives.md) when organizing your primary ROM collection. It is much faster for Igir to scan archives with CRC32 information, speeding up actions such as merging new ROMs into an existing collection.
 

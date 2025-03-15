@@ -1,6 +1,6 @@
 # Writing Fixdats
 
-"Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see the [DATs introduction docs](introduction.md) for how to obtain DATs), containing only a subset of the ROMs. Fixdats are specific to the state of each person's ROM collection, so they aren't necessarily meaningful to other people.
+"Fixdats" are DATs that contain only ROMs that are missing from your collection. Fixdats are derived from some other DAT (see the [DATs introduction docs](introduction.md) for how to obtain DATs), containing only a subset of its ROMs. Fixdats are specific to the state of each person's ROM collection, so they aren't necessarily meaningful to other people.
 
 Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
@@ -46,7 +46,7 @@ Example usage:
       --output ROMs-Sorted/
     ```
 
-may produce some fixdats in the `ROMs-Sorted/` directory, if any of the input DATs have ROMs that weren't found in the `ROMs/` input directory:
+This command will produce a fixdat file in the `ROMs-Sorted/` directory for each of the three input DATs that have at least one ROM that wasn't found in the `ROMs/` input directory:
 
 ```text
 ROMs-Sorted/

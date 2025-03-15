@@ -15,7 +15,7 @@ There are a few different popular ROM managers that have similar features:
 | DATs: built-in download manager            | ❌                                                                                                | ⚠️ via [DatVault](https://www.datvault.com/)                | ❌                                                             | ❌                                          |
 | DATs: supports DAT URLs                    | ✅                                                                                                | ❌                                                           | ❌                                                             | ❌                                          |
 | DATs: create from files (dir2dat)          | ✅ [dir2dat docs](dats/dir2dat.md)                                                                | ❓                                                           | ✅                                                             | ❌                                          |
-| DATs: fixdat creation                      | ✅ [Fixdat docs](dats/fixdats.md)                                                                 | ✅                                                           | ✅                                                             | ❌                                          |
+| DATs: fixdat creation                      | ✅ [fixdat docs](dats/fixdats.md)                                                                 | ✅                                                           | ✅                                                             | ❌                                          |
 | DATs: combine multiple                     | ✅                                                                                                | ✅                                                           | ❌                                                             | ❌                                          |
 | ROM Scanning: parallel scanning            | ✅                                                                                                | ❌                                                           | ❓                                                             | ❓                                          |
 | ROM Scanning: scanning exclusions          | ✅                                                                                                | ❌                                                           | ❓                                                             | ❓                                          |
@@ -25,16 +25,16 @@ There are a few different popular ROM managers that have similar features:
 | ROMs: header detection                     | ✅                                                                                                | ✅                                                           | ⚠️ via supplemental XMLs                                      | ⚠️ via plugins                             |
 | ROMs: header removal                       | ✅ [automatic and forced](roms/headers.md)                                                        | ❌                                                           | ❌                                                             | ❌                                          |
 | ROMs: automatic extension correction       | ✅ [output writing docs](output/options.md#fixing-rom-extensions)                                 | ❌                                                           | ❌                                                             | ❌                                          |
-| ROMs: patching support                     | ✅ [patching docs](roms/patching.md)                                                              | ⚠️ SNES SuperDAT                                            | ❌                                                             | ❌                                          |
+| ROMs: patching support                     | ✅ many formats ([patching docs](roms/patching.md))                                               | ⚠️ SNES SuperDAT                                            | ❌                                                             | ❌                                          |
 | Arcade: supported merge types              | ✅ full non-merged, non-merged, split, merged ([arcade docs](usage/arcade.md))                    | ⚠️ full non-merged, split, merged                           | ✅ full non-merged, non-merged, split, merged                  | ⚠️ full non-merged, split, merged          |
 | Arcade: CHD disk inclusion                 | ✅ by default, can be turned off ([arcade docs](usage/arcade.md))                                 | ✅ by default, can be turned off                             | ❓                                                             | ❓                                          |
 | Arcade: sample inclusion                   | ❌                                                                                                | ❌                                                           | ✅                                                             | ❓                                          |
-| Archives: extraction formats               | ✅ many formats ([reading archives docs](input/reading-archives.md))                              | ⚠️ `.zip`, `.7z` (natively)                                 | ✅ `.zip`, `.7z` (via `7z`), `.rar` (via `rar`)                | ⚠️ `.zip`, `.7z`                           |
+| Archives: extraction formats               | ✅ many formats ([reading archives docs](input/reading-archives.md))                              | ⚠️ `.zip` (including zstd), `.7z` (natively)                | ✅ `.zip`, `.7z` (via `7z`), `.rar` (via `rar`)                | ⚠️ `.zip`, `.7z`                           |
 | Archives: `.chd` support                   | ⚠️ via `chdman`<sup>1</sup> (bundled)                                                            | ✅ v1-5 natively                                             | ⚠️ via `chdman`<sup>1</sup>                                   | ⚠️ v1-4 natively                           |
 | Archives: `.cso` & `.zso` support          | ⚠️ via `maxcso` (bundled)                                                                        | ❌                                                           | ❌                                                             | ❌                                          |
 | Archives: `.gcz`, `.rvz`, & `.wia` support | ⚠️ via `dolphin-tool` (bundled)                                                                  | ❌                                                           | ❌                                                             | ❌                                          |
 | Archives: `.nkit.iso` support              | ⚠️ matching but no extraction/inflation ([GameCube docs](usage/console/gamecube.md#nkit))        | ❌                                                           | ❌                                                             | ❌                                          |
-| Archives: creation formats                 | ❌ `.zip` only by design ([writing archives docs](output/writing-archives.md))                    | ⚠️ `.zip` (TorrentZip), `.7z` (RV7Z)                        | ✅ `.zip`, `.7z`, `.rar`                                       | ⚠️ `.zip`, `.7z`                           |
+| Archives: creation formats                 | ❌ `.zip` only by design ([writing archives docs](output/writing-archives.md))                    | ⚠️ `.zip` (TorrentZip, Total DOS, zstd), `.7z` (LZMA, zstd) | ✅ `.zip`, `.7z`, `.rar`                                       | ⚠️ `.zip`, `.7z`                           |
 | Archives: contents checksums               | ✅ when needed ([reading archives docs](input/reading-archives.md))                               | ⚠️ requires "files only" mode                               | ⚠️ if DAT has forcepacking=unzip                              | ❓                                          |
 | Archives: automatic extension correction   | ✅                                                                                                | ❌                                                           | ❌                                                             | ❌                                          |
 | Filtering: region, language, type, etc.    | ✅ [many options](roms/filtering-preferences.md#filters)                                          | ❌                                                           | ❌ only 1G1R options                                           | ⚠️ only at DB setup                        |
@@ -47,14 +47,20 @@ There are a few different popular ROM managers that have similar features:
 | Output: create single archive for DAT      | ✅                                                                                                | ✅                                                           | ❌                                                             | ❌                                          |
 
 <small>
-<sup>1</sup> requires you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
+<sup>1</sup> may require you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
 </small>
 
 !!! note
 
     Just like Igir, other ROM managers that are in active development are likely to release new features often. The above table is not guaranteed to be perfectly up-to-date, it is just a best effort.
 
-Other alternative ROM managers can be found in a number of other wikis, such as:
+There are some other managers omitted from the table above because they focus more on visual presentation and in-browser/app emulation than they do organization:
+
+- [RomM](https://romm.app/)
+- [Retrom](https://github.com/JMBeresford/retrom)
+- [Gaseous](https://github.com/gaseous-project/gaseous-server)
+
+Lists of other ROM managers can be found in a number of other wikis, such as:
 
 - [Emulation General Wiki](https://emulation.gametechwiki.com/index.php/ROM_managers)
 - [Pleasuredome's "Retro Arcade Guides"](https://pleasuredome.miraheze.org/wiki/ROM_Manager)
