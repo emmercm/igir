@@ -18,11 +18,11 @@ export default class CandidateValidator extends Module {
    */
   validate(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): ReleaseCandidate[] {
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to validate candidates for`);
+      this.progressBar.logTrace(`${dat.getName()}: no parents to validate candidates for`);
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: validating candidates`);
+    this.progressBar.logTrace(`${dat.getName()}: validating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
     this.progressBar.reset(parentsToCandidates.size);
 
@@ -31,7 +31,7 @@ export default class CandidateValidator extends Module {
       return conflictedOutputPaths;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done validating candidates`);
+    this.progressBar.logTrace(`${dat.getName()}: done validating candidates`);
     return [];
   }
 
@@ -62,7 +62,7 @@ export default class CandidateValidator extends Module {
           return false;
         }
 
-        let message = `${dat.getNameShort()}: multiple games writing to the same output path: ${outputPath}`;
+        let message = `${dat.getName()}: multiple games writing to the same output path: ${outputPath}`;
         uniqueCandidates.forEach((candidate) => {
           message += `\n  ${candidate.getName()}`;
         });

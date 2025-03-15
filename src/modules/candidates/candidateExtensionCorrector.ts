@@ -47,7 +47,7 @@ export default class CandidateExtensionCorrector extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to correct extensions for`);
+      this.progressBar.logTrace(`${dat.getName()}: no parents to correct extensions for`);
       return parentsToCandidates;
     }
 
@@ -56,21 +56,19 @@ export default class CandidateExtensionCorrector extends Module {
       .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
       .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles)).length;
     if (romsThatNeedCorrecting === 0) {
-      this.progressBar.logTrace(
-        `${dat.getNameShort()}: no output files need their extension corrected`,
-      );
+      this.progressBar.logTrace(`${dat.getName()}: no output files need their extension corrected`);
       return parentsToCandidates;
     }
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`,
+      `${dat.getName()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.reset(romsThatNeedCorrecting);
 
     const correctedParentsToCandidates = await this.correctExtensions(dat, parentsToCandidates);
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done correcting output file extensions`);
+    this.progressBar.logTrace(`${dat.getName()}: done correcting output file extensions`);
     return correctedParentsToCandidates;
   }
 
@@ -173,7 +171,7 @@ export default class CandidateExtensionCorrector extends Module {
       const waitingMessage = `${releaseCandidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
       this.progressBar.logTrace(
-        `${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles
+        `${dat.getName()}: ${parent.getName()}: correcting extension for: ${romWithFiles
           .getInputFile()
           .toString()}`,
       );
@@ -183,7 +181,7 @@ export default class CandidateExtensionCorrector extends Module {
         romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
       } catch (error) {
         this.progressBar.logError(
-          `${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile().toString()}': ${error}`,
+          `${dat.getName()}: failed to correct file extension for '${romWithFiles.getInputFile().toString()}': ${error}`,
         );
       }
       if (romSignature) {

@@ -1,4 +1,3 @@
-import { Memoize } from 'typescript-memoize';
 import xml2js from 'xml2js';
 
 import FsPoly from '../../polyfill/fsPoly.js';
@@ -101,23 +100,15 @@ export default abstract class DAT {
   }
 
   getName(): string {
-    return this.getHeader().getName();
+    return this.getHeader().getName().trim();
   }
 
-  @Memoize()
-  getNameShort(): string {
+  getDisplayName(): string {
     return (
       this.getName()
-        // Prefixes
-        .replace('FinalBurn Neo', '')
-        .replace('Non-Redump', '')
-        .replace('Source Code', '')
-        .replace('Unofficial', '')
-        // Suffixes
-        .replace('Datfile', '')
-        .replace('(Deprecated)', '')
-        .replace(/\(Parent-Clone\)/g, '')
-        .replace('(WIP)', '')
+        // No-Intro
+        .replace('Non-Redump', '!Redump')
+        .replace('Source Code', 'S.Code')
         // Cleanup
         .replace(/-( +-)+/g, '- ')
         .replace(/^[ -]+/, '')

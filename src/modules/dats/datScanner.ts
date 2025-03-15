@@ -144,7 +144,7 @@ export default class DATScanner extends Scanner {
     )
       .filter((dat) => dat !== undefined)
       .map((dat) => this.sanitizeDat(dat))
-      .sort((a, b) => a.getNameShort().localeCompare(b.getNameShort()));
+      .sort((a, b) => a.getName().localeCompare(b.getName()));
   }
 
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {

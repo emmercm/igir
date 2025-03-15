@@ -150,8 +150,8 @@ export default class OutputFactory {
       output = path.join(output, mirroredDirPath);
     }
 
-    if (options.getDirDatName() && dat.getNameShort()) {
-      output = path.join(output, dat.getNameShort());
+    if (options.getDirDatName() && dat.getName()) {
+      output = path.join(output, dat.getName());
     }
     if (options.getDirDatDescription() && dat.getDescription()) {
       output = path.join(output, dat.getDescription() as string);
