@@ -33,7 +33,7 @@ export default class MovedROMDeleter extends Module {
     }
 
     this.progressBar.logTrace('deleting moved ROMs');
-    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_FILTERING);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
     this.progressBar.reset(movedRoms.length);
 
     const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(movedRoms, inputRoms);

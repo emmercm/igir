@@ -23,7 +23,7 @@ export default class SingleBarFormatted {
 
   private readonly singleBar: SingleBar;
 
-  private lastOutput = '';
+  private lastOutput?: string;
 
   private valueTimeBuffer: number[][] = [];
 
@@ -69,7 +69,7 @@ export default class SingleBarFormatted {
     return this.singleBar;
   }
 
-  getLastOutput(): string {
+  getLastOutput(): string | undefined {
     return this.lastOutput;
   }
 
