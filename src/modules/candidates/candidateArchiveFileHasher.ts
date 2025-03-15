@@ -39,13 +39,13 @@ export default class CandidateArchiveFileHasher extends Module {
     parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to hash ArchiveFiles for`);
+      this.progressBar.logTrace(`${dat.getName()}: no parents to hash ArchiveFiles for`);
       return parentsToCandidates;
     }
 
     if (!this.options.shouldTest() && !this.options.getOverwriteInvalid()) {
       this.progressBar.logTrace(
-        `${dat.getNameShort()}: not testing or overwriting invalid files, no need`,
+        `${dat.getName()}: not testing or overwriting invalid files, no need`,
       );
       return parentsToCandidates;
     }
@@ -55,21 +55,19 @@ export default class CandidateArchiveFileHasher extends Module {
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .filter((romWithFiles) => romWithFiles.getInputFile() instanceof ArchiveFile).length;
     if (archiveFileCount === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no ArchiveFiles to hash`);
+      this.progressBar.logTrace(`${dat.getName()}: no ArchiveFiles to hash`);
       return parentsToCandidates;
     }
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount !== 1 ? 's' : ''}`,
+      `${dat.getName()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount !== 1 ? 's' : ''}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
     this.progressBar.reset(archiveFileCount);
 
     const hashedParentsToCandidates = this.hashArchiveFiles(dat, parentsToCandidates);
 
-    this.progressBar.logTrace(
-      `${dat.getNameShort()}: done generating hashed ArchiveFile candidates`,
-    );
+    this.progressBar.logTrace(`${dat.getName()}: done generating hashed ArchiveFile candidates`);
     return hashedParentsToCandidates;
   }
 
@@ -104,7 +102,7 @@ export default class CandidateArchiveFileHasher extends Module {
                         const waitingMessage = `${inputFile.toString()} ...`;
                         this.progressBar.addWaitingMessage(waitingMessage);
                         this.progressBar.logTrace(
-                          `${dat.getNameShort()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`,
+                          `${dat.getName()}: ${parent.getName()}: calculating checksums for: ${inputFile.toString()}`,
                         );
 
                         const hashedInputFile = await this.fileFactory.archiveFileFrom(

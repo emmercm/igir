@@ -31,21 +31,21 @@ export default class CandidatePatchGenerator extends Module {
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
     if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to make patched candidates for`);
+      this.progressBar.logTrace(`${dat.getName()}: no parents to make patched candidates for`);
       return parentsToCandidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: generating patched candidates`);
+    this.progressBar.logTrace(`${dat.getName()}: generating patched candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.reset(parentsToCandidates.size);
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${crcToPatches.size} unique patch${crcToPatches.size !== 1 ? 'es' : ''} found`,
+      `${dat.getName()}: ${crcToPatches.size} unique patch${crcToPatches.size !== 1 ? 'es' : ''} found`,
     );
 
     const patchedParentsToCandidates = this.build(dat, parentsToCandidates, crcToPatches);
-    this.progressBar.logTrace(`${dat.getNameShort()}: done generating patched candidates`);
+    this.progressBar.logTrace(`${dat.getName()}: done generating patched candidates`);
 
     return patchedParentsToCandidates;
   }
@@ -184,7 +184,7 @@ export default class CandidatePatchGenerator extends Module {
               });
 
               this.progressBar.logTrace(
-                `${dat.getNameShort()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`,
+                `${dat.getName()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`,
               );
             }
 

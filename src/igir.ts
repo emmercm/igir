@@ -144,7 +144,7 @@ export default class Igir {
       datProcessProgressBar.incrementProgress();
 
       const progressBar = this.logger.addProgressBar(
-        dat.getNameShort(),
+        dat.getDisplayName(),
         ProgressBarSymbol.WAITING,
         dat.getParents().length,
       );
@@ -385,9 +385,7 @@ export default class Igir {
         .filter((bitmask) => (datMinimumRomBitmask & ChecksumBitmask[bitmask]) > 0)
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
-          this.logger.trace(
-            `${dat.getNameShort()}: needs ${bitmask} file checksums for ROMs, enabling`,
-          );
+          this.logger.trace(`${dat.getName()}: needs ${bitmask} file checksums for ROMs, enabling`);
         });
 
       if (this.options.getExcludeDisks()) {
@@ -408,7 +406,7 @@ export default class Igir {
         .forEach((bitmask) => {
           matchChecksum |= ChecksumBitmask[bitmask];
           this.logger.trace(
-            `${dat.getNameShort()}: needs ${bitmask} file checksums for disks, enabling`,
+            `${dat.getName()}: needs ${bitmask} file checksums for disks, enabling`,
           );
         });
     });
@@ -436,7 +434,7 @@ export default class Igir {
           const isArchive = FileFactory.isExtensionArchive(rom.getName());
           if (isArchive) {
             this.logger.trace(
-              `${dat.getNameShort()}: contains archives, enabling checksum calculation of raw archive contents`,
+              `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
             );
           }
           return isArchive;

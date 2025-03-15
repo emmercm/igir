@@ -26,12 +26,12 @@ export default class CandidateMergeSplitValidator extends Module {
   validate(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): string[] {
     if (parentsToCandidates.size === 0) {
       this.progressBar.logTrace(
-        `${dat.getNameShort()}: no parents to validate merged & split ROM sets for`,
+        `${dat.getName()}: no parents to validate merged & split ROM sets for`,
       );
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: validating merged & split ROM sets`);
+    this.progressBar.logTrace(`${dat.getName()}: validating merged & split ROM sets`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
     this.progressBar.reset(parentsToCandidates.size);
 
@@ -90,13 +90,13 @@ export default class CandidateMergeSplitValidator extends Module {
 
         if (missingDependencies.length > 0) {
           this.progressBar.logWarn(
-            `${dat.getNameShort()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`,
+            `${dat.getName()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`,
           );
         }
         return missingDependencies;
       });
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done validating merged & split ROM sets`);
+    this.progressBar.logTrace(`${dat.getName()}: done validating merged & split ROM sets`);
     return missingGames;
   }
 }

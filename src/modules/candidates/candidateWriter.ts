@@ -99,7 +99,7 @@ export default class CandidateWriter extends Module {
 
     const totalCandidateCount = [...parentsToWritableCandidates.values()].flat().length;
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`,
+      `${dat.getName()}: writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`,
     );
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
       this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
@@ -113,7 +113,7 @@ export default class CandidateWriter extends Module {
         CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
           this.progressBar.incrementProgress();
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${parent.getName()} (parent): writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`,
+            `${dat.getName()}: ${parent.getName()} (parent): writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`,
           );
 
           for (const releaseCandidate of releaseCandidates) {
@@ -121,7 +121,7 @@ export default class CandidateWriter extends Module {
           }
 
           this.progressBar.logTrace(
-            `${dat.getNameShort()}: ${parent.getName()} (parent): done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`,
+            `${dat.getName()}: ${parent.getName()} (parent): done writing ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`,
           );
           this.progressBar.incrementDone();
         }),
@@ -129,7 +129,7 @@ export default class CandidateWriter extends Module {
     );
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`,
+      `${dat.getName()}: done writing ${totalCandidateCount.toLocaleString()} candidate${totalCandidateCount !== 1 ? 's' : ''}`,
     );
 
     const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
@@ -149,7 +149,7 @@ export default class CandidateWriter extends Module {
       .some((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()));
     if (!writeNeeded) {
       this.progressBar.logDebug(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: input and output files are the same, skipping`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: input and output files are the same, skipping`,
       );
       return;
     }
@@ -199,7 +199,7 @@ export default class CandidateWriter extends Module {
       ]) satisfies [File, ArchiveEntry<Zip>][];
     if (inputToOutputZipEntries.length === 0) {
       this.progressBar.logTrace(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: no zip archives to write`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: no zip archives to write`,
       );
       return;
     }
@@ -211,7 +211,7 @@ export default class CandidateWriter extends Module {
     if (await FsPoly.exists(outputZip.getFilePath())) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
         this.progressBar.logDebug(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
         );
         return;
       }
@@ -225,7 +225,7 @@ export default class CandidateWriter extends Module {
         );
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`,
+            `${dat.getName()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`,
           );
           return;
         }
@@ -252,7 +252,7 @@ export default class CandidateWriter extends Module {
           // Successfully validated
           break;
         }
-        const message = `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
+        const message = `${dat.getName()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
         if (i < this.options.getWriteRetry()) {
           this.progressBar.logWarn(`${message}, retrying`);
         } else {
@@ -275,7 +275,7 @@ export default class CandidateWriter extends Module {
     expectedArchiveEntries: ArchiveEntry<Zip>[],
   ): Promise<string | undefined> {
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${zipFilePath}: testing zip`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: ${zipFilePath}: testing zip`,
     );
 
     const expectedEntriesByPath = expectedArchiveEntries.reduce((map, entry) => {
@@ -348,7 +348,7 @@ export default class CandidateWriter extends Module {
       if (actualFile.getCrc32() && expectedFile.getCrc32()) {
         if (!expectedFile.getSize()) {
           this.progressBar.logWarn(
-            `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected size is unknown`,
+            `${dat.getName()}: ${releaseCandidate.getName()}: ${expectedFile.toString()}: can't test, expected size is unknown`,
           );
           continue;
         }
@@ -359,7 +359,7 @@ export default class CandidateWriter extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${zipFilePath}: test passed`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: ${zipFilePath}: test passed`,
     );
     return undefined;
   }
@@ -371,7 +371,7 @@ export default class CandidateWriter extends Module {
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
   ): Promise<boolean> {
     this.progressBar.logInfo(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
     );
 
     try {
@@ -379,13 +379,13 @@ export default class CandidateWriter extends Module {
       await outputZip.createArchive(inputToOutputZipEntries);
     } catch (error) {
       this.progressBar.logError(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
       );
       return false;
     }
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`,
     );
     return true;
   }
@@ -408,7 +408,7 @@ export default class CandidateWriter extends Module {
     if (inputToOutputEntries.length === 0) {
       // TODO(cemmer): unit test
       this.progressBar.logTrace(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: no raw files to write`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: no raw files to write`,
       );
       return;
     }
@@ -423,7 +423,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -465,7 +465,7 @@ export default class CandidateWriter extends Module {
 
       if (!wasMoved) {
         this.progressBar.logDebug(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
         );
         return;
       }
@@ -477,7 +477,7 @@ export default class CandidateWriter extends Module {
     if (!this.options.getOverwrite() && (await FsPoly.exists(outputFilePath))) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
         this.progressBar.logDebug(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: not overwriting existing file`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: ${outputFilePath}: not overwriting existing file`,
         );
         return;
       }
@@ -491,7 +491,7 @@ export default class CandidateWriter extends Module {
         );
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: not overwriting existing file, existing file is what was expected`,
+            `${dat.getName()}: ${releaseCandidate.getName()}: ${outputFilePath}: not overwriting existing file, existing file is what was expected`,
           );
           return;
         }
@@ -522,7 +522,7 @@ export default class CandidateWriter extends Module {
           // Successfully validated
           break;
         }
-        const message = `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
+        const message = `${dat.getName()}: ${releaseCandidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
         if (i < this.options.getWriteRetry()) {
           this.progressBar.logWarn(`${message}, retrying`);
         } else {
@@ -567,7 +567,7 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.logInfo(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: moving file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: moving file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
       );
 
       try {
@@ -578,7 +578,7 @@ export default class CandidateWriter extends Module {
         return true;
       } catch (error) {
         this.progressBar.logError(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
         );
         return false;
       }
@@ -592,7 +592,7 @@ export default class CandidateWriter extends Module {
     outputFilePath: string,
   ): Promise<boolean> {
     this.progressBar.logInfo(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
     );
 
     try {
@@ -604,7 +604,7 @@ export default class CandidateWriter extends Module {
       return true;
     } catch (error) {
       this.progressBar.logError(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
       );
       return false;
     }
@@ -617,7 +617,7 @@ export default class CandidateWriter extends Module {
     expectedFile: File,
   ): Promise<string | undefined> {
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: testing raw file`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: ${outputFilePath}: testing raw file`,
     );
 
     // Check checksum
@@ -664,7 +664,7 @@ export default class CandidateWriter extends Module {
     if (actualFile.getCrc32()) {
       if (actualFile.getCrc32() && !expectedFile.getSize()) {
         this.progressBar.logWarn(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected size is unknown`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: ${outputFilePath}: can't test, expected size is unknown`,
         );
         return undefined;
       }
@@ -674,7 +674,7 @@ export default class CandidateWriter extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputFilePath}: test passed`,
+      `${dat.getName()}: ${releaseCandidate.getName()}: ${outputFilePath}: test passed`,
     );
     return undefined;
   }
@@ -716,7 +716,7 @@ export default class CandidateWriter extends Module {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
       this.progressBar.logDebug(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
       );
       return;
     }
@@ -732,7 +732,7 @@ export default class CandidateWriter extends Module {
     if (await FsPoly.exists(linkPath)) {
       if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
         this.progressBar.logDebug(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing file`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing file`,
         );
         return;
       }
@@ -749,7 +749,7 @@ export default class CandidateWriter extends Module {
         }
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing link, existing link is what was expected`,
+            `${dat.getName()}: ${releaseCandidate.getName()}: ${linkPath}: not overwriting existing link, existing link is what was expected`,
           );
           return;
         }
@@ -780,7 +780,7 @@ export default class CandidateWriter extends Module {
           // Successfully validated
           break;
         }
-        const message = `${dat.getNameShort()}: ${releaseCandidate.getName()} ${linkPath}: written link ${writtenTest}`;
+        const message = `${dat.getName()}: ${releaseCandidate.getName()} ${linkPath}: written link ${writtenTest}`;
         if (i < this.options.getWriteRetry()) {
           this.progressBar.logWarn(`${message}, retrying`);
         } else {
@@ -801,19 +801,19 @@ export default class CandidateWriter extends Module {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       if (this.options.getSymlink()) {
         this.progressBar.logInfo(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`,
         );
         await FsPoly.symlink(targetPath, linkPath);
       } else {
         this.progressBar.logInfo(
-          `${dat.getNameShort()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`,
+          `${dat.getName()}: ${releaseCandidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`,
         );
         await FsPoly.hardlink(targetPath, linkPath);
       }
       return true;
     } catch (error) {
       this.progressBar.logError(
-        `${dat.getNameShort()}: ${releaseCandidate.getName()}: ${linkPath}: failed to link from ${targetPath}: ${error}`,
+        `${dat.getName()}: ${releaseCandidate.getName()}: ${linkPath}: failed to link from ${targetPath}: ${error}`,
       );
       return false;
     }
