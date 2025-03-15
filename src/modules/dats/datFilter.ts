@@ -28,7 +28,7 @@ export default class DATFilter extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getNameShort()}: filtering DAT`);
-    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_FILTERING);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
     this.progressBar.reset(dat.getGames().length);
 
     const filteredGames = dat.getParents().flatMap((parent) => {

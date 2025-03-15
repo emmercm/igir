@@ -49,7 +49,7 @@ export default class ProgressBarCLI extends ProgressBar {
     this.payload = payload;
     this.singleBarFormatted = singleBarFormatted;
     if (singleBarFormatted) {
-      ProgressBarCLI.progressBars = [...ProgressBarCLI.progressBars, this];
+      ProgressBarCLI.progressBars.push(this);
     }
   }
 

@@ -21,9 +21,10 @@ export const ProgressBarSymbol = {
   // Processing a single DAT
   DAT_GROUPING_SIMILAR: chalk.cyan('∩'),
   DAT_MERGE_SPLIT: chalk.cyan('↔'),
+  DAT_FILTERING: chalk.cyan('∆'),
+  DAT_PREFERRING: chalk.cyan(process.platform === 'win32' ? '↨' : '⇅'),
   // Candidates
   CANDIDATE_GENERATING: chalk.cyan('Σ'),
-  CANDIDATE_FILTERING: chalk.cyan('∆'),
   CANDIDATE_EXTENSION_CORRECTION: chalk.cyan('.'),
   CANDIDATE_HASHING: chalk.yellow('#'),
   CANDIDATE_VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
