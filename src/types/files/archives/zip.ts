@@ -44,26 +44,30 @@ export default class Zip extends Archive {
           zipFile.on('entry', async (entryFile: Entry) => {
             if (entryFile.fileName.endsWith('/')) {
               // Is a directory
-              zipFile.readEntry(); // continue reading the next entry
-              return;
+              return zipFile.readEntry(); // continue reading the next entry
             }
 
             if (entryFile.compressionMethod === 12) {
-              throw new ExpectedError("BZip2 isn't supported for .zip files");
+              reject(new ExpectedError("BZip2 isn't supported for .zip files"));
+              return zipFile.close();
             }
             if (entryFile.compressionMethod === 14) {
-              throw new ExpectedError("LZMA isn't supported for .zip files");
+              reject(new ExpectedError("LZMA isn't supported for .zip files"));
+              return zipFile.close();
             }
             if (entryFile.compressionMethod === 20 || entryFile.compressionMethod === 93) {
-              throw new ExpectedError("Zstandard isn't supported for .zip files");
+              reject(new ExpectedError("Zstandard isn't supported for .zip files"));
+              return zipFile.close();
             }
             if (entryFile.compressionMethod === 98) {
-              throw new ExpectedError("PPMd isn't supported for .zip files");
+              reject(new ExpectedError("PPMd isn't supported for .zip files"));
+              return zipFile.close();
             }
             if (entryFile.compressionMethod !== 0 && entryFile.compressionMethod !== 8) {
-              throw new ExpectedError(
-                'only STORE and DEFLATE methods are supported for .zip files',
+              reject(
+                new ExpectedError('only STORE and DEFLATE methods are supported for .zip files'),
               );
+              return zipFile.close();
             }
 
             let checksums: ChecksumProps = {};
@@ -74,7 +78,10 @@ export default class Zip extends Archive {
                     reject(entryError);
                     return;
                   }
-                  entryStream.on('error', reject);
+                  entryStream.on('error', (error) => {
+                    reject(error);
+                    zipFile.close();
+                  });
 
                   try {
                     checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
@@ -88,6 +95,7 @@ export default class Zip extends Archive {
                         new Error(`failed to hash ${this.getFilePath()}|${entryFile.fileName}`),
                       );
                     }
+                    zipFile.close();
                   } finally {
                     entryStream.destroy();
                     entryResolve();
