@@ -90,6 +90,14 @@ export default [
       },
     },
 
+    settings: {
+      // https://github.com/import-js/eslint-plugin-import?tab=readme-ov-file#typescript
+      'import/resolver': {
+        typescript: true,
+        node: true,
+      },
+    },
+
     rules: {
       // ***** Files *****
       'unicorn/no-empty-file': 'error',

@@ -4,11 +4,10 @@ import { Readable } from 'node:stream';
 
 import archiver, { Archiver } from 'archiver';
 import async from 'async';
-import unzipper, { Entry, File as ZipFile } from 'unzipper';
+import yauzl, { Entry } from 'yauzl';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
-import StreamPoly from '../../../polyfill/streamPoly.js';
 import Timer from '../../../timer.js';
 import ExpectedError from '../../expectedError.js';
 import File from '../file.js';
@@ -30,67 +29,107 @@ export default class Zip extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
-    // https://github.com/ZJONSSON/node-unzipper/issues/280
-    // UTF-8 entry names are not decoded correctly
-    // But this is mitigated by `extractEntryToStream()` and therefore `extractEntryToFile()` both
-    //  using `unzipper.Open.file()` as well, so mangled filenames here will still extract fine
-    const archive = await unzipper.Open.file(this.getFilePath());
-
-    return async.mapLimit(
-      archive.files.filter((entryFile) => entryFile.type === 'File'),
-      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entryFile: ZipFile): Promise<ArchiveEntry<this>> => {
-        // We have to filter these out here because `Entry.stream()` will fail, and even though it
-        // will emit a catchable error, the stream will never be released
-        if (entryFile.compressionMethod === 12) {
-          throw new ExpectedError("BZip2 isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 14) {
-          throw new ExpectedError("LZMA isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 20 || entryFile.compressionMethod === 93) {
-          throw new ExpectedError("Zstandard isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 98) {
-          throw new ExpectedError("PPMd isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod !== 0 && entryFile.compressionMethod !== 8) {
-          throw new ExpectedError('only STORE and DEFLATE methods are supported for .zip files');
-        }
-
-        let checksums: ChecksumProps = {};
-        if (checksumBitmask & ~ChecksumBitmask.CRC32) {
-          const entryStream = entryFile
-            .stream()
-            // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
-            // may lead to unexpected behavior, but at least this won't crash because of an
-            // unhandled exception on the stream.
-            .on('error', () => {});
-          try {
-            checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
-          } finally {
-            /**
-             * In the case the callback doesn't read the entire stream, {@link unzipper} will leave
-             * the file handle open. Drain the stream so the file handle can be released. The stream
-             * cannot be destroyed by the callback, or this will never resolve!
-             */
-            await StreamPoly.autodrain(entryStream);
+    const entries: ArchiveEntry<this>[] = [];
+    await new Promise<void>((resolve, reject) => {
+      yauzl.open(
+        this.getFilePath(),
+        { autoClose: true, lazyEntries: true },
+        (zipError, zipFile) => {
+          if (zipError) {
+            reject(zipError);
+            return;
           }
-        }
-        const { crc32, ...checksumsWithoutCrc } = checksums;
 
-        return ArchiveEntry.entryOf(
-          {
-            archive: this,
-            entryPath: entryFile.path,
-            size: entryFile.uncompressedSize,
-            crc32: crc32 ?? entryFile.crc32.toString(16),
-            ...checksumsWithoutCrc,
-          },
-          checksumBitmask,
-        );
-      },
-    );
+          zipFile.readEntry(); // read first entry
+          zipFile.on('entry', async (entryFile: Entry) => {
+            if (entryFile.fileName.endsWith('/')) {
+              // Is a directory
+              zipFile.readEntry(); // continue reading the next entry
+              return;
+            }
+
+            if (entryFile.compressionMethod === 12) {
+              throw new ExpectedError("BZip2 isn't supported for .zip files");
+            }
+            if (entryFile.compressionMethod === 14) {
+              throw new ExpectedError("LZMA isn't supported for .zip files");
+            }
+            if (entryFile.compressionMethod === 20 || entryFile.compressionMethod === 93) {
+              throw new ExpectedError("Zstandard isn't supported for .zip files");
+            }
+            if (entryFile.compressionMethod === 98) {
+              throw new ExpectedError("PPMd isn't supported for .zip files");
+            }
+            if (entryFile.compressionMethod !== 0 && entryFile.compressionMethod !== 8) {
+              throw new ExpectedError(
+                'only STORE and DEFLATE methods are supported for .zip files',
+              );
+            }
+
+            let checksums: ChecksumProps = {};
+            if (checksumBitmask & ~ChecksumBitmask.CRC32) {
+              await new Promise<void>((entryResolve) => {
+                zipFile.openReadStream(entryFile, async (entryError, entryStream) => {
+                  if (entryError) {
+                    reject(entryError);
+                    return;
+                  }
+                  entryStream.on('error', reject);
+
+                  try {
+                    checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
+                  } catch (error) {
+                    if (error instanceof Error) {
+                      reject(error);
+                    } else if (typeof error === 'string') {
+                      reject(new Error(error));
+                    } else {
+                      reject(
+                        new Error(`failed to hash ${this.getFilePath()}|${entryFile.fileName}`),
+                      );
+                    }
+                  } finally {
+                    entryStream.destroy();
+                    entryResolve();
+                  }
+                });
+              });
+            }
+            const { crc32, ...checksumsWithoutCrc } = checksums;
+
+            try {
+              const archiveEntry = await ArchiveEntry.entryOf(
+                {
+                  archive: this,
+                  entryPath: entryFile.fileName,
+                  size: entryFile.uncompressedSize,
+                  crc32: crc32 ?? entryFile.crc32.toString(16),
+                  ...checksumsWithoutCrc,
+                },
+                checksumBitmask,
+              );
+              entries.push(archiveEntry);
+            } catch (error) {
+              if (error instanceof Error) {
+                reject(error);
+              } else if (typeof error === 'string') {
+                reject(new Error(error));
+              } else {
+                reject(
+                  new Error(`failed to make entry of ${this.getFilePath()}|${entryFile.fileName}`),
+                );
+              }
+            } finally {
+              zipFile.readEntry(); // continue reading the next entry
+            }
+          });
+
+          zipFile.on('error', reject);
+          zipFile.on('close', resolve);
+        },
+      );
+    });
+    return entries;
   }
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
@@ -121,33 +160,64 @@ export default class Zip extends Archive {
       return super.extractEntryToStream(entryPath, callback, start);
     }
 
-    const archive = await unzipper.Open.file(this.getFilePath());
+    return new Promise((resolve, reject) => {
+      yauzl.open(
+        this.getFilePath(),
+        { autoClose: true, lazyEntries: true },
+        (zipError, zipFile) => {
+          if (zipError) {
+            reject(zipError);
+            return;
+          }
 
-    const entry = archive.files
-      .filter((entryFile) => entryFile.type === 'File')
-      .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
-    if (!entry) {
-      // This should never happen, this likely means the zip file was modified after scanning
-      throw new ExpectedError(`didn't find entry '${entryPath}'`);
-    }
+          let result: T;
+          let foundEntry = false;
+          zipFile.readEntry(); // read first entry
+          zipFile.on('entry', (entryFile: Entry) => {
+            if (entryFile.fileName !== entryPath.replace(/[\\/]/g, '/')) {
+              zipFile.readEntry(); // continue reading the next entry
+              return;
+            }
 
-    let stream: Entry;
-    try {
-      stream = entry.stream();
-    } catch (error) {
-      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
-    }
+            zipFile.openReadStream(entryFile, async (entryError, entryStream) => {
+              if (entryError) {
+                reject(entryError);
+                return;
+              }
+              entryStream.on('error', reject);
 
-    try {
-      return await callback(stream);
-    } finally {
-      /**
-       * In the case the callback doesn't read the entire stream, {@link unzipper} will leave the
-       * file handle open. Drain the stream so the file handle can be released. The stream cannot
-       * be destroyed by the callback, or this will never resolve!
-       */
-      await StreamPoly.autodrain(stream);
-    }
+              try {
+                result = await callback(entryStream);
+                foundEntry = true;
+              } catch (error) {
+                if (error instanceof Error) {
+                  reject(error);
+                } else if (typeof error === 'string') {
+                  reject(new Error(error));
+                } else {
+                  reject(
+                    new Error(`failed to extract ${this.getFilePath()}|${entryFile.fileName}`),
+                  );
+                }
+              } finally {
+                entryStream.destroy();
+                zipFile.readEntry(); // continue reading the next entry
+              }
+            });
+          });
+
+          zipFile.on('error', reject);
+          zipFile.on('close', () => {
+            if (foundEntry) {
+              resolve(result);
+            } else {
+              // This should never happen, this likely means the zip file was modified after scanning
+              reject(new Error(`didn't find entry '${entryPath}'`));
+            }
+          });
+        },
+      );
+    });
   }
 
   async createArchive(inputToOutput: [File, ArchiveEntry<Zip>][]): Promise<void> {
