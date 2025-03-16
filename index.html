@@ -2706,7 +2706,7 @@
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  | $$  | $$ \$$$$  | $$  | $$$$$$$\
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a> _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.1.0
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a> _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.2.0
 </span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>|   $$ \ \$$    $$|   $$ \| $$  | $$
 </span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a> \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 </span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
@@ -2794,7 +2794,7 @@
 </span><span id="__span-1-94"><a id="__codelineno-1-94" name="__codelineno-1-94" href="#__codelineno-1-94"></a>
 </span><span id="__span-1-95"><a id="__codelineno-1-95" name="__codelineno-1-95" href="#__codelineno-1-95"></a>clean command options:
 </span><span id="__span-1-96"><a id="__codelineno-1-96" name="__codelineno-1-96" href="#__codelineno-1-96"></a>  -C, --clean-exclude  Path(s) to files to exclude from cleaning (supports globbing)   [array]
-</span><span id="__span-1-97"><a id="__codelineno-1-97" name="__codelineno-1-97" href="#__codelineno-1-97"></a>      --clean-backup   Move cleaned files to a directory for backup                   [string]
+</span><span id="__span-1-97"><a id="__codelineno-1-97" name="__codelineno-1-97" href="#__codelineno-1-97"></a>      --clean-backup   Directory to move cleaned files to (instead of being recycled) [string]
 </span><span id="__span-1-98"><a id="__codelineno-1-98" name="__codelineno-1-98" href="#__codelineno-1-98"></a>      --clean-dry-run  Don&#39;t clean any files and instead only print what files would be cleane
 </span><span id="__span-1-99"><a id="__codelineno-1-99" name="__codelineno-1-99" href="#__codelineno-1-99"></a>                       d                                                             [boolean]
 </span><span id="__span-1-100"><a id="__codelineno-1-100" name="__codelineno-1-100" href="#__codelineno-1-100"></a>
@@ -2824,143 +2824,145 @@
 </span><span id="__span-1-124"><a id="__codelineno-1-124" name="__codelineno-1-124" href="#__codelineno-1-124"></a>      --allow-incomplete-sets  Allow writing games that don&#39;t have all of their ROMs [boolean]
 </span><span id="__span-1-125"><a id="__codelineno-1-125" name="__codelineno-1-125" href="#__codelineno-1-125"></a>
 </span><span id="__span-1-126"><a id="__codelineno-1-126" name="__codelineno-1-126" href="#__codelineno-1-126"></a>ROM filtering options:
-</span><span id="__span-1-127"><a id="__codelineno-1-127" name="__codelineno-1-127" href="#__codelineno-1-127"></a>  -x, --filter-regex          Regular expression of game names to filter to           [string]
-</span><span id="__span-1-128"><a id="__codelineno-1-128" name="__codelineno-1-128" href="#__codelineno-1-128"></a>  -X, --filter-regex-exclude  Regular expression of game names to exclude             [string]
-</span><span id="__span-1-129"><a id="__codelineno-1-129" name="__codelineno-1-129" href="#__codelineno-1-129"></a>  -L, --filter-language       List of comma-separated languages to filter to (supported: DA, D
-</span><span id="__span-1-130"><a id="__codelineno-1-130" name="__codelineno-1-130" href="#__codelineno-1-130"></a>                              E, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
+</span><span id="__span-1-127"><a id="__codelineno-1-127" name="__codelineno-1-127" href="#__codelineno-1-127"></a>  -x, --filter-regex           Regular expression of game names to filter to          [string]
+</span><span id="__span-1-128"><a id="__codelineno-1-128" name="__codelineno-1-128" href="#__codelineno-1-128"></a>  -X, --filter-regex-exclude   Regular expression of game names to exclude            [string]
+</span><span id="__span-1-129"><a id="__codelineno-1-129" name="__codelineno-1-129" href="#__codelineno-1-129"></a>  -L, --filter-language        List of comma-separated languages to filter to (supported: DA,
+</span><span id="__span-1-130"><a id="__codelineno-1-130" name="__codelineno-1-130" href="#__codelineno-1-130"></a>                               DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
 </span><span id="__span-1-131"><a id="__codelineno-1-131" name="__codelineno-1-131" href="#__codelineno-1-131"></a>                                                                                      [string]
-</span><span id="__span-1-132"><a id="__codelineno-1-132" name="__codelineno-1-132" href="#__codelineno-1-132"></a>  -R, --filter-region         List of comma-separated regions to filter to (supported: ARG, AS
-</span><span id="__span-1-133"><a id="__codelineno-1-133" name="__codelineno-1-133" href="#__codelineno-1-133"></a>                              I, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HO
-</span><span id="__span-1-134"><a id="__codelineno-1-134" name="__codelineno-1-134" href="#__codelineno-1-134"></a>                              L, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK
-</span><span id="__span-1-135"><a id="__codelineno-1-135" name="__codelineno-1-135" href="#__codelineno-1-135"></a>                              , USA, WORLD)                                           [string]
-</span><span id="__span-1-136"><a id="__codelineno-1-136" name="__codelineno-1-136" href="#__codelineno-1-136"></a>      --no-bios               Filter out BIOS files, opposite of --only-bios         [boolean]
-</span><span id="__span-1-137"><a id="__codelineno-1-137" name="__codelineno-1-137" href="#__codelineno-1-137"></a>      --no-device             Filter out MAME devies, opposite of --only-device      [boolean]
-</span><span id="__span-1-138"><a id="__codelineno-1-138" name="__codelineno-1-138" href="#__codelineno-1-138"></a>      --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed
-</span><span id="__span-1-139"><a id="__codelineno-1-139" name="__codelineno-1-139" href="#__codelineno-1-139"></a>                                                                                     [boolean]
-</span><span id="__span-1-140"><a id="__codelineno-1-140" name="__codelineno-1-140" href="#__codelineno-1-140"></a>      --only-retail           Filter to only retail releases, enabling all the following &quot;no&quot;
-</span><span id="__span-1-141"><a id="__codelineno-1-141" name="__codelineno-1-141" href="#__codelineno-1-141"></a>                              options                                                [boolean]
-</span><span id="__span-1-142"><a id="__codelineno-1-142" name="__codelineno-1-142" href="#__codelineno-1-142"></a>      --no-debug              Filter out debug ROMs, opposite of --only-debug        [boolean]
-</span><span id="__span-1-143"><a id="__codelineno-1-143" name="__codelineno-1-143" href="#__codelineno-1-143"></a>      --no-demo               Filter out demo ROMs, opposite of --only-demo          [boolean]
-</span><span id="__span-1-144"><a id="__codelineno-1-144" name="__codelineno-1-144" href="#__codelineno-1-144"></a>      --no-beta               Filter out beta ROMs, opposite of --only-beta          [boolean]
-</span><span id="__span-1-145"><a id="__codelineno-1-145" name="__codelineno-1-145" href="#__codelineno-1-145"></a>      --no-sample             Filter out sample ROMs, opposite of --only-sample      [boolean]
-</span><span id="__span-1-146"><a id="__codelineno-1-146" name="__codelineno-1-146" href="#__codelineno-1-146"></a>      --no-prototype          Filter out prototype ROMs, opposite of --only-prototype[boolean]
-</span><span id="__span-1-147"><a id="__codelineno-1-147" name="__codelineno-1-147" href="#__codelineno-1-147"></a>      --no-program            Filter out program application ROMs, opposite of --only-program
+</span><span id="__span-1-132"><a id="__codelineno-1-132" name="__codelineno-1-132" href="#__codelineno-1-132"></a>  -R, --filter-region          List of comma-separated regions to filter to (supported: ARG, A
+</span><span id="__span-1-133"><a id="__codelineno-1-133" name="__codelineno-1-133" href="#__codelineno-1-133"></a>                               SI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK,
+</span><span id="__span-1-134"><a id="__codelineno-1-134" name="__codelineno-1-134" href="#__codelineno-1-134"></a>                               HOL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK,
+</span><span id="__span-1-135"><a id="__codelineno-1-135" name="__codelineno-1-135" href="#__codelineno-1-135"></a>                               UNK, USA, WORLD)                                       [string]
+</span><span id="__span-1-136"><a id="__codelineno-1-136" name="__codelineno-1-136" href="#__codelineno-1-136"></a>      --filter-category-regex  Regular expression of categories to filter to          [string]
+</span><span id="__span-1-137"><a id="__codelineno-1-137" name="__codelineno-1-137" href="#__codelineno-1-137"></a>      --no-bios                Filter out BIOS files, opposite of --only-bios        [boolean]
+</span><span id="__span-1-138"><a id="__codelineno-1-138" name="__codelineno-1-138" href="#__codelineno-1-138"></a>      --no-device              Filter out MAME devies, opposite of --only-device     [boolean]
+</span><span id="__span-1-139"><a id="__codelineno-1-139" name="__codelineno-1-139" href="#__codelineno-1-139"></a>      --no-unlicensed          Filter out unlicensed ROMs, opposite of --only-unlicensed
+</span><span id="__span-1-140"><a id="__codelineno-1-140" name="__codelineno-1-140" href="#__codelineno-1-140"></a>                                                                                     [boolean]
+</span><span id="__span-1-141"><a id="__codelineno-1-141" name="__codelineno-1-141" href="#__codelineno-1-141"></a>      --only-retail            Filter to only retail releases, enabling all the following &quot;no&quot;
+</span><span id="__span-1-142"><a id="__codelineno-1-142" name="__codelineno-1-142" href="#__codelineno-1-142"></a>                                options                                              [boolean]
+</span><span id="__span-1-143"><a id="__codelineno-1-143" name="__codelineno-1-143" href="#__codelineno-1-143"></a>      --no-debug               Filter out debug ROMs, opposite of --only-debug       [boolean]
+</span><span id="__span-1-144"><a id="__codelineno-1-144" name="__codelineno-1-144" href="#__codelineno-1-144"></a>      --no-demo                Filter out demo ROMs, opposite of --only-demo         [boolean]
+</span><span id="__span-1-145"><a id="__codelineno-1-145" name="__codelineno-1-145" href="#__codelineno-1-145"></a>      --no-beta                Filter out beta ROMs, opposite of --only-beta         [boolean]
+</span><span id="__span-1-146"><a id="__codelineno-1-146" name="__codelineno-1-146" href="#__codelineno-1-146"></a>      --no-sample              Filter out sample ROMs, opposite of --only-sample     [boolean]
+</span><span id="__span-1-147"><a id="__codelineno-1-147" name="__codelineno-1-147" href="#__codelineno-1-147"></a>      --no-prototype           Filter out prototype ROMs, opposite of --only-prototype
 </span><span id="__span-1-148"><a id="__codelineno-1-148" name="__codelineno-1-148" href="#__codelineno-1-148"></a>                                                                                     [boolean]
-</span><span id="__span-1-149"><a id="__codelineno-1-149" name="__codelineno-1-149" href="#__codelineno-1-149"></a>      --no-aftermarket        Filter out aftermarket ROMs, opposite of --only-aftermarket
+</span><span id="__span-1-149"><a id="__codelineno-1-149" name="__codelineno-1-149" href="#__codelineno-1-149"></a>      --no-program             Filter out program application ROMs, opposite of --only-program
 </span><span id="__span-1-150"><a id="__codelineno-1-150" name="__codelineno-1-150" href="#__codelineno-1-150"></a>                                                                                     [boolean]
-</span><span id="__span-1-151"><a id="__codelineno-1-151" name="__codelineno-1-151" href="#__codelineno-1-151"></a>      --no-homebrew           Filter out homebrew ROMs, opposite of --only-homebrew  [boolean]
-</span><span id="__span-1-152"><a id="__codelineno-1-152" name="__codelineno-1-152" href="#__codelineno-1-152"></a>      --no-unverified         Filter out unverified ROMs, opposite of --only-unverified
-</span><span id="__span-1-153"><a id="__codelineno-1-153" name="__codelineno-1-153" href="#__codelineno-1-153"></a>                                                                                     [boolean]
-</span><span id="__span-1-154"><a id="__codelineno-1-154" name="__codelineno-1-154" href="#__codelineno-1-154"></a>      --no-bad                Filter out bad ROM dumps, opposite of --only-bad       [boolean]
-</span><span id="__span-1-155"><a id="__codelineno-1-155" name="__codelineno-1-155" href="#__codelineno-1-155"></a>
-</span><span id="__span-1-156"><a id="__codelineno-1-156" name="__codelineno-1-156" href="#__codelineno-1-156"></a>One game, one ROM (1G1R) options:
-</span><span id="__span-1-157"><a id="__codelineno-1-157" name="__codelineno-1-157" href="#__codelineno-1-157"></a>  -s, --single             Output only a single game per parent (1G1R) (required for all optio
-</span><span id="__span-1-158"><a id="__codelineno-1-158" name="__codelineno-1-158" href="#__codelineno-1-158"></a>                           ns below, requires DATs with parent/clone information)    [boolean]
-</span><span id="__span-1-159"><a id="__codelineno-1-159" name="__codelineno-1-159" href="#__codelineno-1-159"></a>      --prefer-game-regex  Regular expression of game names to prefer                 [string]
-</span><span id="__span-1-160"><a id="__codelineno-1-160" name="__codelineno-1-160" href="#__codelineno-1-160"></a>      --prefer-rom-regex   Regular expression of ROM filenames to prefer              [string]
-</span><span id="__span-1-161"><a id="__codelineno-1-161" name="__codelineno-1-161" href="#__codelineno-1-161"></a>      --prefer-verified    Prefer verified ROM dumps over unverified                 [boolean]
-</span><span id="__span-1-162"><a id="__codelineno-1-162" name="__codelineno-1-162" href="#__codelineno-1-162"></a>      --prefer-good        Prefer good ROM dumps over bad                            [boolean]
-</span><span id="__span-1-163"><a id="__codelineno-1-163" name="__codelineno-1-163" href="#__codelineno-1-163"></a>  -l, --prefer-language    List of comma-separated languages in priority order (supported: DA,
-</span><span id="__span-1-164"><a id="__codelineno-1-164" name="__codelineno-1-164" href="#__codelineno-1-164"></a>                            DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
-</span><span id="__span-1-165"><a id="__codelineno-1-165" name="__codelineno-1-165" href="#__codelineno-1-165"></a>                                                                                      [string]
-</span><span id="__span-1-166"><a id="__codelineno-1-166" name="__codelineno-1-166" href="#__codelineno-1-166"></a>  -r, --prefer-region      List of comma-separated regions in priority order (supported: ARG,
-</span><span id="__span-1-167"><a id="__codelineno-1-167" name="__codelineno-1-167" href="#__codelineno-1-167"></a>                           ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL
-</span><span id="__span-1-168"><a id="__codelineno-1-168" name="__codelineno-1-168" href="#__codelineno-1-168"></a>                           , ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, US
-</span><span id="__span-1-169"><a id="__codelineno-1-169" name="__codelineno-1-169" href="#__codelineno-1-169"></a>                           A, WORLD)                                                  [string]
-</span><span id="__span-1-170"><a id="__codelineno-1-170" name="__codelineno-1-170" href="#__codelineno-1-170"></a>      --prefer-revision    Prefer older or newer revisions, versions, or ring codes
-</span><span id="__span-1-171"><a id="__codelineno-1-171" name="__codelineno-1-171" href="#__codelineno-1-171"></a>                                                                   [choices: &quot;older&quot;, &quot;newer&quot;]
-</span><span id="__span-1-172"><a id="__codelineno-1-172" name="__codelineno-1-172" href="#__codelineno-1-172"></a>      --prefer-retail      Prefer retail releases (see --only-retail)                [boolean]
-</span><span id="__span-1-173"><a id="__codelineno-1-173" name="__codelineno-1-173" href="#__codelineno-1-173"></a>      --prefer-parent      Prefer parent ROMs over clones                            [boolean]
-</span><span id="__span-1-174"><a id="__codelineno-1-174" name="__codelineno-1-174" href="#__codelineno-1-174"></a>
-</span><span id="__span-1-175"><a id="__codelineno-1-175" name="__codelineno-1-175" href="#__codelineno-1-175"></a>dir2dat command options:
-</span><span id="__span-1-176"><a id="__codelineno-1-176" name="__codelineno-1-176" href="#__codelineno-1-176"></a>      --dir2dat-output  dir2dat output directory                                      [string]
-</span><span id="__span-1-177"><a id="__codelineno-1-177" name="__codelineno-1-177" href="#__codelineno-1-177"></a>
-</span><span id="__span-1-178"><a id="__codelineno-1-178" name="__codelineno-1-178" href="#__codelineno-1-178"></a>fixdat command options:
-</span><span id="__span-1-179"><a id="__codelineno-1-179" name="__codelineno-1-179" href="#__codelineno-1-179"></a>      --fixdat-output  Fixdat output directory                                        [string]
-</span><span id="__span-1-180"><a id="__codelineno-1-180" name="__codelineno-1-180" href="#__codelineno-1-180"></a>
-</span><span id="__span-1-181"><a id="__codelineno-1-181" name="__codelineno-1-181" href="#__codelineno-1-181"></a>report command options:
-</span><span id="__span-1-182"><a id="__codelineno-1-182" name="__codelineno-1-182" href="#__codelineno-1-182"></a>      --report-output  Report output file location (formatted with moment.js)
-</span><span id="__span-1-183"><a id="__codelineno-1-183" name="__codelineno-1-183" href="#__codelineno-1-183"></a>                                    [string] [default: &quot;./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv&quot;]
-</span><span id="__span-1-184"><a id="__codelineno-1-184" name="__codelineno-1-184" href="#__codelineno-1-184"></a>
-</span><span id="__span-1-185"><a id="__codelineno-1-185" name="__codelineno-1-185" href="#__codelineno-1-185"></a>Help &amp; debug options:
-</span><span id="__span-1-186"><a id="__codelineno-1-186" name="__codelineno-1-186" href="#__codelineno-1-186"></a>      --dat-threads     Number of DATs to process in parallel            [number] [default: 3]
-</span><span id="__span-1-187"><a id="__codelineno-1-187" name="__codelineno-1-187" href="#__codelineno-1-187"></a>      --reader-threads  Maximum number of ROMs to read in parallel per disk
-</span><span id="__span-1-188"><a id="__codelineno-1-188" name="__codelineno-1-188" href="#__codelineno-1-188"></a>                                                                         [number] [default: 8]
-</span><span id="__span-1-189"><a id="__codelineno-1-189" name="__codelineno-1-189" href="#__codelineno-1-189"></a>      --writer-threads  Maximum number of ROMs to write in parallel      [number] [default: 4]
-</span><span id="__span-1-190"><a id="__codelineno-1-190" name="__codelineno-1-190" href="#__codelineno-1-190"></a>      --write-retry     Number of additional retries to attempt when writing a file has failed
-</span><span id="__span-1-191"><a id="__codelineno-1-191" name="__codelineno-1-191" href="#__codelineno-1-191"></a>                         (0 disables retries)                            [number] [default: 2]
-</span><span id="__span-1-192"><a id="__codelineno-1-192" name="__codelineno-1-192" href="#__codelineno-1-192"></a>      --temp-dir        Path to a directory for temporary files                       [string]
-</span><span id="__span-1-193"><a id="__codelineno-1-193" name="__codelineno-1-193" href="#__codelineno-1-193"></a>      --disable-cache   Disable loading or saving the cache file                     [boolean]
-</span><span id="__span-1-194"><a id="__codelineno-1-194" name="__codelineno-1-194" href="#__codelineno-1-194"></a>      --cache-path      Location for the cache file                                   [string]
-</span><span id="__span-1-195"><a id="__codelineno-1-195" name="__codelineno-1-195" href="#__codelineno-1-195"></a>  -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)   [count]
-</span><span id="__span-1-196"><a id="__codelineno-1-196" name="__codelineno-1-196" href="#__codelineno-1-196"></a>  -h, --help            Show help                                                    [boolean]
-</span><span id="__span-1-197"><a id="__codelineno-1-197" name="__codelineno-1-197" href="#__codelineno-1-197"></a>
-</span><span id="__span-1-198"><a id="__codelineno-1-198" name="__codelineno-1-198" href="#__codelineno-1-198"></a>----------------------------------------------------------------------------------------------
+</span><span id="__span-1-151"><a id="__codelineno-1-151" name="__codelineno-1-151" href="#__codelineno-1-151"></a>      --no-aftermarket         Filter out aftermarket ROMs, opposite of --only-aftermarket
+</span><span id="__span-1-152"><a id="__codelineno-1-152" name="__codelineno-1-152" href="#__codelineno-1-152"></a>                                                                                     [boolean]
+</span><span id="__span-1-153"><a id="__codelineno-1-153" name="__codelineno-1-153" href="#__codelineno-1-153"></a>      --no-homebrew            Filter out homebrew ROMs, opposite of --only-homebrew [boolean]
+</span><span id="__span-1-154"><a id="__codelineno-1-154" name="__codelineno-1-154" href="#__codelineno-1-154"></a>      --no-unverified          Filter out unverified ROMs, opposite of --only-unverified
+</span><span id="__span-1-155"><a id="__codelineno-1-155" name="__codelineno-1-155" href="#__codelineno-1-155"></a>                                                                                     [boolean]
+</span><span id="__span-1-156"><a id="__codelineno-1-156" name="__codelineno-1-156" href="#__codelineno-1-156"></a>      --no-bad                 Filter out bad ROM dumps, opposite of --only-bad      [boolean]
+</span><span id="__span-1-157"><a id="__codelineno-1-157" name="__codelineno-1-157" href="#__codelineno-1-157"></a>
+</span><span id="__span-1-158"><a id="__codelineno-1-158" name="__codelineno-1-158" href="#__codelineno-1-158"></a>One game, one ROM (1G1R) options:
+</span><span id="__span-1-159"><a id="__codelineno-1-159" name="__codelineno-1-159" href="#__codelineno-1-159"></a>  -s, --single             Output only a single game per parent (1G1R) (required for all optio
+</span><span id="__span-1-160"><a id="__codelineno-1-160" name="__codelineno-1-160" href="#__codelineno-1-160"></a>                           ns below, requires DATs with parent/clone information)    [boolean]
+</span><span id="__span-1-161"><a id="__codelineno-1-161" name="__codelineno-1-161" href="#__codelineno-1-161"></a>      --prefer-game-regex  Regular expression of game names to prefer                 [string]
+</span><span id="__span-1-162"><a id="__codelineno-1-162" name="__codelineno-1-162" href="#__codelineno-1-162"></a>      --prefer-rom-regex   Regular expression of ROM filenames to prefer              [string]
+</span><span id="__span-1-163"><a id="__codelineno-1-163" name="__codelineno-1-163" href="#__codelineno-1-163"></a>      --prefer-verified    Prefer verified ROM dumps over unverified                 [boolean]
+</span><span id="__span-1-164"><a id="__codelineno-1-164" name="__codelineno-1-164" href="#__codelineno-1-164"></a>      --prefer-good        Prefer good ROM dumps over bad                            [boolean]
+</span><span id="__span-1-165"><a id="__codelineno-1-165" name="__codelineno-1-165" href="#__codelineno-1-165"></a>  -l, --prefer-language    List of comma-separated languages in priority order (supported: DA,
+</span><span id="__span-1-166"><a id="__codelineno-1-166" name="__codelineno-1-166" href="#__codelineno-1-166"></a>                            DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
+</span><span id="__span-1-167"><a id="__codelineno-1-167" name="__codelineno-1-167" href="#__codelineno-1-167"></a>                                                                                      [string]
+</span><span id="__span-1-168"><a id="__codelineno-1-168" name="__codelineno-1-168" href="#__codelineno-1-168"></a>  -r, --prefer-region      List of comma-separated regions in priority order (supported: ARG,
+</span><span id="__span-1-169"><a id="__codelineno-1-169" name="__codelineno-1-169" href="#__codelineno-1-169"></a>                           ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HOL
+</span><span id="__span-1-170"><a id="__codelineno-1-170" name="__codelineno-1-170" href="#__codelineno-1-170"></a>                           , ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK, US
+</span><span id="__span-1-171"><a id="__codelineno-1-171" name="__codelineno-1-171" href="#__codelineno-1-171"></a>                           A, WORLD)                                                  [string]
+</span><span id="__span-1-172"><a id="__codelineno-1-172" name="__codelineno-1-172" href="#__codelineno-1-172"></a>      --prefer-revision    Prefer older or newer revisions, versions, or ring codes
+</span><span id="__span-1-173"><a id="__codelineno-1-173" name="__codelineno-1-173" href="#__codelineno-1-173"></a>                                                                   [choices: &quot;older&quot;, &quot;newer&quot;]
+</span><span id="__span-1-174"><a id="__codelineno-1-174" name="__codelineno-1-174" href="#__codelineno-1-174"></a>      --prefer-retail      Prefer retail releases (see --only-retail)                [boolean]
+</span><span id="__span-1-175"><a id="__codelineno-1-175" name="__codelineno-1-175" href="#__codelineno-1-175"></a>      --prefer-parent      Prefer parent ROMs over clones                            [boolean]
+</span><span id="__span-1-176"><a id="__codelineno-1-176" name="__codelineno-1-176" href="#__codelineno-1-176"></a>
+</span><span id="__span-1-177"><a id="__codelineno-1-177" name="__codelineno-1-177" href="#__codelineno-1-177"></a>dir2dat command options:
+</span><span id="__span-1-178"><a id="__codelineno-1-178" name="__codelineno-1-178" href="#__codelineno-1-178"></a>      --dir2dat-output  dir2dat output directory                                      [string]
+</span><span id="__span-1-179"><a id="__codelineno-1-179" name="__codelineno-1-179" href="#__codelineno-1-179"></a>
+</span><span id="__span-1-180"><a id="__codelineno-1-180" name="__codelineno-1-180" href="#__codelineno-1-180"></a>fixdat command options:
+</span><span id="__span-1-181"><a id="__codelineno-1-181" name="__codelineno-1-181" href="#__codelineno-1-181"></a>      --fixdat-output  Fixdat output directory                                        [string]
+</span><span id="__span-1-182"><a id="__codelineno-1-182" name="__codelineno-1-182" href="#__codelineno-1-182"></a>
+</span><span id="__span-1-183"><a id="__codelineno-1-183" name="__codelineno-1-183" href="#__codelineno-1-183"></a>report command options:
+</span><span id="__span-1-184"><a id="__codelineno-1-184" name="__codelineno-1-184" href="#__codelineno-1-184"></a>      --report-output  Report output file location (formatted with moment.js)
+</span><span id="__span-1-185"><a id="__codelineno-1-185" name="__codelineno-1-185" href="#__codelineno-1-185"></a>                                    [string] [default: &quot;./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv&quot;]
+</span><span id="__span-1-186"><a id="__codelineno-1-186" name="__codelineno-1-186" href="#__codelineno-1-186"></a>
+</span><span id="__span-1-187"><a id="__codelineno-1-187" name="__codelineno-1-187" href="#__codelineno-1-187"></a>Help &amp; debug options:
+</span><span id="__span-1-188"><a id="__codelineno-1-188" name="__codelineno-1-188" href="#__codelineno-1-188"></a>      --dat-threads     Number of DATs to process in parallel            [number] [default: 3]
+</span><span id="__span-1-189"><a id="__codelineno-1-189" name="__codelineno-1-189" href="#__codelineno-1-189"></a>      --reader-threads  Maximum number of ROMs to read in parallel per disk
+</span><span id="__span-1-190"><a id="__codelineno-1-190" name="__codelineno-1-190" href="#__codelineno-1-190"></a>                                                                         [number] [default: 8]
+</span><span id="__span-1-191"><a id="__codelineno-1-191" name="__codelineno-1-191" href="#__codelineno-1-191"></a>      --writer-threads  Maximum number of ROMs to write in parallel      [number] [default: 4]
+</span><span id="__span-1-192"><a id="__codelineno-1-192" name="__codelineno-1-192" href="#__codelineno-1-192"></a>      --write-retry     Number of additional retries to attempt when writing a file has failed
+</span><span id="__span-1-193"><a id="__codelineno-1-193" name="__codelineno-1-193" href="#__codelineno-1-193"></a>                         (0 disables retries)                            [number] [default: 2]
+</span><span id="__span-1-194"><a id="__codelineno-1-194" name="__codelineno-1-194" href="#__codelineno-1-194"></a>      --temp-dir        Path to a directory for temporary files                       [string]
+</span><span id="__span-1-195"><a id="__codelineno-1-195" name="__codelineno-1-195" href="#__codelineno-1-195"></a>      --disable-cache   Disable loading or saving the cache file                     [boolean]
+</span><span id="__span-1-196"><a id="__codelineno-1-196" name="__codelineno-1-196" href="#__codelineno-1-196"></a>      --cache-path      Location for the cache file                                   [string]
+</span><span id="__span-1-197"><a id="__codelineno-1-197" name="__codelineno-1-197" href="#__codelineno-1-197"></a>  -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)   [count]
+</span><span id="__span-1-198"><a id="__codelineno-1-198" name="__codelineno-1-198" href="#__codelineno-1-198"></a>  -h, --help            Show help                                                    [boolean]
 </span><span id="__span-1-199"><a id="__codelineno-1-199" name="__codelineno-1-199" href="#__codelineno-1-199"></a>
-</span><span id="__span-1-200"><a id="__codelineno-1-200" name="__codelineno-1-200" href="#__codelineno-1-200"></a>Advanced usage:
+</span><span id="__span-1-200"><a id="__codelineno-1-200" name="__codelineno-1-200" href="#__codelineno-1-200"></a>----------------------------------------------------------------------------------------------
 </span><span id="__span-1-201"><a id="__codelineno-1-201" name="__codelineno-1-201" href="#__codelineno-1-201"></a>
-</span><span id="__span-1-202"><a id="__codelineno-1-202" name="__codelineno-1-202" href="#__codelineno-1-202"></a>  Tokens that are replaced when generating the output (--output) path of a ROM:
-</span><span id="__span-1-203"><a id="__codelineno-1-203" name="__codelineno-1-203" href="#__codelineno-1-203"></a>    {datName}         The name of the DAT that contains the ROM (e.g. &quot;Nintendo - Game Boy&quot;)
-</span><span id="__span-1-204"><a id="__codelineno-1-204" name="__codelineno-1-204" href="#__codelineno-1-204"></a>    {datDescription}  The description of the DAT that contains the ROM
-</span><span id="__span-1-205"><a id="__codelineno-1-205" name="__codelineno-1-205" href="#__codelineno-1-205"></a>    {region}          The region of the ROM release (e.g. &quot;USA&quot;), each ROM can have multiple
-</span><span id="__span-1-206"><a id="__codelineno-1-206" name="__codelineno-1-206" href="#__codelineno-1-206"></a>    {language}        The language of the ROM release (e.g. &quot;En&quot;), each ROM can have multiple
-</span><span id="__span-1-207"><a id="__codelineno-1-207" name="__codelineno-1-207" href="#__codelineno-1-207"></a>    {type}            The type of the game (e.g. &quot;Retail&quot;, &quot;Demo&quot;, &quot;Prototype&quot;)
-</span><span id="__span-1-208"><a id="__codelineno-1-208" name="__codelineno-1-208" href="#__codelineno-1-208"></a>    {genre}           The DAT-defined genre of the game
-</span><span id="__span-1-209"><a id="__codelineno-1-209" name="__codelineno-1-209" href="#__codelineno-1-209"></a>
-</span><span id="__span-1-210"><a id="__codelineno-1-210" name="__codelineno-1-210" href="#__codelineno-1-210"></a>    {inputDirname}    The input file&#39;s dirname
-</span><span id="__span-1-211"><a id="__codelineno-1-211" name="__codelineno-1-211" href="#__codelineno-1-211"></a>    {outputBasename}  Equivalent to &quot;{outputName}.{outputExt}&quot;
-</span><span id="__span-1-212"><a id="__codelineno-1-212" name="__codelineno-1-212" href="#__codelineno-1-212"></a>    {outputName}      The output file&#39;s filename without extension
-</span><span id="__span-1-213"><a id="__codelineno-1-213" name="__codelineno-1-213" href="#__codelineno-1-213"></a>    {outputExt}       The output file&#39;s extension
-</span><span id="__span-1-214"><a id="__codelineno-1-214" name="__codelineno-1-214" href="#__codelineno-1-214"></a>
-</span><span id="__span-1-215"><a id="__codelineno-1-215" name="__codelineno-1-215" href="#__codelineno-1-215"></a>    {adam}      The ROM&#39;s emulator-specific /ROMS/* directory for the &#39;Adam&#39; image (e.g. &quot;GB&quot;)
-</span><span id="__span-1-216"><a id="__codelineno-1-216" name="__codelineno-1-216" href="#__codelineno-1-216"></a>    {batocera}  The ROM&#39;s emulator-specific /roms/* directory for Batocera (e.g. &quot;gb&quot;)
-</span><span id="__span-1-217"><a id="__codelineno-1-217" name="__codelineno-1-217" href="#__codelineno-1-217"></a>    {es}        The ROM&#39;s emulator-specific /roms/* directory for the &#39;EmulationStation&#39; image
-</span><span id="__span-1-218"><a id="__codelineno-1-218" name="__codelineno-1-218" href="#__codelineno-1-218"></a>     (e.g. &quot;gb&quot;)
-</span><span id="__span-1-219"><a id="__codelineno-1-219" name="__codelineno-1-219" href="#__codelineno-1-219"></a>    {funkeyos}  The ROM&#39;s emulator-specific /* directory for FunKey OS (e.g. &quot;Game Boy&quot;)
-</span><span id="__span-1-220"><a id="__codelineno-1-220" name="__codelineno-1-220" href="#__codelineno-1-220"></a>    {jelos}     The ROM&#39;s emulator-specific /roms/* directory for JELOS (e.g. &quot;gb&quot;)
-</span><span id="__span-1-221"><a id="__codelineno-1-221" name="__codelineno-1-221" href="#__codelineno-1-221"></a>    {minui}     The ROM&#39;s emulator-specific /Roms/* directory for MinUI (e.g. &quot;Game Boy (GB)&quot;)
-</span><span id="__span-1-222"><a id="__codelineno-1-222" name="__codelineno-1-222" href="#__codelineno-1-222"></a>    {mister}    The ROM&#39;s core-specific /games/* directory for the MiSTer FPGA (e.g. &quot;Gameboy&quot;
-</span><span id="__span-1-223"><a id="__codelineno-1-223" name="__codelineno-1-223" href="#__codelineno-1-223"></a>    )
-</span><span id="__span-1-224"><a id="__codelineno-1-224" name="__codelineno-1-224" href="#__codelineno-1-224"></a>    {miyoocfw}  The ROM&#39;s emulator-specific /roms/* directory for MiyooCFW (e.g. &quot;GB&quot;)
-</span><span id="__span-1-225"><a id="__codelineno-1-225" name="__codelineno-1-225" href="#__codelineno-1-225"></a>    {onion}     The ROM&#39;s emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. &quot;GB&quot;)
-</span><span id="__span-1-226"><a id="__codelineno-1-226" name="__codelineno-1-226" href="#__codelineno-1-226"></a>    {pocket}    The ROM&#39;s core-specific /Assets/* directory for the Analogue Pocket (e.g. &quot;gb&quot;
-</span><span id="__span-1-227"><a id="__codelineno-1-227" name="__codelineno-1-227" href="#__codelineno-1-227"></a>    )
-</span><span id="__span-1-228"><a id="__codelineno-1-228" name="__codelineno-1-228" href="#__codelineno-1-228"></a>    {retrodeck} The ROM&#39;s emulator-specific /roms/* directory for the &#39;RetroDECK&#39; image (e.g.
-</span><span id="__span-1-229"><a id="__codelineno-1-229" name="__codelineno-1-229" href="#__codelineno-1-229"></a>    &quot;gb&quot;)
-</span><span id="__span-1-230"><a id="__codelineno-1-230" name="__codelineno-1-230" href="#__codelineno-1-230"></a>    {romm}      The ROM&#39;s manager-specific /roms/* directory for &#39;RomM&#39; (e.g. &quot;gb&quot;)
-</span><span id="__span-1-231"><a id="__codelineno-1-231" name="__codelineno-1-231" href="#__codelineno-1-231"></a>    {twmenu}    The ROM&#39;s emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3D
-</span><span id="__span-1-232"><a id="__codelineno-1-232" name="__codelineno-1-232" href="#__codelineno-1-232"></a>    S (e.g. &quot;gb&quot;)
-</span><span id="__span-1-233"><a id="__codelineno-1-233" name="__codelineno-1-233" href="#__codelineno-1-233"></a>
-</span><span id="__span-1-234"><a id="__codelineno-1-234" name="__codelineno-1-234" href="#__codelineno-1-234"></a>Example use cases:
+</span><span id="__span-1-202"><a id="__codelineno-1-202" name="__codelineno-1-202" href="#__codelineno-1-202"></a>Advanced usage:
+</span><span id="__span-1-203"><a id="__codelineno-1-203" name="__codelineno-1-203" href="#__codelineno-1-203"></a>
+</span><span id="__span-1-204"><a id="__codelineno-1-204" name="__codelineno-1-204" href="#__codelineno-1-204"></a>  Tokens that are replaced when generating the output (--output) path of a ROM:
+</span><span id="__span-1-205"><a id="__codelineno-1-205" name="__codelineno-1-205" href="#__codelineno-1-205"></a>    {datName}         The name of the DAT that contains the ROM (e.g. &quot;Nintendo - Game Boy&quot;)
+</span><span id="__span-1-206"><a id="__codelineno-1-206" name="__codelineno-1-206" href="#__codelineno-1-206"></a>    {datDescription}  The description of the DAT that contains the ROM
+</span><span id="__span-1-207"><a id="__codelineno-1-207" name="__codelineno-1-207" href="#__codelineno-1-207"></a>    {region}          The region of the ROM release (e.g. &quot;USA&quot;), each ROM can have multiple
+</span><span id="__span-1-208"><a id="__codelineno-1-208" name="__codelineno-1-208" href="#__codelineno-1-208"></a>    {language}        The language of the ROM release (e.g. &quot;En&quot;), each ROM can have multiple
+</span><span id="__span-1-209"><a id="__codelineno-1-209" name="__codelineno-1-209" href="#__codelineno-1-209"></a>    {type}            The type of the game (e.g. &quot;Retail&quot;, &quot;Demo&quot;, &quot;Prototype&quot;)
+</span><span id="__span-1-210"><a id="__codelineno-1-210" name="__codelineno-1-210" href="#__codelineno-1-210"></a>    {genre}           The DAT-defined genre of the game
+</span><span id="__span-1-211"><a id="__codelineno-1-211" name="__codelineno-1-211" href="#__codelineno-1-211"></a>
+</span><span id="__span-1-212"><a id="__codelineno-1-212" name="__codelineno-1-212" href="#__codelineno-1-212"></a>    {inputDirname}    The input file&#39;s dirname
+</span><span id="__span-1-213"><a id="__codelineno-1-213" name="__codelineno-1-213" href="#__codelineno-1-213"></a>    {outputBasename}  Equivalent to &quot;{outputName}.{outputExt}&quot;
+</span><span id="__span-1-214"><a id="__codelineno-1-214" name="__codelineno-1-214" href="#__codelineno-1-214"></a>    {outputName}      The output file&#39;s filename without extension
+</span><span id="__span-1-215"><a id="__codelineno-1-215" name="__codelineno-1-215" href="#__codelineno-1-215"></a>    {outputExt}       The output file&#39;s extension
+</span><span id="__span-1-216"><a id="__codelineno-1-216" name="__codelineno-1-216" href="#__codelineno-1-216"></a>
+</span><span id="__span-1-217"><a id="__codelineno-1-217" name="__codelineno-1-217" href="#__codelineno-1-217"></a>    {adam}      The ROM&#39;s emulator-specific /ROMS/* directory for the &#39;Adam&#39; image (e.g. &quot;GB&quot;)
+</span><span id="__span-1-218"><a id="__codelineno-1-218" name="__codelineno-1-218" href="#__codelineno-1-218"></a>    {batocera}  The ROM&#39;s emulator-specific /roms/* directory for Batocera (e.g. &quot;gb&quot;)
+</span><span id="__span-1-219"><a id="__codelineno-1-219" name="__codelineno-1-219" href="#__codelineno-1-219"></a>    {es}        The ROM&#39;s emulator-specific /roms/* directory for the &#39;EmulationStation&#39; image
+</span><span id="__span-1-220"><a id="__codelineno-1-220" name="__codelineno-1-220" href="#__codelineno-1-220"></a>     (e.g. &quot;gb&quot;)
+</span><span id="__span-1-221"><a id="__codelineno-1-221" name="__codelineno-1-221" href="#__codelineno-1-221"></a>    {funkeyos}  The ROM&#39;s emulator-specific /* directory for FunKey OS (e.g. &quot;Game Boy&quot;)
+</span><span id="__span-1-222"><a id="__codelineno-1-222" name="__codelineno-1-222" href="#__codelineno-1-222"></a>    {jelos}     The ROM&#39;s emulator-specific /roms/* directory for JELOS (e.g. &quot;gb&quot;)
+</span><span id="__span-1-223"><a id="__codelineno-1-223" name="__codelineno-1-223" href="#__codelineno-1-223"></a>    {minui}     The ROM&#39;s emulator-specific /Roms/* directory for MinUI (e.g. &quot;Game Boy (GB)&quot;)
+</span><span id="__span-1-224"><a id="__codelineno-1-224" name="__codelineno-1-224" href="#__codelineno-1-224"></a>    {mister}    The ROM&#39;s core-specific /games/* directory for the MiSTer FPGA (e.g. &quot;Gameboy&quot;
+</span><span id="__span-1-225"><a id="__codelineno-1-225" name="__codelineno-1-225" href="#__codelineno-1-225"></a>    )
+</span><span id="__span-1-226"><a id="__codelineno-1-226" name="__codelineno-1-226" href="#__codelineno-1-226"></a>    {miyoocfw}  The ROM&#39;s emulator-specific /roms/* directory for MiyooCFW (e.g. &quot;GB&quot;)
+</span><span id="__span-1-227"><a id="__codelineno-1-227" name="__codelineno-1-227" href="#__codelineno-1-227"></a>    {onion}     The ROM&#39;s emulator-specific /Roms/* directory for OnionOS/GarlicOS (e.g. &quot;GB&quot;)
+</span><span id="__span-1-228"><a id="__codelineno-1-228" name="__codelineno-1-228" href="#__codelineno-1-228"></a>    {pocket}    The ROM&#39;s core-specific /Assets/* directory for the Analogue Pocket (e.g. &quot;gb&quot;
+</span><span id="__span-1-229"><a id="__codelineno-1-229" name="__codelineno-1-229" href="#__codelineno-1-229"></a>    )
+</span><span id="__span-1-230"><a id="__codelineno-1-230" name="__codelineno-1-230" href="#__codelineno-1-230"></a>    {retrodeck} The ROM&#39;s emulator-specific /roms/* directory for the &#39;RetroDECK&#39; image (e.g.
+</span><span id="__span-1-231"><a id="__codelineno-1-231" name="__codelineno-1-231" href="#__codelineno-1-231"></a>    &quot;gb&quot;)
+</span><span id="__span-1-232"><a id="__codelineno-1-232" name="__codelineno-1-232" href="#__codelineno-1-232"></a>    {romm}      The ROM&#39;s manager-specific /roms/* directory for &#39;RomM&#39; (e.g. &quot;gb&quot;)
+</span><span id="__span-1-233"><a id="__codelineno-1-233" name="__codelineno-1-233" href="#__codelineno-1-233"></a>    {twmenu}    The ROM&#39;s emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3D
+</span><span id="__span-1-234"><a id="__codelineno-1-234" name="__codelineno-1-234" href="#__codelineno-1-234"></a>    S (e.g. &quot;gb&quot;)
 </span><span id="__span-1-235"><a id="__codelineno-1-235" name="__codelineno-1-235" href="#__codelineno-1-235"></a>
-</span><span id="__span-1-236"><a id="__codelineno-1-236" name="__codelineno-1-236" href="#__codelineno-1-236"></a>  Merge new ROMs into an existing ROM collection and delete any unrecognized files:
-</span><span id="__span-1-237"><a id="__codelineno-1-237" name="__codelineno-1-237" href="#__codelineno-1-237"></a>    igir copy clean --dat &quot;*.dat&quot; --input New-ROMs/ --input ROMs/ --output ROMs/
-</span><span id="__span-1-238"><a id="__codelineno-1-238" name="__codelineno-1-238" href="#__codelineno-1-238"></a>
-</span><span id="__span-1-239"><a id="__codelineno-1-239" name="__codelineno-1-239" href="#__codelineno-1-239"></a>  Organize and zip an existing ROM collection:
-</span><span id="__span-1-240"><a id="__codelineno-1-240" name="__codelineno-1-240" href="#__codelineno-1-240"></a>    igir move zip --dat &quot;*.dat&quot; --input ROMs/ --output ROMs/
-</span><span id="__span-1-241"><a id="__codelineno-1-241" name="__codelineno-1-241" href="#__codelineno-1-241"></a>
-</span><span id="__span-1-242"><a id="__codelineno-1-242" name="__codelineno-1-242" href="#__codelineno-1-242"></a>  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
-</span><span id="__span-1-243"><a id="__codelineno-1-243" name="__codelineno-1-243" href="#__codelineno-1-243"></a>    igir report --dat &quot;*.dat&quot; --input ROMs/
-</span><span id="__span-1-244"><a id="__codelineno-1-244" name="__codelineno-1-244" href="#__codelineno-1-244"></a>
-</span><span id="__span-1-245"><a id="__codelineno-1-245" name="__codelineno-1-245" href="#__codelineno-1-245"></a>  Produce a 1G1R set per console, preferring English ROMs from USA&gt;WORLD&gt;EUR&gt;JPN:
-</span><span id="__span-1-246"><a id="__codelineno-1-246" name="__codelineno-1-246" href="#__codelineno-1-246"></a>    igir copy --dat &quot;*.dat&quot; --input &quot;**/*.zip&quot; --output 1G1R/ --dir-dat-name --single --prefer
-</span><span id="__span-1-247"><a id="__codelineno-1-247" name="__codelineno-1-247" href="#__codelineno-1-247"></a>    -language EN --prefer-region USA,WORLD,EUR,JPN
-</span><span id="__span-1-248"><a id="__codelineno-1-248" name="__codelineno-1-248" href="#__codelineno-1-248"></a>
-</span><span id="__span-1-249"><a id="__codelineno-1-249" name="__codelineno-1-249" href="#__codelineno-1-249"></a>  Copy all Mario, Metroid, and Zelda games to one directory:
-</span><span id="__span-1-250"><a id="__codelineno-1-250" name="__codelineno-1-250" href="#__codelineno-1-250"></a>    igir copy --input ROMs/ --output Nintendo/ --filter-regex &quot;/(Mario|Metroid|Zelda)/i&quot;
-</span><span id="__span-1-251"><a id="__codelineno-1-251" name="__codelineno-1-251" href="#__codelineno-1-251"></a>
-</span><span id="__span-1-252"><a id="__codelineno-1-252" name="__codelineno-1-252" href="#__codelineno-1-252"></a>  Copy all BIOS files into one directory, extracting if necessary:
-</span><span id="__span-1-253"><a id="__codelineno-1-253" name="__codelineno-1-253" href="#__codelineno-1-253"></a>    igir copy extract --dat &quot;*.dat&quot; --input &quot;**/*.zip&quot; --output BIOS/ --only-bios
-</span><span id="__span-1-254"><a id="__codelineno-1-254" name="__codelineno-1-254" href="#__codelineno-1-254"></a>
-</span><span id="__span-1-255"><a id="__codelineno-1-255" name="__codelineno-1-255" href="#__codelineno-1-255"></a>  Create patched copies of ROMs in an existing collection, not overwriting existing files:
-</span><span id="__span-1-256"><a id="__codelineno-1-256" name="__codelineno-1-256" href="#__codelineno-1-256"></a>    igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
-</span><span id="__span-1-257"><a id="__codelineno-1-257" name="__codelineno-1-257" href="#__codelineno-1-257"></a>
-</span><span id="__span-1-258"><a id="__codelineno-1-258" name="__codelineno-1-258" href="#__codelineno-1-258"></a>  Re-build a MAME ROM set for a specific version of MAME:
-</span><span id="__span-1-259"><a id="__codelineno-1-259" name="__codelineno-1-259" href="#__codelineno-1-259"></a>    igir copy zip --dat &quot;MAME 0.258.dat&quot; --input MAME/ --output MAME-0.258/ --merge-roms split
-</span><span id="__span-1-260"><a id="__codelineno-1-260" name="__codelineno-1-260" href="#__codelineno-1-260"></a>
-</span><span id="__span-1-261"><a id="__codelineno-1-261" name="__codelineno-1-261" href="#__codelineno-1-261"></a>  Copy ROMs to an Analogue Pocket and test they were written correctly:
-</span><span id="__span-1-262"><a id="__codelineno-1-262" name="__codelineno-1-262" href="#__codelineno-1-262"></a>    igir copy extract test --dat &quot;*.dat&quot; --input ROMs/ --output /Assets/{pocket}/common/ --dir
-</span><span id="__span-1-263"><a id="__codelineno-1-263" name="__codelineno-1-263" href="#__codelineno-1-263"></a>    -letter
+</span><span id="__span-1-236"><a id="__codelineno-1-236" name="__codelineno-1-236" href="#__codelineno-1-236"></a>Example use cases:
+</span><span id="__span-1-237"><a id="__codelineno-1-237" name="__codelineno-1-237" href="#__codelineno-1-237"></a>
+</span><span id="__span-1-238"><a id="__codelineno-1-238" name="__codelineno-1-238" href="#__codelineno-1-238"></a>  Merge new ROMs into an existing ROM collection and delete any unrecognized files:
+</span><span id="__span-1-239"><a id="__codelineno-1-239" name="__codelineno-1-239" href="#__codelineno-1-239"></a>    igir copy clean --dat &quot;*.dat&quot; --input New-ROMs/ --input ROMs/ --output ROMs/
+</span><span id="__span-1-240"><a id="__codelineno-1-240" name="__codelineno-1-240" href="#__codelineno-1-240"></a>
+</span><span id="__span-1-241"><a id="__codelineno-1-241" name="__codelineno-1-241" href="#__codelineno-1-241"></a>  Organize and zip an existing ROM collection:
+</span><span id="__span-1-242"><a id="__codelineno-1-242" name="__codelineno-1-242" href="#__codelineno-1-242"></a>    igir move zip --dat &quot;*.dat&quot; --input ROMs/ --output ROMs/
+</span><span id="__span-1-243"><a id="__codelineno-1-243" name="__codelineno-1-243" href="#__codelineno-1-243"></a>
+</span><span id="__span-1-244"><a id="__codelineno-1-244" name="__codelineno-1-244" href="#__codelineno-1-244"></a>  Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
+</span><span id="__span-1-245"><a id="__codelineno-1-245" name="__codelineno-1-245" href="#__codelineno-1-245"></a>    igir report --dat &quot;*.dat&quot; --input ROMs/
+</span><span id="__span-1-246"><a id="__codelineno-1-246" name="__codelineno-1-246" href="#__codelineno-1-246"></a>
+</span><span id="__span-1-247"><a id="__codelineno-1-247" name="__codelineno-1-247" href="#__codelineno-1-247"></a>  Produce a 1G1R set per console, preferring English ROMs from USA&gt;WORLD&gt;EUR&gt;JPN:
+</span><span id="__span-1-248"><a id="__codelineno-1-248" name="__codelineno-1-248" href="#__codelineno-1-248"></a>    igir copy --dat &quot;*.dat&quot; --input &quot;**/*.zip&quot; --output 1G1R/ --dir-dat-name --single --prefer
+</span><span id="__span-1-249"><a id="__codelineno-1-249" name="__codelineno-1-249" href="#__codelineno-1-249"></a>    -language EN --prefer-region USA,WORLD,EUR,JPN
+</span><span id="__span-1-250"><a id="__codelineno-1-250" name="__codelineno-1-250" href="#__codelineno-1-250"></a>
+</span><span id="__span-1-251"><a id="__codelineno-1-251" name="__codelineno-1-251" href="#__codelineno-1-251"></a>  Copy all Mario, Metroid, and Zelda games to one directory:
+</span><span id="__span-1-252"><a id="__codelineno-1-252" name="__codelineno-1-252" href="#__codelineno-1-252"></a>    igir copy --input ROMs/ --output Nintendo/ --filter-regex &quot;/(Mario|Metroid|Zelda)/i&quot;
+</span><span id="__span-1-253"><a id="__codelineno-1-253" name="__codelineno-1-253" href="#__codelineno-1-253"></a>
+</span><span id="__span-1-254"><a id="__codelineno-1-254" name="__codelineno-1-254" href="#__codelineno-1-254"></a>  Copy all BIOS files into one directory, extracting if necessary:
+</span><span id="__span-1-255"><a id="__codelineno-1-255" name="__codelineno-1-255" href="#__codelineno-1-255"></a>    igir copy extract --dat &quot;*.dat&quot; --input &quot;**/*.zip&quot; --output BIOS/ --only-bios
+</span><span id="__span-1-256"><a id="__codelineno-1-256" name="__codelineno-1-256" href="#__codelineno-1-256"></a>
+</span><span id="__span-1-257"><a id="__codelineno-1-257" name="__codelineno-1-257" href="#__codelineno-1-257"></a>  Create patched copies of ROMs in an existing collection, not overwriting existing files:
+</span><span id="__span-1-258"><a id="__codelineno-1-258" name="__codelineno-1-258" href="#__codelineno-1-258"></a>    igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
+</span><span id="__span-1-259"><a id="__codelineno-1-259" name="__codelineno-1-259" href="#__codelineno-1-259"></a>
+</span><span id="__span-1-260"><a id="__codelineno-1-260" name="__codelineno-1-260" href="#__codelineno-1-260"></a>  Re-build a MAME ROM set for a specific version of MAME:
+</span><span id="__span-1-261"><a id="__codelineno-1-261" name="__codelineno-1-261" href="#__codelineno-1-261"></a>    igir copy zip --dat &quot;MAME 0.258.dat&quot; --input MAME/ --output MAME-0.258/ --merge-roms split
+</span><span id="__span-1-262"><a id="__codelineno-1-262" name="__codelineno-1-262" href="#__codelineno-1-262"></a>
+</span><span id="__span-1-263"><a id="__codelineno-1-263" name="__codelineno-1-263" href="#__codelineno-1-263"></a>  Copy ROMs to an Analogue Pocket and test they were written correctly:
+</span><span id="__span-1-264"><a id="__codelineno-1-264" name="__codelineno-1-264" href="#__codelineno-1-264"></a>    igir copy extract test --dat &quot;*.dat&quot; --input ROMs/ --output /Assets/{pocket}/common/ --dir
+</span><span id="__span-1-265"><a id="__codelineno-1-265" name="__codelineno-1-265" href="#__codelineno-1-265"></a>    -letter
 </span></code></pre></div>
 <!-- WARN: everything above is automatically updated! Update src/modules/argumentsParser.ts instead! -->
 
@@ -2995,7 +2997,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 5, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 16, 2025</span>
   </span>
 
     

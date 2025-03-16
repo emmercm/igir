@@ -2748,7 +2748,7 @@
 <td><code>.chd</code></td>
 <td>❌ SHA1</td>
 <td>❌ <code>chdman</code><sup>1</sup></td>
-<td>❌</td>
+<td>⚠️ SHA1 only for hard drive images</td>
 </tr>
 <tr>
 <td><code>.cso</code>, <code>.zso</code>, <code>.dax</code></td>
@@ -2828,7 +2828,7 @@
 <sup>1</sup> may require you to install SDL2 manually, see the <a href="https://github.com/emmercm/chdman-js#readme">chdman-js README</a>.
 </small></p>
 <p><strong>You should prefer archive formats that have CRC32 checksum information for each file.</strong></p>
-<p>By default, Igir uses CRC32 information to <a href="../../roms/matching/">match ROMs</a> to DAT entries. If an archive already contains CRC32 information for each file, then Igir doesn't need to extract each file and compute its CRC32. This can save a lot of time on large archives.</p>
+<p>By default, Igir uses CRC32 information to <a href="../../roms/matching/">match ROMs</a> to DAT entries. If an archive already contains CRC32 information for each file, then Igir doesn't need to extract any file to compute its CRC32. This can save a lot of time on large archives.</p>
 <p>This is why you should use the <a href="../../output/writing-archives/"><code>igir zip</code> command</a> when organizing your primary ROM collection. It is much faster for Igir to scan archives with CRC32 information, speeding up actions such as merging new ROMs into an existing collection.</p>
 <p><strong>You should prefer archive formats that Igir can extract natively.</strong></p>
 <p>Somewhat proprietary archive formats such as <code>.7z</code> and <code>.rar</code> require Igir to use an external tool to enumerate and extract files. This can greatly slow down processing speed.</p>
@@ -2864,7 +2864,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 27, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 15, 2025</span>
   </span>
 
     

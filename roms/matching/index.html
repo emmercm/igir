@@ -2733,7 +2733,7 @@
 </div>
 <h2 id="automatically-using-other-checksum-algorithms">Automatically using other checksum algorithms</h2>
 <p>Some DAT release groups do not include every checksum for every file. For example, CHDs in MAME DATs only include SHA1 checksums and nothing else, not even filesize information.</p>
-<p>And some DAT release groups do not include filesize information for every file, preventing a safe use of CRC32. For example, not every <a href="https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs">Hardware Target Game Database SMDB</a> includes file sizes, but they typically include all the normal checksums.</p>
+<p>Some DAT release groups do not include filesize information for every file, preventing a safe use of CRC32. For example, not every <a href="https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs">Hardware Target Game Database SMDB</a> includes file sizes, but they typically include all the normal checksums.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>For situations like these, Igir will automatically detect what combination of checksums it needs to calculate for input files to be able to match them to DATs. This <em>does</em> have the chance of greatly slowing down file scanning, especially with archives.</p>
@@ -2772,7 +2772,7 @@
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-checksum-min<span class="w"> </span>SHA256
 </span></code></pre></div>
 <p>This option defines the <em>minimum</em> checksum that will be used based on digest size (below). If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above), but never lower.</p>
-<p>The reason you might want to do this is to have a higher confidence that found files <em>exactly</em> match ROMs in DATs. Keep in mind that explicitly enabling non-CRC32 checksums will <em>greatly</em> slow down scanning of files within archives (see "quick scanning" above).</p>
+<p>The reason you might want to do this is to have a higher confidence that found files <em>exactly</em> match ROMs in DATs. Keep in mind that explicitly enabling non-CRC32 checksums will <em>greatly</em> slow down scanning of files within archives (see <code>--input-checksum-quick</code> above).</p>
 <p>Here is a table that shows the keyspace for each checksum algorithm, where the higher number of bits reduces the chances of collisions:</p>
 <table>
 <thead>
@@ -2831,7 +2831,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 27, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 15, 2025</span>
   </span>
 
     

@@ -2801,7 +2801,7 @@
 </li>
 </ul>
 <ul>
-<li><strong>Archive files will be treated as a single game, with every archive entry being a separate ROM.</strong><p>This is consistent with how the <a href="../../output/writing-archives/"><code>igir zip</code> command</a> works, and with what <a href="../../usage/arcade/">MAME expects</a>.</p>
+<li><strong>Archive files will be treated as a single game, with every archive entry being a separate ROM file.</strong><p>This is consistent with how the <a href="../../output/writing-archives/"><code>igir zip</code> command</a> works, and with what <a href="../../usage/arcade/">MAME expects</a>.</p>
 </li>
 </ul>
 <ul>
@@ -2816,18 +2816,18 @@
 <h2 id="combining-with-other-options">Combining with other options</h2>
 <p>Once DATs have been generated from input files, they are processed the same as any other DAT file. That means:</p>
 <ul>
-<li><strong>Parent/clone information may be <a href="../processing/#parentclone-inference">inferred</a> from game names.</strong><p>If your input files are in some kind of standard naming convention (e.g. <a href="https://wiki.no-intro.org/index.php?title=Naming_Convention">No-Intro</a>, <a href="https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf">Redump</a>, or <a href="https://www.tosecdev.org/tosec-naming-convention">TOSEC</a>), then parent/clone information can be inferred for <a href="../../roms/filtering-preferences/">1G1R preferences</a>.</p>
+<li><strong>Parent/clone information may be <a href="../processing/#parentclone-inference">inferred</a> from game names.</strong><p>If your input files are in some kind of standard naming convention (e.g. <a href="https://wiki.no-intro.org/index.php?title=Naming_Convention">No-Intro</a>, <a href="https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf">Redump</a>, <a href="https://www.tosecdev.org/tosec-naming-convention">TOSEC</a>, or <a href="https://emulation.gametechwiki.com/index.php/GoodTools">GoodTools</a>), then parent/clone information can be inferred for <a href="../../roms/filtering-preferences/">1G1R preferences</a>.</p>
 <p>Parent/clone information also allows for <a href="../../usage/arcade/">merging &amp; splitting</a> of ROM sets.</p>
 </li>
 </ul>
 <ul>
 <li>
-<p><strong><a href="../../roms/filtering-preferences/">ROM filter options</a> can be applied.</strong></p>
-<p>If your input files are in some kind of standard naming convention (e.g. <a href="https://wiki.no-intro.org/index.php?title=Naming_Convention">No-Intro</a>, <a href="https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf">Redump</a>, or <a href="https://www.tosecdev.org/tosec-naming-convention">TOSEC</a>) that contains region, language, or other tags, then <a href="../../roms/filtering-preferences/">ROM filter options</a> can be applied.</p>
+<p><strong><a href="../../roms/filtering-preferences/">ROM filter &amp; preference options</a> can be applied.</strong></p>
+<p>If your input files are in some kind of standard naming convention (e.g. <a href="https://wiki.no-intro.org/index.php?title=Naming_Convention">No-Intro</a>, <a href="https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf">Redump</a>, <a href="https://www.tosecdev.org/tosec-naming-convention">TOSEC</a>, or <a href="https://emulation.gametechwiki.com/index.php/GoodTools">GoodTools</a>) that contains region, language, or other tags, then <a href="../../roms/filtering-preferences/">ROM filter &amp; preference options</a> can be applied.</p>
 </li>
 </ul>
 <ul>
-<li><strong>Filename extensions can be corrected.</strong><p>See <a href="../../output/options/#fixing-rom-extensions">ROM Output Options</a> for more information.</p>
+<li><strong>Filename extensions will be corrected by default.</strong><p>See <a href="../../output/options/#fixing-rom-extensions">ROM Output Options</a> for more information.</p>
 </li>
 </ul>
 <h2 id="alternative-tools">Alternative tools</h2>
@@ -2853,7 +2853,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 28, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 15, 2025</span>
   </span>
 
     
