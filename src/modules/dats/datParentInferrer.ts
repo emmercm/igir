@@ -209,6 +209,7 @@ export default class DATParentInferrer extends Module {
         .replace(/\(NP\)/i, '') // "Nintendo Power"
         // Sega - Dreamcast
         .replace(/\[([0-9A-Z ]+(, )?)+\]$/, '') // TOSEC boxcode
+        .replace(/\[[0-9]+S\]/, '') // TOSEC ring code
         .replace(
           /\[(compilation|data identical to retail|fixed version|keyboard|limited edition|req\. microphone|scrambled|unscrambled|white label)\]/gi,
           '',

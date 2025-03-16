@@ -216,6 +216,7 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
+    expect(options.getMergeDiscs()).toEqual(false);
     expect(options.getExcludeDisks()).toEqual(false);
     expect(options.getAllowExcessSets()).toEqual(false);
     expect(options.getAllowIncompleteSets()).toEqual(false);
@@ -2721,6 +2722,37 @@ describe('options', () => {
         ])
         .getMergeRoms(),
     ).toEqual(MergeMode.SPLIT);
+  });
+
+  it('should parse "merge-discs"', () => {
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--merge-discs']).getMergeDiscs(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--merge-discs', 'true'])
+        .getMergeDiscs(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--merge-discs', 'false'])
+        .getMergeDiscs(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--merge-discs', '--merge-discs'])
+        .getMergeDiscs(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--merge-discs', 'false', '--merge-discs', 'true'])
+        .getMergeDiscs(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--merge-discs', 'true', '--merge-discs', 'false'])
+        .getMergeDiscs(),
+    ).toEqual(false);
   });
 
   it('should parse "exclude-disks"', () => {
