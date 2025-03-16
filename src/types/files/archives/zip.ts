@@ -185,8 +185,8 @@ export default class Zip extends Archive {
           zipFile.readEntry(); // read first entry
           zipFile.on('entry', (entryFile: Entry) => {
             if (entryFile.fileName !== entryPath.replace(/[\\/]/g, '/')) {
-              zipFile.readEntry(); // continue reading the next entry
-              return;
+              // Is not the entry we're looking for
+              return zipFile.readEntry(); // continue reading the next entry
             }
 
             zipFile.openReadStream(entryFile, async (entryError, entryStream) => {
@@ -194,7 +194,10 @@ export default class Zip extends Archive {
                 reject(entryError);
                 return;
               }
-              entryStream.on('error', reject);
+              entryStream.on('error', (error) => {
+                reject(error);
+                zipFile.close();
+              });
 
               try {
                 result = await callback(entryStream);
@@ -209,6 +212,7 @@ export default class Zip extends Archive {
                     new Error(`failed to extract ${this.getFilePath()}|${entryFile.fileName}`),
                   );
                 }
+                zipFile.close();
               } finally {
                 entryStream.destroy();
                 zipFile.readEntry(); // continue reading the next entry
