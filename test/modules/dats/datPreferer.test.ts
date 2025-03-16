@@ -604,4 +604,38 @@ describe('preference combinations', () => {
       'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     ]);
   });
+
+  // https://github.com/emmercm/igir/discussions/1496#discussioncomment-12514981
+  it('should prefer regions in some game names over releases', () => {
+    const options = new Options({
+      single: true,
+      preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(),
+      preferRegion: ['USA'],
+    });
+    const dat = new LogiqxDAT(new Header(), [
+      new Game({
+        name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        description: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
+        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced).gb', size: 131_072 }),
+      }),
+      new Game({
+        name: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
+        cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        description: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
+        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (SGB Enhanced).gb', size: 131_072 }),
+      }),
+      new Game({
+        name: 'Tetris 2 (USA)',
+        cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        description: 'Tetris 2 (USA)',
+        release: new Release('Tetris 2 (USA)', 'USA'),
+        rom: new ROM({ name: 'Tetris 2 (USA).gb', size: 131_072 }),
+      }),
+    ]);
+    const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
+    expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
+      'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+    ]);
+  });
 });
