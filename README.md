@@ -61,7 +61,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.1.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.2.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -149,7 +149,7 @@ ROM writing options:
 
 clean command options:
   -C, --clean-exclude  Path(s) to files to exclude from cleaning (supports globbing)   [array]
-      --clean-backup   Move cleaned files to a directory for backup                   [string]
+      --clean-backup   Directory to move cleaned files to (instead of being recycled) [string]
       --clean-dry-run  Don't clean any files and instead only print what files would be cleane
                        d                                                             [boolean]
 
@@ -179,34 +179,36 @@ ROM set options (requires DATs):
       --allow-incomplete-sets  Allow writing games that don't have all of their ROMs [boolean]
 
 ROM filtering options:
-  -x, --filter-regex          Regular expression of game names to filter to           [string]
-  -X, --filter-regex-exclude  Regular expression of game names to exclude             [string]
-  -L, --filter-language       List of comma-separated languages to filter to (supported: DA, D
-                              E, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
+  -x, --filter-regex           Regular expression of game names to filter to          [string]
+  -X, --filter-regex-exclude   Regular expression of game names to exclude            [string]
+  -L, --filter-language        List of comma-separated languages to filter to (supported: DA,
+                               DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
                                                                                       [string]
-  -R, --filter-region         List of comma-separated regions to filter to (supported: ARG, AS
-                              I, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK, HO
-                              L, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK, UNK
-                              , USA, WORLD)                                           [string]
-      --no-bios               Filter out BIOS files, opposite of --only-bios         [boolean]
-      --no-device             Filter out MAME devies, opposite of --only-device      [boolean]
-      --no-unlicensed         Filter out unlicensed ROMs, opposite of --only-unlicensed
+  -R, --filter-region          List of comma-separated regions to filter to (supported: ARG, A
+                               SI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK,
+                               HOL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK,
+                               UNK, USA, WORLD)                                       [string]
+      --filter-category-regex  Regular expression of categories to filter to          [string]
+      --no-bios                Filter out BIOS files, opposite of --only-bios        [boolean]
+      --no-device              Filter out MAME devies, opposite of --only-device     [boolean]
+      --no-unlicensed          Filter out unlicensed ROMs, opposite of --only-unlicensed
                                                                                      [boolean]
-      --only-retail           Filter to only retail releases, enabling all the following "no"
-                              options                                                [boolean]
-      --no-debug              Filter out debug ROMs, opposite of --only-debug        [boolean]
-      --no-demo               Filter out demo ROMs, opposite of --only-demo          [boolean]
-      --no-beta               Filter out beta ROMs, opposite of --only-beta          [boolean]
-      --no-sample             Filter out sample ROMs, opposite of --only-sample      [boolean]
-      --no-prototype          Filter out prototype ROMs, opposite of --only-prototype[boolean]
-      --no-program            Filter out program application ROMs, opposite of --only-program
+      --only-retail            Filter to only retail releases, enabling all the following "no"
+                                options                                              [boolean]
+      --no-debug               Filter out debug ROMs, opposite of --only-debug       [boolean]
+      --no-demo                Filter out demo ROMs, opposite of --only-demo         [boolean]
+      --no-beta                Filter out beta ROMs, opposite of --only-beta         [boolean]
+      --no-sample              Filter out sample ROMs, opposite of --only-sample     [boolean]
+      --no-prototype           Filter out prototype ROMs, opposite of --only-prototype
                                                                                      [boolean]
-      --no-aftermarket        Filter out aftermarket ROMs, opposite of --only-aftermarket
+      --no-program             Filter out program application ROMs, opposite of --only-program
                                                                                      [boolean]
-      --no-homebrew           Filter out homebrew ROMs, opposite of --only-homebrew  [boolean]
-      --no-unverified         Filter out unverified ROMs, opposite of --only-unverified
+      --no-aftermarket         Filter out aftermarket ROMs, opposite of --only-aftermarket
                                                                                      [boolean]
-      --no-bad                Filter out bad ROM dumps, opposite of --only-bad       [boolean]
+      --no-homebrew            Filter out homebrew ROMs, opposite of --only-homebrew [boolean]
+      --no-unverified          Filter out unverified ROMs, opposite of --only-unverified
+                                                                                     [boolean]
+      --no-bad                 Filter out bad ROM dumps, opposite of --only-bad      [boolean]
 
 One game, one ROM (1G1R) options:
   -s, --single             Output only a single game per parent (1G1R) (required for all optio
