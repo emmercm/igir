@@ -76,6 +76,7 @@ export default class Zip extends Archive {
                 zipFile.openReadStream(entryFile, async (entryError, entryStream) => {
                   if (entryError) {
                     reject(entryError);
+                    zipFile.close();
                     return;
                   }
                   entryStream.on('error', (error) => {
@@ -127,6 +128,7 @@ export default class Zip extends Archive {
                   new Error(`failed to make entry of ${this.getFilePath()}|${entryFile.fileName}`),
                 );
               }
+              zipFile.close();
             } finally {
               zipFile.readEntry(); // continue reading the next entry
             }
