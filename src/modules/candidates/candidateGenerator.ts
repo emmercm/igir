@@ -585,12 +585,16 @@ export default class CandidateGenerator extends Module {
     const foundRomNames = new Set(foundRoms.map((rom) => rom.getName()));
     const missingCueRoms = game
       .getRoms()
-      .filter((rom) => !foundRomNames.has(rom.getName()))
-      .filter((rom) => path.extname(rom.getName()).toLowerCase() === '.cue');
+      .filter(
+        (rom) =>
+          !foundRomNames.has(rom.getName()) && path.extname(rom.getName()).toLowerCase() === '.cue',
+      );
     const missingNonCueRoms = game
       .getRoms()
-      .filter((rom) => !foundRomNames.has(rom.getName()))
-      .filter((rom) => path.extname(rom.getName()).toLowerCase() !== '.cue');
+      .filter(
+        (rom) =>
+          !foundRomNames.has(rom.getName()) && path.extname(rom.getName()).toLowerCase() !== '.cue',
+      );
     return missingCueRoms.length > 0 && missingNonCueRoms.length === 0;
   }
 
@@ -656,18 +660,25 @@ export default class CandidateGenerator extends Module {
     //  matched to the same input file, so not every archive entry may be in {@link inputFiles}
     const archiveEntryHashCodes = new Set(
       inputFiles
-        .filter((entry) => entry.getFilePath() === archive.getFilePath())
-        .filter((file) => file instanceof ArchiveEntry)
+        .filter(
+          (file) => file.getFilePath() === archive.getFilePath() && file instanceof ArchiveEntry,
+        )
         .map((entry) => entry.hashCode()),
     );
 
     // Find which of the Archive's entries didn't match to a ROM from this Game
-    return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? [])
-      .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
-      .filter(
-        (file) =>
-          !(archive instanceof Chd) || !file.getExtractedFilePath().toLowerCase().endsWith('.cue'),
-      )
-      .filter((entry) => !archiveEntryHashCodes.has(entry.hashCode()));
+    return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? []).filter(
+      (file): file is ArchiveEntry<Archive> => {
+        if (!(file instanceof ArchiveEntry)) {
+          return false;
+        }
+
+        return (
+          (!(archive instanceof Chd) ||
+            !file.getExtractedFilePath().toLowerCase().endsWith('.cue')) &&
+          !archiveEntryHashCodes.has(file.hashCode())
+        );
+      },
+    );
   }
 }

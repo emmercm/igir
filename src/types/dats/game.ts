@@ -754,8 +754,12 @@ export default class Game implements GameProps {
               (langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase(),
             )?.short,
         )
-        .filter((lang) => lang !== undefined)
-        .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
+        .filter(
+          (lang): lang is string =>
+            lang !== undefined &&
+            // Is known
+            Internationalization.LANGUAGES.includes(lang),
+        )
         .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length > 0) {
         return threeMatchesParsed;

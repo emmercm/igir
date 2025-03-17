@@ -72,9 +72,12 @@ export default class CandidateMergeSplitValidator extends Module {
           const missingDeviceGames = game
             .getDeviceRefs()
             .map((deviceRef) => datGamesIndexed.get(deviceRef.getName()))
-            .filter((deviceGame) => deviceGame !== undefined)
-            // Dependent device has ROM files
-            .filter((deviceGame) => deviceGame.getRoms().length > 0)
+            .filter(
+              (deviceGame): deviceGame is Game =>
+                deviceGame !== undefined &&
+                // Dependent device has ROM files
+                deviceGame.getRoms().length > 0,
+            )
             .map((deviceGame) => {
               const deviceReleaseCandidate = releaseCandidatesIndexed.get(deviceGame.getName());
               if (deviceReleaseCandidate) {

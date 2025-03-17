@@ -62,9 +62,9 @@ export default class DATStatus {
         parent.getGames().forEach((game) => {
           DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
-          const gameReleaseCandidates = releaseCandidates
-            .filter((rc) => !rc.isPatched())
-            .filter((rc) => rc.getGame().hashCode() === game.hashCode());
+          const gameReleaseCandidates = releaseCandidates.filter(
+            (rc) => !rc.isPatched() && rc.getGame().hashCode() === game.hashCode(),
+          );
           if (gameReleaseCandidates.length > 0 || game.getRoms().length === 0) {
             // The only reason there may be multiple ReleaseCandidates for a Game is if it has
             // multiple regions, but DATStatus doesn't care about regions.
