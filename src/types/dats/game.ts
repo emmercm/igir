@@ -772,8 +772,7 @@ export default class Game implements GameProps {
     // Get languages from regions
     return this.getRegions()
       .map((region) => {
-        for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
-          const regionOption = Internationalization.REGION_OPTIONS[i];
+        for (const regionOption of Internationalization.REGION_OPTIONS) {
           if (regionOption.region === region) {
             return regionOption.language.toUpperCase();
           }

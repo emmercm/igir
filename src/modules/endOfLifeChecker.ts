@@ -41,8 +41,7 @@ export default class EndOfLifeChecker {
    * Check the current Node.js version.
    */
   check(nodejsVersion: string, now = new Date()): void {
-    for (let i = 0; i < EndOfLifeChecker.END_OF_LIFE_DATES.length; i += 1) {
-      const [majorVersion, endOfLifeDate] = EndOfLifeChecker.END_OF_LIFE_DATES[i];
+    for (const [majorVersion, endOfLifeDate] of EndOfLifeChecker.END_OF_LIFE_DATES) {
       if (semver.satisfies(nodejsVersion, `^${majorVersion}`)) {
         if (now > endOfLifeDate) {
           // We are past the EOL of a known version, warn and return
