@@ -104,10 +104,12 @@ export default class MovedROMDeleter extends Module {
           (inputFile) => inputFile instanceof ArchiveEntry,
         );
 
-        const unmovedFiles = inputFilesForPath
-          .filter((inputFile) => !(inputFile instanceof ArchiveEntry))
-          // The input archive entry needs to have been explicitly moved
-          .filter((inputFile) => !movedEntryHashCodes.has(inputFile.hashCode()));
+        const unmovedFiles = inputFilesForPath.filter(
+          (inputFile) =>
+            !(inputFile instanceof ArchiveEntry) &&
+            // The input archive entry needs to have been explicitly moved
+            !movedEntryHashCodes.has(inputFile.hashCode()),
+        );
 
         if (inputFileIsArchive && unmovedFiles.length === 0) {
           // The input file is an archive, and it was fully extracted OR the archive file itself was
@@ -115,17 +117,19 @@ export default class MovedROMDeleter extends Module {
           return filePath;
         }
 
-        const unmovedArchiveEntries = inputFilesForPath
-          .filter((inputFile) => inputFile instanceof ArchiveEntry)
-          .filter((inputEntry) => {
-            if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
-              // If the input archive was written as a raw archive, then consider it moved
-              return false;
-            }
+        const unmovedArchiveEntries = inputFilesForPath.filter((inputFile) => {
+          if (!(inputFile instanceof ArchiveEntry)) {
+            return false;
+          }
 
-            // Otherwise, the input archive entry needs to have been explicitly moved
-            return !movedEntryHashCodes.has(inputEntry.hashCode());
-          });
+          if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
+            // If the input archive was written as a raw archive, then consider it moved
+            return false;
+          }
+
+          // Otherwise, the input archive entry needs to have been explicitly moved
+          return !movedEntryHashCodes.has(inputFile.hashCode());
+        });
 
         if (inputFileIsArchive && unmovedArchiveEntries.length === 0) {
           // The input file is an archive and it was fully zipped

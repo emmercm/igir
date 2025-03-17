@@ -717,9 +717,9 @@ export default class Options implements OptionsProps {
         }
       },
     );
-    const globbedFiles = globbedPaths
-      .filter((inputPath, idx) => isNonDirectory[idx])
-      .filter((inputPath) => isNotJunk(path.basename(inputPath)));
+    const globbedFiles = globbedPaths.filter(
+      (inputPath, idx) => isNonDirectory[idx] && isNotJunk(path.basename(inputPath)),
+    );
 
     if (requireFiles && globbedFiles.length === 0) {
       throw new ExpectedError(
@@ -1001,8 +1001,10 @@ export default class Options implements OptionsProps {
     );
 
     return (await Options.scanPaths(outputDirs, walkCallback, false))
-      .filter((filePath) => !writtenFilesNormalized.has(filePath))
-      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath))
+      .filter(
+        (filePath) =>
+          !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),
+      )
       .sort();
   }
 

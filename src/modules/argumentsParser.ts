@@ -115,10 +115,12 @@ export default class ArgumentsParser {
     ];
     const addCommands = (yargsObj: Argv, previousCommands: string[] = []): Argv => {
       commands
-        // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
-        .filter(([command]) => !previousCommands.includes(command))
-        // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
         .filter(([command]) => {
+          // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
+          if (previousCommands.includes(command)) {
+            return false;
+          }
+          // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
           const incompatibleCommands = previousCommands.flatMap((previousCommand) =>
             mutuallyExclusiveCommands
               .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
