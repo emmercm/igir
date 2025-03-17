@@ -490,13 +490,15 @@ export default class Igir {
   }
 
   private processDAT(progressBar: ProgressBar, dat: DAT): DAT {
-    return [
-      (dat: DAT): DAT => new DATParentInferrer(this.options, progressBar).infer(dat),
-      (dat: DAT): DAT => new DATMergerSplitter(this.options, progressBar).merge(dat),
-      (dat: DAT): DAT => new DATDiscMerger(this.options, progressBar).merge(dat),
-      (dat: DAT): DAT => new DATFilter(this.options, progressBar).filter(dat),
-      (dat: DAT): DAT => new DATPreferer(this.options, progressBar).prefer(dat),
-    ].reduce((processedDat, processor) => {
+    return (
+      [
+        (dat): DAT => new DATParentInferrer(this.options, progressBar).infer(dat),
+        (dat): DAT => new DATMergerSplitter(this.options, progressBar).merge(dat),
+        (dat): DAT => new DATDiscMerger(this.options, progressBar).merge(dat),
+        (dat): DAT => new DATFilter(this.options, progressBar).filter(dat),
+        (dat): DAT => new DATPreferer(this.options, progressBar).prefer(dat),
+      ] satisfies ((dat: DAT) => DAT)[]
+    ).reduce((processedDat, processor) => {
       return processor(processedDat);
     }, dat);
   }
@@ -508,51 +510,54 @@ export default class Igir {
     indexedRoms: IndexedFiles,
     patches: Patch[],
   ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    const candidates = await new CandidateGenerator(this.options, progressBar).generate(
-      dat,
-      indexedRoms,
-    );
-
-    const patchedCandidates = await new CandidatePatchGenerator(progressBar).generate(
-      dat,
-      candidates,
-      patches,
-    );
-
-    const extensionCorrectedCandidates = await new CandidateExtensionCorrector(
-      this.options,
-      progressBar,
-      fileFactory,
-    ).correct(dat, patchedCandidates);
-
-    // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
-    //  for efficiency
-    const hashedCandidates = await new CandidateArchiveFileHasher(
-      this.options,
-      progressBar,
-      fileFactory,
-    ).hash(dat, extensionCorrectedCandidates);
-
-    const postProcessedCandidates = new CandidatePostProcessor(this.options, progressBar).process(
-      dat,
-      hashedCandidates,
-    );
-
-    const invalidCandidates = new CandidateValidator(progressBar).validate(
-      dat,
-      postProcessedCandidates,
-    );
-    if (invalidCandidates.length > 0) {
-      // Return zero candidates if any candidates failed to validate
-      return new Map();
-    }
-
-    new CandidateMergeSplitValidator(this.options, progressBar).validate(
-      dat,
-      postProcessedCandidates,
-    );
-
-    return new CandidateCombiner(this.options, progressBar).combine(dat, postProcessedCandidates);
+    return (
+      [
+        // Generate the initial set of candidates
+        async (): Promise<Map<Parent, ReleaseCandidate[]>> =>
+          new CandidateGenerator(this.options, progressBar).generate(dat, indexedRoms),
+        // Add patched candidates
+        async (candidates): Promise<Map<Parent, ReleaseCandidate[]>> =>
+          new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
+        // Correct output filename extensions
+        async (candidates): Promise<Map<Parent, ReleaseCandidate[]>> =>
+          new CandidateExtensionCorrector(this.options, progressBar, fileFactory).correct(
+            dat,
+            candidates,
+          ),
+        // Delay calculating checksums for {@link ArchiveFile}s until after
+        // {@link CandidatePreferer} for efficiency
+        async (candidates): Promise<Map<Parent, ReleaseCandidate[]>> =>
+          new CandidateArchiveFileHasher(this.options, progressBar, fileFactory).hash(
+            dat,
+            candidates,
+          ),
+        // Finalize output file paths
+        (candidates): Map<Parent, ReleaseCandidate[]> =>
+          new CandidatePostProcessor(this.options, progressBar).process(dat, candidates),
+        // Validate candidates
+        (candidates): Map<Parent, ReleaseCandidate[]> => {
+          const invalidCandidates = new CandidateValidator(progressBar).validate(dat, candidates);
+          if (invalidCandidates.length > 0) {
+            // Return zero candidates if any candidates failed to validate
+            return new Map();
+          }
+          return candidates;
+        },
+        // Validate merge/split
+        (candidates): Map<Parent, ReleaseCandidate[]> => {
+          new CandidateMergeSplitValidator(this.options, progressBar).validate(dat, candidates);
+          return candidates;
+        },
+        // Combine candidates into one
+        (candidates): Map<Parent, ReleaseCandidate[]> =>
+          new CandidateCombiner(this.options, progressBar).combine(dat, candidates),
+      ] satisfies ((
+        candidates: Map<Parent, ReleaseCandidate[]>,
+      ) => Promise<Map<Parent, ReleaseCandidate[]>> | Map<Parent, ReleaseCandidate[]>)[]
+    ).reduce(async (candidatesPromise, processor) => {
+      const candidates = await candidatesPromise;
+      return processor(candidates);
+    }, Promise.resolve(new Map<Parent, ReleaseCandidate[]>()));
   }
 
   /**
