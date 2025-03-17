@@ -608,6 +608,11 @@ export default class ArgumentsParser {
         }
         return true;
       })
+      .option('merge-discs', {
+        group: groupRomSet,
+        description: 'Merge multi-disc games into one game',
+        type: 'boolean',
+      })
       .option('exclude-disks', {
         group: groupRomSet,
         description: 'Exclude CHD disks in DATs from processing & writing',

@@ -20,6 +20,7 @@ import CandidatePostProcessor from './modules/candidates/candidatePostProcessor.
 import CandidateValidator from './modules/candidates/candidateValidator.js';
 import CandidateWriter from './modules/candidates/candidateWriter.js';
 import DATCombiner from './modules/dats/datCombiner.js';
+import DATDiscMerger from './modules/dats/datDiscMerger.js';
 import DATFilter from './modules/dats/datFilter.js';
 import DATGameInferrer from './modules/dats/datGameInferrer.js';
 import DATMergerSplitter from './modules/dats/datMergerSplitter.js';
@@ -486,10 +487,15 @@ export default class Igir {
   }
 
   private processDAT(progressBar: ProgressBar, dat: DAT): DAT {
-    const datWithParents = new DATParentInferrer(this.options, progressBar).infer(dat);
-    const mergedSplitDat = new DATMergerSplitter(this.options, progressBar).merge(datWithParents);
-    const filteredDat = new DATFilter(this.options, progressBar).filter(mergedSplitDat);
-    return new DATPreferer(this.options, progressBar).prefer(filteredDat);
+    return [
+      (dat: DAT): DAT => new DATParentInferrer(this.options, progressBar).infer(dat),
+      (dat: DAT): DAT => new DATMergerSplitter(this.options, progressBar).merge(dat),
+      (dat: DAT): DAT => new DATDiscMerger(this.options, progressBar).merge(dat),
+      (dat: DAT): DAT => new DATFilter(this.options, progressBar).filter(dat),
+      (dat: DAT): DAT => new DATPreferer(this.options, progressBar).prefer(dat),
+    ].reduce((processedDat, processor) => {
+      return processor(processedDat);
+    }, dat);
   }
 
   private async generateCandidates(

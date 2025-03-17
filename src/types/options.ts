@@ -111,6 +111,7 @@ export interface OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly mergeRoms?: string;
+  readonly mergeDiscs?: boolean;
   readonly excludeDisks?: boolean;
   readonly allowExcessSets?: boolean;
   readonly allowIncompleteSets?: boolean;
@@ -258,6 +259,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly mergeRoms?: string;
+
+  readonly mergeDiscs: boolean;
 
   readonly excludeDisks: boolean;
 
@@ -431,6 +434,7 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.mergeRoms = options?.mergeRoms;
+    this.mergeDiscs = options?.mergeDiscs ?? false;
     this.excludeDisks = options?.excludeDisks ?? false;
     this.allowExcessSets = options?.allowExcessSets ?? false;
     this.allowIncompleteSets = options?.allowIncompleteSets ?? false;
@@ -1066,6 +1070,10 @@ export default class Options implements OptionsProps {
       return undefined;
     }
     return MergeMode[mergeMode as keyof typeof MergeMode];
+  }
+
+  getMergeDiscs(): boolean {
+    return this.mergeDiscs;
   }
 
   getExcludeDisks(): boolean {
