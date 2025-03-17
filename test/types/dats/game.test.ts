@@ -384,6 +384,49 @@ describe('hasTrainer', () => {
   });
 });
 
+describe('getRegions', () => {
+  test.each([
+    // No-Intro
+    [
+      new Game({
+        name: "Big Bird's Egg Catch (Japan, USA) (En)",
+        release: [
+          new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'JPN'),
+          new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'USA'),
+        ],
+      }),
+      ['JPN', 'USA'],
+    ],
+    [
+      new Game({
+        name: 'Tetris (World) (Rev 1)',
+        release: [
+          new Release('Tetris (World) (Rev 1)', 'EUR'),
+          new Release('Tetris (World) (Rev 1)', 'JPN'),
+          new Release('Tetris (World) (Rev 1)', 'USA'),
+        ],
+      }),
+      ['WORLD'],
+    ],
+    [
+      new Game({
+        name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
+      }),
+      ['USA', 'EUR'],
+    ],
+    [
+      new Game({
+        name: 'Tetris Flash (Japan) (SGB Enhanced)',
+        release: new Release('Tetris Flash (Japan) (SGB Enhanced)', 'JPN'),
+      }),
+      ['JPN'],
+    ],
+  ])('should prefer game name regions over release regions: %s', (game, expectedRegions) => {
+    expect(game.getRegions()).toEqual(expectedRegions);
+  });
+});
+
 describe('getLanguages', () => {
   test.each([
     [
@@ -414,9 +457,12 @@ describe('getLanguages', () => {
       }),
       ['EN', 'JA', 'FR', 'DE'],
     ],
-  ])('should prefer explicit languages over region language: %s', (game, expectedLanguages) => {
-    expect(game.getLanguages()).toEqual(expectedLanguages);
-  });
+  ])(
+    'should prefer game name languages over release region language: %s',
+    (game, expectedLanguages) => {
+      expect(game.getLanguages()).toEqual(expectedLanguages);
+    },
+  );
 
   test.each([
     [

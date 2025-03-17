@@ -665,23 +665,36 @@ export default class Game implements GameProps {
   // Internationalization
 
   getRegions(): string[] {
+    const longRegions = Internationalization.REGION_OPTIONS.map(
+      (regionOption) => regionOption.long,
+    ).join('|');
+    const longRegionsRegex = new RegExp(`\\(((${longRegions})(, (${longRegions}))*)\\)`, 'i');
+    const longRegionsMatch = this.getName().match(longRegionsRegex);
+    if (longRegionsMatch !== null) {
+      return longRegionsMatch[1]
+        .toLowerCase()
+        .split(/, ?/)
+        .map(
+          (region) =>
+            Internationalization.REGION_OPTIONS.find(
+              (regionOption) => regionOption.long.toLowerCase() === region,
+            )?.region,
+        )
+        .filter((region) => region !== undefined);
+    }
+
+    for (const regionOption of Internationalization.REGION_OPTIONS) {
+      if (regionOption.regex && this.getName().match(regionOption.regex)) {
+        return [regionOption.region.toUpperCase()];
+      }
+    }
+
+    // Note: <release>s tend to be less reliable than game names
     const releaseRegions = this.getReleases().map((release) => release.getRegion().toUpperCase());
     if (releaseRegions.length > 0) {
       return releaseRegions;
     }
 
-    for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
-      const regionOption = Internationalization.REGION_OPTIONS[i];
-      if (
-        regionOption.long &&
-        this.getName().match(new RegExp(`\\(${regionOption.long}(,[ a-z]+)*\\)`, 'i'))
-      ) {
-        return [regionOption.region.toUpperCase()];
-      }
-      if (regionOption.regex && this.getName().match(regionOption.regex)) {
-        return [regionOption.region.toUpperCase()];
-      }
-    }
     return [];
   }
 
@@ -703,6 +716,7 @@ export default class Game implements GameProps {
       return releaseLanguages;
     }
 
+    // Note: <release>s tend to be less reliable than game names
     const regionLanguages = this.getLanguagesFromRegions();
     if (regionLanguages.length > 0) {
       return regionLanguages;
