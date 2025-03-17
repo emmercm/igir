@@ -69,8 +69,7 @@ export default class CandidateGenerator extends Module {
           const releaseCandidates: ReleaseCandidate[] = [];
 
           // For every game
-          for (let j = 0; j < parent.getGames().length; j += 1) {
-            const game = parent.getGames()[j];
+          for (const game of parent.getGames()) {
             let foundCandidates = 0;
 
             // For every release (ensuring at least one), find all release candidates
