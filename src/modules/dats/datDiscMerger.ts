@@ -1,4 +1,7 @@
+import path from 'node:path';
+
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import GameGrouper from '../../gameGrouper.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
@@ -47,30 +50,7 @@ export default class DATDiscMerger extends Module {
   }
 
   private groupGames(games: Game[]): Game[] {
-    const gameNamesToGames = games.reduce((map, game) => {
-      let gameNameStripped = game
-        .getName()
-        // Redump
-        .replace(/ ?\(Disc [0-9]+\)/i, '')
-        // TOSEC
-        .replace(/ ?\(Disc [0-9]+ of [0-9]+\)/i, '');
-
-      if (gameNameStripped !== game.getName()) {
-        // The game is a multi-disc game, strip some additional patterns
-        gameNameStripped = gameNameStripped
-          // TOSEC
-          .replace(/\[[0-9]+S\]/, '') // Dreamcast ring code
-          .trim();
-      }
-
-      if (!map.has(gameNameStripped)) {
-        map.set(gameNameStripped, [game]);
-      } else {
-        map.get(gameNameStripped)?.push(game);
-      }
-
-      return map;
-    }, new Map<string, Game[]>());
+    const gameNamesToGames = GameGrouper.groupMultiDiscGames(games, (game) => game.getName());
 
     return [...gameNamesToGames.entries()].flatMap(([gameName, games]) => {
       if (games.length === 1) {
@@ -79,6 +59,7 @@ export default class DATDiscMerger extends Module {
 
       const roms = games.flatMap((game) => game.getRoms());
 
+      // Detect conflicting ROM names
       const romNamesToCount = roms.reduce((map, rom) => {
         map.set(rom.getName(), (map.get(rom.getName()) ?? 0) + 1);
         return map;
@@ -88,10 +69,14 @@ export default class DATDiscMerger extends Module {
         .map(([romName]) => romName)
         .sort();
       if (duplicateRomNames.length > 1) {
-        this.progressBar.logError(
-          `${gameName}: can't group discs, games have duplicate ROM filenames:\n${duplicateRomNames.map((name) => `  ${name}`).join('\n')}`,
+        // De-conflict the filenames by adding a subfolder of the original game's name
+        const deconflictedRoms = games.flatMap((game) =>
+          game.getRoms().map((rom) => rom.withName(path.join(game.getName(), rom.getName()))),
         );
-        return games;
+        return new Game({
+          name: gameName,
+          rom: deconflictedRoms,
+        });
       }
 
       return new Game({

@@ -160,6 +160,8 @@ export interface OptionsProps {
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
 
+  readonly playlistExtensions?: string[];
+
   readonly dir2datOutput?: string;
 
   readonly fixdatOutput?: string;
@@ -352,6 +354,8 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly playlistExtensions: string[];
+
   readonly dir2datOutput?: string;
 
   readonly fixdatOutput?: string;
@@ -482,6 +486,8 @@ export default class Options implements OptionsProps {
     this.preferRevision = options?.preferRevision;
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
+
+    this.playlistExtensions = options?.playlistExtensions ?? [];
 
     this.dir2datOutput = options?.dir2datOutput?.replace(/[\\/]/g, path.sep);
 
@@ -620,6 +626,13 @@ export default class Options implements OptionsProps {
       (!this.getZipExclude() ||
         !micromatch.isMatch(rom.getName().replace(/^.[\\/]/, ''), this.getZipExclude()))
     );
+  }
+
+  /**
+   * Was the 'playlist' command provided?
+   */
+  shouldPlaylist(): boolean {
+    return this.getCommands().has('playlist');
   }
 
   /**
@@ -1268,6 +1281,10 @@ export default class Options implements OptionsProps {
 
   getPreferParent(): boolean {
     return this.preferParent;
+  }
+
+  getPlaylistExtensions(): string[] {
+    return this.playlistExtensions;
   }
 
   getDir2DatOutput(): string {

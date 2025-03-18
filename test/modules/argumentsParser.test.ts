@@ -82,6 +82,7 @@ describe('commands', () => {
         .shouldZipRom(new ROM({ name: '', size: 0 })),
     ).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldTest()).toEqual(false);
+    expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldPlaylist()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldFixdat()).toEqual(false);
     expect(argumentsParser.parse(['copy', ...dummyRequiredArgs]).shouldClean()).toEqual(false);
@@ -106,12 +107,21 @@ describe('commands', () => {
       false,
     );
     expect(argumentsParser.parse(datCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(datCommands).shouldPlaylist()).toEqual(false);
     expect(argumentsParser.parse(datCommands).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(datCommands).shouldFixdat()).toEqual(false);
     expect(argumentsParser.parse(datCommands).shouldClean()).toEqual(true);
     expect(argumentsParser.parse(datCommands).shouldReport()).toEqual(true);
 
-    const nonDatCommands = ['copy', 'extract', 'test', 'dir2dat', 'clean', ...dummyRequiredArgs];
+    const nonDatCommands = [
+      'copy',
+      'extract',
+      'test',
+      'playlist',
+      'dir2dat',
+      'clean',
+      ...dummyRequiredArgs,
+    ];
     expect(argumentsParser.parse(nonDatCommands).shouldCopy()).toEqual(true);
     expect(argumentsParser.parse(nonDatCommands).shouldMove()).toEqual(false);
     expect(argumentsParser.parse(nonDatCommands).shouldExtract()).toEqual(true);
@@ -119,6 +129,7 @@ describe('commands', () => {
       argumentsParser.parse(nonDatCommands).shouldZipRom(new ROM({ name: '', size: 0 })),
     ).toEqual(false);
     expect(argumentsParser.parse(nonDatCommands).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(nonDatCommands).shouldPlaylist()).toEqual(true);
     expect(argumentsParser.parse(nonDatCommands).shouldDir2Dat()).toEqual(true);
     expect(argumentsParser.parse(nonDatCommands).shouldFixdat()).toEqual(false);
     expect(argumentsParser.parse(nonDatCommands).shouldClean()).toEqual(true);
@@ -128,6 +139,7 @@ describe('commands', () => {
       'move',
       'zip',
       'test',
+      'playlist',
       'fixdat',
       'clean',
       'report',
@@ -142,6 +154,7 @@ describe('commands', () => {
       true,
     );
     expect(argumentsParser.parse(moveZip).shouldTest()).toEqual(true);
+    expect(argumentsParser.parse(moveZip).shouldPlaylist()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldDir2Dat()).toEqual(false);
     expect(argumentsParser.parse(moveZip).shouldFixdat()).toEqual(true);
     expect(argumentsParser.parse(moveZip).shouldClean()).toEqual(true);
@@ -173,6 +186,7 @@ describe('options', () => {
     expect(options.shouldLink()).toEqual(false);
     expect(options.shouldExtract()).toEqual(false);
     expect(options.shouldZip()).toEqual(false);
+    expect(options.shouldPlaylist()).toEqual(false);
     expect(options.shouldDir2Dat()).toEqual(false);
     expect(options.shouldFixdat()).toEqual(false);
     expect(options.shouldTest()).toEqual(false);
@@ -264,6 +278,13 @@ describe('options', () => {
     expect(options.getPreferRevision()).toBeUndefined();
     expect(options.getPreferRetail()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
+
+    expect(argumentsParser.parse(['playlist']).getPlaylistExtensions()).toEqual([
+      '.cue',
+      '.gdi',
+      '.mdf',
+      '.chd',
+    ]);
 
     expect(options.getDir2DatOutput()).toEqual(options.getOutput());
 
@@ -2705,6 +2726,26 @@ describe('options', () => {
         ])
         .getPreferParent(),
     ).toEqual(false);
+  });
+
+  it('should parse "playlist-extensions"', () => {
+    expect(() => argumentsParser.parse(['playlist', '--playlist-extensions', ''])).toThrow(
+      /missing required argument/i,
+    );
+    expect(argumentsParser.parse(['playlist']).getPlaylistExtensions()).toEqual([
+      '.cue',
+      '.gdi',
+      '.mdf',
+      '.chd',
+    ]);
+    expect(
+      argumentsParser.parse(['playlist', '--playlist-extensions', '.cue']).getPlaylistExtensions(),
+    ).toEqual(['.cue']);
+    expect(
+      argumentsParser
+        .parse(['playlist', '--playlist-extensions', '.cue', '--playlist-extensions', 'gdi,mdf'])
+        .getPlaylistExtensions(),
+    ).toEqual(['.cue', '.gdi', '.mdf']);
   });
 
   it('should parse "merge-roms"', () => {

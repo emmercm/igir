@@ -36,6 +36,7 @@ With Igir you can manage a ROM collection of any size:
 - 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/dats/overview))
 - ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/roms/filtering-preferences))
 - 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/output/writing-archives))
+- 🔢 Create playlists for multi-disc games in mass (see [playlist docs](https://igir.io/output/playlists))
 - 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/input/file-scanning) & [patching docs](https://igir.io/roms/patching))
 - 🎩 Parse ROMs with headers and optionally remove them (see [header docs](https://igir.io/roms/headers))
 - ↔️ Build & re-build (un-merge, split, or merge) MAME ROM sets (see [arcade docs](https://igir.io/usage/arcade))

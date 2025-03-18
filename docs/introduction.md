@@ -29,7 +29,7 @@ Igir is a ROM manager for the modern age.
 
 Most ROM managers are only built for Windows, though some offer workarounds for running on macOS and Linux. Most of these managers have confusing GUIs that make batch-able, repeatable actions difficult. Igir is a command line tool that works on any OS.
 
-In addition, Igir has features that aren't found in any other ROM managers, such as [ROM patching](roms/patching.md) and [ROM extension correction](output/options.md#fixing-rom-extensions).
+In addition, Igir has features that aren't found in any other ROM managers, such as [ROM patching](roms/patching.md), multi-disc [playlist creation](output/playlists.md), and [ROM extension correction](output/options.md#fixing-rom-extensions).
 
 !!! info
 

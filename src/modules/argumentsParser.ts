@@ -83,6 +83,7 @@ export default class ArgumentsParser {
     const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
+    const groupPlaylist = 'playlist command options:';
     const groupDir2Dat = 'dir2dat command options:';
     const groupFixdat = 'fixdat command options:';
     const groupReport = 'report command options:';
@@ -96,6 +97,7 @@ export default class ArgumentsParser {
       ['link', 'Create links in the output directory to ROM files in the input directory'],
       ['extract', 'Extract ROM files in archives when copying or moving'],
       ['zip', 'Create zip archives of ROMs when copying or moving'],
+      ['playlist', 'Create playlist files for multi-disc games'],
       ['test', 'Test ROMs for accuracy after writing them to the output directory'],
       ['dir2dat', 'Generate a DAT from all input files'],
       ['fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)'],
@@ -582,11 +584,11 @@ export default class ArgumentsParser {
         type: 'string',
         coerce: (vals: string | string[]) =>
           (Array.isArray(vals) ? vals : [vals]).flatMap((val) => {
-            if (val === '') {
+            if (val.trim() === '') {
               // Flag was provided without any extensions
               return val;
             }
-            return val.split(',').map((v) => `.${v.replace(/^\.+/, '')}`);
+            return val.split(',').map((v) => `.${v.trim().replace(/^\.+/, '')}`);
           }),
       })
 
@@ -848,6 +850,30 @@ export default class ArgumentsParser {
         implies: 'single',
       })
 
+      .option('playlist-extensions', {
+        group: groupPlaylist,
+        description: 'List of comma-separated file extensions to generate multi-disc playlists for',
+        type: 'string',
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => {
+            if (val.trim() === '') {
+              return [];
+            }
+            return val.split(',').map((v) => `.${v.trim().replace(/^\.+/, '')}`);
+          }),
+        requiresArg: true,
+        default: '.cue,.gdi,.mdf,.chd',
+      })
+      .check((checkArgv) => {
+        if (checkArgv._.includes('playlist') && checkArgv['playlist-extensions'].length === 0) {
+          // TODO(cememr): print help message
+          throw new ExpectedError(
+            `Missing required argument for command playlist: --playlist-extensions <exts>`,
+          );
+        }
+        return true;
+      })
+
       .option('dir2dat-output', {
         group: groupDir2Dat,
         description: 'dir2dat output directory',
@@ -1052,6 +1078,9 @@ Example use cases:
 
   Copy all BIOS files into one directory, extracting if necessary:
     $0 copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
+
+  Create playlist files for all multi-disc games in an existing collection:
+    $0 playlist --input ROMs/
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
