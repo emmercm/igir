@@ -415,7 +415,7 @@ export default class ArgumentsParser {
         group: groupRomOutputPath,
         description: 'How many game name letters to use for the subdirectory name',
         type: 'number',
-        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: 1,
       })
@@ -431,7 +431,7 @@ export default class ArgumentsParser {
         description:
           'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
-        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         implies: 'dir-letter',
       })
@@ -580,13 +580,13 @@ export default class ArgumentsParser {
         alias: 'H',
         description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${ROMHeader.getSupportedExtensions().join(', ')})`,
         type: 'string',
-        coerce: (vals: string) =>
-          vals.split(',').map((val) => {
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => {
             if (val === '') {
               // Flag was provided without any extensions
               return val;
             }
-            return `.${val.replace(/^\.+/, '')}`;
+            return val.split(',').map((v) => `.${v.replace(/^\.+/, '')}`);
           }),
       })
 
@@ -655,7 +655,8 @@ export default class ArgumentsParser {
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -674,7 +675,8 @@ export default class ArgumentsParser {
         alias: 'R',
         description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -786,7 +788,8 @@ export default class ArgumentsParser {
         alias: 'l',
         description: `List of comma-separated languages in priority order (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
         implies: 'single',
       })
@@ -806,7 +809,8 @@ export default class ArgumentsParser {
         alias: 'r',
         description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
         implies: 'single',
       })
@@ -893,7 +897,7 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Number of DATs to process in parallel',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: Defaults.DAT_DEFAULT_THREADS,
       })
@@ -901,7 +905,7 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Maximum number of ROMs to read in parallel per disk',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: Defaults.FILE_READER_DEFAULT_THREADS,
       })
@@ -909,7 +913,7 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Maximum number of ROMs to write in parallel',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: Defaults.ROM_WRITER_DEFAULT_THREADS,
       })
@@ -923,7 +927,7 @@ export default class ArgumentsParser {
         description:
           'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 0),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 0),
         requiresArg: true,
         default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
       })
