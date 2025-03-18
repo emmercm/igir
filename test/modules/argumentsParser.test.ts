@@ -2120,6 +2120,18 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, 'zip', '--remove-headers', 'lnx,.LNX'])
         .canRemoveHeader('.LnX'),
     ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          'zip',
+          '--remove-headers',
+          'LNX',
+          '--remove-headers',
+          '.smc',
+        ])
+        .canRemoveHeader('.smc'),
+    ).toEqual(true);
   });
 
   it('should parse "single"', () => {
@@ -2479,6 +2491,18 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-language', 'EN,en'])
         .getPreferLanguages(),
     ).toEqual(['EN']);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--single',
+          '--prefer-language',
+          'EN',
+          '--prefer-language',
+          'fr',
+        ])
+        .getPreferLanguages(),
+    ).toEqual(['EN', 'FR']);
   });
 
   it('should parse "prefer-region"', () => {
@@ -2524,6 +2548,18 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-region', 'USA,usa'])
         .getPreferRegions(),
     ).toEqual(['USA']);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--single',
+          '--prefer-region',
+          'USA',
+          '--prefer-region',
+          'jpn',
+        ])
+        .getPreferRegions(),
+    ).toEqual(['USA', 'JPN']);
   });
 
   it('should parse "prefer-revision"', () => {
@@ -3126,6 +3162,17 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--filter-language', 'EN,en'])
         .getFilterLanguage(),
     ).toEqual(new Set(['EN']));
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--filter-language',
+          'EN',
+          '--filter-language',
+          'fr',
+        ])
+        .getFilterLanguage(),
+    ).toEqual(new Set(['EN', 'FR']));
   });
 
   it('should parse "filter-region"', () => {
@@ -3161,6 +3208,11 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA,usa'])
         .getFilterRegion(),
     ).toEqual(new Set(['USA']));
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--filter-region', 'USA', '--filter-region', 'jpn'])
+        .getFilterRegion(),
+    ).toEqual(new Set(['USA', 'JPN']));
   });
 
   it('should parse "filter-category-regex"', async () => {
@@ -4393,6 +4445,11 @@ describe('options', () => {
     expect(
       argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dat-threads', '2']).getDatThreads(),
     ).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat-threads', '2', '--dat-threads', '3'])
+        .getDatThreads(),
+    ).toEqual(3);
   });
 
   it('should parse "reader-threads"', () => {
@@ -4417,6 +4474,11 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--reader-threads', '2'])
         .getReaderThreads(),
     ).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--reader-threads', '2', '--reader-threads', '3'])
+        .getReaderThreads(),
+    ).toEqual(3);
   });
 
   it('should parse "writer-threads"', () => {
@@ -4441,6 +4503,11 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2'])
         .getWriterThreads(),
     ).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2', '--writer-threads', '3'])
+        .getWriterThreads(),
+    ).toEqual(3);
   });
 
   it('should parse "write-retry"', () => {
@@ -4459,6 +4526,11 @@ describe('options', () => {
     expect(
       argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry(),
     ).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '2', '--write-retry', '3'])
+        .getWriteRetry(),
+    ).toEqual(3);
   });
 
   it('should parse "disable-cache"', () => {
