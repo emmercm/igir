@@ -32,6 +32,7 @@ import DirectoryCleaner from './modules/directoryCleaner.js';
 import FixdatCreator from './modules/fixdatCreator.js';
 import MovedROMDeleter from './modules/movedRomDeleter.js';
 import PatchScanner from './modules/patchScanner.js';
+import PlaylistCreator from './modules/playlistCreator.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMHeaderProcessor from './modules/roms/romHeaderProcessor.js';
 import ROMIndexer from './modules/roms/romIndexer.js';
@@ -171,6 +172,16 @@ export default class Igir {
       );
       movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
       datsToWrittenFiles.set(processedDat, writerResults.wrote);
+
+      // Write playlists
+      const playlistPaths = await new PlaylistCreator(this.options, progressBar).create(
+        processedDat,
+        parentsToCandidates,
+      );
+      datsToWrittenFiles.set(processedDat, [
+        ...(datsToWrittenFiles.get(processedDat) ?? []),
+        ...(await Promise.all(playlistPaths.map(async (filePath) => File.fileOf({ filePath })))),
+      ]);
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar).create(

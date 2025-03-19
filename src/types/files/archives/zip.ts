@@ -145,6 +145,7 @@ export default class Zip extends Archive {
        * In the case the callback doesn't read the entire stream, {@link unzipper} will leave the
        * file handle open. Drain the stream so the file handle can be released. The stream cannot
        * be destroyed by the callback, or this will never resolve!
+       * TODO(cemmer): this takes forever to drain with large files, e.g. during extension correction
        */
       await StreamPoly.autodrain(stream);
     }
