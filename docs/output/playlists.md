@@ -214,6 +214,8 @@ The two created playlists will have the contents:
 
 ### When writing & sorting ROMs
 
+<!-- markdownlint-disable no-reversed-links -->
+
 Let's say you haven't sorted your ROM collection yet and want to do that, while writing playlist files at the same time. Your input files might look like this:
 
 ```text
@@ -339,6 +341,8 @@ The two created playlists will have the contents:
 !!! note
 
     A `.m3u` playlist file was not created for `Typing of the Dead, The v1.004 (2000)(Sega)(US)[!][req. keyboard]` because it is not a multi-disc game.
+
+<!-- markdownlint-enable no-reversed-links -->
 
 ## ROM extensions
 
