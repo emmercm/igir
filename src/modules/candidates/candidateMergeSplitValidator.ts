@@ -3,9 +3,8 @@ import ArrayPoly from '../../polyfill/arrayPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import Machine from '../../types/dats/mame/machine.js';
-import Parent from '../../types/dats/parent.js';
 import Options, { MergeMode } from '../../types/options.js';
-import ReleaseCandidate from '../../types/releaseCandidate.js';
+import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**
@@ -21,38 +20,38 @@ export default class CandidateMergeSplitValidator extends Module {
   }
 
   /**
-   * Validate the {@link ReleaseCandidate}s.
+   * Validate the {@link WriteCandidate}s.
    */
-  validate(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): string[] {
-    if (parentsToCandidates.size === 0) {
+  validate(dat: DAT, candidates: WriteCandidate[]): string[] {
+    if (candidates.length === 0) {
       this.progressBar.logTrace(
-        `${dat.getName()}: no parents to validate merged & split ROM sets for`,
+        `${dat.getName()}: no candidates to validate merged & split ROM sets for`,
       );
       return [];
     }
 
     this.progressBar.logTrace(`${dat.getName()}: validating merged & split ROM sets`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
-    this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.reset(candidates.length);
 
     const datGamesIndexed = dat.getGames().reduce((map, game) => {
       map.set(game.getName(), game);
       return map;
     }, new Map<string, Game>());
 
-    const releaseCandidatesIndexed = [...parentsToCandidates.values()]
-      .flat()
-      .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length > 0)
-      .reduce((map, releaseCandidate) => {
-        map.set(releaseCandidate.getGame().getName(), releaseCandidate);
+    const candidatesIndexed = candidates
+      .filter((candidate) => candidate.getRomsWithFiles().length > 0)
+      .reduce((map, candidate) => {
+        map.set(candidate.getGame().getName(), candidate);
         return map;
-      }, new Map<string, ReleaseCandidate>());
+      }, new Map<string, WriteCandidate>());
 
-    // For every Game that has ReleaseCandidate(s) with files
-    const missingGames = [...parentsToCandidates.values()]
-      .flat()
-      .filter((releaseCandidate) => releaseCandidate.getRomsWithFiles().length > 0)
-      .map((releaseCandidate) => releaseCandidate.getGame())
+    /**
+     * For every {@link Game} that has {@link WriteCandidate}s with files
+     */
+    const missingGames = candidates
+      .filter((candidate) => candidate.getRomsWithFiles().length > 0)
+      .map((candidate) => candidate.getGame())
       .reduce(ArrayPoly.reduceUnique(), [])
       .flatMap((game) => {
         let missingDependencies: string[] = [];
@@ -62,7 +61,7 @@ export default class CandidateMergeSplitValidator extends Module {
         if (
           this.options.getMergeRoms() === MergeMode.SPLIT &&
           cloneOf !== undefined &&
-          !releaseCandidatesIndexed.has(cloneOf)
+          !candidatesIndexed.has(cloneOf)
         ) {
           missingDependencies = [cloneOf, ...missingDependencies];
         }
@@ -79,8 +78,8 @@ export default class CandidateMergeSplitValidator extends Module {
                 deviceGame.getRoms().length > 0,
             )
             .map((deviceGame) => {
-              const deviceReleaseCandidate = releaseCandidatesIndexed.get(deviceGame.getName());
-              if (deviceReleaseCandidate) {
+              const deviceCandidate = candidatesIndexed.get(deviceGame.getName());
+              if (deviceCandidate) {
                 // The device game has candidates, validation passed
                 return undefined;
               }

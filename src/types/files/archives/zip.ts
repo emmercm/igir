@@ -65,7 +65,9 @@ export default class Zip extends Archive {
             // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
             // may lead to unexpected behavior, but at least this won't crash because of an
             // unhandled exception on the stream.
-            .on('error', () => {});
+            .on('error', () => {
+              // @typescript-eslint/no-empty-function
+            });
           try {
             checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
           } finally {

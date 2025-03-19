@@ -92,7 +92,7 @@ describe('token replacement', () => {
       options,
       dat,
       game,
-      game.getReleases().find(() => true),
+      undefined,
       dummyRom,
       await dummyRom.toFile(),
     );
@@ -115,7 +115,7 @@ describe('token replacement', () => {
       options,
       dat,
       game,
-      game.getReleases().find(() => true),
+      undefined,
       dummyRom,
       await dummyRom.toFile(),
     );
@@ -136,7 +136,7 @@ describe('token replacement', () => {
       options,
       dat,
       game,
-      game.getReleases().find(() => true),
+      undefined,
       dummyRom,
       await dummyRom.toFile(),
     );

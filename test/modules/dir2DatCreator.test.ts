@@ -13,7 +13,7 @@ import DAT from '../../src/types/dats/dat.js';
 import FileCache from '../../src/types/files/fileCache.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
-import ReleaseCandidate from '../../src/types/releaseCandidate.js';
+import WriteCandidate from '../../src/types/writeCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 it('should do nothing if dir2dat command not provided', async () => {
@@ -140,24 +140,18 @@ it('should use the candidates for games and ROMs', async () => {
   );
 
   // When manipulating the candidates
-  const updatedCandidates = new Map(
-    [...candidates.entries()].map(([parent, releaseCandidates]) => [
-      parent,
-      releaseCandidates.map(
-        (candidate) =>
-          new ReleaseCandidate(
-            candidate.getGame().withProps({ name: `${candidate.getGame().getName()} (updated)` }),
-            candidate.getRelease(),
-            candidate
-              .getRomsWithFiles()
-              .map((romWithFiles) =>
-                romWithFiles.withRom(
-                  romWithFiles.getRom().withName(`${romWithFiles.getRom().getName()} (updated)`),
-                ),
-              ),
+  const updatedCandidates = candidates.map(
+    (candidate) =>
+      new WriteCandidate(
+        candidate.getGame().withProps({ name: `${candidate.getGame().getName()} (updated)` }),
+        candidate
+          .getRomsWithFiles()
+          .map((romWithFiles) =>
+            romWithFiles.withRom(
+              romWithFiles.getRom().withName(`${romWithFiles.getRom().getName()} (updated)`),
+            ),
           ),
       ),
-    ]),
   );
 
   // When writing the DAT to disk

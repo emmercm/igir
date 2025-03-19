@@ -4,7 +4,7 @@ import { clearTimeout } from 'node:timers';
  * A wrapper to centrally manage Node.js timeouts.
  */
 export default class Timer {
-  private static readonly TIMERS: Set<Timer> = new Set();
+  private static readonly TIMERS = new Set<Timer>();
 
   private readonly timeoutId: NodeJS.Timeout;
 

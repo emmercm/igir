@@ -7,7 +7,6 @@ import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import Parent from '../../types/dats/parent.js';
 import Release from '../../types/dats/release.js';
 import ROM from '../../types/dats/rom.js';
 import Archive from '../../types/files/archives/archive.js';
@@ -19,12 +18,12 @@ import File from '../../types/files/file.js';
 import IndexedFiles from '../../types/indexedFiles.js';
 import Options from '../../types/options.js';
 import OutputFactory, { OutputPath } from '../../types/outputFactory.js';
-import ReleaseCandidate from '../../types/releaseCandidate.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
+import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**
- * For every {@link Parent} in the {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
+ * For every {@link Game} in a {@link DAT}, look for its {@link ROM}s in the scanned ROM list,
  * and return a set of candidate files.
  */
 export default class CandidateGenerator extends Module {
@@ -45,57 +44,36 @@ export default class CandidateGenerator extends Module {
   /**
    * Generate the candidates.
    */
-  async generate(dat: DAT, indexedFiles: IndexedFiles): Promise<Map<Parent, ReleaseCandidate[]>> {
+  async generate(dat: DAT, indexedFiles: IndexedFiles): Promise<WriteCandidate[]> {
     if (indexedFiles.getFiles().length === 0) {
       this.progressBar.logTrace(`${dat.getName()}: no input ROMs to make candidates from`);
-      return new Map(dat.getParents().map((parent) => [parent, []]));
+      return [];
     }
 
-    const output = new Map<Parent, ReleaseCandidate[]>();
-    const parents = dat.getParents();
+    const candidates: WriteCandidate[] = [];
 
     this.progressBar.logTrace(`${dat.getName()}: generating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
-    this.progressBar.reset(parents.length);
+    this.progressBar.reset(dat.getGames().length);
 
-    // For each parent, try to generate a parent candidate
+    // For each game, try to generate a candidate
     await Promise.all(
-      parents.map(async (parent) =>
+      dat.getGames().map(async (game) =>
         CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
           this.progressBar.incrementProgress();
-          const waitingMessage = `${parent.getName()} ...`;
+          const waitingMessage = `${game.getName()} ...`;
           this.progressBar.addWaitingMessage(waitingMessage);
 
-          const releaseCandidates: ReleaseCandidate[] = [];
-
-          // For every game
-          for (const game of parent.getGames()) {
-            let foundCandidates = 0;
-
-            // For every release (ensuring at least one), find all release candidates
-            const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
-            for (const release of releases) {
-              const releaseCandidate = await this.buildReleaseCandidateForRelease(
-                dat,
-                game,
-                release,
-                indexedFiles,
-              );
-              if (releaseCandidate) {
-                releaseCandidates.push(releaseCandidate);
-                foundCandidates += 1;
-              }
-            }
-
+          const candidate = await this.buildCandidateForGame(dat, game, indexedFiles);
+          if (candidate) {
             this.progressBar.logTrace(
-              `${dat.getName()}: ${game.getName()}: found ${foundCandidates.toLocaleString()} candidate${foundCandidates !== 1 ? 's' : ''}`,
+              `${dat.getName()}: ${game.getName()}: found candidate: ${candidate
+                .getRomsWithFiles()
+                .map((rwf) => rwf.getInputFile().toString())
+                .join(', ')}`,
             );
+            candidates.push(candidate);
           }
-
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${parent.getName()} (parent): found ${releaseCandidates.length.toLocaleString()} candidate${releaseCandidates.length !== 1 ? 's' : ''}`,
-          );
-          output.set(parent, releaseCandidates);
 
           this.progressBar.removeWaitingMessage(waitingMessage);
           this.progressBar.incrementDone();
@@ -103,25 +81,22 @@ export default class CandidateGenerator extends Module {
       ),
     );
 
-    const size = [...output.values()]
-      .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+    const size = candidates
+      .flatMap((candidate) => candidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
-    const totalCandidates = [...output.values()].reduce((sum, rc) => sum + rc.length, 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${totalCandidates.toLocaleString()} candidate${totalCandidates !== 1 ? 's' : ''} for ${output.size.toLocaleString()} parent${output.size !== 1 ? 's' : ''}`,
+      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${candidates.length.toLocaleString()} candidate${candidates.length !== 1 ? 's' : ''}`,
     );
 
     this.progressBar.logTrace(`${dat.getName()}: done generating candidates`);
-    return output;
+    return candidates;
   }
 
-  private async buildReleaseCandidateForRelease(
+  private async buildCandidateForGame(
     dat: DAT,
     game: Game,
-    release: Release | undefined,
     indexedFiles: IndexedFiles,
-  ): Promise<ReleaseCandidate | undefined> {
+  ): Promise<WriteCandidate | undefined> {
     const romsToInputFiles = this.getInputFilesForGame(dat, game, indexedFiles);
 
     const gameRoms = [
@@ -194,11 +169,13 @@ export default class CandidateGenerator extends Module {
          */
         if (
           inputFile instanceof ArchiveEntry &&
-          this.shouldGenerateArchiveFile(dat, game, release, rom, romsToInputFiles)
+          this.shouldGenerateArchiveFile(dat, game, rom, romsToInputFiles)
         ) {
           try {
-            // Note: we're delaying checksum calculations for now,
-            // {@link CandidateArchiveFileHasher} will handle it later
+            /**
+             * Note: we're delaying checksum calculations for now,
+             * {@link CandidateArchiveFileHasher} will handle it later
+             */
             inputFile = new ArchiveFile(inputFile.getArchive(), {
               size: await FsPoly.size(inputFile.getFilePath()),
               checksumBitmask: inputFile.getChecksumBitmask(),
@@ -210,7 +187,7 @@ export default class CandidateGenerator extends Module {
         }
 
         try {
-          const outputFile = await this.getOutputFile(dat, game, release, rom, inputFile);
+          const outputFile = await this.getOutputFile(dat, game, undefined, rom, inputFile);
           if (outputFile === undefined) {
             return [rom, undefined];
           }
@@ -236,7 +213,7 @@ export default class CandidateGenerator extends Module {
     // Ignore the Game if not every File is present
     if (missingRoms.length > 0 && !this.options.getAllowIncompleteSets()) {
       if (foundRomsWithFiles.length > 0) {
-        this.logMissingRomFiles(dat, game, release, foundRomsWithFiles, missingRoms);
+        this.logMissingRomFiles(dat, game, foundRomsWithFiles, missingRoms);
       }
       return undefined;
     }
@@ -256,7 +233,7 @@ export default class CandidateGenerator extends Module {
       return undefined;
     }
 
-    return new ReleaseCandidate(game, release, foundRomsWithFiles);
+    return new WriteCandidate(game, foundRomsWithFiles);
   }
 
   private getInputFilesForGame(dat: DAT, game: Game, indexedFiles: IndexedFiles): Map<ROM, File> {
@@ -389,7 +366,7 @@ export default class CandidateGenerator extends Module {
             ?.find((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'));
         }
 
-        return [rom, archiveEntry as File];
+        return [rom, archiveEntry!];
       }),
     );
   }
@@ -397,7 +374,6 @@ export default class CandidateGenerator extends Module {
   private shouldGenerateArchiveFile(
     dat: DAT,
     game: Game,
-    release: Release | undefined,
     rom: ROM,
     romsToInputFiles: Map<ROM, File>,
   ): boolean {
@@ -431,8 +407,8 @@ export default class CandidateGenerator extends Module {
           inputFile instanceof ArchiveEntry &&
           inputFile.getArchive() instanceof Zip &&
           this.options.shouldZipRom(inputRom) &&
-          OutputFactory.getPath(this.options, dat, game, release, inputRom, inputFile).entryPath ===
-            inputFile.getExtractedFilePath(),
+          OutputFactory.getPath(this.options, dat, game, undefined, inputRom, inputFile)
+            .entryPath === inputFile.getExtractedFilePath(),
       ) &&
       [...romsToInputFiles.values()]
         .map((inputFile) => inputFile.getFilePath())
@@ -505,14 +481,10 @@ export default class CandidateGenerator extends Module {
   private logMissingRomFiles(
     dat: DAT,
     game: Game,
-    release: Release | undefined,
     foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
   ): void {
     let message = `${dat.getName()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
-    if (release?.getRegion()) {
-      message += ` (${release?.getRegion()})`;
-    }
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
@@ -654,9 +626,11 @@ export default class CandidateGenerator extends Module {
       return [];
     }
 
-    // Find the Archive's entries (all of them, not just ones that match ROMs in this Game)
-    // NOTE(cemmer): we need to use hashCode() because a Game may have duplicate ROMs that all got
-    //  matched to the same input file, so not every archive entry may be in {@link inputFiles}
+    /**
+     * Find the Archive's entries (all of them, not just ones that match ROMs in this Game)
+     * NOTE(cemmer): we need to use hashCode() because a Game may have duplicate ROMs that all got
+     *  matched to the same input file, so not every archive entry may be in {@link inputFiles}
+     */
     const archiveEntryHashCodes = new Set(
       inputFiles
         .filter(

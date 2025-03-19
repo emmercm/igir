@@ -1,23 +1,19 @@
 import Game from './dats/game.js';
-import Release from './dats/release.js';
 import ROMWithFiles from './romWithFiles.js';
 
 /**
  * A container holding a {@link Game}, optionally a {@link Release} for that {@link Game}, and a
  * {@link ROMWithFiles} with input and output {@link File} information for every {@link ROM}.
- * In other words, a {@link ReleaseCandidate} will only exist if every {@link ROM} of a {@link Game}
+ * In other words, a {@link WriteCandidate} will only exist if every {@link ROM} of a {@link Game}
  * has been found.
  */
-export default class ReleaseCandidate {
+export default class WriteCandidate {
   private readonly game: Game;
-
-  private readonly release?: Release;
 
   private readonly romsWithFiles: ROMWithFiles[];
 
-  constructor(game: Game, release: Release | undefined, romsWithFiles: ROMWithFiles[]) {
+  constructor(game: Game, romsWithFiles: ROMWithFiles[]) {
     this.game = game;
-    this.release = release;
     this.romsWithFiles = romsWithFiles;
   }
 
@@ -27,10 +23,6 @@ export default class ReleaseCandidate {
     return this.game;
   }
 
-  getRelease(): Release | undefined {
-    return this.release;
-  }
-
   getRomsWithFiles(): ROMWithFiles[] {
     return this.romsWithFiles;
   }
@@ -38,28 +30,7 @@ export default class ReleaseCandidate {
   // Computed getters
 
   getName(): string {
-    if (this.release) {
-      return this.release.getName();
-    }
     return this.game.getName();
-  }
-
-  getRegion(): string | undefined {
-    if (this.release?.getRegion()) {
-      return this.release.getRegion();
-    }
-
-    return this.game.getRegions().at(0);
-  }
-
-  getLanguages(): string[] {
-    // Get language off of the release
-    const releaseLanguage = this.release?.getLanguage();
-    if (releaseLanguage) {
-      return [releaseLanguage.toUpperCase()];
-    }
-
-    return this.game.getLanguages();
   }
 
   /**
@@ -73,7 +44,7 @@ export default class ReleaseCandidate {
 
   // Immutable setters
 
-  withRomsWithFiles(romsWithFiles: ROMWithFiles[]): ReleaseCandidate {
+  withRomsWithFiles(romsWithFiles: ROMWithFiles[]): WriteCandidate {
     if (
       romsWithFiles === this.romsWithFiles ||
       (romsWithFiles.length === this.romsWithFiles.length &&
@@ -81,6 +52,6 @@ export default class ReleaseCandidate {
     ) {
       return this;
     }
-    return new ReleaseCandidate(this.game, this.release, romsWithFiles);
+    return new WriteCandidate(this.game, romsWithFiles);
   }
 }

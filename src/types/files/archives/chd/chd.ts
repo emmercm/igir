@@ -174,13 +174,13 @@ export default class Chd extends Archive {
     });
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
-    let filePath = this.tempSingletonFilePath as string;
+    let filePath = this.tempSingletonFilePath!;
     if (
       extractedEntryPath &&
-      (await FsPoly.exists(path.join(this.tempSingletonDirPath as string, extractedEntryPath)))
+      (await FsPoly.exists(path.join(this.tempSingletonDirPath!, extractedEntryPath)))
     ) {
       // The entry path is the name of a real extracted file, use that
-      filePath = path.join(this.tempSingletonDirPath as string, extractedEntryPath);
+      filePath = path.join(this.tempSingletonDirPath!, extractedEntryPath);
     }
 
     // Parse the entry path for any extra start/stop parameters
@@ -203,7 +203,7 @@ export default class Chd extends Archive {
         await this.tempSingletonMutex.runExclusive(async () => {
           this.tempSingletonHandles -= 1;
           if (this.tempSingletonHandles <= 0) {
-            await FsPoly.rm(this.tempSingletonDirPath as string, { recursive: true, force: true });
+            await FsPoly.rm(this.tempSingletonDirPath!, { recursive: true, force: true });
             this.tempSingletonDirPath = undefined;
           }
         });

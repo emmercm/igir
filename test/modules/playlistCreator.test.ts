@@ -9,11 +9,10 @@ import DAT from '../../src/types/dats/dat.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
-import Parent from '../../src/types/dats/parent.js';
 import ROM from '../../src/types/dats/rom.js';
 import Options from '../../src/types/options.js';
-import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
+import WriteCandidate from '../../src/types/writeCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const games: Game[] = [
@@ -229,55 +228,45 @@ const games: Game[] = [
 
 const dat = new LogiqxDAT(new Header(), games);
 
-async function datToCandidates(dat: DAT): Promise<Map<Parent, ReleaseCandidate[]>> {
-  const map = new Map<Parent, ReleaseCandidate[]>();
-  for (const parent of dat.getParents()) {
-    const releaseCandidates = await Promise.all(
-      parent.getGames().flatMap((game) => {
-        const releases = game.getReleases().length > 0 ? game.getReleases() : [undefined];
-        return releases.map(
-          async (release) =>
-            new ReleaseCandidate(
-              game,
-              release,
-              await Promise.all(
-                game.getRoms().map(async (rom) => {
-                  const file = await rom.toFile();
-                  const inputFile = file.withFilePath(
-                    path.join(
-                      // Distinguish input and output directories
-                      'input',
-                      // Emulate: --dir-letter --dir-game-subdir always
-                      game.getName().slice(0, 1),
-                      game.getName(),
-                      rom.getName(),
-                    ),
-                  );
-                  const outputFile = file.withFilePath(
-                    path.join(
-                      // Distinguish input and output directories
-                      'output',
-                      // Emulate: --dir-game-subdir always
-                      game.getName(),
-                      rom.getName(),
-                    ),
-                  );
-                  return new ROMWithFiles(rom, inputFile, outputFile);
-                }),
+async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
+  return Promise.all(
+    dat.getGames().map(async (game) => {
+      return new WriteCandidate(
+        game,
+        await Promise.all(
+          game.getRoms().map(async (rom) => {
+            const file = await rom.toFile();
+            const inputFile = file.withFilePath(
+              path.join(
+                // Distinguish input and output directories
+                'input',
+                // Emulate: --dir-letter --dir-game-subdir always
+                game.getName().slice(0, 1),
+                game.getName(),
+                rom.getName(),
               ),
-            ),
-        );
-      }),
-    );
-    map.set(parent, releaseCandidates);
-  }
-  return map;
+            );
+            const outputFile = file.withFilePath(
+              path.join(
+                // Distinguish input and output directories
+                'output',
+                // Emulate: --dir-game-subdir always
+                game.getName(),
+                rom.getName(),
+              ),
+            );
+            return new ROMWithFiles(rom, inputFile, outputFile);
+          }),
+        ),
+      );
+    }),
+  );
 }
 
 async function playlistCreator(
   options: Options,
   dat: DAT,
-  candidates: Map<Parent, ReleaseCandidate[]>,
+  candidates: WriteCandidate[],
 ): Promise<[string, string[]][]> {
   const writtenFiles = await new PlaylistCreator(options, new ProgressBarFake()).create(
     dat,

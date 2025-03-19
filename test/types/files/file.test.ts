@@ -170,7 +170,7 @@ describe('getCrc32WithoutHeader', () => {
     async (filePath, expectedCrc) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.CRC32)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).not.toEqual(file.getCrc32WithoutHeader());
       expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
       expect(file.getMd5()).toBeUndefined();
@@ -226,7 +226,7 @@ describe('getMd5WithoutHeader', () => {
     async (filePath, expectedMd5) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.MD5)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).not.toEqual(file.getMd5WithoutHeader());
@@ -288,7 +288,7 @@ describe('getSha1WithoutHeader', () => {
     async (filePath, expectedSha1) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.SHA1)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).toBeUndefined();
@@ -368,7 +368,7 @@ describe('getSha256WithoutHeader', () => {
     async (filePath, expectedSha256) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.SHA256)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).toBeUndefined();

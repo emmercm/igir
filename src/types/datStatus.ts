@@ -4,10 +4,9 @@ import chalk, { ChalkInstance } from 'chalk';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import DAT from './dats/dat.js';
 import Game from './dats/game.js';
-import Parent from './dats/parent.js';
 import File from './files/file.js';
 import Options from './options.js';
-import ReleaseCandidate from './releaseCandidate.js';
+import WriteCandidate from './writeCandidate.js';
 
 enum ROMType {
   GAME = 'games',
@@ -34,82 +33,57 @@ export enum GameStatus {
 
 /**
  * Parse and hold information about every {@link Game} in a {@link DAT}, as well as which
- * {@link Game}s were found (had a {@link ReleaseCandidate} created for it).
+ * {@link Game}s were found (had a {@link WriteCandidate} created for it).
  */
 export default class DATStatus {
   private readonly dat: DAT;
 
   private readonly allRomTypesToGames = new Map<ROMType, Game[]>();
 
-  private readonly foundRomTypesToReleaseCandidates = new Map<
-    ROMType,
-    (ReleaseCandidate | undefined)[]
-  >();
+  private readonly foundRomTypesToCandidates = new Map<ROMType, (WriteCandidate | undefined)[]>();
 
-  private readonly incompleteRomTypesToReleaseCandidates = new Map<ROMType, ReleaseCandidate[]>();
+  private readonly incompleteRomTypesToCandidates = new Map<ROMType, WriteCandidate[]>();
 
-  constructor(
-    dat: DAT,
-    options: Options,
-    parentsToReleaseCandidates: Map<Parent, ReleaseCandidate[]>,
-  ) {
+  constructor(dat: DAT, candidates: WriteCandidate[]) {
     this.dat = dat;
 
+    const indexedCandidates = candidates.reduce((map, candidate) => {
+      const key = candidate.getGame().hashCode();
+      if (!map.has(key)) {
+        map.set(key, [candidate]);
+      } else {
+        map.get(key)?.push(candidate);
+      }
+      return map;
+    }, new Map<string, WriteCandidate[]>());
+
     // Un-patched ROMs
-    [...parentsToReleaseCandidates.entries()]
-      .filter(([, releaseCandidates]) => releaseCandidates.every((rc) => !rc.isPatched()))
-      .forEach(([parent, releaseCandidates]) => {
-        parent.getGames().forEach((game) => {
-          DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
+    dat.getGames().forEach((game: Game) => {
+      DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
-          const gameReleaseCandidates = releaseCandidates.filter(
-            (rc) => !rc.isPatched() && rc.getGame().hashCode() === game.hashCode(),
-          );
-          if (gameReleaseCandidates.length > 0 || game.getRoms().length === 0) {
-            // The only reason there may be multiple ReleaseCandidates for a Game is if it has
-            // multiple regions, but DATStatus doesn't care about regions.
-            const gameReleaseCandidate = gameReleaseCandidates.find(() => true);
+      const gameCandidates = indexedCandidates.get(game.hashCode());
+      if (gameCandidates !== undefined || game.getRoms().length === 0) {
+        const gameCandidate = gameCandidates?.at(0);
 
-            if (
-              gameReleaseCandidate &&
-              gameReleaseCandidate.getRomsWithFiles().length !== game.getRoms().length
-            ) {
-              // The found ReleaseCandidate is incomplete
-              DATStatus.pushValueIntoMap(
-                this.incompleteRomTypesToReleaseCandidates,
-                game,
-                gameReleaseCandidate,
-              );
-              return;
-            }
+        if (gameCandidate && gameCandidate.getRomsWithFiles().length !== game.getRoms().length) {
+          // The found ReleaseCandidate is incomplete
+          DATStatus.pushValueIntoMap(this.incompleteRomTypesToCandidates, game, gameCandidate);
+          return;
+        }
 
-            // The found ReleaseCandidate is complete
-            DATStatus.pushValueIntoMap(
-              this.foundRomTypesToReleaseCandidates,
-              game,
-              gameReleaseCandidate,
-            );
-            return;
-          }
-        });
-      });
+        // The found ReleaseCandidate is complete
+        DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
+        return;
+      }
+    });
 
     // Patched ROMs
-    [...parentsToReleaseCandidates.entries()]
-      .filter(([, releaseCandidates]) => releaseCandidates.some((rc) => rc.isPatched()))
-      .forEach(([, releaseCandidates]) => {
-        // Patched ROMs
-        releaseCandidates
-          .filter((rc) => rc.isPatched())
-          .forEach((releaseCandidate) => {
-            const game = releaseCandidate.getGame();
-            DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
-            DATStatus.append(
-              this.foundRomTypesToReleaseCandidates,
-              ROMType.PATCHED,
-              releaseCandidate,
-            );
-          });
+    candidates
+      .filter((candidate) => candidate.isPatched())
+      .forEach((candidate) => {
+        const game = candidate.getGame();
+        DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
+        DATStatus.append(this.foundRomTypesToCandidates, ROMType.PATCHED, candidate);
       });
   }
 
@@ -140,12 +114,12 @@ export default class DATStatus {
 
   getInputFiles(): File[] {
     return [
-      ...this.foundRomTypesToReleaseCandidates.values(),
-      ...this.incompleteRomTypesToReleaseCandidates.values(),
+      ...this.foundRomTypesToCandidates.values(),
+      ...this.incompleteRomTypesToCandidates.values(),
     ]
       .flat()
-      .filter((releaseCandidate) => releaseCandidate !== undefined)
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      .filter((candidate) => candidate !== undefined)
+      .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getInputFile());
   }
 
@@ -154,9 +128,8 @@ export default class DATStatus {
    */
   anyGamesFound(options: Options): boolean {
     return DATStatus.getAllowedTypes(options).reduce((result, romType) => {
-      const foundReleaseCandidates =
-        this.foundRomTypesToReleaseCandidates.get(romType)?.length ?? 0;
-      return result || foundReleaseCandidates > 0;
+      const foundCandidates = this.foundRomTypesToCandidates.get(romType)?.length ?? 0;
+      return result || foundCandidates > 0;
     }, false);
   }
 
@@ -167,11 +140,10 @@ export default class DATStatus {
     return `${DATStatus.getAllowedTypes(options)
       .filter(
         (type) =>
-          this.allRomTypesToGames.has(type) &&
-          (this.allRomTypesToGames.get(type) as Game[]).length > 0,
+          this.allRomTypesToGames.has(type) && this.allRomTypesToGames.get(type)!.length > 0,
       )
       .map((type) => {
-        const found = this.foundRomTypesToReleaseCandidates.get(type) ?? [];
+        const found = this.foundRomTypesToCandidates.get(type) ?? [];
         const all = this.allRomTypesToGames.get(type) ?? [];
 
         if (!options.usingDats()) {
@@ -209,14 +181,14 @@ export default class DATStatus {
    * Return the file contents of a CSV with status information for every {@link Game}.
    */
   async toCsv(options: Options): Promise<string> {
-    const foundReleaseCandidates = DATStatus.getValuesForAllowedTypes(
+    const foundCandidates = DATStatus.getValuesForAllowedTypes(
       options,
-      this.foundRomTypesToReleaseCandidates,
+      this.foundRomTypesToCandidates,
     );
 
-    const incompleteReleaseCandidates = DATStatus.getValuesForAllowedTypes(
+    const incompleteCandidates = DATStatus.getValuesForAllowedTypes(
       options,
-      this.incompleteRomTypesToReleaseCandidates,
+      this.incompleteRomTypesToCandidates,
     );
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
@@ -225,23 +197,23 @@ export default class DATStatus {
       .map((game) => {
         let status = GameStatus.MISSING;
 
-        const incompleteReleaseCandidate = incompleteReleaseCandidates.find((rc) =>
-          rc.getGame().equals(game),
+        const incompleteCandidate = incompleteCandidates.find((candidate) =>
+          candidate.getGame().equals(game),
         );
-        if (incompleteReleaseCandidate) {
+        if (incompleteCandidate) {
           status = GameStatus.INCOMPLETE;
         }
 
-        const foundReleaseCandidate = foundReleaseCandidates.find(
-          (rc) => rc !== undefined && rc.getGame().equals(game),
+        const foundCandidate = foundCandidates.find((candidate) =>
+          candidate?.getGame().equals(game),
         );
-        if (foundReleaseCandidate !== undefined || game.getRoms().length === 0) {
+        if (foundCandidate !== undefined || game.getRoms().length === 0) {
           status = GameStatus.FOUND;
         }
 
         const filePaths = [
-          ...(incompleteReleaseCandidate ? incompleteReleaseCandidate.getRomsWithFiles() : []),
-          ...(foundReleaseCandidate ? foundReleaseCandidate.getRomsWithFiles() : []),
+          ...(incompleteCandidate ? incompleteCandidate.getRomsWithFiles() : []),
+          ...(foundCandidate ? foundCandidate.getRomsWithFiles() : []),
         ]
           .map((romWithFiles) =>
             options.shouldWrite() ? romWithFiles.getOutputFile() : romWithFiles.getInputFile(),
@@ -254,7 +226,7 @@ export default class DATStatus {
           game.getName(),
           status,
           filePaths,
-          foundReleaseCandidate?.isPatched() ?? false,
+          foundCandidate?.isPatched() ?? false,
           game.getIsBios(),
           game.isRetail(),
           game.isUnlicensed(),

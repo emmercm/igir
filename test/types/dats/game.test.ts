@@ -15,16 +15,6 @@ describe('isBios', () => {
   });
 });
 
-describe('getReleases', () => {
-  it('should always return a list', () => {
-    const release = new Release('name', 'USA');
-
-    expect(new Game({ release: [release] }).getReleases()).toEqual([release]);
-    expect(new Game({ release }).getReleases()).toEqual([release]);
-    expect(new Game().getReleases()).toHaveLength(0);
-  });
-});
-
 describe('getRoms', () => {
   it('should always return a list', () => {
     const rom = new ROM({ name: 'name', size: 0, crc32: '00000000' });

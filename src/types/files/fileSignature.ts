@@ -2,17 +2,17 @@ import { Readable } from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
-type SignaturePiece = {
+interface SignaturePiece {
   offset?: number;
   value: Buffer;
-};
+}
 
 export default class FileSignature {
   // @see https://en.wikipedia.org/wiki/List_of_file_signatures
   // @see https://www.garykessler.net/library/file_sigs.html
   // @see https://file-extension.net/seeker/
   // @see https://gbatemp.net/threads/help-with-rom-iso-console-identification.611378/
-  private static readonly SIGNATURES: { [key: string]: FileSignature } = {
+  private static readonly SIGNATURES: Record<string, FileSignature> = {
     // ********** GENERAL **********
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -447,7 +447,7 @@ export default class FileSignature {
   getName(): string {
     return Object.keys(FileSignature.SIGNATURES).find(
       (name) => FileSignature.SIGNATURES[name] === this,
-    ) as string;
+    )!;
   }
 
   getExtension(): string {

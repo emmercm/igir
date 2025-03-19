@@ -73,7 +73,9 @@ export default class ROMIndexer extends Module {
           return fileOneInOutput - fileTwoInOutput;
         }
 
-        // Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
+        /**
+         * Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
+         */
         if (outputDirDisk) {
           // TODO(cemmer): only do this when not copying files?
           const fileOneInOutputDisk = path.resolve(fileOne.getFilePath()).startsWith(outputDirDisk)

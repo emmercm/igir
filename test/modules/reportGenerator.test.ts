@@ -7,13 +7,12 @@ import FsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
-import Parent from '../../src/types/dats/parent.js';
 import ROM from '../../src/types/dats/rom.js';
 import DATStatus from '../../src/types/datStatus.js';
 import File from '../../src/types/files/file.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
-import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
+import WriteCandidate from '../../src/types/writeCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 /**
@@ -21,11 +20,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
  *  test the interaction of combining multiple DATStatus.
  */
 
-const datStatusEmpty = new DATStatus(
-  new LogiqxDAT(new Header({ name: 'Empty' }), []),
-  new Options(),
-  new Map(),
-);
+const datStatusEmpty = new DATStatus(new LogiqxDAT(new Header({ name: 'Empty' }), []), []);
 
 const gamesSingle = [
   new Game({
@@ -34,31 +29,21 @@ const gamesSingle = [
   }),
 ];
 async function buildDatStatusSingle(): Promise<DATStatus> {
-  const entries = await Promise.all(
+  const candidates = await Promise.all(
     gamesSingle.map(
-      async (game): Promise<[Parent, ReleaseCandidate[]]> => [
-        new Parent(game),
-        [
-          new ReleaseCandidate(
-            game,
-            undefined,
-            await Promise.all(
-              game.getRoms().map(async (rom) => {
-                const romFile = await rom.toFile();
-                return new ROMWithFiles(rom, romFile, romFile);
-              }),
-            ),
+      async (game) =>
+        new WriteCandidate(
+          game,
+          await Promise.all(
+            game.getRoms().map(async (rom) => {
+              const romFile = await rom.toFile();
+              return new ROMWithFiles(rom, romFile, romFile);
+            }),
           ),
-        ],
-      ],
+        ),
     ),
   );
-  const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>(entries);
-  return new DATStatus(
-    new LogiqxDAT(new Header({ name: 'Single' }), gamesSingle),
-    new Options(),
-    parentsToReleaseCandidates,
-  );
+  return new DATStatus(new LogiqxDAT(new Header({ name: 'Single' }), gamesSingle), candidates);
 }
 
 const gamesMultiple = [
@@ -80,31 +65,21 @@ const gamesMultiple = [
   }),
 ];
 async function buildDatStatusMultiple(): Promise<DATStatus> {
-  const entries = await Promise.all(
+  const candidates = await Promise.all(
     gamesMultiple.map(
-      async (game): Promise<[Parent, ReleaseCandidate[]]> => [
-        new Parent(game),
-        [
-          new ReleaseCandidate(
-            game,
-            undefined,
-            await Promise.all(
-              game.getRoms().map(async (rom) => {
-                const romFile = await rom.toFile();
-                return new ROMWithFiles(rom, romFile, romFile);
-              }),
-            ),
+      async (game) =>
+        new WriteCandidate(
+          game,
+          await Promise.all(
+            game.getRoms().map(async (rom) => {
+              const romFile = await rom.toFile();
+              return new ROMWithFiles(rom, romFile, romFile);
+            }),
           ),
-        ],
-      ],
+        ),
     ),
   );
-  const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>(entries);
-  return new DATStatus(
-    new LogiqxDAT(new Header({ name: 'Multiple' }), gamesMultiple),
-    new Options(),
-    parentsToReleaseCandidates,
-  );
+  return new DATStatus(new LogiqxDAT(new Header({ name: 'Multiple' }), gamesMultiple), candidates);
 }
 
 async function wrapReportGenerator(

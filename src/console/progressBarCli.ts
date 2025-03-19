@@ -25,7 +25,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static progressBars: ProgressBarCLI[] = [];
 
-  private static lastRedraw: number = 0;
+  private static lastRedraw = 0;
 
   private static logQueue: string[] = [];
 
@@ -37,7 +37,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private waitingMessageTimeout?: Timer;
 
-  private readonly waitingMessages: Map<string, number> = new Map();
+  private readonly waitingMessages = new Map<string, number>();
 
   private constructor(
     logger: Logger,
