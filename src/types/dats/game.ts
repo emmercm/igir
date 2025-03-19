@@ -146,7 +146,7 @@ export default class Game implements GameProps {
   readonly category: string | string[];
 
   @Expose()
-  readonly description: string;
+  readonly description?: string;
 
   @Expose()
   readonly id?: string;
@@ -173,7 +173,7 @@ export default class Game implements GameProps {
     this.disk = props?.disk ?? [];
 
     this.category = props?.category ?? [];
-    this.description = props?.description ?? '';
+    this.description = props?.description;
     this.id = props?.id;
     this.cloneOfId = props?.cloneOfId;
 
@@ -198,9 +198,13 @@ export default class Game implements GameProps {
         cloneofid: this.cloneOfId,
         isdevice: this.getIsDevice() ? 'yes' : undefined,
       },
-      description: {
-        _: this.description,
-      },
+      ...(this.description !== undefined
+        ? {
+            description: {
+              _: this.description,
+            },
+          }
+        : {}),
       category: this.getCategories().map((category) => ({ _: category })),
       ...(this.manufacturer !== undefined
         ? {
