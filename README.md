@@ -62,7 +62,7 @@ $ igir --help
   | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
   | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
   | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.2.0
+ _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.3.0
 |   $$ \ \$$    $$|   $$ \| $$  | $$
  \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
 
@@ -70,18 +70,19 @@ $ igir --help
 Usage: igir [commands..] [options]
 
 Commands (can specify multiple):
-  igir copy     Copy ROM files from the input to output directory
-  igir move     Move ROM files from the input to output directory
-  igir link     Create links in the output directory to ROM files in the input directory
-  igir extract  Extract ROM files in archives when copying or moving
-  igir zip      Create zip archives of ROMs when copying or moving
-  igir test     Test ROMs for accuracy after writing them to the output directory
-  igir dir2dat  Generate a DAT from all input files
-  igir fixdat   Generate a fixdat of any missing games for every DAT processed (requires --dat
-                )
-  igir clean    Recycle unknown files in the output directory
-  igir report   Generate a CSV report on the known & unknown ROM files found in the input dire
-                ctories (requires --dat)
+  igir copy      Copy ROM files from the input to output directory
+  igir move      Move ROM files from the input to output directory
+  igir link      Create links in the output directory to ROM files in the input directory
+  igir extract   Extract ROM files in archives when copying or moving
+  igir zip       Create zip archives of ROMs when copying or moving
+  igir playlist  Create playlist files for multi-disc games
+  igir test      Test ROMs for accuracy after writing them to the output directory
+  igir dir2dat   Generate a DAT from all input files
+  igir fixdat    Generate a fixdat of any missing games for every DAT processed (requires --da
+                 t)
+  igir clean     Recycle unknown files in the output directory
+  igir report    Generate a CSV report on the known & unknown ROM files found in the input dir
+                 ectories (requires --dat)
 
 ROM input options:
   -i, --input                    Path(s) to ROM files or archives (supports globbing)  [array]
@@ -174,6 +175,7 @@ ROM set options (requires DATs):
       --merge-roms             ROM merge/split mode (requires DATs with parent/clone informati
                                on)
          [choices: "fullnonmerged", "nonmerged", "split", "merged"] [default: "fullnonmerged"]
+      --merge-discs            Merge multi-disc games into one game                  [boolean]
       --exclude-disks          Exclude CHD disks in DATs from processing & writing   [boolean]
       --allow-excess-sets      Allow writing archives that have excess files when not extracti
                                ng or zipping                                         [boolean]
@@ -229,6 +231,10 @@ One game, one ROM (1G1R) options:
                                                                    [choices: "older", "newer"]
       --prefer-retail      Prefer retail releases (see --only-retail)                [boolean]
       --prefer-parent      Prefer parent ROMs over clones                            [boolean]
+
+playlist command options:
+      --playlist-extensions  List of comma-separated file extensions to generate multi-disc pl
+                             aylists for             [string] [default: ".cue,.gdi,.mdf,.chd"]
 
 dir2dat command options:
       --dir2dat-output  dir2dat output directory                                      [string]
@@ -309,6 +315,9 @@ Example use cases:
 
   Copy all BIOS files into one directory, extracting if necessary:
     igir copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
+
+  Create playlist files for all multi-disc games in an existing collection:
+    igir playlist --input ROMs/
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
