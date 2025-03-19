@@ -400,32 +400,27 @@ describe('should delete archives', () => {
 
         const rawRomFiles = (
           await Promise.all(
-            dat
-              .getParents()
-              .flatMap((parent) => parent.getGames())
-              .map(async (game): Promise<File[]> => {
-                const zipPath = path.join(inputPath, `${game.getName()}.zip`);
-                await FsPoly.touch(zipPath);
-                const zip = new Zip(zipPath);
-                return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
-              }),
+            dat.getGames().map(async (game): Promise<File[]> => {
+              const zipPath = path.join(inputPath, `${game.getName()}.zip`);
+              await FsPoly.touch(zipPath);
+              const zip = new Zip(zipPath);
+              return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
+            }),
           )
         ).flat();
 
         const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(rawRomFiles);
-        const parentsToCandidates = await new CandidateGenerator(
-          options,
-          new ProgressBarFake(),
-        ).generate(dat, indexedRomFiles);
+        const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
+          dat,
+          indexedRomFiles,
+        );
 
         const inputRoms = rawRomFiles;
-        const movedRoms = [...parentsToCandidates.values()]
-          .flat()
-          .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+        const movedRoms = candidates
+          .flatMap((candidate) => candidate.getRomsWithFiles())
           .map((romWithFiles) => romWithFiles.getInputFile());
 
-        const writtenRoms = [...parentsToCandidates.values()]
-          .flat()
+        const writtenRoms = candidates
           .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
           .map((romWithFiles) => romWithFiles.getOutputFile());
         const datsToWrittenRoms = new Map([[dat, writtenRoms]]);

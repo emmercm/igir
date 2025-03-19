@@ -42,7 +42,6 @@ import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
 import Timer from './timer.js';
 import DAT from './types/dats/dat.js';
-import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
 import ExpectedError from './types/expectedError.js';
 import File from './types/files/file.js';
@@ -53,7 +52,7 @@ import IndexedFiles from './types/indexedFiles.js';
 import Options, { InputChecksumArchivesMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
-import ReleaseCandidate from './types/releaseCandidate.js';
+import WriteCandidate from './types/writeCandidate.js';
 
 /**
  * The main class that coordinates file scanning, processing, and writing.
@@ -153,22 +152,19 @@ export default class Igir {
       const processedDat = this.processDAT(progressBar, dat);
 
       // Generate and filter ROM candidates
-      const parentsToCandidates = await this.generateCandidates(
+      const candidates = await this.generateCandidates(
         progressBar,
         fileFactory,
         processedDat,
         indexedRoms,
         patches,
       );
-      romOutputDirs = [
-        ...romOutputDirs,
-        ...this.getCandidateOutputDirs(processedDat, parentsToCandidates),
-      ];
+      romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
       const writerResults = await new CandidateWriter(this.options, progressBar).write(
         processedDat,
-        parentsToCandidates,
+        candidates,
       );
       movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
       datsToWrittenFiles.set(processedDat, writerResults.wrote);
@@ -176,7 +172,7 @@ export default class Igir {
       // Write playlists
       const playlistPaths = await new PlaylistCreator(this.options, progressBar).create(
         processedDat,
-        parentsToCandidates,
+        candidates,
       );
       datsToWrittenFiles.set(processedDat, [
         ...(datsToWrittenFiles.get(processedDat) ?? []),
@@ -186,7 +182,7 @@ export default class Igir {
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar).create(
         processedDat,
-        parentsToCandidates,
+        candidates,
       );
       if (dir2DatPath) {
         datsToWrittenFiles.set(processedDat, [
@@ -198,7 +194,7 @@ export default class Igir {
       // Write a fixdat
       const fixdatPath = await new FixdatCreator(this.options, progressBar).create(
         processedDat,
-        parentsToCandidates,
+        candidates,
       );
       if (fixdatPath) {
         datsToWrittenFiles.set(processedDat, [
@@ -208,10 +204,7 @@ export default class Igir {
       }
 
       // Write the output report
-      const datStatus = new StatusGenerator(this.options, progressBar).generate(
-        processedDat,
-        parentsToCandidates,
-      );
+      const datStatus = new StatusGenerator(progressBar).generate(processedDat, candidates);
       datsStatuses.push(datStatus);
       progressBar.done(
         [
@@ -224,15 +217,7 @@ export default class Igir {
       );
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...parentsToCandidates.values()].reduce(
-        (sum, rcs) => sum + rcs.length,
-        0,
-      );
-      if (
-        totalReleaseCandidates > 0 ||
-        this.options.shouldDir2Dat() ||
-        this.options.shouldFixdat()
-      ) {
+      if (candidates.length > 0 || this.options.shouldDir2Dat() || this.options.shouldFixdat()) {
         progressBar.freeze();
       } else {
         progressBar.delete();
@@ -520,83 +505,81 @@ export default class Igir {
     dat: DAT,
     indexedRoms: IndexedFiles,
     patches: Patch[],
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
+  ): Promise<WriteCandidate[]> {
     return (
       [
         // Generate the initial set of candidates
-        async (): Promise<Map<Parent, ReleaseCandidate[]>> =>
+        async (): Promise<WriteCandidate[]> =>
           new CandidateGenerator(this.options, progressBar).generate(dat, indexedRoms),
         // Add patched candidates
-        async (candidates): Promise<Map<Parent, ReleaseCandidate[]>> =>
+        async (candidates): Promise<WriteCandidate[]> =>
           new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
         // Correct output filename extensions
-        async (candidates): Promise<Map<Parent, ReleaseCandidate[]>> =>
+        async (candidates): Promise<WriteCandidate[]> =>
           new CandidateExtensionCorrector(this.options, progressBar, fileFactory).correct(
             dat,
             candidates,
           ),
-        // Delay calculating checksums for {@link ArchiveFile}s until after
-        // {@link CandidatePreferer} for efficiency
-        async (candidates): Promise<Map<Parent, ReleaseCandidate[]>> =>
+        /**
+         * Delay calculating checksums for {@link ArchiveFile}s until after the above steps for
+         * efficiency
+         */
+        async (candidates): Promise<WriteCandidate[]> =>
           new CandidateArchiveFileHasher(this.options, progressBar, fileFactory).hash(
             dat,
             candidates,
           ),
         // Finalize output file paths
-        (candidates): Map<Parent, ReleaseCandidate[]> =>
+        (candidates): WriteCandidate[] =>
           new CandidatePostProcessor(this.options, progressBar).process(dat, candidates),
         // Validate candidates
-        (candidates): Map<Parent, ReleaseCandidate[]> => {
+        (candidates): WriteCandidate[] => {
           const invalidCandidates = new CandidateValidator(progressBar).validate(dat, candidates);
           if (invalidCandidates.length > 0) {
             // Return zero candidates if any candidates failed to validate
-            return new Map();
+            return [];
           }
           return candidates;
         },
         // Validate merge/split
-        (candidates): Map<Parent, ReleaseCandidate[]> => {
+        (candidates): WriteCandidate[] => {
           new CandidateMergeSplitValidator(this.options, progressBar).validate(dat, candidates);
           return candidates;
         },
         // Combine candidates into one
-        (candidates): Map<Parent, ReleaseCandidate[]> =>
+        (candidates): WriteCandidate[] =>
           new CandidateCombiner(this.options, progressBar).combine(dat, candidates),
-      ] satisfies ((
-        candidates: Map<Parent, ReleaseCandidate[]>,
-      ) => Promise<Map<Parent, ReleaseCandidate[]>> | Map<Parent, ReleaseCandidate[]>)[]
-    ).reduce(async (candidatesPromise, processor) => {
-      const candidates = await candidatesPromise;
-      return processor(candidates);
-    }, Promise.resolve(new Map<Parent, ReleaseCandidate[]>()));
+      ] satisfies ((candidates: WriteCandidate[]) => Promise<WriteCandidate[]> | WriteCandidate[])[]
+    ).reduce(
+      async (candidatesPromise, processor) => {
+        const candidates = await candidatesPromise;
+        return processor(candidates);
+      },
+      Promise.resolve([] as WriteCandidate[]),
+    );
   }
 
   /**
    * Find all ROM output paths for a DAT and its candidates.
    */
-  private getCandidateOutputDirs(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): string[] {
-    return [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) =>
-        releaseCandidates.flatMap((releaseCandidate) =>
-          releaseCandidate.getRomsWithFiles().flatMap(
-            (romWithFiles) =>
-              OutputFactory.getPath(
-                // Parse the output directory, as supplied by the user, ONLY replacing tokens in the
-                // path and NOT respecting any `--dir-*` options.
-                new Options({
-                  commands: [...this.options.getCommands()],
-                  output: this.options.getOutput(),
-                }),
-                dat,
-                releaseCandidate.getGame(),
-                releaseCandidate.getRelease(),
-                romWithFiles.getRom(),
-                romWithFiles.getInputFile(),
-              ).dir,
-          ),
+  private getCandidateOutputDirs(dat: DAT, candidates: WriteCandidate[]): string[] {
+    return candidates
+      .flatMap((candidate) =>
+        candidate.getRomsWithFiles().flatMap(
+          (romWithFiles) =>
+            OutputFactory.getPath(
+              // Parse the output directory, as supplied by the user, ONLY replacing tokens in the
+              // path and NOT respecting any `--dir-*` options.
+              new Options({
+                commands: [...this.options.getCommands()],
+                output: this.options.getOutput(),
+              }),
+              dat,
+              candidate.getGame(),
+              undefined,
+              romWithFiles.getRom(),
+              romWithFiles.getInputFile(),
+            ).dir,
         ),
       )
       .reduce(ArrayPoly.reduceUnique(), []);

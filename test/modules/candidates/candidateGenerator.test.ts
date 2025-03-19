@@ -10,7 +10,6 @@ import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import Machine from '../../../src/types/dats/mame/machine.js';
 import MameDAT from '../../../src/types/dats/mame/mameDat.js';
-import Parent from '../../../src/types/dats/parent.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
@@ -22,7 +21,7 @@ import File from '../../../src/types/files/file.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import IndexedFiles from '../../../src/types/indexedFiles.js';
 import Options, { GameSubdirMode } from '../../../src/types/options.js';
-import ReleaseCandidate from '../../../src/types/releaseCandidate.js';
+import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const gameWithNoRoms = new Game({
@@ -75,7 +74,7 @@ async function candidateGenerator(
   options: Options,
   dat: DAT,
   files: (File | Promise<File>)[],
-): Promise<Map<Parent, ReleaseCandidate[]>> {
+): Promise<WriteCandidate[]> {
   const resolvedFiles = await Promise.all(files);
   const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(resolvedFiles);
   return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, indexedFiles);
@@ -86,15 +85,15 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     commands: ['copy', command],
   });
 
-  it('should return no candidates with no parents', async () => {
+  it('should return no candidates with no games', async () => {
     // Given
     const datWithoutParents = new LogiqxDAT(new Header(), []);
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithoutParents, []);
+    const candidates = await candidateGenerator(options, datWithoutParents, []);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(0);
+    expect(candidates).toHaveLength(0);
   });
 
   it('should return no candidates with no games with ROMs', async () => {
@@ -102,15 +101,10 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     const datWithGamesWithNoRoms = new LogiqxDAT(new Header(), [gameWithNoRoms]);
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithGamesWithNoRoms, []);
+    const candidates = await candidateGenerator(options, datWithGamesWithNoRoms, []);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(1);
-    const totalReleaseCandidates = [...parentsToCandidates.values()].reduce(
-      (sum, releaseCandidates) => sum + releaseCandidates.length,
-      0,
-    );
-    expect(totalReleaseCandidates).toEqual(0);
+    expect(candidates).toHaveLength(0);
   });
 
   test.each([
@@ -129,11 +123,9 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
       const files = await Promise.all(filePromises);
 
       // When
-      const parentsToCandidates = await candidateGenerator(options, datWithFourGames, files);
+      const candidates = await candidateGenerator(options, datWithFourGames, files);
 
       // Then
-      expect(parentsToCandidates.size).toEqual(3);
-      const candidates = [...parentsToCandidates.values()].flat();
       expect(candidates).toHaveLength(1);
       const candidateWithNoRoms = candidates[0];
       expect(candidateWithNoRoms.getRomsWithFiles()).toHaveLength(0);
@@ -158,16 +150,12 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ];
 
     // When
-    const parentsToCandidates = await candidateGenerator(
-      allowIncompleteOptions,
-      datWithFourGames,
-      files,
-    );
+    const candidates = await candidateGenerator(allowIncompleteOptions, datWithFourGames, files);
 
     // Then
-    const incompleteCandidates = [...parentsToCandidates.entries()]
-      .filter(([parent]) => parent.getName() === gameWithTwoRomsParent.getName())
-      .flatMap(([, releaseCandidates]) => releaseCandidates);
+    const incompleteCandidates = candidates.filter(
+      (candidate) => candidate.getName() === gameWithTwoRomsParent.getName(),
+    );
     expect(incompleteCandidates).toHaveLength(1);
     expect(incompleteCandidates[0].getRomsWithFiles().length).toBeGreaterThan(0);
     expect(incompleteCandidates[0].getRomsWithFiles()).not.toHaveLength(
@@ -189,27 +177,18 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ];
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, files);
+    const candidates = await candidateGenerator(options, datWithFourGames, files);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(3);
-    const candidates = [...parentsToCandidates.values()];
-
-    const candidateWithNoRoms = candidates[0];
-    expect(candidateWithNoRoms).toHaveLength(1);
-    candidateWithNoRoms.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(0);
-    });
-
-    const candidateWithOneRom = candidates[1];
-    expect(candidateWithOneRom).toHaveLength(3);
-    candidateWithOneRom.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      expect(candidate.getRomsWithFiles()[0].getInputFile()).not.toBeInstanceOf(ArchiveEntry); // preferred the non-archive
-    });
-
-    const candidateWithTwoRoms = candidates[2];
-    expect(candidateWithTwoRoms).toHaveLength(0);
+    expect(
+      candidates.map((candidate) => [
+        candidate.getName(),
+        candidate.getRomsWithFiles().map((rwf) => rwf.getInputFile().toString()),
+      ]),
+    ).toEqual([
+      ['game with no ROMs', []],
+      ['game with one ROM and multiple releases', ['1.rom']], // preferred the non-archive
+    ]);
   });
 
   it('should return all candidates for all games that have all of their files matched', async () => {
@@ -251,30 +230,17 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ];
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, files);
+    const candidates = await candidateGenerator(options, datWithFourGames, files);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(3);
-    const candidates = [...parentsToCandidates.values()];
-
-    const candidateWithNoRoms = candidates[0];
-    expect(candidateWithNoRoms).toHaveLength(1);
-    candidateWithNoRoms.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(0);
-    });
-
-    const candidateWithOneRom = candidates[1];
-    expect(candidateWithOneRom).toHaveLength(3);
-    candidateWithOneRom.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      expect(candidate.getRomsWithFiles()[0].getInputFile()).not.toBeInstanceOf(ArchiveEntry); // preferred the non-archive
-    });
-
-    const candidateWithTwoRoms = candidates[2];
-    expect(candidateWithTwoRoms).toHaveLength(1);
-    candidateWithTwoRoms.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(2);
-    });
+    expect(
+      candidates.map((candidate) => [candidate.getName(), candidate.getRomsWithFiles().length]),
+    ).toEqual([
+      ['game with no ROMs', 0],
+      ['game with one ROM and multiple releases', 1],
+      ['game with two ROMs (parent)', 2],
+    ]);
+    expect(candidates[1].getRomsWithFiles()[0].getInputFile()).not.toBeInstanceOf(ArchiveEntry); // preferred the non-archive
   });
 });
 
@@ -313,44 +279,29 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(3);
-    const candidates = [...parentsToCandidates.values()];
-
-    const candidateWithOneRom = candidates[1];
-    expect(candidateWithOneRom).toHaveLength(3);
-    candidateWithOneRom.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      const candidateWithOneRomOutput = candidate
-        .getRomsWithFiles()[0]
-        .getOutputFile() as ArchiveEntry<Zip>;
-      expect(candidateWithOneRomOutput.getFilePath()).toEqual(
-        'game with one ROM and multiple releases.zip',
-      ); // respected DAT
-      expect(candidateWithOneRomOutput.getEntryPath()).toEqual('one.nes'); // respected headerless extension
-    });
-
-    const candidateWithTwoRoms = candidates[2];
-    expect(candidateWithTwoRoms).toHaveLength(1);
-    candidateWithTwoRoms.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(2);
-      const candidateWithTwoRomsOutputOne = candidate
-        .getRomsWithFiles()[0]
-        .getOutputFile() as ArchiveEntry<Zip>;
-      expect(candidateWithTwoRomsOutputOne.getFilePath()).toEqual(
-        'game with two ROMs (parent).zip',
-      ); // respected DAT
-      expect(candidateWithTwoRomsOutputOne.getEntryPath()).toEqual('two.sfc'); // respected headerless extension
-      const candidateWithTwoRomsOutputTwo = candidate
-        .getRomsWithFiles()[1]
-        .getOutputFile() as ArchiveEntry<Zip>;
-      expect(candidateWithTwoRomsOutputTwo.getFilePath()).toEqual(
-        'game with two ROMs (parent).zip',
-      ); // respected DAT
-      expect(candidateWithTwoRomsOutputTwo.getEntryPath()).toEqual('two.b'); // respected DAT
-    });
+    expect(candidates).toHaveLength(3);
+    expect(
+      candidates.map((candidate) => [
+        candidate.getName(),
+        candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
+      ]),
+    ).toEqual([
+      ['game with no ROMs', []],
+      [
+        'game with one ROM and multiple releases',
+        ['game with one ROM and multiple releases.zip|one.nes'], // respected headerless extension
+      ],
+      [
+        'game with two ROMs (parent)',
+        [
+          'game with two ROMs (parent).zip|two.sfc', // respected headerless extension
+          'game with two ROMs (parent).zip|two.b', // respected DAT
+        ],
+      ],
+    ]);
   });
 
   it('extract', async () => {
@@ -362,30 +313,26 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(3);
-    const candidates = [...parentsToCandidates.values()];
-
-    const candidateWithOneRom = candidates[1];
-    expect(candidateWithOneRom).toHaveLength(3);
-    candidateWithOneRom.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual('one.nes'); // respected headerless extension
-    });
-
-    const candidateWithTwoRoms = candidates[2];
-    expect(candidateWithTwoRoms).toHaveLength(1);
-    candidateWithTwoRoms.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(2);
-      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual(
-        path.join('game with two ROMs (parent)', 'two.sfc'),
-      ); // respected headerless extension
-      expect(candidate.getRomsWithFiles()[1].getOutputFile().getFilePath()).toEqual(
-        path.join('game with two ROMs (parent)', 'two.b'),
-      ); // respected DAT
-    });
+    expect(candidates).toHaveLength(3);
+    expect(
+      candidates.map((candidate) => [
+        candidate.getName(),
+        candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
+      ]),
+    ).toEqual([
+      ['game with no ROMs', []],
+      ['game with one ROM and multiple releases', ['one.nes']], // respected headerless extension
+      [
+        'game with two ROMs (parent)',
+        [
+          'game with two ROMs (parent)/two.sfc', // respected headerless extension
+          'game with two ROMs (parent)/two.b', // respected DAT
+        ],
+      ],
+    ]);
   });
 
   it('raw', async () => {
@@ -396,21 +343,18 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
     // Then
-    expect(parentsToCandidates.size).toEqual(3);
-    const candidates = [...parentsToCandidates.values()];
-
-    const candidateWithOneRom = candidates[1];
-    expect(candidateWithOneRom).toHaveLength(3);
-    candidateWithOneRom.forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      expect(candidate.getRomsWithFiles()[0].getOutputFile().getFilePath()).toEqual('one.nes'); // respected headerless extension
-    });
-
-    const candidateWithTwoRoms = candidates[2];
-    expect(candidateWithTwoRoms).toHaveLength(0); // can't remove headers & leave the archive as-is
+    expect(
+      candidates.map((candidate) => [
+        candidate.getName(),
+        candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
+      ]),
+    ).toEqual([
+      ['game with no ROMs', []],
+      ['game with one ROM and multiple releases', ['one.nes']], // respected headerless extension
+    ]);
   });
 });
 
@@ -445,29 +389,22 @@ describe('with different input files for every game ROM', () => {
       const options = new Options({ commands: ['copy', command] });
 
       // When
-      const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
+      const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
-      // Then there should still be 3 parents, with the input -> output:
+      // Then there should still be 3 candidates, with the input -> output:
       //  (nothing) -> game with no ROMs
       //  one.rom -> game with one ROM
       //  a.rar|a.rom & b.rar|b.rom -> game with two ROMs (either in a folder or a zip, together)
-      expect(parentsToCandidates.size).toEqual(3);
-      const candidates = [...parentsToCandidates.values()];
-
-      expect(candidates[0]).toHaveLength(1);
-      candidates[0].forEach((candidate) => {
-        expect(candidate.getRomsWithFiles()).toHaveLength(0);
-      });
-
-      expect(candidates[1]).toHaveLength(3);
-      candidates[1].forEach((candidate) => {
-        expect(candidate.getRomsWithFiles()).toHaveLength(1);
-      });
-
-      expect(candidates[2]).toHaveLength(1);
-      candidates[2].forEach((candidate) => {
-        expect(candidate.getRomsWithFiles()).toHaveLength(2);
-      });
+      expect(
+        candidates.map((candidate) => [
+          candidate.getName(),
+          candidate.getRomsWithFiles().map((rwf) => rwf.getInputFile().toString()),
+        ]),
+      ).toEqual([
+        ['game with no ROMs', []],
+        ['game with one ROM and multiple releases', ['one.rom']],
+        ['game with two ROMs (parent)', ['a.rar|a.rom', 'b.rar|b.rom']],
+      ]);
     },
   );
 
@@ -476,28 +413,23 @@ describe('with different input files for every game ROM', () => {
     const options = new Options({ commands: ['copy'] });
 
     // When
-    const parentsToCandidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
 
-    // Then there should still be 3 parents, with the input -> output:
+    // Then there should be 2 candidates, with the input -> output:
     //  (nothing) -> game with no ROMs
     //  one.rom -> one.rom
     //  a.rar|a.rom & b.rar|b.rom -> game with two ROMs.rar -- CONFLICT!
     // Because we're not extracting or zipping, two different input 7z files wanted to write to the
     //  same output file, which is a problem, so the parent resulted in no candidates
-    expect(parentsToCandidates.size).toEqual(3);
-    const candidates = [...parentsToCandidates.values()];
-
-    expect(candidates[0]).toHaveLength(1);
-    candidates[0].forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(0);
-    });
-
-    expect(candidates[1]).toHaveLength(3);
-    candidates[1].forEach((candidate) => {
-      expect(candidate.getRomsWithFiles()).toHaveLength(1);
-    });
-
-    expect(candidates[2]).toHaveLength(0);
+    expect(
+      candidates.map((candidate) => [
+        candidate.getName(),
+        candidate.getRomsWithFiles().map((rwf) => rwf.getInputFile().toString()),
+      ]),
+    ).toEqual([
+      ['game with no ROMs', []],
+      ['game with one ROM and multiple releases', ['one.rom']],
+    ]);
   });
 });
 
@@ -532,17 +464,10 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       });
 
       // When
-      const parentsToCandidates = await candidateGenerator(
-        allowExcessOptions,
-        datWithFourGames,
-        files,
-      );
+      const candidates = await candidateGenerator(allowExcessOptions, datWithFourGames, files);
 
       // Then
-      const candidates = [...parentsToCandidates.entries()]
-        .filter(([parent]) => parent.getName() === gameWithTwoRomsParent.getName())
-        .flatMap(([, releaseCandidates]) => releaseCandidates);
-      expect(candidates).toHaveLength(0);
+      expect(candidates).toHaveLength(1);
     });
 
     it('should return candidates when input files have excess files and allowExcessSets:true', async () => {
@@ -553,17 +478,10 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       });
 
       // When
-      const parentsToCandidates = await candidateGenerator(
-        allowExcessOptions,
-        datWithFourGames,
-        files,
-      );
+      const candidates = await candidateGenerator(allowExcessOptions, datWithFourGames, files);
 
       // Then
-      const candidates = [...parentsToCandidates.entries()]
-        .filter(([parent]) => parent.getName() === gameWithTwoRomsParent.getName())
-        .flatMap(([, releaseCandidates]) => releaseCandidates);
-      expect(candidates).toHaveLength(1);
+      expect(candidates).toHaveLength(2);
     });
   });
 
@@ -591,22 +509,18 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       const files = [...rawFiles, ...archiveEntries];
 
       // When
-      const parentsToCandidates = await candidateGenerator(options, dat, files);
+      const candidates = await candidateGenerator(options, dat, files);
 
       // Then the Archive isn't used for any input file
-      expect(parentsToCandidates.size).toEqual(1);
-      const candidates = [...parentsToCandidates.values()];
-      expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
+      expect(candidates).toHaveLength(1);
 
-      for (const candidate of candidates) {
-        const firstCandidate = candidate[0];
-        const romsWithFiles = firstCandidate.getRomsWithFiles();
-        expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+      const firstCandidate = candidates[0];
+      const romsWithFiles = firstCandidate.getRomsWithFiles();
+      expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-        for (const [idx, romsWithFile] of romsWithFiles.entries()) {
-          const inputFile = romsWithFile.getInputFile();
-          expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
-        }
+      for (const [idx, romsWithFile] of romsWithFiles.entries()) {
+        const inputFile = romsWithFile.getInputFile();
+        expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
       }
     });
 
@@ -625,22 +539,18 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
           );
 
           // When
-          const parentsToCandidates = await candidateGenerator(options, dat, rawFiles);
+          const candidates = await candidateGenerator(options, dat, rawFiles);
 
           // Then the Archive isn't used for any input file
-          expect(parentsToCandidates.size).toEqual(1);
-          const candidates = [...parentsToCandidates.values()];
-          expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
+          expect(candidates).toHaveLength(1);
 
-          for (const candidate of candidates) {
-            const firstCandidate = candidate[0];
-            const romsWithFiles = firstCandidate.getRomsWithFiles();
-            expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+          const firstCandidate = candidates[0];
+          const romsWithFiles = firstCandidate.getRomsWithFiles();
+          expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-            for (const [idx, romsWithFile] of romsWithFiles.entries()) {
-              const inputFile = romsWithFile.getInputFile();
-              expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
-            }
+          for (const [idx, romsWithFile] of romsWithFiles.entries()) {
+            const inputFile = romsWithFile.getInputFile();
+            expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
           }
         });
 
@@ -662,22 +572,18 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
           const files = [...rawFiles, ...archiveEntries];
 
           // When
-          const parentsToCandidates = await candidateGenerator(options, dat, files);
+          const candidates = await candidateGenerator(options, dat, files);
 
           // Then the Archive is used for every input file
-          expect(parentsToCandidates.size).toEqual(1);
-          const candidates = [...parentsToCandidates.values()];
-          expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
+          expect(candidates).toHaveLength(1);
 
-          for (const candidate of candidates) {
-            const firstCandidate = candidate[0];
-            const romsWithFiles = firstCandidate.getRomsWithFiles();
-            expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+          const firstCandidate = candidates[0];
+          const romsWithFiles = firstCandidate.getRomsWithFiles();
+          expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-            for (const romsWithFile of romsWithFiles) {
-              const inputFile = romsWithFile.getInputFile();
-              expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
-            }
+          for (const romsWithFile of romsWithFiles) {
+            const inputFile = romsWithFile.getInputFile();
+            expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
           }
         });
 
@@ -713,22 +619,18 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
           ];
 
           // When
-          const parentsToCandidates = await candidateGenerator(allowExcessOptions, dat, files);
+          const candidates = await candidateGenerator(allowExcessOptions, dat, files);
 
           // Then the Archive is used for every input file
-          expect(parentsToCandidates.size).toEqual(1);
-          const candidates = [...parentsToCandidates.values()];
-          expect(candidates[0]).toHaveLength(Math.max(datGame.getReleases().length, 1));
+          expect(candidates).toHaveLength(1);
 
-          for (const candidate of candidates) {
-            const firstCandidate = candidate[0];
-            const romsWithFiles = firstCandidate.getRomsWithFiles();
-            expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+          const firstCandidate = candidates[0];
+          const romsWithFiles = firstCandidate.getRomsWithFiles();
+          expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-            for (const romsWithFile of romsWithFiles) {
-              const inputFile = romsWithFile.getInputFile();
-              expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
-            }
+          for (const romsWithFile of romsWithFiles) {
+            const inputFile = romsWithFile.getInputFile();
+            expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
           }
         });
       },
@@ -806,9 +708,8 @@ describe('MAME v0.260', () => {
       await mameIndexedFiles,
     );
 
-    const outputFiles = [...candidates.values()]
-      .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+    const outputFiles = candidates
+      .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
       .sort();
     expect(outputFiles).toEqual([
@@ -846,9 +747,8 @@ describe('MAME v0.260', () => {
       await mameIndexedFiles,
     );
 
-    const outputFiles = [...candidates.values()]
-      .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+    const outputFiles = candidates
+      .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
       .sort();
     expect(outputFiles).toEqual([

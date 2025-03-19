@@ -25,6 +25,7 @@ export default [
   ...compat.extends(
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended-type-checked',
+    'plugin:@typescript-eslint/stylistic-type-checked',
     'plugin:jsdoc/recommended-typescript-error',
     'plugin:jest/recommended',
     'plugin:prettier/recommended', // MUST BE LAST!

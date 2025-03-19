@@ -63,7 +63,9 @@ export interface SampleProps extends CMProObject {
 
 type CMProValue = CMProObject | string | undefined;
 
-type CMProObject = { [key: string]: CMProValue | CMProValue[] };
+interface CMProObject {
+  [key: string]: CMProValue | CMProValue[];
+}
 
 /**
  * A parser for CMPRo schema DATs.

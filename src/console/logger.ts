@@ -88,7 +88,7 @@ export default class Logger {
       [LogLevel.ERROR]: chalk.red,
       [LogLevel.NOTICE]: chalk.underline,
       [LogLevel.NEVER]: (msg): string => msg,
-    } satisfies { [key in LogLevel]: (message: string) => string };
+    } satisfies Record<LogLevel, (message: string) => string>;
     const chalkFunc = chalkFuncs[logLevel];
 
     const loggerTime =

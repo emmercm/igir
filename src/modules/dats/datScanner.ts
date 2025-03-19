@@ -28,14 +28,14 @@ import FileFactory from '../../types/files/fileFactory.js';
 import Options from '../../types/options.js';
 import Scanner from '../scanner.js';
 
-type SmdbRow = {
+interface SmdbRow {
   sha256: string;
   name: string;
   sha1: string;
   md5: string;
   crc: string;
   size?: string;
-};
+}
 
 /**
  * Scan the {@link OptionsProps.dat} input directory for DAT files and return the internal model
@@ -339,7 +339,7 @@ export default class DATScanner extends Scanner {
     /**
      * Validation that this might be a CMPro file.
      */
-    if (fileContents.match(/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m) === null) {
+    if (/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.exec(fileContents) === null) {
       return undefined;
     }
 
@@ -500,10 +500,10 @@ export default class DATScanner extends Scanner {
         .validate(
           (row: SmdbRow) =>
             row.name &&
-            (row.crc.match(/^[0-9a-f]{8}$/) !== null ||
-              row.md5.match(/^[0-9a-f]{32}$/) !== null ||
-              row.sha1.match(/^[0-9a-f]{40}$/) !== null ||
-              row.sha256.match(/^[0-9a-f]{64}$/) !== null),
+            (/^[0-9a-f]{8}$/.exec(row.crc) !== null ||
+              /^[0-9a-f]{32}$/.exec(row.md5) !== null ||
+              /^[0-9a-f]{40}$/.exec(row.sha1) !== null ||
+              /^[0-9a-f]{64}$/.exec(row.sha256) !== null),
         )
         .on('error', reject)
         .on('data', (row: SmdbRow) => {
@@ -522,7 +522,7 @@ export default class DATScanner extends Scanner {
     }
 
     const datNameRegexExclude = this.options.getDatNameRegexExclude();
-    if (datNameRegexExclude && datNameRegexExclude.some((regex) => regex.test(dat.getName()))) {
+    if (datNameRegexExclude?.some((regex) => regex.test(dat.getName()))) {
       return true;
     }
 
@@ -538,11 +538,7 @@ export default class DATScanner extends Scanner {
     }
 
     const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-    if (
-      datDescription &&
-      datDescriptionRegexExclude &&
-      datDescriptionRegexExclude.some((regex) => regex.test(datDescription))
-    ) {
+    if (datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription))) {
       return true;
     }
 

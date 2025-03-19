@@ -2,12 +2,9 @@ import DAT from '../../src/types/dats/dat.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
-import Parent from '../../src/types/dats/parent.js';
 import Release from '../../src/types/dats/release.js';
 import ROM from '../../src/types/dats/rom.js';
 import DATStatus from '../../src/types/datStatus.js';
-import Options from '../../src/types/options.js';
-import ReleaseCandidate from '../../src/types/releaseCandidate.js';
 
 // NOTE(cemmer): the majority of tests would expect to be here are covered in
 //  statusGenerator.test.ts instead in order to increase coverage
@@ -46,7 +43,6 @@ function givenDAT(): DAT {
 
 it('getDATName', () => {
   const dat = givenDAT();
-  const parentsToReleaseCandidates = new Map<Parent, ReleaseCandidate[]>();
-  const datStatus = new DATStatus(dat, new Options(), parentsToReleaseCandidates);
+  const datStatus = new DATStatus(dat, []);
   expect(datStatus.getDATName()).toEqual('dat name');
 });

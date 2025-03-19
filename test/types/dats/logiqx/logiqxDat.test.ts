@@ -27,7 +27,7 @@ describe('fromObject', () => {
   </game>
 </datafile>`;
     const obj = DATObject.fromXmlString(xml);
-    const dat = LogiqxDAT.fromObject(obj.datafile as object);
+    const dat = LogiqxDAT.fromObject(obj.datafile!);
 
     expect(dat.getName()).toEqual('Nintendo - Game Boy (Parent-Clone)');
 

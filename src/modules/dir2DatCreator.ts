@@ -6,9 +6,8 @@ import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
 import IgirHeader from '../types/dats/igirHeader.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
-import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
-import ReleaseCandidate from '../types/releaseCandidate.js';
+import WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**
@@ -25,11 +24,13 @@ export default class Dir2DatCreator extends Module {
   /**
    * Write the DAT.
    */
-  async create(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<string | undefined> {
+  async create(dat: DAT, candidates: WriteCandidate[]): Promise<string | undefined> {
     if (!this.options.shouldDir2Dat()) {
+      return undefined;
+    }
+
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to create dir2dat for`);
       return undefined;
     }
 
@@ -37,29 +38,27 @@ export default class Dir2DatCreator extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.reset(1);
 
-    // It is possible that the {@link ROM} embedded within {@link ReleaseCandidate}s has been
-    // manipulated, such as from {@link CandidateExtensionCorrector}. Use the {@link Game}s and
-    // {@link ROM}s from the {@link ReleaseCandidate}s instead of the original {@link DAT}.
-    const gamesToCandidates = [...parentsToCandidates.values()]
-      .flat()
-      .reduce((map, releaseCandidate) => {
-        const key = releaseCandidate.getGame();
-        if (!map.has(key)) {
-          map.set(key, [releaseCandidate]);
-        } else {
-          map.get(key)?.push(releaseCandidate);
-        }
-        return map;
-      }, new Map<Game, ReleaseCandidate[]>());
-    const gamesFromCandidates = [...gamesToCandidates.entries()].map(
-      ([game, releaseCandidates]) => {
-        const roms = releaseCandidates
-          .at(0)
-          ?.getRomsWithFiles()
-          .map((romWithFiles) => romWithFiles.getRom());
-        return game.withProps({ rom: roms });
-      },
-    );
+    /**
+     * It is possible that the {@link ROM} embedded within {@link WriteCandidate}s has been
+     * manipulated, such as from {@link CandidateExtensionCorrector}. Use the {@link Game}s and
+     * {@link ROM}s from the {@link WriteCandidate}s instead of the original {@link DAT}.
+     */
+    const gamesToCandidates = candidates.reduce((map, candidate) => {
+      const key = candidate.getGame();
+      if (!map.has(key)) {
+        map.set(key, [candidate]);
+      } else {
+        map.get(key)?.push(candidate);
+      }
+      return map;
+    }, new Map<Game, WriteCandidate[]>());
+    const gamesFromCandidates = [...gamesToCandidates.entries()].map(([game, candidates]) => {
+      const roms = candidates
+        .at(0)
+        ?.getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getRom());
+      return game.withProps({ rom: roms });
+    });
 
     const dir2datDir = this.options.getDir2DatOutput();
     if (!(await FsPoly.exists(dir2datDir))) {

@@ -143,7 +143,7 @@ async function candidateWriter(
   return walkAndStat(outputTemp);
 }
 
-it('should not do anything if there are no parents', async () => {
+it('should not do anything if there are no candidates', async () => {
   await copyFixturesToTemp(async (inputTemp, outputTemp) => {
     // Given
     const options = new Options({ commands: ['copy'] });

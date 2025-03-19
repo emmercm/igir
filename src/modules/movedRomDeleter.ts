@@ -91,12 +91,14 @@ export default class MovedROMDeleter extends Module {
 
     return [...groupedMovedRoms.entries()]
       .map(([filePath, movedEntries]) => {
-        // NOTE(cemmer): games can have ROMs with duplicate checksums, which means an Archive of
-        //  that game's ROMs will contain some duplicate files. When extracting or zipping, we would
-        //  have generated multiple ReleaseCandidates with the same input File, resulting in the
-        //  duplicate files in the Archive not being considered "moved." Therefore, we should use
-        //  the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
-        //  during writing.
+        /**
+         * NOTE(cemmer): games can have ROMs with duplicate checksums, which means an Archive of
+         * that game's ROMs will contain some duplicate files. When extracting or zipping, we would
+         * have generated multiple {@link WriteCandidate} with the same input File, resulting in the
+         * duplicate files in the Archive not being considered "moved." Therefore, we should use
+         * the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
+         * during writing.
+         */
         const movedEntryHashCodes = new Set(movedEntries.flatMap((file) => file.hashCode()));
 
         const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];

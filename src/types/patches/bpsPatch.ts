@@ -84,11 +84,7 @@ export default class BPSPatch extends Patch {
     patchFile: IOFile,
   ): Promise<void> {
     return inputRomFile.extractToTempFilePoly('r', async (inputRomFilePoly) => {
-      const targetFile = await IOFile.fileOfSize(
-        outputRomPath,
-        'r+',
-        this.getSizeAfter() as number,
-      );
+      const targetFile = await IOFile.fileOfSize(outputRomPath, 'r+', this.getSizeAfter()!);
 
       try {
         await BPSPatch.applyPatch(patchFile, inputRomFilePoly, targetFile);

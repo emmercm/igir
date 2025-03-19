@@ -51,7 +51,7 @@ export default class DriveSemaphore {
         this.driveSemaphores.set(filePathDisk, new ElasticSemaphore(maxKilobytes));
       }
 
-      return this.driveSemaphores.get(filePathDisk) as ElasticSemaphore;
+      return this.driveSemaphores.get(filePathDisk)!;
     });
 
     const fileSizeKilobytes =
@@ -141,7 +141,7 @@ export default class DriveSemaphore {
     }
 
     // If a drive couldn't be found, try to parse a samba server name
-    const sambaMatches = filePathNormalized.match(/^([\\/]{2}[^\\/]+)/);
+    const sambaMatches = /^([\\/]{2}[^\\/]+)/.exec(filePathNormalized);
     if (sambaMatches !== null) {
       return sambaMatches[1];
     }
