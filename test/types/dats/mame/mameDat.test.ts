@@ -156,7 +156,7 @@ describe('fromObject', () => {
   </machine>
 </mame>`;
     const obj = DATObject.fromXmlString(xml);
-    const dat = MameDAT.fromObject(obj.mame as object);
+    const dat = MameDAT.fromObject(obj.mame!);
 
     expect(dat.getName()).toEqual('0.257 (mame0257-dirty)');
 

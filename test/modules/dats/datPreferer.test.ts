@@ -103,7 +103,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
   }),
 ];
 
-test.each([[true], [false]])('should return nothing if no parents exist, single: %s', (single) => {
+test.each([[true], [false]])('should return nothing with no parents, single: %s', (single) => {
   const options = new Options({ single });
   const dat = new LogiqxDAT(new Header(), []);
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);

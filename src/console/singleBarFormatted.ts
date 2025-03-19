@@ -27,7 +27,7 @@ export default class SingleBarFormatted {
 
   private valueTimeBuffer: number[][] = [];
 
-  private lastEtaTime: number = 0;
+  private lastEtaTime = 0;
 
   private lastEtaValue = 'infinity';
 

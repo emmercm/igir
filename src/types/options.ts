@@ -518,7 +518,7 @@ export default class Options implements OptionsProps {
   /**
    * Return an object of all options.
    */
-  toObject(): { [key: string]: unknown } {
+  toObject(): Record<string, unknown> {
     return instanceToPlain(this);
   }
 
@@ -532,7 +532,7 @@ export default class Options implements OptionsProps {
   // Helpers
 
   private static getRegex(pattern: string | undefined): RegExp[] | undefined {
-    if (pattern === undefined || !pattern.trim()) {
+    if (!pattern?.trim()) {
       return undefined;
     }
 
@@ -540,7 +540,7 @@ export default class Options implements OptionsProps {
       .split(/\r?\n/)
       .filter((line) => line.length > 0)
       .map((line) => {
-        const flagsMatch = line.match(/^\/(.+)\/([a-z]*)$/);
+        const flagsMatch = /^\/(.+)\/([a-z]*)$/.exec(line);
         if (flagsMatch !== null) {
           return new RegExp(flagsMatch[1], flagsMatch[2]);
         }
@@ -706,7 +706,7 @@ export default class Options implements OptionsProps {
     const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
     let globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
-      const paths = await this.globPath(uniqueGlobPattern, walkCallback ?? ((): void => {}));
+      const paths = await this.globPath(uniqueGlobPattern, walkCallback);
       // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
       // size limit
       globbedPaths = [...globbedPaths, ...paths];
@@ -746,7 +746,7 @@ export default class Options implements OptionsProps {
 
   private static async globPath(
     inputPath: string,
-    walkCallback: FsWalkCallback,
+    walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Windows will report that \\.\nul doesn't exist, catch it explicitly
     if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
@@ -760,7 +760,9 @@ export default class Options implements OptionsProps {
 
     // If the file exists, don't process it as a glob pattern
     if (await FsPoly.exists(inputPath)) {
-      walkCallback(1);
+      if (walkCallback !== undefined) {
+        walkCallback(1);
+      }
       return [inputPath];
     }
 
@@ -779,12 +781,16 @@ export default class Options implements OptionsProps {
     if (globbedPaths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
-        walkCallback(1);
+        if (walkCallback !== undefined) {
+          walkCallback(1);
+        }
         return [inputPath];
       }
       return [];
     }
-    walkCallback(globbedPaths.length);
+    if (walkCallback !== undefined) {
+      walkCallback(globbedPaths.length);
+    }
     if (process.platform === 'win32') {
       return globbedPaths.map((globbedPath) => globbedPath.replace(/[\\/]/g, path.sep));
     }
@@ -928,7 +934,7 @@ export default class Options implements OptionsProps {
   getOutputDirRoot(): string {
     const outputSplit = this.getOutput().split(/[\\/]/);
     for (let i = 0; i < outputSplit.length; i += 1) {
-      if (outputSplit[i].match(/\{[a-zA-Z]+\}/) !== null) {
+      if (/\{[a-zA-Z]+\}/.exec(outputSplit[i]) !== null) {
         return outputSplit.slice(0, i).join(path.sep);
       }
     }

@@ -1,33 +1,59 @@
 import ProgressBar from '../../src/console/progressBar.js';
 
 export default class ProgressBarFake extends ProgressBar {
-  delete(): void {}
+  delete(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  done(): void {}
+  done(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  addWaitingMessage(): void {}
+  addWaitingMessage(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  removeWaitingMessage(): void {}
+  removeWaitingMessage(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  incrementTotal(): void {}
+  incrementTotal(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  incrementProgress(): void {}
+  incrementProgress(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  incrementDone(): void {}
+  incrementDone(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
   setLoggerPrefix(): ProgressBar {
     return this;
   }
 
-  log(): void {}
+  log(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  reset(): void {}
+  reset(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  setName(): void {}
+  setName(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  setSymbol(): void {}
+  setSymbol(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  freeze(): void {}
+  freeze(): void {
+    // @typescript-eslint/no-empty-function
+  }
 
-  update(): void {}
+  update(): void {
+    // @typescript-eslint/no-empty-function
+  }
 }

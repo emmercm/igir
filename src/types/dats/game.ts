@@ -236,7 +236,7 @@ export default class Game implements GameProps {
    * Is this game a collection of BIOS file(s).
    */
   getIsBios(): boolean {
-    return this.isBios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
+    return this.isBios === 'yes' || /\[BIOS\]/i.exec(this.name) !== null;
   }
 
   /**
@@ -250,7 +250,7 @@ export default class Game implements GameProps {
     return this.genre;
   }
 
-  getReleases(): Release[] {
+  private getReleases(): Release[] {
     if (Array.isArray(this.release)) {
       return this.release;
     }
@@ -291,29 +291,25 @@ export default class Game implements GameProps {
 
   getRevision(): number {
     // Numeric revision
-    const revNumberMatches = this.getName().match(/\((Rev|Version)\s*([0-9.]+)\)/i);
+    const revNumberMatches = /\((Rev|Version)\s*([0-9.]+)\)/i.exec(this.getName());
     if (revNumberMatches && revNumberMatches.length >= 3 && !Number.isNaN(revNumberMatches[1])) {
       return Number(revNumberMatches[2]);
     }
 
     // Letter revision
-    const revLetterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
+    const revLetterMatches = /\(Rev\s*([A-Z])\)/i.exec(this.getName());
     if (revLetterMatches && revLetterMatches.length >= 2) {
-      return (
-        (revLetterMatches[1].toUpperCase().codePointAt(0) as number) -
-        ('A'.codePointAt(0) as number) +
-        1
-      );
+      return revLetterMatches[1].toUpperCase().codePointAt(0)! - 'A'.codePointAt(0)! + 1;
     }
 
     // TOSEC versions
-    const versionMatches = this.getName().match(/\Wv([0-9]+\.[0-9]+)\W/i);
+    const versionMatches = /\Wv([0-9]+\.[0-9]+)\W/i.exec(this.getName());
     if (versionMatches && versionMatches.length >= 2 && !Number.isNaN(versionMatches[1])) {
       return Number(versionMatches[1]);
     }
 
     // Ring code revision
-    const ringCodeMatches = this.getName().match(/\(RE?-?([0-9]*)\)/i);
+    const ringCodeMatches = /\(RE?-?([0-9]*)\)/i.exec(this.getName());
     if (ringCodeMatches && ringCodeMatches.length >= 2) {
       if (ringCodeMatches[1] === '') {
         // Redump doesn't always include a number
@@ -330,28 +326,28 @@ export default class Game implements GameProps {
    * Is this game aftermarket (released after the last known console release)?
    */
   isAftermarket(): boolean {
-    return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
+    return /\(Aftermarket[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game an alpha pre-release?
    */
   isAlpha(): boolean {
-    return this.name.match(/\(Alpha[a-z0-9. ]*\)/i) !== null;
+    return /\(Alpha[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game an alternate release?
    */
   isAlternate(): boolean {
-    return this.name.match(/\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i) !== null;
+    return /\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game a "bad" dump?
    */
   isBad(): boolean {
-    if (this.name.match(/\[b[0-9]*\]/) !== null) {
+    if (/\[b[0-9]*\]/.exec(this.name) !== null) {
       return true;
     }
     if (this.isVerified()) {
@@ -368,7 +364,7 @@ export default class Game implements GameProps {
    * Is this game a beta pre-release?
    */
   isBeta(): boolean {
-    return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
+    return /\(Beta[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
@@ -382,14 +378,14 @@ export default class Game implements GameProps {
    * Is this game a "cracked" release (has copy protection removed)?
    */
   isCracked(): boolean {
-    return this.name.match(/\[cr([0-9]+| [^\]]+)?\]/) !== null;
+    return /\[cr([0-9]+| [^\]]+)?\]/.exec(this.name) !== null;
   }
 
   /**
    * Does this game contain debug symbols?
    */
   isDebug(): boolean {
-    return this.name.match(/\(Debug[a-z0-9. ]*\)/i) !== null;
+    return /\(Debug[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   public static readonly DEMO_REGEX = new RegExp(
@@ -422,21 +418,21 @@ export default class Game implements GameProps {
    * Is this game an enhancement chip? Primarily for SNES
    */
   isEnhancementChip(): boolean {
-    return this.name.match(/\(Enhancement Chip\)/i) !== null;
+    return /\(Enhancement Chip\)/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game "fixed" (altered to run better in emulation)?
    */
   isFixed(): boolean {
-    return this.name.match(/\[f[0-9]*\]/) !== null;
+    return /\[f[0-9]*\]/.exec(this.name) !== null;
   }
 
   /**
    * Is this game community homebrew?
    */
   isHomebrew(): boolean {
-    return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
+    return /\(Homebrew[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
@@ -447,14 +443,14 @@ export default class Game implements GameProps {
    * https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
    */
   isMIA(): boolean {
-    return this.name.match(/\[MIA\]/i) !== null;
+    return /\[MIA\]/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game an overdump (contains excess data)?
    */
   isOverdump(): boolean {
-    return this.name.match(/\[o[0-9]*\]/) !== null;
+    return /\[o[0-9]*\]/.exec(this.name) !== null;
   }
 
   /**
@@ -469,7 +465,7 @@ export default class Game implements GameProps {
    */
   isPirated(): boolean {
     return (
-      this.name.match(/\(Pirate[a-z0-9. ]*\)/i) !== null || this.name.match(/\[p[0-9]*\]/) !== null
+      /\(Pirate[a-z0-9. ]*\)/i.exec(this.name) !== null || /\[p[0-9]*\]/.exec(this.name) !== null
     );
   }
 
@@ -478,7 +474,7 @@ export default class Game implements GameProps {
    */
   isProgram(): boolean {
     return (
-      this.name.match(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i) !== null ||
+      /\([a-z0-9. ]*Program\)|(Check|Sample) Program/i.exec(this.name) !== null ||
       this.getCategories().some((category) => category.toLowerCase() === 'applications')
     );
   }
@@ -488,7 +484,7 @@ export default class Game implements GameProps {
    */
   isPrototype(): boolean {
     return (
-      this.name.match(/\([^)]*Proto[a-z0-9. ]*\)/i) !== null ||
+      /\([^)]*Proto[a-z0-9. ]*\)/i.exec(this.name) !== null ||
       this.getCategories().some((category) => category.toLowerCase() === 'preproduction')
     );
   }
@@ -497,21 +493,21 @@ export default class Game implements GameProps {
    * Is this game a sample?
    */
   isSample(): boolean {
-    return this.name.match(/\([^)]*Sample[a-z0-9. ]*\)/i) !== null;
+    return /\([^)]*Sample[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game translated by the community?
    */
   isTranslated(): boolean {
-    return this.name.match(/\[T[+-][^\]]+\]/) !== null;
+    return /\[T[+-][^\]]+\]/.exec(this.name) !== null;
   }
 
   /**
    * Is this game unlicensed (but was still physically produced and sold)?
    */
   isUnlicensed(): boolean {
-    return this.name.match(/\(Unl[a-z0-9. ]*\)/i) !== null;
+    return /\(Unl[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
@@ -526,7 +522,7 @@ export default class Game implements GameProps {
    * @see https://en.wikipedia.org/wiki/Bung_Enterprises
    */
   hasBungFix(): boolean {
-    return this.name.match(/\(Bung\)|\[bf\]/i) !== null;
+    return /\(Bung\)|\[bf\]/i.exec(this.name) !== null;
   }
 
   /**
@@ -534,8 +530,8 @@ export default class Game implements GameProps {
    */
   hasHack(): boolean {
     return (
-      this.name.match(/\(Hack\)/i) !== null ||
-      this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null ||
+      /\(Hack\)/i.exec(this.name) !== null ||
+      /\[h[a-zA-Z90-9+]*\]/.exec(this.name) !== null ||
       (this.manufacturer?.toLowerCase().includes('hack') ?? false)
     );
   }
@@ -544,7 +540,7 @@ export default class Game implements GameProps {
    * Does this game have a trainer?
    */
   hasTrainer(): boolean {
-    return this.name.match(/\[t[0-9]*\]/) !== null;
+    return /\[t[0-9]*\]/.exec(this.name) !== null;
   }
 
   /**
@@ -730,7 +726,7 @@ export default class Game implements GameProps {
   }
 
   private getTwoLetterLanguagesFromName(): string[] {
-    const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/);
+    const twoMatches = /\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/.exec(this.getName());
     if (twoMatches && twoMatches.length >= 2) {
       const twoMatchesParsed = twoMatches[1]
         .replace(/-[a-zA-Z]+$/, '') // chop off country
@@ -747,7 +743,7 @@ export default class Game implements GameProps {
 
   private getThreeLetterLanguagesFromName(): string[] {
     // Get language from long languages in the game name
-    const threeMatches = this.getName().match(/\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/);
+    const threeMatches = /\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/.exec(this.getName());
     if (threeMatches && threeMatches.length >= 2) {
       const threeMatchesParsed = threeMatches[1]
         .split('-')

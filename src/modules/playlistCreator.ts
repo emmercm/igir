@@ -7,10 +7,9 @@ import GameGrouper from '../gameGrouper.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
-import Parent from '../types/dats/parent.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
-import ReleaseCandidate from '../types/releaseCandidate.js';
+import WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**
@@ -27,30 +26,30 @@ export default class PlaylistCreator extends Module {
   /**
    * Creates playlists.
    */
-  async create(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): Promise<string[]> {
+  async create(dat: DAT, candidates: WriteCandidate[]): Promise<string[]> {
     if (!this.options.shouldPlaylist()) {
       return [];
     }
 
-    if (this.options.getPlaylistExtensions().length === 0) {
-      // Should not happen, ArgumentsParser checks this
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to create playlists for`);
       return [];
     }
 
     this.progressBar.logTrace(`${dat.getName()}: writing playlists`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.reset(candidates.length);
 
     const writtenPlaylistPaths: string[] = [];
 
-    let remainingCandidates: ReleaseCandidate[] = [...parentsToCandidates.values()].flat();
+    let remainingCandidates: WriteCandidate[] = candidates;
 
     // Write playlists for games that have multiple playlist-able files, i.e. from disc merging
     remainingCandidates = (
       await async.mapLimit(
         remainingCandidates,
         this.options.getWriterThreads(),
-        async (candidate: ReleaseCandidate) => {
+        async (candidate: WriteCandidate) => {
           const writtenFile = await this.maybeWritePlaylist(
             dat,
             candidate,
@@ -74,7 +73,7 @@ export default class PlaylistCreator extends Module {
       await async.mapLimit(
         [...gameNamesToCandidates.entries()],
         this.options.getWriterThreads(),
-        async ([gameName, candidates]: [string, ReleaseCandidate[]]) => {
+        async ([gameName, candidates]: [string, WriteCandidate[]]) => {
           const writtenFile = await this.maybeWritePlaylist(dat, candidates, gameName);
           if (writtenFile === undefined) {
             // We didn't write a playlist file, keep this candidate for more processing
@@ -95,7 +94,7 @@ export default class PlaylistCreator extends Module {
 
   private async maybeWritePlaylist(
     dat: DAT,
-    candidates: ReleaseCandidate | ReleaseCandidate[],
+    candidates: WriteCandidate | WriteCandidate[],
     playlistBasename: string,
   ): Promise<string | undefined> {
     const playlistFiles = (Array.isArray(candidates) ? candidates : [candidates])

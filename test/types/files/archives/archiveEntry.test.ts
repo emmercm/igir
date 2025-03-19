@@ -208,7 +208,7 @@ describe('getCrc32WithoutHeader', () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);
@@ -335,7 +335,7 @@ describe('getMd5WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).toBeDefined();
@@ -480,7 +480,7 @@ describe('getSha1WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).toBeDefined();
@@ -715,7 +715,7 @@ describe('getSha256WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).toBeDefined();

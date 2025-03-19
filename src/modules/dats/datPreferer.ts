@@ -35,7 +35,7 @@ export default class DATPreferer extends Module {
     }
 
     // Return early if there aren't any games
-    if (dat.getParents().reduce((sum, parent) => sum + parent.getGames().length, 0) === 0) {
+    if (dat.getGames().length === 0) {
       this.progressBar.logTrace(`${dat.getName()}: no parent has games, not preferring games`);
       return dat;
     }

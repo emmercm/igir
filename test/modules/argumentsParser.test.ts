@@ -343,7 +343,7 @@ describe('options', () => {
       .scanInputFilesWithoutExclusions();
     expect(src.length).toBeGreaterThan(0);
     expect(test.length).toBeGreaterThan(0);
-    expect(both.length).toEqual(src.length + test.length);
+    expect(both).toHaveLength(src.length + test.length);
     /** Note: glob patterns are tested in {@link ROMScanner} */
   });
 
@@ -670,7 +670,7 @@ describe('options', () => {
       .scanDatFilesWithoutExclusions();
     expect(src.length).toBeGreaterThan(0);
     expect(test.length).toBeGreaterThan(0);
-    expect(both.length).toEqual(src.length + test.length);
+    expect(both).toHaveLength(src.length + test.length);
     /** Note: glob patterns are tested in {@link DATScanner} */
 
     await expect(
@@ -1153,7 +1153,7 @@ describe('options', () => {
       .scanPatchFilesWithoutExclusions();
     expect(src.length).toBeGreaterThan(0);
     expect(test.length).toBeGreaterThan(0);
-    expect(both.length).toEqual(src.length + test.length);
+    expect(both).toHaveLength(src.length + test.length);
     /** Note: glob patterns are tested in {@link PatchScanner} */
   });
 
