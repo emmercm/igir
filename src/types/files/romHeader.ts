@@ -14,7 +14,8 @@ export default class ROMHeader {
     'No-Intro_LNX.xml': new ROMHeader(0, '4C594E58', 64, '.lnx', '.lyx'),
 
     // https://www.nesdev.org/wiki/INES
-    'No-Intro_NES.xml': new ROMHeader(0, '4E4553', 16, '.nes'),
+    // https://www.nesdev.org/wiki/NES_2.0
+    'No-Intro_NES.xml': new ROMHeader(0, '4E45531A', 16, '.nes'),
 
     // https://www.nesdev.org/wiki/FDS_file_format
     'No-Intro_FDS.xml': new ROMHeader(0, '464453', 16, '.fds'),
