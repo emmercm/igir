@@ -97,10 +97,36 @@ export default class FileSignature {
     // ********** ROMs - SPECIFIC **********
 
     // Atari - 7800
-    a78: new FileSignature('.a78', [{ offset: 1, value: Buffer.from('ATARI7800') }]),
+    a78: new FileSignature('.a78', [
+      { offset: 1, value: Buffer.from('ATARI7800') },
+      { offset: 0x64, value: Buffer.from('ACTUAL CART DATA STARTS HERE') },
+    ]),
 
     // Atari - Lynx
     lnx: new FileSignature('.lnx', [{ value: Buffer.from('LYNX') }]),
+
+    // Commodore
+    // @see https://vice-emu.sourceforge.io/vice_17.html#SEC434
+    crt_c64: new FileSignature('.crt', [{ value: Buffer.from('C64 CARTRIDGE   ') }]),
+    crt_c128: new FileSignature('.crt', [{ value: Buffer.from('C128 CARTRIDGE  ') }]),
+    crt_cbm2: new FileSignature('.crt', [{ value: Buffer.from('CBM2 CARTRIDGE  ') }]),
+    crt_vic20: new FileSignature('.crt', [{ value: Buffer.from('VIC20 CARTRIDGE ') }]),
+    crt_plus4: new FileSignature('.crt', [{ value: Buffer.from('PLUS4 CARTRIDGE ') }]),
+    // @see https://vice-emu.sourceforge.io/vice_17.html#SEC400
+    g64: new FileSignature('.g64', [{ value: Buffer.from('GCR-1541') }]),
+    // @see https://vice-emu.sourceforge.io/vice_17.html#SEC433
+    p00: new FileSignature('.p00', [{ value: Buffer.from('C64File\x00') }]),
+    // @see https://vice-emu.sourceforge.io/vice_17.html#SEC404
+    p64: new FileSignature('.p64', [{ value: Buffer.from('P64-1541') }]),
+    // @see https://vice-emu.sourceforge.io/vice_17.html#SEC396
+    t64: new FileSignature('.t64', [
+      { value: Buffer.from('C64S tape image file'.padEnd(32, '\x00')) },
+    ]),
+    // @see https://vice-emu.sourceforge.io/vice_17.html#SEC395
+    tap_v0_v1: new FileSignature('.tap', [{ value: Buffer.from('C64-TAPE-RAW') }]),
+    tap_v2: new FileSignature('.tap', [{ value: Buffer.from('C16-TAPE-RAW') }]),
+    // @see https://vice-emu.sourceforge.io/vice_17.html#SEC415
+    x64: new FileSignature('.x64', [{ value: Buffer.from('43154164', 'hex') }]),
 
     // Nintendo - Nintendo 3DS
     // TODO(cemmer): .3ds/.cci
@@ -134,7 +160,7 @@ export default class FileSignature {
     gw: new FileSignature('.bin', [{ value: Buffer.from('main.bs') }]),
 
     // Nintendo - GameCube
-    // TODO(cemmer): .gcm
+    // TODO(cemmer): .fdi
     // @see https://github.com/dolphin-emu/dolphin/blob/1f5e100a0e6dd4f9ab3784fd6373d452054d08bf/Source/Core/DiscIO/CompressedBlob.h#L25 (reversed)
     gcz: new FileSignature('.gcz', [{ value: Buffer.from('01C00BB1', 'hex') }]),
     // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
@@ -192,7 +218,7 @@ export default class FileSignature {
       { offset: 0x01_43, value: Buffer.from('C0', 'hex') }, // color only
     ]),
 
-    // Nintendo - Nintendo DS (Decrypted)
+    // Nintendo - Nintendo DS (encrypted & decrypted)
     // @see http://dsibrew.org/wiki/DSi_cartridge_header
     nds: new FileSignature('.nds', [
       {
@@ -205,7 +231,9 @@ export default class FileSignature {
     ]),
 
     // Nintendo - Nintendo Entertainment System
-    nes: new FileSignature('.nes', [{ value: Buffer.from('NES') }]),
+    // @see https://www.nesdev.org/wiki/INES
+    // @see https://www.nesdev.org/wiki/NES_2.0
+    nes: new FileSignature('.nes', [{ value: Buffer.from('NES\x1A') }]),
 
     // Nintendo - Super Nintendo Entertainment System
     // @see https://snes.nesdev.org/wiki/ROM_header
