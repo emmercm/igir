@@ -328,8 +328,8 @@ describe('with ROMs with headers', () => {
       [
         'game with two ROMs (parent)',
         [
-          'game with two ROMs (parent)/two.sfc', // respected headerless extension
-          'game with two ROMs (parent)/two.b', // respected DAT
+          path.join('game with two ROMs (parent)', 'two.sfc'), // respected headerless extension
+          path.join('game with two ROMs (parent)', 'two.b'), // respected DAT
         ],
       ],
     ]);
