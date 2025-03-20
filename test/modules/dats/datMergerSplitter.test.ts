@@ -8,7 +8,7 @@ import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
 import Machine from '../../../src/types/dats/mame/machine.js';
 import ROM from '../../../src/types/dats/rom.js';
-import Options, { MergeMode } from '../../../src/types/options.js';
+import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 it('should do nothing if no parent/clone info is present', () => {
@@ -23,21 +23,20 @@ it('should do nothing if no parent/clone info is present', () => {
   expect(result).toEqual(dat);
 });
 
-test.each(
-  Object.keys(MergeMode)
-    .filter((mode) => Number.isNaN(Number(mode)))
-    .map((mode) => [mode.toLowerCase()]),
-)('should do nothing if no parent/clone info is present: %s', (mergeRoms) => {
-  // Given
-  const options = new Options({ mergeRoms });
-  const dat = new LogiqxDAT(new Header(), []);
+test.each(Object.values(MergeMode).map((mode) => MergeModeInverted[mode].toLowerCase()))(
+  'should do nothing if no parent/clone info is present: %s',
+  (mergeRoms) => {
+    // Given
+    const options = new Options({ mergeRoms });
+    const dat = new LogiqxDAT(new Header(), []);
 
-  // When
-  const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
+    // When
+    const result = new DATMergerSplitter(options, new ProgressBarFake()).merge(dat);
 
-  // Then the original DAT was returned
-  expect(result).toEqual(dat);
-});
+    // Then the original DAT was returned
+    expect(result).toEqual(dat);
+  },
+);
 
 describe('MAME v0.258', () => {
   /* eslint-disable unicorn/numeric-separators-style */
@@ -6175,7 +6174,7 @@ describe('MAME v0.258', () => {
   it('should full-non-merged', () => {
     // Given
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
     });
 
     // When
@@ -6886,7 +6885,7 @@ describe('MAME v0.258', () => {
   it('should non-merged', () => {
     // Given
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.NONMERGED].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.NONMERGED].toLowerCase(),
     });
 
     // When
@@ -7372,7 +7371,7 @@ describe('MAME v0.258', () => {
   it('should split', () => {
     // Given
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.SPLIT].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.SPLIT].toLowerCase(),
     });
 
     // When
@@ -7685,7 +7684,7 @@ describe('MAME v0.258', () => {
   it('should merged', () => {
     // Given
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.MERGED].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.MERGED].toLowerCase(),
     });
 
     // When
@@ -8294,7 +8293,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
   it('should split', () => {
     // Given
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.SPLIT].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.SPLIT].toLowerCase(),
     });
 
     // When

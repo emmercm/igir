@@ -1,7 +1,7 @@
 import semver from 'semver';
 
 import Logger from '../console/logger.js';
-import LogLevel from '../console/logLevel.js';
+import { LogLevel } from '../console/logLevel.js';
 import ProgressBarCLI from '../console/progressBarCli.js';
 
 /**

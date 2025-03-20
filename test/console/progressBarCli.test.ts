@@ -1,6 +1,6 @@
 import stripAnsi from 'strip-ansi';
 
-import LogLevel from '../../src/console/logLevel.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import { ProgressBarSymbol } from '../../src/console/progressBar.js';
 import ProgressBarCLI from '../../src/console/progressBarCli.js';
 import SingleBarFormatted from '../../src/console/singleBarFormatted.js';
@@ -244,7 +244,7 @@ describe('logDebug', () => {
   });
 
   it('should not log at the matching log level', () => {
-    const spy = new ProgressBarCLISpy(LogLevel.DEBUG + 1);
+    const spy = new ProgressBarCLISpy(LogLevel.INFO);
     const progressBar = ProgressBarCLI.new(
       spy.getLogger(),
       'name',
@@ -279,7 +279,7 @@ describe('logInfo', () => {
   });
 
   it('should not log at the matching log level', () => {
-    const spy = new ProgressBarCLISpy(LogLevel.INFO + 1);
+    const spy = new ProgressBarCLISpy(LogLevel.WARN);
     const progressBar = ProgressBarCLI.new(
       spy.getLogger(),
       'name',
@@ -314,7 +314,7 @@ describe('logWarn', () => {
   });
 
   it('should not log at the matching log level', () => {
-    const spy = new ProgressBarCLISpy(LogLevel.WARN + 1);
+    const spy = new ProgressBarCLISpy(LogLevel.ERROR);
     const progressBar = ProgressBarCLI.new(
       spy.getLogger(),
       'name',
@@ -349,7 +349,7 @@ describe('logError', () => {
   });
 
   it('should not log at the matching log level', () => {
-    const spy = new ProgressBarCLISpy(LogLevel.ERROR + 1);
+    const spy = new ProgressBarCLISpy(LogLevel.NOTICE);
     const progressBar = ProgressBarCLI.new(
       spy.getLogger(),
       'name',

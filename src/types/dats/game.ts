@@ -8,30 +8,31 @@ import Disk from './disk.js';
 import Release from './release.js';
 import ROM from './rom.js';
 
-enum GameType {
-  AFTERMARKET = 'Aftermarket',
-  ALPHA = 'Alpha',
-  BAD = 'Bad',
-  BETA = 'Beta',
-  BIOS = 'BIOS',
-  CRACKED = 'Cracked',
-  DEBUG = 'Debug',
-  DEMO = 'Demo',
-  DEVICE = 'Device',
-  FIXED = 'Fixed',
-  HACKED = 'Hacked',
-  HOMEBREW = 'Homebrew',
-  OVERDUMP = 'Overdump',
-  PENDING_DUMP = 'Pending Dump',
-  PIRATED = 'Pirated',
-  PROGRAM = 'Program',
-  PROTOTYPE = 'Prototype',
-  RETAIL = 'Retail',
-  SAMPLE = 'Sample',
-  TRAINED = 'Trained',
-  TRANSLATED = 'Translated',
-  UNLICENSED = 'Unlicensed',
-}
+const GameType = {
+  AFTERMARKET: 'Aftermarket',
+  ALPHA: 'Alpha',
+  BAD: 'Bad',
+  BETA: 'Beta',
+  BIOS: 'BIOS',
+  CRACKED: 'Cracked',
+  DEBUG: 'Debug',
+  DEMO: 'Demo',
+  DEVICE: 'Device',
+  FIXED: 'Fixed',
+  HACKED: 'Hacked',
+  HOMEBREW: 'Homebrew',
+  OVERDUMP: 'Overdump',
+  PENDING_DUMP: 'Pending Dump',
+  PIRATED: 'Pirated',
+  PROGRAM: 'Program',
+  PROTOTYPE: 'Prototype',
+  RETAIL: 'Retail',
+  SAMPLE: 'Sample',
+  TRAINED: 'Trained',
+  TRANSLATED: 'Translated',
+  UNLICENSED: 'Unlicensed',
+} as const;
+type GameTypeValue = (typeof GameType)[keyof typeof GameType];
 
 /**
  * "There are two 'semi-optional' fields that can be included for each game;
@@ -575,7 +576,7 @@ export default class Game implements GameProps {
     );
   }
 
-  getGameType(): GameType {
+  getGameType(): GameTypeValue {
     // NOTE(cemmer): priority here matters!
     if (this.getIsBios()) {
       return GameType.BIOS;

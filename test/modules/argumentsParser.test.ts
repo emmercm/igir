@@ -2,7 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import Logger from '../../src/console/logger.js';
-import LogLevel from '../../src/console/logLevel.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import Temp from '../../src/globals/temp.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';

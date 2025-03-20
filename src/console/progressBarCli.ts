@@ -8,7 +8,7 @@ import ConsolePoly from '../polyfill/consolePoly.js';
 import TimePoly from '../polyfill/timePoly.js';
 import Timer from '../timer.js';
 import Logger from './logger.js';
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelValue } from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarPayload from './progressBarPayload.js';
 import SingleBarFormatted from './singleBarFormatted.js';
@@ -320,16 +320,16 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   /**
-   * Log a message at some specified {@link LogLevel}.
+   * Log a message at some specified {@link LogLevelValue}.
    */
-  log(logLevel: LogLevel, message: string): void {
+  log(logLevel: LogLevelValue, message: string): void {
     ProgressBarCLI.log(this.logger, logLevel, message);
   }
 
   /**
-   * Log a message at some specified {@link LogLevel}.
+   * Log a message at some specified {@link LogLevelValue}.
    */
-  static log(logger: Logger, logLevel: LogLevel, message: string): void {
+  static log(logger: Logger, logLevel: LogLevelValue, message: string): void {
     if (logger.getLogLevel() > logLevel) {
       return;
     }

@@ -5,7 +5,7 @@ import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/types/dats/rom.js';
-import Options, { GameSubdirMode } from '../../../src/types/options.js';
+import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -67,7 +67,7 @@ it('should do nothing with no options', async () => {
   const options = new Options({
     commands: ['copy'],
     output: 'Output',
-    dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+    dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
 
   const candidates = await runCandidatePostProcessor(options);
@@ -178,7 +178,7 @@ describe('dirLetterLimit', () => {
         dirLetter: true,
         dirLetterCount: 1,
         dirLetterLimit,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       const candidates = await runCandidatePostProcessor(options);
@@ -325,7 +325,7 @@ describe('dirLetterGroup', () => {
         dirLetterCount,
         dirLetterLimit,
         dirLetterGroup: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       const candidates = await runCandidatePostProcessor(options);

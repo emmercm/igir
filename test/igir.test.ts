@@ -2,19 +2,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import Logger from '../src/console/logger.js';
-import LogLevel from '../src/console/logLevel.js';
+import { LogLevel } from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
 import DATScanner from '../src/modules/dats/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import FsPoly from '../src/polyfill/fsPoly.js';
 import FileCache from '../src/types/files/fileCache.js';
-import { ChecksumBitmask } from '../src/types/files/fileChecksums.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import Options, {
   FixExtension,
+  FixExtensionInverted,
   GameSubdirMode,
+  GameSubdirModeInverted,
   InputChecksumArchivesMode,
+  InputChecksumArchivesModeInverted,
   OptionsProps,
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
@@ -148,11 +151,11 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         inputChecksumArchives:
-          InputChecksumArchivesMode[InputChecksumArchivesMode.NEVER].toLowerCase(),
+          InputChecksumArchivesModeInverted[InputChecksumArchivesMode.NEVER].toLowerCase(),
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
         disableCache: true,
       });
@@ -243,9 +246,9 @@ describe('with explicit DATs', () => {
         dat: [path.join(inputTemp, 'dats', 'one.dat')],
         input: [path.join(inputTemp, 'roms')],
         inputChecksumArchives:
-          InputChecksumArchivesMode[InputChecksumArchivesMode.ALWAYS].toLowerCase(),
+          InputChecksumArchivesModeInverted[InputChecksumArchivesMode.ALWAYS].toLowerCase(),
         output: outputTemp,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         single: true,
         preferParent: true,
         cachePath: inputTemp,
@@ -305,8 +308,8 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
       });
 
@@ -432,7 +435,7 @@ describe('with explicit DATs', () => {
         input: inputHardlinks,
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         excludeDisks: true,
       });
 
@@ -475,7 +478,7 @@ describe('with explicit DATs', () => {
         input: inputSymlinks,
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         excludeDisks: true,
       });
 
@@ -512,8 +515,8 @@ describe('with explicit DATs', () => {
         dirDatName: true,
         dirLetter: true,
         dirLetterCount: 1,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -733,7 +736,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -836,7 +839,7 @@ describe('with explicit DATs', () => {
         inputExclude: [path.join(inputTemp, 'roms', 'nkit')], // will throw an error, preventing everything
         output: outputTemp,
         zipDatName: true,
-        fixExtension: FixExtension[FixExtension.NEVER].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.NEVER].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -929,8 +932,8 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         symlink: true,
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
       });
@@ -1122,12 +1125,12 @@ describe('with explicit DATs', () => {
         commands: ['copy', 'extract', 'test'],
         dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
-        inputChecksumMin: ChecksumBitmask[ChecksumBitmask.MD5].toLowerCase(),
+        inputChecksumMin: ChecksumBitmaskInverted[ChecksumBitmask.MD5].toLowerCase(),
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -1253,7 +1256,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       const writtenFixdats = result.outputFilesAndCrcs
@@ -1283,7 +1286,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         fixdatOutput: outputTemp,
         reportOutput: path.join(outputTemp, 'report.csv'),
       });
@@ -1320,7 +1323,7 @@ describe('with inferred DATs', () => {
         dirLetter: true,
         dirLetterCount: 1,
         dirLetterLimit: 2,
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -1400,8 +1403,8 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         output: outputTemp,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -1553,7 +1556,7 @@ describe('with inferred DATs', () => {
           path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
         ],
         output: outputTemp,
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         symlink: true,
         symlinkRelative: true,
       });
@@ -1714,7 +1717,7 @@ describe('with inferred DATs', () => {
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms', 'headered')],
         output: outputTemp,
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -1750,7 +1753,7 @@ describe('with inferred DATs', () => {
         ],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtension[FixExtension.AUTO].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         dir2datOutput: outputTemp,
       });
 

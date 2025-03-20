@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelValue } from './logLevel.js';
 
 /**
  * @see https://www.toptal.com/designers/htmlarrows/symbols/
@@ -75,7 +75,7 @@ export default abstract class ProgressBar {
 
   abstract setLoggerPrefix(prefix: string): void;
 
-  abstract log(logLevel: LogLevel, message: string): void;
+  abstract log(logLevel: LogLevelValue, message: string): void;
 
   /**
    * Log a TRACE message.

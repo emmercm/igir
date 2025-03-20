@@ -5,7 +5,7 @@ import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
-import Options, { PreferRevision } from '../../../src/types/options.js';
+import Options, { PreferRevision, PreferRevisionInverted } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const testGameWarlocked: Game[] = [
@@ -475,7 +475,7 @@ describe('revisions', () => {
   it('should prefer newer revisions', () => {
     const options = new Options({
       single: true,
-      preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(),
+      preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
     });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
@@ -492,7 +492,7 @@ describe('revisions', () => {
   it('should prefer older revisions', () => {
     const options = new Options({
       single: true,
-      preferRevision: PreferRevision[PreferRevision.OLDER].toLowerCase(),
+      preferRevision: PreferRevisionInverted[PreferRevision.OLDER].toLowerCase(),
     });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
@@ -595,7 +595,7 @@ describe('preference combinations', () => {
     const options = new Options({
       preferLanguage: ['DE', 'EN'],
       preferRegion: ['GER', 'EUR', 'USA', 'WORLD'],
-      preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(),
+      preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
       single: true,
     });
     const dat = new LogiqxDAT(new Header(), testGameDaveMirraFreestyleBmx2);
@@ -609,7 +609,7 @@ describe('preference combinations', () => {
   it('should prefer regions in some game names over releases', () => {
     const options = new Options({
       single: true,
-      preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(),
+      preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
       preferRegion: ['USA'],
     });
     const dat = new LogiqxDAT(new Header(), [

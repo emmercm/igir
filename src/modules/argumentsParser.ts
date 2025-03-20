@@ -8,15 +8,20 @@ import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ExpectedError from '../types/expectedError.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
 import Options, {
   FixExtension,
+  FixExtensionInverted,
   GameSubdirMode,
+  GameSubdirModeInverted,
   InputChecksumArchivesMode,
+  InputChecksumArchivesModeInverted,
   MergeMode,
+  MergeModeInverted,
   PreferRevision,
+  PreferRevisionInverted,
 } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
@@ -223,7 +228,8 @@ export default class ArgumentsParser {
         // Re-implement `conflicts: 'input-checksum-min'`, which isn't possible with a default value
         if (
           checkArgv['input-checksum-quick'] &&
-          checkArgv['input-checksum-min'] !== ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase()
+          checkArgv['input-checksum-min'] !==
+            ChecksumBitmaskInverted[ChecksumBitmask.CRC32].toUpperCase()
         ) {
           throw new ExpectedError(
             'Arguments input-checksum-quick and input-checksum-min are mutually exclusive',
@@ -239,27 +245,19 @@ export default class ArgumentsParser {
       .option('input-checksum-min', {
         group: groupRomInput,
         description: 'The minimum checksum level to calculate and use for matching',
-        choices: Object.keys(ChecksumBitmask)
-          .filter((bitmask) => Number.isNaN(Number(bitmask)))
-          .filter(
-            (bitmask) =>
-              ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] !== ChecksumBitmask.NONE,
-          )
-          .map((bitmask) => bitmask.toUpperCase()),
+        choices: Object.values(ChecksumBitmask)
+          .filter((bitmask) => bitmask !== ChecksumBitmask.NONE)
+          .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase(),
+        default: ChecksumBitmaskInverted[ChecksumBitmask.CRC32].toUpperCase(),
       })
       .option('input-checksum-max', {
         group: groupRomInput,
         description: 'The maximum checksum level to calculate and use for matching',
-        choices: Object.keys(ChecksumBitmask)
-          .filter((bitmask) => Number.isNaN(Number(bitmask)))
-          .filter(
-            (bitmask) =>
-              ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] !== ChecksumBitmask.NONE,
-          )
-          .map((bitmask) => bitmask.toUpperCase()),
+        choices: Object.values(ChecksumBitmask)
+          .filter((bitmask) => bitmask !== ChecksumBitmask.NONE)
+          .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
@@ -282,12 +280,12 @@ export default class ArgumentsParser {
         group: groupRomInput,
         description:
           'Calculate checksums of archive files themselves, allowing them to match files in DATs',
-        choices: Object.keys(InputChecksumArchivesMode)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(InputChecksumArchivesMode).map((mode) =>
+          InputChecksumArchivesModeInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: InputChecksumArchivesMode[InputChecksumArchivesMode.AUTO].toLowerCase(),
+        default: InputChecksumArchivesModeInverted[InputChecksumArchivesMode.AUTO].toLowerCase(),
       })
 
       .option('dat', {
@@ -447,24 +445,24 @@ export default class ArgumentsParser {
       .option('dir-game-subdir', {
         group: groupRomOutputPath,
         description: 'Append the name of the game as an output subdirectory depending on its ROMs',
-        choices: Object.keys(GameSubdirMode)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(GameSubdirMode).map((mode) =>
+          GameSubdirModeInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        default: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       })
 
       .option('fix-extension', {
         group: groupRomOutput,
         description:
           'Read files for known signatures and use the correct extension (also affects dir2dat)',
-        choices: Object.keys(FixExtension)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(FixExtension).map((mode) =>
+          FixExtensionInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: FixExtension[FixExtension.AUTO].toLowerCase(),
+        default: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       })
       .option('overwrite', {
         group: groupRomOutput,
@@ -595,17 +593,15 @@ export default class ArgumentsParser {
       .option('merge-roms', {
         group: groupRomSet,
         description: 'ROM merge/split mode (requires DATs with parent/clone information)',
-        choices: Object.keys(MergeMode)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(MergeMode).map((mode) => MergeModeInverted[mode].toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+        default: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
       })
       .check((checkArgv) => {
         // Re-implement `implies: 'dat'`, which isn't possible with a default value
         if (
-          checkArgv['merge-roms'] !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          checkArgv['merge-roms'] !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           !checkArgv.dat
         ) {
           throw new ExpectedError('Missing dependent arguments:\n merge-roms -> dat');
@@ -830,9 +826,9 @@ export default class ArgumentsParser {
       .option('prefer-revision', {
         group: groupRomPriority,
         description: 'Prefer older or newer revisions, versions, or ring codes',
-        choices: Object.keys(PreferRevision)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(PreferRevision).map((mode) =>
+          PreferRevisionInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         implies: 'single',
@@ -993,30 +989,30 @@ export default class ArgumentsParser {
 
       .check((checkArgv) => {
         if (
-          checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          checkArgv.mergeRoms !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.dirMirror || checkArgv.dirLetter)
         ) {
           this.logger.warn(
-            `at least one --dir-* option was provided, be careful about how you organize non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`,
+            `at least one --dir-* option was provided, be careful about how you organize non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`,
           );
         }
 
         if (
-          checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          checkArgv.mergeRoms !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.noBios || checkArgv.noDevice)
         ) {
           this.logger.warn(
-            `--no-bios and --no-device may leave non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`,
+            `--no-bios and --no-device may leave non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
 
         if (
           checkArgv.single &&
           !checkArgv.preferParent &&
-          checkArgv.mergeRoms === MergeMode[MergeMode.SPLIT].toLowerCase()
+          checkArgv.mergeRoms === MergeModeInverted[MergeMode.SPLIT].toLowerCase()
         ) {
           this.logger.warn(
-            `--single may leave '${MergeMode[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
+            `--single may leave '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
 
