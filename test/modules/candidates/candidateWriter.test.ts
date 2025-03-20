@@ -25,7 +25,11 @@ import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options, { GameSubdirMode, OptionsProps } from '../../../src/types/options.js';
+import Options, {
+  GameSubdirMode,
+  GameSubdirModeInverted,
+  OptionsProps,
+} from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function copyFixturesToTemp(
@@ -1204,7 +1208,7 @@ describe('extract', () => {
       // Given
       const options = new Options({
         commands: ['copy', 'extract', 'test'],
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
@@ -1385,7 +1389,7 @@ describe('extract', () => {
         // Given
         const options = new Options({
           commands: ['move', 'extract', 'test'],
-          dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+          dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         });
         const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);

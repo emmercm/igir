@@ -6,7 +6,7 @@ import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
 import Machine from '../../../src/types/dats/mame/machine.js';
 import ROM from '../../../src/types/dats/rom.js';
 import File from '../../../src/types/files/file.js';
-import Options, { MergeMode } from '../../../src/types/options.js';
+import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -40,10 +40,9 @@ describe('missing parents', () => {
   ]);
 
   test.each(
-    Object.keys(MergeMode)
-      .filter((mode) => Number.isNaN(Number(mode)))
-      .filter((mode) => mode !== MergeMode[MergeMode.SPLIT])
-      .map((mode) => [mode.toLowerCase()]),
+    Object.values(MergeMode)
+      .filter((mode) => mode !== MergeMode.SPLIT)
+      .map((mode) => MergeModeInverted[mode].toLowerCase()),
   )('should return no missing games for %s sets', async (mergeRoms) => {
     const options = new Options({ mergeRoms });
     const candidates = await datToCandidates(dat);
@@ -57,7 +56,7 @@ describe('missing parents', () => {
 
   it('should return missing games for split sets', async () => {
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.SPLIT].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.SPLIT].toLowerCase(),
     });
     const candidates = await datToCandidates(dat);
 
@@ -92,7 +91,7 @@ describe('device refs', () => {
 
   it('should return no missing device refs for fullnonmerged sets', async () => {
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
     });
     const candidates = (await datToCandidates(dat))
       // Remove all candidates for devices
@@ -106,10 +105,9 @@ describe('device refs', () => {
   });
 
   test.each(
-    Object.keys(MergeMode)
-      .filter((mode) => Number.isNaN(Number(mode)))
-      .filter((mode) => mode !== MergeMode[MergeMode.FULLNONMERGED])
-      .map((mode) => [mode.toLowerCase()]),
+    Object.values(MergeMode)
+      .filter((mode) => mode !== MergeMode.FULLNONMERGED)
+      .map((mode) => MergeModeInverted[mode].toLowerCase()),
   )('should return missing games for %s sets', async (mergeRoms) => {
     const options = new Options({ mergeRoms });
     const candidates = (await datToCandidates(dat))

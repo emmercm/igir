@@ -6,7 +6,7 @@ import figlet from 'figlet';
 import moment from 'moment';
 
 import Package from '../globals/package.js';
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelInverted, LogLevelValue } from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarCLI from './progressBarCli.js';
 
@@ -14,14 +14,14 @@ import ProgressBarCLI from './progressBarCli.js';
  * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.
  */
 export default class Logger {
-  private logLevel: LogLevel;
+  private logLevel: LogLevelValue;
 
   private readonly stream: NodeJS.WritableStream;
 
   private readonly loggerPrefix?: string;
 
   constructor(
-    logLevel: LogLevel = LogLevel.WARN,
+    logLevel: LogLevelValue = LogLevel.WARN,
     stream: NodeJS.WritableStream = process.stdout,
     loggerPrefix?: string,
   ) {
@@ -30,11 +30,11 @@ export default class Logger {
     this.loggerPrefix = loggerPrefix;
   }
 
-  getLogLevel(): LogLevel {
+  getLogLevel(): LogLevelValue {
     return this.logLevel;
   }
 
-  setLogLevel(logLevel: LogLevel): void {
+  setLogLevel(logLevel: LogLevelValue): void {
     this.logLevel = logLevel;
   }
 
@@ -56,7 +56,7 @@ export default class Logger {
     return false;
   }
 
-  private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
+  private readonly print = (logLevel: LogLevelValue, message: unknown = ''): void => {
     if (this.logLevel > logLevel) {
       return;
     }
@@ -71,9 +71,9 @@ export default class Logger {
   }
 
   /**
-   * Format a log message for a given {@link LogLevel}.
+   * Format a log message for a given {@link LogLevelValue}.
    */
-  formatMessage(logLevel: LogLevel, message: string): string {
+  formatMessage(logLevel: LogLevelValue, message: string): string {
     // Don't format "ALWAYS" or "NEVER"
     if (logLevel >= LogLevel.ALWAYS) {
       return message;
@@ -88,12 +88,12 @@ export default class Logger {
       [LogLevel.ERROR]: chalk.red,
       [LogLevel.NOTICE]: chalk.underline,
       [LogLevel.NEVER]: (msg): string => msg,
-    } satisfies Record<LogLevel, (message: string) => string>;
+    } satisfies Record<LogLevelValue, (message: string) => string>;
     const chalkFunc = chalkFuncs[logLevel];
 
     const loggerTime =
       this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = `${chalkFunc(LogLevel[logLevel])}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `;
+    const levelPrefix = `${chalkFunc(LogLevelInverted[logLevel])}:${' '.repeat(Math.max(5 - LogLevelInverted[logLevel].length, 0))} `;
     const loggerPrefix =
       this.logLevel <= LogLevel.TRACE && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 

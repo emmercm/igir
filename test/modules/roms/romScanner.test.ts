@@ -80,9 +80,10 @@ describe('multiple files', () => {
   ] satisfies [OptionsProps, number][])(
     'should calculate checksums of archives: %s',
     async (optionsProps, expectedRomFiles) => {
-      const checksumBitmask = Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-        .reduce((allBitmasks, bitmask) => allBitmasks | ChecksumBitmask[bitmask], 0);
+      const checksumBitmask = Object.values(ChecksumBitmask).reduce(
+        (allBitmasks, bitmask) => allBitmasks | bitmask,
+        0 as number,
+      );
       const scannedFiles = await new ROMScanner(
         new Options(optionsProps),
         new ProgressBarFake(),

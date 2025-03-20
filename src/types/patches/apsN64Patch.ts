@@ -3,10 +3,11 @@ import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
-enum APSN64PatchType {
-  SIMPLE = 0,
-  N64 = 1,
-}
+const APSN64PatchType = {
+  SIMPLE: 0,
+  N64: 1,
+} as const;
+type APSN64PatchTypeValue = (typeof APSN64PatchType)[keyof typeof APSN64PatchType];
 
 /**
  * @see https://github.com/btimofeev/UniPatcher/wiki/APS-(N64)
@@ -14,10 +15,10 @@ enum APSN64PatchType {
 export default class APSN64Patch extends Patch {
   static readonly FILE_SIGNATURE = Buffer.from('APS10');
 
-  private readonly patchType: APSN64PatchType;
+  private readonly patchType: APSN64PatchTypeValue;
 
   protected constructor(
-    patchType: APSN64PatchType,
+    patchType: APSN64PatchTypeValue,
     file: File,
     crcBefore: string,
     sizeAfter: number,
@@ -27,13 +28,13 @@ export default class APSN64Patch extends Patch {
   }
 
   static async patchFrom(file: File): Promise<APSN64Patch> {
-    let patchType = APSN64PatchType.SIMPLE;
+    let patchType: APSN64PatchTypeValue = APSN64PatchType.SIMPLE;
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
 
     await file.extractToTempFilePoly('r', async (patchFile) => {
       patchFile.seek(APSN64Patch.FILE_SIGNATURE.length);
-      patchType = (await patchFile.readNext(1)).readUInt8();
+      patchType = (await patchFile.readNext(1)).readUInt8() as APSN64PatchTypeValue;
       patchFile.skipNext(1); // encoding method
       patchFile.skipNext(50); // description
 

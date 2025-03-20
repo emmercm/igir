@@ -10,7 +10,7 @@ import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
 
-import LogLevel from '../console/logLevel.js';
+import { LogLevel, LogLevelValue } from '../console/logLevel.js';
 import Defaults from '../globals/defaults.js';
 import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -20,47 +20,77 @@ import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
 import ExpectedError from './expectedError.js';
 import File from './files/file.js';
-import { ChecksumBitmask } from './files/fileChecksums.js';
+import {
+  ChecksumBitmask,
+  ChecksumBitmaskKey,
+  ChecksumBitmaskValue,
+} from './files/fileChecksums.js';
 
-export enum InputChecksumArchivesMode {
+export const InputChecksumArchivesMode = {
   // Never calculate the checksum of archive files
-  NEVER = 1,
+  NEVER: 1,
   // Calculate the checksum of archive files if DATs reference archives
-  AUTO = 2,
+  AUTO: 2,
   // Always calculate the checksum of archive files
-  ALWAYS = 3,
-}
+  ALWAYS: 3,
+} as const;
+export type InputChecksumArchivesModeKey = keyof typeof InputChecksumArchivesMode;
+export type InputChecksumArchivesModeValue =
+  (typeof InputChecksumArchivesMode)[InputChecksumArchivesModeKey];
+export const InputChecksumArchivesModeInverted = Object.fromEntries(
+  Object.entries(InputChecksumArchivesMode).map(([key, value]) => [value, key]),
+) as Record<InputChecksumArchivesModeValue, InputChecksumArchivesModeKey>;
 
-export enum MergeMode {
+export const MergeMode = {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
-  FULLNONMERGED = 1,
+  FULLNONMERGED: 1,
   // Clones contain all parent ROMs, BIOS & device ROMsets are separate
-  NONMERGED,
+  NONMERGED: 2,
   // Clones exclude all parent ROMs, BIOS & device ROMsets are separate
-  SPLIT,
+  SPLIT: 3,
   // Clones are merged into parent, BIOS & device ROMsets are separate
-  MERGED,
-}
+  MERGED: 4,
+} as const;
+export type MergeModeKey = keyof typeof MergeMode;
+export type MergeModeValue = (typeof MergeMode)[MergeModeKey];
+export const MergeModeInverted = Object.fromEntries(
+  Object.entries(MergeMode).map(([key, value]) => [value, key]),
+) as Record<MergeModeValue, MergeModeKey>;
 
-export enum GameSubdirMode {
+export const GameSubdirMode = {
   // Never add the Game name as a subdirectory
-  NEVER = 1,
+  NEVER: 1,
   // Add the Game name as a subdirectory if it has multiple output files
-  MULTIPLE,
+  MULTIPLE: 2,
   // Always add the Game name as a subdirectory
-  ALWAYS,
-}
+  ALWAYS: 3,
+} as const;
+export type GameSubdirModeKey = keyof typeof GameSubdirMode;
+export type GameSubdirModeValue = (typeof GameSubdirMode)[GameSubdirModeKey];
+export const GameSubdirModeInverted = Object.fromEntries(
+  Object.entries(GameSubdirMode).map(([key, value]) => [value, key]),
+) as Record<GameSubdirModeValue, GameSubdirModeKey>;
 
-export enum FixExtension {
-  NEVER = 1,
-  AUTO = 2,
-  ALWAYS = 3,
-}
+export const FixExtension = {
+  NEVER: 1,
+  AUTO: 2,
+  ALWAYS: 3,
+} as const;
+export type FixExtensionKey = keyof typeof FixExtension;
+export type FixExtensionValue = (typeof FixExtension)[FixExtensionKey];
+export const FixExtensionInverted = Object.fromEntries(
+  Object.entries(FixExtension).map(([key, value]) => [value, key]),
+) as Record<FixExtensionValue, FixExtensionKey>;
 
-export enum PreferRevision {
-  OLDER = 1,
-  NEWER = 2,
-}
+export const PreferRevision = {
+  OLDER: 1,
+  NEWER: 2,
+} as const;
+export type PreferRevisionKey = keyof typeof PreferRevision;
+export type PreferRevisionValue = (typeof PreferRevision)[PreferRevisionKey];
+export const PreferRevisionInverted = Object.fromEntries(
+  Object.entries(PreferRevision).map(([key, value]) => [value, key]),
+) as Record<PreferRevisionValue, PreferRevisionKey>;
 
 export interface OptionsProps {
   readonly commands?: string[];
@@ -825,34 +855,34 @@ export default class Options implements OptionsProps {
     return this.inputChecksumQuick;
   }
 
-  getInputChecksumMin(): ChecksumBitmask | undefined {
+  getInputChecksumMin(): ChecksumBitmaskValue | undefined {
     const checksumBitmask = Object.keys(ChecksumBitmask).find(
       (bitmask) => bitmask.toUpperCase() === this.inputChecksumMin?.toUpperCase(),
     );
     if (!checksumBitmask) {
       return undefined;
     }
-    return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+    return ChecksumBitmask[checksumBitmask as ChecksumBitmaskKey];
   }
 
-  getInputChecksumMax(): ChecksumBitmask | undefined {
+  getInputChecksumMax(): ChecksumBitmaskValue | undefined {
     const checksumBitmask = Object.keys(ChecksumBitmask).find(
       (bitmask) => bitmask.toUpperCase() === this.inputChecksumMax?.toUpperCase(),
     );
     if (!checksumBitmask) {
       return undefined;
     }
-    return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+    return ChecksumBitmask[checksumBitmask as ChecksumBitmaskKey];
   }
 
-  getInputChecksumArchives(): InputChecksumArchivesMode | undefined {
+  getInputChecksumArchives(): InputChecksumArchivesModeValue | undefined {
     const checksumMode = Object.keys(InputChecksumArchivesMode).find(
       (mode) => mode.toLowerCase() === this.inputChecksumArchives?.toLowerCase(),
     );
     if (!checksumMode) {
       return undefined;
     }
-    return InputChecksumArchivesMode[checksumMode as keyof typeof InputChecksumArchivesMode];
+    return InputChecksumArchivesMode[checksumMode as InputChecksumArchivesModeKey];
   }
 
   /**
@@ -969,24 +999,24 @@ export default class Options implements OptionsProps {
     return this.dirLetterGroup;
   }
 
-  getDirGameSubdir(): GameSubdirMode | undefined {
+  getDirGameSubdir(): GameSubdirModeValue | undefined {
     const subdirMode = Object.keys(GameSubdirMode).find(
       (mode) => mode.toLowerCase() === this.dirGameSubdir?.toLowerCase(),
     );
     if (!subdirMode) {
       return undefined;
     }
-    return GameSubdirMode[subdirMode as keyof typeof GameSubdirMode];
+    return GameSubdirMode[subdirMode as GameSubdirModeKey];
   }
 
-  getFixExtension(): FixExtension | undefined {
+  getFixExtension(): FixExtensionValue | undefined {
     const fixExtensionMode = Object.keys(FixExtension).find(
       (mode) => mode.toLowerCase() === this.fixExtension?.toLowerCase(),
     );
     if (!fixExtensionMode) {
       return undefined;
     }
-    return FixExtension[fixExtensionMode as keyof typeof FixExtension];
+    return FixExtension[fixExtensionMode as FixExtensionKey];
   }
 
   getOverwrite(): boolean {
@@ -1083,14 +1113,14 @@ export default class Options implements OptionsProps {
     );
   }
 
-  getMergeRoms(): MergeMode | undefined {
+  getMergeRoms(): MergeModeValue | undefined {
     const mergeMode = Object.keys(MergeMode).find(
       (mode) => mode.toLowerCase() === this.mergeRoms?.toLowerCase(),
     );
     if (!mergeMode) {
       return undefined;
     }
-    return MergeMode[mergeMode as keyof typeof MergeMode];
+    return MergeMode[mergeMode as MergeModeKey];
   }
 
   getMergeDiscs(): boolean {
@@ -1271,14 +1301,14 @@ export default class Options implements OptionsProps {
     return Options.filterUniqueUpper(this.preferRegion);
   }
 
-  getPreferRevision(): PreferRevision | undefined {
+  getPreferRevision(): PreferRevisionValue | undefined {
     const preferRevision = Object.keys(PreferRevision).find(
       (mode) => mode.toLowerCase() === this.preferRevision?.toLowerCase(),
     );
     if (!preferRevision) {
       return undefined;
     }
-    return PreferRevision[preferRevision as keyof typeof PreferRevision];
+    return PreferRevision[preferRevision as PreferRevisionKey];
   }
 
   getPreferRetail(): boolean {
@@ -1348,7 +1378,7 @@ export default class Options implements OptionsProps {
     return this.cachePath;
   }
 
-  getLogLevel(): LogLevel {
+  getLogLevel(): LogLevelValue {
     if (this.verbose === 1) {
       return LogLevel.INFO;
     }

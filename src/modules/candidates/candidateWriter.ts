@@ -266,7 +266,7 @@ export default class CandidateWriter extends Module {
 
     const checksumBitmask = expectedArchiveEntries.reduce(
       (bitmask, entry) => bitmask | entry.getChecksumBitmask(),
-      ChecksumBitmask.CRC32,
+      ChecksumBitmask.CRC32 as number,
     );
 
     let archiveEntries: ArchiveEntry<Zip>[];

@@ -5,12 +5,13 @@ import File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
 
-enum BPSAction {
-  SOURCE_READ = 0,
-  TARGET_READ,
-  SOURCE_COPY,
-  TARGET_COPY,
-}
+const BPSAction = {
+  SOURCE_READ: 0,
+  TARGET_READ: 1,
+  SOURCE_COPY: 2,
+  TARGET_COPY: 3,
+} as const;
+type BPSActionValue = (typeof BPSAction)[keyof typeof BPSAction];
 
 /**
  * @see https://github.com/blakesmith/rombp/blob/master/docs/bps_spec.md
@@ -104,7 +105,7 @@ export default class BPSPatch extends Patch {
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const blockHeader = await Patch.readUpsUint(patchFile);
-      const action = (blockHeader & 3) as BPSAction;
+      const action = (blockHeader & 3) as BPSActionValue;
       const length = (blockHeader >> 2) + 1;
 
       if (action === BPSAction.SOURCE_READ) {

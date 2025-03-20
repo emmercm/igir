@@ -98,7 +98,7 @@ export default class File implements FileProps {
 
   static async fileOf(
     fileProps: FileProps,
-    checksumBitmask: ChecksumBitmask = ChecksumBitmask.NONE,
+    checksumBitmask: number = ChecksumBitmask.NONE,
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
