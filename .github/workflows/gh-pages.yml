@@ -79,6 +79,8 @@ jobs:
       - uses: actions/cache/restore@v4
         with:
           key: ${{ env.ref }}
+          restore-keys: |
+            refs/heads/main
           path: .cache
       - uses: actions/setup-python@v5
         with:

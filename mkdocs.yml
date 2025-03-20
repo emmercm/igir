@@ -153,8 +153,8 @@ plugins:
   - git-committers:
       repository: emmercm/igir
       branch: main
-      exclude:
-        - index.md
+      exclude_committers:
+        - web-flow
   - redirects:
       redirect_maps:
         'archives.md': 'input/reading-archives.md'
