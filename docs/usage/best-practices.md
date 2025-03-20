@@ -105,7 +105,7 @@ If you value keeping a clean and accurate ROM collection, use the [`--overwrite-
 
 **Use the right DAT version for your emulator version.**
 
-You must choose the right DAT for your emulator (e.g. MAME) and emulator version (e.g. MAME 0.258) or your ROMs may not work correctly. See the [arcade ROM sets page](../usage/arcade.md#emulator-versions--dats) for more information.
+You must choose the right DAT for your emulator (e.g. MAME) and emulator version (e.g. MAME 0.258) or your ROMs may not work correctly. See the [arcade ROM sets page](../usage/arcade.md#emulator-versions-dats) for more information.
 
 **For MAME, use the official DATs or ones from progetto-SNAPS.**
 

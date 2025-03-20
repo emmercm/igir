@@ -69,6 +69,8 @@ jobs:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0
+          sparse-checkout: |
+            docs
       - uses: actions/setup-python@v5
         with:
           python-version: 3.13.2
@@ -80,6 +82,8 @@ jobs:
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
@@ -106,6 +110,8 @@ jobs:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0
+          sparse-checkout: |
+            docs
       - uses: actions/setup-python@v5
         with:
           python-version: 3.13.2
@@ -117,3 +123,5 @@ jobs:
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs gh-deploy --strict --verbose --force
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
