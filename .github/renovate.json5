@@ -178,7 +178,7 @@
           '^@typescript-eslint/',
         ],
         matchUpdateTypes: ['major', 'minor'],
-        schedule: 'every Sunday',
+        schedule: 'at any time',
         rebaseWhen: 'behind-base-branch'
       },
       {
