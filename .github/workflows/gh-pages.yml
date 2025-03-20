@@ -71,6 +71,8 @@ jobs:
           fetch-depth: 0
           sparse-checkout: |
             docs
+            README.md
+            .github/CONTRIBUTING.md
       - uses: actions/setup-python@v5
         with:
           python-version: 3.13.2
@@ -112,6 +114,8 @@ jobs:
           fetch-depth: 0
           sparse-checkout: |
             docs
+            README.md
+            .github/CONTRIBUTING.md
       - uses: actions/setup-python@v5
         with:
           python-version: 3.13.2
