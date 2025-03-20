@@ -11,7 +11,7 @@ import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import ExpectedError from '../../../expectedError.js';
 import File from '../../file.js';
-import { ChecksumBitmask } from '../../fileChecksums.js';
+import { ChecksumBitmask, ChecksumBitmaskValue } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import ChdBinCueParser from './chdBinCueParser.js';
@@ -38,7 +38,7 @@ export default class Chd extends Archive {
     return Chd.getExtensions()[0];
   }
 
-  async getArchiveEntries(checksumBitmask: ChecksumBitmask): Promise<ArchiveEntry<this>[]> {
+  async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
 
     if (checksumBitmask === ChecksumBitmask.NONE) {

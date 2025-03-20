@@ -8,28 +8,34 @@ import File from './files/file.js';
 import Options from './options.js';
 import WriteCandidate from './writeCandidate.js';
 
-enum ROMType {
-  GAME = 'games',
-  BIOS = 'BIOSes',
-  DEVICE = 'devices',
-  RETAIL = 'retail releases',
-  PATCHED = 'patched games',
-}
+const ROMType = {
+  GAME: 'games',
+  BIOS: 'BIOSes',
+  DEVICE: 'devices',
+  RETAIL: 'retail releases',
+  PATCHED: 'patched games',
+} as const;
+type ROMTypeValue = (typeof ROMType)[keyof typeof ROMType];
 
-export enum GameStatus {
+export const GameStatus = {
   // The Game wanted to be written, and it has no ROMs or every ROM was found
-  FOUND = 1,
+  FOUND: 1,
   // Only some of the Game's ROMs were found
-  INCOMPLETE,
+  INCOMPLETE: 2,
   // The Game wanted to be written, but there was no matching ReleaseCandidate
-  MISSING,
+  MISSING: 3,
   // The input file was not used in any ReleaseCandidate, but a duplicate file was
-  DUPLICATE,
+  DUPLICATE: 4,
   // The input File was not used in any ReleaseCandidate, and neither was any duplicate file
-  UNUSED,
+  UNUSED: 5,
   // The output File was not from any ReleaseCandidate, so it was deleted
-  DELETED,
-}
+  DELETED: 6,
+} as const;
+type GameStatusKey = keyof typeof GameStatus;
+export type GameStatusValue = (typeof GameStatus)[GameStatusKey];
+const GameStatusInverted = Object.fromEntries(
+  Object.entries(GameStatus).map(([key, value]) => [value, key]),
+) as Record<GameStatusValue, GameStatusKey>;
 
 /**
  * Parse and hold information about every {@link Game} in a {@link DAT}, as well as which
@@ -38,11 +44,14 @@ export enum GameStatus {
 export default class DATStatus {
   private readonly dat: DAT;
 
-  private readonly allRomTypesToGames = new Map<ROMType, Game[]>();
+  private readonly allRomTypesToGames = new Map<ROMTypeValue, Game[]>();
 
-  private readonly foundRomTypesToCandidates = new Map<ROMType, (WriteCandidate | undefined)[]>();
+  private readonly foundRomTypesToCandidates = new Map<
+    ROMTypeValue,
+    (WriteCandidate | undefined)[]
+  >();
 
-  private readonly incompleteRomTypesToCandidates = new Map<ROMType, WriteCandidate[]>();
+  private readonly incompleteRomTypesToCandidates = new Map<ROMTypeValue, WriteCandidate[]>();
 
   constructor(dat: DAT, candidates: WriteCandidate[]) {
     this.dat = dat;
@@ -87,7 +96,7 @@ export default class DATStatus {
       });
   }
 
-  private static pushValueIntoMap<T>(map: Map<ROMType, T[]>, game: Game, value: T): void {
+  private static pushValueIntoMap<T>(map: Map<ROMTypeValue, T[]>, game: Game, value: T): void {
     DATStatus.append(map, ROMType.GAME, value);
     if (game.getIsBios()) {
       DATStatus.append(map, ROMType.BIOS, value);
@@ -100,7 +109,7 @@ export default class DATStatus {
     }
   }
 
-  private static append<T>(map: Map<ROMType, T[]>, romType: ROMType, val: T): void {
+  private static append<T>(map: Map<ROMTypeValue, T[]>, romType: ROMTypeValue, val: T): void {
     if (!map.has(romType)) {
       map.set(romType, [val]);
     } else {
@@ -195,7 +204,7 @@ export default class DATStatus {
       .reduce(ArrayPoly.reduceUnique(), [])
       .sort((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
-        let status = GameStatus.MISSING;
+        let status: GameStatusValue = GameStatus.MISSING;
 
         const incompleteCandidate = incompleteCandidates.find((candidate) =>
           candidate.getGame().equals(game),
@@ -265,16 +274,16 @@ export default class DATStatus {
   }
 
   /**
-   * Return a string of CSV rows without headers for a certain {@link GameStatus}.
+   * Return a string of CSV rows without headers for a certain {@link GameStatusValue}.
    */
-  static async filesToCsv(filePaths: string[], status: GameStatus): Promise<string> {
+  static async filesToCsv(filePaths: string[], status: GameStatusValue): Promise<string> {
     return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
   }
 
   private static buildCsvRow(
     datName: string,
     gameName: string,
-    status: GameStatus,
+    status: GameStatusValue,
     filePaths: string[] = [],
     patched = false,
     bios = false,
@@ -293,7 +302,7 @@ export default class DATStatus {
     return [
       datName,
       gameName,
-      GameStatus[status],
+      GameStatusInverted[status],
       filePaths.join('|'),
       String(patched),
       String(bios),
@@ -313,7 +322,7 @@ export default class DATStatus {
 
   private static getValuesForAllowedTypes<T>(
     options: Options,
-    romTypesToValues: Map<ROMType, T[]>,
+    romTypesToValues: Map<ROMTypeValue, T[]>,
   ): T[] {
     return DATStatus.getAllowedTypes(options)
       .flatMap((type) => romTypesToValues.get(type))
@@ -322,7 +331,7 @@ export default class DATStatus {
       .sort();
   }
 
-  private static getAllowedTypes(options: Options): ROMType[] {
+  private static getAllowedTypes(options: Options): ROMTypeValue[] {
     return [
       !options.getOnlyBios() && !options.getOnlyDevice() && !options.getOnlyRetail()
         ? ROMType.GAME

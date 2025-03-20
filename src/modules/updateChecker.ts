@@ -3,7 +3,7 @@ import https from 'node:https';
 import semver from 'semver';
 
 import Logger from '../console/logger.js';
-import LogLevel from '../console/logLevel.js';
+import { LogLevel } from '../console/logLevel.js';
 import ProgressBarCLI from '../console/progressBarCli.js';
 import Package from '../globals/package.js';
 import BufferPoly from '../polyfill/bufferPoly.js';

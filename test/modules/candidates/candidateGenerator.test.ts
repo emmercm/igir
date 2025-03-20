@@ -20,7 +20,7 @@ import Zip from '../../../src/types/files/archives/zip.js';
 import File from '../../../src/types/files/file.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import IndexedFiles from '../../../src/types/indexedFiles.js';
-import Options, { GameSubdirMode } from '../../../src/types/options.js';
+import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/types/options.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -309,7 +309,7 @@ describe('with ROMs with headers', () => {
     const options = new Options({
       commands: ['copy', 'extract'],
       removeHeaders: [''], // all
-      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
     // When
@@ -700,7 +700,7 @@ describe('MAME v0.260', () => {
   it('should include disks by default', async () => {
     const options = new Options({
       commands: ['copy', 'zip'],
-      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
     const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
@@ -738,7 +738,7 @@ describe('MAME v0.260', () => {
   it('should not include disks', async () => {
     const options = new Options({
       commands: ['copy'],
-      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       excludeDisks: true,
     });
 

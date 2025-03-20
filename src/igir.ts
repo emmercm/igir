@@ -341,10 +341,7 @@ export default class Igir {
     const minimumChecksum = this.options.getInputChecksumMin() ?? ChecksumBitmask.NONE;
     const maximumChecksum =
       this.options.getInputChecksumMax() ??
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-        .map((bitmask) => ChecksumBitmask[bitmask])
-        .at(-1) ??
+      Object.values(ChecksumBitmask).at(-1) ??
       minimumChecksum;
 
     let matchChecksum = minimumChecksum;
@@ -355,36 +352,34 @@ export default class Igir {
     }
 
     if (this.options.shouldDir2Dat()) {
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+      Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
             // Has not been enabled yet
-            ChecksumBitmask[bitmask] >= ChecksumBitmask.CRC32 &&
-            ChecksumBitmask[bitmask] <= ChecksumBitmask.SHA1 &&
-            !(matchChecksum & ChecksumBitmask[bitmask]),
+            bitmask >= ChecksumBitmask.CRC32 &&
+            bitmask <= ChecksumBitmask.SHA1 &&
+            !(matchChecksum & bitmask),
         )
         .forEach((bitmask) => {
-          matchChecksum |= ChecksumBitmask[bitmask];
+          matchChecksum |= bitmask;
           this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
         });
     }
 
     dats.forEach((dat) => {
       const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+      Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
             // Has not been enabled yet
-            ChecksumBitmask[bitmask] > minimumChecksum &&
-            ChecksumBitmask[bitmask] <= maximumChecksum &&
-            !(matchChecksum & ChecksumBitmask[bitmask]) &&
+            bitmask > minimumChecksum &&
+            bitmask <= maximumChecksum &&
+            !(matchChecksum & bitmask) &&
             // Should be enabled for this DAT
-            (datMinimumRomBitmask & ChecksumBitmask[bitmask]) > 0,
+            (datMinimumRomBitmask & bitmask) > 0,
         )
         .forEach((bitmask) => {
-          matchChecksum |= ChecksumBitmask[bitmask];
+          matchChecksum |= bitmask;
           this.logger.trace(`${dat.getName()}: needs ${bitmask} file checksums for ROMs, enabling`);
         });
 
@@ -392,19 +387,18 @@ export default class Igir {
         return;
       }
       const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
+      Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
             // Has not been enabled yet
-            ChecksumBitmask[bitmask] > minimumChecksum &&
-            ChecksumBitmask[bitmask] <= maximumChecksum &&
-            !(matchChecksum & ChecksumBitmask[bitmask]) &&
+            bitmask > minimumChecksum &&
+            bitmask <= maximumChecksum &&
+            !(matchChecksum & bitmask) &&
             // Should be enabled for this DAT
-            (datMinimumDiskBitmask & ChecksumBitmask[bitmask]) > 0,
+            (datMinimumDiskBitmask & bitmask) > 0,
         )
         .forEach((bitmask) => {
-          matchChecksum |= ChecksumBitmask[bitmask];
+          matchChecksum |= bitmask;
           this.logger.trace(
             `${dat.getName()}: needs ${bitmask} file checksums for disks, enabling`,
           );
