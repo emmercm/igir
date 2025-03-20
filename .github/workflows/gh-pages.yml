@@ -78,8 +78,8 @@ jobs:
             README.md
       - uses: actions/cache/restore@v4
         with:
+          key: ${{ env.ref }}
           restore-keys: |
-            ${{ env.ref }}
             refs/heads/main
           path: .cache
       - uses: actions/setup-python@v5
