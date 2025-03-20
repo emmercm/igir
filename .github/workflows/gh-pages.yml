@@ -76,19 +76,23 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.13.2
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         with:
           key: ${{ env.ref }}
           path: .cache
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.13.2
       - run: |
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
+      - uses: actions/cache@v4
+        with:
+          key: ${{ env.ref }}
+          path: .cache
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
@@ -122,6 +126,10 @@ jobs:
             static
             LICENSE
             README.md
+      - uses: actions/cache/restore@v4
+        with:
+          key: ${{ env.ref }}
+          path: .cache
       - uses: actions/setup-python@v5
         with:
           python-version: 3.13.2
@@ -135,3 +143,7 @@ jobs:
       - run: mkdocs gh-deploy --strict --verbose --force
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
+      - uses: actions/cache@v4
+        with:
+          key: ${{ env.ref }}
+          path: .cache
