@@ -71,8 +71,11 @@ jobs:
           fetch-depth: 0
           sparse-checkout: |
             docs
-            README.md
+            # Symlinked paths
             .github/CONTRIBUTING.md
+            static
+            LICENSE
+            README.md
       - uses: actions/setup-python@v5
         with:
           python-version: 3.13.2
@@ -114,8 +117,11 @@ jobs:
           fetch-depth: 0
           sparse-checkout: |
             docs
-            README.md
+            # Symlinked paths
             .github/CONTRIBUTING.md
+            static
+            LICENSE
+            README.md
       - uses: actions/setup-python@v5
         with:
           python-version: 3.13.2
