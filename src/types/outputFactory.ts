@@ -44,12 +44,12 @@ export class OutputPath implements ParsedPathWithEntryPath {
   entryPath: string;
 
   constructor(parsedPath: ParsedPathWithEntryPath) {
-    this.base = parsedPath.base.replace(/[\\/]/g, path.sep);
-    this.dir = parsedPath.dir.replace(/[\\/]/g, path.sep);
-    this.ext = parsedPath.ext.replace(/[\\/]/g, path.sep);
-    this.name = parsedPath.name.replace(/[\\/]/g, path.sep);
-    this.root = parsedPath.root.replace(/[\\/]/g, path.sep);
-    this.entryPath = parsedPath.entryPath.replace(/[\\/]/g, path.sep);
+    this.base = parsedPath.base.replaceAll(/[\\/]/g, path.sep);
+    this.dir = parsedPath.dir.replaceAll(/[\\/]/g, path.sep);
+    this.ext = parsedPath.ext.replaceAll(/[\\/]/g, path.sep);
+    this.name = parsedPath.name.replaceAll(/[\\/]/g, path.sep);
+    this.root = parsedPath.root.replaceAll(/[\\/]/g, path.sep);
+    this.entryPath = parsedPath.entryPath.replaceAll(/[\\/]/g, path.sep);
   }
 
   /**
@@ -60,7 +60,7 @@ export class OutputPath implements ParsedPathWithEntryPath {
       path
         .format(this)
         // No double slashes / empty subdir name
-        .replace(/\/{2,}/g, path.sep) // unix
+        .replaceAll(/\/{2,}/g, path.sep) // unix
         .replace(/(?<!^\\*)\\{2,}/, path.sep) // windows, preserving network paths
         // No trailing slashes
         .replace(/[\\/]+$/, '')
@@ -144,7 +144,7 @@ export default class OutputFactory {
         .map((inputPath) => path.resolve(inputPath))
         .reduce((inputFilePath, inputPath) => {
           const inputPathRegex = new RegExp(
-            `^${inputPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
+            `^${inputPath.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
           );
           return inputFilePath.replace(inputPathRegex, '');
         }, path.resolve(inputFile.getFilePath()));
@@ -188,7 +188,7 @@ export default class OutputFactory {
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new ExpectedError(
-        `failed to replace output token${leftoverTokens.length !== 1 ? 's' : ''}: ${leftoverTokens.join(', ')} for ${outputRomFilename ?? inputRomPath ?? game?.getName()}`,
+        `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')} for ${outputRomFilename ?? inputRomPath ?? game?.getName()}`,
       );
     }
 
@@ -239,11 +239,11 @@ export default class OutputFactory {
 
   private static replaceDatTokens(input: string, dat: DAT): string {
     let output = input;
-    output = output.replace('{datName}', dat.getName().replace(/[\\/]/g, '_'));
+    output = output.replace('{datName}', dat.getName().replaceAll(/[\\/]/g, '_'));
 
     const description = dat.getDescription();
     if (description) {
-      output = output.replace('{datDescription}', description.replace(/[\\/]/g, '_'));
+      output = output.replace('{datDescription}', description.replaceAll(/[\\/]/g, '_'));
     }
 
     return output;
@@ -375,12 +375,12 @@ export default class OutputFactory {
     let lettersToFilenames = (romBasenames ?? [romBasename]).reduce((map, filename) => {
       const filenameParsed = path.parse(filename);
       let letters = (filenameParsed.dir || filenameParsed.name)
-        .substring(0, options.getDirLetterCount())
+        .slice(0, Math.max(0, options.getDirLetterCount()))
         .padEnd(options.getDirLetterCount(), 'A')
         .toUpperCase()
-        .replace(/[^A-Z0-9]/g, '#');
+        .replaceAll(/[^A-Z0-9]/g, '#');
       if (!options.getDirLetterGroup()) {
-        letters = letters.replace(/[^A-Z]/g, '#');
+        letters = letters.replaceAll(/[^A-Z]/g, '#');
       }
 
       const existing = map.get(letters) ?? new Set();
@@ -401,10 +401,10 @@ export default class OutputFactory {
             // subdir, or just the ROM's basename otherwise.
             const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
               const subPath = filename.replace(/[\\/].+$/, '');
-              if (!subPathMap.has(subPath)) {
-                subPathMap.set(subPath, [filename]);
-              } else {
+              if (subPathMap.has(subPath)) {
                 subPathMap.get(subPath)?.push(filename);
+              } else {
+                subPathMap.set(subPath, [filename]);
               }
               return subPathMap;
             }, new Map<string, string[]>());
@@ -441,10 +441,10 @@ export default class OutputFactory {
           // subdir, or just the ROM's basename otherwise.
           const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
             const subPath = filename.replace(/[\\/].+$/, '');
-            if (!subPathMap.has(subPath)) {
-              subPathMap.set(subPath, [filename]);
-            } else {
+            if (subPathMap.has(subPath)) {
               subPathMap.get(subPath)?.push(filename);
+            } else {
+              subPathMap.set(subPath, [filename]);
             }
             return subPathMap;
           }, new Map<string, string[]>());
@@ -542,11 +542,11 @@ export default class OutputFactory {
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());
     const oldExt =
-      oldExtMatch !== null
-        ? // Respect the input file's extension
-          oldExtMatch[1]
-        : // The input file has no extension, get the canonical extension from the {@link Archive}
-          inputFile.getArchive().getExtension();
+      oldExtMatch === null
+        ? // The input file has no extension, get the canonical extension from the {@link Archive}
+          inputFile.getArchive().getExtension()
+        : // Respect the input file's extension
+          oldExtMatch[1];
 
     // If we got a filename with 2+ extensions, but the additional extensions
     // are actually part of the game's name, then just use the last extension
@@ -567,14 +567,14 @@ export default class OutputFactory {
     // The file structure from HTGD SMDBs ends up in both the Game and ROM names. If we're
     // zipping, then the Game name will end up in the filename, we don't need it duplicated in
     // the entry path.
-    const gameNameSanitized = game.getName().replace(/[\\/]/g, path.sep);
+    const gameNameSanitized = game.getName().replaceAll(/[\\/]/g, path.sep);
     return romBasename
-      .replace(/[\\/]/g, path.sep)
+      .replaceAll(/[\\/]/g, path.sep)
       .replace(`${path.dirname(gameNameSanitized)}${path.sep}`, '');
   }
 
   private static getRomBasename(rom: ROM, inputFile: File): string {
-    const romNameSanitized = rom.getName().replace(/[\\/]/g, path.sep);
+    const romNameSanitized = rom.getName().replaceAll(/[\\/]/g, path.sep);
     const { base, ...parsedRomPath } = path.parse(romNameSanitized);
 
     // Alter the output extension of the file

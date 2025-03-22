@@ -100,7 +100,7 @@ export default class ProgressBarCLI extends ProgressBar {
    */
   static stop(): void {
     // Freeze (and delete) any lingering progress bars
-    const progressBarsCopy = ProgressBarCLI.progressBars.slice();
+    const progressBarsCopy = [...ProgressBarCLI.progressBars];
     progressBarsCopy.forEach((progressBar) => progressBar.freeze());
 
     // Clear the last deleted, non-frozen progress bar
@@ -134,7 +134,7 @@ export default class ProgressBarCLI extends ProgressBar {
               //  progress bar output.
               .split('\n')
               // TODO(cemmer): this appears to only overwrite the last line, not any others?
-              .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`),
+              .join(`\n${this.logger.isTTY() ? '\x1B[K' : ''}`),
           )
           .join('\n');
         ProgressBarCLI.multiBar.log(`${logMessage}\n`);
@@ -232,7 +232,7 @@ export default class ProgressBarCLI extends ProgressBar {
         );
 
         const newWaitingMessage =
-          newWaitingMessagePair !== undefined ? newWaitingMessagePair[0] : undefined;
+          newWaitingMessagePair === undefined ? undefined : newWaitingMessagePair[0];
 
         if (newWaitingMessage !== this.payload.waitingMessage) {
           this.payload.waitingMessage = newWaitingMessage;

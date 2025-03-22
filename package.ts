@@ -23,7 +23,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   filters.forEach((filter) => {
     if (filter.include) {
       const include = fg
-        .globSync(filter.include.replace(/\\/g, '/'), filter)
+        .globSync(filter.include.replaceAll('\\', '/'), filter)
         .map((file) => path.resolve(file));
       if (include.length === 0) {
         throw new ExpectedError(`glob pattern '${filter.include}' returned no paths`);
@@ -32,7 +32,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
     }
     if (filter.exclude) {
       const exclude = new Set(
-        fg.globSync(filter.exclude.replace(/\\/g, '/'), filter).map((file) => path.resolve(file)),
+        fg.globSync(filter.exclude.replaceAll('\\', '/'), filter).map((file) => path.resolve(file)),
       );
       if (exclude.size === 0) {
         throw new ExpectedError(`glob pattern '${filter.exclude}' returned no paths`);
@@ -104,7 +104,7 @@ const includeSize = (
   )
 ).reduce((sum, size) => sum + size, 0);
 logger.info(
-  `Include: found ${FsPoly.sizeReadable(includeSize)} of ${include.size.toLocaleString()} file${include.size !== 1 ? 's' : ''} to include`,
+  `Include: found ${FsPoly.sizeReadable(includeSize)} of ${include.size.toLocaleString()} file${include.size === 1 ? '' : 's'} to include`,
 );
 
 const exclude = fileFilter([{ include: '*{,/**}', onlyFiles: false, dot: true }]).filter(
@@ -121,7 +121,7 @@ const excludeSize = (
   )
 ).reduce((sum, size) => sum + size, 0);
 logger.info(
-  `Exclude: found ${FsPoly.sizeReadable(excludeSize)} of ${exclude.length.toLocaleString()} file${exclude.length !== 1 ? 's' : ''} to exclude`,
+  `Exclude: found ${FsPoly.sizeReadable(excludeSize)} of ${exclude.length.toLocaleString()} file${exclude.length === 1 ? '' : 's'} to exclude`,
 );
 const excludeGlobs = exclude.map((glob) => fg.convertPathToPattern(glob));
 

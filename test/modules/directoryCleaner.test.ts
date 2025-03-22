@@ -59,7 +59,7 @@ async function runOutputCleaner(
       .sort();
 
     const movedPaths =
-      optionsProps.cleanBackup !== undefined ? await FsPoly.walk(optionsProps.cleanBackup) : [];
+      optionsProps.cleanBackup === undefined ? [] : await FsPoly.walk(optionsProps.cleanBackup);
 
     return {
       cleanedPaths,

@@ -82,13 +82,15 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     .flat()
     .reduce(ArrayPoly.reduceUnique(), []);
   const outputFilesBefore =
-    options.getOutput() !== Temp.getTempDir() ? await FsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
+    options.getOutput() === Temp.getTempDir() ? [] : await FsPoly.walk(options.getOutputDirRoot()); // the output dir is a parent of the input dir, ignore all output
 
   await new Igir(options, new Logger(LogLevel.NEVER)).main();
 
   const outputFilesAndCrcs =
-    options.getOutput() !== Temp.getTempDir()
-      ? (
+    options.getOutput() === Temp.getTempDir()
+      ? // The output dir defaulted to the temp dir because we aren't writing ROMs, ignore all output
+        []
+      : (
           await Promise.all(
             options
               .getInputPaths()
@@ -97,9 +99,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
         )
           .flat()
           .filter((tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx)
-          .sort((a, b) => a[0].localeCompare(b[0]))
-      : // The output dir defaulted to the temp dir because we aren't writing ROMs, ignore all output
-        [];
+          .sort((a, b) => a[0].localeCompare(b[0]));
 
   const inputFilesAfter = (
     await Promise.all(options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath)))
@@ -118,7 +118,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     .sort();
 
   const outputFilesAfter =
-    options.getOutput() !== Temp.getTempDir() ? await FsPoly.walk(options.getOutputDirRoot()) : []; // the output dir is a parent of the input dir, ignore all output
+    options.getOutput() === Temp.getTempDir() ? [] : await FsPoly.walk(options.getOutputDirRoot()); // the output dir is a parent of the input dir, ignore all output
   const cleanedFiles = outputFilesBefore
     .filter((filePath) => !outputFilesAfter.includes(filePath))
     .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))

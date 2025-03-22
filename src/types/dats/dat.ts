@@ -110,10 +110,10 @@ export default abstract class DAT {
         .replace('Non-Redump', '!Redump')
         .replace('Source Code', 'S.Code')
         // Cleanup
-        .replace(/-( +-)+/g, '- ')
+        .replaceAll(/-( +-)+/g, '- ')
         .replace(/^[ -]+/, '')
         .replace(/[ -]+$/, '')
-        .replace(/  +/g, ' ')
+        .replaceAll(/  +/g, ' ')
         .trim()
     );
   }

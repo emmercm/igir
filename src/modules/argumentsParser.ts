@@ -206,7 +206,7 @@ export default class ArgumentsParser {
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`,
+            `Missing required argument for command${needInput.length === 1 ? '' : 's'} ${needInput.join(', ')}: --input <path>`,
           );
         }
         return true;
@@ -483,7 +483,7 @@ export default class ArgumentsParser {
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`,
+            `Missing required argument for command${needOutput.length === 1 ? '' : 's'} ${needOutput.join(', ')}: --output <path>`,
           );
         }
         return true;
@@ -515,7 +515,7 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`,
+            `Missing required command for option${needClean.length === 1 ? '' : 's'} ${needClean.join(', ')}: clean`,
           );
         }
         return true;
@@ -541,7 +541,7 @@ export default class ArgumentsParser {
         );
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
           throw new ExpectedError(
-            `Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`,
+            `Missing required command for option${needZip.length === 1 ? '' : 's'} ${needZip.join(', ')}: zip`,
           );
         }
         return true;
@@ -562,7 +562,7 @@ export default class ArgumentsParser {
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option] !== undefined);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
           throw new ExpectedError(
-            `Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`,
+            `Missing required command for option${needLinkCommand.length === 1 ? '' : 's'} ${needLinkCommand.join(', ')}: link`,
           );
         }
         return true;
@@ -663,7 +663,7 @@ export default class ArgumentsParser {
         );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
           throw new ExpectedError(
-            `Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`,
+            `Invalid --filter-language language${invalidLangs.length === 1 ? '' : 's'}: ${invalidLangs.join(', ')}`,
           );
         }
         return true;
@@ -683,7 +683,7 @@ export default class ArgumentsParser {
         );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
           throw new ExpectedError(
-            `Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`,
+            `Invalid --filter-region region${invalidRegions.length === 1 ? '' : 's'}: ${invalidRegions.join(', ')}`,
           );
         }
         return true;
@@ -797,7 +797,7 @@ export default class ArgumentsParser {
         );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
           throw new ExpectedError(
-            `Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`,
+            `Invalid --prefer-language language${invalidLangs.length === 1 ? '' : 's'}: ${invalidLangs.join(', ')}`,
           );
         }
         return true;
@@ -818,7 +818,7 @@ export default class ArgumentsParser {
         );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
           throw new ExpectedError(
-            `Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`,
+            `Invalid --prefer-region region${invalidRegions.length === 1 ? '' : 's'}: ${invalidRegions.join(', ')}`,
           );
         }
         return true;
@@ -882,7 +882,7 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('dir2dat') && needDir2Dat.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needDir2Dat.length !== 1 ? 's' : ''} ${needDir2Dat.join(', ')}: dir2dat`,
+            `Missing required command for option${needDir2Dat.length === 1 ? '' : 's'} ${needDir2Dat.join(', ')}: dir2dat`,
           );
         }
         return true;
@@ -900,7 +900,7 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('fixdat') && needFixdat.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needFixdat.length !== 1 ? 's' : ''} ${needFixdat.join(', ')}: fixdat`,
+            `Missing required command for option${needFixdat.length === 1 ? '' : 's'} ${needFixdat.join(', ')}: fixdat`,
           );
         }
         return true;

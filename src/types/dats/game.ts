@@ -199,21 +199,21 @@ export default class Game implements GameProps {
         cloneofid: this.cloneOfId,
         isdevice: this.getIsDevice() ? 'yes' : undefined,
       },
-      ...(this.description !== undefined
-        ? {
+      ...(this.description === undefined
+        ? {}
+        : {
             description: {
               _: this.description,
             },
-          }
-        : {}),
+          }),
       category: this.getCategories().map((category) => ({ _: category })),
-      ...(this.manufacturer !== undefined
-        ? {
+      ...(this.manufacturer === undefined
+        ? {}
+        : {
             manufacturer: {
               _: this.manufacturer,
             },
-          }
-        : {}),
+          }),
       release: this.getReleases().map((release) => release.toXmlDatObj()),
       rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
       disk: this.getDisks().map((disk) => disk.toXmlDatObj()),
@@ -685,7 +685,7 @@ export default class Game implements GameProps {
     }
 
     for (const regionOption of Internationalization.REGION_OPTIONS) {
-      if (regionOption.regex && this.getName().match(regionOption.regex)) {
+      if (regionOption.regex?.test(this.getName())) {
         return [regionOption.region.toUpperCase()];
       }
     }

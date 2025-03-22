@@ -86,10 +86,10 @@ export default class DriveSemaphore {
       })
       .reduce((map, [file, idx]) => {
         const key = DriveSemaphore.getDiskForFile(file);
-        if (!map.has(key)) {
-          map.set(key, [[file, idx]]);
-        } else {
+        if (map.has(key)) {
           map.get(key)?.push([file, idx]);
+        } else {
+          map.set(key, [[file, idx]]);
         }
         return map;
       }, new Map<string, [K, number][]>());
@@ -132,7 +132,7 @@ export default class DriveSemaphore {
 
   private static getDiskForFile(file: File | string): string {
     const filePath = file instanceof File ? file.getFilePath() : file;
-    const filePathNormalized = filePath.replace(/[\\/]/g, path.sep);
+    const filePathNormalized = filePath.replaceAll(/[\\/]/g, path.sep);
 
     // Try to get the path of the drive this file is on
     const filePathDisk = FsPoly.diskResolved(filePathNormalized);

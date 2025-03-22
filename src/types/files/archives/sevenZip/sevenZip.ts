@@ -69,7 +69,7 @@ export default class SevenZip extends Archive {
         } else {
           message = 'failed to list files in archive';
         }
-        throw new Error(message.replace(/\n\n+/g, '\n').replace(/^/gm, '   ').trim());
+        throw new Error(message.replaceAll(/\n\n+/g, '\n').replaceAll(/^/gm, '   ').trim());
       }
     });
 

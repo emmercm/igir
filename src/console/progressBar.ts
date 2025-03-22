@@ -70,7 +70,7 @@ export default abstract class ProgressBar {
       pluralSuffix = 'es';
     }
 
-    this.done(`${count.toLocaleString()} ${noun.trim()}${count !== 1 ? pluralSuffix : ''} ${verb}`);
+    this.done(`${count.toLocaleString()} ${noun.trim()}${count === 1 ? '' : pluralSuffix} ${verb}`);
   }
 
   abstract setLoggerPrefix(prefix: string): void;

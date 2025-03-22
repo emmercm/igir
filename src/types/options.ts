@@ -413,18 +413,18 @@ export default class Options implements OptionsProps {
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
 
-    this.input = (options?.input ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.input = (options?.input ?? []).map((filePath) => filePath.replaceAll(/[\\/]/g, path.sep));
     this.inputExclude = (options?.inputExclude ?? []).map((filePath) =>
-      filePath.replace(/[\\/]/g, path.sep),
+      filePath.replaceAll(/[\\/]/g, path.sep),
     );
     this.inputChecksumQuick = options?.inputChecksumQuick ?? false;
     this.inputChecksumMin = options?.inputChecksumMin;
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = (options?.dat ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.dat = (options?.dat ?? []).map((filePath) => filePath.replaceAll(/[\\/]/g, path.sep));
     this.datExclude = (options?.datExclude ?? []).map((filePath) =>
-      filePath.replace(/[\\/]/g, path.sep),
+      filePath.replaceAll(/[\\/]/g, path.sep),
     );
     this.datNameRegex = options?.datNameRegex;
     this.datNameRegexExclude = options?.datNameRegexExclude;
@@ -433,9 +433,9 @@ export default class Options implements OptionsProps {
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
-    this.patch = (options?.patch ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.patch = (options?.patch ?? []).map((filePath) => filePath.replaceAll(/[\\/]/g, path.sep));
     this.patchExclude = (options?.patchExclude ?? []).map((filePath) =>
-      filePath.replace(/[\\/]/g, path.sep),
+      filePath.replaceAll(/[\\/]/g, path.sep),
     );
 
     this.output = options?.output?.replace(/[\\/]/g, path.sep);
@@ -453,7 +453,7 @@ export default class Options implements OptionsProps {
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
 
     this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
-      filePath.replace(/[\\/]/g, path.sep),
+      filePath.replaceAll(/[\\/]/g, path.sep),
     );
     this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
     this.cleanDryRun = options?.cleanDryRun ?? false;
@@ -523,13 +523,13 @@ export default class Options implements OptionsProps {
 
     this.fixdatOutput = options?.fixdatOutput?.replace(/[\\/]/g, path.sep);
 
-    this.reportOutput = (options?.reportOutput ?? process.cwd()).replace(/[\\/]/g, path.sep);
+    this.reportOutput = (options?.reportOutput ?? process.cwd()).replaceAll(/[\\/]/g, path.sep);
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
-    this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replace(/[\\/]/g, path.sep);
+    this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replaceAll(/[\\/]/g, path.sep);
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
@@ -766,7 +766,7 @@ export default class Options implements OptionsProps {
 
     if (requireFiles && globbedFiles.length === 0) {
       throw new ExpectedError(
-        `no files found in director${globPatterns.length !== 1 ? 'ies' : 'y'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`,
+        `no files found in director${globPatterns.length === 1 ? 'y' : 'ies'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`,
       );
     }
 
@@ -797,7 +797,7 @@ export default class Options implements OptionsProps {
     }
 
     // fg only uses forward-slash path separators
-    const inputPathNormalized = inputPath.replace(/\\/g, '/');
+    const inputPathNormalized = inputPath.replaceAll('\\', '/');
     // Try to handle globs a little more intelligently (see the JSDoc below)
     const inputPathEscaped = await this.sanitizeGlobPattern(inputPathNormalized);
 
@@ -822,7 +822,7 @@ export default class Options implements OptionsProps {
       walkCallback(globbedPaths.length);
     }
     if (process.platform === 'win32') {
-      return globbedPaths.map((globbedPath) => globbedPath.replace(/[\\/]/g, path.sep));
+      return globbedPaths.map((globbedPath) => globbedPath.replaceAll(/[\\/]/g, path.sep));
     }
     return globbedPaths;
   }

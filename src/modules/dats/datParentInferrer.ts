@@ -32,7 +32,7 @@ export default class DATParentInferrer extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
     this.progressBar.reset(dat.getGames().length);
@@ -42,10 +42,10 @@ export default class DATParentInferrer extends Module {
       let strippedGameName = game.getName();
       strippedGameName = DATParentInferrer.stripGameRegionAndLanguage(strippedGameName);
       strippedGameName = DATParentInferrer.stripGameVariants(strippedGameName);
-      if (!map.has(strippedGameName)) {
-        map.set(strippedGameName, [game]);
-      } else {
+      if (map.has(strippedGameName)) {
         map.get(strippedGameName)?.push(game);
+      } else {
+        map.set(strippedGameName, [game]);
       }
       return map;
     }, new Map<string, Game[]>());
@@ -56,7 +56,7 @@ export default class DATParentInferrer extends Module {
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
     const inferredDat = new LogiqxDAT(dat.getHeader(), newGames);
     this.progressBar.logTrace(
-      `${inferredDat.getName()}: grouped to ${inferredDat.getParents().length.toLocaleString()} parent${inferredDat.getParents().length !== 1 ? 's' : ''}`,
+      `${inferredDat.getName()}: grouped to ${inferredDat.getParents().length.toLocaleString()} parent${inferredDat.getParents().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done inferring parents');
@@ -86,7 +86,7 @@ export default class DATParentInferrer extends Module {
           '',
         )
         // ***** Cleanup *****
-        .replace(/  +/g, ' ')
+        .replaceAll(/  +/g, ' ')
         .trim()
     );
   }
@@ -210,7 +210,7 @@ export default class DATParentInferrer extends Module {
         // Sega - Dreamcast
         .replace(/\[([0-9A-Z ]+(, )?)+\]$/, '') // TOSEC boxcode
         .replace(/\[[0-9]+S\]/, '') // TOSEC ring code
-        .replace(
+        .replaceAll(
           /\[(compilation|data identical to retail|fixed version|keyboard|limited edition|req\. microphone|scrambled|unscrambled|white label)\]/gi,
           '',
         ) // TOSEC
@@ -228,7 +228,7 @@ export default class DATParentInferrer extends Module {
         // Sony - PlayStation Portable
         .replace(/[(\]][UN][CLP][AEJKU][BFGHJMSXZ]-[0-9]+[(\]]/i, '')
         // ***** Cleanup *****
-        .replace(/  +/g, ' ')
+        .replaceAll(/  +/g, ' ')
         .trim()
     );
     // ***** EXPLICITLY LEFT ALONE *****

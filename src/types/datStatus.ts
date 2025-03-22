@@ -58,10 +58,10 @@ export default class DATStatus {
 
     const indexedCandidates = candidates.reduce((map, candidate) => {
       const key = candidate.getGame().hashCode();
-      if (!map.has(key)) {
-        map.set(key, [candidate]);
-      } else {
+      if (map.has(key)) {
         map.get(key)?.push(candidate);
+      } else {
+        map.set(key, [candidate]);
       }
       return map;
     }, new Map<string, WriteCandidate[]>());
@@ -87,13 +87,11 @@ export default class DATStatus {
     });
 
     // Patched ROMs
-    candidates
-      .filter((candidate) => candidate.isPatched())
-      .forEach((candidate) => {
-        const game = candidate.getGame();
-        DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
-        DATStatus.append(this.foundRomTypesToCandidates, ROMType.PATCHED, candidate);
-      });
+    for (const candidate of candidates.filter((candidate) => candidate.isPatched())) {
+      const game = candidate.getGame();
+      DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
+      DATStatus.append(this.foundRomTypesToCandidates, ROMType.PATCHED, candidate);
+    }
   }
 
   private static pushValueIntoMap<T>(map: Map<ROMTypeValue, T[]>, game: Game, value: T): void {
@@ -109,11 +107,11 @@ export default class DATStatus {
     }
   }
 
-  private static append<T>(map: Map<ROMTypeValue, T[]>, romType: ROMTypeValue, val: T): void {
-    if (!map.has(romType)) {
-      map.set(romType, [val]);
+  private static append<T>(map: Map<ROMTypeValue, T[]>, romType: ROMTypeValue, value: T): void {
+    if (map.has(romType)) {
+      map.get(romType)?.push(value);
     } else {
-      map.get(romType)?.push(val);
+      map.set(romType, [value]);
     }
   }
 
@@ -182,7 +180,7 @@ export default class DATStatus {
 
         return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
       })
-      .filter((str) => str.length > 0)
+      .filter((string_) => string_.length > 0)
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
   }
 

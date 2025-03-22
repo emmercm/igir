@@ -139,7 +139,7 @@ export default class Igir {
 
     // Process every DAT
     datProcessProgressBar.logTrace(
-      `processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`,
+      `processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
     );
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
       datProcessProgressBar.incrementProgress();
@@ -226,7 +226,7 @@ export default class Igir {
       datProcessProgressBar.incrementDone();
     });
     datProcessProgressBar.logTrace(
-      `done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`,
+      `done processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
     );
 
     datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');

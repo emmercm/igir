@@ -61,7 +61,7 @@ export default class DATScanner extends Scanner {
       return [];
     }
     this.progressBar.logTrace(
-      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`,
+      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.reset(datFilePaths.length);
 
@@ -88,7 +88,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace(
-      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length !== 1 ? 's' : ''} from URL${datUrlFiles.length !== 1 ? 's' : ''}`,
+      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
@@ -116,7 +116,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(
-      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`,
+      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
@@ -200,7 +200,7 @@ export default class DATScanner extends Scanner {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`,
+      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
     );
 
     return dat;

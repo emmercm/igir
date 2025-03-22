@@ -94,14 +94,14 @@ export default class CMProParser {
       const value = this.parseValue();
 
       const existing = result[tag];
-      if (existing !== undefined) {
+      if (existing === undefined) {
+        result[tag] = value;
+      } else {
         if (Array.isArray(existing)) {
           result[tag] = [...existing, value];
         } else {
           result[tag] = [existing, value];
         }
-      } else {
-        result[tag] = value;
       }
 
       this.skipWhitespace();
@@ -127,14 +127,14 @@ export default class CMProParser {
       const value = this.parseValue();
 
       const existing = result[tag];
-      if (existing !== undefined) {
+      if (existing === undefined) {
+        result[tag] = value;
+      } else {
         if (Array.isArray(existing)) {
           result[tag] = [...existing, value];
         } else {
           result[tag] = [existing, value];
         }
-      } else {
-        result[tag] = value;
       }
 
       this.skipWhitespace();

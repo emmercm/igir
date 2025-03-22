@@ -102,9 +102,9 @@ it('should write a valid DAT', async () => {
   }
 
   // And the written DAT matches the inferred DAT
-  expect(writtenDat.getHeader().getName()).toEqual(inferredDat.getHeader().getName() + ' dir2dat');
+  expect(writtenDat.getHeader().getName()).toEqual(`${inferredDat.getHeader().getName()} dir2dat`);
   expect(writtenDat.getHeader().getDescription()).toEqual(
-    inferredDat.getHeader().getDescription() + ' dir2dat',
+    `${inferredDat.getHeader().getDescription()} dir2dat`,
   );
   expect(writtenDat.getParents()).toHaveLength(inferredDat.getParents().length);
   expect(writtenDat.getParents().map((parent) => parent.getName())).toIncludeAllMembers(
@@ -184,9 +184,9 @@ it('should use the candidates for games and ROMs', async () => {
   }
 
   // And the written DAT matches the inferred DAT
-  expect(writtenDat.getHeader().getName()).toEqual(inferredDat.getHeader().getName() + ' dir2dat');
+  expect(writtenDat.getHeader().getName()).toEqual(`${inferredDat.getHeader().getName()} dir2dat`);
   expect(writtenDat.getHeader().getDescription()).toEqual(
-    inferredDat.getHeader().getDescription() + ' dir2dat',
+    `${inferredDat.getHeader().getDescription()} dir2dat`,
   );
   expect(writtenDat.getParents()).toHaveLength(inferredDat.getParents().length);
   expect(writtenDat.getParents().map((parent) => parent.getName())).not.toIncludeAnyMembers(

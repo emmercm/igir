@@ -269,7 +269,7 @@ export default class FsPoly {
    * @returns if {@param filePath} is on a samba path
    */
   static isSamba(filePath: string): boolean {
-    const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
+    const normalizedPath = filePath.replaceAll(/[\\/]/g, path.sep);
     if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
       return true;
     }
@@ -285,7 +285,7 @@ export default class FsPoly {
       return false;
     }
     return filePathDrive.filesystem
-      .replace(/[\\/]/g, path.sep)
+      .replaceAll(/[\\/]/g, path.sep)
       .startsWith(`${path.sep}${path.sep}`);
   }
 
@@ -335,11 +335,11 @@ export default class FsPoly {
     return (
       filePath
         // Make the filename Windows legal
-        .replace(/:/g, ';')
+        .replaceAll(':', ';')
         // Make the filename everything else legal
-        .replace(/[<>:"|?*]/g, '_')
+        .replaceAll(/[<>:"|?*]/g, '_')
         // Normalize the path separators
-        .replace(/[\\/]/g, pathSep)
+        .replaceAll(/[\\/]/g, pathSep)
         // Revert the Windows drive letter
         .replace(/^([a-z]);\\/i, '$1:\\')
     );
@@ -389,7 +389,9 @@ export default class FsPoly {
   static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
     // Can't rename across drives
     if (this.onDifferentDrives(oldPath, newPath)) {
-      await this.copyFile(oldPath, newPath);
+      const newPathTemp = await this.mktemp(newPath);
+      await this.copyFile(oldPath, newPathTemp);
+      await this.mv(newPathTemp, newPath);
       await this.rm(oldPath, { force: true });
       return;
     }
