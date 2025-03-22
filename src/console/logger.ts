@@ -2,7 +2,6 @@ import { PassThrough } from 'node:stream';
 import { WriteStream } from 'node:tty';
 
 import chalk from 'chalk';
-import figlet from 'figlet';
 import moment from 'moment';
 
 import Package from '../globals/package.js';
@@ -121,17 +120,22 @@ export default class Logger {
    * Print the CLI header.
    */
   printHeader(): void {
-    const logo = figlet
-      .textSync(Package.NAME.toUpperCase(), {
-        font: 'Big Money-se',
-      })
-      .trimEnd();
+    const logo = `
+   @@@@@@   @@@@@@     @@@@@@    @@@@@@@@@
+ @@      @@  @@      @@      @@         @@@
+@@        @@  @@    @@        @@         @@
+ @@      @@  @@      @@      @@         @@@
+   @@@@@@   @@         @@@@@@   @@@@@@@@@@
+     @@   @@@     @@@@   @@   @@@      @@
+     @@   @@        @@   @@   @@       @@
+     @@   @@        @@   @@   @@       @@
+     @@   @@@@@@@@@@@@   @@   @@       @@`.replace(/^[\r\n]+/, '');
 
     const logoSplit = logo.split('\n');
     const midLine = Math.min(Math.ceil(logoSplit.length / 2), logoSplit.length - 1);
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
     logoSplit[midLine - 2] =
-      `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ROM collection manager`;
+      `${logoSplit[midLine - 2].padEnd(maxLineLen, ' ')}   ROM collection manager`;
     logoSplit[midLine - 1] =
       `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Package.HOMEPAGE}`;
     logoSplit[midLine + 1] =
