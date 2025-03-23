@@ -151,7 +151,7 @@ plugins:
   - git-revision-date-localized:
       enable_creation_date: true
   - git-committers:
-      enabled: !ENV [MKDOCS_GIT_COMMITTERS_APIKEY, false]
+      enabled: !ENV [CI, false]
       repository: emmercm/igir
       branch: main
       exclude_committers:
