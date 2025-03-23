@@ -8,7 +8,7 @@ export default class KeyedMutex {
 
   private readonly keyMutexesMutex = new Mutex();
 
-  private keyMutexesLru: Set<string> = new Set();
+  private keyMutexesLru = new Set<string>();
 
   private readonly maxSize?: number;
 
@@ -45,7 +45,7 @@ export default class KeyedMutex {
       this.keyMutexesLru.delete(key);
       this.keyMutexesLru = new Set([key, ...this.keyMutexesLru]);
 
-      return this.keyMutexes.get(key) as Mutex;
+      return this.keyMutexes.get(key)!;
     });
 
     return keyMutex.runExclusive(runnable);

@@ -8,15 +8,20 @@ import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 import ExpectedError from '../types/expectedError.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
 import Options, {
   FixExtension,
+  FixExtensionInverted,
   GameSubdirMode,
+  GameSubdirModeInverted,
   InputChecksumArchivesMode,
+  InputChecksumArchivesModeInverted,
   MergeMode,
+  MergeModeInverted,
   PreferRevision,
+  PreferRevisionInverted,
 } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
@@ -83,6 +88,7 @@ export default class ArgumentsParser {
     const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
+    const groupPlaylist = 'playlist command options:';
     const groupDir2Dat = 'dir2dat command options:';
     const groupFixdat = 'fixdat command options:';
     const groupReport = 'report command options:';
@@ -96,6 +102,7 @@ export default class ArgumentsParser {
       ['link', 'Create links in the output directory to ROM files in the input directory'],
       ['extract', 'Extract ROM files in archives when copying or moving'],
       ['zip', 'Create zip archives of ROMs when copying or moving'],
+      ['playlist', 'Create playlist files for multi-disc games'],
       ['test', 'Test ROMs for accuracy after writing them to the output directory'],
       ['dir2dat', 'Generate a DAT from all input files'],
       ['fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)'],
@@ -115,10 +122,12 @@ export default class ArgumentsParser {
     ];
     const addCommands = (yargsObj: Argv, previousCommands: string[] = []): Argv => {
       commands
-        // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
-        .filter(([command]) => !previousCommands.includes(command))
-        // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
         .filter(([command]) => {
+          // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
+          if (previousCommands.includes(command)) {
+            return false;
+          }
+          // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
           const incompatibleCommands = previousCommands.flatMap((previousCommand) =>
             mutuallyExclusiveCommands
               .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
@@ -191,16 +200,9 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .check((checkArgv) => {
-        const needInput = [
-          'copy',
-          'move',
-          'link',
-          'extract',
-          'zip',
-          'test',
-          'dir2dat',
-          'fixdat',
-        ].filter((command) => checkArgv._.includes(command));
+        const needInput = ['copy', 'move', 'link', 'extract', 'zip', 'test', 'dir2dat'].filter(
+          (command) => checkArgv._.includes(command),
+        );
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
@@ -226,7 +228,8 @@ export default class ArgumentsParser {
         // Re-implement `conflicts: 'input-checksum-min'`, which isn't possible with a default value
         if (
           checkArgv['input-checksum-quick'] &&
-          checkArgv['input-checksum-min'] !== ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase()
+          checkArgv['input-checksum-min'] !==
+            ChecksumBitmaskInverted[ChecksumBitmask.CRC32].toUpperCase()
         ) {
           throw new ExpectedError(
             'Arguments input-checksum-quick and input-checksum-min are mutually exclusive',
@@ -242,21 +245,19 @@ export default class ArgumentsParser {
       .option('input-checksum-min', {
         group: groupRomInput,
         description: 'The minimum checksum level to calculate and use for matching',
-        choices: Object.keys(ChecksumBitmask)
-          .filter((bitmask) => Number.isNaN(Number(bitmask)))
-          .filter((bitmask) => ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] > 0)
-          .map((bitmask) => bitmask.toUpperCase()),
+        choices: Object.values(ChecksumBitmask)
+          .filter((bitmask) => bitmask !== ChecksumBitmask.NONE)
+          .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: ChecksumBitmask[ChecksumBitmask.CRC32].toUpperCase(),
+        default: ChecksumBitmaskInverted[ChecksumBitmask.CRC32].toUpperCase(),
       })
       .option('input-checksum-max', {
         group: groupRomInput,
         description: 'The maximum checksum level to calculate and use for matching',
-        choices: Object.keys(ChecksumBitmask)
-          .filter((bitmask) => Number.isNaN(Number(bitmask)))
-          .filter((bitmask) => ChecksumBitmask[bitmask as keyof typeof ChecksumBitmask] > 0)
-          .map((bitmask) => bitmask.toUpperCase()),
+        choices: Object.values(ChecksumBitmask)
+          .filter((bitmask) => bitmask !== ChecksumBitmask.NONE)
+          .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
@@ -279,12 +280,12 @@ export default class ArgumentsParser {
         group: groupRomInput,
         description:
           'Calculate checksums of archive files themselves, allowing them to match files in DATs',
-        choices: Object.keys(InputChecksumArchivesMode)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(InputChecksumArchivesMode).map((mode) =>
+          InputChecksumArchivesModeInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: InputChecksumArchivesMode[InputChecksumArchivesMode.AUTO].toLowerCase(),
+        default: InputChecksumArchivesModeInverted[InputChecksumArchivesMode.AUTO].toLowerCase(),
       })
 
       .option('dat', {
@@ -414,7 +415,7 @@ export default class ArgumentsParser {
         group: groupRomOutputPath,
         description: 'How many game name letters to use for the subdirectory name',
         type: 'number',
-        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: 1,
       })
@@ -430,7 +431,7 @@ export default class ArgumentsParser {
         description:
           'Limit the number of games in letter subdirectories, splitting into multiple subdirectories if necessary',
         type: 'number',
-        coerce: (val: number) => Math.max(ArgumentsParser.getLastValue(val), 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         implies: 'dir-letter',
       })
@@ -444,24 +445,24 @@ export default class ArgumentsParser {
       .option('dir-game-subdir', {
         group: groupRomOutputPath,
         description: 'Append the name of the game as an output subdirectory depending on its ROMs',
-        choices: Object.keys(GameSubdirMode)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(GameSubdirMode).map((mode) =>
+          GameSubdirModeInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        default: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       })
 
       .option('fix-extension', {
         group: groupRomOutput,
         description:
           'Read files for known signatures and use the correct extension (also affects dir2dat)',
-        choices: Object.keys(FixExtension)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(FixExtension).map((mode) =>
+          FixExtensionInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: FixExtension[FixExtension.AUTO].toLowerCase(),
+        default: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       })
       .option('overwrite', {
         group: groupRomOutput,
@@ -497,7 +498,7 @@ export default class ArgumentsParser {
       })
       .option('clean-backup', {
         group: groupRomClean,
-        description: 'Move cleaned files to a directory for backup',
+        description: 'Directory to move cleaned files to (instead of being recycled)',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -579,35 +580,38 @@ export default class ArgumentsParser {
         alias: 'H',
         description: `Remove known headers from ROMs, optionally limited to a list of comma-separated file extensions (supported: ${ROMHeader.getSupportedExtensions().join(', ')})`,
         type: 'string',
-        coerce: (vals: string) =>
-          vals.split(',').map((val) => {
-            if (val === '') {
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => {
+            if (val.trim() === '') {
               // Flag was provided without any extensions
               return val;
             }
-            return `.${val.replace(/^\.+/, '')}`;
+            return val.split(',').map((v) => `.${v.trim().replace(/^\.+/, '')}`);
           }),
       })
 
       .option('merge-roms', {
         group: groupRomSet,
         description: 'ROM merge/split mode (requires DATs with parent/clone information)',
-        choices: Object.keys(MergeMode)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(MergeMode).map((mode) => MergeModeInverted[mode].toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+        default: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
       })
       .check((checkArgv) => {
         // Re-implement `implies: 'dat'`, which isn't possible with a default value
         if (
-          checkArgv['merge-roms'] !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          checkArgv['merge-roms'] !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           !checkArgv.dat
         ) {
           throw new ExpectedError('Missing dependent arguments:\n merge-roms -> dat');
         }
         return true;
+      })
+      .option('merge-discs', {
+        group: groupRomSet,
+        description: 'Merge multi-disc games into one game',
+        type: 'boolean',
       })
       .option('exclude-disks', {
         group: groupRomSet,
@@ -649,7 +653,8 @@ export default class ArgumentsParser {
         alias: 'L',
         description: `List of comma-separated languages to filter to (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -668,7 +673,8 @@ export default class ArgumentsParser {
         alias: 'R',
         description: `List of comma-separated regions to filter to (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -681,6 +687,14 @@ export default class ArgumentsParser {
           );
         }
         return true;
+      })
+      .option('filter-category-regex', {
+        group: groupRomFiltering,
+        description: 'Regular expression of categories to filter to',
+        type: 'string',
+        coerce: ArgumentsParser.readRegexFile,
+        requiresArg: true,
+        implies: 'dat',
       });
     [
       ['bios', 'BIOS files'],
@@ -772,7 +786,8 @@ export default class ArgumentsParser {
         alias: 'l',
         description: `List of comma-separated languages in priority order (supported: ${Internationalization.LANGUAGES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
         implies: 'single',
       })
@@ -792,7 +807,8 @@ export default class ArgumentsParser {
         alias: 'r',
         description: `List of comma-separated regions in priority order (supported: ${Internationalization.REGION_CODES.join(', ')})`,
         type: 'string',
-        coerce: (val: string) => val.toUpperCase().split(','),
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => val.toUpperCase().split(',')),
         requiresArg: true,
         implies: 'single',
       })
@@ -810,9 +826,9 @@ export default class ArgumentsParser {
       .option('prefer-revision', {
         group: groupRomPriority,
         description: 'Prefer older or newer revisions, versions, or ring codes',
-        choices: Object.keys(PreferRevision)
-          .filter((mode) => Number.isNaN(Number(mode)))
-          .map((mode) => mode.toLowerCase()),
+        choices: Object.values(PreferRevision).map((mode) =>
+          PreferRevisionInverted[mode].toLowerCase(),
+        ),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         implies: 'single',
@@ -830,6 +846,30 @@ export default class ArgumentsParser {
         implies: 'single',
       })
 
+      .option('playlist-extensions', {
+        group: groupPlaylist,
+        description: 'List of comma-separated file extensions to generate multi-disc playlists for',
+        type: 'string',
+        coerce: (vals: string | string[]) =>
+          (Array.isArray(vals) ? vals : [vals]).flatMap((val) => {
+            if (val.trim() === '') {
+              return [];
+            }
+            return val.split(',').map((v) => `.${v.trim().replace(/^\.+/, '')}`);
+          }),
+        requiresArg: true,
+        default: '.cue,.gdi,.mdf,.chd',
+      })
+      .check((checkArgv) => {
+        if (checkArgv._.includes('playlist') && checkArgv['playlist-extensions'].length === 0) {
+          // TODO(cememr): print help message
+          throw new ExpectedError(
+            `Missing required argument for command playlist: --playlist-extensions <exts>`,
+          );
+        }
+        return true;
+      })
+
       .option('dir2dat-output', {
         group: groupDir2Dat,
         description: 'dir2dat output directory',
@@ -842,7 +882,7 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('dir2dat') && needDir2Dat.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needDir2Dat.length !== 1 ? 's' : ''} ${needDir2Dat.join(', ')}: fixdat`,
+            `Missing required command for option${needDir2Dat.length !== 1 ? 's' : ''} ${needDir2Dat.join(', ')}: dir2dat`,
           );
         }
         return true;
@@ -879,7 +919,7 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Number of DATs to process in parallel',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: Defaults.DAT_DEFAULT_THREADS,
       })
@@ -887,7 +927,7 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Maximum number of ROMs to read in parallel per disk',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: Defaults.FILE_READER_DEFAULT_THREADS,
       })
@@ -895,7 +935,7 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Maximum number of ROMs to write in parallel',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 1),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
         requiresArg: true,
         default: Defaults.ROM_WRITER_DEFAULT_THREADS,
       })
@@ -909,7 +949,7 @@ export default class ArgumentsParser {
         description:
           'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
         type: 'number',
-        coerce: (val: number) => Math.max(val, 0),
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 0),
         requiresArg: true,
         default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
       })
@@ -949,30 +989,30 @@ export default class ArgumentsParser {
 
       .check((checkArgv) => {
         if (
-          checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          checkArgv.mergeRoms !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.dirMirror || checkArgv.dirLetter)
         ) {
           this.logger.warn(
-            `at least one --dir-* option was provided, be careful about how you organize non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`,
+            `at least one --dir-* option was provided, be careful about how you organize non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`,
           );
         }
 
         if (
-          checkArgv.mergeRoms !== MergeMode[MergeMode.FULLNONMERGED].toLowerCase() &&
+          checkArgv.mergeRoms !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.noBios || checkArgv.noDevice)
         ) {
           this.logger.warn(
-            `--no-bios and --no-device may leave non-'${MergeMode[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`,
+            `--no-bios and --no-device may leave non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
 
         if (
           checkArgv.single &&
           !checkArgv.preferParent &&
-          checkArgv.mergeRoms === MergeMode[MergeMode.SPLIT].toLowerCase()
+          checkArgv.mergeRoms === MergeModeInverted[MergeMode.SPLIT].toLowerCase()
         ) {
           this.logger.warn(
-            `--single may leave '${MergeMode[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
+            `--single may leave '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
 
@@ -1034,6 +1074,9 @@ Example use cases:
 
   Copy all BIOS files into one directory, extracting if necessary:
     $0 copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
+
+  Create playlist files for all multi-disc games in an existing collection:
+    $0 playlist --input ROMs/
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/

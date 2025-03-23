@@ -4,7 +4,7 @@ import path from 'node:path';
 import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
-import fsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly from '../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
@@ -80,9 +80,10 @@ describe('multiple files', () => {
   ] satisfies [OptionsProps, number][])(
     'should calculate checksums of archives: %s',
     async (optionsProps, expectedRomFiles) => {
-      const checksumBitmask = Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-        .reduce((allBitmasks, bitmask) => allBitmasks | ChecksumBitmask[bitmask], 0);
+      const checksumBitmask = Object.values(ChecksumBitmask).reduce(
+        (allBitmasks, bitmask) => allBitmasks | bitmask,
+        0 as number,
+      );
       const scannedFiles = await new ROMScanner(
         new Options(optionsProps),
         new ProgressBarFake(),
@@ -179,29 +180,29 @@ describe('multiple files', () => {
     );
 
     // Given some hard linked files
-    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       const filesDir = path.join(tempDir, 'files');
-      await fsPoly.mkdir(filesDir);
+      await FsPoly.mkdir(filesDir);
 
       const romFiles = await Promise.all(
-        (await fsPoly.walk('test/fixtures/roms')).map(async (romFile) => {
+        (await FsPoly.walk('test/fixtures/roms')).map(async (romFile) => {
           // Make a copy of the original file to ensure it's on the same drive
           const tempFile = path.join(filesDir, romFile);
-          await fsPoly.mkdir(path.dirname(tempFile), { recursive: true });
-          await fsPoly.copyFile(romFile, tempFile);
+          await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+          await FsPoly.copyFile(romFile, tempFile);
           return tempFile;
         }),
       );
 
       const linksDir = path.join(tempDir, 'links');
-      await fsPoly.mkdir(linksDir);
+      await FsPoly.mkdir(linksDir);
 
       await Promise.all(
         romFiles.map(async (romFile) => {
           const tempLink = path.join(linksDir, path.relative(filesDir, romFile));
-          await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-          await fsPoly.hardlink(path.resolve(romFile), tempLink);
+          await FsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+          await FsPoly.hardlink(romFile, tempLink);
         }),
       );
 
@@ -217,7 +218,7 @@ describe('multiple files', () => {
         expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
       }
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await FsPoly.rm(tempDir, { recursive: true });
     }
   });
 
@@ -227,19 +228,19 @@ describe('multiple files', () => {
     );
 
     // Given some symlinked files
-    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
-      const romFiles = await fsPoly.walk('test/fixtures/roms');
+      const romFiles = await FsPoly.walk('test/fixtures/roms');
       await Promise.all(
         romFiles.map(async (romFile, idx) => {
           const tempLink = path.join(tempDir, romFile);
-          await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+          await FsPoly.mkdir(path.dirname(tempLink), { recursive: true });
           if (idx % 2 === 0) {
             // symlink some files with absolute paths
-            await fsPoly.symlink(path.resolve(romFile), tempLink);
+            await FsPoly.symlink(path.resolve(romFile), tempLink);
           } else {
             // symlink some files with relative paths
-            await fsPoly.symlink(await fsPoly.symlinkRelativePath(romFile, tempLink), tempLink);
+            await FsPoly.symlink(await FsPoly.symlinkRelativePath(romFile, tempLink), tempLink);
           }
         }),
       );
@@ -256,31 +257,31 @@ describe('multiple files', () => {
         expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
       }
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await FsPoly.rm(tempDir, { recursive: true });
     }
   });
 
   it('should scan symlinked directories', async () => {
     const realRomDir = path.join('test', 'fixtures', 'roms');
-    const romDirs = await fsPoly.dirs(realRomDir);
+    const romDirs = await FsPoly.dirs(realRomDir);
 
     const scannedRealFiles = (await createRomScanner(romDirs).scan()).sort((a, b) =>
       a.getFilePath().localeCompare(b.getFilePath()),
     );
 
     // Given some symlinked dirs
-    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       await Promise.all(
         romDirs.map(async (romDir, idx) => {
           const tempLink = path.join(tempDir, romDir);
-          await fsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+          await FsPoly.mkdir(path.dirname(tempLink), { recursive: true });
           if (idx % 2 === 0) {
             // symlink some files with absolute paths
-            await fsPoly.symlink(path.resolve(romDir), tempLink);
+            await FsPoly.symlink(path.resolve(romDir), tempLink);
           } else {
             // symlink some files with relative paths
-            await fsPoly.symlink(await fsPoly.symlinkRelativePath(romDir, tempLink), tempLink);
+            await FsPoly.symlink(await FsPoly.symlinkRelativePath(romDir, tempLink), tempLink);
           }
         }),
       );
@@ -297,7 +298,7 @@ describe('multiple files', () => {
         expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
       }
     } finally {
-      await fsPoly.rm(tempDir, { recursive: true });
+      await FsPoly.rm(tempDir, { recursive: true });
     }
   });
 });

@@ -3,13 +3,13 @@ import { CHDInfo, CHDType } from 'chdman';
 import ProgressBar from '../console/progressBar.js';
 import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Chd from '../types/files/archives/chd/chd.js';
 import Gzip from '../types/files/archives/sevenZip/gzip.js';
 import Tar from '../types/files/archives/tar.js';
 import File from '../types/files/file.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import { ChecksumBitmask, ChecksumBitmaskValue } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -58,7 +58,7 @@ export default abstract class Scanner extends Module {
   protected async getUniqueFilesFromPaths(
     filePaths: string[],
     threads: number,
-    checksumBitmask: number,
+    checksumBitmask: ChecksumBitmaskValue,
   ): Promise<File[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       throw new Error('must provide ChecksumBitmask when getting unique files');
@@ -73,9 +73,9 @@ export default abstract class Scanner extends Module {
     checksumArchives = false,
   ): Promise<File[]> {
     try {
-      if (await fsPoly.isSymlink(filePath)) {
-        const realFilePath = await fsPoly.readlinkResolved(filePath);
-        if (!(await fsPoly.exists(realFilePath))) {
+      if (await FsPoly.isSymlink(filePath)) {
+        const realFilePath = await FsPoly.readlinkResolved(filePath);
+        if (!(await FsPoly.exists(realFilePath))) {
           this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
           return [];
         }

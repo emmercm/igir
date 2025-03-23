@@ -23,6 +23,6 @@ export default class DATObject {
     return new XMLParser({
       ignoreAttributes: false,
       attributeNamePrefix: '',
-    }).parse(xmlContents);
+    }).parse(xmlContents) as DATObjectProps;
   }
 }

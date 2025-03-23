@@ -6,8 +6,8 @@ export default {
       readable.resume();
 
       const chunks: Buffer[] = [];
-      readable.on('data', (chunk) => {
-        chunks.push(Buffer.from(chunk));
+      readable.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
       });
 
       readable.on('end', () => {

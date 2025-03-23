@@ -3,9 +3,8 @@ import async from 'async';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
-import Archive from '../types/files/archives/archive.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import File from '../types/files/file.js';
@@ -34,7 +33,7 @@ export default class MovedROMDeleter extends Module {
     }
 
     this.progressBar.logTrace('deleting moved ROMs');
-    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_FILTERING);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
     this.progressBar.reset(movedRoms.length);
 
     const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(movedRoms, inputRoms);
@@ -47,7 +46,7 @@ export default class MovedROMDeleter extends Module {
     const existingFilePathsCheck = await async.mapLimit(
       filePathsToDelete,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => fsPoly.exists(filePath),
+      async (filePath: string) => FsPoly.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
       (filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -70,7 +69,7 @@ export default class MovedROMDeleter extends Module {
       await Promise.all(
         filePathChunk.map(async (filePath) => {
           try {
-            await fsPoly.rm(filePath, { force: true });
+            await FsPoly.rm(filePath, { force: true });
           } catch (error) {
             this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
           }
@@ -92,12 +91,14 @@ export default class MovedROMDeleter extends Module {
 
     return [...groupedMovedRoms.entries()]
       .map(([filePath, movedEntries]) => {
-        // NOTE(cemmer): games can have ROMs with duplicate checksums, which means an Archive of
-        //  that game's ROMs will contain some duplicate files. When extracting or zipping, we would
-        //  have generated multiple ReleaseCandidates with the same input File, resulting in the
-        //  duplicate files in the Archive not being considered "moved." Therefore, we should use
-        //  the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
-        //  during writing.
+        /**
+         * NOTE(cemmer): games can have ROMs with duplicate checksums, which means an Archive of
+         * that game's ROMs will contain some duplicate files. When extracting or zipping, we would
+         * have generated multiple {@link WriteCandidate} with the same input File, resulting in the
+         * duplicate files in the Archive not being considered "moved." Therefore, we should use
+         * the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
+         * during writing.
+         */
         const movedEntryHashCodes = new Set(movedEntries.flatMap((file) => file.hashCode()));
 
         const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];
@@ -105,10 +106,12 @@ export default class MovedROMDeleter extends Module {
           (inputFile) => inputFile instanceof ArchiveEntry,
         );
 
-        const unmovedFiles = inputFilesForPath
-          .filter((inputFile) => !(inputFile instanceof ArchiveEntry))
-          // The input archive entry needs to have been explicitly moved
-          .filter((inputFile) => !movedEntryHashCodes.has(inputFile.hashCode()));
+        const unmovedFiles = inputFilesForPath.filter(
+          (inputFile) =>
+            !(inputFile instanceof ArchiveEntry) &&
+            // The input archive entry needs to have been explicitly moved
+            !movedEntryHashCodes.has(inputFile.hashCode()),
+        );
 
         if (inputFileIsArchive && unmovedFiles.length === 0) {
           // The input file is an archive, and it was fully extracted OR the archive file itself was
@@ -116,19 +119,19 @@ export default class MovedROMDeleter extends Module {
           return filePath;
         }
 
-        const unmovedArchiveEntries = inputFilesForPath
-          .filter(
-            (inputFile): inputFile is ArchiveEntry<Archive> => inputFile instanceof ArchiveEntry,
-          )
-          .filter((inputEntry) => {
-            if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
-              // If the input archive was written as a raw archive, then consider it moved
-              return false;
-            }
+        const unmovedArchiveEntries = inputFilesForPath.filter((inputFile) => {
+          if (!(inputFile instanceof ArchiveEntry)) {
+            return false;
+          }
 
-            // Otherwise, the input archive entry needs to have been explicitly moved
-            return !movedEntryHashCodes.has(inputEntry.hashCode());
-          });
+          if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
+            // If the input archive was written as a raw archive, then consider it moved
+            return false;
+          }
+
+          // Otherwise, the input archive entry needs to have been explicitly moved
+          return !movedEntryHashCodes.has(inputFile.hashCode());
+        });
 
         if (inputFileIsArchive && unmovedArchiveEntries.length === 0) {
           // The input file is an archive and it was fully zipped
@@ -140,7 +143,7 @@ export default class MovedROMDeleter extends Module {
           this.progressBar.logWarn(
             `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries
               .sort()
-              .map((entry) => `  ${entry}`)
+              .map((entry) => `  ${entry.toString()}`)
               .join('\n')}`,
           );
           return undefined;

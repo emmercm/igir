@@ -36,7 +36,7 @@ describe('getSingleBar', () => {
 describe('getLastOutput', () => {
   it('should be empty before render', () => {
     testSingleBarFormatted(0, {}, (singleBarFormatted) => {
-      expect(singleBarFormatted.getLastOutput()).toEqual('');
+      expect(singleBarFormatted.getLastOutput()).toEqual(undefined);
     });
   });
 
@@ -81,7 +81,7 @@ describe('format', () => {
       singleBarFormatted.getSingleBar().update(payload);
       singleBarFormatted.getSingleBar().render();
 
-      expect(stripAnsi(singleBarFormatted.getLastOutput())).toEqual(expected);
+      expect(stripAnsi(singleBarFormatted.getLastOutput() ?? '')).toEqual(expected);
     });
   });
 });

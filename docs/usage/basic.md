@@ -46,7 +46,7 @@ Let's say that you have a directory named `ROMs/` that contains ROMs for many di
       --dir-dat-name
     ```
 
-This will organize your ROMs into system-specific subdirectories within `ROMs-Sorted/` and name all of your ROMs according to the No-Intro DATs. Because we copied and didn't move the files, no files were deleted from the `ROMs/` input directory.
+This will organize your ROMs into system-specific subdirectories within the `ROMs-Sorted/` directory and name all of your ROMs according to the No-Intro DATs. Because we copied and didn't move the files, no files were deleted from the `ROMs/` input directory.
 
 `ROMs-Sorted/` then might look something like this:
 
@@ -73,7 +73,7 @@ ROMs-Sorted/
 
 Let's say that we've done the above first time sort and were happy with the results. We can now consider the `ROMs-Sorted/` directory to be our "golden" or "primary" collection, as every file in there has been matched to a DAT.
 
-We now have new ROMs that we want to newly merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" or delete any unknown files that may have made their way into our collection.
+We now have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" or delete any unknown files that may have made their way into our collection.
 
 === ":fontawesome-brands-windows: Windows"
 
@@ -108,7 +108,7 @@ We now have new ROMs that we want to newly merge into our collection, and we wan
       --dir-dat-name
     ```
 
-Any new ROMs in `ROMs-New/` that we didn't already have in `ROMs-Sorted/` will be moved, and a report will be generated for us.
+Any new ROMs in `ROMs-New/` that we didn't already have in `ROMs-Sorted/` will be moved to `ROMs-Sorted/`, and a report will be generated for us.
 
 !!! note
 
@@ -139,7 +139,13 @@ ROMs-Sorted/
 
 Let's say we've done the above sorting we want to copy some ROMs from `ROMs-Sorted/` to a flash cart.
 
-We would prefer having only one copy of every game ([1G1R](../roms/filtering-preferences.md#preferences-for-1g1r)), because we have a preferred language, and so there is less to scroll through to find what game we want. Our flash cart can't read `.zip` files, so we'll need to extract our ROMs during copying.
+We would prefer having only one copy of every game because we have a preferred language, and so there is less to scroll through to find what game we want.
+
+!!! note
+
+    The common name for this is "one-game, one-ROM" or "1G1R"—this is what Igir is named after! Igir has some of the most extensive [filtering](../roms/filtering-preferences.md#filters) and [1G1R options](../roms/filtering-preferences.md#preferences-for-1g1r) of any ROM manager.
+
+Our example flash cart, like most flash carts, can't read `.zip` files, so we'll need to extract our ROMs during copying.
 
 === ":fontawesome-brands-windows: Windows"
 
@@ -201,10 +207,6 @@ Your flash cart might then look something like this:
 
 <script src="https://asciinema.org/a/GxXyngUlZ5Xg8pCh6GhJdDc4t.js" id="asciicast-GxXyngUlZ5Xg8pCh6GhJdDc4t" async="true"></script>
 
-!!! info
-
-    See the [ROM filtering & preference](../roms/filtering-preferences.md) page for other ways that you can filter your collection.
-
 ## Without DATs
 
 ROM organization is very opinion-based, and your opinion may not match that of DAT groups. To preserve your custom ROM sorting, you can skip providing any DATs by omitting the `--dat <path>` option.
@@ -248,7 +250,7 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
 
 ### Fixing file extensions
 
-Igir is able to detect more than 50 ROM and archive file types and automatically correct file extensions when needed during writing. See the [writing options](../output/options.md#fixing-rom-extensions) page for more information.
+Igir is able to detect more than 60 ROM and archive file types and automatically correct file extensions when needed during writing. See the [writing options](../output/options.md#fixing-rom-extensions) page for more information.
 
 === ":fontawesome-brands-windows: Windows"
 

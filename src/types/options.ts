@@ -10,57 +10,87 @@ import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
 
-import LogLevel from '../console/logLevel.js';
+import { LogLevel, LogLevelValue } from '../console/logLevel.js';
 import Defaults from '../globals/defaults.js';
 import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
+import FsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
 import ExpectedError from './expectedError.js';
 import File from './files/file.js';
-import { ChecksumBitmask } from './files/fileChecksums.js';
+import {
+  ChecksumBitmask,
+  ChecksumBitmaskKey,
+  ChecksumBitmaskValue,
+} from './files/fileChecksums.js';
 
-export enum InputChecksumArchivesMode {
+export const InputChecksumArchivesMode = {
   // Never calculate the checksum of archive files
-  NEVER = 1,
+  NEVER: 1,
   // Calculate the checksum of archive files if DATs reference archives
-  AUTO = 2,
+  AUTO: 2,
   // Always calculate the checksum of archive files
-  ALWAYS = 3,
-}
+  ALWAYS: 3,
+} as const;
+export type InputChecksumArchivesModeKey = keyof typeof InputChecksumArchivesMode;
+export type InputChecksumArchivesModeValue =
+  (typeof InputChecksumArchivesMode)[InputChecksumArchivesModeKey];
+export const InputChecksumArchivesModeInverted = Object.fromEntries(
+  Object.entries(InputChecksumArchivesMode).map(([key, value]) => [value, key]),
+) as Record<InputChecksumArchivesModeValue, InputChecksumArchivesModeKey>;
 
-export enum MergeMode {
+export const MergeMode = {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
-  FULLNONMERGED = 1,
+  FULLNONMERGED: 1,
   // Clones contain all parent ROMs, BIOS & device ROMsets are separate
-  NONMERGED,
+  NONMERGED: 2,
   // Clones exclude all parent ROMs, BIOS & device ROMsets are separate
-  SPLIT,
+  SPLIT: 3,
   // Clones are merged into parent, BIOS & device ROMsets are separate
-  MERGED,
-}
+  MERGED: 4,
+} as const;
+export type MergeModeKey = keyof typeof MergeMode;
+export type MergeModeValue = (typeof MergeMode)[MergeModeKey];
+export const MergeModeInverted = Object.fromEntries(
+  Object.entries(MergeMode).map(([key, value]) => [value, key]),
+) as Record<MergeModeValue, MergeModeKey>;
 
-export enum GameSubdirMode {
+export const GameSubdirMode = {
   // Never add the Game name as a subdirectory
-  NEVER = 1,
+  NEVER: 1,
   // Add the Game name as a subdirectory if it has multiple output files
-  MULTIPLE,
+  MULTIPLE: 2,
   // Always add the Game name as a subdirectory
-  ALWAYS,
-}
+  ALWAYS: 3,
+} as const;
+export type GameSubdirModeKey = keyof typeof GameSubdirMode;
+export type GameSubdirModeValue = (typeof GameSubdirMode)[GameSubdirModeKey];
+export const GameSubdirModeInverted = Object.fromEntries(
+  Object.entries(GameSubdirMode).map(([key, value]) => [value, key]),
+) as Record<GameSubdirModeValue, GameSubdirModeKey>;
 
-export enum FixExtension {
-  NEVER = 1,
-  AUTO = 2,
-  ALWAYS = 3,
-}
+export const FixExtension = {
+  NEVER: 1,
+  AUTO: 2,
+  ALWAYS: 3,
+} as const;
+export type FixExtensionKey = keyof typeof FixExtension;
+export type FixExtensionValue = (typeof FixExtension)[FixExtensionKey];
+export const FixExtensionInverted = Object.fromEntries(
+  Object.entries(FixExtension).map(([key, value]) => [value, key]),
+) as Record<FixExtensionValue, FixExtensionKey>;
 
-export enum PreferRevision {
-  OLDER = 1,
-  NEWER = 2,
-}
+export const PreferRevision = {
+  OLDER: 1,
+  NEWER: 2,
+} as const;
+export type PreferRevisionKey = keyof typeof PreferRevision;
+export type PreferRevisionValue = (typeof PreferRevision)[PreferRevisionKey];
+export const PreferRevisionInverted = Object.fromEntries(
+  Object.entries(PreferRevision).map(([key, value]) => [value, key]),
+) as Record<PreferRevisionValue, PreferRevisionKey>;
 
 export interface OptionsProps {
   readonly commands?: string[];
@@ -111,6 +141,7 @@ export interface OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly mergeRoms?: string;
+  readonly mergeDiscs?: boolean;
   readonly excludeDisks?: boolean;
   readonly allowExcessSets?: boolean;
   readonly allowIncompleteSets?: boolean;
@@ -119,6 +150,7 @@ export interface OptionsProps {
   readonly filterRegexExclude?: string;
   readonly filterLanguage?: string[];
   readonly filterRegion?: string[];
+  readonly filterCategoryRegex?: string;
   readonly noBios?: boolean;
   readonly onlyBios?: boolean;
   readonly noDevice?: boolean;
@@ -157,6 +189,8 @@ export interface OptionsProps {
   readonly preferRevision?: string;
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
+
+  readonly playlistExtensions?: string[];
 
   readonly dir2datOutput?: string;
 
@@ -198,13 +232,13 @@ export default class Options implements OptionsProps {
 
   readonly datExclude: string[];
 
-  readonly datNameRegex: string;
+  readonly datNameRegex?: string;
 
-  readonly datNameRegexExclude: string;
+  readonly datNameRegexExclude?: string;
 
-  readonly datDescriptionRegex: string;
+  readonly datDescriptionRegex?: string;
 
-  readonly datDescriptionRegexExclude: string;
+  readonly datDescriptionRegexExclude?: string;
 
   readonly datCombine: boolean;
 
@@ -258,19 +292,23 @@ export default class Options implements OptionsProps {
 
   readonly mergeRoms?: string;
 
+  readonly mergeDiscs: boolean;
+
   readonly excludeDisks: boolean;
 
   readonly allowExcessSets: boolean;
 
   readonly allowIncompleteSets: boolean;
 
-  readonly filterRegex: string;
+  readonly filterRegex?: string;
 
-  readonly filterRegexExclude: string;
+  readonly filterRegexExclude?: string;
 
   readonly filterLanguage: string[];
 
   readonly filterRegion: string[];
+
+  readonly filterCategoryRegex?: string;
 
   readonly noBios: boolean;
 
@@ -328,9 +366,9 @@ export default class Options implements OptionsProps {
 
   readonly single: boolean;
 
-  readonly preferGameRegex: string;
+  readonly preferGameRegex?: string;
 
-  readonly preferRomRegex: string;
+  readonly preferRomRegex?: string;
 
   readonly preferVerified: boolean;
 
@@ -345,6 +383,8 @@ export default class Options implements OptionsProps {
   readonly preferRetail: boolean;
 
   readonly preferParent: boolean;
+
+  readonly playlistExtensions: string[];
 
   readonly dir2datOutput?: string;
 
@@ -373,26 +413,32 @@ export default class Options implements OptionsProps {
   constructor(options?: OptionsProps) {
     this.commands = options?.commands ?? [];
 
-    this.input = options?.input ?? [];
-    this.inputExclude = options?.inputExclude ?? [];
+    this.input = (options?.input ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.inputExclude = (options?.inputExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
     this.inputChecksumQuick = options?.inputChecksumQuick ?? false;
     this.inputChecksumMin = options?.inputChecksumMin;
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = options?.dat ?? [];
-    this.datExclude = options?.datExclude ?? [];
-    this.datNameRegex = options?.datNameRegex ?? '';
-    this.datNameRegexExclude = options?.datNameRegexExclude ?? '';
-    this.datDescriptionRegex = options?.datDescriptionRegex ?? '';
-    this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude ?? '';
+    this.dat = (options?.dat ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.datExclude = (options?.datExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
+    this.datNameRegex = options?.datNameRegex;
+    this.datNameRegexExclude = options?.datNameRegexExclude;
+    this.datDescriptionRegex = options?.datDescriptionRegex;
+    this.datDescriptionRegexExclude = options?.datDescriptionRegexExclude;
     this.datCombine = options?.datCombine ?? false;
     this.datIgnoreParentClone = options?.datIgnoreParentClone ?? false;
 
-    this.patch = options?.patch ?? [];
-    this.patchExclude = options?.patchExclude ?? [];
+    this.patch = (options?.patch ?? []).map((filePath) => filePath.replace(/[\\/]/g, path.sep));
+    this.patchExclude = (options?.patchExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
 
-    this.output = options?.output;
+    this.output = options?.output?.replace(/[\\/]/g, path.sep);
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
     this.dirDatDescription = options?.dirDatDescription ?? false;
@@ -406,8 +452,10 @@ export default class Options implements OptionsProps {
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
 
-    this.cleanExclude = options?.cleanExclude ?? [];
-    this.cleanBackup = options?.cleanBackup;
+    this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
+      filePath.replace(/[\\/]/g, path.sep),
+    );
+    this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipExclude = options?.zipExclude ?? '';
@@ -420,14 +468,16 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.mergeRoms = options?.mergeRoms;
+    this.mergeDiscs = options?.mergeDiscs ?? false;
     this.excludeDisks = options?.excludeDisks ?? false;
     this.allowExcessSets = options?.allowExcessSets ?? false;
     this.allowIncompleteSets = options?.allowIncompleteSets ?? false;
 
-    this.filterRegex = options?.filterRegex ?? '';
-    this.filterRegexExclude = options?.filterRegexExclude ?? '';
+    this.filterRegex = options?.filterRegex;
+    this.filterRegexExclude = options?.filterRegexExclude;
     this.filterLanguage = options?.filterLanguage ?? [];
     this.filterRegion = options?.filterRegion ?? [];
+    this.filterCategoryRegex = options?.filterCategoryRegex;
     this.noBios = options?.noBios ?? false;
     this.onlyBios = options?.onlyBios ?? false;
     this.noDevice = options?.noDevice ?? false;
@@ -457,8 +507,8 @@ export default class Options implements OptionsProps {
     this.onlyBad = options?.onlyBad ?? false;
 
     this.single = options?.single ?? false;
-    this.preferGameRegex = options?.preferGameRegex ?? '';
-    this.preferRomRegex = options?.preferRomRegex ?? '';
+    this.preferGameRegex = options?.preferGameRegex;
+    this.preferRomRegex = options?.preferRomRegex;
     this.preferVerified = options?.preferVerified ?? false;
     this.preferGood = options?.preferGood ?? false;
     this.preferLanguage = options?.preferLanguage ?? [];
@@ -467,17 +517,19 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
-    this.dir2datOutput = options?.dir2datOutput;
+    this.playlistExtensions = options?.playlistExtensions ?? [];
 
-    this.fixdatOutput = options?.fixdatOutput;
+    this.dir2datOutput = options?.dir2datOutput?.replace(/[\\/]/g, path.sep);
 
-    this.reportOutput = options?.reportOutput ?? process.cwd();
+    this.fixdatOutput = options?.fixdatOutput?.replace(/[\\/]/g, path.sep);
+
+    this.reportOutput = (options?.reportOutput ?? process.cwd()).replace(/[\\/]/g, path.sep);
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
     this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
-    this.tempDir = options?.tempDir ?? Temp.getTempDir();
+    this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replace(/[\\/]/g, path.sep);
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
     this.verbose = options?.verbose ?? 0;
@@ -494,16 +546,23 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Return an object of all options.
+   */
+  toObject(): Record<string, unknown> {
+    return instanceToPlain(this);
+  }
+
+  /**
    * Return a JSON representation of all options.
    */
   toString(): string {
-    return JSON.stringify(instanceToPlain(this));
+    return JSON.stringify(this.toObject());
   }
 
   // Helpers
 
-  private static getRegex(pattern: string): RegExp[] | undefined {
-    if (!pattern.trim()) {
+  private static getRegex(pattern: string | undefined): RegExp[] | undefined {
+    if (!pattern?.trim()) {
       return undefined;
     }
 
@@ -511,7 +570,7 @@ export default class Options implements OptionsProps {
       .split(/\r?\n/)
       .filter((line) => line.length > 0)
       .map((line) => {
-        const flagsMatch = line.match(/^\/(.+)\/([a-z]*)$/);
+        const flagsMatch = /^\/(.+)\/([a-z]*)$/.exec(line);
         if (flagsMatch !== null) {
           return new RegExp(flagsMatch[1], flagsMatch[2]);
         }
@@ -600,6 +659,13 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Was the 'playlist' command provided?
+   */
+  shouldPlaylist(): boolean {
+    return this.getCommands().has('playlist');
+  }
+
+  /**
    * Was the 'dir2dat' command provided?
    */
   shouldDir2Dat(): boolean {
@@ -641,7 +707,11 @@ export default class Options implements OptionsProps {
   }
 
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.input, walkCallback, this.shouldWrite() || !this.shouldReport());
+    return Options.scanPaths(
+      this.input,
+      walkCallback,
+      this.shouldWrite() || !(this.shouldReport() || this.shouldFixdat()),
+    );
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {
@@ -666,7 +736,7 @@ export default class Options implements OptionsProps {
     const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
     let globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
-      const paths = await this.globPath(uniqueGlobPattern, walkCallback ?? ((): void => {}));
+      const paths = await this.globPath(uniqueGlobPattern, walkCallback);
       // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
       // size limit
       globbedPaths = [...globbedPaths, ...paths];
@@ -677,22 +747,22 @@ export default class Options implements OptionsProps {
       globbedPaths,
       Defaults.MAX_FS_THREADS,
       async (file: string): Promise<boolean> => {
-        if (!(await fsPoly.exists(file)) && URLPoly.canParse(file)) {
+        if (!(await FsPoly.exists(file)) && URLPoly.canParse(file)) {
           // Treat URLs as files (and not directories)
           return true;
         }
 
         try {
-          return !(await fsPoly.isDirectory(file));
+          return !(await FsPoly.isDirectory(file));
         } catch {
           // Assume errors mean the path doesn't exist
           return false;
         }
       },
     );
-    const globbedFiles = globbedPaths
-      .filter((inputPath, idx) => isNonDirectory[idx])
-      .filter((inputPath) => isNotJunk(path.basename(inputPath)));
+    const globbedFiles = globbedPaths.filter(
+      (inputPath, idx) => isNonDirectory[idx] && isNotJunk(path.basename(inputPath)),
+    );
 
     if (requireFiles && globbedFiles.length === 0) {
       throw new ExpectedError(
@@ -706,7 +776,7 @@ export default class Options implements OptionsProps {
 
   private static async globPath(
     inputPath: string,
-    walkCallback: FsWalkCallback,
+    walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Windows will report that \\.\nul doesn't exist, catch it explicitly
     if (inputPath === os.devNull || inputPath.startsWith(os.devNull + path.sep)) {
@@ -714,15 +784,15 @@ export default class Options implements OptionsProps {
     }
 
     // Glob the contents of directories
-    if (await fsPoly.isDirectory(inputPath)) {
-      return (await fsPoly.walk(inputPath, walkCallback)).map((filePath) =>
-        path.normalize(filePath),
-      );
+    if (await FsPoly.isDirectory(inputPath)) {
+      return FsPoly.walk(inputPath, walkCallback);
     }
 
     // If the file exists, don't process it as a glob pattern
-    if (await fsPoly.exists(inputPath)) {
-      walkCallback(1);
+    if (await FsPoly.exists(inputPath)) {
+      if (walkCallback !== undefined) {
+        walkCallback(1);
+      }
       return [inputPath];
     }
 
@@ -737,19 +807,24 @@ export default class Options implements OptionsProps {
     }
 
     // Otherwise, process it as a glob pattern
-    const paths = (await fg(inputPathEscaped, { onlyFiles: true })).map((filePath) =>
-      path.normalize(filePath),
-    );
-    if (paths.length === 0) {
+    const globbedPaths = await fg(inputPathEscaped, { onlyFiles: true });
+    if (globbedPaths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
-        walkCallback(1);
+        if (walkCallback !== undefined) {
+          walkCallback(1);
+        }
         return [inputPath];
       }
       return [];
     }
-    walkCallback(paths.length);
-    return paths;
+    if (walkCallback !== undefined) {
+      walkCallback(globbedPaths.length);
+    }
+    if (process.platform === 'win32') {
+      return globbedPaths.map((globbedPath) => globbedPath.replace(/[\\/]/g, path.sep));
+    }
+    return globbedPaths;
   }
 
   /**
@@ -764,7 +839,7 @@ export default class Options implements OptionsProps {
     const pathsSplit = globPattern.split(/[\\/]/);
     for (let i = 0; i < pathsSplit.length; i += 1) {
       const subPath = pathsSplit.slice(0, i + 1).join('/');
-      if (subPath !== '' && !(await fsPoly.exists(subPath))) {
+      if (subPath !== '' && !(await FsPoly.exists(subPath))) {
         const dirname = pathsSplit.slice(0, i).join('/');
         if (dirname === '') {
           // fg won't let you escape empty strings
@@ -780,34 +855,34 @@ export default class Options implements OptionsProps {
     return this.inputChecksumQuick;
   }
 
-  getInputChecksumMin(): ChecksumBitmask | undefined {
+  getInputChecksumMin(): ChecksumBitmaskValue | undefined {
     const checksumBitmask = Object.keys(ChecksumBitmask).find(
       (bitmask) => bitmask.toUpperCase() === this.inputChecksumMin?.toUpperCase(),
     );
     if (!checksumBitmask) {
       return undefined;
     }
-    return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+    return ChecksumBitmask[checksumBitmask as ChecksumBitmaskKey];
   }
 
-  getInputChecksumMax(): ChecksumBitmask | undefined {
+  getInputChecksumMax(): ChecksumBitmaskValue | undefined {
     const checksumBitmask = Object.keys(ChecksumBitmask).find(
       (bitmask) => bitmask.toUpperCase() === this.inputChecksumMax?.toUpperCase(),
     );
     if (!checksumBitmask) {
       return undefined;
     }
-    return ChecksumBitmask[checksumBitmask as keyof typeof ChecksumBitmask];
+    return ChecksumBitmask[checksumBitmask as ChecksumBitmaskKey];
   }
 
-  getInputChecksumArchives(): InputChecksumArchivesMode | undefined {
+  getInputChecksumArchives(): InputChecksumArchivesModeValue | undefined {
     const checksumMode = Object.keys(InputChecksumArchivesMode).find(
       (mode) => mode.toLowerCase() === this.inputChecksumArchives?.toLowerCase(),
     );
     if (!checksumMode) {
       return undefined;
     }
-    return InputChecksumArchivesMode[checksumMode as keyof typeof InputChecksumArchivesMode];
+    return InputChecksumArchivesMode[checksumMode as InputChecksumArchivesModeKey];
   }
 
   /**
@@ -889,7 +964,7 @@ export default class Options implements OptionsProps {
   getOutputDirRoot(): string {
     const outputSplit = this.getOutput().split(/[\\/]/);
     for (let i = 0; i < outputSplit.length; i += 1) {
-      if (outputSplit[i].match(/\{[a-zA-Z]+\}/) !== null) {
+      if (/\{[a-zA-Z]+\}/.exec(outputSplit[i]) !== null) {
         return outputSplit.slice(0, i).join(path.sep);
       }
     }
@@ -924,24 +999,24 @@ export default class Options implements OptionsProps {
     return this.dirLetterGroup;
   }
 
-  getDirGameSubdir(): GameSubdirMode | undefined {
+  getDirGameSubdir(): GameSubdirModeValue | undefined {
     const subdirMode = Object.keys(GameSubdirMode).find(
       (mode) => mode.toLowerCase() === this.dirGameSubdir?.toLowerCase(),
     );
     if (!subdirMode) {
       return undefined;
     }
-    return GameSubdirMode[subdirMode as keyof typeof GameSubdirMode];
+    return GameSubdirMode[subdirMode as GameSubdirModeKey];
   }
 
-  getFixExtension(): FixExtension | undefined {
+  getFixExtension(): FixExtensionValue | undefined {
     const fixExtensionMode = Object.keys(FixExtension).find(
       (mode) => mode.toLowerCase() === this.fixExtension?.toLowerCase(),
     );
     if (!fixExtensionMode) {
       return undefined;
     }
-    return FixExtension[fixExtensionMode as keyof typeof FixExtension];
+    return FixExtension[fixExtensionMode as FixExtensionKey];
   }
 
   getOverwrite(): boolean {
@@ -975,9 +1050,10 @@ export default class Options implements OptionsProps {
     );
 
     return (await Options.scanPaths(outputDirs, walkCallback, false))
-      .map((filePath) => path.normalize(filePath))
-      .filter((filePath) => !writtenFilesNormalized.has(filePath))
-      .filter((filePath) => !cleanExcludedFilesNormalized.has(filePath))
+      .filter(
+        (filePath) =>
+          !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),
+      )
       .sort();
   }
 
@@ -1037,14 +1113,18 @@ export default class Options implements OptionsProps {
     );
   }
 
-  getMergeRoms(): MergeMode | undefined {
+  getMergeRoms(): MergeModeValue | undefined {
     const mergeMode = Object.keys(MergeMode).find(
       (mode) => mode.toLowerCase() === this.mergeRoms?.toLowerCase(),
     );
     if (!mergeMode) {
       return undefined;
     }
-    return MergeMode[mergeMode as keyof typeof MergeMode];
+    return MergeMode[mergeMode as MergeModeKey];
+  }
+
+  getMergeDiscs(): boolean {
+    return this.mergeDiscs;
   }
 
   getExcludeDisks(): boolean {
@@ -1079,6 +1159,10 @@ export default class Options implements OptionsProps {
       return new Set(Options.filterUniqueUpper(this.filterRegion));
     }
     return new Set();
+  }
+
+  getFilterCategoryRegex(): RegExp[] | undefined {
+    return Options.getRegex(this.filterCategoryRegex);
   }
 
   getNoBios(): boolean {
@@ -1217,14 +1301,14 @@ export default class Options implements OptionsProps {
     return Options.filterUniqueUpper(this.preferRegion);
   }
 
-  getPreferRevision(): PreferRevision | undefined {
+  getPreferRevision(): PreferRevisionValue | undefined {
     const preferRevision = Object.keys(PreferRevision).find(
       (mode) => mode.toLowerCase() === this.preferRevision?.toLowerCase(),
     );
     if (!preferRevision) {
       return undefined;
     }
-    return PreferRevision[preferRevision as keyof typeof PreferRevision];
+    return PreferRevision[preferRevision as PreferRevisionKey];
   }
 
   getPreferRetail(): boolean {
@@ -1235,14 +1319,18 @@ export default class Options implements OptionsProps {
     return this.preferParent;
   }
 
+  getPlaylistExtensions(): string[] {
+    return this.playlistExtensions;
+  }
+
   getDir2DatOutput(): string {
-    return fsPoly.makeLegal(
+    return FsPoly.makeLegal(
       this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
 
   getFixdatOutput(): string {
-    return fsPoly.makeLegal(
+    return FsPoly.makeLegal(
       this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
@@ -1259,7 +1347,7 @@ export default class Options implements OptionsProps {
       });
     }
 
-    return fsPoly.makeLegal(reportOutput);
+    return FsPoly.makeLegal(reportOutput);
   }
 
   getDatThreads(): number {
@@ -1290,7 +1378,7 @@ export default class Options implements OptionsProps {
     return this.cachePath;
   }
 
-  getLogLevel(): LogLevel {
+  getLogLevel(): LogLevelValue {
     if (this.verbose === 1) {
       return LogLevel.INFO;
     }

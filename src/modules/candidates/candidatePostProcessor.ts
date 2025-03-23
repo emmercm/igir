@@ -1,15 +1,14 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DAT from '../../types/dats/dat.js';
-import Parent from '../../types/dats/parent.js';
 import Options from '../../types/options.js';
 import OutputFactory from '../../types/outputFactory.js';
-import ReleaseCandidate from '../../types/releaseCandidate.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
+import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**
- * Perform any {@link Parent} and {@link ReleaseCandidate} manipulations needed after candidates
- * have had patches attached and have been filtered.
+ * Perform any {@link WriteCandidate} manipulations needed after candidates have had patches
+ * attached.
  */
 export default class CandidatePostProcessor extends Module {
   private readonly options: Options;
@@ -22,69 +21,57 @@ export default class CandidatePostProcessor extends Module {
   /**
    * Post-process the candidates.
    */
-  process(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Map<Parent, ReleaseCandidate[]> {
-    if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents, so no candidates to process`);
-      return parentsToCandidates;
+  process(dat: DAT, candidates: WriteCandidate[]): WriteCandidate[] {
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to post-process`);
+      return candidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: processing candidates`);
+    this.progressBar.logTrace(`${dat.getName()}: processing candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
-    this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.reset(candidates.length);
 
     // Get the output basename of every ROM
-    const outputFileBasenames = [...parentsToCandidates.values()]
-      .flat()
-      .flatMap((releaseCandidate) =>
-        releaseCandidate.getRomsWithFiles().map((romWithFiles) => {
-          const outputPathParsed = OutputFactory.getPath(
-            this.options,
-            dat,
-            releaseCandidate.getGame(),
-            releaseCandidate.getRelease(),
-            romWithFiles.getRom(),
-            romWithFiles.getInputFile(),
-          );
-          return outputPathParsed.name + outputPathParsed.ext;
-        }),
-      );
-
-    const processedCandidates = new Map(
-      [...parentsToCandidates.entries()].map(
-        ([parent, releaseCandidates]): [Parent, ReleaseCandidate[]] => {
-          const newReleaseCandidates = releaseCandidates.map((releaseCandidate) =>
-            this.mapReleaseCandidate(dat, releaseCandidate, outputFileBasenames),
-          );
-          return [parent, newReleaseCandidates];
-        },
-      ),
+    const outputFileBasenames = candidates.flatMap((candidate) =>
+      candidate.getRomsWithFiles().map((romWithFiles) => {
+        const outputPathParsed = OutputFactory.getPath(
+          this.options,
+          dat,
+          candidate.getGame(),
+          undefined,
+          romWithFiles.getRom(),
+          romWithFiles.getInputFile(),
+        );
+        return outputPathParsed.name + outputPathParsed.ext;
+      }),
     );
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done processing candidates`);
+    const processedCandidates = candidates.map((candidate) =>
+      this.postProcessCandidate(dat, candidate, outputFileBasenames),
+    );
+
+    this.progressBar.logTrace(`${dat.getName()}: done processing candidates`);
     return processedCandidates;
   }
 
-  private mapReleaseCandidate(
+  private postProcessCandidate(
     dat: DAT,
-    releaseCandidate: ReleaseCandidate,
+    candidate: WriteCandidate,
     outputFileBasenames: string[],
-  ): ReleaseCandidate {
+  ): WriteCandidate {
     const newRomsWithFiles = this.mapRomsWithFiles(
       dat,
-      releaseCandidate,
-      releaseCandidate.getRomsWithFiles(),
+      candidate,
+      candidate.getRomsWithFiles(),
       outputFileBasenames,
     );
 
-    return releaseCandidate.withRomsWithFiles(newRomsWithFiles);
+    return candidate.withRomsWithFiles(newRomsWithFiles);
   }
 
   private mapRomsWithFiles(
     dat: DAT,
-    releaseCandidate: ReleaseCandidate,
+    candidate: WriteCandidate,
     romsWithFiles: ROMWithFiles[],
     outputFileBasenames: string[],
   ): ROMWithFiles[] {
@@ -92,8 +79,8 @@ export default class CandidatePostProcessor extends Module {
       const newOutputPath = OutputFactory.getPath(
         this.options,
         dat,
-        releaseCandidate.getGame(),
-        releaseCandidate.getRelease(),
+        candidate.getGame(),
+        undefined,
         romWithFiles.getRom(),
         romWithFiles.getInputFile(),
         outputFileBasenames,

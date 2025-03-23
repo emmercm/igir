@@ -54,6 +54,10 @@ ROMs that are already in an archive will be re-archived.
 
     You can use the [`--dat-combine` option](dats/processing.md#dat-combining) to cause every ROM in a DAT to be zipped together.
 
+### `playlist`
+
+Create `.m3u` playlist files for multi-disc games. See the [playlists page](output/playlists.md) for more information.
+
 ## ROM verification
 
 ### `test`
@@ -62,6 +66,16 @@ After performing one of the ROM writing commands (above), verify that the file w
 
 - `extract test` tests that each ROM file written has the correct size & checksum
 - `zip test` tests that the `.zip` file has all the correct archive entry sizes & checksums, and contains no excess entries
+
+## DAT writing
+
+### `dir2dat`
+
+Creates a DAT from scanned ROM files. See the [dir2dat page](dats/dir2dat.md) for more information.
+
+### `fixdat`
+
+Creates a DAT from missing ROM files. See the [fixdat page](dats/fixdats.md) for more information.
 
 ## File manipulation
 

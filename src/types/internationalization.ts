@@ -18,7 +18,7 @@ interface LanguageOptions {
 export default class Internationalization {
   public static readonly REGION_OPTIONS: RegionOptions[] = [
     // Specific countries
-    { region: 'ARG', long: 'Argentina', language: 'ES' },
+    { region: 'ARG', long: 'Argentina', language: 'ES', regex: /\(AR\)/i },
     {
       region: 'AUS',
       long: 'Australia',
@@ -41,13 +41,13 @@ export default class Internationalization {
       region: 'CAN',
       long: 'Canada',
       language: 'EN',
-      regex: /\(CA\)/i,
+      regex: /\((C|CA)\)/i,
     },
     {
       region: 'CHN',
       long: 'China',
       language: 'ZH',
-      regex: /\((C|CH|CN)\)/i,
+      regex: /\((C|CH|CHI|CN)\)/i,
     },
     {
       region: 'DAN',
@@ -71,13 +71,13 @@ export default class Internationalization {
       region: 'GER',
       long: 'Germany',
       language: 'DE',
-      regex: /\((DE|G)\)/i,
+      regex: /\((DE|G|GE)\)/i,
     },
     {
       region: 'GRE',
       long: 'Greece',
       language: 'EL',
-      regex: /\(Gr\)/i,
+      regex: /\(GR\)/i,
     },
     {
       region: 'HK',
@@ -122,7 +122,7 @@ export default class Internationalization {
       regex: /\(No\)/i,
     },
     { region: 'NZ', long: 'New Zealand', language: 'EN' },
-    { region: 'POR', long: 'Portugal', language: 'PT' },
+    { region: 'POR', long: 'Portugal', language: 'PT', regex: /\((P|PT)\)/i },
     {
       region: 'RUS',
       long: 'Russia',
@@ -163,7 +163,7 @@ export default class Internationalization {
       region: 'USA',
       long: 'USA',
       language: 'EN',
-      regex: /\((4|U|US)\)/i,
+      regex: /\((4|5|U|US)\)/i,
     },
     // Regions
     {
@@ -176,14 +176,14 @@ export default class Internationalization {
       region: 'EUR',
       long: 'Europe',
       language: 'EN',
-      regex: /\((E|EU|PAL)\)/i,
+      regex: /\((8|E|EU|PAL)\)/i,
     },
     { region: '', long: 'Scandinavia', language: '' },
     {
       region: 'WORLD',
       long: 'World',
       language: 'EN',
-      regex: /\(W\)/i,
+      regex: /\((F|W|WO)\)/i,
     },
   ];
 
@@ -218,6 +218,10 @@ export default class Internationalization {
     .filter((region) => region.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
+
+  public static readonly REGION_REGEX = this.REGION_OPTIONS.map(
+    (regionOptions) => regionOptions.regex,
+  ).filter((regex) => regex !== undefined);
 
   public static readonly LANGUAGES = this.REGION_OPTIONS.map((regionOption) =>
     regionOption.language.toUpperCase(),

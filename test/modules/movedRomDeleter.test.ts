@@ -5,7 +5,7 @@ import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
 import ROMIndexer from '../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../src/modules/roms/romScanner.js';
-import fsPoly from '../../src/polyfill/fsPoly.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
@@ -29,7 +29,7 @@ it('should do nothing if no ROMs moved', async () => {
 
   await new MovedROMDeleter(new ProgressBarFake()).delete(romFiles, [], new Map());
 
-  const exists = Promise.all(romFiles.map(async (romFile) => fsPoly.exists(romFile.getFilePath())));
+  const exists = Promise.all(romFiles.map(async (romFile) => FsPoly.exists(romFile.getFilePath())));
   expect(exists).not.toContain(false);
 });
 
@@ -388,7 +388,7 @@ describe('should delete archives', () => {
         ],
       ],
     ])('%s', async (games, expectedDeletedFilePaths) => {
-      const inputPath = await fsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+      const inputPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
       try {
         const options = new Options({
           commands: ['move', ...(command ? [command] : [])],
@@ -400,32 +400,27 @@ describe('should delete archives', () => {
 
         const rawRomFiles = (
           await Promise.all(
-            dat
-              .getParents()
-              .flatMap((parent) => parent.getGames())
-              .map(async (game): Promise<File[]> => {
-                const zipPath = path.join(inputPath, `${game.getName()}.zip`);
-                await fsPoly.touch(zipPath);
-                const zip = new Zip(zipPath);
-                return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
-              }),
+            dat.getGames().map(async (game): Promise<File[]> => {
+              const zipPath = path.join(inputPath, `${game.getName()}.zip`);
+              await FsPoly.touch(zipPath);
+              const zip = new Zip(zipPath);
+              return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
+            }),
           )
         ).flat();
 
         const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(rawRomFiles);
-        const parentsToCandidates = await new CandidateGenerator(
-          options,
-          new ProgressBarFake(),
-        ).generate(dat, indexedRomFiles);
+        const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
+          dat,
+          indexedRomFiles,
+        );
 
         const inputRoms = rawRomFiles;
-        const movedRoms = [...parentsToCandidates.values()]
-          .flat()
-          .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+        const movedRoms = candidates
+          .flatMap((candidate) => candidate.getRomsWithFiles())
           .map((romWithFiles) => romWithFiles.getInputFile());
 
-        const writtenRoms = [...parentsToCandidates.values()]
-          .flat()
+        const writtenRoms = candidates
           .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
           .map((romWithFiles) => romWithFiles.getOutputFile());
         const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
@@ -442,7 +437,7 @@ describe('should delete archives', () => {
 
         expect(deletedFilePaths).toEqual(expectedDeletedFilePaths);
       } finally {
-        await fsPoly.rm(inputPath, { recursive: true });
+        await FsPoly.rm(inputPath, { recursive: true });
       }
     });
   });

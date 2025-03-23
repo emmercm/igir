@@ -8,7 +8,7 @@ import ConsolePoly from '../polyfill/consolePoly.js';
 import TimePoly from '../polyfill/timePoly.js';
 import Timer from '../timer.js';
 import Logger from './logger.js';
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelValue } from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarPayload from './progressBarPayload.js';
 import SingleBarFormatted from './singleBarFormatted.js';
@@ -25,7 +25,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static progressBars: ProgressBarCLI[] = [];
 
-  private static lastRedraw: number = 0;
+  private static lastRedraw = 0;
 
   private static logQueue: string[] = [];
 
@@ -37,7 +37,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private waitingMessageTimeout?: Timer;
 
-  private readonly waitingMessages: Map<string, number> = new Map();
+  private readonly waitingMessages = new Map<string, number>();
 
   private constructor(
     logger: Logger,
@@ -49,7 +49,7 @@ export default class ProgressBarCLI extends ProgressBar {
     this.payload = payload;
     this.singleBarFormatted = singleBarFormatted;
     if (singleBarFormatted) {
-      ProgressBarCLI.progressBars = [...ProgressBarCLI.progressBars, this];
+      ProgressBarCLI.progressBars.push(this);
     }
   }
 
@@ -320,16 +320,16 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   /**
-   * Log a message at some specified {@link LogLevel}.
+   * Log a message at some specified {@link LogLevelValue}.
    */
-  log(logLevel: LogLevel, message: string): void {
+  log(logLevel: LogLevelValue, message: string): void {
     ProgressBarCLI.log(this.logger, logLevel, message);
   }
 
   /**
-   * Log a message at some specified {@link LogLevel}.
+   * Log a message at some specified {@link LogLevelValue}.
    */
-  static log(logger: Logger, logLevel: LogLevel, message: string): void {
+  static log(logger: Logger, logLevel: LogLevelValue, message: string): void {
     if (logger.getLogLevel() > logLevel) {
       return;
     }

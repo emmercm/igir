@@ -5,13 +5,18 @@ import { crc32 } from '@node-rs/crc32';
 
 import File from './file.js';
 
-export enum ChecksumBitmask {
-  NONE = 0x0_00,
-  CRC32 = 0x0_01,
-  MD5 = 0x0_10,
-  SHA1 = 0x1_00,
-  SHA256 = 0x10_00,
-}
+export const ChecksumBitmask = {
+  NONE: 0x0_00,
+  CRC32: 0x0_01,
+  MD5: 0x0_10,
+  SHA1: 0x1_00,
+  SHA256: 0x10_00,
+} as const;
+export type ChecksumBitmaskKey = keyof typeof ChecksumBitmask;
+export type ChecksumBitmaskValue = (typeof ChecksumBitmask)[ChecksumBitmaskKey];
+export const ChecksumBitmaskInverted = Object.fromEntries(
+  Object.entries(ChecksumBitmask).map(([key, value]) => [value, key]),
+) as Record<ChecksumBitmaskValue, ChecksumBitmaskKey>;
 
 export interface ChecksumProps {
   crc32?: string;
@@ -60,7 +65,7 @@ export default class FileChecksums {
       const sha256 =
         checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
-      stream.on('data', (chunk) => {
+      stream.on('data', (chunk: Buffer) => {
         if (checksumBitmask & ChecksumBitmask.CRC32) {
           crc = crc32(chunk, crc);
         }

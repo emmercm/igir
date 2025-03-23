@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
-import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import File from '../../../../src/types/files/file.js';
@@ -36,9 +36,9 @@ describe('createArchive', () => {
     if (!rom) {
       throw new Error('no ROM of a non-zero size was found');
     }
-    const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     const tempFilePath = path.join(tempDir, path.basename(rom.getFilePath()));
-    await fsPoly.copyFile(rom.getFilePath(), tempFilePath);
+    await FsPoly.copyFile(rom.getFilePath(), tempFilePath);
 
     // And a candidate is partially generated for that file
     const tempFiles = await new FileFactory(new FileCache()).filesFrom(tempFilePath);
@@ -56,13 +56,13 @@ describe('createArchive', () => {
     // And the input files have been deleted
     await Promise.all(
       inputToOutput.map(async ([tempInputFile]) => {
-        await fsPoly.rm(tempInputFile.getFilePath(), { force: true });
+        await FsPoly.rm(tempInputFile.getFilePath(), { force: true });
       }),
     );
 
     // When the file is being zipped
     // Then any underlying exception will be re-thrown
-    const zip = inputToOutput[0][1].getArchive();
+    const zip = inputToOutput[0][1].getArchive() as Zip;
     await expect(zip.createArchive(inputToOutput)).rejects.toThrow();
 
     // And we were able to continue

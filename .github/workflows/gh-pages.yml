@@ -69,17 +69,32 @@ jobs:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-      - uses: actions/cache@v4
+          sparse-checkout: |
+            docs
+            # Symlinked paths
+            .github/CONTRIBUTING.md
+            static
+            LICENSE
+            README.md
+      - uses: actions/cache/restore@v4
         with:
           key: ${{ env.ref }}
+          restore-keys: |
+            refs/heads/main
           path: .cache
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.13.2
       - run: |
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
+      - uses: actions/cache@v4
+        with:
+          key: ${{ env.ref }}
+          path: .cache
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
@@ -106,9 +121,20 @@ jobs:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0
+          sparse-checkout: |
+            docs
+            # Symlinked paths
+            .github/CONTRIBUTING.md
+            static
+            LICENSE
+            README.md
+      - uses: actions/cache/restore@v4
+        with:
+          key: ${{ env.ref }}
+          path: .cache
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: 3.13.2
       - uses: actions/cache@v4
         with:
           key: ${{ env.ref }}
@@ -117,3 +143,9 @@ jobs:
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs gh-deploy --strict --verbose --force
+        env:
+          MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
+      - uses: actions/cache@v4
+        with:
+          key: ${{ env.ref }}
+          path: .cache

@@ -2,20 +2,17 @@ import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DAT from '../../types/dats/dat.js';
-import Game from '../../types/dats/game.js';
-import Parent from '../../types/dats/parent.js';
-import Release from '../../types/dats/release.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import File from '../../types/files/file.js';
 import Patch from '../../types/patches/patch.js';
-import ReleaseCandidate from '../../types/releaseCandidate.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
+import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**
- * For each {@link Patch} that matches a {@link ROM}, generate a new {@link Parent} and
- * {@link ReleaseCandidate} of that {@link Game}.
+ * For each {@link Patch} that matches a {@link ROM}, generate a new {@link Game} and
+ * {@link WriteCandidate} of that {@link Game}.
  */
 export default class CandidatePatchGenerator extends Module {
   constructor(progressBar: ProgressBar) {
@@ -27,27 +24,32 @@ export default class CandidatePatchGenerator extends Module {
    */
   async generate(
     dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+    candidates: WriteCandidate[],
     patches: Patch[],
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to make patched candidates for`);
-      return parentsToCandidates;
+  ): Promise<WriteCandidate[]> {
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to make patched candidates for`);
+      return candidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: generating patched candidates`);
+    if (patches.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no patches to make patched candidates for`);
+      return candidates;
+    }
+
+    this.progressBar.logTrace(`${dat.getName()}: generating patched candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
-    this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.reset(candidates.length);
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: ${crcToPatches.size} unique patch${crcToPatches.size !== 1 ? 'es' : ''} found`,
+      `${dat.getName()}: ${crcToPatches.size} unique patch${crcToPatches.size !== 1 ? 'es' : ''} found`,
     );
 
-    const patchedParentsToCandidates = this.build(dat, parentsToCandidates, crcToPatches);
-    this.progressBar.logTrace(`${dat.getNameShort()}: done generating patched candidates`);
+    const patchedCandidates = this.build(dat, candidates, crcToPatches);
+    this.progressBar.logTrace(`${dat.getName()}: done generating patched candidates`);
 
-    return patchedParentsToCandidates;
+    return patchedCandidates;
   }
 
   private static indexPatchesByCrcBefore(patches: Patch[]): Map<string, Patch[]> {
@@ -64,74 +66,49 @@ export default class CandidatePatchGenerator extends Module {
 
   private async build(
     dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
+    candidates: WriteCandidate[],
     crcToPatches: Map<string, Patch[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    // For every parent
-    return new Map(
-      (
-        await Promise.all(
-          [...parentsToCandidates.entries()]
-            // For every Parent's ReleaseCandidates
-            .map(async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]][]> => {
-              // ReleaseCandidates exist for every Release of a Game, but we only want to create one new
-              //  ReleaseCandidate for each Game, so remember which Games we've seen for this Parent
-              const seenGames = new Set<Game>();
-
-              let parentsAndReleaseCandidates: [Parent, ReleaseCandidate[]][] = [
-                [parent, releaseCandidates],
-              ];
-
-              // Possibly generate multiple new Parents for the ReleaseCandidates
-              for (const releaseCandidate of releaseCandidates) {
-                if (seenGames.has(releaseCandidate.getGame())) {
-                  continue;
-                }
-
-                const patchedParents = await this.buildPatchedParentsForReleaseCandidate(
-                  dat,
-                  releaseCandidate,
-                  crcToPatches,
-                );
-                seenGames.add(releaseCandidate.getGame());
-
-                if (patchedParents) {
-                  parentsAndReleaseCandidates = [...parentsAndReleaseCandidates, ...patchedParents];
-                }
-              }
-
-              return parentsAndReleaseCandidates;
-            }),
-        )
-      ).flat(),
-    );
+  ): Promise<WriteCandidate[]> {
+    return (
+      await Promise.all(
+        candidates.map(async (unpatchedCandidate) => {
+          // Possibly generate multiple new patched candidates for the ReleaseCandidates
+          const patchedCandidates = await this.buildPatchedCandidates(
+            dat,
+            unpatchedCandidate,
+            crcToPatches,
+          );
+          return [unpatchedCandidate, ...patchedCandidates];
+        }),
+      )
+    ).flat();
   }
 
-  private async buildPatchedParentsForReleaseCandidate(
+  private async buildPatchedCandidates(
     dat: DAT,
-    unpatchedReleaseCandidate: ReleaseCandidate,
+    unpatchedCandidate: WriteCandidate,
     crcToPatches: Map<string, Patch[]>,
-  ): Promise<[Parent, ReleaseCandidate[]][] | undefined> {
+  ): Promise<WriteCandidate[]> {
     // Get all patch files relevant to any ROM in the ReleaseCandidate
-    const releaseCandidatePatches = unpatchedReleaseCandidate
+    const candidatePatches = unpatchedCandidate
       .getRomsWithFiles()
       .flatMap((romWithFiles) => romWithFiles.getInputFile())
       .filter((inputFile) => inputFile.getCrc32() !== undefined)
-      .flatMap((inputFile) => crcToPatches.get(inputFile.getCrc32() as string))
+      .flatMap((inputFile) => crcToPatches.get(inputFile.getCrc32()!))
       .filter((patch) => patch !== undefined);
 
     // No relevant patches found, no new candidates generated
-    if (releaseCandidatePatches.length === 0) {
-      return undefined;
+    if (candidatePatches.length === 0) {
+      return [];
     }
 
-    // Generate new, patched candidates for the parent
+    // Generate new, patched candidates for each patch
     return Promise.all(
-      releaseCandidatePatches.map(async (patch) => {
+      candidatePatches.map(async (patch) => {
         const patchedRomName = patch.getRomName();
 
         const romsWithFiles = await Promise.all(
-          unpatchedReleaseCandidate.getRomsWithFiles().map(async (romWithFiles) => {
+          unpatchedCandidate.getRomsWithFiles().map(async (romWithFiles) => {
             // Apply the new filename
             let rom = romWithFiles.getRom();
             let inputFile = romWithFiles.getInputFile();
@@ -143,17 +120,14 @@ export default class CandidatePatchGenerator extends Module {
               inputFile = inputFile.withPatch(patch);
 
               // Build a new output file
-              const extMatch = romWithFiles
-                .getRom()
-                .getName()
-                .match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+              const extMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(romWithFiles.getRom().getName());
               const extractedFileName = patchedRomName + (extMatch !== null ? extMatch[1] : '');
               if (outputFile instanceof ArchiveEntry) {
                 outputFile = await ArchiveEntry.entryOf({
-                  archive: await outputFile.getArchive().withFilePath(patchedRomName),
+                  archive: outputFile.getArchive().withFilePath(patchedRomName),
                   // Output is an archive of a single file, the entry path should also change
                   entryPath:
-                    unpatchedReleaseCandidate.getRomsWithFiles().length === 1
+                    unpatchedCandidate.getRomsWithFiles().length === 1
                       ? extractedFileName
                       : outputFile.getEntryPath(),
                   size: patch.getSizeAfter(),
@@ -184,7 +158,7 @@ export default class CandidatePatchGenerator extends Module {
               });
 
               this.progressBar.logTrace(
-                `${dat.getNameShort()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`,
+                `${dat.getName()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`,
               );
             }
 
@@ -194,29 +168,13 @@ export default class CandidatePatchGenerator extends Module {
 
         // Build a new Game from the ROM's info
         const gameName = path.join(
-          path.dirname(unpatchedReleaseCandidate.getGame().getName().replace(/[\\/]/g, path.sep)),
+          path.dirname(unpatchedCandidate.getGame().getName().replace(/[\\/]/g, path.sep)),
           patchedRomName,
         );
-        const patchedGame = unpatchedReleaseCandidate.getGame().withProps({
+        const patchedGame = unpatchedCandidate.getGame().withProps({
           name: gameName,
         });
-
-        const parent = new Parent(patchedGame);
-
-        let patchedRelease;
-        const unpatchedRelease = unpatchedReleaseCandidate.getRelease();
-        if (unpatchedRelease) {
-          // If the original ROM has release info, continue to use that
-          patchedRelease = new Release(
-            patchedRomName,
-            unpatchedRelease.getRegion(),
-            unpatchedRelease.getLanguage(),
-          );
-        }
-
-        const releaseCandidate = new ReleaseCandidate(patchedGame, patchedRelease, romsWithFiles);
-
-        return [parent, [releaseCandidate]];
+        return new WriteCandidate(patchedGame, romsWithFiles);
       }),
     );
   }

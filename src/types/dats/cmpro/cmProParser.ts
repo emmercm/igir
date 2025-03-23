@@ -13,7 +13,7 @@ export interface ClrMameProProps extends CMProObject {
   version?: string;
   forcemerging?: 'none' | 'split' | 'full';
   forcezipping?: 'yes' | 'no';
-  sampleOf?: string;
+  // sampleOf?: string;
   // NON-STANDARD PROPERTIES
   date?: string;
   author?: string;
@@ -29,7 +29,7 @@ export interface GameProps extends CMProObject {
   manufacturer?: string;
   cloneof?: string;
   romof?: string;
-  sampleof?: string;
+  // sampleof?: string;
   rom?: ROMProps | ROMProps[];
   disk?: ROMProps | ROMProps[];
   sample?: SampleProps | SampleProps[];
@@ -63,7 +63,9 @@ export interface SampleProps extends CMProObject {
 
 type CMProValue = CMProObject | string | undefined;
 
-type CMProObject = { [key: string]: CMProValue | CMProValue[] };
+interface CMProObject {
+  [key: string]: CMProValue | CMProValue[];
+}
 
 /**
  * A parser for CMPRo schema DATs.

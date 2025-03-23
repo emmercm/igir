@@ -6,7 +6,7 @@ import { Memoize } from 'typescript-memoize';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 
 export default class ROMHeader {
-  private static readonly HEADERS: { [key: string]: ROMHeader } = {
+  private static readonly HEADERS: Record<string, ROMHeader> = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
     'No-Intro_A7800.xml': new ROMHeader(1, '415441524937383030', 128, '.a78'),
 
@@ -14,7 +14,8 @@ export default class ROMHeader {
     'No-Intro_LNX.xml': new ROMHeader(0, '4C594E58', 64, '.lnx', '.lyx'),
 
     // https://www.nesdev.org/wiki/INES
-    'No-Intro_NES.xml': new ROMHeader(0, '4E4553', 16, '.nes'),
+    // https://www.nesdev.org/wiki/NES_2.0
+    'No-Intro_NES.xml': new ROMHeader(0, '4E45531A', 16, '.nes'),
 
     // https://www.nesdev.org/wiki/FDS_file_format
     'No-Intro_FDS.xml': new ROMHeader(0, '464453', 16, '.fds'),
@@ -100,8 +101,8 @@ export default class ROMHeader {
         resolve(header);
       };
 
-      stream.on('data', (chunk) => {
-        chunks.push(Buffer.from(chunk));
+      stream.on('data', (chunk: Buffer) => {
+        chunks.push(chunk);
 
         // Stop reading when we get enough data, trigger a 'close' event
         if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
@@ -134,9 +135,7 @@ export default class ROMHeader {
 
   @Memoize()
   getName(): string {
-    return Object.keys(ROMHeader.HEADERS).find(
-      (name) => ROMHeader.HEADERS[name] === this,
-    ) as string;
+    return Object.keys(ROMHeader.HEADERS).find((name) => ROMHeader.HEADERS[name] === this)!;
   }
 
   getDataOffsetBytes(): number {

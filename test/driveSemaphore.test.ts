@@ -12,7 +12,7 @@ describe('map', () => {
   it('should handle thrown literals', async () => {
     await expect(
       new DriveSemaphore(1).map(['file'], () => {
-        throw 'message';
+        throw new Error('message');
       }),
     ).rejects.toThrow('message');
   });

@@ -8,30 +8,31 @@ import Disk from './disk.js';
 import Release from './release.js';
 import ROM from './rom.js';
 
-enum GameType {
-  AFTERMARKET = 'Aftermarket',
-  ALPHA = 'Alpha',
-  BAD = 'Bad',
-  BETA = 'Beta',
-  BIOS = 'BIOS',
-  CRACKED = 'Cracked',
-  DEBUG = 'Debug',
-  DEMO = 'Demo',
-  DEVICE = 'Device',
-  FIXED = 'Fixed',
-  HACKED = 'Hacked',
-  HOMEBREW = 'Homebrew',
-  OVERDUMP = 'Overdump',
-  PENDING_DUMP = 'Pending Dump',
-  PIRATED = 'Pirated',
-  PROGRAM = 'Program',
-  PROTOTYPE = 'Prototype',
-  RETAIL = 'Retail',
-  SAMPLE = 'Sample',
-  TRAINED = 'Trained',
-  TRANSLATED = 'Translated',
-  UNLICENSED = 'Unlicensed',
-}
+const GameType = {
+  AFTERMARKET: 'Aftermarket',
+  ALPHA: 'Alpha',
+  BAD: 'Bad',
+  BETA: 'Beta',
+  BIOS: 'BIOS',
+  CRACKED: 'Cracked',
+  DEBUG: 'Debug',
+  DEMO: 'Demo',
+  DEVICE: 'Device',
+  FIXED: 'Fixed',
+  HACKED: 'Hacked',
+  HOMEBREW: 'Homebrew',
+  OVERDUMP: 'Overdump',
+  PENDING_DUMP: 'Pending Dump',
+  PIRATED: 'Pirated',
+  PROGRAM: 'Program',
+  PROTOTYPE: 'Prototype',
+  RETAIL: 'Retail',
+  SAMPLE: 'Sample',
+  TRAINED: 'Trained',
+  TRANSLATED: 'Translated',
+  UNLICENSED: 'Unlicensed',
+} as const;
+type GameTypeValue = (typeof GameType)[keyof typeof GameType];
 
 /**
  * "There are two 'semi-optional' fields that can be included for each game;
@@ -52,23 +53,61 @@ enum GameType {
  * @see http://www.logiqx.com/DatFAQs/CMPro.php
  */
 export interface GameProps {
+  // ********** OFFICIAL LOGIQX FIELDS **********
+  // @see http://www.logiqx.com/Dats/datafile.dtd
+
   readonly name?: string;
-  readonly category?: string;
-  readonly description?: string;
-  // readonly sourceFile?: string,
-  readonly bios?: 'yes' | 'no';
-  readonly device?: 'yes' | 'no';
+  // readonly sourceFile?: string;
+  readonly isBios?: 'yes' | 'no';
   readonly cloneOf?: string;
   readonly romOf?: string;
-  readonly sampleOf?: string;
-  readonly genre?: string;
-  // readonly board?: string,
-  // readonly rebuildTo?: string,
-  // readonly year?: string,
-  // readonly manufacturer?: string,
+  // readonly sampleOf?: string;
+  // readonly board?: string;
+  // readonly rebuildTo?: string;
+  // readonly year?: string;
   readonly release?: Release | Release[];
+  // readonly biosset?: unknown;
   readonly rom?: ROM | ROM[];
   readonly disk?: Disk | Disk[];
+  // readonly sample?: unknown;
+  // readonly archive?: unknown;
+
+  // ********** NO-INTRO FIELDS **********
+  // @see https://datomatic.no-intro.org/stuff/schema_nointro_datfile_v3.xsd
+
+  // @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
+  readonly category?: string | string[];
+  readonly description?: string;
+  readonly id?: string;
+  readonly cloneOfId?: string;
+
+  // ********** MAME FIELDS **********
+
+  readonly isDevice?: 'yes' | 'no';
+  // readonly mechanical?: 'yes' | 'no';
+  // readonly runnable?: 'yes' | 'no';
+  readonly manufacturer?: string;
+  // readonly deviceRef: DeviceRef | DeviceRef[];
+  // readonly chip?: unknown;
+  // readonly display?: unknown;
+  // readonly sound?: unknown;
+  // readonly condition?: unknown;
+  // readonly input?: unknown;
+  // readonly dipswitch?: unknown;
+  // readonly configuration?: unknown;
+  // readonly port?: unknown;
+  // readonly adjuster?: unknown;
+  // readonly driver?: unknown;
+  // readonly feature?: unknown;
+  // readonly devices?: unknown;
+  // readonly slot?: unknown;
+  // readonly softwarelist?: unknown;
+  // readonly ramoption?: 'yes' | 'no';
+
+  // ********** LIBRETRO FIELDS **********
+  // @see https://github.com/libretro/libretro-database/tree/master/metadat/genre
+
+  readonly genre?: string;
 }
 
 /**
@@ -79,70 +118,70 @@ export default class Game implements GameProps {
   @Expose()
   readonly name: string;
 
-  /**
-   * This is non-standard, but Redump uses it:
-   * @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
-   */
-  @Expose()
-  readonly category: string;
-
-  @Expose()
-  readonly description: string;
-
   @Expose({ name: 'isbios' })
-  readonly bios: 'yes' | 'no' = 'no';
-
-  @Expose({ name: 'isdevice' })
-  readonly device: 'yes' | 'no' = 'no';
+  readonly isBios: 'yes' | 'no' = 'no';
 
   @Expose({ name: 'cloneof' })
   readonly cloneOf?: string;
 
-  // TODO(cemmer): support cloneofid
-
   @Expose({ name: 'romof' })
   readonly romOf?: string;
 
-  @Expose({ name: 'sampleof' })
-  readonly sampleOf?: string;
-
-  // This is non-standard, but libretro uses it
-  @Expose({ name: 'genre' })
-  readonly genre?: string;
-
-  // readonly board?: string;
-  // readonly rebuildto?: string;
-  // readonly year?: string;
-  // readonly manufacturer?: string;
-
   @Expose()
   @Type(() => Release)
-  @Transform(({ value }) => value || [])
-  readonly release?: Release | Release[];
+  @Transform(({ value }: { value: undefined | Release | Release[] }) => value ?? [])
+  readonly release: Release | Release[];
 
   @Expose()
   @Type(() => ROM)
-  @Transform(({ value }) => value || [])
-  readonly rom?: ROM | ROM[];
+  @Transform(({ value }: { value: undefined | ROM | ROM[] }) => value ?? [])
+  readonly rom: ROM | ROM[];
 
   @Expose()
   @Type(() => Disk)
-  @Transform(({ value }) => value || [])
-  readonly disk?: Disk | Disk[];
+  @Transform(({ value }: { value: undefined | Disk | Disk[] }) => value ?? [])
+  readonly disk: Disk | Disk[];
+
+  @Expose()
+  @Transform(({ value }: { value: undefined | string | string[] }) => value ?? [])
+  readonly category: string | string[];
+
+  @Expose()
+  readonly description?: string;
+
+  @Expose()
+  readonly id?: string;
+
+  @Expose({ name: 'cloneofid' })
+  readonly cloneOfId?: string;
+
+  @Expose({ name: 'isdevice' })
+  readonly isDevice: 'yes' | 'no' = 'no';
+
+  @Expose({ name: 'genre' })
+  readonly genre?: string;
+
+  @Expose()
+  readonly manufacturer?: string;
 
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
-    this.category = props?.category ?? '';
-    this.description = props?.description ?? '';
-    this.bios = props?.bios ?? this.bios;
-    this.device = props?.device ?? this.device;
+    this.isBios = props?.isBios ?? this.isBios;
     this.cloneOf = props?.cloneOf;
     this.romOf = props?.romOf;
-    this.sampleOf = props?.sampleOf;
+    this.release = props?.release ?? [];
+    this.rom = props?.rom ?? [];
+    this.disk = props?.disk ?? [];
+
+    this.category = props?.category ?? [];
+    this.description = props?.description;
+    this.id = props?.id;
+    this.cloneOfId = props?.cloneOfId;
+
+    this.isDevice = props?.isDevice ?? this.isDevice;
+    this.manufacturer = props?.manufacturer;
+
     this.genre = props?.genre;
-    this.release = props?.release;
-    this.rom = props?.rom;
-    this.disk = props?.disk;
   }
 
   /**
@@ -151,18 +190,33 @@ export default class Game implements GameProps {
   toXmlDatObj(parentNames: Set<string>): object {
     return {
       $: {
-        name: this.getName(),
-        isbios: this.isBios() ? 'yes' : undefined,
-        isdevice: this.isDevice() ? 'yes' : undefined,
+        name: this.name,
+        isbios: this.getIsBios() ? 'yes' : undefined,
         cloneof:
-          this.getParent() && parentNames.has(this.getParent()) ? this.getParent() : undefined,
-        romof: this.getBios() && parentNames.has(this.getBios()) ? this.getBios() : undefined,
+          this.cloneOf !== undefined && parentNames.has(this.cloneOf) ? this.cloneOf : undefined,
+        romof: this.romOf && parentNames.has(this.romOf) ? this.romOf : undefined,
+        id: this.id,
+        cloneofid: this.cloneOfId,
+        isdevice: this.getIsDevice() ? 'yes' : undefined,
       },
-      description: {
-        _: this.getDescription(),
-      },
+      ...(this.description !== undefined
+        ? {
+            description: {
+              _: this.description,
+            },
+          }
+        : {}),
+      category: this.getCategories().map((category) => ({ _: category })),
+      ...(this.manufacturer !== undefined
+        ? {
+            manufacturer: {
+              _: this.manufacturer,
+            },
+          }
+        : {}),
       release: this.getReleases().map((release) => release.toXmlDatObj()),
       rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
+      disk: this.getDisks().map((disk) => disk.toXmlDatObj()),
     };
   }
 
@@ -172,129 +226,129 @@ export default class Game implements GameProps {
     return this.name;
   }
 
-  getCategory(): string {
-    return this.category;
-  }
-
-  getDescription(): string {
-    return this.description;
+  getCategories(): string[] {
+    if (Array.isArray(this.category)) {
+      return this.category;
+    }
+    return [this.category];
   }
 
   /**
    * Is this game a collection of BIOS file(s).
    */
-  isBios(): boolean {
-    return this.bios === 'yes' || this.name.match(/\[BIOS\]/i) !== null;
+  getIsBios(): boolean {
+    return this.isBios === 'yes' || /\[BIOS\]/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game a MAME "device"?
    */
-  isDevice(): boolean {
-    return this.device === 'yes';
+  getIsDevice(): boolean {
+    return this.isDevice === 'yes';
   }
 
   getGenre(): string | undefined {
     return this.genre;
   }
 
-  getReleases(): Release[] {
+  private getReleases(): Release[] {
     if (Array.isArray(this.release)) {
       return this.release;
     }
-    if (this.release) {
-      return [this.release];
-    }
-    return [];
+    return [this.release];
   }
 
   getRoms(): ROM[] {
     if (Array.isArray(this.rom)) {
       return this.rom;
     }
-    if (this.rom) {
-      return [this.rom];
-    }
-    return [];
+    return [this.rom];
   }
 
   getDisks(): Disk[] {
     if (Array.isArray(this.disk)) {
       return this.disk;
     }
-    if (this.disk) {
-      return [this.disk];
-    }
-    return [];
+    return [this.disk];
+  }
+
+  getCloneOf(): string | undefined {
+    return this.cloneOf;
+  }
+
+  getRomOf(): string | undefined {
+    return this.romOf;
+  }
+
+  getId(): string | undefined {
+    return this.id;
+  }
+
+  getCloneOfId(): string | undefined {
+    return this.cloneOfId;
   }
 
   // Computed getters
 
   getRevision(): number {
     // Numeric revision
-    const revNumberMatches = this.getName().match(/\(Rev\s*([0-9.]+)\)/i);
-    if (revNumberMatches && revNumberMatches?.length >= 2 && !Number.isNaN(revNumberMatches[1])) {
-      return Number(revNumberMatches[1]);
+    const revNumberMatches = /\((Rev|Version)\s*([0-9.]+)\)/i.exec(this.getName());
+    if (revNumberMatches && revNumberMatches.length >= 3 && !Number.isNaN(revNumberMatches[1])) {
+      return Number(revNumberMatches[2]);
     }
 
     // Letter revision
-    const revLetterMatches = this.getName().match(/\(Rev\s*([A-Z])\)/i);
-    if (revLetterMatches && revLetterMatches?.length >= 2) {
-      return (
-        (revLetterMatches[1].toUpperCase().codePointAt(0) as number) -
-        ('A'.codePointAt(0) as number) +
-        1
-      );
+    const revLetterMatches = /\(Rev\s*([A-Z])\)/i.exec(this.getName());
+    if (revLetterMatches && revLetterMatches.length >= 2) {
+      return revLetterMatches[1].toUpperCase().codePointAt(0)! - 'A'.codePointAt(0)! + 1;
     }
 
     // TOSEC versions
-    const versionMatches = this.getName().match(/\Wv([0-9]+\.[0-9]+)\W/i);
-    if (versionMatches && versionMatches?.length >= 2 && !Number.isNaN(versionMatches[1])) {
+    const versionMatches = /\Wv([0-9]+\.[0-9]+)\W/i.exec(this.getName());
+    if (versionMatches && versionMatches.length >= 2 && !Number.isNaN(versionMatches[1])) {
       return Number(versionMatches[1]);
     }
 
     // Ring code revision
-    const ringCodeMatches = this.getName().match(/\(RE([0-9]+)\)/i);
-    if (ringCodeMatches && ringCodeMatches?.length >= 2 && !Number.isNaN(ringCodeMatches[1])) {
-      return Number(ringCodeMatches[1]);
+    const ringCodeMatches = /\(RE?-?([0-9]*)\)/i.exec(this.getName());
+    if (ringCodeMatches && ringCodeMatches.length >= 2) {
+      if (ringCodeMatches[1] === '') {
+        // Redump doesn't always include a number
+        return 1;
+      } else if (!Number.isNaN(ringCodeMatches[1])) {
+        return Number(ringCodeMatches[1]);
+      }
     }
 
     return 0;
   }
 
   /**
-   * Is this game explicitly NTSC?
-   */
-  isNTSC(): boolean {
-    return this.name.match(/\(NTSC\)/i) !== null;
-  }
-
-  /**
-   * Is this game explicitly PAL?
-   */
-  isPAL(): boolean {
-    return this.name.match(/\(PAL[a-z0-9 ]*\)/i) !== null;
-  }
-
-  /**
    * Is this game aftermarket (released after the last known console release)?
    */
   isAftermarket(): boolean {
-    return this.name.match(/\(Aftermarket[a-z0-9. ]*\)/i) !== null;
+    return /\(Aftermarket[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game an alpha pre-release?
    */
   isAlpha(): boolean {
-    return this.name.match(/\(Alpha[a-z0-9. ]*\)/i) !== null;
+    return /\(Alpha[a-z0-9. ]*\)/i.exec(this.name) !== null;
+  }
+
+  /**
+   * Is this game an alternate release?
+   */
+  isAlternate(): boolean {
+    return /\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game a "bad" dump?
    */
   isBad(): boolean {
-    if (this.name.match(/\[b[0-9]*\]/) !== null) {
+    if (/\[b[0-9]*\]/.exec(this.name) !== null) {
       return true;
     }
     if (this.isVerified()) {
@@ -311,21 +365,28 @@ export default class Game implements GameProps {
    * Is this game a beta pre-release?
    */
   isBeta(): boolean {
-    return this.name.match(/\(Beta[a-z0-9. ]*\)/i) !== null;
+    return /\(Beta[a-z0-9. ]*\)/i.exec(this.name) !== null;
+  }
+
+  /**
+   * Is this game an unlicensed bootleg?
+   */
+  isBootleg(): boolean {
+    return this.manufacturer?.toLowerCase().includes('bootleg') ?? false;
   }
 
   /**
    * Is this game a "cracked" release (has copy protection removed)?
    */
   isCracked(): boolean {
-    return this.name.match(/\[cr([0-9]+| [^\]]+)?\]/) !== null;
+    return /\[cr([0-9]+| [^\]]+)?\]/.exec(this.name) !== null;
   }
 
   /**
    * Does this game contain debug symbols?
    */
   isDebug(): boolean {
-    return this.name.match(/\(Debug[a-z0-9. ]*\)/i) !== null;
+    return /\(Debug[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   public static readonly DEMO_REGEX = new RegExp(
@@ -348,21 +409,31 @@ export default class Game implements GameProps {
    * Is this game a demo?
    */
   isDemo(): boolean {
-    return this.name.match(Game.DEMO_REGEX) !== null || this.getCategory() === 'Demos';
+    return (
+      this.name.match(Game.DEMO_REGEX) !== null ||
+      this.getCategories().some((category) => category.toLowerCase() === 'demos')
+    );
+  }
+
+  /**
+   * Is this game an enhancement chip? Primarily for SNES
+   */
+  isEnhancementChip(): boolean {
+    return /\(Enhancement Chip\)/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game "fixed" (altered to run better in emulation)?
    */
   isFixed(): boolean {
-    return this.name.match(/\[f[0-9]*\]/) !== null;
+    return /\[f[0-9]*\]/.exec(this.name) !== null;
   }
 
   /**
    * Is this game community homebrew?
    */
   isHomebrew(): boolean {
-    return this.name.match(/\(Homebrew[a-z0-9. ]*\)/i) !== null;
+    return /\(Homebrew[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
@@ -373,14 +444,14 @@ export default class Game implements GameProps {
    * https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
    */
   isMIA(): boolean {
-    return this.name.match(/\[MIA\]/i) !== null;
+    return /\[MIA\]/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game an overdump (contains excess data)?
    */
   isOverdump(): boolean {
-    return this.name.match(/\[o[0-9]*\]/) !== null;
+    return /\[o[0-9]*\]/.exec(this.name) !== null;
   }
 
   /**
@@ -395,7 +466,7 @@ export default class Game implements GameProps {
    */
   isPirated(): boolean {
     return (
-      this.name.match(/\(Pirate[a-z0-9. ]*\)/i) !== null || this.name.match(/\[p[0-9]*\]/) !== null
+      /\(Pirate[a-z0-9. ]*\)/i.exec(this.name) !== null || /\[p[0-9]*\]/.exec(this.name) !== null
     );
   }
 
@@ -404,8 +475,8 @@ export default class Game implements GameProps {
    */
   isProgram(): boolean {
     return (
-      this.name.match(/\([a-z0-9. ]*Program\)|(Check|Sample) Program/i) !== null ||
-      this.getCategory() === 'Applications'
+      /\([a-z0-9. ]*Program\)|(Check|Sample) Program/i.exec(this.name) !== null ||
+      this.getCategories().some((category) => category.toLowerCase() === 'applications')
     );
   }
 
@@ -414,8 +485,8 @@ export default class Game implements GameProps {
    */
   isPrototype(): boolean {
     return (
-      this.name.match(/\([^)]*Proto[a-z0-9. ]*\)/i) !== null ||
-      this.getCategory() === 'Preproduction'
+      /\([^)]*Proto[a-z0-9. ]*\)/i.exec(this.name) !== null ||
+      this.getCategories().some((category) => category.toLowerCase() === 'preproduction')
     );
   }
 
@@ -423,21 +494,21 @@ export default class Game implements GameProps {
    * Is this game a sample?
    */
   isSample(): boolean {
-    return this.name.match(/\([^)]*Sample[a-z0-9. ]*\)/i) !== null;
+    return /\([^)]*Sample[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
    * Is this game translated by the community?
    */
   isTranslated(): boolean {
-    return this.name.match(/\[T[+-][^\]]+\]/) !== null;
+    return /\[T[+-][^\]]+\]/.exec(this.name) !== null;
   }
 
   /**
    * Is this game unlicensed (but was still physically produced and sold)?
    */
   isUnlicensed(): boolean {
-    return this.name.match(/\(Unl[a-z0-9. ]*\)/i) !== null;
+    return /\(Unl[a-z0-9. ]*\)/i.exec(this.name) !== null;
   }
 
   /**
@@ -452,21 +523,25 @@ export default class Game implements GameProps {
    * @see https://en.wikipedia.org/wiki/Bung_Enterprises
    */
   hasBungFix(): boolean {
-    return this.name.match(/\(Bung\)|\[bf\]/i) !== null;
+    return /\(Bung\)|\[bf\]/i.exec(this.name) !== null;
   }
 
   /**
-   * Does this game have a community hack?
+   * Does this game have a hack?
    */
   hasHack(): boolean {
-    return this.name.match(/\(Hack\)/i) !== null || this.name.match(/\[h[a-zA-Z90-9+]*\]/) !== null;
+    return (
+      /\(Hack\)/i.exec(this.name) !== null ||
+      /\[h[a-zA-Z90-9+]*\]/.exec(this.name) !== null ||
+      (this.manufacturer?.toLowerCase().includes('hack') ?? false)
+    );
   }
 
   /**
    * Does this game have a trainer?
    */
   hasTrainer(): boolean {
-    return this.name.match(/\[t[0-9]*\]/) !== null;
+    return /\[t[0-9]*\]/.exec(this.name) !== null;
   }
 
   /**
@@ -474,22 +549,26 @@ export default class Game implements GameProps {
    */
   isRetail(): boolean {
     return (
-      !this.isAftermarket() &&
-      !this.isAlpha() &&
-      !this.isBad() &&
-      !this.isBeta() &&
-      !this.isCracked() &&
+      // Has their own dedicated filters
       !this.isDebug() &&
       !this.isDemo() &&
-      !this.isFixed() &&
+      !this.isBeta() &&
+      !this.isSample() &&
+      !this.isPrototype() &&
+      !this.isProgram() &&
+      !this.isAftermarket() &&
       !this.isHomebrew() &&
+      !this.isBad() &&
+      // Doesn't have their own dedicated filter
+      !this.isAlpha() &&
+      !this.isBootleg() &&
+      !this.isCracked() &&
+      !this.isEnhancementChip() &&
+      !this.isFixed() &&
       !this.isMIA() &&
       !this.isOverdump() &&
       !this.isPendingDump() &&
       !this.isPirated() &&
-      !this.isProgram() &&
-      !this.isPrototype() &&
-      !this.isSample() &&
       !this.isTranslated() &&
       !this.hasBungFix() &&
       !this.hasHack() &&
@@ -497,9 +576,9 @@ export default class Game implements GameProps {
     );
   }
 
-  getGameType(): GameType {
+  getGameType(): GameTypeValue {
     // NOTE(cemmer): priority here matters!
-    if (this.isBios()) {
+    if (this.getIsBios()) {
       return GameType.BIOS;
     }
     if (this.isVerified()) {
@@ -527,7 +606,7 @@ export default class Game implements GameProps {
     if (this.isDemo()) {
       return GameType.DEMO;
     }
-    if (this.isDevice()) {
+    if (this.getIsDevice()) {
       return GameType.DEVICE;
     }
     if (this.isFixed()) {
@@ -581,37 +660,42 @@ export default class Game implements GameProps {
    * Is this game a clone?
    */
   isClone(): boolean {
-    return this.getParent() !== '';
-  }
-
-  getParent(): string {
-    return this.cloneOf ?? '';
-  }
-
-  getBios(): string {
-    return this.romOf ?? '';
+    return this.getCloneOf() !== undefined || this.getCloneOfId() !== undefined;
   }
 
   // Internationalization
 
   getRegions(): string[] {
+    const longRegions = Internationalization.REGION_OPTIONS.map(
+      (regionOption) => regionOption.long,
+    ).join('|');
+    const longRegionsRegex = new RegExp(`\\(((${longRegions})(, (${longRegions}))*)\\)`, 'i');
+    const longRegionsMatch = this.getName().match(longRegionsRegex);
+    if (longRegionsMatch !== null) {
+      return longRegionsMatch[1]
+        .toLowerCase()
+        .split(/, ?/)
+        .map(
+          (region) =>
+            Internationalization.REGION_OPTIONS.find(
+              (regionOption) => regionOption.long.toLowerCase() === region,
+            )?.region,
+        )
+        .filter((region) => region !== undefined);
+    }
+
+    for (const regionOption of Internationalization.REGION_OPTIONS) {
+      if (regionOption.regex && this.getName().match(regionOption.regex)) {
+        return [regionOption.region.toUpperCase()];
+      }
+    }
+
+    // Note: <release>s tend to be less reliable than game names
     const releaseRegions = this.getReleases().map((release) => release.getRegion().toUpperCase());
     if (releaseRegions.length > 0) {
       return releaseRegions;
     }
 
-    for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
-      const regionOption = Internationalization.REGION_OPTIONS[i];
-      if (
-        regionOption.long &&
-        this.getName().match(new RegExp(`\\(${regionOption.long}(,[ a-z]+)*\\)`, 'i'))
-      ) {
-        return [regionOption.region.toUpperCase()];
-      }
-      if (regionOption.regex && this.getName().match(regionOption.regex)) {
-        return [regionOption.region.toUpperCase()];
-      }
-    }
     return [];
   }
 
@@ -633,6 +717,7 @@ export default class Game implements GameProps {
       return releaseLanguages;
     }
 
+    // Note: <release>s tend to be less reliable than game names
     const regionLanguages = this.getLanguagesFromRegions();
     if (regionLanguages.length > 0) {
       return regionLanguages;
@@ -642,7 +727,7 @@ export default class Game implements GameProps {
   }
 
   private getTwoLetterLanguagesFromName(): string[] {
-    const twoMatches = this.getName().match(/\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/);
+    const twoMatches = /\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/.exec(this.getName());
     if (twoMatches && twoMatches.length >= 2) {
       const twoMatchesParsed = twoMatches[1]
         .replace(/-[a-zA-Z]+$/, '') // chop off country
@@ -659,7 +744,7 @@ export default class Game implements GameProps {
 
   private getThreeLetterLanguagesFromName(): string[] {
     // Get language from long languages in the game name
-    const threeMatches = this.getName().match(/\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/);
+    const threeMatches = /\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/.exec(this.getName());
     if (threeMatches && threeMatches.length >= 2) {
       const threeMatchesParsed = threeMatches[1]
         .split('-')
@@ -670,8 +755,12 @@ export default class Game implements GameProps {
               (langOpt) => langOpt.long?.toUpperCase() === lang.toUpperCase(),
             )?.short,
         )
-        .filter((lang) => lang !== undefined)
-        .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
+        .filter(
+          (lang): lang is string =>
+            lang !== undefined &&
+            // Is known
+            Internationalization.LANGUAGES.includes(lang),
+        )
         .reduce(ArrayPoly.reduceUnique(), []);
       if (threeMatchesParsed.length > 0) {
         return threeMatchesParsed;
@@ -684,8 +773,7 @@ export default class Game implements GameProps {
     // Get languages from regions
     return this.getRegions()
       .map((region) => {
-        for (let i = 0; i < Internationalization.REGION_OPTIONS.length; i += 1) {
-          const regionOption = Internationalization.REGION_OPTIONS[i];
+        for (const regionOption of Internationalization.REGION_OPTIONS) {
           if (regionOption.region === region) {
             return regionOption.language.toUpperCase();
           }

@@ -20,9 +20,32 @@ The `--dat <path>` option supports files, archives, directories, and globs like 
 
 Igir also supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
 
-```shell
-igir [commands..] --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" --input <input>
-```
+=== ":fontawesome-brands-windows: Windows"
+
+    ```batch
+    igir copy ^
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" ^
+      --input ROMs\ ^
+      --output ROMs-Sorted\
+    ```
+
+=== ":fontawesome-brands-apple: macOS"
+
+    ```shell
+    igir copy \
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
+      --input ROMs/ \
+      --output ROMs-Sorted/
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy \
+      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
+      --input ROMs/ \
+      --output ROMs-Sorted/
+    ```
 
 !!! note
 
@@ -64,7 +87,7 @@ There have been a few DAT-like formats developed over the years. Igir supports t
           ```
 
 - [MAME software lists](https://docs.mamedev.org/contributing/softlist.html) (XML exported by the `mame -getsoftlist` command)
-- [CMPro](http://www.logiqx.com/DatFAQs/CMPro.php)
+- [ClrMamePro](http://www.logiqx.com/DatFAQs/CMPro.php) (libretro, DOSCenter, and more)
 - [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs
 
 !!! tip
@@ -112,7 +135,7 @@ This may be desirable when creating a [dir2dat](./dir2dat.md), a [fixdat](fixdat
 
     Using this option with the [`igir zip` command](../output/writing-archives.md) will result in all ROMs in a DAT being archived into one file. This can work great for archiving older, cartridge-based consoles with smaller ROM sizes, but will likely not work well with larger ROMs.
 
-    To keep files organized in a human-readable way, it is _not_ recommended to use the [`--dir-game-subdir never`](../output/path-options.md#append-the-game-name) option along with `igir zip --dat-combine`.
+    To keep files organized in a human-readable way, it is _not_ recommended to use the [`--dir-game-subdir never`](../output/path-options.md#append-the-game-name) option combined with `--dat-combine`.
 
 ## Parent/clone inference
 

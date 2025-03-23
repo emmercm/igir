@@ -7,7 +7,7 @@ import Header from '../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../src/types/dats/release.js';
 import ROM from '../src/types/dats/rom.js';
-import Options, { GameSubdirMode } from '../src/types/options.js';
+import Options, { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
 import OutputFactory from '../src/types/outputFactory.js';
 
 const dummyDat = new LogiqxDAT(new Header(), []);
@@ -92,7 +92,7 @@ describe('token replacement', () => {
       options,
       dat,
       game,
-      game.getReleases().find(() => true),
+      undefined,
       dummyRom,
       await dummyRom.toFile(),
     );
@@ -115,7 +115,7 @@ describe('token replacement', () => {
       options,
       dat,
       game,
-      game.getReleases().find(() => true),
+      undefined,
       dummyRom,
       await dummyRom.toFile(),
     );
@@ -136,7 +136,7 @@ describe('token replacement', () => {
       options,
       dat,
       game,
-      game.getReleases().find(() => true),
+      undefined,
       dummyRom,
       await dummyRom.toFile(),
     );
@@ -989,7 +989,7 @@ describe('should respect "--dir-letter"', () => {
         output: os.devNull,
         dirLetter: true,
         dirLetterCount: 1,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
       const outputPaths = await Promise.all(
@@ -1027,7 +1027,7 @@ describe('should respect "--dir-game-subdir"', () => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,
-      dirGameSubdir: GameSubdirMode[GameSubdirMode.NEVER].toLowerCase(),
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.NEVER].toLowerCase(),
     });
 
     const outputPath = OutputFactory.getPath(
@@ -1069,7 +1069,7 @@ describe('should respect "--dir-game-subdir"', () => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,
-      dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
     const outputPath = OutputFactory.getPath(
@@ -1102,7 +1102,7 @@ describe('should respect "--dir-game-subdir"', () => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,
-      dirGameSubdir: GameSubdirMode[GameSubdirMode.ALWAYS].toLowerCase(),
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.ALWAYS].toLowerCase(),
     });
 
     const outputPath = OutputFactory.getPath(

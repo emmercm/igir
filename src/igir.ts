@@ -17,20 +17,22 @@ import CandidateGenerator from './modules/candidates/candidateGenerator.js';
 import CandidateMergeSplitValidator from './modules/candidates/candidateMergeSplitValidator.js';
 import CandidatePatchGenerator from './modules/candidates/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidates/candidatePostProcessor.js';
-import CandidatePreferer from './modules/candidates/candidatePreferer.js';
 import CandidateValidator from './modules/candidates/candidateValidator.js';
 import CandidateWriter from './modules/candidates/candidateWriter.js';
 import DATCombiner from './modules/dats/datCombiner.js';
+import DATDiscMerger from './modules/dats/datDiscMerger.js';
 import DATFilter from './modules/dats/datFilter.js';
 import DATGameInferrer from './modules/dats/datGameInferrer.js';
 import DATMergerSplitter from './modules/dats/datMergerSplitter.js';
 import DATParentInferrer from './modules/dats/datParentInferrer.js';
+import DATPreferer from './modules/dats/datPreferer.js';
 import DATScanner from './modules/dats/datScanner.js';
 import Dir2DatCreator from './modules/dir2DatCreator.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FixdatCreator from './modules/fixdatCreator.js';
 import MovedROMDeleter from './modules/movedRomDeleter.js';
 import PatchScanner from './modules/patchScanner.js';
+import PlaylistCreator from './modules/playlistCreator.js';
 import ReportGenerator from './modules/reportGenerator.js';
 import ROMHeaderProcessor from './modules/roms/romHeaderProcessor.js';
 import ROMIndexer from './modules/roms/romIndexer.js';
@@ -40,7 +42,6 @@ import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
 import Timer from './timer.js';
 import DAT from './types/dats/dat.js';
-import Parent from './types/dats/parent.js';
 import DATStatus from './types/datStatus.js';
 import ExpectedError from './types/expectedError.js';
 import File from './types/files/file.js';
@@ -51,7 +52,7 @@ import IndexedFiles from './types/indexedFiles.js';
 import Options, { InputChecksumArchivesMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
-import ReleaseCandidate from './types/releaseCandidate.js';
+import WriteCandidate from './types/writeCandidate.js';
 
 /**
  * The main class that coordinates file scanning, processing, and writing.
@@ -144,65 +145,66 @@ export default class Igir {
       datProcessProgressBar.incrementProgress();
 
       const progressBar = this.logger.addProgressBar(
-        dat.getNameShort(),
+        dat.getDisplayName(),
         ProgressBarSymbol.WAITING,
         dat.getParents().length,
       );
-
-      const datWithParents = new DATParentInferrer(this.options, progressBar).infer(dat);
-      const mergedSplitDat = new DATMergerSplitter(this.options, progressBar).merge(datWithParents);
-      const filteredDat = new DATFilter(this.options, progressBar).filter(mergedSplitDat);
+      const processedDat = this.processDAT(progressBar, dat);
 
       // Generate and filter ROM candidates
-      const parentsToCandidates = await this.generateCandidates(
+      const candidates = await this.generateCandidates(
         progressBar,
         fileFactory,
-        filteredDat,
+        processedDat,
         indexedRoms,
         patches,
       );
-      romOutputDirs = [
-        ...romOutputDirs,
-        ...this.getCandidateOutputDirs(filteredDat, parentsToCandidates),
-      ];
+      romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
       const writerResults = await new CandidateWriter(this.options, progressBar).write(
-        filteredDat,
-        parentsToCandidates,
+        processedDat,
+        candidates,
       );
       movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
-      datsToWrittenFiles.set(filteredDat, writerResults.wrote);
+      datsToWrittenFiles.set(processedDat, writerResults.wrote);
+
+      // Write playlists
+      const playlistPaths = await new PlaylistCreator(this.options, progressBar).create(
+        processedDat,
+        candidates,
+      );
+      datsToWrittenFiles.set(processedDat, [
+        ...(datsToWrittenFiles.get(processedDat) ?? []),
+        ...(await Promise.all(playlistPaths.map(async (filePath) => File.fileOf({ filePath })))),
+      ]);
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar).create(
-        filteredDat,
-        parentsToCandidates,
+        processedDat,
+        candidates,
       );
       if (dir2DatPath) {
-        datsToWrittenFiles.set(filteredDat, [
-          ...(datsToWrittenFiles.get(filteredDat) ?? []),
+        datsToWrittenFiles.set(processedDat, [
+          ...(datsToWrittenFiles.get(processedDat) ?? []),
           await File.fileOf({ filePath: dir2DatPath }),
         ]);
       }
 
       // Write a fixdat
       const fixdatPath = await new FixdatCreator(this.options, progressBar).create(
-        filteredDat,
-        parentsToCandidates,
+        processedDat,
+        candidates,
       );
       if (fixdatPath) {
-        datsToWrittenFiles.set(filteredDat, [
-          ...(datsToWrittenFiles.get(filteredDat) ?? []),
+        datsToWrittenFiles.set(processedDat, [
+          ...(datsToWrittenFiles.get(processedDat) ?? []),
           await File.fileOf({ filePath: fixdatPath }),
         ]);
       }
 
       // Write the output report
-      const datStatus = new StatusGenerator(this.options, progressBar).generate(
-        filteredDat,
-        parentsToCandidates,
-      );
+      const datStatus = new StatusGenerator(progressBar).generate(processedDat, candidates);
       datsStatuses.push(datStatus);
       progressBar.done(
         [
@@ -215,11 +217,7 @@ export default class Igir {
       );
 
       // Progress bar cleanup
-      const totalReleaseCandidates = [...parentsToCandidates.values()].reduce(
-        (sum, rcs) => sum + rcs.length,
-        0,
-      );
-      if (totalReleaseCandidates > 0) {
+      if (candidates.length > 0 || this.options.shouldDir2Dat() || this.options.shouldFixdat()) {
         progressBar.freeze();
       } else {
         progressBar.delete();
@@ -271,7 +269,7 @@ export default class Igir {
     }
 
     const cachePathCandidates = [
-      path.join(path.resolve(Package.DIRECTORY), defaultFileName),
+      path.join(Package.DIRECTORY, defaultFileName),
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
     ]
@@ -343,10 +341,7 @@ export default class Igir {
     const minimumChecksum = this.options.getInputChecksumMin() ?? ChecksumBitmask.NONE;
     const maximumChecksum =
       this.options.getInputChecksumMax() ??
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-        .map((bitmask) => ChecksumBitmask[bitmask])
-        .at(-1) ??
+      Object.values(ChecksumBitmask).at(-1) ??
       minimumChecksum;
 
     let matchChecksum = minimumChecksum;
@@ -357,57 +352,55 @@ export default class Igir {
     }
 
     if (this.options.shouldDir2Dat()) {
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-        // Has not been enabled yet
-        .filter((bitmask) => ChecksumBitmask[bitmask] >= ChecksumBitmask.CRC32)
-        .filter((bitmask) => ChecksumBitmask[bitmask] <= ChecksumBitmask.SHA1)
-        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
+      Object.values(ChecksumBitmask)
+        .filter(
+          (bitmask) =>
+            // Has not been enabled yet
+            bitmask >= ChecksumBitmask.CRC32 &&
+            bitmask <= ChecksumBitmask.SHA1 &&
+            !(matchChecksum & bitmask),
+        )
         .forEach((bitmask) => {
-          matchChecksum |= ChecksumBitmask[bitmask];
+          matchChecksum |= bitmask;
           this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
         });
     }
 
     dats.forEach((dat) => {
       const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-        // Has not been enabled yet
+      Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
-            ChecksumBitmask[bitmask] > minimumChecksum &&
-            ChecksumBitmask[bitmask] <= maximumChecksum,
+            // Has not been enabled yet
+            bitmask > minimumChecksum &&
+            bitmask <= maximumChecksum &&
+            !(matchChecksum & bitmask) &&
+            // Should be enabled for this DAT
+            (datMinimumRomBitmask & bitmask) > 0,
         )
-        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
-        // Should be enabled for this DAT
-        .filter((bitmask) => (datMinimumRomBitmask & ChecksumBitmask[bitmask]) > 0)
         .forEach((bitmask) => {
-          matchChecksum |= ChecksumBitmask[bitmask];
-          this.logger.trace(
-            `${dat.getNameShort()}: needs ${bitmask} file checksums for ROMs, enabling`,
-          );
+          matchChecksum |= bitmask;
+          this.logger.trace(`${dat.getName()}: needs ${bitmask} file checksums for ROMs, enabling`);
         });
 
       if (this.options.getExcludeDisks()) {
         return;
       }
       const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
-      Object.keys(ChecksumBitmask)
-        .filter((bitmask): bitmask is keyof typeof ChecksumBitmask => Number.isNaN(Number(bitmask)))
-        // Has not been enabled yet
+      Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
-            ChecksumBitmask[bitmask] > minimumChecksum &&
-            ChecksumBitmask[bitmask] <= maximumChecksum,
+            // Has not been enabled yet
+            bitmask > minimumChecksum &&
+            bitmask <= maximumChecksum &&
+            !(matchChecksum & bitmask) &&
+            // Should be enabled for this DAT
+            (datMinimumDiskBitmask & bitmask) > 0,
         )
-        .filter((bitmask) => !(matchChecksum & ChecksumBitmask[bitmask]))
-        // Should be enabled for this DAT
-        .filter((bitmask) => (datMinimumDiskBitmask & ChecksumBitmask[bitmask]) > 0)
         .forEach((bitmask) => {
-          matchChecksum |= ChecksumBitmask[bitmask];
+          matchChecksum |= bitmask;
           this.logger.trace(
-            `${dat.getNameShort()}: needs ${bitmask} file checksums for disks, enabling`,
+            `${dat.getName()}: needs ${bitmask} file checksums for disks, enabling`,
           );
         });
     });
@@ -435,7 +428,7 @@ export default class Igir {
           const isArchive = FileFactory.isExtensionArchive(rom.getName());
           if (isArchive) {
             this.logger.trace(
-              `${dat.getNameShort()}: contains archives, enabling checksum calculation of raw archive contents`,
+              `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
             );
           }
           return isArchive;
@@ -486,91 +479,101 @@ export default class Igir {
     return patches;
   }
 
+  private processDAT(progressBar: ProgressBar, dat: DAT): DAT {
+    return (
+      [
+        (dat): DAT => new DATParentInferrer(this.options, progressBar).infer(dat),
+        (dat): DAT => new DATMergerSplitter(this.options, progressBar).merge(dat),
+        (dat): DAT => new DATDiscMerger(this.options, progressBar).merge(dat),
+        (dat): DAT => new DATFilter(this.options, progressBar).filter(dat),
+        (dat): DAT => new DATPreferer(this.options, progressBar).prefer(dat),
+      ] satisfies ((dat: DAT) => DAT)[]
+    ).reduce((processedDat, processor) => {
+      return processor(processedDat);
+    }, dat);
+  }
+
   private async generateCandidates(
     progressBar: ProgressBar,
     fileFactory: FileFactory,
     dat: DAT,
     indexedRoms: IndexedFiles,
     patches: Patch[],
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    const candidates = await new CandidateGenerator(this.options, progressBar).generate(
-      dat,
-      indexedRoms,
+  ): Promise<WriteCandidate[]> {
+    return (
+      [
+        // Generate the initial set of candidates
+        async (): Promise<WriteCandidate[]> =>
+          new CandidateGenerator(this.options, progressBar).generate(dat, indexedRoms),
+        // Add patched candidates
+        async (candidates): Promise<WriteCandidate[]> =>
+          new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
+        // Correct output filename extensions
+        async (candidates): Promise<WriteCandidate[]> =>
+          new CandidateExtensionCorrector(this.options, progressBar, fileFactory).correct(
+            dat,
+            candidates,
+          ),
+        /**
+         * Delay calculating checksums for {@link ArchiveFile}s until after the above steps for
+         * efficiency
+         */
+        async (candidates): Promise<WriteCandidate[]> =>
+          new CandidateArchiveFileHasher(this.options, progressBar, fileFactory).hash(
+            dat,
+            candidates,
+          ),
+        // Finalize output file paths
+        (candidates): WriteCandidate[] =>
+          new CandidatePostProcessor(this.options, progressBar).process(dat, candidates),
+        // Validate candidates
+        (candidates): WriteCandidate[] => {
+          const invalidCandidates = new CandidateValidator(progressBar).validate(dat, candidates);
+          if (invalidCandidates.length > 0) {
+            // Return zero candidates if any candidates failed to validate
+            return [];
+          }
+          return candidates;
+        },
+        // Validate merge/split
+        (candidates): WriteCandidate[] => {
+          new CandidateMergeSplitValidator(this.options, progressBar).validate(dat, candidates);
+          return candidates;
+        },
+        // Combine candidates into one
+        (candidates): WriteCandidate[] =>
+          new CandidateCombiner(this.options, progressBar).combine(dat, candidates),
+      ] satisfies ((candidates: WriteCandidate[]) => Promise<WriteCandidate[]> | WriteCandidate[])[]
+    ).reduce(
+      async (candidatesPromise, processor) => {
+        const candidates = await candidatesPromise;
+        return processor(candidates);
+      },
+      Promise.resolve([] as WriteCandidate[]),
     );
-
-    const patchedCandidates = await new CandidatePatchGenerator(progressBar).generate(
-      dat,
-      candidates,
-      patches,
-    );
-
-    const preferredCandidates = new CandidatePreferer(this.options, progressBar).prefer(
-      dat,
-      patchedCandidates,
-    );
-
-    const extensionCorrectedCandidates = await new CandidateExtensionCorrector(
-      this.options,
-      progressBar,
-      fileFactory,
-    ).correct(dat, preferredCandidates);
-
-    // Delay calculating checksums for {@link ArchiveFile}s until after {@link CandidatePreferer}
-    //  for efficiency
-    const hashedCandidates = await new CandidateArchiveFileHasher(
-      this.options,
-      progressBar,
-      fileFactory,
-    ).hash(dat, extensionCorrectedCandidates);
-
-    const postProcessedCandidates = new CandidatePostProcessor(this.options, progressBar).process(
-      dat,
-      hashedCandidates,
-    );
-
-    const invalidCandidates = new CandidateValidator(progressBar).validate(
-      dat,
-      postProcessedCandidates,
-    );
-    if (invalidCandidates.length > 0) {
-      // Return zero candidates if any candidates failed to validate
-      return new Map();
-    }
-
-    new CandidateMergeSplitValidator(this.options, progressBar).validate(
-      dat,
-      postProcessedCandidates,
-    );
-
-    return new CandidateCombiner(this.options, progressBar).combine(dat, postProcessedCandidates);
   }
 
   /**
    * Find all ROM output paths for a DAT and its candidates.
    */
-  private getCandidateOutputDirs(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): string[] {
-    return [...parentsToCandidates.values()]
-      .flatMap((releaseCandidates) =>
-        releaseCandidates.flatMap((releaseCandidate) =>
-          releaseCandidate.getRomsWithFiles().flatMap(
-            (romWithFiles) =>
-              OutputFactory.getPath(
-                // Parse the output directory, as supplied by the user, ONLY replacing tokens in the
-                // path and NOT respecting any `--dir-*` options.
-                new Options({
-                  commands: [...this.options.getCommands()],
-                  output: this.options.getOutput(),
-                }),
-                dat,
-                releaseCandidate.getGame(),
-                releaseCandidate.getRelease(),
-                romWithFiles.getRom(),
-                romWithFiles.getInputFile(),
-              ).dir,
-          ),
+  private getCandidateOutputDirs(dat: DAT, candidates: WriteCandidate[]): string[] {
+    return candidates
+      .flatMap((candidate) =>
+        candidate.getRomsWithFiles().flatMap(
+          (romWithFiles) =>
+            OutputFactory.getPath(
+              // Parse the output directory, as supplied by the user, ONLY replacing tokens in the
+              // path and NOT respecting any `--dir-*` options.
+              new Options({
+                commands: [...this.options.getCommands()],
+                output: this.options.getOutput(),
+              }),
+              dat,
+              candidate.getGame(),
+              undefined,
+              romWithFiles.getRom(),
+              romWithFiles.getInputFile(),
+            ).dir,
         ),
       )
       .reduce(ArrayPoly.reduceUnique(), []);

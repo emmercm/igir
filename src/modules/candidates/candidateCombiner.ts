@@ -3,16 +3,14 @@ import path from 'node:path';
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import Parent from '../../types/dats/parent.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Options from '../../types/options.js';
-import ReleaseCandidate from '../../types/releaseCandidate.js';
+import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**
- * Combine every {@link Parent} and its {@link ReleaseCandidate}s for a {@link DAT} into a single
- * {@link Parent}.
+ * Combine every {@link WriteCandidate} for a {@link DAT} into a single {@link WriteCandidate}.
  */
 export default class CandidateCombiner extends Module {
   private readonly options: Options;
@@ -25,39 +23,30 @@ export default class CandidateCombiner extends Module {
   /**
    * Combine the candidates.
    */
-  combine(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Map<Parent, ReleaseCandidate[]> {
+  combine(dat: DAT, candidates: WriteCandidate[]): WriteCandidate[] {
     if (!this.options.getZipDatName()) {
-      return parentsToCandidates;
+      return candidates;
     }
 
-    if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to make patched candidates for`);
-      return parentsToCandidates;
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to make patched candidates for`);
+      return candidates;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: generating consolidated candidate`);
+    this.progressBar.logTrace(`${dat.getName()}: generating consolidated candidate`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_COMBINING);
-    this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.reset(candidates.length);
 
-    const game = CandidateCombiner.buildGame(dat, parentsToCandidates);
-    const parent = new Parent(game);
-    const releaseCandidate = CandidateCombiner.buildReleaseCandidate(
-      dat,
-      game,
-      parentsToCandidates,
-    );
-    return new Map([[parent, [releaseCandidate]]]);
+    const game = CandidateCombiner.buildGame(dat, candidates);
+    const candidate = CandidateCombiner.buildCombinedCandidate(dat, game, candidates);
+    return [candidate];
   }
 
-  private static buildGame(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): Game {
-    const name = dat.getNameShort();
+  private static buildGame(dat: DAT, candidates: WriteCandidate[]): Game {
+    const name = dat.getName();
 
-    const roms = [...parentsToCandidates.values()]
-      .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+    const roms = candidates
+      .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getRom());
     const uniqueRoms = [
       ...roms
@@ -77,13 +66,13 @@ export default class CandidateCombiner extends Module {
     });
   }
 
-  private static buildReleaseCandidate(
+  private static buildCombinedCandidate(
     dat: DAT,
     game: Game,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): ReleaseCandidate {
-    const romsWithFiles = [...parentsToCandidates.values()].flat().flatMap((releaseCandidate) =>
-      releaseCandidate.getRomsWithFiles().map((romWithFiles) => {
+    candidates: WriteCandidate[],
+  ): WriteCandidate {
+    const romsWithFiles = candidates.flatMap((candidate) =>
+      candidate.getRomsWithFiles().map((romWithFiles) => {
         // If the output isn't an archive then it must have been excluded (e.g. --zip-exclude),
         //  don't manipulate it.
         const outputFile = romWithFiles.getOutputFile();
@@ -92,12 +81,12 @@ export default class CandidateCombiner extends Module {
         }
 
         // Combine all output ArchiveEntry to a single archive of the DAT name
-        let outputEntry = outputFile.withFilePath(dat.getNameShort());
+        let outputEntry = outputFile.withFilePath(dat.getName());
 
         // If the game has multiple ROMs, then group them in a folder in the archive
-        if (releaseCandidate.getGame().getRoms().length > 1) {
+        if (candidate.getGame().getRoms().length > 1) {
           outputEntry = outputEntry.withEntryPath(
-            path.join(releaseCandidate.getGame().getName(), outputEntry.getEntryPath()),
+            path.join(candidate.getGame().getName(), outputEntry.getEntryPath()),
           );
         }
 
@@ -105,6 +94,6 @@ export default class CandidateCombiner extends Module {
       }),
     );
 
-    return new ReleaseCandidate(game, undefined, romsWithFiles);
+    return new WriteCandidate(game, romsWithFiles);
   }
 }

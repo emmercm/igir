@@ -1,16 +1,17 @@
-import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
 
-enum BPSAction {
-  SOURCE_READ = 0,
-  TARGET_READ,
-  SOURCE_COPY,
-  TARGET_COPY,
-}
+const BPSAction = {
+  SOURCE_READ: 0,
+  TARGET_READ: 1,
+  SOURCE_COPY: 2,
+  TARGET_COPY: 3,
+} as const;
+type BPSActionValue = (typeof BPSAction)[keyof typeof BPSAction];
 
 /**
  * @see https://github.com/blakesmith/rombp/blob/master/docs/bps_spec.md
@@ -64,7 +65,7 @@ export default class BPSPatch extends Patch {
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new ExpectedError(
-          `BPS patch expected ROM size of ${fsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
+          `BPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
         );
       }
       await Patch.readUpsUint(patchFile); // target size
@@ -81,14 +82,10 @@ export default class BPSPatch extends Patch {
   private async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
   ): Promise<void> {
     return inputRomFile.extractToTempFilePoly('r', async (inputRomFilePoly) => {
-      const targetFile = await FilePoly.fileOfSize(
-        outputRomPath,
-        'r+',
-        this.getSizeAfter() as number,
-      );
+      const targetFile = await IOFile.fileOfSize(outputRomPath, 'r+', this.getSizeAfter()!);
 
       try {
         await BPSPatch.applyPatch(patchFile, inputRomFilePoly, targetFile);
@@ -99,16 +96,16 @@ export default class BPSPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: FilePoly,
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    sourceFile: IOFile,
+    targetFile: IOFile,
   ): Promise<void> {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const blockHeader = await Patch.readUpsUint(patchFile);
-      const action = blockHeader & 3;
+      const action = (blockHeader & 3) as BPSActionValue;
       const length = (blockHeader >> 2) + 1;
 
       if (action === BPSAction.SOURCE_READ) {

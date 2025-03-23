@@ -1,5 +1,5 @@
-import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
@@ -27,7 +27,7 @@ export default class DPSPatch extends Patch {
       const originalSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== originalSize) {
         throw new ExpectedError(
-          `DPS patch expected ROM size of ${fsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`,
+          `DPS patch expected ROM size of ${FsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`,
         );
       }
 
@@ -38,13 +38,13 @@ export default class DPSPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
   ): Promise<void> {
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
+      const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await fsPoly.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+      await FsPoly.copyFile(tempRomFile, outputRomPath);
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
         await DPSPatch.applyPatch(patchFile, sourceFile, targetFile);
@@ -56,9 +56,9 @@ export default class DPSPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: FilePoly,
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    sourceFile: IOFile,
+    targetFile: IOFile,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const mode = (await patchFile.readNext(1)).readUInt8();
@@ -74,7 +74,7 @@ export default class DPSPatch extends Patch {
         data = await patchFile.readNext(dataLength);
       } else {
         throw new ExpectedError(
-          `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike()}`,
+          `DPS patch mode type ${mode} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
 

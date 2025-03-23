@@ -3,7 +3,7 @@ import https from 'node:https';
 import semver from 'semver';
 
 import Logger from '../console/logger.js';
-import LogLevel from '../console/logLevel.js';
+import { LogLevel } from '../console/logLevel.js';
 import ProgressBarCLI from '../console/progressBarCli.js';
 import Package from '../globals/package.js';
 import BufferPoly from '../polyfill/bufferPoly.js';
@@ -50,9 +50,17 @@ export default class UpdateChecker {
             const data = await BufferPoly.fromReadable(res);
             let json;
             try {
-              json = JSON.parse(data.toString()) || {};
+              json = JSON.parse(data.toString()) as {
+                version: string;
+              };
             } catch (error) {
-              reject(error);
+              if (error instanceof Error) {
+                reject(error);
+              } else if (typeof error === 'string') {
+                reject(new Error(error));
+              } else {
+                reject(new Error('failed to get latest version from npmjs.org'));
+              }
               return;
             }
 

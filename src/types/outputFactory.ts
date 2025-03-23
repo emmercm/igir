@@ -1,7 +1,7 @@
 import path, { ParsedPath } from 'node:path';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
 import Game from './dats/game.js';
@@ -32,9 +32,11 @@ export class OutputPath implements ParsedPathWithEntryPath {
 
   ext: string;
 
-  // NOTE(cemmer): this class differs from {@link ParsedPath} crucially in that the "name" here
-  // may contain {@link path.sep} in it on purpose. That's fine, because {@link path.format} handles
-  // it gracefully.
+  /**
+   * NOTE(cemmer): this class differs from {@link ParsedPath} crucially in that the "name" here
+   * may contain {@link path.sep} in it on purpose. That's fine, because {@link path.format} handles
+   * it gracefully.
+   */
   name: string;
 
   root: string;
@@ -124,7 +126,7 @@ export default class OutputFactory {
     let output = options.getOutput();
 
     // Replace all {token}s in the output path
-    output = fsPoly.makeLegal(
+    output = FsPoly.makeLegal(
       OutputFactory.replaceTokensInOutputPath(
         options,
         output,
@@ -150,11 +152,11 @@ export default class OutputFactory {
       output = path.join(output, mirroredDirPath);
     }
 
-    if (options.getDirDatName() && dat.getNameShort()) {
-      output = path.join(output, dat.getNameShort());
+    if (options.getDirDatName() && dat.getName()) {
+      output = path.join(output, dat.getName());
     }
     if (options.getDirDatDescription() && dat.getDescription()) {
-      output = path.join(output, dat.getDescription() as string);
+      output = path.join(output, dat.getDescription()!);
     }
 
     const dirLetter = this.getDirLetterParsed(options, romBasename, romBasenames);
@@ -162,7 +164,7 @@ export default class OutputFactory {
       output = path.join(output, dirLetter);
     }
 
-    return fsPoly.makeLegal(output);
+    return FsPoly.makeLegal(output);
   }
 
   private static replaceTokensInOutputPath(
@@ -215,12 +217,12 @@ export default class OutputFactory {
     }
     let output = input;
 
-    const gameRegion = game.getRegions().find(() => true);
+    const gameRegion = game.getRegions().at(0);
     if (gameRegion) {
       output = output.replace('{region}', gameRegion);
     }
 
-    const gameLanguage = game.getLanguages().find(() => true);
+    const gameLanguage = game.getLanguages().at(0);
     if (gameLanguage) {
       output = output.replace('{language}', gameLanguage);
     }
@@ -419,8 +421,8 @@ export default class OutputFactory {
         // Group letters together to create letter ranges
         .reduce(ArrayPoly.reduceChunk(options.getDirLetterLimit()), [])
         .reduce((map, tuples) => {
-          const firstTuple = tuples.at(0) as [string, Set<string>];
-          const lastTuple = tuples.at(-1) as [string, Set<string>];
+          const firstTuple = tuples.at(0)!;
+          const lastTuple = tuples.at(-1)!;
           const letterRange = `${firstTuple[0]}-${lastTuple[0]}`;
           const newFilenames = new Set(tuples.flatMap(([, filenames]) => [...filenames]));
           const existingFilenames = map.get(letterRange) ?? new Set();
@@ -538,7 +540,7 @@ export default class OutputFactory {
 
     // Should leave archived, generate the archive name from the game name
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
-    const oldExtMatch = inputFile.getFilePath().match(/[^.]+((\.[a-zA-Z0-9]+)+)$/);
+    const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());
     const oldExt =
       oldExtMatch !== null
         ? // Respect the input file's extension

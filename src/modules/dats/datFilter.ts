@@ -1,5 +1,5 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
@@ -23,12 +23,12 @@ export default class DATFilter extends Module {
   filter(dat: DAT): DAT {
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no games to filter`);
+      this.progressBar.logTrace(`${dat.getName()}: no games to filter`);
       return dat;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: filtering DAT`);
-    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_FILTERING);
+    this.progressBar.logTrace(`${dat.getName()}: filtering DAT`);
+    this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
     this.progressBar.reset(dat.getGames().length);
 
     const filteredGames = dat.getParents().flatMap((parent) => {
@@ -52,15 +52,17 @@ export default class DATFilter extends Module {
     });
     const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
 
+    // TODO(cemmer): warning if every game was filtered out?
+
     const size = filteredDat
       .getGames()
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${filteredDat.getNameShort()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${fsPoly.sizeReadable(size)})`,
+      `${filteredDat.getName()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${FsPoly.sizeReadable(size)})`,
     );
 
-    this.progressBar.logTrace(`${filteredDat.getNameShort()}: done filtering DAT`);
+    this.progressBar.logTrace(`${filteredDat.getName()}: done filtering DAT`);
     return filteredDat;
   }
 
@@ -78,14 +80,17 @@ export default class DATFilter extends Module {
       [
         this.options.getFilterRegex() &&
           !this.options.getFilterRegex()?.some((regex) => regex.test(game.getName())),
-        this.options.getFilterRegexExclude() &&
-          this.options.getFilterRegexExclude()?.some((regex) => regex.test(game.getName())),
+        this.options.getFilterRegexExclude()?.some((regex) => regex.test(game.getName())),
         this.noLanguageAllowed(game),
         this.regionNotAllowed(game),
-        this.options.getNoBios() && game.isBios(),
-        this.options.getOnlyBios() && !game.isBios(),
-        this.options.getNoDevice() && game.isDevice(),
-        this.options.getOnlyDevice() && !game.isDevice(),
+        this.options.getFilterCategoryRegex() &&
+          !this.options
+            .getFilterCategoryRegex()
+            ?.some((regex) => game.getCategories().some((category) => regex.test(category))),
+        this.options.getNoBios() && game.getIsBios(),
+        this.options.getOnlyBios() && !game.getIsBios(),
+        this.options.getNoDevice() && game.getIsDevice(),
+        this.options.getOnlyDevice() && !game.getIsDevice(),
         this.options.getOnlyRetail() && !game.isRetail(),
         this.options.getNoUnlicensed() && game.isUnlicensed(),
         this.options.getOnlyUnlicensed() && !game.isUnlicensed(),

@@ -2,10 +2,8 @@ import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
-import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
-import fsPoly from '../../../../src/polyfill/fsPoly.js';
-import Archive from '../../../../src/types/files/archives/archive.js';
+import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
@@ -61,14 +59,14 @@ describe('getSize', () => {
     });
 
     it("should get the hard link's target size", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
         // Make a copy of the original file to ensure it's on the same drive
         const tempFile = path.join(tempDir, `file_${path.basename(filePath)}`);
-        await fsPoly.copyFile(filePath, tempFile);
+        await FsPoly.copyFile(filePath, tempFile);
 
         const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
-        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+        await FsPoly.hardlink(tempFile, tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
@@ -76,15 +74,15 @@ describe('getSize', () => {
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the absolute symlink's target size", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
-        await fsPoly.symlink(path.resolve(filePath), tempLink);
+        await FsPoly.symlink(path.resolve(filePath), tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
@@ -92,15 +90,15 @@ describe('getSize', () => {
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the relative symlink's target size", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
         const tempLink = path.join(tempDir, path.basename(filePath));
-        await fsPoly.symlink(await fsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
+        await FsPoly.symlink(await FsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
 
         const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
@@ -108,7 +106,7 @@ describe('getSize', () => {
 
         expect(archiveEntry.getSize()).toEqual(expectedSize);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
   });
@@ -210,7 +208,7 @@ describe('getCrc32WithoutHeader', () => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);
@@ -337,7 +335,7 @@ describe('getMd5WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).toBeDefined();
@@ -482,7 +480,7 @@ describe('getSha1WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).toBeDefined();
@@ -717,7 +715,7 @@ describe('getSha256WithoutHeader', () => {
       );
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
+        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
       );
 
       expect(archiveEntry.getCrc32()).toBeDefined();
@@ -733,29 +731,43 @@ describe('getSha256WithoutHeader', () => {
 });
 
 describe('extractEntryToFile', () => {
-  it('should throw on invalid entry paths', async () => {
+  it('should extract', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(
+    const scannedFiles = await new ROMScanner(
       new Options({
-        input: [
-          './test/fixtures/roms/7z',
-          './test/fixtures/roms/gz',
-          './test/fixtures/roms/rar',
-          './test/fixtures/roms/tar',
-          './test/fixtures/roms/zip',
+        input: [path.join('test', 'fixtures', 'roms')],
+        inputExclude: [
+          // We may not know the extracted file size of CHDs
+          path.join('test', 'fixtures', 'roms', 'chd'),
+          // Can't extract NKit files
+          path.join('test', 'fixtures', 'roms', 'nkit'),
         ],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    const archives = archiveEntries
-      .filter((entry): entry is ArchiveEntry<Archive> => entry instanceof ArchiveEntry)
-      .map((entry) => entry.getArchive())
-      .reduce(ArrayPoly.reduceUnique(), []);
-    expect(archives).toHaveLength(28);
+    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
-    for (const archive of archives) {
-      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      for (const archiveEntry of archiveEntries) {
+        const tempFilePath = await FsPoly.mktemp(
+          path.join(tempDir, path.basename(archiveEntry.getExtractedFilePath())),
+        );
+        await archiveEntry.extractToFile(tempFilePath);
+
+        const tempFile = await File.fileOf(
+          { filePath: tempFilePath },
+          archiveEntry.getChecksumBitmask(),
+        );
+        expect(tempFile.getSize()).toEqual(archiveEntry.getSize());
+        expect(tempFile.getCrc32()).toEqual(archiveEntry.getCrc32());
+        expect(tempFile.getMd5()).toEqual(archiveEntry.getMd5());
+        expect(tempFile.getSha1()).toEqual(archiveEntry.getSha1());
+        expect(tempFile.getSha256()).toEqual(archiveEntry.getSha256());
+      }
+    } finally {
+      await FsPoly.rm(tempDir, { recursive: true });
     }
   });
 });
@@ -763,58 +775,69 @@ describe('extractEntryToFile', () => {
 describe('copyToTempFile', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(
+    const scannedFiles = await new ROMScanner(
       new Options({
-        input: [
-          './test/fixtures/roms/7z',
-          './test/fixtures/roms/gz',
-          './test/fixtures/roms/rar',
-          './test/fixtures/roms/tar',
-          './test/fixtures/roms/zip',
+        input: [path.join('test', 'fixtures', 'roms')],
+        inputExclude: [
+          // We may not know the extracted file size of CHDs
+          path.join('test', 'fixtures', 'roms', 'chd'),
+          // Can't extract NKit files
+          path.join('test', 'fixtures', 'roms', 'nkit'),
         ],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    expect(archiveEntries).toHaveLength(37);
+    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
-    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
-    for (const archiveEntry of archiveEntries) {
-      await archiveEntry.extractToTempFile(async (tempFile) => {
-        await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
-        expect(tempFile).not.toEqual(archiveEntry.getFilePath());
-      });
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      for (const archiveEntry of archiveEntries) {
+        await archiveEntry.extractToTempFile(async (tempFilePath) => {
+          const tempFile = await File.fileOf(
+            { filePath: tempFilePath },
+            archiveEntry.getChecksumBitmask(),
+          );
+          expect(tempFile.getSize()).toEqual(archiveEntry.getSize());
+          expect(tempFile.getCrc32()).toEqual(archiveEntry.getCrc32());
+          expect(tempFile.getMd5()).toEqual(archiveEntry.getMd5());
+          expect(tempFile.getSha1()).toEqual(archiveEntry.getSha1());
+          expect(tempFile.getSha256()).toEqual(archiveEntry.getSha256());
+        });
+      }
+    } finally {
+      await FsPoly.rm(tempDir, { recursive: true });
     }
-    await fsPoly.rm(temp, { recursive: true });
   });
 });
 
 describe('createReadStream', () => {
   it('should extract archived files', async () => {
     // Note: this will only return valid archives with at least one file
-    const archiveEntries = await new ROMScanner(
+    const scannedFiles = await new ROMScanner(
       new Options({
-        input: [
-          './test/fixtures/roms/7z',
-          './test/fixtures/roms/gz',
-          './test/fixtures/roms/rar',
-          './test/fixtures/roms/tar',
-          './test/fixtures/roms/zip',
+        input: [path.join('test', 'fixtures', 'roms')],
+        inputExclude: [
+          // Can't extract NKit files
+          path.join('test', 'fixtures', 'roms', 'nkit'),
         ],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache()),
     ).scan();
-    expect(archiveEntries).toHaveLength(37);
+    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
-    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
-    for (const archiveEntry of archiveEntries) {
-      await archiveEntry.createReadStream(async (stream) => {
-        const contents = (await bufferPoly.fromReadable(stream)).toString();
-        expect(contents).toBeTruthy();
-      });
+    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      for (const archiveEntry of archiveEntries) {
+        await archiveEntry.createReadStream(async (stream) => {
+          const contents = (await bufferPoly.fromReadable(stream)).toString();
+          expect(contents).toBeTruthy();
+        });
+      }
+    } finally {
+      await FsPoly.rm(temp, { recursive: true });
     }
-    await fsPoly.rm(temp, { recursive: true });
   });
 });
 

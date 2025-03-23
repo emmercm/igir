@@ -7,21 +7,11 @@ describe('isBios', () => {
     ['[BIOS] Nintendo Game Boy Boot ROM (World) (Rev 1)', true],
     ['Tetris (World) (Rev 1)', false],
   ])('%s', (name, expected) => {
-    expect(new Game({ name }).isBios()).toEqual(expected);
+    expect(new Game({ name }).getIsBios()).toEqual(expected);
   });
 
   test.each([true, false])('option: %s', (bios) => {
-    expect(new Game({ bios: bios ? 'yes' : 'no' }).isBios()).toEqual(bios);
-  });
-});
-
-describe('getReleases', () => {
-  it('should always return a list', () => {
-    const release = new Release('name', 'USA');
-
-    expect(new Game({ release: [release] }).getReleases()).toEqual([release]);
-    expect(new Game({ release }).getReleases()).toEqual([release]);
-    expect(new Game().getReleases()).toHaveLength(0);
+    expect(new Game({ isBios: bios ? 'yes' : 'no' }).getIsBios()).toEqual(bios);
   });
 });
 
@@ -121,6 +111,32 @@ describe('isBeta', () => {
   });
 });
 
+describe('isBootleg', () => {
+  test.each([
+    // mame0260
+    [new Game({ name: '1942abl', cloneOf: '1942', manufacturer: 'bootleg' })],
+    [new Game({ name: 'abattle', cloneOf: 'astrof', manufacturer: 'bootleg? (Sidam)' })],
+    [new Game({ name: 'acombat3', cloneOf: 'astrof', manufacturer: 'bootleg (Proel)' })],
+    [new Game({ name: 'aladmdb', manufacturer: 'bootleg / Sega' })],
+    [new Game({ name: 'goldnpke', cloneOf: 'goldnpkr', manufacturer: 'Intercoast (bootleg)' })],
+    [new Game({ name: 'm4hslo', manufacturer: '(bootleg)' })],
+    [new Game({ name: 'mtwinsb', cloneOf: 'mtwins', manufacturer: 'David Inc. (bootleg)' })],
+  ])('should evaluate true: %s', (game) => {
+    expect(game.isBootleg()).toEqual(true);
+    expect(game.isRetail()).toEqual(false);
+  });
+
+  test.each([
+    // mame0260
+    [new Game({ name: 'puckman', manufacturer: 'Namco' })],
+    [new Game({ name: 'galaga', manufacturer: 'Namco' })],
+    [new Game({ name: 'ghouls', manufacturer: 'Capcom' })],
+  ])('should evaluate false: %s', (game) => {
+    expect(game.isBootleg()).toEqual(false);
+    expect(game.isRetail()).toEqual(true);
+  });
+});
+
 describe('isCracked', () => {
   test.each([
     ['Grand Prix 500 2 (1990)(Microids)(FR)(Disk 1 of 2)[cr]', true],
@@ -155,6 +171,37 @@ describe('isDemo', () => {
   ])('%s', (name, expected) => {
     expect(new Game({ name }).isDemo()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
+  });
+});
+
+describe('isEnhancementChip', () => {
+  test.each([
+    // No-Intro 2025/02/12
+    ['CX4 (World) (Enhancement Chip)'],
+    ['DSP1 B (World) (Enhancement Chip)'],
+    ['DSP2 (World) (Enhancement Chip)'],
+    ['DSP3 (Japan) (Enhancement Chip)'],
+    ['DSP4 (World) (Enhancement Chip)'],
+    ['ST010 (Japan, USA) (Enhancement Chip)'],
+    ['ST011 (Japan) (Enhancement Chip)'],
+    ['ST018 (Japan) (Enhancement Chip)'],
+    ['Super Game Boy 2 SGB2-CPU (Japan) (Enhancement Chip)'],
+    ['Super Game Boy SGB-CPU (World) (Enhancement Chip)'],
+  ])('should evaluate true: %s', (name) => {
+    expect(new Game({ name }).isEnhancementChip()).toEqual(true);
+    expect(new Game({ name }).getIsBios()).toEqual(false);
+    expect(new Game({ name }).isRetail()).toEqual(false);
+  });
+
+  test.each([
+    // No-Intro 2025/02/12
+    ['Legend of Zelda, The - A Link to the Past (Europe)'],
+    ['Super Mario Kart (Europe)'],
+    ['Super Metroid (Europe) (En,Fr,De)'],
+  ])('should evaluate false: %s', (name) => {
+    expect(new Game({ name }).isEnhancementChip()).toEqual(false);
+    expect(new Game({ name }).getIsBios()).toEqual(false);
+    expect(new Game({ name }).isRetail()).toEqual(true);
   });
 });
 
@@ -288,13 +335,31 @@ describe('hasBungFix', () => {
 
 describe('hasHack', () => {
   test.each([
-    ['Smurfs, The (UE) (V1.0) (M4) [h1]', true],
-    ['Space Invasion (Unl) [C][hIR]', true],
-    ['Super Mario 4 (Unl) [p1][h1C]', true],
-    ['Survival Kids (U) [C][!]', false],
-  ])('%s', (name, expected) => {
-    expect(new Game({ name }).hasHack()).toEqual(expected);
-    expect(new Game({ name }).isRetail()).toEqual(!expected);
+    // GoodTools
+    [new Game({ name: 'Smurfs, The (UE) (V1.0) (M4) [h1]' })],
+    [new Game({ name: 'Space Invasion (Unl) [C][hIR]' })],
+    [new Game({ name: 'Super Mario 4 (Unl) [p1][h1C]' })],
+    // mame0260
+    [new Game({ name: '1942h', cloneOf: '1942', manufacturer: 'hack (Two Bit Score)' })],
+    [new Game({ name: 'arbv2', cloneOf: 'arb', manufacturer: 'hack (Steve Braid)' })],
+    [new Game({ name: 'hangly', cloneOf: 'puckman', manufacturer: 'hack (Igleck)' })],
+    [new Game({ name: 'komemokos', cloneOf: 'puckman', manufacturer: 'hack' })],
+    [new Game({ name: 'm4andycp10_a', cloneOf: 'm4andycp', manufacturer: 'hack?' })],
+  ])('should evaluate true: %s', (game) => {
+    expect(game.hasHack()).toEqual(true);
+    expect(game.isRetail()).toEqual(false);
+  });
+
+  test.each([
+    // GoodTools
+    [new Game({ name: 'Survival Kids (U) [C][!]' })],
+    // mame0260
+    [new Game({ name: '1942', manufacturer: 'Capcom' })],
+    [new Game({ name: 'arb', manufacturer: 'AVE Micro Systems' })],
+    [new Game({ name: 'puckman', manufacturer: 'Namco' })],
+  ])('should evaluate false: %s', (game) => {
+    expect(game.hasHack()).toEqual(false);
+    expect(game.isRetail()).toEqual(true);
   });
 });
 
@@ -306,6 +371,49 @@ describe('hasTrainer', () => {
   ])('%s', (name, expected) => {
     expect(new Game({ name }).hasTrainer()).toEqual(expected);
     expect(new Game({ name }).isRetail()).toEqual(!expected);
+  });
+});
+
+describe('getRegions', () => {
+  test.each([
+    // No-Intro
+    [
+      new Game({
+        name: "Big Bird's Egg Catch (Japan, USA) (En)",
+        release: [
+          new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'JPN'),
+          new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'USA'),
+        ],
+      }),
+      ['JPN', 'USA'],
+    ],
+    [
+      new Game({
+        name: 'Tetris (World) (Rev 1)',
+        release: [
+          new Release('Tetris (World) (Rev 1)', 'EUR'),
+          new Release('Tetris (World) (Rev 1)', 'JPN'),
+          new Release('Tetris (World) (Rev 1)', 'USA'),
+        ],
+      }),
+      ['WORLD'],
+    ],
+    [
+      new Game({
+        name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
+      }),
+      ['USA', 'EUR'],
+    ],
+    [
+      new Game({
+        name: 'Tetris Flash (Japan) (SGB Enhanced)',
+        release: new Release('Tetris Flash (Japan) (SGB Enhanced)', 'JPN'),
+      }),
+      ['JPN'],
+    ],
+  ])('should prefer game name regions over release regions: %s', (game, expectedRegions) => {
+    expect(game.getRegions()).toEqual(expectedRegions);
   });
 });
 
@@ -339,9 +447,12 @@ describe('getLanguages', () => {
       }),
       ['EN', 'JA', 'FR', 'DE'],
     ],
-  ])('should prefer explicit languages over region language: %s', (game, expectedLanguages) => {
-    expect(game.getLanguages()).toEqual(expectedLanguages);
-  });
+  ])(
+    'should prefer game name languages over release region language: %s',
+    (game, expectedLanguages) => {
+      expect(game.getLanguages()).toEqual(expectedLanguages);
+    },
+  );
 
   test.each([
     [

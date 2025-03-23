@@ -1,49 +1,62 @@
-import FilePoly from '../../polyfill/filePoly.js';
-import fsPoly from '../../polyfill/fsPoly.js';
+import FsPoly from '../../polyfill/fsPoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
-enum VcdiffSecondaryCompression {
-  DJW_STATIC_HUFFMAN = 1,
-  LZMA = 2,
-  FGK_ADAPTIVE_HUFFMAN = 16,
-}
+const VcdiffSecondaryCompression = {
+  NONE: 0,
+  DJW_STATIC_HUFFMAN: 1,
+  LZMA: 2,
+  FGK_ADAPTIVE_HUFFMAN: 16,
+} as const;
+type VcdiffSecondaryCompressionKey = keyof typeof VcdiffSecondaryCompression;
+type VcdiffSecondaryCompressionValue =
+  (typeof VcdiffSecondaryCompression)[VcdiffSecondaryCompressionKey];
+const VcdiffSecondaryCompressionInverted = Object.fromEntries(
+  Object.entries(VcdiffSecondaryCompression).map(([key, value]) => [value, key]),
+) as Record<VcdiffSecondaryCompressionValue, VcdiffSecondaryCompressionKey>;
 
-enum VcdiffHdrIndicator {
-  DECOMPRESS = 0x01,
-  CODETABLE = 0x02,
-  APPHEADER = 0x04,
-}
+const VcdiffHdrIndicator = {
+  DECOMPRESS: 0x01,
+  CODETABLE: 0x02,
+  APPHEADER: 0x04,
+} as const;
+// type VcdiffHdrIndicatorValue = (typeof VcdiffHdrIndicator)[keyof typeof VcdiffHdrIndicator];
 
-enum VcdiffWinIndicator {
-  SOURCE = 0x01,
-  TARGET = 0x02,
-  ADLER32 = 0x04,
-}
+const VcdiffWinIndicator = {
+  SOURCE: 0x01,
+  TARGET: 0x02,
+  ADLER32: 0x04,
+} as const;
+type VcdiffWinIndicatorValue = (typeof VcdiffWinIndicator)[keyof typeof VcdiffWinIndicator];
 
-enum VcdiffDeltaIndicator {
-  DATACOMP = 0x01,
-  INSTCOMP = 0x02,
-  ADDRCOMP = 0x04,
-}
+const VcdiffDeltaIndicator = {
+  DATACOMP: 0x01,
+  INSTCOMP: 0x02,
+  ADDRCOMP: 0x04,
+} as const;
+// type VcdiffDeltaIndicatorValue = (typeof VcdiffDeltaIndicator)[keyof typeof VcdiffDeltaIndicator];
 
-enum VcdiffCopyAddressMode {
-  SELF = 0,
-  HERE = 1,
-}
+const VcdiffCopyAddressMode = {
+  SELF: 0,
+  HERE: 1,
+} as const;
+type VcdiffCopyAddressModeValue =
+  (typeof VcdiffCopyAddressMode)[keyof typeof VcdiffCopyAddressMode];
 
-enum VcdiffInstruction {
-  NOOP = 0,
-  ADD,
-  RUN,
-  COPY,
-}
+const VcdiffInstruction = {
+  NOOP: 0,
+  ADD: 1,
+  RUN: 2,
+  COPY: 3,
+} as const;
+type VcdiffInstructionValue = (typeof VcdiffInstruction)[keyof typeof VcdiffInstruction];
 
 interface VcdiffDeltaInstruction {
-  type: VcdiffInstruction;
+  type: VcdiffInstructionValue;
   size: number;
-  mode: VcdiffCopyAddressMode;
+  mode: VcdiffCopyAddressModeValue;
 }
 
 class VcdiffHeader {
@@ -68,12 +81,16 @@ class VcdiffHeader {
     // COPY+NOOP
     for (let copyMode = 0; copyMode <= 8; copyMode += 1) {
       entries.push([
-        { type: VcdiffInstruction.COPY, size: 0, mode: copyMode },
+        { type: VcdiffInstruction.COPY, size: 0, mode: copyMode as VcdiffCopyAddressModeValue },
         { type: VcdiffInstruction.NOOP, size: 0, mode: 0 },
       ]);
       for (let copySize = 4; copySize <= 18; copySize += 1) {
         entries.push([
-          { type: VcdiffInstruction.COPY, size: copySize, mode: copyMode },
+          {
+            type: VcdiffInstruction.COPY,
+            size: copySize,
+            mode: copyMode as VcdiffCopyAddressModeValue,
+          },
           { type: VcdiffInstruction.NOOP, size: 0, mode: 0 },
         ]);
       }
@@ -85,7 +102,11 @@ class VcdiffHeader {
         for (let copySize = 4; copySize <= 6; copySize += 1) {
           entries.push([
             { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
-            { type: VcdiffInstruction.COPY, size: copySize, mode: copyMode },
+            {
+              type: VcdiffInstruction.COPY,
+              size: copySize,
+              mode: copyMode as VcdiffCopyAddressModeValue,
+            },
           ]);
         }
       }
@@ -94,7 +115,7 @@ class VcdiffHeader {
       for (let addSize = 1; addSize <= 4; addSize += 1) {
         entries.push([
           { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
-          { type: VcdiffInstruction.COPY, size: 4, mode: copyMode },
+          { type: VcdiffInstruction.COPY, size: 4, mode: copyMode as VcdiffCopyAddressModeValue },
         ]);
       }
     }
@@ -102,7 +123,7 @@ class VcdiffHeader {
     // COPY+ADD
     for (let copyMode = 0; copyMode <= 8; copyMode += 1) {
       entries.push([
-        { type: VcdiffInstruction.COPY, size: 4, mode: copyMode },
+        { type: VcdiffInstruction.COPY, size: 4, mode: copyMode as VcdiffCopyAddressModeValue },
         { type: VcdiffInstruction.ADD, size: 1, mode: 0 },
       ]);
     }
@@ -110,30 +131,34 @@ class VcdiffHeader {
     return entries;
   })();
 
-  readonly secondaryDecompressorId: VcdiffSecondaryCompression;
+  readonly secondaryDecompressorId: VcdiffSecondaryCompressionValue;
 
   readonly codeTable: VcdiffDeltaInstruction[][];
 
   constructor(
-    secondaryDecompressorId: VcdiffSecondaryCompression,
+    secondaryDecompressorId: VcdiffSecondaryCompressionValue,
     codeTable: VcdiffDeltaInstruction[][],
   ) {
     this.secondaryDecompressorId = secondaryDecompressorId;
     this.codeTable = codeTable;
   }
 
-  static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffHeader> {
+  static async fromFilePoly(patchFile: IOFile): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
       await patchFile.close();
-      throw new ExpectedError(`Vcdiff patch header is invalid: ${patchFile.getPathLike()}`);
+      throw new ExpectedError(
+        `Vcdiff patch header is invalid: ${patchFile.getPathLike().toString()}`,
+      );
     }
     patchFile.skipNext(1); // version
 
     const hdrIndicator = (await patchFile.readNext(1)).readUInt8();
-    let secondaryDecompressorId = 0;
+    let secondaryDecompressorId: VcdiffSecondaryCompressionValue = 0;
     if (hdrIndicator & VcdiffHdrIndicator.DECOMPRESS) {
-      secondaryDecompressorId = (await patchFile.readNext(1)).readUInt8();
+      secondaryDecompressorId = (
+        await patchFile.readNext(1)
+      ).readUInt8() as VcdiffSecondaryCompressionValue;
       if (secondaryDecompressorId) {
         /**
          * TODO(cemmer): notes for later on LZMA (the default for the xdelta3 tool):
@@ -144,7 +169,7 @@ class VcdiffHeader {
          */
         await patchFile.close();
         throw new ExpectedError(
-          `unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompression[secondaryDecompressorId]}: ${patchFile.getPathLike()}`,
+          `unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompressionInverted[secondaryDecompressorId]}: ${patchFile.getPathLike().toString()}`,
         );
       }
     }
@@ -155,7 +180,7 @@ class VcdiffHeader {
       if (codeTableLength) {
         await patchFile.close();
         throw new ExpectedError(
-          `can't parse Vcdiff application-defined code table: ${patchFile.getPathLike()}`,
+          `can't parse Vcdiff application-defined code table: ${patchFile.getPathLike().toString()}`,
         );
       }
     }
@@ -169,7 +194,7 @@ class VcdiffHeader {
   }
 }
 class VcdiffWindow {
-  readonly winIndicator: VcdiffWinIndicator;
+  readonly winIndicator: VcdiffWinIndicatorValue;
 
   readonly sourceSegmentSize: number;
 
@@ -192,7 +217,7 @@ class VcdiffWindow {
   readonly copyAddressesData: Buffer;
 
   private constructor(
-    winIndicator: VcdiffWinIndicator,
+    winIndicator: VcdiffWinIndicatorValue,
     sourceSegmentSize: number,
     sourceSegmentPosition: number,
     deltaEncodingTargetWindowSize: number,
@@ -209,8 +234,8 @@ class VcdiffWindow {
     this.copyAddressesData = copyAddressesData;
   }
 
-  static async fromFilePoly(patchFile: FilePoly): Promise<VcdiffWindow> {
-    const winIndicator = (await patchFile.readNext(1)).readUInt8();
+  static async fromFilePoly(patchFile: IOFile): Promise<VcdiffWindow> {
+    const winIndicator = (await patchFile.readNext(1)).readUInt8() as VcdiffWinIndicatorValue;
     let sourceSegmentSize = 0;
     let sourceSegmentPosition = 0;
     if (winIndicator & (VcdiffWinIndicator.SOURCE | VcdiffWinIndicator.TARGET)) {
@@ -278,7 +303,7 @@ class VcdiffWindow {
   }
 
   async writeAddData(
-    targetFile: FilePoly,
+    targetFile: IOFile,
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
@@ -294,7 +319,7 @@ class VcdiffWindow {
   }
 
   async writeRunData(
-    targetFile: FilePoly,
+    targetFile: IOFile,
     targetWindowPosition: number,
     size: number,
   ): Promise<void> {
@@ -313,12 +338,12 @@ class VcdiffWindow {
   }
 
   async writeCopyData(
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    sourceFile: IOFile,
+    targetFile: IOFile,
     targetWindowPosition: number,
     size: number,
     copyCache: VcdiffCache,
-    mode: number,
+    mode: VcdiffCopyAddressModeValue,
   ): Promise<void> {
     const [addr, copyAddressesOffset] = copyCache.decode(
       this.copyAddressesData,
@@ -390,7 +415,7 @@ class VcdiffCache {
     copyAddressesData: Buffer,
     copyAddressesOffset: number,
     here: number,
-    mode: number,
+    mode: VcdiffCopyAddressModeValue,
   ): [number, number] {
     let addr: number;
     let readValue: number;
@@ -454,15 +479,15 @@ export default class VcdiffPatch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
   ): Promise<void> {
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
-      const sourceFile = await FilePoly.fileFrom(tempRomFile, 'r');
+      const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await fsPoly.copyFile(tempRomFile, outputRomPath);
-      const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+      await FsPoly.copyFile(tempRomFile, outputRomPath);
+      const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
         await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
@@ -474,9 +499,9 @@ export default class VcdiffPatch extends Patch {
   }
 
   private static async applyPatch(
-    patchFile: FilePoly,
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    patchFile: IOFile,
+    sourceFile: IOFile,
+    targetFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
   ): Promise<void> {
@@ -500,8 +525,8 @@ export default class VcdiffPatch extends Patch {
   }
 
   private static async applyPatchWindow(
-    sourceFile: FilePoly,
-    targetFile: FilePoly,
+    sourceFile: IOFile,
+    targetFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
     targetWindowPosition: number,

@@ -3,8 +3,8 @@ import path from 'node:path';
 import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
-import FilePoly from '../../../src/polyfill/filePoly.js';
-import fsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly from '../../../src/polyfill/fsPoly.js';
+import IOFile from '../../../src/polyfill/ioFile.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/types/files/archives/archiveFile.js';
 import Zip from '../../../src/types/files/archives/zip.js';
@@ -19,7 +19,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 describe('fileOf', () => {
   it("should not throw when the file doesn't exist", async () => {
-    const tempFile = await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
     const file = await File.fileOf({ filePath: tempFile });
     expect(file.getFilePath()).toEqual(tempFile);
     expect(file.getSize()).toEqual(0);
@@ -44,66 +44,66 @@ describe('getFilePath', () => {
 });
 
 describe('getSize', () => {
-  describe.each([[0], [1], [100], [10_000], [1_000_000]])('%s', (size) => {
+  describe.each([[0], [1], [100], [10_000], [1_000_000]])('bytes: %s', (size) => {
     it("should get the file's size", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
         const fileLink = await File.fileOf({ filePath: tempFile });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
 
-    it("should get the hard link's target size: %s", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    it("should get the hard link's target size", async () => {
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-        const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
-        await fsPoly.hardlink(path.resolve(tempFile), tempLink);
+        const tempLink = await FsPoly.mktemp(path.join(tempDir, 'link'));
+        await FsPoly.hardlink(tempFile, tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
 
-    it("should get the absolute symlink's target size: %s", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+    it("should get the absolute symlink's target size", async () => {
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-        const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
-        await fsPoly.symlink(path.resolve(tempFile), tempLink);
+        const tempLink = await FsPoly.mktemp(path.join(tempDir, 'link'));
+        await FsPoly.symlink(path.resolve(tempFile), tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the relative symlink's target size: %s", async () => {
-      const tempDir = await fsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = path.resolve(await fsPoly.mktemp(path.join(tempDir, 'file')));
-        await (await FilePoly.fileOfSize(tempFile, 'r', size)).close(); // touch
+        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-        const tempLink = await fsPoly.mktemp(path.join(tempDir, 'link'));
-        await fsPoly.symlink(await fsPoly.symlinkRelativePath(tempFile, tempLink), tempLink);
+        const tempLink = await FsPoly.mktemp(path.join(tempDir, 'link'));
+        await FsPoly.symlink(await FsPoly.symlinkRelativePath(tempFile, tempLink), tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await fsPoly.rm(tempDir, { recursive: true });
+        await FsPoly.rm(tempDir, { recursive: true });
       }
     });
   });
@@ -170,7 +170,7 @@ describe('getCrc32WithoutHeader', () => {
     async (filePath, expectedCrc) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.CRC32)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).not.toEqual(file.getCrc32WithoutHeader());
       expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
       expect(file.getMd5()).toBeUndefined();
@@ -226,7 +226,7 @@ describe('getMd5WithoutHeader', () => {
     async (filePath, expectedMd5) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.MD5)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).not.toEqual(file.getMd5WithoutHeader());
@@ -288,7 +288,7 @@ describe('getSha1WithoutHeader', () => {
     async (filePath, expectedSha1) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.SHA1)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).toBeUndefined();
@@ -368,7 +368,7 @@ describe('getSha256WithoutHeader', () => {
     async (filePath, expectedSha256) => {
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.SHA256)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath) as ROMHeader);
+      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).toBeUndefined();
@@ -392,14 +392,14 @@ describe('copyToTempFile', () => {
     ).scan();
     expect(raws).toHaveLength(10);
 
-    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
+    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
       await raw.extractToTempFile(async (tempFile) => {
-        await expect(fsPoly.exists(tempFile)).resolves.toEqual(true);
+        await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
         expect(tempFile).not.toEqual(raw.getFilePath());
       });
     }
-    await fsPoly.rm(temp, { recursive: true });
+    await FsPoly.rm(temp, { recursive: true });
   });
 });
 
@@ -414,14 +414,14 @@ describe('createReadStream', () => {
     ).scan();
     expect(raws).toHaveLength(9);
 
-    const temp = await fsPoly.mkdtemp(Temp.getTempDir());
+    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
       await raw.createReadStream(async (stream) => {
         const contents = (await bufferPoly.fromReadable(stream)).toString();
         expect(contents).toBeTruthy();
       });
     }
-    await fsPoly.rm(temp, { recursive: true });
+    await FsPoly.rm(temp, { recursive: true });
   });
 });
 

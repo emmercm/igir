@@ -16,8 +16,24 @@ theme:
   name: material
 
   palette:
-    scheme: slate
-    primary: black
+    # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
+    - media: "(prefers-color-scheme)"
+      primary: black
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: grey
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
 
   icon:
     repo: fontawesome/brands/github
@@ -92,6 +108,7 @@ nav:
       - input/reading-archives.md
     - ROM Processing:
       - roms/matching.md
+      - roms/sets.md
       - roms/filtering-preferences.md
       - roms/headers.md
       - roms/patching.md
@@ -100,6 +117,7 @@ nav:
       - output/tokens.md
       - output/options.md
       - output/writing-archives.md
+      - output/playlists.md
       - output/reporting.md
       - output/cleaning.md
     - Advanced:
@@ -131,7 +149,12 @@ plugins:
       exclude_unreferenced: true
   - social
   - git-revision-date-localized:
-      enable_creation_date: false
+      enable_creation_date: true
+  - git-committers:
+      repository: emmercm/igir
+      branch: main
+      exclude_committers:
+        - web-flow
   - redirects:
       redirect_maps:
         'archives.md': 'input/reading-archives.md'
@@ -182,6 +205,16 @@ extra:
   analytics:
     provider: google
     property: G-GX1E7CQ1L7
+  consent:
+    title: Cookie consent
+    description: >-
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+    actions:
+      - accept
+      - reject
 
   social:
     - icon: simple/github
@@ -190,3 +223,6 @@ extra:
       link: https://www.npmjs.com/package/igir
     - icon: simple/x
       link: https://x.com/emmercm
+
+copyright: >
+  <a href="#__consent">Change cookie settings</a>

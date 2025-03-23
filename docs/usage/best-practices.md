@@ -34,10 +34,36 @@ Then, create sub-collections by copying files from your main collection to other
 
 **Provide the output directory as an input directory when moving or cleaning.**
 
-This is for a few reasons:
+This is because the [`igir clean` command](../output/cleaning.md) won't delete file paths considered for writing (no matter if a file was actually written, or it was ignored because of [overwriting](../output/options.md#overwriting-files) rules). Providing the output directory as an input directory will ensure no DAT-matched files are deleted.
 
-- [1G1R rules](../roms/filtering-preferences.md#preferences-for-1g1r) are only applied to files found & matched in the input directories, so moving files out of the input directories may change your 1G1R results on subsequent runs. Providing the output directory as an input directory will make sure you keep your preferred files.
-- The [`igir clean` command](../output/cleaning.md) excludes files considered for writing (either written or _not_ [overwritten](../output/options.md#overwriting-files)). Providing the output directory as an input directory will ensure no DAT-matched files are deleted.
+Example:
+
+=== ":fontawesome-brands-windows: Windows"
+
+    ```batch
+    igir move clean ^
+      --input ROMs\ ^
+      --input "%UserProfile%\Downloads\" ^
+      --output ROMs\
+    ```
+
+=== ":fontawesome-brands-apple: macOS"
+
+    ```shell
+    igir move clean \
+      --input ROMs/ \
+      --input ~/Downloads/ \
+      --output ROMs/
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir move clean \
+      --input ROMs/ \
+      --input ~/Downloads/ \
+      --output ROMs/
+    ```
 
 **Prefer ROMs with headers.**
 
@@ -49,17 +75,17 @@ The default settings for Igir will have the best chance for you to match input f
 
 **Don't increase the minimum checksum level unless you absolutely need it.**
 
-The default settings for Igir will cause accurate file matching for the gross majority of cases with the least amount of processing. Additionally, most [archive formats](../input/reading-archives.md) only store CRC32 checksums, so forcing any others will greatly increase scanning time. Use the `--input-checksum-min <algorithm>` option with caution.
+The default settings for Igir will cause accurate file matching for the gross majority of cases with the least amount of processing. Additionally, most [archive formats](../input/reading-archives.md) only store CRC32 checksums, so forcing any others will greatly increase scanning time. Use the [`--input-checksum-min <algorithm>` option](../roms/matching.md#manually-using-other-checksum-algorithms) with caution.
 
 ## File Outputs
 
-**Zip ROMs wherever possible.**
+**Zip ROMs whenever it makes sense.**
 
 Zip files generally save file space and are faster to scan, at the expense of more time to create them. For collections that will be read from more often than written to, such as a primary collection, prefer to eat the cost of [archiving files](../output/writing-archives.md) once with the `igir zip` command.
 
 **Organize ROM sets by DAT name or description.**
 
-Ignoring [arcade ROM sets](../usage/arcade.md), one purpose of sorting your ROM collection using DATs is to organize them in some human-understandable manner. A common way to help with this is to group ROMs from the same console together using [`--dir-dat-name`](../output/path-options.md#append-dat-name) or [`--dir-dat-description`](../output/path-options.md#append-dat-description)`
+Ignoring [arcade ROM sets](../usage/arcade.md), one purpose of sorting your ROM collection using DATs is to organize them in some human-understandable manner. A common way to help with this is to group ROMs from the same console together using [`--dir-dat-name`](../output/path-options.md#append-dat-name) or [`--dir-dat-description`](../output/path-options.md#append-dat-description).
 
 Alternatively, you can [filter to only the DATs](../dats/processing.md#dat-filtering) you want and then [combine them](../dats/processing.md#dat-combining) and write the resulting ROMs to one directory.
 
@@ -79,7 +105,7 @@ If you value keeping a clean and accurate ROM collection, use the [`--overwrite-
 
 **Use the right DAT version for your emulator version.**
 
-You must choose the right DAT for your emulator (e.g. MAME) and emulator version (e.g. MAME 0.258) or your ROMs may not work correctly. See the [arcade ROM sets page](../usage/arcade.md#emulator-versions--dats) for more information.
+You must choose the right DAT for your emulator (e.g. MAME) and emulator version (e.g. MAME 0.258) or your ROMs may not work correctly. See the [arcade ROM sets page](../usage/arcade.md#emulator-versions-dats) for more information.
 
 **For MAME, use the official DATs or ones from progetto-SNAPS.**
 

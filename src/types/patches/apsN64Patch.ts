@@ -1,12 +1,13 @@
-import FilePoly from '../../polyfill/filePoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
-enum APSN64PatchType {
-  SIMPLE = 0,
-  N64 = 1,
-}
+const APSN64PatchType = {
+  SIMPLE: 0,
+  N64: 1,
+} as const;
+type APSN64PatchTypeValue = (typeof APSN64PatchType)[keyof typeof APSN64PatchType];
 
 /**
  * @see https://github.com/btimofeev/UniPatcher/wiki/APS-(N64)
@@ -14,10 +15,10 @@ enum APSN64PatchType {
 export default class APSN64Patch extends Patch {
   static readonly FILE_SIGNATURE = Buffer.from('APS10');
 
-  private readonly patchType: APSN64PatchType;
+  private readonly patchType: APSN64PatchTypeValue;
 
   protected constructor(
-    patchType: APSN64PatchType,
+    patchType: APSN64PatchTypeValue,
     file: File,
     crcBefore: string,
     sizeAfter: number,
@@ -27,13 +28,13 @@ export default class APSN64Patch extends Patch {
   }
 
   static async patchFrom(file: File): Promise<APSN64Patch> {
-    let patchType = APSN64PatchType.SIMPLE;
+    let patchType: APSN64PatchTypeValue = APSN64PatchType.SIMPLE;
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
 
     await file.extractToTempFilePoly('r', async (patchFile) => {
       patchFile.seek(APSN64Patch.FILE_SIGNATURE.length);
-      patchType = (await patchFile.readNext(1)).readUInt8();
+      patchType = (await patchFile.readNext(1)).readUInt8() as APSN64PatchTypeValue;
       patchFile.skipNext(1); // encoding method
       patchFile.skipNext(50); // description
 
@@ -48,7 +49,7 @@ export default class APSN64Patch extends Patch {
         targetSize = (await patchFile.readNext(4)).readUInt32LE();
       } else {
         throw new ExpectedError(
-          `APS (N64) patch type ${patchType} isn't supported: ${patchFile.getPathLike()}`,
+          `APS (N64) patch type ${patchType} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
     });
@@ -69,7 +70,7 @@ export default class APSN64Patch extends Patch {
         patchFile.seek(78);
       } else {
         throw new ExpectedError(
-          `APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike()}`,
+          `APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
 
@@ -80,10 +81,10 @@ export default class APSN64Patch extends Patch {
   private static async writeOutputFile(
     inputRomFile: File,
     outputRomPath: string,
-    patchFile: FilePoly,
+    patchFile: IOFile,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
-    const targetFile = await FilePoly.fileFrom(outputRomPath, 'r+');
+    const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
       await APSN64Patch.applyPatch(patchFile, targetFile);
@@ -92,7 +93,7 @@ export default class APSN64Patch extends Patch {
     }
   }
 
-  private static async applyPatch(patchFile: FilePoly, targetFile: FilePoly): Promise<void> {
+  private static async applyPatch(patchFile: IOFile, targetFile: IOFile): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const offset = (await patchFile.readNext(4)).readUInt32LE();
       const size = (await patchFile.readNext(1)).readUInt8();

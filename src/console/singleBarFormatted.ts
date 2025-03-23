@@ -23,11 +23,11 @@ export default class SingleBarFormatted {
 
   private readonly singleBar: SingleBar;
 
-  private lastOutput = '';
+  private lastOutput?: string;
 
   private valueTimeBuffer: number[][] = [];
 
-  private lastEtaTime: number = 0;
+  private lastEtaTime = 0;
 
   private lastEtaValue = 'infinity';
 
@@ -69,7 +69,7 @@ export default class SingleBarFormatted {
     return this.singleBar;
   }
 
-  getLastOutput(): string {
+  getLastOutput(): string | undefined {
     return this.lastOutput;
   }
 

@@ -7,7 +7,7 @@ import async from 'async';
 import unzipper, { Entry, File as ZipFile } from 'unzipper';
 
 import Defaults from '../../../globals/defaults.js';
-import fsPoly from '../../../polyfill/fsPoly.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../polyfill/streamPoly.js';
 import Timer from '../../../timer.js';
 import ExpectedError from '../../expectedError.js';
@@ -40,6 +40,24 @@ export default class Zip extends Archive {
       archive.files.filter((entryFile) => entryFile.type === 'File'),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile: ZipFile): Promise<ArchiveEntry<this>> => {
+        // We have to filter these out here because `Entry.stream()` will fail, and even though it
+        // will emit a catchable error, the stream will never be released
+        if (entryFile.compressionMethod === 12) {
+          throw new ExpectedError("BZip2 isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod === 14) {
+          throw new ExpectedError("LZMA isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod === 20 || entryFile.compressionMethod === 93) {
+          throw new ExpectedError("Zstandard isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod === 98) {
+          throw new ExpectedError("PPMd isn't supported for .zip files");
+        }
+        if (entryFile.compressionMethod !== 0 && entryFile.compressionMethod !== 8) {
+          throw new ExpectedError('only STORE and DEFLATE methods are supported for .zip files');
+        }
+
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
           const entryStream = entryFile
@@ -47,7 +65,9 @@ export default class Zip extends Archive {
             // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
             // may lead to unexpected behavior, but at least this won't crash because of an
             // unhandled exception on the stream.
-            .on('error', () => {});
+            .on('error', () => {
+              // @typescript-eslint/no-empty-function
+            });
           try {
             checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
           } finally {
@@ -77,8 +97,8 @@ export default class Zip extends Archive {
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const extractedDir = path.dirname(extractedFilePath);
-    if (!(await fsPoly.exists(extractedDir))) {
-      await fsPoly.mkdir(extractedDir, { recursive: true });
+    if (!(await FsPoly.exists(extractedDir))) {
+      await FsPoly.mkdir(extractedDir, { recursive: true });
     }
 
     return this.extractEntryToStream(
@@ -127,6 +147,7 @@ export default class Zip extends Archive {
        * In the case the callback doesn't read the entire stream, {@link unzipper} will leave the
        * file handle open. Drain the stream so the file handle can be released. The stream cannot
        * be destroyed by the callback, or this will never resolve!
+       * TODO(cemmer): this takes forever to drain with large files, e.g. during extension correction
        */
       await StreamPoly.autodrain(stream);
     }
@@ -135,7 +156,7 @@ export default class Zip extends Archive {
   async createArchive(inputToOutput: [File, ArchiveEntry<Zip>][]): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
-    const tempZipFile = await fsPoly.mktemp(this.getFilePath());
+    const tempZipFile = await FsPoly.mktemp(this.getFilePath());
     const writeStream = fs.createWriteStream(tempZipFile);
 
     // Start writing the zip file
@@ -154,7 +175,7 @@ export default class Zip extends Archive {
       await Zip.addArchiveEntries(zipFile, inputToOutput);
     } catch (error) {
       zipFile.abort();
-      await fsPoly.rm(tempZipFile, { force: true });
+      await FsPoly.rm(tempZipFile, { force: true });
       throw error;
     }
 
@@ -166,7 +187,7 @@ export default class Zip extends Archive {
       writeStream.on('close', resolve);
     });
 
-    return fsPoly.mv(tempZipFile, this.getFilePath());
+    return FsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(

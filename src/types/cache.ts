@@ -25,7 +25,7 @@ export default class Cache<V> {
 
   private readonly keyedMutex = new KeyedMutex(1000);
 
-  private hasChanged: boolean = false;
+  private hasChanged = false;
 
   private saveToFileTimeout?: Timer;
 
@@ -150,8 +150,8 @@ export default class Cache<V> {
       }
       // NOTE(cemmer): util.promisify(zlib.inflate) seems to have issues not throwing correctly
       const decompressed = zlib.inflateSync(compressed);
-      const keyValuesObject = v8.deserialize(decompressed);
-      const keyValuesEntries = Object.entries(keyValuesObject) as [string, V][];
+      const keyValuesObject = v8.deserialize(decompressed) as Record<string, V>;
+      const keyValuesEntries = Object.entries(keyValuesObject);
       this.keyValues = new Map(keyValuesEntries);
     } catch {
       /* ignored */

@@ -4,7 +4,6 @@ import { Semaphore } from 'async-mutex';
 
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DAT from '../../types/dats/dat.js';
-import Parent from '../../types/dats/parent.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
@@ -12,8 +11,8 @@ import FileFactory from '../../types/files/fileFactory.js';
 import FileSignature from '../../types/files/fileSignature.js';
 import Options, { FixExtension } from '../../types/options.js';
 import OutputFactory from '../../types/outputFactory.js';
-import ReleaseCandidate from '../../types/releaseCandidate.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
+import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**
@@ -42,36 +41,30 @@ export default class CandidateExtensionCorrector extends Module {
   /**
    * Correct the file extensions.
    */
-  async correct(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getNameShort()}: no parents to correct extensions for`);
-      return parentsToCandidates;
+  async correct(dat: DAT, candidates: WriteCandidate[]): Promise<WriteCandidate[]> {
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to correct extensions for`);
+      return candidates;
     }
 
-    const romsThatNeedCorrecting = [...parentsToCandidates.values()]
-      .flat()
-      .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+    const romsThatNeedCorrecting = candidates
+      .flatMap((candidate) => candidate.getRomsWithFiles())
       .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles)).length;
     if (romsThatNeedCorrecting === 0) {
-      this.progressBar.logTrace(
-        `${dat.getNameShort()}: no output files need their extension corrected`,
-      );
-      return parentsToCandidates;
+      this.progressBar.logTrace(`${dat.getName()}: no output files need their extension corrected`);
+      return candidates;
     }
 
     this.progressBar.logTrace(
-      `${dat.getNameShort()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`,
+      `${dat.getName()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.reset(romsThatNeedCorrecting);
 
-    const correctedParentsToCandidates = await this.correctExtensions(dat, parentsToCandidates);
+    const correctedCandidates = await this.correctExtensions(dat, candidates);
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: done correcting output file extensions`);
-    return correctedParentsToCandidates;
+    this.progressBar.logTrace(`${dat.getName()}: done correcting output file extensions`);
+    return correctedCandidates;
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
@@ -94,60 +87,44 @@ export default class CandidateExtensionCorrector extends Module {
 
   private async correctExtensions(
     dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<Map<Parent, ReleaseCandidate[]>> {
-    return new Map(
-      await Promise.all(
-        [...parentsToCandidates.entries()].map(
-          async ([parent, releaseCandidates]): Promise<[Parent, ReleaseCandidate[]]> => {
-            const hashedReleaseCandidates = await Promise.all(
-              releaseCandidates.map(async (releaseCandidate) => {
-                const hashedRomsWithFiles = await Promise.all(
-                  releaseCandidate.getRomsWithFiles().map(async (romWithFiles) => {
-                    const correctedRom = await this.buildCorrectedRom(
-                      dat,
-                      parent,
-                      releaseCandidate,
-                      romWithFiles,
-                    );
+    candidates: WriteCandidate[],
+  ): Promise<WriteCandidate[]> {
+    return Promise.all(
+      candidates.map(async (candidate) => {
+        const hashedRomsWithFiles = await Promise.all(
+          candidate.getRomsWithFiles().map(async (romWithFiles) => {
+            const correctedRom = await this.buildCorrectedRom(dat, candidate, romWithFiles);
 
-                    // Using the corrected ROM name, build a new output path
-                    const correctedOutputPath = OutputFactory.getPath(
-                      this.options,
-                      dat,
-                      releaseCandidate.getGame(),
-                      releaseCandidate.getRelease(),
-                      correctedRom,
-                      romWithFiles.getInputFile(),
-                    );
-                    let correctedOutputFile = romWithFiles
-                      .getOutputFile()
-                      .withFilePath(correctedOutputPath.format());
-                    if (correctedOutputFile instanceof ArchiveEntry) {
-                      correctedOutputFile = correctedOutputFile.withEntryPath(
-                        correctedOutputPath.entryPath,
-                      );
-                    }
-
-                    return romWithFiles.withRom(correctedRom).withOutputFile(correctedOutputFile);
-                  }),
-                );
-
-                return releaseCandidate.withRomsWithFiles(hashedRomsWithFiles);
-              }),
+            // Using the corrected ROM name, build a new output path
+            const correctedOutputPath = OutputFactory.getPath(
+              this.options,
+              dat,
+              candidate.getGame(),
+              undefined,
+              correctedRom,
+              romWithFiles.getInputFile(),
             );
+            let correctedOutputFile = romWithFiles
+              .getOutputFile()
+              .withFilePath(correctedOutputPath.format());
+            if (correctedOutputFile instanceof ArchiveEntry) {
+              correctedOutputFile = correctedOutputFile.withEntryPath(
+                correctedOutputPath.entryPath,
+              );
+            }
 
-            return [parent, hashedReleaseCandidates];
-          },
-        ),
-      ),
+            return romWithFiles.withRom(correctedRom).withOutputFile(correctedOutputFile);
+          }),
+        );
+
+        return candidate.withRomsWithFiles(hashedRomsWithFiles);
+      }),
     );
   }
 
   private async buildCorrectedRom(
     dat: DAT,
-    parent: Parent,
-    releaseCandidate: ReleaseCandidate,
+    candidate: WriteCandidate,
     romWithFiles: ROMWithFiles,
   ): Promise<ROM> {
     let correctedRom = romWithFiles.getRom();
@@ -155,11 +132,11 @@ export default class CandidateExtensionCorrector extends Module {
     if (correctedRom.getName().trim() === '') {
       // The ROM doesn't have any filename, default it. Because we never knew a file extension,
       // doing this isn't considered "correction".
-      const romWithFilesIdx = releaseCandidate.getRomsWithFiles().indexOf(romWithFiles);
+      const romWithFilesIdx = candidate.getRomsWithFiles().indexOf(romWithFiles);
       correctedRom = correctedRom.withName(
-        `${releaseCandidate
+        `${candidate
           .getGame()
-          .getName()}${releaseCandidate.getRomsWithFiles().length > 1 ? ` (File ${romWithFilesIdx + 1})` : ''}.rom`,
+          .getName()}${candidate.getRomsWithFiles().length > 1 ? ` (File ${romWithFilesIdx + 1})` : ''}.rom`,
       );
     }
 
@@ -170,10 +147,10 @@ export default class CandidateExtensionCorrector extends Module {
 
     await CandidateExtensionCorrector.THREAD_SEMAPHORE.runExclusive(async () => {
       this.progressBar.incrementProgress();
-      const waitingMessage = `${releaseCandidate.getName()} ...`;
+      const waitingMessage = `${candidate.getName()} ...`;
       this.progressBar.addWaitingMessage(waitingMessage);
       this.progressBar.logTrace(
-        `${dat.getNameShort()}: ${parent.getName()}: correcting extension for: ${romWithFiles
+        `${dat.getName()}: ${candidate.getName()}: correcting extension for: ${romWithFiles
           .getInputFile()
           .toString()}`,
       );
@@ -183,7 +160,7 @@ export default class CandidateExtensionCorrector extends Module {
         romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
       } catch (error) {
         this.progressBar.logError(
-          `${dat.getNameShort()}: failed to correct file extension for '${romWithFiles.getInputFile()}': ${error}`,
+          `${dat.getName()}: failed to correct file extension for '${romWithFiles.getInputFile().toString()}': ${error}`,
         );
       }
       if (romSignature) {

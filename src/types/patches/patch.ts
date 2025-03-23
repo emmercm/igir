@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import FilePoly from '../../polyfill/filePoly.js';
+import IOFile from '../../polyfill/ioFile.js';
 import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 
@@ -21,7 +21,7 @@ export default abstract class Patch {
   }
 
   protected static getCrcFromPath(fileBasename: string): string {
-    const matches = fileBasename.match(/(^|[^a-z0-9])([a-f0-9]{8})([^a-z0-9]|$)/i);
+    const matches = /(^|[^a-z0-9])([a-f0-9]{8})([^a-z0-9]|$)/i.exec(fileBasename);
     if (matches && matches?.length >= 3) {
       return matches[2].toLowerCase();
     }
@@ -55,7 +55,7 @@ export default abstract class Patch {
 
   abstract createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void>;
 
-  protected static async readUpsUint(fp: FilePoly): Promise<number> {
+  protected static async readUpsUint(fp: IOFile): Promise<number> {
     let data = 0;
     let shift = 1;
 
@@ -73,7 +73,7 @@ export default abstract class Patch {
     return data;
   }
 
-  static async readVcdiffUintFromFile(fp: FilePoly): Promise<number> {
+  static async readVcdiffUintFromFile(fp: IOFile): Promise<number> {
     let num = 0;
 
     while (!fp.isEOF()) {

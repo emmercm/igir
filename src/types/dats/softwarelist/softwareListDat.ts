@@ -17,8 +17,8 @@ export default class SoftwareListDAT extends DAT {
 
   @Expose()
   @Type(() => Software)
-  @Transform(({ value }) => value || [])
-  readonly software?: Software | Software[];
+  @Transform(({ value }: { value: undefined | Software | Software[] }) => value ?? [])
+  readonly software: Software | Software[];
 
   constructor(software: Software | Software[]) {
     super();
@@ -47,9 +47,6 @@ export default class SoftwareListDAT extends DAT {
     if (Array.isArray(this.software)) {
       return this.software;
     }
-    if (this.software) {
-      return [this.software];
-    }
-    return [];
+    return [this.software];
   }
 }

@@ -68,6 +68,13 @@
       schedule: 'at any time'
     },
 
+    // Don't update some packages in GitHub Actions workflows
+    {
+      matchFileNames: ['.github/workflows/**'],
+      matchPackageNames: ['python'],
+      enabled: false,
+    },
+
     // Group any/all package files in the docs/ directory
     {
       matchFileNames: ['docs/**'],
@@ -156,12 +163,23 @@
       {
         // Group ESLint together so files can be fixed automatically
         matchPackagePatterns: [
+          'typescript-eslint',
           '^@typescript-eslint',
           '^eslint',
         ],
         groupName: 'ESLint',
         // Only group non-major updates
         matchUpdateTypes: ['patch', 'minor']
+      },
+      {
+        // Update TypeScript-related ESLint more frequently so that TypeScript can update
+        matchPackagePatterns: [
+          'typescript-eslint',
+          '^@typescript-eslint/',
+        ],
+        matchUpdateTypes: ['major', 'minor'],
+        schedule: 'at any time',
+        rebaseWhen: 'behind-base-branch'
       },
       {
         // Group Jest together because of peerDependencies
@@ -176,10 +194,12 @@
         matchUpdateTypes: ['patch', 'minor']
       },
       {
-        // Separate TypeScript because upgrades are dependent on support by other dependencies
+        // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)
         matchPackageNames: ['typescript'],
         groupName: 'TypeScript',
         prPriority: -10,
+        schedule: 'at any time',
+        rebaseWhen: 'behind-base-branch'
       },
 
       // Everything else

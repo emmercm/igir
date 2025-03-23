@@ -1,7 +1,7 @@
 import { PassThrough } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
-import LogLevel from '../../src/console/logLevel.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import EndOfLifeChecker from '../../src/modules/endOfLifeChecker.js';
 
 function range(start: number, end: number): number[] {

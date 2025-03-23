@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelValue } from './logLevel.js';
 
 /**
  * @see https://www.toptal.com/designers/htmlarrows/symbols/
@@ -21,9 +21,10 @@ export const ProgressBarSymbol = {
   // Processing a single DAT
   DAT_GROUPING_SIMILAR: chalk.cyan('∩'),
   DAT_MERGE_SPLIT: chalk.cyan('↔'),
+  DAT_FILTERING: chalk.cyan('∆'),
+  DAT_PREFERRING: chalk.cyan(process.platform === 'win32' ? '↨' : '⇅'),
   // Candidates
   CANDIDATE_GENERATING: chalk.cyan('Σ'),
-  CANDIDATE_FILTERING: chalk.cyan('∆'),
   CANDIDATE_EXTENSION_CORRECTION: chalk.cyan('.'),
   CANDIDATE_HASHING: chalk.yellow('#'),
   CANDIDATE_VALIDATING: chalk.cyan(process.platform === 'win32' ? '?' : '≟'),
@@ -74,7 +75,7 @@ export default abstract class ProgressBar {
 
   abstract setLoggerPrefix(prefix: string): void;
 
-  abstract log(logLevel: LogLevel, message: string): void;
+  abstract log(logLevel: LogLevelValue, message: string): void;
 
   /**
    * Log a TRACE message.

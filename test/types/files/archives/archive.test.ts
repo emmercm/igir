@@ -1,7 +1,9 @@
 import path from 'node:path';
 
 import Temp from '../../../../src/globals/temp.js';
-import fsPoly from '../../../../src/polyfill/fsPoly.js';
+import ROMScanner from '../../../../src/modules/roms/romScanner.js';
+import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
+import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Chd from '../../../../src/types/files/archives/chd/chd.js';
@@ -22,6 +24,8 @@ import Tar from '../../../../src/types/files/archives/tar.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import FileCache from '../../../../src/types/files/fileCache.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
+import Options from '../../../../src/types/options.js';
+import ProgressBarFake from '../../../console/progressBarFake.js';
 
 describe('getArchiveEntries', () => {
   test.each([
@@ -46,7 +50,7 @@ describe('getArchiveEntries', () => {
       ...NkitIso.getExtensions(),
     ]),
   ])("should throw when the file doesn't exist: %s", async (extension) => {
-    const tempFile = (await fsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
+    const tempFile = (await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
     await expect(new FileFactory(new FileCache()).filesFrom(tempFile)).rejects.toThrow();
   });
 
@@ -97,33 +101,33 @@ describe('getArchiveEntries', () => {
     [
       './test/fixtures/roms/7z/onetwothree.7z',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/rar/onetwothree.rar',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/tar/onetwothree.tar.gz',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/zip/onetwothree.zip',
       [
-        ['1/one.rom', 'f817a89f'],
-        ['2/two.rom', '96170874'],
-        ['3/three.rom', 'ff46c5d8'],
+        [path.join('1', 'one.rom'), 'f817a89f'],
+        [path.join('2', 'two.rom'), '96170874'],
+        [path.join('3', 'three.rom'), 'ff46c5d8'],
       ],
     ],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
@@ -132,10 +136,36 @@ describe('getArchiveEntries', () => {
 
     for (const [idx, entry] of entries.entries()) {
       const expectedEntry = expectedEntries[idx];
-      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(
-        path.normalize(expectedEntry[0]),
-      );
+      expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntry[0]);
       expect(entry.getCrc32()).toEqual(expectedEntry[1]);
+    }
+  });
+});
+
+describe('extractEntryToFile', () => {
+  it('should throw on invalid entry paths', async () => {
+    // Note: this will only return valid archives with at least one file
+    const archiveEntries = await new ROMScanner(
+      new Options({
+        input: [
+          './test/fixtures/roms/7z',
+          './test/fixtures/roms/gz',
+          './test/fixtures/roms/rar',
+          './test/fixtures/roms/tar',
+          './test/fixtures/roms/zip',
+        ],
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+    ).scan();
+    const archives = archiveEntries
+      .filter((entry) => entry instanceof ArchiveEntry)
+      .map((entry) => entry.getArchive())
+      .reduce(ArrayPoly.reduceUnique(), []);
+    expect(archives).toHaveLength(28);
+
+    for (const archive of archives) {
+      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
     }
   });
 });

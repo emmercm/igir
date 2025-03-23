@@ -1,13 +1,13 @@
 import path from 'node:path';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import fsPoly from '../polyfill/fsPoly.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import Game from '../types/dats/game.js';
+import IgirHeader from '../types/dats/igirHeader.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
-import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
-import ReleaseCandidate from '../types/releaseCandidate.js';
+import WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**
@@ -24,54 +24,56 @@ export default class Dir2DatCreator extends Module {
   /**
    * Write the DAT.
    */
-  async create(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<string | undefined> {
+  async create(dat: DAT, candidates: WriteCandidate[]): Promise<string | undefined> {
     if (!this.options.shouldDir2Dat()) {
       return undefined;
     }
 
-    this.progressBar.logTrace(`${dat.getNameShort()}: writing dir2dat`);
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to create dir2dat for`);
+      return undefined;
+    }
+
+    this.progressBar.logTrace(`${dat.getName()}: writing dir2dat`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.reset(1);
 
-    const datDir = this.options.getDir2DatOutput();
-    if (!(await fsPoly.exists(datDir))) {
-      await fsPoly.mkdir(datDir, { recursive: true });
+    /**
+     * It is possible that the {@link ROM} embedded within {@link WriteCandidate}s has been
+     * manipulated, such as from {@link CandidateExtensionCorrector}. Use the {@link Game}s and
+     * {@link ROM}s from the {@link WriteCandidate}s instead of the original {@link DAT}.
+     */
+    const gamesToCandidates = candidates.reduce((map, candidate) => {
+      const key = candidate.getGame();
+      if (!map.has(key)) {
+        map.set(key, [candidate]);
+      } else {
+        map.get(key)?.push(candidate);
+      }
+      return map;
+    }, new Map<Game, WriteCandidate[]>());
+    const gamesFromCandidates = [...gamesToCandidates.entries()].map(([game, candidates]) => {
+      const roms = candidates
+        .at(0)
+        ?.getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getRom());
+      return game.withProps({ rom: roms });
+    });
+
+    const dir2datDir = this.options.getDir2DatOutput();
+    if (!(await FsPoly.exists(dir2datDir))) {
+      await FsPoly.mkdir(dir2datDir, { recursive: true });
     }
-    const datPath = path.join(datDir, dat.getFilename());
 
-    // It is possible that the {@link ROM} embedded within {@link ReleaseCandidate}s has been
-    // manipulated, such as from {@link CandidateExtensionCorrector}. Use the {@link Game}s and
-    // {@link ROM}s from the {@link ReleaseCandidate}s instead of the original {@link DAT}.
-    const gamesToCandidates = [...parentsToCandidates.values()]
-      .flat()
-      .reduce((map, releaseCandidate) => {
-        const key = releaseCandidate.getGame();
-        if (!map.has(key)) {
-          map.set(key, [releaseCandidate]);
-        } else {
-          map.get(key)?.push(releaseCandidate);
-        }
-        return map;
-      }, new Map<Game, ReleaseCandidate[]>());
-    const gamesFromCandidates = [...gamesToCandidates.entries()].map(
-      ([game, releaseCandidates]) => {
-        const roms = releaseCandidates
-          .at(0)
-          ?.getRomsWithFiles()
-          .map((romWithFiles) => romWithFiles.getRom());
-        return game.withProps({ rom: roms });
-      },
-    );
-    const datFromCandidates = new LogiqxDAT(dat.getHeader(), gamesFromCandidates);
+    // Construct a new DAT and write it to the output dir
+    const header = new IgirHeader('dir2dat', dat, this.options);
+    const dir2dat = new LogiqxDAT(header, gamesFromCandidates);
+    const dir2datContents = dir2dat.toXmlDat();
+    const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
+    this.progressBar.logInfo(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);
+    await FsPoly.writeFile(dir2datPath, dir2datContents);
 
-    this.progressBar.logInfo(`${datFromCandidates.getNameShort()}: creating dir2dat '${datPath}'`);
-    const datContents = datFromCandidates.toXmlDat();
-    await fsPoly.writeFile(datPath, datContents);
-
-    this.progressBar.logTrace(`${datFromCandidates.getNameShort()}: done writing dir2dat`);
-    return datPath;
+    this.progressBar.logTrace(`${dir2dat.getName()}: done writing dir2dat`);
+    return dir2datPath;
   }
 }

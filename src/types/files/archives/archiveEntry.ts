@@ -3,8 +3,7 @@ import { Readable } from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
-import Defaults from '../../../globals/defaults.js';
-import fsPoly from '../../../polyfill/fsPoly.js';
+import FsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
@@ -29,9 +28,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       filePath: archiveEntryProps.archive.getFilePath(),
     });
     this.archive = archiveEntryProps.archive;
-    this.entryPath = archiveEntryProps.entryPath
-      ? path.normalize(archiveEntryProps.entryPath)
-      : archiveEntryProps.entryPath;
+    this.entryPath = archiveEntryProps.entryPath.replace(/[\\/]/g, path.sep);
   }
 
   static async entryOf<A extends Archive>(
@@ -57,7 +54,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       : archiveEntryProps.sha256;
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
-    if (await fsPoly.exists(archiveEntryProps.archive.getFilePath())) {
+    if (await FsPoly.exists(archiveEntryProps.archive.getFilePath())) {
       // Calculate size
       finalSize = finalSize ?? 0;
 
@@ -68,9 +65,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         (!finalSha1WithHeader && checksumBitmask & ChecksumBitmask.SHA1) ||
         (!finalSha256WithHeader && checksumBitmask & ChecksumBitmask.SHA256)
       ) {
-        // If any additional checksum needs to be calculated, then prefer those calculated ones
-        // over any that were supplied in {@link archiveEntryProps} that probably came from the
-        // archive's file table.
+        /**
+         * If any additional checksum needs to be calculated, then prefer those calculated ones
+         * over any that were supplied in {@link archiveEntryProps} that probably came from the
+         * archive's file table.
+         */
         const headeredChecksums = await this.calculateEntryChecksums(
           archiveEntryProps.archive,
           archiveEntryProps.entryPath,
@@ -94,8 +93,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSha256WithoutHeader = headerlessChecksums.sha256;
       }
 
-      if (await fsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {
-        finalSymlinkSource = await fsPoly.readlink(archiveEntryProps.archive.getFilePath());
+      if (await FsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {
+        finalSymlinkSource = await FsPoly.readlink(archiveEntryProps.archive.getFilePath());
       }
     } else {
       finalSize = finalSize ?? 0;
@@ -143,12 +142,21 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   // Property getters
 
-  getArchive(): A {
+  /**
+   * Note: we're using type `Archive` here instead of `A` because otherwise TypeScript v5.7 will
+   * think this is an `any`:
+   * <code>
+   * (File instanceof ArchiveEntry).getArchive()
+   * </code>
+   */
+  getArchive(): Archive {
     return this.archive;
   }
 
   getExtractedFilePath(): string {
-    // Note: {@link Chd} will stuff some extra metadata in the entry path, chop it out
+    /**
+     * Note: {@link Chd} will stuff some extra metadata in the entry path, chop it out
+     */
     return this.entryPath.split('|')[0];
   }
 
@@ -198,9 +206,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {
-    // Don't extract to memory if this archive entry size is too large, or if we need to manipulate
-    // the stream start point
-    if (this.getSize() > Defaults.MAX_MEMORY_FILE_SIZE || start > 0) {
+    // Don't extract to memory if we need to manipulate the stream start point
+    if (start > 0) {
       return this.extractToTempFile(async (tempFile) =>
         File.createStreamFromFile(tempFile, callback, start),
       );

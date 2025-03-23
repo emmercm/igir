@@ -4,9 +4,19 @@ Igir offers many options for filtering as well as 1G1R preferences/priorities (w
 
 ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](../output/reporting.md). ROM preferences decide what duplicates to eliminate (1G1R).
 
+!!! tip
+
+    Filters & preferences are applied before generating [fixdats](../dats/fixdats.md) and [dir2dats](../dats/dir2dat.md), allowing you to DATs for your exact needs!
+
 ## Filters
 
 Multiple filter options can be specified at once.
+
+!!! note
+
+    Filters are applied against all [DATs](../dats/processing.md) _before_ [ROM matching](./matching.md) happens.
+
+    If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files.
 
 ### Game name filter
 
@@ -14,7 +24,7 @@ Multiple filter options can be specified at once.
 --filter-regex <pattern|filename>, --filter-regex-exclude <pattern|filename>
 ```
 
-Only include or exclude games based if their DAT name (or filename if not using DATs) matches a regular expression.
+Only include or exclude games based on if their DAT name (or filename if not using DATs) matches a regular expression.
 
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 
@@ -50,7 +60,7 @@ Wario Land II (USA, Europe) (SGB Enhanced)
 
 Languages are two-letter codes, and multiple languages can be specified with commas between them. See the `--help` message for the full list of supported languages.
 
-If a game doesn’t have language information specified, it will be inferred from the region.
+If a game doesn’t have language information specified in its name, the region's primary language will be used. If a game doesn't have language or region information, then it will always be filtered out by this option.
 
 Here are some example game names that Igir can parse languages from, including ones with multiple languages:
 
@@ -82,6 +92,8 @@ A game can have many languages, and all of them are considered during filtering.
 
 Regions are two or three-letter codes, and you can specify multiple regions with commas between them. See the `--help` message for the full list of supported regions.
 
+If a game doesn't have region information then it will always be filtered out by this option.
+
 Here are some example game names that Igir can parse regions from:
 
 ```text
@@ -105,6 +117,18 @@ Spain:
 ```
 
 A game can only have one primary region. The first region detected is what is used.
+
+### Category filter
+
+```text
+--filter-category-regex <pattern|filename>
+```
+
+Only include games whose category matches the provided regular expression.
+
+!!! warning
+
+    This options requires that the DATs you use include category information. Not every DAT release group includes category information (e.g. MAME, TOSEC), and not every release group includes category in every version of their DATs (e.g. No-Intro). Games without categories will always be filtered out by this option!
 
 ### BIOS
 
@@ -161,12 +185,21 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   Sword (Alpha) (PD) [C]
   ```
 
+- **Bootleg**: games that contain `bootleg` in their manufacturer
+
 - **Cracked**: games that contain `[cr]` or `[cr *]` in their name, e.g.:
 
   ```text
   Jet Set Willy (1984)(Software Projects)[cr]
   Buck Rogers - Countdown to Doomsday v1.0 (1991)(SSI)(Disk 1 of 3)[cr2][FD installed]
   Dungeon Master (1987)(FTL)[cr 42-Crew]
+  ```
+
+- **Enhancement chips**: games that contain `(Enhancement Chip)` in their name, e.g.:
+
+  ```text
+  DSP1 B (World) (Enhancement Chip)
+  Super Game Boy SGB-CPU (World) (Enhancement Chip)
   ```
 
 - **Fixed**: games that contain `[f]` or `[f#]` in their name, e.g.:
@@ -211,7 +244,7 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   Final Fantasy Legend II (U) [T+Fre]
   ```
 
-- **Games with hacks**: games that contain `(Hack)` or `[h*]` in their name, e.g.:
+- **Games with hacks**: games that contain `(Hack)` or `[h*]` in their name, or `hack` in their manufacturer, e.g.:
 
   ```text
   Kirby's Dream Land 2 (U) [S][h1] (Sound Test)
@@ -384,17 +417,21 @@ Brian Lara Cricket 96 (E) [a1][x]
 Micro Machines Military - It's a Blast! (E) [x]
 ```
 
+!!! warning
+
+    This is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[b]` in their names!
+
 ## Preferences (for 1G1R)
 
 The `--single` option is required for all `--prefer-*` options, otherwise there would be no effect.
 
 Multiple `--prefer-*` options can be specified at once, and they will be applied in the following order of importance (most important to least important).
 
-!!! warning
+!!! note
 
-    Be careful when using the `igir move` command! 1G1R preferences are only applied to files found & matched in the input directories. Because moving files will change what files are in your input directories, different games may be preferred if you run the same command multiple times.
+    Filters are applied against all [DATs](../dats/processing.md) _before_ [ROM matching](./matching.md) happens.
 
-    It is a [best practice](../usage/best-practices.md#file-inputs) to include your output directory as an input directory when moving files. This will ensure any previously moved games remain the preferred version when applying 1G1R rules again.
+    If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files, and then [infer parents](../dats/processing.md#parentclone-inference) among those games.
 
 ### Prefer game names
 
@@ -434,9 +471,7 @@ Mario.*\\.gb$
 
 Prefer games that contain `[!]` in their name over those that don't.
 
-!!! warning
-
-    This is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[!]` in their names!
+See the [unverified dumps](#unverified-dumps) section for more information about "verified" and "unverified" ROM dumps.
 
 ### Prefer good
 
@@ -446,17 +481,17 @@ Prefer games that contain `[!]` in their name over those that don't.
 
 Prefer games that _don't_ contain `[b]` or `[b#]` in their name over those that do.
 
-See the [bad dumps](#bad-dumps) section for more information about "good" and "bad" ROMs.
+See the [bad dumps](#bad-dumps) section for more information about "good" and "bad" ROM dumps.
 
 ### Prefer language
 
 ```text
---prefer-language
+--prefer-language [languages..]
 ```
 
 Prefer games of certain languages over those in other languages. Multiple languages can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood languages.
 
-If a game doesn’t have language information specified, it will be inferred from the region.
+If a game doesn’t have language information specified in its name, the region's primary language will be used.
 
 For example, to prefer games in English and _then_ Japanese, the command would be:
 
@@ -467,7 +502,7 @@ For example, to prefer games in English and _then_ Japanese, the command would b
 ### Prefer region
 
 ```text
---prefer-region
+--prefer-region [regions..]
 ```
 
 Prefer games from certain regions over those from other regions. Multiple regions can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood regions.
