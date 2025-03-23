@@ -154,7 +154,7 @@ export default class Chd extends Archive {
           this.tempSingletonFilePath,
           (await util.promisify(fs.readFile)(this.tempSingletonFilePath))
             .toString()
-            .replace(/\r?\n/g, '\r\n'),
+            .replaceAll(/\r?\n/g, '\r\n'),
         );
       } else if (info.type === CHDType.DVD_ROM) {
         await chdman.extractDvd({

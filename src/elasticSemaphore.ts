@@ -26,7 +26,7 @@ export default class ElasticSemaphore {
     return this.semaphore.runExclusive(
       callback,
       // If the weight of this call is larger than the max value then just use the max value
-      weightNormalized > this.semaphoreValue ? this.semaphoreValue : weightNormalized,
+      Math.min(weightNormalized, this.semaphoreValue),
     );
   }
 }

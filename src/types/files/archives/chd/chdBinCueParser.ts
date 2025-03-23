@@ -139,17 +139,22 @@ export default class ChdBinCueParser {
       case TrackDataType.Audio:
       case TrackDataType['Mode1/2352']:
       case TrackDataType['Mode2/2352']:
-      case TrackDataType['Cdi/2352']:
+      case TrackDataType['Cdi/2352']: {
         return 2352;
-      case TrackDataType.Cdg:
+      }
+      case TrackDataType.Cdg: {
         return 2448;
-      case TrackDataType['Mode1/2048']:
+      }
+      case TrackDataType['Mode1/2048']: {
         return 2048;
+      }
       case TrackDataType['Mode2/2336']:
-      case TrackDataType['Cdi/2336']:
+      case TrackDataType['Cdi/2336']: {
         return 2336;
-      default:
+      }
+      default: {
         throw new ExpectedError(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
+      }
     }
   }
 }

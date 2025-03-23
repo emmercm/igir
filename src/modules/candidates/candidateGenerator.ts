@@ -85,7 +85,7 @@ export default class CandidateGenerator extends Module {
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${candidates.length.toLocaleString()} candidate${candidates.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${candidates.length.toLocaleString()} candidate${candidates.length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${dat.getName()}: done generating candidates`);
@@ -484,7 +484,7 @@ export default class CandidateGenerator extends Module {
     foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
   ): void {
-    let message = `${dat.getName()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length !== 1 ? 's' : ''}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length !== 1 ? 's' : ''}`;
+    let message = `${dat.getName()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length === 1 ? '' : 's'}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length === 1 ? '' : 's'}`;
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });

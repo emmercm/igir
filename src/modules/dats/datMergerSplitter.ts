@@ -44,7 +44,7 @@ export default class DATMergerSplitter extends Module {
     }, new Map<string, Game>());
 
     this.progressBar.logTrace(
-      `${dat.getName()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
     this.progressBar.reset(dat.getGames().length);
@@ -54,7 +54,7 @@ export default class DATMergerSplitter extends Module {
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
     const newDat = new LogiqxDAT(dat.getHeader(), newGames);
     this.progressBar.logTrace(
-      `${newDat.getName()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length !== 1 ? 's' : ''}`,
+      `${newDat.getName()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${newDat.getName()}: done merging & splitting`);

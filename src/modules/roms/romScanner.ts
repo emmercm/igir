@@ -29,7 +29,7 @@ export default class ROMScanner extends Scanner {
       this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(
-      `found ${romFilePaths.length.toLocaleString()} ROM file${romFilePaths.length !== 1 ? 's' : ''}`,
+      `found ${romFilePaths.length.toLocaleString()} ROM file${romFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HASHING);
     this.progressBar.reset(romFilePaths.length);

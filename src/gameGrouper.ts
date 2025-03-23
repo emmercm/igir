@@ -13,10 +13,10 @@ export default {
         // TOSEC
         .replace(/ ?\(Dis[ck] [0-9]+ of [0-9]+\)/i, '');
 
-      if (!map.has(gameNameStripped)) {
-        map.set(gameNameStripped, [value]);
-      } else {
+      if (map.has(gameNameStripped)) {
         map.get(gameNameStripped)?.push(value);
+      } else {
+        map.set(gameNameStripped, [value]);
       }
 
       return map;

@@ -38,10 +38,10 @@ export default class CandidateValidator extends Module {
     const outputPathsToCandidates = candidates.reduce((map, candidate) => {
       candidate.getRomsWithFiles().forEach((romWithFiles) => {
         const key = romWithFiles.getOutputFile().getFilePath();
-        if (!map.has(key)) {
-          map.set(key, [candidate]);
-        } else {
+        if (map.has(key)) {
           map.get(key)?.push(candidate);
+        } else {
+          map.set(key, [candidate]);
         }
       });
       return map;

@@ -52,14 +52,14 @@ export default class SingleBarFormatted {
             }
             return ' '.repeat(stripAnsi(symbolAndName).length) + lineTrimmed;
           })
-          .join('\n\x1b[K');
+          .join('\n\x1B[K');
 
         this.lastOutput = `${symbolAndName}${progressWrapped}`.trim();
         return (
           this.lastOutput
             // cli-progress doesn't handle multi-line progress bars, collapse to one line. The multi-
             // line message will get logged correctly when the progress bar is frozen & logged.
-            .replace(/\n\S*\s+/g, ' ')
+            .replaceAll(/\n\S*\s+/g, ' ')
         );
       },
     });
@@ -82,10 +82,7 @@ export default class SingleBarFormatted {
 
     const excessLength =
       stripAnsi(symbolAndName).trimStart().length - SingleBarFormatted.MAX_NAME_LENGTH;
-    const nameTrimmed = namePadded.slice(
-      0,
-      namePadded.length - (excessLength > 0 ? excessLength : 0),
-    );
+    const nameTrimmed = namePadded.slice(0, namePadded.length - Math.max(excessLength, 0));
 
     return `${symbol} ${nameTrimmed}`.trimStart();
   }

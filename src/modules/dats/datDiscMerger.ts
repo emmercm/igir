@@ -34,7 +34,7 @@ export default class DATDiscMerger extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: merging ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: merging ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
     this.progressBar.reset(dat.getGames().length);
@@ -42,7 +42,7 @@ export default class DATDiscMerger extends Module {
     const groupedGames = this.groupGames(dat.getGames());
     const newDat = new LogiqxDAT(dat.getHeader(), groupedGames);
     this.progressBar.logTrace(
-      `${newDat.getName()}: merged to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length !== 1 ? 's' : ''}`,
+      `${newDat.getName()}: merged to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${newDat.getName()}: done merging`);

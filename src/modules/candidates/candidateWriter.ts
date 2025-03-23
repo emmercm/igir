@@ -84,7 +84,7 @@ export default class CandidateWriter extends Module {
     );
 
     this.progressBar.logTrace(
-      `${dat.getName()}: writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
       this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
@@ -110,7 +110,7 @@ export default class CandidateWriter extends Module {
     );
 
     this.progressBar.logTrace(
-      `${dat.getName()}: done writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: done writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
     const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
@@ -366,7 +366,7 @@ export default class CandidateWriter extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`,
+      `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
     );
     return true;
   }
@@ -402,7 +402,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -410,10 +410,10 @@ export default class CandidateWriter extends Module {
     const uniqueInputToOutputEntriesMap = uniqueInputToOutputEntries.reduce(
       (map, [inputRomFile, outputRomFile]) => {
         const key = inputRomFile.getFilePath();
-        if (!map.has(key)) {
-          map.set(key, [[inputRomFile, outputRomFile]]);
-        } else {
+        if (map.has(key)) {
           map.get(key)?.push([inputRomFile, outputRomFile]);
+        } else {
+          map.set(key, [[inputRomFile, outputRomFile]]);
         }
         return map;
       },

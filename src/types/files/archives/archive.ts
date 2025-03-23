@@ -10,7 +10,7 @@ export default abstract class Archive {
   private readonly filePath: string;
 
   constructor(filePath: string) {
-    this.filePath = filePath.replace(/[\\/]/g, path.sep);
+    this.filePath = filePath.replaceAll(/[\\/]/g, path.sep);
   }
 
   protected abstract new(filePath: string): Archive;
@@ -71,10 +71,10 @@ export default abstract class Archive {
     const { base, ...parsedFilePath } = path.parse(this.getFilePath());
 
     const newNameMatch = /^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/.exec(filePath);
-    parsedFilePath.name = newNameMatch !== null ? newNameMatch[2] : '';
+    parsedFilePath.name = newNameMatch === null ? '' : newNameMatch[2];
 
     const oldExtMatch = /^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/.exec(this.getFilePath());
-    parsedFilePath.ext = oldExtMatch !== null ? oldExtMatch[3] : '';
+    parsedFilePath.ext = oldExtMatch === null ? '' : oldExtMatch[3];
 
     return this.new(path.format(parsedFilePath));
   }

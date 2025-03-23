@@ -28,7 +28,7 @@ export default class PatchScanner extends Scanner {
       this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(
-      `found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length !== 1 ? 's' : ''}`,
+      `found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.reset(patchFilePaths.length);
 

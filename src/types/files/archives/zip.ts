@@ -127,7 +127,7 @@ export default class Zip extends Archive {
 
     const entry = archive.files
       .filter((entryFile) => entryFile.type === 'File')
-      .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
+      .find((entryFile) => entryFile.path === entryPath.replaceAll(/[\\/]/g, '/'));
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
       throw new ExpectedError(`didn't find entry '${entryPath}'`);
@@ -226,7 +226,7 @@ export default class Zip extends Archive {
           // Catch stream errors such as `ENOENT: no such file or directory`
           stream.on('error', catchError);
 
-          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
+          const entryName = outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/');
           zipFile.append(stream, {
             name: entryName,
           });

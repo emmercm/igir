@@ -45,10 +45,10 @@ export default class Dir2DatCreator extends Module {
      */
     const gamesToCandidates = candidates.reduce((map, candidate) => {
       const key = candidate.getGame();
-      if (!map.has(key)) {
-        map.set(key, [candidate]);
-      } else {
+      if (map.has(key)) {
         map.get(key)?.push(candidate);
+      } else {
+        map.set(key, [candidate]);
       }
       return map;
     }, new Map<Game, WriteCandidate[]>());

@@ -10,10 +10,10 @@ export default class Parent {
 
   constructor(parentGame: Game, allGames?: Game | Game[]) {
     this.parentGame = parentGame;
-    if (allGames !== undefined) {
-      this.allGames = Array.isArray(allGames) ? allGames : [allGames];
-    } else {
+    if (allGames === undefined) {
       this.allGames = [parentGame];
+    } else {
+      this.allGames = Array.isArray(allGames) ? allGames : [allGames];
     }
   }
 
