@@ -399,16 +399,16 @@ export default class FsPoly {
     try {
       return await fs.promises.rename(oldPath, newPath);
     } catch (error) {
-      // These are the same error codes that `graceful-fs` catches
-      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
-        throw error;
-      }
-
       // Can't rename across drives
-      if (!['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+      if (['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
         await this.copyFile(oldPath, newPath);
         await this.rm(oldPath, { force: true });
         return;
+      }
+
+      // These are the same error codes that `graceful-fs` catches
+      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+        throw error;
       }
 
       // Backoff with jitter
