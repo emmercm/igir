@@ -153,7 +153,6 @@
           '@types/micromatch',
           '@types/semver',
           '@types/tar',
-          '@types/unzipper',
           '@types/xml2js',
           '@types/yargs',
         ],
