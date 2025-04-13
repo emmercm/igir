@@ -56,15 +56,14 @@ Here is the full help message which shows all available options and a number of 
 ```help
 $ igir --help
 
- ______   ______   ______  _______
-|      \ /      \ |      \|       \
- \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
-  | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
-  | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
-  | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.3.0
-|   $$ \ \$$    $$|   $$ \| $$  | $$
- \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
+   @@@@@@   @@@@@@     @@@@@@    @@@@@@@@
+ @@      @@  @@      @@      @@         @@
+ @@      @@  @@      @@      @@         @@   ROM collection manager
+   @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
+          @@@     @@@@        @@@
+     @@   @@        @@   @@   @@       @@    v3.3.1
+     @@   @@        @@   @@   @@       @@
+     @@   @@@@@@@@@@@@   @@   @@       @@
 
 
 Usage: igir [commands..] [options]
