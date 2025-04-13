@@ -7,7 +7,7 @@ import ElasticSemaphore from '../../elasticSemaphore.js';
 import Defaults from '../../globals/defaults.js';
 import KeyedMutex from '../../keyedMutex.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import FsPoly from '../../polyfill/fsPoly.js';
+import FsPoly, { MoveResult, MoveResultValue } from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
@@ -478,7 +478,7 @@ export default class CandidateWriter extends Module {
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    let written = false;
+    let written: MoveResultValue | undefined;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       if (this.options.shouldMove()) {
         written = await this.moveRawFile(dat, candidate, inputRomFile, outputFilePath);
@@ -486,11 +486,13 @@ export default class CandidateWriter extends Module {
         written = await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath);
       }
 
-      if (written && !this.options.shouldTest()) {
+      if (written !== undefined && !this.options.shouldTest()) {
         // Successfully written, unknown if valid
         break;
       }
-      if (written && this.options.shouldTest()) {
+      if (written === MoveResult.COPIED && this.options.shouldTest()) {
+        // Only test the output file if it was copied, we don't need to test the file if it was
+        // just renamed
         const writtenTest = await this.testWrittenRaw(
           dat,
           candidate,
@@ -522,7 +524,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     inputRomFile: File,
     outputFilePath: string,
-  ): Promise<boolean> {
+  ): Promise<MoveResultValue | undefined> {
     // Lock the input file, we can't handle concurrent moves
     return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
       const movedFilePath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
@@ -552,14 +554,14 @@ export default class CandidateWriter extends Module {
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-        await FsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
+        const moveResult = await FsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
         CandidateWriter.FILE_PATH_MOVES.set(inputRomFile.getFilePath(), outputFilePath);
-        return true;
+        return moveResult;
       } catch (error) {
         this.progressBar.logError(
           `${dat.getName()}: ${candidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
         );
-        return false;
+        return undefined;
       }
     });
   }
@@ -569,7 +571,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     inputRomFile: File,
     outputFilePath: string,
-  ): Promise<boolean> {
+  ): Promise<MoveResultValue | undefined> {
     this.progressBar.logInfo(
       `${dat.getName()}: ${candidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
     );
@@ -580,12 +582,12 @@ export default class CandidateWriter extends Module {
       const tempRawFile = await FsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile);
       await FsPoly.mv(tempRawFile, outputFilePath);
-      return true;
+      return MoveResult.COPIED;
     } catch (error) {
       this.progressBar.logError(
         `${dat.getName()}: ${candidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
       );
-      return false;
+      return undefined;
     }
   }
 
@@ -701,7 +703,7 @@ export default class CandidateWriter extends Module {
     }
 
     const linkPath = outputRomFile.getFilePath();
-    let targetPath = inputRomFile.getFilePath();
+    let targetPath = path.resolve(inputRomFile.getFilePath());
     if (this.options.getSymlink() && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       targetPath = await FsPoly.symlinkRelativePath(targetPath, linkPath);
