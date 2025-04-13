@@ -16,6 +16,7 @@ import LocalFileRecord from './localFileRecord.js';
  * @see https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
  * @see https://en.wikipedia.org/wiki/ZIP_(file_format)
  * @see https://libzip.org/specifications/appnote_iz.txt
+ * @see https://libzip.org/specifications/extrafld.txt
  * @see https://romvault.com/trrntzip_explained.pdf
  */
 export default class BananaSplit {

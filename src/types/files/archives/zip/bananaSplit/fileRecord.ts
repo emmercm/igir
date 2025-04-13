@@ -49,9 +49,9 @@ export const CompressionMethodInverted = Object.fromEntries(
 ) as Record<CompressionMethodValue, CompressionMethodKey>;
 
 export interface FileTimestamps {
-  modified?: number;
-  accessed?: number;
-  creation?: number;
+  modified?: Date;
+  accessed?: Date;
+  creation?: Date;
 }
 
 export default class FileRecord implements IFileRecord {
@@ -122,13 +122,12 @@ export default class FileRecord implements IFileRecord {
       // Info-ZIP Unicode Path Extra Field
       extraFields.get(0x70_75)?.subarray(5) ?? variableLengthBuffer.subarray(0, fileNameLength);
 
-    // TODO(cemmer): 0x000a NTFS timestamp
     // TODO(cemmer): 0x000d UNIX timestamp
     // TODO(cemmer): 0x5855 unix extra field original
     // TODO(cemmer): 0x7855 unix extra field new?
-    // TODO(cemmer): 0x7875 unix extra field newer?
     const timestamps =
       this.parseExtendedTimestamp(extraFields.get(0x54_55)) ??
+      this.parseNtfsExtraTimestamp(extraFields.get(0x00_0a)) ??
       this.parseDOSTimestamp(
         fixedLengthBuffer.readUInt16LE(fieldOffsets.modifiedTime),
         fixedLengthBuffer.readUInt16LE(fieldOffsets.modifiedDate),
@@ -170,6 +169,9 @@ export default class FileRecord implements IFileRecord {
     return extraFields;
   }
 
+  /**
+   * @see https://github.com/DidierStevens/DidierStevensSuite/blob/master/zipdump.py
+   */
   private static parseDOSTimestamp(bufferTime: number, bufferDate: number): FileTimestamps {
     const seconds = (bufferTime & 0b0000_0000_0001_1111) * 2;
     const minutes = (bufferTime & 0b0000_0111_1110_0000) >> 5;
@@ -180,10 +182,38 @@ export default class FileRecord implements IFileRecord {
     const year = 1980 + ((bufferDate & 0b1111_1110_0000_0000) >> 9);
 
     return {
-      modified: Math.floor(
-        new Date(year, month - 1, day, hours, minutes, seconds).getTime() / 1000,
-      ),
+      modified: new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds)),
     };
+  }
+
+  private static parseNtfsExtraTimestamp(
+    buffer: Buffer<ArrayBuffer> | undefined,
+  ): FileTimestamps | undefined {
+    if (buffer === undefined || buffer.length === 0) {
+      return undefined;
+    }
+
+    const attributes = new Map<number, Buffer<ArrayBuffer>>();
+    let position = 4;
+    while (position < buffer.length) {
+      const attributeTagValue = buffer.readUInt16LE(position);
+      const attributeTagSize = buffer.readUInt16LE(position + 2);
+      const attributeTagData = buffer.subarray(position + 4, position + 4 + attributeTagSize);
+      attributes.set(attributeTagValue, attributeTagData);
+      position += 4 + attributeTagSize;
+    }
+
+    const fileTimes = attributes.get(0x00_01);
+    if (fileTimes === undefined) {
+      return undefined;
+    }
+
+    return undefined;
+    // return {
+    //   modified: new Date(Number(fileTimes.readBigUInt64LE(0) / BigInt(100_000))),
+    //   accessed: new Date(Number(fileTimes.readBigUInt64LE(8) / BigInt(100_000))),
+    //   creation: new Date(Number(fileTimes.readBigUInt64LE(16) / BigInt(100_000))),
+    // };
   }
 
   /**
@@ -209,15 +239,54 @@ export default class FileRecord implements IFileRecord {
 
     const infoBit = buffer.readInt8(0);
     if (infoBit & 0x01) {
-      timestamps.modified = times.at(readTimes);
+      const epochSeconds = times.at(readTimes);
+      if (epochSeconds !== undefined) {
+        const localDate = new Date(epochSeconds * 1000);
+        timestamps.modified = new Date(
+          Date.UTC(
+            localDate.getFullYear(),
+            localDate.getMonth(),
+            localDate.getDate(),
+            localDate.getHours(),
+            localDate.getMinutes(),
+            localDate.getSeconds(),
+          ),
+        );
+      }
       readTimes += 1;
     }
     if (infoBit & 0x02) {
-      timestamps.accessed = times.at(readTimes);
+      const epochSeconds = times.at(readTimes);
+      if (epochSeconds !== undefined) {
+        const localDate = new Date(epochSeconds * 1000);
+        timestamps.accessed = new Date(
+          Date.UTC(
+            localDate.getFullYear(),
+            localDate.getMonth(),
+            localDate.getDate(),
+            localDate.getHours(),
+            localDate.getMinutes(),
+            localDate.getSeconds(),
+          ),
+        );
+      }
       readTimes += 1;
     }
     if (infoBit & 0x04) {
-      timestamps.creation = times.at(readTimes);
+      const epochSeconds = times.at(readTimes);
+      if (epochSeconds !== undefined) {
+        const localDate = new Date(epochSeconds * 1000);
+        timestamps.creation = new Date(
+          Date.UTC(
+            localDate.getFullYear(),
+            localDate.getMonth(),
+            localDate.getDate(),
+            localDate.getHours(),
+            localDate.getMinutes(),
+            localDate.getSeconds(),
+          ),
+        );
+      }
       readTimes += 1;
     }
 
