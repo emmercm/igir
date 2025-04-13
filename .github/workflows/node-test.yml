@@ -154,6 +154,7 @@ jobs:
       - run: npm ci
       # Test the packaging
       - run: |
+          set -x
           npm pack
           tar -xvzf igir-*.tgz
           cd package
