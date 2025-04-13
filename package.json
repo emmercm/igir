@@ -101,7 +101,8 @@
     "typescript-memoize": "1.1.1",
     "wrap-ansi": "8.1.0",
     "xml2js": "0.6.2",
-    "yargs": "17.7.2"
+    "yargs": "17.7.2",
+    "zstd-napi": "^0.0.10"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",

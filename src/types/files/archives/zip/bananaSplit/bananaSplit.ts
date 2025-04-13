@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import stream from 'node:stream';
 import * as zlib from 'node:zlib';
 
+import zstd from 'zstd-napi';
+
 import CentralDirectoryFile from './centralDirectoryFile.js';
 import EndOfCentralDirectoryRecord from './endOfCentralDirectoryRecord.js';
 import { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
@@ -106,6 +108,15 @@ export default class BananaSplit {
           (err: Error) => inflater.emit('error', err),
         );
         return compressedStream.pipe(inflater);
+      }
+      case CompressionMethod.ZSTD_DEPRECATED:
+      case CompressionMethod.ZSTD: {
+        const decompressor = new zstd.DecompressStream();
+        const compressedStream = (await this.compressedStream(centralDirectoryFile)).on(
+          'error',
+          (err: Error) => decompressor.emit('error', err),
+        );
+        return compressedStream.pipe(decompressor);
       }
       default: {
         throw new Error(
