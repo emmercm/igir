@@ -1,7 +1,5 @@
 import fs from 'node:fs';
 
-import DatePoly from '../../../../../polyfill/datePoly.js';
-
 export interface IFileRecord extends IFileRecordZip64 {
   versionNeeded: number;
   generalPurposeBitFlag: number;
@@ -201,7 +199,8 @@ export default class FileRecord implements IFileRecord {
     const year = 1980 + ((bufferDate & 0b1111_1110_0000_0000) >> 9);
 
     return {
-      modified: new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds)),
+      // The specification provides no way to know the timezone, so local is assumed
+      modified: new Date(year, month - 1, day, hours, minutes, seconds),
     };
   }
 
@@ -227,12 +226,17 @@ export default class FileRecord implements IFileRecord {
       return undefined;
     }
 
-    return undefined;
-    // return {
-    //   modified: new Date(Number(fileTimes.readBigUInt64LE(0) / BigInt(100_000))),
-    //   accessed: new Date(Number(fileTimes.readBigUInt64LE(8) / BigInt(100_000))),
-    //   creation: new Date(Number(fileTimes.readBigUInt64LE(16) / BigInt(100_000))),
-    // };
+    return {
+      modified: new Date(
+        Number(BigInt(Date.UTC(1601, 0, 1)) + fileTimes.readBigUInt64LE(0) / 10_000n),
+      ),
+      accessed: new Date(
+        Number(BigInt(Date.UTC(1601, 0, 1)) + fileTimes.readBigUInt64LE(8) / 10_000n),
+      ),
+      created: new Date(
+        Number(BigInt(Date.UTC(1601, 0, 1)) + fileTimes.readBigUInt64LE(16) / 10_000n),
+      ),
+    };
   }
 
   /**
@@ -259,20 +263,17 @@ export default class FileRecord implements IFileRecord {
     const infoBit = buffer.readInt8(0);
     if (infoBit & 0x01) {
       const epochSeconds = times.at(readTimes);
-      timestamps.modified =
-        epochSeconds === undefined ? undefined : DatePoly.fromUtcSeconds(epochSeconds);
+      timestamps.modified = epochSeconds === undefined ? undefined : new Date(epochSeconds * 1000);
       readTimes += 1;
     }
     if (infoBit & 0x02) {
       const epochSeconds = times.at(readTimes);
-      timestamps.accessed =
-        epochSeconds === undefined ? undefined : DatePoly.fromUtcSeconds(epochSeconds);
+      timestamps.accessed = epochSeconds === undefined ? undefined : new Date(epochSeconds * 1000);
       readTimes += 1;
     }
     if (infoBit & 0x04) {
       const epochSeconds = times.at(readTimes);
-      timestamps.created =
-        epochSeconds === undefined ? undefined : DatePoly.fromUtcSeconds(epochSeconds);
+      timestamps.created = epochSeconds === undefined ? undefined : new Date(epochSeconds * 1000);
       readTimes += 1;
     }
 
@@ -287,8 +288,8 @@ export default class FileRecord implements IFileRecord {
     }
 
     return {
-      accessed: DatePoly.fromUtcSeconds(buffer.readUInt32LE(0)),
-      modified: DatePoly.fromUtcSeconds(buffer.readUInt32LE(4)),
+      accessed: new Date(buffer.readUInt32LE(0) * 1000),
+      modified: new Date(buffer.readUInt32LE(4) * 1000),
     };
   }
 
