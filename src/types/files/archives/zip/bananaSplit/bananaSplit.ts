@@ -81,7 +81,7 @@ export default class BananaSplit {
     try {
       localFileRecord = await LocalFileRecord.localFileRecordFromFileHandle(
         fileHandle,
-        centralDirectoryFile.localFileHeaderRelativeOffset,
+        centralDirectoryFile.localFileHeaderRelativeOffset ?? 0,
       );
     } finally {
       await fileHandle.close();

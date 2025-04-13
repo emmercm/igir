@@ -175,6 +175,125 @@ describe('entries', () => {
         [3, 8, 5, '08-11-2016 15:45', '76ff8caa', 'test2.txt'],
       ],
     ],
+    [
+      path.join('unzipper', 'chunk-boundary.zip'),
+      [
+        [0, 0, 0, '09-22-2018 10:14', '00000000', 'chunk-boundary-archive/'],
+        [486, 8, 397, '09-22-2018 10:19', '54a65dca', 'chunk-boundary-archive/chunk-boundary.txt'],
+        [6148, 8, 235, '09-22-2018 06:26', '9e541964', 'chunk-boundary-archive/.DS_Store'],
+        [0, 0, 0, '09-22-2018 10:19', '00000000', '__MACOSX/'],
+        [0, 0, 0, '09-22-2018 10:19', '00000000', '__MACOSX/chunk-boundary-archive/'],
+        [120, 8, 53, '09-22-2018 06:26', '38c0880b', '__MACOSX/chunk-boundary-archive/._.DS_Store'],
+        [568, 8, 458, '09-22-2018 10:14', 'eb4518be', 'chunk-boundary-archive/chunk-boundary2.txt'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'compressed-OSX-Finder.zip'),
+      [
+        [0, 0, 0, '02-03-2013 10:21', '00000000', 'dir/'],
+        [3, 8, 5, '02-03-2013 10:21', 'd1862931', 'dir/fileInsideDir.txt'],
+        [2712, 8, 1161, '02-03-2013 10:21', '97a7ed7a', 'file.txt'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'compressed-comment.zip'),
+      [
+        [15, 8, 17, '05-26-2020 21:32', '4d372318', 'file.txt'],
+        [0, 0, 0, '05-26-2020 21:32', '00000000', 'dir/'],
+        [4, 8, 6, '05-26-2020 21:32', '2c991647', 'dir/fileInsideDir.txt'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'compressed-cp866.zip'),
+      // TODO(cemmer): need to handle this encoding?
+      [[13, 0, 13, '01-03-2019 11:42', 'f77a2052', '����.txt']],
+    ],
+    [
+      path.join('unzipper', 'compressed-directory-entry.zip'),
+      [
+        [20, 0, 20, '03-27-2018 16:29', '2cab616f', 'mimetype'],
+        [0, 8, 2, '03-27-2018 16:29', '00000000', 'META-INF/'],
+        [244, 8, 154, '03-27-2018 16:29', '74069f90', 'META-INF/container.xml'],
+        [58, 8, 42, '03-27-2018 16:29', '08765cc3', 'page_styles.css'],
+        [670, 8, 364, '03-27-2018 16:29', '1c517816', 'toc.ncx'],
+        [654, 8, 368, '03-27-2018 16:29', '9fa5bb03', 'index.html'],
+        [174, 8, 101, '03-27-2018 16:29', '3c58138e', 'stylesheet.css'],
+        [1264, 8, 607, '03-27-2018 16:29', 'e76dd43d', 'content.opf'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'compressed-encrypted.zip'),
+      [
+        [0, 0, 0, '01-22-2017 16:00', '00000000', 'dir/'],
+        [3, 0, 15, '01-22-2017 16:00', 'd1862931', 'dir/fileInsideDir.txt'],
+        // TODO(cemmer): compressed size is wrong? should be 1161
+        [2712, 8, 1173, '01-22-2017 16:00', '97a7ed7a', 'file.txt'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'compressed-flags-set.zip'),
+      [
+        [0, 0, 0, '08-08-2012 08:18', '00000000', 'dir/'],
+        [3, 0, 3, '08-08-2012 08:18', 'd1862931', 'dir/fileInsideDir.txt'],
+        [2712, 8, 1161, '08-08-2012 08:21', '97a7ed7a', 'file.txt'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'compressed-standard-archive.zip'),
+      [
+        [0, 0, 0, '08-08-2012 08:18', '00000000', 'dir/'],
+        [3, 0, 3, '08-08-2012 08:18', 'd1862931', 'dir/fileInsideDir.txt'],
+        [2712, 8, 1161, '08-08-2012 08:21', '97a7ed7a', 'file.txt'],
+        [0, 0, 0, '06-08-2024 08:48', '00000000', 'emptydir/'],
+        [0, 0, 0, '06-08-2024 08:48', '00000000', 'emptyroot/'],
+        [0, 0, 0, '06-08-2024 08:48', '00000000', 'emptyroot/emptydir/'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'uncompressed.zip'),
+      [
+        [0, 0, 0, '08-08-2012 08:18', '00000000', 'dir/'],
+        [3, 0, 3, '08-08-2012 08:18', 'd1862931', 'dir/fileInsideDir.txt'],
+        [14, 0, 14, '08-08-2012 08:18', '144ca5ef', 'file.txt'],
+      ],
+    ],
+    [
+      path.join('unzipper', 'zip-slip-win.zip'),
+      [
+        [19, 0, 19, '04-15-2018 12:04', 'f34f6f0f', 'good.txt'],
+        [
+          20,
+          0,
+          20,
+          '04-15-2018 22:04',
+          '397b4160',
+          '..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\Temp\\evil.txt',
+        ],
+      ],
+    ],
+    [
+      path.join('unzipper', 'zip-slip.zip'),
+      [
+        [19, 0, 19, '04-15-2018 12:04', 'f34f6f0f', 'good.txt'],
+        [
+          20,
+          0,
+          20,
+          '04-15-2018 22:04',
+          '397b4160',
+          '../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../tmp/evil.txt',
+        ],
+      ],
+    ],
+    [
+      path.join('unzipper', 'zip64-allextrafields.zip'),
+      [[36, 8, 36, '08-10-2012 14:33', '69ffe77e', 'README']],
+    ],
+    [
+      path.join('unzipper', 'zip64-extrafieldoffsetlength.zip'),
+      [[36, 8, 36, '08-10-2012 14:33', '69ffe77e', 'README']],
+    ],
+    [path.join('unzipper', 'zip64.zip'), [[36, 8, 36, '08-10-2012 14:33', '69ffe77e', 'README']]],
   ]);
 
   test.each(nonEmptyFixtures)('non-empty: %s', async (filePath) => {
@@ -203,7 +322,6 @@ describe('entries', () => {
       if (entry.fileName.toString('utf8').endsWith('/')) {
         expect(entry.uncompressedCrc32).toEqual('00000000');
         expect(entry.uncompressedSize).toEqual(0);
-        expect(entry.compressedSize).toEqual(0);
       }
 
       // Empty file

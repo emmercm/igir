@@ -93,7 +93,9 @@ export default class Zip extends Archive {
     const archive = new BananaSplit(this.getFilePath());
     const entries = await archive.entries();
     const entry = entries.find(
-      (entryFile) => entryFile.fileName.toString('utf8') === entryPath.replaceAll(/[\\/]/g, '/'),
+      (entryFile) =>
+        entryFile.fileName.toString('utf8').replaceAll(/[\\/]/g, '/') ===
+        entryPath.replaceAll(/[\\/]/g, '/'),
     );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning

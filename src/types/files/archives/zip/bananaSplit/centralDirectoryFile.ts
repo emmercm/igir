@@ -1,13 +1,8 @@
 import fs from 'node:fs';
 
-import FileRecord, { IFileRecord, IFileRecordZip64 } from './fileRecord.js';
+import FileRecord, { IFileRecord } from './fileRecord.js';
 
-export interface ICentralDirectoryFileZip64 extends IFileRecordZip64 {
-  fileDiskStart: number;
-  localFileHeaderRelativeOffset: number;
-}
-
-export interface ICentralDirectoryFile extends IFileRecord, ICentralDirectoryFileZip64 {
+export interface ICentralDirectoryFile extends IFileRecord {
   versionMadeBy: number;
   internalFileAttributes: number;
   externalFileAttributes: number;
@@ -43,8 +38,6 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
   readonly versionMadeBy: number;
   readonly internalFileAttributes: number;
   readonly externalFileAttributes: number;
-  readonly fileDiskStart: number;
-  readonly localFileHeaderRelativeOffset: number;
   readonly fileComment: Buffer<ArrayBuffer>;
 
   private constructor(props: ICentralDirectoryFile) {
@@ -52,8 +45,6 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
     this.versionMadeBy = props.versionMadeBy;
     this.internalFileAttributes = props.internalFileAttributes;
     this.externalFileAttributes = props.externalFileAttributes;
-    this.fileDiskStart = props.fileDiskStart;
-    this.localFileHeaderRelativeOffset = props.localFileHeaderRelativeOffset;
     this.fileComment = props.fileComment;
   }
 
@@ -94,22 +85,9 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
           fileRecord.extraFieldLength,
       });
 
-      const zip64ExtendableInformation = this.parseCentralDirectoryFileZip64(
-        fileRecord.extraFields.get(0x00_01),
-        {
-          compressedSize: fileRecord.compressedSize,
-          uncompressedSize: fileRecord.uncompressedSize,
-          fileDiskStart: fixedLengthBuffer.readUInt16LE(this.FIELD_OFFSETS.fileDiskStart),
-          localFileHeaderRelativeOffset: fixedLengthBuffer.readUInt32LE(
-            this.FIELD_OFFSETS.localFileHeaderRelativeOffset,
-          ),
-        },
-      );
-
       fileHeaders.push(
         new CentralDirectoryFile({
           ...fileRecord,
-          ...zip64ExtendableInformation,
           versionMadeBy: fixedLengthBuffer.readUInt16LE(4),
           internalFileAttributes: fixedLengthBuffer.readUInt16LE(36),
           externalFileAttributes: fixedLengthBuffer.readUInt32LE(38),
@@ -125,39 +103,5 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
     }
 
     return fileHeaders;
-  }
-
-  private static parseCentralDirectoryFileZip64(
-    buffer: Buffer<ArrayBuffer> | undefined,
-    originalDirectoryRecord: ICentralDirectoryFileZip64,
-  ): ICentralDirectoryFileZip64 {
-    if (buffer === undefined || buffer.length === 0) {
-      return originalDirectoryRecord;
-    }
-
-    const extendedInformation = {
-      ...originalDirectoryRecord,
-    };
-
-    // Only respect the zip64 extended information if the local/central directory record says to do so
-    let position = 0;
-    if (originalDirectoryRecord.uncompressedSize === 0xff_ff_ff_ff) {
-      extendedInformation.uncompressedSize = Number(buffer.readBigUInt64LE(position));
-      position += 8;
-    }
-    if (originalDirectoryRecord.compressedSize === 0xff_ff_ff_ff) {
-      extendedInformation.compressedSize = Number(buffer.readBigUInt64LE(position));
-      position += 8;
-    }
-    if (originalDirectoryRecord.localFileHeaderRelativeOffset === 0xff_ff_ff_ff) {
-      extendedInformation.localFileHeaderRelativeOffset = Number(buffer.readBigUInt64LE(position));
-      position += 8;
-    }
-    if (originalDirectoryRecord.fileDiskStart === 0xff_ff) {
-      extendedInformation.fileDiskStart = buffer.readUInt32LE(position);
-      position += 4;
-    }
-
-    return extendedInformation;
   }
 }

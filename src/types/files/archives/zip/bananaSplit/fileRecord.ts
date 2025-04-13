@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 
+import DatePoly from '../../../../../polyfill/datePoly.js';
+
 export interface IFileRecord extends IFileRecordZip64 {
   versionNeeded: number;
   generalPurposeBitFlag: number;
@@ -15,6 +17,8 @@ export interface IFileRecord extends IFileRecordZip64 {
 export interface IFileRecordZip64 {
   uncompressedSize: number;
   compressedSize: number;
+  localFileHeaderRelativeOffset?: number;
+  fileDiskStart?: number;
 }
 
 export const CompressionMethod = {
@@ -51,7 +55,7 @@ export const CompressionMethodInverted = Object.fromEntries(
 export interface FileTimestamps {
   modified?: Date;
   accessed?: Date;
-  creation?: Date;
+  created?: Date;
 }
 
 export default class FileRecord implements IFileRecord {
@@ -66,6 +70,8 @@ export default class FileRecord implements IFileRecord {
   readonly extraFieldLength: number;
   readonly fileName: Buffer<ArrayBuffer>;
   readonly extraFields: Map<number, Buffer<ArrayBuffer>>;
+  readonly localFileHeaderRelativeOffset?: number;
+  readonly fileDiskStart?: number;
 
   protected constructor(props: IFileRecord) {
     this.versionNeeded = props.versionNeeded;
@@ -79,6 +85,8 @@ export default class FileRecord implements IFileRecord {
     this.extraFieldLength = props.extraFieldLength;
     this.fileName = props.fileName;
     this.extraFields = props.extraFields;
+    this.localFileHeaderRelativeOffset = props.localFileHeaderRelativeOffset;
+    this.fileDiskStart = props.fileDiskStart;
   }
 
   static async fileRecordFromFileHandle(
@@ -93,12 +101,14 @@ export default class FileRecord implements IFileRecord {
       uncompressedCrc32: number;
       compressedSize: number;
       uncompressedSize: number;
+      fileDiskStart?: number;
+      localFileHeaderRelativeOffset?: number;
       fileNameLength: number;
       extraFieldLength: number;
       fileName: number;
     },
   ): Promise<FileRecord> {
-    const fixedLengthBuffer = Buffer.allocUnsafe(fieldOffsets.extraFieldLength + 2);
+    const fixedLengthBuffer = Buffer.allocUnsafe(Math.max(...Object.values(fieldOffsets)) + 4);
     await fileHandle.read({ buffer: fixedLengthBuffer, position: recordOffset });
 
     const fileNameLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.fileNameLength);
@@ -116,6 +126,14 @@ export default class FileRecord implements IFileRecord {
     const zip64ExtendableInformation = this.parseFileRecordZip64(extraFields.get(0x00_01), {
       compressedSize: fixedLengthBuffer.readUInt32LE(fieldOffsets.compressedSize),
       uncompressedSize: fixedLengthBuffer.readUInt32LE(fieldOffsets.uncompressedSize),
+      fileDiskStart:
+        fieldOffsets.fileDiskStart === undefined
+          ? undefined
+          : fixedLengthBuffer.readUInt16LE(fieldOffsets.fileDiskStart),
+      localFileHeaderRelativeOffset:
+        fieldOffsets.localFileHeaderRelativeOffset === undefined
+          ? undefined
+          : fixedLengthBuffer.readUInt32LE(fieldOffsets.localFileHeaderRelativeOffset),
     });
 
     const fileName =
@@ -127,6 +145,7 @@ export default class FileRecord implements IFileRecord {
     // TODO(cemmer): 0x7855 unix extra field new?
     const timestamps =
       this.parseExtendedTimestamp(extraFields.get(0x54_55)) ??
+      this.parseUnixExtraTimestamp(extraFields.get(0x58_55)) ??
       this.parseNtfsExtraTimestamp(extraFields.get(0x00_0a)) ??
       this.parseDOSTimestamp(
         fixedLengthBuffer.readUInt16LE(fieldOffsets.modifiedTime),
@@ -240,57 +259,37 @@ export default class FileRecord implements IFileRecord {
     const infoBit = buffer.readInt8(0);
     if (infoBit & 0x01) {
       const epochSeconds = times.at(readTimes);
-      if (epochSeconds !== undefined) {
-        const localDate = new Date(epochSeconds * 1000);
-        timestamps.modified = new Date(
-          Date.UTC(
-            localDate.getFullYear(),
-            localDate.getMonth(),
-            localDate.getDate(),
-            localDate.getHours(),
-            localDate.getMinutes(),
-            localDate.getSeconds(),
-          ),
-        );
-      }
+      timestamps.modified =
+        epochSeconds === undefined ? undefined : DatePoly.fromUtcSeconds(epochSeconds);
       readTimes += 1;
     }
     if (infoBit & 0x02) {
       const epochSeconds = times.at(readTimes);
-      if (epochSeconds !== undefined) {
-        const localDate = new Date(epochSeconds * 1000);
-        timestamps.accessed = new Date(
-          Date.UTC(
-            localDate.getFullYear(),
-            localDate.getMonth(),
-            localDate.getDate(),
-            localDate.getHours(),
-            localDate.getMinutes(),
-            localDate.getSeconds(),
-          ),
-        );
-      }
+      timestamps.accessed =
+        epochSeconds === undefined ? undefined : DatePoly.fromUtcSeconds(epochSeconds);
       readTimes += 1;
     }
     if (infoBit & 0x04) {
       const epochSeconds = times.at(readTimes);
-      if (epochSeconds !== undefined) {
-        const localDate = new Date(epochSeconds * 1000);
-        timestamps.creation = new Date(
-          Date.UTC(
-            localDate.getFullYear(),
-            localDate.getMonth(),
-            localDate.getDate(),
-            localDate.getHours(),
-            localDate.getMinutes(),
-            localDate.getSeconds(),
-          ),
-        );
-      }
+      timestamps.created =
+        epochSeconds === undefined ? undefined : DatePoly.fromUtcSeconds(epochSeconds);
       readTimes += 1;
     }
 
     return timestamps;
+  }
+
+  private static parseUnixExtraTimestamp(
+    buffer: Buffer<ArrayBuffer> | undefined,
+  ): FileTimestamps | undefined {
+    if (buffer === undefined || buffer.length === 0) {
+      return undefined;
+    }
+
+    return {
+      accessed: DatePoly.fromUtcSeconds(buffer.readUInt32LE(0)),
+      modified: DatePoly.fromUtcSeconds(buffer.readUInt32LE(4)),
+    };
   }
 
   private static parseFileRecordZip64(
@@ -314,6 +313,14 @@ export default class FileRecord implements IFileRecord {
     if (originalDirectoryRecord.compressedSize === 0xff_ff_ff_ff) {
       extendedInformation.compressedSize = Number(buffer.readBigUInt64LE(position));
       position += 8;
+    }
+    if (originalDirectoryRecord.localFileHeaderRelativeOffset === 0xff_ff_ff_ff) {
+      extendedInformation.localFileHeaderRelativeOffset = Number(buffer.readBigUInt64LE(position));
+      position += 8;
+    }
+    if (originalDirectoryRecord.fileDiskStart === 0xff_ff) {
+      extendedInformation.fileDiskStart = buffer.readUInt32LE(position);
+      position += 4;
     }
 
     return extendedInformation;
