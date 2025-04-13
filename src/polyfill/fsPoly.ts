@@ -12,6 +12,13 @@ import { Memoize } from 'typescript-memoize';
 import Defaults from '../globals/defaults.js';
 import ExpectedError from '../types/expectedError.js';
 
+export const MoveResult = {
+  COPIED: 1,
+  RENAMED: 2,
+} as const;
+export type MoveResultKey = keyof typeof MoveResult;
+export type MoveResultValue = (typeof MoveResult)[MoveResultKey];
+
 export type FsWalkCallback = (increment: number) => void;
 
 /**
@@ -386,24 +393,25 @@ export default class FsPoly {
   /**
    * Move the file {@param oldPath} to {@param newPath}, retrying failures.
    */
-  static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
+  static async mv(oldPath: string, newPath: string, attempt = 1): Promise<MoveResultValue> {
     // Can't rename across drives
     if (this.onDifferentDrives(oldPath, newPath)) {
       const newPathTemp = await this.mktemp(newPath);
       await this.copyFile(oldPath, newPathTemp);
       await this.mv(newPathTemp, newPath);
       await this.rm(oldPath, { force: true });
-      return;
+      return MoveResult.COPIED;
     }
 
     try {
-      return await fs.promises.rename(oldPath, newPath);
+      await fs.promises.rename(oldPath, newPath);
+      return MoveResult.RENAMED;
     } catch (error) {
       // Can't rename across drives
       if (['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
         await this.copyFile(oldPath, newPath);
         await this.rm(oldPath, { force: true });
-        return;
+        return MoveResult.COPIED;
       }
 
       // These are the same error codes that `graceful-fs` catches
