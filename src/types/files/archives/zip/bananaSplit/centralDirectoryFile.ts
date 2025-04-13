@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 
+import EndOfCentralDirectoryRecord from './endOfCentralDirectoryRecord.js';
 import FileRecord, { IFileRecord } from './fileRecord.js';
 
 export interface ICentralDirectoryFile extends IFileRecord {
@@ -50,16 +51,14 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
 
   static async centralDirectoryFileFromFileHandle(
     fileHandle: fs.promises.FileHandle,
-    centralDirectoryOffset: number,
+    endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
   ): Promise<CentralDirectoryFile[]> {
     const fileHeaders: CentralDirectoryFile[] = [];
 
-    let position = centralDirectoryOffset;
-
     const fixedLengthBuffer = Buffer.allocUnsafe(this.CENTRAL_DIRECTORY_FILE_HEADER_SIZE);
 
-    const fileHandleSize = (await fileHandle.stat()).size;
-    while (position < fileHandleSize) {
+    let position = endOfCentralDirectoryRecord.centralDirectoryOffset;
+    for (let i = 0; i < endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount; i += 1) {
       await fileHandle.read({ buffer: fixedLengthBuffer, position });
       if (!fixedLengthBuffer.subarray(0, 4).equals(this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)) {
         // Got to the end of the central directory
@@ -75,15 +74,21 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
       const fileCommentLength = fixedLengthBuffer.readUInt16LE(
         this.FIELD_OFFSETS.fileCommentLength,
       );
-      const fileComment = Buffer.allocUnsafe(fileCommentLength);
-      await fileHandle.read({
-        buffer: fileComment,
-        position:
-          position +
-          this.FIELD_OFFSETS.fileName +
-          fileRecord.fileNameLength +
-          fileRecord.extraFieldLength,
-      });
+      let fileComment: Buffer<ArrayBuffer>;
+      if (fileCommentLength > 0) {
+        // Only read from the file if there's something to read
+        fileComment = Buffer.allocUnsafe(fileCommentLength);
+        await fileHandle.read({
+          buffer: fileComment,
+          position:
+            position +
+            this.FIELD_OFFSETS.fileName +
+            fileRecord.fileNameLength +
+            fileRecord.extraFieldLength,
+        });
+      } else {
+        fileComment = Buffer.alloc(0);
+      }
 
       fileHeaders.push(
         new CentralDirectoryFile({

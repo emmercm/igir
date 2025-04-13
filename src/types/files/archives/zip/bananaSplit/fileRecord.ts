@@ -111,11 +111,19 @@ export default class FileRecord implements IFileRecord {
 
     const fileNameLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.fileNameLength);
     const extraFieldLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.extraFieldLength);
-    const variableLengthBuffer = Buffer.allocUnsafe(fileNameLength + extraFieldLength);
-    await fileHandle.read({
-      buffer: variableLengthBuffer,
-      position: recordOffset + fieldOffsets.fileName,
-    });
+
+    const variableLengthBufferSize = fileNameLength + extraFieldLength;
+    let variableLengthBuffer: Buffer<ArrayBuffer>;
+    if (variableLengthBufferSize > 0) {
+      // Only read from the file if there's something to read
+      variableLengthBuffer = Buffer.allocUnsafe(variableLengthBufferSize);
+      await fileHandle.read({
+        buffer: variableLengthBuffer,
+        position: recordOffset + fieldOffsets.fileName,
+      });
+    } else {
+      variableLengthBuffer = Buffer.alloc(0);
+    }
 
     const extraFields = this.parseExtraFields(
       variableLengthBuffer.subarray(fileNameLength, fileNameLength + extraFieldLength),
@@ -137,6 +145,9 @@ export default class FileRecord implements IFileRecord {
     const fileName =
       // Info-ZIP Unicode Path Extra Field
       extraFields.get(0x70_75)?.subarray(5) ?? variableLengthBuffer.subarray(0, fileNameLength);
+
+    // TODO(cemmer): comments in general
+    // TODO(cemmer): 0x6375 unicode comment
 
     // TODO(cemmer): 0x000d UNIX timestamp
     // TODO(cemmer): 0x5855 unix extra field original

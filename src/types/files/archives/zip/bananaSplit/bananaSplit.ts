@@ -36,10 +36,7 @@ export default class BananaSplit {
         throw new Error(`multi-disk zips aren't supported`);
       }
 
-      return await CentralDirectoryFile.centralDirectoryFileFromFileHandle(
-        fileHandle,
-        eocd.centralDirectoryOffset,
-      );
+      return await CentralDirectoryFile.centralDirectoryFileFromFileHandle(fileHandle, eocd);
     } finally {
       await fileHandle.close();
     }
@@ -112,6 +109,7 @@ export default class BananaSplit {
       }
       case CompressionMethod.ZSTD_DEPRECATED:
       case CompressionMethod.ZSTD: {
+        // TODO(cemmer): replace with zlib in Node.js 24
         const decompressor = new zstd.DecompressStream();
         const compressedStream = (await this.compressedStream(centralDirectoryFile)).on(
           'error',

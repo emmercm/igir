@@ -122,7 +122,7 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
         position: eocdPosition + this.CENTRAL_DIRECTORY_END_SIZE,
         length: commentLength,
       });
-      comment = readResult.buffer;
+      comment = readResult.buffer.subarray(0, readResult.bytesRead);
     } else {
       // The comment is long, allocate a new buffer
       const readResult = await fileHandle.read({
