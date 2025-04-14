@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../static/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -2852,7 +2852,7 @@
 </tbody>
 </table>
 <p>Those file extensions above are the commonly accepted "correct" extensions, and Igir will attempt to detect if a header is present in those ROM files automatically. If for some reason your files don't have the right extension (e.g. <code>.rom</code>) you can force header detection with the <code>--header</code> glob option:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span>&lt;dats&gt;<span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;<span class="w"> </span>--header<span class="w"> </span><span class="s2">&quot;*.rom&quot;</span>
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span>&lt;dats&gt;<span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;<span class="w"> </span>--header<span class="w"> </span><span class="s2">&quot;*.rom&quot;</span>
 </span></code></pre></div>
 <p>Igir will use this detected header information to compute both "headered" and "headerless" checksums of ROMs and use both of those to match against DAT files.</p>
 <div class="admonition warning">
@@ -2904,10 +2904,10 @@
 </tbody>
 </table>
 <p>For every console that Igir can understand the headers for, it can also remove them with the <code>--remove-headers</code> option. This only makes sense for the consoles above with different "headerless" extensions, so you have to specify the extensions like this:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span>&lt;dats&gt;<span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;<span class="w"> </span>--remove-headers<span class="w"> </span>.lnx,.smc
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span>&lt;dats&gt;<span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;<span class="w"> </span>--remove-headers<span class="w"> </span>.lnx,.smc
 </span></code></pre></div>
 <p>But if you're absolutely sure you want to remove any known header from every single ROM file, you can omit the extension argument:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span>&lt;dats&gt;<span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;<span class="w"> </span>--remove-headers
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span>&lt;dats&gt;<span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;<span class="w"> </span>--remove-headers
 </span></code></pre></div>
 <h2 id="automatic-header-removal">Automatic header removal</h2>
 <p>Some DAT groups such as No-Intro publish "headered" and "headerless" DATs for the same console, such as NES. Igir will treat these DATs differently, it will automatically remove headers (if present) for "headerless" DATs, and leave the header intact for "headered" DATs (ignoring the <code>--remove-headers</code> option completely).</p>
@@ -2934,7 +2934,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 15, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 15, 2025 23:41:16">March 15, 2025</span>
   </span>
 
     
@@ -2944,7 +2944,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 17, 2022</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 17, 2022 03:33:03">October 17, 2022</span>
   </span>
 
     
@@ -2965,11 +2965,6 @@
         <a href="https://github.com/emmercm" class="md-author" title="@emmercm">
           
           <img src="https://avatars.githubusercontent.com/u/10749361?v=4&size=72" alt="emmercm">
-        </a>
-      
-        <a href="https://github.com/web-flow" class="md-author" title="@web-flow">
-          
-          <img src="https://avatars.githubusercontent.com/u/19864447?v=4&size=72" alt="web-flow">
         </a>
       
       
@@ -3181,7 +3176,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
     
   </body>

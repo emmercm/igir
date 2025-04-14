@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../static/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -2632,7 +2632,7 @@
         <li class="md-nav__item">
   <a href="#feature-requests-bug-reports" class="md-nav__link">
     <span class="md-ellipsis">
-      Feature requests &amp; bug reports
+      💡 Feature requests &amp; bug reports
     </span>
   </a>
   
@@ -2641,20 +2641,44 @@
         <li class="md-nav__item">
   <a href="#discussions" class="md-nav__link">
     <span class="md-ellipsis">
-      Discussions
+      💬 Discussions
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-contributions" class="md-nav__link">
+  <a href="#coding-standards" class="md-nav__link">
     <span class="md-ellipsis">
-      Code contributions
+      📐 Coding standards
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Code contributions">
+    <nav class="md-nav" aria-label="📐 Coding standards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code style
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      🫴 Code contributions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🫴 Code contributions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2670,15 +2694,6 @@
   <a href="#running-code" class="md-nav__link">
     <span class="md-ellipsis">
       Running code
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-style" class="md-nav__link">
-    <span class="md-ellipsis">
-      Code style
     </span>
   </a>
   
@@ -2737,7 +2752,7 @@
         <li class="md-nav__item">
   <a href="#license" class="md-nav__link">
     <span class="md-ellipsis">
-      License
+      ⚖️ License
     </span>
   </a>
   
@@ -2898,13 +2913,13 @@
 
 
 <h1 id="contribution-guidelines">Contribution Guidelines</h1>
-<p>Welcome! If you're viewing this, it means that you are likely interested in contributing to the project. That's marvelous!</p>
-<p>The following is a set of guidelines for contributing to Igir. These guidelines are published in order to clarify expectations and reduce potential conflict of opinions.</p>
-<h2 id="feature-requests-bug-reports">Feature requests &amp; bug reports</h2>
+<p>Welcome! If you're viewing this, it means that you’re likely interested in contributing to the project. That's fantastic!</p>
+<p>The following is a set of guidelines for contributing to Igir. These guidelines are published to clarify expectations and reduce potential conflict of opinions.</p>
+<h2 id="feature-requests-bug-reports">💡 Feature requests &amp; bug reports</h2>
 <p>Feedback is a gift! Your feature requests and bug reports help improve the project for everyone.</p>
 <p>If you have an idea for a new feature, please <a href="https://github.com/emmercm/igir/issues">search for if an active issue already exists</a>. If an existing issue doesn't already exist, please submit a detailed <a href="https://github.com/emmercm/igir/issues/new/choose">feature request</a> in GitHub. If you're not sure if your idea is ready for a full request, feel free to start a <a href="https://github.com/emmercm/igir/discussions">discussion</a> in GitHub for feedback instead - it can always be turned into a feature request later!</p>
 <p>If you are experiencing an issues, please submit a detailed <a href="https://github.com/emmercm/igir/issues/new/choose">bug report</a> in GitHub.</p>
-<h2 id="discussions">Discussions</h2>
+<h2 id="discussions">💬 Discussions</h2>
 <p><a href="https://github.com/emmercm/igir/discussions">GitHub discussions</a> are a great tool for a number of topics:</p>
 <ul>
 <li>Getting help with Igir CLI syntax or usage</li>
@@ -2913,33 +2928,47 @@
 <li>...and more!</li>
 </ul>
 <p>Discussions are intended to be low-pressure spaces for questions and collaboration, please feel free to use them openly!</p>
-<h2 id="code-contributions">Code contributions</h2>
+<h2 id="coding-standards">📐 Coding standards</h2>
+<p>Igir is written in <a href="https://www.typescriptlang.org/">TypeScript</a>. Why TypeScript and not something compiled? Mainly because of the maintainer's familiarity, JavaScript's popularity, and JavaScript's ecosystem of available libraries. Much of the more CPU-intensive operations such as calculating checksums is handled by low-level libraries anyway.</p>
+<p>TypeScript can have a lot of flaws, though, so here are the tenets that Igir abides by:</p>
+<ul>
+<li><strong>Version:</strong> the TypeScript version is kept up to date automatically.</li>
+<li><strong><code>target</code> and <code>module</code>:</strong> is set to the newest version that the minimum Node.js version supports.</li>
+<li><strong>Typing:</strong> the use of <code>any</code> is disallowed and <code>unknown</code> is only used where necessary. There is little point in using TypeScript if you don't require strict typing everywhere.</li>
+<li><strong>Erasable syntax:</strong> the TypeScript config is set to allow <a href="https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-8.html">erasable syntax</a> only with the hope that future Node.js versions will support TypeScript without the need for transpiling.</li>
+</ul>
+<p>Igir also abides by these Node.js tenets:</p>
+<ul>
+<li><strong>Current version:</strong> is kept up to date automatically with whatever major LTS version is in <a href="https://endoflife.date/nodejs">active support</a>.</li>
+<li><strong>Minimum version:</strong> automated tests will guarantee support with the oldest major LTS version still in <a href="https://endoflife.date/nodejs">security support</a>.</li>
+</ul>
+<h3 id="code-style">Code style</h3>
+<p>Igir uses <a href="https://eslint.org/">ESLint</a> as its linter and <a href="https://prettier.io/">Prettier</a> as its style enforcer. Rules have been specifically chosen to increase code consistency, safety, readability, and maintainability.</p>
+<p>All code changes must pass the existing ESLint rules. Discussions on adding, removing, and changing ESLint rules should happen outside of pull requests that contain code changes, in their own dedicated pull request or discussion thread (above).</p>
+<h2 id="code-contributions">🫴 Code contributions</h2>
 <h3 id="environment-setup">Environment setup</h3>
 <p>First, you will want to check out Igir's source code from GitHub:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/emmercm/igir.git
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/emmercm/igir.git
 </span></code></pre></div>
 <p>Igir is written in TypeScript for the Node.js runtime. The current version of Node.js that Igir uses is defined under the <code>"volta"</code> object in the <code>package.json</code> file. After <a href="https://docs.volta.sh/guide/getting-started">installing</a>, Volta will make sure you're always using the correct Node.js version.</p>
-<p>Third-party dependencies are managed and easily installed with npm:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>npm<span class="w"> </span>install
+<p>Third-party dependencies are managed and easily installed with <a href="https://docs.npmjs.com/about-npm">npm</a>:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>npm<span class="w"> </span>install
 </span></code></pre></div>
 <p>Scripts are defined for common npm commands:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>arguments..<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>arguments..<span class="o">]</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>npm<span class="w"> </span><span class="nb">test</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>npm<span class="w"> </span>pack
 </span></code></pre></div>
 <h3 id="running-code">Running code</h3>
 <p>A script has been defined for the <code>npm start</code> command to easily run Igir:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </span></code></pre></div>
 <p>for example:</p>
-<div class="language-shell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span>report<span class="w"> </span>--dat<span class="w"> </span>*.dat<span class="w"> </span>--input<span class="w"> </span>ROMs/
+<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>npm<span class="w"> </span>start<span class="w"> </span>--<span class="w"> </span>report<span class="w"> </span>--dat<span class="w"> </span>*.dat<span class="w"> </span>--input<span class="w"> </span>ROMs/
 </span></code></pre></div>
-<h3 id="code-style">Code style</h3>
-<p>Igir uses <a href="https://eslint.org/">ESLint</a> as its linter and style enforcer. Rules have been specifically chosen to increase code consistency, safety, readability, and maintainability.</p>
-<p>All code changes must pass the existing ESLint rules. Discussions on adding, removing, and changing ESLint rules should happen outside of pull requests that contain code changes, in their own dedicated pull request or discussion thread (above).</p>
 <h3 id="automated-tests">Automated tests</h3>
 <p>Igir uses <a href="https://jestjs.io/">Jest</a> as its testing framework, and it uses <a href="https://about.codecov.io/">Codecov</a> to ensure a minimum amount of test coverage.</p>
-<p>All code changes must come with appropriate automated tests in order to prove correctness and to protect against future regressions.</p>
+<p>All code changes must come with appropriate automated tests to prove correctness and to protect against future regressions.</p>
 <h3 id="docs">Docs</h3>
 <p>Igir uses <a href="https://www.mkdocs.org/">MkDocs</a> to turn Markdown files into a documentation website.</p>
 <p>Appropriate updates must be made to all relevant documentation pages if functionality is added, removed, or changed.</p>
@@ -2947,17 +2976,17 @@
 <p>Igir is configured to squash-merge all pull requests, such that only the pull request title ends up in the commit history of the main branch. This means that individual commit messages are less important, and it puts more emphasis on quality pull request titles &amp; descriptions.</p>
 <p>That said, quality commit messages help future maintainers understand past intentions. Please use your best judgement on descriptive, clear, and concise commit messages.</p>
 <h3 id="pull-request-checklist">Pull request checklist</h3>
-<p>Here are steps that should be completed prior to submitting a pull request:</p>
-<ul>
-<li>[ ] Validate your change works as expected locally by running Igir (not just the unit tests)</li>
-<li>[ ] Unit tests have been added to cover your change</li>
-<li>[ ] <code>npm test</code> has been run locally for your change, to validate:<ul>
-<li>Your added &amp; changed tests are passing</li>
-<li>Your added &amp; changed code adheres to the linter settings</li>
+<p>Here are steps that should be completed before submitting a pull request:</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Validate your change works as expected locally by running Igir (not just the unit tests)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Unit tests have been added to cover your change</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>npm test</code> has been run locally for your change, to validate:<ul>
+<li>Your added and changed tests are passing</li>
+<li>Your added and changed code adheres to the linter settings</li>
 </ul>
 </li>
-<li>[ ] Appropriate docs have been added or changed for your change</li>
-<li>[ ] Your branch has no conflicts with the main (destination) branch</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Appropriate docs have been added or changed for your change</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Your branch has no conflicts with the main (destination) branch</li>
 </ul>
 <h3 id="pull-requests">Pull requests</h3>
 <p>To contribute code changes, you will need to:</p>
@@ -2966,13 +2995,13 @@
 <li>Create a new branch in your copy of the repository</li>
 <li>Make any intended changes</li>
 <li>Complete the above pull request checklist</li>
-<li><a href="https://github.com/emmercm/igir/compare">Create a pull request</a>, complete with a meaningful title &amp; description</li>
+<li><a href="https://github.com/emmercm/igir/compare">Create a pull request</a>, complete with a meaningful title and description</li>
 <li>Ensure that all GitHub status checks are passing, otherwise address the related issue(s)<ol>
 <li>Running tests in GitHub may require maintainer approval</li>
 </ol>
 </li>
 </ol>
-<h2 id="license">License</h2>
+<h2 id="license">⚖️ License</h2>
 <p>Igir is licensed under <a href="https://github.com/emmercm/igir/blob/main/LICENSE">GNU General Public License v3.0</a>.</p>
 <p>✅ That means that Igir can be used for free commercially, can be modified, can be distributed, and can be used for private use.</p>
 <p>⚠️ But it also means that distribution of closed-source versions is <em>not</em> allowed.</p>
@@ -2998,7 +3027,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 27, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 23, 2025 19:08:32">March 23, 2025</span>
   </span>
 
     
@@ -3008,7 +3037,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 28, 2023</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 28, 2023 02:39:20">August 28, 2023</span>
   </span>
 
     
@@ -3029,11 +3058,6 @@
         <a href="https://github.com/emmercm" class="md-author" title="@emmercm">
           
           <img src="https://avatars.githubusercontent.com/u/10749361?v=4&size=72" alt="emmercm">
-        </a>
-      
-        <a href="https://github.com/web-flow" class="md-author" title="@web-flow">
-          
-          <img src="https://avatars.githubusercontent.com/u/19864447?v=4&size=72" alt="web-flow">
         </a>
       
       
@@ -3245,7 +3269,7 @@
     <script id="__config" type="application/json">{"base": "..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
       
     
   </body>

@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../static/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -30,7 +30,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -3062,15 +3062,15 @@
 <p>If no DATs are provided, Igir will <a href="../../dats/dir2dat/">infer DATs</a> from the input files.</p>
 </div>
 <h3 id="game-name-filter">Game name filter</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>--filter-regex &lt;pattern|filename&gt;, --filter-regex-exclude &lt;pattern|filename&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>--filter-regex &lt;pattern|filename&gt;, --filter-regex-exclude &lt;pattern|filename&gt;
 </span></code></pre></div>
 <p>Only include or exclude games based on if their DAT name (or filename if not using DATs) matches a regular expression.</p>
 <p>Regex flags can be optionally provided in the form <code>/&lt;pattern&gt;/&lt;flags&gt;</code>, for example:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Mario|Zelda
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Mario|Zelda
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>/mario|zelda/i
 </span></code></pre></div>
 <p>A filename can be provided to a file that contains one or more lines of patterns. Multiple patterns will be combined in a logical "or" fashion. For example:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a># patterns.txt
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a># patterns.txt
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>^Mario
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>/kirby|zelda/i
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
@@ -3086,12 +3086,12 @@
 </span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>Wario Land II (USA, Europe) (SGB Enhanced)
 </span></code></pre></div>
 <h3 id="language-filter">Language filter</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>--filter-language [languages..]
+<div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>--filter-language [languages..]
 </span></code></pre></div>
 <p>Languages are two-letter codes, and multiple languages can be specified with commas between them. See the <code>--help</code> message for the full list of supported languages.</p>
 <p>If a game doesn’t have language information specified in its name, the region's primary language will be used. If a game doesn't have language or region information, then it will always be filtered out by this option.</p>
 <p>Here are some example game names that Igir can parse languages from, including ones with multiple languages:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>English:
+<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>English:
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  Donkey Kong (Japan, USA) (En) (SGB Enhanced)
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  Dr. Franken (USA)
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  Dragon&#39;s Lair - The Legend (Europe)
@@ -3109,12 +3109,12 @@
 </span></code></pre></div>
 <p>A game can have many languages, and all of them are considered during filtering.</p>
 <h3 id="region-filter">Region filter</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>--filter-region [regions..]
+<div class="highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>--filter-region [regions..]
 </span></code></pre></div>
 <p>Regions are two or three-letter codes, and you can specify multiple regions with commas between them. See the <code>--help</code> message for the full list of supported regions.</p>
 <p>If a game doesn't have region information then it will always be filtered out by this option.</p>
 <p>Here are some example game names that Igir can parse regions from:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>USA:
+<div class="highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>USA:
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  10-Pin Bowling (USA)
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  Addams Family, The - Pugsley&#39;s Scavenger Hunt (USA, Europe)
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  Castelian (U) [!]
@@ -3134,7 +3134,7 @@
 </span></code></pre></div>
 <p>A game can only have one primary region. The first region detected is what is used.</p>
 <h3 id="category-filter">Category filter</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>--filter-category-regex &lt;pattern|filename&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>--filter-category-regex &lt;pattern|filename&gt;
 </span></code></pre></div>
 <p>Only include games whose category matches the provided regular expression.</p>
 <div class="admonition warning">
@@ -3142,10 +3142,10 @@
 <p>This options requires that the DATs you use include category information. Not every DAT release group includes category information (e.g. MAME, TOSEC), and not every release group includes category in every version of their DATs (e.g. No-Intro). Games without categories will always be filtered out by this option!</p>
 </div>
 <h3 id="bios">BIOS</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>--no-bios, --only-bios
+<div class="highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>--no-bios, --only-bios
 </span></code></pre></div>
 <p>Filter out, or only include games that are marked <code>bios="yes"</code> in the DAT, or contain <code>[BIOS]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>[BIOS] Nintendo Game Boy Boot ROM (World) (Rev 1)
+<div class="highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>[BIOS] Nintendo Game Boy Boot ROM (World) (Rev 1)
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>[BIOS] Nintendo Game Boy Color Boot ROM (World) (Rev 1)
 </span></code></pre></div>
 <div class="admonition tip">
@@ -3153,25 +3153,25 @@
 <p><code>--only-bios</code> is a great option to collate all BIOS files across all consoles to one directory.</p>
 </div>
 <h3 id="mame-devices">MAME devices</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>--no-device, --only-device
+<div class="highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>--no-device, --only-device
 </span></code></pre></div>
 <p>Filter out or only include <a href="https://wiki.mamedev.org/index.php/MAME_Device_Basics">MAME devices</a>. MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.</p>
 <h3 id="unlicensed">Unlicensed</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>--no-unlicensed, --only-unlicensed
+<div class="highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>--no-unlicensed, --only-unlicensed
 </span></code></pre></div>
 <p>Filter out, or only include games that contain <code>(Unl)</code> or <code>(Unlicensed)</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>4 in 1 (Europe) (4B-002, Sachen) (Unl)
+<div class="highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>4 in 1 (Europe) (4B-002, Sachen) (Unl)
 </span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>Caihong Zhanshi - Rainbow Prince (Taiwan) (Unl)
 </span></code></pre></div>
 <p>These games are still considered "retail" releases (below).</p>
 <h3 id="only-retail">Only retail</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>--only-retail
+<div class="highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>--only-retail
 </span></code></pre></div>
 <p>Enables all the following <code>--no-*</code> options, as well as filtering out games that are:</p>
 <ul>
 <li>
 <p><strong>Alphas</strong>: games that contain <code>(Alpha)</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Isle Quest (World) (v0.1c) (Alpha) (Aftermarket) (Homebrew)
+<div class="highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Isle Quest (World) (v0.1c) (Alpha) (Aftermarket) (Homebrew)
 </span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Sword (Alpha) (PD) [C]
 </span></code></pre></div>
 </li>
@@ -3182,7 +3182,7 @@
 <ul>
 <li>
 <p><strong>Cracked</strong>: games that contain <code>[cr]</code> or <code>[cr *]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Jet Set Willy (1984)(Software Projects)[cr]
+<div class="highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Jet Set Willy (1984)(Software Projects)[cr]
 </span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>Buck Rogers - Countdown to Doomsday v1.0 (1991)(SSI)(Disk 1 of 3)[cr2][FD installed]
 </span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>Dungeon Master (1987)(FTL)[cr 42-Crew]
 </span></code></pre></div>
@@ -3191,7 +3191,7 @@
 <ul>
 <li>
 <p><strong>Enhancement chips</strong>: games that contain <code>(Enhancement Chip)</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>DSP1 B (World) (Enhancement Chip)
+<div class="highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>DSP1 B (World) (Enhancement Chip)
 </span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>Super Game Boy SGB-CPU (World) (Enhancement Chip)
 </span></code></pre></div>
 </li>
@@ -3199,7 +3199,7 @@
 <ul>
 <li>
 <p><strong>Fixed</strong>: games that contain <code>[f]</code> or <code>[f#]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Black Bass - Lure Fishing (U) [C][f1]
+<div class="highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Black Bass - Lure Fishing (U) [C][f1]
 </span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>Bugs Bunny - Crazy Castle 3 (J) [C][f2]
 </span></code></pre></div>
 </li>
@@ -3207,7 +3207,7 @@
 <ul>
 <li>
 <p><strong>Non-public "MIA"</strong>: games that contain <code>[MIA]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>[MIA] Better Dead Than Alien (Europe)
+<div class="highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>[MIA] Better Dead Than Alien (Europe)
 </span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>[MIA] Billiards Simulator (Europe) (En,Fr,De)
 </span></code></pre></div>
 </li>
@@ -3215,7 +3215,7 @@
 <ul>
 <li>
 <p><strong>Overdumps</strong>: games that contain <code>[o]</code> or <code>[o#]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Castlevania II - Belmont&#39;s Revenge (U) [o1]
+<div class="highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Castlevania II - Belmont&#39;s Revenge (U) [o1]
 </span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Cave Noire (J) [o2]
 </span></code></pre></div>
 </li>
@@ -3223,14 +3223,14 @@
 <ul>
 <li>
 <p><strong>Pending dumps</strong>: games that contain <code>[!p]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Cheetah Men II (Active Enterprises) [!p]
+<div class="highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Cheetah Men II (Active Enterprises) [!p]
 </span></code></pre></div>
 </li>
 </ul>
 <ul>
 <li>
 <p><strong>Pirated</strong>: games that contain <code>(Pirate)</code>, <code>[p]</code>, or <code>[p#]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Flipull (J) [p1]
+<div class="highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Flipull (J) [p1]
 </span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>Super Mario 4 (Unknown) (Ja) (Pirate)
 </span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>Super Robot Taisen Final Vol.1 (Unl) [C][p2]
 </span></code></pre></div>
@@ -3239,7 +3239,7 @@
 <ul>
 <li>
 <p><strong>Unofficial translations</strong>: games that contain <code>[T-*]</code> or <code>[T+*]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Duck Tales (E) [T-Ger]
+<div class="highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Duck Tales (E) [T-Ger]
 </span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>Final Fantasy Legend II (U) [T+Fre]
 </span></code></pre></div>
 </li>
@@ -3247,7 +3247,7 @@
 <ul>
 <li>
 <p><strong>Games with hacks</strong>: games that contain <code>(Hack)</code> or <code>[h*]</code> in their name, or <code>hack</code> in their manufacturer, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Kirby&#39;s Dream Land 2 (U) [S][h1] (Sound Test)
+<div class="highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Kirby&#39;s Dream Land 2 (U) [S][h1] (Sound Test)
 </span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>Pokemon - Blue Version (UE) [S][h2]
 </span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>Q-bert II (UE) [h1C]
 </span></code></pre></div>
@@ -3256,20 +3256,20 @@
 <ul>
 <li>
 <p><strong>Games with trainers</strong>: games that contain <code>[t]</code> or <code>[t#]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Qix Adventure (J) [C][t1]
+<div class="highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Qix Adventure (J) [C][t1]
 </span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>R-Type DX (U) [C][t2]
 </span></code></pre></div>
 </li>
 </ul>
 <h3 id="debug">Debug</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>--no-debug, --only-debug
+<div class="highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>--no-debug, --only-debug
 </span></code></pre></div>
 <p>Filter out, or only include games that contain <code>(Debug)</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Megaman - Battle Network 2 (USA) (Debug Version)
+<div class="highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Megaman - Battle Network 2 (USA) (Debug Version)
 </span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>Perfect Dark (USA) (2000-03-22) (Debug)
 </span></code></pre></div>
 <h3 id="demos">Demos</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>--no-demo, --only-demo
+<div class="highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>--no-demo, --only-demo
 </span></code></pre></div>
 <p>Filter out or only include games that contain one of the following in their name:</p>
 <ul>
@@ -3285,32 +3285,32 @@
 <li><code>Trial Edition</code></li>
 </ul>
 <p>or has the game category of <code>Demos</code>, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>Coria and the Sunken City (Unknown) (Demo)
+<div class="highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>Coria and the Sunken City (Unknown) (Demo)
 </span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>Two Hearts (Japan) (Demo) (Unl)
 </span></code></pre></div>
 <h3 id="betas">Betas</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>--no-beta, --only-beta
+<div class="highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>--no-beta, --only-beta
 </span></code></pre></div>
 <p>Filter out, or only include games that contain <code>(Beta)</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>Cosmo Tank (Japan) (Beta)
+<div class="highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>Cosmo Tank (Japan) (Beta)
 </span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>F-15 Strike Eagle II (USA, Europe) (Beta) (July, 1992)
 </span></code></pre></div>
 <h3 id="samples">Samples</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>--no-sample, --only-sample
+<div class="highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>--no-sample, --only-sample
 </span></code></pre></div>
 <p>Filter out, or only include games that contain <code>(Sample)</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>Mega Man III (USA) (Sample)
+<div class="highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>Mega Man III (USA) (Sample)
 </span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>Shin Nihon Pro Wrestling - Toukon Sanjuushi (Japan) (Sample)
 </span></code></pre></div>
 <h3 id="prototypes">Prototypes</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>--no-prototype, --only-prototype
+<div class="highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>--no-prototype, --only-prototype
 </span></code></pre></div>
 <p>Filter out, or only include games that contain <code>(Proto)</code> or <code>(Prototype)</code> in their name, or has the game category of <code>Preproduction</code>, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>Philip &amp; Marlowe in Bloomland (USA) (Proto)
+<div class="highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>Philip &amp; Marlowe in Bloomland (USA) (Proto)
 </span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>Sword of Hope, The (Europe) (Proto)
 </span></code></pre></div>
 <h3 id="program-application-roms">Program application ROMS</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>--no-program, --only-program
+<div class="highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>--no-program, --only-program
 </span></code></pre></div>
 <p>Filter out or only include games that contain one of the following in their name</p>
 <ul>
@@ -3318,28 +3318,28 @@
 <li><code>Check Program</code></li>
 <li><code>Sample Program</code></li>
 </ul>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>AGB Aging Cartridge (World) (v1.0) (Test Program)
+<div class="highlight"><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>AGB Aging Cartridge (World) (v1.0) (Test Program)
 </span><span id="__span-36-2"><a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>AGB-Parallel Interface Cartridge (Japan) (En) (Program)
 </span></code></pre></div>
 <h3 id="homebrew">Homebrew</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>--no-homebrew, --only-homebrew
+<div class="highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>--no-homebrew, --only-homebrew
 </span></code></pre></div>
 <p>Filter out, or only include games that contain <code>(Homebrew)</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>Game Boy Camera Gallery 2022, The (World) (Aftermarket) (Homebrew)
+<div class="highlight"><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>Game Boy Camera Gallery 2022, The (World) (Aftermarket) (Homebrew)
 </span><span id="__span-38-2"><a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>GB-Wordyl (World) (Aftermarket) (Homebrew)
 </span></code></pre></div>
 <h3 id="unverified-dumps">Unverified dumps</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>--no-unverified, --only-unverified
+<div class="highlight"><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>--no-unverified, --only-unverified
 </span></code></pre></div>
 <p>Only include, or filter out games that contain <code>[!]</code> in their name.</p>
 <p>For example, <code>--no-unverified</code> would filter out the following:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>Getaway, The (U)
+<div class="highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>Getaway, The (U)
 </span><span id="__span-40-2"><a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>Gex - Enter the Gecko (U) [C][b1]
 </span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>Golf (W) [o1]
 </span><span id="__span-40-4"><a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a>Grand Theft Auto (E) (M5) [C][t1]
 </span></code></pre></div>
 <p>and <code>--only-unverified</code> would filter out the following:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>Kirby &amp; The Amazing Mirror (U) [!]
+<div class="highlight"><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>Kirby &amp; The Amazing Mirror (U) [!]
 </span><span id="__span-41-2"><a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>Legend of Zelda, The - A Link To The Past with Four Swords (E) (M5) [!]
 </span><span id="__span-41-3"><a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>Mario &amp; Luigi - Superstar Saga (U) [!]
 </span></code></pre></div>
@@ -3348,15 +3348,15 @@
 <p>This is a <a href="https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes">GoodTools</a> naming convention, other groups such as <a href="https://no-intro.org/">No-Intro</a> never include <code>[!]</code> in their names!</p>
 </div>
 <h3 id="bad-dumps">Bad dumps</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-42-1"><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>--no-bad, --only-bad
+<div class="highlight"><pre><span></span><code><span id="__span-42-1"><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>--no-bad, --only-bad
 </span></code></pre></div>
 <p>Filter out, or only include games that contain <code>[b]</code> or <code>[b#]</code> in their name, e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-43-1"><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>[MIA] Aprilia - DiTech Interface (Unknown) (Unl) [b]
+<div class="highlight"><pre><span></span><code><span id="__span-43-1"><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>[MIA] Aprilia - DiTech Interface (Unknown) (Unl) [b]
 </span><span id="__span-43-2"><a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>Great Greed (U) [b1]
 </span><span id="__span-43-3"><a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>Gremlins 2 - The New Batch (W) [b2]
 </span></code></pre></div>
 <p>as well as games that contain <code>[c]</code> or <code>[x]</code> and are <em>not</em> verified dumps (above), e.g.:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-44-1"><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>Brian Lara Cricket 96 (E) [a1][x]
+<div class="highlight"><pre><span></span><code><span id="__span-44-1"><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>Brian Lara Cricket 96 (E) [a1][x]
 </span><span id="__span-44-2"><a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>Micro Machines Military - It&#39;s a Blast! (E) [x]
 </span></code></pre></div>
 <div class="admonition warning">
@@ -3372,76 +3372,76 @@
 <p>If no DATs are provided, Igir will <a href="../../dats/dir2dat/">infer DATs</a> from the input files, and then <a href="../../dats/processing/#parentclone-inference">infer parents</a> among those games.</p>
 </div>
 <h3 id="prefer-game-names">Prefer game names</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>--prefer-game-regex &lt;pattern|filename&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>--prefer-game-regex &lt;pattern|filename&gt;
 </span></code></pre></div>
 <p>Prefer games if their DAT name (or filename if not using DATs) matches a regular expression.</p>
 <p>Regex flags can be optionally provided in the form <code>/&lt;pattern&gt;/&lt;flags&gt;</code>, for example:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-46-1"><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>Mario|Zelda
+<div class="highlight"><pre><span></span><code><span id="__span-46-1"><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>Mario|Zelda
 </span><span id="__span-46-2"><a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>/mario|zelda/i
 </span></code></pre></div>
 <h3 id="prefer-rom-filenames">Prefer ROM filenames</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-47-1"><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>--prefer-rom-regex &lt;pattern|filename&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-47-1"><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>--prefer-rom-regex &lt;pattern|filename&gt;
 </span></code></pre></div>
 <p>Prefer games if any of their ROM filenames matches a regular expression.</p>
 <p>Regex flags can be optionally provided in the form <code>/&lt;pattern&gt;/&lt;flags&gt;</code>, for example:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-48-1"><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>Mario.*\\.gb$
+<div class="highlight"><pre><span></span><code><span id="__span-48-1"><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>Mario.*\\.gb$
 </span><span id="__span-48-2"><a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>/mario.*\\.gb$/i
 </span></code></pre></div>
 <h3 id="prefer-verified">Prefer verified</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-49-1"><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>--prefer-verified
+<div class="highlight"><pre><span></span><code><span id="__span-49-1"><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>--prefer-verified
 </span></code></pre></div>
 <p>Prefer games that contain <code>[!]</code> in their name over those that don't.</p>
 <p>See the <a href="#unverified-dumps">unverified dumps</a> section for more information about "verified" and "unverified" ROM dumps.</p>
 <h3 id="prefer-good">Prefer good</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-50-1"><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>--prefer-good
+<div class="highlight"><pre><span></span><code><span id="__span-50-1"><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>--prefer-good
 </span></code></pre></div>
 <p>Prefer games that <em>don't</em> contain <code>[b]</code> or <code>[b#]</code> in their name over those that do.</p>
 <p>See the <a href="#bad-dumps">bad dumps</a> section for more information about "good" and "bad" ROM dumps.</p>
 <h3 id="prefer-language">Prefer language</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-51-1"><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>--prefer-language [languages..]
+<div class="highlight"><pre><span></span><code><span id="__span-51-1"><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>--prefer-language [languages..]
 </span></code></pre></div>
 <p>Prefer games of certain languages over those in other languages. Multiple languages can be specified, in priority order, with commas between them. See the <code>--help</code> message for the full list of understood languages.</p>
 <p>If a game doesn’t have language information specified in its name, the region's primary language will be used.</p>
 <p>For example, to prefer games in English and <em>then</em> Japanese, the command would be:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-52-1"><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>--prefer-language En,Ja
+<div class="highlight"><pre><span></span><code><span id="__span-52-1"><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>--prefer-language En,Ja
 </span></code></pre></div>
 <h3 id="prefer-region">Prefer region</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-53-1"><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>--prefer-region [regions..]
+<div class="highlight"><pre><span></span><code><span id="__span-53-1"><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>--prefer-region [regions..]
 </span></code></pre></div>
 <p>Prefer games from certain regions over those from other regions. Multiple regions can be specified, in priority order, with commas between them. See the <code>--help</code> message for the full list of understood regions.</p>
 <p>For example, to prefer games from: USA (highest priority), "world," and then Europe, the command would be:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-54-1"><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>--prefer-region USA,WORLD,EUR
+<div class="highlight"><pre><span></span><code><span id="__span-54-1"><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>--prefer-region USA,WORLD,EUR
 </span></code></pre></div>
 <h3 id="prefer-revision">Prefer revision</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-55-1"><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>--prefer-revision &lt;older|newer&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-55-1"><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>--prefer-revision &lt;older|newer&gt;
 </span></code></pre></div>
 <p>Prefer newer or older revisions, versions, or ring codes of a game.</p>
 <p>Revisions can be numeric:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-56-1"><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>Frogger (Europe) (En,Fr,De,Es,It,Nl) (GB Compatible)
+<div class="highlight"><pre><span></span><code><span id="__span-56-1"><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>Frogger (Europe) (En,Fr,De,Es,It,Nl) (GB Compatible)
 </span><span id="__span-56-2"><a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>Frogger (USA) (Rev 1) (GB Compatible)
 </span><span id="__span-56-3"><a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>Frogger (USA) (Rev 2) (GB Compatible)
 </span></code></pre></div>
 <p>or alphabetical:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-57-1"><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es)
+<div class="highlight"><pre><span></span><code><span id="__span-57-1"><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es)
 </span><span id="__span-57-2"><a id="__codelineno-57-2" name="__codelineno-57-2" href="#__codelineno-57-2"></a>MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev A)
 </span><span id="__span-57-3"><a id="__codelineno-57-3" name="__codelineno-57-3" href="#__codelineno-57-3"></a>MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev B)
 </span></code></pre></div>
 <p>Versions can be semantic:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-58-1"><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]
+<div class="highlight"><pre><span></span><code><span id="__span-58-1"><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]
 </span><span id="__span-58-2"><a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a>F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]
 </span><span id="__span-58-3"><a id="__codelineno-58-3" name="__codelineno-58-3" href="#__codelineno-58-3"></a>F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]
 </span></code></pre></div>
 <p>Ring codes can be numeric:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-59-1"><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>Sonic CD (USA) (RE125)
+<div class="highlight"><pre><span></span><code><span id="__span-59-1"><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>Sonic CD (USA) (RE125)
 </span><span id="__span-59-2"><a id="__codelineno-59-2" name="__codelineno-59-2" href="#__codelineno-59-2"></a>Sonic CD (USA) (RE125) (Alt)
 </span></code></pre></div>
 <h3 id="prefer-retail">Prefer retail</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-60-1"><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>--prefer-retail
+<div class="highlight"><pre><span></span><code><span id="__span-60-1"><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>--prefer-retail
 </span></code></pre></div>
 <p>Prefer games that are considered "retail" releases over those that aren't.</p>
 <p>See the <a href="#only-retail">only retail</a> section for more information on what games are considered "retail."</p>
 <h3 id="prefer-parent">Prefer parent</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-61-1"><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>--prefer-parent
+<div class="highlight"><pre><span></span><code><span id="__span-61-1"><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>--prefer-parent
 </span></code></pre></div>
 <p>Prefer games that DATs consider the "parent" of other game clones, over the clones themselves.</p>
 <p>It is unlikely you will often use this option, it is more likely other preference options will accomplish what you want.</p>
@@ -3467,7 +3467,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 12, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 12, 2025 05:07:20">March 12, 2025</span>
   </span>
 
     
@@ -3477,7 +3477,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 21, 2022</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 21, 2022 22:26:11">October 21, 2022</span>
   </span>
 
     
@@ -3498,11 +3498,6 @@
         <a href="https://github.com/emmercm" class="md-author" title="@emmercm">
           
           <img src="https://avatars.githubusercontent.com/u/10749361?v=4&size=72" alt="emmercm">
-        </a>
-      
-        <a href="https://github.com/web-flow" class="md-author" title="@web-flow">
-          
-          <img src="https://avatars.githubusercontent.com/u/19864447?v=4&size=72" alt="web-flow">
         </a>
       
       
@@ -3714,7 +3709,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
     
   </body>
