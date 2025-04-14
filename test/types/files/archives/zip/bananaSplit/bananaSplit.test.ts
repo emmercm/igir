@@ -188,8 +188,8 @@ describe('entries', () => {
     [
       path.join('yauzl', 'zip64.zip'),
       [
-        [3, 8, 5, '2016-08-11T22:45:14.000Z', '8c736521', 'test1.txt'],
-        [3, 8, 5, '2016-08-11T22:45:30.000Z', '76ff8caa', 'test2.txt'],
+        [3, 8, 5, new Date('2016-08-11T22:45:14.000Z').toISOString(), '8c736521', 'test1.txt'],
+        [3, 8, 5, new Date('2016-08-11T22:45:30.000Z').toISOString(), '76ff8caa', 'test2.txt'],
       ],
     ],
     [
