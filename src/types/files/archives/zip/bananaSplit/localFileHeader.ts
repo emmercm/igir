@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import stream from 'node:stream';
+import stream, { PassThrough } from 'node:stream';
 import zlib from 'node:zlib';
 
 import zstd from 'zstd-napi';
@@ -10,6 +10,7 @@ import FileRecord, {
   CompressionMethodInverted,
   IFileRecord,
 } from './fileRecord.js';
+import ZipBombProtector from './zipBombProtector.js';
 
 export interface ILocalFileRecord extends IFileRecord {
   localFileDataRelativeOffset: number;
@@ -94,20 +95,20 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
         return this.compressedStream();
       }
       case CompressionMethod.DEFLATE: {
-        const inflater = zlib.createInflateRaw();
-        const compressedStream = this.compressedStream().on('error', (err: Error) =>
-          inflater.emit('error', err),
+        return LocalFileHeader.pipeline(
+          this.compressedStream(),
+          zlib.createInflateRaw(),
+          new ZipBombProtector(this.uncompressedSize),
         );
-        return compressedStream.pipe(inflater);
       }
       case CompressionMethod.ZSTD_DEPRECATED:
       case CompressionMethod.ZSTD: {
-        // TODO(cemmer): replace with zlib in Node.js 24
-        const decompressor = new zstd.DecompressStream();
-        const compressedStream = this.compressedStream().on('error', (err: Error) =>
-          decompressor.emit('error', err),
+        return LocalFileHeader.pipeline(
+          this.compressedStream(),
+          // TODO(cemmer): replace with zlib in Node.js 24
+          new zstd.DecompressStream(),
+          new ZipBombProtector(this.uncompressedSize),
         );
-        return compressedStream.pipe(decompressor);
       }
       default: {
         throw new Error(
@@ -115,5 +116,19 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
         );
       }
     }
+  }
+
+  static pipeline(
+    inputStream: stream.Readable,
+    transformOne: stream.Transform,
+    transformTwo: stream.Transform,
+  ): stream.Readable {
+    const outputStream = new PassThrough();
+    stream.pipeline(inputStream, transformOne, transformTwo, outputStream, (err) => {
+      if (err) {
+        outputStream.destroy(err);
+      }
+    });
+    return outputStream;
   }
 }
