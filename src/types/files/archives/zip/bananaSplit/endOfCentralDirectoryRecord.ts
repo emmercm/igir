@@ -25,8 +25,8 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
   // Size with the signature, and without variable length fields at the end
   private static readonly CENTRAL_DIRECTORY_END_SIZE = 22;
 
-  // Maximum size of the archive comment (~64KiB)
-  private static readonly BACKWARD_CHUNK_SIZE: number = 0xff_ff;
+  // Maximum size of the non-zip64 EOCD
+  private static readonly BACKWARD_CHUNK_SIZE: number = 22 + 0xff_ff;
 
   readonly _isZip64: boolean;
   readonly centralDirectoryDiskRecordsCount: number;
