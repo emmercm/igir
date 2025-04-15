@@ -87,6 +87,7 @@ export default class CentralDirectoryFileHeader
         zipFilePath,
         fileHandle,
         position,
+        this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE,
         this.FIELD_OFFSETS,
       );
 

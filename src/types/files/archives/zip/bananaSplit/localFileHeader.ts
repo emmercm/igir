@@ -48,6 +48,7 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
       centralDirectoryFileHeader.zipFilePath,
       fileHandle,
       centralDirectoryFileHeader.localFileHeaderRelativeOffset,
+      this.LOCAL_FILE_HEADER_SIGNATURE,
       this.FIELD_OFFSETS,
     );
 

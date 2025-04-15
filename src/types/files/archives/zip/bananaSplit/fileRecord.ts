@@ -102,6 +102,7 @@ export default class FileRecord implements IFileRecord {
     zipFilePath: string,
     fileHandle: fs.promises.FileHandle,
     recordOffset: number,
+    expectedSignature: Buffer<ArrayBuffer>,
     fieldOffsets: {
       versionNeeded: number;
       generalPurposeBitFlag: number;
@@ -121,6 +122,11 @@ export default class FileRecord implements IFileRecord {
   ): Promise<FileRecord> {
     const fixedLengthBuffer = Buffer.allocUnsafe(Math.max(...Object.values(fieldOffsets)) + 4);
     await fileHandle.read({ buffer: fixedLengthBuffer, position: recordOffset });
+
+    const signature = fixedLengthBuffer.subarray(0, expectedSignature.length);
+    if (!signature.equals(expectedSignature)) {
+      throw new Error(`invalid signature: 0x${signature.toString('hex')}`);
+    }
 
     const fileNameLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.fileNameLength);
     const extraFieldLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.extraFieldLength);
@@ -171,7 +177,9 @@ export default class FileRecord implements IFileRecord {
       .reverse()
       .toString('hex')
       .toLowerCase();
-    const compressedSize = fixedLengthBuffer.readUInt32LE(fieldOffsets.compressedSize);
+    const compressedSize =
+      fixedLengthBuffer.readUInt32LE(fieldOffsets.compressedSize) -
+      (generalPurposeBitFlag & 0x01 ? 12 : 0);
     const uncompressedSize = fixedLengthBuffer.readUInt32LE(fieldOffsets.uncompressedSize);
     const fileDiskStart =
       fieldOffsets.fileDiskStart === undefined
