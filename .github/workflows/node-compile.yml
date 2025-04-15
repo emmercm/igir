@@ -57,6 +57,7 @@ jobs:
           - os: ubuntu-latest
             arch: amd64
             build: |
+              set -x
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=amd64
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -73,6 +74,7 @@ jobs:
           - os: ubuntu-latest
             arch: arm/v7
             build: |
+              set -x
               npm rebuild zstd-napi --build-from-source
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm/v7
@@ -90,6 +92,7 @@ jobs:
           - os: ubuntu-latest
             arch: arm64/v8
             build: |
+              set -x
               npm rebuild zstd-napi --build-from-source
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm64/v8
@@ -106,6 +109,7 @@ jobs:
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-13
             build: |
+              set -x
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
@@ -120,6 +124,7 @@ jobs:
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: macos-15
             build: |
+              set -x
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
