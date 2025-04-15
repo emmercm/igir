@@ -58,8 +58,6 @@ jobs:
             arch: amd64
             build: |
               set -x
-              npm ci
-              npm run build
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=amd64
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -77,9 +75,7 @@ jobs:
             arch: arm/v7
             build: |
               set -x
-              npm ci
               npm rebuild zstd-napi --build-from-source
-              npm run build
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm/v7
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -97,9 +93,7 @@ jobs:
             arch: arm64/v8
             build: |
               set -x
-              npm ci
               npm rebuild zstd-napi --build-from-source
-              npm run build
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm64/v8
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -116,8 +110,6 @@ jobs:
           - os: macos-13
             build: |
               set -x
-              npm ci
-              npm run build
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
@@ -133,8 +125,6 @@ jobs:
           - os: macos-15
             build: |
               set -x
-              npm ci
-              npm run build
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
@@ -149,8 +139,6 @@ jobs:
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: windows-latest
             build: |
-              npm ci
-              npm run build
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
               $NODE_ARCH=$(node --print 'process.arch')
               $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
@@ -173,6 +161,8 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         uses: docker/setup-qemu-action@v3
       - uses: volta-cli/action@v4
+      - run: npm ci
+      - run: npm run build
       # Compile and upload
       - run: ${{ matrix.build }}
       - if: ${{ github.event_name != 'pull_request' }}
