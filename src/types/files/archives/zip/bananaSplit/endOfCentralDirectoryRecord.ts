@@ -150,8 +150,6 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
     fileHandle: fs.promises.FileHandle,
     eocdPosition: number,
   ): Promise<EndOfCentralDirectoryRecord> {
-    // TODO(cemmer): validate signature
-
     const eocdSizeBuffer = await fileHandle.read({ position: eocdPosition + 4, length: 8 });
     const eocdSize = eocdSizeBuffer.buffer.readBigUInt64LE();
 

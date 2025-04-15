@@ -20,7 +20,6 @@ describe('entries', () => {
     expect(entries).toHaveLength(0);
   });
 
-  // TODO(cemmer): add `unzipper` test fixtures
   const expected = new Map<
     string,
     [number, CompressionMethodValue, number, string, string, string, string][]
@@ -316,7 +315,6 @@ describe('entries', () => {
     ],
     [
       path.join('unzipper', 'compressed-cp866.zip'),
-      // TODO(cemmer): need to handle this encoding?
       [[13, 0, 13, '2019-01-03T08:42:47.853Z', 'f77a2052', 'ÆÑßΓ.txt', '']],
     ],
     [
@@ -448,6 +446,22 @@ describe('entries', () => {
     [
       path.join('unzipper', 'zip64.zip'),
       [[36, 8, 36, new Date('2012-08-10T14:33:32.000').toISOString(), '69ffe77e', 'README', '']],
+    ],
+    [
+      '1kb-zstd1.5.7-level19.zip',
+      [[1369, 93, 1079, new Date('2025-04-14T20:10:54.000').toISOString(), '1b4fea72', '1kb', '']],
+    ],
+    [
+      '2kb-zstd1.5.7-level20.zip',
+      [[2733, 93, 2099, new Date('2025-04-14T20:11:00.000').toISOString(), 'd16564f3', '2kb', '']],
+    ],
+    [
+      '3kb-zstd1.5.7-level21.zip',
+      [[4097, 93, 3124, new Date('2025-04-14T20:13:41.000').toISOString(), 'e674ff24', '3kb', '']],
+    ],
+    [
+      '4kb-zstd1.5.7-level22.zip',
+      [[5465, 93, 4153, new Date('2025-04-14T20:13:49.000').toISOString(), '2e638652', '4kb', '']],
     ],
   ]);
 

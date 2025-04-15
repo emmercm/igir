@@ -161,7 +161,6 @@ export default class FileRecord implements IFileRecord {
     ) as CompressionMethodValue;
 
     // TODO(cemmer): 0x000d UNIX timestamp
-    // TODO(cemmer): 0x5855 unix extra field original
     // TODO(cemmer): 0x7855 unix extra field new?
     const timestamps =
       this.parseExtendedTimestamp(extraFields.get(0x54_55)) ??
