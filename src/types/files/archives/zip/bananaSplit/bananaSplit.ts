@@ -48,7 +48,7 @@ export default class BananaSplit {
         LocalFileHeader.LOCAL_FILE_HEADER_SIGNATURE.toString('hex'),
         // No files in the zip
         EndOfCentralDirectoryRecord.CENTRAL_DIRECTORY_END_SIGNATURE.toString('hex'),
-        // The zip is spanned
+        // The zip is spanned, and this ISN'T the first file
         LocalFileHeader.DATA_DESCRIPTOR_SIGNATURE.toString('hex'),
       ]).has(magicNumber.toString('hex'))
     ) {
