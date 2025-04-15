@@ -58,14 +58,13 @@ jobs:
             arch: amd64
             build: |
               set -x
-              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=amd64
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm run package -- . igir && ./igir --help"
+                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi) && npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -76,14 +75,13 @@ jobs:
             arch: arm/v7
             build: |
               set -x
-              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm/v7
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm run package -- . igir && ./igir --help"
+                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi) && npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -94,14 +92,13 @@ jobs:
             arch: arm64/v8
             build: |
               set -x
-              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm64/v8
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm run package -- . igir && ./igir --help"
+                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi) && npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -111,11 +108,11 @@ jobs:
           - os: macos-13
             build: |
               set -x
-              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi)
               npm run package -- . igir
               ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
@@ -127,11 +124,11 @@ jobs:
           - os: macos-15
             build: |
               set -x
-              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi)
               npm run package -- . igir
               ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
