@@ -279,7 +279,7 @@ describe('entries', () => {
     [
       path.join('unzipper', 'compressed-cp866.zip'),
       // TODO(cemmer): need to handle this encoding?
-      [[13, 0, 13, '2019-01-03T08:42:47.853Z', 'f77a2052', '����.txt']],
+      [[13, 0, 13, '2019-01-03T08:42:47.853Z', 'f77a2052', 'ÆÑßΓ.txt']],
     ],
     [
       path.join('unzipper', 'compressed-directory-entry.zip'),
@@ -414,7 +414,7 @@ describe('entries', () => {
           ? undefined
           : entry.timestamps.modified.toISOString(),
         entry.uncompressedCrc32,
-        entry.fileName.toString('utf8'),
+        entry.fileName,
       ]),
     ).toEqual(expected.get(filePath.replace(dirname, '')));
 
@@ -423,7 +423,7 @@ describe('entries', () => {
       expect(entry.uncompressedCrc32).toHaveLength(8);
 
       // Directory
-      if (entry.fileName.toString('utf8').endsWith('/')) {
+      if (entry.isDirectory()) {
         expect(entry.uncompressedCrc32).toEqual('00000000');
         expect(entry.uncompressedSize).toEqual(0);
       }
@@ -453,9 +453,9 @@ describe('compressedStream', () => {
     )) {
       // Write compressed bytes to file
       const tempFile = await FsPoly.mktemp(
-        path.join(Temp.getTempDir(), path.basename(entry.fileName.toString('utf8'))),
+        path.join(Temp.getTempDir(), path.basename(entry.fileName)),
       );
-      const compressedStream = await zip.compressedStream(entry);
+      const compressedStream = await entry.compressedStream();
       await new Promise<void>((resolve, reject) => {
         compressedStream
           .pipe(fs.createWriteStream(tempFile))
@@ -486,9 +486,9 @@ describe('uncompressedStream', () => {
     )) {
       // Write compressed bytes to file
       const tempFile = await FsPoly.mktemp(
-        path.join(Temp.getTempDir(), path.basename(entry.fileName.toString('utf8'))),
+        path.join(Temp.getTempDir(), path.basename(entry.fileName)),
       );
-      const uncompressedStream = await zip.uncompressedStream(entry);
+      const uncompressedStream = await entry.uncompressedStream();
       await new Promise<void>((resolve, reject) => {
         uncompressedStream
           .on('error', reject)

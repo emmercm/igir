@@ -1,13 +1,8 @@
 import fs from 'node:fs';
-import stream from 'node:stream';
-import * as zlib from 'node:zlib';
 
-import zstd from 'zstd-napi';
-
-import CentralDirectoryFile from './centralDirectoryFile.js';
+import CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
 import EndOfCentralDirectoryRecord from './endOfCentralDirectoryRecord.js';
-import { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
-import LocalFileRecord from './localFileRecord.js';
+import LocalFileHeader from './localFileHeader.js';
 
 /**
  * Why did I make the terrible choice of writing my own zip decompression library? Because neither
@@ -20,23 +15,23 @@ import LocalFileRecord from './localFileRecord.js';
  * @see https://romvault.com/trrntzip_explained.pdf
  */
 export default class BananaSplit {
-  private readonly filePath: string;
+  private readonly zipFilePath: string;
+
+  private _endOfCentralDirectoryRecord?: EndOfCentralDirectoryRecord;
 
   constructor(filePath: string) {
-    this.filePath = filePath;
+    this.zipFilePath = filePath;
   }
 
-  async entries(): Promise<CentralDirectoryFile[]> {
-    const fileHandle = await fs.promises.open(this.filePath, 'r');
+  async entries(): Promise<CentralDirectoryFileHeader[]> {
+    const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {
-      await this.assertValidMagicNumber(fileHandle);
-
-      const eocd = await EndOfCentralDirectoryRecord.fromFileHandle(fileHandle);
-      if (eocd.diskNumber !== 0 || eocd.centralDirectoryDiskStart !== 0) {
-        throw new Error(`multi-disk zips aren't supported`);
-      }
-
-      return await CentralDirectoryFile.centralDirectoryFileFromFileHandle(fileHandle, eocd);
+      const eocd = await this.endOfCentralDirectoryRecordFromFileHandle(fileHandle);
+      return await CentralDirectoryFileHeader.centralDirectoryFileFromFileHandle(
+        this.zipFilePath,
+        fileHandle,
+        eocd,
+      );
     } finally {
       await fileHandle.close();
     }
@@ -47,11 +42,11 @@ export default class BananaSplit {
     if (
       !new Set([
         // At least one file in the zip
-        LocalFileRecord.LOCAL_FILE_HEADER_SIGNATURE.toString('hex'),
+        LocalFileHeader.LOCAL_FILE_HEADER_SIGNATURE.toString('hex'),
         // No files in the zip
         EndOfCentralDirectoryRecord.CENTRAL_DIRECTORY_END_SIGNATURE.toString('hex'),
         // The zip is spanned
-        LocalFileRecord.DATA_DESCRIPTOR_SIGNATURE.toString('hex'),
+        LocalFileHeader.DATA_DESCRIPTOR_SIGNATURE.toString('hex'),
       ]).has(magicNumber.toString('hex'))
     ) {
       throw new Error(`unknown zip file magic number: ${magicNumber.toString('hex')}`);
@@ -64,64 +59,25 @@ export default class BananaSplit {
     return buffer;
   }
 
-  /**
-   * WARN: It's the caller's responsibility to close the stream!
-   */
-  async compressedStream(centralDirectoryFile: CentralDirectoryFile): Promise<stream.Readable> {
-    if (centralDirectoryFile.compressedSize === 0 && centralDirectoryFile.uncompressedSize === 0) {
-      // There's no need to open the file, it will be an empty stream
-      return stream.Readable.from([]);
-    }
-
-    const fileHandle = await fs.promises.open(this.filePath, 'r');
-    let localFileRecord: LocalFileRecord;
+  async endOfCentralDirectoryRecord(): Promise<EndOfCentralDirectoryRecord> {
+    const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {
-      localFileRecord = await LocalFileRecord.localFileRecordFromFileHandle(
-        fileHandle,
-        centralDirectoryFile.localFileHeaderRelativeOffset ?? 0,
-      );
+      return this.endOfCentralDirectoryRecordFromFileHandle(fileHandle);
     } finally {
       await fileHandle.close();
     }
-
-    return fs.createReadStream(this.filePath, {
-      // TODO(cemmer): providing `fd` doesn't seem to work right
-      start: localFileRecord.localFileDataRelativeOffset,
-      end: localFileRecord.localFileDataRelativeOffset + centralDirectoryFile.compressedSize - 1,
-    });
   }
 
-  /**
-   * WARN: It's the caller's responsibility to close the stream!
-   */
-  async uncompressedStream(centralDirectoryFile: CentralDirectoryFile): Promise<stream.Readable> {
-    switch (centralDirectoryFile.compressionMethod) {
-      case CompressionMethod.STORE: {
-        return this.compressedStream(centralDirectoryFile);
-      }
-      case CompressionMethod.DEFLATE: {
-        const inflater = zlib.createInflateRaw();
-        const compressedStream = (await this.compressedStream(centralDirectoryFile)).on(
-          'error',
-          (err: Error) => inflater.emit('error', err),
-        );
-        return compressedStream.pipe(inflater);
-      }
-      case CompressionMethod.ZSTD_DEPRECATED:
-      case CompressionMethod.ZSTD: {
-        // TODO(cemmer): replace with zlib in Node.js 24
-        const decompressor = new zstd.DecompressStream();
-        const compressedStream = (await this.compressedStream(centralDirectoryFile)).on(
-          'error',
-          (err: Error) => decompressor.emit('error', err),
-        );
-        return compressedStream.pipe(decompressor);
-      }
-      default: {
-        throw new Error(
-          `unsupported compression method: ${CompressionMethodInverted[centralDirectoryFile.compressionMethod]}`,
-        );
-      }
+  private async endOfCentralDirectoryRecordFromFileHandle(
+    fileHandle: fs.promises.FileHandle,
+  ): Promise<EndOfCentralDirectoryRecord> {
+    if (this._endOfCentralDirectoryRecord !== undefined) {
+      return this._endOfCentralDirectoryRecord;
     }
+
+    await this.assertValidMagicNumber(fileHandle);
+    this._endOfCentralDirectoryRecord =
+      await EndOfCentralDirectoryRecord.fromFileHandle(fileHandle);
+    return this._endOfCentralDirectoryRecord;
   }
 }

@@ -1,15 +1,20 @@
 import fs from 'node:fs';
 
+import CP437Decoder from './cp437Decoder.js';
+
 export interface IFileRecord extends IFileRecordZip64 {
+  zipFilePath: string;
   versionNeeded: number;
   generalPurposeBitFlag: number;
   compressionMethod: CompressionMethodValue;
   timestamps: FileTimestamps;
   uncompressedCrc32: string;
   fileNameLength: number;
+  fileName: string;
   extraFieldLength: number;
-  fileName: Buffer<ArrayBuffer>;
   extraFields: Map<number, Buffer<ArrayBuffer>>;
+  fileCommentLength?: number;
+  fileComment?: string;
 }
 
 export interface IFileRecordZip64 {
@@ -57,6 +62,7 @@ export interface FileTimestamps {
 }
 
 export default class FileRecord implements IFileRecord {
+  readonly zipFilePath: string;
   readonly versionNeeded: number;
   readonly generalPurposeBitFlag: number;
   readonly compressionMethod: CompressionMethodValue;
@@ -65,13 +71,16 @@ export default class FileRecord implements IFileRecord {
   readonly compressedSize: number;
   readonly uncompressedSize: number;
   readonly fileNameLength: number;
+  readonly fileName: string;
   readonly extraFieldLength: number;
-  readonly fileName: Buffer<ArrayBuffer>;
   readonly extraFields: Map<number, Buffer<ArrayBuffer>>;
   readonly localFileHeaderRelativeOffset?: number;
   readonly fileDiskStart?: number;
+  readonly fileCommentLength?: number;
+  readonly fileComment?: string;
 
   protected constructor(props: IFileRecord) {
+    this.zipFilePath = props.zipFilePath;
     this.versionNeeded = props.versionNeeded;
     this.generalPurposeBitFlag = props.generalPurposeBitFlag;
     this.compressionMethod = props.compressionMethod;
@@ -80,14 +89,17 @@ export default class FileRecord implements IFileRecord {
     this.compressedSize = props.compressedSize;
     this.uncompressedSize = props.uncompressedSize;
     this.fileNameLength = props.fileNameLength;
-    this.extraFieldLength = props.extraFieldLength;
     this.fileName = props.fileName;
+    this.extraFieldLength = props.extraFieldLength;
     this.extraFields = props.extraFields;
     this.localFileHeaderRelativeOffset = props.localFileHeaderRelativeOffset;
     this.fileDiskStart = props.fileDiskStart;
+    this.fileCommentLength = props.fileCommentLength;
+    this.fileComment = props.fileComment;
   }
 
   static async fileRecordFromFileHandle(
+    zipFilePath: string,
     fileHandle: fs.promises.FileHandle,
     recordOffset: number,
     fieldOffsets: {
@@ -99,10 +111,11 @@ export default class FileRecord implements IFileRecord {
       uncompressedCrc32: number;
       compressedSize: number;
       uncompressedSize: number;
-      fileDiskStart?: number;
-      localFileHeaderRelativeOffset?: number;
       fileNameLength: number;
       extraFieldLength: number;
+      fileCommentLength?: number;
+      fileDiskStart?: number;
+      localFileHeaderRelativeOffset?: number;
       fileName: number;
     },
   ): Promise<FileRecord> {
@@ -111,8 +124,12 @@ export default class FileRecord implements IFileRecord {
 
     const fileNameLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.fileNameLength);
     const extraFieldLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.extraFieldLength);
+    const fileCommentLength =
+      fieldOffsets.fileCommentLength === undefined
+        ? 0
+        : fixedLengthBuffer.readUInt16LE(fieldOffsets.fileCommentLength);
 
-    const variableLengthBufferSize = fileNameLength + extraFieldLength;
+    const variableLengthBufferSize = fileNameLength + extraFieldLength + fileCommentLength;
     let variableLengthBuffer: Buffer<ArrayBuffer>;
     if (variableLengthBufferSize > 0) {
       // Only read from the file if there's something to read
@@ -129,25 +146,13 @@ export default class FileRecord implements IFileRecord {
       variableLengthBuffer.subarray(fileNameLength, fileNameLength + extraFieldLength),
     );
 
-    const zip64ExtendableInformation = this.parseFileRecordZip64(extraFields.get(0x00_01), {
-      compressedSize: fixedLengthBuffer.readUInt32LE(fieldOffsets.compressedSize),
-      uncompressedSize: fixedLengthBuffer.readUInt32LE(fieldOffsets.uncompressedSize),
-      fileDiskStart:
-        fieldOffsets.fileDiskStart === undefined
-          ? undefined
-          : fixedLengthBuffer.readUInt16LE(fieldOffsets.fileDiskStart),
-      localFileHeaderRelativeOffset:
-        fieldOffsets.localFileHeaderRelativeOffset === undefined
-          ? undefined
-          : fixedLengthBuffer.readUInt32LE(fieldOffsets.localFileHeaderRelativeOffset),
-    });
-
-    const fileName =
-      // Info-ZIP Unicode Path Extra Field
-      extraFields.get(0x70_75)?.subarray(5) ?? variableLengthBuffer.subarray(0, fileNameLength);
-
-    // TODO(cemmer): comments in general
-    // TODO(cemmer): 0x6375 unicode comment
+    const versionNeeded = fixedLengthBuffer.readUInt16LE(fieldOffsets.versionNeeded);
+    const generalPurposeBitFlag = fixedLengthBuffer.readUInt16LE(
+      fieldOffsets.generalPurposeBitFlag,
+    );
+    const compressionMethod = fixedLengthBuffer.readUInt16LE(
+      fieldOffsets.compressionMethod,
+    ) as CompressionMethodValue;
 
     // TODO(cemmer): 0x000d UNIX timestamp
     // TODO(cemmer): 0x5855 unix extra field original
@@ -161,23 +166,58 @@ export default class FileRecord implements IFileRecord {
         fixedLengthBuffer.readUInt16LE(fieldOffsets.modifiedDate),
       );
 
+    const uncompressedCrc32 = fixedLengthBuffer
+      .subarray(fieldOffsets.uncompressedCrc32, fieldOffsets.uncompressedCrc32 + 4)
+      .reverse()
+      .toString('hex')
+      .toLowerCase();
+    const compressedSize = fixedLengthBuffer.readUInt32LE(fieldOffsets.compressedSize);
+    const uncompressedSize = fixedLengthBuffer.readUInt32LE(fieldOffsets.uncompressedSize);
+    const fileDiskStart =
+      fieldOffsets.fileDiskStart === undefined
+        ? undefined
+        : fixedLengthBuffer.readUInt16LE(fieldOffsets.fileDiskStart);
+    const localFileHeaderRelativeOffset =
+      fieldOffsets.localFileHeaderRelativeOffset === undefined
+        ? undefined
+        : fixedLengthBuffer.readUInt32LE(fieldOffsets.localFileHeaderRelativeOffset);
+    const fileName =
+      // Info-ZIP Unicode Path Extra Field
+      extraFields.get(0x70_75)?.subarray(5).toString('utf8') ??
+      (generalPurposeBitFlag & 0x8_00
+        ? variableLengthBuffer.subarray(0, fileNameLength).toString('utf8')
+        : CP437Decoder.decode(variableLengthBuffer.subarray(0, fileNameLength)));
+
+    let fileComment: string | undefined;
+    if (fieldOffsets.fileCommentLength !== undefined) {
+      fileComment =
+        extraFields.get(0x63_75)?.subarray(5).toString('utf8') ??
+        (generalPurposeBitFlag & 0x8_00
+          ? variableLengthBuffer.subarray(fileNameLength + extraFieldLength).toString('utf8')
+          : CP437Decoder.decode(variableLengthBuffer.subarray(fileNameLength + extraFieldLength)));
+    }
+
+    const zip64ExtendableInformation = this.parseFileRecordZip64(extraFields.get(0x00_01), {
+      compressedSize,
+      uncompressedSize,
+      fileDiskStart,
+      localFileHeaderRelativeOffset,
+    });
+
     return new FileRecord({
-      ...zip64ExtendableInformation,
-      versionNeeded: fixedLengthBuffer.readUInt16LE(fieldOffsets.versionNeeded),
-      generalPurposeBitFlag: fixedLengthBuffer.readUInt16LE(fieldOffsets.generalPurposeBitFlag),
-      compressionMethod: fixedLengthBuffer.readUInt16LE(
-        fieldOffsets.compressionMethod,
-      ) as CompressionMethodValue,
+      zipFilePath: zipFilePath,
+      versionNeeded,
+      generalPurposeBitFlag,
+      compressionMethod,
       timestamps,
-      uncompressedCrc32: fixedLengthBuffer
-        .subarray(fieldOffsets.uncompressedCrc32, fieldOffsets.uncompressedCrc32 + 4)
-        .reverse()
-        .toString('hex')
-        .toLowerCase(),
+      uncompressedCrc32,
       fileNameLength,
-      extraFieldLength,
       fileName,
+      extraFieldLength,
       extraFields,
+      fileCommentLength,
+      fileComment,
+      ...zip64ExtendableInformation,
     });
   }
 
@@ -188,7 +228,7 @@ export default class FileRecord implements IFileRecord {
 
     const extraFields = new Map<number, Buffer<ArrayBuffer>>();
     let position = 0;
-    while (position < buffer.length) {
+    while (position < buffer.length - 3) {
       const headerId = buffer.readUInt16LE(position);
       const dataSize = buffer.readUInt16LE(position + 2);
       extraFields.set(headerId, buffer.subarray(position + 4, position + 4 + dataSize));
@@ -285,7 +325,6 @@ export default class FileRecord implements IFileRecord {
     if (infoBit & 0x04) {
       const epochSeconds = times.at(readTimes);
       timestamps.created = epochSeconds === undefined ? undefined : new Date(epochSeconds * 1000);
-      readTimes += 1;
     }
 
     return timestamps;
@@ -332,17 +371,24 @@ export default class FileRecord implements IFileRecord {
     }
     if (originalDirectoryRecord.fileDiskStart === 0xff_ff) {
       extendedInformation.fileDiskStart = buffer.readUInt32LE(position);
-      position += 4;
     }
 
     return extendedInformation;
+  }
+
+  isUtf8(): boolean {
+    return (this.generalPurposeBitFlag & 0x8_00) !== 0;
   }
 
   isEncrypted(): boolean {
     return (this.generalPurposeBitFlag & 0x01) !== 0;
   }
 
+  isCompressed(): boolean {
+    return this.compressionMethod !== CompressionMethod.STORE;
+  }
+
   isDirectory(): boolean {
-    return this.fileName.toString('utf8').endsWith('/');
+    return this.fileName.endsWith('/');
   }
 }

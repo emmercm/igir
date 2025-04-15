@@ -1,16 +1,22 @@
 import fs from 'node:fs';
+import stream from 'node:stream';
 
 import EndOfCentralDirectoryRecord from './endOfCentralDirectoryRecord.js';
 import FileRecord, { IFileRecord } from './fileRecord.js';
+import LocalFileHeader from './localFileHeader.js';
 
 export interface ICentralDirectoryFile extends IFileRecord {
   versionMadeBy: number;
   internalFileAttributes: number;
   externalFileAttributes: number;
-  fileComment: Buffer<ArrayBuffer>;
+  localFileHeaderRelativeOffset: number;
+  fileComment: string;
 }
 
-export default class CentralDirectoryFile extends FileRecord implements ICentralDirectoryFile {
+export default class CentralDirectoryFileHeader
+  extends FileRecord
+  implements ICentralDirectoryFile
+{
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE = Buffer.from(
     '02014b50',
     'hex',
@@ -39,21 +45,33 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
   readonly versionMadeBy: number;
   readonly internalFileAttributes: number;
   readonly externalFileAttributes: number;
-  readonly fileComment: Buffer<ArrayBuffer>;
+  readonly localFileHeaderRelativeOffset: number;
+  readonly fileComment: string;
+
+  private _localFileHeader?: LocalFileHeader;
 
   private constructor(props: ICentralDirectoryFile) {
     super(props);
     this.versionMadeBy = props.versionMadeBy;
     this.internalFileAttributes = props.internalFileAttributes;
     this.externalFileAttributes = props.externalFileAttributes;
+    this.localFileHeaderRelativeOffset = props.localFileHeaderRelativeOffset;
     this.fileComment = props.fileComment;
   }
 
   static async centralDirectoryFileFromFileHandle(
+    zipFilePath: string,
     fileHandle: fs.promises.FileHandle,
     endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
-  ): Promise<CentralDirectoryFile[]> {
-    const fileHeaders: CentralDirectoryFile[] = [];
+  ): Promise<CentralDirectoryFileHeader[]> {
+    if (
+      endOfCentralDirectoryRecord.diskNumber !== 0 ||
+      endOfCentralDirectoryRecord.centralDirectoryDiskStart !== 0
+    ) {
+      throw new Error(`multi-disk zips aren't supported`);
+    }
+
+    const fileHeaders: CentralDirectoryFileHeader[] = [];
 
     const fixedLengthBuffer = Buffer.allocUnsafe(this.CENTRAL_DIRECTORY_FILE_HEADER_SIZE);
 
@@ -66,37 +84,21 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
       }
 
       const fileRecord = await FileRecord.fileRecordFromFileHandle(
+        zipFilePath,
         fileHandle,
         position,
         this.FIELD_OFFSETS,
       );
 
-      const fileCommentLength = fixedLengthBuffer.readUInt16LE(
-        this.FIELD_OFFSETS.fileCommentLength,
-      );
-      let fileComment: Buffer<ArrayBuffer>;
-      if (fileCommentLength > 0) {
-        // Only read from the file if there's something to read
-        fileComment = Buffer.allocUnsafe(fileCommentLength);
-        await fileHandle.read({
-          buffer: fileComment,
-          position:
-            position +
-            this.FIELD_OFFSETS.fileName +
-            fileRecord.fileNameLength +
-            fileRecord.extraFieldLength,
-        });
-      } else {
-        fileComment = Buffer.alloc(0);
-      }
-
       fileHeaders.push(
-        new CentralDirectoryFile({
+        new CentralDirectoryFileHeader({
           ...fileRecord,
+          zipFilePath: zipFilePath,
           versionMadeBy: fixedLengthBuffer.readUInt16LE(4),
           internalFileAttributes: fixedLengthBuffer.readUInt16LE(36),
           externalFileAttributes: fixedLengthBuffer.readUInt32LE(38),
-          fileComment,
+          localFileHeaderRelativeOffset: fileRecord.localFileHeaderRelativeOffset!,
+          fileComment: fileRecord.fileComment!,
         }),
       );
 
@@ -104,9 +106,33 @@ export default class CentralDirectoryFile extends FileRecord implements ICentral
         fixedLengthBuffer.length +
         fileRecord.fileNameLength +
         fileRecord.extraFieldLength +
-        fileCommentLength;
+        fileRecord.fileCommentLength!;
     }
 
     return fileHeaders;
+  }
+
+  async localFileHeader(): Promise<LocalFileHeader> {
+    if (this._localFileHeader !== undefined) {
+      return this._localFileHeader;
+    }
+
+    const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
+    try {
+      this._localFileHeader = await LocalFileHeader.localFileRecordFromFileHandle(this, fileHandle);
+      return this._localFileHeader;
+    } finally {
+      await fileHandle.close();
+    }
+  }
+
+  async compressedStream(): Promise<stream.Readable> {
+    const localFileHeader = await this.localFileHeader();
+    return localFileHeader.compressedStream();
+  }
+
+  async uncompressedStream(): Promise<stream.Readable> {
+    const localFileHeader = await this.localFileHeader();
+    return localFileHeader.uncompressedStream();
   }
 }

@@ -14,7 +14,7 @@ import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 import BananaSplit from './zip/bananaSplit/bananaSplit.js';
-import CentralDirectoryFile from './zip/bananaSplit/centralDirectoryFile.js';
+import CentralDirectoryFileHeader from './zip/bananaSplit/centralDirectoryFileHeader.js';
 
 export default class Zip extends Archive {
   protected new(filePath: string): Archive {
@@ -36,10 +36,10 @@ export default class Zip extends Archive {
     return async.mapLimit(
       entries.filter((entry) => !entry.isDirectory()),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entryFile: CentralDirectoryFile): Promise<ArchiveEntry<this>> => {
+      async (entryFile: CentralDirectoryFileHeader): Promise<ArchiveEntry<this>> => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
-          const entryStream = await archive.uncompressedStream(entryFile);
+          const entryStream = await entryFile.uncompressedStream();
           try {
             checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
           } finally {
@@ -51,7 +51,7 @@ export default class Zip extends Archive {
         return ArchiveEntry.entryOf(
           {
             archive: this,
-            entryPath: entryFile.fileName.toString('utf8'),
+            entryPath: entryFile.fileName,
             size: entryFile.uncompressedSize,
             crc32: crc32 ?? entryFile.uncompressedCrc32,
             ...checksumsWithoutCrc,
@@ -94,8 +94,7 @@ export default class Zip extends Archive {
     const entries = await archive.entries();
     const entry = entries.find(
       (entryFile) =>
-        entryFile.fileName.toString('utf8').replaceAll(/[\\/]/g, '/') ===
-        entryPath.replaceAll(/[\\/]/g, '/'),
+        entryFile.fileName.replaceAll(/[\\/]/g, '/') === entryPath.replaceAll(/[\\/]/g, '/'),
     );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
@@ -104,7 +103,7 @@ export default class Zip extends Archive {
 
     let entryStream: stream.Readable;
     try {
-      entryStream = await archive.uncompressedStream(entry);
+      entryStream = await entry.uncompressedStream();
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
     }

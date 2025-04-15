@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 
+import CP437Decoder from './cp437Decoder.js';
+
 export interface IEndOfCentralDirectoryRecord {
   diskNumber: number;
   centralDirectoryDiskStart: number;
@@ -7,7 +9,7 @@ export interface IEndOfCentralDirectoryRecord {
   centralDirectoryTotalRecordsCount: number;
   centralDirectorySizeBytes: number;
   centralDirectoryOffset: number;
-  comment: Buffer<ArrayBuffer>;
+  comment: string;
   // Zip64
   isZip64: boolean;
   versionMadeBy?: number;
@@ -37,7 +39,7 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
   readonly centralDirectoryOffset: number;
   readonly centralDirectorySizeBytes: number;
   readonly centralDirectoryTotalRecordsCount: number;
-  readonly comment: Buffer<ArrayBuffer>;
+  readonly comment: string;
   readonly diskNumber: number;
   readonly isZip64: boolean;
   readonly versionMadeBy?: number;
@@ -99,22 +101,21 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
     if (!buffer.subarray(0, 4).equals(this.CENTRAL_DIRECTORY_END_SIGNATURE)) {
       throw new Error('bad end of central directory record position');
     }
-    const endOfCentralDirectory: IEndOfCentralDirectoryRecord = {
-      isZip64: false,
-      diskNumber: buffer.readUInt16LE(4),
-      centralDirectoryDiskStart: buffer.readUInt16LE(6),
-      centralDirectoryDiskRecordsCount: buffer.readUInt16LE(8),
-      centralDirectoryTotalRecordsCount: buffer.readUInt16LE(10),
-      centralDirectorySizeBytes: buffer.readUInt32LE(12),
-      centralDirectoryOffset: buffer.readUInt32LE(16),
-      comment: Buffer.alloc(0),
-    };
+
+    const isZip64 = false;
+    const diskNumber = buffer.readUInt16LE(4);
+    const centralDirectoryDiskStart = buffer.readUInt16LE(6);
+    const centralDirectoryDiskRecordsCount = buffer.readUInt16LE(8);
+    const centralDirectoryTotalRecordsCount = buffer.readUInt16LE(10);
+    const centralDirectorySizeBytes = buffer.readUInt32LE(12);
+    const centralDirectoryOffset = buffer.readUInt32LE(16);
     const commentLength = buffer.readUInt16LE(20);
 
     // Read the EOCD comment
-    let comment: Buffer<ArrayBuffer> = endOfCentralDirectory.comment;
+    let commentBuffer: Buffer<ArrayBuffer>;
     if (commentLength === 0) {
       // No need to read the comment
+      commentBuffer = Buffer.alloc(0);
     } else if (commentLength < buffer.length) {
       // The comment is small, keep re-using the same buffer
       const readResult = await fileHandle.read({
@@ -122,18 +123,25 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
         position: eocdPosition + this.CENTRAL_DIRECTORY_END_SIZE,
         length: commentLength,
       });
-      comment = readResult.buffer.subarray(0, readResult.bytesRead);
+      commentBuffer = readResult.buffer.subarray(0, readResult.bytesRead);
     } else {
       // The comment is long, allocate a new buffer
       const readResult = await fileHandle.read({
         buffer: Buffer.alloc(commentLength),
         position: eocdPosition + this.CENTRAL_DIRECTORY_END_SIZE,
       });
-      comment = readResult.buffer;
+      commentBuffer = readResult.buffer;
     }
+    const comment = CP437Decoder.decode(commentBuffer);
 
     return new EndOfCentralDirectoryRecord({
-      ...endOfCentralDirectory,
+      isZip64,
+      diskNumber,
+      centralDirectoryDiskStart,
+      centralDirectoryDiskRecordsCount,
+      centralDirectoryTotalRecordsCount,
+      centralDirectorySizeBytes,
+      centralDirectoryOffset,
       comment,
     });
   }
@@ -161,7 +169,7 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
       centralDirectoryTotalRecordsCount: Number(buffer.readBigUInt64LE(20)),
       centralDirectorySizeBytes: Number(buffer.readBigUInt64LE(28)),
       centralDirectoryOffset: Number(buffer.readBigUInt64LE(36)),
-      comment: buffer.subarray(44),
+      comment: CP437Decoder.decode(buffer.subarray(44)),
     });
   }
 }
