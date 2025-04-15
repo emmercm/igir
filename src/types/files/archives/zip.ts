@@ -22,7 +22,7 @@ export default class Zip extends Archive {
   }
 
   static getExtensions(): string[] {
-    return ['.zip', '.apk', '.ipa', '.jar', '.pk3'];
+    return ['.zip', '.zip64', '.apk', '.ipa', '.jar', '.pk3'];
   }
 
   getExtension(): string {

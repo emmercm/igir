@@ -19,7 +19,7 @@ Igir supports most common archive formats:
 | `.tar`                                                           | ❌                    | ✅                                             | ✅                                         |
 | `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅                                         |
 | `.z01`                                                           | ✅                    | ❌ `7za`                                       | ❌                                         |
-| `.zip` (including zip64)                                         | ✅                    | ✅                                             | ✅                                         |
+| `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                    | ✅                                             | ✅                                         |
 | `.zip.001`                                                       | ✅                    | ❌ `7za`                                       | ❌                                         |
 | `.zipx`                                                          | ✅                    | ❌ `7za`                                       | ❌                                         |
 
