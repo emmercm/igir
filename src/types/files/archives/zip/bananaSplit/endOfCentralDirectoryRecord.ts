@@ -11,7 +11,6 @@ export interface IEndOfCentralDirectoryRecord {
   centralDirectoryOffset: number;
   comment: string;
   // Zip64
-  isZip64: boolean;
   versionMadeBy?: number;
   versionNeeded?: number;
 }
@@ -25,15 +24,11 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
 
   // Size with the signature, and without variable length fields at the end
   private static readonly CENTRAL_DIRECTORY_END_SIZE = 22;
-  private static readonly CENTRAL_DIRECTORY_END_SIZE_ZIP64 = 56;
 
-  private static readonly BACKWARD_CHUNK_SIZE: number = Math.max(
-    1024,
-    // End of central directory record, minus the comment
-    this.CENTRAL_DIRECTORY_END_SIZE,
-    this.CENTRAL_DIRECTORY_END_SIZE_ZIP64,
-  );
+  // Maximum size of the archive comment (~64KiB)
+  private static readonly BACKWARD_CHUNK_SIZE: number = 0xff_ff;
 
+  readonly _isZip64: boolean;
   readonly centralDirectoryDiskRecordsCount: number;
   readonly centralDirectoryDiskStart: number;
   readonly centralDirectoryOffset: number;
@@ -41,11 +36,11 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
   readonly centralDirectoryTotalRecordsCount: number;
   readonly comment: string;
   readonly diskNumber: number;
-  readonly isZip64: boolean;
   readonly versionMadeBy?: number;
   readonly versionNeeded?: number;
 
-  private constructor(props: IEndOfCentralDirectoryRecord) {
+  private constructor(isZip64: boolean, props: IEndOfCentralDirectoryRecord) {
+    this._isZip64 = isZip64;
     this.centralDirectoryDiskRecordsCount = props.centralDirectoryDiskRecordsCount;
     this.centralDirectoryDiskStart = props.centralDirectoryDiskStart;
     this.centralDirectoryOffset = props.centralDirectoryOffset;
@@ -53,7 +48,6 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
     this.centralDirectoryTotalRecordsCount = props.centralDirectoryTotalRecordsCount;
     this.comment = props.comment;
     this.diskNumber = props.diskNumber;
-    this.isZip64 = props.isZip64;
     this.versionMadeBy = props.versionMadeBy;
     this.versionNeeded = props.versionNeeded;
   }
@@ -67,10 +61,12 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
 
     // Find where the start position of the EOCD
     while (filePosition >= 0) {
-      await fileHandle.read({ buffer, position: filePosition });
+      const readResult = await fileHandle.read({ buffer, position: filePosition });
 
       // Look for zip64 EOCD
-      const eocdPositionZip64 = buffer.lastIndexOf(this.CENTRAL_DIRECTORY_END_SIGNATURE_ZIP64);
+      const eocdPositionZip64 = buffer
+        .subarray(0, readResult.bytesRead)
+        .lastIndexOf(this.CENTRAL_DIRECTORY_END_SIGNATURE_ZIP64);
       if (eocdPositionZip64 !== -1) {
         return this.readEndOfCentralDirectoryRecordZip64(
           fileHandle,
@@ -79,7 +75,9 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
       }
 
       // Look for zip EOCD
-      const eocdPosition = buffer.lastIndexOf(this.CENTRAL_DIRECTORY_END_SIGNATURE);
+      const eocdPosition = buffer
+        .subarray(0, readResult.bytesRead)
+        .lastIndexOf(this.CENTRAL_DIRECTORY_END_SIGNATURE);
       if (eocdPosition !== -1) {
         return this.readEndOfCentralDirectoryRecordZip(fileHandle, filePosition + eocdPosition);
       }
@@ -102,7 +100,6 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
       throw new Error('bad end of central directory record position');
     }
 
-    const isZip64 = false;
     const diskNumber = buffer.readUInt16LE(4);
     const centralDirectoryDiskStart = buffer.readUInt16LE(6);
     const centralDirectoryDiskRecordsCount = buffer.readUInt16LE(8);
@@ -134,8 +131,7 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
     }
     const comment = CP437Decoder.decode(commentBuffer);
 
-    return new EndOfCentralDirectoryRecord({
-      isZip64,
+    return new EndOfCentralDirectoryRecord(false, {
       diskNumber,
       centralDirectoryDiskStart,
       centralDirectoryDiskRecordsCount,
@@ -157,8 +153,7 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
 
     // Read the EOCD record
     await fileHandle.read({ buffer, position: eocdPosition + 12 });
-    return new EndOfCentralDirectoryRecord({
-      isZip64: true,
+    return new EndOfCentralDirectoryRecord(true, {
       versionMadeBy: buffer.readUInt16LE(0),
       versionNeeded: buffer.readUInt16LE(2),
       diskNumber: buffer.readUInt32LE(4),
@@ -169,5 +164,9 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
       centralDirectoryOffset: Number(buffer.readBigUInt64LE(36)),
       comment: CP437Decoder.decode(buffer.subarray(44)),
     });
+  }
+
+  isZip64(): boolean {
+    return this._isZip64;
   }
 }

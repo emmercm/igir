@@ -1,3 +1,6 @@
+/**
+ * @see https://en.wikipedia.org/wiki/Code_page_437
+ */
 export default class CP437Decoder {
   private static readonly DECODER_TABLE = [
     '\u0000',

@@ -1,5 +1,9 @@
 import stream, { TransformCallback } from 'node:stream';
 
+/**
+ * @see https://en.wikipedia.org/wiki/Zip_bomb
+ * @see https://www.usenix.org/system/files/woot19-paper_fifield_0.pdf
+ */
 export default class ZipBombProtector extends stream.Transform {
   private readonly expectedBytes: number;
   private readBytes = 0;

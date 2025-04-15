@@ -77,6 +77,9 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
     });
   }
 
+  /**
+   * Return this file's compressed/raw stream.
+   */
   compressedStream(): stream.Readable {
     if (this.compressedSize === 0) {
       // There's no need to open the file, it will be an empty stream
@@ -89,6 +92,9 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
     });
   }
 
+  /**
+   * Return this file's uncompressed/decompressed stream.
+   */
   uncompressedStream(): stream.Readable {
     switch (this.compressionMethod) {
       case CompressionMethod.STORE: {
@@ -118,7 +124,11 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
     }
   }
 
-  static pipeline(
+  /**
+   * {@link stream.pipeline} returns a {@link stream.Writable} which doesn't let us pipe through
+   * more steps, so use an intermediate {@link stream.PassThrough} to allow for further piping.
+   */
+  private static pipeline(
     inputStream: stream.Readable,
     transformOne: stream.Transform,
     transformTwo: stream.Transform,

@@ -31,7 +31,7 @@ export default class Zip extends Archive {
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const archive = new BananaSplit(this.getFilePath());
-    const entries = await archive.entries();
+    const entries = await archive.centralDirectoryFileHeaders();
 
     return async.mapLimit(
       entries.filter((entry) => !entry.isDirectory()),
@@ -91,7 +91,7 @@ export default class Zip extends Archive {
     }
 
     const archive = new BananaSplit(this.getFilePath());
-    const entries = await archive.entries();
+    const entries = await archive.centralDirectoryFileHeaders();
     const entry = entries.find(
       (entryFile) =>
         entryFile.fileName.replaceAll(/[\\/]/g, '/') === entryPath.replaceAll(/[\\/]/g, '/'),

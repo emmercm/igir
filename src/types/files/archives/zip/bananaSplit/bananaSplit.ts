@@ -23,7 +23,10 @@ export default class BananaSplit {
     this.zipFilePath = filePath;
   }
 
-  async entries(): Promise<CentralDirectoryFileHeader[]> {
+  /**
+   * Return all central directory file headers.
+   */
+  async centralDirectoryFileHeaders(): Promise<CentralDirectoryFileHeader[]> {
     const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {
       const eocd = await this.endOfCentralDirectoryRecordFromFileHandle(fileHandle);
@@ -59,6 +62,9 @@ export default class BananaSplit {
     return buffer;
   }
 
+  /**
+   * Return the end of central directory record.
+   */
   async endOfCentralDirectoryRecord(): Promise<EndOfCentralDirectoryRecord> {
     const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {

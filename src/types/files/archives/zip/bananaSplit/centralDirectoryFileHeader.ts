@@ -78,9 +78,12 @@ export default class CentralDirectoryFileHeader
     let position = endOfCentralDirectoryRecord.centralDirectoryOffset;
     for (let i = 0; i < endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount; i += 1) {
       await fileHandle.read({ buffer: fixedLengthBuffer, position });
-      if (!fixedLengthBuffer.subarray(0, 4).equals(this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)) {
-        // Got to the end of the central directory
-        break;
+
+      const signature = fixedLengthBuffer.subarray(0, 4);
+      if (!signature.equals(this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)) {
+        throw new Error(
+          `invalid signature central directory file header signature for file ${i + 1}/${endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount}: 0x${signature.toString('hex')}`,
+        );
       }
 
       const fileRecord = await FileRecord.fileRecordFromFileHandle(
@@ -113,6 +116,9 @@ export default class CentralDirectoryFileHeader
     return fileHeaders;
   }
 
+  /**
+   * Return the local file header associated with this central directory file header.
+   */
   async localFileHeader(): Promise<LocalFileHeader> {
     if (this._localFileHeader !== undefined) {
       return this._localFileHeader;
@@ -127,11 +133,17 @@ export default class CentralDirectoryFileHeader
     }
   }
 
+  /**
+   * Return this file's compressed/raw stream.
+   */
   async compressedStream(): Promise<stream.Readable> {
     const localFileHeader = await this.localFileHeader();
     return localFileHeader.compressedStream();
   }
 
+  /**
+   * Return this file's uncompressed/decompressed stream.
+   */
   async uncompressedStream(): Promise<stream.Readable> {
     const localFileHeader = await this.localFileHeader();
     return localFileHeader.uncompressedStream();

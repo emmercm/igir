@@ -16,7 +16,7 @@ describe('entries', () => {
   const nonEmptyFixtures = fixtures.filter((filePath) => !emptyFixtures.includes(filePath));
 
   test.each(emptyFixtures)('empty: %s', async (filePath) => {
-    const entries = await new BananaSplit(filePath).entries();
+    const entries = await new BananaSplit(filePath).centralDirectoryFileHeaders();
     expect(entries).toHaveLength(0);
   });
 
@@ -466,7 +466,7 @@ describe('entries', () => {
   ]);
 
   test.each(nonEmptyFixtures)('non-empty: %s', async (filePath) => {
-    const entries = await new BananaSplit(filePath).entries();
+    const entries = await new BananaSplit(filePath).centralDirectoryFileHeaders();
     expect(entries.length).toBeGreaterThan(0);
 
     expect(
@@ -508,7 +508,7 @@ describe('entries', () => {
 describe('compressedStream', () => {
   test.each(fixtures)('%s', async (filePath) => {
     const zip = new BananaSplit(filePath);
-    const entries = await zip.entries();
+    const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {
       await FsPoly.mkdir(Temp.getTempDir());
@@ -541,7 +541,7 @@ describe('compressedStream', () => {
 describe('uncompressedStream', () => {
   test.each(fixtures)('%s', async (filePath) => {
     const zip = new BananaSplit(filePath);
-    const entries = await zip.entries();
+    const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {
       await FsPoly.mkdir(Temp.getTempDir());
