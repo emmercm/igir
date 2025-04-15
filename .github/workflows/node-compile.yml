@@ -75,7 +75,7 @@ jobs:
             arch: arm/v7
             build: |
               set -x
-              npm rebuild zstd-napi --build-from-source
+              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform linux --arch arm)
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm/v7
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -93,7 +93,7 @@ jobs:
             arch: arm64/v8
             build: |
               set -x
-              npm rebuild zstd-napi --build-from-source
+              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform linux --arch arm64)
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm64/v8
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
