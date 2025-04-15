@@ -57,7 +57,7 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
   ): Promise<EndOfCentralDirectoryRecord> {
     const fileSize = (await fileHandle.stat()).size;
     let filePosition = Math.max(fileSize - 1 - this.BACKWARD_CHUNK_SIZE, 0);
-    const buffer = Buffer.alloc(Math.min(this.BACKWARD_CHUNK_SIZE, fileSize));
+    const buffer = Buffer.allocUnsafe(Math.min(this.BACKWARD_CHUNK_SIZE, fileSize));
 
     // Find where the start position of the EOCD
     while (filePosition >= 0) {
