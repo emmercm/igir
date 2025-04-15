@@ -58,6 +58,7 @@ jobs:
             arch: amd64
             build: |
               set -x
+              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=amd64
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -75,7 +76,7 @@ jobs:
             arch: arm/v7
             build: |
               set -x
-              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform linux --arch arm)
+              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm/v7
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -93,7 +94,7 @@ jobs:
             arch: arm64/v8
             build: |
               set -x
-              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform linux --arch arm64)
+              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               DOCKER_ARCH=arm64/v8
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
@@ -110,6 +111,7 @@ jobs:
           - os: macos-13
             build: |
               set -x
+              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
@@ -125,6 +127,7 @@ jobs:
           - os: macos-15
             build: |
               set -x
+              (cd node_modules/zstd-napi && prebuild-install --runtime napi --platform "$(node --print 'process.platform')" --arch "$(node --print 'process.arch')")
               NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
