@@ -64,7 +64,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || ../.bin/prebuild-install --runtime napi --build-from-source) && npm run package -- . igir && ./igir --help"
+                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || npm install node-gyp node-addon-api && node_modules/.bin/node-gyp rebuild) && npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -81,7 +81,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || ../.bin/prebuild-install --runtime napi --build-from-source) && npm run package -- . igir && ./igir --help"
+                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || npm install node-gyp node-addon-api && node_modules/.bin/node-gyp rebuild) && npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -98,7 +98,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
               docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
                 "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || ../.bin/prebuild-install --runtime napi --build-from-source) && npm run package -- . igir && ./igir --help"
+                "(cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || npm install node-gyp node-addon-api && node_modules/.bin/node-gyp rebuild) && npm run package -- . igir && ./igir --help"
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
               {
                 echo '```text'
@@ -112,7 +112,7 @@ jobs:
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || ../.bin/prebuild-install --runtime napi --build-from-source)
+              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || npm install node-gyp node-addon-api && node_modules/.bin/node-gyp rebuild)
               npm run package -- . igir
               ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
@@ -128,7 +128,7 @@ jobs:
               NODE_ARCH=$(node --print 'process.arch')
               BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || ../.bin/prebuild-install --runtime napi --build-from-source)
+              (cd node_modules/zstd-napi && ../.bin/prebuild-install --runtime napi || npm install node-gyp node-addon-api && node_modules/.bin/node-gyp rebuild)
               npm run package -- . igir
               ./igir --help
               tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
