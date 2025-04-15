@@ -50,6 +50,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: node-compile (${{ matrix.os }} ${{ matrix.arch }})
     strategy:
+      fail-fast: false
       matrix:
         include:
           # docker manifest inspect node:<version> | jq '.manifests[].platform'
