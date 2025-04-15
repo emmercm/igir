@@ -448,19 +448,35 @@ describe('entries', () => {
       [[36, 8, 36, new Date('2012-08-10T14:33:32.000').toISOString(), '69ffe77e', 'README', '']],
     ],
     [
-      '1kb-zstd1.5.7-level19.zip',
+      path.join('zstd', '1kb-zstd1.5.5-level16.zip'),
       [[1369, 93, 1079, '2025-04-15T03:10:54.000Z', '1b4fea72', '1kb', '']],
     ],
     [
-      '2kb-zstd1.5.7-level20.zip',
+      path.join('zstd', '1kb-zstd1.5.7-level19.zip'),
+      [[1369, 93, 1079, '2025-04-15T03:10:54.000Z', '1b4fea72', '1kb', '']],
+    ],
+    [
+      path.join('zstd', '2kb-zstd1.5.5-level17.zip'),
       [[2733, 93, 2099, '2025-04-15T03:11:00.000Z', 'd16564f3', '2kb', '']],
     ],
     [
-      '3kb-zstd1.5.7-level21.zip',
+      path.join('zstd', '2kb-zstd1.5.7-level20.zip'),
+      [[2733, 93, 2099, '2025-04-15T03:11:00.000Z', 'd16564f3', '2kb', '']],
+    ],
+    [
+      path.join('zstd', '3kb-zstd1.5.5-level18.zip'),
       [[4097, 93, 3124, '2025-04-15T03:13:41.000Z', 'e674ff24', '3kb', '']],
     ],
     [
-      '4kb-zstd1.5.7-level22.zip',
+      path.join('zstd', '3kb-zstd1.5.7-level21.zip'),
+      [[4097, 93, 3124, '2025-04-15T03:13:41.000Z', 'e674ff24', '3kb', '']],
+    ],
+    [
+      path.join('zstd', '4kb-zstd1.5.5-level19.zip'),
+      [[5465, 93, 4153, '2025-04-15T03:13:49.000Z', '2e638652', '4kb', '']],
+    ],
+    [
+      path.join('zstd', '4kb-zstd1.5.7-level22.zip'),
       [[5465, 93, 4153, '2025-04-15T03:13:49.000Z', '2e638652', '4kb', '']],
     ],
   ]);
