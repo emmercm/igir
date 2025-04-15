@@ -82,7 +82,7 @@ export default class EndOfCentralDirectoryRecord implements IEndOfCentralDirecto
         return this.readEndOfCentralDirectoryRecordZip(fileHandle, filePosition + eocdPosition);
       }
 
-      filePosition -= this.BACKWARD_CHUNK_SIZE;
+      filePosition -= readResult.bytesRead;
     }
 
     throw new Error('could not find end of central directory record');
