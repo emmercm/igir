@@ -139,6 +139,7 @@ jobs:
               } >> "${GITHUB_STEP_SUMMARY}"
           - os: windows-latest
             build: |
+              Set-PSDebug -Trace 1
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
               $NODE_ARCH=$(node --print 'process.arch')
               $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
@@ -155,6 +156,7 @@ jobs:
               echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
           - os: windows-11-arm
             build: |
+              Set-PSDebug -Trace 1
               $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
               $NODE_ARCH=$(node --print 'process.arch')
               $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
@@ -177,7 +179,7 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         uses: docker/setup-qemu-action@v3
       - uses: volta-cli/action@v4
-      - run: npm ci
+      - run: npm ci || Get-Content C:\npm\cache\_logs\*.log
       - run: npm run build
       # Compile and upload
       - run: ${{ matrix.build }}
