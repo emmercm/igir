@@ -79,13 +79,16 @@ jobs:
       # Compile and upload
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
-      - id: package-json
+      - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+        run: |
+          echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+          DOCKER_ARCH=${{ matrix.docker_arch }}
+          echo "DOCKER_ARCH_NORMALIZED=${DOCKER_ARCH/\//}" >> "${GITHUB_OUTPUT}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: addnab/docker-run-action@v3
         with:
-          image: node:${{ steps.package-json.outputs.VOLTA_NODE }}
+          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
@@ -94,8 +97,7 @@ jobs:
           run: |
             set -x
             NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-            DOCKER_ARCH=${{ matrix.docker_arch }}
-            BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH/\//}.tar.gz"
+            BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH_NORMALIZED }}.tar.gz"
             echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
             npm ci
@@ -103,14 +105,14 @@ jobs:
             ./igir --help
             tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
-          #{
-          #  echo '```text'
-          #  ls -alh igir "${BIN_OUTPUT}"
-          #  echo '```'
-          #  echo '```text'
-          #  ./igir --help
-          #  echo '```'
-          #} >> "${GITHUB_STEP_SUMMARY}"
+            {
+              echo '```text'
+              ls -alh igir "${BIN_OUTPUT}"
+              echo '```'
+              echo '```text'
+              ./igir --help
+              echo '```'
+            } >> "${GITHUB_STEP_SUMMARY}"
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
