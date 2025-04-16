@@ -121,7 +121,7 @@ jobs:
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
           # Install dependencies...
-          if ($NODE_ARCH -eq "arm64") {
+          if ($NODE_ARCH -notin @("x64")) {
             # ...but fix zstd-napi not compiling correctly out of the box
             npm ci --ignore-scripts
             Push-Location
@@ -136,7 +136,7 @@ jobs:
           # ...and use a version of 7zip-bin that includes win/arm64
           npm install 7zip-bin@">=5.2.0"
           # ...and build a caxa stub for win/arm64
-          if ($NODE_ARCH -eq "arm64") {
+          if ($NODE_ARCH -notin @("x64")) {
             Push-Location
             cd node_modules\caxa
             npm run prepare:stubs
