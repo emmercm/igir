@@ -182,10 +182,13 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
               npm ci --ignore-scripts
+              Push-Location
               cd node_modules\zstd-napi
               Remove-Item deps\zstd\lib\decompress\huf_decompress_amd64.S
-              ..\.bin\node-gyp rebuild
+              npm install node-gyp
+              node_modules\.bin\node-gyp rebuild
               & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\arm64\MSBuild.exe" "build\binding.sln" "/nologo" "/p:Configuration=Release;Platform=ARM64"
+              Pop-Location
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
 
