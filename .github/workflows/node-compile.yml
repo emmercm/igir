@@ -181,13 +181,13 @@ jobs:
               $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
+              # Install dependencies, but fix zstd-napi not compiling correctly out of the box
               npm ci --ignore-scripts
               Push-Location
               cd node_modules\zstd-napi
               Set-Content -Path deps\zstd.gyp -Value (Get-Content -Path deps\zstd.gyp | Select-String -Pattern 'huf_decompress_amd64' -NotMatch)
               npm install node-gyp
               node_modules\.bin\node-gyp rebuild
-              & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\arm64\MSBuild.exe" "build\binding.sln" "/nologo" "/p:Configuration=Release;Platform=ARM64"
               Pop-Location
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
