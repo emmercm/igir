@@ -146,7 +146,7 @@ jobs:
             npm install
             node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows "GOARCH=${{ matrix.go_arch }}" go build -o "stubs\stub--win32--${NODE_ARCH}" stubs\stub.go
             $stubSeparatorBytes = [System.Text.Encoding]::ASCII.GetBytes("`nCAXACAXACAXA`n")
-            [System.IO.File]::Open("stubs\stub--win32--${NODE_ARCH}", 'Append', 'Write').Write($stubSeparatorBytes, 0, $stubSeparatorBytes.Length)
+            [System.IO.File]::Open([System.IO.Path]::GetFullPath("stubs\stub--win32--${NODE_ARCH}", $PWD), 'Append', 'Write').Write($stubSeparatorBytes, 0, $stubSeparatorBytes.Length)
             Pop-Location
           }
 
