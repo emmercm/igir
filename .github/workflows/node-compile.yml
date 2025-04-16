@@ -48,24 +48,24 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}
-    name: node-compile (${{ matrix.os }} ${{ matrix.arch }})
+    name: node-compile (${{ matrix.os }} ${{ matrix.docker_arch || matrix.go_arch }})
     strategy:
       fail-fast: false
       matrix:
         include:
           # docker manifest inspect node:<version> | jq '.manifests[].platform'
           - os: ubuntu-latest
-            arch: amd64
+            docker_arch: amd64
           - os: ubuntu-latest
-            arch: arm/v7
+            docker_arch: arm/v7
           - os: ubuntu-latest
-            arch: arm64/v8
+            docker_arch: arm64/v8
           - os: macos-13
           - os: macos-15
           - os: windows-latest
-            goarch: amd64
+            go_arch: amd64
           - os: windows-11-arm
-            goarch: arm64
+            go_arch: arm64
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
         run: |
           set -x
           NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-          DOCKER_ARCH=${{ matrix.arch }}
+          DOCKER_ARCH=${{ matrix.docker_arch }}
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
@@ -136,17 +136,17 @@ jobs:
             Pop-Location
           }
           if ($NODE_ARCH -notin @("ia32", "x64")) {
-            # ...and use a version of 7zip-bin that includes win/arm64
+            # ...and use a version of 7zip-bin that includes this arch
             npm install 7zip-bin@">=5.2.0"
           }
           if ($NODE_ARCH -notin @("x64")) {
-            # ...and build a caxa stub
+            # ...and build the missing caxa stub
             Push-Location
             cd node_modules\caxa
             npm install
-            node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows "GOARCH=${{ matrix.goarch }}" go build -o "stubs\stub--win32--${NODE_ARCH}" stubs\stub.go
-            node_modules\.bin\shx echo >> "stubs\stub--win32--${NODE_ARCH}"
-            node_modules\.bin\shx echo CAXACAXACAXA >> "stubs\stub--win32--${NODE_ARCH}"
+            node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows "GOARCH=${{ matrix.go_arch }}" go build -o "stubs\stub--win32--${NODE_ARCH}" stubs\stub.go
+            $stubSeparatorBytes = [System.Text.Encoding]::ASCII.GetBytes("`nCAXACAXACAXA`n")
+            [System.IO.File]::Open("stubs\stub--win32--${NODE_ARCH}", 'Append', 'Write').Write($stubSeparatorBytes, 0, $stubSeparatorBytes.Length)
             Pop-Location
           }
 
