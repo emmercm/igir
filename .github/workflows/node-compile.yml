@@ -153,6 +153,22 @@ jobs:
               echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
               .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
               echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
+          - os: windows-11-arm
+            build: |
+              $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
+              $NODE_ARCH=$(node --print 'process.arch')
+              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
+              echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
+              npm run package -- . igir.exe
+              Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
+              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
+              Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
+              Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "" >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
+              .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
+              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
     steps:
       # Setup and install
       - uses: actions/checkout@v4
