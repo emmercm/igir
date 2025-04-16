@@ -184,6 +184,7 @@ jobs:
               npm ci --ignore-scripts
               Push-Location
               cd node_modules\zstd-napi
+              Get-Content deps\zstd.gyp | Where-Object {$_ -notmatch 'not'} | Set-Content deps\zstd.gyp
               Remove-Item deps\zstd\lib\decompress\huf_decompress_amd64.S
               npm install node-gyp
               node_modules\.bin\node-gyp rebuild
