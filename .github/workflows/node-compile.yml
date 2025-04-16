@@ -77,7 +77,7 @@ jobs:
         run: |
           set -x
           NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-          DOCKER_ARCH=${{ matrix.arch }}
+          DOCKER_ARCH=${{ matrix.arch || 'amd64' }}
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
@@ -128,12 +128,9 @@ jobs:
           npm install node-gyp
           node_modules\.bin\node-gyp rebuild
           Pop-Location
-          # ...and fix 7zip-bin v5.2.0
-          Push-Location
-          cd node_modules\7zip-min
+          # ...and use a version of 7zip-bin that includes win/arm64
           npm install 7zip-bin
-          Pop-Location
-          Get-ChildItem -Path node_modules\7zip-bin -Recurse
+
           npm run package -- . igir.exe
           Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
 
