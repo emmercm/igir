@@ -63,7 +63,9 @@ jobs:
           - os: macos-13
           - os: macos-15
           - os: windows-latest
+            goarch: amd64
           - os: windows-11-arm
+            goarch: arm64
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -142,7 +144,9 @@ jobs:
             Push-Location
             cd node_modules\caxa
             npm install
-            node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o stubs/stub--win32--arm64 stubs/stub.go
+            node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows "GOARCH=${{ matrix.goarch }}" go build -o "stubs\stub--win32--${NODE_ARCH}" stubs\stub.go
+            node_modules\.bin\shx echo >> "stubs\stub--win32--${NODE_ARCH}"
+            node_modules\.bin\shx echo CAXACAXACAXA >> "stubs\stub--win32--${NODE_ARCH}"
             Pop-Location
           }
 
