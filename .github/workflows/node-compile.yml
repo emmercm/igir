@@ -133,6 +133,11 @@ jobs:
           )
           # ...and use a version of 7zip-bin that includes win/arm64
           npm install 7zip-bin@">=5.2.0"
+          # ...and build a caxa stub for win/arm64
+          Push-Location
+          cd node_modules\caxa
+          npm run prepare:stubs
+          Pop-Location
 
           npm run package -- . igir.exe
           Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
