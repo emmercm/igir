@@ -56,151 +56,13 @@ jobs:
           # docker manifest inspect node:<version> | jq '.manifests[].platform'
           - os: ubuntu-latest
             arch: amd64
-            build: |
-              set -x
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              DOCKER_ARCH=amd64
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-
-              docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm ci && npm run package -- . igir && ./igir --help"
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-
-              {
-                echo '```text'
-                ls -alh igir "${BIN_OUTPUT}"
-                echo '```'
-              } >> "${GITHUB_STEP_SUMMARY}"
-
           - os: ubuntu-latest
             arch: arm/v7
-            build: |
-              set -x
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              DOCKER_ARCH=arm/v7
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-
-              docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm ci && npm run package -- . igir && ./igir --help"
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-
-              {
-                echo '```text'
-                ls -alh igir "${BIN_OUTPUT}"
-                echo '```'
-              } >> "${GITHUB_STEP_SUMMARY}"
-
           - os: ubuntu-latest
-            arch: arm64/v8
-            build: |
-              set -x
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              DOCKER_ARCH=arm64/v8
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-
-              docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
-                "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
-                "npm ci && npm run package -- . igir && ./igir --help"
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-
-              {
-                echo '```text'
-                ls -alh igir "${BIN_OUTPUT}"
-                echo '```'
-              } >> "${GITHUB_STEP_SUMMARY}"
-
           - os: macos-13
-            build: |
-              set -x
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=$(node --print 'process.arch')
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-
-              npm ci
-              npm run package -- . igir
-              ./igir --help
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-
-              {
-                echo '```text'
-                ls -alh igir "${BIN_OUTPUT}"
-                echo '```'
-              } >> "${GITHUB_STEP_SUMMARY}"
-
           - os: macos-15
-            build: |
-              set -x
-              NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-              NODE_ARCH=$(node --print 'process.arch')
-              BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
-
-              npm ci
-              npm run package -- . igir
-              ./igir --help
-              tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
-
-              {
-                echo '```text'
-                ls -alh igir "${BIN_OUTPUT}"
-                echo '```'
-              } >> "${GITHUB_STEP_SUMMARY}"
-
           - os: windows-latest
-            build: |
-              Set-PSDebug -Trace 1
-              $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
-              $NODE_ARCH=$(node --print 'process.arch')
-              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
-
-              npm ci
-              npm run package -- . igir.exe
-              Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-
-              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
-              Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
-              Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "" >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
-              .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
-
           - os: windows-11-arm
-            build: |
-              Set-PSDebug -Trace 1
-              $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
-              $NODE_ARCH=$(node --print 'process.arch')
-              $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
-              echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
-
-              # Install dependencies, but fix zstd-napi not compiling correctly out of the box
-              npm ci --ignore-scripts
-              Push-Location
-              cd node_modules\zstd-napi
-              Set-Content -Path deps\zstd.gyp -Value (Get-Content -Path deps\zstd.gyp | Select-String -Pattern 'huf_decompress_amd64' -NotMatch)
-              npm install node-gyp
-              node_modules\.bin\node-gyp rebuild
-              Pop-Location
-              Get-ChildItem -Path node_modules\7zip-bin -Recurse
-              npm run package -- . igir.exe
-              Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
-
-              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
-              Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
-              Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "" >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
-              .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
-              echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -209,8 +71,76 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         uses: docker/setup-qemu-action@v3
       - uses: volta-cli/action@v4
+
       # Compile and upload
-      - run: ${{ matrix.build }}
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          set -x
+          NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+          DOCKER_ARCH=${{ matrix.arch }}
+          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+
+          docker run --rm --platform "linux/${DOCKER_ARCH}" --volume "$(pwd):/app" --workdir "/app" \
+            "node:$(jq --raw-output '.volta.node' package.json)" sh -c \
+            "npm ci && npm run package -- . igir && ./igir --help"
+          tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+
+          {
+            echo '```text'
+            ls -alh igir "${BIN_OUTPUT}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - if: ${{ startsWith(matrix.os, 'macos') }}
+        run: |
+          set -x
+          NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+          NODE_ARCH=$(node --print 'process.arch')
+          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+
+          npm ci
+          npm run package -- . igir
+          ./igir --help
+          tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+
+          {
+            echo '```text'
+            ls -alh igir "${BIN_OUTPUT}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - if: ${{ startsWith(matrix.os, 'windows') }}
+        run: |
+          Set-PSDebug -Trace 1
+          $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
+          $NODE_ARCH=$(node --print 'process.arch')
+          $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
+
+          # Install dependencies, but fix zstd-napi not compiling correctly out of the box
+          npm ci --ignore-scripts
+          Push-Location
+          cd node_modules\zstd-napi
+          Set-Content -Path deps\zstd.gyp -Value (Get-Content -Path deps\zstd.gyp | Select-String -Pattern 'huf_decompress_amd64' -NotMatch)
+          npm install node-gyp
+          node_modules\.bin\node-gyp rebuild
+          Pop-Location
+          Get-ChildItem -Path node_modules\7zip-bin -Recurse
+          npm run package -- . igir.exe
+          Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
+
+          echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
+          Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
+          Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
+          echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
+          echo "" >> "${env:GITHUB_STEP_SUMMARY}"
+          echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
+          .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
+          echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
+
+
       - if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
