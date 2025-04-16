@@ -55,17 +55,20 @@ jobs:
         include:
           # docker manifest inspect node:<version> | jq '.manifests[].platform'
           - os: ubuntu-latest
-            docker_arch: amd64
+            docker_arch: linux/amd64
           - os: ubuntu-latest
-            docker_arch: arm/v7
+            docker_arch: linux/arm/v7
           - os: ubuntu-latest
-            docker_arch: arm64/v8
+            docker_arch: linux/arm64/v8
+
           - os: macos-13
           - os: macos-15
+
           - os: windows-latest
             go_arch: amd64
           - os: windows-11-arm
             go_arch: arm64
+
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -76,10 +79,13 @@ jobs:
       # Compile and upload
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
+      - id: package-json
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: addnab/docker-run-action@v3
         with:
-          image: ${{ matrix.docker_image || 'ubuntu:latest' }}
+          image: node:${{ steps.package-json.outputs.VOLTA_NODE }}
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
@@ -171,7 +177,6 @@ jobs:
           echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
           .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
           echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
-
 
       - if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
