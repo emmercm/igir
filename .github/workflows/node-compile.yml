@@ -86,7 +86,7 @@ jobs:
           DOCKER_ARCH=${{ matrix.docker_arch }}
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
           DOCKER_ARCH=${DOCKER_ARCH//\//}
-          echo "DOCKER_ARCH=${DOCKER_ARCH/\//}" >> "${GITHUB_OUTPUT}"
+          echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: addnab/docker-run-action@v3
         with:
@@ -114,9 +114,6 @@ jobs:
               echo '```text'
               ls -alh igir "${BIN_OUTPUT}"
               echo '```'
-              echo '```text'
-              ./igir --help
-              echo '```'
             } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
@@ -135,9 +132,6 @@ jobs:
           {
             echo '```text'
             ls -alh igir "${BIN_OUTPUT}"
-            echo '```'
-            echo '```text'
-            ./igir --help
             echo '```'
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -185,10 +179,6 @@ jobs:
           echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
           Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
           Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
-          echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
-          echo "" >> "${env:GITHUB_STEP_SUMMARY}"
-          echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
-          .\igir.exe --help >> "${env:GITHUB_STEP_SUMMARY}"
           echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
 
       - if: ${{ github.event_name != 'pull_request' }}
