@@ -189,6 +189,7 @@ jobs:
               npm install node-gyp
               node_modules\.bin\node-gyp rebuild
               Pop-Location
+              Get-ChildItem -Path node_modules\7zip-bin -Recurse
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
 
