@@ -95,7 +95,13 @@ jobs:
             --volume ${{ github.workspace }}:/build
             --workdir /build
           run: |
+            # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
+            set -eo pipefail
+
             set -x
+            echo $GITHUB_ENV
+            echo $GITHUB_STEP_SUMMARY
+
             NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
             BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH_NORMALIZED }}.tar.gz"
             echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
