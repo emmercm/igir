@@ -184,7 +184,7 @@ jobs:
               npm ci --ignore-scripts
               Push-Location
               cd node_modules\zstd-napi
-              Get-Content deps\zstd.gyp | Where-Object {$_ -notmatch 'huf_decompress_amd64'} | Set-Content deps\zstd.gyp
+              Set-Content -Path deps\zstd.gyp -Value (Get-Content -Path deps\zstd.gyp | Select-String -Pattern 'huf_decompress_amd64' -NotMatch)
               npm install node-gyp
               node_modules\.bin\node-gyp rebuild
               & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\arm64\MSBuild.exe" "build\binding.sln" "/nologo" "/p:Configuration=Release;Platform=ARM64"
