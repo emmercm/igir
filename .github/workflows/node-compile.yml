@@ -142,7 +142,7 @@ jobs:
             Push-Location
             cd node_modules\caxa
             npm install
-            npm run prepare:stubs
+            node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o stubs/stub--win32--arm64 stubs/stub.go
             Pop-Location
           }
 
