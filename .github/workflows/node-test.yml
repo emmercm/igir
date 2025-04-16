@@ -154,10 +154,11 @@ jobs:
       - run: npm ci
       # Test the packaging
       - run: |
+          set -x
           npm pack
           tar -xvzf igir-*.tgz
           cd package
-          npm install --ignore-scripts
+          npm install
           ./dist/index.js --help
           cd ..
           rm -rf package

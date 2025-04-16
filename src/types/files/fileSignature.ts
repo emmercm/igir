@@ -77,6 +77,7 @@ export default class FileSignature {
     zst: new FileSignature('.zst', [{ value: Buffer.from('28B52FFD', 'hex') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
+    // Note: this file might be some other .z## number, it just ISN'T the final zip file
     z01: new FileSignature('.z01', [{ value: Buffer.from('PK\x07\x08') }]),
 
     // ********** ROMs - GENERAL **********

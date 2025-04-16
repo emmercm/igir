@@ -16,10 +16,10 @@ Igir supports most common archive formats:
 | `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                       | ✅                                         |
 | `.rar`                                                           | ✅                    | ✅                                             | ❌                                         |
 | `.rvz`, `.wia`                                                   | ❌                    | ❌ `dolphin-tool`                              | ⚠️ CRC32, MD5, and SHA1 only              |
-| `.tar`                                                           | ❌                    | ✅                                             | ✅ ≤64MiB                                  |
-| `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅ ≤64MiB                                  |
+| `.tar`                                                           | ❌                    | ✅                                             | ✅                                         |
+| `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅                                         |
 | `.z01`                                                           | ✅                    | ❌ `7za`                                       | ❌                                         |
-| `.zip` (including zip64)                                         | ✅                    | ✅                                             | ✅ ≤64MiB                                  |
+| `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                    | ✅                                             | ✅                                         |
 | `.zip.001`                                                       | ✅                    | ❌ `7za`                                       | ❌                                         |
 | `.zipx`                                                          | ✅                    | ❌ `7za`                                       | ❌                                         |
 

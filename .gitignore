@@ -201,3 +201,4 @@ site/
 !test/fixtures/patches/*
 !test/fixtures/roms/*
 !test/fixtures/roms/*/*
+!test/**/bananaSplit/**/*.zip
