@@ -90,7 +90,6 @@ jobs:
           options: |
             --platform ${{ matrix.docker_arch }}
             --volume ${{ github.workspace }}:/build
-            --volume ${{ env.GITHUB_STEP_SUMMARY }}:${{ env.GITHUB_STEP_SUMMARY }}
             --workdir /build
           run: |
             set -x
@@ -104,11 +103,11 @@ jobs:
             ./igir --help
             tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
-            {
-              echo '```text'
-              ls -alh igir "${BIN_OUTPUT}"
-              echo '```'
-            } >> "${GITHUB_STEP_SUMMARY}"
+            #{
+            #  echo '```text'
+            #  ls -alh igir "${BIN_OUTPUT}"
+            #  echo '```'
+            #} >> "${GITHUB_STEP_SUMMARY}"
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
