@@ -137,6 +137,7 @@ jobs:
 
       - if: ${{ startsWith(matrix.os, 'windows') }}
         run: |
+          # shellcheck disable=all
           Set-PSDebug -Trace 1
           $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
           $NODE_ARCH=$(node --print 'process.arch')
