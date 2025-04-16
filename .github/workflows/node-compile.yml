@@ -121,7 +121,7 @@ jobs:
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
           # Install dependencies...
-          npm ci || (
+          if ($NODE_ARCH -eq "arm64") {
             # ...but fix zstd-napi not compiling correctly out of the box
             npm ci --ignore-scripts
             Push-Location
@@ -130,14 +130,18 @@ jobs:
             npm install node-gyp
             node_modules\.bin\node-gyp rebuild
             Pop-Location
-          )
+          } else {
+            npm ci
+          }
           # ...and use a version of 7zip-bin that includes win/arm64
           npm install 7zip-bin@">=5.2.0"
           # ...and build a caxa stub for win/arm64
-          Push-Location
-          cd node_modules\caxa
-          npm run prepare:stubs
-          Pop-Location
+          if ($NODE_ARCH -eq "arm64") {
+            Push-Location
+            cd node_modules\caxa
+            npm run prepare:stubs
+            Pop-Location
+          }
 
           npm run package -- . igir.exe
           Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
