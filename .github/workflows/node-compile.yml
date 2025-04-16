@@ -95,7 +95,7 @@ jobs:
             set -x
             NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
             DOCKER_ARCH=${{ matrix.docker_arch }}
-            BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${DOCKER_ARCH/\//}.tar.gz"
+            BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH/\//}.tar.gz"
             echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
             npm ci
@@ -103,18 +103,21 @@ jobs:
             ./igir --help
             tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
-            #{
-            #  echo '```text'
-            #  ls -alh igir "${BIN_OUTPUT}"
-            #  echo '```'
-            #} >> "${GITHUB_STEP_SUMMARY}"
+          #{
+          #  echo '```text'
+          #  ls -alh igir "${BIN_OUTPUT}"
+          #  echo '```'
+          #  echo '```text'
+          #  ./igir --help
+          #  echo '```'
+          #} >> "${GITHUB_STEP_SUMMARY}"
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
           set -x
           NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
           NODE_ARCH=$(node --print 'process.arch')
-          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${RUNNER_OS}-${NODE_ARCH}.tar.gz"
+          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${NODE_ARCH}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
           npm ci
@@ -126,6 +129,9 @@ jobs:
             echo '```text'
             ls -alh igir "${BIN_OUTPUT}"
             echo '```'
+            echo '```text'
+            ./igir --help
+            echo '```'
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - if: ${{ startsWith(matrix.os, 'windows') }}
@@ -133,7 +139,7 @@ jobs:
           Set-PSDebug -Trace 1
           $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
           $NODE_ARCH=$(node --print 'process.arch')
-          $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${env:RUNNER_OS}-${NODE_ARCH}.zip"
+          $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${{ runner.os }}-${NODE_ARCH}.zip"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
           # Install dependencies...
