@@ -182,7 +182,7 @@ jobs:
               echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
               npm ci --loglevel verbose
-              "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\arm64\MSBuild.exe" "build\binding.sln" "/nologo" "/p:Configuration=Release;Platform=ARM64"
+              & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\arm64\MSBuild.exe" "build\binding.sln" "/nologo" "/p:Configuration=Release;Platform=ARM64"
               npm run package -- . igir.exe
               Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
 
