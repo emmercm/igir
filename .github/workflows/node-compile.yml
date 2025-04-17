@@ -182,12 +182,12 @@ jobs:
           Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
           echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
 
-      - if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BIN_OUTPUT }}
           path: ${{ env.BIN_OUTPUT }}
           if-no-files-found: error
+          retention-days: 7
 
   release-update:
     if: ${{ github.event_name != 'pull_request' }}
