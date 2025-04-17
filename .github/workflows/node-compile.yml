@@ -115,7 +115,7 @@ jobs:
               echo '```text'
               ls -alh igir "${{ env.BIN_OUTPUT }}"
               echo '```'
-            } >> "${GITHUB_STEP_SUMMARY}"
+            } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
