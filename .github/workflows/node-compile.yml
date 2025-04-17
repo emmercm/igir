@@ -83,10 +83,15 @@ jobs:
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+
           DOCKER_ARCH=${{ matrix.docker_arch }}
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
           DOCKER_ARCH=${DOCKER_ARCH//\//}
           echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
+
+          NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH}.tar.gz"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: addnab/docker-run-action@v3
         with:
@@ -101,10 +106,6 @@ jobs:
             set -eo pipefail
 
             set -x
-            NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
-            BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}.tar.gz"
-            echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV:-/dev/null}"
-
             npm ci
             npm run package -- . igir
             ./igir --help
@@ -114,7 +115,7 @@ jobs:
               echo '```text'
               ls -alh igir "${BIN_OUTPUT}"
               echo '```'
-            } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+            } >> "${GITHUB_STEP_SUMMARY}"
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
