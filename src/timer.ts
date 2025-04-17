@@ -37,7 +37,9 @@ export default class Timer {
    * Cancel all pending timeouts.
    */
   static cancelAll(): void {
-    Timer.TIMERS.forEach((timer) => timer.cancel());
+    Timer.TIMERS.forEach((timer) => {
+      timer.cancel();
+    });
   }
 
   /**

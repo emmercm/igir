@@ -27,7 +27,7 @@ export default [
   // @typescript-eslint
   eslint.configs.recommended,
   ...compat.extends(
-    'plugin:@typescript-eslint/recommended-type-checked',
+    'plugin:@typescript-eslint/strict-type-checked',
     'plugin:@typescript-eslint/stylistic-type-checked',
   ),
   {
@@ -38,6 +38,10 @@ export default [
       },
     },
     rules: {
+      // Conflicts between @typescript-eslint plugins 😡
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+
+      // Personal preferences
       '@typescript-eslint/no-misused-promises': [
         'error',
         {
@@ -139,6 +143,15 @@ export default [
 
       // ***** Classes *****
       '@typescript-eslint/prefer-readonly': 'error',
+      // A lot of utility classes contain private functions that shouldn't be exposed
+      '@typescript-eslint/no-extraneous-class': [
+        'error',
+        {
+          allowStaticOnly: true,
+        },
+      ],
+      // TODO(cemmer)
+      '@typescript-eslint/no-misused-spread': 'off',
 
       // ***** Functions *****
       // Require explicit return types on functions and class methods.
@@ -227,6 +240,15 @@ export default [
       // ***** plugin:jest/recommended *****
       // A lot of test files define their own expect functions
       'jest/expect-expect': 'off',
+    },
+  },
+
+  {
+    // These files have switch cases on enum values, and have defensive
+    // programming in case it was written wrong
+    files: ['src/types/files/archives/**/*.ts', 'src/types/patches/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unnecessary-condition': 'off',
     },
   },
 

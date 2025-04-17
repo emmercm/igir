@@ -145,10 +145,10 @@ export default class DATStatus {
    */
   toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
-      .filter(
-        (type) =>
-          this.allRomTypesToGames.has(type) && this.allRomTypesToGames.get(type)!.length > 0,
-      )
+      .filter((type) => {
+        const games = this.allRomTypesToGames.get(type);
+        return games !== undefined && games.length > 0;
+      })
       .map((type) => {
         const found = this.foundRomTypesToCandidates.get(type) ?? [];
         const all = this.allRomTypesToGames.get(type) ?? [];

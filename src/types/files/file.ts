@@ -328,10 +328,10 @@ export default class File implements FileProps {
       // Create a patched temp file, then copy it without removing its header
       await patch.createPatchedFile(this, tempFile);
       try {
-        return await File.createStreamFromFile(
+        await File.createStreamFromFile(
           tempFile,
           async (stream) =>
-            new Promise((resolve, reject) => {
+            new Promise<void>((resolve, reject) => {
               const writeStream = fs.createWriteStream(destinationPath);
               writeStream.on('close', resolve);
               writeStream.on('error', reject);
@@ -339,6 +339,7 @@ export default class File implements FileProps {
             }),
           start,
         );
+        return;
       } finally {
         await FsPoly.rm(tempFile, { force: true });
       }

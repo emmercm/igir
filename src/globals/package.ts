@@ -20,7 +20,7 @@ function scanUpPathForFile(filePath: string, fileName: string): string | undefin
 }
 
 const PACKAGE_JSON_PATH = path.resolve(
-  scanUpPathForFile(url.fileURLToPath(new URL('.', import.meta.url)), 'package.json')!,
+  scanUpPathForFile(url.fileURLToPath(new URL('.', import.meta.url)), 'package.json') as string,
 );
 const PACKAGE_JSON = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH).toString()) as {
   name: string;
@@ -43,5 +43,5 @@ export default class Package {
 
   static readonly VERSION = PACKAGE_JSON.version;
 
-  static readonly ENGINES_NODE = PACKAGE_JSON.engines?.node ?? '*';
+  static readonly ENGINES_NODE = PACKAGE_JSON.engines.node;
 }

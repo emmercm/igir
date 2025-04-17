@@ -156,7 +156,10 @@ describe('fromObject', () => {
   </machine>
 </mame>`;
     const obj = DATObject.fromXmlString(xml);
-    const dat = MameDAT.fromObject(obj.mame!);
+    if (obj.mame === undefined) {
+      throw new Error('XML missing root <mame> tag');
+    }
+    const dat = MameDAT.fromObject(obj.mame);
 
     expect(dat.getName()).toEqual('0.257 (mame0257-dirty)');
 

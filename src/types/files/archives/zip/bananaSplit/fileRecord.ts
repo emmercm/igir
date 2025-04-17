@@ -125,7 +125,7 @@ export default class FileRecord implements IFileRecord {
 
     const signature = fixedLengthBuffer.subarray(0, expectedSignature.length);
     if (!signature.equals(expectedSignature)) {
-      throw new Error(`invalid signature: 0x${signature.toString('hex')}`);
+      throw new Error(`invalid zip signature: 0x${signature.toString('hex')}`);
     }
 
     const fileNameLength = fixedLengthBuffer.readUInt16LE(fieldOffsets.fileNameLength);

@@ -28,8 +28,10 @@ export default class KeyedMutex {
    */
   async runExclusiveForKey<V>(key: string, runnable: () => V | Promise<V>): Promise<V> {
     const keyMutex = await this.runExclusiveGlobally(() => {
-      if (!this.keyMutexes.has(key)) {
-        this.keyMutexes.set(key, new Mutex());
+      let mutex = this.keyMutexes.get(key);
+      if (mutex === undefined) {
+        mutex = new Mutex();
+        this.keyMutexes.set(key, mutex);
 
         // Expire least recently used keys
         [...this.keyMutexesLru]
@@ -45,7 +47,7 @@ export default class KeyedMutex {
       this.keyMutexesLru.delete(key);
       this.keyMutexesLru = new Set([key, ...this.keyMutexesLru]);
 
-      return this.keyMutexes.get(key)!;
+      return mutex;
     });
 
     return keyMutex.runExclusive(runnable);

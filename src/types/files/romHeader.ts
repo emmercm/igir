@@ -78,8 +78,7 @@ export default class ROMHeader {
     for (const header of headers) {
       if (
         header.headeredFileExtension.toLowerCase() === path.extname(filePath).toLowerCase() ||
-        (header.headerlessFileExtension?.toLowerCase() ?? '') ===
-          path.extname(filePath).toLowerCase()
+        header.headerlessFileExtension.toLowerCase() === path.extname(filePath).toLowerCase()
       ) {
         return header;
       }
@@ -135,7 +134,9 @@ export default class ROMHeader {
 
   @Memoize()
   getName(): string {
-    return Object.keys(ROMHeader.HEADERS).find((name) => ROMHeader.HEADERS[name] === this)!;
+    return Object.keys(ROMHeader.HEADERS).find(
+      (name) => ROMHeader.HEADERS[name] === this,
+    ) as string;
   }
 
   getDataOffsetBytes(): number {
