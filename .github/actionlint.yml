@@ -1,0 +1,5 @@
+paths:
+  .github/workflows/**/*.{yml,yaml}:
+    ignore:
+      # Don't try to detect if a GitHub runner isn't available 😡 actions will fail it's not
+      - 'available labels are'
