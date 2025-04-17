@@ -22,20 +22,20 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   let results: string[] = [];
   filters.forEach((filter) => {
     if (filter.include) {
-      const include = fg
-        .globSync(filter.include.replaceAll('\\', '/'), filter)
-        .map((file) => path.resolve(file));
+      const includeNormalized = filter.include.replaceAll('\\', '/');
+      const include = fg.globSync(includeNormalized, filter).map((file) => path.resolve(file));
       if (include.length === 0) {
-        throw new ExpectedError(`glob pattern '${filter.include}' returned no paths`);
+        throw new ExpectedError(`glob pattern '${includeNormalized}' returned no paths`);
       }
       results = [...results, ...include];
     }
     if (filter.exclude) {
+      const excludeNormalized = filter.exclude.replaceAll('\\', '/');
       const exclude = new Set(
-        fg.globSync(filter.exclude.replaceAll('\\', '/'), filter).map((file) => path.resolve(file)),
+        fg.globSync(excludeNormalized, filter).map((file) => path.resolve(file)),
       );
       if (exclude.size === 0) {
-        throw new ExpectedError(`glob pattern '${filter.exclude}' returned no paths`);
+        throw new ExpectedError(`glob pattern '${excludeNormalized}' returned no paths`);
       }
       results = results.filter((result) => !exclude.has(result));
     }
