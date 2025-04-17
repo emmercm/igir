@@ -100,7 +100,6 @@ jobs:
           options: |
             --platform ${{ matrix.docker_arch }}
             --volume ${{ github.workspace }}:/build
-            --env BIN_OUTPUT
             --workdir /build
           run: |
             # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
@@ -110,11 +109,11 @@ jobs:
             npm ci
             npm run package -- . igir
             ./igir --help
-            tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+            tar cvf - igir | gzip --best > "${{ env.BIN_OUTPUT }}"
 
             {
               echo '```text'
-              ls -alh igir "${BIN_OUTPUT}"
+              ls -alh igir "${{ env.BIN_OUTPUT }}"
               echo '```'
             } >> "${GITHUB_STEP_SUMMARY}"
 
