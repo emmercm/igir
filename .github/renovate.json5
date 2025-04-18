@@ -151,11 +151,9 @@
         groupName: 'dev dependencies',
         matchDepTypes: ['devDependencies'],
         excludePackageNames: [
-          '@types/7zip-min',
           '@types/archiver',
           '@types/async',
           '@types/cli-progress',
-          '@types/figlet',
           '@types/micromatch',
           '@types/semver',
           '@types/tar',
