@@ -570,7 +570,6 @@ export default class Igir {
               }),
               dat,
               candidate.getGame(),
-              undefined,
               romWithFiles.getRom(),
               romWithFiles.getInputFile(),
             ).dir,

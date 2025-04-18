@@ -421,7 +421,7 @@ export default class DATScanner extends Scanner {
         description: game.description,
         isBios:
           cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro' &&
-          cmproDat.clrmamepro?.name?.toLowerCase() === 'system'
+          cmproDat.clrmamepro.name?.toLowerCase() === 'system'
             ? 'yes'
             : 'no',
         isDevice: undefined,
@@ -509,7 +509,9 @@ export default class DATScanner extends Scanner {
         .on('data', (row: SmdbRow) => {
           rows.push(row);
         })
-        .on('end', () => resolve(rows));
+        .on('end', () => {
+          resolve(rows);
+        });
       stream.write(fileContents);
       stream.end();
     });

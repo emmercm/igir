@@ -201,7 +201,8 @@ export default class FsPoly {
   static async hardlink(target: string, link: string): Promise<void> {
     const targetResolved = path.resolve(target);
     try {
-      return await fs.promises.link(targetResolved, link);
+      await fs.promises.link(targetResolved, link);
+      return;
     } catch (error) {
       if (this.onDifferentDrives(targetResolved, link)) {
         throw new ExpectedError(`can't hard link files on different drives: ${error}`);
@@ -503,7 +504,7 @@ export default class FsPoly {
     };
 
     if (!(await this.exists(pathLike))) {
-      if (optionsWithRetry?.force) {
+      if (optionsWithRetry.force) {
         return;
       }
       throw new ExpectedError(`can't rm, path doesn't exist: ${pathLike}`);
@@ -530,7 +531,7 @@ export default class FsPoly {
     };
 
     if (!this.existsSync(pathLike)) {
-      if (optionsWithRetry?.force) {
+      if (optionsWithRetry.force) {
         return;
       }
       throw new ExpectedError(`can't rmSync, path doesn't exist: ${pathLike}`);

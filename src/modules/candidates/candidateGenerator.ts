@@ -7,7 +7,6 @@ import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import Release from '../../types/dats/release.js';
 import ROM from '../../types/dats/rom.js';
 import Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
@@ -187,7 +186,7 @@ export default class CandidateGenerator extends Module {
         }
 
         try {
-          const outputFile = await this.getOutputFile(dat, game, undefined, rom, inputFile);
+          const outputFile = await this.getOutputFile(dat, game, rom, inputFile);
           if (outputFile === undefined) {
             return [rom, undefined];
           }
@@ -366,7 +365,7 @@ export default class CandidateGenerator extends Module {
             ?.find((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'));
         }
 
-        return [rom, archiveEntry!];
+        return [rom, archiveEntry as File];
       }),
     );
   }
@@ -407,13 +406,14 @@ export default class CandidateGenerator extends Module {
           inputFile instanceof ArchiveEntry &&
           inputFile.getArchive() instanceof Zip &&
           this.options.shouldZipRom(inputRom) &&
-          OutputFactory.getPath(this.options, dat, game, undefined, inputRom, inputFile)
-            .entryPath === inputFile.getExtractedFilePath(),
+          OutputFactory.getPath(this.options, dat, game, inputRom, inputFile).entryPath ===
+            inputFile.getExtractedFilePath(),
       ) &&
       [...romsToInputFiles.values()]
         .map((inputFile) => inputFile.getFilePath())
         .reduce(ArrayPoly.reduceUnique(), []).length === 1
     ) {
+      // TODO(cemmer): does this respect no excess sets?
       // Every ROM should be zipped, and every input file is already in the same zip, and the
       // archive entry paths match, so it's safe to copy the zip as-is
       return true;
@@ -426,14 +426,13 @@ export default class CandidateGenerator extends Module {
   private async getOutputFile(
     dat: DAT,
     game: Game,
-    release: Release | undefined,
     rom: ROM,
     inputFile: File,
   ): Promise<File | undefined> {
     // Determine the output file's path
     let outputPathParsed: OutputPath;
     try {
-      outputPathParsed = OutputFactory.getPath(this.options, dat, game, release, rom, inputFile);
+      outputPathParsed = OutputFactory.getPath(this.options, dat, game, rom, inputFile);
     } catch (error) {
       this.progressBar.logTrace(`${dat.getName()}: ${game.getName()}: ${error}`);
       return undefined;

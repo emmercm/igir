@@ -84,7 +84,7 @@ export default abstract class ProgressBar {
    * helpful in bug reports.
    */
   logTrace(message: string): void {
-    return this.log(LogLevel.TRACE, message);
+    this.log(LogLevel.TRACE, message);
   }
 
   /**
@@ -94,7 +94,7 @@ export default abstract class ProgressBar {
    * already exists, etc.).
    */
   logDebug(message: string): void {
-    return this.log(LogLevel.DEBUG, message);
+    this.log(LogLevel.DEBUG, message);
   }
 
   /**
@@ -104,21 +104,21 @@ export default abstract class ProgressBar {
    * writing DATs, etc.).
    */
   logInfo(message: string): void {
-    return this.log(LogLevel.INFO, message);
+    this.log(LogLevel.INFO, message);
   }
 
   /**
    * Log a WARN message.
    */
   logWarn(message: string): void {
-    return this.log(LogLevel.WARN, message);
+    this.log(LogLevel.WARN, message);
   }
 
   /**
    * Log an ERROR message.
    */
   logError(message: string): void {
-    return this.log(LogLevel.ERROR, message);
+    this.log(LogLevel.ERROR, message);
   }
 
   abstract freeze(): void;

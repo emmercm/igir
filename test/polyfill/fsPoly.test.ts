@@ -684,13 +684,17 @@ describe('rmSync', () => {
   it('should throw on missing file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
-    expect(() => FsPoly.rmSync(tempFile)).toThrow();
+    expect(() => {
+      FsPoly.rmSync(tempFile);
+    }).toThrow();
   });
 
   it('should not throw on forcing missing file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
-    expect(() => FsPoly.rmSync(tempFile, { force: true })).not.toThrow();
+    expect(() => {
+      FsPoly.rmSync(tempFile, { force: true });
+    }).not.toThrow();
   });
 
   it('should delete an existing file', async () => {

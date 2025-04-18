@@ -108,6 +108,11 @@ export interface GameProps {
   // @see https://github.com/libretro/libretro-database/tree/master/metadat/genre
 
   readonly genre?: string;
+
+  // ********** IGIR INTERNAL FIELDS **********
+
+  readonly region?: string;
+  readonly language?: string;
 }
 
 /**
@@ -158,11 +163,14 @@ export default class Game implements GameProps {
   @Expose({ name: 'isdevice' })
   readonly isDevice: 'yes' | 'no' = 'no';
 
+  @Expose()
+  readonly manufacturer?: string;
+
   @Expose({ name: 'genre' })
   readonly genre?: string;
 
-  @Expose()
-  readonly manufacturer?: string;
+  readonly region?: string;
+  readonly language?: string;
 
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
@@ -182,6 +190,9 @@ export default class Game implements GameProps {
     this.manufacturer = props?.manufacturer;
 
     this.genre = props?.genre;
+
+    this.region = props?.region;
+    this.language = props?.language;
   }
 
   /**
@@ -300,7 +311,11 @@ export default class Game implements GameProps {
     // Letter revision
     const revLetterMatches = /\(Rev\s*([A-Z])\)/i.exec(this.getName());
     if (revLetterMatches && revLetterMatches.length >= 2) {
-      return revLetterMatches[1].toUpperCase().codePointAt(0)! - 'A'.codePointAt(0)! + 1;
+      return (
+        (revLetterMatches[1].toUpperCase().codePointAt(0) as number) -
+        ('A'.codePointAt(0) as number) +
+        1
+      );
     }
 
     // TOSEC versions
@@ -666,6 +681,10 @@ export default class Game implements GameProps {
   // Internationalization
 
   getRegions(): string[] {
+    if (this.region !== undefined) {
+      return [this.region.toUpperCase()];
+    }
+
     const longRegions = Internationalization.REGION_OPTIONS.map(
       (regionOption) => regionOption.long,
     ).join('|');
@@ -700,6 +719,10 @@ export default class Game implements GameProps {
   }
 
   getLanguages(): string[] {
+    if (this.language !== undefined) {
+      return [this.language.toUpperCase()];
+    }
+
     const shortLanguages = this.getTwoLetterLanguagesFromName();
     if (shortLanguages.length > 0) {
       return shortLanguages;

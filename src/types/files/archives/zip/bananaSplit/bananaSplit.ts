@@ -68,7 +68,7 @@ export default class BananaSplit {
   async endOfCentralDirectoryRecord(): Promise<EndOfCentralDirectoryRecord> {
     const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {
-      return this.endOfCentralDirectoryRecordFromFileHandle(fileHandle);
+      return await this.endOfCentralDirectoryRecordFromFileHandle(fileHandle);
     } finally {
       await fileHandle.close();
     }

@@ -38,7 +38,6 @@ export default class CandidatePostProcessor extends Module {
           this.options,
           dat,
           candidate.getGame(),
-          undefined,
           romWithFiles.getRom(),
           romWithFiles.getInputFile(),
         );
@@ -80,7 +79,6 @@ export default class CandidatePostProcessor extends Module {
         this.options,
         dat,
         candidate.getGame(),
-        undefined,
         romWithFiles.getRom(),
         romWithFiles.getInputFile(),
         outputFileBasenames,

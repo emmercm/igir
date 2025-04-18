@@ -20,7 +20,8 @@ export default class ZipBombProtector extends stream.Transform {
   ): void {
     this.readBytes += chunk.length;
     if (this.readBytes > this.expectedBytes) {
-      return callback(new Error(`stream exceeded expected size of ${this.expectedBytes}`));
+      callback(new Error(`stream exceeded expected size of ${this.expectedBytes}`));
+      return;
     }
     // eslint-disable-next-line unicorn/no-null
     callback(null, chunk);

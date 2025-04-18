@@ -93,8 +93,13 @@ export default class CandidatePatchGenerator extends Module {
     const candidatePatches = unpatchedCandidate
       .getRomsWithFiles()
       .flatMap((romWithFiles) => romWithFiles.getInputFile())
-      .filter((inputFile) => inputFile.getCrc32() !== undefined)
-      .flatMap((inputFile) => crcToPatches.get(inputFile.getCrc32()!))
+      .flatMap((inputFile) => {
+        const inputFileCrc32 = inputFile.getCrc32();
+        if (inputFileCrc32 === undefined) {
+          return [];
+        }
+        return crcToPatches.get(inputFileCrc32);
+      })
       .filter((patch) => patch !== undefined);
 
     // No relevant patches found, no new candidates generated

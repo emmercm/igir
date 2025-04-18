@@ -448,7 +448,7 @@ export default class FileSignature {
   getName(): string {
     return Object.keys(FileSignature.SIGNATURES).find(
       (name) => FileSignature.SIGNATURES[name] === this,
-    )!;
+    ) as string;
   }
 
   getExtension(): string {

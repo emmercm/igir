@@ -100,7 +100,6 @@ export default class CandidateExtensionCorrector extends Module {
               this.options,
               dat,
               candidate.getGame(),
-              undefined,
               correctedRom,
               romWithFiles.getInputFile(),
             );

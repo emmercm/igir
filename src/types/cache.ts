@@ -101,7 +101,9 @@ export default class Cache<V> {
    * Set the value of a key in the cache.
    */
   public async set(key: string, val: V): Promise<void> {
-    return this.keyedMutex.runExclusiveForKey(key, () => this.setUnsafe(key, val));
+    return this.keyedMutex.runExclusiveForKey(key, () => {
+      this.setUnsafe(key, val);
+    });
   }
 
   private setUnsafe(key: string, val: V): void {
@@ -125,7 +127,9 @@ export default class Cache<V> {
 
     // Note: avoiding lockKey() because it could get expensive with many keys to delete
     await this.keyedMutex.runExclusiveGlobally(() => {
-      keysToDelete.forEach((k) => this.deleteUnsafe(k));
+      keysToDelete.forEach((k) => {
+        this.deleteUnsafe(k);
+      });
     });
   }
 

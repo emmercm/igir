@@ -82,7 +82,7 @@ export default class CentralDirectoryFileHeader
       const signature = fixedLengthBuffer.subarray(0, 4);
       if (!signature.equals(this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)) {
         throw new Error(
-          `invalid signature central directory file header signature for file ${i + 1}/${endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount}: 0x${signature.toString('hex')}`,
+          `invalid zip central directory file header signature for file ${i + 1}/${endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount}: 0x${signature.toString('hex')}`,
         );
       }
 
@@ -101,8 +101,8 @@ export default class CentralDirectoryFileHeader
           versionMadeBy: fixedLengthBuffer.readUInt16LE(4),
           internalFileAttributes: fixedLengthBuffer.readUInt16LE(36),
           externalFileAttributes: fixedLengthBuffer.readUInt32LE(38),
-          localFileHeaderRelativeOffset: fileRecord.localFileHeaderRelativeOffset!,
-          fileComment: fileRecord.fileComment!,
+          localFileHeaderRelativeOffset: fileRecord.localFileHeaderRelativeOffset as number,
+          fileComment: fileRecord.fileComment as string,
         }),
       );
 
@@ -110,7 +110,7 @@ export default class CentralDirectoryFileHeader
         fixedLengthBuffer.length +
         fileRecord.fileNameLength +
         fileRecord.extraFieldLength +
-        fileRecord.fileCommentLength!;
+        (fileRecord.fileCommentLength as number);
     }
 
     return fileHeaders;

@@ -5,7 +5,6 @@ import FsPoly from '../polyfill/fsPoly.js';
 import DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
 import Game from './dats/game.js';
-import Release from './dats/release.js';
 import ROM from './dats/rom.js';
 import ExpectedError from './expectedError.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
@@ -70,7 +69,7 @@ export class OutputPath implements ParsedPathWithEntryPath {
 
 /**
  * A factory of static methods to generate output paths for a {@link ROM} and its related
- * {@link Game} and {@link Release}.
+ * {@link Game}.
  */
 export default class OutputFactory {
   /**
@@ -78,7 +77,6 @@ export default class OutputFactory {
    * @param options the {@link Options} instance for this run of igir.
    * @param dat the {@link DAT} that the ROM/{@link Game} is from.
    * @param game the {@link Game} that this file matches to.
-   * @param release a {@link Release} from the {@link Game}.
    * @param rom a {@link ROM} from the {@link Game}.
    * @param inputFile a {@link File} that matches the {@link ROM}.
    * @param romBasenames the intended output basenames for every ROM from this {@link DAT}.
@@ -87,7 +85,6 @@ export default class OutputFactory {
     options: Options,
     dat: DAT,
     game: Game,
-    release: Release | undefined,
     rom: ROM,
     inputFile: File,
     romBasenames?: string[],
@@ -98,7 +95,7 @@ export default class OutputFactory {
 
     return new OutputPath({
       root: '',
-      dir: this.getDir(options, dat, game, release, inputFile, basename, romBasenames),
+      dir: this.getDir(options, dat, game, inputFile, basename, romBasenames),
       base: '',
       name,
       ext,
@@ -118,7 +115,6 @@ export default class OutputFactory {
     options: Options,
     dat: DAT,
     game?: Game,
-    release?: Release,
     inputFile?: File,
     romBasename?: string,
     romBasenames?: string[],
@@ -133,7 +129,6 @@ export default class OutputFactory {
         dat,
         inputFile?.getFilePath(),
         game,
-        release,
         romBasename,
       ),
     );
@@ -155,8 +150,9 @@ export default class OutputFactory {
     if (options.getDirDatName() && dat.getName()) {
       output = path.join(output, dat.getName());
     }
-    if (options.getDirDatDescription() && dat.getDescription()) {
-      output = path.join(output, dat.getDescription()!);
+    const datDescription = dat.getDescription();
+    if (options.getDirDatDescription() && datDescription) {
+      output = path.join(output, datDescription);
     }
 
     const dirLetter = this.getDirLetterParsed(options, romBasename, romBasenames);
@@ -173,12 +169,10 @@ export default class OutputFactory {
     dat: DAT,
     inputRomPath?: string,
     game?: Game,
-    release?: Release,
     outputRomFilename?: string,
   ): string {
     let result = outputPath;
     // NOTE(cemmer): order here is important! They should go most specific to least
-    result = this.replaceReleaseTokens(result, release);
     result = this.replaceGameTokens(result, game);
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
@@ -193,22 +187,6 @@ export default class OutputFactory {
     }
 
     return result;
-  }
-
-  private static replaceReleaseTokens(input: string, release?: Release): string {
-    if (!release) {
-      return input;
-    }
-
-    let output = input;
-    output = output.replace('{region}', release.getRegion());
-
-    const releaseLanguage = release.getLanguage();
-    if (releaseLanguage) {
-      output = output.replace('{language}', releaseLanguage);
-    }
-
-    return output;
   }
 
   private static replaceGameTokens(input: string, game?: Game): string {
@@ -393,36 +371,38 @@ export default class OutputFactory {
       lettersToFilenames = [...lettersToFilenames.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))
         // Generate a tuple of [letter, Set(filenames)] for every subpath
-        .reduce(
-          (arr, [letter, filenames]) => {
-            // ROMs may have been grouped together into a subdirectory. For example, when a game has
-            // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
-            // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
-            // subdir, or just the ROM's basename otherwise.
-            const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
-              const subPath = filename.replace(/[\\/].+$/, '');
-              if (subPathMap.has(subPath)) {
-                subPathMap.get(subPath)?.push(filename);
-              } else {
-                subPathMap.set(subPath, [filename]);
-              }
-              return subPathMap;
-            }, new Map<string, string[]>());
-            const tuples = [...subPathsToFilenames.entries()]
-              .sort(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
-              .map(
-                ([, subPathFilenames]) =>
-                  [letter, new Set(subPathFilenames)] satisfies [string, Set<string>],
-              );
-            return [...arr, ...tuples];
-          },
-          [] as [string, Set<string>][],
-        )
+        .reduce<[string, Set<string>][]>((arr, [letter, filenames]) => {
+          // ROMs may have been grouped together into a subdirectory. For example, when a game has
+          // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
+          // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
+          // subdir, or just the ROM's basename otherwise.
+          const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
+            const subPath = filename.replace(/[\\/].+$/, '');
+            if (subPathMap.has(subPath)) {
+              subPathMap.get(subPath)?.push(filename);
+            } else {
+              subPathMap.set(subPath, [filename]);
+            }
+            return subPathMap;
+          }, new Map<string, string[]>());
+          const tuples = [...subPathsToFilenames.entries()]
+            .sort(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
+            .map(
+              ([, subPathFilenames]) =>
+                [letter, new Set(subPathFilenames)] satisfies [string, Set<string>],
+            );
+          return [...arr, ...tuples];
+        }, [])
         // Group letters together to create letter ranges
         .reduce(ArrayPoly.reduceChunk(options.getDirLetterLimit()), [])
         .reduce((map, tuples) => {
-          const firstTuple = tuples.at(0)!;
-          const lastTuple = tuples.at(-1)!;
+          const firstTuple = tuples.at(0);
+          const lastTuple = tuples.at(-1);
+          if (firstTuple === undefined || lastTuple === undefined) {
+            throw new Error(
+              'there should be at least one letter tuple (this should never happen!)',
+            );
+          }
           const letterRange = `${firstTuple[0]}-${lastTuple[0]}`;
           const newFilenames = new Set(tuples.flatMap(([, filenames]) => [...filenames]));
           const existingFilenames = map.get(letterRange) ?? new Set();

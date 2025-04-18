@@ -246,7 +246,9 @@ export default class CandidateWriter extends Module {
       return;
     }
 
-    inputToOutputZipEntries.forEach(([inputRomFile]) => this.enqueueFileDeletion(inputRomFile));
+    inputToOutputZipEntries.forEach(([inputRomFile]) => {
+      this.enqueueFileDeletion(inputRomFile);
+    });
   }
 
   private async testZipContents(
@@ -264,9 +266,9 @@ export default class CandidateWriter extends Module {
       return map;
     }, new Map<string, ArchiveEntry<Zip>>());
 
-    const checksumBitmask = expectedArchiveEntries.reduce(
+    const checksumBitmask = expectedArchiveEntries.reduce<number>(
       (bitmask, entry) => bitmask | entry.getChecksumBitmask(),
-      ChecksumBitmask.CRC32 as number,
+      ChecksumBitmask.CRC32,
     );
 
     let archiveEntries: ArchiveEntry<Zip>[];
@@ -284,17 +286,14 @@ export default class CandidateWriter extends Module {
       return `has ${actualEntriesByPath.size.toLocaleString()} files, expected ${expectedEntriesByPath.size.toLocaleString()}`;
     }
 
-    const entryPaths = [...expectedEntriesByPath.keys()];
-    for (const entryPath of entryPaths) {
-      const expectedFile = expectedEntriesByPath.get(entryPath)!;
-
+    for (const [entryPath, expectedFile] of expectedEntriesByPath.entries()) {
       // Check existence
       if (!actualEntriesByPath.has(entryPath)) {
         return `is missing the file ${entryPath}`;
       }
 
       // Check checksum
-      const actualFile = actualEntriesByPath.get(entryPath)!;
+      const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
       if (
         actualFile.getSha256() &&
         expectedFile.getSha256() &&

@@ -216,14 +216,14 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
-  withFilePath(filePath: string): ArchiveEntry<Archive> {
+  withFilePath(filePath: string): ArchiveEntry<A> {
     if (this.getArchive().getFilePath() === filePath) {
       return this;
     }
     return new ArchiveEntry({
       ...this,
       archive: this.getArchive().withFilePath(filePath),
-    });
+    }) as ArchiveEntry<A>;
   }
 
   withEntryPath(entryPath: string): ArchiveEntry<A> {

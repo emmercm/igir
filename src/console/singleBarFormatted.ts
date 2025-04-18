@@ -44,6 +44,7 @@ export default class SingleBarFormatted {
             let lineTrimmed = line;
             const maxLineLength = ConsolePoly.consoleWidth() - stripAnsi(symbolAndName).length - 2;
             if (line.length > maxLineLength) {
+              // TODO(cemmer): seems to trim the first line of multi-line statuses too short
               lineTrimmed = `${line.slice(0, maxLineLength - 3)}...`;
             }
 

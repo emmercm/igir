@@ -104,17 +104,29 @@ export default class Logger {
       .join('\n');
   }
 
-  trace = (message: unknown = ''): void => this.print(LogLevel.TRACE, message);
+  trace = (message: unknown = ''): void => {
+    this.print(LogLevel.TRACE, message);
+  };
 
-  debug = (message: unknown = ''): void => this.print(LogLevel.DEBUG, message);
+  debug = (message: unknown = ''): void => {
+    this.print(LogLevel.DEBUG, message);
+  };
 
-  info = (message: unknown = ''): void => this.print(LogLevel.INFO, message);
+  info = (message: unknown = ''): void => {
+    this.print(LogLevel.INFO, message);
+  };
 
-  warn = (message: unknown = ''): void => this.print(LogLevel.WARN, message);
+  warn = (message: unknown = ''): void => {
+    this.print(LogLevel.WARN, message);
+  };
 
-  error = (message: unknown = ''): void => this.print(LogLevel.ERROR, message);
+  error = (message: unknown = ''): void => {
+    this.print(LogLevel.ERROR, message);
+  };
 
-  notice = (message: unknown = ''): void => this.print(LogLevel.NOTICE, message);
+  notice = (message: unknown = ''): void => {
+    this.print(LogLevel.NOTICE, message);
+  };
 
   /**
    * Print the CLI header.

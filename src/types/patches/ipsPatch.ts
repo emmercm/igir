@@ -67,7 +67,7 @@ export default class IPSPatch extends Patch {
   ): Promise<void> {
     while (!patchFile.isEOF()) {
       const offsetPeek = await patchFile.peekNext(eofString.length);
-      if (offsetPeek === null || offsetPeek.toString() === eofString) {
+      if (offsetPeek.length === 0 || offsetPeek.toString() === eofString) {
         break;
       }
 
