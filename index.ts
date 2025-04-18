@@ -45,7 +45,7 @@ try {
       if (!arg.includes(' ')) {
         return arg;
       }
-      return `"${arg.replace(/"/g, '\\"')}"`;
+      return `"${arg.replaceAll('"', '\\"')}"`;
     })
     .join(' ');
   logger.trace(`Parsing CLI arguments: ${argvString}`);

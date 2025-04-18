@@ -36,6 +36,7 @@ With Igir you can manage a ROM collection of any size:
 - 🪄 Name ROM files consistently, including the right extension (see [DAT docs](https://igir.io/dats/overview))
 - ✂️ Filter out duplicate ROMs, or ROMs in languages you don't understand (see [filtering docs](https://igir.io/roms/filtering-preferences))
 - 🗜️ Extract or archive ROMs in mass (see [archive docs](https://igir.io/output/writing-archives))
+- 🔢 Create playlists for multi-disc games in mass (see [playlist docs](https://igir.io/output/playlists))
 - 🩹 Patch ROMs automatically in mass (see [scanning](https://igir.io/input/file-scanning) & [patching docs](https://igir.io/roms/patching))
 - 🎩 Parse ROMs with headers and optionally remove them (see [header docs](https://igir.io/roms/headers))
 - ↔️ Build & re-build (un-merge, split, or merge) MAME ROM sets (see [arcade docs](https://igir.io/usage/arcade))
@@ -55,32 +56,32 @@ Here is the full help message which shows all available options and a number of 
 ```help
 $ igir --help
 
- ______   ______   ______  _______
-|      \ /      \ |      \|       \
- \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
-  | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
-  | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
-  | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.2.0
-|   $$ \ \$$    $$|   $$ \| $$  | $$
- \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
+   @@@@@@   @@@@@@     @@@@@@    @@@@@@@@
+ @@      @@  @@      @@      @@         @@
+ @@      @@  @@      @@      @@         @@   ROM collection manager
+   @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
+          @@@     @@@@        @@@
+     @@   @@        @@   @@   @@       @@    v3.4.0
+     @@   @@        @@   @@   @@       @@
+     @@   @@@@@@@@@@@@   @@   @@       @@
 
 
 Usage: igir [commands..] [options]
 
 Commands (can specify multiple):
-  igir copy     Copy ROM files from the input to output directory
-  igir move     Move ROM files from the input to output directory
-  igir link     Create links in the output directory to ROM files in the input directory
-  igir extract  Extract ROM files in archives when copying or moving
-  igir zip      Create zip archives of ROMs when copying or moving
-  igir test     Test ROMs for accuracy after writing them to the output directory
-  igir dir2dat  Generate a DAT from all input files
-  igir fixdat   Generate a fixdat of any missing games for every DAT processed (requires --dat
-                )
-  igir clean    Recycle unknown files in the output directory
-  igir report   Generate a CSV report on the known & unknown ROM files found in the input dire
-                ctories (requires --dat)
+  igir copy      Copy ROM files from the input to output directory
+  igir move      Move ROM files from the input to output directory
+  igir link      Create links in the output directory to ROM files in the input directory
+  igir extract   Extract ROM files in archives when copying or moving
+  igir zip       Create zip archives of ROMs when copying or moving
+  igir playlist  Create playlist files for multi-disc games
+  igir test      Test ROMs for accuracy after writing them to the output directory
+  igir dir2dat   Generate a DAT from all input files
+  igir fixdat    Generate a fixdat of any missing games for every DAT processed (requires --da
+                 t)
+  igir clean     Recycle unknown files in the output directory
+  igir report    Generate a CSV report on the known & unknown ROM files found in the input dir
+                 ectories (requires --dat)
 
 ROM input options:
   -i, --input                    Path(s) to ROM files or archives (supports globbing)  [array]
@@ -173,6 +174,7 @@ ROM set options (requires DATs):
       --merge-roms             ROM merge/split mode (requires DATs with parent/clone informati
                                on)
          [choices: "fullnonmerged", "nonmerged", "split", "merged"] [default: "fullnonmerged"]
+      --merge-discs            Merge multi-disc games into one game                  [boolean]
       --exclude-disks          Exclude CHD disks in DATs from processing & writing   [boolean]
       --allow-excess-sets      Allow writing archives that have excess files when not extracti
                                ng or zipping                                         [boolean]
@@ -228,6 +230,10 @@ One game, one ROM (1G1R) options:
                                                                    [choices: "older", "newer"]
       --prefer-retail      Prefer retail releases (see --only-retail)                [boolean]
       --prefer-parent      Prefer parent ROMs over clones                            [boolean]
+
+playlist command options:
+      --playlist-extensions  List of comma-separated file extensions to generate multi-disc pl
+                             aylists for             [string] [default: ".cue,.gdi,.mdf,.chd"]
 
 dir2dat command options:
       --dir2dat-output  dir2dat output directory                                      [string]
@@ -308,6 +314,9 @@ Example use cases:
 
   Copy all BIOS files into one directory, extracting if necessary:
     igir copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
+
+  Create playlist files for all multi-disc games in an existing collection:
+    igir playlist --input ROMs/
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
     igir copy extract --input ROMs/ --patch Patches/ --output ROMs/

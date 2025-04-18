@@ -28,14 +28,14 @@ import FileFactory from '../../types/files/fileFactory.js';
 import Options from '../../types/options.js';
 import Scanner from '../scanner.js';
 
-type SmdbRow = {
+interface SmdbRow {
   sha256: string;
   name: string;
   sha1: string;
   md5: string;
   crc: string;
   size?: string;
-};
+}
 
 /**
  * Scan the {@link OptionsProps.dat} input directory for DAT files and return the internal model
@@ -61,7 +61,7 @@ export default class DATScanner extends Scanner {
       return [];
     }
     this.progressBar.logTrace(
-      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`,
+      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.reset(datFilePaths.length);
 
@@ -88,7 +88,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace(
-      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length !== 1 ? 's' : ''} from URL${datUrlFiles.length !== 1 ? 's' : ''}`,
+      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
@@ -116,7 +116,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(
-      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`,
+      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
@@ -200,7 +200,7 @@ export default class DATScanner extends Scanner {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`,
+      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
     );
 
     return dat;
@@ -339,7 +339,7 @@ export default class DATScanner extends Scanner {
     /**
      * Validation that this might be a CMPro file.
      */
-    if (fileContents.match(/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m) === null) {
+    if (/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.exec(fileContents) === null) {
       return undefined;
     }
 
@@ -421,7 +421,7 @@ export default class DATScanner extends Scanner {
         description: game.description,
         isBios:
           cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro' &&
-          cmproDat.clrmamepro?.name?.toLowerCase() === 'system'
+          cmproDat.clrmamepro.name?.toLowerCase() === 'system'
             ? 'yes'
             : 'no',
         isDevice: undefined,
@@ -500,16 +500,18 @@ export default class DATScanner extends Scanner {
         .validate(
           (row: SmdbRow) =>
             row.name &&
-            (row.crc.match(/^[0-9a-f]{8}$/) !== null ||
-              row.md5.match(/^[0-9a-f]{32}$/) !== null ||
-              row.sha1.match(/^[0-9a-f]{40}$/) !== null ||
-              row.sha256.match(/^[0-9a-f]{64}$/) !== null),
+            (/^[0-9a-f]{8}$/.exec(row.crc) !== null ||
+              /^[0-9a-f]{32}$/.exec(row.md5) !== null ||
+              /^[0-9a-f]{40}$/.exec(row.sha1) !== null ||
+              /^[0-9a-f]{64}$/.exec(row.sha256) !== null),
         )
         .on('error', reject)
         .on('data', (row: SmdbRow) => {
           rows.push(row);
         })
-        .on('end', () => resolve(rows));
+        .on('end', () => {
+          resolve(rows);
+        });
       stream.write(fileContents);
       stream.end();
     });
@@ -522,7 +524,7 @@ export default class DATScanner extends Scanner {
     }
 
     const datNameRegexExclude = this.options.getDatNameRegexExclude();
-    if (datNameRegexExclude && datNameRegexExclude.some((regex) => regex.test(dat.getName()))) {
+    if (datNameRegexExclude?.some((regex) => regex.test(dat.getName()))) {
       return true;
     }
 
@@ -538,11 +540,7 @@ export default class DATScanner extends Scanner {
     }
 
     const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-    if (
-      datDescription &&
-      datDescriptionRegexExclude &&
-      datDescriptionRegexExclude.some((regex) => regex.test(datDescription))
-    ) {
+    if (datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription))) {
       return true;
     }
 

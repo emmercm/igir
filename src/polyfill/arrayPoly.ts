@@ -10,10 +10,10 @@ export default class ArrayPoly {
    * ['a', 'b', 'c', 'a', 'A', 'C'].filter(ArrayPoly.filterUniqueMapped((str) => str.toUpperCase());
    * </code>
    */
-  public static filterUniqueMapped<T, V>(
-    mapper: (arg: T) => V,
+  public static filterUniqueMapped<T>(
+    mapper: (arg: T) => unknown,
   ): (value: T, idx: number, values: T[]) => boolean {
-    const seenMappedValues = new Set<V>();
+    const seenMappedValues = new Set<unknown>();
     return (value, idx, values): boolean => {
       if (values.length <= 1) {
         // Arrays that are empty or only have one element are already unique

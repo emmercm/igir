@@ -1,8 +1,7 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import DAT from '../../types/dats/dat.js';
-import Parent from '../../types/dats/parent.js';
-import ReleaseCandidate from '../../types/releaseCandidate.js';
+import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**
@@ -14,19 +13,19 @@ export default class CandidateValidator extends Module {
   }
 
   /**
-   * Validate the {@link ReleaseCandidate}s.
+   * Validate the {@link WriteCandidate}s.
    */
-  validate(dat: DAT, parentsToCandidates: Map<Parent, ReleaseCandidate[]>): ReleaseCandidate[] {
-    if (parentsToCandidates.size === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no parents to validate candidates for`);
+  validate(dat: DAT, candidates: WriteCandidate[]): WriteCandidate[] {
+    if (candidates.length === 0) {
+      this.progressBar.logTrace(`${dat.getName()}: no candidates to validate`);
       return [];
     }
 
     this.progressBar.logTrace(`${dat.getName()}: validating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
-    this.progressBar.reset(parentsToCandidates.size);
+    this.progressBar.reset(candidates.length);
 
-    const conflictedOutputPaths = this.validateUniqueOutputPaths(dat, parentsToCandidates);
+    const conflictedOutputPaths = this.validateUniqueOutputPaths(dat, candidates);
     if (conflictedOutputPaths.length > 0) {
       return conflictedOutputPaths;
     }
@@ -35,23 +34,18 @@ export default class CandidateValidator extends Module {
     return [];
   }
 
-  private validateUniqueOutputPaths(
-    dat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): ReleaseCandidate[] {
-    const outputPathsToCandidates = [...parentsToCandidates.values()]
-      .flat()
-      .reduce((map, releaseCandidate) => {
-        releaseCandidate.getRomsWithFiles().forEach((romWithFiles) => {
-          const key = romWithFiles.getOutputFile().getFilePath();
-          if (!map.has(key)) {
-            map.set(key, [releaseCandidate]);
-          } else {
-            map.get(key)?.push(releaseCandidate);
-          }
-        });
-        return map;
-      }, new Map<string, ReleaseCandidate[]>());
+  private validateUniqueOutputPaths(dat: DAT, candidates: WriteCandidate[]): WriteCandidate[] {
+    const outputPathsToCandidates = candidates.reduce((map, candidate) => {
+      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+        const key = romWithFiles.getOutputFile().getFilePath();
+        if (map.has(key)) {
+          map.get(key)?.push(candidate);
+        } else {
+          map.set(key, [candidate]);
+        }
+      });
+      return map;
+    }, new Map<string, WriteCandidate[]>());
 
     return [...outputPathsToCandidates.entries()]
       .filter(([outputPath, candidates]) => {

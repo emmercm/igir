@@ -5,9 +5,8 @@ import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import IgirHeader from '../types/dats/igirHeader.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
-import Parent from '../types/dats/parent.js';
 import Options from '../types/options.js';
-import ReleaseCandidate from '../types/releaseCandidate.js';
+import WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**
@@ -25,10 +24,7 @@ export default class FixdatCreator extends Module {
   /**
    * Create & write a fixdat.
    */
-  async create(
-    originalDat: DAT,
-    parentsToCandidates: Map<Parent, ReleaseCandidate[]>,
-  ): Promise<string | undefined> {
+  async create(originalDat: DAT, candidates: WriteCandidate[]): Promise<string | undefined> {
     if (!this.options.shouldFixdat()) {
       return undefined;
     }
@@ -37,11 +33,12 @@ export default class FixdatCreator extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.reset(1);
 
-    // Create an easily searchable index of every ROM that has a ReleaseCandidate
+    /**
+     * Create an easily searchable index of every {@link ROM} that has a {@link WriteCandidate}
+     */
     const writtenRomHashCodes = new Set(
-      [...parentsToCandidates.values()]
-        .flat()
-        .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      candidates
+        .flatMap((candidate) => candidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getRom())
         .map((rom) => rom.hashCode()),
     );

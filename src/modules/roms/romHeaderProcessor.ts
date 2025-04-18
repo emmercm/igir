@@ -45,7 +45,7 @@ export default class ROMHeaderProcessor extends Module {
     }
 
     this.progressBar.logTrace(
-      `processing headers in ${filesThatNeedProcessing.toLocaleString()} ROM${filesThatNeedProcessing !== 1 ? 's' : ''}`,
+      `processing headers in ${filesThatNeedProcessing.toLocaleString()} ROM${filesThatNeedProcessing === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
     this.progressBar.reset(filesThatNeedProcessing);
@@ -85,7 +85,7 @@ export default class ROMHeaderProcessor extends Module {
       (romFile) => romFile.getFileHeader() !== undefined,
     ).length;
     this.progressBar.logTrace(
-      `found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount !== 1 ? 's' : ''}`,
+      `found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done processing file headers');
@@ -96,7 +96,7 @@ export default class ROMHeaderProcessor extends Module {
     /**
      * If the input file is from an archive, and we're not zipping or extracting, then we have no
      * chance to remove the header, so we shouldn't bother detecting one.
-     * Matches {@link CandidateGenerator.buildReleaseCandidateForRelease}
+     * Matches {@link CandidateGenerator#buildCandidateForGame}
      */
     if (
       inputFile instanceof ArchiveEntry &&

@@ -67,7 +67,7 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     const isUrl = URLPoly.canParse(fileProps.filePath);
 
-    this.filePath = isUrl ? fileProps.filePath : fileProps.filePath.replace(/[\\/]/g, path.sep);
+    this.filePath = isUrl ? fileProps.filePath : fileProps.filePath.replaceAll(/[\\/]/g, path.sep);
     this.size = fileProps.size ?? 0;
     this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
@@ -98,7 +98,7 @@ export default class File implements FileProps {
 
   static async fileOf(
     fileProps: FileProps,
-    checksumBitmask: ChecksumBitmask = ChecksumBitmask.NONE,
+    checksumBitmask: number = ChecksumBitmask.NONE,
   ): Promise<File> {
     let finalSize = fileProps.size;
     let finalCrcWithHeader = fileProps.crc32;
@@ -164,7 +164,7 @@ export default class File implements FileProps {
       size: finalSize,
       // We were told not to calculate any checksums (default behavior), but some might have been
       // provided, so let {@link getChecksumBitmask()} figure it out
-      checksumBitmask: checksumBitmask !== ChecksumBitmask.NONE ? checksumBitmask : undefined,
+      checksumBitmask: checksumBitmask === ChecksumBitmask.NONE ? undefined : checksumBitmask,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
       md5: finalMd5WithHeader,
@@ -328,10 +328,10 @@ export default class File implements FileProps {
       // Create a patched temp file, then copy it without removing its header
       await patch.createPatchedFile(this, tempFile);
       try {
-        return await File.createStreamFromFile(
+        await File.createStreamFromFile(
           tempFile,
           async (stream) =>
-            new Promise((resolve, reject) => {
+            new Promise<void>((resolve, reject) => {
               const writeStream = fs.createWriteStream(destinationPath);
               writeStream.on('close', resolve);
               writeStream.on('error', reject);
@@ -339,6 +339,7 @@ export default class File implements FileProps {
             }),
           start,
         );
+        return;
       } finally {
         await FsPoly.rm(tempFile, { force: true });
       }
@@ -452,7 +453,7 @@ export default class File implements FileProps {
 
     const lastUrlSegment = new URL(this.getFilePath()).pathname.split('/').slice(-1).at(0);
     const tempPrefix =
-      lastUrlSegment !== undefined ? FsPoly.makeLegal(decodeURIComponent(lastUrlSegment)) : 'temp';
+      lastUrlSegment === undefined ? 'temp' : FsPoly.makeLegal(decodeURIComponent(lastUrlSegment));
 
     const filePath = await FsPoly.mktemp(path.join(Temp.getTempDir(), tempPrefix));
     return this.downloadToPath(filePath);

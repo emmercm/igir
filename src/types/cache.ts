@@ -25,7 +25,7 @@ export default class Cache<V> {
 
   private readonly keyedMutex = new KeyedMutex(1000);
 
-  private hasChanged: boolean = false;
+  private hasChanged = false;
 
   private saveToFileTimeout?: Timer;
 
@@ -101,7 +101,9 @@ export default class Cache<V> {
    * Set the value of a key in the cache.
    */
   public async set(key: string, val: V): Promise<void> {
-    return this.keyedMutex.runExclusiveForKey(key, () => this.setUnsafe(key, val));
+    return this.keyedMutex.runExclusiveForKey(key, () => {
+      this.setUnsafe(key, val);
+    });
   }
 
   private setUnsafe(key: string, val: V): void {
@@ -125,7 +127,9 @@ export default class Cache<V> {
 
     // Note: avoiding lockKey() because it could get expensive with many keys to delete
     await this.keyedMutex.runExclusiveGlobally(() => {
-      keysToDelete.forEach((k) => this.deleteUnsafe(k));
+      keysToDelete.forEach((k) => {
+        this.deleteUnsafe(k);
+      });
     });
   }
 
@@ -150,7 +154,7 @@ export default class Cache<V> {
       }
       // NOTE(cemmer): util.promisify(zlib.inflate) seems to have issues not throwing correctly
       const decompressed = zlib.inflateSync(compressed);
-      const keyValuesObject = v8.deserialize(decompressed) as { [key: string]: V };
+      const keyValuesObject = v8.deserialize(decompressed) as Record<string, V>;
       const keyValuesEntries = Object.entries(keyValuesObject);
       this.keyValues = new Map(keyValuesEntries);
     } catch {

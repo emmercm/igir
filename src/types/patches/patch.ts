@@ -21,8 +21,8 @@ export default abstract class Patch {
   }
 
   protected static getCrcFromPath(fileBasename: string): string {
-    const matches = fileBasename.match(/(^|[^a-z0-9])([a-f0-9]{8})([^a-z0-9]|$)/i);
-    if (matches && matches?.length >= 3) {
+    const matches = /(^|[^a-z0-9])([a-f0-9]{8})([^a-z0-9]|$)/i.exec(fileBasename);
+    if (matches && matches.length >= 3) {
       return matches[2].toLowerCase();
     }
 
@@ -48,8 +48,8 @@ export default abstract class Patch {
   getRomName(): string {
     return path
       .parse(this.getFile().getExtractedFilePath())
-      .name.replace(new RegExp(this.getCrcBefore(), 'gi'), '')
-      .replace(/  +/g, ' ')
+      .name.replaceAll(new RegExp(this.getCrcBefore(), 'gi'), '')
+      .replaceAll(/  +/g, ' ')
       .trim();
   }
 

@@ -89,7 +89,7 @@ export default class Tar extends Archive {
           return true;
         },
       },
-      [entryPath.replace(/[\\/]/g, '/')],
+      [entryPath.replaceAll(/[\\/]/g, '/')],
     );
     if (!(await FsPoly.exists(extractedFilePath))) {
       throw new ExpectedError(`didn't find extracted file '${entryPath}'`);

@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelValue } from './logLevel.js';
 
 /**
  * @see https://www.toptal.com/designers/htmlarrows/symbols/
@@ -70,12 +70,12 @@ export default abstract class ProgressBar {
       pluralSuffix = 'es';
     }
 
-    this.done(`${count.toLocaleString()} ${noun.trim()}${count !== 1 ? pluralSuffix : ''} ${verb}`);
+    this.done(`${count.toLocaleString()} ${noun.trim()}${count === 1 ? '' : pluralSuffix} ${verb}`);
   }
 
   abstract setLoggerPrefix(prefix: string): void;
 
-  abstract log(logLevel: LogLevel, message: string): void;
+  abstract log(logLevel: LogLevelValue, message: string): void;
 
   /**
    * Log a TRACE message.
@@ -84,7 +84,7 @@ export default abstract class ProgressBar {
    * helpful in bug reports.
    */
   logTrace(message: string): void {
-    return this.log(LogLevel.TRACE, message);
+    this.log(LogLevel.TRACE, message);
   }
 
   /**
@@ -94,7 +94,7 @@ export default abstract class ProgressBar {
    * already exists, etc.).
    */
   logDebug(message: string): void {
-    return this.log(LogLevel.DEBUG, message);
+    this.log(LogLevel.DEBUG, message);
   }
 
   /**
@@ -104,21 +104,21 @@ export default abstract class ProgressBar {
    * writing DATs, etc.).
    */
   logInfo(message: string): void {
-    return this.log(LogLevel.INFO, message);
+    this.log(LogLevel.INFO, message);
   }
 
   /**
    * Log a WARN message.
    */
   logWarn(message: string): void {
-    return this.log(LogLevel.WARN, message);
+    this.log(LogLevel.WARN, message);
   }
 
   /**
    * Log an ERROR message.
    */
   logError(message: string): void {
-    return this.log(LogLevel.ERROR, message);
+    this.log(LogLevel.ERROR, message);
   }
 
   abstract freeze(): void;

@@ -21,8 +21,8 @@ export default abstract class DAT {
    * exists, then there will be one {@link Parent} for every {@link Game}.
    */
   protected generateGameNamesToParents(): this {
-    const gameNamesToParents: Map<string, Parent> = new Map();
-    const gameIdsToParents: Map<string, Parent> = new Map();
+    const gameNamesToParents = new Map<string, Parent>();
+    const gameIdsToParents = new Map<string, Parent>();
 
     // Find all parents
     this.getGames().forEach((game: Game) => {
@@ -110,10 +110,10 @@ export default abstract class DAT {
         .replace('Non-Redump', '!Redump')
         .replace('Source Code', 'S.Code')
         // Cleanup
-        .replace(/-( +-)+/g, '- ')
+        .replaceAll(/-( +-)+/g, '- ')
         .replace(/^[ -]+/, '')
         .replace(/[ -]+$/, '')
-        .replace(/  +/g, ' ')
+        .replaceAll(/  +/g, ' ')
         .trim()
     );
   }
@@ -136,7 +136,7 @@ export default abstract class DAT {
 
   getRequiredRomChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) =>
+    this.getGames().forEach((game) => {
       game.getRoms().forEach((rom) => {
         if (rom.getCrc32() && rom.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
@@ -147,14 +147,14 @@ export default abstract class DAT {
         } else if (rom.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      }),
-    );
+      });
+    });
     return checksumBitmask;
   }
 
   getRequiredDiskChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) =>
+    this.getGames().forEach((game) => {
       game.getDisks().forEach((disk) => {
         if (disk.getCrc32() && disk.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
@@ -165,8 +165,8 @@ export default abstract class DAT {
         } else if (disk.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      }),
-    );
+      });
+    });
     return checksumBitmask;
   }
 

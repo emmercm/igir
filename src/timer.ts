@@ -4,7 +4,7 @@ import { clearTimeout } from 'node:timers';
  * A wrapper to centrally manage Node.js timeouts.
  */
 export default class Timer {
-  private static readonly TIMERS: Set<Timer> = new Set();
+  private static readonly TIMERS = new Set<Timer>();
 
   private readonly timeoutId: NodeJS.Timeout;
 
@@ -37,7 +37,9 @@ export default class Timer {
    * Cancel all pending timeouts.
    */
   static cancelAll(): void {
-    Timer.TIMERS.forEach((timer) => timer.cancel());
+    Timer.TIMERS.forEach((timer) => {
+      timer.cancel();
+    });
   }
 
   /**

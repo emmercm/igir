@@ -8,7 +8,7 @@ import ConsolePoly from '../polyfill/consolePoly.js';
 import TimePoly from '../polyfill/timePoly.js';
 import Timer from '../timer.js';
 import Logger from './logger.js';
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelValue } from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarPayload from './progressBarPayload.js';
 import SingleBarFormatted from './singleBarFormatted.js';
@@ -25,7 +25,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private static progressBars: ProgressBarCLI[] = [];
 
-  private static lastRedraw: number = 0;
+  private static lastRedraw = 0;
 
   private static logQueue: string[] = [];
 
@@ -37,7 +37,7 @@ export default class ProgressBarCLI extends ProgressBar {
 
   private waitingMessageTimeout?: Timer;
 
-  private readonly waitingMessages: Map<string, number> = new Map();
+  private readonly waitingMessages = new Map<string, number>();
 
   private constructor(
     logger: Logger,
@@ -100,8 +100,10 @@ export default class ProgressBarCLI extends ProgressBar {
    */
   static stop(): void {
     // Freeze (and delete) any lingering progress bars
-    const progressBarsCopy = ProgressBarCLI.progressBars.slice();
-    progressBarsCopy.forEach((progressBar) => progressBar.freeze());
+    const progressBarsCopy = [...ProgressBarCLI.progressBars];
+    progressBarsCopy.forEach((progressBar) => {
+      progressBar.freeze();
+    });
 
     // Clear the last deleted, non-frozen progress bar
     ProgressBarCLI.multiBar?.log(' ');
@@ -134,7 +136,7 @@ export default class ProgressBarCLI extends ProgressBar {
               //  progress bar output.
               .split('\n')
               // TODO(cemmer): this appears to only overwrite the last line, not any others?
-              .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`),
+              .join(`\n${this.logger.isTTY() ? '\x1B[K' : ''}`),
           )
           .join('\n');
         ProgressBarCLI.multiBar.log(`${logMessage}\n`);
@@ -232,7 +234,7 @@ export default class ProgressBarCLI extends ProgressBar {
         );
 
         const newWaitingMessage =
-          newWaitingMessagePair !== undefined ? newWaitingMessagePair[0] : undefined;
+          newWaitingMessagePair === undefined ? undefined : newWaitingMessagePair[0];
 
         if (newWaitingMessage !== this.payload.waitingMessage) {
           this.payload.waitingMessage = newWaitingMessage;
@@ -320,16 +322,16 @@ export default class ProgressBarCLI extends ProgressBar {
   }
 
   /**
-   * Log a message at some specified {@link LogLevel}.
+   * Log a message at some specified {@link LogLevelValue}.
    */
-  log(logLevel: LogLevel, message: string): void {
+  log(logLevel: LogLevelValue, message: string): void {
     ProgressBarCLI.log(this.logger, logLevel, message);
   }
 
   /**
-   * Log a message at some specified {@link LogLevel}.
+   * Log a message at some specified {@link LogLevelValue}.
    */
-  static log(logger: Logger, logLevel: LogLevel, message: string): void {
+  static log(logger: Logger, logLevel: LogLevelValue, message: string): void {
     if (logger.getLogLevel() > logLevel) {
       return;
     }
@@ -351,7 +353,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     this.render(true);
-    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted?.getLastOutput()}\n`);
+    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted.getLastOutput()}\n`);
     this.delete();
   }
 

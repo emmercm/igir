@@ -39,14 +39,14 @@ export default class DATFilter extends Module {
       }
 
       // Elect a new parent in case it was filtered out
-      if (games.find((game) => game.getName() === parent.getName())) {
+      if (games.some((game) => game.getName() === parent.getName())) {
         // Parent is still present, return
         return games;
       }
       const newParent = games.at(0)?.getName();
       return games.map((game) =>
         game.withProps({
-          cloneOf: game.getName() !== newParent ? newParent : undefined,
+          cloneOf: game.getName() === newParent ? undefined : newParent,
         }),
       );
     });
@@ -59,7 +59,7 @@ export default class DATFilter extends Module {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${filteredDat.getName()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length !== 1 ? 's' : ''} (${FsPoly.sizeReadable(size)})`,
+      `${filteredDat.getName()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
     );
 
     this.progressBar.logTrace(`${filteredDat.getName()}: done filtering DAT`);
@@ -80,8 +80,7 @@ export default class DATFilter extends Module {
       [
         this.options.getFilterRegex() &&
           !this.options.getFilterRegex()?.some((regex) => regex.test(game.getName())),
-        this.options.getFilterRegexExclude() &&
-          this.options.getFilterRegexExclude()?.some((regex) => regex.test(game.getName())),
+        this.options.getFilterRegexExclude()?.some((regex) => regex.test(game.getName())),
         this.noLanguageAllowed(game),
         this.regionNotAllowed(game),
         this.options.getFilterCategoryRegex() &&

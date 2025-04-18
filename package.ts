@@ -8,7 +8,7 @@ import fg, { Options as GlobOptions } from 'fast-glob';
 import yargs from 'yargs';
 
 import Logger from './src/console/logger.js';
-import LogLevel from './src/console/logLevel.js';
+import { LogLevel } from './src/console/logLevel.js';
 import Package from './src/globals/package.js';
 import FsPoly from './src/polyfill/fsPoly.js';
 import ExpectedError from './src/types/expectedError.js';
@@ -22,20 +22,20 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   let results: string[] = [];
   filters.forEach((filter) => {
     if (filter.include) {
-      const include = fg
-        .globSync(filter.include.replace(/\\/g, '/'), filter)
-        .map((file) => path.resolve(file));
+      const includeNormalized = filter.include.replaceAll('\\', '/');
+      const include = fg.globSync(includeNormalized, filter).map((file) => path.resolve(file));
       if (include.length === 0) {
-        throw new ExpectedError(`glob pattern '${filter.include}' returned no paths`);
+        throw new ExpectedError(`glob pattern '${includeNormalized}' returned no paths`);
       }
       results = [...results, ...include];
     }
     if (filter.exclude) {
+      const excludeNormalized = filter.exclude.replaceAll('\\', '/');
       const exclude = new Set(
-        fg.globSync(filter.exclude.replace(/\\/g, '/'), filter).map((file) => path.resolve(file)),
+        fg.globSync(excludeNormalized, filter).map((file) => path.resolve(file)),
       );
       if (exclude.size === 0) {
-        throw new ExpectedError(`glob pattern '${filter.exclude}' returned no paths`);
+        throw new ExpectedError(`glob pattern '${excludeNormalized}' returned no paths`);
       }
       results = results.filter((result) => !exclude.has(result));
     }
@@ -104,7 +104,7 @@ const includeSize = (
   )
 ).reduce((sum, size) => sum + size, 0);
 logger.info(
-  `Include: found ${FsPoly.sizeReadable(includeSize)} of ${include.size.toLocaleString()} file${include.size !== 1 ? 's' : ''} to include`,
+  `Include: found ${FsPoly.sizeReadable(includeSize)} of ${include.size.toLocaleString()} file${include.size === 1 ? '' : 's'} to include`,
 );
 
 const exclude = fileFilter([{ include: '*{,/**}', onlyFiles: false, dot: true }]).filter(
@@ -121,7 +121,7 @@ const excludeSize = (
   )
 ).reduce((sum, size) => sum + size, 0);
 logger.info(
-  `Exclude: found ${FsPoly.sizeReadable(excludeSize)} of ${exclude.length.toLocaleString()} file${exclude.length !== 1 ? 's' : ''} to exclude`,
+  `Exclude: found ${FsPoly.sizeReadable(excludeSize)} of ${exclude.length.toLocaleString()} file${exclude.length === 1 ? '' : 's'} to exclude`,
 );
 const excludeGlobs = exclude.map((glob) => fg.convertPathToPattern(glob));
 

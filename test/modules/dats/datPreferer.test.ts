@@ -5,7 +5,7 @@ import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
-import Options, { PreferRevision } from '../../../src/types/options.js';
+import Options, { PreferRevision, PreferRevisionInverted } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const testGameWarlocked: Game[] = [
@@ -103,7 +103,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
   }),
 ];
 
-test.each([[true], [false]])('should return nothing if no parents exist, single: %s', (single) => {
+test.each([[true], [false]])('should return nothing with no parents, single: %s', (single) => {
   const options = new Options({ single });
   const dat = new LogiqxDAT(new Header(), []);
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
@@ -475,7 +475,7 @@ describe('revisions', () => {
   it('should prefer newer revisions', () => {
     const options = new Options({
       single: true,
-      preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(),
+      preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
     });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
@@ -492,7 +492,7 @@ describe('revisions', () => {
   it('should prefer older revisions', () => {
     const options = new Options({
       single: true,
-      preferRevision: PreferRevision[PreferRevision.OLDER].toLowerCase(),
+      preferRevision: PreferRevisionInverted[PreferRevision.OLDER].toLowerCase(),
     });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
@@ -595,13 +595,47 @@ describe('preference combinations', () => {
     const options = new Options({
       preferLanguage: ['DE', 'EN'],
       preferRegion: ['GER', 'EUR', 'USA', 'WORLD'],
-      preferRevision: PreferRevision[PreferRevision.NEWER].toLowerCase(),
+      preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
       single: true,
     });
     const dat = new LogiqxDAT(new Header(), testGameDaveMirraFreestyleBmx2);
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
+    ]);
+  });
+
+  // https://github.com/emmercm/igir/discussions/1496#discussioncomment-12514981
+  it('should prefer regions in some game names over releases', () => {
+    const options = new Options({
+      single: true,
+      preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
+      preferRegion: ['USA'],
+    });
+    const dat = new LogiqxDAT(new Header(), [
+      new Game({
+        name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        description: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
+        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced).gb', size: 131_072 }),
+      }),
+      new Game({
+        name: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
+        cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        description: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
+        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (SGB Enhanced).gb', size: 131_072 }),
+      }),
+      new Game({
+        name: 'Tetris 2 (USA)',
+        cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+        description: 'Tetris 2 (USA)',
+        release: new Release('Tetris 2 (USA)', 'USA'),
+        rom: new ROM({ name: 'Tetris 2 (USA).gb', size: 131_072 }),
+      }),
+    ]);
+    const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
+    expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
+      'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
     ]);
   });
 });

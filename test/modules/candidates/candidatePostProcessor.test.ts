@@ -4,11 +4,10 @@ import CandidatePostProcessor from '../../../src/modules/candidates/candidatePos
 import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import Parent from '../../../src/types/dats/parent.js';
 import ROM from '../../../src/types/dats/rom.js';
-import Options, { GameSubdirMode } from '../../../src/types/options.js';
-import ReleaseCandidate from '../../../src/types/releaseCandidate.js';
+import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
+import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const singleRomGames = [
@@ -46,15 +45,12 @@ const multiRomGames = ['Dainty', 'Daring', 'Dazzling', 'Dedicated'].map(
 const games = [...singleRomGames, ...subDirRomGames, ...multiRomGames];
 const dat = new LogiqxDAT(new Header(), games);
 
-async function runCandidatePostProcessor(
-  options: Options,
-): Promise<Map<Parent, ReleaseCandidate[]>> {
-  const gameReleaseCandidates = await Promise.all(
+async function runCandidatePostProcessor(options: Options): Promise<WriteCandidate[]> {
+  const candidates = await Promise.all(
     games.map(
       async (game) =>
-        new ReleaseCandidate(
+        new WriteCandidate(
           game,
-          undefined,
           await Promise.all(
             game
               .getRoms()
@@ -63,28 +59,21 @@ async function runCandidatePostProcessor(
         ),
     ),
   );
-  const datCandidates = new Map(
-    gameReleaseCandidates.map((releaseCandidate) => [
-      new Parent(releaseCandidate.getGame()),
-      [releaseCandidate],
-    ]),
-  );
 
-  return new CandidatePostProcessor(options, new ProgressBarFake()).process(dat, datCandidates);
+  return new CandidatePostProcessor(options, new ProgressBarFake()).process(dat, candidates);
 }
 
 it('should do nothing with no options', async () => {
   const options = new Options({
     commands: ['copy'],
     output: 'Output',
-    dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+    dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
 
-  const parentsToCandidates = await runCandidatePostProcessor(options);
+  const candidates = await runCandidatePostProcessor(options);
 
-  const outputFilePaths = [...parentsToCandidates.values()]
-    .flat()
-    .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+  const outputFilePaths = candidates
+    .flatMap((candidate) => candidate.getRomsWithFiles())
     .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
     .sort();
   expect(outputFilePaths).toEqual([
@@ -189,14 +178,13 @@ describe('dirLetterLimit', () => {
         dirLetter: true,
         dirLetterCount: 1,
         dirLetterLimit,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
-      const parentsToCandidates = await runCandidatePostProcessor(options);
+      const candidates = await runCandidatePostProcessor(options);
 
-      const outputFilePaths = [...parentsToCandidates.values()]
-        .flat()
-        .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      const outputFilePaths = candidates
+        .flatMap((candidate) => candidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
         .sort();
       expect(outputFilePaths).toEqual(expectedFilePaths);
@@ -337,14 +325,13 @@ describe('dirLetterGroup', () => {
         dirLetterCount,
         dirLetterLimit,
         dirLetterGroup: true,
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
 
-      const parentsToCandidates = await runCandidatePostProcessor(options);
+      const candidates = await runCandidatePostProcessor(options);
 
-      const outputFilePaths = [...parentsToCandidates.values()]
-        .flat()
-        .flatMap((releaseCandidate) => releaseCandidate.getRomsWithFiles())
+      const outputFilePaths = candidates
+        .flatMap((candidate) => candidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
         .sort();
       expect(outputFilePaths).toEqual(expectedFilePaths);

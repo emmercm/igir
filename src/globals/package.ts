@@ -43,5 +43,5 @@ export default class Package {
 
   static readonly VERSION = PACKAGE_JSON.version;
 
-  static readonly ENGINES_NODE = PACKAGE_JSON.engines?.node ?? '*';
+  static readonly ENGINES_NODE = PACKAGE_JSON.engines.node;
 }

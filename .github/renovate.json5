@@ -126,7 +126,13 @@
         },
       },
 
-      // Update chdman, maxcso immediately
+      {
+        // Locked to a specific Zstandard version for RVZSTD zip creation
+        matchPackageNames: ['zstd-napi'],
+        enabled: false,
+      },
+
+      // Update chdman, dolphin-tool, maxcso immediately
       {
         groupName: null,
         matchPackageNames: [
@@ -153,7 +159,6 @@
           '@types/micromatch',
           '@types/semver',
           '@types/tar',
-          '@types/unzipper',
           '@types/xml2js',
           '@types/yargs',
         ],
@@ -172,6 +177,16 @@
         matchUpdateTypes: ['patch', 'minor']
       },
       {
+        // Update TypeScript-related ESLint more frequently so that TypeScript can update
+        matchPackagePatterns: [
+          'typescript-eslint',
+          '^@typescript-eslint/',
+        ],
+        matchUpdateTypes: ['major', 'minor'],
+        schedule: 'at any time',
+        rebaseWhen: 'behind-base-branch'
+      },
+      {
         // Group Jest together because of peerDependencies
         matchPackageNames: [
           '@jest/globals',
@@ -184,10 +199,12 @@
         matchUpdateTypes: ['patch', 'minor']
       },
       {
-        // Separate TypeScript because upgrades are dependent on support by other dependencies
+        // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)
         matchPackageNames: ['typescript'],
         groupName: 'TypeScript',
         prPriority: -10,
+        schedule: 'at any time',
+        rebaseWhen: 'behind-base-branch'
       },
 
       // Everything else

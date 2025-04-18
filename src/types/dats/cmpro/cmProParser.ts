@@ -63,7 +63,9 @@ export interface SampleProps extends CMProObject {
 
 type CMProValue = CMProObject | string | undefined;
 
-type CMProObject = { [key: string]: CMProValue | CMProValue[] };
+interface CMProObject {
+  [key: string]: CMProValue | CMProValue[];
+}
 
 /**
  * A parser for CMPRo schema DATs.
@@ -92,14 +94,14 @@ export default class CMProParser {
       const value = this.parseValue();
 
       const existing = result[tag];
-      if (existing !== undefined) {
+      if (existing === undefined) {
+        result[tag] = value;
+      } else {
         if (Array.isArray(existing)) {
           result[tag] = [...existing, value];
         } else {
           result[tag] = [existing, value];
         }
-      } else {
-        result[tag] = value;
       }
 
       this.skipWhitespace();
@@ -125,14 +127,14 @@ export default class CMProParser {
       const value = this.parseValue();
 
       const existing = result[tag];
-      if (existing !== undefined) {
+      if (existing === undefined) {
+        result[tag] = value;
+      } else {
         if (Array.isArray(existing)) {
           result[tag] = [...existing, value];
         } else {
           result[tag] = [existing, value];
         }
-      } else {
-        result[tag] = value;
       }
 
       this.skipWhitespace();

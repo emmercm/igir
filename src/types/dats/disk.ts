@@ -18,7 +18,7 @@ export default class Disk extends ROM implements DiskProps {
       props
         ? {
             ...props,
-            size: props?.size ?? 0,
+            size: props.size ?? 0,
           }
         : undefined,
     );

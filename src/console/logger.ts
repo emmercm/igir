@@ -2,11 +2,10 @@ import { PassThrough } from 'node:stream';
 import { WriteStream } from 'node:tty';
 
 import chalk from 'chalk';
-import figlet from 'figlet';
 import moment from 'moment';
 
 import Package from '../globals/package.js';
-import LogLevel from './logLevel.js';
+import { LogLevel, LogLevelInverted, LogLevelValue } from './logLevel.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 import ProgressBarCLI from './progressBarCli.js';
 
@@ -14,14 +13,14 @@ import ProgressBarCLI from './progressBarCli.js';
  * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.
  */
 export default class Logger {
-  private logLevel: LogLevel;
+  private logLevel: LogLevelValue;
 
   private readonly stream: NodeJS.WritableStream;
 
   private readonly loggerPrefix?: string;
 
   constructor(
-    logLevel: LogLevel = LogLevel.WARN,
+    logLevel: LogLevelValue = LogLevel.WARN,
     stream: NodeJS.WritableStream = process.stdout,
     loggerPrefix?: string,
   ) {
@@ -30,11 +29,11 @@ export default class Logger {
     this.loggerPrefix = loggerPrefix;
   }
 
-  getLogLevel(): LogLevel {
+  getLogLevel(): LogLevelValue {
     return this.logLevel;
   }
 
-  setLogLevel(logLevel: LogLevel): void {
+  setLogLevel(logLevel: LogLevelValue): void {
     this.logLevel = logLevel;
   }
 
@@ -56,7 +55,7 @@ export default class Logger {
     return false;
   }
 
-  private readonly print = (logLevel: LogLevel, message: unknown = ''): void => {
+  private readonly print = (logLevel: LogLevelValue, message: unknown = ''): void => {
     if (this.logLevel > logLevel) {
       return;
     }
@@ -71,9 +70,9 @@ export default class Logger {
   }
 
   /**
-   * Format a log message for a given {@link LogLevel}.
+   * Format a log message for a given {@link LogLevelValue}.
    */
-  formatMessage(logLevel: LogLevel, message: string): string {
+  formatMessage(logLevel: LogLevelValue, message: string): string {
     // Don't format "ALWAYS" or "NEVER"
     if (logLevel >= LogLevel.ALWAYS) {
       return message;
@@ -88,12 +87,12 @@ export default class Logger {
       [LogLevel.ERROR]: chalk.red,
       [LogLevel.NOTICE]: chalk.underline,
       [LogLevel.NEVER]: (msg): string => msg,
-    } satisfies { [key in LogLevel]: (message: string) => string };
+    } satisfies Record<LogLevelValue, (message: string) => string>;
     const chalkFunc = chalkFuncs[logLevel];
 
     const loggerTime =
       this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = `${chalkFunc(LogLevel[logLevel])}:${' '.repeat(Math.max(5 - LogLevel[logLevel].length, 0))} `;
+    const levelPrefix = `${chalkFunc(LogLevelInverted[logLevel])}:${' '.repeat(Math.max(5 - LogLevelInverted[logLevel].length, 0))} `;
     const loggerPrefix =
       this.logLevel <= LogLevel.TRACE && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
@@ -105,33 +104,49 @@ export default class Logger {
       .join('\n');
   }
 
-  trace = (message: unknown = ''): void => this.print(LogLevel.TRACE, message);
+  trace = (message: unknown = ''): void => {
+    this.print(LogLevel.TRACE, message);
+  };
 
-  debug = (message: unknown = ''): void => this.print(LogLevel.DEBUG, message);
+  debug = (message: unknown = ''): void => {
+    this.print(LogLevel.DEBUG, message);
+  };
 
-  info = (message: unknown = ''): void => this.print(LogLevel.INFO, message);
+  info = (message: unknown = ''): void => {
+    this.print(LogLevel.INFO, message);
+  };
 
-  warn = (message: unknown = ''): void => this.print(LogLevel.WARN, message);
+  warn = (message: unknown = ''): void => {
+    this.print(LogLevel.WARN, message);
+  };
 
-  error = (message: unknown = ''): void => this.print(LogLevel.ERROR, message);
+  error = (message: unknown = ''): void => {
+    this.print(LogLevel.ERROR, message);
+  };
 
-  notice = (message: unknown = ''): void => this.print(LogLevel.NOTICE, message);
+  notice = (message: unknown = ''): void => {
+    this.print(LogLevel.NOTICE, message);
+  };
 
   /**
    * Print the CLI header.
    */
   printHeader(): void {
-    const logo = figlet
-      .textSync(Package.NAME.toUpperCase(), {
-        font: 'Big Money-se',
-      })
-      .trimEnd();
+    const logo = `
+   @@@@@@   @@@@@@     @@@@@@    @@@@@@@@
+ @@      @@  @@      @@      @@         @@
+ @@      @@  @@      @@      @@         @@
+   @@@@@@   @@         @@@@@@   @@@@@@@@@
+          @@@     @@@@        @@@
+     @@   @@        @@   @@   @@       @@
+     @@   @@        @@   @@   @@       @@
+     @@   @@@@@@@@@@@@   @@   @@       @@`.replace(/^[\r\n]+/, '');
 
     const logoSplit = logo.split('\n');
     const midLine = Math.min(Math.ceil(logoSplit.length / 2), logoSplit.length - 1);
     const maxLineLen = logoSplit.reduce((max, line) => Math.max(max, line.length), 0);
     logoSplit[midLine - 2] =
-      `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ROM collection manager`;
+      `${logoSplit[midLine - 2].padEnd(maxLineLen, ' ')}   ROM collection manager`;
     logoSplit[midLine - 1] =
       `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Package.HOMEPAGE}`;
     logoSplit[midLine + 1] =
@@ -149,28 +164,31 @@ export default class Logger {
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
 
-        .replace(/(\[commands\.*\])/g, chalk.magenta('$1'))
-        .replace(new RegExp(`(${Package.NAME}) (( ?[a-z0-9])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
+        .replaceAll(/(\[commands\.*\])/g, chalk.magenta('$1'))
+        .replaceAll(
+          new RegExp(`(${Package.NAME}) (( ?[a-z0-9])+)`, 'g'),
+          `$1 ${chalk.magenta('$2')}`,
+        )
 
-        .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
-        .replace(
+        .replaceAll(/(\[options\.*\])/g, chalk.cyan('$1'))
+        .replaceAll(
           /([^a-zA-Z0-9-])(-[a-zA-Z0-9]([a-zA-Z0-9]|\n[ \t]*)*)/g,
           `$1${chalk.cyanBright('$2')}`,
         )
-        .replace(
+        .replaceAll(
           /(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+) ((?:[^ -])[^"][^ \n]*|"(?:[^"\\]|\\.)*")/g,
           `$1 ${chalk.underline('$3')}`,
         )
-        .replace(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
-        .replace(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
+        .replaceAll(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
+        .replaceAll(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
 
-        .replace(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))
-        .replace(/(\[default: ([^[\]]+(\[[^\]]+\])?)*\])/g, chalk.green('$1'))
-        .replace(/(\[required\])/g, chalk.red('$1'))
+        .replaceAll(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))
+        .replaceAll(/(\[default: ([^[\]]+(\[[^\]]+\])?)*\])/g, chalk.green('$1'))
+        .replaceAll(/(\[required\])/g, chalk.red('$1'))
 
-        .replace(/(\{[a-zA-Z]+\})/g, chalk.yellow('$1'))
+        .replaceAll(/(\{[a-zA-Z]+\})/g, chalk.yellow('$1'))
 
-        .replace(new RegExp(` (${Package.NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
+        .replaceAll(new RegExp(` (${Package.NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
     );
   }
 

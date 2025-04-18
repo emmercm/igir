@@ -1,7 +1,7 @@
 import { PassThrough, Writable } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
-import LogLevel from '../../src/console/logLevel.js';
+import { LogLevel, LogLevelValue } from '../../src/console/logLevel.js';
 
 class LoggerSpy {
   private readonly stream: NodeJS.WritableStream;
@@ -10,7 +10,7 @@ class LoggerSpy {
 
   private readonly logger: Logger;
 
-  constructor(logLevel: LogLevel) {
+  constructor(logLevel: LogLevelValue) {
     this.stream = new PassThrough();
     this.spy = new Promise((resolve) => {
       const buffers: Uint8Array[] = [];
@@ -35,20 +35,16 @@ class LoggerSpy {
   }
 }
 
-function getLevelsAbove(logLevel: LogLevel): LogLevel[] {
-  return Object.keys(LogLevel)
-    .map((ll) => LogLevel[ll as keyof typeof LogLevel])
-    .filter((ll) => ll > logLevel);
+function getLevelsAbove(logLevel: LogLevelValue): LogLevelValue[] {
+  return Object.values(LogLevel).filter((ll) => ll > logLevel);
 }
 
-function getLogLevelsAtOrBelow(logLevel: LogLevel): LogLevel[] {
-  return Object.keys(LogLevel)
-    .map((ll) => LogLevel[ll as keyof typeof LogLevel])
-    .filter((ll) => ll <= logLevel);
+function getLogLevelsAtOrBelow(logLevel: LogLevelValue): LogLevelValue[] {
+  return Object.values(LogLevel).filter((ll) => ll <= logLevel);
 }
 
 describe('setLogLevel_getLogLevel', () => {
-  const logLevels = Object.keys(LogLevel).map((ll) => LogLevel[ll as keyof typeof LogLevel]);
+  const logLevels = Object.values(LogLevel);
   test.each(logLevels)('should reflect: %s', (logLevel) => {
     const logger = new Logger(LogLevel.TRACE, new PassThrough());
     logger.setLogLevel(logLevel);
@@ -69,13 +65,13 @@ describe('isTTY', () => {
 });
 
 describe('newLine', () => {
-  test.each(getLevelsAbove(LogLevel.NEVER - 1))('should not write: %s', async (logLevel) => {
+  test.each(getLevelsAbove(LogLevel.ALWAYS))('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  test.each(getLogLevelsAtOrBelow(LogLevel.NEVER - 1))('should write: %s', async (logLevel) => {
+  test.each(getLogLevelsAtOrBelow(LogLevel.ALWAYS))('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().newLine();
     await expect(spy.getOutput()).resolves.toEqual('\n');
@@ -153,13 +149,13 @@ describe('error', () => {
 });
 
 describe('printHeader', () => {
-  test.each(getLevelsAbove(LogLevel.NEVER - 1))('should not write: %s', async (logLevel) => {
+  test.each(getLevelsAbove(LogLevel.ALWAYS))('should not write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.toEqual('');
   });
 
-  test.each(getLogLevelsAtOrBelow(LogLevel.NEVER - 1))('should write: %s', async (logLevel) => {
+  test.each(getLogLevelsAtOrBelow(LogLevel.ALWAYS))('should write: %s', async (logLevel) => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().printHeader();
     await expect(spy.getOutput()).resolves.not.toEqual('');

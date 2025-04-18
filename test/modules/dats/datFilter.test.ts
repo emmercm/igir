@@ -18,7 +18,7 @@ function expectFilteredDAT(
 ): void {
   const dat = new LogiqxDAT(new Header(), gamesArr.flat());
   const filteredDat = buildDATFilter(options).filter(dat);
-  expect(filteredDat.getGames().length).toEqual(expectedGameCount);
+  expect(filteredDat.getGames()).toHaveLength(expectedGameCount);
 }
 
 function arrayCoerce<T>(val: T | T[] | undefined): T[] {

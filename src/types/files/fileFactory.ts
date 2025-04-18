@@ -119,10 +119,17 @@ export default class FileFactory {
     } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       archive = new NkitIso(filePath);
     } else {
+      // The file path doesn't have a known archive extension
       return undefined;
     }
 
-    return this.fileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
+    try {
+      return await this.fileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
+    } catch {
+      // The file at the given path may not be of the type asserted by the given extension, or it
+      // may be an incomplete/corrupted file
+      return undefined;
+    }
   }
 
   /**
@@ -147,6 +154,7 @@ export default class FileFactory {
     if (!signature) {
       return undefined;
     }
+    // Note that the signature might not be of an archive
 
     return this.entriesFromArchiveExtension(filePath, checksumBitmask, signature.getExtension());
   }

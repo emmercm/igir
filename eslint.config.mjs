@@ -3,11 +3,12 @@ import { fileURLToPath } from 'node:url';
 
 import { FlatCompat } from '@eslint/eslintrc';
 import eslint from '@eslint/js';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
-import jest from 'eslint-plugin-jest';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import unicorn from 'eslint-plugin-unicorn';
+import eslintPluginJest from 'eslint-plugin-jest';
+import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
+import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import tseslint from 'typescript-eslint';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,15 +23,13 @@ export default [
   {
     ignores: ['dist/**/*'],
   },
-  ...compat.extends(
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended-type-checked',
-    'plugin:jsdoc/recommended-typescript-error',
-    'plugin:jest/recommended',
-    'plugin:prettier/recommended', // MUST BE LAST!
-  ),
 
-  // plugin:@typescript-eslint/recommended-type-checked
+  // @typescript-eslint
+  eslint.configs.recommended,
+  ...compat.extends(
+    'plugin:@typescript-eslint/strict-type-checked',
+    'plugin:@typescript-eslint/stylistic-type-checked',
+  ),
   {
     languageOptions: {
       parserOptions: {
@@ -39,6 +38,10 @@ export default [
       },
     },
     rules: {
+      // Conflicts between @typescript-eslint plugins 😡
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+
+      // Personal preferences
       '@typescript-eslint/no-misused-promises': [
         'error',
         {
@@ -67,15 +70,26 @@ export default [
     ...tseslint.configs.disableTypeChecked,
   },
 
+  // Third party configs
+  eslintPluginUnicorn.configs.recommended,
+  eslintPluginJsdoc.configs['flat/recommended-typescript-error'],
+  {
+    ...eslintPluginJest.configs['flat/recommended'],
+  },
+  {
+    plugins: {
+      'simple-import-sort': eslintPluginSimpleImportSort,
+    },
+    rules: {
+      'simple-import-sort/exports': 'error',
+      'simple-import-sort/imports': 'error',
+    },
+  },
+  eslintPluginPrettierRecommended, // MUST BE THE LAST PLUGIN!
+
+  // Rule overrides
   {
     files: ['**/*.ts'],
-
-    plugins: {
-      '@typescript-eslint': typescriptEslint,
-      'simple-import-sort': simpleImportSort,
-      jest,
-      unicorn,
-    },
 
     languageOptions: {
       parser: tsParser,
@@ -86,13 +100,12 @@ export default [
       sourceType: 'module',
 
       globals: {
-        ...jest.environments.globals.globals,
+        ...eslintPluginJest.environments.globals.globals,
       },
     },
 
     rules: {
       // ***** Files *****
-      'unicorn/no-empty-file': 'error',
       'unicorn/filename-case': [
         'error',
         {
@@ -101,7 +114,6 @@ export default [
       ],
 
       // ***** Imports *****
-      'unicorn/prefer-node-protocol': 'error',
       'simple-import-sort/exports': 'error',
       'simple-import-sort/imports': 'error',
 
@@ -124,34 +136,30 @@ export default [
       'jsdoc/no-blank-blocks': 'error',
 
       // ***** Types *****
-      'unicorn/no-null': 'error',
 
       // ***** Promises *****
-      // Disallow awaiting a value that is not a Thenable.
-      '@typescript-eslint/await-thenable': 'error',
-      // Disallow async functions which have no `await` expression.
-      '@typescript-eslint/require-await': 'error',
-      // Enforce consistent returning of awaited values.
-      '@typescript-eslint/return-await': 'error',
       // Require any function or method that returns a Promise to be marked async.
       '@typescript-eslint/promise-function-async': ['error'],
 
       // ***** Classes *****
       '@typescript-eslint/prefer-readonly': 'error',
-      'unicorn/new-for-builtins': 'error',
-      'unicorn/no-static-only-class': 'error',
+      // A lot of utility classes contain private functions that shouldn't be exposed
+      '@typescript-eslint/no-extraneous-class': [
+        'error',
+        {
+          allowStaticOnly: true,
+        },
+      ],
+      // TODO(cemmer)
+      '@typescript-eslint/no-misused-spread': 'off',
 
       // ***** Functions *****
       // Require explicit return types on functions and class methods.
       '@typescript-eslint/explicit-function-return-type': 'error',
-      'unicorn/prefer-default-parameters': 'error',
 
       // ***** Errors *****
-      'unicorn/catch-error-name': 'error',
-      'unicorn/prefer-optional-catch-binding': 'error',
 
       // ***** Operands *****
-      '@typescript-eslint/prefer-nullish-coalescing': 'error',
 
       // ***** Conditionals *****
       // Don't allow unnecessary conditional checks, such as when a value is always true, which can also help catch cases
@@ -164,11 +172,8 @@ export default [
           allowNullableString: true,
         },
       ],
-      // Don't allow truthy or falsey conditionals on array lengths
-      'unicorn/explicit-length-check': 'error',
 
       // ***** Loops *****
-      'unicorn/no-for-loop': 'error',
 
       // ***** Objects *****
       '@typescript-eslint/no-unused-vars': [
@@ -188,30 +193,39 @@ export default [
             "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'",
         },
       ],
-      'unicorn/no-new-array': 'error',
-      // TypeScript doesn't do a good job of reporting indexed values as potentially undefined, such as `[1,2,3][999]`
-      'unicorn/prefer-at': 'error',
-      // Try to enforce early terminations of loops, rather than statements such as `.find(x=>x)[0]`
-      'unicorn/prefer-array-find': [
-        'error',
-        {
-          checkFromLast: false,
-        },
-      ],
-      'unicorn/prefer-array-flat': 'error',
-      'unicorn/prefer-array-flat-map': 'error',
-      'unicorn/prefer-includes': 'error',
-      'unicorn/prefer-object-from-entries': 'error',
 
       // ***** Numbers *****
-      'unicorn/no-zero-fractions': 'error',
-      'unicorn/numeric-separators-style': 'error',
-      'unicorn/prefer-number-properties': 'error',
 
       // ***** Strings *****
-      'unicorn/prefer-code-point': 'error',
+      'prefer-template': 'error',
 
       // ********** Recommended Overrides **********
+
+      // ***** unicorn:recommended *****
+      // Fixes
+      'unicorn/no-array-push-push': [
+        'error',
+        {
+          // Readable#push() doesn't have a rest parameter 😡
+          ignore: ['readable'],
+        },
+      ],
+      // Style and clarity preference differences
+      'unicorn/import-style': 'off',
+      'unicorn/no-array-for-each': 'off',
+      'unicorn/no-array-reduce': 'off',
+      'unicorn/no-await-expression-member': 'off',
+      'unicorn/no-hex-escape': 'off',
+      'unicorn/no-useless-undefined': 'off',
+      'unicorn/prefer-string-raw': 'off',
+      'unicorn/prefer-switch': 'off',
+      'unicorn/prefer-ternary': 'off',
+      'unicorn/prevent-abbreviations': 'off',
+      // Too many false positives 😡
+      'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
+      'unicorn/no-array-callback-reference': 'off',
+      'unicorn/no-array-method-this-argument': 'off',
+      'unicorn/prefer-type-error': 'off',
 
       // ***** eslint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
@@ -223,13 +237,18 @@ export default [
       // There are a few places where this needs to be allowed, but only a few, so warn on them
       '@typescript-eslint/no-unused-expressions': 'warn',
 
-      // ***** airbnb-base, airbnb-typescript/base *****
-      'no-await-in-loop': 'off',
-      'no-bitwise': 'off',
-
       // ***** plugin:jest/recommended *****
       // A lot of test files define their own expect functions
       'jest/expect-expect': 'off',
+    },
+  },
+
+  {
+    // These files have switch cases on enum values, and have defensive
+    // programming in case it was written wrong
+    files: ['src/types/files/archives/**/*.ts', 'src/types/patches/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unnecessary-condition': 'off',
     },
   },
 

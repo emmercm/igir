@@ -5,13 +5,18 @@ import { crc32 } from '@node-rs/crc32';
 
 import File from './file.js';
 
-export enum ChecksumBitmask {
-  NONE = 0x0_00,
-  CRC32 = 0x0_01,
-  MD5 = 0x0_10,
-  SHA1 = 0x1_00,
-  SHA256 = 0x10_00,
-}
+export const ChecksumBitmask = {
+  NONE: 0x0_00,
+  CRC32: 0x0_01,
+  MD5: 0x0_10,
+  SHA1: 0x1_00,
+  SHA256: 0x10_00,
+} as const;
+export type ChecksumBitmaskKey = keyof typeof ChecksumBitmask;
+export type ChecksumBitmaskValue = (typeof ChecksumBitmask)[ChecksumBitmaskKey];
+export const ChecksumBitmaskInverted = Object.fromEntries(
+  Object.entries(ChecksumBitmask).map(([key, value]) => [value, key]),
+) as Record<ChecksumBitmaskValue, ChecksumBitmaskKey>;
 
 export interface ChecksumProps {
   crc32?: string;
@@ -77,12 +82,12 @@ export default class FileChecksums {
       stream.on('end', () => {
         resolve({
           crc32:
-            crc?.toString(16) ??
+            crc?.toString(16).padStart(8, '0') ??
             // Empty files won't emit any data, default to the empty file CRC32
             (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
-          md5: md5?.digest('hex'),
-          sha1: sha1?.digest('hex'),
-          sha256: sha256?.digest('hex'),
+          md5: md5?.digest('hex').padStart(32, '0'),
+          sha1: sha1?.digest('hex').padStart(40, '0'),
+          sha256: sha256?.digest('hex').padStart(64, '0'),
         });
       });
 

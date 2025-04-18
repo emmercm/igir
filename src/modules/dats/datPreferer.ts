@@ -35,7 +35,7 @@ export default class DATPreferer extends Module {
     }
 
     // Return early if there aren't any games
-    if (dat.getParents().reduce((sum, parent) => sum + parent.getGames().length, 0) === 0) {
+    if (dat.getGames().length === 0) {
       this.progressBar.logTrace(`${dat.getName()}: no parent has games, not preferring games`);
       return dat;
     }
@@ -53,7 +53,7 @@ export default class DATPreferer extends Module {
           return undefined;
         }
         this.progressBar.logTrace(
-          `${dat.getName()}: ${parent.getName()} (parent): ${parent.getGames().length.toLocaleString()} game${parent.getGames().length !== 1 ? 's' : ''} before preferring`,
+          `${dat.getName()}: ${parent.getName()} (parent): ${parent.getGames().length.toLocaleString()} game${parent.getGames().length === 1 ? '' : 's'} before preferring`,
         );
 
         const preferredGame = parent
@@ -70,7 +70,7 @@ export default class DATPreferer extends Module {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${preferredDat.getName()}: preferred to ${preferredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${preferredGames.length !== 1 ? 's' : ''} (${FsPoly.sizeReadable(size)})`,
+      `${preferredDat.getName()}: preferred to ${preferredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${preferredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
     );
 
     this.progressBar.logTrace(`${preferredDat.getName()}: done preferring DAT games`);

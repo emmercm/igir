@@ -3,24 +3,30 @@ import ExpectedError from '../expectedError.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
-enum NinjaCommand {
-  TERMINATE = 0x00,
-  OPEN = 0x01,
-  XOR = 0x02,
-}
+const NinjaCommand = {
+  TERMINATE: 0x00,
+  OPEN: 0x01,
+  XOR: 0x02,
+} as const;
+type NinjaCommandValue = (typeof NinjaCommand)[keyof typeof NinjaCommand];
 
-enum NinjaFileType {
-  RAW = 0,
-  NES = 1,
-  FDS = 2,
-  SNES = 3,
-  N64 = 4,
-  GB = 5,
-  SMS = 6,
-  MEGA = 7,
-  PCE = 8,
-  LYNX = 9,
-}
+const NinjaFileType = {
+  RAW: 0,
+  NES: 1,
+  FDS: 2,
+  SNES: 3,
+  N64: 4,
+  GB: 5,
+  SMS: 6,
+  MEGA: 7,
+  PCE: 8,
+  LYNX: 9,
+} as const;
+type NinjaFileTypeKey = keyof typeof NinjaFileType;
+type NinjaFileTypeValue = (typeof NinjaFileType)[NinjaFileTypeKey];
+const NinjaFileTypeInverted = Object.fromEntries(
+  Object.entries(NinjaFileType).map(([key, value]) => [value, key]),
+) as Record<NinjaFileTypeValue, NinjaFileTypeKey>;
 
 /**
  * @see https://www.romhacking.net/utilities/329/
@@ -78,7 +84,7 @@ export default class NinjaPatch extends Patch {
   }
 
   private async applyCommand(patchFile: IOFile, targetFile: IOFile): Promise<void> {
-    const command = (await patchFile.readNext(1)).readUInt8() as NinjaCommand;
+    const command = (await patchFile.readNext(1)).readUInt8() as NinjaCommandValue;
 
     if (command === NinjaCommand.TERMINATE) {
       // Nothing
@@ -86,6 +92,8 @@ export default class NinjaPatch extends Patch {
       await this.applyCommandOpen(patchFile, targetFile);
     } else if (command === NinjaCommand.XOR) {
       await NinjaPatch.applyCommandXor(patchFile, targetFile);
+    } else {
+      throw new ExpectedError(`Ninja command ${command} isn't supported`);
     }
   }
 
@@ -100,10 +108,10 @@ export default class NinjaPatch extends Patch {
     const fileNameLength =
       multiFile > 0 ? (await patchFile.readNext(multiFile)).readUIntLE(0, multiFile) : 0;
     patchFile.skipNext(fileNameLength); // file name
-    const fileType = (await patchFile.readNext(1)).readUInt8();
+    const fileType = (await patchFile.readNext(1)).readUInt8() as NinjaFileTypeValue;
     if (fileType > 0) {
       throw new ExpectedError(
-        `unsupported NINJA file type ${NinjaFileType[fileType]}: ${this.getFile().toString()}`,
+        `unsupported NINJA file type ${NinjaFileTypeInverted[fileType]}: ${this.getFile().toString()}`,
       );
     }
     const sourceFileSizeLength = (await patchFile.readNext(1)).readUInt8();

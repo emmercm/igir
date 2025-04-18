@@ -207,9 +207,11 @@ describe('getCrc32WithoutHeader', () => {
     async (filePath, expectedCrc) => {
       const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);
       expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -334,9 +336,11 @@ describe('getMd5WithoutHeader', () => {
         ChecksumBitmask.MD5,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
@@ -479,9 +483,11 @@ describe('getSha1WithoutHeader', () => {
         ChecksumBitmask.SHA1,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
@@ -714,9 +720,11 @@ describe('getSha256WithoutHeader', () => {
         ChecksumBitmask.SHA256,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath()) as ROMHeader,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();

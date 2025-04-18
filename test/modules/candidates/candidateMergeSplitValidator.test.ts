@@ -4,30 +4,21 @@ import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
 import Machine from '../../../src/types/dats/mame/machine.js';
-import Parent from '../../../src/types/dats/parent.js';
 import ROM from '../../../src/types/dats/rom.js';
 import File from '../../../src/types/files/file.js';
-import Options, { MergeMode } from '../../../src/types/options.js';
-import ReleaseCandidate from '../../../src/types/releaseCandidate.js';
+import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
+import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-async function datToCandidates(dat: DAT): Promise<Map<Parent, ReleaseCandidate[]>> {
+async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
   const dummyFile = await File.fileOf({ filePath: '' });
-  return dat.getParents().reduce((map, parent) => {
-    const releaseCandidates = parent.getGames().flatMap((game) =>
-      (game.getReleases().length > 0 ? game.getReleases() : [undefined]).map(
-        (release) =>
-          new ReleaseCandidate(
-            game,
-            release,
-            game.getRoms().map((rom) => new ROMWithFiles(rom, dummyFile, dummyFile)),
-          ),
-      ),
+  return dat.getGames().map((game) => {
+    return new WriteCandidate(
+      game,
+      game.getRoms().map((rom) => new ROMWithFiles(rom, dummyFile, dummyFile)),
     );
-    map.set(parent, releaseCandidates);
-    return map;
-  }, new Map<Parent, ReleaseCandidate[]>());
+  });
 }
 
 describe('missing parents', () => {
@@ -49,30 +40,29 @@ describe('missing parents', () => {
   ]);
 
   test.each(
-    Object.keys(MergeMode)
-      .filter((mode) => Number.isNaN(Number(mode)))
-      .filter((mode) => mode !== MergeMode[MergeMode.SPLIT])
-      .map((mode) => [mode.toLowerCase()]),
-  )('should return no missing parents for %s sets', async (mergeRoms) => {
+    Object.values(MergeMode)
+      .filter((mode) => mode !== MergeMode.SPLIT)
+      .map((mode) => MergeModeInverted[mode].toLowerCase()),
+  )('should return no missing games for %s sets', async (mergeRoms) => {
     const options = new Options({ mergeRoms });
-    const parentsToCandidates = await datToCandidates(dat);
+    const candidates = await datToCandidates(dat);
 
     const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
       dat,
-      parentsToCandidates,
+      candidates,
     );
     expect(missingGames).toEqual([]);
   });
 
-  it('should return missing parents for split sets', async () => {
+  it('should return missing games for split sets', async () => {
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.SPLIT].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.SPLIT].toLowerCase(),
     });
-    const parentsToCandidates = await datToCandidates(dat);
+    const candidates = await datToCandidates(dat);
 
     const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
       dat,
-      parentsToCandidates,
+      candidates,
     );
     expect(missingGames).toEqual(['grandparent']);
   });
@@ -101,37 +91,32 @@ describe('device refs', () => {
 
   it('should return no missing device refs for fullnonmerged sets', async () => {
     const options = new Options({
-      mergeRoms: MergeMode[MergeMode.FULLNONMERGED].toLowerCase(),
+      mergeRoms: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
     });
-    const parentsToCandidates = new Map(
-      [...(await datToCandidates(dat)).entries()]
-        // Remove all candidates for devices
-        .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().getIsDevice())),
-    );
+    const candidates = (await datToCandidates(dat))
+      // Remove all candidates for devices
+      .filter((candidate) => !candidate.getGame().getIsDevice());
 
     const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
       dat,
-      parentsToCandidates,
+      candidates,
     );
     expect(missingGames).toEqual([]);
   });
 
   test.each(
-    Object.keys(MergeMode)
-      .filter((mode) => Number.isNaN(Number(mode)))
-      .filter((mode) => mode !== MergeMode[MergeMode.FULLNONMERGED])
-      .map((mode) => [mode.toLowerCase()]),
-  )('should return missing parents for %s sets', async (mergeRoms) => {
+    Object.values(MergeMode)
+      .filter((mode) => mode !== MergeMode.FULLNONMERGED)
+      .map((mode) => MergeModeInverted[mode].toLowerCase()),
+  )('should return missing games for %s sets', async (mergeRoms) => {
     const options = new Options({ mergeRoms });
-    const parentsToCandidates = new Map(
-      [...(await datToCandidates(dat)).entries()]
-        // Remove all candidates for devices
-        .filter(([, candidate]) => candidate.some((rc) => !rc.getGame().getIsDevice())),
-    );
+    const candidates = (await datToCandidates(dat))
+      // Remove all candidates for devices
+      .filter((candidate) => !candidate.getGame().getIsDevice());
 
     const missingGames = new CandidateMergeSplitValidator(options, new ProgressBarFake()).validate(
       dat,
-      parentsToCandidates,
+      candidates,
     );
     expect(missingGames).toEqual(['screen']);
   });

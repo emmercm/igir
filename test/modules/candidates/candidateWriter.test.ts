@@ -25,7 +25,11 @@ import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options, { GameSubdirMode, OptionsProps } from '../../../src/types/options.js';
+import Options, {
+  GameSubdirMode,
+  GameSubdirModeInverted,
+  OptionsProps,
+} from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function copyFixturesToTemp(
@@ -143,7 +147,7 @@ async function candidateWriter(
   return walkAndStat(outputTemp);
 }
 
-it('should not do anything if there are no parents', async () => {
+it('should not do anything if there are no candidates', async () => {
   await copyFixturesToTemp(async (inputTemp, outputTemp) => {
     // Given
     const options = new Options({ commands: ['copy'] });
@@ -524,6 +528,7 @@ describe('zip', () => {
         'foobar.zip',
         'four.zip',
         'fourfive.zip',
+        'invalid.zip',
         'loremipsum.zip',
         'one.zip',
         'onetwothree.zip',
@@ -532,8 +537,28 @@ describe('zip', () => {
         'unknown.zip',
       ],
     ],
-    ['7z/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
-    ['rar/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
+    [
+      '7z/*',
+      [
+        'fizzbuzz.zip',
+        'foobar.zip',
+        'invalid.zip',
+        'loremipsum.zip',
+        'onetwothree.zip',
+        'unknown.zip',
+      ],
+    ],
+    [
+      'rar/*',
+      [
+        'fizzbuzz.zip',
+        'foobar.zip',
+        'invalid.zip',
+        'loremipsum.zip',
+        'onetwothree.zip',
+        'unknown.zip',
+      ],
+    ],
     [
       'raw/*',
       [
@@ -549,13 +574,24 @@ describe('zip', () => {
         'unknown.zip',
       ],
     ],
-    ['tar/*', ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip']],
+    [
+      'tar/*',
+      [
+        'fizzbuzz.zip',
+        'foobar.zip',
+        'invalid.zip',
+        'loremipsum.zip',
+        'onetwothree.zip',
+        'unknown.zip',
+      ],
+    ],
     [
       'zip/*',
       [
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'invalid.zip',
         'loremipsum.zip',
         'onetwothree.zip',
         'unknown.zip',
@@ -608,6 +644,7 @@ describe('zip', () => {
         'foobar.zip',
         'four.zip',
         'fourfive.zip',
+        'invalid.zip',
         'loremipsum.zip',
         'one.zip',
         'onetwothree.zip',
@@ -619,12 +656,26 @@ describe('zip', () => {
     ],
     [
       '7z/*',
-      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      [
+        'fizzbuzz.zip',
+        'foobar.zip',
+        'invalid.zip',
+        'loremipsum.zip',
+        'onetwothree.zip',
+        'unknown.zip',
+      ],
       [],
     ],
     [
       'rar/*',
-      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      [
+        'fizzbuzz.zip',
+        'foobar.zip',
+        'invalid.zip',
+        'loremipsum.zip',
+        'onetwothree.zip',
+        'unknown.zip',
+      ],
       [],
     ],
     [
@@ -645,7 +696,14 @@ describe('zip', () => {
     ],
     [
       'tar/*',
-      ['fizzbuzz.zip', 'foobar.zip', 'loremipsum.zip', 'onetwothree.zip', 'unknown.zip'],
+      [
+        'fizzbuzz.zip',
+        'foobar.zip',
+        'invalid.zip',
+        'loremipsum.zip',
+        'onetwothree.zip',
+        'unknown.zip',
+      ],
       [],
     ],
     [
@@ -654,6 +712,7 @@ describe('zip', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'invalid.zip',
         'loremipsum.zip',
         'onetwothree.zip',
         'unknown.zip',
@@ -738,6 +797,10 @@ describe('zip', () => {
         [`ROMWriter Test.zip|${path.join('GD-ROM', 'track02.raw')}`, 'abc178d5'],
         [`ROMWriter Test.zip|${path.join('GD-ROM', 'track03.bin')}`, '61a363f1'],
         [`ROMWriter Test.zip|${path.join('GD-ROM', 'track04.bin')}`, 'fc5ff5a0'],
+        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.7z')}`, 'df941cc9'],
+        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.rar')}`, 'df941cc9'],
+        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.tar.gz')}`, 'df941cc9'],
+        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.zip')}`, 'df941cc9'],
         ['ROMWriter Test.zip|KDULVQN.rom', 'b1c303e4'],
         ['ROMWriter Test.zip|LCDTestROM.lnx', '2d251538'],
         ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
@@ -1124,6 +1187,10 @@ describe('extract', () => {
         'four.rom',
         path.join('fourfive', 'five.rom'),
         path.join('fourfive', 'four.rom'),
+        'invalid.7z',
+        'invalid.rar',
+        'invalid.tar.gz',
+        'invalid.zip',
         'loremipsum.rom',
         'one.rom',
         path.join('onetwothree', 'one.rom'),
@@ -1139,6 +1206,7 @@ describe('extract', () => {
       [
         'fizzbuzz.nes',
         'foobar.lnx',
+        'invalid.7z',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
@@ -1151,6 +1219,7 @@ describe('extract', () => {
       [
         'fizzbuzz.nes',
         'foobar.lnx',
+        'invalid.rar',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
@@ -1178,6 +1247,7 @@ describe('extract', () => {
       [
         'fizzbuzz.nes',
         'foobar.lnx',
+        'invalid.tar.gz',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
@@ -1192,6 +1262,7 @@ describe('extract', () => {
         'foobar.lnx',
         path.join('fourfive', 'five.rom'),
         path.join('fourfive', 'four.rom'),
+        'invalid.zip',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
@@ -1204,7 +1275,7 @@ describe('extract', () => {
       // Given
       const options = new Options({
         commands: ['copy', 'extract', 'test'],
-        dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
@@ -1257,6 +1328,10 @@ describe('extract', () => {
         'four.rom',
         path.join('fourfive', 'five.rom'),
         path.join('fourfive', 'four.rom'),
+        'invalid.7z',
+        'invalid.rar',
+        'invalid.tar.gz',
+        'invalid.zip',
         'loremipsum.rom',
         'one.rom',
         path.join('onetwothree', 'one.rom'),
@@ -1267,6 +1342,7 @@ describe('extract', () => {
         'unknown.rom',
       ],
       [
+        path.join('7z', 'invalid.7z'),
         path.join('discs', 'CD-ROM (Track 1).bin'),
         path.join('discs', 'CD-ROM (Track 2).bin'),
         path.join('discs', 'CD-ROM (Track 3).bin'),
@@ -1302,26 +1378,28 @@ describe('extract', () => {
       [
         'fizzbuzz.nes',
         'foobar.lnx',
+        'invalid.7z',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
         path.join('onetwothree', 'two.rom'),
         'unknown.rom',
       ],
-      [],
+      [path.join('7z', 'invalid.7z')],
     ],
     [
       'rar/*',
       [
         'fizzbuzz.nes',
         'foobar.lnx',
+        'invalid.rar',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
         path.join('onetwothree', 'two.rom'),
         'unknown.rom',
       ],
-      [],
+      [path.join('rar', 'invalid.rar')],
     ],
     [
       'raw/*',
@@ -1355,13 +1433,14 @@ describe('extract', () => {
       [
         'fizzbuzz.nes',
         'foobar.lnx',
+        'invalid.tar.gz',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
         path.join('onetwothree', 'two.rom'),
         'unknown.rom',
       ],
-      [],
+      [path.join('tar', 'invalid.tar.gz')],
     ],
     [
       'zip/*',
@@ -1370,13 +1449,14 @@ describe('extract', () => {
         'foobar.lnx',
         path.join('fourfive', 'five.rom'),
         path.join('fourfive', 'four.rom'),
+        'invalid.zip',
         'loremipsum.rom',
         path.join('onetwothree', 'one.rom'),
         path.join('onetwothree', 'three.rom'),
         path.join('onetwothree', 'two.rom'),
         'unknown.rom',
       ],
-      [],
+      [path.join('zip', 'invalid.zip')],
     ],
   ])(
     'should move, extract, and test: %s',
@@ -1385,7 +1465,7 @@ describe('extract', () => {
         // Given
         const options = new Options({
           commands: ['move', 'extract', 'test'],
-          dirGameSubdir: GameSubdirMode[GameSubdirMode.MULTIPLE].toLowerCase(),
+          dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         });
         const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
@@ -1723,6 +1803,10 @@ describe('raw', () => {
         'foobar.lnx',
         'four.rom',
         'fourfive.zip',
+        'invalid.7z',
+        'invalid.rar',
+        'invalid.tar.gz',
+        'invalid.zip',
         'loremipsum.rom',
         'one.rom',
         'onetwothree.zip',
@@ -1731,8 +1815,21 @@ describe('raw', () => {
         'unknown.rom',
       ],
     ],
-    ['7z/*', ['fizzbuzz.7z', 'foobar.7z', 'loremipsum.7z', 'onetwothree.7z', 'unknown.7z']],
-    ['rar/*', ['fizzbuzz.rar', 'foobar.rar', 'loremipsum.rar', 'onetwothree.rar', 'unknown.rar']],
+    [
+      '7z/*',
+      ['fizzbuzz.7z', 'foobar.7z', 'invalid.7z', 'loremipsum.7z', 'onetwothree.7z', 'unknown.7z'],
+    ],
+    [
+      'rar/*',
+      [
+        'fizzbuzz.rar',
+        'foobar.rar',
+        'invalid.rar',
+        'loremipsum.rar',
+        'onetwothree.rar',
+        'unknown.rar',
+      ],
+    ],
     [
       'raw/*',
       [
@@ -1753,6 +1850,7 @@ describe('raw', () => {
       [
         'fizzbuzz.tar.gz',
         'foobar.tar.gz',
+        'invalid.tar.gz',
         'loremipsum.tar.gz',
         'onetwothree.tar.gz',
         'unknown.tar.gz',
@@ -1764,6 +1862,7 @@ describe('raw', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'invalid.zip',
         'loremipsum.zip',
         'onetwothree.zip',
         'unknown.zip',
@@ -1816,6 +1915,10 @@ describe('raw', () => {
         'foobar.lnx',
         'four.rom',
         'fourfive.zip',
+        'invalid.7z',
+        'invalid.rar',
+        'invalid.tar.gz',
+        'invalid.zip',
         'loremipsum.rom',
         'one.rom',
         'onetwothree.zip',
@@ -1824,6 +1927,7 @@ describe('raw', () => {
         'unknown.rom',
       ],
       [
+        path.join('7z', 'invalid.7z'),
         path.join('chd', '2048.chd'),
         path.join('chd', '4096.chd'),
         path.join('chd', 'CD-ROM.chd'),
@@ -1855,10 +1959,11 @@ describe('raw', () => {
     ],
     [
       '7z/*',
-      ['fizzbuzz.7z', 'foobar.7z', 'loremipsum.7z', 'onetwothree.7z', 'unknown.7z'],
+      ['fizzbuzz.7z', 'foobar.7z', 'invalid.7z', 'loremipsum.7z', 'onetwothree.7z', 'unknown.7z'],
       [
         path.join('7z', 'fizzbuzz.7z'),
         path.join('7z', 'foobar.7z'),
+        path.join('7z', 'invalid.7z'),
         path.join('7z', 'loremipsum.7z'),
         path.join('7z', 'onetwothree.7z'),
         path.join('7z', 'unknown.7z'),
@@ -1866,10 +1971,18 @@ describe('raw', () => {
     ],
     [
       'rar/*',
-      ['fizzbuzz.rar', 'foobar.rar', 'loremipsum.rar', 'onetwothree.rar', 'unknown.rar'],
+      [
+        'fizzbuzz.rar',
+        'foobar.rar',
+        'invalid.rar',
+        'loremipsum.rar',
+        'onetwothree.rar',
+        'unknown.rar',
+      ],
       [
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
+        path.join('rar', 'invalid.rar'),
         path.join('rar', 'loremipsum.rar'),
         path.join('rar', 'onetwothree.rar'),
         path.join('rar', 'unknown.rar'),
@@ -1907,6 +2020,7 @@ describe('raw', () => {
       [
         'fizzbuzz.tar.gz',
         'foobar.tar.gz',
+        'invalid.tar.gz',
         'loremipsum.tar.gz',
         'onetwothree.tar.gz',
         'unknown.tar.gz',
@@ -1914,6 +2028,7 @@ describe('raw', () => {
       [
         path.join('tar', 'fizzbuzz.tar.gz'),
         path.join('tar', 'foobar.tar.gz'),
+        path.join('tar', 'invalid.tar.gz'),
         path.join('tar', 'loremipsum.tar.gz'),
         path.join('tar', 'onetwothree.tar.gz'),
         path.join('tar', 'unknown.tar.gz'),
@@ -1925,6 +2040,7 @@ describe('raw', () => {
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'invalid.zip',
         'loremipsum.zip',
         'onetwothree.zip',
         'unknown.zip',
@@ -1933,6 +2049,7 @@ describe('raw', () => {
         path.join('zip', 'fizzbuzz.zip'),
         path.join('zip', 'foobar.zip'),
         path.join('zip', 'fourfive.zip'),
+        path.join('zip', 'invalid.zip'),
         path.join('zip', 'loremipsum.zip'),
         path.join('zip', 'onetwothree.zip'),
         path.join('zip', 'unknown.zip'),

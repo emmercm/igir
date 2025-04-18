@@ -6,29 +6,28 @@ import DATCombiner from '../../../src/modules/dats/datCombiner.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import Parent from '../../../src/types/dats/parent.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options from '../../../src/types/options.js';
-import ReleaseCandidate from '../../../src/types/releaseCandidate.js';
+import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function runCombinedCandidateGenerator(
   options: Options,
   romFiles: File[],
-): Promise<Map<Parent, ReleaseCandidate[]>> {
+): Promise<WriteCandidate[]> {
   // Run DATGameInferrer, but condense all DATs down to one
   const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
   const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
-  const parentsToCandidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
+  const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
     dat,
     indexedRomFiles,
   );
 
-  return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, parentsToCandidates);
+  return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 }
 
 it('should do nothing if option not specified', async () => {
@@ -43,22 +42,22 @@ it('should do nothing if option not specified', async () => {
   ).scan();
 
   // When
-  const parentsToCandidates = await runCombinedCandidateGenerator(options, romFiles);
+  const candidates = await runCombinedCandidateGenerator(options, romFiles);
 
   // Then the map wasn't altered
-  expect(parentsToCandidates.size).toEqual(romFiles.length);
+  expect(candidates).toHaveLength(romFiles.length);
 });
 
-it('should do nothing with no parents', async () => {
+it('should do nothing with no files', async () => {
   // Given
   const options = new Options({ zipDatName: true });
   const romFiles: File[] = [];
 
   // When
-  const parentsToCandidates = await runCombinedCandidateGenerator(options, romFiles);
+  const candidates = await runCombinedCandidateGenerator(options, romFiles);
 
   // Then the map wasn't altered
-  expect(parentsToCandidates.size).toEqual(romFiles.length);
+  expect(candidates).toHaveLength(romFiles.length);
 });
 
 it('should combine candidates', async () => {
@@ -73,13 +72,12 @@ it('should combine candidates', async () => {
   ).scan();
 
   // When
-  const parentsToCandidates = await runCombinedCandidateGenerator(options, romFiles);
+  const candidates = await runCombinedCandidateGenerator(options, romFiles);
 
-  // Then parents were combined into one
-  expect(parentsToCandidates.size).toEqual(1);
+  // Then candidates were combined into one
+  expect(candidates).toHaveLength(1);
 
-  // And the one parent has one candidate with all the ROMs
-  const candidates = [...parentsToCandidates.values()][0];
+  // And the one candidate has all the ROMs
   expect(candidates).toHaveLength(1);
   expect(candidates[0].getRomsWithFiles()).toHaveLength(romFiles.length);
 });

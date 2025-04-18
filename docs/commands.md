@@ -54,6 +54,10 @@ ROMs that are already in an archive will be re-archived.
 
     You can use the [`--dat-combine` option](dats/processing.md#dat-combining) to cause every ROM in a DAT to be zipped together.
 
+### `playlist`
+
+Create `.m3u` playlist files for multi-disc games. See the [playlists page](output/playlists.md) for more information.
+
 ## ROM verification
 
 ### `test`
