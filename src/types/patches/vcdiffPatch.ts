@@ -41,7 +41,9 @@ const VcdiffDeltaIndicator = {
 const VcdiffCopyAddressMode = {
   SELF: 0,
   HERE: 1,
-} as const;
+  // s_near "near modes"
+  // s_same "same modes"
+};
 type VcdiffCopyAddressModeValue =
   (typeof VcdiffCopyAddressMode)[keyof typeof VcdiffCopyAddressMode];
 
@@ -81,7 +83,7 @@ class VcdiffHeader {
     // COPY+NOOP
     for (let copyMode = 0; copyMode <= 8; copyMode += 1) {
       entries.push([
-        { type: VcdiffInstruction.COPY, size: 0, mode: copyMode as VcdiffCopyAddressModeValue },
+        { type: VcdiffInstruction.COPY, size: 0, mode: copyMode },
         { type: VcdiffInstruction.NOOP, size: 0, mode: 0 },
       ]);
       for (let copySize = 4; copySize <= 18; copySize += 1) {
@@ -89,7 +91,7 @@ class VcdiffHeader {
           {
             type: VcdiffInstruction.COPY,
             size: copySize,
-            mode: copyMode as VcdiffCopyAddressModeValue,
+            mode: copyMode,
           },
           { type: VcdiffInstruction.NOOP, size: 0, mode: 0 },
         ]);
@@ -105,7 +107,7 @@ class VcdiffHeader {
             {
               type: VcdiffInstruction.COPY,
               size: copySize,
-              mode: copyMode as VcdiffCopyAddressModeValue,
+              mode: copyMode,
             },
           ]);
         }
@@ -115,7 +117,7 @@ class VcdiffHeader {
       for (let addSize = 1; addSize <= 4; addSize += 1) {
         entries.push([
           { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
-          { type: VcdiffInstruction.COPY, size: 4, mode: copyMode as VcdiffCopyAddressModeValue },
+          { type: VcdiffInstruction.COPY, size: 4, mode: copyMode },
         ]);
       }
     }
@@ -123,7 +125,7 @@ class VcdiffHeader {
     // COPY+ADD
     for (let copyMode = 0; copyMode <= 8; copyMode += 1) {
       entries.push([
-        { type: VcdiffInstruction.COPY, size: 4, mode: copyMode as VcdiffCopyAddressModeValue },
+        { type: VcdiffInstruction.COPY, size: 4, mode: copyMode },
         { type: VcdiffInstruction.ADD, size: 1, mode: 0 },
       ]);
     }
@@ -559,6 +561,8 @@ export default class VcdiffPatch extends Patch {
             copyCache,
             instruction.mode,
           );
+        } else {
+          throw new ExpectedError(`Vcdiff instruction ${instruction.type} isn't supported`);
         }
       }
     }

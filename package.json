@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "🕹 A zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.",
   "keywords": [
     "1g1r",
@@ -99,10 +99,10 @@
     "terminal-size": "4.0.0",
     "trash": "8.1.1",
     "typescript-memoize": "1.1.1",
-    "unzipper": "0.12.3",
     "wrap-ansi": "8.1.0",
     "xml2js": "0.6.2",
-    "yargs": "17.7.2"
+    "yargs": "17.7.2",
+    "zstd-napi": "0.0.7"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",
@@ -116,7 +116,6 @@
     "@types/node": "22.13.13",
     "@types/semver": "7.5.8",
     "@types/tar": "6.1.13",
-    "@types/unzipper": "0.10.11",
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.33",
@@ -138,7 +137,7 @@
     "prettier": "3.5.3",
     "ts-jest": "29.3.0",
     "ts-node": "10.9.2",
-    "typescript": "5.8.2",
+    "typescript": "5.8.3",
     "typescript-eslint": "8.28.0",
     "which": "5.0.0"
   },

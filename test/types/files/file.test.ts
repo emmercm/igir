@@ -168,9 +168,13 @@ describe('getCrc32WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedCrc) => {
+      const header = ROMHeader.headerFromFilename(filePath);
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${filePath}`);
+      }
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.CRC32)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
+      ).withFileHeader(header);
       expect(file.getCrc32()).not.toEqual(file.getCrc32WithoutHeader());
       expect(file.getCrc32WithoutHeader()).toEqual(expectedCrc);
       expect(file.getMd5()).toBeUndefined();
@@ -224,9 +228,13 @@ describe('getMd5WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedMd5) => {
+      const header = ROMHeader.headerFromFilename(filePath);
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${filePath}`);
+      }
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.MD5)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
+      ).withFileHeader(header);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).not.toEqual(file.getMd5WithoutHeader());
@@ -286,9 +294,13 @@ describe('getSha1WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedSha1) => {
+      const header = ROMHeader.headerFromFilename(filePath);
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${filePath}`);
+      }
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.SHA1)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
+      ).withFileHeader(header);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).toBeUndefined();
@@ -366,9 +378,13 @@ describe('getSha256WithoutHeader', () => {
   ])(
     'should hash the file without the header when header is given and present in file: %s',
     async (filePath, expectedSha256) => {
+      const header = ROMHeader.headerFromFilename(filePath);
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${filePath}`);
+      }
       const file = await (
         await File.fileOf({ filePath }, ChecksumBitmask.SHA256)
-      ).withFileHeader(ROMHeader.headerFromFilename(filePath)!);
+      ).withFileHeader(header);
       expect(file.getCrc32()).toBeUndefined();
       expect(file.getCrc32WithoutHeader()).toBeUndefined();
       expect(file.getMd5()).toBeUndefined();

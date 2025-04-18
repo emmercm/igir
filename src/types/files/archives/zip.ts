@@ -1,20 +1,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream, { Readable } from 'node:stream';
 
 import archiver, { Archiver } from 'archiver';
 import async from 'async';
-import unzipper, { Entry, File as ZipFile } from 'unzipper';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
-import StreamPoly from '../../../polyfill/streamPoly.js';
 import Timer from '../../../timer.js';
 import ExpectedError from '../../expectedError.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
+import BananaSplit from './zip/bananaSplit/bananaSplit.js';
+import CentralDirectoryFileHeader from './zip/bananaSplit/centralDirectoryFileHeader.js';
 
 export default class Zip extends Archive {
   protected new(filePath: string): Archive {
@@ -22,7 +22,7 @@ export default class Zip extends Archive {
   }
 
   static getExtensions(): string[] {
-    return ['.zip', '.apk', '.ipa', '.jar', '.pk3'];
+    return ['.zip', '.zip64', '.apk', '.ipa', '.jar', '.pk3'];
   }
 
   getExtension(): string {
@@ -30,53 +30,20 @@ export default class Zip extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
-    // https://github.com/ZJONSSON/node-unzipper/issues/280
-    // UTF-8 entry names are not decoded correctly
-    // But this is mitigated by `extractEntryToStream()` and therefore `extractEntryToFile()` both
-    //  using `unzipper.Open.file()` as well, so mangled filenames here will still extract fine
-    const archive = await unzipper.Open.file(this.getFilePath());
+    const archive = new BananaSplit(this.getFilePath());
+    const entries = await archive.centralDirectoryFileHeaders();
 
     return async.mapLimit(
-      archive.files.filter((entryFile) => entryFile.type === 'File'),
+      entries.filter((entry) => !entry.isDirectory()),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entryFile: ZipFile): Promise<ArchiveEntry<this>> => {
-        // We have to filter these out here because `Entry.stream()` will fail, and even though it
-        // will emit a catchable error, the stream will never be released
-        if (entryFile.compressionMethod === 12) {
-          throw new ExpectedError("BZip2 isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 14) {
-          throw new ExpectedError("LZMA isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 20 || entryFile.compressionMethod === 93) {
-          throw new ExpectedError("Zstandard isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 98) {
-          throw new ExpectedError("PPMd isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod !== 0 && entryFile.compressionMethod !== 8) {
-          throw new ExpectedError('only STORE and DEFLATE methods are supported for .zip files');
-        }
-
+      async (entryFile: CentralDirectoryFileHeader): Promise<ArchiveEntry<this>> => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
-          const entryStream = entryFile
-            .stream()
-            // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
-            // may lead to unexpected behavior, but at least this won't crash because of an
-            // unhandled exception on the stream.
-            .on('error', () => {
-              // @typescript-eslint/no-empty-function
-            });
+          const entryStream = await entryFile.uncompressedStream();
           try {
             checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
           } finally {
-            /**
-             * In the case the callback doesn't read the entire stream, {@link unzipper} will leave
-             * the file handle open. Drain the stream so the file handle can be released. The stream
-             * cannot be destroyed by the callback, or this will never resolve!
-             */
-            await StreamPoly.autodrain(entryStream);
+            entryStream.destroy();
           }
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
@@ -84,9 +51,9 @@ export default class Zip extends Archive {
         return ArchiveEntry.entryOf(
           {
             archive: this,
-            entryPath: entryFile.path,
+            entryPath: entryFile.fileName,
             size: entryFile.uncompressedSize,
-            crc32: crc32 ?? entryFile.crc32.toString(16),
+            crc32: crc32 ?? entryFile.uncompressedCrc32,
             ...checksumsWithoutCrc,
           },
           checksumBitmask,
@@ -119,37 +86,32 @@ export default class Zip extends Archive {
     start = 0,
   ): Promise<T> {
     if (start > 0) {
-      // Zip library doesn't support starting the stream at some offset
+      // Can't start the stream at an uncompressed offset
       return super.extractEntryToStream(entryPath, callback, start);
     }
 
-    const archive = await unzipper.Open.file(this.getFilePath());
-
-    const entry = archive.files
-      .filter((entryFile) => entryFile.type === 'File')
-      .find((entryFile) => entryFile.path === entryPath.replaceAll(/[\\/]/g, '/'));
+    const archive = new BananaSplit(this.getFilePath());
+    const entries = await archive.centralDirectoryFileHeaders();
+    const entry = entries.find(
+      (entryFile) =>
+        entryFile.fileName.replaceAll(/[\\/]/g, '/') === entryPath.replaceAll(/[\\/]/g, '/'),
+    );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
       throw new ExpectedError(`didn't find entry '${entryPath}'`);
     }
 
-    let stream: Entry;
+    let entryStream: stream.Readable;
     try {
-      stream = entry.stream();
+      entryStream = await entry.uncompressedStream();
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
     }
 
     try {
-      return await callback(stream);
+      return await callback(entryStream);
     } finally {
-      /**
-       * In the case the callback doesn't read the entire stream, {@link unzipper} will leave the
-       * file handle open. Drain the stream so the file handle can be released. The stream cannot
-       * be destroyed by the callback, or this will never resolve!
-       * TODO(cemmer): this takes forever to drain with large files, e.g. during extension correction
-       */
-      await StreamPoly.autodrain(stream);
+      entryStream.destroy();
     }
   }
 
@@ -187,7 +149,7 @@ export default class Zip extends Archive {
       writeStream.on('close', resolve);
     });
 
-    return FsPoly.mv(tempZipFile, this.getFilePath());
+    await FsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(

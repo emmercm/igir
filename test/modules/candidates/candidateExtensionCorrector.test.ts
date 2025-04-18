@@ -71,7 +71,7 @@ function expectcorrectedCandidates(
 
   for (let i = 0; i < candidates.length; i += 1) {
     const candidate = candidates.at(i);
-    const correctedCandidate = correctedCandidates?.at(i);
+    const correctedCandidate = correctedCandidates.at(i);
 
     const romsWithFiles = candidate?.getRomsWithFiles();
     const correctedRomsWithFiles = correctedCandidate?.getRomsWithFiles();

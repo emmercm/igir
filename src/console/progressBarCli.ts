@@ -101,7 +101,9 @@ export default class ProgressBarCLI extends ProgressBar {
   static stop(): void {
     // Freeze (and delete) any lingering progress bars
     const progressBarsCopy = [...ProgressBarCLI.progressBars];
-    progressBarsCopy.forEach((progressBar) => progressBar.freeze());
+    progressBarsCopy.forEach((progressBar) => {
+      progressBar.freeze();
+    });
 
     // Clear the last deleted, non-frozen progress bar
     ProgressBarCLI.multiBar?.log(' ');
@@ -349,7 +351,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     this.render(true);
-    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted?.getLastOutput()}\n`);
+    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted.getLastOutput()}\n`);
     this.delete();
   }
 

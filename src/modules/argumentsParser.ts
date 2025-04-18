@@ -980,7 +980,7 @@ export default class ArgumentsParser {
         type: 'count',
       })
       .middleware((middlewareArgv) => {
-        if (middlewareArgv['clean-dry-run'] === true && (middlewareArgv.verbose ?? 0) < 1) {
+        if (middlewareArgv['clean-dry-run'] === true && middlewareArgv.verbose < 1) {
           this.logger.warn(
             '--clean-dry-run prints INFO logs for files skipped, enable them with -v',
           );
@@ -1096,7 +1096,7 @@ Example use cases:
         type: 'boolean',
       })
       .fail((msg, err, _yargs) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions,@typescript-eslint/no-unnecessary-condition
         if (err) {
           throw err;
         }

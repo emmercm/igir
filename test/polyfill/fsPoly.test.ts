@@ -10,6 +10,22 @@ describe('canSymlink', () => {
   });
 });
 
+describe('copyDir', () => {
+  // TODO(cemmer)
+});
+
+describe('copyFile', () => {
+  // TODO(cemmer)
+});
+
+describe('dirs', () => {
+  // TODO(cemmer)
+});
+
+describe('diskResolved', () => {
+  // TODO(cemmer)
+});
+
 describe('exists', () => {
   it('should return false for a non-existent file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
@@ -154,6 +170,10 @@ describe('existsSync', () => {
   });
 });
 
+describe('inode', () => {
+  // TODO(cemmer)
+});
+
 describe('isDirectory', () => {
   it('should return true for a directory', async () => {
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -194,6 +214,10 @@ describe('isDirectorySync', () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     expect(FsPoly.isDirectorySync(tempFile)).toEqual(false);
   });
+});
+
+describe('isExecutable', () => {
+  // TODO(cemmer)
 });
 
 describe('isHardlink', () => {
@@ -366,6 +390,10 @@ describe('isSymlinkSync', () => {
   });
 });
 
+describe('isWritable', () => {
+  // TODO(cemmer)
+});
+
 describe('makeLegal', () => {
   describe('unix', () => {
     test.each([
@@ -394,6 +422,22 @@ describe('makeLegal', () => {
       expect(FsPoly.makeLegal(input, '\\')).toEqual(expected);
     });
   });
+});
+
+describe('mkdir', () => {
+  // TODO(cemmer)
+});
+
+describe('mkdtemp', () => {
+  // TODO(cemmer)
+});
+
+describe('mktemp', () => {
+  // TODO(cemmer)
+});
+
+describe('mv', () => {
+  // TODO(cemmer)
 });
 
 describe('readlink', () => {
@@ -584,6 +628,17 @@ describe('readlinkResolvedSync', () => {
   });
 });
 
+describe('realpath', () => {
+  it('should throw on non-existent path', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await expect(FsPoly.realpath(tempFile)).rejects.toThrow();
+  });
+
+  it('should resolve existing paths', async () => {
+    await expect(FsPoly.realpath('.')).resolves.toEqual(process.cwd());
+  });
+});
+
 describe('rm', () => {
   it('should throw on missing file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
@@ -629,13 +684,17 @@ describe('rmSync', () => {
   it('should throw on missing file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
-    expect(() => FsPoly.rmSync(tempFile)).toThrow();
+    expect(() => {
+      FsPoly.rmSync(tempFile);
+    }).toThrow();
   });
 
   it('should not throw on forcing missing file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
-    expect(() => FsPoly.rmSync(tempFile, { force: true })).not.toThrow();
+    expect(() => {
+      FsPoly.rmSync(tempFile, { force: true });
+    }).not.toThrow();
   });
 
   it('should delete an existing file', async () => {
@@ -666,15 +725,12 @@ describe('rmSync', () => {
   });
 });
 
-describe('realpath', () => {
-  it('should throw on non-existent path', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await expect(FsPoly.realpath(tempFile)).rejects.toThrow();
-  });
+describe('size', () => {
+  // TODO(cemmer)
+});
 
-  it('should resolve existing paths', async () => {
-    await expect(FsPoly.realpath('.')).resolves.toEqual(process.cwd());
-  });
+describe('stat', () => {
+  // TODO(cemmer)
 });
 
 describe('touch', () => {
@@ -689,4 +745,12 @@ describe('touch', () => {
       await FsPoly.rm(tempDir, { recursive: true, force: true });
     }
   });
+});
+
+describe('walk', () => {
+  // TODO(cemmer)
+});
+
+describe('writeFile', () => {
+  // TODO(cemmer)
 });

@@ -7,8 +7,8 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 test.each([
   // One input path
-  [['test/fixtures/roms/**/*'], { roms: 35 }],
-  [['test/fixtures/roms/7z/*'], { '7z': 5 }],
+  [['test/fixtures/roms/**/*'], { roms: 36 }],
+  [['test/fixtures/roms/7z/*'], { '7z': 6 }],
   [['test/fixtures/roms/chd/*'], { chd: 4 }],
   [['test/fixtures/roms/cso/*'], { cso: 1 }],
   [['test/fixtures/roms/discs/*'], { discs: 3 }],
@@ -16,10 +16,10 @@ test.each([
   [['test/fixtures/roms/headered/*'], { headered: 6 }],
   [['test/fixtures/roms/headerless/*'], { headerless: 1 }],
   [['test/fixtures/roms/nkit/*'], { nkit: 1 }],
-  [['test/fixtures/roms/rar/*'], { rar: 5 }],
+  [['test/fixtures/roms/rar/*'], { rar: 6 }],
   [['test/fixtures/roms/raw/*'], { raw: 10 }],
-  [['test/fixtures/roms/tar/*'], { tar: 5 }],
-  [['test/fixtures/roms/zip/*'], { zip: 6 }],
+  [['test/fixtures/roms/tar/*'], { tar: 6 }],
+  [['test/fixtures/roms/zip/*'], { zip: 7 }],
   // Multiple input paths
   [
     [
