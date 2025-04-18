@@ -70,8 +70,8 @@
 
     // Don't update some packages in GitHub Actions workflows
     {
-      matchFileNames: ['.github/workflows/**'],
-      matchPackageNames: ['python'],
+      matchManagers: ['github-actions'],
+      matchDepNames: ['python'],
       enabled: false,
     },
 
