@@ -85,7 +85,7 @@ jobs:
           path: .cache
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.13.2
+          python-version: 3.x
       - run: |
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
@@ -135,7 +135,7 @@ jobs:
           path: .cache
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.13.2
+          python-version: 3.x
       - run: |
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
