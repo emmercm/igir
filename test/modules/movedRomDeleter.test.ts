@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../src/console/logger.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import Temp from '../../src/globals/temp.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
@@ -23,7 +25,7 @@ it('should do nothing if no ROMs moved', async () => {
       input: ['./test/fixtures/roms'],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
 

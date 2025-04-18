@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import which from 'which';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -13,7 +15,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
   return new DATScanner(
     new Options(props),
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
   );
 }
 

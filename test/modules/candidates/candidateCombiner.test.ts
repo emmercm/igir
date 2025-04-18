@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
@@ -12,6 +14,8 @@ import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options from '../../../src/types/options.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
+
+const LOGGER = new Logger(LogLevel.NEVER);
 
 async function runCombinedCandidateGenerator(
   options: Options,
@@ -38,7 +42,7 @@ it('should do nothing if option not specified', async () => {
       input: [path.join('test', 'fixtures', 'roms', 'raw')],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   // When
@@ -68,7 +72,7 @@ it('should combine candidates', async () => {
       input: [path.join('test', 'fixtures', 'roms', 'raw')],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   // When

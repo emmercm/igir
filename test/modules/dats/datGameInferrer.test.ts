@@ -1,3 +1,5 @@
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FileCache from '../../../src/types/files/fileCache.js';
@@ -39,7 +41,7 @@ test.each([
   const romFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
   ).scan();
 
   // When

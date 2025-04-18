@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
@@ -16,6 +18,8 @@ import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import IPSPatch from '../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
+
+const LOGGER = new Logger(LogLevel.NEVER);
 
 describe('fileOf', () => {
   it("should not throw when the file doesn't exist", async () => {
@@ -404,7 +408,7 @@ describe('copyToTempFile', () => {
         input: ['./test/fixtures/roms/raw'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(raws).toHaveLength(10);
 
@@ -426,7 +430,7 @@ describe('createReadStream', () => {
         input: ['./test/fixtures/roms/raw/!(empty).*'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(raws).toHaveLength(9);
 
