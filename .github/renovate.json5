@@ -154,7 +154,6 @@
           '@types/archiver',
           '@types/async',
           '@types/cli-progress',
-          '@types/figlet',
           '@types/micromatch',
           '@types/semver',
           '@types/tar',
