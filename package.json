@@ -117,8 +117,8 @@
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.33",
-    "@typescript-eslint/eslint-plugin": "8.27.0",
-    "@typescript-eslint/parser": "8.27.0",
+    "@typescript-eslint/eslint-plugin": "8.28.0",
+    "@typescript-eslint/parser": "8.28.0",
     "auto-changelog": "2.5.0",
     "caxa": "3.0.1",
     "eslint": "9.23.0",
@@ -126,7 +126,7 @@
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-jest": "28.11.0",
     "eslint-plugin-jsdoc": "50.6.9",
-    "eslint-plugin-prettier": "5.2.4",
+    "eslint-plugin-prettier": "5.2.5",
     "eslint-plugin-simple-import-sort": "12.1.1",
     "eslint-plugin-unicorn": "58.0.0",
     "husky": "9.1.7",
@@ -136,7 +136,7 @@
     "ts-jest": "29.3.0",
     "ts-node": "10.9.2",
     "typescript": "5.8.3",
-    "typescript-eslint": "8.27.0",
+    "typescript-eslint": "8.28.0",
     "which": "5.0.0"
   },
   "//engines": [
