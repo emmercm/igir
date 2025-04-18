@@ -119,9 +119,7 @@ export default class File implements FileProps {
 
     if (await FsPoly.exists(fileProps.filePath)) {
       // Calculate size
-      if (finalSize === undefined) {
-        finalSize = await FsPoly.size(fileProps.filePath);
-      }
+      finalSize ??= await FsPoly.size(fileProps.filePath);
 
       // Calculate checksums
       if (

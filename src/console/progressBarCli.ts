@@ -224,22 +224,20 @@ export default class ProgressBarCLI extends ProgressBar {
     }
     this.waitingMessages.set(waitingMessage, TimePoly.hrtimeMillis());
 
-    if (!this.waitingMessageTimeout) {
-      this.waitingMessageTimeout = Timer.setInterval(() => {
-        const currentMillis = TimePoly.hrtimeMillis();
-        const newWaitingMessagePair = [...this.waitingMessages].find(
-          ([, ms]) => currentMillis - ms >= 5000,
-        );
+    this.waitingMessageTimeout ??= Timer.setInterval(() => {
+      const currentMillis = TimePoly.hrtimeMillis();
+      const newWaitingMessagePair = [...this.waitingMessages].find(
+        ([, ms]) => currentMillis - ms >= 5000,
+      );
 
-        const newWaitingMessage =
-          newWaitingMessagePair === undefined ? undefined : newWaitingMessagePair[0];
+      const newWaitingMessage =
+        newWaitingMessagePair === undefined ? undefined : newWaitingMessagePair[0];
 
-        if (newWaitingMessage !== this.payload.waitingMessage) {
-          this.payload.waitingMessage = newWaitingMessage;
-          this.render(true);
-        }
-      }, 1000 / ProgressBarCLI.FPS);
-    }
+      if (newWaitingMessage !== this.payload.waitingMessage) {
+        this.payload.waitingMessage = newWaitingMessage;
+        this.render(true);
+      }
+    }, 1000 / ProgressBarCLI.FPS);
   }
 
   /**
