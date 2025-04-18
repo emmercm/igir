@@ -1,3 +1,5 @@
+import Logger from '../../src/console/logger.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
@@ -69,7 +71,7 @@ async function runFixdatCreator(
           dat: [fixdatPath],
         }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache()),
+        new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
       ).scan()
     )[0];
   } finally {

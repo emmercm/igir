@@ -1,10 +1,14 @@
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
+
+const LOGGER = new Logger(LogLevel.NEVER);
 
 describe('filesFrom', () => {
   describe.each([
@@ -39,7 +43,7 @@ describe('filesFrom', () => {
     ['test/fixtures/roms/zip/unknown.zip', 1],
   ])('%s', (filePath, expectedCount) => {
     it('should read the entries of archives with valid extensions: %s', async () => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
       expect(archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry)).toEqual(
         true,
       );
@@ -51,7 +55,7 @@ describe('filesFrom', () => {
       await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
       await FsPoly.copyFile(filePath, tempFile);
       try {
-        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempFile);
+        const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(tempFile);
         expect(
           archiveEntries.every((archiveEntry) => archiveEntry instanceof ArchiveEntry),
         ).toEqual(true);

@@ -2,6 +2,8 @@ import 'jest-extended';
 
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
@@ -18,6 +20,8 @@ import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER);
+
 it('should do nothing with no candidates', async () => {
   const options = new Options();
   const dat = new LogiqxDAT(new Header(), []);
@@ -26,7 +30,7 @@ it('should do nothing with no candidates', async () => {
   const correctedCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -54,7 +58,7 @@ it('should do nothing when no ROMs need correcting', async () => {
   const correctedCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -104,7 +108,7 @@ it('should correct ROMs without DATs', async () => {
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -140,7 +144,7 @@ it('should correct ROMs without DATs', async () => {
     const correctedCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);
@@ -159,7 +163,7 @@ it('should correct ROMs with missing filenames', async () => {
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -191,7 +195,7 @@ it('should correct ROMs with missing filenames', async () => {
     const correctedCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);

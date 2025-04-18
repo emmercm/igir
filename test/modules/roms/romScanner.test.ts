@@ -1,6 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
@@ -13,11 +15,13 @@ import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER);
+
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
   return new ROMScanner(
     new Options({ input, inputExclude }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   );
 }
 
@@ -99,7 +103,7 @@ describe('multiple files', () => {
       const scannedFiles = await new ROMScanner(
         new Options(optionsProps),
         new ProgressBarFake(),
-        new FileFactory(new FileCache()),
+        new FileFactory(new FileCache(), LOGGER),
       ).scan(checksumBitmask, true);
       expect(scannedFiles).toHaveLength(expectedRomFiles);
     },
@@ -114,7 +118,7 @@ describe('multiple files', () => {
     const scannedFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan(ChecksumBitmask.CRC32, false);
 
     const extensionsWithoutCrc32 = scannedFiles

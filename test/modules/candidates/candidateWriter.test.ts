@@ -4,6 +4,8 @@ import fs, { Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
@@ -31,6 +33,8 @@ import Options, {
   OptionsProps,
 } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
+
+const LOGGER = new Logger(LogLevel.NEVER);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
@@ -104,7 +108,7 @@ async function candidateWriter(
     romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
   } catch {
     /* ignored */
@@ -114,7 +118,7 @@ async function candidateWriter(
   const romFilesWithHeaders = await new ROMHeaderProcessor(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
   let candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
@@ -125,7 +129,7 @@ async function candidateWriter(
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     candidates = await new CandidatePatchGenerator(new ProgressBarFake()).generate(
       dat,
@@ -136,7 +140,7 @@ async function candidateWriter(
   candidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
@@ -404,7 +408,7 @@ describe('zip', () => {
           outputTemp,
         );
         expect(outputFiles).toHaveLength(1);
-        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+        const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
           path.join(outputTemp, outputFiles[0][0]),
         );
         expect(archiveEntries).toHaveLength(1);
@@ -442,7 +446,7 @@ describe('zip', () => {
         outputTemp,
       );
       expect(outputFiles).toHaveLength(1);
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         path.join(outputTemp, outputFiles[0][0]),
       );
       expect(archiveEntries).toHaveLength(1);
@@ -489,7 +493,7 @@ describe('zip', () => {
       const writtenRomsAndCrcs = (
         await Promise.all(
           outputFiles.map(async ([outputPath]) =>
-            new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
+            new FileFactory(new FileCache(), LOGGER).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -851,7 +855,9 @@ describe('zip', () => {
         // Then
         expect(outputFiles).toHaveLength(1);
         const outputFile = path.join(outputTemp, outputFiles[0][0]);
-        const writtenRomsAndCrcs = (await new FileFactory(new FileCache()).filesFrom(outputFile))
+        const writtenRomsAndCrcs = (
+          await new FileFactory(new FileCache(), LOGGER).filesFrom(outputFile)
+        )
           .map((entry) => [
             entry.toString().replace(outputTemp + path.sep, ''),
             entry.getCrc32() ?? '',
@@ -1140,7 +1146,7 @@ describe('extract', () => {
       const writtenRomsAndCrcs = (
         await Promise.all(
           outputFiles.map(async ([outputPath]) =>
-            new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
+            new FileFactory(new FileCache(), LOGGER).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -1764,7 +1770,7 @@ describe('raw', () => {
       const writtenRomsAndCrcs = (
         await Promise.all(
           outputFiles.map(async ([outputPath]) =>
-            new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
+            new FileFactory(new FileCache(), LOGGER).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )

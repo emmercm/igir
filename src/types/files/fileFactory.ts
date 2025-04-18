@@ -1,3 +1,6 @@
+import Logger from '../../console/logger.js';
+import { LogLevel } from '../../console/logLevel.js';
+import ProgressBarCLI from '../../console/progressBarCli.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import ExpectedError from '../expectedError.js';
 import Archive from './archives/archive.js';
@@ -27,9 +30,11 @@ import ROMHeader from './romHeader.js';
 
 export default class FileFactory {
   private readonly fileCache: FileCache;
+  private readonly logger: Logger;
 
-  constructor(fileCache: FileCache) {
+  constructor(fileCache: FileCache, logger: Logger) {
     this.fileCache = fileCache;
+    this.logger = logger;
   }
 
   async filesFrom(
@@ -125,9 +130,14 @@ export default class FileFactory {
 
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
-    } catch {
+    } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
       // may be an incomplete/corrupted file
+      ProgressBarCLI.log(
+        this.logger,
+        LogLevel.WARN,
+        `${filePath}: failed to parse ${fileExt.replace(/^\./, '')} file: ${error}`,
+      );
       return undefined;
     }
   }

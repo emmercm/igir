@@ -110,7 +110,7 @@ export default class Igir {
         this.logger.trace('not using a file for the file cache');
       }
     }
-    const fileFactory = new FileFactory(fileCache);
+    const fileFactory = new FileFactory(fileCache, this.logger);
 
     // Scan and process input files
     let dats = await this.processDATScanner(fileFactory);

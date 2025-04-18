@@ -2,6 +2,8 @@ import 'jest-extended';
 
 import path from 'node:path';
 
+import Logger from '../../src/console/logger.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import DATGameInferrer from '../../src/modules/dats/datGameInferrer.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
@@ -16,6 +18,8 @@ import Options from '../../src/types/options.js';
 import WriteCandidate from '../../src/types/writeCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER);
+
 it('should do nothing if dir2dat command not provided', async () => {
   // Given some input ROMs
   const options = new Options({
@@ -25,7 +29,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   const files = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   // And a DAT
@@ -58,7 +62,7 @@ it('should write a valid DAT', async () => {
   const files = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   // And a DAT
@@ -93,7 +97,7 @@ it('should write a valid DAT', async () => {
         dat: [dir2dat],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
@@ -125,7 +129,7 @@ it('should use the candidates for games and ROMs', async () => {
   const files = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   // And a DAT
@@ -175,7 +179,7 @@ it('should use the candidates for games and ROMs', async () => {
         dat: [dir2dat],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;

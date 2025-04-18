@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import CandidatePatchGenerator from '../../../src/modules/candidates/candidatePatchGenerator.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
@@ -17,6 +19,8 @@ import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options from '../../../src/types/options.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
+
+const LOGGER = new Logger(LogLevel.NEVER);
 
 // Run DATGameInferrer, but condense all DATs down to one
 async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT> {
@@ -39,7 +43,7 @@ async function runPatchCandidateGenerator(dat: DAT, romFiles: File[]): Promise<W
   const patches = await new PatchScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   return new CandidatePatchGenerator(new ProgressBarFake()).generate(dat, candidates, patches);
@@ -65,7 +69,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -84,7 +88,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -104,12 +108,16 @@ describe('with explicit DATs', () => {
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
     });
     const dat = (
-      await new DATScanner(options, new ProgressBarFake(), new FileFactory(new FileCache())).scan()
+      await new DATScanner(
+        options,
+        new ProgressBarFake(),
+        new FileFactory(new FileCache(), LOGGER),
+      ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
 
     // And pre-assert all Game names and ROM names have path separators in them

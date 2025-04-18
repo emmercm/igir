@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
@@ -10,6 +12,8 @@ import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER);
+
 describe('extension has possible header', () => {
   it('should do nothing if extension not found', async () => {
     const inputRomFiles = await new ROMScanner(
@@ -17,7 +21,7 @@ describe('extension has possible header', () => {
         input: ['./test/fixtures/roms/{,**/}*.rom'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -26,7 +30,7 @@ describe('extension has possible header', () => {
         commands: ['copy', 'extract'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -46,7 +50,7 @@ describe('extension has possible header', () => {
         commands: ['copy', 'extract'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(1);
@@ -59,7 +63,7 @@ describe('extension has possible header', () => {
         input: ['./test/fixtures/roms/headered/*{.a78,.lnx,.nes,.fds,.smc}*'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -68,7 +72,7 @@ describe('extension has possible header', () => {
         commands: ['copy', 'extract'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -85,14 +89,14 @@ describe('extension has possible header', () => {
         input: ['./test/fixtures/roms/headered/*{.7z,.rar,.zip}'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
     const processedRomFiles = await new ROMHeaderProcessor(
       new Options(),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -111,7 +115,7 @@ describe('should read file for header', () => {
         input: ['./test/fixtures/roms/!(headered){,/}*'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -121,7 +125,7 @@ describe('should read file for header', () => {
         header: '**/*',
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -138,7 +142,7 @@ describe('should read file for header', () => {
         input: ['./test/fixtures/roms/headered/!(*{.a78,.lnx,.nes,.fds,.smc}*)'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -148,7 +152,7 @@ describe('should read file for header', () => {
         header: '**/*',
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);

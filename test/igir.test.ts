@@ -22,6 +22,8 @@ import Options, {
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER);
+
 interface TestOutput {
   outputFilesAndCrcs: string[][];
   movedFiles: string[];
@@ -55,7 +57,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
     await Promise.all(
       (await FsPoly.walk(outputDir)).map(async (filePath) => {
         try {
-          return await new FileFactory(new FileCache()).filesFrom(filePath);
+          return await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
         } catch {
           return [];
         }
@@ -84,7 +86,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const outputFilesBefore =
     options.getOutput() === Temp.getTempDir() ? [] : await FsPoly.walk(options.getOutputDirRoot()); // the output dir is a parent of the input dir, ignore all output
 
-  await new Igir(options, new Logger(LogLevel.NEVER)).main();
+  await new Igir(options, LOGGER).main();
 
   const outputFilesAndCrcs =
     options.getOutput() === Temp.getTempDir()
@@ -138,7 +140,7 @@ describe('with explicit DATs', () => {
         new Options({
           dat: ['src/*'],
         }),
-        new Logger(LogLevel.NEVER),
+        LOGGER,
       ).main(),
     ).rejects.toThrow(/no valid dat files/i);
   });
@@ -1789,7 +1791,7 @@ describe('with inferred DATs', () => {
       const dats = await new DATScanner(
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache()),
+        new FileFactory(new FileCache(), LOGGER),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]
