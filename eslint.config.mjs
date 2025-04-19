@@ -179,6 +179,13 @@ export default [
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
+          /*** @eslint/js defaults ***/
+          vars: 'all',
+          caughtErrors: 'all',
+          reportUsedIgnorePattern: false,
+          /*** Overrides ***/
+          args: 'all',
+          argsIgnorePattern: '^_',
           // Allow the use of destructuring to remove keys from an object
           ignoreRestSiblings: true,
         },

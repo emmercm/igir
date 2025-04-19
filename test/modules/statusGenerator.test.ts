@@ -7,6 +7,7 @@ import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
+import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import File from '../../src/types/files/file.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
 import IPSPatch from '../../src/types/patches/ipsPatch.js';
@@ -33,20 +34,20 @@ const games = [
   new Game({
     name: gameNameBios,
     isBios: 'yes',
-    rom: new ROM({ name: 'bios.rom', size: 123, crc32: '11111111' }),
+    roms: new ROM({ name: 'bios.rom', size: 123, crc32: '11111111' }),
   }),
   new Game({
     name: gameNamePrototype,
     cloneOf: gameNameSingleRom,
-    rom: new ROM({ name: 'game prototype (proto).rom', size: 123, crc32: '22222222' }),
+    roms: new ROM({ name: 'game prototype (proto).rom', size: 123, crc32: '22222222' }),
   }),
   new Game({
     name: gameNameSingleRom,
-    rom: new ROM({ name: 'game.rom', size: 123, crc32: '33333333' }),
+    roms: new ROM({ name: 'game.rom', size: 123, crc32: '33333333' }),
   }),
   new Game({
     name: gameNameMultipleRoms,
-    rom: [
+    roms: [
       new ROM({ name: 'one.rom', size: 123, crc32: '44444444' }),
       new ROM({ name: 'two.rom', size: 123, crc32: '55555555' }),
     ],
@@ -76,7 +77,7 @@ async function candidateGenerator(dat: DAT, gameNames: string[]): Promise<WriteC
             .getRoms()
             .map(async (rom) => new ROMWithFiles(rom, await rom.toFile(), await rom.toFile())),
         );
-        return new WriteCandidate(game, romWithFiles);
+        return new WriteCandidate(new SingleValueGame({ ...game }), romWithFiles);
       }),
   );
 }
@@ -198,7 +199,7 @@ describe('toConsole', () => {
 
   it('should always print patched games as found', async () => {
     const options = new Options(defaultOptions);
-    const game = new Game({ name: 'patched game' });
+    const game = new SingleValueGame({ name: 'patched game' });
     const rom = new ROM({ name: 'patched.rom', size: 123, crc32: '00000000' });
     const candidates = [
       new WriteCandidate(game, [
@@ -401,7 +402,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
                 .slice(0, 1)
                 .map(async (rom) => new ROMWithFiles(rom, await rom.toFile(), await rom.toFile())),
             );
-            return new WriteCandidate(game, romWithFiles);
+            return new WriteCandidate(new SingleValueGame({ ...game }), romWithFiles);
           }),
       );
 
@@ -457,7 +458,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
   it('should always report patched games as found', async () => {
     const options = new Options(defaultOptions);
-    const game = new Game({ name: 'patched game' });
+    const game = new SingleValueGame({ name: 'patched game' });
     const rom = new ROM({ name: 'patched.rom', size: 123, crc32: '00000000' });
     const candidates = [
       new WriteCandidate(game, [

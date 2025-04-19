@@ -122,7 +122,7 @@ export default class DATGameInferrer extends Module {
         return new Game({
           name: gameName,
           description: gameName,
-          rom: roms,
+          roms: roms,
         });
       })
       // Filter out duplicate games

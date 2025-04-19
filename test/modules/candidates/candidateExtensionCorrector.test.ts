@@ -12,6 +12,7 @@ import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/types/dats/rom.js';
+import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -46,11 +47,11 @@ it('should do nothing when no ROMs need correcting', async () => {
     }),
     new Game({
       name: 'game with one ROM',
-      rom: new ROM({ name: 'one.rom', size: 1 }),
+      roms: new ROM({ name: 'one.rom', size: 1 }),
     }),
     new Game({
       name: 'game with two ROMs',
-      rom: [new ROM({ name: 'two.rom', size: 2 }), new ROM({ name: 'three.rom', size: 3 })],
+      roms: [new ROM({ name: 'two.rom', size: 2 }), new ROM({ name: 'three.rom', size: 3 })],
     }),
   ]);
   const candidates: WriteCandidate[] = [];
@@ -128,9 +129,9 @@ it('should correct ROMs without DATs', async () => {
           size: tempFile.getSize(),
         }),
       ];
-      const game = new Game({
+      const game = new SingleValueGame({
         name: path.parse(tempFile.getFilePath()).name,
-        rom: roms,
+        roms: roms,
       });
       const romsWithFiles = roms.map((rom) => {
         const { dir, name } = path.parse(tempFile.getFilePath());
@@ -179,9 +180,9 @@ it('should correct ROMs with missing filenames', async () => {
     const candidates = tempFiles.map((tempFile) => {
       // No ROM in the DAT has a filename, therefore all of them should be corrected
       const roms = [new ROM({ name: '', size: tempFile.getSize() })];
-      const game = new Game({
+      const game = new SingleValueGame({
         name: path.parse(tempFile.getFilePath()).name,
-        rom: roms,
+        roms: roms,
       });
       const romsWithFiles = roms.map((rom) => {
         const { dir, name } = path.parse(tempFile.getFilePath());

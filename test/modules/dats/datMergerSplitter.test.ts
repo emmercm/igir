@@ -6,7 +6,6 @@ import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
-import Machine from '../../../src/types/dats/mame/machine.js';
 import ROM from '../../../src/types/dats/rom.js';
 import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -42,12 +41,12 @@ describe('MAME v0.258', () => {
   /* eslint-disable unicorn/numeric-separators-style */
   const dat = new LogiqxDAT(new Header(), [
     // ***** Games *****
-    new Machine({
+    new Game({
       // Game that has clone(s) and a romOf BIOS parent
       name: '100lions',
       romOf: 'aristmk6',
       description: '100 Lions (10219211, NSW/ACT)',
-      rom: [
+      roms: [
         new ROM({
           name: '24013001_right.u83',
           merge: '24013001_right.u83',
@@ -838,12 +837,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('palette'),
       ],
     }),
-    new Machine({
+    new Game({
       name: '100lionsa',
       cloneOf: '100lions',
       romOf: '100lions',
       description: '100 Lions (30223811, ASP)',
-      rom: [
+      roms: [
         new ROM({
           name: '24013001_right.u83',
           merge: '24013001_right.u83',
@@ -1635,12 +1634,12 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with multiple clones, where clones have duplicate filenames with different checksums
       // (3.bin)
       name: '1942',
       description: '1942 (Revision B)',
-      rom: [
+      roms: [
         new ROM({
           name: 'srb-03.m3',
           size: 16384,
@@ -1825,12 +1824,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('nl_stream_out'),
       ],
     }),
-    new Machine({
+    new Game({
       name: '1942a',
       cloneOf: '1942',
       romOf: '1942',
       description: '1942 (Revision A)',
-      rom: [
+      roms: [
         new ROM({
           name: 'sra-03.m3',
           size: 16384,
@@ -2037,12 +2036,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('nl_stream_out'),
       ],
     }),
-    new Machine({
+    new Game({
       name: '1942abl',
       cloneOf: '1942',
       romOf: '1942',
       description: '1942 (Revision A, bootleg)',
-      rom: [
+      roms: [
         new ROM({
           name: '3.bin',
           size: 32768,
@@ -2197,12 +2196,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('nl_stream_out'),
       ],
     }),
-    new Machine({
+    new Game({
       name: '1942b',
       cloneOf: '1942',
       romOf: '1942',
       description: '1942 (First Version)',
-      rom: [
+      roms: [
         new ROM({
           name: 'sr-03.m3',
           size: 16384,
@@ -2409,12 +2408,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('nl_stream_out'),
       ],
     }),
-    new Machine({
+    new Game({
       name: '1942h',
       cloneOf: '1942',
       romOf: '1942',
       description: 'Supercharger 1942',
-      rom: [
+      roms: [
         new ROM({
           name: 'supercharger_1942_@3.m3',
           size: 16384,
@@ -2623,12 +2622,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('nl_stream_out'),
       ],
     }),
-    new Machine({
+    new Game({
       name: '1942p',
       cloneOf: '1942',
       romOf: '1942',
       description: '1942 (Tecfri PCB, bootleg?)',
-      rom: [
+      roms: [
         new ROM({
           name: '1.bin',
           size: 32768,
@@ -2722,12 +2721,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('ay8910'),
       ],
     }),
-    new Machine({
+    new Game({
       name: '1942w',
       cloneOf: '1942',
       romOf: '1942',
       description: '1942 (Williams Electronics license)',
-      rom: [
+      roms: [
         new ROM({
           name: 'sw-03.m3',
           size: 16384,
@@ -2935,12 +2934,12 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with two disks
       name: '2spicy',
       romOf: 'lindbios',
       description: '2 Spicy',
-      rom: [
+      roms: [
         new ROM({ name: '317-0491-com.bin', size: 8192, status: 'nodump' }),
         new ROM({
           name: '6.0.0009.bin',
@@ -2978,7 +2977,7 @@ describe('MAME v0.258', () => {
           sha1: 'f129787e487984edd23bf344f2e9500c85052275',
         }),
       ],
-      disk: [
+      disks: [
         new Disk({ name: 'dvp-0027a', sha1: 'da1aacee9e32e813844f4d434981e69cc5c80682' }),
         new Disk({
           name: 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01',
@@ -3013,11 +3012,11 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with BIOS files but no romOf BIOS parent
       name: 'aes',
       description: 'Neo-Geo AES (NTSC)',
-      rom: [
+      roms: [
         new ROM({
           name: 'neo-epo.bin',
           bios: 'asia',
@@ -3146,11 +3145,11 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with one disk
       name: 'area51mx',
       description: 'Area 51 / Maximum Force Duo v2.0',
-      rom: [
+      roms: [
         new ROM({
           name: '2.0_68020_max-a51_kit_3h.3h',
           size: 524288,
@@ -3182,7 +3181,7 @@ describe('MAME v0.258', () => {
           sha1: '58117e11fd6478c521fbd3fdbe157f39567552f0',
         }),
       ],
-      disk: [new Disk({ name: 'area51mx', sha1: '5ff10f4e87094d4449eabf3de7549564ca568c7e' })],
+      disks: [new Disk({ name: 'area51mx', sha1: '5ff10f4e87094d4449eabf3de7549564ca568c7e' })],
       deviceRef: [
         new DeviceRef('m68ec020'),
         new DeviceRef('jaguargpu'),
@@ -3203,13 +3202,13 @@ describe('MAME v0.258', () => {
         new DeviceRef('dac_16bit_r2r_tc'),
       ],
     }),
-    new Machine({
+    new Game({
       // Clone of a game with the same disk as its parent
       name: 'a51mxr3k',
       cloneOf: 'area51mx',
       romOf: 'area51mx',
       description: 'Area 51 / Maximum Force Duo (R3000, 2/10/98)',
-      rom: [
+      roms: [
         new ROM({
           name: '1.0_r3k_max-a51_kit_hh.hh',
           size: 524288,
@@ -3242,7 +3241,7 @@ describe('MAME v0.258', () => {
           sha1: '58117e11fd6478c521fbd3fdbe157f39567552f0',
         }),
       ],
-      disk: [
+      disks: [
         new Disk({
           name: 'area51mx',
           merge: 'area51mx',
@@ -3270,11 +3269,11 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with no clones
       name: 'bbtime',
       description: 'Burger Time (Bandai)',
-      rom: [
+      roms: [
         new ROM({
           name: 'hd38820a65',
           size: 4352,
@@ -3298,11 +3297,11 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with DeviceRefs that have 'status=nodump' ROMs
       name: 'c64',
       description: 'Commodore 64 (NTSC)',
-      rom: [
+      roms: [
         new ROM({
           name: '901227-01.u4',
           bios: 'r1',
@@ -3576,12 +3575,12 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game where parent and clone(s) have duplicate filenames with different checksums
       // (eeprom-ddonpach.bin)
       name: 'ddonpach',
       description: 'DoDonPachi (World, 1997 2/ 5 Master Ver.)',
-      rom: [
+      roms: [
         new ROM({
           name: 'b1.u27',
           size: 524288,
@@ -3670,12 +3669,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('ymz280b'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'ddonpacha',
       cloneOf: 'ddonpach',
       romOf: 'ddonpach',
       description: 'DoDonPachi (2012/02/12 Arrange Ver. 1.1) (hack)',
-      rom: [
+      roms: [
         new ROM({
           name: 'arrange_u27.bin',
           size: 524288,
@@ -3771,12 +3770,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('ymz280b'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'ddonpachj',
       cloneOf: 'ddonpach',
       romOf: 'ddonpach',
       description: 'DoDonPachi (Japan, 1997 2/ 5 Master Ver.)',
-      rom: [
+      roms: [
         new ROM({
           name: 'u27.bin',
           size: 524288,
@@ -3876,11 +3875,11 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with clones that have DeviceRefs with ROM files
       name: 'galaga',
       description: 'Galaga (Namco rev. B)',
-      rom: [
+      roms: [
         new ROM({
           name: 'gg1_1b.3p',
           size: 4096,
@@ -3987,12 +3986,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('discrete'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'galagamf',
       cloneOf: 'galaga',
       romOf: 'galaga',
       description: 'Galaga (Midway set 1 with fast shoot hack)',
-      rom: [
+      roms: [
         new ROM({
           name: '3200a.bin',
           size: 4096,
@@ -4107,12 +4106,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('discrete'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'galagamk',
       cloneOf: 'galaga',
       romOf: 'galaga',
       description: 'Galaga (Midway set 2)',
-      rom: [
+      roms: [
         new ROM({
           name: 'mk2-1',
           size: 4096,
@@ -4228,12 +4227,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('discrete'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'galagamw',
       cloneOf: 'galaga',
       romOf: 'galaga',
       description: 'Galaga (Midway set 1)',
-      rom: [
+      roms: [
         new ROM({
           name: '3200a.bin',
           size: 4096,
@@ -4348,12 +4347,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('discrete'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'galagao',
       cloneOf: 'galaga',
       romOf: 'galaga',
       description: 'Galaga (Namco)',
-      rom: [
+      roms: [
         new ROM({
           name: 'gg1-1.3p',
           size: 4096,
@@ -4469,12 +4468,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('discrete'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'gallag',
       cloneOf: 'galaga',
       romOf: 'galaga',
       description: 'Gallag',
-      rom: [
+      roms: [
         new ROM({
           name: 'gallag.1',
           size: 4096,
@@ -4593,12 +4592,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('z80'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'gatsbee',
       cloneOf: 'galaga',
       romOf: 'galaga',
       description: 'Gatsbee',
-      rom: [
+      roms: [
         new ROM({
           name: '1.4b',
           size: 4096,
@@ -4717,12 +4716,12 @@ describe('MAME v0.258', () => {
         new DeviceRef('ls259'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'nebulbee',
       cloneOf: 'galaga',
       romOf: 'galaga',
       description: 'Nebulous Bee',
-      rom: [
+      roms: [
         new ROM({
           name: 'nebulbee.01',
           size: 4096,
@@ -4839,11 +4838,11 @@ describe('MAME v0.258', () => {
       ],
     }),
 
-    new Machine({
+    new Game({
       // Game with DeviceRefs that have 'status=nodump' ROMs
       name: 'liblrabl',
       description: 'Libble Rabble',
-      rom: [
+      roms: [
         new ROM({
           name: '5b.rom',
           size: 16384,
@@ -4940,11 +4939,11 @@ describe('MAME v0.258', () => {
     }),
 
     // ***** BIOSes *****
-    new Machine({
+    new Game({
       name: 'aristmk6',
       isBios: 'yes',
       description: 'MK6 System Software/Setchips',
-      rom: [
+      roms: [
         new ROM({
           name: '24013001_right.u83',
           bios: 'au-nsw1',
@@ -5627,11 +5626,11 @@ describe('MAME v0.258', () => {
         new DeviceRef('palette'),
       ],
     }),
-    new Machine({
+    new Game({
       name: 'lindbios',
       isBios: 'yes',
       description: 'Sega Lindbergh BIOS',
-      rom: [
+      roms: [
         new ROM({
           name: '6.0.0009.bin',
           size: 1048576,
@@ -5663,7 +5662,7 @@ describe('MAME v0.258', () => {
           sha1: 'f129787e487984edd23bf344f2e9500c85052275',
         }),
       ],
-      disk: [
+      disks: [
         new Disk({
           name: 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01',
           sha1: 'e13da5f827df852e742b594729ee3f933b387410',
@@ -5697,26 +5696,26 @@ describe('MAME v0.258', () => {
     }),
 
     // ***** Devices *****
-    new Machine({ name: '93c46_16', isDevice: 'yes' }),
-    new Machine({ name: '93c56_16', isDevice: 'yes' }),
-    new Machine({
+    new Game({ name: '93c46_16', isDevice: 'yes' }),
+    new Game({ name: '93c56_16', isDevice: 'yes' }),
+    new Game({
       name: 'alps_3255190x',
       isDevice: 'yes',
       description: 'ALPS 32551901/32551902 Floppy Drive',
       deviceRef: [new DeviceRef('speaker'), new DeviceRef('flopsnd')],
     }),
-    new Machine({ name: 'ay8910', isDevice: 'yes' }),
-    new Machine({
+    new Game({ name: 'ay8910', isDevice: 'yes' }),
+    new Game({
       name: 'c1530',
       isDevice: 'yes',
       description: 'Commodore 1530 Datassette',
       deviceRef: new DeviceRef('cassette_image'),
     }),
-    new Machine({
+    new Game({
       name: 'c1541',
       isDevice: 'yes',
       description: 'Commodore 1541 Disk Drive',
-      rom: [
+      roms: [
         new ROM({
           name: '901229-01.uab5',
           bios: 'r1',
@@ -5803,40 +5802,40 @@ describe('MAME v0.258', () => {
         new DeviceRef('floppy_connector'),
       ],
     }),
-    new Machine({ name: 'c64_expansion_slot', isDevice: 'yes' }),
-    new Machine({ name: 'c64h156', isDevice: 'yes' }),
-    new Machine({ name: 'cassette_image', isDevice: 'yes' }),
-    new Machine({ name: 'cbm_iec', isDevice: 'yes' }),
-    new Machine({ name: 'cbm_iec_slot', isDevice: 'yes' }),
-    new Machine({ name: 'discrete', isDevice: 'yes' }),
-    new Machine({ name: 'floppy_connector', isDevice: 'yes' }),
-    new Machine({ name: 'flopsnd', isDevice: 'yes' }),
-    new Machine({ name: 'generic_latch_8', isDevice: 'yes' }),
-    new Machine({ name: 'gfxdecode', isDevice: 'yes' }),
-    new Machine({ name: 'hc259', isDevice: 'yes' }),
-    new Machine({ name: 'hd38820', isDevice: 'yes' }),
-    new Machine({ name: 'ipt_merge_all_hi', isDevice: 'yes' }),
-    new Machine({ name: 'ipt_merge_any_hi', isDevice: 'yes' }),
-    new Machine({ name: 'ls259', isDevice: 'yes' }),
-    new Machine({ name: 'm6502', isDevice: 'yes' }),
-    new Machine({ name: 'm6510', isDevice: 'yes' }),
-    new Machine({ name: 'm68000', isDevice: 'yes' }),
-    new Machine({ name: 'mb8843', isDevice: 'yes' }),
-    new Machine({ name: 'mb8844', isDevice: 'yes' }),
-    new Machine({ name: 'mc6809e', isDevice: 'yes' }),
-    new Machine({ name: 'mos6522', isDevice: 'yes' }),
-    new Machine({ name: 'mos6526', isDevice: 'yes' }),
-    new Machine({ name: 'mos6567', isDevice: 'yes' }),
-    new Machine({ name: 'mos6581', isDevice: 'yes' }),
-    new Machine({ name: 'namco', isDevice: 'yes' }),
-    new Machine({ name: 'namco_05xx_starfield', isDevice: 'yes' }),
-    new Machine({ name: 'namco_15xx', isDevice: 'yes' }),
-    new Machine({ name: 'namco06', isDevice: 'yes' }),
-    new Machine({
+    new Game({ name: 'c64_expansion_slot', isDevice: 'yes' }),
+    new Game({ name: 'c64h156', isDevice: 'yes' }),
+    new Game({ name: 'cassette_image', isDevice: 'yes' }),
+    new Game({ name: 'cbm_iec', isDevice: 'yes' }),
+    new Game({ name: 'cbm_iec_slot', isDevice: 'yes' }),
+    new Game({ name: 'discrete', isDevice: 'yes' }),
+    new Game({ name: 'floppy_connector', isDevice: 'yes' }),
+    new Game({ name: 'flopsnd', isDevice: 'yes' }),
+    new Game({ name: 'generic_latch_8', isDevice: 'yes' }),
+    new Game({ name: 'gfxdecode', isDevice: 'yes' }),
+    new Game({ name: 'hc259', isDevice: 'yes' }),
+    new Game({ name: 'hd38820', isDevice: 'yes' }),
+    new Game({ name: 'ipt_merge_all_hi', isDevice: 'yes' }),
+    new Game({ name: 'ipt_merge_any_hi', isDevice: 'yes' }),
+    new Game({ name: 'ls259', isDevice: 'yes' }),
+    new Game({ name: 'm6502', isDevice: 'yes' }),
+    new Game({ name: 'm6510', isDevice: 'yes' }),
+    new Game({ name: 'm68000', isDevice: 'yes' }),
+    new Game({ name: 'mb8843', isDevice: 'yes' }),
+    new Game({ name: 'mb8844', isDevice: 'yes' }),
+    new Game({ name: 'mc6809e', isDevice: 'yes' }),
+    new Game({ name: 'mos6522', isDevice: 'yes' }),
+    new Game({ name: 'mos6526', isDevice: 'yes' }),
+    new Game({ name: 'mos6567', isDevice: 'yes' }),
+    new Game({ name: 'mos6581', isDevice: 'yes' }),
+    new Game({ name: 'namco', isDevice: 'yes' }),
+    new Game({ name: 'namco_05xx_starfield', isDevice: 'yes' }),
+    new Game({ name: 'namco_15xx', isDevice: 'yes' }),
+    new Game({ name: 'namco06', isDevice: 'yes' }),
+    new Game({
       name: 'namco51',
       isDevice: 'yes',
       description: 'Namco 51xx',
-      rom: new ROM({
+      roms: new ROM({
         name: '51xx.bin',
         size: 1024,
         crc32: 'c2f57ef8',
@@ -5844,11 +5843,11 @@ describe('MAME v0.258', () => {
       }),
       deviceRef: new DeviceRef('mb8843'),
     }),
-    new Machine({
+    new Game({
       name: 'namco54',
       isDevice: 'yes',
       description: 'Namco 54xx',
-      rom: new ROM({
+      roms: new ROM({
         name: '54xx.bin',
         size: 1024,
         crc32: 'ee7357e0',
@@ -5856,19 +5855,19 @@ describe('MAME v0.258', () => {
       }),
       deviceRef: new DeviceRef('mb8844'),
     }),
-    new Machine({
+    new Game({
       name: 'namco56',
-      rom: new ROM({ name: '56xx.bin', size: 1024, status: 'nodump' }),
+      roms: new ROM({ name: '56xx.bin', size: 1024, status: 'nodump' }),
     }),
-    new Machine({
+    new Game({
       name: 'namco58',
-      rom: new ROM({ name: '58xx.bin', size: 1024, status: 'nodump' }),
+      roms: new ROM({ name: '58xx.bin', size: 1024, status: 'nodump' }),
     }),
-    new Machine({
+    new Game({
       name: 'neogeo',
       isBios: 'yes',
       description: 'Neo-Geo MV-6',
-      rom: [
+      roms: [
         new ROM({
           name: 'sp-s2.sp1',
           bios: 'euro',
@@ -6141,34 +6140,34 @@ describe('MAME v0.258', () => {
         new DeviceRef('software_list'),
       ],
     }),
-    new Machine({ name: 'neogeo_cart_slot', isDevice: 'yes' }),
-    new Machine({ name: 'neogeo_control_port', isDevice: 'yes' }),
-    new Machine({ name: 'neogeo_joy', isDevice: 'yes' }),
-    new Machine({ name: 'neosprite_opt', isDevice: 'yes' }),
-    new Machine({ name: 'netlist_sound', isDevice: 'yes' }),
-    new Machine({ name: 'ng_memcard', isDevice: 'yes' }),
-    new Machine({ name: 'nl_stream_in', isDevice: 'yes' }),
-    new Machine({ name: 'nl_stream_out', isDevice: 'yes' }),
-    new Machine({ name: 'ns16550', isDevice: 'yes' }),
-    new Machine({ name: 'palette', isDevice: 'yes' }),
-    new Machine({ name: 'pet_datassette_port', isDevice: 'yes' }),
-    new Machine({ name: 'pet_user_port', isDevice: 'yes' }),
-    new Machine({ name: 'pls100', isDevice: 'yes' }),
-    new Machine({ name: 'pwm_display', isDevice: 'yes' }),
-    new Machine({ name: 'quickload', isDevice: 'yes' }),
-    new Machine({ name: 'ram', isDevice: 'yes' }),
-    new Machine({ name: 'screen', isDevice: 'yes' }),
-    new Machine({ name: 'sh4le', isDevice: 'yes' }),
-    new Machine({ name: 'speaker', isDevice: 'yes' }),
-    new Machine({ name: 'speaker_sound_device', isDevice: 'yes' }),
-    new Machine({ name: 'timer', isDevice: 'yes' }),
-    new Machine({ name: 'tmap038', isDevice: 'yes' }),
-    new Machine({ name: 'vcs_control_port', isDevice: 'yes' }),
-    new Machine({ name: 'vcs_joystick', isDevice: 'yes' }),
-    new Machine({ name: 'watchdog', isDevice: 'yes' }),
-    new Machine({ name: 'ym2610', isDevice: 'yes' }),
-    new Machine({ name: 'ymz280b', isDevice: 'yes' }),
-    new Machine({ name: 'z80', isDevice: 'yes' }),
+    new Game({ name: 'neogeo_cart_slot', isDevice: 'yes' }),
+    new Game({ name: 'neogeo_control_port', isDevice: 'yes' }),
+    new Game({ name: 'neogeo_joy', isDevice: 'yes' }),
+    new Game({ name: 'neosprite_opt', isDevice: 'yes' }),
+    new Game({ name: 'netlist_sound', isDevice: 'yes' }),
+    new Game({ name: 'ng_memcard', isDevice: 'yes' }),
+    new Game({ name: 'nl_stream_in', isDevice: 'yes' }),
+    new Game({ name: 'nl_stream_out', isDevice: 'yes' }),
+    new Game({ name: 'ns16550', isDevice: 'yes' }),
+    new Game({ name: 'palette', isDevice: 'yes' }),
+    new Game({ name: 'pet_datassette_port', isDevice: 'yes' }),
+    new Game({ name: 'pet_user_port', isDevice: 'yes' }),
+    new Game({ name: 'pls100', isDevice: 'yes' }),
+    new Game({ name: 'pwm_display', isDevice: 'yes' }),
+    new Game({ name: 'quickload', isDevice: 'yes' }),
+    new Game({ name: 'ram', isDevice: 'yes' }),
+    new Game({ name: 'screen', isDevice: 'yes' }),
+    new Game({ name: 'sh4le', isDevice: 'yes' }),
+    new Game({ name: 'speaker', isDevice: 'yes' }),
+    new Game({ name: 'speaker_sound_device', isDevice: 'yes' }),
+    new Game({ name: 'timer', isDevice: 'yes' }),
+    new Game({ name: 'tmap038', isDevice: 'yes' }),
+    new Game({ name: 'vcs_control_port', isDevice: 'yes' }),
+    new Game({ name: 'vcs_joystick', isDevice: 'yes' }),
+    new Game({ name: 'watchdog', isDevice: 'yes' }),
+    new Game({ name: 'ym2610', isDevice: 'yes' }),
+    new Game({ name: 'ymz280b', isDevice: 'yes' }),
+    new Game({ name: 'z80', isDevice: 'yes' }),
   ]);
 
   it('should full-non-merged', () => {
@@ -7967,7 +7966,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
       name: '3countb',
       romOf: 'neogeo',
       description: '3 Count Bout / Fire Suplex (NGM-043 ~ NGH-043)',
-      rom: [
+      roms: [
         new ROM({ name: '043-p1.p1', size: 1048576, crc32: 'ffbdd928' }),
         new ROM({ name: '043-s1.s1', size: 131072, crc32: 'c362d484' }),
         new ROM({ name: '043-c1.c1', size: 2097152, crc32: 'bad2d67f' }),
@@ -8107,7 +8106,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
       cloneOf: '3countb',
       romOf: '3countb',
       description: '3 Count Bout / Fire Suplex (NGM-043)',
-      rom: [
+      roms: [
         new ROM({ name: '043-epr.ep1', size: 524288, crc32: 'eb2714c4' }),
         new ROM({ name: '043-epr.ep2', size: 524288, crc32: '5e764567' }),
         new ROM({ name: '043-s1.s1', merge: '043-s1.s1', size: 131072, crc32: 'c362d484' }),
@@ -8247,7 +8246,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
       isBios: 'yes',
       name: 'neogeo',
       description: 'Neo Geo',
-      rom: [
+      roms: [
         new ROM({ name: 'sp-s3.sp1', size: 131072, crc32: '91b64be3' }),
         new ROM({ name: 'sp-s2.sp1', size: 131072, crc32: '9036d879' }),
         new ROM({ name: 'sp-s.sp1', size: 131072, crc32: 'c7f2fa45' }),

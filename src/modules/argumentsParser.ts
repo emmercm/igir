@@ -1034,6 +1034,7 @@ Advanced usage:
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {category}        The DAT-defined category of the game (e.g. "Games", "Demos", "Multimedia")
     {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname
@@ -1104,11 +1105,13 @@ Example use cases:
         throw new ExpectedError(msg);
       });
 
-    const yargsArgv = yargsParser.strictOptions(true).parse(argv, {}, (err, parsedArgv, output) => {
-      if (output) {
-        this.logger.colorizeYargs(`${output.trimEnd()}\n`);
-      }
-    });
+    const yargsArgv = yargsParser
+      .strictOptions(true)
+      .parse(argv, {}, (_err, _parsedArgv, output) => {
+        if (output) {
+          this.logger.colorizeYargs(`${output.trimEnd()}\n`);
+        }
+      });
 
     return Options.fromObject(yargsArgv);
   }

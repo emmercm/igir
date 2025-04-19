@@ -187,7 +187,7 @@ export default class DATScanner extends Scanner {
             const gameName = path.format({ dir, name });
             return game.withProps({
               name: gameName,
-              rom: [rom],
+              roms: [rom],
             });
           }),
       );
@@ -415,7 +415,7 @@ export default class DATScanner extends Scanner {
 
       return new Game({
         name: gameName,
-        category: undefined,
+        categories: undefined,
         description: game.description,
         isBios:
           cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro' &&
@@ -427,8 +427,8 @@ export default class DATScanner extends Scanner {
         romOf: game.romof,
         genre: game.genre?.toString(),
         release: undefined,
-        rom: roms,
-        disk: disks,
+        roms: roms,
+        disks: disks,
       });
     });
 
@@ -472,7 +472,7 @@ export default class DATScanner extends Scanner {
       return new Game({
         name: gameName,
         description: gameName,
-        rom,
+        roms: rom,
       });
     });
 
@@ -561,7 +561,7 @@ export default class DATScanner extends Scanner {
                 rom.getSha256() !==
                   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')),
         );
-      return game.withProps({ rom: roms });
+      return game.withProps({ roms: roms });
     });
 
     return new LogiqxDAT(dat.getHeader(), games);

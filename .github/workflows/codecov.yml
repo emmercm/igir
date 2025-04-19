@@ -30,6 +30,7 @@ jobs:
     needs:
       - codecov-lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       # Setup and install
       - uses: actions/checkout@v4

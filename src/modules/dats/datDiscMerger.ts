@@ -75,13 +75,13 @@ export default class DATDiscMerger extends Module {
         );
         return new Game({
           name: gameName,
-          rom: deconflictedRoms,
+          roms: deconflictedRoms,
         });
       }
 
       return new Game({
         name: gameName,
-        rom: roms,
+        roms: roms,
       });
     });
   }

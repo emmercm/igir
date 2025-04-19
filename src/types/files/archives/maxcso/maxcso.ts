@@ -31,7 +31,7 @@ export default abstract class Maxcso extends Archive {
     ];
   }
 
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
     return maxcso.decompress({
       inputFilename: this.getFilePath(),
       outputFilename: extractedFilePath,

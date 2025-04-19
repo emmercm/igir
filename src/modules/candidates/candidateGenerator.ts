@@ -8,6 +8,7 @@ import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import ROM from '../../types/dats/rom.js';
+import SingleValueGame from '../../types/dats/singleValueGame.js';
 import Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
@@ -49,7 +50,7 @@ export default class CandidateGenerator extends Module {
       return [];
     }
 
-    const candidates: WriteCandidate[] = [];
+    let candidates: WriteCandidate[] = [];
 
     this.progressBar.logTrace(`${dat.getName()}: generating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
@@ -63,16 +64,16 @@ export default class CandidateGenerator extends Module {
           const waitingMessage = `${game.getName()} ...`;
           this.progressBar.addWaitingMessage(waitingMessage);
 
-          const candidate = await this.buildCandidateForGame(dat, game, indexedFiles);
-          if (candidate) {
+          const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
+          if (gameCandidates.length > 0) {
             this.progressBar.logTrace(
-              `${dat.getName()}: ${game.getName()}: found candidate: ${candidate
+              `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
                 .getRomsWithFiles()
                 .map((rwf) => rwf.getInputFile().toString())
                 .join(', ')}`,
             );
-            candidates.push(candidate);
           }
+          candidates = [...candidates, ...gameCandidates];
 
           this.progressBar.removeWaitingMessage(waitingMessage);
           this.progressBar.incrementDone();
@@ -91,11 +92,11 @@ export default class CandidateGenerator extends Module {
     return candidates;
   }
 
-  private async buildCandidateForGame(
+  private async buildCandidatesForGame(
     dat: DAT,
     game: Game,
     indexedFiles: IndexedFiles,
-  ): Promise<WriteCandidate | undefined> {
+  ): Promise<WriteCandidate[]> {
     const romsToInputFiles = this.getInputFilesForGame(dat, game, indexedFiles);
 
     const gameRoms = [
@@ -105,98 +106,7 @@ export default class CandidateGenerator extends Module {
 
     // For each Game's ROM, find the matching File
     const romFiles = (await Promise.all(
-      gameRoms.map(async (rom) => {
-        let inputFile = romsToInputFiles.get(rom);
-        if (inputFile === undefined) {
-          return [rom, undefined];
-        }
-
-        /**
-         * WARN(cemmer): {@link inputFile} may not be an exact match for {@link rom}. There are two
-         * situations we can be in:
-         *  - {@link rom} is headered and so is {@link inputFile}, so we have an exact match
-         *  - {@link rom} is headerless but {@link inputFile} is headered, because we know how to
-         *    remove headers from ROMs - but we can't remove headers in all writing modes!
-         */
-
-        // If we're not writing (report only) then just use the input file for the output file
-        if (!this.options.shouldWrite()) {
-          return [rom, new ROMWithFiles(rom, inputFile, inputFile)];
-        }
-
-        // If the input file is headered...
-        if (
-          inputFile.getFileHeader() &&
-          // ...and we want a headered ROM
-          ((inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32()) ||
-            (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5()) ||
-            (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1()) ||
-            (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256())) &&
-          // ...and we shouldn't remove the header
-          !this.options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))
-        ) {
-          // ...then forget the input file's header, so that we don't later remove it
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`,
-          );
-          inputFile = inputFile.withoutFileHeader();
-        }
-
-        // If the input file is headered...
-        if (
-          inputFile.getFileHeader() &&
-          // ...and we DON'T want a headered ROM
-          !(
-            (inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32()) ||
-            (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5()) ||
-            (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1()) ||
-            (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256())
-          ) &&
-          // ...and we're writing file links
-          this.options.shouldLink()
-        ) {
-          // ...then we can't use this file
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`,
-          );
-          return [rom, undefined];
-        }
-
-        /**
-         * If the matched input file is from an archive, and we can raw-copy that entire archive,
-         * then treat the file as "raw" so it can be copied/moved as-is.
-         */
-        if (
-          inputFile instanceof ArchiveEntry &&
-          this.shouldGenerateArchiveFile(dat, game, rom, romsToInputFiles)
-        ) {
-          try {
-            /**
-             * Note: we're delaying checksum calculations for now,
-             * {@link CandidateArchiveFileHasher} will handle it later
-             */
-            inputFile = new ArchiveFile(inputFile.getArchive(), {
-              size: await FsPoly.size(inputFile.getFilePath()),
-              checksumBitmask: inputFile.getChecksumBitmask(),
-            });
-          } catch (error) {
-            this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${error}`);
-            return [rom, undefined];
-          }
-        }
-
-        try {
-          const outputFile = await this.getOutputFile(dat, game, rom, inputFile);
-          if (outputFile === undefined) {
-            return [rom, undefined];
-          }
-          const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
-          return [rom, romWithFiles];
-        } catch (error) {
-          this.progressBar.logError(`${dat.getName()}: ${game.getName()}: ${error}`);
-          return [rom, undefined];
-        }
-      }),
+      gameRoms.map(async (rom) => this.buildRomRomWithFilesPairs(dat, game, rom, romsToInputFiles)),
     )) satisfies [ROM, ROMWithFiles | undefined][];
 
     const foundRomsWithFiles = romFiles
@@ -204,7 +114,7 @@ export default class CandidateGenerator extends Module {
       .filter((romWithFiles) => romWithFiles !== undefined);
     if (romFiles.length > 0 && foundRomsWithFiles.length === 0) {
       // The Game has ROMs, but none were found
-      return undefined;
+      return [];
     }
 
     const missingRoms = romFiles.filter(([, romWithFiles]) => !romWithFiles).map(([rom]) => rom);
@@ -214,12 +124,12 @@ export default class CandidateGenerator extends Module {
       if (foundRomsWithFiles.length > 0) {
         this.logMissingRomFiles(dat, game, foundRomsWithFiles, missingRoms);
       }
-      return undefined;
+      return [];
     }
 
     // Ignore the Game with conflicting input->output files
     if (this.hasConflictingOutputFiles(dat, foundRomsWithFiles)) {
-      return undefined;
+      return [];
     }
 
     // If the found files have excess and we aren't allowing it, then return no candidate
@@ -229,10 +139,48 @@ export default class CandidateGenerator extends Module {
       !this.options.getAllowExcessSets() &&
       this.hasExcessFiles(dat, game, foundRomsWithFiles, indexedFiles)
     ) {
-      return undefined;
+      return [];
     }
 
-    return new WriteCandidate(game, foundRomsWithFiles);
+    const singleValueGames = (
+      game.getRegions().length > 0 ? game.getRegions() : [undefined]
+    ).flatMap((region) =>
+      (game.getLanguages().length > 0 ? game.getLanguages() : [undefined]).flatMap((language) =>
+        (game.getCategories().length > 0 ? game.getCategories() : [undefined]).flatMap(
+          (category) => new SingleValueGame({ ...game, region, language, category }),
+        ),
+      ),
+    );
+    const writeCandidates = await Promise.all(
+      (singleValueGames.length > 0 ? singleValueGames : [new SingleValueGame({ ...game })]).map(
+        async (singleValueGame) => {
+          const romWithFiles = (
+            await Promise.all(
+              foundRomsWithFiles.map(async (romWithFiles) => {
+                const outputFile = await this.getOutputFile(
+                  dat,
+                  singleValueGame,
+                  romWithFiles.getRom(),
+                  romWithFiles.getInputFile(),
+                );
+                if (!outputFile) {
+                  return undefined;
+                }
+                return new ROMWithFiles(
+                  romWithFiles.getRom(),
+                  romWithFiles.getInputFile(),
+                  outputFile,
+                );
+              }),
+            )
+          ).filter((romWithFiles) => romWithFiles !== undefined);
+          return new WriteCandidate(singleValueGame, romWithFiles);
+        },
+      ),
+    );
+    return writeCandidates.filter(
+      ArrayPoly.filterUniqueMapped((candidate) => candidate.hashCode()),
+    );
   }
 
   private getInputFilesForGame(dat: DAT, game: Game, indexedFiles: IndexedFiles): Map<ROM, File> {
@@ -370,9 +318,109 @@ export default class CandidateGenerator extends Module {
     );
   }
 
-  private shouldGenerateArchiveFile(
+  private async buildRomRomWithFilesPairs(
     dat: DAT,
     game: Game,
+    rom: ROM,
+    romsToInputFiles: Map<ROM, File>,
+  ): Promise<[ROM, ROMWithFiles | undefined]> {
+    let inputFile = romsToInputFiles.get(rom);
+    if (inputFile === undefined) {
+      return [rom, undefined];
+    }
+
+    /**
+     * WARN(cemmer): {@link inputFile} may not be an exact match for {@link rom}. There are two
+     * situations we can be in:
+     *  - {@link rom} is headered and so is {@link inputFile}, so we have an exact match
+     *  - {@link rom} is headerless but {@link inputFile} is headered, because we know how to
+     *    remove headers from ROMs - but we can't remove headers in all writing modes!
+     */
+
+    // If we're not writing (report only) then just use the input file for the output file
+    if (!this.options.shouldWrite()) {
+      return [rom, new ROMWithFiles(rom, inputFile, inputFile)];
+    }
+
+    // If the input file is headered...
+    if (
+      inputFile.getFileHeader() &&
+      // ...and we want a headered ROM
+      ((inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32()) ||
+        (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5()) ||
+        (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1()) ||
+        (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256())) &&
+      // ...and we shouldn't remove the header
+      !this.options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))
+    ) {
+      // ...then forget the input file's header, so that we don't later remove it
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`,
+      );
+      inputFile = inputFile.withoutFileHeader();
+    }
+
+    // If the input file is headered...
+    if (
+      inputFile.getFileHeader() &&
+      // ...and we DON'T want a headered ROM
+      !(
+        (inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32()) ||
+        (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5()) ||
+        (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1()) ||
+        (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256())
+      ) &&
+      // ...and we're writing file links
+      this.options.shouldLink()
+    ) {
+      // ...then we can't use this file
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`,
+      );
+      return [rom, undefined];
+    }
+
+    const singleValueGame = new SingleValueGame({ ...game });
+
+    /**
+     * If the matched input file is from an archive, and we can raw-copy that entire archive,
+     * then treat the file as "raw" so it can be copied/moved as-is.
+     */
+    if (
+      inputFile instanceof ArchiveEntry &&
+      this.shouldGenerateArchiveFile(dat, singleValueGame, rom, romsToInputFiles)
+    ) {
+      try {
+        /**
+         * Note: we're delaying checksum calculations for now,
+         * {@link CandidateArchiveFileHasher} will handle it later
+         */
+        inputFile = new ArchiveFile(inputFile.getArchive(), {
+          size: await FsPoly.size(inputFile.getFilePath()),
+          checksumBitmask: inputFile.getChecksumBitmask(),
+        });
+      } catch (error) {
+        this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${error}`);
+        return [rom, undefined];
+      }
+    }
+
+    try {
+      const outputFile = await this.getOutputFile(dat, singleValueGame, rom, inputFile);
+      if (outputFile === undefined) {
+        return [rom, undefined];
+      }
+      const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
+      return [rom, romWithFiles];
+    } catch (error) {
+      this.progressBar.logError(`${dat.getName()}: ${game.getName()}: ${error}`);
+      return [rom, undefined];
+    }
+  }
+
+  private shouldGenerateArchiveFile(
+    dat: DAT,
+    game: SingleValueGame,
     rom: ROM,
     romsToInputFiles: Map<ROM, File>,
   ): boolean {
@@ -425,7 +473,7 @@ export default class CandidateGenerator extends Module {
 
   private async getOutputFile(
     dat: DAT,
-    game: Game,
+    game: SingleValueGame,
     rom: ROM,
     inputFile: File,
   ): Promise<File | undefined> {

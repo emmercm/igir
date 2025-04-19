@@ -425,7 +425,7 @@ We can group the games into letter ranges, with a max of 10 games in each subdir
       --input "ROMs-Input" ^
       --output "ROMs-Output" ^
       --dir-letter ^
-      --dir-letter-limit 5 ^
+      --dir-letter-limit 10 ^
       --dir-letter-group
     ```
 
@@ -436,7 +436,7 @@ We can group the games into letter ranges, with a max of 10 games in each subdir
       --input "ROMs-Input/" \
       --output "ROMs-Output/" \
       --dir-letter \
-      --dir-letter-limit 5 \
+      --dir-letter-limit 10 \
       --dir-letter-group
     ```
 
@@ -447,7 +447,7 @@ We can group the games into letter ranges, with a max of 10 games in each subdir
       --input "ROMs-Input/" \
       --output "ROMs-Output/" \
       --dir-letter \
-      --dir-letter-limit 5 \
+      --dir-letter-limit 10 \
       --dir-letter-group
     ```
 
@@ -479,6 +479,41 @@ You can also combine this option with `--dir-letter-count <count>` for ranges wi
 !!! note
 
     This is how the [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) organizes most of their SMDBs, grouping ROMs into subdirectories of ~200 ROMs each.
+
+    You can achieve a result similar to the Hardware Target Game Database DATs with the following options:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir [commands..] ^
+          [options] ^
+          --output "{datName}\{region}" ^
+          --dir-letter ^
+          --dir-letter-group ^
+          --dir-letter-limit 200
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir [commands..] \
+          [options] \
+          --output "{datName}/{region}" \
+          --dir-letter \
+          --dir-letter-group \
+          --dir-letter-limit 200
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir [commands..] \
+          [options] \
+          --output "{datName}/{region}" \
+          --dir-letter \
+          --dir-letter-group \
+          --dir-letter-limit 200
+        ```
 
 ## Append the game name
 

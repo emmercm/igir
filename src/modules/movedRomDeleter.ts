@@ -49,7 +49,7 @@ export default class MovedROMDeleter extends Module {
       async (filePath: string) => FsPoly.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
-      (filePath, idx) => existingFilePathsCheck.at(idx) === true,
+      (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
     );
 
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);

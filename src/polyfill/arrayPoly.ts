@@ -14,7 +14,7 @@ export default class ArrayPoly {
     mapper: (arg: T) => unknown,
   ): (value: T, idx: number, values: T[]) => boolean {
     const seenMappedValues = new Set<unknown>();
-    return (value, idx, values): boolean => {
+    return (value, _idx, values): boolean => {
       if (values.length <= 1) {
         // Arrays that are empty or only have one element are already unique
         return true;
@@ -39,7 +39,7 @@ export default class ArrayPoly {
   public static reduceChunk<T>(
     limit: number,
   ): (previous: T[][], current: T, idx: number, array: T[]) => T[][] {
-    return (previous: T[][], current: T, idx: number, array: T[]): T[][] => {
+    return (previous: T[][], _current: T, idx: number, array: T[]): T[][] => {
       if (idx === 0) {
         if (limit <= 0) {
           return [array];
@@ -65,7 +65,7 @@ export default class ArrayPoly {
    * </code>
    */
   public static reduceUnique<T>(): (previous: T[], current: T, idx: number, array: T[]) => T[] {
-    return (previous: T[], current: T, idx: number, array: T[]): T[] => {
+    return (previous: T[], _current: T, idx: number, array: T[]): T[] => {
       if (array.length <= 1) {
         // Arrays that are empty or only have one element are already unique
         return array;

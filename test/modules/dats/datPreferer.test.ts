@@ -13,7 +13,7 @@ const testGameWarlocked: Game[] = [
     name: 'Warlocked (USA)',
     description: 'Warlocked (USA)',
     release: new Release('Warlocked (USA)', 'USA'),
-    rom: new ROM({ name: 'Warlocked (USA).gbc', size: 2_097_152 }),
+    roms: new ROM({ name: 'Warlocked (USA).gbc', size: 2_097_152 }),
   }),
 ];
 
@@ -23,7 +23,7 @@ const testGameAdvanceWars: Game[] = [
     name: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (Europe) (En,Fr,De,Es)',
     release: new Release('Advance Wars (Europe) (En,Fr,De,Es)', 'EUR'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (Europe) (En,Fr,De,Es).gba',
       size: 8_388_608,
     }),
@@ -33,7 +33,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (USA)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (USA).gba',
       size: 4_194_304,
     }),
@@ -43,7 +43,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (USA) (Rev 1)',
     release: new Release('Advance Wars (USA) (Rev 1)', 'USA'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (USA) (Rev 1).gba',
       size: 4_194_304,
     }),
@@ -53,7 +53,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (USA) (Virtual Console)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (USA) (Virtual Console).gba',
       size: 4_194_304,
     }),
@@ -63,7 +63,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (Europe) (En,Fr,De,Es) (Virtual Console)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (Europe) (En,Fr,De,Es) (Virtual Console).gba',
       size: 8_388_608,
     }),
@@ -76,7 +76,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
     name: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     description: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     release: new Release('Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)', 'EUR'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1).gba',
       size: 8_388_608,
     }),
@@ -86,7 +86,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
     cloneOf: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     description: 'Dave Mirra Freestyle BMX 2 (USA)',
     release: new Release('Dave Mirra Freestyle BMX 2 (USA)', 'USA'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Dave Mirra Freestyle BMX 2 (USA).gba',
       size: 8_388_608,
     }),
@@ -96,7 +96,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
     cloneOf: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     description: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It).gba',
       size: 8_388_608,
     }),
@@ -617,20 +617,20 @@ describe('preference combinations', () => {
         name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
         description: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
         release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
-        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced).gb', size: 131_072 }),
+        roms: new ROM({ name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced).gb', size: 131_072 }),
       }),
       new Game({
         name: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
         cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
         description: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
-        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (SGB Enhanced).gb', size: 131_072 }),
+        roms: new ROM({ name: 'Tetris 2 (USA, Europe) (SGB Enhanced).gb', size: 131_072 }),
       }),
       new Game({
         name: 'Tetris 2 (USA)',
         cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
         description: 'Tetris 2 (USA)',
         release: new Release('Tetris 2 (USA)', 'USA'),
-        rom: new ROM({ name: 'Tetris 2 (USA).gb', size: 131_072 }),
+        roms: new ROM({ name: 'Tetris 2 (USA).gb', size: 131_072 }),
       }),
     ]);
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);

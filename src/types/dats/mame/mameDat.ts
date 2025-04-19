@@ -3,10 +3,9 @@ import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 import DAT from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
-import Machine from './machine.js';
 
 /**
- * MAME-schema DAT that documents {@link Machine}s.
+ * MAME-schema DAT that documents {@link Game}s.
  */
 export default class MameDAT extends DAT {
   @Expose()
@@ -19,11 +18,11 @@ export default class MameDAT extends DAT {
   // private readonly mameconfig: number = 0;
 
   @Expose()
-  @Type(() => Machine)
-  @Transform(({ value }: { value: undefined | Machine | Machine[] }) => value ?? [])
-  private readonly machine: Machine | Machine[];
+  @Type(() => Game)
+  @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
+  private readonly machine: Game | Game[];
 
-  constructor(machine?: Machine | Machine[]) {
+  constructor(machine?: Game | Game[]) {
     super();
     this.machine = machine ?? [];
     this.generateGameNamesToParents();
