@@ -1,10 +1,11 @@
 import CandidateMergeSplitValidator from '../../../src/modules/candidates/candidateMergeSplitValidator.js';
 import DAT from '../../../src/types/dats/dat.js';
+import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
-import Machine from '../../../src/types/dats/mame/machine.js';
 import ROM from '../../../src/types/dats/rom.js';
+import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
 import File from '../../../src/types/files/file.js';
 import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
@@ -15,7 +16,7 @@ async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
   const dummyFile = await File.fileOf({ filePath: '' });
   return dat.getGames().map((game) => {
     return new WriteCandidate(
-      game,
+      new SingleValueGame({ ...game }),
       game.getRoms().map((rom) => new ROMWithFiles(rom, dummyFile, dummyFile)),
     );
   });
@@ -23,19 +24,19 @@ async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
 
 describe('missing parents', () => {
   const dat = new LogiqxDAT(new Header(), [
-    new Machine({
+    new Game({
       name: 'solo',
-      rom: new ROM(),
+      roms: new ROM(),
     }),
-    new Machine({
+    new Game({
       name: 'parent',
       cloneOf: 'grandparent',
-      rom: new ROM(),
+      roms: new ROM(),
     }),
-    new Machine({
+    new Game({
       name: 'child',
       cloneOf: 'parent',
-      rom: new ROM(),
+      roms: new ROM(),
     }),
   ]);
 
@@ -70,21 +71,21 @@ describe('missing parents', () => {
 
 describe('device refs', () => {
   const dat = new LogiqxDAT(new Header(), [
-    new Machine({
+    new Game({
       name: 'game one',
-      rom: new ROM(),
+      roms: new ROM(),
       // Invalid device ref, there is no machine of the same name
       deviceRef: new DeviceRef('controller'),
     }),
-    new Machine({
+    new Game({
       name: 'game two',
-      rom: new ROM(),
+      roms: new ROM(),
       // Valid device ref, there is a machine of the same name
       deviceRef: new DeviceRef('screen'),
     }),
-    new Machine({
+    new Game({
       name: 'screen',
-      rom: new ROM(),
+      roms: new ROM(),
       isDevice: 'yes',
     }),
   ]);

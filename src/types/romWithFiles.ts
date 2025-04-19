@@ -52,4 +52,13 @@ export default class ROMWithFiles {
     }
     return new ROMWithFiles(this.rom, this.inputFile, outputFile);
   }
+
+  // Pseudo Built-Ins
+
+  /**
+   * A string hash code to uniquely identify this {@link ROMWithFiles}.
+   */
+  hashCode(): string {
+    return `${this.rom.hashCode()}|${this.inputFile.toString()}|${this.outputFile.toString()}`;
+  }
 }

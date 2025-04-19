@@ -57,7 +57,7 @@ export default class Dir2DatCreator extends Module {
         .at(0)
         ?.getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getRom());
-      return game.withProps({ rom: roms });
+      return game.withProps({ roms: roms });
     });
 
     const dir2datDir = this.options.getDir2DatOutput();

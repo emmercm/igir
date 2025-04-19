@@ -47,7 +47,7 @@ describe('should delete archives', () => {
         [
           new Game({
             name: 'Euro Demo 42 (Europe)',
-            rom: [
+            roms: [
               new ROM({ name: 'Euro Demo 42 (Europe).cue', size: 1374, crc32: '96b2b896' }),
               new ROM({
                 name: 'Euro Demo 42 (Europe) (Track 01).bin',
@@ -119,7 +119,7 @@ describe('should delete archives', () => {
         [
           new Game({
             name: 'Zero 4 Champ II (Japan)',
-            rom: [
+            roms: [
               new ROM({ name: 'Zero 4 Champ II (Japan).cue', size: 4187, crc32: 'a8c5c66e' }),
               new ROM({
                 name: 'Zero 4 Champ II (Japan) (Track 01).bin',
@@ -340,7 +340,7 @@ describe('should delete archives', () => {
           }),
           new Game({
             name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan)',
-            rom: [
+            roms: [
               new ROM({
                 name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan).cue',
                 size: 984,

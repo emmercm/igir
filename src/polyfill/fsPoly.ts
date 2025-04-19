@@ -644,7 +644,7 @@ export default class FsPoly {
 
     // Depth-first search directories first
     const directories = entries
-      .filter((entry, idx) => entryIsDirectory[idx])
+      .filter((_entry, idx) => entryIsDirectory[idx])
       .map((entry) => path.join(pathLike.toString(), entry.name));
     for (const directory of directories) {
       const subDirFiles = await this.walk(directory);
@@ -655,7 +655,7 @@ export default class FsPoly {
     }
 
     const files = entries
-      .filter((entry, idx) => !entryIsDirectory[idx])
+      .filter((_entry, idx) => !entryIsDirectory[idx])
       .map((entry) => path.join(pathLike.toString(), entry.name));
     if (callback) {
       callback(files.length);

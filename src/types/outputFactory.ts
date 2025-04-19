@@ -6,6 +6,7 @@ import DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
 import Game from './dats/game.js';
 import ROM from './dats/rom.js';
+import SingleValueGame from './dats/singleValueGame.js';
 import ExpectedError from './expectedError.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import ArchiveFile from './files/archives/archiveFile.js';
@@ -84,7 +85,7 @@ export default class OutputFactory {
   static getPath(
     options: Options,
     dat: DAT,
-    game: Game,
+    game: SingleValueGame,
     rom: ROM,
     inputFile: File,
     romBasenames?: string[],
@@ -114,7 +115,7 @@ export default class OutputFactory {
   static getDir(
     options: Options,
     dat: DAT,
-    game?: Game,
+    game?: SingleValueGame,
     inputFile?: File,
     romBasename?: string,
     romBasenames?: string[],
@@ -168,7 +169,7 @@ export default class OutputFactory {
     outputPath: string,
     dat: DAT,
     inputRomPath?: string,
-    game?: Game,
+    game?: SingleValueGame,
     outputRomFilename?: string,
   ): string {
     let result = outputPath;
@@ -176,7 +177,7 @@ export default class OutputFactory {
     result = this.replaceGameTokens(result, game);
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
-    result = this.replaceOutputTokens(result, options, game, outputRomFilename);
+    result = this.replaceOutputTokens(result, options, outputRomFilename);
     result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
@@ -189,18 +190,18 @@ export default class OutputFactory {
     return result;
   }
 
-  private static replaceGameTokens(input: string, game?: Game): string {
+  private static replaceGameTokens(input: string, game?: SingleValueGame): string {
     if (!game) {
       return input;
     }
     let output = input;
 
-    const gameRegion = game.getRegions().at(0);
+    const gameRegion = game.getRegion();
     if (gameRegion) {
       output = output.replace('{region}', gameRegion);
     }
 
-    const gameLanguage = game.getLanguages().at(0);
+    const gameLanguage = game.getLanguage();
     if (gameLanguage) {
       output = output.replace('{language}', gameLanguage);
     }
@@ -210,6 +211,11 @@ export default class OutputFactory {
     const gameGenre = game.getGenre();
     if (gameGenre) {
       output = output.replace('{genre}', gameGenre);
+    }
+
+    const gameCategory = game.getCategory();
+    if (gameCategory) {
+      output = output.replace('{category}', gameCategory);
     }
 
     return output;
@@ -238,7 +244,6 @@ export default class OutputFactory {
   private static replaceOutputTokens(
     input: string,
     options: Options,
-    game?: Game,
     outputRomFilename?: string,
   ): string {
     if (!outputRomFilename && options.getFixExtension() === FixExtension.NEVER) {

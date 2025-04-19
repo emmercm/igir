@@ -15,7 +15,7 @@ export default class ZipBombProtector extends stream.Transform {
 
   _transform(
     chunk: Buffer<ArrayBuffer>,
-    encoding: BufferEncoding,
+    _encoding: BufferEncoding,
     callback: TransformCallback,
   ): void {
     this.readBytes += chunk.length;

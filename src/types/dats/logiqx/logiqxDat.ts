@@ -4,7 +4,6 @@ import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
 import DAT from '../dat.js';
 import Game from '../game.js';
-import Machine from '../mame/machine.js';
 import Header from './header.js';
 
 /**
@@ -23,9 +22,9 @@ export default class LogiqxDAT extends DAT {
 
   // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what pleasuredome Datfiles use
   @Expose()
-  @Type(() => Machine)
-  @Transform(({ value }: { value: undefined | Machine | Machine[] }) => value ?? [])
-  private readonly machine?: Machine | Machine[];
+  @Type(() => Game)
+  @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
+  private readonly machine?: Game | Game[];
 
   constructor(header: Header, games: Game | Game[]) {
     super();

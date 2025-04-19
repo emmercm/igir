@@ -4,6 +4,7 @@ import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/types/dats/rom.js';
+import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -13,7 +14,7 @@ async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
     dat.getGames().map(
       async (game) =>
         new WriteCandidate(
-          game,
+          new SingleValueGame({ ...game }),
           await Promise.all(
             game.getRoms().map(async (rom) => {
               const dummyFile = await rom.toFile();
@@ -41,11 +42,11 @@ it('should return nothing if all candidates have unique paths', async () => {
     }),
     new Game({
       name: 'game with one ROM',
-      rom: [new ROM({ name: 'one', size: 1 })],
+      roms: [new ROM({ name: 'one', size: 1 })],
     }),
     new Game({
       name: 'game with two ROMs',
-      rom: [new ROM({ name: 'two', size: 2 }), new ROM({ name: 'three', size: 3 })],
+      roms: [new ROM({ name: 'two', size: 2 }), new ROM({ name: 'three', size: 3 })],
     }),
   ]);
   const candidates = await datToCandidates(dat);
@@ -62,19 +63,19 @@ it('should return something if some candidates have conflicting paths', async ()
     }),
     new Game({
       name: 'game one',
-      rom: [new ROM({ name: 'one', size: 1 })],
+      roms: [new ROM({ name: 'one', size: 1 })],
     }),
     new Game({
       name: 'game two',
-      rom: [new ROM({ name: 'two', size: 2 }), new ROM({ name: 'three', size: 3 })],
+      roms: [new ROM({ name: 'two', size: 2 }), new ROM({ name: 'three', size: 3 })],
     }),
     new Game({
       name: 'game three',
-      rom: [new ROM({ name: 'three', size: 3 }), new ROM({ name: 'four', size: 4 })],
+      roms: [new ROM({ name: 'three', size: 3 }), new ROM({ name: 'four', size: 4 })],
     }),
     new Game({
       name: 'game four',
-      rom: [new ROM({ name: 'four', size: 4 }), new ROM({ name: 'five', size: 5 })],
+      roms: [new ROM({ name: 'four', size: 4 }), new ROM({ name: 'five', size: 5 })],
     }),
   ]);
   const candidates = await datToCandidates(dat);

@@ -46,6 +46,43 @@ you can then add some other output options such as the [`--dir-letter` option](.
 
 Alternatively, Igir supports [Hardware Target Game Database SMDB files](https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs) as [DATs](../../dats/introduction.md). Unlike typical DATs, Hardware Target Game Database SMDBs typically have an opinionated directory structure to help sort ROMs by language, category, genre, and more. Example usage:
 
+!!! tip
+
+    You can achieve a result similar to the Hardware Target Game Database DATs with the following options:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir [commands..] ^
+          [options] ^
+          --output "{datName}\{region}" ^
+          --dir-letter ^
+          --dir-letter-group ^
+          --dir-letter-limit 200
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir [commands..] \
+          [options] \
+          --output "{datName}/{region}" \
+          --dir-letter \
+          --dir-letter-group \
+          --dir-letter-limit 200
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir [commands..] \
+          [options] \
+          --output "{datName}/{region}" \
+          --dir-letter \
+          --dir-letter-group \
+          --dir-letter-limit 200
+        ```
+
 === ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:

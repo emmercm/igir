@@ -1,4 +1,4 @@
-import Game from './dats/game.js';
+import SingleValueGame from './dats/singleValueGame.js';
 import ROMWithFiles from './romWithFiles.js';
 
 /**
@@ -8,18 +8,18 @@ import ROMWithFiles from './romWithFiles.js';
  * has been found.
  */
 export default class WriteCandidate {
-  private readonly game: Game;
+  private readonly game: SingleValueGame;
 
   private readonly romsWithFiles: ROMWithFiles[];
 
-  constructor(game: Game, romsWithFiles: ROMWithFiles[]) {
+  constructor(game: SingleValueGame, romsWithFiles: ROMWithFiles[]) {
     this.game = game;
     this.romsWithFiles = romsWithFiles;
   }
 
   // Property getters
 
-  getGame(): Game {
+  getGame(): SingleValueGame {
     return this.game;
   }
 
@@ -53,5 +53,16 @@ export default class WriteCandidate {
       return this;
     }
     return new WriteCandidate(this.game, romsWithFiles);
+  }
+
+  // Pseudo Built-Ins
+
+  /**
+   * A string hash code to uniquely identify this {@link WriteCandidate}.
+   */
+  hashCode(): string {
+    let hashCode = this.game.hashCode();
+    hashCode += `|${this.romsWithFiles.map((romWithFiles) => romWithFiles.hashCode()).join(',')}`;
+    return hashCode;
   }
 }

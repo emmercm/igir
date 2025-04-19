@@ -2,16 +2,16 @@ import os from 'node:os';
 import path from 'node:path';
 
 import Temp from '../src/globals/temp.js';
-import Game from '../src/types/dats/game.js';
 import Header from '../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../src/types/dats/release.js';
 import ROM from '../src/types/dats/rom.js';
+import SingleValueGame from '../src/types/dats/singleValueGame.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
 import OutputFactory from '../src/types/outputFactory.js';
 
 const dummyDat = new LogiqxDAT(new Header(), []);
-const dummyGame = new Game({ name: 'Dummy Game' });
+const dummyGame = new SingleValueGame({ name: 'Dummy Game' });
 const dummyRom = new ROM({ name: 'Dummy.rom', size: 0, crc32: '00000000' });
 
 test.each(['test', 'report', 'zip', 'clean'])(
@@ -72,15 +72,14 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{region}', 'Game (E)', [], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{region}', 'Game (Europe)', [], path.join('root', 'EUR', 'Dummy.rom')],
-    ['root/{region}', 'Game', ['EUR'], path.join('root', 'EUR', 'Dummy.rom')],
-  ])('should replace {region}: %s', async (output, gameName, regions, expectedPath) => {
+    ['root/{region}', 'USA', path.join('root', 'USA', 'Dummy.rom')],
+    ['root/{region}', 'WORLD', path.join('root', 'WORLD', 'Dummy.rom')],
+    ['root/{region}', 'EUR', path.join('root', 'EUR', 'Dummy.rom')],
+  ])('should replace {region}: %s', async (output, region, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
-    const game = new Game({
-      name: gameName,
-      release: regions.map((region) => new Release(gameName, region)),
+    const game = new SingleValueGame({
+      region,
     });
 
     const outputPath = OutputFactory.getPath(options, dat, game, dummyRom, await dummyRom.toFile());
@@ -88,15 +87,13 @@ describe('token replacement', () => {
   });
 
   test.each([
-    ['root/{language}', 'Game (E)', [], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{language}', 'Game (Europe)', [], path.join('root', 'EN', 'Dummy.rom')],
-    ['root/{language}', 'Game', ['EUR'], path.join('root', 'EN', 'Dummy.rom')],
-  ])('should replace {language}: %s', async (output, gameName, regions, expectedPath) => {
+    ['root/{language}', 'EN', path.join('root', 'EN', 'Dummy.rom')],
+    ['root/{language}', 'JP', path.join('root', 'JP', 'Dummy.rom')],
+  ])('should replace {language}: %s', async (output, language, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
-    const game = new Game({
-      name: gameName,
-      release: regions.map((region) => new Release(gameName, region)),
+    const game = new SingleValueGame({
+      language,
     });
 
     const outputPath = OutputFactory.getPath(options, dat, game, dummyRom, await dummyRom.toFile());
@@ -109,8 +106,23 @@ describe('token replacement', () => {
   ])('should replace {genre}: %s', async (output, genre, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT(new Header(), []);
-    const game = new Game({
+    const game = new SingleValueGame({
       genre,
+    });
+
+    const outputPath = OutputFactory.getPath(options, dat, game, dummyRom, await dummyRom.toFile());
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each([
+    ['root/{category}', 'Applications', path.join('root', 'Applications', 'Dummy.rom')],
+    ['root/{category}', 'Games', path.join('root', 'Games', 'Dummy.rom')],
+    ['root/{category}', 'Multimedia', path.join('root', 'Multimedia', 'Dummy.rom')],
+  ])('should replace {category}: %s', async (output, category, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output });
+    const dat = new LogiqxDAT(new Header(), []);
+    const game = new SingleValueGame({
+      category,
     });
 
     const outputPath = OutputFactory.getPath(options, dat, game, dummyRom, await dummyRom.toFile());
@@ -146,7 +158,7 @@ describe('token replacement', () => {
     ['Game', 'Retail'],
   ])('should replace {type}: %s', async (gameName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: '{type}' });
-    const game = new Game({
+    const game = new SingleValueGame({
       name: gameName,
       release: [
         new Release(gameName, 'USA'),
@@ -870,9 +882,9 @@ describe('should respect "--dir-letter"', () => {
   });
 
   describe('game with multiple ROMs', () => {
-    const game = new Game({
+    const game = new SingleValueGame({
       name: 'Apidya (Unknown)',
-      rom: [
+      roms: [
         new ROM({ name: 'disk1\\apidya_disk1_00.0.raw', size: 265_730, crc32: '555b1be8' }),
         new ROM({ name: 'disk1\\apidya_disk1_00.1.raw', size: 256_990, crc32: '9ef64ba6' }),
       ],
@@ -904,16 +916,16 @@ describe('should respect "--dir-letter"', () => {
 
 describe('should respect "--dir-game-subdir"', () => {
   test.each([
-    new Game({
+    new SingleValueGame({
       name: 'game',
     }),
-    new Game({
+    new SingleValueGame({
       name: 'game',
-      rom: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+      roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
     }),
-    new Game({
+    new SingleValueGame({
       name: 'game',
-      rom: [
+      roms: [
         new ROM({ name: 'one.rom', size: 0, crc32: '' }),
         new ROM({ name: 'two.rom', size: 0, crc32: '' }),
       ],
@@ -937,22 +949,22 @@ describe('should respect "--dir-game-subdir"', () => {
 
   test.each([
     [
-      new Game({
+      new SingleValueGame({
         name: 'game',
       }),
       path.join(os.devNull, 'Dummy.rom'),
     ],
     [
-      new Game({
+      new SingleValueGame({
         name: 'game',
-        rom: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+        roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
       }),
       path.join(os.devNull, 'Dummy.rom'),
     ],
     [
-      new Game({
+      new SingleValueGame({
         name: 'game',
-        rom: [
+        roms: [
           new ROM({ name: 'one.rom', size: 0, crc32: '' }),
           new ROM({ name: 'two.rom', size: 0, crc32: '' }),
         ],
@@ -977,16 +989,16 @@ describe('should respect "--dir-game-subdir"', () => {
   });
 
   test.each([
-    new Game({
+    new SingleValueGame({
       name: 'game',
     }),
-    new Game({
+    new SingleValueGame({
       name: 'game',
-      rom: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+      roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
     }),
-    new Game({
+    new SingleValueGame({
       name: 'game',
-      rom: [
+      roms: [
         new ROM({ name: 'one.rom', size: 0, crc32: '' }),
         new ROM({ name: 'two.rom', size: 0, crc32: '' }),
       ],
