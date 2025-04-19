@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v3.4.1
+     @@   @@        @@   @@   @@       @@    v3.4.2
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -268,6 +268,8 @@ Advanced usage:
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {category}        The DAT-defined category of the game (e.g. "Games", "Demos", "Multimedia
+    ")
     {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname
