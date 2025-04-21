@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y python3 make g++ && ln -sf python3 /usr
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
-# # Install dependencies (including devDependencies for build), but ignore lifecycle scripts to avoid postinstall error
-RUN npm ci --ignore-scripts
+# Disable postinstall script to prevent build errors during Docker build
+RUN npm pkg set scripts.postinstall="true"
+RUN npm ci
 
 # Copy the rest of the project files
 COPY . .
@@ -29,9 +30,7 @@ WORKDIR /app
 COPY --from=build /app/package.json ./
 COPY --from=build /app/package-lock.json ./
 COPY --from=build /app/dist ./dist
-
-# Install only production dependencies, but ignore lifecycle scripts to avoid husky/prepare errors
-RUN npm ci --omit=dev --ignore-scripts
+COPY --from=build /app/node_modules ./node_modules
 
 # Set binary path for CLI
 ENV PATH="/app/dist:$PATH"
