@@ -4,14 +4,19 @@ FROM node:18-slim AS build
 # Set working directory
 WORKDIR /app
 
+# Install Python 3 (for node-gyp and native modules)
+RUN apt-get update && apt-get install -y python3 make g++ && ln -sf python3 /usr/bin/python && rm -rf /var/lib/apt/lists/*
+
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
-# Install dependencies (including devDependencies for build), but ignore lifecycle scripts to avoid postinstall error
+# # Install dependencies (including devDependencies for build), but ignore lifecycle scripts to avoid postinstall error
 RUN npm ci --ignore-scripts
 
 # Copy the rest of the project files
 COPY . .
+# Ensure index.ts is present for TypeScript build
+COPY index.ts ./
 
 # Build the TypeScript code
 RUN npm run build
