@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import stream from 'node:stream';
 
-import EndOfCentralDirectoryRecord from './endOfCentralDirectoryRecord.js';
+import EndOfCentralDirectory from './endOfCentralDirectory.js';
 import FileRecord, { IFileRecord } from './fileRecord.js';
 import LocalFileHeader from './localFileHeader.js';
 
@@ -26,7 +26,7 @@ export default class CentralDirectoryFileHeader
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIZE = 46;
 
   private static readonly FIELD_OFFSETS = {
-    versionNeeded: 4,
+    versionNeeded: 6,
     generalPurposeBitFlag: 8,
     compressionMethod: 10,
     modifiedTime: 12,
@@ -62,7 +62,7 @@ export default class CentralDirectoryFileHeader
   static async centralDirectoryFileFromFileHandle(
     zipFilePath: string,
     fileHandle: fs.promises.FileHandle,
-    endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
+    endOfCentralDirectoryRecord: EndOfCentralDirectory,
   ): Promise<CentralDirectoryFileHeader[]> {
     if (
       endOfCentralDirectoryRecord.diskNumber !== 0 ||
@@ -77,23 +77,16 @@ export default class CentralDirectoryFileHeader
 
     let position = endOfCentralDirectoryRecord.centralDirectoryOffset;
     for (let i = 0; i < endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount; i += 1) {
-      await fileHandle.read({ buffer: fixedLengthBuffer, position });
-
-      const signature = fixedLengthBuffer.subarray(0, 4);
-      if (!signature.equals(this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)) {
-        throw new Error(
-          `invalid zip central directory file header signature for file ${i + 1}/${endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount}: 0x${signature.toString('hex')}`,
-        );
-      }
-
       const fileRecord = await FileRecord.fileRecordFromFileHandle(
         zipFilePath,
         fileHandle,
         position,
         this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE,
+        this.CENTRAL_DIRECTORY_FILE_HEADER_SIZE,
         this.FIELD_OFFSETS,
       );
 
+      await fileHandle.read({ buffer: fixedLengthBuffer, position });
       fileHeaders.push(
         new CentralDirectoryFileHeader({
           ...fileRecord,
@@ -102,7 +95,7 @@ export default class CentralDirectoryFileHeader
           internalFileAttributes: fixedLengthBuffer.readUInt16LE(36),
           externalFileAttributes: fixedLengthBuffer.readUInt32LE(38),
           localFileHeaderRelativeOffset: fileRecord.localFileHeaderRelativeOffset as number,
-          fileComment: fileRecord.fileComment as string,
+          fileComment: fileRecord.fileComment ?? '',
         }),
       );
 
@@ -110,7 +103,7 @@ export default class CentralDirectoryFileHeader
         fixedLengthBuffer.length +
         fileRecord.fileNameLength +
         fileRecord.extraFieldLength +
-        (fileRecord.fileCommentLength as number);
+        (fileRecord.fileCommentLength ?? 0);
     }
 
     return fileHeaders;

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import CP437Decoder from './cp437Decoder.js';
 
 export interface IFileRecord extends IFileRecordZip64 {
+  raw: Buffer<ArrayBuffer>;
   zipFilePath: string;
   versionNeeded: number;
   generalPurposeBitFlag: number;
@@ -62,6 +63,7 @@ export interface FileTimestamps {
 }
 
 export default class FileRecord implements IFileRecord {
+  readonly raw: Buffer<ArrayBuffer>;
   readonly zipFilePath: string;
   readonly versionNeeded: number;
   readonly generalPurposeBitFlag: number;
@@ -80,6 +82,7 @@ export default class FileRecord implements IFileRecord {
   readonly fileComment?: string;
 
   protected constructor(props: IFileRecord) {
+    this.raw = props.raw;
     this.zipFilePath = props.zipFilePath;
     this.versionNeeded = props.versionNeeded;
     this.generalPurposeBitFlag = props.generalPurposeBitFlag;
@@ -103,6 +106,7 @@ export default class FileRecord implements IFileRecord {
     fileHandle: fs.promises.FileHandle,
     recordOffset: number,
     expectedSignature: Buffer<ArrayBuffer>,
+    fixedLengthSize: number,
     fieldOffsets: {
       versionNeeded: number;
       generalPurposeBitFlag: number;
@@ -120,7 +124,7 @@ export default class FileRecord implements IFileRecord {
       fileName: number;
     },
   ): Promise<FileRecord> {
-    const fixedLengthBuffer = Buffer.allocUnsafe(Math.max(...Object.values(fieldOffsets)) + 4);
+    const fixedLengthBuffer = Buffer.allocUnsafe(fixedLengthSize);
     await fileHandle.read({ buffer: fixedLengthBuffer, position: recordOffset });
 
     const signature = fixedLengthBuffer.subarray(0, expectedSignature.length);
@@ -171,8 +175,12 @@ export default class FileRecord implements IFileRecord {
         fixedLengthBuffer.readUInt16LE(fieldOffsets.modifiedDate),
       );
 
-    const uncompressedCrc32 = fixedLengthBuffer
-      .subarray(fieldOffsets.uncompressedCrc32, fieldOffsets.uncompressedCrc32 + 4)
+    const uncompressedCrc32 = Buffer.from(
+      fixedLengthBuffer.subarray(
+        fieldOffsets.uncompressedCrc32,
+        fieldOffsets.uncompressedCrc32 + 4,
+      ),
+    )
       .reverse()
       .toString('hex')
       .toLowerCase();
@@ -212,6 +220,7 @@ export default class FileRecord implements IFileRecord {
     });
 
     return new FileRecord({
+      raw: Buffer.concat([fixedLengthBuffer, variableLengthBuffer]),
       zipFilePath: zipFilePath,
       versionNeeded,
       generalPurposeBitFlag,
@@ -363,6 +372,7 @@ export default class FileRecord implements IFileRecord {
     };
 
     // Only respect the zip64 extended information if the local/central directory record says to do so
+    // TODO(cemmer): refactor this into getters like EOCD was
     let position = 0;
     if (originalDirectoryRecord.uncompressedSize === 0xff_ff_ff_ff) {
       extendedInformation.uncompressedSize = Number(buffer.readBigUInt64LE(position));

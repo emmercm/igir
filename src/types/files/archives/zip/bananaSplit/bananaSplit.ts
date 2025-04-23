@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
 import CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
-import EndOfCentralDirectoryRecord from './endOfCentralDirectoryRecord.js';
+import EndOfCentralDirectory from './endOfCentralDirectory.js';
 import LocalFileHeader from './localFileHeader.js';
 
 /**
@@ -18,7 +18,7 @@ export default class BananaSplit {
   private readonly zipFilePath: string;
 
   private _centralDirectoryFileHeaders?: CentralDirectoryFileHeader[];
-  private _endOfCentralDirectoryRecord?: EndOfCentralDirectoryRecord;
+  private _endOfCentralDirectoryRecord?: EndOfCentralDirectory;
 
   constructor(zipFilePath: string) {
     this.zipFilePath = zipFilePath;
@@ -54,7 +54,7 @@ export default class BananaSplit {
         // At least one file in the zip
         LocalFileHeader.LOCAL_FILE_HEADER_SIGNATURE.toString('hex'),
         // No files in the zip
-        EndOfCentralDirectoryRecord.END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE.toString('hex'),
+        EndOfCentralDirectory.END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE.toString('hex'),
         // The zip is spanned, and this ISN'T the first file
         LocalFileHeader.DATA_DESCRIPTOR_SIGNATURE.toString('hex'),
       ]).has(magicNumber.toString('hex'))
@@ -72,7 +72,7 @@ export default class BananaSplit {
   /**
    * Return the end of central directory record.
    */
-  async endOfCentralDirectoryRecord(): Promise<EndOfCentralDirectoryRecord> {
+  async endOfCentralDirectoryRecord(): Promise<EndOfCentralDirectory> {
     if (this._endOfCentralDirectoryRecord !== undefined) {
       return this._endOfCentralDirectoryRecord;
     }
@@ -87,14 +87,13 @@ export default class BananaSplit {
 
   private async endOfCentralDirectoryRecordFromFileHandle(
     fileHandle: fs.promises.FileHandle,
-  ): Promise<EndOfCentralDirectoryRecord> {
+  ): Promise<EndOfCentralDirectory> {
     if (this._endOfCentralDirectoryRecord !== undefined) {
       return this._endOfCentralDirectoryRecord;
     }
 
     await this.assertValidMagicNumber(fileHandle);
-    this._endOfCentralDirectoryRecord =
-      await EndOfCentralDirectoryRecord.fromFileHandle(fileHandle);
+    this._endOfCentralDirectoryRecord = await EndOfCentralDirectory.fromFileHandle(fileHandle);
     return this._endOfCentralDirectoryRecord;
   }
 }

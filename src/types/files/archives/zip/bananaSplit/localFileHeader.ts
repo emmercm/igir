@@ -20,6 +20,9 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
   public static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
   public static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
 
+  // Size with the signature, and without variable length fields at the end
+  private static readonly LOCAL_FILE_HEADER_SIZE = 30;
+
   private static readonly FIELD_OFFSETS = {
     versionNeeded: 4,
     generalPurposeBitFlag: 6,
@@ -50,6 +53,7 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
       fileHandle,
       centralDirectoryFileHeader.localFileHeaderRelativeOffset,
       this.LOCAL_FILE_HEADER_SIGNATURE,
+      this.LOCAL_FILE_HEADER_SIZE,
       this.FIELD_OFFSETS,
     );
 
