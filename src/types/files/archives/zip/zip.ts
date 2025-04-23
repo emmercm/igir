@@ -5,18 +5,26 @@ import stream, { Readable } from 'node:stream';
 import archiver, { Archiver } from 'archiver';
 import async from 'async';
 
-import Defaults from '../../../globals/defaults.js';
-import FsPoly from '../../../polyfill/fsPoly.js';
-import Timer from '../../../timer.js';
-import ExpectedError from '../../expectedError.js';
-import File from '../file.js';
-import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
-import Archive from './archive.js';
-import ArchiveEntry from './archiveEntry.js';
-import BananaSplit from './zip/bananaSplit/bananaSplit.js';
-import CentralDirectoryFileHeader from './zip/bananaSplit/centralDirectoryFileHeader.js';
+import Defaults from '../../../../globals/defaults.js';
+import FsPoly from '../../../../polyfill/fsPoly.js';
+import Timer from '../../../../timer.js';
+import ExpectedError from '../../../expectedError.js';
+import File from '../../file.js';
+import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../../fileChecksums.js';
+import Archive from '../archive.js';
+import ArchiveEntry from '../archiveEntry.js';
+import BananaSplit from './bananaSplit/bananaSplit.js';
+import CentralDirectoryFileHeader from './bananaSplit/centralDirectoryFileHeader.js';
+import TorrentZipValidator from './torrentZipValidator.js';
 
 export default class Zip extends Archive {
+  private readonly bananaSplit: BananaSplit;
+
+  constructor(filePath: string) {
+    super(filePath);
+    this.bananaSplit = new BananaSplit(this.getFilePath());
+  }
+
   protected new(filePath: string): Archive {
     return new Zip(filePath);
   }
@@ -30,8 +38,7 @@ export default class Zip extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
-    const archive = new BananaSplit(this.getFilePath());
-    const entries = await archive.centralDirectoryFileHeaders();
+    const entries = await this.bananaSplit.centralDirectoryFileHeaders();
 
     return async.mapLimit(
       entries.filter((entry) => !entry.isDirectory()),
@@ -90,8 +97,7 @@ export default class Zip extends Archive {
       return super.extractEntryToStream(entryPath, callback, start);
     }
 
-    const archive = new BananaSplit(this.getFilePath());
-    const entries = await archive.centralDirectoryFileHeaders();
+    const entries = await this.bananaSplit.centralDirectoryFileHeaders();
     const entry = entries.find(
       (entryFile) =>
         entryFile.fileName.replaceAll(/[\\/]/g, '/') === entryPath.replaceAll(/[\\/]/g, '/'),
@@ -226,5 +232,9 @@ export default class Zip extends Archive {
     if (zipFileError) {
       throw zipFileError;
     }
+  }
+
+  async isTorrentZip(): Promise<boolean> {
+    return TorrentZipValidator.validate(this.bananaSplit);
   }
 }

@@ -15,7 +15,7 @@ import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import Rar from '../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/types/files/archives/tar.js';
-import Zip from '../../../src/types/files/archives/zip.js';
+import Zip from '../../../src/types/files/archives/zip/zip.js';
 import File from '../../../src/types/files/file.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import IndexedFiles from '../../../src/types/indexedFiles.js';

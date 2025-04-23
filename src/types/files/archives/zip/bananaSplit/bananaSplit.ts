@@ -17,24 +17,31 @@ import LocalFileHeader from './localFileHeader.js';
 export default class BananaSplit {
   private readonly zipFilePath: string;
 
+  private _centralDirectoryFileHeaders?: CentralDirectoryFileHeader[];
   private _endOfCentralDirectoryRecord?: EndOfCentralDirectoryRecord;
 
-  constructor(filePath: string) {
-    this.zipFilePath = filePath;
+  constructor(zipFilePath: string) {
+    this.zipFilePath = zipFilePath;
   }
 
   /**
    * Return all central directory file headers.
    */
   async centralDirectoryFileHeaders(): Promise<CentralDirectoryFileHeader[]> {
+    if (this._centralDirectoryFileHeaders !== undefined) {
+      return this._centralDirectoryFileHeaders;
+    }
+
     const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {
       const eocd = await this.endOfCentralDirectoryRecordFromFileHandle(fileHandle);
-      return await CentralDirectoryFileHeader.centralDirectoryFileFromFileHandle(
-        this.zipFilePath,
-        fileHandle,
-        eocd,
-      );
+      this._centralDirectoryFileHeaders =
+        await CentralDirectoryFileHeader.centralDirectoryFileFromFileHandle(
+          this.zipFilePath,
+          fileHandle,
+          eocd,
+        );
+      return this._centralDirectoryFileHeaders;
     } finally {
       await fileHandle.close();
     }
@@ -47,7 +54,7 @@ export default class BananaSplit {
         // At least one file in the zip
         LocalFileHeader.LOCAL_FILE_HEADER_SIGNATURE.toString('hex'),
         // No files in the zip
-        EndOfCentralDirectoryRecord.CENTRAL_DIRECTORY_END_SIGNATURE.toString('hex'),
+        EndOfCentralDirectoryRecord.END_OF_CENTRAL_DIRECTORY_SIGNATURE.toString('hex'),
         // The zip is spanned, and this ISN'T the first file
         LocalFileHeader.DATA_DESCRIPTOR_SIGNATURE.toString('hex'),
       ]).has(magicNumber.toString('hex'))
@@ -66,6 +73,10 @@ export default class BananaSplit {
    * Return the end of central directory record.
    */
   async endOfCentralDirectoryRecord(): Promise<EndOfCentralDirectoryRecord> {
+    if (this._endOfCentralDirectoryRecord !== undefined) {
+      return this._endOfCentralDirectoryRecord;
+    }
+
     const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {
       return await this.endOfCentralDirectoryRecordFromFileHandle(fileHandle);

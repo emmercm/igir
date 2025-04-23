@@ -10,7 +10,7 @@ import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FsPoly, { MoveResult, MoveResultValue } from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import Zip from '../../types/files/archives/zip.js';
+import Zip from '../../types/files/archives/zip/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
 import Options from '../../types/options.js';

@@ -23,7 +23,7 @@ import Z from '../../../../src/types/files/archives/sevenZip/z.js';
 import ZipSpanned from '../../../../src/types/files/archives/sevenZip/zipSpanned.js';
 import ZipX from '../../../../src/types/files/archives/sevenZip/zipX.js';
 import Tar from '../../../../src/types/files/archives/tar.js';
-import Zip from '../../../../src/types/files/archives/zip.js';
+import Zip from '../../../../src/types/files/archives/zip/zip.js';
 import FileCache from '../../../../src/types/files/fileCache.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options from '../../../../src/types/options.js';

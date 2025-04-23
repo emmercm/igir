@@ -8,7 +8,7 @@ import Maxcso from '../../types/files/archives/maxcso/maxcso.js';
 import Rar from '../../types/files/archives/rar.js';
 import SevenZip from '../../types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../types/files/archives/tar.js';
-import Zip from '../../types/files/archives/zip.js';
+import Zip from '../../types/files/archives/zip/zip.js';
 import File from '../../types/files/file.js';
 import IndexedFiles, { AllChecksums, ChecksumsToFiles } from '../../types/indexedFiles.js';
 import Options from '../../types/options.js';

@@ -8,7 +8,7 @@ import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
 import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
-import Zip from '../../../../src/types/files/archives/zip.js';
+import Zip from '../../../../src/types/files/archives/zip/zip.js';
 import File from '../../../../src/types/files/file.js';
 import FileCache from '../../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../../src/types/files/fileChecksums.js';

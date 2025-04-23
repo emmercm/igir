@@ -13,7 +13,7 @@ import Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import Chd from '../../types/files/archives/chd/chd.js';
-import Zip from '../../types/files/archives/zip.js';
+import Zip from '../../types/files/archives/zip/zip.js';
 import File from '../../types/files/file.js';
 import IndexedFiles from '../../types/indexedFiles.js';
 import Options from '../../types/options.js';
