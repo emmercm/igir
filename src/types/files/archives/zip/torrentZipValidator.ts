@@ -9,7 +9,8 @@ export default class TorrentZipValidator {
     if (
       eocd.diskNumber !== 0 ||
       eocd.centralDirectoryDiskStart !== 0 ||
-      eocd.comment.length !== 22
+      eocd.comment.length !== 22 ||
+      (eocd.isZip64() && (eocd.versionMadeBy !== 45 || eocd.versionNeeded !== 45))
     ) {
       return false;
     }
@@ -73,7 +74,6 @@ export default class TorrentZipValidator {
     }
 
     // TODO(cemmer): validate entries count
-    // TODO(cemmer): validate zip file comment
 
     return true;
   }
