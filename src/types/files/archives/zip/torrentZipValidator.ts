@@ -12,14 +12,19 @@ export default class TorrentZipValidator {
 
     const eocd = await bananaSplit.endOfCentralDirectoryRecord();
     if (
-      eocd.centralDirectoryDiskRecordsCountResolved() !==
-        eocd.centralDirectoryTotalRecordsCountResolved() ||
-      eocd.centralDirectoryDiskStartResolved() !== 0 ||
-      eocd.comment().length !== 22 ||
-      !eocd.comment().startsWith('TORRENTZIPPED-') ||
-      eocd.diskNumberResolved() !== 0 ||
+      eocd.diskNumber !== 0 ||
+      eocd.centralDirectoryDiskStart !== 0 ||
+      eocd.centralDirectoryDiskRecordsCount !== eocd.centralDirectoryTotalRecordsCount ||
+      eocd.comment.length !== 22 ||
+      !eocd.comment.startsWith('TORRENTZIPPED-') ||
       (eocd.zip64Record &&
-        (eocd.zip64Record?.versionMadeBy !== 45 || eocd.zip64Record?.versionNeeded !== 45))
+        (eocd.zip64Record.diskNumber !== 0 ||
+          eocd.zip64Record.centralDirectoryDiskStart !== 0 ||
+          eocd.zip64Record.centralDirectoryDiskRecordsCount !==
+            eocd.zip64Record.centralDirectoryTotalRecordsCount ||
+          eocd.zip64Record.comment !== '' ||
+          eocd.zip64Record.versionMadeBy !== 45 ||
+          eocd.zip64Record.versionNeeded !== 45))
     ) {
       return false;
     }
@@ -68,7 +73,7 @@ export default class TorrentZipValidator {
       .toString(16)
       .padStart(8, '0')
       .toUpperCase();
-    if (eocd.comment() !== `TORRENTZIPPED-${cdfhCrc32}`) {
+    if (eocd.comment !== `TORRENTZIPPED-${cdfhCrc32}`) {
       return false;
     }
 

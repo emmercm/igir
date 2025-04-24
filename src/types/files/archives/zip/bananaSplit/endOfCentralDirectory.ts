@@ -2,12 +2,6 @@ import fs from 'node:fs';
 
 import CP437Decoder from './cp437Decoder.js';
 
-export interface IEndOfCentralDirectory {
-  record: IEndOfCentralDirectoryRecord;
-  zip64Locator?: IZip64EndOfCentralDirectoryLocator;
-  zip64Record?: IZip64EndOfCentralDirectoryRecord;
-}
-
 export interface IEndOfCentralDirectoryRecord {
   diskNumber: number;
   centralDirectoryDiskStart: number;
@@ -16,6 +10,11 @@ export interface IEndOfCentralDirectoryRecord {
   centralDirectorySizeBytes: number;
   centralDirectoryOffset: number;
   comment: string;
+}
+
+export interface IEndOfCentralDirectory extends IEndOfCentralDirectoryRecord {
+  zip64Locator?: IZip64EndOfCentralDirectoryLocator;
+  zip64Record?: IZip64EndOfCentralDirectoryRecord;
 }
 
 export interface IZip64EndOfCentralDirectoryLocator {
@@ -51,12 +50,24 @@ export default class EndOfCentralDirectory {
   // Maximum size of the non-zip64 EOCD
   private static readonly BACKWARD_CHUNK_SIZE: number = 22 + 0xff_ff;
 
-  readonly record: IEndOfCentralDirectoryRecord;
+  readonly diskNumber: number;
+  readonly centralDirectoryDiskStart: number;
+  readonly centralDirectoryDiskRecordsCount: number;
+  readonly centralDirectoryTotalRecordsCount: number;
+  readonly centralDirectorySizeBytes: number;
+  readonly centralDirectoryOffset: number;
+  readonly comment: string;
   readonly zip64Locator?: IZip64EndOfCentralDirectoryLocator;
   readonly zip64Record?: IZip64EndOfCentralDirectoryRecord;
 
   private constructor(props: IEndOfCentralDirectory) {
-    this.record = props.record;
+    this.diskNumber = props.diskNumber;
+    this.centralDirectoryDiskStart = props.centralDirectoryDiskStart;
+    this.centralDirectoryDiskRecordsCount = props.centralDirectoryDiskRecordsCount;
+    this.centralDirectoryTotalRecordsCount = props.centralDirectoryTotalRecordsCount;
+    this.centralDirectorySizeBytes = props.centralDirectorySizeBytes;
+    this.centralDirectoryOffset = props.centralDirectoryOffset;
+    this.comment = props.comment;
     this.zip64Locator = props.zip64Locator;
     this.zip64Record = props.zip64Record;
   }
@@ -122,16 +133,6 @@ export default class EndOfCentralDirectory {
     }
     const comment = CP437Decoder.decode(commentBuffer);
 
-    const endOfCentralDirectoryRecord = {
-      diskNumber,
-      centralDirectoryDiskStart,
-      centralDirectoryDiskRecordsCount,
-      centralDirectoryTotalRecordsCount,
-      centralDirectorySizeBytes,
-      centralDirectoryOffset,
-      comment,
-    } satisfies IEndOfCentralDirectoryRecord;
-
     // Parse the optional zip64 EOCD
     let zip64EndOfCentralDirectoryLocator: IZip64EndOfCentralDirectoryLocator | undefined;
     let zip64EndOfCentralDirectoryRecord: IZip64EndOfCentralDirectoryRecord | undefined;
@@ -159,7 +160,13 @@ export default class EndOfCentralDirectory {
     }
 
     return new EndOfCentralDirectory({
-      record: endOfCentralDirectoryRecord,
+      diskNumber,
+      centralDirectoryDiskStart,
+      centralDirectoryDiskRecordsCount,
+      centralDirectoryTotalRecordsCount,
+      centralDirectorySizeBytes,
+      centralDirectoryOffset,
+      comment,
       zip64Locator: zip64EndOfCentralDirectoryLocator,
       zip64Record: zip64EndOfCentralDirectoryRecord,
     });
@@ -215,44 +222,38 @@ export default class EndOfCentralDirectory {
   }
 
   diskNumberResolved(): number {
-    return this.record.diskNumber === 0xff_ff && this.zip64Record !== undefined
+    return this.diskNumber === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.diskNumber
-      : this.record.diskNumber;
+      : this.diskNumber;
   }
 
   centralDirectoryDiskStartResolved(): number {
-    return this.record.centralDirectoryDiskStart === 0xff_ff && this.zip64Record !== undefined
+    return this.centralDirectoryDiskStart === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskStart
-      : this.record.centralDirectoryDiskStart;
+      : this.centralDirectoryDiskStart;
   }
 
   centralDirectoryDiskRecordsCountResolved(): number {
-    return this.record.centralDirectoryDiskRecordsCount === 0xff_ff &&
-      this.zip64Record !== undefined
+    return this.centralDirectoryDiskRecordsCount === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskRecordsCount
-      : this.record.centralDirectoryDiskRecordsCount;
+      : this.centralDirectoryDiskRecordsCount;
   }
 
   centralDirectoryTotalRecordsCountResolved(): number {
-    return this.record.centralDirectoryTotalRecordsCount === 0xff_ff &&
-      this.zip64Record !== undefined
+    return this.centralDirectoryTotalRecordsCount === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryTotalRecordsCount
-      : this.record.centralDirectoryTotalRecordsCount;
+      : this.centralDirectoryTotalRecordsCount;
   }
 
   centralDirectorySizeBytesResolved(): number {
-    return this.record.centralDirectorySizeBytes === 0xff_ff_ff_ff && this.zip64Record !== undefined
+    return this.centralDirectorySizeBytes === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectorySizeBytes
-      : this.record.centralDirectorySizeBytes;
+      : this.centralDirectorySizeBytes;
   }
 
   centralDirectoryOffsetResolved(): number {
-    return this.record.centralDirectoryOffset === 0xff_ff_ff_ff && this.zip64Record !== undefined
+    return this.centralDirectoryOffset === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryOffset
-      : this.record.centralDirectoryOffset;
-  }
-
-  comment(): string {
-    return this.record.comment;
+      : this.centralDirectoryOffset;
   }
 }
