@@ -53,22 +53,22 @@ export const CompressionMethodInverted = Object.fromEntries(
 ) as Record<CompressionMethodValue, CompressionMethodKey>;
 
 export default class FileRecord {
-  private readonly raw: Buffer<ArrayBuffer>;
+  readonly raw: Buffer<ArrayBuffer>;
 
-  private readonly versionNeeded: number;
-  private readonly generalPurposeBitFlag: number;
-  private readonly compressionMethod: CompressionMethodValue;
-  private readonly fileModificationTime: number;
-  private readonly fileModificationDate: number;
-  private readonly uncompressedCrc32: Buffer<ArrayBuffer>;
-  private readonly compressedSize: number;
-  private readonly uncompressedSize: number;
-  private readonly fileNameLength: number;
-  private readonly extraFieldLength: number;
-  private readonly fileName: Buffer<ArrayBuffer>;
-  private readonly extraFields: Map<number, Buffer<ArrayBuffer>>;
+  readonly versionNeeded: number;
+  readonly generalPurposeBitFlag: number;
+  readonly compressionMethod: CompressionMethodValue;
+  readonly fileModificationTime: number;
+  readonly fileModificationDate: number;
+  readonly uncompressedCrc32: Buffer<ArrayBuffer>;
+  readonly compressedSize: number;
+  readonly uncompressedSize: number;
+  readonly fileNameLength: number;
+  readonly extraFieldLength: number;
+  readonly fileName: Buffer<ArrayBuffer>;
+  readonly extraFields: Map<number, Buffer<ArrayBuffer>>;
 
-  private readonly zip64ExtendedInformation?: IZip64ExtendedInformation;
+  readonly zip64ExtendedInformation?: IZip64ExtendedInformation;
 
   constructor(props: IFileRecord) {
     this.raw = props.raw;
@@ -89,23 +89,7 @@ export default class FileRecord {
     this.zip64ExtendedInformation = props.zip64ExtendedInformation;
   }
 
-  getRaw(): Buffer<ArrayBuffer> {
-    return this.raw;
-  }
-
-  getVersionNeeded(): number {
-    return this.versionNeeded;
-  }
-
-  getGeneralPurposeBitFlag(): number {
-    return this.generalPurposeBitFlag;
-  }
-
-  getCompressionMethod(): CompressionMethodValue {
-    return this.compressionMethod;
-  }
-
-  getFileModification(): Date {
+  fileModificationResolved(): Date {
     // TODO(cemmer): 0x000d UNIX timestamp
     // TODO(cemmer): 0x7855 unix extra field new?
     return (
@@ -116,22 +100,26 @@ export default class FileRecord {
     );
   }
 
-  getUncompressedCrc32(): string {
-    return Buffer.from(this.uncompressedCrc32).reverse().toString('hex').toLowerCase();
+  uncompressedCrc32Number(): number {
+    return this.uncompressedCrc32.readUInt32LE();
   }
 
-  getCompressedSize(): number {
+  uncompressedCrc32String(): string {
+    return this.uncompressedCrc32Number().toString(16).toLowerCase().padStart(8, '0');
+  }
+
+  compressedSizeResolved(): number {
     return (
       this.zip64ExtendedInformation?.compressedSize ??
       this.compressedSize - (this.isEncrypted() ? 12 : 0)
     );
   }
 
-  getUncompressedSize(): number {
+  uncompressedSizeResolved(): number {
     return this.zip64ExtendedInformation?.uncompressedSize ?? this.uncompressedSize;
   }
 
-  getFileName(): string {
+  fileNameResolved(): string {
     return (
       // Info-ZIP Unicode Path Extra Field
       this.extraFields.get(0x70_75)?.subarray(5).toString('utf8') ??
@@ -139,14 +127,6 @@ export default class FileRecord {
         ? this.fileName.toString('utf8')
         : CP437Decoder.decode(this.fileName))
     );
-  }
-
-  getExtraFields(): Map<number, Buffer<ArrayBuffer>> {
-    return this.extraFields;
-  }
-
-  getZip64ExtendedInformation(): IZip64ExtendedInformation | undefined {
-    return this.zip64ExtendedInformation;
   }
 
   isEncrypted(): boolean {
@@ -158,6 +138,6 @@ export default class FileRecord {
   }
 
   isDirectory(): boolean {
-    return this.getFileName().endsWith('/');
+    return this.fileNameResolved().endsWith('/');
   }
 }

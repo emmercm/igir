@@ -26,15 +26,15 @@ export default class CentralDirectoryFileHeader extends FileRecord {
   // Size with the signature, and without variable length fields at the end
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIZE = 46;
 
-  private readonly zipFilePath: string;
+  readonly zipFilePath: string;
 
-  private readonly versionMadeBy: number;
-  private readonly fileCommentLength: number;
-  private readonly fileDiskStart: number;
-  private readonly internalFileAttributes: number;
-  private readonly externalFileAttributes: number;
-  private readonly localFileHeaderRelativeOffset: number;
-  private readonly fileComment: Buffer<ArrayBuffer>;
+  readonly versionMadeBy: number;
+  readonly fileCommentLength: number;
+  readonly fileDiskStart: number;
+  readonly internalFileAttributes: number;
+  readonly externalFileAttributes: number;
+  readonly localFileHeaderRelativeOffset: number;
+  readonly fileComment: Buffer<ArrayBuffer>;
 
   private _localFileHeader?: LocalFileHeader;
 
@@ -57,8 +57,8 @@ export default class CentralDirectoryFileHeader extends FileRecord {
     endOfCentralDirectoryRecord: EndOfCentralDirectory,
   ): Promise<CentralDirectoryFileHeader[]> {
     if (
-      endOfCentralDirectoryRecord.getDiskNumber() !== 0 ||
-      endOfCentralDirectoryRecord.getCentralDirectoryDiskStart() !== 0
+      endOfCentralDirectoryRecord.diskNumberResolved() !== 0 ||
+      endOfCentralDirectoryRecord.centralDirectoryDiskStartResolved() !== 0
     ) {
       throw new Error(`multi-disk zips aren't supported`);
     }
@@ -67,10 +67,10 @@ export default class CentralDirectoryFileHeader extends FileRecord {
 
     const fixedLengthBuffer = Buffer.allocUnsafe(this.CENTRAL_DIRECTORY_FILE_HEADER_SIZE);
 
-    let position = endOfCentralDirectoryRecord.getCentralDirectoryOffset();
+    let position = endOfCentralDirectoryRecord.centralDirectoryOffsetResolved();
     for (
       let i = 0;
-      i < endOfCentralDirectoryRecord.getCentralDirectoryTotalRecordsCount();
+      i < endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCountResolved();
       i += 1
     ) {
       // const fileRecord = await FileRecord.fileRecordFromFileHandle(
@@ -172,37 +172,21 @@ export default class CentralDirectoryFileHeader extends FileRecord {
     return fileHeaders;
   }
 
-  getZipFilePath(): string {
-    return this.zipFilePath;
+  fileDiskStartResolved(): number {
+    return this.zip64ExtendedInformation?.fileDiskStart ?? this.fileDiskStart;
   }
 
-  getVersionMadeBy(): number {
-    return this.versionMadeBy;
-  }
-
-  getFileDiskStart(): number {
-    return this.getZip64ExtendedInformation()?.fileDiskStart ?? this.fileDiskStart;
-  }
-
-  getInternalFileAttributes(): number {
-    return this.internalFileAttributes;
-  }
-
-  getExternalFileAttributes(): number {
-    return this.externalFileAttributes;
-  }
-
-  getLocalFileHeaderRelativeOffset(): number {
+  localFileHeaderRelativeOffsetResolved(): number {
     return (
-      this.getZip64ExtendedInformation()?.localFileHeaderRelativeOffset ??
+      this.zip64ExtendedInformation?.localFileHeaderRelativeOffset ??
       this.localFileHeaderRelativeOffset
     );
   }
 
-  getFileComment(): string {
+  fileCommentResolved(): string {
     return (
-      this.getExtraFields().get(0x63_75)?.subarray(5).toString('utf8') ??
-      (this.getGeneralPurposeBitFlag() & 0x8_00
+      this.extraFields.get(0x63_75)?.subarray(5).toString('utf8') ??
+      (this.generalPurposeBitFlag & 0x8_00
         ? this.fileComment.toString('utf8')
         : CP437Decoder.decode(this.fileComment))
     );

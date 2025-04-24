@@ -51,9 +51,9 @@ export default class EndOfCentralDirectory {
   // Maximum size of the non-zip64 EOCD
   private static readonly BACKWARD_CHUNK_SIZE: number = 22 + 0xff_ff;
 
-  private readonly record: IEndOfCentralDirectoryRecord;
-  private readonly zip64Locator?: IZip64EndOfCentralDirectoryLocator;
-  private readonly zip64Record?: IZip64EndOfCentralDirectoryRecord;
+  readonly record: IEndOfCentralDirectoryRecord;
+  readonly zip64Locator?: IZip64EndOfCentralDirectoryLocator;
+  readonly zip64Record?: IZip64EndOfCentralDirectoryRecord;
 
   private constructor(props: IEndOfCentralDirectory) {
     this.record = props.record;
@@ -214,49 +214,45 @@ export default class EndOfCentralDirectory {
     };
   }
 
-  getDiskNumber(): number {
+  diskNumberResolved(): number {
     return this.record.diskNumber === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.diskNumber
       : this.record.diskNumber;
   }
 
-  getCentralDirectoryDiskStart(): number {
+  centralDirectoryDiskStartResolved(): number {
     return this.record.centralDirectoryDiskStart === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskStart
       : this.record.centralDirectoryDiskStart;
   }
 
-  getCentralDirectoryDiskRecordsCount(): number {
+  centralDirectoryDiskRecordsCountResolved(): number {
     return this.record.centralDirectoryDiskRecordsCount === 0xff_ff &&
       this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskRecordsCount
       : this.record.centralDirectoryDiskRecordsCount;
   }
 
-  getCentralDirectoryTotalRecordsCount(): number {
+  centralDirectoryTotalRecordsCountResolved(): number {
     return this.record.centralDirectoryTotalRecordsCount === 0xff_ff &&
       this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryTotalRecordsCount
       : this.record.centralDirectoryTotalRecordsCount;
   }
 
-  getCentralDirectorySizeBytes(): number {
+  centralDirectorySizeBytesResolved(): number {
     return this.record.centralDirectorySizeBytes === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectorySizeBytes
       : this.record.centralDirectorySizeBytes;
   }
 
-  getCentralDirectoryOffset(): number {
+  centralDirectoryOffsetResolved(): number {
     return this.record.centralDirectoryOffset === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryOffset
       : this.record.centralDirectoryOffset;
   }
 
-  getComment(): string {
+  comment(): string {
     return this.record.comment;
-  }
-
-  getZip64Record(): IZip64EndOfCentralDirectoryRecord | undefined {
-    return this.zip64Record;
   }
 }

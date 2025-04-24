@@ -52,7 +52,7 @@ export default class LocalFileHeader extends FileRecord {
     const fixedLengthBuffer = Buffer.allocUnsafe(this.LOCAL_FILE_HEADER_SIZE);
     await fileHandle.read({
       buffer: fixedLengthBuffer,
-      position: centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
+      position: centralDirectoryFileHeader.localFileHeaderRelativeOffsetResolved(),
     });
 
     const versionNeeded = fixedLengthBuffer.readUInt16LE(4);
@@ -74,7 +74,8 @@ export default class LocalFileHeader extends FileRecord {
       await fileHandle.read({
         buffer: variableLengthBuffer,
         position:
-          centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() + fixedLengthBuffer.length,
+          centralDirectoryFileHeader.localFileHeaderRelativeOffsetResolved() +
+          fixedLengthBuffer.length,
       });
     } else {
       variableLengthBuffer = Buffer.alloc(0);
@@ -89,72 +90,74 @@ export default class LocalFileHeader extends FileRecord {
       extraFields.get(0x00_01),
       uncompressedSize,
       compressedSize,
-      centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
-      centralDirectoryFileHeader.getFileDiskStart(),
+      centralDirectoryFileHeader.localFileHeaderRelativeOffsetResolved(),
+      centralDirectoryFileHeader.fileDiskStartResolved(),
     );
 
-    return new LocalFileHeader(
-      centralDirectoryFileHeader.getZipFilePath(),
-      centralDirectoryFileHeader,
-      {
-        raw: Buffer.concat([fixedLengthBuffer, variableLengthBuffer]),
-        headerRelativeOffset: centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
-        dataRelativeOffset:
-          centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() +
-          fixedLengthBuffer.length +
-          variableLengthBuffer.length +
-          (generalPurposeBitFlag & 0x01 ? 12 : 0),
-        versionNeeded,
-        generalPurposeBitFlag,
-        compressionMethod,
-        fileModificationTime,
-        fileModificationDate,
-        uncompressedCrc32,
-        compressedSize,
-        uncompressedSize,
-        fileNameLength,
-        extraFieldLength,
-        fileName,
-        extraFields,
-        zip64ExtendedInformation,
-      },
-    );
+    return new LocalFileHeader(centralDirectoryFileHeader.zipFilePath, centralDirectoryFileHeader, {
+      raw: Buffer.concat([fixedLengthBuffer, variableLengthBuffer]),
+      headerRelativeOffset: centralDirectoryFileHeader.localFileHeaderRelativeOffsetResolved(),
+      dataRelativeOffset:
+        centralDirectoryFileHeader.localFileHeaderRelativeOffsetResolved() +
+        fixedLengthBuffer.length +
+        variableLengthBuffer.length +
+        (generalPurposeBitFlag & 0x01 ? 12 : 0),
+      versionNeeded,
+      generalPurposeBitFlag,
+      compressionMethod,
+      fileModificationTime,
+      fileModificationDate,
+      uncompressedCrc32,
+      compressedSize,
+      uncompressedSize,
+      fileNameLength,
+      extraFieldLength,
+      fileName,
+      extraFields,
+      zip64ExtendedInformation,
+    });
   }
 
   getLocalFileDataRelativeOffset(): number {
     return this.dataRelativeOffset;
   }
 
-  getUncompressedCrc32(): string {
+  uncompressedCrc32Number(): number {
     return this.hasDataDescriptor()
-      ? this.centralDirectoryFileHeader.getUncompressedCrc32()
-      : super.getUncompressedCrc32();
+      ? this.centralDirectoryFileHeader.uncompressedCrc32Number()
+      : super.uncompressedCrc32Number();
   }
 
-  getCompressedSize(): number {
+  uncompressedCrc32String(): string {
     return this.hasDataDescriptor()
-      ? this.centralDirectoryFileHeader.getCompressedSize()
-      : super.getCompressedSize();
+      ? this.centralDirectoryFileHeader.uncompressedCrc32String()
+      : super.uncompressedCrc32String();
   }
 
-  getUncompressedSize(): number {
+  compressedSizeResolved(): number {
     return this.hasDataDescriptor()
-      ? this.centralDirectoryFileHeader.getUncompressedSize()
-      : super.getUncompressedSize();
+      ? this.centralDirectoryFileHeader.compressedSizeResolved()
+      : super.compressedSizeResolved();
+  }
+
+  uncompressedSizeResolved(): number {
+    return this.hasDataDescriptor()
+      ? this.centralDirectoryFileHeader.uncompressedSizeResolved()
+      : super.uncompressedSizeResolved();
   }
 
   /**
    * Return this file's compressed/raw stream.
    */
   compressedStream(): stream.Readable {
-    if (this.getCompressedSize() === 0) {
+    if (this.compressedSizeResolved() === 0) {
       // There's no need to open the file, it will be an empty stream
       return stream.Readable.from([]);
     }
 
     return fs.createReadStream(this.zipFilePath, {
       start: this.getLocalFileDataRelativeOffset(),
-      end: this.getLocalFileDataRelativeOffset() + this.getCompressedSize() - 1,
+      end: this.getLocalFileDataRelativeOffset() + this.compressedSizeResolved() - 1,
     });
   }
 
@@ -162,7 +165,7 @@ export default class LocalFileHeader extends FileRecord {
    * Return this file's uncompressed/decompressed stream.
    */
   uncompressedStream(): stream.Readable {
-    switch (this.getCompressionMethod()) {
+    switch (this.compressionMethod) {
       case CompressionMethod.STORE: {
         return this.compressedStream();
       }
@@ -170,7 +173,7 @@ export default class LocalFileHeader extends FileRecord {
         return LocalFileHeader.pipeline(
           this.compressedStream(),
           zlib.createInflateRaw(),
-          new ZipBombProtector(this.getUncompressedSize()),
+          new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }
       case CompressionMethod.ZSTD_DEPRECATED:
@@ -179,12 +182,12 @@ export default class LocalFileHeader extends FileRecord {
           this.compressedStream(),
           // TODO(cemmer): replace with zlib in Node.js 24
           new zstd.DecompressStream(),
-          new ZipBombProtector(this.getUncompressedSize()),
+          new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }
       default: {
         throw new Error(
-          `unsupported compression method: ${CompressionMethodInverted[this.getCompressionMethod()]}`,
+          `unsupported compression method: ${CompressionMethodInverted[this.compressionMethod]}`,
         );
       }
     }
