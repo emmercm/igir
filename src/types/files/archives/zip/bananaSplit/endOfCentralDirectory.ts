@@ -29,7 +29,7 @@ export interface IZip64EndOfCentralDirectoryRecord extends IEndOfCentralDirector
   versionNeeded: number;
 }
 
-export default class EndOfCentralDirectory implements IEndOfCentralDirectory {
+export default class EndOfCentralDirectory {
   public static readonly END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
     '06054b50',
     'hex',
@@ -51,9 +51,9 @@ export default class EndOfCentralDirectory implements IEndOfCentralDirectory {
   // Maximum size of the non-zip64 EOCD
   private static readonly BACKWARD_CHUNK_SIZE: number = 22 + 0xff_ff;
 
-  readonly record: IEndOfCentralDirectoryRecord;
-  readonly zip64Locator?: IZip64EndOfCentralDirectoryLocator;
-  readonly zip64Record?: IZip64EndOfCentralDirectoryRecord;
+  private readonly record: IEndOfCentralDirectoryRecord;
+  private readonly zip64Locator?: IZip64EndOfCentralDirectoryLocator;
+  private readonly zip64Record?: IZip64EndOfCentralDirectoryRecord;
 
   private constructor(props: IEndOfCentralDirectory) {
     this.record = props.record;
@@ -214,45 +214,45 @@ export default class EndOfCentralDirectory implements IEndOfCentralDirectory {
     };
   }
 
-  get diskNumber(): number {
+  getDiskNumber(): number {
     return this.record.diskNumber === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.diskNumber
       : this.record.diskNumber;
   }
 
-  get centralDirectoryDiskStart(): number {
+  getCentralDirectoryDiskStart(): number {
     return this.record.centralDirectoryDiskStart === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskStart
       : this.record.centralDirectoryDiskStart;
   }
 
-  get centralDirectoryDiskRecordsCount(): number {
+  getCentralDirectoryDiskRecordsCount(): number {
     return this.record.centralDirectoryDiskRecordsCount === 0xff_ff &&
       this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskRecordsCount
       : this.record.centralDirectoryDiskRecordsCount;
   }
 
-  get centralDirectoryTotalRecordsCount(): number {
+  getCentralDirectoryTotalRecordsCount(): number {
     return this.record.centralDirectoryTotalRecordsCount === 0xff_ff &&
       this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryTotalRecordsCount
       : this.record.centralDirectoryTotalRecordsCount;
   }
 
-  get centralDirectorySizeBytes(): number {
+  getCentralDirectorySizeBytes(): number {
     return this.record.centralDirectorySizeBytes === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectorySizeBytes
       : this.record.centralDirectorySizeBytes;
   }
 
-  get centralDirectoryOffset(): number {
+  getCentralDirectoryOffset(): number {
     return this.record.centralDirectoryOffset === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryOffset
       : this.record.centralDirectoryOffset;
   }
 
-  get comment(): string {
+  getComment(): string {
     return this.record.comment;
   }
 }

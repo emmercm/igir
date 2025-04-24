@@ -49,9 +49,9 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
     fileHandle: fs.promises.FileHandle,
   ): Promise<LocalFileHeader> {
     const fileRecord = await FileRecord.fileRecordFromFileHandle(
-      centralDirectoryFileHeader.zipFilePath,
+      centralDirectoryFileHeader.getZipFilePath(),
       fileHandle,
-      centralDirectoryFileHeader.localFileHeaderRelativeOffset,
+      centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
       this.LOCAL_FILE_HEADER_SIGNATURE,
       this.LOCAL_FILE_HEADER_SIZE,
       this.FIELD_OFFSETS,
@@ -62,9 +62,9 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
     let centralDirectoryCompressedSize: number | undefined;
     let centralDirectoryUncompressedSize: number | undefined;
     if (fileRecord.generalPurposeBitFlag & 0x08) {
-      centralDirectoryUncompressedCrc32 = centralDirectoryFileHeader.uncompressedCrc32;
-      centralDirectoryCompressedSize = centralDirectoryFileHeader.compressedSize;
-      centralDirectoryUncompressedSize = centralDirectoryFileHeader.uncompressedSize;
+      centralDirectoryUncompressedCrc32 = centralDirectoryFileHeader.getUncompressedCrc32();
+      centralDirectoryCompressedSize = centralDirectoryFileHeader.getCompressedSize();
+      centralDirectoryUncompressedSize = centralDirectoryFileHeader.getUncompressedSize();
     }
 
     return new LocalFileHeader({
@@ -73,7 +73,7 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
       compressedSize: centralDirectoryCompressedSize ?? fileRecord.compressedSize,
       uncompressedSize: centralDirectoryUncompressedSize ?? fileRecord.uncompressedSize,
       localFileDataRelativeOffset:
-        centralDirectoryFileHeader.localFileHeaderRelativeOffset +
+        centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() +
         this.FIELD_OFFSETS.fileName +
         fileRecord.fileNameLength +
         fileRecord.extraFieldLength +

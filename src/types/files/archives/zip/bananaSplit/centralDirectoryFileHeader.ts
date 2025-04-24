@@ -1,22 +1,38 @@
 import fs from 'node:fs';
 import stream from 'node:stream';
 
+import CP437Decoder from './cp437Decoder.js';
 import EndOfCentralDirectory from './endOfCentralDirectory.js';
-import FileRecord, { IFileRecord } from './fileRecord.js';
+import { CompressionMethodValue } from './fileRecord.js';
+import FileRecordUtil, { IZip64ExtendedInformation } from './fileRecordUtil.js';
 import LocalFileHeader from './localFileHeader.js';
+import TimestampUtil from './timestampUtil.js';
 
-export interface ICentralDirectoryFile extends IFileRecord {
+export interface ICentralDirectoryFileHeader {
   versionMadeBy: number;
+  versionNeeded: number;
+  generalPurposeBitFlag: number;
+  compressionMethod: CompressionMethodValue;
+  fileModificationTime: number;
+  fileModificationDate: number;
+  uncompressedCrc32: Buffer<ArrayBuffer>;
+  compressedSize: number;
+  uncompressedSize: number;
+  fileNameLength: number;
+  extraFieldLength: number;
+  fileCommentLength: number;
+  fileDiskStart: number;
   internalFileAttributes: number;
   externalFileAttributes: number;
   localFileHeaderRelativeOffset: number;
-  fileComment: string;
+  fileName: Buffer<ArrayBuffer>;
+  extraFields: Map<number, Buffer<ArrayBuffer>>;
+  fileComment: Buffer<ArrayBuffer>;
+
+  zip64ExtendedInformation?: IZip64ExtendedInformation;
 }
 
-export default class CentralDirectoryFileHeader
-  extends FileRecord
-  implements ICentralDirectoryFile
-{
+export default class CentralDirectoryFileHeader {
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE = Buffer.from(
     '02014b50',
     'hex',
@@ -25,38 +41,56 @@ export default class CentralDirectoryFileHeader
   // Size with the signature, and without variable length fields at the end
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIZE = 46;
 
-  private static readonly FIELD_OFFSETS = {
-    versionNeeded: 6,
-    generalPurposeBitFlag: 8,
-    compressionMethod: 10,
-    modifiedTime: 12,
-    modifiedDate: 14,
-    uncompressedCrc32: 16,
-    compressedSize: 20,
-    uncompressedSize: 24,
-    fileNameLength: 28,
-    extraFieldLength: 30,
-    fileCommentLength: 32,
-    fileDiskStart: 34,
-    localFileHeaderRelativeOffset: 42,
-    fileName: 46,
-  } as const;
+  private readonly zipFilePath: string;
 
-  readonly versionMadeBy: number;
-  readonly internalFileAttributes: number;
-  readonly externalFileAttributes: number;
-  readonly localFileHeaderRelativeOffset: number;
-  readonly fileComment: string;
+  private readonly versionMadeBy: number;
+  private readonly versionNeeded: number;
+  private readonly generalPurposeBitFlag: number;
+  private readonly compressionMethod: CompressionMethodValue;
+  private readonly fileModificationTime: number;
+  private readonly fileModificationDate: number;
+  private readonly uncompressedCrc32: Buffer<ArrayBuffer>;
+  private readonly compressedSize: number;
+  private readonly uncompressedSize: number;
+  private readonly fileNameLength: number;
+  private readonly extraFieldLength: number;
+  private readonly fileCommentLength: number;
+  private readonly fileDiskStart: number;
+  private readonly internalFileAttributes: number;
+  private readonly externalFileAttributes: number;
+  private readonly localFileHeaderRelativeOffset: number;
+  private readonly fileName: Buffer<ArrayBuffer>;
+  private readonly extraFields: Map<number, Buffer<ArrayBuffer>>;
+  private readonly fileComment: Buffer<ArrayBuffer>;
+
+  private readonly zip64ExtendedInformation?: IZip64ExtendedInformation;
 
   private _localFileHeader?: LocalFileHeader;
 
-  private constructor(props: ICentralDirectoryFile) {
-    super(props);
+  private constructor(zipFilePath: string, props: ICentralDirectoryFileHeader) {
+    this.zipFilePath = zipFilePath;
+
     this.versionMadeBy = props.versionMadeBy;
+    this.versionNeeded = props.versionNeeded;
+    this.generalPurposeBitFlag = props.generalPurposeBitFlag;
+    this.compressionMethod = props.compressionMethod;
+    this.fileModificationTime = props.fileModificationTime;
+    this.fileModificationDate = props.fileModificationDate;
+    this.uncompressedCrc32 = props.uncompressedCrc32;
+    this.compressedSize = props.compressedSize;
+    this.uncompressedSize = props.uncompressedSize;
+    this.fileNameLength = props.fileNameLength;
+    this.extraFieldLength = props.extraFieldLength;
+    this.fileCommentLength = props.fileCommentLength;
+    this.fileDiskStart = props.fileDiskStart;
     this.internalFileAttributes = props.internalFileAttributes;
     this.externalFileAttributes = props.externalFileAttributes;
     this.localFileHeaderRelativeOffset = props.localFileHeaderRelativeOffset;
+    this.fileName = props.fileName;
+    this.extraFields = props.extraFields;
     this.fileComment = props.fileComment;
+
+    this.zip64ExtendedInformation = props.zip64ExtendedInformation;
   }
 
   static async centralDirectoryFileFromFileHandle(
@@ -65,8 +99,8 @@ export default class CentralDirectoryFileHeader
     endOfCentralDirectoryRecord: EndOfCentralDirectory,
   ): Promise<CentralDirectoryFileHeader[]> {
     if (
-      endOfCentralDirectoryRecord.diskNumber !== 0 ||
-      endOfCentralDirectoryRecord.centralDirectoryDiskStart !== 0
+      endOfCentralDirectoryRecord.getDiskNumber() !== 0 ||
+      endOfCentralDirectoryRecord.getCentralDirectoryDiskStart() !== 0
     ) {
       throw new Error(`multi-disk zips aren't supported`);
     }
@@ -75,38 +109,180 @@ export default class CentralDirectoryFileHeader
 
     const fixedLengthBuffer = Buffer.allocUnsafe(this.CENTRAL_DIRECTORY_FILE_HEADER_SIZE);
 
-    let position = endOfCentralDirectoryRecord.centralDirectoryOffset;
-    for (let i = 0; i < endOfCentralDirectoryRecord.centralDirectoryTotalRecordsCount; i += 1) {
-      const fileRecord = await FileRecord.fileRecordFromFileHandle(
-        zipFilePath,
-        fileHandle,
-        position,
-        this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE,
-        this.CENTRAL_DIRECTORY_FILE_HEADER_SIZE,
-        this.FIELD_OFFSETS,
-      );
+    let position = endOfCentralDirectoryRecord.getCentralDirectoryOffset();
+    for (
+      let i = 0;
+      i < endOfCentralDirectoryRecord.getCentralDirectoryTotalRecordsCount();
+      i += 1
+    ) {
+      // const fileRecord = await FileRecord.fileRecordFromFileHandle(
+      //   zipFilePath,
+      //   fileHandle,
+      //   position,
+      //   this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE,
+      //   this.CENTRAL_DIRECTORY_FILE_HEADER_SIZE,
+      //   this.FIELD_OFFSETS,
+      // );
 
       await fileHandle.read({ buffer: fixedLengthBuffer, position });
+
+      const signature = fixedLengthBuffer.subarray(
+        0,
+        this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE.length,
+      );
+      if (!signature.equals(this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)) {
+        throw new Error(
+          `invalid zip central directory file header signature: 0x${signature.toString('hex')}`,
+        );
+      }
+
+      const versionMadeBy = fixedLengthBuffer.readUInt16LE(4);
+      const versionNeeded = fixedLengthBuffer.readUInt16LE(6);
+      const generalPurposeBitFlag = fixedLengthBuffer.readUInt16LE(8);
+      const compressionMethod = fixedLengthBuffer.readUInt16LE(10) as CompressionMethodValue;
+      const fileModificationTime = fixedLengthBuffer.readUInt16LE(12);
+      const fileModificationDate = fixedLengthBuffer.readUInt16LE(14);
+      const uncompressedCrc32 = Buffer.from(fixedLengthBuffer.subarray(16, 20));
+      const compressedSize = fixedLengthBuffer.readUInt32LE(20);
+      const uncompressedSize = fixedLengthBuffer.readUInt32LE(24);
+      const fileNameLength = fixedLengthBuffer.readUInt16LE(28);
+      const extraFieldLength = fixedLengthBuffer.readUInt16LE(30);
+      const fileCommentLength = fixedLengthBuffer.readUInt16LE(32);
+      const fileDiskStart = fixedLengthBuffer.readUInt16LE(34);
+      const internalFileAttributes = fixedLengthBuffer.readUInt16LE(36);
+      const externalFileAttributes = fixedLengthBuffer.readUInt32LE(38);
+      const localFileHeaderRelativeOffset = fixedLengthBuffer.readUInt32LE(42);
+
+      const variableLengthBufferSize = fileNameLength + extraFieldLength + fileCommentLength;
+      let variableLengthBuffer: Buffer<ArrayBuffer>;
+      if (variableLengthBufferSize > 0) {
+        // Only read from the file if there's something to read
+        variableLengthBuffer = Buffer.allocUnsafe(variableLengthBufferSize);
+        await fileHandle.read({
+          buffer: variableLengthBuffer,
+          position: position + fixedLengthBuffer.length,
+        });
+      } else {
+        variableLengthBuffer = Buffer.alloc(0);
+      }
+
+      const fileName = Buffer.from(variableLengthBuffer.subarray(0, fileNameLength));
+      const extraFields = FileRecordUtil.parseExtraFields(
+        variableLengthBuffer.subarray(fileNameLength, fileNameLength + extraFieldLength),
+      );
+      const fileComment = Buffer.from(
+        variableLengthBuffer.subarray(fileNameLength + extraFieldLength),
+      );
+
+      const zip64ExtendedInformation = FileRecordUtil.parseZip64ExtendedInformation(
+        extraFields.get(0x00_01),
+        uncompressedSize,
+        compressedSize,
+        localFileHeaderRelativeOffset,
+        fileDiskStart,
+      );
+
       fileHeaders.push(
-        new CentralDirectoryFileHeader({
-          ...fileRecord,
-          zipFilePath: zipFilePath,
-          versionMadeBy: fixedLengthBuffer.readUInt16LE(4),
-          internalFileAttributes: fixedLengthBuffer.readUInt16LE(36),
-          externalFileAttributes: fixedLengthBuffer.readUInt32LE(38),
-          localFileHeaderRelativeOffset: fileRecord.localFileHeaderRelativeOffset as number,
-          fileComment: fileRecord.fileComment ?? '',
+        new CentralDirectoryFileHeader(zipFilePath, {
+          versionMadeBy,
+          versionNeeded,
+          generalPurposeBitFlag,
+          compressionMethod,
+          fileModificationTime,
+          fileModificationDate,
+          uncompressedCrc32,
+          compressedSize,
+          uncompressedSize,
+          fileNameLength,
+          extraFieldLength,
+          fileCommentLength,
+          fileDiskStart,
+          internalFileAttributes,
+          externalFileAttributes,
+          localFileHeaderRelativeOffset,
+          fileName,
+          extraFields,
+          fileComment,
+          zip64ExtendedInformation,
         }),
       );
 
-      position +=
-        fixedLengthBuffer.length +
-        fileRecord.fileNameLength +
-        fileRecord.extraFieldLength +
-        (fileRecord.fileCommentLength ?? 0);
+      position += fixedLengthBuffer.length + variableLengthBuffer.length;
     }
 
     return fileHeaders;
+  }
+
+  getZipFilePath(): string {
+    return this.zipFilePath;
+  }
+
+  getCompressionMethod(): CompressionMethodValue {
+    return this.compressionMethod;
+  }
+
+  getFileModification(): Date {
+    // TODO(cemmer): 0x000d UNIX timestamp
+    // TODO(cemmer): 0x7855 unix extra field new?
+    return (
+      TimestampUtil.parseExtendedTimestamp(this.extraFields.get(0x54_55))?.modified ??
+      TimestampUtil.parseUnixExtraTimestamp(this.extraFields.get(0x58_55))?.modified ??
+      TimestampUtil.parseNtfsExtraTimestamp(this.extraFields.get(0x00_0a))?.modified ??
+      TimestampUtil.parseDOSTimestamp(this.fileModificationTime, this.fileModificationDate)
+    );
+  }
+
+  getUncompressedCrc32(): string {
+    return Buffer.from(this.uncompressedCrc32).reverse().toString('hex').toLowerCase();
+  }
+
+  getCompressedSize(): number {
+    return (
+      this.zip64ExtendedInformation?.compressedSize ??
+      this.compressedSize - (this.isEncrypted() ? 12 : 0)
+    );
+  }
+
+  getUncompressedSize(): number {
+    return this.zip64ExtendedInformation?.uncompressedSize ?? this.uncompressedSize;
+  }
+
+  getFileDiskStart(): number {
+    return this.zip64ExtendedInformation?.fileDiskStart ?? this.fileDiskStart;
+  }
+
+  getLocalFileHeaderRelativeOffset(): number {
+    return (
+      this.zip64ExtendedInformation?.localFileHeaderRelativeOffset ??
+      this.localFileHeaderRelativeOffset
+    );
+  }
+
+  getFileName(): string {
+    return (
+      // Info-ZIP Unicode Path Extra Field
+      this.extraFields.get(0x70_75)?.subarray(5).toString('utf8') ??
+      (this.generalPurposeBitFlag & 0x8_00
+        ? this.fileName.toString('utf8')
+        : CP437Decoder.decode(this.fileName))
+    );
+  }
+
+  getFileComment(): string {
+    return (
+      this.extraFields.get(0x63_75)?.subarray(5).toString('utf8') ??
+      (this.generalPurposeBitFlag & 0x8_00
+        ? this.fileComment.toString('utf8')
+        : CP437Decoder.decode(this.fileComment))
+    );
+  }
+
+  isEncrypted(): boolean {
+    return (this.generalPurposeBitFlag & 0x01) !== 0;
+  }
+
+  isDirectory(): boolean {
+    return this.getFileName().endsWith('/');
   }
 
   /**
