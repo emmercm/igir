@@ -12,13 +12,14 @@ export default class TorrentZipValidator {
 
     const eocd = await bananaSplit.endOfCentralDirectoryRecord();
     if (
-      eocd.centralDirectoryDiskRecordsCount !== eocd.centralDirectoryTotalRecordsCount ||
-      eocd.centralDirectoryDiskStart !== 0 ||
-      eocd.comment.length !== 22 ||
-      !eocd.comment.startsWith('TORRENTZIPPED-') ||
-      eocd.diskNumber !== 0 ||
-      (eocd.zip64Record &&
-        (eocd.zip64Record.versionMadeBy !== 45 || eocd.zip64Record.versionNeeded !== 45))
+      eocd.getCentralDirectoryDiskRecordsCount() !== eocd.getCentralDirectoryTotalRecordsCount() ||
+      eocd.getCentralDirectoryDiskStart() !== 0 ||
+      eocd.getComment().length !== 22 ||
+      !eocd.getComment().startsWith('TORRENTZIPPED-') ||
+      eocd.getDiskNumber() !== 0 ||
+      (eocd.getZip64Record() &&
+        (eocd.getZip64Record()?.versionMadeBy !== 45 ||
+          eocd.getZip64Record()?.versionNeeded !== 45))
     ) {
       return false;
     }
@@ -27,26 +28,26 @@ export default class TorrentZipValidator {
     if (
       centralDirectoryFileHeaders.some((fileHeader) => {
         return (
-          fileHeader.versionMadeBy !== 0 ||
+          fileHeader.getVersionMadeBy() !== 0 ||
           !(
-            fileHeader.versionNeeded === 20 ||
-            (fileHeader.versionNeeded === 45 && eocd.zip64Record)
+            fileHeader.getVersionNeeded() === 20 ||
+            (fileHeader.getVersionNeeded() === 45 && eocd.getZip64Record())
           ) ||
           !(
-            fileHeader.generalPurposeBitFlag === 0x02 ||
-            fileHeader.generalPurposeBitFlag === (0x02 | 0x8_00)
+            fileHeader.getGeneralPurposeBitFlag() === 0x02 ||
+            fileHeader.getGeneralPurposeBitFlag() === (0x02 | 0x8_00)
           ) ||
-          fileHeader.compressionMethod !== CompressionMethod.DEFLATE ||
-          fileHeader.timestamps.modified?.getTime() !== this.MODIFIED_TIME_MS ||
-          fileHeader.fileName.includes('\\') ||
+          fileHeader.getCompressionMethod() !== CompressionMethod.DEFLATE ||
+          fileHeader.getFileModification().getTime() !== this.MODIFIED_TIME_MS ||
+          fileHeader.getFileName().includes('\\') ||
           !(
-            fileHeader.extraFields.size === 0 ||
-            (fileHeader.extraFields.size === 1 && fileHeader.extraFields.has(0x00_01))
+            fileHeader.getExtraFields().size === 0 ||
+            (fileHeader.getExtraFields().size === 1 && fileHeader.getExtraFields().has(0x00_01))
           ) ||
-          fileHeader.fileComment.length > 0 ||
-          fileHeader.fileDiskStart !== 0 ||
-          fileHeader.internalFileAttributes !== 0 ||
-          fileHeader.externalFileAttributes !== 0
+          fileHeader.getFileComment().length > 0 ||
+          fileHeader.getFileDiskStart() !== 0 ||
+          fileHeader.getInternalFileAttributes() !== 0 ||
+          fileHeader.getExternalFileAttributes() !== 0
         );
       })
     ) {
@@ -54,7 +55,7 @@ export default class TorrentZipValidator {
     }
 
     const fileNamesLowerCase = centralDirectoryFileHeaders.map((fileHeader) =>
-      fileHeader.fileName.toLowerCase(),
+      fileHeader.getFileName().toLowerCase(),
     );
     if (fileNamesLowerCase !== fileNamesLowerCase.sort()) {
       // Filenames should be sorted by lowercase
@@ -62,12 +63,12 @@ export default class TorrentZipValidator {
     }
 
     const cdfhCrc32 = crc32(
-      Buffer.concat(centralDirectoryFileHeaders.map((fileHeader) => fileHeader.raw)),
+      Buffer.concat(centralDirectoryFileHeaders.map((fileHeader) => fileHeader.getRaw())),
     )
       .toString(16)
       .padStart(8, '0')
       .toUpperCase();
-    if (eocd.comment !== `TORRENTZIPPED-${cdfhCrc32}`) {
+    if (eocd.getComment() !== `TORRENTZIPPED-${cdfhCrc32}`) {
       return false;
     }
 
@@ -76,45 +77,49 @@ export default class TorrentZipValidator {
       const localFileHeader = await centralDirectoryFileHeader.localFileHeader();
 
       if (
-        localFileHeader.localFileDataRelativeOffset !==
-        centralDirectoryFileHeader.localFileHeaderRelativeOffset + localFileHeader.raw.length
+        localFileHeader.getLocalFileDataRelativeOffset() !==
+        centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() +
+          localFileHeader.getRaw().length
       ) {
         // There should be no extra data between a local file header and its data,
         // e.g. an encryption header
         return false;
       }
-      if (centralDirectoryFileHeader.localFileHeaderRelativeOffset !== expectedOffset) {
+      if (centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() !== expectedOffset) {
         // There should be no extra data between file data and the next local file header,
         // e.g. a data descriptor
         return false;
       }
-      expectedOffset += localFileHeader.raw.length + localFileHeader.compressedSize;
+      expectedOffset += localFileHeader.getRaw().length + localFileHeader.getCompressedSize();
 
       if (
         !(
-          localFileHeader.versionNeeded === 20 ||
-          (localFileHeader.versionNeeded === 45 && eocd.zip64Record)
+          localFileHeader.getVersionNeeded() === 20 ||
+          (localFileHeader.getVersionNeeded() === 45 && eocd.getZip64Record())
         ) ||
         !(
-          localFileHeader.generalPurposeBitFlag === 0x02 ||
-          localFileHeader.generalPurposeBitFlag === (0x02 | 0x8_00) // UTF-8 encoding
+          localFileHeader.getGeneralPurposeBitFlag() === 0x02 ||
+          localFileHeader.getGeneralPurposeBitFlag() === (0x02 | 0x8_00) // UTF-8 encoding
         ) ||
-        localFileHeader.compressionMethod !== CompressionMethod.DEFLATE ||
-        localFileHeader.timestamps.modified?.getTime() !== this.MODIFIED_TIME_MS ||
-        localFileHeader.uncompressedCrc32 !== centralDirectoryFileHeader.uncompressedCrc32 ||
-        localFileHeader.compressedSize !== centralDirectoryFileHeader.compressedSize ||
-        localFileHeader.uncompressedSize !== centralDirectoryFileHeader.uncompressedSize ||
-        localFileHeader.fileName !== centralDirectoryFileHeader.fileName ||
+        localFileHeader.getCompressionMethod() !== CompressionMethod.DEFLATE ||
+        localFileHeader.getFileModification().getTime() !== this.MODIFIED_TIME_MS ||
+        localFileHeader.getUncompressedCrc32() !==
+          centralDirectoryFileHeader.getUncompressedCrc32() ||
+        localFileHeader.getCompressedSize() !== centralDirectoryFileHeader.getCompressedSize() ||
+        localFileHeader.getUncompressedSize() !==
+          centralDirectoryFileHeader.getUncompressedSize() ||
+        localFileHeader.getFileName() !== centralDirectoryFileHeader.getFileName() ||
         !(
-          localFileHeader.extraFields.size === 0 ||
-          (localFileHeader.extraFields.size === 1 && localFileHeader.extraFields.has(0x00_01))
+          localFileHeader.getExtraFields().size === 0 ||
+          (localFileHeader.getExtraFields().size === 1 &&
+            localFileHeader.getExtraFields().has(0x00_01))
         )
       ) {
         return false;
       }
     }
 
-    if (expectedOffset !== eocd.centralDirectoryOffset) {
+    if (expectedOffset !== eocd.getCentralDirectoryOffset()) {
       // There should be no extra data between the last file data and the first central directory
       // header, e.g. an archive decryption header or archive extra data record
       return false;

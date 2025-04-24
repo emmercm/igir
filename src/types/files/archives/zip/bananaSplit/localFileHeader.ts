@@ -8,91 +8,153 @@ import CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
 import FileRecord, {
   CompressionMethod,
   CompressionMethodInverted,
+  CompressionMethodValue,
   IFileRecord,
 } from './fileRecord.js';
+import FileRecordUtil from './fileRecordUtil.js';
 import ZipBombProtector from './zipBombProtector.js';
 
-export interface ILocalFileRecord extends IFileRecord {
-  localFileDataRelativeOffset: number;
+export interface ILocalFileHeader extends IFileRecord {
+  headerRelativeOffset: number;
+  dataRelativeOffset: number;
 }
 
-export default class LocalFileHeader extends FileRecord implements ILocalFileRecord {
+export default class LocalFileHeader extends FileRecord {
   public static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
   public static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
 
   // Size with the signature, and without variable length fields at the end
   private static readonly LOCAL_FILE_HEADER_SIZE = 30;
 
-  private static readonly FIELD_OFFSETS = {
-    versionNeeded: 4,
-    generalPurposeBitFlag: 6,
-    compressionMethod: 8,
-    modifiedTime: 10,
-    modifiedDate: 12,
-    uncompressedCrc32: 14,
-    compressedSize: 18,
-    uncompressedSize: 22,
-    fileNameLength: 26,
-    extraFieldLength: 28,
-    fileName: 30,
-  } as const;
+  private readonly zipFilePath: string;
+  private readonly centralDirectoryFileHeader: CentralDirectoryFileHeader;
 
-  readonly localFileDataRelativeOffset: number;
+  private readonly headerRelativeOffset: number;
+  private readonly dataRelativeOffset: number;
 
-  protected constructor(props: ILocalFileRecord) {
+  protected constructor(
+    zipFilePath: string,
+    centralDirectoryFileHeader: CentralDirectoryFileHeader,
+    props: ILocalFileHeader,
+  ) {
     super(props);
-    this.localFileDataRelativeOffset = props.localFileDataRelativeOffset;
+    this.zipFilePath = zipFilePath;
+    this.centralDirectoryFileHeader = centralDirectoryFileHeader;
+
+    this.headerRelativeOffset = props.headerRelativeOffset;
+    this.dataRelativeOffset = props.dataRelativeOffset;
   }
 
   static async localFileRecordFromFileHandle(
     centralDirectoryFileHeader: CentralDirectoryFileHeader,
     fileHandle: fs.promises.FileHandle,
   ): Promise<LocalFileHeader> {
-    const fileRecord = await FileRecord.fileRecordFromFileHandle(
-      centralDirectoryFileHeader.getZipFilePath(),
-      fileHandle,
-      centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
-      this.LOCAL_FILE_HEADER_SIGNATURE,
-      this.LOCAL_FILE_HEADER_SIZE,
-      this.FIELD_OFFSETS,
-    );
+    const fixedLengthBuffer = Buffer.allocUnsafe(this.LOCAL_FILE_HEADER_SIZE);
+    await fileHandle.read({
+      buffer: fixedLengthBuffer,
+      position: centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
+    });
 
-    // Trust the central directory's CRC and sizes if a data descriptor is present
-    let centralDirectoryUncompressedCrc32: string | undefined;
-    let centralDirectoryCompressedSize: number | undefined;
-    let centralDirectoryUncompressedSize: number | undefined;
-    if (fileRecord.generalPurposeBitFlag & 0x08) {
-      centralDirectoryUncompressedCrc32 = centralDirectoryFileHeader.getUncompressedCrc32();
-      centralDirectoryCompressedSize = centralDirectoryFileHeader.getCompressedSize();
-      centralDirectoryUncompressedSize = centralDirectoryFileHeader.getUncompressedSize();
+    const versionNeeded = fixedLengthBuffer.readUInt16LE(4);
+    const generalPurposeBitFlag = fixedLengthBuffer.readUInt16LE(6);
+    const compressionMethod = fixedLengthBuffer.readUInt16LE(8) as CompressionMethodValue;
+    const fileModificationTime = fixedLengthBuffer.readUInt16LE(10);
+    const fileModificationDate = fixedLengthBuffer.readUInt16LE(12);
+    const uncompressedCrc32 = Buffer.from(fixedLengthBuffer.subarray(14, 18));
+    const compressedSize = fixedLengthBuffer.readUInt32LE(18);
+    const uncompressedSize = fixedLengthBuffer.readUInt32LE(22);
+    const fileNameLength = fixedLengthBuffer.readUInt16LE(26);
+    const extraFieldLength = fixedLengthBuffer.readUInt16LE(28);
+
+    const variableLengthBufferSize = fileNameLength + extraFieldLength;
+    let variableLengthBuffer: Buffer<ArrayBuffer>;
+    if (variableLengthBufferSize > 0) {
+      // Only read from the file if there's something to read
+      variableLengthBuffer = Buffer.allocUnsafe(variableLengthBufferSize);
+      await fileHandle.read({
+        buffer: variableLengthBuffer,
+        position:
+          centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() + fixedLengthBuffer.length,
+      });
+    } else {
+      variableLengthBuffer = Buffer.alloc(0);
     }
 
-    return new LocalFileHeader({
-      ...fileRecord,
-      uncompressedCrc32: centralDirectoryUncompressedCrc32 ?? fileRecord.uncompressedCrc32,
-      compressedSize: centralDirectoryCompressedSize ?? fileRecord.compressedSize,
-      uncompressedSize: centralDirectoryUncompressedSize ?? fileRecord.uncompressedSize,
-      localFileDataRelativeOffset:
-        centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() +
-        this.FIELD_OFFSETS.fileName +
-        fileRecord.fileNameLength +
-        fileRecord.extraFieldLength +
-        (fileRecord.isEncrypted() ? 12 : 0),
-    });
+    const fileName = Buffer.from(variableLengthBuffer.subarray(0, fileNameLength));
+    const extraFields = FileRecordUtil.parseExtraFields(
+      variableLengthBuffer.subarray(fileNameLength, fileNameLength + extraFieldLength),
+    );
+
+    const zip64ExtendedInformation = FileRecordUtil.parseZip64ExtendedInformation(
+      extraFields.get(0x00_01),
+      uncompressedSize,
+      compressedSize,
+      centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
+      centralDirectoryFileHeader.getFileDiskStart(),
+    );
+
+    return new LocalFileHeader(
+      centralDirectoryFileHeader.getZipFilePath(),
+      centralDirectoryFileHeader,
+      {
+        raw: Buffer.concat([fixedLengthBuffer, variableLengthBuffer]),
+        headerRelativeOffset: centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset(),
+        dataRelativeOffset:
+          centralDirectoryFileHeader.getLocalFileHeaderRelativeOffset() +
+          fixedLengthBuffer.length +
+          variableLengthBuffer.length +
+          (generalPurposeBitFlag & 0x01 ? 12 : 0),
+        versionNeeded,
+        generalPurposeBitFlag,
+        compressionMethod,
+        fileModificationTime,
+        fileModificationDate,
+        uncompressedCrc32,
+        compressedSize,
+        uncompressedSize,
+        fileNameLength,
+        extraFieldLength,
+        fileName,
+        extraFields,
+        zip64ExtendedInformation,
+      },
+    );
+  }
+
+  getLocalFileDataRelativeOffset(): number {
+    return this.dataRelativeOffset;
+  }
+
+  getUncompressedCrc32(): string {
+    return this.hasDataDescriptor()
+      ? this.centralDirectoryFileHeader.getUncompressedCrc32()
+      : super.getUncompressedCrc32();
+  }
+
+  getCompressedSize(): number {
+    return this.hasDataDescriptor()
+      ? this.centralDirectoryFileHeader.getCompressedSize()
+      : super.getCompressedSize();
+  }
+
+  getUncompressedSize(): number {
+    return this.hasDataDescriptor()
+      ? this.centralDirectoryFileHeader.getUncompressedSize()
+      : super.getUncompressedSize();
   }
 
   /**
    * Return this file's compressed/raw stream.
    */
   compressedStream(): stream.Readable {
-    if (this.compressedSize === 0) {
+    if (this.getCompressedSize() === 0) {
       // There's no need to open the file, it will be an empty stream
       return stream.Readable.from([]);
     }
 
     return fs.createReadStream(this.zipFilePath, {
-      start: this.localFileDataRelativeOffset,
-      end: this.localFileDataRelativeOffset + this.compressedSize - 1,
+      start: this.getLocalFileDataRelativeOffset(),
+      end: this.getLocalFileDataRelativeOffset() + this.getCompressedSize() - 1,
     });
   }
 
@@ -100,7 +162,7 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
    * Return this file's uncompressed/decompressed stream.
    */
   uncompressedStream(): stream.Readable {
-    switch (this.compressionMethod) {
+    switch (this.getCompressionMethod()) {
       case CompressionMethod.STORE: {
         return this.compressedStream();
       }
@@ -108,7 +170,7 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
         return LocalFileHeader.pipeline(
           this.compressedStream(),
           zlib.createInflateRaw(),
-          new ZipBombProtector(this.uncompressedSize),
+          new ZipBombProtector(this.getUncompressedSize()),
         );
       }
       case CompressionMethod.ZSTD_DEPRECATED:
@@ -117,12 +179,12 @@ export default class LocalFileHeader extends FileRecord implements ILocalFileRec
           this.compressedStream(),
           // TODO(cemmer): replace with zlib in Node.js 24
           new zstd.DecompressStream(),
-          new ZipBombProtector(this.uncompressedSize),
+          new ZipBombProtector(this.getUncompressedSize()),
         );
       }
       default: {
         throw new Error(
-          `unsupported compression method: ${CompressionMethodInverted[this.compressionMethod]}`,
+          `unsupported compression method: ${CompressionMethodInverted[this.getCompressionMethod()]}`,
         );
       }
     }

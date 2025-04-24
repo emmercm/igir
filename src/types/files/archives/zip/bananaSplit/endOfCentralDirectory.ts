@@ -255,4 +255,8 @@ export default class EndOfCentralDirectory {
   getComment(): string {
     return this.record.comment;
   }
+
+  getZip64Record(): IZip64EndOfCentralDirectoryRecord | undefined {
+    return this.zip64Record;
+  }
 }

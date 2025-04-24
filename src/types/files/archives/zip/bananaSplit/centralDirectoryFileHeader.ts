@@ -3,36 +3,21 @@ import stream from 'node:stream';
 
 import CP437Decoder from './cp437Decoder.js';
 import EndOfCentralDirectory from './endOfCentralDirectory.js';
-import { CompressionMethodValue } from './fileRecord.js';
-import FileRecordUtil, { IZip64ExtendedInformation } from './fileRecordUtil.js';
+import FileRecord, { CompressionMethodValue, IFileRecord } from './fileRecord.js';
+import FileRecordUtil from './fileRecordUtil.js';
 import LocalFileHeader from './localFileHeader.js';
-import TimestampUtil from './timestampUtil.js';
 
-export interface ICentralDirectoryFileHeader {
+export interface ICentralDirectoryFileHeader extends IFileRecord {
   versionMadeBy: number;
-  versionNeeded: number;
-  generalPurposeBitFlag: number;
-  compressionMethod: CompressionMethodValue;
-  fileModificationTime: number;
-  fileModificationDate: number;
-  uncompressedCrc32: Buffer<ArrayBuffer>;
-  compressedSize: number;
-  uncompressedSize: number;
-  fileNameLength: number;
-  extraFieldLength: number;
   fileCommentLength: number;
   fileDiskStart: number;
   internalFileAttributes: number;
   externalFileAttributes: number;
   localFileHeaderRelativeOffset: number;
-  fileName: Buffer<ArrayBuffer>;
-  extraFields: Map<number, Buffer<ArrayBuffer>>;
   fileComment: Buffer<ArrayBuffer>;
-
-  zip64ExtendedInformation?: IZip64ExtendedInformation;
 }
 
-export default class CentralDirectoryFileHeader {
+export default class CentralDirectoryFileHeader extends FileRecord {
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE = Buffer.from(
     '02014b50',
     'hex',
@@ -44,53 +29,26 @@ export default class CentralDirectoryFileHeader {
   private readonly zipFilePath: string;
 
   private readonly versionMadeBy: number;
-  private readonly versionNeeded: number;
-  private readonly generalPurposeBitFlag: number;
-  private readonly compressionMethod: CompressionMethodValue;
-  private readonly fileModificationTime: number;
-  private readonly fileModificationDate: number;
-  private readonly uncompressedCrc32: Buffer<ArrayBuffer>;
-  private readonly compressedSize: number;
-  private readonly uncompressedSize: number;
-  private readonly fileNameLength: number;
-  private readonly extraFieldLength: number;
   private readonly fileCommentLength: number;
   private readonly fileDiskStart: number;
   private readonly internalFileAttributes: number;
   private readonly externalFileAttributes: number;
   private readonly localFileHeaderRelativeOffset: number;
-  private readonly fileName: Buffer<ArrayBuffer>;
-  private readonly extraFields: Map<number, Buffer<ArrayBuffer>>;
   private readonly fileComment: Buffer<ArrayBuffer>;
-
-  private readonly zip64ExtendedInformation?: IZip64ExtendedInformation;
 
   private _localFileHeader?: LocalFileHeader;
 
   private constructor(zipFilePath: string, props: ICentralDirectoryFileHeader) {
+    super(props);
     this.zipFilePath = zipFilePath;
 
     this.versionMadeBy = props.versionMadeBy;
-    this.versionNeeded = props.versionNeeded;
-    this.generalPurposeBitFlag = props.generalPurposeBitFlag;
-    this.compressionMethod = props.compressionMethod;
-    this.fileModificationTime = props.fileModificationTime;
-    this.fileModificationDate = props.fileModificationDate;
-    this.uncompressedCrc32 = props.uncompressedCrc32;
-    this.compressedSize = props.compressedSize;
-    this.uncompressedSize = props.uncompressedSize;
-    this.fileNameLength = props.fileNameLength;
-    this.extraFieldLength = props.extraFieldLength;
     this.fileCommentLength = props.fileCommentLength;
     this.fileDiskStart = props.fileDiskStart;
     this.internalFileAttributes = props.internalFileAttributes;
     this.externalFileAttributes = props.externalFileAttributes;
     this.localFileHeaderRelativeOffset = props.localFileHeaderRelativeOffset;
-    this.fileName = props.fileName;
-    this.extraFields = props.extraFields;
     this.fileComment = props.fileComment;
-
-    this.zip64ExtendedInformation = props.zip64ExtendedInformation;
   }
 
   static async centralDirectoryFileFromFileHandle(
@@ -184,6 +142,7 @@ export default class CentralDirectoryFileHeader {
 
       fileHeaders.push(
         new CentralDirectoryFileHeader(zipFilePath, {
+          raw: Buffer.concat([fixedLengthBuffer, variableLengthBuffer]),
           versionMadeBy,
           versionNeeded,
           generalPurposeBitFlag,
@@ -217,72 +176,36 @@ export default class CentralDirectoryFileHeader {
     return this.zipFilePath;
   }
 
-  getCompressionMethod(): CompressionMethodValue {
-    return this.compressionMethod;
-  }
-
-  getFileModification(): Date {
-    // TODO(cemmer): 0x000d UNIX timestamp
-    // TODO(cemmer): 0x7855 unix extra field new?
-    return (
-      TimestampUtil.parseExtendedTimestamp(this.extraFields.get(0x54_55))?.modified ??
-      TimestampUtil.parseUnixExtraTimestamp(this.extraFields.get(0x58_55))?.modified ??
-      TimestampUtil.parseNtfsExtraTimestamp(this.extraFields.get(0x00_0a))?.modified ??
-      TimestampUtil.parseDOSTimestamp(this.fileModificationTime, this.fileModificationDate)
-    );
-  }
-
-  getUncompressedCrc32(): string {
-    return Buffer.from(this.uncompressedCrc32).reverse().toString('hex').toLowerCase();
-  }
-
-  getCompressedSize(): number {
-    return (
-      this.zip64ExtendedInformation?.compressedSize ??
-      this.compressedSize - (this.isEncrypted() ? 12 : 0)
-    );
-  }
-
-  getUncompressedSize(): number {
-    return this.zip64ExtendedInformation?.uncompressedSize ?? this.uncompressedSize;
+  getVersionMadeBy(): number {
+    return this.versionMadeBy;
   }
 
   getFileDiskStart(): number {
-    return this.zip64ExtendedInformation?.fileDiskStart ?? this.fileDiskStart;
+    return this.getZip64ExtendedInformation()?.fileDiskStart ?? this.fileDiskStart;
+  }
+
+  getInternalFileAttributes(): number {
+    return this.internalFileAttributes;
+  }
+
+  getExternalFileAttributes(): number {
+    return this.externalFileAttributes;
   }
 
   getLocalFileHeaderRelativeOffset(): number {
     return (
-      this.zip64ExtendedInformation?.localFileHeaderRelativeOffset ??
+      this.getZip64ExtendedInformation()?.localFileHeaderRelativeOffset ??
       this.localFileHeaderRelativeOffset
-    );
-  }
-
-  getFileName(): string {
-    return (
-      // Info-ZIP Unicode Path Extra Field
-      this.extraFields.get(0x70_75)?.subarray(5).toString('utf8') ??
-      (this.generalPurposeBitFlag & 0x8_00
-        ? this.fileName.toString('utf8')
-        : CP437Decoder.decode(this.fileName))
     );
   }
 
   getFileComment(): string {
     return (
-      this.extraFields.get(0x63_75)?.subarray(5).toString('utf8') ??
-      (this.generalPurposeBitFlag & 0x8_00
+      this.getExtraFields().get(0x63_75)?.subarray(5).toString('utf8') ??
+      (this.getGeneralPurposeBitFlag() & 0x8_00
         ? this.fileComment.toString('utf8')
         : CP437Decoder.decode(this.fileComment))
     );
-  }
-
-  isEncrypted(): boolean {
-    return (this.generalPurposeBitFlag & 0x01) !== 0;
-  }
-
-  isDirectory(): boolean {
-    return this.getFileName().endsWith('/');
   }
 
   /**
