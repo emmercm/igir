@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import Temp from '../../../src/globals/temp.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
-import Zip from '../../../src/types/files/archives/zip/zip.js';
+import Zip from '../../../src/types/files/archives/zip.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 

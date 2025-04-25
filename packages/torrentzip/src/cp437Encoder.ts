@@ -1,7 +1,8 @@
 /**
+ * Encode a string to CP437.
  * @see https://en.wikipedia.org/wiki/Code_page_437
  */
-export default class CP437Decoder {
+export default class CP437Encoder {
   private static readonly DECODER_TABLE = [
     '\u0000',
     '\u263A',
@@ -259,9 +260,35 @@ export default class CP437Decoder {
     '\u00B2',
     '\u25A0',
     '\u00A0',
-  ];
+  ] as const;
+  private static readonly ENCODER_TABLE = this.DECODER_TABLE.reduce<Record<string, number>>(
+    (map, char, idx) => {
+      map[char] = idx;
+      return map;
+    },
+    {},
+  );
 
-  static decode(input: Buffer<ArrayBuffer>): string {
-    return Array.from(input, (byte) => this.DECODER_TABLE[byte] || '').join('');
+  /**
+   * Can the string be encoded? i.e. does it contain only encodable characters?
+   */
+  static canEncode(input: string): boolean {
+    for (const char of input) {
+      if (!(char in this.ENCODER_TABLE)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Encode a string.
+   */
+  static encode(input: string): Buffer<ArrayBuffer> {
+    const buffer = Buffer.allocUnsafe(input.length);
+    for (let i = 0; i < buffer.length; i++) {
+      buffer[i] = this.ENCODER_TABLE[input[i]];
+    }
+    return buffer;
   }
 }

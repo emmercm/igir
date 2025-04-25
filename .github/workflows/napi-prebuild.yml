@@ -1,0 +1,86 @@
+name: Node-API Prebuild
+
+on:
+  push:
+
+jobs:
+  path-filter:
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            changes:
+              - 'packages/torrentzip/*'
+
+  prebuild:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    name: prebuildify (${{ matrix.os }} ${{ matrix.docker_arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # docker manifest inspect node:<version> | jq '.manifests[].platform'
+          - os: ubuntu-latest
+            docker_arch: linux/amd64
+          - os: ubuntu-latest
+            docker_arch: linux/arm/v7
+          - os: ubuntu-latest
+            docker_arch: linux/arm64/v8
+          - os: macos-13
+          - os: macos-15
+          - os: windows-latest
+          - os: windows-11-arm
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: volta-cli/action@v4
+
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        uses: docker/setup-qemu-action@v3
+      - id: linux-vars
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
+          shell: bash
+          options: |
+            --platform ${{ matrix.docker_arch }}
+            --volume ${{ github.workspace }}:/build
+            --workdir /build
+          run: |
+            set -x
+            cd packages/torrentzip
+            npm install
+            prebuildify --napi --strip
+      - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
+        shell: bash
+        run: |
+          set -x
+          cd packages/torrentzip
+          npm install
+          prebuildify --napi --strip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prebuild-${{ matrix.os }}-${{ matrix.docker_arch }}
+          path: prebuilds/
+          if-no-files-found: error
+          retention-days: 7

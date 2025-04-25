@@ -263,6 +263,7 @@ export default [
   {
     files: [
       'test/**/*.ts',
+      'packages/*/test/**/*.ts',
       // TODO(cemmer)
       'src/types/files/**/*.ts',
       'src/types/patches/**/*.ts',

@@ -14,7 +14,7 @@ import LocalFileHeader from './localFileHeader.js';
  * @see https://libzip.org/specifications/extrafld.txt
  * @see https://romvault.com/trrntzip_explained.pdf
  */
-export default class BananaSplit {
+export default class ZipReader {
   private readonly zipFilePath: string;
 
   private _centralDirectoryFileHeaders?: CentralDirectoryFileHeader[];

@@ -19,6 +19,10 @@ export interface ILocalFileHeader extends IFileRecord {
   dataRelativeOffset: number;
 }
 
+/**
+ * A local file header in a zip file.
+ * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#Local_file_header
+ */
 export default class LocalFileHeader extends FileRecord {
   public static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
   public static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
@@ -45,7 +49,10 @@ export default class LocalFileHeader extends FileRecord {
     this.dataRelativeOffset = props.dataRelativeOffset;
   }
 
-  static async localFileRecordFromFileHandle(
+  /**
+   * Parse a local file header given a central directory file header.
+   */
+  static async localFileHeaderFromFileHandle(
     centralDirectoryFileHeader: CentralDirectoryFileHeader,
     fileHandle: fs.promises.FileHandle,
   ): Promise<LocalFileHeader> {
@@ -122,24 +129,36 @@ export default class LocalFileHeader extends FileRecord {
     return this.dataRelativeOffset;
   }
 
+  /**
+   * Return the numerical CRC32, taking the existence of a data descriptor into account.
+   */
   uncompressedCrc32Number(): number {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.uncompressedCrc32Number()
       : super.uncompressedCrc32Number();
   }
 
+  /**
+   * Return the CRC32 string, taking the existence of a data descriptor into account.
+   */
   uncompressedCrc32String(): string {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.uncompressedCrc32String()
       : super.uncompressedCrc32String();
   }
 
+  /**
+   * Return the compressed size, taking the existence of a data descriptor into account.
+   */
   compressedSizeResolved(): number {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.compressedSizeResolved()
       : super.compressedSizeResolved();
   }
 
+  /**
+   * Return the uncompressed size, taking the existence of a data descriptor into account.
+   */
   uncompressedSizeResolved(): number {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.uncompressedSizeResolved()

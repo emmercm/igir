@@ -57,7 +57,7 @@ const jestConfig = async (): Promise<Config> => {
     coveragePathIgnorePatterns: ['<rootDir>/test/'],
 
     // Report coverage on all source files, because it won't by default...
-    collectCoverageFrom: ['<rootDir>/src/**/*.{js,cjs,mjs,ts}'],
+    collectCoverageFrom: ['<rootDir>/{packages,src}/**/*.{js,cjs,mjs,ts}'],
   };
 };
 export default jestConfig;

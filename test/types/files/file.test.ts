@@ -9,7 +9,7 @@ import FsPoly from '../../../src/polyfill/fsPoly.js';
 import IOFile from '../../../src/polyfill/ioFile.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/types/files/archives/archiveFile.js';
-import Zip from '../../../src/types/files/archives/zip/zip.js';
+import Zip from '../../../src/types/files/archives/zip.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';

@@ -52,6 +52,10 @@ export const CompressionMethodInverted = Object.fromEntries(
   Object.entries(CompressionMethod).map(([key, value]) => [value, key]),
 ) as Record<CompressionMethodValue, CompressionMethodKey>;
 
+/**
+ * A zip file record, with properties and functionality common to local file headers and central
+ * directory file headers.
+ */
 export default class FileRecord {
   readonly raw: Buffer<ArrayBuffer>;
 
@@ -89,6 +93,9 @@ export default class FileRecord {
     this.zip64ExtendedInformation = props.zip64ExtendedInformation;
   }
 
+  /**
+   * Return the file modification time, taking extra fields into account.
+   */
   fileModificationResolved(): Date {
     // TODO(cemmer): 0x000d UNIX timestamp
     // TODO(cemmer): 0x7855 unix extra field new?
@@ -100,14 +107,23 @@ export default class FileRecord {
     );
   }
 
+  /**
+   * Return the numerical CRC32.
+   */
   uncompressedCrc32Number(): number {
     return this.uncompressedCrc32.readUInt32LE();
   }
 
+  /**
+   * Return the lowercased and padded CRC32 string
+   */
   uncompressedCrc32String(): string {
     return this.uncompressedCrc32Number().toString(16).toLowerCase().padStart(8, '0');
   }
 
+  /**
+   * Return the compressed size, taking zip64 information into account.
+   */
   compressedSizeResolved(): number {
     return (
       this.zip64ExtendedInformation?.compressedSize ??
@@ -115,10 +131,16 @@ export default class FileRecord {
     );
   }
 
+  /**
+   * Return the uncompressed size, taking zip64 information into account.
+   */
   uncompressedSizeResolved(): number {
     return this.zip64ExtendedInformation?.uncompressedSize ?? this.uncompressedSize;
   }
 
+  /**
+   * Return the file name, taking extra fields into account.
+   */
   fileNameResolved(): string {
     return (
       // Info-ZIP Unicode Path Extra Field
@@ -129,14 +151,23 @@ export default class FileRecord {
     );
   }
 
+  /**
+   * Return if this file is encrypted.
+   */
   isEncrypted(): boolean {
     return (this.generalPurposeBitFlag & 0x01) !== 0;
   }
 
+  /**
+   * Return if this file has a data descriptor.
+   */
   hasDataDescriptor(): boolean {
     return (this.generalPurposeBitFlag & 0x08) !== 0;
   }
 
+  /**
+   * Return if this file is a directory.
+   */
   isDirectory(): boolean {
     return this.fileNameResolved().endsWith('/');
   }

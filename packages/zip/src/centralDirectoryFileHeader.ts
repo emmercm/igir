@@ -17,6 +17,10 @@ export interface ICentralDirectoryFileHeader extends IFileRecord {
   fileComment: Buffer<ArrayBuffer>;
 }
 
+/**
+ * A central directory file header in a zip file.
+ * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#Central_directory_file_header_(CDFH)
+ */
 export default class CentralDirectoryFileHeader extends FileRecord {
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE = Buffer.from(
     '02014b50',
@@ -51,6 +55,9 @@ export default class CentralDirectoryFileHeader extends FileRecord {
     this.fileComment = props.fileComment;
   }
 
+  /**
+   * Parse all central directory file headers given an EOCD.
+   */
   static async centralDirectoryFileFromFileHandle(
     zipFilePath: string,
     fileHandle: fs.promises.FileHandle,
@@ -172,10 +179,16 @@ export default class CentralDirectoryFileHeader extends FileRecord {
     return fileHeaders;
   }
 
+  /**
+   * Return the disk number that contains the start of the file, taking zip64 information into account.
+   */
   fileDiskStartResolved(): number {
     return this.zip64ExtendedInformation?.fileDiskStart ?? this.fileDiskStart;
   }
 
+  /**
+   * Return the relative offset to the start of the file, taking zip64 information into account.
+   */
   localFileHeaderRelativeOffsetResolved(): number {
     return (
       this.zip64ExtendedInformation?.localFileHeaderRelativeOffset ??
@@ -183,6 +196,9 @@ export default class CentralDirectoryFileHeader extends FileRecord {
     );
   }
 
+  /**
+   * Return the file's comment, taking extra fields and encodings into account.
+   */
   fileCommentResolved(): string {
     return (
       this.extraFields.get(0x63_75)?.subarray(5).toString('utf8') ??
@@ -202,7 +218,7 @@ export default class CentralDirectoryFileHeader extends FileRecord {
 
     const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
     try {
-      this._localFileHeader = await LocalFileHeader.localFileRecordFromFileHandle(this, fileHandle);
+      this._localFileHeader = await LocalFileHeader.localFileHeaderFromFileHandle(this, fileHandle);
       return this._localFileHeader;
     } finally {
       await fileHandle.close();

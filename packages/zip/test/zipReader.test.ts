@@ -2,11 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
-import Temp from '../../../../../../src/globals/temp.js';
-import FsPoly from '../../../../../../src/polyfill/fsPoly.js';
-import BananaSplit from '../../../../../../src/types/files/archives/zip/bananaSplit/bananaSplit.js';
-import { CompressionMethodValue } from '../../../../../../src/types/files/archives/zip/bananaSplit/fileRecord.js';
-import FileChecksums, { ChecksumBitmask } from '../../../../../../src/types/files/fileChecksums.js';
+import { CompressionMethodValue, ZipReader } from '@igir/zip';
+
+import Temp from '../../../src/globals/temp.js';
+import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const fixtures = (await FsPoly.walk(dirname)).filter((filePath) => !filePath.endsWith('.ts'));
@@ -16,7 +16,7 @@ describe('entries', () => {
   const nonEmptyFixtures = fixtures.filter((filePath) => !emptyFixtures.includes(filePath));
 
   test.each(emptyFixtures)('empty: %s', async (filePath) => {
-    const entries = await new BananaSplit(filePath).centralDirectoryFileHeaders();
+    const entries = await new ZipReader(filePath).centralDirectoryFileHeaders();
     expect(entries).toHaveLength(0);
   });
 
@@ -482,7 +482,7 @@ describe('entries', () => {
   ]);
 
   test.each(nonEmptyFixtures)('non-empty: %s', async (filePath) => {
-    const entries = await new BananaSplit(filePath).centralDirectoryFileHeaders();
+    const entries = await new ZipReader(filePath).centralDirectoryFileHeaders();
     expect(entries.length).toBeGreaterThan(0);
 
     expect(
@@ -521,7 +521,7 @@ describe('entries', () => {
 
 describe('compressedStream', () => {
   test.each(fixtures)('%s', async (filePath) => {
-    const zip = new BananaSplit(filePath);
+    const zip = new ZipReader(filePath);
     const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {
@@ -555,7 +555,7 @@ describe('compressedStream', () => {
 
 describe('uncompressedStream', () => {
   test.each(fixtures)('%s', async (filePath) => {
-    const zip = new BananaSplit(filePath);
+    const zip = new ZipReader(filePath);
     const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {

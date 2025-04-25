@@ -28,6 +28,10 @@ export interface IZip64EndOfCentralDirectoryRecord extends IEndOfCentralDirector
   versionNeeded: number;
 }
 
+/**
+ * The end of central directory in a zip file.
+ * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#End_of_central_directory_record_(EOCD)
+ */
 export default class EndOfCentralDirectory {
   public static readonly END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
     '06054b50',
@@ -72,6 +76,9 @@ export default class EndOfCentralDirectory {
     this.zip64Record = props.zip64Record;
   }
 
+  /**
+   * Parse the end of central directory in a file.
+   */
   static async fromFileHandle(fileHandle: fs.promises.FileHandle): Promise<EndOfCentralDirectory> {
     const fileSize = (await fileHandle.stat()).size;
     const filePosition = Math.max(fileSize - 1 - this.END_OF_CENTRAL_DIRECTORY_MAX_SIZE, 0);
@@ -221,36 +228,54 @@ export default class EndOfCentralDirectory {
     };
   }
 
+  /**
+   * Return this EOCD's disk number, taking zip64 information into account.
+   */
   diskNumberResolved(): number {
     return this.diskNumber === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.diskNumber
       : this.diskNumber;
   }
 
+  /**
+   * Return the disk that contains the SOCD, taking zip64 information into account.
+   */
   centralDirectoryDiskStartResolved(): number {
     return this.centralDirectoryDiskStart === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskStart
       : this.centralDirectoryDiskStart;
   }
 
+  /**
+   * Return the number of central directory records on this disk, taking zip64 information into account.
+   */
   centralDirectoryDiskRecordsCountResolved(): number {
     return this.centralDirectoryDiskRecordsCount === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryDiskRecordsCount
       : this.centralDirectoryDiskRecordsCount;
   }
 
+  /**
+   * Return the total number of central directory records, taking zip64 information into account.
+   */
   centralDirectoryTotalRecordsCountResolved(): number {
     return this.centralDirectoryTotalRecordsCount === 0xff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryTotalRecordsCount
       : this.centralDirectoryTotalRecordsCount;
   }
 
+  /**
+   * Return the total size of the central directory, taking zip64 information into account.
+   */
   centralDirectorySizeBytesResolved(): number {
     return this.centralDirectorySizeBytes === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectorySizeBytes
       : this.centralDirectorySizeBytes;
   }
 
+  /**
+   * Return the relative offset to the SOCD, taking zip64 information into account.
+   */
   centralDirectoryOffsetResolved(): number {
     return this.centralDirectoryOffset === 0xff_ff_ff_ff && this.zip64Record !== undefined
       ? this.zip64Record.centralDirectoryOffset

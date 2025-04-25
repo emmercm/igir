@@ -1,14 +1,18 @@
+import { CompressionMethod, ZipReader } from '@igir/zip';
 import { crc32 } from '@node-rs/crc32';
 
-import BananaSplit from '../bananaSplit/bananaSplit.js';
-import { CompressionMethod } from '../bananaSplit/fileRecord.js';
-
+/**
+ * Validate TorrentZip files.
+ */
 export default {
-  async validate(bananaSplit: BananaSplit): Promise<boolean> {
+  /**
+   * Validate if the file is a valid TorrentZip file.
+   */
+  async validate(zipReader: ZipReader): Promise<boolean> {
     // TODO(cemmer): pass in an expected set of files? Including name, CRC32, and uncompressed size
 
     // Validate very basic points in the EOCD
-    const eocd = await bananaSplit.endOfCentralDirectoryRecord();
+    const eocd = await zipReader.endOfCentralDirectoryRecord();
     if (
       eocd.diskNumber !== 0 ||
       eocd.centralDirectoryDiskStart !== 0 ||
@@ -27,7 +31,7 @@ export default {
       return false;
     }
 
-    const centralDirectoryFileHeaders = await bananaSplit.centralDirectoryFileHeaders();
+    const centralDirectoryFileHeaders = await zipReader.centralDirectoryFileHeaders();
     for (const cdFileHeader of centralDirectoryFileHeaders) {
       // Validate very basic points in the CDFH
       if (

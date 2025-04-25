@@ -21,7 +21,7 @@ import Z from './archives/sevenZip/z.js';
 import ZipSpanned from './archives/sevenZip/zipSpanned.js';
 import ZipX from './archives/sevenZip/zipX.js';
 import Tar from './archives/tar.js';
-import Zip from './archives/zip/zip.js';
+import Zip from './archives/zip.js';
 import File from './file.js';
 import FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';

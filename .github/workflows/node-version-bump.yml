@@ -28,6 +28,8 @@ jobs:
     steps:
       # Setup and install
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
       - uses: volta-cli/action@v4
       - run: npm ci
 
