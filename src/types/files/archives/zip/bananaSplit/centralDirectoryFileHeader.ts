@@ -212,16 +212,16 @@ export default class CentralDirectoryFileHeader extends FileRecord {
   /**
    * Return this file's compressed/raw stream.
    */
-  async compressedStream(): Promise<stream.Readable> {
+  async compressedStream(highWaterMark?: number): Promise<stream.Readable> {
     const localFileHeader = await this.localFileHeader();
-    return localFileHeader.compressedStream();
+    return localFileHeader.compressedStream(highWaterMark);
   }
 
   /**
    * Return this file's uncompressed/decompressed stream.
    */
-  async uncompressedStream(): Promise<stream.Readable> {
+  async uncompressedStream(highWaterMark?: number): Promise<stream.Readable> {
     const localFileHeader = await this.localFileHeader();
-    return localFileHeader.uncompressedStream();
+    return localFileHeader.uncompressedStream(highWaterMark);
   }
 }

@@ -15,7 +15,7 @@ import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import BananaSplit from './bananaSplit/bananaSplit.js';
 import CentralDirectoryFileHeader from './bananaSplit/centralDirectoryFileHeader.js';
-import TorrentZipValidator from './torrentZipValidator.js';
+import TZValidator from './torrentzip/tzValidator.js';
 
 export default class Zip extends Archive {
   private readonly bananaSplit: BananaSplit;
@@ -58,9 +58,9 @@ export default class Zip extends Archive {
         return ArchiveEntry.entryOf(
           {
             archive: this,
-            entryPath: entryFile.fileName,
-            size: entryFile.uncompressedSize,
-            crc32: crc32 ?? entryFile.uncompressedCrc32,
+            entryPath: entryFile.fileNameResolved(),
+            size: entryFile.uncompressedSizeResolved(),
+            crc32: crc32 ?? entryFile.uncompressedCrc32String(),
             ...checksumsWithoutCrc,
           },
           checksumBitmask,
@@ -100,7 +100,8 @@ export default class Zip extends Archive {
     const entries = await this.bananaSplit.centralDirectoryFileHeaders();
     const entry = entries.find(
       (entryFile) =>
-        entryFile.fileName.replaceAll(/[\\/]/g, '/') === entryPath.replaceAll(/[\\/]/g, '/'),
+        entryFile.fileNameResolved().replaceAll(/[\\/]/g, '/') ===
+        entryPath.replaceAll(/[\\/]/g, '/'),
     );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
@@ -235,6 +236,6 @@ export default class Zip extends Archive {
   }
 
   async isTorrentZip(): Promise<boolean> {
-    return TorrentZipValidator.validate(this.bananaSplit);
+    return TZValidator.validate(this.bananaSplit);
   }
 }

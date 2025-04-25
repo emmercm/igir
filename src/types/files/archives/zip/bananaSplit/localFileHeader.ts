@@ -149,7 +149,7 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return this file's compressed/raw stream.
    */
-  compressedStream(): stream.Readable {
+  compressedStream(highWaterMark?: number): stream.Readable {
     if (this.compressedSizeResolved() === 0) {
       // There's no need to open the file, it will be an empty stream
       return stream.Readable.from([]);
@@ -158,20 +158,21 @@ export default class LocalFileHeader extends FileRecord {
     return fs.createReadStream(this.zipFilePath, {
       start: this.getLocalFileDataRelativeOffset(),
       end: this.getLocalFileDataRelativeOffset() + this.compressedSizeResolved() - 1,
+      highWaterMark,
     });
   }
 
   /**
    * Return this file's uncompressed/decompressed stream.
    */
-  uncompressedStream(): stream.Readable {
+  uncompressedStream(highWaterMark?: number): stream.Readable {
     switch (this.compressionMethod) {
       case CompressionMethod.STORE: {
-        return this.compressedStream();
+        return this.compressedStream(highWaterMark);
       }
       case CompressionMethod.DEFLATE: {
         return LocalFileHeader.pipeline(
-          this.compressedStream(),
+          this.compressedStream(highWaterMark),
           zlib.createInflateRaw(),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );

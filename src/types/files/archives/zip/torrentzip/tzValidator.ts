@@ -1,15 +1,13 @@
 import { crc32 } from '@node-rs/crc32';
 
-import BananaSplit from './bananaSplit/bananaSplit.js';
-import { CompressionMethod } from './bananaSplit/fileRecord.js';
+import BananaSplit from '../bananaSplit/bananaSplit.js';
+import { CompressionMethod } from '../bananaSplit/fileRecord.js';
 
-export default class TorrentZipValidator {
-  private static readonly MODIFIED_TIME_MS = new Date('1996-12-24T23:32:00').getTime();
-
-  static async validate(bananaSplit: BananaSplit): Promise<boolean> {
+export default {
+  async validate(bananaSplit: BananaSplit): Promise<boolean> {
     // TODO(cemmer): pass in an expected set of files? Including name, CRC32, and uncompressed size
-    // TODO(cemmer): validate what the non-zip64 info looks like when zip64 is present
 
+    // Validate very basic points in the EOCD
     const eocd = await bananaSplit.endOfCentralDirectoryRecord();
     if (
       eocd.diskNumber !== 0 ||
@@ -30,43 +28,50 @@ export default class TorrentZipValidator {
     }
 
     const centralDirectoryFileHeaders = await bananaSplit.centralDirectoryFileHeaders();
-    if (
-      centralDirectoryFileHeaders.some((fileHeader) => {
-        return (
-          fileHeader.versionMadeBy !== 0 ||
-          !(
-            fileHeader.versionNeeded === 20 ||
-            (fileHeader.versionNeeded === 45 && eocd.zip64Record)
-          ) ||
-          !(
-            fileHeader.generalPurposeBitFlag === 0x02 ||
-            fileHeader.generalPurposeBitFlag === (0x02 | 0x8_00)
-          ) ||
-          fileHeader.compressionMethod !== CompressionMethod.DEFLATE ||
-          fileHeader.fileModificationResolved().getTime() !== this.MODIFIED_TIME_MS ||
-          fileHeader.fileNameResolved().includes('\\') ||
-          !(
-            fileHeader.extraFields.size === 0 ||
-            (fileHeader.extraFields.size === 1 && fileHeader.extraFields.has(0x00_01))
-          ) ||
-          fileHeader.fileCommentResolved().length > 0 ||
-          fileHeader.fileDiskStartResolved() !== 0 ||
-          fileHeader.internalFileAttributes !== 0 ||
-          fileHeader.externalFileAttributes !== 0
-        );
-      })
-    ) {
-      return false;
+    for (const cdFileHeader of centralDirectoryFileHeaders) {
+      // Validate very basic points in the CDFH
+      if (
+        cdFileHeader.versionMadeBy !== 0 ||
+        (cdFileHeader.zip64ExtendedInformation === undefined &&
+          cdFileHeader.versionNeeded !== 20) ||
+        (cdFileHeader.zip64ExtendedInformation !== undefined &&
+          cdFileHeader.versionNeeded !== 45) ||
+        !(
+          cdFileHeader.generalPurposeBitFlag === 0x02 ||
+          cdFileHeader.generalPurposeBitFlag === (0x02 | 0x8_00)
+        ) ||
+        cdFileHeader.compressionMethod !== CompressionMethod.DEFLATE ||
+        cdFileHeader.fileModificationTime !== 48_128 ||
+        cdFileHeader.fileModificationDate !== 8600 ||
+        (cdFileHeader.compressedSize >= 0xff_ff_ff_ff &&
+          (cdFileHeader.zip64ExtendedInformation?.compressedSize ?? 0) <
+            cdFileHeader.compressedSize) ||
+        (cdFileHeader.uncompressedSize >= 0xff_ff_ff_ff &&
+          (cdFileHeader.zip64ExtendedInformation?.uncompressedSize ?? 0) <
+            cdFileHeader.uncompressedSize) ||
+        cdFileHeader.fileNameResolved().includes('\\') ||
+        !(
+          cdFileHeader.extraFields.size === 0 ||
+          (cdFileHeader.extraFields.size === 1 && cdFileHeader.extraFields.has(0x00_01))
+        ) ||
+        cdFileHeader.fileComment.length > 0 ||
+        cdFileHeader.fileDiskStart !== 0 ||
+        cdFileHeader.internalFileAttributes !== 0 ||
+        cdFileHeader.externalFileAttributes !== 0
+      ) {
+        return false;
+      }
     }
 
+    // Validate filename sorting
     const fileNamesLowerCase = centralDirectoryFileHeaders.map((fileHeader) =>
       fileHeader.fileNameResolved().toLowerCase(),
     );
     if (fileNamesLowerCase !== fileNamesLowerCase.sort()) {
-      // Filenames should be sorted by lowercase
       return false;
     }
 
+    // Validate the zip comment
     const cdfhCrc32 = crc32(
       Buffer.concat(centralDirectoryFileHeaders.map((fileHeader) => fileHeader.raw)),
     )
@@ -97,23 +102,26 @@ export default class TorrentZipValidator {
       }
       expectedOffset += localFileHeader.raw.length + localFileHeader.compressedSizeResolved();
 
+      // Validate very basic points in the LFH
       if (
-        !(
-          localFileHeader.versionNeeded === 20 ||
-          (localFileHeader.versionNeeded === 45 && eocd.zip64Record)
-        ) ||
+        (localFileHeader.zip64ExtendedInformation === undefined &&
+          localFileHeader.versionNeeded !== 20) ||
+        (localFileHeader.zip64ExtendedInformation !== undefined &&
+          localFileHeader.versionNeeded !== 45) ||
         !(
           localFileHeader.generalPurposeBitFlag === 0x02 ||
-          localFileHeader.generalPurposeBitFlag === (0x02 | 0x8_00) // UTF-8 encoding
+          localFileHeader.generalPurposeBitFlag === (0x02 | 0x8_00)
         ) ||
         localFileHeader.compressionMethod !== CompressionMethod.DEFLATE ||
-        localFileHeader.fileModificationResolved().getTime() !== this.MODIFIED_TIME_MS ||
-        localFileHeader.uncompressedCrc32String() !==
-          centralDirectoryFileHeader.uncompressedCrc32String() ||
-        localFileHeader.compressedSizeResolved() !==
-          centralDirectoryFileHeader.compressedSizeResolved() ||
-        localFileHeader.uncompressedSizeResolved() !==
-          centralDirectoryFileHeader.uncompressedSizeResolved() ||
+        localFileHeader.fileModificationTime !== 48_128 ||
+        localFileHeader.fileModificationDate !== 8600 ||
+        !localFileHeader.uncompressedCrc32.equals(centralDirectoryFileHeader.uncompressedCrc32) ||
+        localFileHeader.compressedSize !== centralDirectoryFileHeader.compressedSize ||
+        localFileHeader.zip64ExtendedInformation?.compressedSize !==
+          centralDirectoryFileHeader.zip64ExtendedInformation?.compressedSize ||
+        localFileHeader.uncompressedSize !== centralDirectoryFileHeader.uncompressedSize ||
+        localFileHeader.zip64ExtendedInformation?.uncompressedSize !==
+          centralDirectoryFileHeader.zip64ExtendedInformation?.uncompressedSize ||
         localFileHeader.fileNameResolved() !== centralDirectoryFileHeader.fileNameResolved() ||
         !(
           localFileHeader.extraFields.size === 0 ||
@@ -131,5 +139,5 @@ export default class TorrentZipValidator {
     }
 
     return true;
-  }
-}
+  },
+};

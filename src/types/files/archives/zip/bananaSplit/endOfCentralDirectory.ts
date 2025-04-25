@@ -47,8 +47,8 @@ export default class EndOfCentralDirectory {
   private static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIZE = 20;
   private static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIZE = 56;
 
-  // Maximum size of the non-zip64 EOCD
-  private static readonly BACKWARD_CHUNK_SIZE: number = 22 + 0xff_ff;
+  // Maximum size of the non-zip64 EOCD (~64KiB)
+  private static readonly END_OF_CENTRAL_DIRECTORY_MAX_SIZE: number = 22 + 0xff_ff;
 
   readonly diskNumber: number;
   readonly centralDirectoryDiskStart: number;
@@ -74,8 +74,8 @@ export default class EndOfCentralDirectory {
 
   static async fromFileHandle(fileHandle: fs.promises.FileHandle): Promise<EndOfCentralDirectory> {
     const fileSize = (await fileHandle.stat()).size;
-    const filePosition = Math.max(fileSize - 1 - this.BACKWARD_CHUNK_SIZE, 0);
-    const buffer = Buffer.allocUnsafe(Math.min(this.BACKWARD_CHUNK_SIZE, fileSize));
+    const filePosition = Math.max(fileSize - 1 - this.END_OF_CENTRAL_DIRECTORY_MAX_SIZE, 0);
+    const buffer = Buffer.allocUnsafe(Math.min(this.END_OF_CENTRAL_DIRECTORY_MAX_SIZE, fileSize));
 
     // Find the start position of the EOCD
     const readResult = await fileHandle.read({ buffer, position: filePosition });
