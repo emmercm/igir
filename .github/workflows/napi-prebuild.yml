@@ -69,14 +69,14 @@ jobs:
             set -x
             cd packages/torrentzip
             npm install
-            prebuildify --napi --strip
+            ./node_modules/.bin/prebuildify --napi --strip
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         shell: bash
         run: |
           set -x
           cd packages/torrentzip
           npm install
-          prebuildify --napi --strip
+          ./node_modules/.bin/prebuildify --napi --strip
 
       - uses: actions/upload-artifact@v4
         with:
