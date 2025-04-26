@@ -54,6 +54,9 @@ jobs:
       - uses: volta-cli/action@v4
 
       # Prebuild
+      - shell: bash
+        run: |
+          rm -rf packages/*/prebuilds
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
       - id: linux-vars

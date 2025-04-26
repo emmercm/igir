@@ -27,7 +27,8 @@
         "deps/zlib_1_1_3"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      "cflags_cc": ["-std=c++17"]
+      "cflags_cc": ["-std=c++17"],
+      "libraries": []
     }
   ]
 }
