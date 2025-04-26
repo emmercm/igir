@@ -151,7 +151,6 @@
         groupName: 'dev dependencies',
         matchDepTypes: ['devDependencies'],
         excludePackageNames: [
-          '@types/archiver',
           '@types/async',
           '@types/cli-progress',
           '@types/micromatch',
