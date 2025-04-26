@@ -1,9 +1,9 @@
 {
   "name": "@igir/torrentzip",
-  "main": "dist/index.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "install": "node-gyp-build"
+    "postinstall": "node-gyp-build"
   },
   "dependencies": {
     "@igir/zip": "file:../zip",
