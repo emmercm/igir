@@ -79,7 +79,7 @@ describe('createArchive', () => {
     './test/fixtures/roms/**/*.rar',
     './test/fixtures/roms/**/*.tar.gz',
     './test/fixtures/roms/**/*.zip',
-  ])('should not create TorrentZip files: %s', async (input) => {
+  ])('should create TorrentZip files: %s', async (input) => {
     const romFiles = (await findRoms(input)).filter((file) => file.getSize() > 0);
     if (romFiles.length === 0) {
       throw new Error('no ROMs of a non-zero size were found');
@@ -99,7 +99,7 @@ describe('createArchive', () => {
           ],
         ]);
 
-        await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toBeFalse();
+        await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toEqual(true);
       } finally {
         await FsPoly.rm(tempZipPath, { force: true });
       }
