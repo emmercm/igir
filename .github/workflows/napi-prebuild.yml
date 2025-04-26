@@ -81,7 +81,6 @@ jobs:
             set -x
             cd packages/torrentzip
             npm install --ignore-scripts
-            ls -alR
             ./node_modules/.bin/prebuildify --napi --strip
             touch prebuilds/.gitkeep
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
