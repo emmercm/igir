@@ -119,7 +119,9 @@ jobs:
           sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       # Test the built files
       - run: npm run build
-      - run: ./test/endToEndTest.sh
+      - run: |
+          cp package.json dist/
+          ./test/endToEndTest.sh
 
   node-package:
     needs:
