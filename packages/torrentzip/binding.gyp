@@ -28,7 +28,13 @@
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
       "cflags_cc": ["-std=c++17"],
-      "libraries": []
+      "libraries": [],
+      "link_settings": {
+        "libraries": []
+      },
+      "xcode_settings": {
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES"
+      }
     }
   ]
 }
