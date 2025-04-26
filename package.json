@@ -30,6 +30,7 @@
   "type": "module",
   "files": [
     "dist",
+    "dist/packages/*/package.json",
     "!**/test/**",
     "!**/*.test.*",
     "!**/jest.*"
