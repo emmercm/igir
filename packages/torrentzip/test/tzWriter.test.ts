@@ -1,74 +1,16 @@
 import path from 'node:path';
 
-import { jest } from '@jest/globals';
-
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
-import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
-import Zip from '../../../src/types/files/archives/zip.js';
-import File from '../../../src/types/files/file.js';
-import FileCache from '../../../src/types/files/fileCache.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options from '../../../src/types/options.js';
-import ProgressBarFake from '../../../test/console/progressBarFake.js';
-import TZWriter from '../src/tzWriter.js';
-
-// TODO(cemmer): DEBUG
-jest.setTimeout(30 * 60 * 1000);
 
 const LOGGER = new Logger(LogLevel.NEVER);
 
-async function findRoms(input: string): Promise<File[]> {
-  return new ROMScanner(
-    new Options({
-      input: [input],
-      inputExclude: [path.join('test', 'fixtures', 'roms', 'nkit')],
-    }),
-    new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
-  ).scan();
-}
-
-it('should', async () => {
-  const romFiles = await findRoms(
-    '/Users/cemmer/Downloads/ROMVault_V3.7.2/RomRoot/Redump (2025-03-13)/Sony - PlayStation 3/007 - Blood Stone (USA) (En,Fr).zip',
-    // '/Users/cemmer/Downloads/ROMVault_V3.7.2/RomRoot/Igir/One/GameCube-240pSuite-1.19.iso',
-  );
-
-  for (const romFile of romFiles) {
-    const tempZipPath = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp.zip'));
-    const tempZipDir = path.dirname(tempZipPath);
-    if (!(await FsPoly.exists(tempZipDir))) {
-      await FsPoly.mkdir(tempZipDir, { recursive: true });
-    }
-
-    // expect((await FileChecksums.hashFile(romFile.getFilePath(), ChecksumBitmask.MD5)).md5).toEqual(
-    //   '9fd5b1b1db694746172891d602043bd8',
-    // );
-
-    try {
-      const torrentZip = await TZWriter.open(tempZipPath);
-      await romFile.createReadStream(async (readable) => {
-        return torrentZip.addStream(readable, romFile.getExtractedFilePath(), romFile.getSize());
-      });
-      await torrentZip.finalize();
-
-      const isTorrentZip = await new Zip(tempZipPath).isTorrentZip();
-      expect(isTorrentZip).toEqual(true);
-      expect((await FileChecksums.hashFile(tempZipPath, ChecksumBitmask.MD5)).md5).toEqual(
-        '9fd5b1b1db694746172891d602043bd8',
-      );
-    } finally {
-      await FsPoly.rm(tempZipPath, { force: true });
-    }
-  }
-});
-
-it('should yes', async () => {
+it('should write correct zip files', async () => {
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
 
   try {

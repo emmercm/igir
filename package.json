@@ -48,7 +48,7 @@
   },
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
-    "postinstall": "node --eval \"if(require('fs').existsSync('dist')===false){process.exit(1);}\" || npm run build",
+    "postinstall": "node --eval \"if(require('fs').existsSync('.git')===false && require('fs').existsSync('dist')===false){process.exit(1);}\" || npm run build",
     "prepare": "husky",
     "start": "node --loader ts-node/esm index.ts",
     "build": "tsc && tsc-alias && copyfiles tsconfig.json \"packages/*/deps/**\" \"packages/*/prebuilds/**\" \"packages/*/binding.gyp\" \"packages/*/package.json\" \"dist/\" && node --eval \"if(process.platform!=='win32'){process.exit(1);}\" || chmod +x dist/index.js",

@@ -78,6 +78,7 @@ jobs:
             set -x
             cd packages/torrentzip
             npm install --ignore-scripts
+            ls -alR
             ./node_modules/.bin/prebuildify --napi --strip
             touch prebuilds/.gitkeep
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
@@ -118,7 +119,7 @@ jobs:
           ls -alR packages/*/prebuilds/
       - id: bump-and-commit
         run: |
-          git add --all packages/*/prebuilds || exit 0
+          git add --all packages/*/prebuilds
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
@@ -128,7 +129,7 @@ jobs:
           echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
           git config --global user.name "${USER_NAME}"
 
-          git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}"
+          git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}" || exit 0
           git push
         env:
           GH_TOKEN: ${{ github.token }}
