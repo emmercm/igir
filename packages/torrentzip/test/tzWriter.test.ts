@@ -8,8 +8,6 @@ import FsPoly from '../../../src/polyfill/fsPoly.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import Options from '../../../src/types/options.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
-
 it('should write correct zip files', async () => {
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
 
@@ -25,7 +23,7 @@ it('should write correct zip files', async () => {
         dirDatName: true,
         disableCache: true,
       }),
-      LOGGER,
+      new Logger(LogLevel.NEVER),
     ).main();
 
     const writtenFiles = (await FsPoly.walk(tempDir)).sort();

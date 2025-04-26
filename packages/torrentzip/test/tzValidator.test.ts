@@ -1,13 +1,40 @@
-import { ZipReader } from '@igir/zip';
+import path from 'node:path';
 
+import { TZValidator } from '@igir/torrentzip/index.js';
+import { ZipReader } from '@igir/zip/index.js';
+
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
+import Temp from '../../../src/globals/temp.js';
+import Igir from '../../../src/igir.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
-import TZValidator from '../src/tzValidator.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
+import Options from '../../../src/types/options.js';
 
-const fixtures = (await FsPoly.walk('/Users/cemmer/Downloads/ROMVault_V3.7.2/RomRoot')).filter(
-  (filePath) => filePath.endsWith('.zip'),
-);
+it('should write valid zip files', async () => {
+  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
 
-test.each(fixtures)('%s', async (filePath) => {
-  const validated = await TZValidator.validate(new ZipReader(filePath));
-  expect(validated).toEqual(true);
+  try {
+    await new Igir(
+      new Options({
+        commands: ['copy', 'zip'],
+        dat: [path.join('test', 'fixtures', 'dats')],
+        input: [path.join('test', 'fixtures', 'roms')],
+        output: tempDir,
+        dirDatName: true,
+        disableCache: true,
+      }),
+      new Logger(LogLevel.NEVER),
+    ).main();
+
+    const writtenFiles = await FsPoly.walk(tempDir);
+    for (const writtenFile of writtenFiles) {
+      await TZValidator.validate(new ZipReader(writtenFile));
+    }
+  } finally {
+    await FsPoly.rm(tempDir, {
+      recursive: true,
+      force: true,
+    });
+  }
 });
