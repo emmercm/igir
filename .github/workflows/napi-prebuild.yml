@@ -78,9 +78,12 @@ jobs:
           npm install
           ./node_modules/.bin/prebuildify --napi --strip
 
+      - shell: bash
+        run: |
+          ls -al packages/*/prebuilds/*/*
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ matrix.docker_arch }}
-          path: packages/*/prebuilds/
+          path: packages/*/prebuilds/*/*
           if-no-files-found: error
           retention-days: 7
