@@ -1,6 +1,5 @@
 import path from 'node:path';
 
-import { TZValidator } from '@igir/torrentzip/index.js';
 import { ZipReader } from '@igir/zip/index.js';
 
 import Logger from '../../../src/console/logger.js';
@@ -8,8 +7,8 @@ import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
-import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import Options from '../../../src/types/options.js';
+import TZValidator from '../src/tzValidator.js';
 
 it('should write valid zip files', async () => {
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
