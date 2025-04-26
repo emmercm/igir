@@ -94,6 +94,7 @@ jobs:
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
           path: packages/*/prebuilds/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
 
