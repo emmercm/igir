@@ -108,7 +108,7 @@ dist
 dist/
 packages/*/build/**
 packages/*/package-lock.json
-prebuilds/
+./prebuilds/
 site/
 *.bat
 *.cache*
