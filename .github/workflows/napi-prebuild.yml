@@ -1,3 +1,6 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
+#   Contents: read and write
+
 name: Node-API Prebuild
 
 on:
@@ -103,6 +106,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Token needed to trigger Actions on push
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           path: packages/
@@ -122,7 +128,7 @@ jobs:
           echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
           git config --global user.name "${USER_NAME}"
 
-          git commit -m "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}"
+          git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}"
           git push
         env:
           GH_TOKEN: ${{ github.token }}
