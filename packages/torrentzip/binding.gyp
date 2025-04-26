@@ -45,6 +45,7 @@
           "AdditionalOptions": [
             "/D__DATE__=0",
             "/D__TIME__=0",
+            "/D__TIMESTAMP__=0",
             "/Zc:wchar_t",
             "/EHsc",
             "/Gm-"
@@ -52,6 +53,7 @@
         },
         "VCLinkerTool": {
           "AdditionalOptions": [
+            "/Brepro",
             "/NOLOGO",
             "/OPT:REF",
             "/DEBUG:NONE"
