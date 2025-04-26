@@ -149,12 +149,18 @@ export default class Zip extends Archive {
 
     for (const [inputFile, outputArchiveEntry] of inputToOutputSorted) {
       try {
-        await inputFile.createPatchedReadStream(async (readable) => {
-          await torrentZip.addStream(
-            readable,
-            outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
-            inputFile.getSize(),
-          );
+        await new Promise((resolve, reject) => {
+          inputFile
+            .createPatchedReadStream(async (readable) => {
+              readable.on('error', reject);
+              await torrentZip.addStream(
+                readable,
+                outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
+                inputFile.getSize(),
+              );
+            })
+            .then(resolve)
+            .catch(reject);
         });
       } catch (error) {
         throw new Error(
