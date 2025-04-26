@@ -121,5 +121,9 @@
     // WARN: this will skip type checking!
     // https://github.com/nodejs/node/issues/48207#issuecomment-1880644283
     "transpileOnly": true
+  },
+  "tsc-alias": {
+    "verbose": true,
+    "resolveFullPaths": true
   }
 }

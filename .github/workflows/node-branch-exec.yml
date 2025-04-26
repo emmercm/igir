@@ -31,7 +31,7 @@ jobs:
       - env:
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: npm exec --loglevel verbose --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${HEAD_REF}" --help
+        run: npm exec --loglevel silly --yes -- "github:${{ github.event.pull_request.head.repo.full_name }}#${HEAD_REF}" --help
 
   npm-exec:
     if: github.event.action != 'closed'
