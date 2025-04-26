@@ -144,7 +144,6 @@ jobs:
           npm pack
           tar -xvzf igir-*.tgz
           cd package
-          cat package.json
           npm install
           ./dist/index.js --help
           cd ..

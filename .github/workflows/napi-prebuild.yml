@@ -114,8 +114,8 @@ jobs:
           path: packages/
           merge-multiple: true
       - run: |
-          ls -alR .
           rm packages/*/prebuilds/.gitkeep
+          ls -alR packages/*/prebuilds/
       - id: bump-and-commit
         run: |
           git add --all packages/*/prebuilds || exit 0
