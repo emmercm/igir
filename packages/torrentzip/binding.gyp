@@ -27,16 +27,24 @@
         "deps/zlib_1_1_3"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      "cflags": ["-fvisibility=hidden"],
+      "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
       "ldflags": ["-L./deps/zlib_1_1_3", "-Wl,--exclude-libs,ALL"],
 
       "xcode_settings": {
-        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES"
+        "GCC_OPTIMIZATION_LEVEL": "3",
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
+        "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
+        "DEAD_CODE_STRIPPING": "YES"
       },
 
       "msvs_settings": {
         "VCCLCompilerTool": {
+          "Optimization": "2",
+          "FavorSizeOrSpeed": "2",
+          "EnableIntrinsicFunctions": "true",
+          "EnableFunctionLevelLinking": "true",
+          "WholeProgramOptimization": "true",
           "AdditionalOptions": [
             "/D__DATE__=0",
             "/D__TIME__=0",
