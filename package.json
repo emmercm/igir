@@ -30,7 +30,6 @@
   "type": "module",
   "files": [
     "dist",
-    "dist/packages/*/package.json",
     "!**/test/**",
     "!**/*.test.*",
     "!**/jest.*"
@@ -52,7 +51,7 @@
     "postinstall": "node --eval \"if(require('fs').existsSync('dist')===false){process.exit(1);}\" || npm run build",
     "prepare": "husky",
     "start": "node --loader ts-node/esm index.ts",
-    "build": "tsc && node --eval \"if(process.platform!=='win32'){process.exit(1);}\" || chmod +x dist/index.js",
+    "build": "tsc && tsc-alias && node --eval \"if(process.platform!=='win32'){process.exit(1);}\" || chmod +x dist/index.js",
     "package": "npm run build && node --loader ts-node/esm package.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -138,6 +137,7 @@
     "prettier": "3.5.3",
     "ts-jest": "29.3.0",
     "ts-node": "10.9.2",
+    "tsc-alias": "^1.8.15",
     "typescript": "5.8.3",
     "typescript-eslint": "8.30.1",
     "which": "5.0.0"
