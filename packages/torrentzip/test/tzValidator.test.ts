@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { ZipReader } from '@igir/zip/index.js';
+import { ZipReader } from '@igir/zip';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';

@@ -2,11 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
-import { CompressionMethodValue, ZipReader } from '@igir/zip';
-
 import Temp from '../../../src/globals/temp.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
+import { CompressionMethodValue } from '../src/fileRecord.js';
+import ZipReader from '../src/zipReader.js';
 
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const fixtures = (await FsPoly.walk(dirname)).filter((filePath) => !filePath.endsWith('.ts'));
