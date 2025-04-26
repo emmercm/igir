@@ -50,6 +50,7 @@ jobs:
           submodules: 'recursive'
       - uses: volta-cli/action@v4
 
+      # Prebuild
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
       - id: linux-vars
@@ -92,3 +93,26 @@ jobs:
           path: packages/*/prebuilds/
           if-no-files-found: error
           retention-days: 7
+
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+      - id: bump-and-commit
+        run: |
+          git add --all packages/*/prebuilds
+
+          USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
+          git config --global user.email "${USER_EMAIL}"
+
+          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
+          echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
+          git config --global user.name "${USER_NAME}"
+
+          PACKAGE_VERSION="$(jq --raw-output '.version' package.json)"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "${GITHUB_OUTPUT}"
+          git commit -m "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
