@@ -108,6 +108,7 @@ dist
 dist/
 packages/*/build/**
 packages/*/package-lock.json
+prebuilds/
 site/
 *.bat
 *.cache*
