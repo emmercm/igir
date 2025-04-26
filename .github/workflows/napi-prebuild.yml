@@ -1,13 +1,17 @@
-# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
-#   Contents: read and write
-
 name: Node-API Prebuild
 
 on:
   push:
+    branches:
+      - '!main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   path-filter:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     permissions:
       pull-requests: read
     runs-on: ubuntu-latest
@@ -20,6 +24,7 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@v3
         with:
+          base: ${{ github.ref }}
           filters: |
             changes:
               - 'packages/torrentzip/*'
@@ -111,7 +116,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           # Token needed to trigger Actions on push
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           path: packages/
