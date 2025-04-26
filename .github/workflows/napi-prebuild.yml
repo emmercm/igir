@@ -107,7 +107,7 @@ jobs:
         with:
           path: packages/
       - run: |
-          rm packages/*/.gitkeep
+          rm packages/*/prebuilds/.gitkeep
       - id: bump-and-commit
         run: |
           git add --all packages/*/prebuilds
@@ -120,8 +120,7 @@ jobs:
           echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
           git config --global user.name "${USER_NAME}"
 
-          PACKAGE_VERSION="$(jq --raw-output '.version' package.json)"
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "${GITHUB_OUTPUT}"
           git commit -m "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}"
+          git push
         env:
           GH_TOKEN: ${{ github.token }}
