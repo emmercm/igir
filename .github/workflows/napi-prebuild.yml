@@ -56,6 +56,11 @@ jobs:
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+
+          DOCKER_ARCH=${{ matrix.docker_arch }}
+          DOCKER_ARCH=${DOCKER_ARCH/linux\//}
+          DOCKER_ARCH=${DOCKER_ARCH//\//}
+          echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: addnab/docker-run-action@v3
         with:
@@ -80,10 +85,10 @@ jobs:
 
       - shell: bash
         run: |
-          ls -al packages/*/prebuilds/*/*
+          ls -alR packages/*/prebuilds/
       - uses: actions/upload-artifact@v4
         with:
-          name: prebuild-${{ matrix.os }}-${{ matrix.docker_arch }}
-          path: packages/*/prebuilds/*/*
+          name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
+          path: packages/*/prebuilds/
           if-no-files-found: error
           retention-days: 7
