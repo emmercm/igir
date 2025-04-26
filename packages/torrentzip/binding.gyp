@@ -30,18 +30,33 @@
       "cflags": ["-fvisibility=hidden"],
       "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
 
-      "libraries": [],
       "link_settings": {
-        "libraries": ["-lz"],
+        "libraries": [],
         "library_dirs": ["./deps/zlib_1_1_3"],
-        "ldflags": [
-          "-Wl,--exclude-libs,ALL",
-          "-v"
-        ]
+        "ldflags": ["-Wl,--exclude-libs,ALL", "-v"]
       },
 
       "xcode_settings": {
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES"
+      },
+
+      "msvs_settings": {
+        "VCCLCompilerTool": {
+          "AdditionalOptions": [
+            "/D__DATE__=0",
+            "/D__TIME__=0",
+            "/Zc:wchar_t",
+            "/EHsc",
+            "/Gm-"
+          ]
+        },
+        "VCLinkerTool": {
+          "AdditionalOptions": [
+            "/NOLOGO",
+            "/OPT:REF",
+            "/DEBUG:NONE"
+          ]
+        }
       }
     }
   ]
