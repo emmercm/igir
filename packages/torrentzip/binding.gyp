@@ -33,7 +33,7 @@
       "link_settings": {
         "libraries": [],
         "library_dirs": ["./deps/zlib_1_1_3"],
-        "ldflags": ["-Wl,--exclude-libs,ALL", "-v"]
+        "ldflags": ["-L./deps/zlib_1_1_3", "-Wl,--exclude-libs,ALL", "-v"]
       },
 
       "xcode_settings": {
