@@ -106,6 +106,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: packages/
+          merge-multiple: true
       - run: |
           ls -alR .
           rm packages/*/prebuilds/.gitkeep
