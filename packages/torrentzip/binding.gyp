@@ -27,16 +27,18 @@
         "deps/zlib_1_1_3"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      "cflags": ["-std=c++17", "-fvisibility=hidden"],
+      "cflags": ["-fvisibility=hidden"],
       "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
 
       "libraries": [],
       "link_settings": {
-        "libraries": []
+        "libraries": ["-lz"],
+        "library_dirs": ["./deps/zlib_1_1_3"],
+        "ldflags": [
+          "-Wl,--exclude-libs,ALL",
+          "-v"
+        ]
       },
-      "ldflags": [
-        "-Wl,--exclude-libs,ALL"
-      ],
 
       "xcode_settings": {
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES"
