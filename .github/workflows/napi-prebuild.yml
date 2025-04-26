@@ -76,6 +76,7 @@ jobs:
             cd packages/torrentzip
             npm install --ignore-scripts
             ./node_modules/.bin/prebuildify --napi --strip
+            touch prebuilds/.gitkeep
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         shell: bash
         run: |
@@ -83,13 +84,11 @@ jobs:
           cd packages/torrentzip
           npm install --ignore-scripts
           ./node_modules/.bin/prebuildify --napi --strip
+          touch prebuilds/.gitkeep
 
       - shell: bash
         run: |
           ls -alR packages/*/prebuilds/
-          for dir in packages/*/prebuilds; do
-            touch "${dir}/.gitkeep"
-          done
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
