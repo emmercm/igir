@@ -27,10 +27,9 @@
         "deps/zlib_1_1_3"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      "cflags+": ["-fvisibility=hidden"],
-      "cflags_cc": ["-std=c++17"],
+      "cflags": ["-std=c++17", "-fvisibility=hidden"],
+      "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
 
-      // Do NOT link the system-installed zlib
       "libraries": [],
       "link_settings": {
         "libraries": []
