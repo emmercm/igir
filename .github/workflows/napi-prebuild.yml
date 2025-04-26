@@ -118,7 +118,7 @@ jobs:
           rm packages/*/prebuilds/.gitkeep
       - id: bump-and-commit
         run: |
-          git add --all packages/*/prebuilds
+          git add --all packages/*/prebuilds || exit 0
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
