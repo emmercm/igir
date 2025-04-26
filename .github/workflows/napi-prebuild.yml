@@ -107,6 +107,7 @@ jobs:
         with:
           path: packages/
       - run: |
+          ls -alR .
           rm packages/*/prebuilds/.gitkeep
       - id: bump-and-commit
         run: |
