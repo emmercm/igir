@@ -74,20 +74,20 @@ jobs:
           run: |
             set -x
             cd packages/torrentzip
-            npm install
+            npm install --ignore-scripts
             ./node_modules/.bin/prebuildify --napi --strip
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         shell: bash
         run: |
           set -x
           cd packages/torrentzip
-          npm install
+          npm install --ignore-scripts
           ./node_modules/.bin/prebuildify --napi --strip
 
       - shell: bash
         run: |
           ls -alR packages/*/prebuilds/
-          for dir in packages/*; do
+          for dir in packages/*/prebuilds; do
             touch "${dir}/.gitkeep"
           done
       - uses: actions/upload-artifact@v4
