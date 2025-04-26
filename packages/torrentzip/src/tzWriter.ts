@@ -305,7 +305,7 @@ export default class TZWriter {
       centralDirectoryFileHeaders.reduce((sum, cdfh) => sum + cdfh.length, 0),
       12,
     ); // length of the CD
-    buffer.writeUInt32LE(Math.min(startOfCentralDirectoryOffset, 0xff_ff_ff_ff), 16); // TODO(cemmer): handle overflow
+    buffer.writeUInt32LE(Math.min(startOfCentralDirectoryOffset, 0xff_ff_ff_ff), 16);
 
     const cdfhCrc32 = crc32(Buffer.concat(centralDirectoryFileHeaders))
       .toString(16)

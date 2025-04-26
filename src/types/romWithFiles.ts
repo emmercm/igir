@@ -11,7 +11,6 @@ export default class ROMWithFiles {
 
   private readonly outputFile: File;
 
-  // TODO(cemmer): information about what checksum algorithm was used to match the input file
   constructor(rom: ROM, inputFile: File, outputFile: File) {
     this.rom = rom;
     this.inputFile = inputFile;

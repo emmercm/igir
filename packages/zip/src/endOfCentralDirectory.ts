@@ -200,7 +200,6 @@ export default class EndOfCentralDirectory {
     fileHandle: fs.promises.FileHandle,
     eocdPosition: number,
   ): Promise<IZip64EndOfCentralDirectoryRecord> {
-    // TODO(cemmer): don't skip reading the signature, validate it
     const fixedLengthBuffer = Buffer.allocUnsafe(this.ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIZE);
     await fileHandle.read({ buffer: fixedLengthBuffer, position: eocdPosition });
     if (
