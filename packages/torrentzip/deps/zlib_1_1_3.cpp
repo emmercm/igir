@@ -1,5 +1,5 @@
 #include <napi.h>
-#include <zlib.h>
+#include "zlib.h"
 #include <vector>
 #include <memory>
 #include <sstream>
