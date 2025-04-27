@@ -44,7 +44,19 @@
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
       "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": [],
-      "ldflags": ["-no-pie"],
+      "ldflags": [],
+
+      "conditions": [
+        ["OS=='mac'", {
+          "ldflags+": ["-no-pie"]
+        }],
+        ["OS=='win'", {
+          "sources!": [
+            "deps/zstd/lib/decompress/huf_decompress_amd64.S"
+          ]
+        }]
+      ],
+
       "xcode_settings": {
         "GCC_OPTIMIZATION_LEVEL": "3",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
