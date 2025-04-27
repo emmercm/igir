@@ -93,7 +93,7 @@ jobs:
               npm install --ignore-scripts
               ./node_modules/.bin/prebuildify --napi --strip
               touch prebuilds/.gitkeep
-              cd ..
+              cd ../..
             done
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         shell: bash
@@ -104,7 +104,7 @@ jobs:
             npm install --ignore-scripts
             ./node_modules/.bin/prebuildify --napi --strip
             touch prebuilds/.gitkeep
-            cd ..
+            cd ../..
           done
 
       - shell: bash
