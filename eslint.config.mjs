@@ -160,6 +160,7 @@ export default [
       // ***** Errors *****
 
       // ***** Operands *****
+      eqeqeq: 'error',
 
       // ***** Conditionals *****
       // Don't allow unnecessary conditional checks, such as when a value is always true, which can also help catch cases

@@ -10,9 +10,12 @@ import CP437Encoder from './cp437Encoder.js';
 import DeflateTransform from './deflateTransform.js';
 import UncompressedTransform from './uncompressedTransform.js';
 
-interface LocalFileHeaderWithPosition {
+interface LocalFileHeader {
   position: number;
-  raw: Buffer<ArrayBuffer>;
+  uncompressedCrc32: number;
+  compressedSize: number;
+  uncompressedSize: number;
+  rawBytes: Buffer<ArrayBuffer>;
 }
 
 /**
@@ -41,7 +44,7 @@ export default class TZWriter {
 
   private readonly fileHandle: fs.promises.FileHandle;
   private filePosition = 0;
-  private readonly localFileHeaders: LocalFileHeaderWithPosition[] = [];
+  private readonly localFileHeaders: LocalFileHeader[] = [];
 
   private constructor(fileHandle: fs.promises.FileHandle) {
     this.fileHandle = fileHandle;
@@ -110,7 +113,10 @@ export default class TZWriter {
 
     this.localFileHeaders.push({
       position: this.filePosition,
-      raw: localFileHeader,
+      uncompressedCrc32: uncompressedTransform.getCrc32(),
+      compressedSize: compressedTransform.getSize(),
+      uncompressedSize: uncompressedTransform.getSize(),
+      rawBytes: localFileHeader,
     });
     this.filePosition += localFileHeader.length + compressedTransform.getSize();
   }
@@ -121,20 +127,24 @@ export default class TZWriter {
     compressedSize?: number,
     uncompressedSize?: number,
   ): Buffer<ArrayBuffer> {
-    const encodedFilename = CP437Encoder.canEncode(filename)
-      ? CP437Encoder.encode(filename)
-      : Buffer.from(filename, 'utf8');
+    const cp437 = CP437Encoder.canEncode(filename);
+    const encodedFilename = cp437 ? CP437Encoder.encode(filename) : Buffer.from(filename, 'utf8');
 
     const buffer = Buffer.allocUnsafe(this.LOCAL_FILE_HEADER_MIN_LENGTH + encodedFilename.length);
     this.LOCAL_FILE_HEADER_SIGNATURE.copy(buffer);
     buffer.writeUInt16LE(20, 4); // version needed (for DEFLATE)
-    buffer.writeUInt16LE(2, 6); // general purpose flag (DEFLATE max)
+    buffer.writeUInt16LE(0x02 | (cp437 ? 0x0 : 0x8_00), 6); // general purpose flag (DEFLATE max)
     buffer.writeUInt16LE(8, 8); // compression method (is DEFLATEd)
     buffer.writeUInt16LE(48_128, 10); // file last modification time
     buffer.writeUInt16LE(8600, 12); // file last modification date
     buffer.writeUInt32LE(uncompressedCrc32 ?? 0, 14);
-    buffer.writeUInt32LE(Math.min(compressedSize ?? 0, 0xff_ff_ff_ff), 18);
-    buffer.writeUInt32LE(Math.min(uncompressedSize ?? 0, 0xff_ff_ff_ff), 22);
+    if ((compressedSize ?? 0) >= 0xff_ff_ff_ff || (uncompressedSize ?? 0) >= 0xff_ff_ff_ff) {
+      buffer.writeUInt32LE(0xff_ff_ff_ff, 18);
+      buffer.writeUInt32LE(0xff_ff_ff_ff, 22);
+    } else {
+      buffer.writeUInt32LE(compressedSize ?? 0, 18);
+      buffer.writeUInt32LE(uncompressedSize ?? 0, 22);
+    }
     buffer.writeUint16LE(encodedFilename.length, 26); // file name length
     buffer.writeUint16LE(0, 28); // extra field length
     encodedFilename.copy(buffer, this.LOCAL_FILE_HEADER_MIN_LENGTH);
@@ -155,16 +165,16 @@ export default class TZWriter {
       uncompressedSize,
     );
 
-    const zip64ExtraFieldLength = 20 + (localFileHeaderRelativeOffset >= 0xff_ff_ff_ff ? 8 : 0);
+    const extraFieldLength = 20 + (localFileHeaderRelativeOffset >= 0xff_ff_ff_ff ? 8 : 0);
 
-    const buffer = Buffer.alloc(localFileHeader.length + zip64ExtraFieldLength);
+    const buffer = Buffer.alloc(localFileHeader.length + extraFieldLength);
     localFileHeader.copy(buffer, 0);
     buffer.writeUInt16LE(45, 4); // version needed (for zip64)
-    buffer.writeUint16LE(zip64ExtraFieldLength, 28); // extra field length
+    buffer.writeUint16LE(extraFieldLength, 28); // extra field length
 
     // Write extra field
     buffer.writeUInt16LE(0x00_01, localFileHeader.length);
-    buffer.writeUInt16LE(zip64ExtraFieldLength - 4, localFileHeader.length + 2);
+    buffer.writeUInt16LE(extraFieldLength - 4, localFileHeader.length + 2);
     buffer.writeBigUInt64LE(BigInt(uncompressedSize ?? 0), localFileHeader.length + 4);
     buffer.writeBigUInt64LE(BigInt(compressedSize ?? 0), localFileHeader.length + 12);
     if (localFileHeaderRelativeOffset >= 0xff_ff_ff_ff) {
@@ -180,7 +190,7 @@ export default class TZWriter {
   async finalize(): Promise<void> {
     try {
       const centralDirectoryFileHeaders = this.localFileHeaders.map((lfh) =>
-        TZWriter.centralDirectoryFileHeader(lfh.raw, lfh.position),
+        TZWriter.centralDirectoryFileHeader(lfh),
       );
       const startOfCentralDirectoryOffset = this.filePosition;
       const centralDirectoryFileHeadersConcat = Buffer.concat(centralDirectoryFileHeaders);
@@ -192,8 +202,11 @@ export default class TZWriter {
       );
       this.filePosition += centralDirectoryFileHeadersConcat.length;
 
-      // If any local file was written with zip64 information then a zip64 EOCD needs to be written
-      const zip64 = this.localFileHeaders.some((lfh) => lfh.raw.readUInt16LE(4) === 45);
+      // Determine if a zip64 EOCD needs to be written
+      const zip64 =
+        centralDirectoryFileHeadersConcat.length >= 0xff_ff_ff_ff ||
+        startOfCentralDirectoryOffset >= 0xff_ff_ff_ff ||
+        this.localFileHeaders.length >= 0xff_ff;
       if (zip64) {
         const zip64EndOfCentralDirectoryOffset = this.filePosition;
         const zip64EndOfCentralDirectoryRecord = TZWriter.zip64EndOfCentralDirectoryRecord(
@@ -231,29 +244,57 @@ export default class TZWriter {
     await this.fileHandle.close();
   }
 
-  private static centralDirectoryFileHeader(
-    localFileHeader: Buffer<ArrayBuffer>,
-    localFileHeaderOffset: number,
-  ): Buffer<ArrayBuffer> {
-    const fileNameLength = localFileHeader.readUInt16LE(26);
-    const extraFieldLength = localFileHeader.readUInt16LE(28);
+  private static centralDirectoryFileHeader(localFileHeader: LocalFileHeader): Buffer<ArrayBuffer> {
+    const fileNameLength = localFileHeader.rawBytes.readUInt16LE(26);
+    const extraFieldLength =
+      localFileHeader.uncompressedSize >= 0xff_ff_ff_ff ||
+      localFileHeader.compressedSize >= 0xff_ff_ff_ff ||
+      localFileHeader.position >= 0xff_ff_ff_ff
+        ? 4 +
+          (localFileHeader.uncompressedSize >= 0xff_ff_ff_ff ? 8 : 0) +
+          (localFileHeader.compressedSize >= 0xff_ff_ff_ff ? 8 : 0) +
+          (localFileHeader.position >= 0xff_ff_ff_ff ? 8 : 0)
+        : 0;
     const buffer = Buffer.allocUnsafe(
       this.CENTRAL_DIRECTORY_FILE_HEADER_MIN_LENGTH + fileNameLength + extraFieldLength,
     );
 
     this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE.copy(buffer);
     buffer.writeUInt16LE(0, 4); // version made by
-    localFileHeader.copy(buffer, 6, 4, 4 + 26); // version needed -> extra field length
+    localFileHeader.rawBytes.copy(buffer, 6, 4, 4 + 2); // version needed to extract
+    localFileHeader.rawBytes.copy(buffer, 8, 6, 6 + 2); // general purpose flag
+    localFileHeader.rawBytes.copy(buffer, 10, 8, 8 + 2); // compression method
+    localFileHeader.rawBytes.copy(buffer, 12, 10, 10 + 2); // file last modification time
+    localFileHeader.rawBytes.copy(buffer, 14, 12, 12 + 2); // file last modification date
+    buffer.writeUInt32LE(localFileHeader.uncompressedCrc32, 16); // uncompressed CRC32
+    buffer.writeUInt32LE(Math.min(localFileHeader.compressedSize, 0xff_ff_ff_ff), 20); // compressed size
+    buffer.writeUInt32LE(Math.min(localFileHeader.uncompressedSize, 0xff_ff_ff_ff), 24); // uncompressed size
+    localFileHeader.rawBytes.copy(buffer, 28, 26, 26 + 2); // file name length
+    buffer.writeUInt16LE(extraFieldLength, 30); // extra field length
     buffer.writeUInt16LE(0, 32); // file comment length
     buffer.writeUInt16LE(0, 34); // disk number where file starts
     buffer.writeUInt16LE(0, 36); // internal file attributes
     buffer.writeUInt32LE(0, 38); // external file attributes
-    buffer.writeUInt32LE(Math.min(localFileHeaderOffset, 0xff_ff_ff_ff), 42);
-    localFileHeader.copy(
-      buffer,
-      this.CENTRAL_DIRECTORY_FILE_HEADER_MIN_LENGTH,
-      this.LOCAL_FILE_HEADER_MIN_LENGTH,
-    ); // file name + extra field
+    buffer.writeUInt32LE(Math.min(localFileHeader.position, 0xff_ff_ff_ff), 42);
+    localFileHeader.rawBytes.copy(buffer, 46, 30, 30 + fileNameLength); // file name
+
+    // Write extra field
+    if (extraFieldLength > 0) {
+      buffer.writeUInt16LE(0x00_01, 46 + fileNameLength);
+      buffer.writeUInt16LE(extraFieldLength - 4, 46 + fileNameLength + 2);
+      let extraFieldPosition = 46 + fileNameLength + 4;
+      if (localFileHeader.uncompressedSize >= 0xff_ff_ff_ff) {
+        buffer.writeBigUInt64LE(BigInt(localFileHeader.uncompressedSize), extraFieldPosition);
+        extraFieldPosition += 8;
+      }
+      if (localFileHeader.compressedSize >= 0xff_ff_ff_ff) {
+        buffer.writeBigUInt64LE(BigInt(localFileHeader.compressedSize), extraFieldPosition);
+        extraFieldPosition += 8;
+      }
+      if (localFileHeader.position >= 0xff_ff_ff_ff) {
+        buffer.writeBigUInt64LE(BigInt(localFileHeader.position), extraFieldPosition);
+      }
+    }
 
     return buffer;
   }
@@ -265,6 +306,7 @@ export default class TZWriter {
     const buffer = Buffer.allocUnsafe(this.ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_LENGTH);
     this.ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE.copy(buffer);
     buffer.writeBigUInt64LE(BigInt(buffer.length - 12), 4); // size of the zip64 EOCD minus 12
+    // TODO(cemmer): uncompressed size < 0xFFFFFFFF doesn't get rounded up like it does in the CDFH
     buffer.writeUInt16LE(45, 12); // version made by
     buffer.writeUInt16LE(45, 14); // version needed to extract
     buffer.writeUInt32LE(0, 16); // number of this disk
@@ -299,10 +341,13 @@ export default class TZWriter {
     this.END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE.copy(buffer);
     buffer.writeUInt16LE(0, 4); // number of this disk
     buffer.writeUInt16LE(0, 6); // number of the disk with the SOCD
-    buffer.writeUInt16LE(centralDirectoryFileHeaders.length, 8); // total number of entries in this disk's CD
-    buffer.writeUInt16LE(centralDirectoryFileHeaders.length, 10); // total number of entries in the CD
+    buffer.writeUInt16LE(Math.min(centralDirectoryFileHeaders.length, 0xff_ff), 8); // total number of entries in this disk's CD
+    buffer.writeUInt16LE(Math.min(centralDirectoryFileHeaders.length, 0xff_ff), 10); // total number of entries in the CD
     buffer.writeUInt32LE(
-      centralDirectoryFileHeaders.reduce((sum, cdfh) => sum + cdfh.length, 0),
+      Math.min(
+        centralDirectoryFileHeaders.reduce((sum, cdfh) => sum + cdfh.length, 0),
+        0xff_ff_ff_ff,
+      ),
       12,
     ); // length of the CD
     buffer.writeUInt32LE(Math.min(startOfCentralDirectoryOffset, 0xff_ff_ff_ff), 16);

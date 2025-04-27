@@ -123,7 +123,7 @@ export default class IOFile {
   /**
    * @returns bytes of size {@param size} at the seek position {@param offset}
    */
-  async readAt(offset: number, size: number): Promise<Buffer> {
+  async readAt(position: number, size: number): Promise<Buffer> {
     if (size > this.tempBuffer.length) {
       this.tempBuffer = Buffer.allocUnsafe(size);
     }
@@ -134,13 +134,13 @@ export default class IOFile {
         this.tempBuffer = Buffer.alloc(0);
         this.fileBuffer = await fs.promises.readFile(this.fd);
       }
-      return Buffer.from(this.fileBuffer.subarray(offset, offset + size));
+      return Buffer.from(this.fileBuffer.subarray(position, position + size));
     }
 
     // If the file is large, read from the open file handle
     let bytesRead = 0;
     try {
-      bytesRead = (await this.fd.read(this.tempBuffer, 0, size, offset)).bytesRead;
+      bytesRead = (await this.fd.read(this.tempBuffer, 0, size, position)).bytesRead;
     } catch {
       // NOTE(cemmer): Windows will give "EINVAL: invalid argument, read" when reading out of
       //  bounds, but other OSes don't. Swallow the error.
@@ -162,18 +162,18 @@ export default class IOFile {
   /**
    * Write {@param buffer} at the seek position {@param offset}
    */
-  async writeAt(buffer: Buffer, offset: number): Promise<number> {
-    const { bytesWritten } = await this.fd.write(buffer, 0, buffer.length, offset);
+  async writeAt(buffer: Buffer, position: number): Promise<number> {
+    const { bytesWritten } = await this.fd.write(buffer, 0, buffer.length, position);
 
     if (this.fileBuffer) {
-      if (offset + bytesWritten > this.fileBuffer.length) {
+      if (position + bytesWritten > this.fileBuffer.length) {
         this.fileBuffer = Buffer.concat([
           this.fileBuffer,
-          Buffer.allocUnsafe(offset + bytesWritten - this.fileBuffer.length),
+          Buffer.allocUnsafe(position + bytesWritten - this.fileBuffer.length),
         ]);
       }
       for (let i = 0; i < bytesWritten; i += 1) {
-        this.fileBuffer[offset + i] = buffer[i];
+        this.fileBuffer[position + i] = buffer[i];
       }
     }
 

@@ -126,6 +126,10 @@ export default {
         localFileHeader.uncompressedSize !== centralDirectoryFileHeader.uncompressedSize ||
         localFileHeader.zip64ExtendedInformation?.uncompressedSize !==
           centralDirectoryFileHeader.zip64ExtendedInformation?.uncompressedSize ||
+        (localFileHeader.uncompressedSize === 0xff_ff_ff_ff &&
+          localFileHeader.compressedSize !== 0xff_ff_ff_ff) ||
+        (localFileHeader.compressedSize === 0xff_ff_ff_ff &&
+          localFileHeader.uncompressedSize !== 0xff_ff_ff_ff) ||
         localFileHeader.fileNameResolved() !== centralDirectoryFileHeader.fileNameResolved() ||
         !(
           localFileHeader.extraFields.size === 0 ||

@@ -10,7 +10,14 @@ import FsPoly from '../../../src/polyfill/fsPoly.js';
 import Options from '../../../src/types/options.js';
 import TZValidator from '../src/tzValidator.js';
 
-it('should write valid zip files', async () => {
+const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms')))
+  .filter((filePath) => filePath.endsWith('.zip'))
+  .filter((filePath) => !filePath.includes('invalid'));
+test.each(zipFiles)('fixtures should be invalid TorrentZip files: %s', async (zipFile) => {
+  await expect(TZValidator.validate(new ZipReader(zipFile))).resolves.toEqual(false);
+});
+
+it('should write valid TorrentZip files', async () => {
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
 
   try {
@@ -30,7 +37,7 @@ it('should write valid zip files', async () => {
 
     const writtenFiles = await FsPoly.walk(tempDir);
     for (const writtenFile of writtenFiles) {
-      await TZValidator.validate(new ZipReader(writtenFile));
+      await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(true);
     }
   } finally {
     await FsPoly.rm(tempDir, {

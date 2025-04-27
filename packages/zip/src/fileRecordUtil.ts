@@ -48,7 +48,7 @@ export default {
       extendedInformation.localFileHeaderRelativeOffset = Number(buffer.readBigUInt64LE(position));
       position += 8;
     }
-    if (originalFileDiskStart == 0xff_ff) {
+    if (originalFileDiskStart === 0xff_ff) {
       extendedInformation.fileDiskStart = buffer.readUInt32LE(position);
     }
 
