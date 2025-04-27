@@ -52,7 +52,7 @@ All code changes must pass the existing ESLint rules. Discussions on adding, rem
 First, you will want to check out Igir's source code from GitHub:
 
 ```shell
-git clone https://github.com/emmercm/igir.git
+git clone --recurse-submodules https://github.com/emmercm/igir.git
 ```
 
 Igir is written in TypeScript for the Node.js runtime. The current version of Node.js that Igir uses is defined under the `"volta"` object in the `package.json` file. After [installing](https://docs.volta.sh/guide/getting-started), Volta will make sure you're always using the correct Node.js version.

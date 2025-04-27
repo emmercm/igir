@@ -1,0 +1,145 @@
+name: Node-API Prebuild
+
+on:
+  pull_request:
+    types:
+      # - edited  # PR's base branch was changed
+      - opened
+      - reopened
+      - synchronize  # PR's branch was edited (i.e. new commits)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  path-filter:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            changes:
+              - 'packages/torrentzip/*'
+
+  prebuild:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    name: prebuildify (${{ matrix.os }} ${{ matrix.docker_arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # docker manifest inspect node:<version> | jq '.manifests[].platform'
+          - os: ubuntu-latest
+            docker_arch: linux/amd64
+          - os: ubuntu-latest
+            docker_arch: linux/arm/v7
+          - os: ubuntu-latest
+            docker_arch: linux/arm64/v8
+          - os: macos-13
+          - os: macos-15
+          - os: windows-latest
+          - os: windows-11-arm
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: volta-cli/action@v4
+
+      # Prebuild
+      - shell: bash
+        run: |
+          rm -rf packages/*/prebuilds
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        uses: docker/setup-qemu-action@v3
+      - id: linux-vars
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+
+          DOCKER_ARCH=${{ matrix.docker_arch }}
+          DOCKER_ARCH=${DOCKER_ARCH/linux\//}
+          DOCKER_ARCH=${DOCKER_ARCH//\//}
+          echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
+          shell: bash
+          options: |
+            --platform ${{ matrix.docker_arch }}
+            --volume ${{ github.workspace }}:/build
+            --workdir /build
+          run: |
+            set -x
+            cd packages/torrentzip
+            npm install --ignore-scripts
+            ./node_modules/.bin/prebuildify --napi --strip
+            touch prebuilds/.gitkeep
+      - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
+        shell: bash
+        run: |
+          set -x
+          cd packages/torrentzip
+          npm install --ignore-scripts
+          ./node_modules/.bin/prebuildify --napi --strip
+          touch prebuilds/.gitkeep
+
+      - shell: bash
+        run: |
+          ls -alR packages/*/prebuilds/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
+          path: packages/*/prebuilds/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  commit:
+    needs:
+      - prebuild
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Token needed to trigger Actions on push
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages/
+          merge-multiple: true
+      - run: |
+          rm packages/*/prebuilds/.gitkeep
+          ls -alR packages/*/prebuilds/
+      - id: bump-and-commit
+        run: |
+          git add --all packages/*/prebuilds
+
+          USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
+          git config --global user.email "${USER_EMAIL}"
+
+          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
+          echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
+          git config --global user.name "${USER_NAME}"
+
+          git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}" || exit 0
+          git push
+        env:
+          GH_TOKEN: ${{ github.token }}

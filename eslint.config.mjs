@@ -160,6 +160,7 @@ export default [
       // ***** Errors *****
 
       // ***** Operands *****
+      eqeqeq: 'error',
 
       // ***** Conditionals *****
       // Don't allow unnecessary conditional checks, such as when a value is always true, which can also help catch cases
@@ -263,6 +264,7 @@ export default [
   {
     files: [
       'test/**/*.ts',
+      'packages/*/test/**/*.ts',
       // TODO(cemmer)
       'src/types/files/**/*.ts',
       'src/types/patches/**/*.ts',

@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import stream from 'node:stream';
 import url from 'node:url';
+import util from 'node:util';
 
-import Temp from '../../../../../../src/globals/temp.js';
-import FsPoly from '../../../../../../src/polyfill/fsPoly.js';
-import BananaSplit from '../../../../../../src/types/files/archives/zip/bananaSplit/bananaSplit.js';
-import { CompressionMethodValue } from '../../../../../../src/types/files/archives/zip/bananaSplit/fileRecord.js';
-import FileChecksums, { ChecksumBitmask } from '../../../../../../src/types/files/fileChecksums.js';
+import Temp from '../../../src/globals/temp.js';
+import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
+import { CompressionMethodValue } from '../src/fileRecord.js';
+import ZipReader from '../src/zipReader.js';
 
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const fixtures = (await FsPoly.walk(dirname)).filter((filePath) => !filePath.endsWith('.ts'));
@@ -16,7 +18,7 @@ describe('entries', () => {
   const nonEmptyFixtures = fixtures.filter((filePath) => !emptyFixtures.includes(filePath));
 
   test.each(emptyFixtures)('empty: %s', async (filePath) => {
-    const entries = await new BananaSplit(filePath).centralDirectoryFileHeaders();
+    const entries = await new ZipReader(filePath).centralDirectoryFileHeaders();
     expect(entries).toHaveLength(0);
   });
 
@@ -482,48 +484,46 @@ describe('entries', () => {
   ]);
 
   test.each(nonEmptyFixtures)('non-empty: %s', async (filePath) => {
-    const entries = await new BananaSplit(filePath).centralDirectoryFileHeaders();
+    const entries = await new ZipReader(filePath).centralDirectoryFileHeaders();
     expect(entries.length).toBeGreaterThan(0);
 
     expect(
       entries.map((entry) => [
         // `unzip -v` output
-        entry.uncompressedSize,
+        entry.uncompressedSizeResolved(),
         entry.compressionMethod,
-        entry.compressedSize,
-        entry.timestamps.modified === undefined
-          ? undefined
-          : entry.timestamps.modified.toISOString(),
-        entry.uncompressedCrc32,
-        entry.fileName,
-        entry.fileComment,
+        entry.compressedSizeResolved(),
+        entry.fileModificationResolved().toISOString(),
+        entry.uncompressedCrc32String(),
+        entry.fileNameResolved(),
+        entry.fileCommentResolved(),
       ]),
     ).toEqual(expected.get(filePath.replace(dirname, '')));
 
     /* eslint-disable jest/no-conditional-expect */
     for (const entry of entries) {
-      expect(entry.uncompressedCrc32).toHaveLength(8);
+      expect(entry.uncompressedCrc32String()).toHaveLength(8);
 
       // Directory
       if (entry.isDirectory()) {
-        expect(entry.uncompressedCrc32).toEqual('00000000');
-        expect(entry.uncompressedSize).toEqual(0);
+        expect(entry.uncompressedCrc32String()).toEqual('00000000');
+        expect(entry.uncompressedSizeResolved()).toEqual(0);
       }
 
       // Empty file
-      if (entry.compressedSize === 0) {
-        expect(entry.uncompressedSize).toEqual(0);
-        expect(entry.uncompressedCrc32).toEqual('00000000');
+      if (entry.compressedSizeResolved() === 0) {
+        expect(entry.uncompressedSizeResolved()).toEqual(0);
+        expect(entry.uncompressedCrc32String()).toEqual('00000000');
       }
 
-      expect(entry.fileName).not.toEqual('');
+      expect(entry.fileNameResolved()).not.toEqual('');
     }
   });
 });
 
 describe('compressedStream', () => {
   test.each(fixtures)('%s', async (filePath) => {
-    const zip = new BananaSplit(filePath);
+    const zip = new ZipReader(filePath);
     const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {
@@ -531,22 +531,21 @@ describe('compressedStream', () => {
     }
 
     for (const entry of entries.filter(
-      (entry) => !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSize < 10_485_760, // 10MiB
+      (entry) =>
+        !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSizeResolved() < 10_485_760, // 10MiB
     )) {
       // Write compressed bytes to file
       const tempFile = await FsPoly.mktemp(
-        path.join(Temp.getTempDir(), path.basename(entry.fileName)),
+        path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),
       );
-      const compressedStream = await entry.compressedStream();
-      await new Promise<void>((resolve, reject) => {
-        compressedStream
-          .pipe(fs.createWriteStream(tempFile))
-          .on('finish', resolve)
-          .on('error', reject);
-      });
 
       try {
-        await expect(FsPoly.size(tempFile)).resolves.toEqual(entry.compressedSize);
+        await util.promisify(stream.pipeline)(
+          await entry.compressedStream(),
+          fs.createWriteStream(tempFile),
+        );
+
+        await expect(FsPoly.size(tempFile)).resolves.toEqual(entry.compressedSizeResolved());
       } finally {
         await FsPoly.rm(tempFile, { force: true });
       }
@@ -556,7 +555,7 @@ describe('compressedStream', () => {
 
 describe('uncompressedStream', () => {
   test.each(fixtures)('%s', async (filePath) => {
-    const zip = new BananaSplit(filePath);
+    const zip = new ZipReader(filePath);
     const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {
@@ -564,27 +563,25 @@ describe('uncompressedStream', () => {
     }
 
     for (const entry of entries.filter(
-      (entry) => !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSize < 10_485_760, // 10MiB
+      (entry) =>
+        !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSizeResolved() < 10_485_760, // 10MiB
     )) {
       // Write compressed bytes to file
       const tempFile = await FsPoly.mktemp(
-        path.join(Temp.getTempDir(), path.basename(entry.fileName)),
+        path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),
       );
-      const uncompressedStream = await entry.uncompressedStream();
-      await new Promise<void>((resolve, reject) => {
-        uncompressedStream
-          .on('error', reject)
-          .pipe(fs.createWriteStream(tempFile))
-          .on('finish', resolve)
-          .on('error', reject);
-      });
 
       try {
+        await util.promisify(stream.pipeline)(
+          await entry.uncompressedStream(),
+          fs.createWriteStream(tempFile),
+        );
+
         const size = await FsPoly.size(tempFile);
-        expect(size).toEqual(entry.uncompressedSize);
+        expect(size).toEqual(entry.uncompressedSizeResolved());
 
         const crc32 = (await FileChecksums.hashFile(tempFile, ChecksumBitmask.CRC32)).crc32;
-        expect(crc32).toEqual(entry.uncompressedCrc32);
+        expect(crc32).toEqual(entry.uncompressedCrc32String());
       } finally {
         await FsPoly.rm(tempFile, { force: true });
       }

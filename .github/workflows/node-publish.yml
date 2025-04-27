@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
       - uses: volta-cli/action@v4
         with:
           registry-url: 'https://registry.npmjs.org'

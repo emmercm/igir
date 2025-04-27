@@ -1,9 +1,10 @@
-import * as child_process from 'node:child_process';
+import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
 import { path7za } from '7zip-bin';
 import caxa from 'caxa';
+import esbuild from 'esbuild';
 import fg, { Options as GlobOptions } from 'fast-glob';
 import yargs from 'yargs';
 
@@ -68,15 +69,42 @@ const argv = await yargs(process.argv.slice(2))
 const input = path.resolve(argv.input);
 logger.info(`Input: '${input}'`);
 
+const output = path.resolve(argv.output);
+logger.info(`Output: '${output}'`);
+
+// Generate the ./dist directory
+await FsPoly.rm('dist', { recursive: true, force: true });
+await esbuild.build({
+  entryPoints: ['index.ts'],
+  outfile: path.join(input, 'dist', 'bundle.js'),
+  platform: 'node',
+  bundle: true,
+  packages: 'external',
+  format: 'esm',
+  // Fix `file:` dependencies
+  alias: (await fs.promises.readdir(path.join(input, 'packages'), { withFileTypes: true }))
+    .filter((dirent) => dirent.isDirectory())
+    .reduce<Record<string, string>>((record, dirent) => {
+      record[`@igir/${dirent.name}`] = path.join(dirent.parentPath, dirent.name);
+      return record;
+    }, {}),
+});
+
+// Generate the ./prebuilds directory
+await FsPoly.rm('prebuilds', { recursive: true, force: true });
+await FsPoly.copyDir(
+  path.join(input, 'packages', 'torrentzip', 'prebuilds', `${process.platform}-${process.arch}`),
+  path.join(input, 'prebuilds', `${process.platform}-${process.arch}`),
+);
+
 const include = new Set(
   fileFilter([
     // Start with the files we need
     { include: 'dist{,/**}', onlyFiles: false },
     { include: 'node_modules{,/**}', onlyFiles: false },
     { include: 'package*.json' },
+    { include: 'prebuilds{,/**}', onlyFiles: false },
     // Exclude unnecessary JavaScript files
-    { exclude: 'dist/test/**' },
-    { exclude: 'dist/{**/,}*.test.*' },
     { exclude: '**/jest.config.(js|ts|mjs|cjs|json)' },
     { exclude: '**/tsconfig*' },
     { exclude: '**/*.d.ts' },
@@ -125,9 +153,6 @@ logger.info(
 );
 const excludeGlobs = exclude.map((glob) => fg.convertPathToPattern(glob));
 
-const output = path.resolve(argv.output);
-logger.info(`Output: '${input}'`);
-
 logger.info('Building ...');
 await caxa({
   input,
@@ -135,9 +160,10 @@ await caxa({
   exclude: excludeGlobs,
   command: [
     `{{caxa}}/node_modules/.bin/node${process.platform === 'win32' ? '.exe' : ''}`,
-    '{{caxa}}/dist/index.js',
+    '{{caxa}}/dist/bundle.js',
   ],
 });
+await FsPoly.rm('prebuilds', { recursive: true });
 
 if (!(await FsPoly.exists(output))) {
   throw new ExpectedError(`output file '${output}' doesn't exist`);

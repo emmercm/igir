@@ -6,9 +6,15 @@ Igir supports creating `.zip` archives with the `igir zip` [command](../commands
 
     It is intentional that Igir only supports `.zip` archives right now.
 
-    `.zip` archives store CRC32 information in their "central directory" which helps drastically speed up Igir's file scanning, and they are easy to create without proprietary tools (e.g. 7-Zip, Rar).
+    `.zip` archives store CRC32 information in their "central directory" which helps drastically speed up Igir's file scanning, and zip archives are easy to create without proprietary tools (e.g. 7-Zip, Rar).
 
 See the [reading archives](../input/reading-archives.md) page for more information on archive formats and their capabilities.
+
+## TorrentZip
+
+Igir adheres to the [TorrentZip](https://sourceforge.net/projects/trrntzip/) standard of zip files. This standard allows ROM managers to write byte-for-byte identical zip files given the same input files.
+
+TorrentZip is particularly useful with how the MAME community likes to distribute ROMs. Different MAME versions can have different sets of ROMs (which is what requires set ["rebuilding" or "fixing"](../usage/arcade.md#example-re-building-a-rom-set)). A person can take a set of ROMs for an old MAME version, rebuild them for the new MAME version, and then join a BitTorrent tracker and skip downloading the correct files they already have. TorrentZip's deterministic format means zip files themselves will have the same checksum every time.
 
 ## Example: zipping a ROM collection
 

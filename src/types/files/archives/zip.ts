@@ -2,21 +2,26 @@ import fs from 'node:fs';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
 
-import archiver, { Archiver } from 'archiver';
+import { TZValidator, TZWriter } from '@igir/torrentzip';
+import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
 import async from 'async';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
-import Timer from '../../../timer.js';
 import ExpectedError from '../../expectedError.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
-import BananaSplit from './zip/bananaSplit/bananaSplit.js';
-import CentralDirectoryFileHeader from './zip/bananaSplit/centralDirectoryFileHeader.js';
 
 export default class Zip extends Archive {
+  private readonly zipReader: ZipReader;
+
+  constructor(filePath: string) {
+    super(filePath);
+    this.zipReader = new ZipReader(this.getFilePath());
+  }
+
   protected new(filePath: string): Archive {
     return new Zip(filePath);
   }
@@ -30,8 +35,7 @@ export default class Zip extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
-    const archive = new BananaSplit(this.getFilePath());
-    const entries = await archive.centralDirectoryFileHeaders();
+    const entries = await this.zipReader.centralDirectoryFileHeaders();
 
     return async.mapLimit(
       entries.filter((entry) => !entry.isDirectory()),
@@ -39,7 +43,7 @@ export default class Zip extends Archive {
       async (entryFile: CentralDirectoryFileHeader): Promise<ArchiveEntry<this>> => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
-          const entryStream = await entryFile.uncompressedStream();
+          const entryStream = await entryFile.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
           try {
             checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
           } finally {
@@ -51,9 +55,9 @@ export default class Zip extends Archive {
         return ArchiveEntry.entryOf(
           {
             archive: this,
-            entryPath: entryFile.fileName,
-            size: entryFile.uncompressedSize,
-            crc32: crc32 ?? entryFile.uncompressedCrc32,
+            entryPath: entryFile.fileNameResolved(),
+            size: entryFile.uncompressedSizeResolved(),
+            crc32: crc32 ?? entryFile.uncompressedCrc32String(),
             ...checksumsWithoutCrc,
           },
           checksumBitmask,
@@ -90,11 +94,12 @@ export default class Zip extends Archive {
       return super.extractEntryToStream(entryPath, callback, start);
     }
 
-    const archive = new BananaSplit(this.getFilePath());
-    const entries = await archive.centralDirectoryFileHeaders();
+    // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
+    const entries = await this.zipReader.centralDirectoryFileHeaders();
     const entry = entries.find(
       (entryFile) =>
-        entryFile.fileName.replaceAll(/[\\/]/g, '/') === entryPath.replaceAll(/[\\/]/g, '/'),
+        entryFile.fileNameResolved().replaceAll(/[\\/]/g, '/') ===
+        entryPath.replaceAll(/[\\/]/g, '/'),
     );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
@@ -103,7 +108,7 @@ export default class Zip extends Archive {
 
     let entryStream: stream.Readable;
     try {
-      entryStream = await entry.uncompressedStream();
+      entryStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
     }
@@ -119,112 +124,58 @@ export default class Zip extends Archive {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
     const tempZipFile = await FsPoly.mktemp(this.getFilePath());
-    const writeStream = fs.createWriteStream(tempZipFile);
-
-    // Start writing the zip file
-    const zipFile = archiver('zip', {
-      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
-      zlib: {
-        chunkSize: 256 * 1024, // 256KiB buffer to/from zlib, defaults to 16KiB
-        level: 9,
-        memLevel: 9, // history buffer size, max, defaults to 8
-      },
-    });
-    zipFile.pipe(writeStream);
+    const torrentZip = await TZWriter.open(tempZipFile);
 
     // Write each entry
     try {
-      await Zip.addArchiveEntries(zipFile, inputToOutput);
+      await Zip.addArchiveEntries(torrentZip, inputToOutput);
     } catch (error) {
-      zipFile.abort();
+      await torrentZip.close();
       await FsPoly.rm(tempZipFile, { force: true });
       throw error;
     }
 
-    // Finalize writing the zip file
-    await zipFile.finalize();
-    await new Promise<void>((resolve) => {
-      // We are writing to a file, so we want to wait on the 'close' event which indicates the file
-      // descriptor has been closed. 'finished' will also fire before 'close' does.
-      writeStream.on('close', resolve);
-    });
-
+    await torrentZip.finalize();
     await FsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(
-    zipFile: Archiver,
+    torrentZip: TZWriter,
     inputToOutput: [File, ArchiveEntry<Zip>][],
   ): Promise<void> {
-    let zipFileError: Error | undefined;
-    const catchError = (err: Error): void => {
-      zipFileError = err;
-    };
-    zipFile.on('error', catchError);
-    zipFile.on('warning', (err) => {
-      if (err.code !== 'ENOENT') {
-        catchError(err);
-      }
-    });
-
-    // Keep track of what entries have been written to the temp file on disk
-    const writtenEntries = new Set<string>();
-    zipFile.on('entry', (entry) => {
-      writtenEntries.add(entry.name);
-    });
-
-    // Write all archive entries to the zip
-    await async.eachLimit(
-      inputToOutput,
-      /**
-       * {@link archiver} uses a sequential, async queue internally:
-       * @see https://github.com/archiverjs/node-archiver/blob/b5cc14cc97cc64bdca32c0cbe9d660b5b979be7c/lib/core.js#L52
-       * Because of that, we should/can limit the number of open input file handles open. But we
-       *  also want to make sure the queue processing stays busy. Use 3 as a middle-ground.
-       */
-      3,
-      async ([inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>]): Promise<void> => {
-        const streamProcessor = async (stream: Readable): Promise<void> => {
-          // Catch stream errors such as `ENOENT: no such file or directory`
-          stream.on('error', catchError);
-
-          const entryName = outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/');
-          zipFile.append(stream, {
-            name: entryName,
-          });
-
-          // Leave the input stream open until we're done writing it
-          await new Promise<void>((resolve) => {
-            const timer = Timer.setInterval(() => {
-              if (writtenEntries.has(entryName) || zipFileError) {
-                timer.cancel();
-                resolve();
-              }
-            }, 10);
-          });
-        };
-
-        try {
-          await inputFile.createPatchedReadStream(streamProcessor);
-        } catch (error) {
-          // Reading the file can throw an exception, so we have to handle that or this will hang
-          if (error instanceof Error) {
-            catchError(error);
-          } else if (typeof error === 'string') {
-            catchError(new Error(error));
-          } else {
-            catchError(
-              new Error(
-                `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`,
-              ),
-            );
-          }
-        }
-      },
+    const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) =>
+      outputA.getEntryPath().toLowerCase().localeCompare(outputB.getEntryPath().toLowerCase()),
     );
 
-    if (zipFileError) {
-      throw zipFileError;
+    for (const [inputFile, outputArchiveEntry] of inputToOutputSorted) {
+      try {
+        await new Promise((resolve, reject) => {
+          inputFile
+            .createPatchedReadStream(async (readable) => {
+              readable.on('error', reject);
+              await torrentZip.addStream(
+                readable,
+                outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
+                inputFile.getSize(),
+              );
+            })
+            .then(resolve)
+            .catch(reject);
+        });
+      } catch (error) {
+        throw new Error(
+          `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}': ${error}`,
+        );
+      }
+    }
+  }
+
+  async isTorrentZip(): Promise<boolean> {
+    try {
+      return await TZValidator.validate(this.zipReader);
+    } catch {
+      // Likely a zip reading failure
+      return false;
     }
   }
 }

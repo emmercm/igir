@@ -106,6 +106,9 @@ dist
 
 # Custom
 dist/
+packages/*/build/**
+packages/*/package-lock.json
+./prebuilds/
 site/
 *.bat
 *.cache*
@@ -196,9 +199,9 @@ site/
 !docs/*
 
 # Always commit fixtures
+!packages/zip/test/**/*.zip
 !test/fixtures/dats/*
 !test/fixtures/dats/*/*
 !test/fixtures/patches/*
 !test/fixtures/roms/*
 !test/fixtures/roms/*/*
-!test/**/bananaSplit/**/*.zip

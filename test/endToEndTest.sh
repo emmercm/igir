@@ -21,6 +21,7 @@ parent_find() {
 }
 
 cd "$(parent_find . "package.json")"
+npm run build
 
 test_igir() {
   echo "--------------------------------------------------"

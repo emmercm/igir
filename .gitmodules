@@ -1,0 +1,6 @@
+[submodule "packages/torrentzip/deps/zlib"]
+	path = packages/torrentzip/deps/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "packages/torrentzip/deps/zlib_1_1_3"]
+	path = packages/torrentzip/deps/zlib_1_1_3
+	url = https://github.com/madler/zlib.git

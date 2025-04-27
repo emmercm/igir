@@ -1,6 +1,7 @@
 import stream, { TransformCallback } from 'node:stream';
 
 /**
+ * Protect against extracting a zip bomb.
  * @see https://en.wikipedia.org/wiki/Zip_bomb
  * @see https://www.usenix.org/system/files/woot19-paper_fifield_0.pdf
  */
@@ -13,6 +14,9 @@ export default class ZipBombProtector extends stream.Transform {
     this.expectedBytes = expectedBytes;
   }
 
+  /**
+   * Throw an error if we've read more than the expected bytes.
+   */
   _transform(
     chunk: Buffer<ArrayBuffer>,
     _encoding: BufferEncoding,
