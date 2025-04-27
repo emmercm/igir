@@ -28,16 +28,16 @@ private:
   z_stream stream_;
   bool initialized_ = false;
 
-  Napi::Value Push(const Napi::CallbackInfo& info);
-  Napi::Value Close(const Napi::CallbackInfo& info);
+  Napi::Value CompressChunk(const Napi::CallbackInfo& info);
+  Napi::Value End(const Napi::CallbackInfo& info);
 };
 
 Napi::FunctionReference Deflater::constructor;
 
 Napi::Object Deflater::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "Deflater", {
-    InstanceMethod("push", &Deflater::Push),
-    InstanceMethod("close", &Deflater::Close),
+    InstanceMethod("compressChunk", &Deflater::CompressChunk),
+    InstanceMethod("end", &Deflater::End),
   });
 
   constructor = Napi::Persistent(func);
@@ -86,7 +86,7 @@ std::string ZlibErrorToString(int ret) {
   }
 }
 
-Napi::Value Deflater::Push(const Napi::CallbackInfo& info) {
+Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (!initialized_) {
     Napi::Error::New(env, "Deflater not initialized").ThrowAsJavaScriptException();
@@ -134,7 +134,7 @@ Napi::Value Deflater::Push(const Napi::CallbackInfo& info) {
   return Napi::Buffer<uint8_t>::Copy(env, output.data(), output.size());
 }
 
-Napi::Value Deflater::Close(const Napi::CallbackInfo& info) {
+Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (initialized_) {
     deflateEnd(&stream_);

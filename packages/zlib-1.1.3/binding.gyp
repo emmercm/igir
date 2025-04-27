@@ -4,32 +4,38 @@
   },
   "targets": [
     {
-      "target_name": "zlib_1_1_3",
+      "target_name": "zlib",
       "sources": [
-        "deps/zlib_1_1_3.cpp",
-        "deps/zlib_1_1_3/adler32.c",
-        "deps/zlib_1_1_3/compress.c",
-        "deps/zlib_1_1_3/crc32.c",
-        "deps/zlib_1_1_3/deflate.c",
-        "deps/zlib_1_1_3/gzio.c",
-        "deps/zlib_1_1_3/infblock.c",
-        "deps/zlib_1_1_3/infcodes.c",
-        "deps/zlib_1_1_3/inffast.c",
-        "deps/zlib_1_1_3/inflate.c",
-        "deps/zlib_1_1_3/inftrees.c",
-        "deps/zlib_1_1_3/infutil.c",
-        "deps/zlib_1_1_3/trees.c",
-        "deps/zlib_1_1_3/uncompr.c",
-        "deps/zlib_1_1_3/zutil.c"
+        "binding.cpp",
+        "deps/zlib/adler32.c",
+        "deps/zlib/compress.c",
+        "deps/zlib/crc32.c",
+        "deps/zlib/deflate.c",
+        "deps/zlib/gzio.c",
+        "deps/zlib/infblock.c",
+        "deps/zlib/infcodes.c",
+        "deps/zlib/inffast.c",
+        "deps/zlib/inflate.c",
+        "deps/zlib/inftrees.c",
+        "deps/zlib/infutil.c",
+        "deps/zlib/trees.c",
+        "deps/zlib/uncompr.c",
+        "deps/zlib/zutil.c"
       ],
       "include_dirs": [
         "<!(node -p \"require('node-addon-api').include_dir\")",
-        "deps/zlib_1_1_3"
+        "deps/zlib"
       ],
-      "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
+      "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS", "Byte=unsigned char"],
       "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
-      "ldflags": ["-L./deps/zlib_1_1_3", "-Wl,--exclude-libs,ALL"],
+      "ldflags": ["-L./deps/zlib", "-Wl,--exclude-libs,ALL"],
+
+      "conditions": [
+        ["OS=='mac'", {
+          "defines+": ["Byte=unsigned char"]
+        }]
+      ],
 
       "xcode_settings": {
         "GCC_OPTIMIZATION_LEVEL": "3",

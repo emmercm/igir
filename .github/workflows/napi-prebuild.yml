@@ -30,7 +30,8 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-              - 'packages/torrentzip/*'
+              - 'packages/zlib*/*'
+              - 'packages/zstd*/*'
 
   prebuild:
     needs:
@@ -87,18 +88,26 @@ jobs:
             --workdir /build
           run: |
             set -x
-            cd packages/torrentzip
-            npm install --ignore-scripts
-            ./node_modules/.bin/prebuildify --napi --strip
-            touch prebuilds/.gitkeep
+            while read -r dir; do
+              for dir in "zlib" "zstd"; do
+              cd "${dir}"
+              npm install --ignore-scripts
+              ./node_modules/.bin/prebuildify --napi --strip
+              touch prebuilds/.gitkeep
+              cd ..
+            done <<< "$(find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \))"
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         shell: bash
         run: |
           set -x
-          cd packages/torrentzip
-          npm install --ignore-scripts
-          ./node_modules/.bin/prebuildify --napi --strip
-          touch prebuilds/.gitkeep
+          while read -r dir; do
+            for dir in "zlib" "zstd"; do
+            cd "${dir}"
+            npm install --ignore-scripts
+            ./node_modules/.bin/prebuildify --napi --strip
+            touch prebuilds/.gitkeep
+            cd ..
+          done <<< "$(find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \))"
 
       - shell: bash
         run: |

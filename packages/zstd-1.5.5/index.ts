@@ -8,14 +8,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-const zlib = nodeGypBuild(path.join(__dirname, '..')) as {
-  Deflater: new (level?: number) => DeflaterInstance;
-  getZlibVersion(): string;
+const zstd = nodeGypBuild(__dirname) as {
+  Compressor: new (level?: number) => ZstdStreamCompressorInstance;
+  getZstdVersion(): string;
 };
 
-export interface DeflaterInstance {
-  push(data: Buffer, flushMode?: number): Buffer;
-  close(): void;
+export interface ZstdStreamCompressorInstance {
+  compressChunk(chunk: Buffer): Buffer;
+  end(): Buffer;
 }
 
-export default zlib;
+export default zstd;

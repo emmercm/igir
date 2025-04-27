@@ -126,12 +126,6 @@
         },
       },
 
-      {
-        // Locked to a specific Zstandard version for RVZSTD zip creation
-        matchPackageNames: ['zstd-napi'],
-        enabled: false,
-      },
-
       // Update chdman, dolphin-tool, maxcso immediately
       {
         groupName: null,
