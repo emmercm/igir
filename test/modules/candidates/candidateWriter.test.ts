@@ -656,7 +656,9 @@ describe('zip', () => {
         'two.zip',
         'unknown.zip',
       ],
-      [path.join('zip', 'fourfive.zip')],
+      [
+        // no input files are TorrentZip
+      ],
     ],
     [
       '7z/*',
@@ -722,11 +724,7 @@ describe('zip', () => {
         'unknown.zip',
       ],
       [
-        path.join('zip', 'fizzbuzz.zip'),
-        path.join('zip', 'foobar.zip'),
-        path.join('zip', 'fourfive.zip'),
-        path.join('zip', 'loremipsum.zip'),
-        path.join('zip', 'unknown.zip'),
+        // no input files are TorrentZip
       ],
     ],
   ])(
