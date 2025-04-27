@@ -26,7 +26,7 @@
         "<!(node -p \"require('node-addon-api').include_dir\")",
         "deps/zlib"
       ],
-      "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS", "Byte=unsigned char"],
+      "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
       "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
       "ldflags": ["-L./deps/zlib", "-Wl,--exclude-libs,ALL"],

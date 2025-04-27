@@ -89,7 +89,6 @@ jobs:
           run: |
             set -x
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
-              for dir in "zlib" "zstd"; do
               cd "${dir}"
               npm install --ignore-scripts
               ./node_modules/.bin/prebuildify --napi --strip
@@ -101,7 +100,6 @@ jobs:
         run: |
           set -x
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
-            for dir in "zlib" "zstd"; do
             cd "${dir}"
             npm install --ignore-scripts
             ./node_modules/.bin/prebuildify --napi --strip
