@@ -93,7 +93,11 @@ await esbuild.build({
 // Generate the ./prebuilds directory
 await FsPoly.rm('prebuilds', { recursive: true, force: true });
 await FsPoly.copyDir(
-  path.join(input, 'packages', 'torrentzip', 'prebuilds', `${process.platform}-${process.arch}`),
+  path.join(input, 'packages', 'zlib-1.1.3', 'prebuilds', `${process.platform}-${process.arch}`),
+  path.join(input, 'prebuilds', `${process.platform}-${process.arch}`),
+);
+await FsPoly.copyDir(
+  path.join(input, 'packages', 'zstd-1.5.5', 'prebuilds', `${process.platform}-${process.arch}`),
   path.join(input, 'prebuilds', `${process.platform}-${process.arch}`),
 );
 
