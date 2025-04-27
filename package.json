@@ -135,7 +135,7 @@
     "jest-extended": "4.0.2",
     "prettier": "3.5.3",
     "rimraf": "6.0.1",
-    "ts-jest": "29.3.0",
+    "ts-jest": "29.3.2",
     "ts-node": "10.9.2",
     "tsc-alias": "1.8.15",
     "typescript": "5.8.3",
