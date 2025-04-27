@@ -1,7 +1,8 @@
 import fs, { OpenMode, PathLike } from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream, { Readable } from 'node:stream';
+import util from 'node:util';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
@@ -328,13 +329,9 @@ export default class File implements FileProps {
       try {
         await File.createStreamFromFile(
           tempFile,
-          async (stream) =>
-            new Promise<void>((resolve, reject) => {
-              const writeStream = fs.createWriteStream(destinationPath);
-              writeStream.on('close', resolve);
-              writeStream.on('error', reject);
-              stream.pipe(writeStream);
-            }),
+          async (readable) => {
+            await util.promisify(stream.pipeline)(readable, fs.createWriteStream(destinationPath));
+          },
           start,
         );
         return;
@@ -343,16 +340,9 @@ export default class File implements FileProps {
       }
     }
     // Extract this file removing its header
-    return this.createReadStream(
-      async (stream) =>
-        new Promise((resolve, reject) => {
-          const writeStream = fs.createWriteStream(destinationPath);
-          writeStream.on('close', resolve);
-          writeStream.on('error', reject);
-          stream.pipe(writeStream);
-        }),
-      start,
-    );
+    return this.createReadStream(async (readable) => {
+      await util.promisify(stream.pipeline)(readable, fs.createWriteStream(destinationPath));
+    }, start);
   }
 
   async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
+import util from 'node:util';
 
 import { TZValidator, TZWriter } from '@igir/torrentzip';
 import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
@@ -72,16 +73,9 @@ export default class Zip extends Archive {
       await FsPoly.mkdir(extractedDir, { recursive: true });
     }
 
-    return this.extractEntryToStream(
-      entryPath,
-      async (stream) =>
-        new Promise((resolve, reject) => {
-          const writeStream = fs.createWriteStream(extractedFilePath);
-          writeStream.on('close', resolve);
-          writeStream.on('error', reject);
-          stream.pipe(writeStream);
-        }),
-    );
+    return this.extractEntryToStream(entryPath, async (readable) => {
+      await util.promisify(stream.pipeline)(readable, fs.createWriteStream(extractedFilePath));
+    });
   }
 
   async extractEntryToStream<T>(
