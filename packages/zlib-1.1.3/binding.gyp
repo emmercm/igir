@@ -33,7 +33,7 @@
 
       "conditions": [
         ["OS=='mac'", {
-          "defines+": ["Byte=unsigned char"]
+          "defines+": ["TARGET_OS_MAC=0", "Byte=unsigned char"]
         }]
       ],
 
