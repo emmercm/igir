@@ -45,6 +45,7 @@
       "cflags_cc": [],
       "ldflags": [],
       "xcode_settings": {
+        "OTHER_LDFLAGS": ["-no-pie"],
         "GCC_OPTIMIZATION_LEVEL": "3",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
