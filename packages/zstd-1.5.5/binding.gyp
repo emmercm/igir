@@ -28,6 +28,7 @@
         "deps/zstd/lib/compress/zstd_opt.c",
         "deps/zstd/lib/compress/zstdmt_compress.c",
         "deps/zstd/lib/decompress/huf_decompress.c",
+        "deps/zstd/lib/decompress/huf_decompress_amd64.S",
         "deps/zstd/lib/decompress/zstd_ddict.c",
         "deps/zstd/lib/decompress/zstd_decompress.c",
         "deps/zstd/lib/decompress/zstd_decompress_block.c",
@@ -43,9 +44,8 @@
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
       "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": [],
-      "ldflags": [],
+      "ldflags": ["-no-pie"],
       "xcode_settings": {
-        "OTHER_LDFLAGS": ["-no-pie"],
         "GCC_OPTIMIZATION_LEVEL": "3",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
