@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import stream from 'node:stream';
 import url from 'node:url';
+import util from 'node:util';
 
 import Temp from '../../../src/globals/temp.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
@@ -536,15 +538,13 @@ describe('compressedStream', () => {
       const tempFile = await FsPoly.mktemp(
         path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),
       );
-      const compressedStream = await entry.compressedStream();
-      await new Promise<void>((resolve, reject) => {
-        compressedStream
-          .pipe(fs.createWriteStream(tempFile))
-          .on('finish', resolve)
-          .on('error', reject);
-      });
 
       try {
+        await util.promisify(stream.pipeline)(
+          await entry.compressedStream(),
+          fs.createWriteStream(tempFile),
+        );
+
         await expect(FsPoly.size(tempFile)).resolves.toEqual(entry.compressedSizeResolved());
       } finally {
         await FsPoly.rm(tempFile, { force: true });
@@ -570,16 +570,13 @@ describe('uncompressedStream', () => {
       const tempFile = await FsPoly.mktemp(
         path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),
       );
-      const uncompressedStream = await entry.uncompressedStream();
-      await new Promise<void>((resolve, reject) => {
-        uncompressedStream
-          .on('error', reject)
-          .pipe(fs.createWriteStream(tempFile))
-          .on('finish', resolve)
-          .on('error', reject);
-      });
 
       try {
+        await util.promisify(stream.pipeline)(
+          await entry.uncompressedStream(),
+          fs.createWriteStream(tempFile),
+        );
+
         const size = await FsPoly.size(tempFile);
         expect(size).toEqual(entry.uncompressedSizeResolved());
 

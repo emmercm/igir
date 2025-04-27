@@ -1,4 +1,4 @@
-import * as child_process from 'node:child_process';
+import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 

@@ -306,7 +306,6 @@ export default class TZWriter {
     const buffer = Buffer.allocUnsafe(this.ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_LENGTH);
     this.ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE.copy(buffer);
     buffer.writeBigUInt64LE(BigInt(buffer.length - 12), 4); // size of the zip64 EOCD minus 12
-    // TODO(cemmer): uncompressed size < 0xFFFFFFFF doesn't get rounded up like it does in the CDFH
     buffer.writeUInt16LE(45, 12); // version made by
     buffer.writeUInt16LE(45, 14); // version needed to extract
     buffer.writeUInt32LE(0, 16); // number of this disk
