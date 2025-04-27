@@ -40,8 +40,8 @@
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
       "cflags": ["-O3", "-fvisibility=hidden"],
-      "cflags_cc": [],
-      "ldflags": [],
+      "cflags_cc": ["-fvisibility=hidden"],
+      "ldflags": ["-L./deps/zstd/lib", "-Wl,--exclude-libs,ALL"],
 
       "conditions": [
         ["OS=='mac'", {
