@@ -88,26 +88,26 @@ jobs:
             --workdir /build
           run: |
             set -x
-            while read -r dir; do
+            find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               for dir in "zlib" "zstd"; do
               cd "${dir}"
               npm install --ignore-scripts
               ./node_modules/.bin/prebuildify --napi --strip
               touch prebuilds/.gitkeep
               cd ..
-            done <<< "$(find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \))"
+            done
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         shell: bash
         run: |
           set -x
-          while read -r dir; do
+          find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             for dir in "zlib" "zstd"; do
             cd "${dir}"
             npm install --ignore-scripts
             ./node_modules/.bin/prebuildify --napi --strip
             touch prebuilds/.gitkeep
             cd ..
-          done <<< "$(find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \))"
+          done
 
       - shell: bash
         run: |
