@@ -1,4 +1,4 @@
-import * as child_process from 'node:child_process';
+import child_process from 'node:child_process';
 import path from 'node:path';
 
 import { parse } from '@fast-csv/parse';
