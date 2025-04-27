@@ -171,6 +171,11 @@ export default class Zip extends Archive {
   }
 
   async isTorrentZip(): Promise<boolean> {
-    return TZValidator.validate(this.zipReader);
+    try {
+      return await TZValidator.validate(this.zipReader);
+    } catch {
+      // Likely a zip reading failure
+      return false;
+    }
   }
 }
