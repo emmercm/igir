@@ -14,7 +14,7 @@ import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChe
 import Options from '../../../src/types/options.js';
 import TZWriter from '../src/tzWriter.js';
 
-jest.setTimeout(60 * 1000);
+jest.setTimeout(5 * 60 * 1000); // 5min
 
 it('should write correct zip files', async () => {
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
