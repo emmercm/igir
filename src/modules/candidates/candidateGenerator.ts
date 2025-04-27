@@ -388,7 +388,7 @@ export default class CandidateGenerator extends Module {
      */
     if (
       inputFile instanceof ArchiveEntry &&
-      this.shouldGenerateArchiveFile(dat, singleValueGame, rom, romsToInputFiles)
+      (await this.shouldGenerateArchiveFile(dat, singleValueGame, rom, romsToInputFiles))
     ) {
       try {
         /**
@@ -418,20 +418,16 @@ export default class CandidateGenerator extends Module {
     }
   }
 
-  private shouldGenerateArchiveFile(
+  private async shouldGenerateArchiveFile(
     dat: DAT,
     game: SingleValueGame,
     rom: ROM,
     romsToInputFiles: Map<ROM, File>,
-  ): boolean {
+  ): Promise<boolean> {
     if (
-      [...romsToInputFiles.values()].some(
-        (inputFile) =>
-          inputFile.getFileHeader() !== undefined || inputFile.getPatch() !== undefined,
-      )
+      [...romsToInputFiles.values()].some((inputFile) => inputFile.getFileHeader() !== undefined)
     ) {
-      // At least one output file won't exactly match its input file, don't generate an archive
-      // file
+      // We're removing a header on write, so we can't raw-copy the archive
       return false;
     }
 
@@ -441,34 +437,51 @@ export default class CandidateGenerator extends Module {
       !this.options.shouldExtractRom(rom)
     ) {
       // This ROM's input file is already archived, and we're not [re-]zipping or extracting, so
-      // we want to leave it as-is. We'll check later if the input archive has excess files.
+      // we want to leave it as-is. We'll check elsewhere if the input archive has excess files.
       return true;
     }
 
-    // TODO(cemmer): delay this until after CandidatePatchGenerator
+    if (this.options.getPatchFileCount() > 0) {
+      // TODO(cemmer): we MIGHT patch these files, so we can't raw-copy this archive
+      return false;
+    }
+
+    if (this.options.getZipDatName()) {
+      // All candidates will be later combined, so we can't raw-copy this archive
+      return false;
+    }
+
     if (
-      this.options.getPatchFileCount() === 0 &&
-      !this.options.getZipDatName() &&
-      [...romsToInputFiles.entries()].every(
+      ![...romsToInputFiles.entries()].every(
         ([inputRom, inputFile]) =>
           inputFile instanceof ArchiveEntry &&
           inputFile.getArchive() instanceof Zip &&
           this.options.shouldZipRom(inputRom) &&
           OutputFactory.getPath(this.options, dat, game, inputRom, inputFile).entryPath ===
             inputFile.getExtractedFilePath(),
-      ) &&
-      [...romsToInputFiles.values()]
-        .map((inputFile) => inputFile.getFilePath())
-        .reduce(ArrayPoly.reduceUnique(), []).length === 1
+      )
     ) {
-      // TODO(cemmer): does this respect no excess sets?
-      // Every ROM should be zipped, and every input file is already in the same zip, and the
-      // archive entry paths match, so it's safe to copy the zip as-is
-      return true;
+      // Not every input file is from a zip, or it won't remain zipped, or the entry path is
+      // incorrect
+      return false;
     }
 
-    // Return false by default
-    return false;
+    const inputZipFiles = [...romsToInputFiles.values()]
+      .filter((inputFile) => inputFile instanceof ArchiveEntry)
+      .map((inputFile) => inputFile.getArchive())
+      .filter((inputArchive) => inputArchive instanceof Zip)
+      .filter(ArrayPoly.filterUniqueMapped((inputArchive) => inputArchive.getFilePath()));
+    if (inputZipFiles.length !== 1) {
+      // The input files are coming from different archives, or they aren't zip files
+      return false;
+    }
+
+    if (!(await inputZipFiles[0].isTorrentZip())) {
+      // The input file isn't a TorrentZip, which means it will be considered invalid when tested
+      return false;
+    }
+
+    return true;
   }
 
   private async getOutputFile(

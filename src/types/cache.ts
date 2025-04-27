@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import * as v8 from 'node:v8';
-import * as zlib from 'node:zlib';
+import v8 from 'node:v8';
+import zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
 

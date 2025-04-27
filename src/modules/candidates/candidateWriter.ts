@@ -261,6 +261,8 @@ export default class CandidateWriter extends Module {
       `${dat.getName()}: ${candidate.getName()}: ${zipFilePath}: testing zip`,
     );
 
+    const zipFile = new Zip(zipFilePath);
+
     const expectedEntriesByPath = expectedArchiveEntries.reduce((map, entry) => {
       map.set(entry.getEntryPath(), entry);
       return map;
@@ -273,7 +275,7 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await new Zip(zipFilePath).getArchiveEntries(checksumBitmask);
+      archiveEntries = await zipFile.getArchiveEntries(checksumBitmask);
     } catch (error) {
       return `failed to get archive contents: ${error}`;
     }
@@ -336,6 +338,10 @@ export default class CandidateWriter extends Module {
           return `has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
         }
       }
+    }
+
+    if (!(await zipFile.isTorrentZip())) {
+      return 'is not a valid TorrentZip file';
     }
 
     this.progressBar.logTrace(
