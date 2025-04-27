@@ -16,6 +16,7 @@
         "deps/zstd/lib/common/xxhash.c",
         "deps/zstd/lib/common/zstd_common.c",
         "deps/zstd/lib/compress/fse_compress.c",
+        "deps/zstd/lib/compress/hist.c",
         "deps/zstd/lib/compress/huf_compress.c",
         "deps/zstd/lib/compress/zstd_compress.c",
         "deps/zstd/lib/compress/zstd_compress_literals.c",
@@ -26,16 +27,13 @@
         "deps/zstd/lib/compress/zstd_lazy.c",
         "deps/zstd/lib/compress/zstd_ldm.c",
         "deps/zstd/lib/compress/zstd_opt.c",
+        "deps/zstd/lib/compress/zstd_preSplit.c",
         "deps/zstd/lib/compress/zstdmt_compress.c",
         "deps/zstd/lib/decompress/huf_decompress.c",
         "deps/zstd/lib/decompress/huf_decompress_amd64.S",
         "deps/zstd/lib/decompress/zstd_ddict.c",
         "deps/zstd/lib/decompress/zstd_decompress.c",
-        "deps/zstd/lib/decompress/zstd_decompress_block.c",
-        "deps/zstd/lib/dictBuilder/cover.c",
-        "deps/zstd/lib/dictBuilder/fastcover.c",
-        "deps/zstd/lib/dictBuilder/divsufsort.c",
-        "deps/zstd/lib/dictBuilder/zdict.c"
+        "deps/zstd/lib/decompress/zstd_decompress_block.c"
       ],
       "include_dirs": [
         "<!(node -p \"require('node-addon-api').include_dir\")",
