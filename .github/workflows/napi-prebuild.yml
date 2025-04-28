@@ -1,12 +1,9 @@
 name: Node-API Prebuild
 
 on:
-  pull_request:
-    types:
-      # - edited  # PR's base branch was changed
-      - opened
-      - reopened
-      - synchronize  # PR's branch was edited (i.e. new commits)
+  push:
+    branches:
+      - '!main'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -125,7 +122,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/download-artifact@v4
