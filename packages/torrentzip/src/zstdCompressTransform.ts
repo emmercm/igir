@@ -81,18 +81,20 @@ export default class ZstdCompressTransform extends stream.Transform {
    * Finalize the compressor and emit the final output.
    */
   private finalizeCompressor(): void {
-    if (!this.compressorEnded) {
-      try {
-        const finalChunk = this.compressor.end();
-        this.compressorEnded = true;
+    if (this.compressorEnded) {
+      return;
+    }
 
-        if (finalChunk.length > 0) {
-          this.push(finalChunk);
-        }
-      } catch (error) {
-        this.compressorEnded = true;
-        throw error;
+    try {
+      const finalChunk = this.compressor.end();
+      if (finalChunk.length > 0) {
+        this.push(finalChunk);
       }
+
+      this.compressorEnded = true;
+    } catch (error) {
+      this.compressorEnded = true;
+      throw error;
     }
   }
 }

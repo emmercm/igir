@@ -101,7 +101,7 @@ Napi::Value Compressor::CompressChunk(const Napi::CallbackInfo& info) {
 
     // Pre-allocate output data with reasonable initial capacity
     std::vector<uint8_t> outputData;
-    outputData.reserve(inputBuffer.Length() / 2); // Compression typically reduces size
+    outputData.reserve(outBufferSize_);
 
     // Process the input buffer
     while (inBuff.pos < inBuff.size) {
@@ -116,34 +116,10 @@ Napi::Value Compressor::CompressChunk(const Napi::CallbackInfo& info) {
         }
 
         if (outBuff.pos > 0) {
-            size_t currentSize = outputData.size();
-            outputData.resize(currentSize + outBuff.pos);
-            memcpy(outputData.data() + currentSize, outBuffer.data(), outBuff.pos);
+            outputData.insert(outputData.end(),
+                             static_cast<uint8_t*>(outBuff.dst),
+                             static_cast<uint8_t*>(outBuff.dst) + outBuff.pos);
         }
-    }
-
-    // Flush data with ZSTD_e_flush to ensure all complete blocks are output
-    bool flushComplete = false;
-    while (!flushComplete) {
-        std::vector<uint8_t> flushBuffer(outBufferSize_);
-        ZSTD_outBuffer flushOut = { flushBuffer.data(), flushBuffer.size(), 0 };
-        ZSTD_inBuffer emptyInBuff = { nullptr, 0, 0 };
-
-        size_t const flushResult = ZSTD_compressStream2(cctx_, &flushOut, &emptyInBuff, ZSTD_e_flush);
-
-        if (ZSTD_isError(flushResult)) {
-            Napi::Error::New(env, ZSTD_getErrorName(flushResult)).ThrowAsJavaScriptException();
-            return env.Null();
-        }
-
-        if (flushOut.pos > 0) {
-            // More efficient append
-            size_t currentSize = outputData.size();
-            outputData.resize(currentSize + flushOut.pos);
-            memcpy(outputData.data() + currentSize, flushBuffer.data(), flushOut.pos);
-        }
-
-        flushComplete = (flushResult == 0);
     }
 
     return Napi::Buffer<uint8_t>::Copy(env, outputData.data(), outputData.size());
@@ -157,17 +133,34 @@ Napi::Value Compressor::End(const Napi::CallbackInfo& info) {
         return Napi::Buffer<uint8_t>::New(env, 0);
     }
 
+    // Pre-allocate final output buffer
     std::vector<uint8_t> outputData;
-    outputData.reserve(outBufferSize_); // Reserve a reasonable amount
+    outputData.reserve(outBufferSize_);
 
-    // Keep flushing until all data is output and the frame is properly closed
+    // Feed an explicit empty chunk
+    ZSTD_inBuffer emptyInBuff = { nullptr, 0, 0 };
+
+    // First, try a regular flush to get any pending data
+    {
+        std::vector<uint8_t> flushBuffer(outBufferSize_);
+        ZSTD_outBuffer flushOut = { flushBuffer.data(), flushBuffer.size(), 0 };
+
+        ZSTD_compressStream2(cctx_, &flushOut, &emptyInBuff, ZSTD_e_flush);
+
+        if (flushOut.pos > 0) {
+            outputData.insert(outputData.end(),
+                              static_cast<uint8_t*>(flushOut.dst),
+                              static_cast<uint8_t*>(flushOut.dst) + flushOut.pos);
+        }
+    }
+
+    // Now force end of frame with ZSTD_e_end
     bool endComplete = false;
     while (!endComplete) {
         std::vector<uint8_t> outBuffer(outBufferSize_);
         ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
-        ZSTD_inBuffer emptyInBuff = { nullptr, 0, 0 };
 
-        // ZSTD_e_end ensures the frame is properly closed
+        // Use ZSTD_e_end to properly close the frame
         size_t const endResult = ZSTD_compressStream2(cctx_, &outBuff, &emptyInBuff, ZSTD_e_end);
 
         if (ZSTD_isError(endResult)) {
@@ -175,10 +168,11 @@ Napi::Value Compressor::End(const Napi::CallbackInfo& info) {
             return env.Null();
         }
 
+        // Add any data produced
         if (outBuff.pos > 0) {
-            size_t currentSize = outputData.size();
-            outputData.resize(currentSize + outBuff.pos);
-            memcpy(outputData.data() + currentSize, outBuffer.data(), outBuff.pos);
+            outputData.insert(outputData.end(),
+                             static_cast<uint8_t*>(outBuff.dst),
+                             static_cast<uint8_t*>(outBuff.dst) + outBuff.pos);
         }
 
         // Continue until endResult is 0, indicating frame is complete
@@ -193,12 +187,8 @@ Napi::Value Compressor::End(const Napi::CallbackInfo& info) {
 }
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
-    // Initialize the Compressor class
     Compressor::Init(env, exports);
-
-    // Expose the GetZstdVersion function as a static method
     exports.Set("getZstdVersion", Napi::Function::New(env, GetZstdVersion));
-
     return exports;
 }
 
