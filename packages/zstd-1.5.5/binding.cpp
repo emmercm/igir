@@ -11,6 +11,7 @@ class Compressor : public Napi::ObjectWrap<Compressor> {
 public:
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
     Compressor(const Napi::CallbackInfo& info);
+    ~Compressor();
 
 private:
     static Napi::FunctionReference constructor;
@@ -18,7 +19,7 @@ private:
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
     Napi::Value End(const Napi::CallbackInfo& info);
 
-    ZSTD_CStream* cstream_;
+    ZSTD_CCtx* cctx_;
     size_t outBufferSize_;
 };
 
@@ -41,33 +42,47 @@ Napi::Object Compressor::Init(Napi::Env env, Napi::Object exports) {
 }
 
 Compressor::Compressor(const Napi::CallbackInfo& info)
-    : Napi::ObjectWrap<Compressor>(info) {
+    : Napi::ObjectWrap<Compressor>(info), cctx_(nullptr) {
     int compressionLevel = 3;  // Default compression level
 
     // If a compression level is passed, use it
     if (info.Length() > 0 && info[0].IsNumber()) {
         compressionLevel = info[0].As<Napi::Number>().Int32Value();
+
+        // Validate compression level
+        if (compressionLevel < 1 || compressionLevel > 22) {
+            Napi::RangeError::New(info.Env(), "Compression level must be between 1 and 22").ThrowAsJavaScriptException();
+            return;
+        }
     }
 
-    // Create the compression stream
-    cstream_ = ZSTD_createCStream();
-    if (!cstream_) {
-        Napi::Error::New(info.Env(), "Failed to create ZSTD_CStream").ThrowAsJavaScriptException();
+    // Create the compression context
+    cctx_ = ZSTD_createCCtx();
+    if (!cctx_) {
+        Napi::Error::New(info.Env(), "Failed to create ZSTD_CCtx").ThrowAsJavaScriptException();
         return;
     }
 
-    // Initialize the compression stream with the specified compression level
-    size_t initResult = ZSTD_initCStream(cstream_, compressionLevel);
-    if (ZSTD_isError(initResult)) {
-        Napi::Error::New(info.Env(), ZSTD_getErrorName(initResult)).ThrowAsJavaScriptException();
-        return;
-    }
+    // Set compression parameters
+    ZSTD_CCtx_setParameter(cctx_, ZSTD_c_compressionLevel, compressionLevel);
 
     outBufferSize_ = ZSTD_CStreamOutSize();
 }
 
+Compressor::~Compressor() {
+    if (cctx_) {
+        ZSTD_freeCCtx(cctx_);
+        cctx_ = nullptr;
+    }
+}
+
 Napi::Value Compressor::CompressChunk(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
+
+    if (!cctx_) {
+        Napi::Error::New(env, "Compressor has been finalized").ThrowAsJavaScriptException();
+        return env.Null();
+    }
 
     if (info.Length() < 1 || !info[0].IsBuffer()) {
         Napi::TypeError::New(env, "Expected a Buffer").ThrowAsJavaScriptException();
@@ -75,22 +90,60 @@ Napi::Value Compressor::CompressChunk(const Napi::CallbackInfo& info) {
     }
 
     Napi::Buffer<uint8_t> inputBuffer = info[0].As<Napi::Buffer<uint8_t>>();
-    ZSTD_inBuffer in = { inputBuffer.Data(), inputBuffer.Length(), 0 };
 
+    // Early return for empty input
+    if (inputBuffer.Length() == 0) {
+        return Napi::Buffer<uint8_t>::New(env, 0);
+    }
+
+    // Prepare input buffer
+    ZSTD_inBuffer inBuff = { inputBuffer.Data(), inputBuffer.Length(), 0 };
+
+    // Pre-allocate output data with reasonable initial capacity
     std::vector<uint8_t> outputData;
+    outputData.reserve(inputBuffer.Length() / 2); // Compression typically reduces size
 
-    while (in.pos < in.size) {
+    // Process the input buffer
+    while (inBuff.pos < inBuff.size) {
         std::vector<uint8_t> outBuffer(outBufferSize_);
-        ZSTD_outBuffer out = { outBuffer.data(), outBuffer.size(), 0 };
+        ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
 
-        size_t ret = ZSTD_compressStream(cstream_, &out, &in);
+        size_t const remaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_continue);
 
-        if (ZSTD_isError(ret)) {
-            Napi::Error::New(env, ZSTD_getErrorName(ret)).ThrowAsJavaScriptException();
+        if (ZSTD_isError(remaining)) {
+            Napi::Error::New(env, ZSTD_getErrorName(remaining)).ThrowAsJavaScriptException();
             return env.Null();
         }
 
-        outputData.insert(outputData.end(), outBuffer.data(), outBuffer.data() + out.pos);
+        if (outBuff.pos > 0) {
+            size_t currentSize = outputData.size();
+            outputData.resize(currentSize + outBuff.pos);
+            memcpy(outputData.data() + currentSize, outBuffer.data(), outBuff.pos);
+        }
+    }
+
+    // Flush data with ZSTD_e_flush to ensure all complete blocks are output
+    bool flushComplete = false;
+    while (!flushComplete) {
+        std::vector<uint8_t> flushBuffer(outBufferSize_);
+        ZSTD_outBuffer flushOut = { flushBuffer.data(), flushBuffer.size(), 0 };
+        ZSTD_inBuffer emptyInBuff = { nullptr, 0, 0 };
+
+        size_t const flushResult = ZSTD_compressStream2(cctx_, &flushOut, &emptyInBuff, ZSTD_e_flush);
+
+        if (ZSTD_isError(flushResult)) {
+            Napi::Error::New(env, ZSTD_getErrorName(flushResult)).ThrowAsJavaScriptException();
+            return env.Null();
+        }
+
+        if (flushOut.pos > 0) {
+            // More efficient append
+            size_t currentSize = outputData.size();
+            outputData.resize(currentSize + flushOut.pos);
+            memcpy(outputData.data() + currentSize, flushBuffer.data(), flushOut.pos);
+        }
+
+        flushComplete = (flushResult == 0);
     }
 
     return Napi::Buffer<uint8_t>::Copy(env, outputData.data(), outputData.size());
@@ -99,22 +152,42 @@ Napi::Value Compressor::CompressChunk(const Napi::CallbackInfo& info) {
 Napi::Value Compressor::End(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
+    if (!cctx_) {
+        // Already finalized, return empty buffer
+        return Napi::Buffer<uint8_t>::New(env, 0);
+    }
+
     std::vector<uint8_t> outputData;
-    size_t ret;
+    outputData.reserve(outBufferSize_); // Reserve a reasonable amount
 
-    do {
+    // Keep flushing until all data is output and the frame is properly closed
+    bool endComplete = false;
+    while (!endComplete) {
         std::vector<uint8_t> outBuffer(outBufferSize_);
-        ZSTD_outBuffer out = { outBuffer.data(), outBuffer.size(), 0 };
+        ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
+        ZSTD_inBuffer emptyInBuff = { nullptr, 0, 0 };
 
-        ret = ZSTD_endStream(cstream_, &out);
+        // ZSTD_e_end ensures the frame is properly closed
+        size_t const endResult = ZSTD_compressStream2(cctx_, &outBuff, &emptyInBuff, ZSTD_e_end);
 
-        if (ZSTD_isError(ret)) {
-            Napi::Error::New(env, ZSTD_getErrorName(ret)).ThrowAsJavaScriptException();
+        if (ZSTD_isError(endResult)) {
+            Napi::Error::New(env, ZSTD_getErrorName(endResult)).ThrowAsJavaScriptException();
             return env.Null();
         }
 
-        outputData.insert(outputData.end(), outBuffer.data(), outBuffer.data() + out.pos);
-    } while (ret != 0);
+        if (outBuff.pos > 0) {
+            size_t currentSize = outputData.size();
+            outputData.resize(currentSize + outBuff.pos);
+            memcpy(outputData.data() + currentSize, outBuffer.data(), outBuff.pos);
+        }
+
+        // Continue until endResult is 0, indicating frame is complete
+        endComplete = (endResult == 0);
+    }
+
+    // Clean up the compression context
+    ZSTD_freeCCtx(cctx_);
+    cctx_ = nullptr;
 
     return Napi::Buffer<uint8_t>::Copy(env, outputData.data(), outputData.size());
 }

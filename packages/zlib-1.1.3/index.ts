@@ -10,25 +10,41 @@ const __dirname = path.dirname(__filename);
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 const zlib = nodeGypBuild(__dirname) as {
   Deflater: new (level?: number) => DeflaterInstance;
+
+  /**
+   * Get the zlib library version
+   * @returns Version string (e.g. "1.1.3")
+   */
   getZlibVersion(): string;
+
+  // Flush mode constants
+  Z_NO_FLUSH: number;
+  Z_SYNC_FLUSH: number;
+  Z_FULL_FLUSH: number;
+  Z_FINISH: number;
 };
 
 export interface DeflaterInstance {
-  compressChunk(data: Buffer, flushMode?: number): Buffer;
-  end(): void;
-}
+  /**
+   * Compress a chunk of data
+   * @param chunk Data buffer to compress
+   * @param flush Flush mode (Z_NO_FLUSH, Z_SYNC_FLUSH, Z_FULL_FLUSH, Z_FINISH, Z_BLOCK)
+   * @returns Compressed data buffer
+   */
+  compressChunk(chunk: Buffer, flush?: number): Buffer;
 
-export const ZlibFlush = {
-  Z_NO_FLUSH: 0,
-  Z_PARTIAL_FLUSH: 1,
-  Z_SYNC_FLUSH: 2,
-  Z_FULL_FLUSH: 3,
-  Z_FINISH: 4,
-  Z_BLOCK: 5,
-  Z_TREES: 6,
-} as const;
-export type ZlibFlushKey = keyof typeof ZlibFlush;
-export type ZlibFlushValue = (typeof ZlibFlush)[ZlibFlushKey];
+  /**
+   * Finalize compression and return any remaining compressed data
+   * @returns Final compressed data buffer
+   */
+  end(): Buffer;
+
+  /**
+   * Release resources without attempting to retrieve final data
+   * Use this for cleanup in error scenarios
+   */
+  finalize(): void;
+}
 
 export const ZlibCompressionLevel = {
   Z_NO_COMPRESSION: 0,

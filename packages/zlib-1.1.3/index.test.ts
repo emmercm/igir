@@ -1,4 +1,4 @@
-import zlib, { ZlibCompressionLevel, ZlibFlush } from './index.js';
+import zlib, { ZlibCompressionLevel } from './index.js';
 
 describe('getZlibVersion', () => {
   it('should be the right zlib version', () => {
@@ -15,9 +15,11 @@ describe('Deflater', () => {
     [Buffer.from('🍣🍜'), Buffer.from('fb30bf77f187f9bd7300', 'hex')],
   ])('should compress data deterministically: %s', (input, expectedOutput) => {
     const deflater = new zlib.Deflater(ZlibCompressionLevel.Z_BEST_COMPRESSION);
-    const compressed = deflater.compressChunk(input, ZlibFlush.Z_FINISH);
-    deflater.end();
+    const compressedChunk = deflater.compressChunk(input);
+    const finalChunk = deflater.end();
 
-    expect(compressed.toString('hex')).toEqual(expectedOutput.toString('hex'));
+    expect(Buffer.concat([compressedChunk, finalChunk]).toString('hex')).toEqual(
+      expectedOutput.toString('hex'),
+    );
   });
 });

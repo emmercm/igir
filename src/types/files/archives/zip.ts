@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
 
-import { TZValidator, TZWriter } from '@igir/torrentzip';
+import { TZValidator, TZWriter, ValidationResult } from '@igir/torrentzip';
 import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
 import async from 'async';
 
@@ -172,7 +172,16 @@ export default class Zip extends Archive {
 
   async isTorrentZip(): Promise<boolean> {
     try {
-      return await TZValidator.validate(this.zipReader);
+      return (await TZValidator.validate(this.zipReader)) === ValidationResult.VALID_TORRENTZIP;
+    } catch {
+      // Likely a zip reading failure
+      return false;
+    }
+  }
+
+  async isRVZSTD(): Promise<boolean> {
+    try {
+      return (await TZValidator.validate(this.zipReader)) === ValidationResult.VALID_RVZSTD;
     } catch {
       // Likely a zip reading failure
       return false;
