@@ -1,9 +1,9 @@
 import stream, { TransformCallback } from 'node:stream';
 
-import zlib, { DeflaterInstance } from '@igir/zlib-1.1.3'; // Your module name
+import zlib, { DeflaterInstance } from '@igir/zlib-1.1.3';
 
 /**
- * ZlibCompressTransform - A stream.Transform implementation for zlib compression
+ * A Transform stream that compresses data using zlib.
  */
 export default class ZlibCompressTransform extends stream.Transform {
   private readonly deflater: DeflaterInstance = new zlib.Deflater(9);

@@ -2,8 +2,8 @@ name: Node-API Prebuild
 
 on:
   push:
-    branches:
-      - '!main'
+    branches-ignore:
+      - 'main'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
