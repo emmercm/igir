@@ -86,7 +86,10 @@ jobs:
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
+      - shell: bash
+        run: |
+          rm -rf packages/*/prebuilds
+          npm ci
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
