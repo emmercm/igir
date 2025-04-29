@@ -1,35 +1,178 @@
 #include <napi.h>
 #include "deps/zstd/lib/zstd.h"
 #include <vector>
-#include <stdexcept>
+#include <memory>
+#include <mutex>
+#include <cstring>
+
+// Promise-based worker for compression operations
+class CompressPromiseWorker : public Napi::AsyncWorker {
+public:
+    CompressPromiseWorker(std::shared_ptr<Napi::Promise::Deferred> deferred,
+                          std::vector<uint8_t> input,
+                          ZSTD_CCtx* cctx,
+                          ZSTD_EndDirective endOp)
+        : Napi::AsyncWorker(deferred->Env()),
+          deferred_(deferred),
+          input_(std::move(input)),
+          cctx_(cctx),
+          endOp_(endOp),
+          result_() {}
+
+    ~CompressPromiseWorker() {}
+
+    void Execute() override {
+        // Check if context is valid
+        if (!cctx_) {
+            SetError("Compression context is no longer valid");
+            return;
+        }
+
+        // Setup input buffer
+        ZSTD_inBuffer inBuff = { input_.data(), input_.size(), 0 };
+
+        // Determine output buffer size more efficiently
+        size_t outSize;
+        if (input_.size() > 0) {
+            outSize = ZSTD_compressBound(input_.size());
+        } else if (endOp_ == ZSTD_e_end) {
+            // For end operations with no input, we just need a small buffer
+            outSize = ZSTD_CStreamOutSize();
+        } else {
+            // Empty continue operation, no output expected
+            outSize = 0;
+        }
+
+        // Prepare output buffer more efficiently
+        if (outSize > 0) {
+            result_.reserve(outSize);
+        }
+
+        // Use a fixed output buffer size that's efficient for zstd
+        const size_t outBuffSize = ZSTD_CStreamOutSize();
+        std::vector<uint8_t> outBuffer(outBuffSize);
+
+        // Process based on the end directive
+        if (endOp_ == ZSTD_e_end) {
+            // First flush any pending data
+            bool flushFinished = false;
+            while (!flushFinished) {
+                ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
+
+                size_t const flushRemaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_flush);
+
+                if (ZSTD_isError(flushRemaining)) {
+                    SetError(std::string("Flush error: ") + ZSTD_getErrorName(flushRemaining));
+                    return;
+                }
+
+                if (outBuff.pos > 0) {
+                    size_t currentSize = result_.size();
+                    result_.resize(currentSize + outBuff.pos);
+                    std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
+                }
+
+                // Flush is complete when remaining is 0
+                flushFinished = (flushRemaining == 0);
+            }
+
+            // Now do the end operation
+            bool endFinished = false;
+            while (!endFinished) {
+                ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
+
+                size_t const endRemaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_end);
+
+                if (ZSTD_isError(endRemaining)) {
+                    SetError(std::string("End error: ") + ZSTD_getErrorName(endRemaining));
+                    return;
+                }
+
+                if (outBuff.pos > 0) {
+                    size_t currentSize = result_.size();
+                    result_.resize(currentSize + outBuff.pos);
+                    std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
+                }
+
+                // End is complete when remaining is 0
+                endFinished = (endRemaining == 0);
+            }
+
+            // Free the context after successful end operation
+            if (cctx_) {
+                ZSTD_freeCCtx(cctx_);
+                cctx_ = nullptr;
+            }
+        } else {
+            // Regular compression operation
+            while (inBuff.pos < inBuff.size) {
+                ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
+
+                size_t const remaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, endOp_);
+
+                if (ZSTD_isError(remaining)) {
+                    SetError(std::string("Compression error: ") + ZSTD_getErrorName(remaining));
+                    return;
+                }
+
+                if (outBuff.pos > 0) {
+                    size_t currentSize = result_.size();
+                    result_.resize(currentSize + outBuff.pos);
+                    std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
+                }
+            }
+        }
+    }
+
+    void OnOK() override {
+        Napi::HandleScope scope(Env());
+        deferred_->Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
+    }
+
+    void OnError(const Napi::Error& e) override {
+        Napi::HandleScope scope(Env());
+        deferred_->Reject(e.Value());
+    }
+
+private:
+    std::shared_ptr<Napi::Promise::Deferred> deferred_;
+    std::vector<uint8_t> input_;
+    ZSTD_CCtx* cctx_;
+    ZSTD_EndDirective endOp_;
+    std::vector<uint8_t> result_;
+};
 
 Napi::String GetZstdVersion(const Napi::CallbackInfo& info) {
-  return Napi::String::New(info.Env(), ZSTD_versionString());
+    return Napi::String::New(info.Env(), ZSTD_versionString());
 }
 
-class Compressor : public Napi::ObjectWrap<Compressor> {
+class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
 public:
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
-    Compressor(const Napi::CallbackInfo& info);
-    ~Compressor();
+    ThreadedCompressor(const Napi::CallbackInfo& info);
+    ~ThreadedCompressor();
 
 private:
     static Napi::FunctionReference constructor;
 
+    // Promise-based methods
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
     Napi::Value End(const Napi::CallbackInfo& info);
 
+    // Thread safety
+    std::mutex mutex_;
     ZSTD_CCtx* cctx_;
+    bool finalized_;
     size_t outBufferSize_;
 };
 
-Napi::FunctionReference Compressor::constructor;
+Napi::FunctionReference ThreadedCompressor::constructor;
 
-Napi::Object Compressor::Init(Napi::Env env, Napi::Object exports) {
-    // Define the class and its methods
-    Napi::Function func = DefineClass(env, "Compressor", {
-        InstanceMethod("compressChunk", &Compressor::CompressChunk),
-        InstanceMethod("end", &Compressor::End),
+Napi::Object ThreadedCompressor::Init(Napi::Env env, Napi::Object exports) {
+    // Define the class and its promise-based methods
+    Napi::Function func = DefineClass(env, "ThreadedCompressor", {
+        InstanceMethod("compressChunk", &ThreadedCompressor::CompressChunk),
+        InstanceMethod("end", &ThreadedCompressor::End),
     });
 
     // Set the constructor as a static reference for future use
@@ -37,21 +180,47 @@ Napi::Object Compressor::Init(Napi::Env env, Napi::Object exports) {
     constructor.SuppressDestruct();
 
     // Expose the class to JavaScript/Node.js
-    exports.Set("Compressor", func);
+    exports.Set("ThreadedCompressor", func);
     return exports;
 }
 
-Compressor::Compressor(const Napi::CallbackInfo& info)
-    : Napi::ObjectWrap<Compressor>(info), cctx_(nullptr) {
-    int compressionLevel = 3;  // Default compression level
+ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info)
+    : Napi::ObjectWrap<ThreadedCompressor>(info), cctx_(nullptr), finalized_(false) {
 
-    // If a compression level is passed, use it
-    if (info.Length() > 0 && info[0].IsNumber()) {
+    Napi::Env env = info.Env();
+    int compressionLevel = 3;  // Default compression level
+    int threadCount = 0;       // Default non-multi-threaded mode
+
+    // Parse options object if provided
+    if (info.Length() > 0 && info[0].IsObject()) {
+        Napi::Object options = info[0].As<Napi::Object>();
+
+        if (options.Has("level") && options.Get("level").IsNumber()) {
+            compressionLevel = options.Get("level").As<Napi::Number>().Int32Value();
+
+            // Validate compression level
+            if (compressionLevel < 1 || compressionLevel > 22) {
+                Napi::RangeError::New(env, "Compression level must be between 1 and 22").ThrowAsJavaScriptException();
+                return;
+            }
+        }
+
+        if (options.Has("threads") && options.Get("threads").IsNumber()) {
+            threadCount = options.Get("threads").As<Napi::Number>().Int32Value();
+
+            // Validate thread count
+            if (threadCount < 0) {
+                Napi::RangeError::New(env, "Thread count must be non-negative").ThrowAsJavaScriptException();
+                return;
+            }
+        }
+    } else if (info.Length() > 0 && info[0].IsNumber()) {
+        // Legacy mode: just accept compression level
         compressionLevel = info[0].As<Napi::Number>().Int32Value();
 
         // Validate compression level
         if (compressionLevel < 1 || compressionLevel > 22) {
-            Napi::RangeError::New(info.Env(), "Compression level must be between 1 and 22").ThrowAsJavaScriptException();
+            Napi::RangeError::New(env, "Compression level must be between 1 and 22").ThrowAsJavaScriptException();
             return;
         }
     }
@@ -59,135 +228,124 @@ Compressor::Compressor(const Napi::CallbackInfo& info)
     // Create the compression context
     cctx_ = ZSTD_createCCtx();
     if (!cctx_) {
-        Napi::Error::New(info.Env(), "Failed to create ZSTD_CCtx").ThrowAsJavaScriptException();
+        Napi::Error::New(env, "Failed to create ZSTD_CCtx").ThrowAsJavaScriptException();
         return;
     }
 
-    // Set compression parameters
-    ZSTD_CCtx_setParameter(cctx_, ZSTD_c_compressionLevel, compressionLevel);
+    // Set compression level with error checking
+    size_t result = ZSTD_CCtx_setParameter(cctx_, ZSTD_c_compressionLevel, compressionLevel);
+    if (ZSTD_isError(result)) {
+        ZSTD_freeCCtx(cctx_);
+        cctx_ = nullptr;
+        Napi::Error::New(env, std::string("Failed to set compression level: ") +
+            ZSTD_getErrorName(result)).ThrowAsJavaScriptException();
+        return;
+    }
+
+    // Set thread count if specified (for multithreaded compression)
+    if (threadCount > 0) {
+        result = ZSTD_CCtx_setParameter(cctx_, ZSTD_c_nbWorkers, threadCount);
+        if (ZSTD_isError(result)) {
+            ZSTD_freeCCtx(cctx_);
+            cctx_ = nullptr;
+            Napi::Error::New(env, std::string("Failed to set worker threads: ") +
+                ZSTD_getErrorName(result)).ThrowAsJavaScriptException();
+            return;
+        }
+    }
 
     outBufferSize_ = ZSTD_CStreamOutSize();
 }
 
-Compressor::~Compressor() {
+ThreadedCompressor::~ThreadedCompressor() {
+    std::lock_guard<std::mutex> lock(mutex_);
+
     if (cctx_) {
         ZSTD_freeCCtx(cctx_);
         cctx_ = nullptr;
     }
+
+    finalized_ = true;
 }
 
-Napi::Value Compressor::CompressChunk(const Napi::CallbackInfo& info) {
+Napi::Value ThreadedCompressor::CompressChunk(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
-    if (!cctx_) {
+    // Lock to ensure thread safety
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (finalized_ || !cctx_) {
         Napi::Error::New(env, "Compressor has been finalized").ThrowAsJavaScriptException();
-        return env.Null();
+        return env.Undefined();
     }
 
     if (info.Length() < 1 || !info[0].IsBuffer()) {
         Napi::TypeError::New(env, "Expected a Buffer").ThrowAsJavaScriptException();
-        return env.Null();
+        return env.Undefined();
     }
 
     Napi::Buffer<uint8_t> inputBuffer = info[0].As<Napi::Buffer<uint8_t>>();
 
-    // Early return for empty input
-    if (inputBuffer.Length() == 0) {
-        return Napi::Buffer<uint8_t>::New(env, 0);
-    }
+    // Create a deferred promise
+    auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
 
-    // Prepare input buffer
-    ZSTD_inBuffer inBuff = { inputBuffer.Data(), inputBuffer.Length(), 0 };
+    // Copy the data to avoid issues with buffer being modified
+    std::vector<uint8_t> dataCopy;
+    dataCopy.reserve(inputBuffer.Length());  // Pre-allocate to avoid resizing
+    dataCopy.assign(inputBuffer.Data(), inputBuffer.Data() + inputBuffer.Length());
 
-    // Pre-allocate output data with reasonable initial capacity
-    std::vector<uint8_t> outputData;
-    outputData.reserve(outBufferSize_);
+    // Create and schedule the promise worker
+    CompressPromiseWorker* worker = new CompressPromiseWorker(
+        deferred,
+        std::move(dataCopy),
+        cctx_,
+        ZSTD_e_continue
+    );
+    worker->Queue();
 
-    // Process the input buffer
-    while (inBuff.pos < inBuff.size) {
-        std::vector<uint8_t> outBuffer(outBufferSize_);
-        ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
-
-        size_t const remaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_continue);
-
-        if (ZSTD_isError(remaining)) {
-            Napi::Error::New(env, ZSTD_getErrorName(remaining)).ThrowAsJavaScriptException();
-            return env.Null();
-        }
-
-        if (outBuff.pos > 0) {
-            outputData.insert(outputData.end(),
-                             static_cast<uint8_t*>(outBuff.dst),
-                             static_cast<uint8_t*>(outBuff.dst) + outBuff.pos);
-        }
-    }
-
-    return Napi::Buffer<uint8_t>::Copy(env, outputData.data(), outputData.size());
+    return deferred->Promise();
 }
 
-Napi::Value Compressor::End(const Napi::CallbackInfo& info) {
+Napi::Value ThreadedCompressor::End(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
-    if (!cctx_) {
-        // Already finalized, return empty buffer
-        return Napi::Buffer<uint8_t>::New(env, 0);
+    // Lock to ensure thread safety
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (finalized_ || !cctx_) {
+        // Already finalized, return resolved promise with empty buffer
+        auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
+        deferred->Resolve(Napi::Buffer<uint8_t>::New(env, 0));
+        return deferred->Promise();
     }
 
-    // Pre-allocate final output buffer
-    std::vector<uint8_t> outputData;
-    outputData.reserve(outBufferSize_);
+    // Create a deferred promise
+    auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
 
-    // Feed an explicit empty chunk
-    ZSTD_inBuffer emptyInBuff = { nullptr, 0, 0 };
+    // Create empty vector for end operation
+    std::vector<uint8_t> emptyData;
 
-    // First, try a regular flush to get any pending data
-    {
-        std::vector<uint8_t> flushBuffer(outBufferSize_);
-        ZSTD_outBuffer flushOut = { flushBuffer.data(), flushBuffer.size(), 0 };
+    // Store the context locally so worker can use it
+    ZSTD_CCtx* ctx_for_worker = cctx_;
+    cctx_ = nullptr;  // Clear our pointer to avoid double-free
 
-        ZSTD_compressStream2(cctx_, &flushOut, &emptyInBuff, ZSTD_e_flush);
+    // Mark as finalized to prevent further operations
+    finalized_ = true;
 
-        if (flushOut.pos > 0) {
-            outputData.insert(outputData.end(),
-                              static_cast<uint8_t*>(flushOut.dst),
-                              static_cast<uint8_t*>(flushOut.dst) + flushOut.pos);
-        }
-    }
+    // Create and schedule the promise worker
+    CompressPromiseWorker* worker = new CompressPromiseWorker(
+        deferred,
+        std::move(emptyData),
+        ctx_for_worker,
+        ZSTD_e_end
+    );
+    worker->Queue();
 
-    // Now force end of frame with ZSTD_e_end
-    bool endComplete = false;
-    while (!endComplete) {
-        std::vector<uint8_t> outBuffer(outBufferSize_);
-        ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
-
-        // Use ZSTD_e_end to properly close the frame
-        size_t const endResult = ZSTD_compressStream2(cctx_, &outBuff, &emptyInBuff, ZSTD_e_end);
-
-        if (ZSTD_isError(endResult)) {
-            Napi::Error::New(env, ZSTD_getErrorName(endResult)).ThrowAsJavaScriptException();
-            return env.Null();
-        }
-
-        // Add any data produced
-        if (outBuff.pos > 0) {
-            outputData.insert(outputData.end(),
-                             static_cast<uint8_t*>(outBuff.dst),
-                             static_cast<uint8_t*>(outBuff.dst) + outBuff.pos);
-        }
-
-        // Continue until endResult is 0, indicating frame is complete
-        endComplete = (endResult == 0);
-    }
-
-    // Clean up the compression context
-    ZSTD_freeCCtx(cctx_);
-    cctx_ = nullptr;
-
-    return Napi::Buffer<uint8_t>::Copy(env, outputData.data(), outputData.size());
+    return deferred->Promise();
 }
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
-    Compressor::Init(env, exports);
+    ThreadedCompressor::Init(env, exports);
     exports.Set("getZstdVersion", Napi::Function::New(env, GetZstdVersion));
     return exports;
 }

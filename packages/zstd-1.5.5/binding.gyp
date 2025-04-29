@@ -38,15 +38,18 @@
         "<!(node -p \"require('node-addon-api').include_dir\")",
         "deps/zstd/lib"
       ],
-      "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
+      "defines": [
+        "NAPI_DISABLE_CPP_EXCEPTIONS",
+        "ZSTD_MULTITHREAD",
+        "ZSTD_LIB_DECOMPRESSION=0",
+        "ZSTD_LEGACY_SUPPORT=0",
+        "ZSTD_NO_UNUSED_FUNCTIONS=1"
+      ],
       "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": ["-fvisibility=hidden"],
       "ldflags": ["-L./deps/zstd/lib", "-Wl,--exclude-libs,ALL"],
 
       "conditions": [
-        ["OS=='mac'", {
-          "ldflags+": ["-no-pie"]
-        }],
         ["OS=='win'", {
           "sources!": [
             "deps/zstd/lib/decompress/huf_decompress_amd64.S"

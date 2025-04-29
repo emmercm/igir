@@ -16,10 +16,10 @@ describe('Compressor', () => {
     ],
     [Buffer.from('smörgås'), Buffer.from('28b52ffd0068480000736dc3b67267c3a573010000', 'hex')],
     [Buffer.from('🍣🍜'), Buffer.from('28b52ffd0068400000f09f8da3f09f8d9c010000', 'hex')],
-  ])('should compress data deterministically: %s', (input, expectedOutput) => {
-    const compressor = new zstd.Compressor(19);
-    const compressedChunk = compressor.compressChunk(input);
-    const finalChunk = compressor.end();
+  ])('should compress data deterministically: %s', async (input, expectedOutput) => {
+    const compressor = new zstd.ThreadedCompressor(19);
+    const compressedChunk = await compressor.compressChunk(input);
+    const finalChunk = await compressor.end();
 
     expect(Buffer.concat([compressedChunk, finalChunk]).toString('hex')).toEqual(
       expectedOutput.toString('hex'),
