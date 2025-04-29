@@ -29,7 +29,7 @@
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
       "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
-      "ldflags": ["-L./deps/zlib", "-Wl,--exclude-libs,ALL"],
+      "ldflags": ["-Wl,--exclude-libs,ALL"],
 
       "conditions": [
         ["OS=='mac'", {

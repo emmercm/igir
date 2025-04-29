@@ -43,11 +43,12 @@
         "ZSTD_MULTITHREAD",
         "ZSTD_LIB_DECOMPRESSION=0",
         "ZSTD_LEGACY_SUPPORT=0",
-        "ZSTD_NO_UNUSED_FUNCTIONS=1"
+        "ZSTD_NO_UNUSED_FUNCTIONS=1",
+        "ZSTD_NOBENCH=1"
       ],
       "cflags": ["-O3", "-fvisibility=hidden"],
       "cflags_cc": ["-fvisibility=hidden"],
-      "ldflags": ["-L./deps/zstd/lib", "-Wl,--exclude-libs,ALL"],
+      "ldflags": ["-Wl,--exclude-libs,ALL"],
 
       "conditions": [
         ["OS=='win'", {
