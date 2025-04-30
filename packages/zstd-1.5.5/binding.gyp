@@ -47,6 +47,7 @@
       ],
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS",
+        "ZSTD_STATIC_LINKING_ONLY",
         "ZSTD_MULTITHREAD",
         "ZSTD_LIB_DECOMPRESSION=0",
         "ZSTD_LEGACY_SUPPORT=0",

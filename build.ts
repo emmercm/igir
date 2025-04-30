@@ -1,9 +1,34 @@
 import child_process from 'node:child_process';
 import path from 'node:path';
+import url from 'node:url';
 
 import fg from 'fast-glob';
 
 import FsPoly from './src/polyfill/fsPoly.js';
+
+/**
+ * Search for a {@link fileName} in {@link filePath} or any of its parent directories.
+ */
+async function scanUpPathForFile(filePath: string, fileName: string): Promise<string | undefined> {
+  const fullPath = path.join(filePath, fileName);
+  if (await FsPoly.exists(fullPath)) {
+    return fullPath;
+  }
+
+  const parentPath = path.dirname(filePath);
+  if (parentPath !== filePath) {
+    return scanUpPathForFile(path.dirname(filePath), fileName);
+  }
+
+  return undefined;
+}
+const nodeModules = await scanUpPathForFile(
+  url.fileURLToPath(new URL('.', import.meta.url)),
+  'node_modules',
+);
+if (nodeModules === undefined) {
+  throw new Error('failed to find node_modules');
+}
 
 // Delete any previous build output
 if (await FsPoly.exists('dist')) {
@@ -13,7 +38,7 @@ if (await FsPoly.exists('dist')) {
 // Transpile the TypeScript
 await new Promise((resolve, reject) => {
   const tsc = child_process.spawn(
-    path.join('node_modules', '.bin', 'tsc'),
+    path.join(nodeModules, '.bin', 'tsc'),
     ['--declaration', 'false', '--sourceMap', 'false'],
     {
       windowsHide: true,
@@ -23,7 +48,7 @@ await new Promise((resolve, reject) => {
   tsc.on('error', reject);
 });
 await new Promise((resolve, reject) => {
-  const tscAlias = child_process.spawn(path.join('node_modules', '.bin', 'tsc-alias'), [], {
+  const tscAlias = child_process.spawn(path.join(nodeModules, '.bin', 'tsc-alias'), [], {
     windowsHide: true,
   });
   tscAlias.on('close', resolve);
