@@ -79,7 +79,9 @@
           "EnableIntrinsicFunctions": "true",
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
-          "AdditionalOptions": []
+          "AdditionalOptions": [
+            "/D__DATE__=0"
+          ]
         },
         "VCLinkerTool": {}
       }
