@@ -69,7 +69,7 @@ export default class TZWriter {
    */
   static async open(
     filePath: string,
-    compressionMethod: CompressionMethodValue = CompressionMethod.DEFLATE,
+    compressionMethod: CompressionMethodValue,
   ): Promise<TZWriter> {
     const fileHandle = await fs.promises.open(filePath, 'w');
     return new TZWriter(fileHandle, compressionMethod);
@@ -78,7 +78,12 @@ export default class TZWriter {
   /**
    * Add a stream to the TorrentZip.
    */
-  async addStream(readable: Readable, filename: string, uncompressedSize: number): Promise<void> {
+  async addStream(
+    readable: Readable,
+    filename: string,
+    uncompressedSize: number,
+    compressorThreads: number,
+  ): Promise<void> {
     // Figure out how long the local file header will be
     let localFileHeaderPlaceholder: Buffer<ArrayBuffer>;
     if (uncompressedSize >= 0xff_ff_ff_ff) {
@@ -101,7 +106,7 @@ export default class TZWriter {
       uncompressedTransform,
       this.compressionMethod === CompressionMethod.DEFLATE
         ? new ZlibDeflateTransform()
-        : new ZstdCompressTransform(),
+        : new ZstdCompressTransform(compressorThreads),
       compressedTransform,
       fs.createWriteStream(os.devNull, {
         fd: this.fileHandle.fd,
@@ -282,6 +287,7 @@ export default class TZWriter {
    * Close the file handle.
    */
   async close(): Promise<void> {
+    console.log(`\n\nclosing ${this.fileHandle.fd}\n\n`);
     await this.fileHandle.close();
   }
 

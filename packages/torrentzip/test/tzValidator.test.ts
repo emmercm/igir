@@ -7,7 +7,7 @@ import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
-import Options from '../../../src/types/options.js';
+import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 
 const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms')))
@@ -30,6 +30,7 @@ it('should write valid TorrentZip files', async () => {
         input: [path.join('test', 'fixtures', 'roms')],
         inputExclude: ['**/invalid.*'],
         output: tempDir,
+        zipFormat: ZipFormatInverted[ZipFormat.TORRENTZIP].toLowerCase(),
         excludeDisks: true,
         dirDatName: true,
         disableCache: true,
@@ -62,6 +63,7 @@ it('should write valid RVZSTD files', async () => {
         input: [path.join('test', 'fixtures', 'roms')],
         inputExclude: ['**/invalid.*'],
         output: tempDir,
+        zipFormat: ZipFormatInverted[ZipFormat.RVZSTD].toLowerCase(),
         excludeDisks: true,
         dirDatName: true,
         disableCache: true,
@@ -72,7 +74,7 @@ it('should write valid RVZSTD files', async () => {
     const writtenFiles = await FsPoly.walk(tempDir);
     for (const writtenFile of writtenFiles) {
       await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
-        ValidationResult.VALID_TORRENTZIP,
+        ValidationResult.VALID_RVZSTD,
       );
     }
   } finally {

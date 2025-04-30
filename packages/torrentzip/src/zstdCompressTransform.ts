@@ -6,11 +6,7 @@ import zstd, { ZstdThreadedCompressorInstance } from '@igir/zstd-1.5.5';
  * A Transform stream that compresses data using zstd with multithreading support.
  */
 export class ZstdCompressTransform extends stream.Transform {
-  private readonly compressor: ZstdThreadedCompressorInstance = new zstd.ThreadedCompressor({
-    level: 19,
-    // Has to be >0 to separate the data into multiple blocks
-    threads: 1,
-  });
+  private readonly compressor: ZstdThreadedCompressorInstance;
   private pendingOperationsCount = 0;
   private finalized = false;
   private finalizationPromise?: Promise<Buffer>;
@@ -18,8 +14,17 @@ export class ZstdCompressTransform extends stream.Transform {
   /**
    * Creates a new ZstdCompressTransform stream.
    */
-  constructor() {
+  constructor(threads: number) {
     super();
+
+    if (threads < 1) {
+      throw new Error('ZSTD_c_nbWorkers must be greater than 1');
+    }
+    this.compressor = new zstd.ThreadedCompressor({
+      level: 19,
+      // Has to be >0 to separate the data into multiple blocks, can be 1
+      threads,
+    });
 
     this.on('error', this.handleError);
     this.on('close', this.handleClose);

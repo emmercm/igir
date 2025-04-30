@@ -14,6 +14,7 @@ import {
   InputChecksumArchivesMode,
   MergeMode,
   PreferRevision,
+  ZipFormat,
 } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -224,6 +225,7 @@ describe('options', () => {
     expect(options.getCleanBackup()).toBeUndefined();
     expect(options.getCleanDryRun()).toEqual(false);
 
+    expect(options.getZipFormat()).toEqual(ZipFormat.TORRENTZIP);
     expect(options.getZipDatName()).toEqual(false);
 
     expect(options.getSymlink()).toEqual(false);
@@ -1896,6 +1898,51 @@ describe('options', () => {
         ])
         .getCleanDryRun(),
     ).toEqual(false);
+  });
+
+  it('should parse "zip-format"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([
+          'copy',
+          'zip',
+          '--input',
+          os.devNull,
+          '--output',
+          os.devNull,
+          '--zip-format',
+          'foobar',
+        ])
+        .getZipFormat(),
+    ).toThrow(/invalid value/i);
+    expect(
+      argumentsParser
+        .parse([
+          'copy',
+          'zip',
+          '--input',
+          os.devNull,
+          '--output',
+          os.devNull,
+          '--zip-format',
+          'torrentzip',
+        ])
+        .getZipFormat(),
+    ).toEqual(ZipFormat.TORRENTZIP);
+    expect(
+      argumentsParser
+        .parse([
+          'copy',
+          'zip',
+          '--input',
+          os.devNull,
+          '--output',
+          os.devNull,
+          '--zip-format',
+          'rvzstd',
+        ])
+        .getZipFormat(),
+    ).toEqual(ZipFormat.RVZSTD);
   });
 
   it('should parse "zip-exclude"', () => {

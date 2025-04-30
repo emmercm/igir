@@ -80,7 +80,9 @@
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
           "AdditionalOptions": [
-            "/D__DATE__=0"
+            "/D__DATE__=0",
+            "/D__TIME__=0",
+            "/D__TIMESTAMP__=0"
           ]
         },
         "VCLinkerTool": {}

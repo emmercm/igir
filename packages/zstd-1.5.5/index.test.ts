@@ -1,7 +1,7 @@
 import zstd from './index.js';
 
 describe('getZstdVersion', () => {
-  it('should be the right zlib version', () => {
+  it('should be the right zstd version', () => {
     expect(zstd.getZstdVersion()).toEqual('1.5.5');
   });
 });

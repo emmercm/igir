@@ -31,6 +31,8 @@ import Options, {
   GameSubdirMode,
   GameSubdirModeInverted,
   OptionsProps,
+  ZipFormat,
+  ZipFormatInverted,
 } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -732,7 +734,10 @@ describe('zip', () => {
     async (inputGlob, expectedOutputPaths, expectedDeletedInputPaths) => {
       await copyFixturesToTemp(async (inputTemp, outputTemp) => {
         // Given
-        const options = new Options({ commands: ['move', 'zip', 'test'] });
+        const options = new Options({
+          commands: ['move', 'zip', 'test'],
+          zipFormat: ZipFormatInverted[ZipFormat.RVZSTD].toLowerCase(),
+        });
         const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 

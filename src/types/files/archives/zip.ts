@@ -2,13 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
 
-import { TZValidator, TZWriter, ValidationResult } from '@igir/torrentzip';
+import { CompressionMethod, TZValidator, TZWriter, ValidationResult } from '@igir/torrentzip';
 import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
 import async from 'async';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import ExpectedError from '../../expectedError.js';
+import { ZipFormat, ZipFormatValue } from '../../options.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
@@ -120,15 +121,22 @@ export default class Zip extends Archive {
     }
   }
 
-  async createArchive(inputToOutput: [File, ArchiveEntry<Zip>][]): Promise<void> {
+  async createArchive(
+    inputToOutput: [File, ArchiveEntry<Zip>][],
+    zipFormat: ZipFormatValue,
+    compressorThreads: number,
+  ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
     const tempZipFile = await FsPoly.mktemp(this.getFilePath());
-    const torrentZip = await TZWriter.open(tempZipFile);
+    const torrentZip = await TZWriter.open(
+      tempZipFile,
+      zipFormat === ZipFormat.RVZSTD ? CompressionMethod.ZSTD : CompressionMethod.DEFLATE,
+    );
 
     // Write each entry
     try {
-      await Zip.addArchiveEntries(torrentZip, inputToOutput);
+      await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads);
     } catch (error) {
       await torrentZip.close();
       await FsPoly.rm(tempZipFile, { force: true });
@@ -142,12 +150,14 @@ export default class Zip extends Archive {
   private static async addArchiveEntries(
     torrentZip: TZWriter,
     inputToOutput: [File, ArchiveEntry<Zip>][],
+    compressorThreads: number,
   ): Promise<void> {
     const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) =>
       outputA.getEntryPath().toLowerCase().localeCompare(outputB.getEntryPath().toLowerCase()),
     );
 
     for (const [inputFile, outputArchiveEntry] of inputToOutputSorted) {
+      // TZWriter requires files to be compressed sequentially
       try {
         await new Promise((resolve, reject) => {
           inputFile
@@ -157,6 +167,7 @@ export default class Zip extends Archive {
                 readable,
                 outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
                 inputFile.getSize(),
+                compressorThreads,
               );
             })
             .then(resolve)

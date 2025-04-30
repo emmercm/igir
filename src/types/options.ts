@@ -92,6 +92,16 @@ export const PreferRevisionInverted = Object.fromEntries(
   Object.entries(PreferRevision).map(([key, value]) => [value, key]),
 ) as Record<PreferRevisionValue, PreferRevisionKey>;
 
+export const ZipFormat = {
+  TORRENTZIP: 1,
+  RVZSTD: 2,
+} as const;
+export type ZipFormatKey = keyof typeof ZipFormat;
+export type ZipFormatValue = (typeof ZipFormat)[ZipFormatKey];
+export const ZipFormatInverted = Object.fromEntries(
+  Object.entries(ZipFormat).map(([key, value]) => [value, key]),
+) as Record<ZipFormatValue, ZipFormatKey>;
+
 export interface OptionsProps {
   readonly commands?: string[];
 
@@ -131,6 +141,7 @@ export interface OptionsProps {
   readonly cleanBackup?: string;
   readonly cleanDryRun?: boolean;
 
+  readonly zipFormat?: string;
   readonly zipExclude?: string;
   readonly zipDatName?: boolean;
 
@@ -277,6 +288,8 @@ export default class Options implements OptionsProps {
   readonly cleanBackup?: string;
 
   readonly cleanDryRun: boolean;
+
+  readonly zipFormat?: string;
 
   readonly zipExclude: string;
 
@@ -458,6 +471,7 @@ export default class Options implements OptionsProps {
     this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
+    this.zipFormat = options?.zipFormat;
     this.zipExclude = options?.zipExclude ?? '';
     this.zipDatName = options?.zipDatName ?? false;
 
@@ -1063,6 +1077,16 @@ export default class Options implements OptionsProps {
 
   getCleanDryRun(): boolean {
     return this.cleanDryRun;
+  }
+
+  getZipFormat(): ZipFormatValue | undefined {
+    const zipFormat = Object.keys(ZipFormat).find(
+      (mode) => mode.toLowerCase() === this.zipFormat?.toLowerCase(),
+    );
+    if (!zipFormat) {
+      return undefined;
+    }
+    return ZipFormat[zipFormat as ZipFormatKey];
   }
 
   private getZipExclude(): string {
