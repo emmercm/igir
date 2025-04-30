@@ -287,7 +287,6 @@ export default class TZWriter {
    * Close the file handle.
    */
   async close(): Promise<void> {
-    console.log(`\n\nclosing ${this.fileHandle.fd}\n\n`);
     await this.fileHandle.close();
   }
 
