@@ -16,7 +16,7 @@ import Chd from '../../types/files/archives/chd/chd.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import IndexedFiles from '../../types/indexedFiles.js';
-import Options from '../../types/options.js';
+import Options, { ZipFormat } from '../../types/options.js';
 import OutputFactory, { OutputPath } from '../../types/outputFactory.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
 import WriteCandidate from '../../types/writeCandidate.js';
@@ -243,19 +243,6 @@ export default class CandidateGenerator extends Module {
 
     const filesByPath = indexedFiles.getFilesByFilePath();
     const filteredArchivesWithEveryRom = archivesWithEveryRom
-      .sort((a, b) => {
-        // First, prefer the archive with the least number of entries
-        const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
-        const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
-        if (aEntries !== bEntries) {
-          return aEntries - bEntries;
-        }
-
-        // Then, prefer archives whose filename contains the game name
-        const aGameName = path.basename(a.getFilePath()).includes(game.getName()) ? 1 : 0;
-        const bGameName = path.basename(b.getFilePath()).includes(game.getName()) ? 1 : 0;
-        return aGameName - bGameName;
-      })
       // Filter out Archives with excess entries
       .filter((archive) => {
         const unusedEntries = this.findArchiveUnusedEntryPaths(
@@ -269,6 +256,19 @@ export default class CandidateGenerator extends Module {
           );
         }
         return unusedEntries.length === 0;
+      })
+      .sort((a, b) => {
+        // First, prefer the archive with the least number of entries
+        const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
+        const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
+        if (aEntries !== bEntries) {
+          return aEntries - bEntries;
+        }
+
+        // Then, prefer archives whose filename contains the game name
+        const aGameName = path.basename(a.getFilePath()).includes(game.getName()) ? 1 : 0;
+        const bGameName = path.basename(b.getFilePath()).includes(game.getName()) ? 1 : 0;
+        return bGameName - aGameName;
       });
 
     const archiveWithEveryRom = filteredArchivesWithEveryRom.at(0);
@@ -438,6 +438,7 @@ export default class CandidateGenerator extends Module {
     ) {
       // This ROM's input file is already archived, and we're not [re-]zipping or extracting, so
       // we want to leave it as-is. We'll check elsewhere if the input archive has excess files.
+      this.progressBar.logError(game.getName());
       return true;
     }
 
@@ -476,8 +477,16 @@ export default class CandidateGenerator extends Module {
       return false;
     }
 
-    if (!(await inputZipFiles[0].isTorrentZip())) {
+    if (
+      this.options.getZipFormat() === ZipFormat.TORRENTZIP &&
+      !(await inputZipFiles[0].isTorrentZip())
+    ) {
       // The input file isn't a TorrentZip, which means it will be considered invalid when tested
+      return false;
+    }
+
+    if (this.options.getZipFormat() === ZipFormat.RVZSTD && !(await inputZipFiles[0].isRVZSTD())) {
+      // The input file isn't RVZSTD, which means it will be considered invalid when tested
       return false;
     }
 

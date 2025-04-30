@@ -197,7 +197,7 @@ export default class CandidateWriter extends Module {
         );
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
           );
           return;
         }
@@ -477,7 +477,7 @@ export default class CandidateWriter extends Module {
         );
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, existing file is what was expected`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
           );
           return;
         }
@@ -737,7 +737,7 @@ export default class CandidateWriter extends Module {
         }
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, existing link is what was expected`,
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, the existing link is correct`,
           );
           return;
         }

@@ -611,11 +611,13 @@ export default class FsPoly {
     // Create the file if it doesn't already exist
     const file = await fs.promises.open(filePath, 'a');
 
-    // Ensure the file's `atime` and `mtime` are updated
-    const date = new Date();
-    await util.promisify(fs.futimes)(file.fd, date, date);
-
-    await file.close();
+    try {
+      // Ensure the file's `atime` and `mtime` are updated
+      const date = new Date();
+      await util.promisify(fs.futimes)(file.fd, date, date);
+    } finally {
+      await file.close();
+    }
   }
 
   /**
@@ -674,8 +676,11 @@ export default class FsPoly {
     options?: ObjectEncodingOptions,
   ): Promise<void> {
     const file = await fs.promises.open(filePath, 'w');
-    await file.writeFile(data, options);
-    await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
-    await file.close();
+    try {
+      await file.writeFile(data, options);
+      await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
+    } finally {
+      await file.close();
+    }
   }
 }
