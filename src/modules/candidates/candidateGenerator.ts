@@ -122,7 +122,6 @@ export default class CandidateGenerator extends Module {
     // archive, then treat the file as "raw" so it can be copied/moved as-is
     const shouldGenerateArchiveFile =
       foundRomsWithFiles.length > 0 && (await this.shouldGenerateArchiveFile(foundRomsWithFiles));
-    await FsPoly.size(foundRomsWithFiles[0]?.getInputFile().getFilePath());
     foundRomsWithFiles = (
       await Promise.all(
         foundRomsWithFiles.map(async (romWithFiles) => {
@@ -130,7 +129,12 @@ export default class CandidateGenerator extends Module {
             return romWithFiles;
           }
 
-          const oldInputFile = romWithFiles.getInputFile() as ArchiveEntry<Archive>;
+          const oldInputFile = romWithFiles.getInputFile();
+          if (!(oldInputFile instanceof ArchiveEntry)) {
+            // This shouldn't happen, but if it does, just ignore
+            return romWithFiles;
+          }
+
           /**
            * Note: we're delaying checksum calculations for now,
            * {@link CandidateArchiveFileHasher} will handle it later
@@ -147,15 +151,9 @@ export default class CandidateGenerator extends Module {
           }
         }),
       )
-    )
-      .filter((romWithFiles) => romWithFiles !== undefined)
-      .filter(
-        // Games with multiple ROMs may have produced duplicate ArchiveFiles, filter them out
-        ArrayPoly.filterUniqueMapped(
-          (romWithFiles) =>
-            `${romWithFiles.getInputFile().toString()}|${romWithFiles.getOutputFile().toString()}`,
-        ),
-      );
+    ).filter((romWithFiles) => romWithFiles !== undefined);
+    // Note: we'll have duplicate input->output files here, but we can't get rid of them until
+    // checking for missing ROMs or excess files
 
     // Ignore the Game if not every File is present
     const missingRoms = romFiles.filter(([, romWithFiles]) => !romWithFiles).map(([rom]) => rom);
@@ -217,8 +215,23 @@ export default class CandidateGenerator extends Module {
         },
       ),
     );
-    return writeCandidates.filter(
-      ArrayPoly.filterUniqueMapped((candidate) => candidate.hashCode()),
+
+    return (
+      writeCandidates
+        // Deduplicate ROMWithFiles within the candidates
+        .map((writeCandidate) => {
+          const uniqueRomsWithFiles = writeCandidate
+            .getRomsWithFiles()
+            .filter(
+              ArrayPoly.filterUniqueMapped(
+                (romWithFiles) =>
+                  `${romWithFiles.getInputFile().toString()}|${romWithFiles.getOutputFile().toString()}`,
+              ),
+            );
+          return writeCandidate.withRomsWithFiles(uniqueRomsWithFiles);
+        })
+        // Deduplicate WriteCandidates
+        .filter(ArrayPoly.filterUniqueMapped((candidate) => candidate.hashCode()))
     );
   }
 
@@ -312,7 +325,7 @@ export default class CandidateGenerator extends Module {
         return bGameName - aGameName;
       });
 
-    if (!this.options.shouldExtract()) {
+    if (!this.options.shouldExtract() && filteredArchivesWithEveryRom.length > 0) {
       // If we might be raw copying the archive, then its entries have to have the correct filenames
       const singleValueGame = new SingleValueGame({ ...game });
       filteredArchivesWithEveryRom = filteredArchivesWithEveryRom.filter((archive) => {
@@ -325,12 +338,22 @@ export default class CandidateGenerator extends Module {
           if (this.options.shouldExtractRom(rom)) {
             return true;
           }
+
+          if (
+            this.options.getPatchFileCount() > 0 &&
+            !(this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom))
+          ) {
+            // We can't choose an archived source for this ROM if we might want to patch it
+            return false;
+          }
+
           /**
            * The archive entry for this ROM from this archive needs to have the correct extracted
            * path.
            * Note: if a DAT didn't provide a ROM name, then this will return false, as we can't know
            * at this step if {@link CandidateExtensionCorrector} will generate a new entry name.
            */
+          // TODO(cemmer): option to allow incorrectly named entry paths?
           return inputFiles.some(
             (inputFile) =>
               inputFile.getFilePath() === archive.getFilePath() &&
@@ -354,7 +377,33 @@ export default class CandidateGenerator extends Module {
       return new Map(
         romsAndInputFiles
           .filter(([, inputFiles]) => inputFiles.length > 0)
-          .map(([rom, inputFiles]) => [rom, inputFiles[0]]),
+          .map(([rom, inputFiles]) => {
+            const rawCopying = !(
+              this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom)
+            );
+
+            // Filter and rank the input files, we want to return the best match
+            const rankedInputFiles = inputFiles
+              .filter((inputFile) => {
+                if (
+                  rawCopying &&
+                  inputFile instanceof ArchiveEntry &&
+                  (gameRoms.length > 1 || this.options.getPatchFileCount() > 0)
+                ) {
+                  // We didn't find an archive with every file, and we can't rewrite this ROM,
+                  // so we can't pick any input file from an archive
+                  return false;
+                }
+                return true;
+              })
+              .sort((a, b) => {
+                // There is no legal archive that contains every ROM, prefer using raw files instead
+                const aArchiveEntry = a instanceof ArchiveEntry ? 1 : 0;
+                const bArchiveEntry = b instanceof ArchiveEntry ? 1 : 0;
+                return bArchiveEntry - aArchiveEntry;
+              });
+            return [rom, rankedInputFiles[0]];
+          }),
       );
     }
 
@@ -462,11 +511,6 @@ export default class CandidateGenerator extends Module {
   }
 
   private async shouldGenerateArchiveFile(romsWithFiles: ROMWithFiles[]): Promise<boolean> {
-    if (this.options.getPatchFileCount() > 0) {
-      // TODO(cemmer): we MIGHT patch these files, so we can't raw-copy this archive
-      return false;
-    }
-
     if (this.options.shouldDir2Dat()) {
       // We want to keep the scanned archive entries for dir2dat
       return false;
@@ -487,28 +531,38 @@ export default class CandidateGenerator extends Module {
         return false;
       }
 
+      if (
+        // If the input file is headered...
+        inputFile.getFileHeader() &&
+        // ...and we want an unheadered ROM
+        ((inputFile.getCrc32WithoutHeader() !== undefined &&
+          inputFile.getCrc32WithoutHeader() !== rom.getCrc32()) ||
+          (inputFile.getMd5WithoutHeader() !== undefined &&
+            inputFile.getMd5WithoutHeader() !== rom.getMd5()) ||
+          (inputFile.getSha1WithoutHeader() !== undefined &&
+            inputFile.getSha1WithoutHeader() !== rom.getSha1()) ||
+          (inputFile.getSha256WithoutHeader() !== undefined &&
+            inputFile.getSha256WithoutHeader() !== rom.getSha256()))
+      ) {
+        // ...then we can't use this archive as-is
+        return false;
+      }
+
       if (this.options.shouldExtractRom(rom)) {
         // We want to extract the ROM, we shouldn't make an ArchiveFile
         return false;
-      } else if (!this.options.shouldZipRom(rom)) {
-        // This ROM's input file is already archived, and we're not [re-]zipping or extracting, so
-        // we have to leave it as-is. We'll check elsewhere if the input archive has excess files.
-        return true;
-      } else if (!(inputFile.getArchive() instanceof Zip)) {
+      }
+
+      if (this.options.shouldZipRom(rom) && !(inputFile.getArchive() instanceof Zip)) {
         // We want to zip the ROM, and the input file isn't already in a zip
         return false;
       }
 
       if (
-        // If the input file is headered...
-        inputFile.getFileHeader() &&
-        // ...and we want an unheadered ROM
-        ((inputFile.getCrc32() !== undefined && inputFile.getCrc32() !== rom.getCrc32()) ||
-          (inputFile.getMd5() !== undefined && inputFile.getMd5() !== rom.getMd5()) ||
-          (inputFile.getSha1() !== undefined && inputFile.getSha1() !== rom.getSha1()) ||
-          (inputFile.getSha256() !== undefined && inputFile.getSha256() !== rom.getSha256()))
+        this.options.getPatchFileCount() > 0 &&
+        !(this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom))
       ) {
-        // ...then we can't use this archive as-is
+        // We might want to patch this file, but won't be able to, so we can't use this archive
         return false;
       }
     }
