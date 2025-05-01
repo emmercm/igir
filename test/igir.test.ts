@@ -53,11 +53,12 @@ async function copyFixturesToTemp(
 }
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
+  const fileFactory = new FileFactory(new FileCache(), LOGGER);
   return (
     await Promise.all(
       (await FsPoly.walk(outputDir)).map(async (filePath) => {
         try {
-          return await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
+          return await fileFactory.filesFrom(filePath);
         } catch {
           return [];
         }
@@ -277,7 +278,7 @@ describe('with explicit DATs', () => {
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
-        ['UMD.iso', 'e90f7cf5'],
+        ['UMD.cso|UMD.iso', 'e90f7cf5'],
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -291,7 +292,7 @@ describe('with explicit DATs', () => {
         path.join(outputTemp, 'one.rom'),
         path.join(outputTemp, 'rom', 'two.rom'),
         path.join(outputTemp, 'zip', 'three.zip'),
-        path.join(outputTemp, 'cso', 'four.wud'),
+        path.join(outputTemp, 'wud', 'four.wud'),
       ];
       await Promise.all(
         junkFiles.map(async (junkFile) => {
@@ -347,7 +348,7 @@ describe('with explicit DATs', () => {
         [`${path.join('chd', 'One', 'Optical Game (Disc 2).chd')}|track03.bin`, '61a363f1'],
         [`${path.join('chd', 'One', 'Optical Game (Disc 2).chd')}|track04.bin`, 'fc5ff5a0'],
         [path.join('chd', 'One', 'Optical Game.m3u'), '8da7b4ae'],
-        [path.join('cso', 'four.wud'), '00000000'], // explicitly not deleted, there were no input files with the extension "cso"
+        [`${path.join('cso', 'One', 'UMD.cso')}|UMD.iso`, 'e90f7cf5'],
         [
           `${path.join('gcz', 'One', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
           '5eb3d183',
@@ -357,7 +358,6 @@ describe('with explicit DATs', () => {
           '8beffd94',
         ],
         [`${path.join('gz', 'Patchable', 'Best.gz')}|best.rom`, '1e3d78cf'],
-        [path.join('iso', 'One', 'UMD.iso'), 'e90f7cf5'],
         [path.join('lnx', 'One', 'Foobar.lnx'), 'b22c9747'],
         [
           path.join('lnx', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'),
@@ -404,6 +404,7 @@ describe('with explicit DATs', () => {
           'dfaebe28',
         ],
         [path.join('smc', 'Headered', 'speed_test_v51.smc'), '9adca6cc'],
+        [path.join('wud', 'four.wud'), '00000000'], // explicitly not deleted, there were no input files with the extension "wud"
         [
           `${path.join('zip', 'Headered', 'fds_joypad_test.fds.zip')}|fds_joypad_test.fds`,
           '1e58456d',
@@ -1052,7 +1053,7 @@ describe('with explicit DATs', () => {
           'ff46c5d8',
         ],
         [
-          `${path.join('One', 'UMD.iso')} -> ${path.join('<input>', 'discs', 'UMD.iso')}`,
+          `${path.join('One', 'UMD.cso')}|UMD.iso -> ${path.join('<input>', 'cso', 'UMD.cso')}|UMD.iso`,
           'e90f7cf5',
         ],
         [
@@ -1352,8 +1353,8 @@ describe('with inferred DATs', () => {
         [path.join('E', 'empty.rom'), '00000000'],
         [path.join('F1', 'fds_joypad_test.fds.zip|fds_joypad_test.fds'), '1e58456d'],
         [path.join('F1', 'five.rom'), '3e5daf67'],
-        [path.join('F2', 'fizzbuzz.nes'), '370517b5'],
-        [path.join('F2', 'foobar.lnx'), 'b22c9747'],
+        [`${path.join('F2', 'fizzbuzz.zip')}|fizzbuzz.nes`, '370517b5'],
+        [`${path.join('F2', 'foobar.zip')}|foobar.lnx`, 'b22c9747'],
         [path.join('F3', 'four.rom'), '1cf3ca74'],
         [path.join('F3', 'fourfive.zip|five.rom'), '3e5daf67'],
         [path.join('F3', 'fourfive.zip|four.rom'), '1cf3ca74'],
@@ -1369,17 +1370,17 @@ describe('with inferred DATs', () => {
         [path.join('I2', 'invalid.zip'), 'df941cc9'],
         [path.join('K', 'KDULVQN.rom'), 'b1c303e4'],
         [path.join('L', 'LCDTestROM.lnx.rar|LCDTestROM.lnx'), '2d251538'],
-        [path.join('L', 'loremipsum.rom'), '70856527'],
-        [path.join('O', 'one.rom'), 'f817a89f'],
+        [`${path.join('L', 'loremipsum.zip')}|loremipsum.rom`, '70856527'],
+        [`${path.join('O', 'one.gz')}|one.rom`, 'f817a89f'],
         [`${path.join('O', 'onetwothree.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
         [`${path.join('O', 'onetwothree.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
         [`${path.join('O', 'onetwothree.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
         [path.join('S', 'speed_test_v51.sfc.gz|speed_test_v51.sfc'), '8beffd94'],
         [path.join('S', 'speed_test_v51.smc'), '9adca6cc'],
-        [path.join('T', 'three.rom'), 'ff46c5d8'],
-        [path.join('T', 'two.rom'), '96170874'],
+        [`${path.join('T', 'three.gz')}|three.rom`, 'ff46c5d8'],
+        [`${path.join('T', 'two.gz')}|two.rom`, '96170874'],
         [path.join('U', 'UMD.cso|UMD.iso'), 'e90f7cf5'],
-        [path.join('U', 'unknown.rom'), '377a7727'],
+        [`${path.join('U', 'unknown.zip')}|unknown.rom`, '377a7727'],
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1449,9 +1450,9 @@ describe('with inferred DATs', () => {
         ['LCDTestROM.lnx', '2d251538'],
         ['loremipsum.rom', '70856527'],
         ['one.rom', 'f817a89f'],
-        [path.join('onetwothree', 'one.rom'), 'f817a89f'],
-        [path.join('onetwothree', 'three.rom'), 'ff46c5d8'],
-        [path.join('onetwothree', 'two.rom'), '96170874'],
+        [path.join('onetwothree', '1', 'one.rom'), 'f817a89f'],
+        [path.join('onetwothree', '2', 'two.rom'), '96170874'],
+        [path.join('onetwothree', '3', 'three.rom'), 'ff46c5d8'],
         ['speed_test_v51.sfc', '8beffd94'],
         ['speed_test_v51.smc', '9adca6cc'],
         ['three.rom', 'ff46c5d8'],
@@ -1547,9 +1548,9 @@ describe('with inferred DATs', () => {
         ['LCDTestROM.lnx.zip|LCDTestROM.lnx', '2d251538'],
         ['loremipsum.zip|loremipsum.rom', '70856527'],
         ['one.zip|one.rom', 'f817a89f'],
-        ['onetwothree.zip|one.rom', 'f817a89f'],
-        ['onetwothree.zip|three.rom', 'ff46c5d8'],
-        ['onetwothree.zip|two.rom', '96170874'],
+        ['onetwothree.zip|1/one.rom', 'f817a89f'],
+        ['onetwothree.zip|2/two.rom', '96170874'],
+        ['onetwothree.zip|3/three.rom', 'ff46c5d8'],
         ['speed_test_v51.zip|speed_test_v51.smc', '9adca6cc'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],
@@ -1645,8 +1646,14 @@ describe('with inferred DATs', () => {
           '1e58456d',
         ],
         [`five.rom -> ${path.join('..', 'input', 'roms', 'raw', 'five.rom')}`, '3e5daf67'],
-        [`fizzbuzz.nes -> ${path.join('..', 'input', 'roms', 'raw', 'fizzbuzz.nes')}`, '370517b5'],
-        [`foobar.lnx -> ${path.join('..', 'input', 'roms', 'foobar.lnx')}`, 'b22c9747'],
+        [
+          `fizzbuzz.zip|fizzbuzz.nes -> ${path.join('..', 'input', 'roms', 'fizzbuzz.zip')}|fizzbuzz.nes`,
+          '370517b5',
+        ],
+        [
+          `foobar.zip|foobar.lnx -> ${path.join('..', 'input', 'roms', 'zip', 'foobar.zip')}|foobar.lnx`,
+          'b22c9747',
+        ],
         [`four.rom -> ${path.join('..', 'input', 'roms', 'raw', 'four.rom')}`, '1cf3ca74'],
         [
           `fourfive.zip|five.rom -> ${path.join('..', 'input', 'roms', 'zip', 'fourfive.zip')}|five.rom`,
@@ -1693,10 +1700,13 @@ describe('with inferred DATs', () => {
           '2d251538',
         ],
         [
-          `loremipsum.rom -> ${path.join('..', 'input', 'roms', 'raw', 'loremipsum.rom')}`,
+          `loremipsum.zip|loremipsum.rom -> ${path.join('..', 'input', 'roms', 'zip', 'loremipsum.zip')}|loremipsum.rom`,
           '70856527',
         ],
-        [`one.rom -> ${path.join('..', 'input', 'roms', 'raw', 'one.rom')}`, 'f817a89f'],
+        [
+          `one.gz|one.rom -> ${path.join('..', 'input', 'roms', 'gz', 'one.gz')}|one.rom`,
+          'f817a89f',
+        ],
         [
           `onetwothree.zip|${path.join('1', 'one.rom')} -> ${path.join('..', 'input', 'roms', 'zip', 'onetwothree.zip')}|${path.join('1', 'one.rom')}`,
           'f817a89f',
@@ -1717,13 +1727,22 @@ describe('with inferred DATs', () => {
           `speed_test_v51.smc -> ${path.join('..', 'input', 'roms', 'headered', 'speed_test_v51.smc')}`,
           '9adca6cc',
         ],
-        [`three.rom -> ${path.join('..', 'input', 'roms', 'raw', 'three.rom')}`, 'ff46c5d8'],
-        [`two.rom -> ${path.join('..', 'input', 'roms', 'raw', 'two.rom')}`, '96170874'],
+        [
+          `three.gz|three.rom -> ${path.join('..', 'input', 'roms', 'gz', 'three.gz')}|three.rom`,
+          'ff46c5d8',
+        ],
+        [
+          `two.gz|two.rom -> ${path.join('..', 'input', 'roms', 'gz', 'two.gz')}|two.rom`,
+          '96170874',
+        ],
         [
           `UMD.cso|UMD.iso -> ${path.join('..', 'input', 'roms', 'cso', 'UMD.cso')}|UMD.iso`,
           'e90f7cf5',
         ],
-        [`unknown.rom -> ${path.join('..', 'input', 'roms', 'raw', 'unknown.rom')}`, '377a7727'],
+        [
+          `unknown.zip|unknown.rom -> ${path.join('..', 'input', 'roms', 'zip', 'unknown.zip')}|unknown.rom`,
+          '377a7727',
+        ],
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1802,7 +1821,10 @@ describe('with inferred DATs', () => {
         .sort();
       expect(roms).toEqual([
         '0F09A40.rom',
+        '1/one.rom',
+        '2/two.rom',
         '2048.rom',
+        '3/three.rom',
         '3708F2C.rom',
         '4096.rom',
         '612644F.rom',

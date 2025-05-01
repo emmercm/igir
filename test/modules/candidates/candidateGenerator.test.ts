@@ -591,7 +591,7 @@ describe('token replacement', () => {
 });
 
 describe.each(['copy', 'move'])('raw writing: %s', (command) => {
-  const options = new Options({ commands: [command] });
+  const options = new Options({ commands: [command, 'extract'] });
 
   describe('allow excess sets', () => {
     const archive = new Zip('input.zip');

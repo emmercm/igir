@@ -58,6 +58,6 @@ export default class ROMWithFiles {
    * A string hash code to uniquely identify this {@link ROMWithFiles}.
    */
   hashCode(): string {
-    return `${this.rom.hashCode()}|${this.inputFile.toString()}|${this.outputFile.toString()}`;
+    return `${this.rom.hashCode()}|${this.outputFile.toString()}`;
   }
 }
