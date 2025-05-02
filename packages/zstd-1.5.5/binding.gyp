@@ -9,6 +9,7 @@
       "dependencies": ["zstd.gyp:zstd"],
       "include_dirs": ["<!(node -p \"require('node-addon-api').include_dir\")"],
       "defines": [
+        "NAPI_VERSION=<(napi_build_version)",
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
@@ -33,8 +34,7 @@
           "AdditionalOptions": [
             "/D__DATE__=0",
             "/D__TIME__=0",
-            "/D__TIMESTAMP__=0",
-            "/wd4117"
+            "/D__TIMESTAMP__=0"
           ]
         },
         "VCLinkerTool": {}
