@@ -28,9 +28,9 @@ test_igir() {
   echo "--------------------------------------------------"
   temp="$(mktemp -d)"
   ./dist/index.js "$@" \
-    --dat test/fixtures/dats/* \
-    --input test/fixtures/roms/* \
-    --input-exclude test/fixtures/roms/discs/* \
+    --dat "test/fixtures/dats/" \
+    --input "test/fixtures/roms/" \
+    --input-exclude "test/fixtures/roms/discs/" \
     --output "${temp}" \
     -vvv
   ls -al "${temp}"/*
