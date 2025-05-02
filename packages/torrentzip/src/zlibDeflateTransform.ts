@@ -81,18 +81,14 @@ export default class ZlibCompressTransform extends stream.Transform {
    * Finalize the deflater and emit the final output.
    */
   private finalizeDeflater(): void {
-    if (!this.deflaterEnded) {
-      try {
-        const finalChunk = this.deflater.end();
-        this.deflaterEnded = true;
+    if (this.deflaterEnded) {
+      return;
+    }
+    this.deflaterEnded = true;
 
-        if (finalChunk.length > 0) {
-          this.push(finalChunk);
-        }
-      } catch (error) {
-        this.deflaterEnded = true;
-        throw error;
-      }
+    const finalChunk = this.deflater.end();
+    if (finalChunk.length > 0) {
+      this.push(finalChunk);
     }
   }
 }

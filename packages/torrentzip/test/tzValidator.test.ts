@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import { ZipReader } from '@igir/zip';
-import { jest } from '@jest/globals';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -10,8 +9,6 @@ import Igir from '../../../src/igir.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
-
-jest.setTimeout(60 * 1000); // 1min
 
 const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms')))
   .filter((filePath) => filePath.endsWith('.zip'))
