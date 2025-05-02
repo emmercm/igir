@@ -73,7 +73,7 @@ jobs:
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
-          echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+          echo "VERSIONS_NODE=$(node --print 'process.versions.node')" >> "${GITHUB_OUTPUT}"
 
           DOCKER_ARCH=${{ matrix.docker_arch }}
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
@@ -83,7 +83,7 @@ jobs:
         id: build-docker
         uses: addnab/docker-run-action@v3
         with:
-          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
+          image: node:${{ steps.linux-vars.outputs.VERSIONS_NODE }}
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
