@@ -27,8 +27,8 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-              - 'packages/zlib*/*'
-              - 'packages/zstd*/*'
+              - 'packages/zlib*/**'
+              - 'packages/zstd*/**'
 
   prebuild:
     needs:
