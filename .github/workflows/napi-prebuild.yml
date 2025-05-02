@@ -27,7 +27,7 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-             - '.github/workflows/napi-prebuild.yml'
+              - '.github/workflows/napi-prebuild.yml'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
 
