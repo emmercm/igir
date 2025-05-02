@@ -3,7 +3,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "install": "node-gyp clean && node-gyp-build"
+    "install": "node-gyp-build"
   },
   "binary": {
     "napi_versions": [8]
