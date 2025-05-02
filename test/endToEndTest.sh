@@ -24,6 +24,10 @@ cd "$(parent_find . "package.json")"
 npm run build
 # Note: this will require `npm run build` to copy prebuilds
 
+# Debug
+command -v tree >/dev/null 2>&1 && tree dist
+command -v tree >/dev/null 2>&1 && tree test/fixtures
+
 test_igir() {
   echo "--------------------------------------------------"
   temp="$(mktemp -d)"
