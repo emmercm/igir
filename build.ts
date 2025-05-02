@@ -3,15 +3,23 @@ import path from 'node:path';
 
 import fg from 'fast-glob';
 
+import Logger from './src/console/logger.js';
+import { LogLevel } from './src/console/logLevel.js';
 import FsPoly from './src/polyfill/fsPoly.js';
 
+const logger = new Logger(LogLevel.TRACE);
+
+const output = 'dist';
+
 // Delete any previous build output
-if (await FsPoly.exists('dist')) {
-  await FsPoly.rm('dist', { recursive: true });
+if (await FsPoly.exists(output)) {
+  logger.info(`Deleting '${output}' ...`);
+  await FsPoly.rm(output, { recursive: true });
 }
 
 // Transpile the TypeScript
 await new Promise((resolve, reject) => {
+  logger.info(`Running 'tsc' ...`);
   const tsc = child_process.spawn(
     'npm',
     ['exec', 'tsc', '--', '--declaration', 'false', '--sourceMap', 'false'],
@@ -19,17 +27,21 @@ await new Promise((resolve, reject) => {
       windowsHide: true,
     },
   );
+  tsc.stderr.on('data', (data: Buffer) => process.stderr.write(data));
   tsc.on('close', resolve);
   tsc.on('error', reject);
 });
 await new Promise((resolve, reject) => {
+  logger.info(`Running 'tsc-alias' ...`);
   const tscAlias = child_process.spawn('npm', ['exec', 'tsc-alias', '--'], {
     windowsHide: true,
   });
+  tscAlias.stderr.on('data', (data: Buffer) => process.stderr.write(data));
   tscAlias.on('close', resolve);
   tscAlias.on('error', reject);
 });
 
+logger.info(`Copying additional files ...`);
 /**
  * Copy some files and exclude others to an output directory.
  */
@@ -90,14 +102,16 @@ await copyfiles(
     'packages/zstd*/deps/**/programs/**',
     'packages/zstd*/deps/**/tests/**',
   ],
-  'dist',
+  output,
 );
 
 if (process.platform !== 'win32') {
+  logger.info(`chmod +x index.js ...`);
   await new Promise((resolve, reject) => {
-    const chmod = child_process.spawn('chmod', ['+x', path.join('dist', 'index.js')], {
+    const chmod = child_process.spawn('chmod', ['+x', path.join(output, 'index.js')], {
       windowsHide: true,
     });
+    chmod.stderr.on('data', (data: Buffer) => process.stderr.write(data));
     chmod.on('close', resolve);
     chmod.on('error', reject);
   });
