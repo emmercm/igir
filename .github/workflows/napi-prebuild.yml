@@ -27,6 +27,7 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
+             - '.github/workflows/napi-prebuild.yml'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
 
@@ -88,7 +89,7 @@ jobs:
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
               npm install --ignore-scripts
-              ./node_modules/.bin/prebuildify --napi --strip
+              ./node_modules/.bin/prebuildify --target "${{ steps.linux-vars.outputs.VOLTA_NODE }}" --napi --strip
               touch prebuilds/.gitkeep
               cd ../..
             done
@@ -99,7 +100,7 @@ jobs:
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
             npm install --ignore-scripts
-            ./node_modules/.bin/prebuildify --napi --strip
+            ./node_modules/.bin/prebuildify --target "${{ steps.linux-vars.outputs.VOLTA_NODE }}" --napi --strip
             touch prebuilds/.gitkeep
             cd ../..
           done
