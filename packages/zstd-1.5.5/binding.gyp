@@ -12,6 +12,11 @@
         "NAPI_VERSION=<(napi_build_version)",
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
+      "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
+      "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
+      "ldflags": [
+        "-nodefaultlibs", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
+      ],
 
       "xcode_settings": {
         "GCC_OPTIMIZATION_LEVEL": "3",
@@ -69,12 +74,7 @@
       ],
       "direct_dependent_settings": {
         "include_dirs": ["deps/zstd/lib"],
-        "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
-        "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
-        "ldflags": [
-          "-Wl,--trace",
-          "-nodefaultlibs", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
-        ]
+        "ldflags": ["-Wl,--trace"]
       },
       "defines": [
         "ZSTD_STATIC_LINKING_ONLY",
@@ -86,10 +86,7 @@
       ],
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
-      "ldflags": [
-        "-Wl,--trace",
-        "-nodefaultlibs"
-      ],
+      "ldflags": ["-Wl,--trace"],
 
       "conditions": [
         ["OS=='win'", {
