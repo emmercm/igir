@@ -92,10 +92,12 @@ jobs:
           npm ci --foreground-scripts
           # TODO(cemmer): DEBUG
           set -x
+          grep -r "ZSTD_VERSION_" packages/zstd-1.5.5/deps/zstd/
           node --eval 'console.log(require("./packages/zstd-1.5.5/build/Release/binding.node").getZstdVersion())'
           strings packages/zstd-1.5.5/build/Release/binding.node | grep "zstd"
           strings packages/zstd-1.5.5/build/Release/zstd.a | grep "zstd"
           nm -gC packages/zstd-1.5.5/build/Release/binding.node | grep ZSTD || true
+          ldd packages/zstd-1.5.5/build/Release/binding.node | grep zstd
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
