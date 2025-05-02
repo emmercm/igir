@@ -37,7 +37,8 @@
       "direct_dependent_settings": {
         "include_dirs": ["deps/zstd/lib"],
         "cflags": ["-I<(module_root_dir)/deps/zstd/lib"],
-        "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib"]
+        "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib"],
+        "ldflags": ["-Wl,--trace"]
       },
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS",
@@ -51,7 +52,7 @@
       "cflags": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC", "-O3"],
       "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC"],
       "ldflags": [
-        "-nodefaultlibs"
+        "-Wl,--trace", "-nodefaultlibs"
       ],
 
       "conditions": [
