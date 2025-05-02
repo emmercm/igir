@@ -110,13 +110,17 @@ jobs:
         run: |
           ls -alR packages/*/prebuilds/
 
+      # Test the build
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       - id: node-unit
+        shell: bash
         run: |
           set -x
           rm -rf packages/*/build
           npm ci --foreground-scripts
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
           npm run test:unit
 
       - uses: actions/upload-artifact@v4
