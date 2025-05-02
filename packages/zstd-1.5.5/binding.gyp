@@ -73,7 +73,12 @@
         "deps/zstd/lib/compress/zstd_lazy.c",
         "deps/zstd/lib/compress/zstd_ldm.c",
         "deps/zstd/lib/compress/zstd_opt.c",
-        "deps/zstd/lib/compress/zstdmt_compress.c"
+        "deps/zstd/lib/compress/zstdmt_compress.c",
+        "deps/zstd/lib/decompress/huf_decompress.c",
+        "deps/zstd/lib/decompress/huf_decompress_amd64.S",
+        "deps/zstd/lib/decompress/zstd_ddict.c",
+        "deps/zstd/lib/decompress/zstd_decompress.c",
+        "deps/zstd/lib/decompress/zstd_decompress_block.c"
       ],
       "direct_dependent_settings": {
         "include_dirs": ["deps/zstd/lib"],
@@ -92,7 +97,15 @@
       ],
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
-      "ldflags": ["-Wl,--trace"]
+      "ldflags": ["-Wl,--trace"],
+
+      "conditions": [
+        ["OS=='win'", {
+          "sources!": [
+            "deps/zstd/lib/decompress/huf_decompress_amd64.S"
+          ]
+        }]
+      ]
     }
   ]
 }

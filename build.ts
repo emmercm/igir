@@ -10,6 +10,7 @@ import FsPoly from './src/polyfill/fsPoly.js';
 const logger = new Logger(LogLevel.TRACE);
 
 const output = 'dist';
+logger.info(`Output: '${output}'`);
 
 // Delete any previous build output
 if (await FsPoly.exists(output)) {
