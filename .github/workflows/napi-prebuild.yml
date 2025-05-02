@@ -62,6 +62,8 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: volta-cli/action@v4
+        with:
+          node-version: 18
 
       # Prebuild
       - run: |
@@ -92,7 +94,7 @@ jobs:
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
               npm install --ignore-scripts
-              ./node_modules/.bin/prebuildify --target "18.20.8" --napi --strip
+              ./node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
               touch prebuilds/.gitkeep
               cd ../..
             done
@@ -106,7 +108,7 @@ jobs:
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
             npm install --ignore-scripts
-            ./node_modules/.bin/prebuildify --target "18.20.8" --napi --strip
+            ./node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
             touch prebuilds/.gitkeep
             cd ../..
           done
