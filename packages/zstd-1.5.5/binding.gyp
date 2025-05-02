@@ -77,7 +77,14 @@
       ],
       "direct_dependent_settings": {
         "include_dirs": ["deps/zstd/lib"],
-        "ldflags": ["-Wl,--trace"]
+        "ldflags": ["-Wl,--trace"],
+        "conditions": [
+          ["OS=='win'", {
+            "sources!": [
+              "deps/zstd/lib/decompress/huf_decompress_amd64.S"
+            ]
+          }]
+        ]
       },
       "defines": [
         "ZSTD_STATIC_LINKING_ONLY",
