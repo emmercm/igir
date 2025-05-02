@@ -118,6 +118,8 @@ jobs:
               ls -alh igir "${{ env.BIN_OUTPUT }}"
               echo '```'
             } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: sudo chown -R $(id -u):$(id -g) .
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
