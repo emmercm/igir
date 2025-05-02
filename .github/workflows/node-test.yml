@@ -92,7 +92,7 @@ jobs:
           npm ci --foreground-scripts
           # TODO(cemmer): DEBUG
           set -x
-          node --eval 'console.log(require("packages/zstd-1.5.5/build/Release/binding.node").getZstdVersion())'
+          node --eval 'console.log(require("./packages/zstd-1.5.5/build/Release/binding.node").getZstdVersion())'
           strings packages/zstd-1.5.5/build/Release/binding.node | grep "zstd"
           strings packages/zstd-1.5.5/build/Release/zstd.a | grep "zstd"
           nm -gC packages/zstd-1.5.5/build/Release/binding.node | grep ZSTD || true
