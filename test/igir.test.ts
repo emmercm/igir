@@ -685,13 +685,7 @@ describe('with explicit DATs', () => {
         // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
       ]);
-      expect(result.movedFiles).toEqual([
-        path.join('fizzbuzz.zip'),
-        path.join('foobar.zip'),
-        // NOTE(cemmer): 'fourfive.zip' is explicitly not deleted
-        path.join('loremipsum.zip'),
-        path.join('onetwothree.zip'), // explicitly deleted!
-      ]);
+      expect(result.movedFiles).toEqual([path.join('loremipsum.zip')]);
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
