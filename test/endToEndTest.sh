@@ -22,19 +22,16 @@ parent_find() {
 
 cd "$(parent_find . "package.json")"
 npm run build
+cd dist
 # Note: this will require `npm run build` to copy prebuilds
-
-# Debug
-command -v tree >/dev/null 2>&1 && tree dist
-command -v tree >/dev/null 2>&1 && tree test/fixtures
 
 test_igir() {
   echo "--------------------------------------------------"
   temp="$(mktemp -d)"
-  ./dist/index.js "$@" \
-    --dat "test/fixtures/dats/" \
-    --input "test/fixtures/roms/" \
-    --input-exclude "test/fixtures/roms/discs/" \
+  ./index.js "$@" \
+    --dat "../test/fixtures/dats/" \
+    --input "../test/fixtures/roms/" \
+    --input-exclude "../test/fixtures/roms/discs/" \
     --output "${temp}" \
     -vvv
   ls -al "${temp}"/*
