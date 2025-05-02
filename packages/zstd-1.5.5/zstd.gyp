@@ -53,8 +53,11 @@
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
       ],
-      "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
-      "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
+      "cflags": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC", "-O3"],
+      "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC"],
+      "ldflags": [
+        "-nodefaultlibs"
+      ],
 
       "conditions": [
         ["OS=='win'", {
