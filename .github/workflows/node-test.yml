@@ -92,8 +92,8 @@ jobs:
           npm ci --foreground-scripts
           # TODO(cemmer): DEBUG
           set -x
-          strings Release/zstd.a | grep "zstd"
-          nm -gC Release/binding.node | grep ZSTD || true
+          strings packages/zstd-1.5.5/build/Release/zstd.a | grep "zstd"
+          nm -gC packages/zstd-1.5.5/build/Release/binding.node | grep ZSTD || true
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
