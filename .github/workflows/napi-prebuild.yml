@@ -94,9 +94,6 @@ jobs:
               touch prebuilds/.gitkeep
               cd ../..
             done
-      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        id: build-docker-chown
-        run: sudo chown -R "$(id -u):$(id -g)" .
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
         shell: bash
@@ -111,6 +108,7 @@ jobs:
           done
       - shell: bash
         run: |
+          sudo chown -R "$(id -u):$(id -g)" .
           ls -alR packages/*/prebuilds/
 
       # Test the build
