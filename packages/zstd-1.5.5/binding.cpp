@@ -3,11 +3,7 @@
 #include <memory>
 #include <mutex>
 #include <cstring>
-
 #include "deps/zstd/lib/zstd.h"
-#if (ZSTD_VERSION_MAJOR != 1 || ZSTD_VERSION_MINOR != 5 || ZSTD_VERSION_RELEASE != 5)
-#error "Incorrect Zstandard version being used!"
-#endif
 
 // Promise-based worker for compression operations
 class CompressPromiseWorker : public Napi::AsyncWorker {
