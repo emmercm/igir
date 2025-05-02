@@ -98,7 +98,6 @@ await copyfiles(
     'packages/zstd*/deps/**/contrib/**',
     'packages/zstd*/deps/**/examples/**',
     'packages/zstd*/deps/**/doc/**',
-    'packages/zstd*/deps/**/lib/decompress/**',
     'packages/zstd*/deps/**/lib/deprecated/**',
     'packages/zstd*/deps/**/lib/dictBuilder/**',
     'packages/zstd*/deps/**/lib/dll/**',
