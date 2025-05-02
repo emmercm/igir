@@ -97,10 +97,14 @@ await copyfiles(
     'packages/zstd*/deps/**/contrib/**',
     'packages/zstd*/deps/**/examples/**',
     'packages/zstd*/deps/**/doc/**',
+    'packages/zstd*/deps/**/lib/decompress/**',
+    'packages/zstd*/deps/**/lib/deprecated/**',
+    'packages/zstd*/deps/**/lib/dictBuilder/**',
     'packages/zstd*/deps/**/lib/dll/**',
     'packages/zstd*/deps/**/lib/legacy/**',
     'packages/zstd*/deps/**/programs/**',
     'packages/zstd*/deps/**/tests/**',
+    'packages/zstd*/deps/**/zlibWrapper/**',
   ],
   output,
 );
@@ -116,3 +120,5 @@ if (process.platform !== 'win32') {
     chmod.on('error', reject);
   });
 }
+
+logger.info('Finished!');

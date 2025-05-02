@@ -177,16 +177,20 @@ if (!(await FsPoly.exists(output))) {
 logger.info(`Output: ${FsPoly.sizeReadable(await FsPoly.size(output))}`);
 
 logger.info(`Testing: '${output}' ...`);
-const proc = child_process.spawn(output, ['--help'], { windowsHide: true });
-let procOutput = '';
-proc.stdout.on('data', (chunk: Buffer) => {
-  procOutput += chunk.toString();
-});
-proc.stderr.on('data', (chunk: Buffer) => {
-  procOutput += chunk.toString();
-});
-await new Promise((resolve, reject) => {
-  proc.on('close', resolve);
+const procOutput = await new Promise<string>((resolve, reject) => {
+  const proc = child_process.spawn(output, ['--help'], { windowsHide: true });
+  let procOutput = '';
+  proc.stdout.on('data', (chunk: Buffer) => {
+    procOutput += chunk.toString();
+  });
+  proc.stderr.on('data', (chunk: Buffer) => {
+    procOutput += chunk.toString();
+  });
+  proc.on('close', () => {
+    resolve(procOutput);
+  });
   proc.on('error', reject);
 });
 logger.trace(procOutput);
+
+logger.info('Finished!');
