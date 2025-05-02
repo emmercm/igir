@@ -76,6 +76,7 @@ jobs:
           DOCKER_ARCH=${DOCKER_ARCH//\//}
           echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        id: build-docker
         uses: addnab/docker-run-action@v3
         with:
           image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
@@ -94,6 +95,7 @@ jobs:
               cd ../..
             done
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
+        id: build
         shell: bash
         run: |
           set -x
@@ -104,10 +106,19 @@ jobs:
             touch prebuilds/.gitkeep
             cd ../..
           done
-
       - shell: bash
         run: |
           ls -alR packages/*/prebuilds/
+
+      - id: node-unit
+        run: |
+          set -x
+          rm -rf packages/*/build
+          npm ci --foreground-scripts
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
+          npm run test:unit
+
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
