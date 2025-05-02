@@ -3,7 +3,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "postinstall": "node-gyp-build"
+    "install": "node-gyp-build"
   },
   "dependencies": {
     "node-addon-api": "8.3.1",
