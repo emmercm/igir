@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 
 # shellcheck disable=SC2064
 trap "cd \"${PWD}\"" EXIT
