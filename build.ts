@@ -72,14 +72,17 @@ await copyfiles(
   ],
   [
     'packages/*/deps/**/(AUTHORS|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
+    'packages/*/deps/**/appveyor.yml',
+    'packages/*/deps/**/Package.swift',
     // zlib
-    'packages/zlib*/deps/**/contrib/delphi*/**',
-    'packages/zlib*/deps/**/contrib/msdos/**',
+    'packages/zlib*/deps/**/amiga/**',
+    'packages/zlib*/deps/**/contrib/**',
+    'packages/zlib*/deps/**/msdos/**',
     // zstd
+    'packages/zstd*/deps/**/build/meson/**',
+    'packages/zstd*/deps/**/build/single_file_libs/**',
     'packages/zstd*/deps/**/build/VS2008/**',
-    'packages/zstd*/deps/**/contrib/docker/**',
-    'packages/zstd*/deps/**/contrib/linux-kernel/**',
-    'packages/zstd*/deps/**/contrib/VS2005/**',
+    'packages/zstd*/deps/**/contrib/**',
     'packages/zstd*/deps/**/examples/**',
     'packages/zstd*/deps/**/doc/**',
     'packages/zstd*/deps/**/lib/dll/**',

@@ -147,7 +147,7 @@ jobs:
           npm pack
           tar -xvzf igir-*.tgz
           cd package
-          npm install
+          npm install --foreground-scripts
           ./dist/index.js --help
           cd ..
           rm -rf package
