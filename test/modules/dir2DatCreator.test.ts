@@ -111,12 +111,28 @@ it('should write a valid DAT', async () => {
     `${inferredDat.getHeader().getDescription()} dir2dat`,
   );
   expect(writtenDat.getParents()).toHaveLength(inferredDat.getParents().length);
-  expect(writtenDat.getParents().map((parent) => parent.getName())).toIncludeAllMembers(
-    inferredDat.getParents().map((parent) => parent.getName()),
+  expect(
+    writtenDat
+      .getParents()
+      .map((parent) => parent.getName())
+      .sort(),
+  ).toEqual(
+    inferredDat
+      .getParents()
+      .map((parent) => parent.getName())
+      .sort(),
   );
   expect(writtenDat.getGames()).toHaveLength(inferredDat.getGames().length);
-  expect(writtenDat.getGames().map((game) => game.hashCode())).toIncludeAllMembers(
-    inferredDat.getGames().map((game) => game.hashCode()),
+  expect(
+    writtenDat
+      .getGames()
+      .map((game) => game.hashCode())
+      .sort(),
+  ).toEqual(
+    inferredDat
+      .getGames()
+      .map((game) => game.hashCode())
+      .sort(),
   );
 });
 

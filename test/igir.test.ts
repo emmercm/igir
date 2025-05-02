@@ -215,7 +215,6 @@ describe('with explicit DATs', () => {
         [path.join('Patchable', '65D1206.rom'), '20323455'],
         [path.join('Patchable', '92C85C9.rom'), '06692159'],
         [path.join('Patchable', 'Before.rom'), '0361b321'],
-        [`${path.join('Patchable', 'Best.gz')}|best.rom`, '1e3d78cf'],
         [path.join('Patchable', 'C01173E.rom'), 'dfaebe28'],
         [path.join('Patchable', 'KDULVQN.rom'), 'b1c303e4'],
         [path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.nes'), '370517b5'],
@@ -357,7 +356,6 @@ describe('with explicit DATs', () => {
           `${path.join('gz', 'Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`,
           '8beffd94',
         ],
-        [`${path.join('gz', 'Patchable', 'Best.gz')}|best.rom`, '1e3d78cf'],
         [path.join('lnx', 'One', 'Foobar.lnx'), 'b22c9747'],
         [
           path.join('lnx', 'smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.lnx'),
@@ -664,21 +662,8 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [`${path.join('One', 'Fizzbuzz.7z')}|fizzbuzz.nes`, '370517b5'],
-        [`${path.join('One', 'Foobar.rar')}|foobar.lnx`, 'b22c9747'],
+        // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
-        [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.7z')}|fizzbuzz.nes`,
-          '370517b5',
-        ],
-        [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.rar')}|foobar.lnx`,
-          'b22c9747',
-        ],
-        [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip')}|loremipsum.rom`,
-          '70856527',
-        ],
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -697,28 +682,8 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [`${path.join('One', 'Fizzbuzz.zip')}|fizzbuzz.nes`, '370517b5'],
-        [`${path.join('One', 'Foobar.zip')}|foobar.lnx`, 'b22c9747'],
-        // NOTE(cemmer): 'One Three.zip' explicitly contains 'two.rom' because the entire file was
-        //  moved, including any extra entries in the input archive.
+        // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('1', 'one.rom')}`, 'f817a89f'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('2', 'two.rom')}`, '96170874'],
-        [`${path.join('One', 'One Three.zip')}|${path.join('3', 'three.rom')}`, 'ff46c5d8'],
-        // NOTE(cemmer): 'Three Four Five.zip' is explicitly missing, because not all ROMs can be
-        //  found in one archive.
-        [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Fizzbuzz.zip')}|fizzbuzz.nes`,
-          '370517b5',
-        ],
-        [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Foobar.zip')}|foobar.lnx`,
-          'b22c9747',
-        ],
-        [
-          `${path.join('smdb', 'Hardware Target Game Database', 'Dummy', 'Lorem Ipsum.zip')}|loremipsum.rom`,
-          '70856527',
-        ],
       ]);
       expect(result.movedFiles).toEqual([
         path.join('fizzbuzz.zip'),
@@ -1081,10 +1046,6 @@ describe('with explicit DATs', () => {
           '0361b321',
         ],
         [
-          `${path.join('Patchable', 'Best.gz|best.rom')} -> ${path.join('<input>', 'patchable', 'best.gz')}|best.rom`,
-          '1e3d78cf',
-        ],
-        [
           `${path.join('Patchable', 'C01173E.rom')} -> ${path.join('<input>', 'patchable', 'C01173E.rom')}`,
           'dfaebe28',
         ],
@@ -1266,15 +1227,31 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      expect(writtenFixdats).toHaveLength(2);
+      expect(writtenFixdats).toHaveLength(3);
+
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
       expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
+      // and because these archives don't have perfect entry path matches:
+      //  Foobar
+      //  Fizzbuzz
+      //  Lorem Ipsum
+      //  One Three
+      //  Three Four Five
+      //  Optical Game (Disc 1)
+      //  Optical Game (Disc 2)
+      //  UMD
+      //  GameCube-240pSuite-1.19
       expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
+      // The "Patchable" DAT should have missing ROMs because some ROMs are only found in archives:
+      //  Best.rom
+      expect(writtenFixdats[2]).toMatch(/^Patchable fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1298,15 +1275,31 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      expect(writtenFixdats).toHaveLength(2);
+      expect(writtenFixdats).toHaveLength(3);
+
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:
       //  diagnostic_test_cartridge.a78
       //  fds_joypad_test.fds
       //  LCDTestROM.lyx
       expect(writtenFixdats[0]).toMatch(/^Headerless fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
       // The "One" DAT should have missing ROMs, because no fixture exists for them:
       //  Missing.rom
+      // and because these archives don't have perfect entry path matches:
+      //  Foobar
+      //  Fizzbuzz
+      //  Lorem Ipsum
+      //  One Three
+      //  Three Four Five
+      //  Optical Game (Disc 1)
+      //  Optical Game (Disc 2)
+      //  UMD
+      //  GameCube-240pSuite-1.19
       expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
+
+      // The "Patchable" DAT should have missing ROMs because some ROMs are only found in archives:
+      //  Best.rom
+      expect(writtenFixdats[2]).toMatch(/^Patchable fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
