@@ -54,8 +54,14 @@
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
       ],
-      "cflags": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC", "-O3"],
-      "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC"],
+      "cflags": [
+        "-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC", "-O3",
+        "-Wmacro-redefined"
+      ],
+      "cflags_cc": [
+        "-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC",
+        "-Wmacro-redefined"
+      ],
       "ldflags": [
         "-Wl,--exclude-libs,ALL", "-Wl,--no-copy-dt-needed-entries",
         "-static-libgcc", "-static-libstdc++"
@@ -85,7 +91,8 @@
           "AdditionalOptions": [
             "/D__DATE__=0",
             "/D__TIME__=0",
-            "/D__TIMESTAMP__=0"
+            "/D__TIMESTAMP__=0",
+            "/wd4117"
           ]
         },
         "VCLinkerTool": {}

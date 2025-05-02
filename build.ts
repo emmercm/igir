@@ -14,7 +14,7 @@ if (await FsPoly.exists('dist')) {
 await new Promise((resolve, reject) => {
   const tsc = child_process.spawn(
     'npm',
-    ['exec', 'tsc', '--declaration', 'false', '--sourceMap', 'false'],
+    ['exec', 'tsc', '--', '--declaration', 'false', '--sourceMap', 'false'],
     {
       windowsHide: true,
     },
@@ -23,7 +23,7 @@ await new Promise((resolve, reject) => {
   tsc.on('error', reject);
 });
 await new Promise((resolve, reject) => {
-  const tscAlias = child_process.spawn('npm', ['exec', 'tsc-alias'], {
+  const tscAlias = child_process.spawn('npm', ['exec', 'tsc-alias', '--'], {
     windowsHide: true,
   });
   tscAlias.on('close', resolve);
@@ -71,7 +71,7 @@ await copyfiles(
     'packages/*/package.json',
   ],
   [
-    'packages/*/deps/**/(AUTHORS|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
+    'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
     'packages/*/deps/**/appveyor.yml',
     'packages/*/deps/**/Package.swift',
     // zlib
