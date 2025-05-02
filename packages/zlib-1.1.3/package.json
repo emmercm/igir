@@ -3,7 +3,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "install": "node-gyp-build"
+    "install": "node-gyp clean && node-gyp-build"
   },
   "dependencies": {
     "node-addon-api": "8.3.1",

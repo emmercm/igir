@@ -32,17 +32,12 @@
         "deps/zstd/lib/decompress/huf_decompress_amd64.S",
         "deps/zstd/lib/decompress/zstd_ddict.c",
         "deps/zstd/lib/decompress/zstd_decompress.c",
-        "deps/zstd/lib/decompress/zstd_decompress_block.c",
-        "deps/zstd/lib/deprecated/zbuff_common.c",
-        "deps/zstd/lib/deprecated/zbuff_compress.c",
-        "deps/zstd/lib/deprecated/zbuff_decompress.c",
-        "deps/zstd/lib/dictBuilder/cover.c",
-        "deps/zstd/lib/dictBuilder/divsufsort.c",
-        "deps/zstd/lib/dictBuilder/fastcover.c",
-        "deps/zstd/lib/dictBuilder/zdict.c"
+        "deps/zstd/lib/decompress/zstd_decompress_block.c"
       ],
       "direct_dependent_settings": {
-        "include_dirs": ["deps/zstd/lib"]
+        "include_dirs": ["deps/zstd/lib"],
+        "cflags": ["-I<(module_root_dir)/deps/zstd/lib"],
+        "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib"]
       },
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS",
