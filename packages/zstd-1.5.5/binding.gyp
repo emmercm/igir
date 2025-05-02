@@ -15,7 +15,8 @@
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
       "ldflags": [
-        "-nodefaultlibs", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
+        "-Wl,--exclude-libs,ALL",
+        "-Wl,-z,norelro"
       ],
 
       "xcode_settings": {
@@ -37,7 +38,14 @@
             "/D__TIMESTAMP__=0"
           ]
         },
-        "VCLinkerTool": {}
+        "VCLinkerTool": {
+          "AdditionalOptions": [
+            "/Brepro",
+            "/NOLOGO",
+            "/OPT:REF",
+            "/DEBUG:NONE"
+          ]
+        }
       }
     },
 
@@ -65,12 +73,7 @@
         "deps/zstd/lib/compress/zstd_lazy.c",
         "deps/zstd/lib/compress/zstd_ldm.c",
         "deps/zstd/lib/compress/zstd_opt.c",
-        "deps/zstd/lib/compress/zstdmt_compress.c",
-        "deps/zstd/lib/decompress/huf_decompress.c",
-        "deps/zstd/lib/decompress/huf_decompress_amd64.S",
-        "deps/zstd/lib/decompress/zstd_ddict.c",
-        "deps/zstd/lib/decompress/zstd_decompress.c",
-        "deps/zstd/lib/decompress/zstd_decompress_block.c"
+        "deps/zstd/lib/compress/zstdmt_compress.c"
       ],
       "direct_dependent_settings": {
         "include_dirs": ["deps/zstd/lib"],
@@ -79,8 +82,11 @@
       "defines": [
         "ZSTD_STATIC_LINKING_ONLY",
         "ZSTD_MULTITHREAD",
-        "ZSTD_LIB_DECOMPRESSION=0",
         "ZSTD_LEGACY_SUPPORT=0",
+        "ZSTD_LIB_DECOMPRESSION=0",
+        "ZSTD_LIB_DICTBUILDER=0",
+        "ZSTD_LIB_DEPRECATED=0",
+        "ZSTD_LIB_MINIFY=1",
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
       ],
