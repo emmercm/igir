@@ -92,15 +92,7 @@
       ],
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
-      "ldflags": ["-Wl,--trace"],
-
-      "conditions": [
-        ["OS=='win'", {
-          "sources!": [
-            "deps/zstd/lib/decompress/huf_decompress_amd64.S"
-          ]
-        }]
-      ]
+      "ldflags": ["-Wl,--trace"]
     }
   ]
 }
