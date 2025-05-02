@@ -39,7 +39,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    timeout-minutes: 15
+    timeout-minutes: 20
     name: prebuildify (${{ matrix.os }} ${{ matrix.docker_arch }})
     strategy:
       fail-fast: false
@@ -98,9 +98,12 @@ jobs:
               touch prebuilds/.gitkeep
               cd ../..
             done
-      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        id: build-docker-chown
-        run: sudo chown -R "$(id -u):$(id -g)" .
+            ls -alR packages/*/prebuilds/
+
+            # Test the build
+            rm -rf packages/*/build
+            npm ci --foreground-scripts
+            npm run test:unit packages
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
         run: |
@@ -112,21 +115,15 @@ jobs:
             touch prebuilds/.gitkeep
             cd ../..
           done
-      - run: |
           ls -alR packages/*/prebuilds/
 
-      # Test the build
-      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
-      - id: node-unit
-        run: |
-          set -x
+          # Test the build
           rm -rf packages/*/build
           npm ci --foreground-scripts
-          npm run test:unit
+          npm run test:unit packages
 
+      - run: |
+          ls -alR packages/*/prebuilds/
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
