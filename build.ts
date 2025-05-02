@@ -67,7 +67,7 @@ await copyfiles(
     'packages/*/deps/**',
     'packages/*/prebuilds/**',
     'packages/*/binding.cpp',
-    'packages/*/*.gyp',
+    'packages/*/binding.gyp',
     'packages/*/package.json',
   ],
   [
