@@ -95,7 +95,7 @@ jobs:
           grep -r "ZSTD_VERSION_" packages/zstd-1.5.5/deps/zstd/
           node --eval 'console.log(require("./packages/zstd-1.5.5/build/Release/binding.node").getZstdVersion())'
           strings packages/zstd-1.5.5/build/Release/binding.node | grep "zstd" || true
-          strings packages/zstd-1.5.5/build/Release/zstd.a | grep "zstd"
+          strings packages/zstd-1.5.5/build/Release/zstd.a | grep "zstd" || true
           nm -gC packages/zstd-1.5.5/build/Release/binding.node | grep ZSTD || true
           ldd packages/zstd-1.5.5/build/Release/binding.node | grep zstd || true
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
