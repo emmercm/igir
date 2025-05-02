@@ -5,9 +5,6 @@
   "scripts": {
     "install": "node-gyp-build"
   },
-  "binary": {
-    "napi_versions": [8]
-  },
   "dependencies": {
     "node-addon-api": "8.3.1",
     "node-gyp": "11.2.0",
