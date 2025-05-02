@@ -56,7 +56,10 @@
       ],
       "cflags": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC", "-O3"],
       "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC"],
-      "ldflags": ["-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"],
+      "ldflags": [
+        "-Wl,--exclude-libs,ALL", "-Wl,--no-copy-dt-needed-entries",
+        "-static-libgcc", "-static-libstdc++"
+      ],
 
       "conditions": [
         ["OS=='win'", {
