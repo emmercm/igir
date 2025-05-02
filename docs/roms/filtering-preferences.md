@@ -60,7 +60,7 @@ Wario Land II (USA, Europe) (SGB Enhanced)
 
 Languages are two-letter codes, and multiple languages can be specified with commas between them. See the `--help` message for the full list of supported languages.
 
-If a game doesn’t have language information specified in its name, the region's primary language will be used. If a game doesn't have language or region information, then it will always be filtered out by this option.
+If a game doesn't have language information specified in its name, the region's primary language will be used. If a game doesn't have language or region information, then it will always be filtered out by this option.
 
 Here are some example game names that Igir can parse languages from, including ones with multiple languages:
 
@@ -491,7 +491,7 @@ See the [bad dumps](#bad-dumps) section for more information about "good" and "b
 
 Prefer games of certain languages over those in other languages. Multiple languages can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood languages.
 
-If a game doesn’t have language information specified in its name, the region's primary language will be used.
+If a game doesn't have language information specified in its name, the region's primary language will be used.
 
 For example, to prefer games in English and _then_ Japanese, the command would be:
 
