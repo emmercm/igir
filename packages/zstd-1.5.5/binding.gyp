@@ -15,7 +15,7 @@
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
       "ldflags": [
-        "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
+        "-Wl,--trace" ,"-nodefaultlibs", "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
       ],
 
       "xcode_settings": {
