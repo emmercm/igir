@@ -90,6 +90,10 @@ jobs:
         run: |
           rm -rf packages/*/prebuilds
           npm ci --foreground-scripts
+          # TODO(cemmer): DEBUG
+          set -x
+          strings Release/zstd.a | grep "zstd"
+          nm -gC Release/binding.node | grep ZSTD || true
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update

@@ -7,7 +7,6 @@
       "target_name": "binding",
       "sources": ["binding.cpp"],
       "dependencies": ["zstd.gyp:zstd"],
-      "libraries": ["<(PRODUCT_DIR)/zstd.a"],
       "include_dirs": ["<!(node -p \"require('node-addon-api').include_dir\")"],
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS"
