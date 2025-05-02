@@ -1,5 +1,5 @@
 #include <napi.h>
-#include "deps/zstd/lib/zstd.h"
+#include <zstd.h>
 #include <vector>
 #include <memory>
 #include <mutex>

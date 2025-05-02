@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { ZipReader } from '@igir/zip';
@@ -126,7 +127,7 @@ const assertSingleFileZip = async (
       fs.createReadStream(tempFilePath, { highWaterMark: 33_554_432 * 2 }),
       fileName,
       fileSize,
-      1,
+      os.cpus().length,
     );
     await tempZip.finalize();
     await tempZip.close();
