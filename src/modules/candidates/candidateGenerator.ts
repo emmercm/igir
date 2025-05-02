@@ -184,7 +184,7 @@ export default class CandidateGenerator extends Module {
 
           if (
             !(inputFile.getArchive() instanceof Chd) &&
-            rom.getName() !== '' &&
+            rom.getName().trim() !== '' &&
             OutputFactory.getPath(this.options, dat, singleValueGame, rom, inputFile).entryPath !==
               inputFile.getExtractedFilePath()
           ) {
@@ -506,7 +506,7 @@ export default class CandidateGenerator extends Module {
 
       if (
         !(inputFile.getArchive() instanceof Chd) &&
-        rom.getName() !== '' &&
+        rom.getName().trim() !== '' &&
         OutputFactory.getPath(this.options, dat, singleValueGame, rom, inputFile).entryPath !==
           inputFile.getExtractedFilePath()
       ) {
