@@ -96,7 +96,7 @@ jobs:
             done
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         id: build-docker-chown
-        run: sudo chown -R $(id -u):$(id -g) .
+        run: sudo chown -R "$(id -u):$(id -g)" .
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
         shell: bash
