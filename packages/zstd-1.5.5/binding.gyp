@@ -54,14 +54,8 @@
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
       ],
-      "cflags": [
-        "-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC", "-O3",
-        "-Wmacro-redefined"
-      ],
-      "cflags_cc": [
-        "-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC",
-        "-Wmacro-redefined"
-      ],
+      "cflags": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC", "-O3"],
+      "cflags_cc": ["-I<(module_root_dir)/deps/zstd/lib", "-fvisibility=hidden", "-fPIC"],
       "ldflags": [
         "-Wl,--exclude-libs,ALL", "-Wl,--no-copy-dt-needed-entries",
         "-static-libgcc", "-static-libstdc++"
