@@ -527,7 +527,7 @@ describe('compressedStream', () => {
     const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {
-      await FsPoly.mkdir(Temp.getTempDir());
+      await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
     }
 
     for (const entry of entries.filter(
@@ -559,7 +559,7 @@ describe('uncompressedStream', () => {
     const entries = await zip.centralDirectoryFileHeaders();
 
     if (!(await FsPoly.exists(Temp.getTempDir()))) {
-      await FsPoly.mkdir(Temp.getTempDir());
+      await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
     }
 
     for (const entry of entries.filter(
