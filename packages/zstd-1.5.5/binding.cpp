@@ -17,7 +17,12 @@ public:
           input_(std::move(input)),
           cctx_(cctx),
           endOp_(endOp),
-          result_() {}
+          result_() {
+        // Preallocate the result buffer to minimize reallocations during runtime
+        size_t outSize = input_.size() > 0 ? ZSTD_compressBound(input_.size())
+                                           : (endOp == ZSTD_e_end ? ZSTD_CStreamOutSize() : 0);
+        result_.reserve(outSize);
+    }
 
     ~CompressPromiseWorker() {}
 
@@ -30,23 +35,6 @@ public:
 
         // Setup input buffer
         ZSTD_inBuffer inBuff = { input_.data(), input_.size(), 0 };
-
-        // Determine output buffer size more efficiently
-        size_t outSize;
-        if (input_.size() > 0) {
-            outSize = ZSTD_compressBound(input_.size());
-        } else if (endOp_ == ZSTD_e_end) {
-            // For end operations with no input, we just need a small buffer
-            outSize = ZSTD_CStreamOutSize();
-        } else {
-            // Empty continue operation, no output expected
-            outSize = 0;
-        }
-
-        // Prepare output buffer more efficiently
-        if (outSize > 0) {
-            result_.reserve(outSize);
-        }
 
         // Use a fixed output buffer size that's efficient for zstd
         const size_t outBuffSize = ZSTD_CStreamOutSize();
