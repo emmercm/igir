@@ -13,7 +13,7 @@
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O2"],
-      "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
+      "cflags_cc": ["-fvisibility=hidden", "-fPIC", "-O2"],
       "ldflags": [
         "-flto",
         "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
@@ -40,6 +40,7 @@
           ]
         },
         "VCLinkerTool": {
+          "LinkTimeCodeGeneration": "true",
           "AdditionalOptions": [
             "/Brepro",
             "/NOLOGO",
@@ -97,7 +98,7 @@
         "ZSTD_NOBENCH=1"
       ],
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O2"],
-      "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
+      "cflags_cc": ["-fvisibility=hidden", "-fPIC", "-O2"],
       "ldflags": ["-Wl,--trace"],
 
       "conditions": [
