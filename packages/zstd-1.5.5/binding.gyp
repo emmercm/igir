@@ -13,15 +13,18 @@
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O2"],
+      "cflags!": ["-fno-exceptions"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC", "-O2"],
+      "cflags_cc!": ["-fno-exceptions"],
       "ldflags": [
         "-flto",
         "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
-        "-Wl,--exclude-libs,ALL"
+        "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
       ],
 
       "xcode_settings": {
         "GCC_OPTIMIZATION_LEVEL": "2",
+        "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
         "DEAD_CODE_STRIPPING": "YES"
@@ -30,6 +33,7 @@
         "VCCLCompilerTool": {
           "Optimization": "2",
           "FavorSizeOrSpeed": "2",
+          "ExceptionHandling": "true",
           "EnableIntrinsicFunctions": "true",
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
@@ -89,6 +93,8 @@
       "defines": [
         "ZSTD_STATIC_LINKING_ONLY",
         "ZSTD_MULTITHREAD",
+        "ZSTD_NO_TRACE",
+        "ZSTDLIB_VISIBLE=",
         "ZSTD_LEGACY_SUPPORT=0",
         "ZSTD_LIB_DECOMPRESSION=0",
         "ZSTD_LIB_DICTBUILDER=0",
@@ -100,6 +106,10 @@
       "cflags": ["-fvisibility=hidden", "-fPIC", "-O2"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC", "-O2"],
       "ldflags": ["-Wl,--trace"],
+
+      "xcode_settings": {
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES"
+      },
 
       "conditions": [
         ["OS=='win'", {
