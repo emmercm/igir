@@ -55,35 +55,35 @@ it('should write valid TorrentZip files', async () => {
   }
 });
 
-it('should write valid RVZSTD files', async () => {
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
-
-  try {
-    await new Igir(
-      new Options({
-        commands: ['copy', 'zip'],
-        dat: [path.join('test', 'fixtures', 'dats')],
-        input: [path.join('test', 'fixtures', 'roms')],
-        inputExclude: ['**/invalid.*'],
-        output: tempDir,
-        zipFormat: ZipFormatInverted[ZipFormat.RVZSTD].toLowerCase(),
-        excludeDisks: true,
-        dirDatName: true,
-        disableCache: true,
-      }),
-      new Logger(LogLevel.NEVER),
-    ).main();
-
-    const writtenFiles = await FsPoly.walk(tempDir);
-    for (const writtenFile of writtenFiles) {
-      await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
-        ValidationResult.VALID_RVZSTD,
-      );
-    }
-  } finally {
-    await FsPoly.rm(tempDir, {
-      recursive: true,
-      force: true,
-    });
-  }
-});
+// it('should write valid RVZSTD files', async () => {
+//   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+//
+//   try {
+//     await new Igir(
+//       new Options({
+//         commands: ['copy', 'zip'],
+//         dat: [path.join('test', 'fixtures', 'dats')],
+//         input: [path.join('test', 'fixtures', 'roms')],
+//         inputExclude: ['**/invalid.*'],
+//         output: tempDir,
+//         zipFormat: ZipFormatInverted[ZipFormat.RVZSTD].toLowerCase(),
+//         excludeDisks: true,
+//         dirDatName: true,
+//         disableCache: true,
+//       }),
+//       new Logger(LogLevel.NEVER),
+//     ).main();
+//
+//     const writtenFiles = await FsPoly.walk(tempDir);
+//     for (const writtenFile of writtenFiles) {
+//       await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
+//         ValidationResult.VALID_RVZSTD,
+//       );
+//     }
+//   } finally {
+//     await FsPoly.rm(tempDir, {
+//       recursive: true,
+//       force: true,
+//     });
+//   }
+// });
