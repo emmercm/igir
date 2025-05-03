@@ -19,18 +19,21 @@ export default class ZstdCompressTransform extends stream.Transform {
       // Has to be >0 to separate the data into multiple blocks, can be 1
       throw new Error('ZSTD_c_nbWorkers must be greater than 1');
     }
+    console.log(`New Zstd compressor with ${threads} threads`);
     this.compressor = new zstd.ThreadedCompressor({
       level: 19,
       threads,
     });
 
     // Set up cleanup handlers
-    this.on('error', () => {
+    this.on('error', (error) => {
+      console.log(`on error: ${error}`);
       this.cleanup(() => {
         /* ignored */
       });
     });
     this.on('close', () => {
+      console.log(`on close`);
       this.cleanup(() => {
         /* ignored */
       });
@@ -46,9 +49,11 @@ export default class ZstdCompressTransform extends stream.Transform {
       return;
     }
 
+    console.log(`compressing ${chunk.length} bytes`);
     this.compressor
       .compressChunk(chunk)
       .then((compressedChunk) => {
+        console.log(`compressed ${compressedChunk.length} bytes`);
         if (compressedChunk.length > 0) {
           this.push(compressedChunk);
         }
@@ -94,9 +99,11 @@ export default class ZstdCompressTransform extends stream.Transform {
     }
     this.compressorEnded = true;
 
+    console.log(`ending compressor`);
     this.compressor
       .end()
       .then((finalData) => {
+        console.log(`got final ${finalData.length} bytes`);
         if (finalData.length > 0) {
           this.push(finalData);
         }
