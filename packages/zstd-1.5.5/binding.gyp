@@ -9,8 +9,7 @@
       "dependencies": ["zstd"],
       "include_dirs": ["<!(node -p \"require('node-addon-api').include_dir\")"],
       "defines": [
-        "NAPI_VERSION=<(napi_build_version)",
-        "NAPI_DISABLE_CPP_EXCEPTIONS"
+        "NAPI_VERSION=<(napi_build_version)"
       ],
       "cflags": ["-fvisibility=hidden", "-O2"],
       "cflags!": ["-fno-exceptions"],
