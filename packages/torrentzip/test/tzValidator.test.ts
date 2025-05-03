@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import { CompressionMethod, CompressionMethodValue } from '@igir/torrentzip/index.js';
 import { ZipReader } from '@igir/zip';
 import { jest } from '@jest/globals';
 
@@ -9,7 +10,7 @@ import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
-import TZValidator, { ValidationResult } from '../src/tzValidator.js';
+import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
 
 jest.setTimeout(60 * 1000); // 1min
 
@@ -22,68 +23,40 @@ test.each(zipFiles)('fixtures should be invalid TorrentZip/RVZSTD files: %s', as
   );
 });
 
-// it('should write valid TorrentZip files', async () => {
-//   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
-//
-//   try {
-//     await new Igir(
-//       new Options({
-//         commands: ['copy', 'zip'],
-//         dat: [path.join('test', 'fixtures', 'dats')],
-//         input: [path.join('test', 'fixtures', 'roms')],
-//         inputExclude: ['**/invalid.*'],
-//         output: tempDir,
-//         zipFormat: ZipFormatInverted[ZipFormat.TORRENTZIP].toLowerCase(),
-//         excludeDisks: true,
-//         dirDatName: true,
-//         disableCache: true,
-//       }),
-//       new Logger(LogLevel.NEVER),
-//     ).main();
-//
-//     const writtenFiles = await FsPoly.walk(tempDir);
-//     for (const writtenFile of writtenFiles) {
-//       await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
-//         ValidationResult.VALID_TORRENTZIP,
-//       );
-//     }
-//   } finally {
-//     await FsPoly.rm(tempDir, {
-//       recursive: true,
-//       force: true,
-//     });
-//   }
-// });
+const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
+  [ZipFormat.TORRENTZIP]: ValidationResult.VALID_TORRENTZIP,
+  [ZipFormat.RVZSTD]: ValidationResult.VALID_RVZSTD,
+} as const;
 
-// it('should write valid RVZSTD files', async () => {
-//   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
-//
-//   try {
-//     await new Igir(
-//       new Options({
-//         commands: ['copy', 'zip'],
-//         dat: [path.join('test', 'fixtures', 'dats')],
-//         input: [path.join('test', 'fixtures', 'roms')],
-//         inputExclude: ['**/invalid.*'],
-//         output: tempDir,
-//         zipFormat: ZipFormatInverted[ZipFormat.RVZSTD].toLowerCase(),
-//         excludeDisks: true,
-//         dirDatName: true,
-//         disableCache: true,
-//       }),
-//       new Logger(LogLevel.NEVER),
-//     ).main();
-//
-//     const writtenFiles = await FsPoly.walk(tempDir);
-//     for (const writtenFile of writtenFiles) {
-//       await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
-//         ValidationResult.VALID_RVZSTD,
-//       );
-//     }
-//   } finally {
-//     await FsPoly.rm(tempDir, {
-//       recursive: true,
-//       force: true,
-//     });
-//   }
-// });
+test.each(Object.keys(VALIDATION_MAP))('should write valid zip files: %s', async (zipFormat) => {
+  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+
+  try {
+    await new Igir(
+      new Options({
+        commands: ['copy', 'zip'],
+        dat: [path.join('test', 'fixtures', 'dats')],
+        input: [path.join('test', 'fixtures', 'roms')],
+        inputExclude: [path.join('test', 'fixtures', 'roms', '{gcz,rvz,wia}', '**')],
+        output: tempDir,
+        zipFormat: zipFormat.toLowerCase(),
+        excludeDisks: true,
+        dirDatName: true,
+        disableCache: true,
+      }),
+      new Logger(LogLevel.NEVER),
+    ).main();
+
+    const writtenFiles = await FsPoly.walk(tempDir);
+    for (const writtenFile of writtenFiles) {
+      await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
+        VALIDATION_MAP[zipFormat],
+      );
+    }
+  } finally {
+    await FsPoly.rm(tempDir, {
+      recursive: true,
+      force: true,
+    });
+  }
+});
