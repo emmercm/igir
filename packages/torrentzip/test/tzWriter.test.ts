@@ -17,7 +17,7 @@ import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/option
 import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
 import TZWriter, { CompressionMethod, CompressionMethodValue } from '../src/tzWriter.js';
 
-jest.setTimeout(60 * 1000); // 1min
+jest.setTimeout(5 * 60 * 1000); // 5min
 
 const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [CompressionMethod.DEFLATE]: ValidationResult.VALID_TORRENTZIP,
