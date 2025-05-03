@@ -25,11 +25,13 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           base: ${{ github.ref }}
+          # TODO(cemmer): debug
           filters: |
             changes:
               - '.github/workflows/napi-prebuild.yml'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
+              - '**'
 
   prebuild:
     needs:
