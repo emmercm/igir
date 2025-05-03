@@ -91,9 +91,7 @@ jobs:
           run: |
             set -x
             npm ci --ignore-scripts
-
-            # Fix zstd-napi not building?
-            npm install zstd-napi
+            rm -rf packages/*/prebuilds
 
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
@@ -107,15 +105,14 @@ jobs:
             # Test the build
             rm -rf packages/*/build
             npm ci --foreground-scripts
+            (cd node_modules/zstd-napi && node-gyp rebuild)
             npm run test:unit packages
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
         run: |
           set -x
           npm ci --ignore-scripts
-
-          # Fix zstd-napi not building?
-          npm install zstd-napi
+          rm -rf packages/*/prebuilds
 
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
@@ -129,6 +126,7 @@ jobs:
           # Test the build
           rm -rf packages/*/build
           npm ci --foreground-scripts
+          (cd node_modules/zstd-napi && node-gyp rebuild)
           npm run test:unit packages
 
       - run: |
