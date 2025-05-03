@@ -75,8 +75,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-latest, windows-11-arm ]
-        node-version: [ lts, 18 ]
+        os: [ ubuntu-latest, ubuntu-latest-arm, macos-latest, macos-13, windows-latest, windows-11-arm ]
+        node-version: [ lts ]
+        include:
+          - os: ubuntu-latest
+            node-version: 18
+          - os: macos-latest
+            node-version: 18
+          - os: windows-latest
+            node-version: 18
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -106,7 +113,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ lts, 18, ]
+        node-version: [ lts, 18 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
