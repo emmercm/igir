@@ -92,7 +92,7 @@
         }],
         ["OS=='win'", {
           "sources!": [
-            "zstd/lib/decompress/huf_decompress_amd64.S",
+            "deps/zstd/lib/decompress/huf_decompress_amd64.S"
           ]
         }]
       ]
