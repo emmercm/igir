@@ -14,6 +14,7 @@ import Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import Chd from '../../types/files/archives/chd/chd.js';
+import NkitIso from '../../types/files/archives/nkitIso.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import IndexedFiles from '../../types/indexedFiles.js';
@@ -176,6 +177,15 @@ export default class CandidateGenerator extends Module {
       const rawCopying = !(this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom));
 
       const filteredInputFiles = inputFiles.filter((inputFile) => {
+        if (
+          !rawCopying &&
+          inputFile instanceof ArchiveEntry &&
+          inputFile.getArchive() instanceof NkitIso
+        ) {
+          // .nkit.iso can't be extracted
+          return false;
+        }
+
         if (rawCopying && inputFile instanceof ArchiveEntry) {
           if (this.options.getPatchFileCount() > 0 && !(rom instanceof Disk)) {
             // We MIGHT want to patch this ROM, but we can't if we're raw-copying it
