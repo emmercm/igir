@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { CompressionMethod, CompressionMethodValue } from '@igir/torrentzip/index.js';
+import { CompressionMethodValue } from '@igir/torrentzip/index.js';
 import { ZipReader } from '@igir/zip';
 import { jest } from '@jest/globals';
 
