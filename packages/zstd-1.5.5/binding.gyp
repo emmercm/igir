@@ -102,7 +102,10 @@
       "ldflags": ["-Wl,--trace"],
 
       "conditions": [
-        ["OS=='win' or target_arch=='arm' or target_arch=='arm64'", {
+        ["OS=='win'", {
+          "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
+        }],
+        ["target_arch=='arm' or target_arch=='arm64'", {
           "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
         }]
       ]
