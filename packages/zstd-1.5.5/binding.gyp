@@ -52,7 +52,15 @@
             "/DEBUG:NONE"
           ]
         }
-      }
+      },
+
+      "conditions": [
+        ["target_arch=='arm' or target_arch=='arm64'", {
+          "cflags!": ["-O2"],
+          "cflags_cc!": ["-O2"],
+          "ldflags": ["-flto"]
+        }]
+      ]
     },
 
     {
@@ -116,7 +124,9 @@
           "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
         }],
         ["target_arch=='arm' or target_arch=='arm64'", {
-          "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
+          "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"],
+          "cflags!": ["-O2"],
+          "cflags_cc!": ["-O2"]
         }]
       ]
     }
