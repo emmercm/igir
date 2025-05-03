@@ -334,7 +334,14 @@ export default class CandidateGenerator extends Module {
           return aEntries - bEntries;
         }
 
-        // Then, prefer archives whose filename contains the game name, this is particularly
+        // Then, prefer non-CHDs
+        const aChd = a instanceof Chd ? 1 : 0;
+        const bChd = b instanceof Chd ? 1 : 0;
+        if (aChd !== bChd) {
+          return bChd - aChd;
+        }
+
+        // Then, prefer archives whose filename contains the game name; this is particularly
         // helpful when working without DATs
         const aGameName = path.basename(a.getFilePath()).includes(game.getName()) ? 1 : 0;
         const bGameName = path.basename(b.getFilePath()).includes(game.getName()) ? 1 : 0;
