@@ -81,7 +81,7 @@
     "chdman": "0.277.0",
     "class-transformer": "0.5.1",
     "cli-progress": "3.12.0",
-    "dolphin-tool": "0.2503.0",
+    "dolphin-tool": "0.2503.1",
     "fast-glob": "3.3.3",
     "fast-xml-parser": "5.0.9",
     "graceful-fs": "4.2.11",
