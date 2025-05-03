@@ -25,18 +25,17 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           base: ${{ github.ref }}
-          # TODO(cemmer): debug
           filters: |
             changes:
               - '.github/workflows/napi-prebuild.yml'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
-              - '**'
 
   prebuild:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    # TODO(cemmer): DEBUG
+    #if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -93,6 +92,8 @@ jobs:
             --workdir /build
           run: |
             set -x
+            npm ci --ignore-scripts
+
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
               npm install --ignore-scripts
@@ -110,6 +111,8 @@ jobs:
         id: build
         run: |
           set -x
+          npm ci --ignore-scripts
+          
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
             npm install --ignore-scripts
