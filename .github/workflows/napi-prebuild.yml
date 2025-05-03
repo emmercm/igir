@@ -105,7 +105,6 @@ jobs:
             # Test the build
             rm -rf packages/*/build
             npm ci --foreground-scripts
-            (cd node_modules/zstd-napi && ../.bin/node-gyp rebuild)
             npm run test:unit packages
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
@@ -126,7 +125,6 @@ jobs:
           # Test the build
           rm -rf packages/*/build
           npm ci --foreground-scripts
-          (cd node_modules/zstd-napi && ../.bin/node-gyp rebuild)
           npm run test:unit packages
 
       - run: |
