@@ -103,10 +103,10 @@ jobs:
             done
             ls -alR packages/*/prebuilds/
 
-            # # Test the build
-            # rm -rf packages/*/build
-            # npm ci --foreground-scripts
-            # npm run test:unit packages
+            # Test the build
+            rm -rf packages/*/build
+            npm ci --foreground-scripts
+            npm run test:unit packages
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
         run: |
@@ -122,10 +122,10 @@ jobs:
           done
           ls -alR packages/*/prebuilds/
 
-          # # Test the build
-          # rm -rf packages/*/build
-          # npm ci --foreground-scripts
-          # npm run test:unit packages
+          # Test the build
+          rm -rf packages/*/build
+          npm ci --foreground-scripts
+          npm run test:unit packages
 
       - run: |
           ls -alR packages/*/prebuilds/

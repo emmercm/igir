@@ -11,7 +11,7 @@ import FsPoly from '../../../src/polyfill/fsPoly.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 
-jest.setTimeout(5 * 60 * 1000); // 5min
+jest.setTimeout(60 * 1000); // 1min
 
 const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms')))
   .filter((filePath) => filePath.endsWith('.zip'))
@@ -38,7 +38,7 @@ it('should write valid TorrentZip files', async () => {
         dirDatName: true,
         disableCache: true,
       }),
-      new Logger(LogLevel.NEVER),
+      new Logger(LogLevel.ALWAYS),
     ).main();
 
     const writtenFiles = await FsPoly.walk(tempDir);
@@ -71,7 +71,7 @@ it('should write valid RVZSTD files', async () => {
         dirDatName: true,
         disableCache: true,
       }),
-      new Logger(LogLevel.NEVER),
+      new Logger(LogLevel.ALWAYS),
     ).main();
 
     const writtenFiles = await FsPoly.walk(tempDir);
