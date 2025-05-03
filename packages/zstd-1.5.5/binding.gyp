@@ -99,7 +99,6 @@
         "ldflags": ["-Wl,--trace"]
       },
       "defines": [
-        "ZSTD_STATIC_LINKING_ONLY",
         "ZSTD_MULTITHREAD",
         "ZSTD_NO_TRACE",
         "ZSTDLIB_VISIBLE=",
