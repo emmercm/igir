@@ -9,12 +9,12 @@
       "dependencies": ["zstd"],
       "include_dirs": ["<!(node -p \"require('node-addon-api').include_dir\")"],
       "defines": [
-        "NAPI_VERSION=<(napi_build_version)"
+        "NAPI_VERSION=<(napi_build_version)",
+        "NODE_ADDON_API_DISABLE_DEPRECATED",
+        "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
       "cflags": ["-fvisibility=hidden", "-O2"],
-      "cflags!": ["-fno-exceptions"],
       "cflags_cc": ["-fvisibility=hidden", "-O2"],
-      "cflags_cc!": ["-fno-exceptions"],
       "ldflags": [
         "-flto",
         "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
@@ -23,14 +23,12 @@
 
       "xcode_settings": {
         "GCC_OPTIMIZATION_LEVEL": "2",
-        "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
         "DEAD_CODE_STRIPPING": "YES"
       },
       "msvs_settings": {
         "VCCLCompilerTool": {
-          "ExceptionHandling": "true",
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
           "AdditionalOptions": [
