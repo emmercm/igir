@@ -48,11 +48,10 @@
   },
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
-    "preinstall": "node --eval \"require('fs').rmSync('dist',{recursive:true,force:true});\"",
     "postinstall": "node --eval \"if(require('fs').existsSync('.git')===false && require('fs').existsSync('dist')===false){process.exit(1);}\" || npm run build",
     "prepare": "husky",
     "start": "node --loader ts-node/esm index.ts",
-    "build": "node --eval \"if(require('fs').existsSync('build.ts')){process.exit(1);}\" || node --loader ts-node/esm build.ts",
+    "build": "node --loader ts-node/esm build.ts",
     "package": "npm run build && node --loader ts-node/esm package.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
