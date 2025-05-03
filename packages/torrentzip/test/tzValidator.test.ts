@@ -28,35 +28,38 @@ const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [ZipFormat.RVZSTD]: ValidationResult.VALID_RVZSTD,
 } as const;
 
-test.each(Object.keys(VALIDATION_MAP))('should write valid zip files: %s', async (zipFormat) => {
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+test.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])(
+  'should write valid zip files: %s',
+  async (zipFormat) => {
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
 
-  try {
-    await new Igir(
-      new Options({
-        commands: ['copy', 'zip'],
-        dat: [path.join('test', 'fixtures', 'dats')],
-        input: [path.join('test', 'fixtures', 'roms')],
-        inputExclude: [path.join('test', 'fixtures', 'roms', '{gcz,rvz,wia}', '**')],
-        output: tempDir,
-        zipFormat: zipFormat.toLowerCase(),
-        excludeDisks: true,
-        dirDatName: true,
-        disableCache: true,
-      }),
-      new Logger(LogLevel.NEVER),
-    ).main();
+    try {
+      await new Igir(
+        new Options({
+          commands: ['copy', 'zip'],
+          dat: [path.join('test', 'fixtures', 'dats')],
+          input: [path.join('test', 'fixtures', 'roms')],
+          inputExclude: [path.join('test', 'fixtures', 'roms', '{gcz,rvz,wia}', '**')],
+          output: tempDir,
+          zipFormat: ZipFormatInverted[zipFormat].toLowerCase(),
+          excludeDisks: true,
+          dirDatName: true,
+          disableCache: true,
+        }),
+        new Logger(LogLevel.NEVER),
+      ).main();
 
-    const writtenFiles = await FsPoly.walk(tempDir);
-    for (const writtenFile of writtenFiles) {
-      await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
-        VALIDATION_MAP[zipFormat],
-      );
+      const writtenFiles = await FsPoly.walk(tempDir);
+      for (const writtenFile of writtenFiles) {
+        await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
+          VALIDATION_MAP[zipFormat],
+        );
+      }
+    } finally {
+      await FsPoly.rm(tempDir, {
+        recursive: true,
+        force: true,
+      });
     }
-  } finally {
-    await FsPoly.rm(tempDir, {
-      recursive: true,
-      force: true,
-    });
-  }
-});
+  },
+);

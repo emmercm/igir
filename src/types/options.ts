@@ -93,8 +93,8 @@ export const PreferRevisionInverted = Object.fromEntries(
 ) as Record<PreferRevisionValue, PreferRevisionKey>;
 
 export const ZipFormat = {
-  TORRENTZIP: 1,
-  RVZSTD: 2,
+  TORRENTZIP: 'TORRENTZIP',
+  RVZSTD: 'RVZSTD',
 } as const;
 export type ZipFormatKey = keyof typeof ZipFormat;
 export type ZipFormatValue = (typeof ZipFormat)[ZipFormatKey];
