@@ -8,36 +8,48 @@
       "sources": ["binding.cpp"],
       "dependencies": ["zstd"],
       "include_dirs": ["<!(node -p \"require('node-addon-api').include_dir\")"],
-
       "defines": [
         "NAPI_VERSION=<(napi_build_version)",
-        "NODE_ADDON_API_DISABLE_DEPRECATED",
-        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS",
-        "NODE_API_NO_EXTERNAL_BUFFERS_ALLOWED"
+        "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
-      "cflags+": ["-fvisibility=hidden"],
+      "cflags": ["-fvisibility=hidden", "-O2"],
       "cflags!": ["-fno-exceptions"],
+      "cflags_cc": ["-fvisibility=hidden", "-O2"],
       "cflags_cc!": ["-fno-exceptions"],
       "ldflags": [
+        "-flto",
         "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
         "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
       ],
-      "conditions": [
-        ["OS=='mac'", {
-          "xcode_settings": {
-            "CLANG_CXX_LIBRARY": "libc++",
-            "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
-            "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
-            "MACOSX_DEPLOYMENT_TARGET": "10.7"
-          }
-        }],
-        ["OS=='win'", {
-          "defines": ["_HAS_EXCEPTIONS=1"],
-          "msvs_settings": {
-            "VCCLCompilerTool": {"ExceptionHandling": 1}
-          }
-        }]
-      ]
+
+      "xcode_settings": {
+        "GCC_OPTIMIZATION_LEVEL": "2",
+        "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
+        "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
+        "DEAD_CODE_STRIPPING": "YES"
+      },
+      "msvs_settings": {
+        "VCCLCompilerTool": {
+          "ExceptionHandling": "true",
+          "EnableFunctionLevelLinking": "true",
+          "WholeProgramOptimization": "true",
+          "AdditionalOptions": [
+            "/D__DATE__=0",
+            "/D__TIME__=0",
+            "/D__TIMESTAMP__=0"
+          ]
+        },
+        "VCLinkerTool": {
+          "LinkTimeCodeGeneration": "true",
+          "AdditionalOptions": [
+            "/Brepro",
+            "/NOLOGO",
+            "/OPT:REF",
+            "/DEBUG:NONE"
+          ]
+        }
+      }
     },
 
     {
@@ -71,29 +83,36 @@
         "deps/zstd/lib/decompress/zstd_decompress.c",
         "deps/zstd/lib/decompress/zstd_decompress_block.c"
       ],
-
-      "cflags+": ["-fvisibility=hidden"],
-      "defines": [
-        "XXH_NAMESPACE=ZSTD_",
-        "ZSTDERRORLIB_VISIBLE=",
-        "ZSTDLIB_VISIBLE=",
-        "ZSTD_MULTITHREAD",
-        "ZSTD_NO_TRACE"
-      ],
       "direct_dependent_settings": {
-        "include_dirs": ["zstd/lib"]
+        "include_dirs": ["deps/zstd/lib"],
+        "ldflags": ["-Wl,--trace"]
       },
+      "defines": [
+        "ZSTD_MULTITHREAD",
+        "ZSTD_NO_TRACE",
+        "ZSTDLIB_VISIBLE=",
+        "ZSTD_LEGACY_SUPPORT=0",
+        "ZSTD_LIB_DECOMPRESSION=0",
+        "ZSTD_LIB_DICTBUILDER=0",
+        "ZSTD_LIB_DEPRECATED=0",
+        "ZSTD_LIB_MINIFY=1",
+        "ZSTD_NO_UNUSED_FUNCTIONS=1",
+        "ZSTD_NOBENCH=1"
+      ],
+      "cflags": ["-fvisibility=hidden", "-O2"],
+      "cflags_cc": ["-fvisibility=hidden", "-O2"],
+      "ldflags": ["-Wl,--trace"],
+
+      "xcode_settings": {
+        "GCC_SYMBOLS_PRIVATE_EXTERN": "YES"
+      },
+
       "conditions": [
-        ["OS=='mac'", {
-          "xcode_settings": {
-            "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
-            "MACOSX_DEPLOYMENT_TARGET": "10.7"
-          }
-        }],
         ["OS=='win'", {
-          "sources!": [
-            "deps/zstd/lib/decompress/huf_decompress_amd64.S"
-          ]
+          "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
+        }],
+        ["target_arch=='arm' or target_arch=='arm64'", {
+          "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
         }]
       ]
     }
