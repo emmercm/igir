@@ -40,7 +40,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    timeout-minutes: 20
+    timeout-minutes: 30
     name: prebuildify (${{ matrix.os }} ${{ matrix.docker_arch }})
     strategy:
       fail-fast: false
