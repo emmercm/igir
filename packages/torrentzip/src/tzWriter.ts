@@ -106,7 +106,7 @@ export default class TZWriter {
       uncompressedTransform,
       this.compressionMethod === CompressionMethod.DEFLATE
         ? new ZlibDeflateTransform()
-        : new ZstdCompressTransform(compressorThreads),
+        : new ZstdCompressTransform(1),
       compressedTransform,
       fs.createWriteStream(os.devNull, {
         fd: this.fileHandle.fd,
