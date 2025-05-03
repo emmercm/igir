@@ -13,8 +13,8 @@
         "NODE_ADDON_API_DISABLE_DEPRECATED",
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
-      "cflags": ["-fvisibility=hidden", "-O2"],
-      "cflags_cc": ["-fvisibility=hidden", "-O2"],
+      "cflags": ["-fvisibility=hidden", "-O3"],
+      "cflags_cc": ["-fvisibility=hidden", "-O3"],
       "ldflags": [
         "-flto",
         "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
@@ -29,6 +29,10 @@
       },
       "msvs_settings": {
         "VCCLCompilerTool": {
+          "Optimization": "3",
+          "FavorSizeOrSpeed": "2",
+          "ExceptionHandling": "true",
+          "EnableIntrinsicFunctions": "true",
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
           "AdditionalOptions": [
@@ -97,8 +101,8 @@
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
       ],
-      "cflags": ["-fvisibility=hidden", "-O2"],
-      "cflags_cc": ["-fvisibility=hidden", "-O2"],
+      "cflags": ["-fvisibility=hidden", "-O3"],
+      "cflags_cc": ["-fvisibility=hidden", "-O3"],
       "ldflags": ["-Wl,--trace"],
 
       "xcode_settings": {
