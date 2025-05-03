@@ -67,8 +67,6 @@ jobs:
           node-version: 18
 
       # Prebuild
-      - run: |
-          rm -rf packages/*/prebuilds
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
       - id: linux-vars
@@ -92,7 +90,8 @@ jobs:
             --workdir /build
           run: |
             set -x
-            npm ci --ignore-scripts
+            npm ci
+            rm -rf packages/*/prebuilds
 
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
@@ -111,7 +110,8 @@ jobs:
         id: build
         run: |
           set -x
-          npm ci --ignore-scripts
+          npm ci
+          rm -rf packages/*/prebuilds
 
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
