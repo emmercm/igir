@@ -12,15 +12,16 @@
         "NAPI_VERSION=<(napi_build_version)",
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
-      "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
+      "cflags": ["-fvisibility=hidden", "-fPIC", "-O2"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
       "ldflags": [
-        "-Wl,--exclude-libs,ALL",
-        "-Wl,-z,norelro"
+        "-flto",
+        "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
+        "-Wl,--exclude-libs,ALL"
       ],
 
       "xcode_settings": {
-        "GCC_OPTIMIZATION_LEVEL": "3",
+        "GCC_OPTIMIZATION_LEVEL": "2",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
         "DEAD_CODE_STRIPPING": "YES"
@@ -95,15 +96,16 @@
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
       ],
-      "cflags": ["-fvisibility=hidden", "-fPIC", "-O3"],
+      "cflags": ["-fvisibility=hidden", "-fPIC", "-O2"],
       "cflags_cc": ["-fvisibility=hidden", "-fPIC"],
       "ldflags": ["-Wl,--trace"],
 
       "conditions": [
         ["OS=='win'", {
-          "sources!": [
-            "deps/zstd/lib/decompress/huf_decompress_amd64.S"
-          ]
+          "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
+        }],
+        ["target_arch=='arm' or target_arch=='arm64'", {
+          "sources!": ["deps/zstd/lib/decompress/huf_decompress_amd64.S"]
         }]
       ]
     }
