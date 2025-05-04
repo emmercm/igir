@@ -34,8 +34,7 @@ jobs:
   prebuild:
     needs:
       - path-filter
-    # TODO(cemmer): DEBUG
-    #if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
