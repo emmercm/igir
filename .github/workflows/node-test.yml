@@ -75,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, ubuntu-latest-arm, macos-latest, macos-13, windows-latest, windows-11-arm ]
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-13, windows-latest, windows-11-arm ]
         node-version: [ lts ]
         include:
           - os: ubuntu-latest
