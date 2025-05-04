@@ -75,7 +75,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-13, windows-latest, windows-11-arm ]
+        # TODO(cemmer): chdman-js and maxcso-js don't have Windows ARM builds, so it won't test the same
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-13, windows-latest ]
         node-version: [ lts ]
         include:
           - os: ubuntu-latest
