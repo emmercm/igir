@@ -12,7 +12,7 @@ import FsPoly from '../../../src/polyfill/fsPoly.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
 import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
 
-jest.setTimeout(5 * 60 * 1000); // 5min for ARM
+jest.setTimeout(10 * 60 * 1000); // 10min for QEMU ARM
 
 const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms')))
   .filter((filePath) => filePath.endsWith('.zip'))
