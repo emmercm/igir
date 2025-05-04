@@ -39,7 +39,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    timeout-minutes: 60 # ARM can take a long time
+    timeout-minutes: 30 # QEMU cross-builds
     name: prebuildify (${{ matrix.os }} ${{ matrix.docker_arch }})
     strategy:
       fail-fast: false
