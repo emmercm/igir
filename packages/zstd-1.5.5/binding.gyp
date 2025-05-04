@@ -13,27 +13,20 @@
         "NODE_ADDON_API_DISABLE_DEPRECATED",
         "NAPI_DISABLE_CPP_EXCEPTIONS"
       ],
-      "cflags": ["-fvisibility=hidden", "-O3"],
-      "cflags_cc": ["-fvisibility=hidden", "-O3"],
+      "cflags": ["-fvisibility=hidden"],
+      "cflags_cc": ["-fvisibility=hidden"],
       "ldflags": [
-        "-flto",
         "-Wl,-z,noexecstack", "-Wl,-z,relro", "-Wl,-z,now",
         "-Wl,--as-needed", "-Wl,--no-copy-dt-needed-entries"
       ],
 
       "xcode_settings": {
-        "GCC_OPTIMIZATION_LEVEL": "2",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
         "DEAD_CODE_STRIPPING": "YES"
       },
       "msvs_settings": {
         "VCCLCompilerTool": {
-          "Optimization": "3",
-          "FavorSizeOrSpeed": "2",
-          "EnableIntrinsicFunctions": "true",
-          "EnableFunctionLevelLinking": "true",
-          "WholeProgramOptimization": "true",
           "AdditionalOptions": [
             "/D__DATE__=0",
             "/D__TIME__=0",
@@ -41,7 +34,6 @@
           ]
         },
         "VCLinkerTool": {
-          "LinkTimeCodeGeneration": "true",
           "AdditionalOptions": [
             "/Brepro",
             "/NOLOGO",
@@ -100,8 +92,8 @@
         "ZSTD_NO_UNUSED_FUNCTIONS=1",
         "ZSTD_NOBENCH=1"
       ],
-      "cflags": ["-fvisibility=hidden", "-O3"],
-      "cflags_cc": ["-fvisibility=hidden", "-O3"],
+      "cflags": ["-fvisibility=hidden"],
+      "cflags_cc": ["-fvisibility=hidden"],
       "ldflags": ["-Wl,--trace"],
 
       "xcode_settings": {
