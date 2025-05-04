@@ -63,7 +63,7 @@ jobs:
             docker_arch: linux/arm64/v8
 
           - os: macos-13
-          - os: macos-15
+          - os: macos-latest
 
           - os: windows-latest
             go_arch: amd64
@@ -118,6 +118,8 @@ jobs:
               ls -alh igir "${{ env.BIN_OUTPUT }}"
               echo '```'
             } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: sudo chown -R "$(id -u):$(id -g)" .
 
       - if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
@@ -148,18 +150,7 @@ jobs:
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
           # Install dependencies...
-          if ($NODE_ARCH -in @("x64")) {
-            npm ci
-          } else {
-            # ...but fix zstd-napi not compiling Zstandard correctly out of the box
-            npm ci --ignore-scripts
-            Push-Location
-            cd node_modules\zstd-napi
-            Set-Content -Path deps\zstd.gyp -Value (Get-Content -Path deps\zstd.gyp | Select-String -Pattern 'huf_decompress_amd64' -NotMatch)
-            npm install node-gyp
-            node_modules\.bin\node-gyp rebuild
-            Pop-Location
-          }
+          npm ci
           if ($NODE_ARCH -notin @("ia32", "x64")) {
             # ...and use a version of 7zip-bin that includes this arch
             npm install 7zip-bin@">=5.2.0"

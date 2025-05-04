@@ -29,6 +29,7 @@ export default class EndOfLifeChecker {
     [21, new Date('2024-06-01')],
     [22, new Date('2027-04-30')],
     [23, new Date('2025-06-01')],
+    [24, new Date('2028-04-30')],
   ] satisfies [number, Date][];
 
   private readonly logger: Logger;

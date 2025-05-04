@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 
 import { Semaphore } from 'async-mutex';
@@ -13,7 +14,7 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import Options from '../../types/options.js';
+import Options, { ZipFormat, ZipFormatValue } from '../../types/options.js';
 import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
@@ -125,16 +126,6 @@ export default class CandidateWriter extends Module {
   }
 
   private async writeCandidate(dat: DAT, candidate: WriteCandidate): Promise<void> {
-    const writeNeeded = candidate
-      .getRomsWithFiles()
-      .some((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()));
-    if (!writeNeeded) {
-      this.progressBar.logDebug(
-        `${dat.getName()}: ${candidate.getName()}: input and output files are the same, skipping`,
-      );
-      return;
-    }
-
     const totalKilobytes =
       candidate
         .getRomsWithFiles()
@@ -206,7 +197,7 @@ export default class CandidateWriter extends Module {
         );
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
           );
           return;
         }
@@ -340,8 +331,12 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    if (!(await zipFile.isTorrentZip())) {
+    if (this.options.getZipFormat() === ZipFormat.TORRENTZIP && !(await zipFile.isTorrentZip())) {
       return 'is not a valid TorrentZip file';
+    }
+
+    if (this.options.getZipFormat() === ZipFormat.RVZSTD && !(await zipFile.isRVZSTD())) {
+      return 'is not a valid RVZSTD file';
     }
 
     this.progressBar.logTrace(
@@ -362,7 +357,14 @@ export default class CandidateWriter extends Module {
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.createArchive(inputToOutputZipEntries);
+      const compressorThreads = Math.ceil(
+        os.cpus().length / Math.max(CandidateWriter.FILESIZE_SEMAPHORE.openLocks(), 1),
+      );
+      await outputZip.createArchive(
+        inputToOutputZipEntries,
+        this.options.getZipFormat() as ZipFormatValue,
+        compressorThreads,
+      );
     } catch (error) {
       this.progressBar.logError(
         `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
@@ -475,7 +477,7 @@ export default class CandidateWriter extends Module {
         );
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, existing file is what was expected`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
           );
           return;
         }
@@ -735,7 +737,7 @@ export default class CandidateWriter extends Module {
         }
         if (!existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, existing link is what was expected`,
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, the existing link is correct`,
           );
           return;
         }

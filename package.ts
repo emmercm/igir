@@ -73,6 +73,7 @@ const output = path.resolve(argv.output);
 logger.info(`Output: '${output}'`);
 
 // Generate the ./dist directory
+logger.info(`Bundling with 'esbuild' ...`);
 await FsPoly.rm('dist', { recursive: true, force: true });
 await esbuild.build({
   entryPoints: ['index.ts'],
@@ -90,11 +91,17 @@ await esbuild.build({
     }, {}),
 });
 
-// Generate the ./prebuilds directory
-await FsPoly.rm('prebuilds', { recursive: true, force: true });
+// Generate the prebuilds directory
+const prebuilds = path.join('dist', 'prebuilds');
+await FsPoly.rm(prebuilds, { recursive: true, force: true });
+// await FsPoly.mkdir('prebuilds');
 await FsPoly.copyDir(
-  path.join(input, 'packages', 'torrentzip', 'prebuilds', `${process.platform}-${process.arch}`),
-  path.join(input, 'prebuilds', `${process.platform}-${process.arch}`),
+  path.join(input, 'packages', 'zlib-1.1.3', 'prebuilds', `${process.platform}-${process.arch}`),
+  path.join(prebuilds, `${process.platform}-${process.arch}`),
+);
+await FsPoly.copyDir(
+  path.join(input, 'packages', 'zstd-1.5.5', 'prebuilds', `${process.platform}-${process.arch}`),
+  path.join(prebuilds, `${process.platform}-${process.arch}`),
 );
 
 const include = new Set(
@@ -103,7 +110,6 @@ const include = new Set(
     { include: 'dist{,/**}', onlyFiles: false },
     { include: 'node_modules{,/**}', onlyFiles: false },
     { include: 'package*.json' },
-    { include: 'prebuilds{,/**}', onlyFiles: false },
     // Exclude unnecessary JavaScript files
     { exclude: '**/jest.config.(js|ts|mjs|cjs|json)' },
     { exclude: '**/tsconfig*' },
@@ -113,7 +119,7 @@ const include = new Set(
     { exclude: 'node_modules/**/docs/{**/,}*.md' },
     {
       exclude:
-        'node_modules/**/(AUTHORS|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|GOVERNANCE|HISTORY|LICENSE|README|RELEASE|RELEASE-NOTES|SECURITY|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
+        'node_modules/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
       caseSensitiveMatch: false,
     },
     // Only include the exact 7zip-bin we need
@@ -153,7 +159,7 @@ logger.info(
 );
 const excludeGlobs = exclude.map((glob) => fg.convertPathToPattern(glob));
 
-logger.info('Building ...');
+logger.info("Packaging with 'caxa' ...");
 await caxa({
   input,
   output,
@@ -163,23 +169,28 @@ await caxa({
     '{{caxa}}/dist/bundle.js',
   ],
 });
-await FsPoly.rm('prebuilds', { recursive: true });
+await FsPoly.rm(prebuilds, { recursive: true });
 
 if (!(await FsPoly.exists(output))) {
   throw new ExpectedError(`output file '${output}' doesn't exist`);
 }
 logger.info(`Output: ${FsPoly.sizeReadable(await FsPoly.size(output))}`);
 
-const proc = child_process.spawn(output, ['--help'], { windowsHide: true });
-let procOutput = '';
-proc.stdout.on('data', (chunk: Buffer) => {
-  procOutput += chunk.toString();
-});
-proc.stderr.on('data', (chunk: Buffer) => {
-  procOutput += chunk.toString();
-});
-await new Promise((resolve, reject) => {
-  proc.on('close', resolve);
+logger.info(`Testing: '${output}' ...`);
+const procOutput = await new Promise<string>((resolve, reject) => {
+  const proc = child_process.spawn(output, ['--help'], { windowsHide: true });
+  let procOutput = '';
+  proc.stdout.on('data', (chunk: Buffer) => {
+    procOutput += chunk.toString();
+  });
+  proc.stderr.on('data', (chunk: Buffer) => {
+    procOutput += chunk.toString();
+  });
+  proc.on('close', () => {
+    resolve(procOutput);
+  });
   proc.on('error', reject);
 });
 logger.trace(procOutput);
+
+logger.info('Finished!');

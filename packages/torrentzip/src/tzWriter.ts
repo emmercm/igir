@@ -7,8 +7,16 @@ import { crc32 } from '@node-rs/crc32';
 
 import CompressedTransform from './compressedTransform.js';
 import CP437Encoder from './cp437Encoder.js';
-import DeflateTransform from './deflateTransform.js';
 import UncompressedTransform from './uncompressedTransform.js';
+import ZlibDeflateTransform from './zlibDeflateTransform.js';
+import ZstdCompressTransform from './zstdCompressTransform.js';
+
+export const CompressionMethod = {
+  DEFLATE: 'DEFLATE',
+  ZSTD: 'ZSTD',
+};
+export type CompressionMethodKey = keyof typeof CompressionMethod;
+export type CompressionMethodValue = (typeof CompressionMethod)[CompressionMethodKey];
 
 interface LocalFileHeader {
   position: number;
@@ -36,38 +44,52 @@ export default class TZWriter {
     '504B0607',
     'hex',
   );
-  private static readonly END_OF_CENTRAL_DIRECTORY_HEADER_LENGTH = 44;
+  private static readonly END_OF_CENTRAL_DIRECTORY_HEADER_MIN_LENGTH = 22;
   private static readonly END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE = Buffer.from(
     '504B0506',
     'hex',
   );
 
   private readonly fileHandle: fs.promises.FileHandle;
+  private readonly compressionMethod: CompressionMethodValue;
+
   private filePosition = 0;
   private readonly localFileHeaders: LocalFileHeader[] = [];
 
-  private constructor(fileHandle: fs.promises.FileHandle) {
+  private constructor(
+    fileHandle: fs.promises.FileHandle,
+    compressionMethod: CompressionMethodValue,
+  ) {
     this.fileHandle = fileHandle;
+    this.compressionMethod = compressionMethod;
   }
 
   /**
    * Open a file path for writing.
    */
-  static async open(filePath: string): Promise<TZWriter> {
+  static async open(
+    filePath: string,
+    compressionMethod: CompressionMethodValue,
+  ): Promise<TZWriter> {
     const fileHandle = await fs.promises.open(filePath, 'w');
-    return new TZWriter(fileHandle);
+    return new TZWriter(fileHandle, compressionMethod);
   }
 
   /**
    * Add a stream to the TorrentZip.
    */
-  async addStream(readable: Readable, filename: string, uncompressedSize: number): Promise<void> {
+  async addStream(
+    readable: Readable,
+    filename: string,
+    uncompressedSize: number,
+    compressorThreads: number,
+  ): Promise<void> {
     // Figure out how long the local file header will be
     let localFileHeaderPlaceholder: Buffer<ArrayBuffer>;
     if (uncompressedSize >= 0xff_ff_ff_ff) {
-      localFileHeaderPlaceholder = TZWriter.zip64LocalFileHeader(filename, this.filePosition);
+      localFileHeaderPlaceholder = this.zip64LocalFileHeader(filename, this.filePosition);
     } else {
-      localFileHeaderPlaceholder = TZWriter.localFileHeader(filename);
+      localFileHeaderPlaceholder = this.localFileHeader(filename);
     }
     await this.fileHandle.write(
       localFileHeaderPlaceholder,
@@ -82,7 +104,9 @@ export default class TZWriter {
     await util.promisify(stream.pipeline)(
       readable,
       uncompressedTransform,
-      new DeflateTransform(),
+      this.compressionMethod === CompressionMethod.DEFLATE
+        ? new ZlibDeflateTransform()
+        : new ZstdCompressTransform(compressorThreads),
       compressedTransform,
       fs.createWriteStream(os.devNull, {
         fd: this.fileHandle.fd,
@@ -94,7 +118,7 @@ export default class TZWriter {
     // Write the final local file header
     let localFileHeader: Buffer<ArrayBuffer>;
     if (uncompressedSize >= 0xff_ff_ff_ff) {
-      localFileHeader = TZWriter.zip64LocalFileHeader(
+      localFileHeader = this.zip64LocalFileHeader(
         filename,
         this.filePosition,
         uncompressedTransform.getCrc32(),
@@ -102,7 +126,7 @@ export default class TZWriter {
         uncompressedTransform.getSize(),
       );
     } else {
-      localFileHeader = TZWriter.localFileHeader(
+      localFileHeader = this.localFileHeader(
         filename,
         uncompressedTransform.getCrc32(),
         compressedTransform.getSize(),
@@ -121,7 +145,7 @@ export default class TZWriter {
     this.filePosition += localFileHeader.length + compressedTransform.getSize();
   }
 
-  private static localFileHeader(
+  private localFileHeader(
     filename: string,
     uncompressedCrc32?: number,
     compressedSize?: number,
@@ -130,13 +154,33 @@ export default class TZWriter {
     const cp437 = CP437Encoder.canEncode(filename);
     const encodedFilename = cp437 ? CP437Encoder.encode(filename) : Buffer.from(filename, 'utf8');
 
-    const buffer = Buffer.allocUnsafe(this.LOCAL_FILE_HEADER_MIN_LENGTH + encodedFilename.length);
-    this.LOCAL_FILE_HEADER_SIGNATURE.copy(buffer);
-    buffer.writeUInt16LE(20, 4); // version needed (for DEFLATE)
-    buffer.writeUInt16LE(0x02 | (cp437 ? 0x0 : 0x8_00), 6); // general purpose flag (DEFLATE max)
-    buffer.writeUInt16LE(8, 8); // compression method (is DEFLATEd)
-    buffer.writeUInt16LE(48_128, 10); // file last modification time
-    buffer.writeUInt16LE(8600, 12); // file last modification date
+    const buffer = Buffer.allocUnsafe(
+      TZWriter.LOCAL_FILE_HEADER_MIN_LENGTH + encodedFilename.length,
+    );
+    TZWriter.LOCAL_FILE_HEADER_SIGNATURE.copy(buffer);
+
+    if (this.compressionMethod === CompressionMethod.DEFLATE) {
+      buffer.writeUInt16LE(20, 4); // version needed
+    } else {
+      buffer.writeUInt16LE(63, 4); // version needed
+    }
+
+    buffer.writeUInt16LE(0x02 | (cp437 ? 0x0 : 0x8_00), 6); // general purpose flag (max compression)
+
+    if (this.compressionMethod === CompressionMethod.DEFLATE) {
+      buffer.writeUInt16LE(8, 8); // compression method
+    } else {
+      buffer.writeUInt16LE(93, 8); // compression method
+    }
+
+    if (this.compressionMethod === CompressionMethod.DEFLATE) {
+      buffer.writeUInt16LE(48_128, 10); // file last modification time
+      buffer.writeUInt16LE(8600, 12); // file last modification date
+    } else {
+      buffer.writeUInt16LE(0, 10); // file last modification time
+      buffer.writeUInt16LE(0, 12); // file last modification date
+    }
+
     buffer.writeUInt32LE(uncompressedCrc32 ?? 0, 14);
     if ((compressedSize ?? 0) >= 0xff_ff_ff_ff || (uncompressedSize ?? 0) >= 0xff_ff_ff_ff) {
       buffer.writeUInt32LE(0xff_ff_ff_ff, 18);
@@ -147,11 +191,11 @@ export default class TZWriter {
     }
     buffer.writeUint16LE(encodedFilename.length, 26); // file name length
     buffer.writeUint16LE(0, 28); // extra field length
-    encodedFilename.copy(buffer, this.LOCAL_FILE_HEADER_MIN_LENGTH);
+    encodedFilename.copy(buffer, TZWriter.LOCAL_FILE_HEADER_MIN_LENGTH);
     return buffer;
   }
 
-  private static zip64LocalFileHeader(
+  private zip64LocalFileHeader(
     filename: string,
     localFileHeaderRelativeOffset: number,
     uncompressedCrc32?: number,
@@ -169,7 +213,9 @@ export default class TZWriter {
 
     const buffer = Buffer.alloc(localFileHeader.length + extraFieldLength);
     localFileHeader.copy(buffer, 0);
-    buffer.writeUInt16LE(45, 4); // version needed (for zip64)
+    if (buffer.readUInt16LE(4) < 45) {
+      buffer.writeUInt16LE(45, 4); // version needed (for zip64)
+    }
     buffer.writeUint16LE(extraFieldLength, 28); // extra field length
 
     // Write extra field
@@ -226,7 +272,7 @@ export default class TZWriter {
           zip64EndOfCentralDirectoryRecord.length + zip64EndOfCentralDirectoryLocator.length;
       }
 
-      const eocd = TZWriter.endOfCentralDirectoryHeader(
+      const eocd = this.endOfCentralDirectoryHeader(
         centralDirectoryFileHeaders,
         startOfCentralDirectoryOffset,
       );
@@ -332,12 +378,15 @@ export default class TZWriter {
     return buffer;
   }
 
-  private static endOfCentralDirectoryHeader(
+  private endOfCentralDirectoryHeader(
     centralDirectoryFileHeaders: Buffer<ArrayBuffer>[],
     startOfCentralDirectoryOffset: number,
   ): Buffer<ArrayBuffer> {
-    const buffer = Buffer.allocUnsafe(this.END_OF_CENTRAL_DIRECTORY_HEADER_LENGTH);
-    this.END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE.copy(buffer);
+    const commentLength = this.compressionMethod === CompressionMethod.DEFLATE ? 22 : 15;
+    const buffer = Buffer.allocUnsafe(
+      TZWriter.END_OF_CENTRAL_DIRECTORY_HEADER_MIN_LENGTH + commentLength,
+    );
+    TZWriter.END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE.copy(buffer);
     buffer.writeUInt16LE(0, 4); // number of this disk
     buffer.writeUInt16LE(0, 6); // number of the disk with the SOCD
     buffer.writeUInt16LE(Math.min(centralDirectoryFileHeaders.length, 0xff_ff), 8); // total number of entries in this disk's CD
@@ -355,7 +404,12 @@ export default class TZWriter {
       .toString(16)
       .padStart(8, '0')
       .toUpperCase();
-    const comment = `TORRENTZIPPED-${cdfhCrc32}`;
+    let comment: string;
+    if (this.compressionMethod === CompressionMethod.DEFLATE) {
+      comment = `TORRENTZIPPED-${cdfhCrc32}`;
+    } else {
+      comment = `RVZSTD-${cdfhCrc32}`;
+    }
     buffer.writeUInt32LE(comment.length, 20);
     buffer.write(comment, 22);
 

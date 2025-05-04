@@ -21,7 +21,8 @@ import Options, {
   MergeMode,
   MergeModeInverted,
   PreferRevision,
-  PreferRevisionInverted,
+  ZipFormat,
+  ZipFormatInverted,
 } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
@@ -280,9 +281,7 @@ export default class ArgumentsParser {
         group: groupRomInput,
         description:
           'Calculate checksums of archive files themselves, allowing them to match files in DATs',
-        choices: Object.values(InputChecksumArchivesMode).map((mode) =>
-          InputChecksumArchivesModeInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(InputChecksumArchivesMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: InputChecksumArchivesModeInverted[InputChecksumArchivesMode.AUTO].toLowerCase(),
@@ -445,9 +444,7 @@ export default class ArgumentsParser {
       .option('dir-game-subdir', {
         group: groupRomOutputPath,
         description: 'Append the name of the game as an output subdirectory depending on its ROMs',
-        choices: Object.values(GameSubdirMode).map((mode) =>
-          GameSubdirModeInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(GameSubdirMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
@@ -457,9 +454,7 @@ export default class ArgumentsParser {
         group: groupRomOutput,
         description:
           'Read files for known signatures and use the correct extension (also affects dir2dat)',
-        choices: Object.values(FixExtension).map((mode) =>
-          FixExtensionInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(FixExtension).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
@@ -521,6 +516,14 @@ export default class ArgumentsParser {
         return true;
       })
 
+      .option('zip-format', {
+        group: groupRomZip,
+        description: 'The structure format to use for written zip files',
+        choices: Object.keys(ZipFormat).map((format) => format.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: ZipFormatInverted[ZipFormat.TORRENTZIP].toLowerCase(),
+      })
       .option('zip-exclude', {
         group: groupRomZip,
         alias: 'Z',
@@ -593,7 +596,7 @@ export default class ArgumentsParser {
       .option('merge-roms', {
         group: groupRomSet,
         description: 'ROM merge/split mode (requires DATs with parent/clone information)',
-        choices: Object.values(MergeMode).map((mode) => MergeModeInverted[mode].toLowerCase()),
+        choices: Object.keys(MergeMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
@@ -826,9 +829,7 @@ export default class ArgumentsParser {
       .option('prefer-revision', {
         group: groupRomPriority,
         description: 'Prefer older or newer revisions, versions, or ring codes',
-        choices: Object.values(PreferRevision).map((mode) =>
-          PreferRevisionInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(PreferRevision).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         implies: 'single',

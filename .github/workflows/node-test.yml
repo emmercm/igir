@@ -75,8 +75,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-15, windows-latest ]
-        node-version: [ lts, 18 ]
+        # TODO(cemmer): chdman-js and maxcso-js don't have Windows ARM builds, so it won't test the same
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-13, windows-latest ]
+        node-version: [ lts ]
+        include:
+          - os: ubuntu-latest
+            node-version: 18
+          - os: macos-latest
+            node-version: 18
+          - os: windows-latest
+            node-version: 18
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -86,7 +94,10 @@ jobs:
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
+      - shell: bash
+        run: |
+          rm -rf packages/*/prebuilds
+          npm ci --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
@@ -103,7 +114,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ lts, 18, ]
+        node-version: [ lts, 18 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -113,7 +124,7 @@ jobs:
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
+      - run: npm ci --foreground-scripts
       - run: |
           sudo apt-get update
           sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
@@ -144,7 +155,7 @@ jobs:
           npm pack
           tar -xvzf igir-*.tgz
           cd package
-          npm install
+          npm install --foreground-scripts
           ./dist/index.js --help
           cd ..
           rm -rf package

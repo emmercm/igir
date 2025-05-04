@@ -1,11 +1,12 @@
 # TorrentZip
 
-A TorrentZip writing and validation library, based heavily on:
+A TorrentZip writing and validation library.
 
-- [tikki/trrntzip](https://github.com/tikki/trrntzip) (C++)
-- [RomVault](https://wiki.romvault.com/doku.php?id=torrentzip) (though it documents the spec wrong)
-- [uwedeportivo/torrentzip](https://github.com/uwedeportivo/torrentzip) (Go)
+## Credits
 
-and:
+Parts of this code are based on:
 
-- [drakedevel/zstd-napi](https://github.com/drakedevel/zstd-napi) (Node-API example)
+- [RomVault's documentation](https://wiki.romvault.com/doku.php?id=torrentzip)
+- [tikki/trrntzip](https://github.com/tikki/trrntzip) (GPL v2)
+- [uwedeportivo/torrentzip](https://github.com/uwedeportivo/torrentzip) (Go license)
+- [archiverjs/node-archiver](https://github.com/archiverjs/node-archiver) (MIT)

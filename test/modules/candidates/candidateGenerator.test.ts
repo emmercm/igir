@@ -186,7 +186,8 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', ['1.rom']], // preferred the non-archive
+      // preferred the non-archive when extracting, otherwise are raw-copying
+      ['game with one ROM and multiple releases', [command === 'extract' ? '1.rom' : 'one.zip']],
     ]);
   });
 
@@ -237,7 +238,8 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ).toEqual([
       ['game with no ROMs', 0],
       ['game with one ROM and multiple releases', 1],
-      ['game with two ROMs (parent)', 2],
+      // two.7z contains both ROMs but with the wrong entry names
+      ...(command === 'raw' ? [] : [['game with two ROMs (parent)', 2]]),
     ]);
     expect(candidates[1].getRomsWithFiles()[0].getInputFile()).not.toBeInstanceOf(ArchiveEntry); // preferred the non-archive
   });
@@ -352,7 +354,8 @@ describe('with ROMs with headers', () => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', ['one.nes']], // respected headerless extension
+      // respected headerless extension
+      ['game with one ROM and multiple releases', ['one.nes']],
     ]);
   });
 });
@@ -668,16 +671,16 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       // When
       const candidates = await candidateGenerator(options, dat, files);
 
-      // Then the Archive isn't used for any input file
+      // Then the Archive isn't used for every input file
       expect(candidates).toHaveLength(1);
 
       const firstCandidate = candidates[0];
       const romsWithFiles = firstCandidate.getRomsWithFiles();
       expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-      for (const [idx, romsWithFile] of romsWithFiles.entries()) {
+      for (const romsWithFile of romsWithFiles.values()) {
         const inputFile = romsWithFile.getInputFile();
-        expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
+        expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
       }
     });
 
@@ -736,7 +739,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
           const firstCandidate = candidates[0];
           const romsWithFiles = firstCandidate.getRomsWithFiles();
-          expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+          expect(romsWithFiles).toHaveLength(1);
 
           for (const romsWithFile of romsWithFiles) {
             const inputFile = romsWithFile.getInputFile();
@@ -783,7 +786,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
           const firstCandidate = candidates[0];
           const romsWithFiles = firstCandidate.getRomsWithFiles();
-          expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+          expect(romsWithFiles).toHaveLength(1);
 
           for (const romsWithFile of romsWithFiles) {
             const inputFile = romsWithFile.getInputFile();

@@ -1,6 +1,6 @@
 # Contribution Guidelines
 
-Welcome! If you're viewing this, it means that you’re likely interested in contributing to the project. That's fantastic!
+Welcome! If you're viewing this, it means that you're likely interested in contributing to the project. That's fantastic!
 
 The following is a set of guidelines for contributing to Igir. These guidelines are published to clarify expectations and reduce potential conflict of opinions.
 

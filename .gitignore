@@ -113,6 +113,8 @@ site/
 *.bat
 *.cache*
 *.sh
+igir
+igir.exe
 !test/*.sh
 
 # DATs

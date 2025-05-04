@@ -38,8 +38,9 @@ const jestConfig = async (): Promise<Config> => {
 
     setupFilesAfterEnv: ['jest-extended/all'],
 
-    // Most tests are I/O-bound, increase the test timeout globally
-    testTimeout: 20_000,
+    // Many tests are I/O-bound, and possibly contend with each other; increase
+    // the test timeout globally
+    testTimeout: 30_000,
 
     // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
     extensionsToTreatAsEsm: ['.ts'],

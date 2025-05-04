@@ -1,12 +1,9 @@
 name: Node-API Prebuild
 
 on:
-  pull_request:
-    types:
-      # - edited  # PR's base branch was changed
-      - opened
-      - reopened
-      - synchronize  # PR's branch was edited (i.e. new commits)
+  push:
+    branches-ignore:
+      - 'main'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,14 +27,19 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-              - 'packages/torrentzip/*'
+              - '.github/workflows/napi-prebuild.yml'
+              - 'packages/zlib*/**'
+              - 'packages/zstd*/**'
 
   prebuild:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    timeout-minutes: 30 # QEMU cross-builds
     name: prebuildify (${{ matrix.os }} ${{ matrix.docker_arch }})
     strategy:
       fail-fast: false
@@ -48,10 +50,10 @@ jobs:
             docker_arch: linux/amd64
           - os: ubuntu-latest
             docker_arch: linux/arm/v7
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             docker_arch: linux/arm64/v8
           - os: macos-13
-          - os: macos-15
+          - os: macos-latest
           - os: windows-latest
           - os: windows-11-arm
     steps:
@@ -60,26 +62,31 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: volta-cli/action@v4
+        with:
+          node-version: 18
 
       # Prebuild
       - shell: bash
         run: |
+          set -x
+          npm ci --ignore-scripts
           rm -rf packages/*/prebuilds
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
-          echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+          echo "VERSIONS_NODE=$(node --print 'process.versions.node')" >> "${GITHUB_OUTPUT}"
 
           DOCKER_ARCH=${{ matrix.docker_arch }}
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
           DOCKER_ARCH=${DOCKER_ARCH//\//}
           echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        id: build-docker
         uses: addnab/docker-run-action@v3
         with:
-          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
+          image: node:${{ steps.linux-vars.outputs.VERSIONS_NODE }}
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
@@ -87,21 +94,38 @@ jobs:
             --workdir /build
           run: |
             set -x
-            cd packages/torrentzip
-            npm install --ignore-scripts
-            ./node_modules/.bin/prebuildify --napi --strip
-            touch prebuilds/.gitkeep
+            find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+              cd "${dir}"
+              npm install --ignore-scripts
+              ./node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
+              touch prebuilds/.gitkeep
+              cd ../..
+            done
+            ls -alR packages/*/prebuilds/
+
+            # Test the build
+            rm -rf packages/*/build
+            npm ci --foreground-scripts
+            npm run test:unit packages
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
-        shell: bash
+        id: build
         run: |
           set -x
-          cd packages/torrentzip
-          npm install --ignore-scripts
-          ./node_modules/.bin/prebuildify --napi --strip
-          touch prebuilds/.gitkeep
+          find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+            cd "${dir}"
+            npm install --ignore-scripts
+            ./node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
+            touch prebuilds/.gitkeep
+            cd ../..
+          done
+          ls -alR packages/*/prebuilds/
 
-      - shell: bash
-        run: |
+          # Test the build
+          rm -rf packages/*/build
+          npm ci --foreground-scripts
+          npm run test:unit packages
+
+      - run: |
           ls -alR packages/*/prebuilds/
       - uses: actions/upload-artifact@v4
         with:

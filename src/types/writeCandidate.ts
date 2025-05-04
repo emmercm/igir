@@ -1,3 +1,5 @@
+import { Memoize } from 'typescript-memoize';
+
 import SingleValueGame from './dats/singleValueGame.js';
 import ROMWithFiles from './romWithFiles.js';
 
@@ -60,9 +62,13 @@ export default class WriteCandidate {
   /**
    * A string hash code to uniquely identify this {@link WriteCandidate}.
    */
+  @Memoize()
   hashCode(): string {
     let hashCode = this.game.hashCode();
-    hashCode += `|${this.romsWithFiles.map((romWithFiles) => romWithFiles.hashCode()).join(',')}`;
+    hashCode += `|${this.romsWithFiles
+      .map((romWithFiles) => romWithFiles.hashCode())
+      .sort()
+      .join(',')}`;
     return hashCode;
   }
 }
