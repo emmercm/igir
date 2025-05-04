@@ -31,7 +31,6 @@
         "VCCLCompilerTool": {
           "Optimization": "3",
           "FavorSizeOrSpeed": "2",
-          "ExceptionHandling": "true",
           "EnableIntrinsicFunctions": "true",
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
