@@ -41,15 +41,12 @@ export default abstract class Scanner extends Module {
   ): Promise<File[]> {
     return (
       await new DriveSemaphore(threads).map(filePaths, async (inputFile) => {
-        this.progressBar.incrementProgress();
-        const waitingMessage = `${inputFile} ...`;
-        this.progressBar.addWaitingMessage(waitingMessage);
+        this.progressBar.incrementInProgress();
 
         const files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
         await this.logWarnings(files);
 
-        this.progressBar.removeWaitingMessage(waitingMessage);
-        this.progressBar.incrementDone();
+        this.progressBar.incrementCompleted();
         return files;
       })
     ).flat();

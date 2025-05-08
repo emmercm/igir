@@ -7,6 +7,7 @@ import { crc32 } from '@node-rs/crc32';
 
 import CompressedTransform from './compressedTransform.js';
 import CP437Encoder from './cp437Encoder.js';
+import ProgressTransform, { ProgressCallback } from './progressTransform.js';
 import UncompressedTransform from './uncompressedTransform.js';
 import ZlibDeflateTransform from './zlibDeflateTransform.js';
 import ZstdCompressTransform from './zstdCompressTransform.js';
@@ -83,6 +84,7 @@ export default class TZWriter {
     filename: string,
     uncompressedSize: number,
     compressorThreads: number,
+    progressCallback?: ProgressCallback,
   ): Promise<void> {
     // Figure out how long the local file header will be
     let localFileHeaderPlaceholder: Buffer<ArrayBuffer>;
@@ -108,6 +110,7 @@ export default class TZWriter {
         ? new ZlibDeflateTransform()
         : new ZstdCompressTransform(compressorThreads),
       compressedTransform,
+      new ProgressTransform(progressCallback),
       fs.createWriteStream(os.devNull, {
         fd: this.fileHandle.fd,
         autoClose: false,

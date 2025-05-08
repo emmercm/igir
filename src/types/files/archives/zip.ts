@@ -13,6 +13,7 @@ import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
 import async from 'async';
 import { Mutex } from 'async-mutex';
 
+import { ProgressCallback } from '../../../console/progressBar.js';
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import ExpectedError from '../../expectedError.js';
@@ -136,6 +137,7 @@ export default class Zip extends Archive {
     inputToOutput: [File, ArchiveEntry<Zip>][],
     zipFormat: ZipFormatValue,
     compressorThreads: number,
+    callback?: ProgressCallback,
   ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
@@ -147,7 +149,7 @@ export default class Zip extends Archive {
 
     // Write each entry
     try {
-      await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads);
+      await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads, callback);
     } catch (error) {
       await torrentZip.close();
       await FsPoly.rm(tempZipFile, { force: true });
@@ -162,14 +164,20 @@ export default class Zip extends Archive {
     torrentZip: TZWriter,
     inputToOutput: [File, ArchiveEntry<Zip>][],
     compressorThreads: number,
+    callback?: ProgressCallback,
   ): Promise<void> {
+    // TZWriter needs files to be sorted by lowercase
     const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) =>
       outputA.getEntryPath().toLowerCase().localeCompare(outputB.getEntryPath().toLowerCase()),
     );
 
+    let sizeWritten = 0;
+    const sizeTotal = inputToOutputSorted.reduce((sum, [, output]) => sum + output.getSize(), 0);
+
     for (const [inputFile, outputArchiveEntry] of inputToOutputSorted) {
       // TZWriter requires files to be compressed sequentially
       try {
+        let lastProgress = 0;
         await new Promise((resolve, reject) => {
           inputFile
             .createPatchedReadStream(async (readable) => {
@@ -179,11 +187,19 @@ export default class Zip extends Archive {
                 outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
                 inputFile.getSize(),
                 compressorThreads,
+                (progress) => {
+                  if (!callback) {
+                    return;
+                  }
+                  lastProgress = progress;
+                  callback(sizeWritten + progress, sizeTotal);
+                },
               );
             })
             .then(resolve)
             .catch(reject);
         });
+        sizeWritten += lastProgress;
       } catch (error) {
         throw new Error(
           `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}': ${error}`,

@@ -73,7 +73,7 @@ describe('createArchive', () => {
       // When the file is being zipped
       // Then any underlying exception will be re-thrown
       const zip = inputToOutput[0][1].getArchive() as Zip;
-      await expect(zip.createArchive(inputToOutput, ZipFormat.TORRENTZIP)).rejects.toThrow();
+      await expect(zip.createArchive(inputToOutput, ZipFormat.TORRENTZIP, 1)).rejects.toThrow();
 
       // And we were able to continue
       expect(true).toEqual(true);
@@ -110,6 +110,7 @@ describe('createArchive', () => {
             ],
           ],
           ZipFormat.TORRENTZIP,
+          1,
         );
 
         await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toEqual(true);
@@ -148,6 +149,7 @@ describe('createArchive', () => {
             ],
           ],
           ZipFormat.RVZSTD,
+          1,
         );
 
         await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toEqual(false);

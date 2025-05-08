@@ -29,7 +29,7 @@ export default class CandidatePostProcessor extends Module {
 
     this.progressBar.logTrace(`${dat.getName()}: processing candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
-    this.progressBar.reset(candidates.length);
+    this.progressBar.resetProgress(candidates.length);
 
     // Get the output basename of every ROM
     const outputFileBasenames = candidates.flatMap((candidate) =>

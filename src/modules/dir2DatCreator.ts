@@ -36,7 +36,7 @@ export default class Dir2DatCreator extends Module {
 
     this.progressBar.logTrace(`${dat.getName()}: writing dir2dat`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    this.progressBar.reset(1);
+    this.progressBar.resetProgress(1);
 
     /**
      * It is possible that the {@link ROM} embedded within {@link WriteCandidate}s has been

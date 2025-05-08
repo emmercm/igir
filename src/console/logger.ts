@@ -1,13 +1,13 @@
-import { PassThrough } from 'node:stream';
-import { WriteStream } from 'node:tty';
+import tty from 'node:tty';
 
 import chalk from 'chalk';
 import moment from 'moment';
 
 import Package from '../globals/package.js';
 import { LogLevel, LogLevelInverted, LogLevelValue } from './logLevel.js';
-import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
-import ProgressBarCLI from './progressBarCli.js';
+import MultiBar from './multiBar.js';
+import ProgressBar from './progressBar.js';
+import { SingleBarOptions } from './singleBar.js';
 
 /**
  * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.
@@ -15,17 +15,19 @@ import ProgressBarCLI from './progressBarCli.js';
 export default class Logger {
   private logLevel: LogLevelValue;
 
-  private readonly stream: NodeJS.WritableStream;
-
+  private readonly stream: tty.WriteStream | NodeJS.WritableStream;
+  private readonly multiBar: MultiBar;
   private readonly loggerPrefix?: string;
 
   constructor(
     logLevel: LogLevelValue = LogLevel.WARN,
-    stream: NodeJS.WritableStream = process.stdout,
+    stream: tty.WriteStream | NodeJS.WritableStream = process.stdout,
+    multiBar?: MultiBar,
     loggerPrefix?: string,
   ) {
     this.logLevel = logLevel;
     this.stream = stream;
+    this.multiBar = multiBar ?? MultiBar.create({ writable: stream });
     this.loggerPrefix = loggerPrefix;
   }
 
@@ -37,22 +39,8 @@ export default class Logger {
     this.logLevel = logLevel;
   }
 
-  getStream(): NodeJS.WritableStream {
+  getStream(): NodeJS.WritableStream | undefined {
     return this.stream;
-  }
-
-  /**
-   * Determine if this {@link Logger}'s underlying stream is a TTY stream or not.
-   */
-  isTTY(): boolean {
-    if (this.stream instanceof WriteStream) {
-      return (this.stream satisfies WriteStream).isTTY;
-    }
-    if (this.stream instanceof PassThrough) {
-      // Testing streams should be treated as TTY
-      return true;
-    }
-    return false;
   }
 
   private readonly print = (logLevel: LogLevelValue, message: unknown = ''): void => {
@@ -195,14 +183,14 @@ export default class Logger {
   /**
    * Create a {@link ProgressBar} with a reference to this {@link Logger}.
    */
-  addProgressBar(name: string, symbol = ProgressBarSymbol.WAITING, initialTotal = 0): ProgressBar {
-    return ProgressBarCLI.new(this, name, symbol, initialTotal);
+  addProgressBar(options?: SingleBarOptions, index?: number): ProgressBar {
+    return this.multiBar.addSingleBar(this, options, index);
   }
 
   /**
    * Return a copy of this Logger with a new string prefix.
    */
   withLoggerPrefix(prefix: string): Logger {
-    return new Logger(this.logLevel, this.stream, prefix);
+    return new Logger(this.logLevel, this.stream, this.multiBar, prefix);
   }
 }

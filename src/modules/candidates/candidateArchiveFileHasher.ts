@@ -58,7 +58,7 @@ export default class CandidateArchiveFileHasher extends Module {
       `${dat.getName()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
-    this.progressBar.reset(archiveFileCount);
+    this.progressBar.resetProgress(archiveFileCount);
 
     const hashedCandidates = this.hashArchiveFiles(dat, candidates);
 
@@ -89,9 +89,7 @@ export default class CandidateArchiveFileHasher extends Module {
             }
 
             return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(inputFile, async () => {
-              this.progressBar.incrementProgress();
-              const waitingMessage = `${inputFile.toString()} ...`;
-              this.progressBar.addWaitingMessage(waitingMessage);
+              this.progressBar.incrementInProgress();
               this.progressBar.logTrace(
                 `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${inputFile.toString()}`,
               );
@@ -113,8 +111,7 @@ export default class CandidateArchiveFileHasher extends Module {
                 .withInputFile(hashedInputFile)
                 .withOutputFile(hashedOutputFile);
 
-              this.progressBar.removeWaitingMessage(waitingMessage);
-              this.progressBar.incrementDone();
+              this.progressBar.incrementCompleted();
               return hashedRomWithFiles;
             });
           }),

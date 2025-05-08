@@ -92,12 +92,12 @@ export default class CandidateWriter extends Module {
     } else {
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     }
-    this.progressBar.reset(writableCandidates.length);
+    this.progressBar.resetProgress(writableCandidates.length);
 
     await Promise.all(
       writableCandidates.map(async (candidate) =>
         CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
-          this.progressBar.incrementProgress();
+          this.progressBar.incrementInProgress();
           this.progressBar.logTrace(`${dat.getName()}: ${candidate.getName()}: writing candidate`);
 
           await this.writeCandidate(dat, candidate);
@@ -105,7 +105,7 @@ export default class CandidateWriter extends Module {
           this.progressBar.logTrace(
             `${dat.getName()}: ${candidate.getName()}: done writing candidate`,
           );
-          this.progressBar.incrementDone();
+          this.progressBar.incrementCompleted();
         }),
       ),
     );
@@ -131,17 +131,12 @@ export default class CandidateWriter extends Module {
         .getRomsWithFiles()
         .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) / 1024;
     await CandidateWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
-      const waitingMessage = `${candidate.getName()} ...`;
-      this.progressBar.addWaitingMessage(waitingMessage);
-
       if (this.options.shouldLink()) {
         await this.writeLink(dat, candidate);
       } else {
         await this.writeZip(dat, candidate);
         await this.writeRaw(dat, candidate);
       }
-
-      this.progressBar.removeWaitingMessage(waitingMessage);
     }, totalKilobytes);
   }
 
@@ -179,67 +174,80 @@ export default class CandidateWriter extends Module {
     // Prep the single output file
     const outputZip = inputToOutputZipEntries[0][1].getArchive() as Zip;
 
-    // If the output file already exists, see if we need to do anything
-    if (await FsPoly.exists(outputZip.getFilePath())) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        this.progressBar.logDebug(
-          `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
-        );
-        return;
-      }
-
-      if (this.options.getOverwriteInvalid()) {
-        const existingTest = await this.testZipContents(
-          dat,
-          candidate,
-          outputZip.getFilePath(),
-          inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
-        );
-        if (!existingTest) {
+    const childBar = this.progressBar.addChildBar({
+      name: outputZip.getFilePath(),
+    });
+    try {
+      // If the output file already exists, see if we need to do anything
+      if (await FsPoly.exists(outputZip.getFilePath())) {
+        if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
           );
           return;
         }
-      }
-    }
 
-    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    let written = false;
-    for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      written = await this.writeZipFile(dat, candidate, outputZip, inputToOutputZipEntries);
-
-      if (written && !this.options.shouldTest()) {
-        // Successfully written, unknown if valid
-        break;
+        if (this.options.getOverwriteInvalid()) {
+          const existingTest = await this.testZipContents(
+            dat,
+            candidate,
+            outputZip.getFilePath(),
+            inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
+          );
+          if (!existingTest) {
+            this.progressBar.logDebug(
+              `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
+            );
+            return;
+          }
+        }
       }
-      if (written && this.options.shouldTest()) {
-        const writtenTest = await this.testZipContents(
+
+      this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+      let written = false;
+      for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
+        written = await this.writeZipFile(
           dat,
           candidate,
-          outputZip.getFilePath(),
-          inputToOutputZipEntries.map((entry) => entry[1]),
+          outputZip,
+          inputToOutputZipEntries,
+          childBar,
         );
-        if (!writtenTest) {
-          // Successfully validated
+
+        if (written && !this.options.shouldTest()) {
+          // Successfully written, unknown if valid
           break;
         }
-        const message = `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
-        if (i < this.options.getWriteRetry()) {
-          this.progressBar.logWarn(`${message}, retrying`);
-        } else {
-          this.progressBar.logError(message);
-          return; // final error, do not continue
+        if (written && this.options.shouldTest()) {
+          const writtenTest = await this.testZipContents(
+            dat,
+            candidate,
+            outputZip.getFilePath(),
+            inputToOutputZipEntries.map((entry) => entry[1]),
+          );
+          if (!writtenTest) {
+            // Successfully validated
+            break;
+          }
+          const message = `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
+          if (i < this.options.getWriteRetry()) {
+            this.progressBar.logWarn(`${message}, retrying`);
+          } else {
+            this.progressBar.logError(message);
+            return; // final error, do not continue
+          }
         }
       }
-    }
-    if (!written) {
-      return;
-    }
+      if (!written) {
+        return;
+      }
 
-    inputToOutputZipEntries.forEach(([inputRomFile]) => {
-      this.enqueueFileDeletion(inputRomFile);
-    });
+      inputToOutputZipEntries.forEach(([inputRomFile]) => {
+        this.enqueueFileDeletion(inputRomFile);
+      });
+    } finally {
+      childBar.delete();
+    }
   }
 
   private async testZipContents(
@@ -350,6 +358,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     outputZip: Zip,
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
+    progressBar: ProgressBar,
   ): Promise<boolean> {
     this.progressBar.logInfo(
       `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
@@ -364,6 +373,10 @@ export default class CandidateWriter extends Module {
         inputToOutputZipEntries,
         this.options.getZipFormat() as ZipFormatValue,
         compressorThreads,
+        (progress, total) => {
+          progressBar.setCompleted(progress);
+          progressBar.setTotal(total);
+        },
       );
     } catch (error) {
       this.progressBar.logError(

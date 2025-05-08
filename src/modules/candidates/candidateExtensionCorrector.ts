@@ -59,7 +59,7 @@ export default class CandidateExtensionCorrector extends Module {
       `${dat.getName()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
-    this.progressBar.reset(romsThatNeedCorrecting);
+    this.progressBar.resetProgress(romsThatNeedCorrecting);
 
     const correctedCandidates = await this.correctExtensions(dat, candidates);
 
@@ -145,9 +145,7 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     await CandidateExtensionCorrector.THREAD_SEMAPHORE.runExclusive(async () => {
-      this.progressBar.incrementProgress();
-      const waitingMessage = `${candidate.getName()} ...`;
-      this.progressBar.addWaitingMessage(waitingMessage);
+      this.progressBar.incrementInProgress();
       this.progressBar.logTrace(
         `${dat.getName()}: ${candidate.getName()}: correcting extension for: ${romWithFiles
           .getInputFile()
@@ -172,8 +170,7 @@ export default class CandidateExtensionCorrector extends Module {
         correctedRom = correctedRom.withName(correctedRomName);
       }
 
-      this.progressBar.removeWaitingMessage(waitingMessage);
-      this.progressBar.incrementDone();
+      this.progressBar.incrementCompleted();
     });
 
     return correctedRom;

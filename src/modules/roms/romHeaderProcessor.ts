@@ -48,7 +48,7 @@ export default class ROMHeaderProcessor extends Module {
       `processing headers in ${filesThatNeedProcessing.toLocaleString()} ROM${filesThatNeedProcessing === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
-    this.progressBar.reset(filesThatNeedProcessing);
+    this.progressBar.resetProgress(filesThatNeedProcessing);
 
     const parsedFiles = await async.mapLimit(
       inputRomFiles,
@@ -59,9 +59,7 @@ export default class ROMHeaderProcessor extends Module {
         }
 
         return this.driveSemaphore.runExclusive(inputFile, async () => {
-          this.progressBar.incrementProgress();
-          const waitingMessage = `${inputFile.toString()} ...`;
-          this.progressBar.addWaitingMessage(waitingMessage);
+          this.progressBar.incrementInProgress();
 
           let fileWithHeader: File | undefined;
           try {
@@ -72,9 +70,7 @@ export default class ROMHeaderProcessor extends Module {
             );
             fileWithHeader = inputFile;
           }
-
-          this.progressBar.removeWaitingMessage(waitingMessage);
-          this.progressBar.incrementDone();
+          this.progressBar.incrementCompleted();
 
           return fileWithHeader;
         });

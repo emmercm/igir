@@ -35,7 +35,7 @@ export default class CandidateCombiner extends Module {
 
     this.progressBar.logTrace(`${dat.getName()}: generating consolidated candidate`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_COMBINING);
-    this.progressBar.reset(candidates.length);
+    this.progressBar.resetProgress(candidates.length);
 
     const game = CandidateCombiner.buildGame(dat, candidates);
     const candidate = CandidateCombiner.buildCombinedCandidate(dat, game, candidates);

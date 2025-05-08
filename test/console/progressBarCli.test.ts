@@ -16,13 +16,13 @@ describe('reset', () => {
       100,
     );
 
-    progressBar.incrementDone();
+    progressBar.incrementCompleted();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`),
     );
 
-    progressBar.reset(20);
+    progressBar.resetProgress(20);
     expect(spy.getLastLine()).toMatch(
       new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 0/20`),
     );
@@ -75,7 +75,7 @@ describe('incrementProgress', () => {
       ),
     );
 
-    progressBar.incrementProgress();
+    progressBar.incrementInProgress();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(
@@ -83,7 +83,7 @@ describe('incrementProgress', () => {
       ),
     );
 
-    progressBar.incrementProgress();
+    progressBar.incrementInProgress();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(
@@ -108,7 +108,7 @@ describe('incrementProgress', () => {
       ),
     );
 
-    progressBar.incrementProgress();
+    progressBar.incrementInProgress();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(
@@ -116,7 +116,7 @@ describe('incrementProgress', () => {
       ),
     );
 
-    progressBar.incrementDone();
+    progressBar.incrementCompleted();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(
@@ -124,7 +124,7 @@ describe('incrementProgress', () => {
       ),
     );
 
-    progressBar.incrementProgress();
+    progressBar.incrementInProgress();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(
@@ -146,13 +146,13 @@ describe('incrementDone', () => {
       100,
     );
 
-    progressBar.incrementDone();
+    progressBar.incrementCompleted();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 1/100`),
     );
 
-    progressBar.incrementDone();
+    progressBar.incrementCompleted();
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 2/100`),
@@ -173,13 +173,13 @@ describe('update', () => {
     );
     expect(spy.getLineCount()).toEqual(1);
 
-    progressBar.update(8);
+    progressBar.setCompleted(8);
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 8/100`),
     );
 
-    progressBar.update(32);
+    progressBar.setCompleted(32);
     progressBar.render(true);
     expect(spy.getLastLine()).toMatch(
       new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* 32/100`),
@@ -199,7 +199,7 @@ describe('done', () => {
     );
     expect(spy.getLineCount()).toEqual(1);
 
-    progressBar.done();
+    progressBar.finish();
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLastLine()).toMatch(new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name`));
 
@@ -215,7 +215,7 @@ describe('done', () => {
     );
     expect(spy.getLineCount()).toEqual(1);
 
-    progressBar.done('done message');
+    progressBar.finish('done message');
     expect(spy.getLineCount()).toEqual(3);
     expect(spy.getLastLine()).toMatch(
       new RegExp(`${stripAnsi(ProgressBarSymbol.DONE)} +name .* done message$`),

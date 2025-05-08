@@ -38,7 +38,7 @@ export default class PlaylistCreator extends Module {
 
     this.progressBar.logTrace(`${dat.getName()}: writing playlists`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    this.progressBar.reset(candidates.length);
+    this.progressBar.resetProgress(candidates.length);
 
     const writtenPlaylistPaths: string[] = [];
 
@@ -113,7 +113,7 @@ export default class PlaylistCreator extends Module {
       return undefined;
     }
 
-    this.progressBar.incrementProgress();
+    this.progressBar.incrementInProgress();
 
     const commonDirectory = PlaylistCreator.getCommonDirectory(playlistFiles);
     const playlistLines = `${playlistFiles
