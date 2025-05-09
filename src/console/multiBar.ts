@@ -214,7 +214,7 @@ export default class MultiBar {
         if (stripChars <= 0) {
           return line;
         }
-        return ` ${line.slice(0, line.length - stripChars)}…`;
+        return `${line.slice(0, line.length - stripChars)}…`;
       });
     const output = `${outputLines.join('\n')}\n`;
     this.terminal.write(output);

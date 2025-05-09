@@ -37,7 +37,7 @@ const DEFAULT_ETA = '--:--:--';
  * TODO(cemmer)
  */
 export default class SingleBar extends ProgressBar {
-  private static readonly BAR_SIZE = 25;
+  private static readonly BAR_SIZE = 30;
 
   private readonly multiBar: MultiBar;
   private logger: Logger;
@@ -93,11 +93,13 @@ export default class SingleBar extends ProgressBar {
       this.logger,
       {
         displayDelay: 2000,
-        indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0) + 4,
-        symbol: {
-          symbol: this.symbol?.symbol ?? '',
-          color: CHALK_PROGRESS_COMPLETE_DEFAULT,
-        },
+        //indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0) + 4,
+        indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0),
+        progressBarSizeMultiplier: this.progressBarSizeMultiplier / 2,
+        // symbol: {
+        //   symbol: this.symbol?.symbol ?? '',
+        //   color: CHALK_PROGRESS_COMPLETE_DEFAULT,
+        // },
         showProgressNewline: false,
         ...options,
       },
@@ -277,7 +279,7 @@ export default class SingleBar extends ProgressBar {
       (this.indentSize === 0 ? this.symbol?.color : undefined) ?? CHALK_PROGRESS_COMPLETE_DEFAULT;
 
     const barSize =
-      SingleBar.BAR_SIZE * this.progressBarSizeMultiplier -
+      Math.floor(SingleBar.BAR_SIZE * this.progressBarSizeMultiplier) -
       this.indentSize -
       (this.symbol?.symbol ? 2 : 0);
 
