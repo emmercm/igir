@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import chalk, { ChalkInstance } from 'chalk';
 import isUnicodeSupported from 'is-unicode-supported';
 
 import { LogLevel, LogLevelValue } from './logLevel.js';
@@ -10,40 +10,39 @@ import { SingleBarOptions } from './singleBar.js';
  * @see https://www.fileformat.info/info/unicode/font/lucida_console/grid.htm (win32)
  */
 const UNICODE_SUPPORTED = isUnicodeSupported();
-export const ProgressBarSymbol = {
-  NONE: '',
-  WAITING: chalk.grey(UNICODE_SUPPORTED ? '⋯' : '…'),
-  DONE: chalk.green(UNICODE_SUPPORTED ? '✓' : '√'),
+export interface ColoredSymbol {
+  symbol: string;
+  color: ChalkInstance;
+}
+export const ProgressBarSymbol: Record<string, ColoredSymbol> = {
+  NONE: { symbol: '', color: chalk.reset },
+  WAITING: { symbol: UNICODE_SUPPORTED ? '⋯' : '…', color: chalk.grey },
+  DONE: { symbol: UNICODE_SUPPORTED ? '✓' : '√', color: chalk.green },
   // Files
-  FILE_SCANNING: chalk.magenta(UNICODE_SUPPORTED ? '↻' : '○'),
-  DAT_DOWNLOADING: chalk.magenta('↓'),
-  DAT_PARSING: chalk.magenta('Σ'),
-  ROM_HASHING: chalk.magenta('#'),
-  ROM_HEADER_DETECTION: chalk.magenta('^'),
-  ROM_INDEXING: chalk.magenta('♦'),
+  FILE_SCANNING: { symbol: UNICODE_SUPPORTED ? '↻' : '○', color: chalk.magenta },
+  DAT_DOWNLOADING: { symbol: '↓', color: chalk.magenta },
+  DAT_PARSING: { symbol: 'Σ', color: chalk.magenta },
+  ROM_HASHING: { symbol: '#', color: chalk.magenta },
+  ROM_HEADER_DETECTION: { symbol: '^', color: chalk.magenta },
+  ROM_INDEXING: { symbol: '♦', color: chalk.magenta },
   // Processing a single DAT
-  DAT_GROUPING_SIMILAR: chalk.cyan('∩'),
-  DAT_MERGE_SPLIT: chalk.cyan('↔'),
-  DAT_FILTERING: chalk.cyan('∆'),
-  DAT_PREFERRING: chalk.cyan(UNICODE_SUPPORTED ? '⇅' : '↨'),
+  DAT_GROUPING_SIMILAR: { symbol: '∩', color: chalk.cyan },
+  DAT_MERGE_SPLIT: { symbol: '↔', color: chalk.cyan },
+  DAT_FILTERING: { symbol: '∆', color: chalk.cyan },
+  DAT_PREFERRING: { symbol: UNICODE_SUPPORTED ? '⇅' : '↨', color: chalk.cyan },
   // Candidates
-  CANDIDATE_GENERATING: chalk.cyan('Σ'),
-  CANDIDATE_EXTENSION_CORRECTION: chalk.cyan('.'),
-  CANDIDATE_HASHING: chalk.yellow('#'),
-  CANDIDATE_VALIDATING: chalk.cyan(UNICODE_SUPPORTED ? '≟' : '?'),
-  CANDIDATE_COMBINING: chalk.cyan(UNICODE_SUPPORTED ? '∪' : 'U'),
-  TESTING: chalk.yellow(UNICODE_SUPPORTED ? '≟' : '?'),
-  WRITING: chalk.yellow(UNICODE_SUPPORTED ? '✎' : '»'),
-  RECYCLING: chalk.blue(UNICODE_SUPPORTED ? '♻' : '»'),
-  DELETING: chalk.red(UNICODE_SUPPORTED ? '✕' : 'X'),
+  CANDIDATE_GENERATING: { symbol: 'Σ', color: chalk.cyan },
+  CANDIDATE_EXTENSION_CORRECTION: { symbol: '.', color: chalk.cyan },
+  CANDIDATE_HASHING: { symbol: '#', color: chalk.yellow },
+  CANDIDATE_VALIDATING: { symbol: UNICODE_SUPPORTED ? '≟' : '?', color: chalk.cyan },
+  CANDIDATE_COMBINING: { symbol: UNICODE_SUPPORTED ? '∪' : 'U', color: chalk.cyan },
+  TESTING: { symbol: UNICODE_SUPPORTED ? '≟' : '?', color: chalk.yellow },
+  WRITING: { symbol: UNICODE_SUPPORTED ? '✎' : '»', color: chalk.yellow },
+  RECYCLING: { symbol: UNICODE_SUPPORTED ? '♻' : '»', color: chalk.blue },
+  DELETING: { symbol: UNICODE_SUPPORTED ? '✕' : 'X', color: chalk.red },
 };
 
 export type ProgressCallback = (progress: number, total: number) => void;
-
-export interface FormatOptions {
-  maxLength: number;
-  maxNameLength: number;
-}
 
 /**
  * ProgressBar represents a single progress bar (of potentially many) to present completion
@@ -52,7 +51,7 @@ export interface FormatOptions {
 export default abstract class ProgressBar {
   abstract addChildBar(options: SingleBarOptions): ProgressBar;
 
-  abstract setSymbol(symbol: string): void;
+  abstract setSymbol(symbol: ColoredSymbol): void;
 
   abstract setName(name: string): void;
 
@@ -139,5 +138,5 @@ export default abstract class ProgressBar {
 
   abstract delete(): void;
 
-  abstract format(options: FormatOptions): string;
+  abstract format(): string;
 }

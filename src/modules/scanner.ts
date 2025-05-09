@@ -42,9 +42,17 @@ export default abstract class Scanner extends Module {
     return (
       await new DriveSemaphore(threads).map(filePaths, async (inputFile) => {
         this.progressBar.incrementInProgress();
+        const childBar = this.progressBar.addChildBar({
+          name: inputFile,
+        });
 
-        const files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
-        await this.logWarnings(files);
+        let files: File[];
+        try {
+          files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
+          await this.logWarnings(files);
+        } finally {
+          childBar.delete();
+        }
 
         this.progressBar.incrementCompleted();
         return files;

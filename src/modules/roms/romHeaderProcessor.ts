@@ -60,6 +60,9 @@ export default class ROMHeaderProcessor extends Module {
 
         return this.driveSemaphore.runExclusive(inputFile, async () => {
           this.progressBar.incrementInProgress();
+          const childBar = this.progressBar.addChildBar({
+            name: inputFile.toString(),
+          });
 
           let fileWithHeader: File | undefined;
           try {
@@ -69,6 +72,8 @@ export default class ROMHeaderProcessor extends Module {
               `${inputFile.toString()}: failed to process ROM header: ${error}`,
             );
             fileWithHeader = inputFile;
+          } finally {
+            childBar.delete();
           }
           this.progressBar.incrementCompleted();
 

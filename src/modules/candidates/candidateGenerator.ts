@@ -63,17 +63,24 @@ export default class CandidateGenerator extends Module {
       dat.getGames().map(async (game) =>
         CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
           this.progressBar.incrementInProgress();
+          const childBar = this.progressBar.addChildBar({
+            name: game.getName(),
+          });
 
-          const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
-          if (gameCandidates.length > 0) {
-            this.progressBar.logTrace(
-              `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
-                .getRomsWithFiles()
-                .map((rwf) => rwf.getInputFile().toString())
-                .join(', ')}`,
-            );
+          try {
+            const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
+            if (gameCandidates.length > 0) {
+              this.progressBar.logTrace(
+                `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
+                  .getRomsWithFiles()
+                  .map((rwf) => rwf.getInputFile().toString())
+                  .join(', ')}`,
+              );
+            }
+            candidates = [...candidates, ...gameCandidates];
+          } finally {
+            childBar.delete();
           }
-          candidates = [...candidates, ...gameCandidates];
 
           this.progressBar.incrementCompleted();
         }),

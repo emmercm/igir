@@ -176,6 +176,7 @@ export default class CandidateWriter extends Module {
 
     const childBar = this.progressBar.addChildBar({
       name: outputZip.getFilePath(),
+      progressFormatter: FsPoly.sizeReadable,
     });
     try {
       // If the output file already exists, see if we need to do anything
@@ -188,6 +189,7 @@ export default class CandidateWriter extends Module {
         }
 
         if (this.options.getOverwriteInvalid()) {
+          childBar.setSymbol(ProgressBarSymbol.TESTING);
           const existingTest = await this.testZipContents(
             dat,
             candidate,
@@ -204,6 +206,7 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+      childBar.setSymbol(ProgressBarSymbol.WRITING);
       let written = false;
       for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
         written = await this.writeZipFile(
@@ -219,6 +222,7 @@ export default class CandidateWriter extends Module {
           break;
         }
         if (written && this.options.shouldTest()) {
+          childBar.setSymbol(ProgressBarSymbol.TESTING);
           const writtenTest = await this.testZipContents(
             dat,
             candidate,
@@ -472,71 +476,82 @@ export default class CandidateWriter extends Module {
 
     const outputFilePath = outputRomFile.getFilePath();
 
-    // If the output file already exists, see if we need to do anything
-    if (!this.options.getOverwrite() && (await FsPoly.exists(outputFilePath))) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
-        this.progressBar.logDebug(
-          `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
-        );
-        return;
-      }
-
-      if (this.options.getOverwriteInvalid()) {
-        const existingTest = await this.testWrittenRaw(
-          dat,
-          candidate,
-          outputFilePath,
-          outputRomFile,
-        );
-        if (!existingTest) {
+    const childBar = this.progressBar.addChildBar({
+      name: outputFilePath,
+      progressFormatter: FsPoly.sizeReadable,
+    });
+    try {
+      // If the output file already exists, see if we need to do anything
+      if (!this.options.getOverwrite() && (await FsPoly.exists(outputFilePath))) {
+        if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
           );
           return;
         }
-      }
-    }
 
-    this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    let written: MoveResultValue | undefined;
-    for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      if (this.options.shouldMove()) {
-        written = await this.moveRawFile(dat, candidate, inputRomFile, outputFilePath);
-      } else {
-        written = await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath);
+        if (this.options.getOverwriteInvalid()) {
+          childBar.setSymbol(ProgressBarSymbol.TESTING);
+          const existingTest = await this.testWrittenRaw(
+            dat,
+            candidate,
+            outputFilePath,
+            outputRomFile,
+          );
+          if (!existingTest) {
+            this.progressBar.logDebug(
+              `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
+            );
+            return;
+          }
+        }
       }
 
-      if (written !== undefined && !this.options.shouldTest()) {
-        // Successfully written, unknown if valid
-        break;
-      }
-      if (written === MoveResult.COPIED && this.options.shouldTest()) {
-        // Only test the output file if it was copied, we don't need to test the file if it was
-        // just renamed
-        const writtenTest = await this.testWrittenRaw(
-          dat,
-          candidate,
-          outputFilePath,
-          outputRomFile,
-        );
-        if (!writtenTest) {
-          // Successfully validated
+      this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
+      childBar.setSymbol(ProgressBarSymbol.WRITING);
+      let written: MoveResultValue | undefined;
+      for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
+        if (this.options.shouldMove()) {
+          written = await this.moveRawFile(dat, candidate, inputRomFile, outputFilePath, childBar);
+        } else {
+          written = await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, childBar);
+        }
+
+        if (written !== undefined && !this.options.shouldTest()) {
+          // Successfully written, unknown if valid
           break;
         }
-        const message = `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
-        if (i < this.options.getWriteRetry()) {
-          this.progressBar.logWarn(`${message}, retrying`);
-        } else {
-          this.progressBar.logError(message);
-          return; // final error, do not continue
+        if (written === MoveResult.COPIED && this.options.shouldTest()) {
+          // Only test the output file if it was copied, we don't need to test the file if it was
+          // just renamed
+          childBar.setSymbol(ProgressBarSymbol.TESTING);
+          const writtenTest = await this.testWrittenRaw(
+            dat,
+            candidate,
+            outputFilePath,
+            outputRomFile,
+          );
+          if (!writtenTest) {
+            // Successfully validated
+            break;
+          }
+          const message = `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
+          if (i < this.options.getWriteRetry()) {
+            this.progressBar.logWarn(`${message}, retrying`);
+          } else {
+            this.progressBar.logError(message);
+            return; // final error, do not continue
+          }
         }
       }
-    }
-    if (!written) {
-      return;
-    }
+      if (!written) {
+        return;
+      }
 
-    this.enqueueFileDeletion(inputRomFile);
+      this.enqueueFileDeletion(inputRomFile);
+    } finally {
+      childBar.delete();
+    }
   }
 
   private async moveRawFile(
@@ -544,6 +559,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     inputRomFile: File,
     outputFilePath: string,
+    progressBar: ProgressBar,
   ): Promise<MoveResultValue | undefined> {
     // Lock the input file, we can't handle concurrent moves
     return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
@@ -555,6 +571,7 @@ export default class CandidateWriter extends Module {
           candidate,
           inputRomFile.withFilePath(movedFilePath),
           outputFilePath,
+          progressBar,
         );
       }
 
@@ -564,7 +581,7 @@ export default class CandidateWriter extends Module {
         inputRomFile.getPatch() !== undefined
       ) {
         // The file can't be moved as-is, it needs to get copied
-        return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath);
+        return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
       }
 
       this.progressBar.logInfo(
@@ -574,7 +591,13 @@ export default class CandidateWriter extends Module {
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-        const moveResult = await FsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
+        const moveResult = await FsPoly.mv(
+          inputRomFile.getFilePath(),
+          outputFilePath,
+          (progress) => {
+            progressBar.setCompleted(progress);
+          },
+        );
         CandidateWriter.FILE_PATH_MOVES.set(inputRomFile.getFilePath(), outputFilePath);
         return moveResult;
       } catch (error) {
@@ -591,6 +614,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     inputRomFile: File,
     outputFilePath: string,
+    progressBar: ProgressBar,
   ): Promise<MoveResultValue | undefined> {
     this.progressBar.logInfo(
       `${dat.getName()}: ${candidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
@@ -600,7 +624,9 @@ export default class CandidateWriter extends Module {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
       const tempRawFile = await FsPoly.mktemp(outputFilePath);
-      await inputRomFile.extractAndPatchToFile(tempRawFile);
+      await inputRomFile.extractAndPatchToFile(tempRawFile, (progress) => {
+        progressBar.setCompleted(progress);
+      });
       await FsPoly.mv(tempRawFile, outputFilePath);
       return MoveResult.COPIED;
     } catch (error) {

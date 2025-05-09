@@ -123,12 +123,16 @@ export default class DATScanner extends Scanner {
     return (
       await new DriveSemaphore(this.options.getReaderThreads()).map(datFiles, async (datFile) => {
         this.progressBar.incrementInProgress();
+        const childBar = this.progressBar.addChildBar({
+          name: datFile.toString(),
+        });
 
         let dat: DAT | undefined;
         try {
           dat = await this.parseDatFile(datFile);
         } catch (error) {
           this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
+          childBar.delete();
         }
 
         this.progressBar.incrementCompleted();

@@ -1,55 +1,56 @@
 import chalk from 'chalk';
 import isUnicodeSupported from 'is-unicode-supported';
 import { linearRegression, linearRegressionLine } from 'simple-statistics';
-import stripAnsi from 'strip-ansi';
 
 import TimePoly from '../polyfill/timePoly.js';
 import Logger from './logger.js';
 import { LogLevel, LogLevelValue } from './logLevel.js';
 import MultiBar from './multiBar.js';
-import ProgressBar, { FormatOptions, ProgressBarSymbol } from './progressBar.js';
+import ProgressBar, { ColoredSymbol, ProgressBarSymbol } from './progressBar.js';
 
 export interface SingleBarOptions {
+  displayDelay?: number;
   indentSize?: number;
-  showProgressSpinner?: boolean;
-  symbol?: string;
+  symbol?: ColoredSymbol;
   name?: string;
   showProgressNewline?: boolean;
-  showCompletedCount?: boolean;
+  progressBarSizeMultiplier?: number;
+  progressFormatter?: (progress: number) => string;
   completed?: number;
   inProgress?: number;
   total?: number;
   finishedMessage?: string;
 }
 
-const CHALK_SPINNER = chalk.hex('BB9AF7');
-const CHALK_PROGRESS_COMPLETE = chalk.blue;
+const CHALK_PROGRESS_COMPLETE_DEFAULT = chalk.reset;
 const CHALK_PROGRESS_IN_PROGRESS = chalk.dim;
 const CHALK_PROGRESS_INCOMPLETE = chalk.grey;
-const CHALK_ETA = chalk.cyan;
 
 const UNICODE_SUPPORTED = isUnicodeSupported();
-const BAR_COMPLETE_CHAR = UNICODE_SUPPORTED ? '▬' : '▬';
-const BAR_IN_PROGRESS_CHAR = UNICODE_SUPPORTED ? '▬' : '▬';
-const BAR_INCOMPLETE_CHAR = UNICODE_SUPPORTED ? '▬' : '▬';
+const BAR_COMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
+const BAR_IN_PROGRESS_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
+const BAR_INCOMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
 
-const DEFAULT_ETA = '-:--:--';
+const DEFAULT_ETA = '--:--:--';
 
 /**
  * TODO(cemmer)
  */
 export default class SingleBar extends ProgressBar {
-  private static readonly BAR_SIZE = 20;
+  private static readonly BAR_SIZE = 25;
 
   private readonly multiBar: MultiBar;
   private logger: Logger;
 
+  private displayDelay?: number;
+  private displayCreated?: number;
+
   private readonly indentSize: number;
-  private readonly showProgressSpinner?: boolean;
-  private symbol?: string;
+  private symbol?: ColoredSymbol;
   private name?: string;
   private readonly showProgressNewline: boolean;
-  private readonly showCompletedCount: boolean;
+  private readonly progressBarSizeMultiplier: number;
+  private readonly progressFormatter: (progress: number) => string;
   private completed: number;
   private inProgress: number;
   private total: number;
@@ -67,12 +68,17 @@ export default class SingleBar extends ProgressBar {
     this.multiBar = multiBar;
     this.logger = logger;
 
+    if (options?.displayDelay !== undefined) {
+      this.displayDelay = options.displayDelay;
+      this.displayCreated = TimePoly.hrtimeMillis();
+    }
     this.indentSize = options?.indentSize ?? 0;
-    this.showProgressSpinner = options?.showProgressSpinner;
     this.symbol = options?.symbol;
     this.name = options?.name;
-    this.showProgressNewline = options?.showProgressNewline ?? false;
-    this.showCompletedCount = options?.showCompletedCount ?? false;
+    this.showProgressNewline = options?.showProgressNewline ?? true;
+    this.progressBarSizeMultiplier = options?.progressBarSizeMultiplier ?? 1;
+    this.progressFormatter =
+      options?.progressFormatter ?? ((progress: number): string => progress.toLocaleString());
     this.completed = options?.completed ?? 0;
     this.inProgress = options?.inProgress ?? 0;
     this.total = options?.total ?? 0;
@@ -83,27 +89,35 @@ export default class SingleBar extends ProgressBar {
    * TODO(cemmer)
    */
   addChildBar(options: SingleBarOptions): ProgressBar {
-    return this.multiBar.addSingleBar(this.logger, {
-      ...options,
-      indentSize: this.indentSize + 4,
-      showProgressNewline: true,
-    });
+    return this.multiBar.addSingleBar(
+      this.logger,
+      {
+        displayDelay: 2000,
+        indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0) + 4,
+        symbol: {
+          symbol: this.symbol?.symbol ?? '',
+          color: CHALK_PROGRESS_COMPLETE_DEFAULT,
+        },
+        showProgressNewline: false,
+        ...options,
+      },
+      this,
+    );
   }
 
   getIndentSize(): number {
     return this.indentSize;
   }
 
-  getSymbol(): string | undefined {
+  getSymbol(): ColoredSymbol | undefined {
     return this.symbol;
   }
 
-  setSymbol(symbol: string): void {
+  setSymbol(symbol: ColoredSymbol): void {
     if (this.symbol === symbol) {
       return;
     }
     this.symbol = symbol;
-    this.multiBar.clearAndRender();
   }
 
   getName(): string | undefined {
@@ -115,19 +129,18 @@ export default class SingleBar extends ProgressBar {
       return;
     }
     this.name = name;
-    this.multiBar.clearAndRender();
-  }
-
-  getShowProgressSpinner(): boolean {
-    return this.showProgressSpinner ?? false;
   }
 
   /**
    * TODO(cemmer)
    */
-  resetProgress(): void {
+  resetProgress(total: number): void {
+    if (this.displayDelay !== undefined) {
+      this.displayCreated = TimePoly.hrtimeMillis();
+    }
     this.completed = 0;
     this.inProgress = 0;
+    this.total = total;
     this.valueTimeBuffer = [];
   }
 
@@ -182,8 +195,6 @@ export default class SingleBar extends ProgressBar {
     this.setInProgress(0);
 
     this.finishedMessage = finishedMessage;
-
-    this.multiBar.clearAndRender();
   }
 
   setLoggerPrefix(prefix: string): void {
@@ -218,95 +229,93 @@ export default class SingleBar extends ProgressBar {
   /**
    * TODO(cemmer)
    */
-  format(options: FormatOptions): string {
-    this.lastOutput = `${this.getSymbolAndName(options)} ${this.getProgress()}`;
-    return this.lastOutput;
-  }
+  format(): string {
+    if (
+      this.displayDelay !== undefined &&
+      (this.completed >= this.total ||
+        TimePoly.hrtimeMillis(this.displayCreated) < this.displayDelay)
+    ) {
+      return '';
+    }
+    this.displayDelay = undefined;
 
-  private getSymbolAndName(options: FormatOptions): string {
     let output = ' '.repeat(this.indentSize);
-    let extraPadding = 0;
 
-    if (this.showProgressSpinner) {
-      output += `${this.multiBar.getProgressBarSpinner()} `;
-    } else if (this.symbol) {
-      output += `${this.symbol} `;
-    } else {
-      extraPadding += 2;
+    if (this.symbol?.symbol) {
+      output += this.symbol.color(`${this.symbol.symbol} `);
     }
 
-    // TODO(cemmer): why is one '·' always rendered? is it because of the minimum length?
-    // TODO(cemmer): extend the '·' for processing DATs across the screen?
-    if (this.name) {
-      const nameStripped = stripAnsi(this.name);
-      const padding =
-        Math.max(extraPadding, 0) +
-        Math.max(options.maxNameLength - this.indentSize - nameStripped.length, 0);
-      const maxLengthWithAnsi =
-        nameStripped.length + padding + (this.name.length - nameStripped.length);
-      // TODO(cemmer): dim the dots
-      output += `${this.name} ${'·'.repeat(padding)}`.slice(0, maxLengthWithAnsi);
-    }
-
-    //const namePadded = `${name} ${'·'.repeat(SingleBarFormatted.MAX_NAME_LENGTH)}`.trim();
-    //const symbolAndName = `${symbol} ${namePadded}`;
-    //const excessLength =
-    //  stripAnsi(symbolAndName).trimStart().length - SingleBarFormatted.MAX_NAME_LENGTH;
-    //const nameTrimmed = namePadded.slice(0, namePadded.length - Math.max(excessLength, 0));
-    //return `${symbol} ${nameTrimmed}`.trimStart();
-
-    return output;
-  }
-
-  private getProgress(): string {
     if (this.finishedMessage) {
-      return this.finishedMessage;
+      output += `${this.name} ${this.finishedMessage}`;
+      this.lastOutput = output;
+      return this.lastOutput;
     }
 
-    let progress = this.getBar();
-    // if (this.total === 0) {
-    //   return progress;
-    // }
-
-    // if (this.showCompletedCount) {
-    progress += ` ${CHALK_PROGRESS_COMPLETE(`${this.completed.toLocaleString()}/${this.total.toLocaleString()}`)}`;
-    // } else {
-    //   const percentage = this.total === 0 ? 0 : Math.floor((this.completed / this.total) * 100);
-    //   progress += ` ${CHALK_PROGRESS_COMPLETE(`${String(percentage).padStart(2, ' ')}%`)}`;
-
-    if (this.completed > 0) {
-      const etaString = CHALK_ETA(this.getEtaFormatted());
-      progress += ` ${etaString}`;
+    if (!this.showProgressNewline) {
+      output += `${this.getBar()} `;
     }
-    // }
 
-    return progress;
+    if (this.name) {
+      output += `${this.name} `;
+    }
+
+    if (this.showProgressNewline) {
+      output += `\n${' '.repeat(this.indentSize + (this.symbol?.symbol ? 2 : 0))}${this.getBar()} `;
+    }
+
+    this.lastOutput = output;
+    return this.lastOutput;
   }
 
   private getBar(): string {
     let bar = '';
     // if (this.showProgressNewline) {
-    //   bar += `\n${' '.repeat(this.indentSize * 2)}`;
+    //   bar += `\n${' '.repeat((this.symbol ? 2 : 0) + this.indentSize)}`;
     // }
+
+    const symbolColor =
+      (this.indentSize === 0 ? this.symbol?.color : undefined) ?? CHALK_PROGRESS_COMPLETE_DEFAULT;
+
+    const barSize =
+      SingleBar.BAR_SIZE * this.progressBarSizeMultiplier -
+      this.indentSize -
+      (this.symbol?.symbol ? 2 : 0);
 
     const clamp = (val: number | undefined, min: number, max: number): number =>
       Math.min(Math.max(val ?? 0, min), max);
-    const completeSize = Math.floor(clamp(this.completed / this.total, 0, 1) * SingleBar.BAR_SIZE);
-    bar += CHALK_PROGRESS_COMPLETE(BAR_COMPLETE_CHAR.repeat(Math.max(completeSize, 0)));
-
+    const completeSize =
+      this.total > 0 ? Math.floor(clamp(this.completed / this.total, 0, 1) * barSize) : 0;
+    bar += symbolColor(BAR_COMPLETE_CHAR.repeat(Math.max(completeSize, 0)));
     const inProgressSize =
       this.total > 0
-        ? Math.ceil((clamp(this.inProgress, 0, this.total) / this.total) * SingleBar.BAR_SIZE)
+        ? Math.ceil((clamp(this.inProgress, 0, this.total) / this.total) * barSize)
         : 0;
     bar += CHALK_PROGRESS_IN_PROGRESS(BAR_IN_PROGRESS_CHAR.repeat(Math.max(inProgressSize, 0)));
-
-    const incompleteSize = SingleBar.BAR_SIZE - inProgressSize - completeSize;
+    const incompleteSize = barSize - inProgressSize - completeSize;
     bar += CHALK_PROGRESS_INCOMPLETE(BAR_INCOMPLETE_CHAR.repeat(Math.max(incompleteSize, 0)));
+    bar += ' ';
 
-    return bar;
+    const formattedCompleted = this.progressFormatter(this.completed);
+    const formattedTotal = this.progressFormatter(this.total);
+    const paddedCompleted = formattedCompleted.padStart(
+      Math.max(formattedTotal.length, this.indentSize > 0 ? 8 : 0),
+      ' ',
+    );
+    const paddedTotal = formattedTotal.padEnd(this.indentSize > 0 ? 8 : 0, ' ');
+    bar += `${symbolColor(paddedCompleted)}/${CHALK_PROGRESS_IN_PROGRESS(paddedTotal)} `;
+
+    if (this.completed > 0 || this.indentSize > 0) {
+      bar += CHALK_PROGRESS_INCOMPLETE(`[${this.getEtaFormatted()}]`);
+    }
+
+    return bar.trim();
   }
 
   private getEtaFormatted(): string {
+    if (this.completed === 0) {
+      return DEFAULT_ETA;
+    }
+
     const etaSeconds = this.calculateEta();
 
     // Throttle how often the ETA can visually change
@@ -316,7 +325,7 @@ export default class SingleBar extends ProgressBar {
     }
     this.lastEtaFormatTime = TimePoly.hrtimeMillis();
 
-    if (Math.floor(etaSeconds) <= 0) {
+    if (Math.floor(etaSeconds) < 0) {
       this.lastEtaFormatted = DEFAULT_ETA;
       return this.lastEtaFormatted;
     }
@@ -324,7 +333,7 @@ export default class SingleBar extends ProgressBar {
     const hours = Math.floor(etaSeconds / 3600);
     const minutes = Math.floor((etaSeconds % 3600) / 60);
     const seconds = Math.ceil(etaSeconds) % 60;
-    this.lastEtaFormatted = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    this.lastEtaFormatted = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     return this.lastEtaFormatted;
   }
 

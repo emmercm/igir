@@ -106,11 +106,11 @@ export default class TZWriter {
     await util.promisify(stream.pipeline)(
       readable,
       uncompressedTransform,
+      new ProgressTransform(progressCallback),
       this.compressionMethod === CompressionMethod.DEFLATE
         ? new ZlibDeflateTransform()
         : new ZstdCompressTransform(compressorThreads),
       compressedTransform,
-      new ProgressTransform(progressCallback),
       fs.createWriteStream(os.devNull, {
         fd: this.fileHandle.fd,
         autoClose: false,

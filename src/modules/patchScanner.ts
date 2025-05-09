@@ -40,18 +40,25 @@ export default class PatchScanner extends Scanner {
     this.progressBar.resetProgress(patchFiles.length);
 
     const patches = (
-      await new DriveSemaphore(this.options.getReaderThreads()).map(patchFiles, async (file) => {
-        this.progressBar.incrementInProgress();
+      await new DriveSemaphore(this.options.getReaderThreads()).map(
+        patchFiles,
+        async (patchFile) => {
+          this.progressBar.incrementInProgress();
 
-        try {
-          return await this.patchFromFile(file);
-        } catch (error) {
-          this.progressBar.logWarn(`${file.toString()}: failed to parse patch: ${error}`);
-          return undefined;
-        } finally {
-          this.progressBar.incrementCompleted();
-        }
-      })
+          const childBar = this.progressBar.addChildBar({
+            name: patchFile.toString(),
+          });
+          try {
+            return await this.patchFromFile(patchFile);
+          } catch (error) {
+            this.progressBar.logWarn(`${patchFile.toString()}: failed to parse patch: ${error}`);
+            return undefined;
+          } finally {
+            childBar.delete();
+            this.progressBar.incrementCompleted();
+          }
+        },
+      )
     ).filter((patch) => patch !== undefined);
 
     this.progressBar.logTrace('done scanning patch files');

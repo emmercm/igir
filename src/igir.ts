@@ -127,9 +127,15 @@ export default class Igir {
       name: chalk.underline('Processing DATs'),
       symbol: ProgressBarSymbol.NONE,
       total: dats.length,
+      progressBarSizeMultiplier: 2,
     });
     if (dats.length === 0) {
       dats = await new DATGameInferrer(this.options, datProcessProgressBar).infer(roms);
+      datProcessProgressBar.setTotal(dats.length);
+    }
+    if (dats.length <= 1) {
+      // If there's only one DAT, then it's redundant to show this progress bar
+      datProcessProgressBar.delete();
     }
 
     const datsToWrittenFiles = new Map<DAT, File[]>();
@@ -308,7 +314,6 @@ export default class Igir {
 
     const progressBar = this.logger.addProgressBar({
       name: 'Scanning for DATs',
-      showCompletedCount: true,
     });
     let dats = await new DATScanner(this.options, progressBar, fileFactory).scan();
     if (dats.length === 0) {
@@ -452,7 +457,6 @@ export default class Igir {
     const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = this.logger.addProgressBar({
       name: romScannerProgressBarName,
-      showCompletedCount: true,
     });
 
     const rawRomFiles = await new ROMScanner(this.options, romProgressBar, fileFactory).scan(
@@ -484,7 +488,6 @@ export default class Igir {
 
     const progressBar = this.logger.addProgressBar({
       name: 'Scanning for patches',
-      showCompletedCount: true,
     });
     const patches = await new PatchScanner(this.options, progressBar, fileFactory).scan();
     progressBar.finishWithItems(patches.length, 'patch', 'found');

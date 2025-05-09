@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
+import util from 'node:util';
 
 import {
   CompressionMethod,
@@ -15,6 +16,7 @@ import { Mutex } from 'async-mutex';
 
 import { ProgressCallback } from '../../../console/progressBar.js';
 import Defaults from '../../../globals/defaults.js';
+import FsCopyTransform, { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import ExpectedError from '../../expectedError.js';
 import { ZipFormat, ZipFormatValue } from '../../options.js';
@@ -79,22 +81,23 @@ export default class Zip extends Archive {
     );
   }
 
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    entryPath: string,
+    extractedFilePath: string,
+    callback?: FsCopyCallback,
+  ): Promise<void> {
     const extractedDir = path.dirname(extractedFilePath);
     if (!(await FsPoly.exists(extractedDir))) {
       await FsPoly.mkdir(extractedDir, { recursive: true });
     }
 
-    return this.extractEntryToStream(
-      entryPath,
-      async (stream) =>
-        new Promise((resolve, reject) => {
-          const writeStream = fs.createWriteStream(extractedFilePath);
-          writeStream.on('close', resolve);
-          writeStream.on('error', reject);
-          stream.pipe(writeStream);
-        }),
-    );
+    return this.extractEntryToStream(entryPath, async (readable) => {
+      await util.promisify(stream.pipeline)(
+        readable,
+        new FsCopyTransform(callback),
+        fs.createWriteStream(extractedFilePath),
+      );
+    });
   }
 
   async extractEntryToStream<T>(

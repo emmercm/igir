@@ -19,8 +19,7 @@ const PROGRESS_BAR_FRAMES = isUnicodeSupported()
  * TODO(cemmer)
  */
 export default class MultiBar {
-  private static readonly MIN_NAME_LENGTH = 20;
-  private static readonly RENDER_MIN_FPS = 4;
+  private static readonly RENDER_MIN_FPS = 5;
 
   private static readonly multiBars: MultiBar[] = [];
   private static readonly logQueue: string[] = [];
@@ -54,22 +53,6 @@ export default class MultiBar {
       this.terminal.write('\x1B[?25l');
     }
 
-    // Set a maximum size for the MultiBar based on terminal size
-    if (this.terminal instanceof tty.WriteStream) {
-      const onResize = (): void => {
-        if (!(this.terminal instanceof tty.WriteStream)) {
-          return;
-        }
-        this.terminalColumns = this.terminal.columns;
-        this.terminalRows = this.terminal.rows;
-      };
-      process.on('SIGWINCH', onResize);
-      onResize();
-    }
-
-    // TODO(cemmer): detect terminal resizes
-
-    // TODO(cemmer): on exit cleanup such as restore cursor
     process.once('exit', () => {
       this.stop();
     });
@@ -79,6 +62,20 @@ export default class MultiBar {
     process.once('SIGTERM', () => {
       this.stop();
     });
+
+    // Set a maximum size for the MultiBar based on terminal size
+    if (this.terminal instanceof tty.WriteStream) {
+      const onResize = (): void => {
+        if (!(this.terminal instanceof tty.WriteStream)) {
+          return;
+        }
+        this.terminalColumns = this.terminal.columns;
+        this.terminalRows = this.terminal.rows;
+        this.clearAndRender();
+      };
+      process.on('SIGWINCH', onResize);
+      onResize();
+    }
   }
 
   /**
@@ -106,13 +103,11 @@ export default class MultiBar {
             (singleBar, idx) => idx > parentSingleBarIndex && singleBar.getIndentSize() === 0,
           );
 
-    this.clear();
-    if (insertionIndex === undefined) {
+    if (insertionIndex === undefined || insertionIndex === -1) {
       this.singleBars.push(singleBar);
     } else {
       this.singleBars.splice(insertionIndex, 0, singleBar);
     }
-    this.render();
 
     return singleBar;
   }
@@ -130,6 +125,7 @@ export default class MultiBar {
     this.singleBars.splice(idx, 1);
     this.singleBars.splice(0, 0, singleBar);
     this.clearAndRender();
+    // TODO(cemmer): this is getting overwritten on next draw
 
     // Finally remove the single bar
     this.singleBars.splice(0, 1);
@@ -144,9 +140,7 @@ export default class MultiBar {
       return;
     }
 
-    this.clear();
     this.singleBars.splice(idx, 1);
-    this.render();
   }
 
   getProgressBarSpinner(): string {
@@ -170,40 +164,30 @@ export default class MultiBar {
   /**
    * TODO(cemmer)
    */
-  clearAndRender(): void {
+  private clearAndRender(): void {
     if (this.stopped) {
       return;
     }
 
-    this.clear();
-    this.render();
-  }
-
-  private clear(): void {
     if (!(this.terminal instanceof tty.WriteStream)) {
       return;
     }
 
+    this.renderTimer?.cancel();
+
+    // Clear the terminal
+    // TODO(cemmer): some kind of line diffing algorithm so not every line has to be repainted
     let rows = 0;
     for (const char of this.lastOutput) {
       if (char === '\n') {
         rows += 1;
       }
     }
-    if (rows === 0) {
-      return;
+    if (rows > 0) {
+      this.terminal.moveCursor(0, -rows);
+      this.terminal.cursorTo(0, undefined);
+      this.terminal.clearScreenDown();
     }
-
-    this.terminal.moveCursor(0, -rows);
-    this.terminal.cursorTo(0, undefined);
-    this.terminal.clearScreenDown();
-  }
-
-  /**
-   * TODO(cemmer)
-   */
-  private render(): void {
-    this.renderTimer?.cancel();
 
     // Write out all queued logs
     let log = MultiBar.logQueue.shift();
@@ -212,32 +196,27 @@ export default class MultiBar {
       log = MultiBar.logQueue.shift();
     }
 
-    let maxNameLength = MultiBar.MIN_NAME_LENGTH;
-    for (const singleBar of this.singleBars) {
-      maxNameLength = Math.max(
-        maxNameLength,
-        singleBar.getIndentSize() + stripAnsi(singleBar.getName() ?? '').length,
-      );
-    }
-
-    const output = `${this.singleBars
-      .flatMap((singleBar) =>
-        singleBar
-          .format({
-            maxLength: this.terminalColumns - 5,
-            maxNameLength,
-          })
-          .split('\n'),
-      )
+    // Write the progress bars
+    const outputLines = this.singleBars
+      .flatMap((singleBar) => {
+        const lines = singleBar
+          .format()
+          .split('\n')
+          .filter((line) => line !== '');
+        if (singleBar.getIndentSize() === 0) {
+          return ['', ...lines];
+        }
+        return lines;
+      })
       .slice(0, this.terminalRows - 1)
-      .join('\n')}\n`;
+      .map((line) => {
+        // TODO(cemmer): ellipsis
+        const stripChars = Math.max(stripAnsi(line).length - this.terminalColumns + 10, 0);
+        return ` ${line.slice(0, line.length - stripChars)}`;
+      });
+    const output = `${outputLines.join('\n')}\n`;
     this.terminal.write(output);
     this.lastOutput = output;
-
-    // TODO(cemmer)
-    // if (this.terminalRows - 1 < this.singleBars.length) {
-    //   this.terminal.write('(MORE)');
-    // }
 
     this.progressBarFrame += 1;
     if (this.progressBarFrame >= PROGRESS_BAR_FRAMES.length) {

@@ -3,7 +3,7 @@ import stream, { TransformCallback } from 'node:stream';
 export type ProgressCallback = (progress: number) => void;
 
 /**
- *
+ * TODO(cemmer)
  */
 export default class ProgressTransform extends stream.Transform {
   private readonly progressCallback?: ProgressCallback;
@@ -15,7 +15,7 @@ export default class ProgressTransform extends stream.Transform {
   }
 
   /**
-   *
+   * TODO(cemmer)
    */
   _transform(
     chunk: Buffer<ArrayBuffer>,

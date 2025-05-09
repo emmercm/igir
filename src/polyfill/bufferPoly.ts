@@ -7,7 +7,9 @@ export default {
 
       const chunks: Buffer[] = [];
       readable.on('data', (chunk: Buffer) => {
-        chunks.push(chunk);
+        if (chunk.length > 0) {
+          chunks.push(chunk);
+        }
       });
 
       readable.on('end', () => {
