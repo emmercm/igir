@@ -210,9 +210,11 @@ export default class MultiBar {
       })
       .slice(0, this.terminalRows - 1)
       .map((line) => {
-        // TODO(cemmer): ellipsis
-        const stripChars = Math.max(stripAnsi(line).length - this.terminalColumns + 10, 0);
-        return ` ${line.slice(0, line.length - stripChars)}`;
+        const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
+        if (stripChars <= 0) {
+          return line;
+        }
+        return ` ${line.slice(0, line.length - stripChars)}…`;
       });
     const output = `${outputLines.join('\n')}\n`;
     this.terminal.write(output);
