@@ -150,16 +150,14 @@ export default class Zip extends Archive {
       zipFormat === ZipFormat.RVZSTD ? CompressionMethod.ZSTD : CompressionMethod.DEFLATE,
     );
 
-    // Write each entry
     try {
       await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads, callback);
-    } catch (error) {
+      await torrentZip.finalize();
+    } finally {
       await torrentZip.close();
       await FsPoly.rm(tempZipFile, { force: true });
-      throw error;
     }
 
-    await torrentZip.finalize();
     await FsPoly.mv(tempZipFile, this.getFilePath());
   }
 
