@@ -61,6 +61,9 @@
     {
       matchPackageNames: ['node'],
       groupName: 'Node.js',
+      // Keep Node.js on the 'current' major version (as opposed to LTS)
+      versioning: 'node',
+      version: 'node@current',
       // The Docker images (used to build executables) frequently don't get published until days
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
       minimumReleaseAge: '7 days',
