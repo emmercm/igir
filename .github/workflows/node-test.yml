@@ -70,6 +70,7 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    name: node-unit (${{ matrix.os }}, ${{ matrix.node-version || 'current' }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -77,7 +78,7 @@ jobs:
       matrix:
         # TODO(cemmer): chdman-js and maxcso-js don't have Windows ARM builds, so it won't test the same
         os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-13, windows-latest ]
-        node-version: [ lts ]
+        node-version: [ '' ]
         include:
           - os: ubuntu-latest
             node-version: 18
@@ -110,11 +111,12 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    name: node-unit (${{ matrix.node-version || 'current' }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ lts, 18 ]
+        node-version: [ '', 18 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -135,10 +137,11 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    name: node-unit (${{ matrix.node-version || 'current' }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts, 18 ]
+        node-version: [ '', 18 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
