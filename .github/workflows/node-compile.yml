@@ -49,7 +49,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}
-    name: node-compile (${{ matrix.os }} ${{ matrix.docker_arch || matrix.go_arch }})
+    name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch }})
     strategy:
       fail-fast: false
       matrix:
