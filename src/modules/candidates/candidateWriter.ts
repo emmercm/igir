@@ -189,7 +189,6 @@ export default class CandidateWriter extends Module {
         }
 
         if (this.options.getOverwriteInvalid()) {
-          // childBar.setSymbol(ProgressBarSymbol.TESTING);
           const existingTest = await this.testZipContents(
             dat,
             candidate,
@@ -206,7 +205,6 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-      // childBar.setSymbol(ProgressBarSymbol.WRITING);
       let written = false;
       for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
         written = await this.writeZipFile(
@@ -222,7 +220,6 @@ export default class CandidateWriter extends Module {
           break;
         }
         if (written && this.options.shouldTest()) {
-          // childBar.setSymbol(ProgressBarSymbol.TESTING);
           const writtenTest = await this.testZipContents(
             dat,
             candidate,
@@ -491,7 +488,6 @@ export default class CandidateWriter extends Module {
         }
 
         if (this.options.getOverwriteInvalid()) {
-          // childBar.setSymbol(ProgressBarSymbol.TESTING);
           const existingTest = await this.testWrittenRaw(
             dat,
             candidate,
@@ -508,7 +504,6 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-      // childBar.setSymbol(ProgressBarSymbol.WRITING);
       let written: MoveResultValue | undefined;
       for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
         if (this.options.shouldMove()) {
@@ -524,7 +519,6 @@ export default class CandidateWriter extends Module {
         if (written === MoveResult.COPIED && this.options.shouldTest()) {
           // Only test the output file if it was copied, we don't need to test the file if it was
           // just renamed
-          // childBar.setSymbol(ProgressBarSymbol.TESTING);
           const writtenTest = await this.testWrittenRaw(
             dat,
             candidate,
