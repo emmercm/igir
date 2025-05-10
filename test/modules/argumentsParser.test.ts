@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import Defaults from '../../src/globals/defaults.js';
 import Temp from '../../src/globals/temp.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
@@ -293,7 +294,7 @@ describe('options', () => {
 
     expect(options.getFixdatOutput()).toEqual(options.getOutput());
 
-    expect(options.getDatThreads()).toEqual(3);
+    expect(options.getDatThreads()).toEqual(Defaults.DAT_DEFAULT_THREADS);
     expect(options.getReaderThreads()).toEqual(8);
     expect(options.getWriterThreads()).toEqual(4);
     expect(options.getDisableCache()).toEqual(false);
@@ -4596,7 +4597,9 @@ describe('options', () => {
   });
 
   it('should parse "dat-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatThreads()).toEqual(3);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDatThreads()).toEqual(
+      Defaults.DAT_DEFAULT_THREADS,
+    );
     expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--dat-threads', '-1'])
