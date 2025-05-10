@@ -355,6 +355,15 @@ export default class CandidateWriter extends Module {
       `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
     );
 
+    // The same input file may have contention with being raw-moved and used as an input file
+    // for a zip (here), so we need to lock all input paths if we're moving
+    const lockedFilePaths = this.options.shouldMove()
+      ? inputToOutputZipEntries
+          .map(([input]) => input.getFilePath())
+          .reduce(ArrayPoly.reduceUnique(), [])
+      : [];
+    await CandidateWriter.MOVE_MUTEX.acquireMultiple(lockedFilePaths);
+
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
       const compressorThreads = Math.ceil(
@@ -370,6 +379,8 @@ export default class CandidateWriter extends Module {
         `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
       );
       return false;
+    } finally {
+      await CandidateWriter.MOVE_MUTEX.releaseMultiple(lockedFilePaths);
     }
 
     this.progressBar.logTrace(
@@ -534,13 +545,18 @@ export default class CandidateWriter extends Module {
   ): Promise<MoveResultValue | undefined> {
     // Lock the input file, we can't handle concurrent moves
     return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
-      const movedFilePath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
-      if (movedFilePath) {
+      const movedInputPath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
+      if (movedInputPath) {
+        if (movedInputPath === outputFilePath) {
+          // Do nothing
+          return undefined;
+        }
+
         // The file was already moved, we shouldn't move it again
         return this.copyRawFile(
           dat,
           candidate,
-          inputRomFile.withFilePath(movedFilePath),
+          inputRomFile.withFilePath(movedInputPath),
           outputFilePath,
         );
       }
