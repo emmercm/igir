@@ -153,7 +153,7 @@ export default class CandidateGenerator extends Module {
       return [];
     }
 
-    // If the found files have excess and we aren't allowing it, then return no candidate
+    // If the found files have excess, and we aren't allowing it, then return no candidate
     if (
       !this.options.shouldZip() &&
       !this.options.shouldExtract() &&
