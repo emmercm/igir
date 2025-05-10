@@ -29,7 +29,11 @@ it('should do nothing if no ROMs moved', async () => {
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
 
-  await new MovedROMDeleter(new ProgressBarFake()).delete(romFiles, [], new Map());
+  await new MovedROMDeleter(new Options({ commands: ['copy'] }), new ProgressBarFake()).delete(
+    romFiles,
+    [],
+    new Map(),
+  );
 
   const exists = Promise.all(romFiles.map(async (romFile) => FsPoly.exists(romFile.getFilePath())));
   expect(exists).not.toContain(false);
@@ -428,11 +432,10 @@ describe('should delete archives', () => {
         const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
 
         const deletedFilePaths = (
-          await new MovedROMDeleter(new ProgressBarFake()).delete(
-            inputRoms,
-            movedRoms,
-            datsToWrittenRoms,
-          )
+          await new MovedROMDeleter(
+            new Options({ commands: ['copy'] }),
+            new ProgressBarFake(),
+          ).delete(inputRoms, movedRoms, datsToWrittenRoms)
         )
           .map((filePath) => filePath.replace(inputPath + path.sep, ''))
           .sort();

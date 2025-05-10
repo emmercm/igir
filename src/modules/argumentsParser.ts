@@ -163,7 +163,7 @@ export default class ArgumentsParser {
             }
           });
 
-          ['test', 'clean'].forEach((command) => {
+          ['clean'].forEach((command) => {
             if (
               checkArgv._.includes(command) &&
               ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))

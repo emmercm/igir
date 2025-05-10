@@ -15,18 +15,13 @@ const dummyGame = new SingleValueGame({ name: 'Dummy Game' });
 const dummyRom = new ROM({ name: 'Dummy.rom', size: 0, crc32: '00000000' });
 
 test.each(['test', 'report', 'zip', 'clean'])(
-  'should use temp dir for non-writing commands: %s',
+  'should equal input file for non-writing commands: %s',
   async (command) => {
     const options = new Options({ commands: [command] });
 
-    const outputPath = OutputFactory.getPath(
-      options,
-      dummyDat,
-      dummyGame,
-      dummyRom,
-      await dummyRom.toFile(),
-    );
-    expect(outputPath.dir).toEqual(Temp.getTempDir());
+    const dummyFile = await dummyRom.toFile();
+    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, dummyRom, dummyFile);
+    expect(outputPath.format()).toEqual(dummyFile.getFilePath());
   },
 );
 

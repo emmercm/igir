@@ -5,6 +5,7 @@ import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/types/dats/rom.js';
 import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
+import Options from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -30,7 +31,10 @@ it('should do nothing with no candidates', async () => {
   const dat = new LogiqxDAT({ header: new Header() });
   const candidates = await datToCandidates(dat);
 
-  const invalidCandidates = new CandidateValidator(new ProgressBarFake()).validate(dat, candidates);
+  const invalidCandidates = new CandidateValidator(
+    new Options({ commands: ['copy'] }),
+    new ProgressBarFake(),
+  ).validate(dat, candidates);
 
   expect(invalidCandidates).toHaveLength(0);
 });
@@ -54,7 +58,10 @@ it('should return nothing if all candidates have unique paths', async () => {
   });
   const candidates = await datToCandidates(dat);
 
-  const invalidCandidates = new CandidateValidator(new ProgressBarFake()).validate(dat, candidates);
+  const invalidCandidates = new CandidateValidator(
+    new Options({ commands: ['copy'] }),
+    new ProgressBarFake(),
+  ).validate(dat, candidates);
 
   expect(invalidCandidates).toHaveLength(0);
 });
@@ -86,7 +93,10 @@ it('should return something if some candidates have conflicting paths', async ()
   });
   const candidates = await datToCandidates(dat);
 
-  const invalidCandidates = new CandidateValidator(new ProgressBarFake()).validate(dat, candidates);
+  const invalidCandidates = new CandidateValidator(
+    new Options({ commands: ['copy'] }),
+    new ProgressBarFake(),
+  ).validate(dat, candidates);
 
   const invalidCandidateNames = invalidCandidates.map((candidate) => candidate.getName()).sort();
   expect(invalidCandidateNames).toEqual(['game four', 'game three', 'game two']);

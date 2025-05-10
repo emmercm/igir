@@ -1189,6 +1189,29 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should test without writing', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['test'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms')],
+        inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
+        inputChecksumArchives:
+          InputChecksumArchivesModeInverted[InputChecksumArchivesMode.NEVER].toLowerCase(),
+        output: outputTemp,
+        dirDatName: true,
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+        playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
+        disableCache: true,
+      });
+
+      expect(result.outputFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should report without writing', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
@@ -1762,6 +1785,28 @@ describe('with inferred DATs', () => {
         'fds_joypad_test.fds.zip',
         'speed_test_v51.smc',
       ]);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  it('should test without writing', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['test'],
+        input: [path.join(inputTemp, 'roms')],
+        inputExclude: [
+          // Note: need to exclude some ROMs to prevent duplicate output paths
+          path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
+          path.join(inputTemp, 'roms', 'nkit'), // will throw an error, preventing everything
+        ],
+        output: outputTemp,
+        dirDatName: true,
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+        dir2datOutput: outputTemp,
+      });
+
+      expect(result.outputFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });

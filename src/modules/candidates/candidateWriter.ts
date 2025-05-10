@@ -72,7 +72,7 @@ export default class CandidateWriter extends Module {
     }
 
     // Return early if we shouldn't write (are only reporting)
-    if (!this.options.shouldWrite()) {
+    if (!this.options.shouldWrite() && !this.options.shouldTest()) {
       return {
         wrote: writtenFiles,
         moved: [],
@@ -85,7 +85,7 @@ export default class CandidateWriter extends Module {
     );
 
     this.progressBar.logTrace(
-      `${dat.getName()}: writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
       this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
@@ -98,12 +98,14 @@ export default class CandidateWriter extends Module {
       writableCandidates.map(async (candidate) =>
         CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
           this.progressBar.incrementProgress();
-          this.progressBar.logTrace(`${dat.getName()}: ${candidate.getName()}: writing candidate`);
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+          );
 
           await this.writeCandidate(dat, candidate);
 
           this.progressBar.logTrace(
-            `${dat.getName()}: ${candidate.getName()}: done writing candidate`,
+            `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
           );
           this.progressBar.incrementDone();
         }),
@@ -111,7 +113,7 @@ export default class CandidateWriter extends Module {
     );
 
     this.progressBar.logTrace(
-      `${dat.getName()}: done writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
     const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
@@ -181,27 +183,40 @@ export default class CandidateWriter extends Module {
 
     // If the output file already exists, see if we need to do anything
     if (await FsPoly.exists(outputZip.getFilePath())) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+      if (
+        this.options.shouldWrite() &&
+        !this.options.getOverwrite() &&
+        !this.options.getOverwriteInvalid()
+      ) {
         this.progressBar.logDebug(
           `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
         );
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
+      if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
         const existingTest = await this.testZipContents(
           dat,
           candidate,
           outputZip.getFilePath(),
           inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
         );
-        if (!existingTest) {
+        if (this.options.shouldWrite() && !existingTest) {
           this.progressBar.logDebug(
             `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
           );
           return;
         }
+        if (!this.options.shouldWrite() && existingTest) {
+          this.progressBar.logError(
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: ${existingTest}`,
+          );
+          return;
+        }
       }
+    }
+    if (!this.options.shouldWrite()) {
+      return;
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
@@ -453,7 +468,7 @@ export default class CandidateWriter extends Module {
     outputRomFile: File,
   ): Promise<void> {
     // Input and output are the exact same, maybe do nothing
-    if (outputRomFile.equals(inputRomFile)) {
+    if (this.options.shouldWrite() && outputRomFile.equals(inputRomFile)) {
       const wasMoved =
         this.options.shouldMove() &&
         (await CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), () =>
@@ -471,28 +486,41 @@ export default class CandidateWriter extends Module {
     const outputFilePath = outputRomFile.getFilePath();
 
     // If the output file already exists, see if we need to do anything
-    if (!this.options.getOverwrite() && (await FsPoly.exists(outputFilePath))) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+    if (await FsPoly.exists(outputFilePath)) {
+      if (
+        this.options.shouldWrite() &&
+        !this.options.getOverwrite() &&
+        !this.options.getOverwriteInvalid()
+      ) {
         this.progressBar.logDebug(
           `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
         );
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
+      if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
         const existingTest = await this.testWrittenRaw(
           dat,
           candidate,
           outputFilePath,
           outputRomFile,
         );
-        if (!existingTest) {
+        if (this.options.shouldWrite() && !existingTest) {
           this.progressBar.logDebug(
             `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
           );
           return;
         }
+        if (!this.options.shouldWrite() && existingTest) {
+          this.progressBar.logError(
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: ${existingTest}`,
+          );
+          return;
+        }
       }
+    }
+    if (!this.options.shouldWrite()) {
+      return;
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
@@ -734,14 +762,18 @@ export default class CandidateWriter extends Module {
 
     // If the output file already exists, see if we need to do anything
     if (await FsPoly.exists(linkPath)) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+      if (
+        this.options.shouldWrite() &&
+        !this.options.getOverwrite() &&
+        !this.options.getOverwriteInvalid()
+      ) {
         this.progressBar.logDebug(
           `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file`,
         );
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
+      if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
         let existingTest;
         if (this.options.getSymlink()) {
           existingTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
@@ -751,15 +783,24 @@ export default class CandidateWriter extends Module {
             inputRomFile.getFilePath(),
           );
         }
-        if (!existingTest) {
+        if (this.options.shouldWrite() && !existingTest) {
           this.progressBar.logDebug(
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, the existing link is correct`,
+          );
+          return;
+        }
+        if (!this.options.shouldWrite() && existingTest) {
+          this.progressBar.logError(
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: ${existingTest}`,
           );
           return;
         }
       }
 
       await FsPoly.rm(linkPath, { force: true });
+    }
+    if (!this.options.shouldWrite()) {
+      return;
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
