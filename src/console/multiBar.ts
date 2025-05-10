@@ -1,6 +1,5 @@
 import tty from 'node:tty';
 
-import isUnicodeSupported from 'is-unicode-supported';
 import stripAnsi from 'strip-ansi';
 
 import Timer from '../timer.js';
@@ -11,21 +10,18 @@ export interface MultiBarOptions {
   writable: tty.WriteStream | NodeJS.WritableStream;
 }
 
-const PROGRESS_BAR_FRAMES = isUnicodeSupported()
-  ? ['-', '\\', '|', '/']
-  : ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-
 /**
- * TODO(cemmer)
+ * A wrapper for multiple {@link SingleBar}s. Should be treated as a singleton.
  */
 export default class MultiBar {
   private static readonly RENDER_MIN_FPS = 5;
+  private static readonly OUTPUT_PADDING = ' ';
 
   private static readonly multiBars: MultiBar[] = [];
   private static readonly logQueue: string[] = [];
+  private static lastPrintedLog?: string;
 
   private readonly singleBars: SingleBar[] = [];
-  private progressBarFrame = 0;
   private renderTimer?: Timer;
   private lastOutput = '';
   private stopped = false;
@@ -33,17 +29,6 @@ export default class MultiBar {
   private readonly terminal: tty.WriteStream | NodeJS.WritableStream;
   private terminalColumns = 65_536;
   private terminalRows = 65_536;
-
-  /**
-   * - Ability to have multiple sub bars, including:
-   *  - The ability to insert them at an index
-   *  - (the multi bar should probably be the renderer, sub-bars should be formatters)
-   * - Detect terminal resizing, especially:
-   *  - Getting smaller width and needing to chop
-   *  - Getting taller height and allowing new previously hidden progress bars
-   * Questions:
-   * - How does cli-progress do logging?
-   */
 
   private constructor(options?: MultiBarOptions) {
     this.terminal = options?.writable ?? process.stdout;
@@ -79,7 +64,7 @@ export default class MultiBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Create a new {@link MultiBar} instance.
    */
   static create(options?: MultiBarOptions): MultiBar {
     const multiBar = new MultiBar(options);
@@ -88,7 +73,7 @@ export default class MultiBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Add a new {@link SingleBar} to the {@link MultiBar}.
    */
   addSingleBar(logger: Logger, options?: SingleBarOptions, parentSingleBar?: SingleBar): SingleBar {
     const singleBar = new SingleBar(this, logger, options);
@@ -113,7 +98,7 @@ export default class MultiBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Log the {@link SingleBar}'s last output and remove it.
    */
   freezeSingleBar(singleBar: SingleBar): void {
     const idx = this.singleBars.indexOf(singleBar);
@@ -121,18 +106,21 @@ export default class MultiBar {
       return;
     }
 
-    // Move the SingleBar to the top of the list and render
-    this.singleBars.splice(idx, 1);
-    this.singleBars.splice(0, 0, singleBar);
+    // Render one last time, then log the output
     this.clearAndRender();
-    // TODO(cemmer): this is getting overwritten on next draw
+    const lastOutput = singleBar.getLastOutput();
+    if (lastOutput !== undefined) {
+      this.log(
+        `${singleBar.getIndentSize() === 0 ? '\n' : ''}${MultiBar.OUTPUT_PADDING}${lastOutput}`,
+      );
+    }
 
-    // Finally remove the single bar
-    this.singleBars.splice(0, 1);
+    // Remove the single bar
+    this.singleBars.splice(idx, 1);
   }
 
   /**
-   * TODO(cemmer)
+   * Remove a {@link SingleBar}.
    */
   removeSingleBar(singleBar: SingleBar): void {
     const idx = this.singleBars.indexOf(singleBar);
@@ -143,26 +131,40 @@ export default class MultiBar {
     this.singleBars.splice(idx, 1);
   }
 
-  getProgressBarSpinner(): string {
-    return PROGRESS_BAR_FRAMES[this.progressBarFrame];
-  }
-
   /**
-   * TODO(cemmer)
+   * Queue a log message to be printed to the terminal.
    */
   static log(message: string): void {
-    this.logQueue.push(`${message}\n`);
-  }
+    const lastPrintedLog =
+      MultiBar.logQueue.length > 0 ? MultiBar.logQueue.at(-1) : MultiBar.lastPrintedLog;
 
-  /**
-   * TODO(cemmer)
-   */
-  log(message: string): void {
+    const isFrozenPattern = new RegExp(`^\n*${MultiBar.OUTPUT_PADDING}`);
+    const lastPrintedLogIsFrozen =
+      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog);
+    const thisMessageIsFrozen = isFrozenPattern.test(message);
+
+    if (lastPrintedLogIsFrozen) {
+      if (thisMessageIsFrozen) {
+        // Print frozen progress bars next to each other
+        message = message.replace(/^\n+/, '');
+      } else {
+        // Otherwise, add a newline after the previous frozen progress bar
+        MultiBar.logQueue.push('\n');
+      }
+    }
+
     MultiBar.logQueue.push(`${message}\n`);
   }
 
   /**
-   * TODO(cemmer)
+   * Queue a log message to be printed to the terminal.
+   */
+  log(message: string): void {
+    MultiBar.log(message);
+  }
+
+  /**
+   * Clear the last output and render the progress bars.
    */
   private clearAndRender(): void {
     if (this.stopped) {
@@ -192,6 +194,7 @@ export default class MultiBar {
     // Write out all queued logs
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
+      MultiBar.lastPrintedLog = log;
       this.terminal.write(log);
       log = MultiBar.logQueue.shift();
     }
@@ -212,18 +215,13 @@ export default class MultiBar {
       .map((line) => {
         const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
         if (stripChars <= 0) {
-          return line;
+          return `${MultiBar.OUTPUT_PADDING}${line}`;
         }
-        return `${line.slice(0, line.length - stripChars)}…`;
+        return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
       });
     const output = `${outputLines.join('\n')}\n`;
     this.terminal.write(output);
     this.lastOutput = output;
-
-    this.progressBarFrame += 1;
-    if (this.progressBarFrame >= PROGRESS_BAR_FRAMES.length) {
-      this.progressBarFrame = 0;
-    }
 
     this.renderTimer = Timer.setTimeout(
       () => {
@@ -234,7 +232,7 @@ export default class MultiBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Stop the {@link MultiBar} and all of its {@link SingleBar}s.
    */
   static stop(): void {
     let multiBar = this.multiBars.shift();
@@ -245,7 +243,7 @@ export default class MultiBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Stop the {@link MultiBar} and all of its {@link SingleBar}s.
    */
   private stop(): void {
     if (this.stopped) {
@@ -260,10 +258,6 @@ export default class MultiBar {
     singleBarsCopy.forEach((progressBar) => {
       progressBar.freeze();
     });
-
-    // TODO(cemmer): Clear the last deleted, non-frozen progress bar?
-    // ProgressBarCLI.multiBar?.log(' ');
-    // this.multiBar?.update();
 
     // Restore the cursor
     if (this.terminal instanceof tty.WriteStream) {

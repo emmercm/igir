@@ -80,7 +80,7 @@ export default class Logger {
 
     const loggerTime =
       this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = `${chalkFunc(LogLevelInverted[logLevel])}:${' '.repeat(Math.max(5 - LogLevelInverted[logLevel].length, 0))} `;
+    const levelPrefix = `${chalkFunc(LogLevelInverted[logLevel])}: `;
     const loggerPrefix =
       this.logLevel <= LogLevel.TRACE && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
 
@@ -140,7 +140,7 @@ export default class Logger {
     logoSplit[midLine + 1] =
       `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION}`;
 
-    this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n\n`);
+    this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
   }
 
   /**
@@ -183,8 +183,8 @@ export default class Logger {
   /**
    * Create a {@link ProgressBar} with a reference to this {@link Logger}.
    */
-  addProgressBar(options?: SingleBarOptions, index?: number): ProgressBar {
-    return this.multiBar.addSingleBar(this, options, index);
+  addProgressBar(options?: SingleBarOptions): ProgressBar {
+    return this.multiBar.addSingleBar(this, options);
   }
 
   /**

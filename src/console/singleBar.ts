@@ -33,6 +33,9 @@ const BAR_INCOMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
 
 const DEFAULT_ETA = '--:--:--';
 
+const clamp = (val: number | undefined, min: number, max: number): number =>
+  Math.min(Math.max(val ?? 0, min), max);
+
 /**
  * TODO(cemmer)
  */
@@ -283,8 +286,6 @@ export default class SingleBar extends ProgressBar {
       this.indentSize -
       (this.symbol?.symbol ? 2 : 0);
 
-    const clamp = (val: number | undefined, min: number, max: number): number =>
-      Math.min(Math.max(val ?? 0, min), max);
     const completeSize =
       this.total > 0 ? Math.floor(clamp(this.completed / this.total, 0, 1) * barSize) : 0;
     bar += symbolColor(BAR_COMPLETE_CHAR.repeat(Math.max(completeSize, 0)));
@@ -347,8 +348,6 @@ export default class SingleBar extends ProgressBar {
     }
     this.lastEtaCalculatedTime = TimePoly.hrtimeMillis();
 
-    const clamp = (val: number, min: number, max: number): number =>
-      Math.min(Math.max(val, min), max);
     const MAX_BUFFER_SIZE = clamp(Math.floor(this.total / 10), 25, 50);
 
     this.valueTimeBuffer = [
@@ -367,5 +366,9 @@ export default class SingleBar extends ProgressBar {
     }
     this.lastEtaCalculated = Math.max(remaining, 0);
     return this.lastEtaCalculated;
+  }
+
+  getLastOutput(): string | undefined {
+    return this.lastOutput;
   }
 }
