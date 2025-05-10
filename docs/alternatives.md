@@ -67,3 +67,133 @@ Lists of other ROM managers can be found in a number of other wikis, such as:
 - [Pleasuredome's "Retro Arcade Guides"](https://pleasuredome.miraheze.org/wiki/ROM_Manager)
 - [Recalbox](https://wiki.recalbox.com/en/tutorials/utilities/rom-management)
 - [RetroPie](https://retropie.org.uk/docs/Validating%2C-Rebuilding%2C-and-Filtering-ROM-Collections/)
+
+## Migrating from RomVault
+
+The majority of [RomVault's](https://www.romvault.com/) functionality also exists in Igir. Here is how users of RomVault can achieve the same default behavior in Igir.
+
+Given a typical RomVault directory structure that looks something like:
+
+```text
+ROMVault_V3.7.4/
+├── DatRoot
+│   ├── No-Intro Love Pack (PC) (2025-05-09)
+│   │   ├── No-Intro
+│   │   │   ├── Sega - Game Gear (Parent-Clone) (20241203-185356).dat
+│   │   │   ├── Sega - Master System - Mark III (Parent-Clone) (20241225-050512).dat
+│   │   │   ├── Sega - Mega Drive - Genesis (Parent-Clone) (20250210-102212).dat
+│   │   │   └── ...
+│   │   └── Non-Redump
+│   │       ├── Non-Redump - Nintendo - Nintendo GameCube (Parent-Clone) (20250118-063947).dat
+│   │       ├── Non-Redump - Nintendo - Wii (Parent-Clone) (20241203-105832).dat
+│   │       ├── Non-Redump - Nintendo - Wii U (Parent-Clone) (20231229-065143).dat
+│   │       └── ...
+│   └── Redump (2025-05-09)
+│       ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
+│       ├── Sony - PlayStation 2 - Datfile (11623) (2025-05-09 15-01-56).dat
+│       ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
+│       └── ...
+├── RomRoot
+│   ├── No-Intro Love Pack (PC) (2025-05-09)
+│   │   ├── No-Intro
+│   │   │   └── ...
+│   │   └── Non-Redump
+│   │       └── ...
+│   └── Redump (2025-05-09)
+│       └── ...
+├── ROMVault37.exe
+└── ToSort
+    └── ...
+```
+
+here is how you can perform each RomVault action in Igir:
+
+1. **Update DATs**
+
+    The equivalent action in Igir is to scan for DATs using the [`--dat <path>` option](dats/processing.md#scanning-for-dats) when performing some [command](commands.md).
+
+    Igir does not cache parsed DATs like RomVault does, which requires fewer setup actions, but at the expense of needing to parse DAT files during every run.
+
+2. **Scan ROMs**
+
+    The equivalent action in Igir is to scan for ROMs using the [`--input <path>` option](input/file-scanning.md) when performing some [command](commands.md). You will need to provide both the unsorted ("ToSort") and sorted ("RomRoot") directories as inputs.
+
+    RomVault's default "level 2" scan level can be achieved with the [`--input-checksum-min SHA1` option](roms/matching.md#manually-using-other-checksum-algorithms) (not recommended).
+
+3. **Find fixes**
+
+    This is done when writing ROMs or generating some kind of report (below).
+
+4. **Fix ROMs**
+
+    The equivalent Igir action is to move missing ROMs from an input directory ([`--input <path>` option](input/file-scanning.md)) to the output directory ([`--output <path>` option](output/path-options.md)) using the [`igir move` command](commands.md#move).
+
+    By default, RomVault writes TorrentZip archives, and it will overwrite files that are not in the TorrentZip structure. This can be achieved with a combination of the [`igir zip` command](output/writing-archives.md), the [`--zip-format torrentzip`](output/writing-archives.md#torrentzip) option (default), and the [`--overwrite-invalid` option](output/options.md#overwriting-files). Igir does not offer a way to create 7zip archives like RomVault does.
+
+    RomVault respects the directory structure of DATs and "mirrors" it in the sorted directory ("RomRoot"). This can be achieved with a combination of the [`--dir-dat-mirror`](output/path-options.md#mirror-the-dat-subdirectory) and [`--dir-dat-name`](output/path-options.md#append-dat-name) options.
+
+    During writing, RomVault will move unmatched files in the sorted directory ("RomRoot") to the unsorted directory ("ToSort"). This can be achieved with a combination of the [`igir clean` command](output/cleaning.md) and the [`--clean-backup <path>` option](output/cleaning.md#backing-up-cleaned-files).
+
+5. **Generate reports**
+
+    The equivalent Igir action is the [`igir report` command](output/reporting.md).
+
+Tying it all together, the Igir command to achieve the same behavior as RomVault's defaults is:
+
+=== ":fontawesome-brands-windows: Windows"
+
+    ```batch
+    igir move zip clean ^
+      --input "ToSort\" ^
+      --input "RomRoot\" ^
+      --input-checksum-min SHA1 ^
+      --dat "DatRoot\" ^
+      --output "RomRoot\" ^
+      --dir-dat-mirror ^
+      --dir-dat-name ^
+      --overwrite-invalid ^
+      --clean-backup "ToSort\" ^
+      --zip-format torrentzip ^
+      --merge-roms fullnonmerged ^
+      -v
+    ```
+
+=== ":fontawesome-brands-apple: macOS"
+
+    ```shell
+    igir move zip clean \
+      --input "ToSort/" \
+      --input "RomRoot/" \
+      --input-checksum-min SHA1 \
+      --dat "DatRoot/" \
+      --output "RomRoot/" \
+      --dir-dat-mirror \
+      --dir-dat-name \
+      --overwrite-invalid \
+      --clean-backup "ToSort/" \
+      --zip-format torrentzip \
+      --merge-roms fullnonmerged \
+      -v
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir move zip clean \
+      --input "ToSort/" \
+      --input "RomRoot/" \
+      --input-checksum-min SHA1 \
+      --dat "DatRoot/" \
+      --output "RomRoot/" \
+      --dir-dat-mirror \
+      --dir-dat-name \
+      --overwrite-invalid \
+      --clean-backup "ToSort/" \
+      --zip-format torrentzip \
+      --merge-roms fullnonmerged \
+      -v
+    ```
+
+!!! note
+
+    Igir does not currently offer an alternative to RomVault's subscription-based [DATVault](https://www.datvault.com/) DAT downloader.

@@ -176,21 +176,25 @@ export default class DATScanner extends Scanner {
       dat.getGames()[0].getRoms().length > 10
     ) {
       const game = dat.getGames()[0];
-      dat = new LogiqxDAT(
-        dat.getHeader(),
-        dat
+      dat = new LogiqxDAT({
+        filePath: datFile.getFilePath(),
+        header: dat.getHeader(),
+        games: dat
           .getGames()[0]
           .getRoms()
           .map((rom) => {
             // Use the ROM's filename without its extension as the game name
             const { dir, name } = path.parse(rom.getName());
-            const gameName = path.format({ dir, name });
+            const gameName = path.format({
+              dir,
+              name,
+            });
             return game.withProps({
               name: gameName,
               roms: [rom],
             });
           }),
-      );
+      });
     }
 
     const size = dat
@@ -432,7 +436,7 @@ export default class DATScanner extends Scanner {
       });
     });
 
-    return new LogiqxDAT(header, games);
+    return new LogiqxDAT({ filePath: datFile.getFilePath(), header, games });
   }
 
   /**
@@ -477,13 +481,14 @@ export default class DATScanner extends Scanner {
     });
 
     const datName = path.parse(datFile.getExtractedFilePath()).name;
-    return new LogiqxDAT(
-      new Header({
+    return new LogiqxDAT({
+      filePath: datFile.getFilePath(),
+      header: new Header({
         name: datName,
         description: datName,
       }),
       games,
-    );
+    });
   }
 
   private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
@@ -564,6 +569,6 @@ export default class DATScanner extends Scanner {
       return game.withProps({ roms: roms });
     });
 
-    return new LogiqxDAT(dat.getHeader(), games);
+    return dat.withGames(games);
   }
 }

@@ -1,13 +1,17 @@
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
-import DAT from '../dat.js';
+import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
+
+export interface MameDATProps extends DATProps {
+  machine?: Game | Game[];
+}
 
 /**
  * MAME-schema DAT that documents {@link Game}s.
  */
-export default class MameDAT extends DAT {
+export default class MameDAT extends DAT implements MameDATProps {
   @Expose()
   private readonly build?: string;
 
@@ -20,11 +24,11 @@ export default class MameDAT extends DAT {
   @Expose()
   @Type(() => Game)
   @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
-  private readonly machine: Game | Game[];
+  readonly machine: Game | Game[];
 
-  constructor(machine?: Game | Game[]) {
-    super();
-    this.machine = machine ?? [];
+  constructor(props?: MameDATProps) {
+    super(props);
+    this.machine = props?.machine ?? [];
     this.generateGameNamesToParents();
   }
 
@@ -49,5 +53,13 @@ export default class MameDAT extends DAT {
       return this.machine;
     }
     return [this.machine];
+  }
+
+  withHeader(header: Header): DAT {
+    return new MameDAT({ ...this, header });
+  }
+
+  withGames(games: Game[]): DAT {
+    return new MameDAT({ ...this, machine: games });
   }
 }

@@ -193,7 +193,7 @@ const multiDiscGamesWithConflictingRoms: Game[] = [
 
 it('should do nothing if no games are present', () => {
   const options = new Options({ mergeDiscs: true });
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 
@@ -202,11 +202,10 @@ it('should do nothing if no games are present', () => {
 
 it('should do nothing if option not enabled', () => {
   const options = new Options({ mergeDiscs: false });
-  const dat = new LogiqxDAT(new Header(), [
-    ...singleDiscGames,
-    ...multiDiscGames,
-    ...multiDiscGamesWithConflictingRoms,
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [...singleDiscGames, ...multiDiscGames, ...multiDiscGamesWithConflictingRoms],
+  });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 
@@ -215,7 +214,7 @@ it('should do nothing if option not enabled', () => {
 
 it('should do nothing if no multi-disc games', () => {
   const options = new Options({ mergeDiscs: true });
-  const dat = new LogiqxDAT(new Header(), singleDiscGames);
+  const dat = new LogiqxDAT({ header: new Header(), games: singleDiscGames });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 
@@ -225,11 +224,10 @@ it('should do nothing if no multi-disc games', () => {
 
 it('should merge multi-disc games and leave single disc games alone', () => {
   const options = new Options({ mergeDiscs: true });
-  const dat = new LogiqxDAT(new Header(), [
-    ...singleDiscGames,
-    ...multiDiscGames,
-    ...multiDiscGamesWithConflictingRoms,
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [...singleDiscGames, ...multiDiscGames, ...multiDiscGamesWithConflictingRoms],
+  });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 

@@ -10,7 +10,7 @@ import SingleValueGame from '../src/types/dats/singleValueGame.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
 import OutputFactory from '../src/types/outputFactory.js';
 
-const dummyDat = new LogiqxDAT(new Header(), []);
+const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new SingleValueGame({ name: 'Dummy Game' });
 const dummyRom = new ROM({ name: 'Dummy.rom', size: 0, crc32: '00000000' });
 
@@ -56,10 +56,9 @@ describe('token replacement', () => {
     ['foo/{datDescription}/bar', path.join('foo', 'DAT _ Description', 'bar', 'Dummy.rom')],
   ])('should replace {dat*}: %s', async (output, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const dat = new LogiqxDAT(
-      new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }),
-      [],
-    );
+    const dat = new LogiqxDAT({
+      header: new Header({ name: 'DAT / Name', description: 'DAT \\ Description' }),
+    });
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -77,7 +76,7 @@ describe('token replacement', () => {
     ['root/{region}', 'EUR', path.join('root', 'EUR', 'Dummy.rom')],
   ])('should replace {region}: %s', async (output, region, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const dat = new LogiqxDAT(new Header(), []);
+    const dat = new LogiqxDAT({ header: new Header() });
     const game = new SingleValueGame({
       region,
     });
@@ -91,7 +90,7 @@ describe('token replacement', () => {
     ['root/{language}', 'JP', path.join('root', 'JP', 'Dummy.rom')],
   ])('should replace {language}: %s', async (output, language, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const dat = new LogiqxDAT(new Header(), []);
+    const dat = new LogiqxDAT({ header: new Header() });
     const game = new SingleValueGame({
       language,
     });
@@ -105,7 +104,7 @@ describe('token replacement', () => {
     ['root/{genre}', 'Sports', path.join('root', 'Sports', 'Dummy.rom')],
   ])('should replace {genre}: %s', async (output, genre, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const dat = new LogiqxDAT(new Header(), []);
+    const dat = new LogiqxDAT({ header: new Header() });
     const game = new SingleValueGame({
       genre,
     });
@@ -120,7 +119,7 @@ describe('token replacement', () => {
     ['root/{category}', 'Multimedia', path.join('root', 'Multimedia', 'Dummy.rom')],
   ])('should replace {category}: %s', async (output, category, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
-    const dat = new LogiqxDAT(new Header(), []);
+    const dat = new LogiqxDAT({ header: new Header() });
     const game = new SingleValueGame({
       category,
     });
@@ -588,7 +587,7 @@ describe('token replacement', () => {
 
     const outputPath = OutputFactory.getPath(
       options,
-      new LogiqxDAT(new Header({ name: datName }), []),
+      new LogiqxDAT({ header: new Header({ name: datName }) }),
       dummyGame,
       dummyRom,
       await dummyRom.toFile(),
@@ -707,6 +706,26 @@ describe('token replacement', () => {
   });
 });
 
+describe('should respect "--dir-dat-mirror"', () => {
+  test.each([
+    ['dats/test.dat', path.join(os.devNull, 'file.rom')],
+    ['dats/subdir/test.dat', path.join(os.devNull, 'subdir', 'file.rom')],
+    ['dats/sub/dir/test.dat', path.join(os.devNull, 'sub', 'dir', 'file.rom')],
+  ])('option is true: %s', async (datPath, expectedPath) => {
+    const options = new Options({
+      commands: ['copy'],
+      dat: [datPath.split(/[\\/]/)[0]],
+      output: os.devNull,
+      dirDatMirror: true,
+    });
+    const dat = new LogiqxDAT({ filePath: datPath, header: new Header() });
+    const rom = new ROM({ name: 'file.rom', size: 0, crc32: '' });
+
+    const outputPath = OutputFactory.getPath(options, dat, dummyGame, rom, await rom.toFile());
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+});
+
 describe('should respect "--dir-mirror"', () => {
   test.each([
     ['roms/file.rom', path.join(os.devNull, 'file.rom')],
@@ -754,7 +773,9 @@ describe('should respect "--dir-dat-name"', () => {
     ['name', path.join(os.devNull, 'name', 'Dummy.rom')],
   ])('option is true: %s', async (datName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: true });
-    const dat = new LogiqxDAT(new Header({ name: datName, description: 'description' }), []);
+    const dat = new LogiqxDAT({
+      header: new Header({ name: datName, description: 'description' }),
+    });
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -770,7 +791,9 @@ describe('should respect "--dir-dat-name"', () => {
     'option is false: %s',
     async (datName, expectedPath) => {
       const options = new Options({ commands: ['copy'], output: os.devNull, dirDatName: false });
-      const dat = new LogiqxDAT(new Header({ name: datName, description: 'description' }), []);
+      const dat = new LogiqxDAT({
+        header: new Header({ name: datName, description: 'description' }),
+      });
 
       const outputPath = OutputFactory.getPath(
         options,
@@ -794,7 +817,9 @@ describe('should respect "--dir-dat-description"', () => {
       output: os.devNull,
       dirDatDescription: true,
     });
-    const dat = new LogiqxDAT(new Header({ name: 'name', description: datDescription }), []);
+    const dat = new LogiqxDAT({
+      header: new Header({ name: 'name', description: datDescription }),
+    });
 
     const outputPath = OutputFactory.getPath(
       options,
@@ -814,7 +839,9 @@ describe('should respect "--dir-dat-description"', () => {
         output: os.devNull,
         dirDatDescription: false,
       });
-      const dat = new LogiqxDAT(new Header({ name: 'name', description: datDescription }), []);
+      const dat = new LogiqxDAT({
+        header: new Header({ name: 'name', description: datDescription }),
+      });
 
       const outputPath = OutputFactory.getPath(
         options,

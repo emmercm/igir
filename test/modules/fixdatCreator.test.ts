@@ -31,7 +31,10 @@ const gameWithTwoRoms = new SingleValueGame({
     new ROM({ name: 'two.b', size: 3, crc32: '09876543' }),
   ],
 });
-const dat = new LogiqxDAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);
+const dat = new LogiqxDAT({
+  header: new Header(),
+  games: [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms],
+});
 
 async function generateCandidates(games: SingleValueGame[]): Promise<WriteCandidate[]> {
   return Promise.all(

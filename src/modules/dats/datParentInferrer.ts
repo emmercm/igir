@@ -1,7 +1,6 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
 import Internationalization from '../../types/internationalization.js';
 import Options from '../../types/options.js';
 import Module from '../module.js';
@@ -54,7 +53,7 @@ export default class DATParentInferrer extends Module {
       .map(([, games]) => games);
 
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
-    const inferredDat = new LogiqxDAT(dat.getHeader(), newGames);
+    const inferredDat = dat.withGames(newGames);
     this.progressBar.logTrace(
       `${inferredDat.getName()}: grouped to ${inferredDat.getParents().length.toLocaleString()} parent${inferredDat.getParents().length === 1 ? '' : 's'}`,
     );

@@ -2,7 +2,6 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
 import Options, { PreferRevision } from '../../types/options.js';
 import Module from '../module.js';
 
@@ -63,7 +62,7 @@ export default class DATPreferer extends Module {
         return preferredGame?.withProps({ cloneOf: undefined });
       })
       .filter((game) => game !== undefined);
-    const preferredDat = new LogiqxDAT(dat.getHeader(), preferredGames);
+    const preferredDat = dat.withGames(preferredGames);
 
     const size = preferredDat
       .getGames()

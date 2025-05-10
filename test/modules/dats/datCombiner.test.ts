@@ -12,12 +12,12 @@ const GAME_COUNT = 100;
 function generateDummyDats(count: number): DAT[] {
   return [...Array.from({ length: count }).keys()].map(
     (dat) =>
-      new LogiqxDAT(
-        new Header({ name: `DAT ${dat}` }),
-        [...Array.from({ length: GAME_COUNT }).keys()].map(
+      new LogiqxDAT({
+        header: new Header({ name: `DAT ${dat}` }),
+        games: [...Array.from({ length: GAME_COUNT }).keys()].map(
           (game) => new Game({ name: `Game ${game}` }),
         ),
-      ),
+      }),
   );
 }
 
