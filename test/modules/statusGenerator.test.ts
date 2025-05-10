@@ -59,12 +59,12 @@ const games = [
   }),
 ];
 
-const dummyDat = new LogiqxDAT(
-  new Header({
+const dummyDat = new LogiqxDAT({
+  header: new Header({
     name: 'dat',
   }),
   games,
-);
+});
 
 async function candidateGenerator(dat: DAT, gameNames: string[]): Promise<WriteCandidate[]> {
   return Promise.all(

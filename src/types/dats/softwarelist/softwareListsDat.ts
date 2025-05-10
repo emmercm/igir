@@ -1,22 +1,26 @@
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
-import DAT from '../dat.js';
+import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
 import SoftwareListDAT from './softwareListDat.js';
 
+export interface SoftwareListsDATProps extends DATProps {
+  softwarelist?: SoftwareListDAT | SoftwareListDAT[];
+}
+
 /**
  * MAME-schema DAT that documents {@link SoftwareListDAT}s.
  */
-export default class SoftwareListsDAT extends DAT {
+export default class SoftwareListsDAT extends DAT implements SoftwareListsDATProps {
   @Expose()
   @Type(() => SoftwareListDAT)
   @Transform(({ value }: { value: undefined | SoftwareListDAT | SoftwareListDAT[] }) => value ?? [])
   readonly softwarelist: SoftwareListDAT | SoftwareListDAT[];
 
-  constructor() {
-    super();
-    this.softwarelist = [];
+  constructor(props?: SoftwareListsDATProps) {
+    super(props);
+    this.softwarelist = props?.softwarelist ?? [];
     this.generateGameNamesToParents();
   }
 
@@ -51,5 +55,14 @@ export default class SoftwareListsDAT extends DAT {
 
   getGames(): Game[] {
     return this.getSoftwareLists().flatMap((softwareList) => softwareList.getGames());
+  }
+
+  withHeader(header: Header): DAT {
+    return new SoftwareListsDAT({ ...this, header });
+  }
+
+  withGames(games: Game[]): DAT {
+    // This DAT is a list of DATs, so we need to type change here
+    return new SoftwareListDAT({ ...this, software: games });
   }
 }

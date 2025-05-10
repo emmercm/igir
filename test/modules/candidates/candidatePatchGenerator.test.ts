@@ -51,7 +51,7 @@ async function runPatchCandidateGenerator(dat: DAT, romFiles: File[]): Promise<W
 
 it('should do nothing with no games', async () => {
   // Given
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
 
   // When
   const candidates = await runPatchCandidateGenerator(dat, []);

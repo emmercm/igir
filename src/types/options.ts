@@ -126,6 +126,7 @@ export interface OptionsProps {
 
   readonly output?: string;
   readonly dirMirror?: boolean;
+  readonly dirDatMirror?: boolean;
   readonly dirDatName?: boolean;
   readonly dirDatDescription?: boolean;
   readonly dirLetter?: boolean;
@@ -262,6 +263,8 @@ export default class Options implements OptionsProps {
   readonly output?: string;
 
   readonly dirMirror: boolean;
+
+  readonly dirDatMirror: boolean;
 
   readonly dirDatName: boolean;
 
@@ -453,6 +456,7 @@ export default class Options implements OptionsProps {
 
     this.output = options?.output?.replace(/[\\/]/g, path.sep);
     this.dirMirror = options?.dirMirror ?? false;
+    this.dirDatMirror = options?.dirDatMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
     this.dirDatDescription = options?.dirDatDescription ?? false;
     this.dirLetter = options?.dirLetter ?? false;
@@ -906,6 +910,10 @@ export default class Options implements OptionsProps {
     return this.dat.length > 0;
   }
 
+  getDatPaths(): string[] {
+    return this.dat;
+  }
+
   private async scanDatFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
     return Options.scanPaths(this.dat, walkCallback);
   }
@@ -987,6 +995,10 @@ export default class Options implements OptionsProps {
 
   getDirMirror(): boolean {
     return this.dirMirror;
+  }
+
+  getDirDatMirror(): boolean {
+    return this.dirDatMirror;
   }
 
   getDirDatName(): boolean {

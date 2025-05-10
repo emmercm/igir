@@ -16,7 +16,7 @@ function expectFilteredDAT(
   gamesArr: Game[][],
   expectedGameCount: number,
 ): void {
-  const dat = new LogiqxDAT(new Header(), gamesArr.flat());
+  const dat = new LogiqxDAT({ header: new Header(), games: gamesArr.flat() });
   const filteredDat = buildDATFilter(options).filter(dat);
   expect(filteredDat.getGames()).toHaveLength(expectedGameCount);
 }
@@ -137,7 +137,7 @@ it('should not re-elect a new parent if not filtered out', () => {
     'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
     'Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)',
   ].map((name) => new Game({ name, cloneOf: parent.getName() }));
-  const dat = new LogiqxDAT(new Header(), [parent, ...children]);
+  const dat = new LogiqxDAT({ header: new Header(), games: [parent, ...children] });
   expect(dat.getParents()).toHaveLength(1);
 
   const filteredDat = new DATFilter(options, new ProgressBarFake()).filter(dat);
@@ -173,7 +173,7 @@ it('should not leave children abandoned', () => {
     'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
     'Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)',
   ].map((name) => new Game({ name, cloneOf: parent.getName() }));
-  const dat = new LogiqxDAT(new Header(), [parent, ...children]);
+  const dat = new LogiqxDAT({ header: new Header(), games: [parent, ...children] });
   expect(dat.getParents()).toHaveLength(1);
 
   const filteredDat = new DATFilter(options, new ProgressBarFake()).filter(dat);

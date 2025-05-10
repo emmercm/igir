@@ -6,15 +6,28 @@ import Game from './game.js';
 import Header from './logiqx/header.js';
 import Parent from './parent.js';
 
+export interface DATProps {
+  filePath?: string;
+}
+
 /**
  * The base class for other DAT classes.
  */
 export default abstract class DAT {
+  readonly filePath?: string;
   private parents: Parent[] = [];
+
+  protected constructor(props?: DATProps) {
+    this.filePath = props?.filePath;
+  }
 
   abstract getHeader(): Header;
 
   abstract getGames(): Game[];
+
+  abstract withHeader(header: Header): DAT;
+
+  abstract withGames(games: Game[]): DAT;
 
   /**
    * Group all {@link Game} clones together into one {@link Parent}. If no parent/clone information
@@ -86,6 +99,10 @@ export default abstract class DAT {
     this.parents = [...gameIdsToParents.values(), ...gameNamesToParents.values()];
 
     return this;
+  }
+
+  getFilePath(): string | undefined {
+    return this.filePath;
   }
 
   getParents(): Parent[] {

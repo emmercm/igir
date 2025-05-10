@@ -22,12 +22,12 @@ export default class DATCombiner extends Module {
   combine(dats: DAT[]): DAT {
     this.progressBar.logTrace(`combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
 
-    const newDat = new LogiqxDAT(
-      DATCombiner.generateHeader(dats),
-      dats
+    const newDat = new LogiqxDAT({
+      header: DATCombiner.generateHeader(dats),
+      games: dats
         .flatMap((dat) => dat.getGames())
         .filter(ArrayPoly.filterUniqueMapped((game) => game.hashCode())),
-    );
+    });
 
     this.progressBar.logTrace(`done combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
     return newDat;

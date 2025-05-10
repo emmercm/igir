@@ -398,7 +398,7 @@ describe('should delete archives', () => {
           output: 'output',
         });
 
-        const dat = new LogiqxDAT(new Header(), games);
+        const dat = new LogiqxDAT({ header: new Header(), games });
 
         const rawRomFiles = (
           await Promise.all(

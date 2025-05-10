@@ -4,7 +4,6 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import GameGrouper from '../../gameGrouper.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
 import Options from '../../types/options.js';
 import Module from '../module.js';
 
@@ -40,7 +39,7 @@ export default class DATDiscMerger extends Module {
     this.progressBar.resetProgress(dat.getGames().length);
 
     const groupedGames = this.groupGames(dat.getGames());
-    const newDat = new LogiqxDAT(dat.getHeader(), groupedGames);
+    const newDat = dat.withGames(groupedGames);
     this.progressBar.logTrace(
       `${newDat.getName()}: merged to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );

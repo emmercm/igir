@@ -60,7 +60,7 @@ export default class FixdatCreator extends Module {
 
     // Construct a new DAT and write it to the output dir
     const header = new IgirHeader('fixdat', originalDat, this.options);
-    const fixdat = new LogiqxDAT(header, gamesWithMissingRoms);
+    const fixdat = new LogiqxDAT({ header, games: gamesWithMissingRoms });
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
     this.progressBar.logInfo(`${originalDat.getName()}: writing fixdat to '${fixdatPath}'`);

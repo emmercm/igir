@@ -346,3 +346,9 @@ Even better, if you feel comfortable writing code, please feel free to submit a 
   <a href="https://github.com/emmercm/igir/discussions"><img alt="GitHub: discussions" src="https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white"></a>
   <a href="https://hacktoberfest.com/"><img alt="Hacktoberfest: participant" src="https://img.shields.io/badge/hacktoberfest-participant-orange?logo=digitalocean&logoColor=white"></a>
 </p>
+
+<p align="center">
+  <a href="https://github.com/emmercm/igir/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=emmercm/igir" alt="List of contributors" />
+  </a>
+</p>
