@@ -109,19 +109,11 @@ export default class SingleBar extends ProgressBar {
     return this.indentSize;
   }
 
-  getSymbol(): ColoredSymbol | undefined {
-    return this.symbol;
-  }
-
   setSymbol(symbol: ColoredSymbol): void {
     if (this.symbol === symbol) {
       return;
     }
     this.symbol = symbol;
-  }
-
-  getName(): string | undefined {
-    return this.name;
   }
 
   setName(name: string): void {
