@@ -176,10 +176,8 @@ export default class DATScanner extends Scanner {
       dat.getGames()[0].getRoms().length > 10
     ) {
       const game = dat.getGames()[0];
-      dat = new LogiqxDAT({
-        filePath: datFile.getFilePath(),
-        header: dat.getHeader(),
-        games: dat
+      dat = dat.withGames(
+        dat
           .getGames()[0]
           .getRoms()
           .map((rom) => {
@@ -194,7 +192,7 @@ export default class DATScanner extends Scanner {
               roms: [rom],
             });
           }),
-      });
+      );
     }
 
     const size = dat
@@ -291,7 +289,7 @@ export default class DATScanner extends Scanner {
 
     if (datObject.datafile) {
       try {
-        return LogiqxDAT.fromObject(datObject.datafile);
+        return LogiqxDAT.fromObject(datObject.datafile, { filePath: datFile.getFilePath() });
       } catch (error) {
         this.progressBar.logTrace(`${datFile.toString()}: failed to parse DAT object: ${error}`);
         return undefined;
@@ -300,7 +298,7 @@ export default class DATScanner extends Scanner {
 
     if (datObject.mame) {
       try {
-        return MameDAT.fromObject(datObject.mame);
+        return MameDAT.fromObject(datObject.mame, { filePath: datFile.getFilePath() });
       } catch (error) {
         this.progressBar.logTrace(
           `${datFile.toString()}: failed to parse MAME DAT object: ${error}`,
@@ -311,7 +309,9 @@ export default class DATScanner extends Scanner {
 
     if (datObject.softwarelists) {
       try {
-        return SoftwareListsDAT.fromObject(datObject.softwarelists);
+        return SoftwareListsDAT.fromObject(datObject.softwarelists, {
+          filePath: datFile.getFilePath(),
+        });
       } catch (error) {
         this.progressBar.logTrace(
           `${datFile.toString()}: failed to parse software list DAT object: ${error}`,

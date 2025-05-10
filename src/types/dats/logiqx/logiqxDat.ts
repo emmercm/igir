@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
+import { Expose, plainToClassFromExist, Transform, Type } from 'class-transformer';
 
 import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from './header.js';
 
 export interface LogiqxDATProps extends DATProps {
-  header: Header;
+  header?: Header;
   games?: Game | Game[];
 }
 
@@ -42,8 +42,9 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
   /**
    * Construct a {@link LogiqxDAT} from a generic object, such as one from reading an XML file.
    */
-  static fromObject(obj: object): LogiqxDAT {
-    return plainToInstance(LogiqxDAT, obj, {
+  static fromObject(obj: object, props?: LogiqxDATProps): LogiqxDAT {
+    const dat = new LogiqxDAT(props);
+    return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     }).generateGameNamesToParents();
@@ -73,10 +74,6 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
     }
 
     return [];
-  }
-
-  withHeader(header: Header): DAT {
-    return new LogiqxDAT({ ...this, header });
   }
 
   withGames(games: Game[]): DAT {
