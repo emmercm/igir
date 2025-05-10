@@ -23,7 +23,7 @@ export default class CandidateValidator extends Module {
 
     this.progressBar.logTrace(`${dat.getName()}: validating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
-    this.progressBar.reset(candidates.length);
+    this.progressBar.resetProgress(candidates.length);
 
     const conflictedOutputPaths = this.validateUniqueOutputPaths(dat, candidates);
     if (conflictedOutputPaths.length > 0) {

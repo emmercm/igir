@@ -18,7 +18,7 @@ export default class Defaults {
   /**
    * Default number of DATs to process at once.
    */
-  static readonly DAT_DEFAULT_THREADS = 3;
+  static readonly DAT_DEFAULT_THREADS = 2;
 
   /**
    * A reasonable max number of files to write at once.

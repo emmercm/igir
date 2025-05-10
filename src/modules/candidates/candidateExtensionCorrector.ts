@@ -59,7 +59,7 @@ export default class CandidateExtensionCorrector extends Module {
       `${dat.getName()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
-    this.progressBar.reset(romsThatNeedCorrecting);
+    this.progressBar.resetProgress(romsThatNeedCorrecting);
 
     const correctedCandidates = await this.correctExtensions(dat, candidates);
 
@@ -145,35 +145,41 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     await CandidateExtensionCorrector.THREAD_SEMAPHORE.runExclusive(async () => {
-      this.progressBar.incrementProgress();
-      const waitingMessage = `${candidate.getName()} ...`;
-      this.progressBar.addWaitingMessage(waitingMessage);
+      this.progressBar.incrementInProgress();
       this.progressBar.logTrace(
         `${dat.getName()}: ${candidate.getName()}: correcting extension for: ${romWithFiles
           .getInputFile()
           .toString()}`,
       );
+      const childBar = this.progressBar.addChildBar({
+        name: romWithFiles.getInputFile().toString(),
+      });
 
-      let romSignature: FileSignature | undefined;
       try {
-        romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
-      } catch (error) {
-        this.progressBar.logError(
-          `${dat.getName()}: failed to correct file extension for '${romWithFiles.getInputFile().toString()}': ${error}`,
-        );
-      }
-      if (romSignature) {
-        // ROM file signature found, use the appropriate extension
-        const { dir, name } = path.parse(correctedRom.getName());
-        const correctedRomName = path.format({
-          dir,
-          name: name + romSignature.getExtension(),
-        });
-        correctedRom = correctedRom.withName(correctedRomName);
+        let romSignature: FileSignature | undefined;
+        try {
+          romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
+        } catch (error) {
+          this.progressBar.logError(
+            `${dat.getName()}: failed to correct file extension for '${romWithFiles
+              .getInputFile()
+              .toString()}': ${error}`,
+          );
+        }
+        if (romSignature) {
+          // ROM file signature found, use the appropriate extension
+          const { dir, name } = path.parse(correctedRom.getName());
+          const correctedRomName = path.format({
+            dir,
+            name: name + romSignature.getExtension(),
+          });
+          correctedRom = correctedRom.withName(correctedRomName);
+        }
+      } finally {
+        childBar.delete();
       }
 
-      this.progressBar.removeWaitingMessage(waitingMessage);
-      this.progressBar.incrementDone();
+      this.progressBar.incrementCompleted();
     });
 
     return correctedRom;

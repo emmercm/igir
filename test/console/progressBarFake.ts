@@ -5,7 +5,7 @@ export default class ProgressBarFake extends ProgressBar {
     // @typescript-eslint/no-empty-function
   }
 
-  done(): void {
+  finish(): void {
     // @typescript-eslint/no-empty-function
   }
 
@@ -21,11 +21,11 @@ export default class ProgressBarFake extends ProgressBar {
     // @typescript-eslint/no-empty-function
   }
 
-  incrementProgress(): void {
+  incrementInProgress(): void {
     // @typescript-eslint/no-empty-function
   }
 
-  incrementDone(): void {
+  incrementCompleted(): void {
     // @typescript-eslint/no-empty-function
   }
 
@@ -37,7 +37,7 @@ export default class ProgressBarFake extends ProgressBar {
     // @typescript-eslint/no-empty-function
   }
 
-  reset(): void {
+  resetProgress(): void {
     // @typescript-eslint/no-empty-function
   }
 
@@ -53,7 +53,7 @@ export default class ProgressBarFake extends ProgressBar {
     // @typescript-eslint/no-empty-function
   }
 
-  update(): void {
+  setCompleted(): void {
     // @typescript-eslint/no-empty-function
   }
 }

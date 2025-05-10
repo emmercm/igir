@@ -95,7 +95,7 @@ export default class ReportGenerator extends Module {
     );
 
     this.progressBar.logTrace('done generating report');
-    this.progressBar.done(reportPath);
+    this.progressBar.finish(reportPath);
     this.progressBar.freeze();
   }
 }
