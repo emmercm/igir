@@ -128,7 +128,9 @@ here is how you can perform each RomVault action in Igir:
 
     The equivalent Igir action is to move missing ROMs from an input directory ([`--input <path>` option](input/file-scanning.md)) to the output directory ([`--output <path>` option](output/path-options.md)) using the [`igir move` command](commands.md#move).
 
-    By default, RomVault writes TorrentZip archives, and it will overwrite files that are not in the TorrentZip structure. This can be achieved with a combination of the [`igir zip` command](output/writing-archives.md), the [`--zip-format torrentzip`](output/writing-archives.md#torrentzip) option (default), and the [`--overwrite-invalid` option](output/options.md#overwriting-files). Igir does not offer a way to create 7zip archives like RomVault does.
+    RomVault writes TorrentZip archives by default, and it will overwrite files that are not in the TorrentZip structure. This can be achieved with a combination of the [`igir zip` command](output/writing-archives.md), the [`--zip-format torrentzip`](output/writing-archives.md#torrentzip) option (default), and the [`--overwrite-invalid` option](output/options.md#overwriting-files). Igir does not offer a way to create 7zip archives like RomVault does.
+
+    By default, RomVault writes "incomplete" sets of ROMs. It will write archives when at least one ROM for a game is present, even if not every ROM is found. Igir does not do this by default as incomplete sets are unlikely to be playable. However, you can enable this behavior with the [`--allow-incomplete-sets` option](roms/sets.md#allowing-inexact-sets).
 
     RomVault respects the directory structure of DATs and "mirrors" it in the sorted directory ("RomRoot"). This can be achieved with a combination of the [`--dir-dat-mirror`](output/path-options.md#mirror-the-dat-subdirectory) and [`--dir-dat-name`](output/path-options.md#append-dat-name) options.
 
@@ -155,6 +157,7 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
       --clean-backup "ToSort\" ^
       --zip-format torrentzip ^
       --merge-roms fullnonmerged ^
+      --allow-incomplete-sets ^
       -v
     ```
 
@@ -173,6 +176,7 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
       --clean-backup "ToSort/" \
       --zip-format torrentzip \
       --merge-roms fullnonmerged \
+      --allow-incomplete-sets \
       -v
     ```
 
@@ -191,8 +195,13 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
       --clean-backup "ToSort/" \
       --zip-format torrentzip \
       --merge-roms fullnonmerged \
+      --allow-incomplete-sets \
       -v
     ```
+
+!!! note
+
+    Writing and rewriting ROMs with Igir or RomVault is likely to invalidate the file cache of the other tool.
 
 !!! note
 

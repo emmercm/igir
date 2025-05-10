@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
+import { Expose, plainToClassFromExist, Transform, Type } from 'class-transformer';
 
 import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from './header.js';
 
 export interface LogiqxDATProps extends DATProps {
-  header: Header;
+  header?: Header;
   games?: Game | Game[];
 }
 
@@ -18,7 +18,7 @@ export interface LogiqxDATProps extends DATProps {
 export default class LogiqxDAT extends DAT implements LogiqxDATProps {
   @Expose()
   @Type(() => Header)
-  readonly header: Header;
+  readonly header?: Header;
 
   @Expose()
   @Type(() => Game)
@@ -33,17 +33,19 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
 
   constructor(props?: LogiqxDATProps) {
     super(props);
-    this.header = props?.header ?? new Header();
+    this.header = props?.header;
     this.game = props?.games;
-    this.machine = [];
     this.generateGameNamesToParents();
   }
 
   /**
    * Construct a {@link LogiqxDAT} from a generic object, such as one from reading an XML file.
    */
-  static fromObject(obj: object): LogiqxDAT {
-    return plainToInstance(LogiqxDAT, obj, {
+  static fromObject(obj: object, props?: DATProps): LogiqxDAT {
+    // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
+    // not overwrite properties with a defined value
+    const dat = new LogiqxDAT(props);
+    return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     }).generateGameNamesToParents();
@@ -52,7 +54,7 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
   // Property getters
 
   getHeader(): Header {
-    return this.header;
+    return this.header ?? new Header();
   }
 
   getGames(): Game[] {
@@ -73,10 +75,6 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
     }
 
     return [];
-  }
-
-  withHeader(header: Header): DAT {
-    return new LogiqxDAT({ ...this, header });
   }
 
   withGames(games: Game[]): DAT {

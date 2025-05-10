@@ -25,8 +25,6 @@ export default abstract class DAT {
 
   abstract getGames(): Game[];
 
-  abstract withHeader(header: Header): DAT;
-
   abstract withGames(games: Game[]): DAT;
 
   /**
