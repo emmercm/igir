@@ -40,7 +40,7 @@ export default class KeyedMutex {
       return;
     }
 
-    const mutexes = await this.runExclusiveGlobally(async () => {
+    const mutexes = await this.runExclusiveGlobally(() => {
       const mutexes = keys.reduce(ArrayPoly.reduceUnique(), []).map((key) => {
         let mutex = this.keyMutexes.get(key);
         if (mutex === undefined) {
