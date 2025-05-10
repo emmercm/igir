@@ -1,14 +1,18 @@
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
-import DAT from '../dat.js';
+import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
 import Software from './software.js';
 
+export interface SoftwareListDATProps extends DATProps {
+  software?: Software | Software[];
+}
+
 /**
  * MAME-schema DAT that documents {@link Software}s.
  */
-export default class SoftwareListDAT extends DAT {
+export default class SoftwareListDAT extends DAT implements SoftwareListDATProps {
   @Expose()
   readonly name?: string;
 
@@ -20,9 +24,10 @@ export default class SoftwareListDAT extends DAT {
   @Transform(({ value }: { value: undefined | Software | Software[] }) => value ?? [])
   readonly software: Software | Software[];
 
-  constructor(software: Software | Software[]) {
-    super();
-    this.software = software;
+  constructor(props?: SoftwareListDATProps) {
+    super(props);
+    this.software = props?.software ?? [];
+    this.generateGameNamesToParents();
   }
 
   /**
@@ -48,5 +53,13 @@ export default class SoftwareListDAT extends DAT {
       return this.software;
     }
     return [this.software];
+  }
+
+  withHeader(header: Header): DAT {
+    return new SoftwareListDAT({ ...this, header });
+  }
+
+  withGames(games: Game[]): DAT {
+    return new SoftwareListDAT({ ...this, software: games });
   }
 }

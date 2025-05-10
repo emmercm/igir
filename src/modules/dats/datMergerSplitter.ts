@@ -51,7 +51,7 @@ export default class DATMergerSplitter extends Module {
     const newGames = dat
       .getParents()
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
-    const newDat = new LogiqxDAT(dat.getHeader(), newGames);
+    const newDat = dat.withGames(newGames);
     this.progressBar.logTrace(
       `${newDat.getName()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );

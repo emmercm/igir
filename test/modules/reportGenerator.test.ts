@@ -20,7 +20,7 @@ import ProgressBarFake from '../console/progressBarFake.js';
  *  test the interaction of combining multiple DATStatus.
  */
 
-const datStatusEmpty = new DATStatus(new LogiqxDAT(new Header({ name: 'Empty' }), []), []);
+const datStatusEmpty = new DATStatus(new LogiqxDAT({ header: new Header({ name: 'Empty' }) }), []);
 
 const gamesSingle = [
   new SingleValueGame({
@@ -43,7 +43,10 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
         ),
     ),
   );
-  return new DATStatus(new LogiqxDAT(new Header({ name: 'Single' }), gamesSingle), candidates);
+  return new DATStatus(
+    new LogiqxDAT({ header: new Header({ name: 'Single' }), games: gamesSingle }),
+    candidates,
+  );
 }
 
 const gamesMultiple = [
@@ -79,7 +82,10 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
         ),
     ),
   );
-  return new DATStatus(new LogiqxDAT(new Header({ name: 'Multiple' }), gamesMultiple), candidates);
+  return new DATStatus(
+    new LogiqxDAT({ header: new Header({ name: 'Multiple' }), games: gamesMultiple }),
+    candidates,
+  );
 }
 
 async function wrapReportGenerator(

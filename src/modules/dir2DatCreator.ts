@@ -67,7 +67,7 @@ export default class Dir2DatCreator extends Module {
 
     // Construct a new DAT and write it to the output dir
     const header = new IgirHeader('dir2dat', dat, this.options);
-    const dir2dat = new LogiqxDAT(header, gamesFromCandidates);
+    const dir2dat = new LogiqxDAT({ header, games: gamesFromCandidates });
     const dir2datContents = dir2dat.toXmlDat();
     const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
     this.progressBar.logInfo(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);

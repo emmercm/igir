@@ -227,7 +227,7 @@ const games: Game[] = [
   }),
 ];
 
-const dat = new LogiqxDAT(new Header(), games);
+const dat = new LogiqxDAT({ header: new Header(), games });
 
 async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
   return Promise.all(

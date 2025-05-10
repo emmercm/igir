@@ -390,6 +390,14 @@ export default class ArgumentsParser {
         group: groupRomOutputPath,
         description: 'Use the input subdirectory structure for the output directory',
         type: 'boolean',
+        conflicts: ['dir-dat-mirror'],
+      })
+      .option('dir-dat-mirror', {
+        group: groupRomOutputPath,
+        description: 'Use the DAT subdirectory structure for the output directory',
+        type: 'boolean',
+        implies: 'dat',
+        conflicts: ['dir-mirror'],
       })
       .option('dir-dat-name', {
         group: groupRomOutputPath,

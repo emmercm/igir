@@ -86,7 +86,7 @@ async function datInferrer(options: Options, romFiles: File[]): Promise<DAT> {
     await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles)
   ).flatMap((dat) => dat.getGames());
   // TODO(cemmer): filter to unique games / remove duplicates
-  return new LogiqxDAT(new Header({ name: 'ROMWriter Test' }), datGames);
+  return new LogiqxDAT({ header: new Header({ name: 'ROMWriter Test' }), games: datGames });
 }
 
 async function candidateWriter(

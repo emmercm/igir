@@ -134,7 +134,7 @@ export default class DATGameInferrer extends Module {
       description: datName,
     });
 
-    return new LogiqxDAT(header, games);
+    return new LogiqxDAT({ header, games });
   }
 
   /**

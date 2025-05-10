@@ -62,12 +62,10 @@ const gameWithDuplicateRoms = new Game({
     new ROM({ name: 'Disc (Track 04).cue', size: 4, crc32: '11bf5dbd' }),
   ],
 });
-const datWithFourGames = new LogiqxDAT(new Header(), [
-  gameWithNoRoms,
-  gameWithOneRom,
-  gameWithTwoRomsParent,
-  gameWithTwoRomsClone,
-]);
+const datWithFourGames = new LogiqxDAT({
+  header: new Header(),
+  games: [gameWithNoRoms, gameWithOneRom, gameWithTwoRomsParent, gameWithTwoRomsClone],
+});
 
 async function candidateGenerator(
   options: Options,
@@ -86,7 +84,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
   it('should return no candidates with no games', async () => {
     // Given
-    const datWithoutParents = new LogiqxDAT(new Header(), []);
+    const datWithoutParents = new LogiqxDAT({ header: new Header() });
 
     // When
     const candidates = await candidateGenerator(options, datWithoutParents, []);
@@ -97,7 +95,7 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
 
   it('should return no candidates with no games with ROMs', async () => {
     // Given
-    const datWithGamesWithNoRoms = new LogiqxDAT(new Header(), [gameWithNoRoms]);
+    const datWithGamesWithNoRoms = new LogiqxDAT({ header: new Header(), games: [gameWithNoRoms] });
 
     // When
     const candidates = await candidateGenerator(options, datWithGamesWithNoRoms, []);
@@ -436,44 +434,47 @@ describe('with different input files for every game ROM', () => {
 });
 
 describe('token replacement', () => {
-  const dat = new LogiqxDAT(new Header(), [
-    new Game({
-      name: 'Advance Wars - Dual Strike (USA, Australia)',
-      categories: 'Games',
-      roms: new ROM({
-        name: 'Advance Wars - Dual Strike (USA, Australia).nds',
-        size: 33_554_432,
-        crc32: '4d9a91e3',
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      new Game({
+        name: 'Advance Wars - Dual Strike (USA, Australia)',
+        categories: 'Games',
+        roms: new ROM({
+          name: 'Advance Wars - Dual Strike (USA, Australia).nds',
+          size: 33_554_432,
+          crc32: '4d9a91e3',
+        }),
       }),
-    }),
-    new Game({
-      name: 'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk)',
-      categories: 'Demos',
-      roms: new ROM({
-        name: 'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
-        size: 67_108_864,
-        crc32: '0e58ed2c',
+      new Game({
+        name: 'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk)',
+        categories: 'Demos',
+        roms: new ROM({
+          name: 'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
+          size: 67_108_864,
+          crc32: '0e58ed2c',
+        }),
       }),
-    }),
-    new Game({
-      name: 'Kirby - Canvas Curse (USA)',
-      // No categories on purpose
-      roms: new ROM({
-        name: 'Kirby - Canvas Curse (USA).nds',
-        size: 67_108_864,
-        crc32: 'fe7dc5ee',
+      new Game({
+        name: 'Kirby - Canvas Curse (USA)',
+        // No categories on purpose
+        roms: new ROM({
+          name: 'Kirby - Canvas Curse (USA).nds',
+          size: 67_108_864,
+          crc32: 'fe7dc5ee',
+        }),
       }),
-    }),
-    new Game({
-      name: 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It)',
-      categories: 'Applications',
-      roms: new ROM({
-        name: 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds',
-        size: 8_388_608,
-        crc32: 'd5fce7e1',
+      new Game({
+        name: 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It)',
+        categories: 'Applications',
+        roms: new ROM({
+          name: 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds',
+          size: 8_388_608,
+          crc32: 'd5fce7e1',
+        }),
       }),
-    }),
-  ]);
+    ],
+  });
 
   const files = Promise.all(
     dat.getGames().flatMap((game) => game.getRoms().map(async (rom) => rom.toFile())),
@@ -650,7 +651,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       // Given
       const datGame = gameWithOneRom;
       expect(datGame.getRoms()).toHaveLength(1);
-      const dat = new LogiqxDAT(new Header(), [datGame]);
+      const dat = new LogiqxDAT({ header: new Header(), games: [datGame] });
 
       // And every file is present, both raw and archived
       const rawFiles = await Promise.all(
@@ -687,7 +688,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     describe.each([gameWithTwoRomsParent, gameWithTwoRomsClone, gameWithDuplicateRoms])(
       'game: %s',
       (datGame) => {
-        const dat = new LogiqxDAT(new Header(), [datGame]);
+        const dat = new LogiqxDAT({ header: new Header(), games: [datGame] });
 
         it('should behave like normal with no archives', async () => {
           // Given every file is present, raw
@@ -799,54 +800,56 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 });
 
 describe('MAME v0.260', () => {
-  const mameDat = new MameDAT([
-    new Game({
-      name: '2spicy',
-      romOf: 'lindbios',
-      description: '2 Spicy',
-      roms: [
-        new ROM({ name: '6.0.0010a.bin', size: 1_048_576, crc32: '10dd9b76' }),
-        new ROM({ name: '6.0.0009.bin', size: 1_048_576, crc32: '5ffdfbf8' }),
-        new ROM({ name: '6.0.0010.bin', size: 1_048_576, crc32: 'ea2bf888' }),
-        new ROM({ name: 'fpr-24370b.ic6', size: 4_194_304, crc32: 'c3b021a4' }),
-        new ROM({ name: 'vid_bios.u504', size: 65_536, crc32: 'f78d14d7' }),
-        // new ROM({ name: '317-0491-com.bin', size: 8192 }),
-      ],
-      disks: [
-        new Disk({
-          name: 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01',
-          sha1: 'e13da5f827df852e742b594729ee3f933b387410',
-        }),
-        new Disk({ name: 'dvp-0027a', sha1: 'da1aacee9e32e813844f4d434981e69cc5c80682' }),
-      ],
-    }),
-    new Game({
-      name: 'area51mx',
-      description: 'Area 51 / Maximum Force Duo v2.0',
-      roms: [
-        new ROM({ name: '2.0_68020_max-a51_kit_3h.3h', size: 524_288, crc32: '47cbf30b' }),
-        new ROM({ name: '2.0_68020_max-a51_kit_3p.3p', size: 524_288, crc32: 'a3c93684' }),
-        new ROM({ name: '2.0_68020_max-a51_kit_3m.3m', size: 524_288, crc32: 'd800ac17' }),
-        new ROM({ name: '2.0_68020_max-a51_kit_3k.3k', size: 524_288, crc32: '0e78f308' }),
-        new ROM({ name: 'jagwave.rom', size: 4096, crc32: '7a25ee5b' }),
-      ],
-      disks: new Disk({ name: 'area51mx', sha1: '5ff10f4e87094d4449eabf3de7549564ca568c7e' }),
-    }),
-    new Game({
-      name: 'a51mxr3k',
-      cloneOf: 'area51mx',
-      romOf: 'area51mx',
-      description: 'Area 51 / Maximum Force Duo (R3000, 2/10/98)',
-      roms: [
-        new ROM({ name: '1.0_r3k_max-a51_kit_hh.hh', size: 524_288, crc32: 'a984dab2' }),
-        new ROM({ name: '1.0_r3k_max-a51_kit_hl.hl', size: 524_288, crc32: '0af49d74' }),
-        new ROM({ name: '1.0_r3k_max-a51_kit_lh.lh', size: 524_288, crc32: 'd7d94dac' }),
-        new ROM({ name: '1.0_r3k_max-a51_kit_ll.ll', size: 524_288, crc32: 'ece9e5ae' }),
-        new ROM({ name: 'jagwave.rom', size: 4096, crc32: '7a25ee5b' }),
-      ],
-      disks: new Disk({ name: 'area51mx', sha1: '5ff10f4e87094d4449eabf3de7549564ca568c7e' }),
-    }),
-  ]);
+  const mameDat = new MameDAT({
+    machine: [
+      new Game({
+        name: '2spicy',
+        romOf: 'lindbios',
+        description: '2 Spicy',
+        roms: [
+          new ROM({ name: '6.0.0010a.bin', size: 1_048_576, crc32: '10dd9b76' }),
+          new ROM({ name: '6.0.0009.bin', size: 1_048_576, crc32: '5ffdfbf8' }),
+          new ROM({ name: '6.0.0010.bin', size: 1_048_576, crc32: 'ea2bf888' }),
+          new ROM({ name: 'fpr-24370b.ic6', size: 4_194_304, crc32: 'c3b021a4' }),
+          new ROM({ name: 'vid_bios.u504', size: 65_536, crc32: 'f78d14d7' }),
+          // new ROM({ name: '317-0491-com.bin', size: 8192 }),
+        ],
+        disks: [
+          new Disk({
+            name: 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01',
+            sha1: 'e13da5f827df852e742b594729ee3f933b387410',
+          }),
+          new Disk({ name: 'dvp-0027a', sha1: 'da1aacee9e32e813844f4d434981e69cc5c80682' }),
+        ],
+      }),
+      new Game({
+        name: 'area51mx',
+        description: 'Area 51 / Maximum Force Duo v2.0',
+        roms: [
+          new ROM({ name: '2.0_68020_max-a51_kit_3h.3h', size: 524_288, crc32: '47cbf30b' }),
+          new ROM({ name: '2.0_68020_max-a51_kit_3p.3p', size: 524_288, crc32: 'a3c93684' }),
+          new ROM({ name: '2.0_68020_max-a51_kit_3m.3m', size: 524_288, crc32: 'd800ac17' }),
+          new ROM({ name: '2.0_68020_max-a51_kit_3k.3k', size: 524_288, crc32: '0e78f308' }),
+          new ROM({ name: 'jagwave.rom', size: 4096, crc32: '7a25ee5b' }),
+        ],
+        disks: new Disk({ name: 'area51mx', sha1: '5ff10f4e87094d4449eabf3de7549564ca568c7e' }),
+      }),
+      new Game({
+        name: 'a51mxr3k',
+        cloneOf: 'area51mx',
+        romOf: 'area51mx',
+        description: 'Area 51 / Maximum Force Duo (R3000, 2/10/98)',
+        roms: [
+          new ROM({ name: '1.0_r3k_max-a51_kit_hh.hh', size: 524_288, crc32: 'a984dab2' }),
+          new ROM({ name: '1.0_r3k_max-a51_kit_hl.hl', size: 524_288, crc32: '0af49d74' }),
+          new ROM({ name: '1.0_r3k_max-a51_kit_lh.lh', size: 524_288, crc32: 'd7d94dac' }),
+          new ROM({ name: '1.0_r3k_max-a51_kit_ll.ll', size: 524_288, crc32: 'ece9e5ae' }),
+          new ROM({ name: 'jagwave.rom', size: 4096, crc32: '7a25ee5b' }),
+        ],
+        disks: new Disk({ name: 'area51mx', sha1: '5ff10f4e87094d4449eabf3de7549564ca568c7e' }),
+      }),
+    ],
+  });
 
   const mameIndexedFiles = Promise.all(
     mameDat

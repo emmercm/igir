@@ -50,7 +50,7 @@ export default class DATFilter extends Module {
         }),
       );
     });
-    const filteredDat = new LogiqxDAT(dat.getHeader(), filteredGames);
+    const filteredDat = dat.withGames(filteredGames);
 
     // TODO(cemmer): warning if every game was filtered out?
 

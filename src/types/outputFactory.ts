@@ -134,7 +134,7 @@ export default class OutputFactory {
       ),
     );
 
-    if (options.getDirMirror() && inputFile?.getFilePath()) {
+    if (options.getDirMirror() && options.getInputPaths().length > 0 && inputFile?.getFilePath()) {
       const mirroredFilePath = options
         .getInputPaths()
         .map((inputPath) => path.resolve(inputPath))
@@ -144,6 +144,25 @@ export default class OutputFactory {
           );
           return inputFilePath.replace(inputPathRegex, '');
         }, path.resolve(inputFile.getFilePath()));
+      const mirroredDirPath = path.dirname(mirroredFilePath);
+      output = path.join(output, mirroredDirPath);
+    }
+
+    const datFilePath = dat.getFilePath();
+    if (
+      options.getDirDatMirror() &&
+      options.getDatPaths().length > 0 &&
+      datFilePath !== undefined
+    ) {
+      const mirroredFilePath = options
+        .getDatPaths()
+        .map((datPath) => path.resolve(datPath))
+        .reduce((datFilePath, datPath) => {
+          const datPathRegex = new RegExp(
+            `^${datPath.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
+          );
+          return datFilePath.replace(datPathRegex, '');
+        }, path.resolve(datFilePath));
       const mirroredDirPath = path.dirname(mirroredFilePath);
       output = path.join(output, mirroredDirPath);
     }

@@ -25,7 +25,7 @@ const LOGGER = new Logger(LogLevel.NEVER);
 
 it('should do nothing with no candidates', async () => {
   const options = new Options();
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
   const candidates: WriteCandidate[] = [];
 
   const correctedCandidates = await new CandidateExtensionCorrector(
@@ -41,19 +41,22 @@ it('should do nothing when no ROMs need correcting', async () => {
   const options = new Options({
     fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
   });
-  const dat = new LogiqxDAT(new Header(), [
-    new Game({
-      name: 'game with no ROMs',
-    }),
-    new Game({
-      name: 'game with one ROM',
-      roms: new ROM({ name: 'one.rom', size: 1 }),
-    }),
-    new Game({
-      name: 'game with two ROMs',
-      roms: [new ROM({ name: 'two.rom', size: 2 }), new ROM({ name: 'three.rom', size: 3 })],
-    }),
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      new Game({
+        name: 'game with no ROMs',
+      }),
+      new Game({
+        name: 'game with one ROM',
+        roms: new ROM({ name: 'one.rom', size: 1 }),
+      }),
+      new Game({
+        name: 'game with two ROMs',
+        roms: [new ROM({ name: 'two.rom', size: 2 }), new ROM({ name: 'three.rom', size: 3 })],
+      }),
+    ],
+  });
   const candidates: WriteCandidate[] = [];
 
   const correctedCandidates = await new CandidateExtensionCorrector(
@@ -105,7 +108,7 @@ it('should correct ROMs without DATs', async () => {
     input: [path.join('test', 'fixtures', 'roms', 'headered')],
     fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
   });
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
@@ -160,7 +163,7 @@ it('should correct ROMs with missing filenames', async () => {
     input: [path.join('test', 'fixtures', 'roms', 'headered')],
     fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
   });
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),

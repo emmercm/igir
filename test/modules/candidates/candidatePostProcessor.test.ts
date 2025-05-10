@@ -43,7 +43,7 @@ const multiRomGames = ['Dainty', 'Daring', 'Dazzling', 'Dedicated'].map(
     }),
 );
 const games = [...singleRomGames, ...subDirRomGames, ...multiRomGames];
-const dat = new LogiqxDAT(new Header(), games);
+const dat = new LogiqxDAT({ header: new Header(), games });
 
 async function runCandidatePostProcessor(options: Options): Promise<WriteCandidate[]> {
   const candidates = await Promise.all(

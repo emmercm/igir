@@ -63,7 +63,7 @@ export default class DATPreferer extends Module {
         return preferredGame?.withProps({ cloneOf: undefined });
       })
       .filter((game) => game !== undefined);
-    const preferredDat = new LogiqxDAT(dat.getHeader(), preferredGames);
+    const preferredDat = dat.withGames(preferredGames);
 
     const size = preferredDat
       .getGames()

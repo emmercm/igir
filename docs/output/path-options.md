@@ -12,7 +12,7 @@ Multiple options can be combined, and they will be appended to the output direct
 --dir-mirror
 ```
 
-This option mirrors the subdirectory structure of where ROMs were found in the input directory.
+This option mirrors the subdirectory structure of where ROMs were found in one of the input directories.
 
 For example, if this is the input directory structure:
 
@@ -28,7 +28,7 @@ ROMs-Input/
         └── pokemon yellow.gb
 ```
 
-When combined with a [DAT](../dats/introduction.md), the ROMs will be written with a standardized name, but the output subdirectory structure will match the input:
+when combined with a [DAT](../dats/introduction.md), the ROMs will be written with a standardized name, but the output subdirectory structure will match the input:
 
 === ":fontawesome-brands-windows: Windows"
 
@@ -75,6 +75,92 @@ ROMs-Output/
 !!! tip
 
     This option is best used to preserve some sort of manual sorting, otherwise you will probably want to combine some of the below options instead.
+
+## Mirror the DAT subdirectory
+
+```text
+--dir-dat-mirror
+```
+
+This option mirrors the subdirectory structure of where DATs were found in one of the DAT directories.
+
+For example, if this is the DAT directory structure:
+
+```text
+DATs/
+├── No-Intro Love Pack (PC) (2025-05-09)
+│   └── No-Intro
+│      ├── Sega - Game Gear (Parent-Clone) (20241203-185356).dat
+│      ├── Sega - Master System - Mark III (Parent-Clone) (20241225-050512).dat
+│      ├── Sega - Mega Drive - Genesis (Parent-Clone) (20250210-102212).dat
+│      └── ...
+└── Redump (2025-05-09)
+    ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
+    ├── Sony - PlayStation 2 - Datfile (11623) (2025-05-09 15-01-56).dat
+    ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
+    └── ...
+```
+
+ROMs that are matched to one of those DATs will use the DAT's relative dirname in the output directory.
+
+For example, given a command such as:
+
+=== ":fontawesome-brands-windows: Windows"
+
+    ```batch
+    igir copy ^
+      --dat "DATs\" ^
+      --input "ROMs-Input" ^
+      --output "ROMs-Output" ^
+      --dir-mirror
+    ```
+
+=== ":fontawesome-brands-apple: macOS"
+
+    ```shell
+    igir copy \
+      --dat "DATs/" \
+      --input "ROMs-Input/" \
+      --output "ROMs-Output/" \
+      --dir-mirror
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy \
+      --dat "DATs/" \
+      --input "ROMs-Input/" \
+      --output "ROMs-Output/" \
+      --dir-mirror
+    ```
+
+you would get a result similar to:
+
+```text
+ROMs-Output/
+├── No-Intro Love Pack (PC) (2025-05-09)
+│   └── No-Intro
+│       ├── Alex Kidd in Miracle World (USA, Europe, Brazil) (En) (Rev 1).sms
+│       ├── Earthworm Jim 2 (USA).md
+│       ├── Psycho Fox (USA, Europe, Brazil) (En) (Beta).sms
+│       ├── Shinobi II - The Silent Fury (World).gg
+│       ├── Rocket Knight Adventures (USA).md
+│       └── Sonic Drift 2 (World).gg
+└── Redump (2025-05-09)
+    ├── Devil May Cry (USA).iso
+    ├── Spyro - Year of the Dragon (USA)
+    │   ├── Spyro - Year of the Dragon (USA).bin
+    │   └── Spyro - Year of the Dragon (USA).cue
+    ├── Tony Hawk's Pro Skater 2 (USA)
+    │   ├── Tony Hawk's Pro Skater 2 (USA).bin
+    │   └── Tony Hawk's Pro Skater 2 (USA).cue
+    └── SSX on Tour (USA).iso
+```
+
+!!! tip
+
+    You probably want to combine this option with the [`--dir-dat-name`](#append-dat-name) or [`--dir-dat-description`](#append-dat-description) options to avoid mixing ROMs from different consoles into the same subdirectory.
 
 ## Append DAT name
 

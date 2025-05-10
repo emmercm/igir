@@ -2,34 +2,39 @@ import 'reflect-metadata';
 
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 
-import DAT from '../dat.js';
+import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from './header.js';
+
+export interface LogiqxDATProps extends DATProps {
+  header: Header;
+  games?: Game | Game[];
+}
 
 /**
  * Logiqx-schema DAT that documents {@link Game}s.
  * @see http://www.logiqx.com/DatFAQs/DatCreation.php
  */
-export default class LogiqxDAT extends DAT {
+export default class LogiqxDAT extends DAT implements LogiqxDATProps {
   @Expose()
   @Type(() => Header)
-  private readonly header: Header;
+  readonly header: Header;
 
   @Expose()
   @Type(() => Game)
   @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
-  private readonly game?: Game | Game[];
+  readonly game?: Game | Game[];
 
   // NOTE(cemmer): this is not Logiqx DTD-compliant, but it's what pleasuredome Datfiles use
   @Expose()
   @Type(() => Game)
   @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
-  private readonly machine?: Game | Game[];
+  readonly machine?: Game | Game[];
 
-  constructor(header: Header, games: Game | Game[]) {
-    super();
-    this.header = header;
-    this.game = games;
+  constructor(props?: LogiqxDATProps) {
+    super(props);
+    this.header = props?.header ?? new Header();
+    this.game = props?.games;
     this.machine = [];
     this.generateGameNamesToParents();
   }
@@ -68,5 +73,13 @@ export default class LogiqxDAT extends DAT {
     }
 
     return [];
+  }
+
+  withHeader(header: Header): DAT {
+    return new LogiqxDAT({ ...this, header });
+  }
+
+  withGames(games: Game[]): DAT {
+    return new LogiqxDAT({ ...this, games });
   }
 }

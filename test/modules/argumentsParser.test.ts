@@ -210,6 +210,7 @@ describe('options', () => {
     expect(options.getPatchFileCount()).toEqual(0);
 
     expect(options.getDirMirror()).toEqual(false);
+    expect(options.getDirDatMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
     expect(options.getDirDatDescription()).toEqual(false);
     expect(options.getDirLetter()).toEqual(false);
@@ -1276,6 +1277,17 @@ describe('options', () => {
   });
 
   it('should parse "dir-mirror"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-mirror',
+          '--dir-dat-mirror',
+        ])
+        .getDirDatMirror(),
+    ).toThrow(/mutually exclusive/i);
     expect(
       argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-mirror']).getDirMirror(),
     ).toEqual(true);
@@ -1303,6 +1315,72 @@ describe('options', () => {
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--dir-mirror', 'true', '--dir-mirror', 'false'])
         .getDirMirror(),
+    ).toEqual(false);
+  });
+
+  it('should parse "dir-dat-mirror"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-mirror',
+          '--dir-dat-mirror',
+        ])
+        .getDirDatMirror(),
+    ).toThrow(/mutually exclusive/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-mirror'])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-mirror', 'true'])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-mirror', 'false'])
+        .getDirDatMirror(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-dat-mirror',
+          '--dir-dat-mirror',
+        ])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-dat-mirror',
+          'false',
+          '--dir-dat-mirror',
+          'true',
+        ])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-dat-mirror',
+          'true',
+          '--dir-dat-mirror',
+          'false',
+        ])
+        .getDirDatMirror(),
     ).toEqual(false);
   });
 

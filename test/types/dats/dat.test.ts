@@ -7,16 +7,16 @@ describe('getGames', () => {
   it('should always return a list for Logiqx DATs', () => {
     const game = new Game({ name: 'game name' });
 
-    expect(new LogiqxDAT(new Header(), [game]).getGames()).toEqual([game]);
-    expect(new LogiqxDAT(new Header(), game).getGames()).toEqual([game]);
-    expect(new LogiqxDAT(new Header(), []).getGames()).toHaveLength(0);
+    expect(new LogiqxDAT({ header: new Header(), games: [game] }).getGames()).toEqual([game]);
+    expect(new LogiqxDAT({ header: new Header(), games: game }).getGames()).toEqual([game]);
+    expect(new LogiqxDAT({ header: new Header() }).getGames()).toHaveLength(0);
   });
 
   it('should always return a list for MAME DATs', () => {
     const game = new Game({ name: 'machine name' });
 
-    expect(new MameDAT([game]).getGames()).toEqual([game]);
-    expect(new MameDAT(game).getGames()).toEqual([game]);
-    expect(new MameDAT([]).getGames()).toHaveLength(0);
+    expect(new MameDAT({ machine: [game] }).getGames()).toEqual([game]);
+    expect(new MameDAT({ machine: game }).getGames()).toEqual([game]);
+    expect(new MameDAT({ machine: [] }).getGames()).toHaveLength(0);
   });
 });
