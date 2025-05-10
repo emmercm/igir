@@ -171,24 +171,22 @@ export default class MultiBar {
       return;
     }
 
-    if (!(this.terminal instanceof tty.WriteStream)) {
-      return;
-    }
-
     this.renderTimer?.cancel();
 
-    // Clear the terminal
-    // TODO(cemmer): some kind of line diffing algorithm so not every line has to be repainted
-    let rows = 0;
-    for (const char of this.lastOutput) {
-      if (char === '\n') {
-        rows += 1;
+    if (this.terminal instanceof tty.WriteStream) {
+      // Clear the terminal
+      // TODO(cemmer): some kind of line diffing algorithm so not every line has to be repainted
+      let rows = 0;
+      for (const char of this.lastOutput) {
+        if (char === '\n') {
+          rows += 1;
+        }
       }
-    }
-    if (rows > 0) {
-      this.terminal.moveCursor(0, -rows);
-      this.terminal.cursorTo(0, undefined);
-      this.terminal.clearScreenDown();
+      if (rows > 0) {
+        this.terminal.moveCursor(0, -rows);
+        this.terminal.cursorTo(0, undefined);
+        this.terminal.clearScreenDown();
+      }
     }
 
     // Write out all queued logs
@@ -220,7 +218,9 @@ export default class MultiBar {
         return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
       });
     const output = `${outputLines.join('\n')}\n`;
-    this.terminal.write(output);
+    if (this.terminal instanceof tty.WriteStream) {
+      this.terminal.write(output);
+    }
     this.lastOutput = output;
 
     this.renderTimer = Timer.setTimeout(
