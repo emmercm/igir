@@ -123,9 +123,6 @@ export default abstract class DAT {
   getDisplayName(): string {
     return (
       this.getName()
-        // No-Intro
-        .replace('Non-Redump', '!Redump')
-        .replace('Source Code', 'S.Code')
         // Cleanup
         .replaceAll(/-( +-)+/g, '- ')
         .replace(/^[ -]+/, '')

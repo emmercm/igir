@@ -82,7 +82,9 @@ export default class Logger {
       this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
     const levelPrefix = `${chalkFunc(LogLevelInverted[logLevel])}: `;
     const loggerPrefix =
-      this.logLevel <= LogLevel.TRACE && this.loggerPrefix ? `${this.loggerPrefix}: ` : '';
+      this.logLevel <= LogLevel.TRACE && this.loggerPrefix
+        ? chalk.dim(`${this.loggerPrefix}: `)
+        : '';
 
     return message
       .replace(/Error: /, '') // strip `new Error()` prefix

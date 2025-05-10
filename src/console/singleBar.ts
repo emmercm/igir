@@ -96,13 +96,8 @@ export default class SingleBar extends ProgressBar {
       this.logger,
       {
         displayDelay: 2000,
-        //indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0) + 4,
         indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0),
         progressBarSizeMultiplier: this.progressBarSizeMultiplier / 2,
-        // symbol: {
-        //   symbol: this.symbol?.symbol ?? '',
-        //   color: CHALK_PROGRESS_COMPLETE_DEFAULT,
-        // },
         showProgressNewline: false,
         ...options,
       },
