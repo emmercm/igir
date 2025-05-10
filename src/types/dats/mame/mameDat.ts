@@ -24,18 +24,20 @@ export default class MameDAT extends DAT implements MameDATProps {
   @Expose()
   @Type(() => Game)
   @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
-  readonly machine: Game | Game[];
+  readonly machine?: Game | Game[];
 
   constructor(props?: MameDATProps) {
     super(props);
-    this.machine = props?.machine ?? [];
+    this.machine = props?.machine;
     this.generateGameNamesToParents();
   }
 
   /**
    * Construct a {@link DAT} from a generic object, such as one from reading an XML file.
    */
-  static fromObject(obj: object, props?: MameDATProps): MameDAT {
+  static fromObject(obj: object, props?: DATProps): MameDAT {
+    // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
+    // not overwrite properties with a defined value
     const dat = new MameDAT(props);
     return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
@@ -50,6 +52,9 @@ export default class MameDAT extends DAT implements MameDATProps {
   }
 
   getGames(): Game[] {
+    if (this.machine === undefined) {
+      return [];
+    }
     if (Array.isArray(this.machine)) {
       return this.machine;
     }

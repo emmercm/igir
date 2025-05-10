@@ -18,7 +18,7 @@ export interface LogiqxDATProps extends DATProps {
 export default class LogiqxDAT extends DAT implements LogiqxDATProps {
   @Expose()
   @Type(() => Header)
-  readonly header: Header;
+  readonly header?: Header;
 
   @Expose()
   @Type(() => Game)
@@ -33,16 +33,17 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
 
   constructor(props?: LogiqxDATProps) {
     super(props);
-    this.header = props?.header ?? new Header();
+    this.header = props?.header;
     this.game = props?.games;
-    this.machine = [];
     this.generateGameNamesToParents();
   }
 
   /**
    * Construct a {@link LogiqxDAT} from a generic object, such as one from reading an XML file.
    */
-  static fromObject(obj: object, props?: LogiqxDATProps): LogiqxDAT {
+  static fromObject(obj: object, props?: DATProps): LogiqxDAT {
+    // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
+    // not overwrite properties with a defined value
     const dat = new LogiqxDAT(props);
     return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
@@ -53,7 +54,7 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
   // Property getters
 
   getHeader(): Header {
-    return this.header;
+    return this.header ?? new Header();
   }
 
   getGames(): Game[] {
