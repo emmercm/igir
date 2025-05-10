@@ -2,7 +2,6 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
 import Parent from '../../types/dats/parent.js';
 import ROM from '../../types/dats/rom.js';
 import Options, { MergeMode } from '../../types/options.js';
