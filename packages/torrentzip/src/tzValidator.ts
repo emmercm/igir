@@ -102,10 +102,17 @@ export default {
     }
 
     // Validate filename sorting
-    const fileNamesLowerCase = centralDirectoryFileHeaders.map((fileHeader) =>
-      fileHeader.fileNameResolved().toLowerCase(),
-    );
-    if (fileNamesLowerCase !== fileNamesLowerCase.sort()) {
+    const fileNamesLowerCaseSorted = centralDirectoryFileHeaders
+      .map((fileHeader) => fileHeader.fileNameResolved().toLowerCase())
+      .sort((a, b) => {
+        if (a < b) {
+          return -1;
+        } else if (a > b) {
+          return 1;
+        }
+        return 0;
+      });
+    if (fileNamesLowerCaseSorted !== fileNamesLowerCaseSorted) {
       return ValidationResult.INVALID;
     }
 
