@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -21,7 +22,7 @@ import {
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
 
-const argumentsParser = new ArgumentsParser(new Logger(LogLevel.NEVER));
+const argumentsParser = new ArgumentsParser(new Logger(LogLevel.NEVER, new PassThrough()));
 
 describe('commands', () => {
   it('should throw on no commands', () => {

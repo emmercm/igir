@@ -20,8 +20,8 @@ export default class Logger {
   private readonly loggerPrefix?: string;
 
   constructor(
-    logLevel: LogLevelValue = LogLevel.WARN,
-    stream: tty.WriteStream | NodeJS.WritableStream = process.stdout,
+    logLevel: LogLevelValue,
+    stream: tty.WriteStream | NodeJS.WritableStream,
     multiBar?: MultiBar,
     loggerPrefix?: string,
   ) {

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -25,7 +26,7 @@ it('should do nothing if no ROMs moved', async () => {
       input: ['./test/fixtures/roms'],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
 

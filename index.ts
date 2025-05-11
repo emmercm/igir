@@ -6,6 +6,7 @@ import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
+import { LogLevel } from './src/console/logLevel.js';
 import MultiBar from './src/console/multiBar.js';
 import Package from './src/globals/package.js';
 import Igir from './src/igir.js';
@@ -18,7 +19,7 @@ import Options from './src/types/options.js';
 // Monkey-patch 'fs' to help prevent Windows EMFILE errors
 gracefulFs.gracefulify(realFs);
 
-const logger = new Logger();
+const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();
 
 if (!semver.satisfies(process.version, Package.ENGINES_NODE)) {
