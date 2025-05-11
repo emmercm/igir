@@ -1,4 +1,4 @@
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
+import { Expose, plainToClassFromExist, Transform, Type } from 'class-transformer';
 
 import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
@@ -16,11 +16,11 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
   @Expose()
   @Type(() => SoftwareListDAT)
   @Transform(({ value }: { value: undefined | SoftwareListDAT | SoftwareListDAT[] }) => value ?? [])
-  readonly softwarelist: SoftwareListDAT | SoftwareListDAT[];
+  readonly softwarelist?: SoftwareListDAT | SoftwareListDAT[];
 
   constructor(props?: SoftwareListsDATProps) {
     super(props);
-    this.softwarelist = props?.softwarelist ?? [];
+    this.softwarelist = props?.softwarelist;
     this.generateGameNamesToParents();
   }
 
@@ -28,8 +28,11 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
    * Construct a {@link SoftwareListsDAT} from a generic object, such as one from reading an XML
    * file.
    */
-  static fromObject(obj: object): SoftwareListsDAT {
-    return plainToInstance(SoftwareListsDAT, obj, {
+  static fromObject(obj: object, props?: DATProps): SoftwareListsDAT {
+    // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
+    // not overwrite properties with a defined value
+    const dat = new SoftwareListsDAT(props);
+    return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     }).generateGameNamesToParents();
@@ -47,6 +50,9 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
   }
 
   private getSoftwareLists(): SoftwareListDAT[] {
+    if (this.softwarelist === undefined) {
+      return [];
+    }
     if (Array.isArray(this.softwarelist)) {
       return this.softwarelist;
     }
@@ -55,10 +61,6 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
 
   getGames(): Game[] {
     return this.getSoftwareLists().flatMap((softwareList) => softwareList.getGames());
-  }
-
-  withHeader(header: Header): DAT {
-    return new SoftwareListsDAT({ ...this, header });
   }
 
   withGames(games: Game[]): DAT {

@@ -1,6 +1,7 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import DAT from '../../types/dats/dat.js';
+import Options from '../../types/options.js';
 import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
@@ -8,14 +9,22 @@ import Module from '../module.js';
  * Validate candidates for write-ability after all generation and filtering has happened.
  */
 export default class CandidateValidator extends Module {
-  constructor(progressBar: ProgressBar) {
+  private readonly options: Options;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, CandidateValidator.name);
+    this.options = options;
   }
 
   /**
    * Validate the {@link WriteCandidate}s.
    */
   validate(dat: DAT, candidates: WriteCandidate[]): WriteCandidate[] {
+    if (!this.options.shouldWrite()) {
+      // No need to validate, we're not writing
+      return [];
+    }
+
     if (candidates.length === 0) {
       this.progressBar.logTrace(`${dat.getName()}: no candidates to validate`);
       return [];

@@ -66,9 +66,6 @@ describe('commands', () => {
     expect(() => argumentsParser.parse(['zip', ...dummyRequiredArgs])).toThrow(
       /command.+requires/i,
     );
-    expect(() => argumentsParser.parse(['test', ...dummyRequiredArgs])).toThrow(
-      /command.+requires/i,
-    );
     expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(
       /command.+requires/i,
     );
@@ -1790,6 +1787,11 @@ describe('options', () => {
   });
 
   it('should parse "overwrite"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--overwrite', '--overwrite-invalid'])
+        .getOverwrite(),
+    ).toThrow(/mutually exclusive/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-O']).getOverwrite()).toEqual(
       true,
     );
@@ -1822,6 +1824,11 @@ describe('options', () => {
   });
 
   it('should parse "overwrite-invalid"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--overwrite', '--overwrite-invalid'])
+        .getOverwrite(),
+    ).toThrow(/mutually exclusive/i);
     expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid'])

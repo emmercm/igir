@@ -163,7 +163,7 @@ export default class ArgumentsParser {
             }
           });
 
-          ['test', 'clean'].forEach((command) => {
+          ['clean'].forEach((command) => {
             if (
               checkArgv._.includes(command) &&
               ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))
@@ -472,12 +472,14 @@ export default class ArgumentsParser {
         alias: 'O',
         description: 'Overwrite any files in the output directory',
         type: 'boolean',
+        conflicts: ['overwrite-invalid'],
       })
       .option('overwrite-invalid', {
         group: groupRomOutput,
         description:
           'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
         type: 'boolean',
+        conflicts: ['overwrite'],
       })
       .check((checkArgv) => {
         const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) =>

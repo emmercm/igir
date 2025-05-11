@@ -482,6 +482,7 @@ describe('token replacement', () => {
 
   it('should replace {region}', async () => {
     const options = new Options({
+      commands: ['copy'],
       output: 'output/{region}',
     });
     const candidates = await candidateGenerator(options, dat, await files);
@@ -506,6 +507,7 @@ describe('token replacement', () => {
 
   it('should replace {language}', async () => {
     const options = new Options({
+      commands: ['copy'],
       output: 'output/{language}',
     });
     const candidates = await candidateGenerator(options, dat, await files);
@@ -552,6 +554,7 @@ describe('token replacement', () => {
 
   it('should replace {type}', async () => {
     const options = new Options({
+      commands: ['copy'],
       output: 'output/{type}',
     });
     const candidates = await candidateGenerator(options, dat, await files);
@@ -574,6 +577,7 @@ describe('token replacement', () => {
 
   it('should replace {category}', async () => {
     const options = new Options({
+      commands: ['copy'],
       output: 'output/{category}',
     });
     const candidates = await candidateGenerator(options, dat, await files);

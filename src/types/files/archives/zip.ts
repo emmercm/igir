@@ -167,9 +167,16 @@ export default class Zip extends Archive {
     callback?: ProgressCallback,
   ): Promise<void> {
     // TZWriter needs files to be sorted by lowercase
-    const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) =>
-      outputA.getEntryPath().toLowerCase().localeCompare(outputB.getEntryPath().toLowerCase()),
-    );
+    const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) => {
+      const pathLowerA = outputA.getEntryPath().toLowerCase();
+      const pathLowerB = outputB.getEntryPath().toLowerCase();
+      if (pathLowerA < pathLowerB) {
+        return -1;
+      } else if (pathLowerA > pathLowerB) {
+        return 1;
+      }
+      return 0;
+    });
 
     let sizeWritten = 0;
     const sizeTotal = inputToOutputSorted.reduce((sum, [, output]) => sum + output.getSize(), 0);

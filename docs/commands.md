@@ -62,10 +62,12 @@ Create `.m3u` playlist files for multi-disc games. See the [playlists page](outp
 
 ### `test`
 
-After performing one of the ROM writing commands (above), verify that the file was written correctly.
+When writing ROMs (above commands), verify that each file was written correctly.
 
-- `extract test` tests that each ROM file written has the correct size & checksum
+- `extract test` tests that each ROM file written has the correct size and checksum
 - `zip test` tests that the `.zip` file has all the correct archive entry sizes & checksums, and contains no excess entries
+
+When not writing ROMs, verify that each input file is valid.
 
 ## DAT writing
 
