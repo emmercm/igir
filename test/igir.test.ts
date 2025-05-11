@@ -1189,6 +1189,29 @@ describe('with explicit DATs', () => {
     });
   });
 
+  it('should test without writing', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['test'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms')],
+        inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
+        inputChecksumArchives:
+          InputChecksumArchivesModeInverted[InputChecksumArchivesMode.NEVER].toLowerCase(),
+        output: outputTemp,
+        dirDatName: true,
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+        playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
+        disableCache: true,
+      });
+
+      expect(result.outputFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
   it('should report without writing', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
@@ -1269,7 +1292,7 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      expect(writtenFixdats).toHaveLength(3);
+      expect(writtenFixdats).toHaveLength(2);
 
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:
       //  diagnostic_test_cartridge.a78
@@ -1290,10 +1313,6 @@ describe('with explicit DATs', () => {
       //  UMD
       //  GameCube-240pSuite-1.19
       expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
-
-      // The "Patchable" DAT should have missing ROMs because some ROMs are only found in archives:
-      //  Best.rom
-      expect(writtenFixdats[2]).toMatch(/^Patchable fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
@@ -1762,6 +1781,28 @@ describe('with inferred DATs', () => {
         'fds_joypad_test.fds.zip',
         'speed_test_v51.smc',
       ]);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  it('should test without writing', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const result = await runIgir({
+        commands: ['test'],
+        input: [path.join(inputTemp, 'roms')],
+        inputExclude: [
+          // Note: need to exclude some ROMs to prevent duplicate output paths
+          path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
+          path.join(inputTemp, 'roms', 'nkit'), // will throw an error, preventing everything
+        ],
+        output: outputTemp,
+        dirDatName: true,
+        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+        dir2datOutput: outputTemp,
+      });
+
+      expect(result.outputFilesAndCrcs).toHaveLength(0);
+      expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });

@@ -528,7 +528,10 @@ export default class Igir {
           new CandidatePostProcessor(this.options, progressBar).process(dat, candidates),
         // Validate candidates
         (candidates): WriteCandidate[] => {
-          const invalidCandidates = new CandidateValidator(progressBar).validate(dat, candidates);
+          const invalidCandidates = new CandidateValidator(this.options, progressBar).validate(
+            dat,
+            candidates,
+          );
           if (invalidCandidates.length > 0) {
             // Return zero candidates if any candidates failed to validate
             return [];
@@ -588,7 +591,7 @@ export default class Igir {
     }
 
     const progressBar = this.logger.addProgressBar('Deleting moved files');
-    const deletedFilePaths = await new MovedROMDeleter(progressBar).delete(
+    const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
       rawRomFiles,
       movedRomsToDelete,
       datsToWrittenFiles,

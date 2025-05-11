@@ -174,7 +174,10 @@ export default class CandidateGenerator extends Module {
     const singleValueGame = new SingleValueGame({ ...game });
 
     return romsToInputFiles.map(([rom, inputFiles]): [ROM, File[]] => {
-      const rawCopying = !(this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom));
+      const rawCopying =
+        this.options.shouldWrite() &&
+        !this.options.shouldExtractRom(rom) &&
+        !this.options.shouldZipRom(rom);
 
       const filteredInputFiles = inputFiles.filter((inputFile) => {
         if (
@@ -394,7 +397,7 @@ export default class CandidateGenerator extends Module {
     }
 
     // If we're not writing (report only) then just use the input file for the output file
-    if (!this.options.shouldWrite()) {
+    if (!this.options.shouldWrite() && !this.options.shouldTest()) {
       return [rom, new ROMWithFiles(rom, inputFile, inputFile)];
     }
 
@@ -405,6 +408,17 @@ export default class CandidateGenerator extends Module {
      *  - {@link rom} is headerless but {@link inputFile} is headered, because we know how to
      *    remove headers from ROMs - but we can't remove headers in all writing modes!
      */
+
+    // If the input file is headered...
+    if (
+      inputFile.getFileHeader() &&
+      // ...and we can rewrite the file
+      !this.options.shouldWrite()
+    ) {
+      // ...then forget the input file's header, so that it doesn't report as incorrect
+      // when tested
+      inputFile = inputFile.withoutFileHeader();
+    }
 
     // If the input file is headered...
     if (
@@ -815,7 +829,12 @@ export default class CandidateGenerator extends Module {
     }
 
     // Determine the output file type
-    if (this.options.shouldZipRom(rom) && !(inputFile instanceof ArchiveFile)) {
+    if (
+      (this.options.shouldZipRom(rom) && !(inputFile instanceof ArchiveFile)) ||
+      (!this.options.shouldWrite() &&
+        inputFile instanceof ArchiveEntry &&
+        inputFile.getArchive() instanceof Zip)
+    ) {
       // Should zip, return an archive entry within an output zip
       return ArchiveEntry.entryOf({
         archive: new Zip(outputFilePath),

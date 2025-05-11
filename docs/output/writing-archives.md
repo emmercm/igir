@@ -68,6 +68,10 @@ The [`--overwrite-invalid` option](options.md#overwriting-files) can help you co
       --overwrite-invalid
     ```
 
+!!! tip
+
+    You can test if zip files in input directories are valid TorrentZip archives without writing anything with the [`igir test` command](../commands.md#test).
+
 ## Example: zipping a ROM collection
 
 One aspect of organizing a ROM collection is to ensure a consistent archive format. You can ensure all ROMs in a collection are in a `.zip` archive like this:

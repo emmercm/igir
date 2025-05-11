@@ -8,6 +8,7 @@ import DAT from '../types/dats/dat.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import File from '../types/files/file.js';
+import Options from '../types/options.js';
 import Module from './module.js';
 
 /**
@@ -16,8 +17,11 @@ import Module from './module.js';
  * reading input {@link File}s from disk.
  */
 export default class MovedROMDeleter extends Module {
-  constructor(progressBar: ProgressBar) {
+  private readonly options: Options;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, MovedROMDeleter.name);
+    this.options = options;
   }
 
   /**
@@ -28,6 +32,11 @@ export default class MovedROMDeleter extends Module {
     movedRoms: File[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
+    if (!this.options.shouldWrite()) {
+      // We shouldn't cause any change to the output directory
+      return [];
+    }
+
     if (movedRoms.length === 0) {
       return [];
     }

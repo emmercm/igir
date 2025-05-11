@@ -90,6 +90,16 @@ export default class OutputFactory {
     inputFile: File,
     romBasenames?: string[],
   ): OutputPath {
+    if (!options.shouldWrite() && !options.shouldDir2Dat() && !options.shouldFixdat()) {
+      // If we're not writing anything to the output, then just return the input as the output
+      return new OutputPath({
+        ...path.parse(inputFile.getFilePath()),
+        root: '',
+        base: '',
+        entryPath: inputFile instanceof ArchiveEntry ? inputFile.getEntryPath() : '',
+      });
+    }
+
     const name = this.getName(options, game, rom, inputFile);
     const ext = this.getExt(options, game, rom, inputFile);
     const basename = name + ext;

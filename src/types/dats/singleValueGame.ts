@@ -23,27 +23,27 @@ export default class SingleValueGame extends Game implements SingleValueGameProp
   }
 
   getRegion(): string | undefined {
-    return this.region;
+    return this.region ?? super.getRegions().at(0);
   }
 
   getRegions(): string[] {
-    return this.region ? [this.region] : [];
+    return this.region ? [this.region] : super.getRegions();
   }
 
   getLanguage(): string | undefined {
-    return this.language;
+    return this.language ?? super.getLanguages().at(0);
   }
 
   getLanguages(): string[] {
-    return this.language ? [this.language] : [];
+    return this.language ? [this.language] : super.getLanguages();
   }
 
   getCategory(): string | undefined {
-    return this.category;
+    return this.category ?? super.getCategories().at(0);
   }
 
   getCategories(): string[] {
-    return this.category ? [this.category] : [];
+    return this.category ? [this.category] : super.getCategories();
   }
 
   withProps(props: SingleValueGameProps): SingleValueGame {

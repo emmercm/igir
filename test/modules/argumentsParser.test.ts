@@ -65,9 +65,6 @@ describe('commands', () => {
     expect(() => argumentsParser.parse(['zip', ...dummyRequiredArgs])).toThrow(
       /command.+requires/i,
     );
-    expect(() => argumentsParser.parse(['test', ...dummyRequiredArgs])).toThrow(
-      /command.+requires/i,
-    );
     expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(
       /command.+requires/i,
     );
