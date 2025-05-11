@@ -85,7 +85,7 @@
     "cli-progress": "3.12.0",
     "dolphin-tool": "0.2503.1",
     "fast-glob": "3.3.3",
-    "fast-xml-parser": "5.2.2",
+    "fast-xml-parser": "5.2.0",
     "graceful-fs": "4.2.11",
     "is-admin": "4.0.0",
     "junk": "4.0.1",
