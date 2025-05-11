@@ -76,7 +76,7 @@
     "@igir/zip": "file:packages/zip",
     "@igir/zip-dist": "file:dist/packages/zip",
     "@node-rs/crc32": "1.10.6",
-    "7zip-min": "2.0.0",
+    "7zip-min": "2.1.0",
     "async": "3.2.6",
     "async-mutex": "0.5.0",
     "chalk": "5.4.1",
@@ -84,7 +84,7 @@
     "class-transformer": "0.5.1",
     "dolphin-tool": "0.2503.1",
     "fast-glob": "3.3.3",
-    "fast-xml-parser": "5.0.9",
+    "fast-xml-parser": "5.2.0",
     "graceful-fs": "4.2.11",
     "is-admin": "4.0.0",
     "is-unicode-supported": "^2.1.0",
@@ -113,7 +113,7 @@
     "@types/jest": "29.5.14",
     "@types/micromatch": "4.0.9",
     "@types/node": "22.15.2",
-    "@types/semver": "7.5.8",
+    "@types/semver": "7.7.0",
     "@types/tar": "6.1.13",
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
@@ -149,12 +149,12 @@
     "Requires ^14.18.0 || >=16.3.0 for `os.devNull`",
     "Requires >=16.6.0 for `Array.prototype.at()`",
     "Requires >=16.7.0 for `fs.cp()`",
-    "Requires >=16.3.0 for ES2020 & ES2021"
+    "Requires >=16.13.2 for ES2022"
   ],
   "engines": {
-    "node": ">=16.7.0"
+    "node": ">=16.13.2"
   },
   "volta": {
-    "node": "22.15.0"
+    "node": "24.0.1"
   }
 }
