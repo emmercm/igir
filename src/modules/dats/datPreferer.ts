@@ -41,12 +41,12 @@ export default class DATPreferer extends Module {
 
     this.progressBar.logTrace(`${dat.getName()}: preferring DAT games`);
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PREFERRING);
-    this.progressBar.reset(dat.getParents().length);
+    this.progressBar.resetProgress(dat.getParents().length);
 
     const preferredGames = dat
       .getParents()
       .map((parent) => {
-        this.progressBar.incrementProgress();
+        this.progressBar.incrementInProgress();
 
         if (parent.getGames().length === 0) {
           return undefined;

@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs, { MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import stream from 'node:stream';
 import util from 'node:util';
 
 import async from 'async';
@@ -11,6 +12,7 @@ import { Memoize } from 'typescript-memoize';
 
 import Defaults from '../globals/defaults.js';
 import ExpectedError from '../types/expectedError.js';
+import FsCopyTransform, { FsCopyCallback } from './fsCopyTransform.js';
 
 export const MoveResult = {
   COPIED: 1,
@@ -103,11 +105,20 @@ export default class FsPoly {
    * Copy {@param src} to {@param dest}, overwriting any existing file, and ensuring {@param dest}
    * is writable.
    */
-  static async copyFile(src: string, dest: string, attempt = 1): Promise<void> {
+  static async copyFile(
+    src: string,
+    dest: string,
+    callback?: FsCopyCallback,
+    attempt = 1,
+  ): Promise<void> {
     const previouslyExisted = await this.exists(src);
 
     try {
-      await fs.promises.copyFile(src, dest);
+      await util.promisify(stream.pipeline)(
+        fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+        new FsCopyTransform(callback),
+        fs.createWriteStream(dest),
+      );
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
       if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
@@ -121,7 +132,7 @@ export default class FsPoly {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
-      return this.copyFile(src, dest, attempt + 1);
+      return this.copyFile(src, dest, callback, attempt + 1);
     }
 
     // Ensure the destination file is writable
@@ -394,7 +405,12 @@ export default class FsPoly {
   /**
    * Move the file {@param oldPath} to {@param newPath}, retrying failures.
    */
-  static async mv(oldPath: string, newPath: string, attempt = 1): Promise<MoveResultValue> {
+  static async mv(
+    oldPath: string,
+    newPath: string,
+    callback?: FsCopyCallback,
+    attempt = 1,
+  ): Promise<MoveResultValue> {
     // Can't rename across drives
     if (this.onDifferentDrives(oldPath, newPath)) {
       const newPathTemp = await this.mktemp(newPath);
@@ -410,7 +426,7 @@ export default class FsPoly {
     } catch (error) {
       // Can't rename across drives
       if (['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
-        await this.copyFile(oldPath, newPath);
+        await this.copyFile(oldPath, newPath, callback);
         await this.rm(oldPath, { force: true });
         return MoveResult.COPIED;
       }
@@ -430,7 +446,7 @@ export default class FsPoly {
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      return this.mv(oldPath, newPath, attempt + 1);
+      return this.mv(oldPath, newPath, callback, attempt + 1);
     }
   }
 
@@ -565,7 +581,7 @@ export default class FsPoly {
     const k = 1024;
     const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
+    return `${(bytes / k ** i).toFixed(decimals)}${sizes[i]}`;
   }
 
   /**
