@@ -58,6 +58,8 @@ jobs:
           - os: ubuntu-latest
             docker_arch: linux/amd64
           - os: ubuntu-latest
+            docker_arch: linux/arm/v7
+          - os: ubuntu-latest
             docker_arch: linux/arm64/v8
 
           - os: macos-13
