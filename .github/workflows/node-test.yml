@@ -81,11 +81,11 @@ jobs:
         node-version: [ '' ]
         include:
           - os: ubuntu-latest
-            node-version: 18
+            node-version: 20
           - os: macos-latest
-            node-version: 18
+            node-version: 20
           - os: windows-latest
-            node-version: 18
+            node-version: 20
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -116,7 +116,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ '', 18 ]
+        node-version: [ '', 20 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -141,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ '', 18 ]
+        node-version: [ '', 20 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -176,5 +176,5 @@ jobs:
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
-          allowed-skips: node-lint, node-unit, node-e2e, node-build, node-package
+          allowed-skips: node-lint, node-unit, node-e2e, node-package
           jobs: ${{ toJSON(needs) }}
