@@ -63,7 +63,7 @@ jobs:
           submodules: 'recursive'
       - uses: volta-cli/action@v4
         with:
-          node-version: 18
+          node-version: 16.13.2
 
       # Prebuild
       - shell: bash

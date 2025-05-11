@@ -149,10 +149,10 @@
     "Requires ^14.18.0 || >=16.3.0 for `os.devNull`",
     "Requires >=16.6.0 for `Array.prototype.at()`",
     "Requires >=16.7.0 for `fs.cp()`",
-    "Requires >=16.3.0 for ES2020 & ES2021"
+    "Requires >=16.13.2 for ES2022"
   ],
   "engines": {
-    "node": ">=16.7.0"
+    "node": ">=16.13.2"
   },
   "volta": {
     "node": "22.15.0"
