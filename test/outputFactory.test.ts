@@ -1,7 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Temp from '../src/globals/temp.js';
 import Header from '../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../src/types/dats/release.js';
