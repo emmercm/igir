@@ -41,6 +41,7 @@ jobs:
           filters: |
             changes:
               - '.github/workflows/node-test.yml'
+              - 'packages/**'
               - 'src/**'
               - 'test/**'
               - '*'
@@ -55,6 +56,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
+          submodules: 'recursive'
       - uses: volta-cli/action@v4
       - run: npm ci
       # Lint the source files
@@ -68,22 +70,35 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    name: node-unit (${{ matrix.os }}, ${{ matrix.node-version || 'package.json' }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest ]
-        node-version: [ lts, 20 ]
+        # TODO(cemmer): chdman-js and maxcso-js don't have Windows ARM builds, so it won't test the same
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-13, windows-latest ]
+        node-version: [ '' ]
+        include:
+          - os: ubuntu-latest
+            node-version: 20
+          - os: macos-latest
+            node-version: 20
+          - os: windows-latest
+            node-version: 20
     steps:
       # Setup and install
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
+          submodules: 'recursive'
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
+      - shell: bash
+        run: |
+          rm -rf packages/*/prebuilds
+          npm ci --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
@@ -96,68 +111,54 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    name: node-unit (${{ matrix.node-version || 'package.json' }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ lts, 20 ]
+        node-version: [ '', 20 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
+          submodules: 'recursive'
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
+      - run: npm ci --foreground-scripts
       - run: |
           sudo apt-get update
           sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       # Test the built files
-      - run: npm run build
       - run: ./test/endToEndTest.sh
-
-  node-build:
-    needs:
-      - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ ubuntu-24.04, ubuntu-24.04-arm, macos-13, macos-15, windows-latest ]
-    steps:
-      # Setup and install
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.ref }}
-      - uses: volta-cli/action@v4
-      - run: npm ci
-      # Test building
-      - run: npm run build
 
   node-package:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    name: node-unit (${{ matrix.node-version || 'package.json' }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ lts, 20 ]
+        node-version: [ '', 20 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
+          submodules: 'recursive'
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       # Test the packaging
       - run: |
+          set -x
           npm pack
           tar -xvzf igir-*.tgz
           cd package
-          npm install --ignore-scripts
+          npm install --foreground-scripts
           ./dist/index.js --help
           cd ..
           rm -rf package
@@ -170,11 +171,10 @@ jobs:
       - node-lint
       - node-unit
       - node-e2e
-      - node-build
       - node-package
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
-          allowed-skips: node-lint, node-unit, node-e2e, node-build, node-package
+          allowed-skips: node-lint, node-unit, node-e2e, node-package
           jobs: ${{ toJSON(needs) }}

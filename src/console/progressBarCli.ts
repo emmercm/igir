@@ -100,8 +100,10 @@ export default class ProgressBarCLI extends ProgressBar {
    */
   static stop(): void {
     // Freeze (and delete) any lingering progress bars
-    const progressBarsCopy = ProgressBarCLI.progressBars.slice();
-    progressBarsCopy.forEach((progressBar) => progressBar.freeze());
+    const progressBarsCopy = [...ProgressBarCLI.progressBars];
+    progressBarsCopy.forEach((progressBar) => {
+      progressBar.freeze();
+    });
 
     // Clear the last deleted, non-frozen progress bar
     ProgressBarCLI.multiBar?.log(' ');
@@ -134,7 +136,7 @@ export default class ProgressBarCLI extends ProgressBar {
               //  progress bar output.
               .split('\n')
               // TODO(cemmer): this appears to only overwrite the last line, not any others?
-              .join(`\n${this.logger.isTTY() ? '\x1b[K' : ''}`),
+              .join(`\n${this.logger.isTTY() ? '\x1B[K' : ''}`),
           )
           .join('\n');
         ProgressBarCLI.multiBar.log(`${logMessage}\n`);
@@ -224,22 +226,20 @@ export default class ProgressBarCLI extends ProgressBar {
     }
     this.waitingMessages.set(waitingMessage, TimePoly.hrtimeMillis());
 
-    if (!this.waitingMessageTimeout) {
-      this.waitingMessageTimeout = Timer.setInterval(() => {
-        const currentMillis = TimePoly.hrtimeMillis();
-        const newWaitingMessagePair = [...this.waitingMessages].find(
-          ([, ms]) => currentMillis - ms >= 5000,
-        );
+    this.waitingMessageTimeout ??= Timer.setInterval(() => {
+      const currentMillis = TimePoly.hrtimeMillis();
+      const newWaitingMessagePair = [...this.waitingMessages].find(
+        ([, ms]) => currentMillis - ms >= 5000,
+      );
 
-        const newWaitingMessage =
-          newWaitingMessagePair !== undefined ? newWaitingMessagePair[0] : undefined;
+      const newWaitingMessage =
+        newWaitingMessagePair === undefined ? undefined : newWaitingMessagePair[0];
 
-        if (newWaitingMessage !== this.payload.waitingMessage) {
-          this.payload.waitingMessage = newWaitingMessage;
-          this.render(true);
-        }
-      }, 1000 / ProgressBarCLI.FPS);
-    }
+      if (newWaitingMessage !== this.payload.waitingMessage) {
+        this.payload.waitingMessage = newWaitingMessage;
+        this.render(true);
+      }
+    }, 1000 / ProgressBarCLI.FPS);
   }
 
   /**
@@ -351,7 +351,7 @@ export default class ProgressBarCLI extends ProgressBar {
     }
 
     this.render(true);
-    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted?.getLastOutput()}\n`);
+    ProgressBarCLI.multiBar?.log(`${this.singleBarFormatted.getLastOutput()}\n`);
     this.delete();
   }
 

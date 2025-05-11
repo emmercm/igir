@@ -21,7 +21,8 @@ import Options, {
   MergeMode,
   MergeModeInverted,
   PreferRevision,
-  PreferRevisionInverted,
+  ZipFormat,
+  ZipFormatInverted,
 } from '../types/options.js';
 import PatchFactory from '../types/patches/patchFactory.js';
 
@@ -162,7 +163,7 @@ export default class ArgumentsParser {
             }
           });
 
-          ['test', 'clean'].forEach((command) => {
+          ['clean'].forEach((command) => {
             if (
               checkArgv._.includes(command) &&
               ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))
@@ -206,7 +207,7 @@ export default class ArgumentsParser {
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required argument for command${needInput.length !== 1 ? 's' : ''} ${needInput.join(', ')}: --input <path>`,
+            `Missing required argument for command${needInput.length === 1 ? '' : 's'} ${needInput.join(', ')}: --input <path>`,
           );
         }
         return true;
@@ -280,9 +281,7 @@ export default class ArgumentsParser {
         group: groupRomInput,
         description:
           'Calculate checksums of archive files themselves, allowing them to match files in DATs',
-        choices: Object.values(InputChecksumArchivesMode).map((mode) =>
-          InputChecksumArchivesModeInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(InputChecksumArchivesMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: InputChecksumArchivesModeInverted[InputChecksumArchivesMode.AUTO].toLowerCase(),
@@ -391,6 +390,14 @@ export default class ArgumentsParser {
         group: groupRomOutputPath,
         description: 'Use the input subdirectory structure for the output directory',
         type: 'boolean',
+        conflicts: ['dir-dat-mirror'],
+      })
+      .option('dir-dat-mirror', {
+        group: groupRomOutputPath,
+        description: 'Use the DAT subdirectory structure for the output directory',
+        type: 'boolean',
+        implies: 'dat',
+        conflicts: ['dir-mirror'],
       })
       .option('dir-dat-name', {
         group: groupRomOutputPath,
@@ -445,9 +452,7 @@ export default class ArgumentsParser {
       .option('dir-game-subdir', {
         group: groupRomOutputPath,
         description: 'Append the name of the game as an output subdirectory depending on its ROMs',
-        choices: Object.values(GameSubdirMode).map((mode) =>
-          GameSubdirModeInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(GameSubdirMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
@@ -457,9 +462,7 @@ export default class ArgumentsParser {
         group: groupRomOutput,
         description:
           'Read files for known signatures and use the correct extension (also affects dir2dat)',
-        choices: Object.values(FixExtension).map((mode) =>
-          FixExtensionInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(FixExtension).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
@@ -469,12 +472,14 @@ export default class ArgumentsParser {
         alias: 'O',
         description: 'Overwrite any files in the output directory',
         type: 'boolean',
+        conflicts: ['overwrite-invalid'],
       })
       .option('overwrite-invalid', {
         group: groupRomOutput,
         description:
           'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
         type: 'boolean',
+        conflicts: ['overwrite'],
       })
       .check((checkArgv) => {
         const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) =>
@@ -483,7 +488,7 @@ export default class ArgumentsParser {
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required argument for command${needOutput.length !== 1 ? 's' : ''} ${needOutput.join(', ')}: --output <path>`,
+            `Missing required argument for command${needOutput.length === 1 ? '' : 's'} ${needOutput.join(', ')}: --output <path>`,
           );
         }
         return true;
@@ -515,12 +520,20 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needClean.length !== 1 ? 's' : ''} ${needClean.join(', ')}: clean`,
+            `Missing required command for option${needClean.length === 1 ? '' : 's'} ${needClean.join(', ')}: clean`,
           );
         }
         return true;
       })
 
+      .option('zip-format', {
+        group: groupRomZip,
+        description: 'The structure format to use for written zip files',
+        choices: Object.keys(ZipFormat).map((format) => format.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: ZipFormatInverted[ZipFormat.TORRENTZIP].toLowerCase(),
+      })
       .option('zip-exclude', {
         group: groupRomZip,
         alias: 'Z',
@@ -541,7 +554,7 @@ export default class ArgumentsParser {
         );
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
           throw new ExpectedError(
-            `Missing required command for option${needZip.length !== 1 ? 's' : ''} ${needZip.join(', ')}: zip`,
+            `Missing required command for option${needZip.length === 1 ? '' : 's'} ${needZip.join(', ')}: zip`,
           );
         }
         return true;
@@ -562,7 +575,7 @@ export default class ArgumentsParser {
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option] !== undefined);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
           throw new ExpectedError(
-            `Missing required command for option${needLinkCommand.length !== 1 ? 's' : ''} ${needLinkCommand.join(', ')}: link`,
+            `Missing required command for option${needLinkCommand.length === 1 ? '' : 's'} ${needLinkCommand.join(', ')}: link`,
           );
         }
         return true;
@@ -593,7 +606,7 @@ export default class ArgumentsParser {
       .option('merge-roms', {
         group: groupRomSet,
         description: 'ROM merge/split mode (requires DATs with parent/clone information)',
-        choices: Object.values(MergeMode).map((mode) => MergeModeInverted[mode].toLowerCase()),
+        choices: Object.keys(MergeMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
@@ -663,7 +676,7 @@ export default class ArgumentsParser {
         );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
           throw new ExpectedError(
-            `Invalid --filter-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`,
+            `Invalid --filter-language language${invalidLangs.length === 1 ? '' : 's'}: ${invalidLangs.join(', ')}`,
           );
         }
         return true;
@@ -683,7 +696,7 @@ export default class ArgumentsParser {
         );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
           throw new ExpectedError(
-            `Invalid --filter-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`,
+            `Invalid --filter-region region${invalidRegions.length === 1 ? '' : 's'}: ${invalidRegions.join(', ')}`,
           );
         }
         return true;
@@ -797,7 +810,7 @@ export default class ArgumentsParser {
         );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
           throw new ExpectedError(
-            `Invalid --prefer-language language${invalidLangs.length !== 1 ? 's' : ''}: ${invalidLangs.join(', ')}`,
+            `Invalid --prefer-language language${invalidLangs.length === 1 ? '' : 's'}: ${invalidLangs.join(', ')}`,
           );
         }
         return true;
@@ -818,7 +831,7 @@ export default class ArgumentsParser {
         );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
           throw new ExpectedError(
-            `Invalid --prefer-region region${invalidRegions.length !== 1 ? 's' : ''}: ${invalidRegions.join(', ')}`,
+            `Invalid --prefer-region region${invalidRegions.length === 1 ? '' : 's'}: ${invalidRegions.join(', ')}`,
           );
         }
         return true;
@@ -826,9 +839,7 @@ export default class ArgumentsParser {
       .option('prefer-revision', {
         group: groupRomPriority,
         description: 'Prefer older or newer revisions, versions, or ring codes',
-        choices: Object.values(PreferRevision).map((mode) =>
-          PreferRevisionInverted[mode].toLowerCase(),
-        ),
+        choices: Object.keys(PreferRevision).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         implies: 'single',
@@ -882,7 +893,7 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('dir2dat') && needDir2Dat.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needDir2Dat.length !== 1 ? 's' : ''} ${needDir2Dat.join(', ')}: dir2dat`,
+            `Missing required command for option${needDir2Dat.length === 1 ? '' : 's'} ${needDir2Dat.join(', ')}: dir2dat`,
           );
         }
         return true;
@@ -900,7 +911,7 @@ export default class ArgumentsParser {
         if (!checkArgv._.includes('fixdat') && needFixdat.length > 0) {
           // TODO(cememr): print help message
           throw new ExpectedError(
-            `Missing required command for option${needFixdat.length !== 1 ? 's' : ''} ${needFixdat.join(', ')}: fixdat`,
+            `Missing required command for option${needFixdat.length === 1 ? '' : 's'} ${needFixdat.join(', ')}: fixdat`,
           );
         }
         return true;
@@ -980,7 +991,7 @@ export default class ArgumentsParser {
         type: 'count',
       })
       .middleware((middlewareArgv) => {
-        if (middlewareArgv['clean-dry-run'] === true && (middlewareArgv.verbose ?? 0) < 1) {
+        if (middlewareArgv['clean-dry-run'] === true && middlewareArgv.verbose < 1) {
           this.logger.warn(
             '--clean-dry-run prints INFO logs for files skipped, enable them with -v',
           );
@@ -1034,6 +1045,7 @@ Advanced usage:
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {category}        The DAT-defined category of the game (e.g. "Games", "Demos", "Multimedia")
     {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname
@@ -1096,7 +1108,7 @@ Example use cases:
         type: 'boolean',
       })
       .fail((msg, err, _yargs) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions,@typescript-eslint/no-unnecessary-condition
         if (err) {
           throw err;
         }
@@ -1104,11 +1116,13 @@ Example use cases:
         throw new ExpectedError(msg);
       });
 
-    const yargsArgv = yargsParser.strictOptions(true).parse(argv, {}, (err, parsedArgv, output) => {
-      if (output) {
-        this.logger.colorizeYargs(`${output.trimEnd()}\n`);
-      }
-    });
+    const yargsArgv = yargsParser
+      .strictOptions(true)
+      .parse(argv, {}, (_err, _parsedArgv, output) => {
+        if (output) {
+          this.logger.colorizeYargs(`${output.trimEnd()}\n`);
+        }
+      });
 
     return Options.fromObject(yargsArgv);
   }

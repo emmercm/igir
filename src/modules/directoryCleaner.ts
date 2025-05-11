@@ -29,6 +29,11 @@ export default class DirectoryCleaner extends Module {
    * Clean some directories, excluding some files.
    */
   async clean(dirsToClean: string[], filesToExclude: File[]): Promise<string[]> {
+    if (!this.options.shouldWrite()) {
+      // We shouldn't cause any change to the output directory
+      return [];
+    }
+
     // If nothing was written, then don't clean anything
     if (filesToExclude.length === 0) {
       this.progressBar.logTrace('no files were written, not cleaning output');
@@ -56,7 +61,7 @@ export default class DirectoryCleaner extends Module {
 
     try {
       this.progressBar.logTrace(
-        `cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length !== 1 ? 's' : ''}`,
+        `cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length === 1 ? '' : 's'}`,
       );
       this.progressBar.reset(filesToClean.length);
       if (this.options.getCleanDryRun()) {
@@ -65,10 +70,10 @@ export default class DirectoryCleaner extends Module {
         );
       } else {
         const cleanBackupDir = this.options.getCleanBackup();
-        if (cleanBackupDir !== undefined) {
-          await this.backupFiles(cleanBackupDir, filesToClean);
-        } else {
+        if (cleanBackupDir === undefined) {
           await this.trashOrDelete(filesToClean);
+        } else {
+          await this.backupFiles(cleanBackupDir, filesToClean);
         }
       }
     } catch (error) {
@@ -81,7 +86,7 @@ export default class DirectoryCleaner extends Module {
       while (emptyDirs.length > 0) {
         this.progressBar.reset(emptyDirs.length);
         this.progressBar.logTrace(
-          `cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length !== 1 ? 'ies' : 'y'}`,
+          `cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
         );
         if (this.options.getCleanDryRun()) {
           this.progressBar.logInfo(
@@ -106,13 +111,13 @@ export default class DirectoryCleaner extends Module {
     for (let i = 0; i < filePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = filePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
       this.progressBar.logInfo(
-        `recycling cleaned path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
+        `recycling cleaned path${filePathsChunk.length === 1 ? '' : 's'}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
       );
       try {
         await trash(filePathsChunk);
       } catch (error) {
         this.progressBar.logWarn(
-          `failed to recycle ${filePathsChunk.length} path${filePathsChunk.length !== 1 ? 's' : ''}: ${error}`,
+          `failed to recycle ${filePathsChunk.length} path${filePathsChunk.length === 1 ? '' : 's'}: ${error}`,
         );
       }
       this.progressBar.update(i);
@@ -126,7 +131,7 @@ export default class DirectoryCleaner extends Module {
       async (filePath: string) => existSemaphore.runExclusive(async () => FsPoly.exists(filePath)),
     );
     const existingFilePaths = filePaths.filter(
-      (filePath, idx) => existingFilePathsCheck.at(idx) === true,
+      (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
     );
     if (existingFilePaths.length > 0) {
       this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
@@ -134,7 +139,7 @@ export default class DirectoryCleaner extends Module {
     for (let i = 0; i < existingFilePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = existingFilePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
       this.progressBar.logInfo(
-        `deleting cleaned path${filePathsChunk.length !== 1 ? 's' : ''}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
+        `deleting cleaned path${filePathsChunk.length === 1 ? '' : 's'}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
       );
       await Promise.all(
         filePathsChunk.map(async (filePath) => {

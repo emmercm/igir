@@ -92,6 +92,8 @@ export default class NinjaPatch extends Patch {
       await this.applyCommandOpen(patchFile, targetFile);
     } else if (command === NinjaCommand.XOR) {
       await NinjaPatch.applyCommandXor(patchFile, targetFile);
+    } else {
+      throw new ExpectedError(`Ninja command ${command} isn't supported`);
     }
   }
 

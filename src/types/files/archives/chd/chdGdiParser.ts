@@ -60,7 +60,7 @@ export default class ChdGdiParser {
       .split(/\r?\n/)
       .filter((line) => line.length > 0)
       // Replace the chdman-generated track files with TOSEC-style track filenames
-      .map((line) => line.replace(filePrefix, 'track').replace(/"/g, ''))
+      .map((line) => line.replace(filePrefix, 'track').replaceAll('"', ''))
       .join('\r\n')}\r\n`;
 
     const gdiFile = await ArchiveEntry.entryOf({

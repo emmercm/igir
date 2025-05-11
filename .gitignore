@@ -106,10 +106,15 @@ dist
 
 # Custom
 dist/
+packages/*/build/**
+packages/*/package-lock.json
+./prebuilds/
 site/
 *.bat
 *.cache*
 *.sh
+igir
+igir.exe
 !test/*.sh
 
 # DATs
@@ -196,6 +201,7 @@ site/
 !docs/*
 
 # Always commit fixtures
+!packages/zip/test/**/*.zip
 !test/fixtures/dats/*
 !test/fixtures/dats/*/*
 !test/fixtures/patches/*

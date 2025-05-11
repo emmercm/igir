@@ -1,0 +1,169 @@
+name: Node-API Prebuild
+
+on:
+  push:
+    branches-ignore:
+      - 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  path-filter:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            changes:
+              - '.github/workflows/napi-prebuild.yml'
+              - 'packages/zlib*/**'
+              - 'packages/zstd*/**'
+
+  prebuild:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    timeout-minutes: 30 # QEMU cross-builds
+    name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # docker manifest inspect node:<version> | jq '.manifests[].platform'
+          - os: ubuntu-latest
+            docker_arch: linux/amd64
+          - os: ubuntu-latest
+            docker_arch: linux/arm/v7
+          - os: ubuntu-24.04-arm
+            docker_arch: linux/arm64/v8
+          - os: macos-13
+          - os: macos-latest
+          - os: windows-latest
+          - os: windows-11-arm
+    steps:
+      # Setup and install
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: volta-cli/action@v4
+        with:
+          node-version: 18
+
+      # Prebuild
+      - shell: bash
+        run: |
+          set -x
+          npm ci --ignore-scripts
+          rm -rf packages/*/prebuilds
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        uses: docker/setup-qemu-action@v3
+      - id: linux-vars
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          echo "VERSIONS_NODE=$(node --print 'process.versions.node')" >> "${GITHUB_OUTPUT}"
+
+          DOCKER_ARCH=${{ matrix.docker_arch }}
+          DOCKER_ARCH=${DOCKER_ARCH/linux\//}
+          DOCKER_ARCH=${DOCKER_ARCH//\//}
+          echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        id: build-docker
+        uses: addnab/docker-run-action@v3
+        with:
+          image: node:${{ steps.linux-vars.outputs.VERSIONS_NODE }}
+          shell: bash
+          options: |
+            --platform ${{ matrix.docker_arch }}
+            --volume ${{ github.workspace }}:/build
+            --workdir /build
+          run: |
+            set -x
+            find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+              cd "${dir}"
+              npm install --ignore-scripts
+              ./node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
+              touch prebuilds/.gitkeep
+              cd ../..
+            done
+            ls -alR packages/*/prebuilds/
+
+            # Test the build
+            rm -rf packages/*/build
+            npm ci --foreground-scripts
+            npm run test:unit packages
+      - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
+        id: build
+        run: |
+          set -x
+          find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+            cd "${dir}"
+            npm install --ignore-scripts
+            ./node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
+            touch prebuilds/.gitkeep
+            cd ../..
+          done
+          ls -alR packages/*/prebuilds/
+
+          # Test the build
+          rm -rf packages/*/build
+          npm ci --foreground-scripts
+          npm run test:unit packages
+
+      - run: |
+          ls -alR packages/*/prebuilds/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
+          path: packages/*/prebuilds/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  commit:
+    needs:
+      - prebuild
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Token needed to trigger Actions on push
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages/
+          merge-multiple: true
+      - run: |
+          rm packages/*/prebuilds/.gitkeep
+          ls -alR packages/*/prebuilds/
+      - id: bump-and-commit
+        run: |
+          git add --all packages/*/prebuilds
+
+          USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
+          git config --global user.email "${USER_EMAIL}"
+
+          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
+          echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
+          git config --global user.name "${USER_NAME}"
+
+          git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}" || exit 0
+          git push
+        env:
+          GH_TOKEN: ${{ github.token }}

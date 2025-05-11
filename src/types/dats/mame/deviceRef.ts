@@ -1,7 +1,7 @@
 import { Expose } from 'class-transformer';
 
 /**
- * A reference to a device {@link Machine}.
+ * A reference to a device {@link Game}.
  */
 export default class DeviceRef {
   @Expose()

@@ -53,71 +53,71 @@ export default class IndexedFiles {
     // Build the maps
     files.forEach((file) => {
       const crc32WithSize = `${file.getCrc32()}|${file.getSize()}`;
-      if (!crc32RawMap.has(crc32WithSize)) {
-        crc32RawMap.set(crc32WithSize, [file]);
-      } else {
+      if (crc32RawMap.has(crc32WithSize)) {
         crc32RawMap.get(crc32WithSize)?.unshift(file);
+      } else {
+        crc32RawMap.set(crc32WithSize, [file]);
       }
 
       const md5 = file.getMd5();
       if (md5) {
-        if (!md5RawMap.has(md5)) {
-          md5RawMap.set(md5, [file]);
-        } else {
+        if (md5RawMap.has(md5)) {
           md5RawMap.get(md5)?.unshift(file);
+        } else {
+          md5RawMap.set(md5, [file]);
         }
       }
 
       const sha1 = file.getSha1();
       if (sha1) {
-        if (!sha1RawMap.has(sha1)) {
-          sha1RawMap.set(sha1, [file]);
-        } else {
+        if (sha1RawMap.has(sha1)) {
           sha1RawMap.get(sha1)?.unshift(file);
+        } else {
+          sha1RawMap.set(sha1, [file]);
         }
       }
 
       const sha256 = file.getSha256();
       if (sha256) {
-        if (!sha256RawMap.has(sha256)) {
-          sha256RawMap.set(sha256, [file]);
-        } else {
+        if (sha256RawMap.has(sha256)) {
           sha256RawMap.get(sha256)?.unshift(file);
+        } else {
+          sha256RawMap.set(sha256, [file]);
         }
       }
 
       if (file.getFileHeader()) {
         const crc32WithoutHeader = `${file.getCrc32WithoutHeader()}|${file.getSizeWithoutHeader()}`;
-        if (!crc32WithoutHeaderMap.has(crc32WithoutHeader)) {
-          crc32WithoutHeaderMap.set(crc32WithoutHeader, [file]);
-        } else {
+        if (crc32WithoutHeaderMap.has(crc32WithoutHeader)) {
           crc32WithoutHeaderMap.get(crc32WithoutHeader)?.push(file);
+        } else {
+          crc32WithoutHeaderMap.set(crc32WithoutHeader, [file]);
         }
 
         const md5WithoutHeader = file.getMd5WithoutHeader();
         if (md5WithoutHeader) {
-          if (!md5WithoutHeaderMap.has(md5WithoutHeader)) {
-            md5WithoutHeaderMap.set(md5WithoutHeader, [file]);
-          } else {
+          if (md5WithoutHeaderMap.has(md5WithoutHeader)) {
             md5WithoutHeaderMap.get(md5WithoutHeader)?.push(file);
+          } else {
+            md5WithoutHeaderMap.set(md5WithoutHeader, [file]);
           }
         }
 
         const sha1WithoutHeader = file.getSha1WithoutHeader();
         if (sha1WithoutHeader) {
-          if (!sha1WithoutHeaderMap.has(sha1WithoutHeader)) {
-            sha1WithoutHeaderMap.set(sha1WithoutHeader, [file]);
-          } else {
+          if (sha1WithoutHeaderMap.has(sha1WithoutHeader)) {
             sha1WithoutHeaderMap.get(sha1WithoutHeader)?.push(file);
+          } else {
+            sha1WithoutHeaderMap.set(sha1WithoutHeader, [file]);
           }
         }
 
         const sha256WithoutHeader = file.getSha256WithoutHeader();
         if (sha256WithoutHeader) {
-          if (!sha256WithoutHeaderMap.has(sha256WithoutHeader)) {
-            sha256WithoutHeaderMap.set(sha256WithoutHeader, [file]);
-          } else {
+          if (sha256WithoutHeaderMap.has(sha256WithoutHeader)) {
             sha256WithoutHeaderMap.get(sha256WithoutHeader)?.push(file);
+          } else {
+            sha256WithoutHeaderMap.set(sha256WithoutHeader, [file]);
           }
         }
       }
@@ -160,10 +160,10 @@ export default class IndexedFiles {
   getFilesByFilePath(): Map<string, File[]> {
     return this.getFiles().reduce((map, file) => {
       const key = file.getFilePath();
-      if (!map.has(key)) {
-        map.set(key, [file]);
-      } else {
+      if (map.has(key)) {
         map.get(key)?.push(file);
+      } else {
+        map.set(key, [file]);
       }
       return map;
     }, new Map<string, File[]>());

@@ -11,7 +11,6 @@ export default class ROMWithFiles {
 
   private readonly outputFile: File;
 
-  // TODO(cemmer): information about what checksum algorithm was used to match the input file
   constructor(rom: ROM, inputFile: File, outputFile: File) {
     this.rom = rom;
     this.inputFile = inputFile;
@@ -51,5 +50,14 @@ export default class ROMWithFiles {
       return this;
     }
     return new ROMWithFiles(this.rom, this.inputFile, outputFile);
+  }
+
+  // Pseudo Built-Ins
+
+  /**
+   * A string hash code to uniquely identify this {@link ROMWithFiles}.
+   */
+  hashCode(): string {
+    return `${this.rom.hashCode()}|${this.outputFile.toString()}`;
   }
 }

@@ -56,7 +56,7 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting !== 1 ? 's' : ''}`,
+      `${dat.getName()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.reset(romsThatNeedCorrecting);
@@ -100,7 +100,6 @@ export default class CandidateExtensionCorrector extends Module {
               this.options,
               dat,
               candidate.getGame(),
-              undefined,
               correctedRom,
               romWithFiles.getInputFile(),
             );

@@ -14,6 +14,7 @@ import {
   InputChecksumArchivesMode,
   MergeMode,
   PreferRevision,
+  ZipFormat,
 } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
@@ -62,9 +63,6 @@ describe('commands', () => {
       /command.+requires/i,
     );
     expect(() => argumentsParser.parse(['zip', ...dummyRequiredArgs])).toThrow(
-      /command.+requires/i,
-    );
-    expect(() => argumentsParser.parse(['test', ...dummyRequiredArgs])).toThrow(
       /command.+requires/i,
     );
     expect(() => argumentsParser.parse(['clean', ...dummyRequiredArgs])).toThrow(
@@ -209,6 +207,7 @@ describe('options', () => {
     expect(options.getPatchFileCount()).toEqual(0);
 
     expect(options.getDirMirror()).toEqual(false);
+    expect(options.getDirDatMirror()).toEqual(false);
     expect(options.getDirDatName()).toEqual(false);
     expect(options.getDirDatDescription()).toEqual(false);
     expect(options.getDirLetter()).toEqual(false);
@@ -224,6 +223,7 @@ describe('options', () => {
     expect(options.getCleanBackup()).toBeUndefined();
     expect(options.getCleanDryRun()).toEqual(false);
 
+    expect(options.getZipFormat()).toEqual(ZipFormat.TORRENTZIP);
     expect(options.getZipDatName()).toEqual(false);
 
     expect(options.getSymlink()).toEqual(false);
@@ -1274,6 +1274,17 @@ describe('options', () => {
   });
 
   it('should parse "dir-mirror"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-mirror',
+          '--dir-dat-mirror',
+        ])
+        .getDirDatMirror(),
+    ).toThrow(/mutually exclusive/i);
     expect(
       argumentsParser.parse([...dummyCommandAndRequiredArgs, '--dir-mirror']).getDirMirror(),
     ).toEqual(true);
@@ -1301,6 +1312,72 @@ describe('options', () => {
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--dir-mirror', 'true', '--dir-mirror', 'false'])
         .getDirMirror(),
+    ).toEqual(false);
+  });
+
+  it('should parse "dir-dat-mirror"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-mirror',
+          '--dir-dat-mirror',
+        ])
+        .getDirDatMirror(),
+    ).toThrow(/mutually exclusive/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-mirror'])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-mirror', 'true'])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--dir-dat-mirror', 'false'])
+        .getDirDatMirror(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-dat-mirror',
+          '--dir-dat-mirror',
+        ])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-dat-mirror',
+          'false',
+          '--dir-dat-mirror',
+          'true',
+        ])
+        .getDirDatMirror(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--dir-dat-mirror',
+          'true',
+          '--dir-dat-mirror',
+          'false',
+        ])
+        .getDirDatMirror(),
     ).toEqual(false);
   });
 
@@ -1709,6 +1786,11 @@ describe('options', () => {
   });
 
   it('should parse "overwrite"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--overwrite', '--overwrite-invalid'])
+        .getOverwrite(),
+    ).toThrow(/mutually exclusive/i);
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs, '-O']).getOverwrite()).toEqual(
       true,
     );
@@ -1741,6 +1823,11 @@ describe('options', () => {
   });
 
   it('should parse "overwrite-invalid"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--overwrite', '--overwrite-invalid'])
+        .getOverwrite(),
+    ).toThrow(/mutually exclusive/i);
     expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--overwrite-invalid'])
@@ -1896,6 +1983,51 @@ describe('options', () => {
         ])
         .getCleanDryRun(),
     ).toEqual(false);
+  });
+
+  it('should parse "zip-format"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([
+          'copy',
+          'zip',
+          '--input',
+          os.devNull,
+          '--output',
+          os.devNull,
+          '--zip-format',
+          'foobar',
+        ])
+        .getZipFormat(),
+    ).toThrow(/invalid value/i);
+    expect(
+      argumentsParser
+        .parse([
+          'copy',
+          'zip',
+          '--input',
+          os.devNull,
+          '--output',
+          os.devNull,
+          '--zip-format',
+          'torrentzip',
+        ])
+        .getZipFormat(),
+    ).toEqual(ZipFormat.TORRENTZIP);
+    expect(
+      argumentsParser
+        .parse([
+          'copy',
+          'zip',
+          '--input',
+          os.devNull,
+          '--output',
+          os.devNull,
+          '--zip-format',
+          'rvzstd',
+        ])
+        .getZipFormat(),
+    ).toEqual(ZipFormat.RVZSTD);
   });
 
   it('should parse "zip-exclude"', () => {

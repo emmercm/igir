@@ -2,6 +2,8 @@ import 'jest-extended';
 
 import path from 'node:path';
 
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
@@ -10,6 +12,7 @@ import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/types/dats/rom.js';
+import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -18,15 +21,17 @@ import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER);
+
 it('should do nothing with no candidates', async () => {
   const options = new Options();
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
   const candidates: WriteCandidate[] = [];
 
   const correctedCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -36,25 +41,28 @@ it('should do nothing when no ROMs need correcting', async () => {
   const options = new Options({
     fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
   });
-  const dat = new LogiqxDAT(new Header(), [
-    new Game({
-      name: 'game with no ROMs',
-    }),
-    new Game({
-      name: 'game with one ROM',
-      rom: new ROM({ name: 'one.rom', size: 1 }),
-    }),
-    new Game({
-      name: 'game with two ROMs',
-      rom: [new ROM({ name: 'two.rom', size: 2 }), new ROM({ name: 'three.rom', size: 3 })],
-    }),
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      new Game({
+        name: 'game with no ROMs',
+      }),
+      new Game({
+        name: 'game with one ROM',
+        roms: new ROM({ name: 'one.rom', size: 1 }),
+      }),
+      new Game({
+        name: 'game with two ROMs',
+        roms: [new ROM({ name: 'two.rom', size: 2 }), new ROM({ name: 'three.rom', size: 3 })],
+      }),
+    ],
+  });
   const candidates: WriteCandidate[] = [];
 
   const correctedCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -71,7 +79,7 @@ function expectcorrectedCandidates(
 
   for (let i = 0; i < candidates.length; i += 1) {
     const candidate = candidates.at(i);
-    const correctedCandidate = correctedCandidates?.at(i);
+    const correctedCandidate = correctedCandidates.at(i);
 
     const romsWithFiles = candidate?.getRomsWithFiles();
     const correctedRomsWithFiles = correctedCandidate?.getRomsWithFiles();
@@ -100,11 +108,11 @@ it('should correct ROMs without DATs', async () => {
     input: [path.join('test', 'fixtures', 'roms', 'headered')],
     fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
   });
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -124,9 +132,9 @@ it('should correct ROMs without DATs', async () => {
           size: tempFile.getSize(),
         }),
       ];
-      const game = new Game({
+      const game = new SingleValueGame({
         name: path.parse(tempFile.getFilePath()).name,
-        rom: roms,
+        roms: roms,
       });
       const romsWithFiles = roms.map((rom) => {
         const { dir, name } = path.parse(tempFile.getFilePath());
@@ -140,7 +148,7 @@ it('should correct ROMs without DATs', async () => {
     const correctedCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);
@@ -155,11 +163,11 @@ it('should correct ROMs with missing filenames', async () => {
     input: [path.join('test', 'fixtures', 'roms', 'headered')],
     fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
   });
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), LOGGER),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -175,9 +183,9 @@ it('should correct ROMs with missing filenames', async () => {
     const candidates = tempFiles.map((tempFile) => {
       // No ROM in the DAT has a filename, therefore all of them should be corrected
       const roms = [new ROM({ name: '', size: tempFile.getSize() })];
-      const game = new Game({
+      const game = new SingleValueGame({
         name: path.parse(tempFile.getFilePath()).name,
-        rom: roms,
+        roms: roms,
       });
       const romsWithFiles = roms.map((rom) => {
         const { dir, name } = path.parse(tempFile.getFilePath());
@@ -191,7 +199,7 @@ it('should correct ROMs with missing filenames', async () => {
     const correctedCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);

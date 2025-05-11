@@ -7,18 +7,18 @@ import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 function buildDat(gameNames: string[]): DAT {
-  return new LogiqxDAT(
-    new Header(),
-    gameNames.map((name) => new Game({ name })),
-  );
+  return new LogiqxDAT({
+    header: new Header(),
+    games: gameNames.map((name) => new Game({ name })),
+  });
 }
 
 it('should not do anything if the DAT has parent/clone info', () => {
   // Given
-  const dat = new LogiqxDAT(new Header(), [
-    new Game({ name: 'game one' }),
-    new Game({ name: 'game two', cloneOf: 'game one' }),
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [new Game({ name: 'game one' }), new Game({ name: 'game two', cloneOf: 'game one' })],
+  });
 
   // When
   const inferredDat = new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);
@@ -32,10 +32,10 @@ it("should ignore the DAT's parent/clone info if specified", () => {
   const options = new Options({
     datIgnoreParentClone: true,
   });
-  const dat = new LogiqxDAT(new Header(), [
-    new Game({ name: 'game one' }),
-    new Game({ name: 'game two', cloneOf: 'game one' }),
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [new Game({ name: 'game one' }), new Game({ name: 'game two', cloneOf: 'game one' })],
+  });
 
   // When
   const inferredDat = new DATParentInferrer(options, new ProgressBarFake()).infer(dat);
@@ -48,7 +48,7 @@ it("should ignore the DAT's parent/clone info if specified", () => {
 
 it('should not do anything if the DAT has no games', () => {
   // Given
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
 
   // When
   const inferredDat = new DATParentInferrer(new Options(), new ProgressBarFake()).infer(dat);

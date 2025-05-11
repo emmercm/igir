@@ -10,14 +10,14 @@ import DATStatus from '../../src/types/datStatus.js';
 //  statusGenerator.test.ts instead in order to increase coverage
 
 function givenDAT(): DAT {
-  return new LogiqxDAT(
-    new Header({
+  return new LogiqxDAT({
+    header: new Header({
       name: 'dat name',
     }),
-    [
+    games: [
       new Game({
         name: 'game with multiple ROMs and no releases',
-        rom: [
+        roms: [
           new ROM({ name: 'one.rom', size: 0, crc32: '00000001' }),
           new ROM({ name: 'two.rom', size: 0, crc32: '00000002' }),
         ],
@@ -26,7 +26,7 @@ function givenDAT(): DAT {
         name: 'bios with one ROM and one release',
         isBios: 'yes',
         release: [new Release('USA', 'USA', 'EN')],
-        rom: new ROM({ name: 'three.rom', size: 0, crc32: '00000003' }),
+        roms: new ROM({ name: 'three.rom', size: 0, crc32: '00000003' }),
       }),
       new Game({
         name: 'game with one ROM and multiple releases',
@@ -35,10 +35,10 @@ function givenDAT(): DAT {
           new Release('EUR', 'EUR', 'EN'),
           new Release('JPN', 'JPN', 'JA'),
         ],
-        rom: new ROM({ name: 'four.rom', size: 0, crc32: '00000004' }),
+        roms: new ROM({ name: 'four.rom', size: 0, crc32: '00000004' }),
       }),
     ],
-  );
+  });
 }
 
 it('getDATName', () => {

@@ -1355,7 +1355,7 @@ export default class GameConsole {
   }
 
   static getForDatName(consoleName: string): GameConsole | undefined {
-    return this.CONSOLES.slice()
+    return [...this.CONSOLES]
       .reverse() // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
       .find((console) => console.getDatRegex().test(consoleName));
   }

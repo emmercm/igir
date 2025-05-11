@@ -1,4 +1,4 @@
-import * as child_process from 'node:child_process';
+import child_process from 'node:child_process';
 import path from 'node:path';
 
 import { parse } from '@fast-csv/parse';
@@ -61,7 +61,7 @@ export default class DATScanner extends Scanner {
       return [];
     }
     this.progressBar.logTrace(
-      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length !== 1 ? 's' : ''}`,
+      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.reset(datFilePaths.length);
 
@@ -88,7 +88,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace(
-      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length !== 1 ? 's' : ''} from URL${datUrlFiles.length !== 1 ? 's' : ''}`,
+      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
@@ -116,7 +116,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(
-      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length !== 1 ? 's' : ''}`,
+      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
@@ -158,12 +158,10 @@ export default class DATScanner extends Scanner {
       dat = await this.parseMameListxml(datFile);
     }
 
-    if (!dat) {
-      dat = await datFile.createReadStream(async (stream) => {
-        const fileContents = (await bufferPoly.fromReadable(stream)).toString();
-        return this.parseDatContents(datFile, fileContents);
-      });
-    }
+    dat ??= await datFile.createReadStream(async (stream) => {
+      const fileContents = (await bufferPoly.fromReadable(stream)).toString();
+      return this.parseDatContents(datFile, fileContents);
+    });
 
     if (!dat) {
       return dat;
@@ -178,18 +176,20 @@ export default class DATScanner extends Scanner {
       dat.getGames()[0].getRoms().length > 10
     ) {
       const game = dat.getGames()[0];
-      dat = new LogiqxDAT(
-        dat.getHeader(),
+      dat = dat.withGames(
         dat
           .getGames()[0]
           .getRoms()
           .map((rom) => {
             // Use the ROM's filename without its extension as the game name
             const { dir, name } = path.parse(rom.getName());
-            const gameName = path.format({ dir, name });
+            const gameName = path.format({
+              dir,
+              name,
+            });
             return game.withProps({
               name: gameName,
-              rom: [rom],
+              roms: [rom],
             });
           }),
       );
@@ -200,7 +200,7 @@ export default class DATScanner extends Scanner {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length !== 1 ? 's' : ''} parsed`,
+      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
     );
 
     return dat;
@@ -289,7 +289,7 @@ export default class DATScanner extends Scanner {
 
     if (datObject.datafile) {
       try {
-        return LogiqxDAT.fromObject(datObject.datafile);
+        return LogiqxDAT.fromObject(datObject.datafile, { filePath: datFile.getFilePath() });
       } catch (error) {
         this.progressBar.logTrace(`${datFile.toString()}: failed to parse DAT object: ${error}`);
         return undefined;
@@ -298,7 +298,7 @@ export default class DATScanner extends Scanner {
 
     if (datObject.mame) {
       try {
-        return MameDAT.fromObject(datObject.mame);
+        return MameDAT.fromObject(datObject.mame, { filePath: datFile.getFilePath() });
       } catch (error) {
         this.progressBar.logTrace(
           `${datFile.toString()}: failed to parse MAME DAT object: ${error}`,
@@ -309,7 +309,9 @@ export default class DATScanner extends Scanner {
 
     if (datObject.softwarelists) {
       try {
-        return SoftwareListsDAT.fromObject(datObject.softwarelists);
+        return SoftwareListsDAT.fromObject(datObject.softwarelists, {
+          filePath: datFile.getFilePath(),
+        });
       } catch (error) {
         this.progressBar.logTrace(
           `${datFile.toString()}: failed to parse software list DAT object: ${error}`,
@@ -417,11 +419,11 @@ export default class DATScanner extends Scanner {
 
       return new Game({
         name: gameName,
-        category: undefined,
+        categories: undefined,
         description: game.description,
         isBios:
           cmproDat.clrmamepro?.author?.toLowerCase() === 'libretro' &&
-          cmproDat.clrmamepro?.name?.toLowerCase() === 'system'
+          cmproDat.clrmamepro.name?.toLowerCase() === 'system'
             ? 'yes'
             : 'no',
         isDevice: undefined,
@@ -429,12 +431,12 @@ export default class DATScanner extends Scanner {
         romOf: game.romof,
         genre: game.genre?.toString(),
         release: undefined,
-        rom: roms,
-        disk: disks,
+        roms: roms,
+        disks: disks,
       });
     });
 
-    return new LogiqxDAT(header, games);
+    return new LogiqxDAT({ filePath: datFile.getFilePath(), header, games });
   }
 
   /**
@@ -474,18 +476,19 @@ export default class DATScanner extends Scanner {
       return new Game({
         name: gameName,
         description: gameName,
-        rom,
+        roms: rom,
       });
     });
 
     const datName = path.parse(datFile.getExtractedFilePath()).name;
-    return new LogiqxDAT(
-      new Header({
+    return new LogiqxDAT({
+      filePath: datFile.getFilePath(),
+      header: new Header({
         name: datName,
         description: datName,
       }),
       games,
-    );
+    });
   }
 
   private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
@@ -509,7 +512,9 @@ export default class DATScanner extends Scanner {
         .on('data', (row: SmdbRow) => {
           rows.push(row);
         })
-        .on('end', () => resolve(rows));
+        .on('end', () => {
+          resolve(rows);
+        });
       stream.write(fileContents);
       stream.end();
     });
@@ -561,9 +566,9 @@ export default class DATScanner extends Scanner {
                 rom.getSha256() !==
                   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')),
         );
-      return game.withProps({ rom: roms });
+      return game.withProps({ roms: roms });
     });
 
-    return new LogiqxDAT(dat.getHeader(), games);
+    return dat.withGames(games);
   }
 }

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import type { Config } from 'jest';
 
-export default async (): Promise<Config> => {
+const jestConfig = async (): Promise<Config> => {
   // Fix some bad package.json files that don't play well with ts-jest
   await Promise.all(
     [
@@ -25,7 +25,7 @@ export default async (): Promise<Config> => {
 
       packageJson.main =
         packageJson.main ??
-        (packageJson.exports !== undefined ? packageJson.exports['.'].import : undefined);
+        (packageJson.exports === undefined ? undefined : packageJson.exports['.'].import);
       delete packageJson.exports;
 
       await fs.promises.writeFile(packagePath, JSON.stringify(packageJson, undefined, 2));
@@ -38,8 +38,9 @@ export default async (): Promise<Config> => {
 
     setupFilesAfterEnv: ['jest-extended/all'],
 
-    // Most tests are I/O-bound, increase the test timeout globally
-    testTimeout: 20_000,
+    // Many tests are I/O-bound, and possibly contend with each other; increase
+    // the test timeout globally
+    testTimeout: 30_000,
 
     // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
     extensionsToTreatAsEsm: ['.ts'],
@@ -57,6 +58,7 @@ export default async (): Promise<Config> => {
     coveragePathIgnorePatterns: ['<rootDir>/test/'],
 
     // Report coverage on all source files, because it won't by default...
-    collectCoverageFrom: ['<rootDir>/src/**/*.{js,cjs,mjs,ts}'],
+    collectCoverageFrom: ['<rootDir>/{packages,src}/**/*.{js,cjs,mjs,ts}'],
   };
 };
+export default jestConfig;

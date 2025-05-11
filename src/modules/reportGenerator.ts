@@ -91,7 +91,7 @@ export default class ReportGenerator extends Module {
     );
     await FsPoly.writeFile(reportPath, rows.join('\n'));
     this.progressBar.logTrace(
-      `wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length !== 1 ? 's' : ''}: ${reportPath}`,
+      `wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
     );
 
     this.progressBar.logTrace('done generating report');

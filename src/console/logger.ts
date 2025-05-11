@@ -104,29 +104,40 @@ export default class Logger {
       .join('\n');
   }
 
-  trace = (message: unknown = ''): void => this.print(LogLevel.TRACE, message);
+  trace = (message: unknown = ''): void => {
+    this.print(LogLevel.TRACE, message);
+  };
 
-  debug = (message: unknown = ''): void => this.print(LogLevel.DEBUG, message);
+  debug = (message: unknown = ''): void => {
+    this.print(LogLevel.DEBUG, message);
+  };
 
-  info = (message: unknown = ''): void => this.print(LogLevel.INFO, message);
+  info = (message: unknown = ''): void => {
+    this.print(LogLevel.INFO, message);
+  };
 
-  warn = (message: unknown = ''): void => this.print(LogLevel.WARN, message);
+  warn = (message: unknown = ''): void => {
+    this.print(LogLevel.WARN, message);
+  };
 
-  error = (message: unknown = ''): void => this.print(LogLevel.ERROR, message);
+  error = (message: unknown = ''): void => {
+    this.print(LogLevel.ERROR, message);
+  };
 
-  notice = (message: unknown = ''): void => this.print(LogLevel.NOTICE, message);
+  notice = (message: unknown = ''): void => {
+    this.print(LogLevel.NOTICE, message);
+  };
 
   /**
    * Print the CLI header.
    */
   printHeader(): void {
     const logo = `
-   @@@@@@   @@@@@@     @@@@@@    @@@@@@@@@
- @@      @@  @@      @@      @@         @@@
-@@        @@  @@    @@        @@         @@
- @@      @@  @@      @@      @@         @@@
-   @@@@@@   @@         @@@@@@   @@@@@@@@@@
-     @@   @@@     @@@@   @@   @@@      @@
+   @@@@@@   @@@@@@     @@@@@@    @@@@@@@@
+ @@      @@  @@      @@      @@         @@
+ @@      @@  @@      @@      @@         @@
+   @@@@@@   @@         @@@@@@   @@@@@@@@@
+          @@@     @@@@        @@@
      @@   @@        @@   @@   @@       @@
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@`.replace(/^[\r\n]+/, '');
@@ -153,28 +164,31 @@ export default class Logger {
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
 
-        .replace(/(\[commands\.*\])/g, chalk.magenta('$1'))
-        .replace(new RegExp(`(${Package.NAME}) (( ?[a-z0-9])+)`, 'g'), `$1 ${chalk.magenta('$2')}`)
+        .replaceAll(/(\[commands\.*\])/g, chalk.magenta('$1'))
+        .replaceAll(
+          new RegExp(`(${Package.NAME}) (( ?[a-z0-9])+)`, 'g'),
+          `$1 ${chalk.magenta('$2')}`,
+        )
 
-        .replace(/(\[options\.*\])/g, chalk.cyan('$1'))
-        .replace(
+        .replaceAll(/(\[options\.*\])/g, chalk.cyan('$1'))
+        .replaceAll(
           /([^a-zA-Z0-9-])(-[a-zA-Z0-9]([a-zA-Z0-9]|\n[ \t]*)*)/g,
           `$1${chalk.cyanBright('$2')}`,
         )
-        .replace(
+        .replaceAll(
           /(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+) ((?:[^ -])[^"][^ \n]*|"(?:[^"\\]|\\.)*")/g,
           `$1 ${chalk.underline('$3')}`,
         )
-        .replace(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
-        .replace(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
+        .replaceAll(/(--[a-zA-Z0-9][a-zA-Z0-9-]+(\n[ \t]+)?[a-zA-Z0-9-]+)/g, chalk.cyan('$1'))
+        .replaceAll(/(<[a-zA-Z]+>)/g, chalk.blue('$1'))
 
-        .replace(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))
-        .replace(/(\[default: ([^[\]]+(\[[^\]]+\])?)*\])/g, chalk.green('$1'))
-        .replace(/(\[required\])/g, chalk.red('$1'))
+        .replaceAll(/(\[(array|boolean|count|number|string)\])/g, chalk.grey('$1'))
+        .replaceAll(/(\[default: ([^[\]]+(\[[^\]]+\])?)*\])/g, chalk.green('$1'))
+        .replaceAll(/(\[required\])/g, chalk.red('$1'))
 
-        .replace(/(\{[a-zA-Z]+\})/g, chalk.yellow('$1'))
+        .replaceAll(/(\{[a-zA-Z]+\})/g, chalk.yellow('$1'))
 
-        .replace(new RegExp(` (${Package.NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
+        .replaceAll(new RegExp(` (${Package.NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
     );
   }
 

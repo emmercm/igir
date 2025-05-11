@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 
 # shellcheck disable=SC2064
 trap "cd \"${PWD}\"" EXIT
@@ -21,14 +21,17 @@ parent_find() {
 }
 
 cd "$(parent_find . "package.json")"
+npm run build
+cd dist
+# Note: this will require `npm run build` to copy prebuilds
 
 test_igir() {
   echo "--------------------------------------------------"
   temp="$(mktemp -d)"
-  ./dist/index.js "$@" \
-    --dat test/fixtures/dats/* \
-    --input test/fixtures/roms/* \
-    --input-exclude test/fixtures/roms/discs/* \
+  ./index.js "$@" \
+    --dat "../test/fixtures/dats/" \
+    --input "../test/fixtures/roms/" \
+    --input-exclude "../test/fixtures/roms/discs/" \
     --output "${temp}" \
     -vvv
   ls -al "${temp}"/*

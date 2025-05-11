@@ -1,14 +1,17 @@
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
+import { Expose, plainToClassFromExist, Transform, Type } from 'class-transformer';
 
-import DAT from '../dat.js';
+import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
-import Machine from './machine.js';
+
+export interface MameDATProps extends DATProps {
+  machine?: Game | Game[];
+}
 
 /**
- * MAME-schema DAT that documents {@link Machine}s.
+ * MAME-schema DAT that documents {@link Game}s.
  */
-export default class MameDAT extends DAT {
+export default class MameDAT extends DAT implements MameDATProps {
   @Expose()
   private readonly build?: string;
 
@@ -19,21 +22,24 @@ export default class MameDAT extends DAT {
   // private readonly mameconfig: number = 0;
 
   @Expose()
-  @Type(() => Machine)
-  @Transform(({ value }: { value: undefined | Machine | Machine[] }) => value ?? [])
-  private readonly machine: Machine | Machine[];
+  @Type(() => Game)
+  @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
+  readonly machine?: Game | Game[];
 
-  constructor(machine?: Machine | Machine[]) {
-    super();
-    this.machine = machine ?? [];
+  constructor(props?: MameDATProps) {
+    super(props);
+    this.machine = props?.machine;
     this.generateGameNamesToParents();
   }
 
   /**
    * Construct a {@link DAT} from a generic object, such as one from reading an XML file.
    */
-  static fromObject(obj: object): MameDAT {
-    return plainToInstance(MameDAT, obj, {
+  static fromObject(obj: object, props?: DATProps): MameDAT {
+    // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
+    // not overwrite properties with a defined value
+    const dat = new MameDAT(props);
+    return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     }).generateGameNamesToParents();
@@ -46,9 +52,16 @@ export default class MameDAT extends DAT {
   }
 
   getGames(): Game[] {
+    if (this.machine === undefined) {
+      return [];
+    }
     if (Array.isArray(this.machine)) {
       return this.machine;
     }
     return [this.machine];
+  }
+
+  withGames(games: Game[]): DAT {
+    return new MameDAT({ ...this, machine: games });
   }
 }

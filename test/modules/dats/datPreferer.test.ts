@@ -13,7 +13,7 @@ const testGameWarlocked: Game[] = [
     name: 'Warlocked (USA)',
     description: 'Warlocked (USA)',
     release: new Release('Warlocked (USA)', 'USA'),
-    rom: new ROM({ name: 'Warlocked (USA).gbc', size: 2_097_152 }),
+    roms: new ROM({ name: 'Warlocked (USA).gbc', size: 2_097_152 }),
   }),
 ];
 
@@ -23,7 +23,7 @@ const testGameAdvanceWars: Game[] = [
     name: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (Europe) (En,Fr,De,Es)',
     release: new Release('Advance Wars (Europe) (En,Fr,De,Es)', 'EUR'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (Europe) (En,Fr,De,Es).gba',
       size: 8_388_608,
     }),
@@ -33,7 +33,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (USA)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (USA).gba',
       size: 4_194_304,
     }),
@@ -43,7 +43,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (USA) (Rev 1)',
     release: new Release('Advance Wars (USA) (Rev 1)', 'USA'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (USA) (Rev 1).gba',
       size: 4_194_304,
     }),
@@ -53,7 +53,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (USA) (Virtual Console)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (USA) (Virtual Console).gba',
       size: 4_194_304,
     }),
@@ -63,7 +63,7 @@ const testGameAdvanceWars: Game[] = [
     cloneOf: 'Advance Wars (Europe) (En,Fr,De,Es)',
     description: 'Advance Wars (Europe) (En,Fr,De,Es) (Virtual Console)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Advance Wars (Europe) (En,Fr,De,Es) (Virtual Console).gba',
       size: 8_388_608,
     }),
@@ -76,7 +76,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
     name: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     description: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     release: new Release('Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)', 'EUR'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1).gba',
       size: 8_388_608,
     }),
@@ -86,7 +86,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
     cloneOf: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     description: 'Dave Mirra Freestyle BMX 2 (USA)',
     release: new Release('Dave Mirra Freestyle BMX 2 (USA)', 'USA'),
-    rom: new ROM({
+    roms: new ROM({
       name: 'Dave Mirra Freestyle BMX 2 (USA).gba',
       size: 8_388_608,
     }),
@@ -96,7 +96,7 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
     cloneOf: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
     description: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It)',
     // No release
-    rom: new ROM({
+    roms: new ROM({
       name: 'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It).gba',
       size: 8_388_608,
     }),
@@ -105,29 +105,27 @@ const testGameDaveMirraFreestyleBmx2: Game[] = [
 
 test.each([[true], [false]])('should return nothing with no parents, single: %s', (single) => {
   const options = new Options({ single });
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(preferredDat.getGames()).toHaveLength(0);
 });
 
 it('should do nothing when not applying 1G1R', () => {
   const options = new Options({ single: false });
-  const dat = new LogiqxDAT(new Header(), [
-    ...testGameWarlocked,
-    ...testGameAdvanceWars,
-    ...testGameDaveMirraFreestyleBmx2,
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [...testGameWarlocked, ...testGameAdvanceWars, ...testGameDaveMirraFreestyleBmx2],
+  });
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(preferredDat.getGames()).toEqual(dat.getGames());
 });
 
 it('should return the parent when no other options given', () => {
   const options = new Options({ single: true });
-  const dat = new LogiqxDAT(new Header(), [
-    ...testGameWarlocked,
-    ...testGameAdvanceWars,
-    ...testGameDaveMirraFreestyleBmx2,
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [...testGameWarlocked, ...testGameAdvanceWars, ...testGameDaveMirraFreestyleBmx2],
+  });
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
     'Warlocked (USA)',
@@ -139,7 +137,7 @@ it('should return the parent when no other options given', () => {
 describe('game name regex', () => {
   it('should return the parent when no game matches', () => {
     const options = new Options({ single: true, preferGameRegex: 'ABCDEFG' });
-    const dat = new LogiqxDAT(new Header(), testGameAdvanceWars);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       testGameAdvanceWars[0].getName(),
@@ -148,14 +146,14 @@ describe('game name regex', () => {
 
   it('should prefer with case sensitivity', () => {
     const options = new Options({ single: true, preferGameRegex: '/usa/i' });
-    const dat = new LogiqxDAT(new Header(), testGameAdvanceWars);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual(['Advance Wars (USA)']);
   });
 
   it('should prefer without case sensitivity', () => {
     const options = new Options({ single: true, preferGameRegex: 'Virtual' });
-    const dat = new LogiqxDAT(new Header(), testGameAdvanceWars);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       'Advance Wars (USA) (Virtual Console)',
@@ -166,7 +164,7 @@ describe('game name regex', () => {
 describe('ROM name regex', () => {
   it('should return the parent when no game matches', () => {
     const options = new Options({ single: true, preferRomRegex: 'ABCDEFG' });
-    const dat = new LogiqxDAT(new Header(), testGameAdvanceWars);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       testGameAdvanceWars[0].getName(),
@@ -175,14 +173,14 @@ describe('ROM name regex', () => {
 
   it('should prefer with case sensitivity', () => {
     const options = new Options({ single: true, preferRomRegex: '/usa/i' });
-    const dat = new LogiqxDAT(new Header(), testGameAdvanceWars);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual(['Advance Wars (USA)']);
   });
 
   it('should prefer without case sensitivity', () => {
     const options = new Options({ single: true, preferRomRegex: 'Virtual' });
-    const dat = new LogiqxDAT(new Header(), testGameAdvanceWars);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       'Advance Wars (USA) (Virtual Console)',
@@ -192,17 +190,20 @@ describe('ROM name regex', () => {
 
 it('should prefer verified games', () => {
   const options = new Options({ single: true, preferVerified: true });
-  const datWithoutParents = new LogiqxDAT(new Header(), [
-    new Game({ name: 'Chu Chu Rocket (J) (M5) [f1]' }),
-    new Game({ name: 'Chu Chu Rocket (J) (M5) [f2]' }),
-    new Game({ name: 'Chu Chu Rocket (J) (M5) [f3]' }),
-    new Game({ name: 'Chu Chu Rocket (U) (M5) [f1]' }),
-    new Game({ name: 'Chu Chu Rocket (U) (M5) [f2]' }),
-    // Verified games are last
-    new Game({ name: 'Chu Chu Rocket (E) (M5) [!]' }),
-    new Game({ name: 'Chu Chu Rocket (J) (M5) [!]' }),
-    new Game({ name: 'Chu Chu Rocket (U) (M5) [!]' }),
-  ]);
+  const datWithoutParents = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      new Game({ name: 'Chu Chu Rocket (J) (M5) [f1]' }),
+      new Game({ name: 'Chu Chu Rocket (J) (M5) [f2]' }),
+      new Game({ name: 'Chu Chu Rocket (J) (M5) [f3]' }),
+      new Game({ name: 'Chu Chu Rocket (U) (M5) [f1]' }),
+      new Game({ name: 'Chu Chu Rocket (U) (M5) [f2]' }),
+      // Verified games are last
+      new Game({ name: 'Chu Chu Rocket (E) (M5) [!]' }),
+      new Game({ name: 'Chu Chu Rocket (J) (M5) [!]' }),
+      new Game({ name: 'Chu Chu Rocket (U) (M5) [!]' }),
+    ],
+  });
   const dat = new DATParentInferrer(options, new ProgressBarFake()).infer(datWithoutParents);
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
@@ -212,16 +213,19 @@ it('should prefer verified games', () => {
 
 it('should prefer "good" games', () => {
   const options = new Options({ single: true, preferVerified: true });
-  const datWithoutParents = new LogiqxDAT(new Header(), [
-    new Game({ name: 'Ballblazer (J) [b1]' }),
-    new Game({ name: 'Ballblazer (J) [b1][o1]' }),
-    new Game({ name: 'Ballblazer (J) [b1][o2]' }),
-    new Game({ name: 'Ballblazer (J) [b1][o3]' }),
-    new Game({ name: 'Ballblazer (J) [b2]' }),
-    new Game({ name: 'Ballblazer (J) [b3]' }),
-    // Good games are last
-    new Game({ name: 'Ballblazer (J) [!]' }),
-  ]);
+  const datWithoutParents = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      new Game({ name: 'Ballblazer (J) [b1]' }),
+      new Game({ name: 'Ballblazer (J) [b1][o1]' }),
+      new Game({ name: 'Ballblazer (J) [b1][o2]' }),
+      new Game({ name: 'Ballblazer (J) [b1][o3]' }),
+      new Game({ name: 'Ballblazer (J) [b2]' }),
+      new Game({ name: 'Ballblazer (J) [b3]' }),
+      // Good games are last
+      new Game({ name: 'Ballblazer (J) [!]' }),
+    ],
+  });
   const dat = new DATParentInferrer(options, new ProgressBarFake()).infer(datWithoutParents);
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(preferredDat.getGames().map((game) => game.getName())).toEqual(['Ballblazer (J) [!]']);
@@ -248,7 +252,7 @@ describe('prefer languages', () => {
     new Game({ name: 'Hexen (Japan)' }),
     new Game({ name: 'Hexen (USA)' }),
   ];
-  const datWithoutParents = new LogiqxDAT(new Header(), languageGames);
+  const datWithoutParents = new LogiqxDAT({ header: new Header(), games: languageGames });
   const dat = new DATParentInferrer(new Options(), new ProgressBarFake()).infer(datWithoutParents);
 
   it('should prefer a single language', () => {
@@ -307,7 +311,7 @@ describe('prefer regions', () => {
     new Game({ name: 'StarCraft 64 (USA) (Beta)' }),
     new Game({ name: 'StarCraft 64 (Germany) (Proto)' }),
   ];
-  const datWithoutParents = new LogiqxDAT(new Header(), regionGames);
+  const datWithoutParents = new LogiqxDAT({ header: new Header(), games: regionGames });
   const dat = new DATParentInferrer(new Options(), new ProgressBarFake()).infer(datWithoutParents);
 
   it('should prefer a single region', () => {
@@ -470,7 +474,7 @@ describe('revisions', () => {
       cloneOf: 'Super Metroid (Europe) (En,Fr,De)',
     }),
   ];
-  const dat = new LogiqxDAT(new Header(), revisionGames);
+  const dat = new LogiqxDAT({ header: new Header(), games: revisionGames });
 
   it('should prefer newer revisions', () => {
     const options = new Options({
@@ -545,7 +549,7 @@ it('should prefer "retail" games', () => {
     // Game with a hacked version
     // Game with a trainer version
   ];
-  const datWithoutParents = new LogiqxDAT(new Header(), games);
+  const datWithoutParents = new LogiqxDAT({ header: new Header(), games });
   const dat = new DATParentInferrer(options, new ProgressBarFake()).infer(datWithoutParents);
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
@@ -557,10 +561,14 @@ it('should prefer "retail" games', () => {
 
 it('should prefer parents', () => {
   const options = new Options({ single: true });
-  const dat = new LogiqxDAT(
-    new Header(),
-    [...testGameWarlocked, ...testGameAdvanceWars, ...testGameDaveMirraFreestyleBmx2].reverse(),
-  );
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      ...testGameWarlocked,
+      ...testGameAdvanceWars,
+      ...testGameDaveMirraFreestyleBmx2,
+    ].reverse(),
+  });
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(
     preferredDat
@@ -583,7 +591,7 @@ describe('preference combinations', () => {
       preferRegion: ['GER', 'USA', 'EUR'],
       single: true,
     });
-    const dat = new LogiqxDAT(new Header(), testGameAdvanceWars);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameAdvanceWars });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       'Advance Wars (Europe) (En,Fr,De,Es)',
@@ -598,7 +606,7 @@ describe('preference combinations', () => {
       preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
       single: true,
     });
-    const dat = new LogiqxDAT(new Header(), testGameDaveMirraFreestyleBmx2);
+    const dat = new LogiqxDAT({ header: new Header(), games: testGameDaveMirraFreestyleBmx2 });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       'Dave Mirra Freestyle BMX 2 (Europe) (En,Fr,De,Es,It) (Rev 1)',
@@ -612,27 +620,33 @@ describe('preference combinations', () => {
       preferRevision: PreferRevisionInverted[PreferRevision.NEWER].toLowerCase(),
       preferRegion: ['USA'],
     });
-    const dat = new LogiqxDAT(new Header(), [
-      new Game({
-        name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
-        description: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
-        release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
-        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced).gb', size: 131_072 }),
-      }),
-      new Game({
-        name: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
-        cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
-        description: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
-        rom: new ROM({ name: 'Tetris 2 (USA, Europe) (SGB Enhanced).gb', size: 131_072 }),
-      }),
-      new Game({
-        name: 'Tetris 2 (USA)',
-        cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
-        description: 'Tetris 2 (USA)',
-        release: new Release('Tetris 2 (USA)', 'USA'),
-        rom: new ROM({ name: 'Tetris 2 (USA).gb', size: 131_072 }),
-      }),
-    ]);
+    const dat = new LogiqxDAT({
+      header: new Header(),
+      games: [
+        new Game({
+          name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+          description: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+          release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
+          roms: new ROM({
+            name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced).gb',
+            size: 131_072,
+          }),
+        }),
+        new Game({
+          name: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
+          cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+          description: 'Tetris 2 (USA, Europe) (SGB Enhanced)',
+          roms: new ROM({ name: 'Tetris 2 (USA, Europe) (SGB Enhanced).gb', size: 131_072 }),
+        }),
+        new Game({
+          name: 'Tetris 2 (USA)',
+          cloneOf: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+          description: 'Tetris 2 (USA)',
+          release: new Release('Tetris 2 (USA)', 'USA'),
+          roms: new ROM({ name: 'Tetris 2 (USA).gb', size: 131_072 }),
+        }),
+      ],
+    });
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',

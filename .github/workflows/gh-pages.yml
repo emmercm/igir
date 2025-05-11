@@ -26,6 +26,7 @@ concurrency:
 
 env:
   ref: ${{ inputs.ref || github.ref }}
+  cache_version: v2
 
 jobs:
   path-filter:
@@ -78,13 +79,13 @@ jobs:
             README.md
       - uses: actions/cache/restore@v4
         with:
-          key: ${{ env.ref }}
+          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           restore-keys: |
-            refs/heads/main
+            mkdocs-v2-refs/heads/main
           path: .cache
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.13.2
+          python-version: 3.x
       - run: |
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
@@ -93,7 +94,7 @@ jobs:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
       - uses: actions/cache@v4
         with:
-          key: ${{ env.ref }}
+          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
 
   # !!! This check should be required by GitHub !!!
@@ -130,15 +131,11 @@ jobs:
             README.md
       - uses: actions/cache/restore@v4
         with:
-          key: ${{ env.ref }}
+          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.13.2
-      - uses: actions/cache@v4
-        with:
-          key: ${{ env.ref }}
-          path: .cache
+          python-version: 3.x
       - run: |
           pip install --requirement docs/requirements.txt
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
@@ -147,5 +144,5 @@ jobs:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
       - uses: actions/cache@v4
         with:
-          key: ${{ env.ref }}
+          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache

@@ -1,14 +1,18 @@
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
+import { Expose, plainToClassFromExist, Transform, Type } from 'class-transformer';
 
-import DAT from '../dat.js';
+import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
 import Software from './software.js';
 
+export interface SoftwareListDATProps extends DATProps {
+  software?: Software | Software[];
+}
+
 /**
  * MAME-schema DAT that documents {@link Software}s.
  */
-export default class SoftwareListDAT extends DAT {
+export default class SoftwareListDAT extends DAT implements SoftwareListDATProps {
   @Expose()
   readonly name?: string;
 
@@ -18,19 +22,23 @@ export default class SoftwareListDAT extends DAT {
   @Expose()
   @Type(() => Software)
   @Transform(({ value }: { value: undefined | Software | Software[] }) => value ?? [])
-  readonly software: Software | Software[];
+  readonly software?: Software | Software[];
 
-  constructor(software: Software | Software[]) {
-    super();
-    this.software = software;
+  constructor(props?: SoftwareListDATProps) {
+    super(props);
+    this.software = props?.software;
+    this.generateGameNamesToParents();
   }
 
   /**
    * Construct a {@link SoftwareListDAT} from a generic object, such as one from reading an XML
    * file.
    */
-  static fromObject(obj: object): SoftwareListDAT {
-    return plainToInstance(SoftwareListDAT, obj, {
+  static fromObject(obj: object, props?: DATProps): SoftwareListDAT {
+    // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
+    // not overwrite properties with a defined value
+    const dat = new SoftwareListDAT(props);
+    return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     }).generateGameNamesToParents();
@@ -44,9 +52,16 @@ export default class SoftwareListDAT extends DAT {
   }
 
   getGames(): Game[] {
+    if (this.software === undefined) {
+      return [];
+    }
     if (Array.isArray(this.software)) {
       return this.software;
     }
     return [this.software];
+  }
+
+  withGames(games: Game[]): DAT {
+    return new SoftwareListDAT({ ...this, software: games });
   }
 }

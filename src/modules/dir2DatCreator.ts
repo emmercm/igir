@@ -45,10 +45,10 @@ export default class Dir2DatCreator extends Module {
      */
     const gamesToCandidates = candidates.reduce((map, candidate) => {
       const key = candidate.getGame();
-      if (!map.has(key)) {
-        map.set(key, [candidate]);
-      } else {
+      if (map.has(key)) {
         map.get(key)?.push(candidate);
+      } else {
+        map.set(key, [candidate]);
       }
       return map;
     }, new Map<Game, WriteCandidate[]>());
@@ -57,7 +57,7 @@ export default class Dir2DatCreator extends Module {
         .at(0)
         ?.getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getRom());
-      return game.withProps({ rom: roms });
+      return game.withProps({ roms: roms });
     });
 
     const dir2datDir = this.options.getDir2DatOutput();
@@ -67,7 +67,7 @@ export default class Dir2DatCreator extends Module {
 
     // Construct a new DAT and write it to the output dir
     const header = new IgirHeader('dir2dat', dat, this.options);
-    const dir2dat = new LogiqxDAT(header, gamesFromCandidates);
+    const dir2dat = new LogiqxDAT({ header, games: gamesFromCandidates });
     const dir2datContents = dir2dat.toXmlDat();
     const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
     this.progressBar.logInfo(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);

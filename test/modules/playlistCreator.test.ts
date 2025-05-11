@@ -10,6 +10,7 @@ import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
+import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import Options from '../../src/types/options.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import WriteCandidate from '../../src/types/writeCandidate.js';
@@ -19,7 +20,7 @@ const games: Game[] = [
   // Redump - single disc cue/bin
   new Game({
     name: 'Steel Reign (USA)',
-    rom: [
+    roms: [
       new ROM({ name: 'Steel Reign (USA).cue', size: 981, crc32: '3c9c6740' }),
       new ROM({ name: 'Steel Reign (USA) (Track 1).bin', size: 322_496_832, crc32: '6e335bb0' }),
       new ROM({ name: 'Steel Reign (USA) (Track 2).bin', size: 65_206_848, crc32: '0c8df541' }),
@@ -35,7 +36,7 @@ const games: Game[] = [
   // Redump - multi-disc cue/bin
   new Game({
     name: 'Final Fantasy VII (USA) (Disc 1)',
-    rom: [
+    roms: [
       new ROM({ name: 'Final Fantasy VII (USA) (Disc 1).cue', size: 98, crc32: '07a7324d' }),
       new ROM({
         name: 'Final Fantasy VII (USA) (Disc 1).bin',
@@ -46,7 +47,7 @@ const games: Game[] = [
   }),
   new Game({
     name: 'Final Fantasy VII (USA) (Disc 2)',
-    rom: [
+    roms: [
       new ROM({ name: 'Final Fantasy VII (USA) (Disc 2).cue', size: 98, crc32: '06fa149c' }),
       new ROM({
         name: 'Final Fantasy VII (USA) (Disc 2).bin',
@@ -57,7 +58,7 @@ const games: Game[] = [
   }),
   new Game({
     name: 'Final Fantasy VII (USA) (Disc 3)',
-    rom: [
+    roms: [
       new ROM({ name: 'Final Fantasy VII (USA) (Disc 3).cue', size: 98, crc32: 'b0e1f4ec' }),
       new ROM({
         name: 'Final Fantasy VII (USA) (Disc 3).bin',
@@ -69,7 +70,7 @@ const games: Game[] = [
   // Redump - multi-disc cue/bin (out of order)
   new Game({
     name: 'Panzer Dragoon Saga (USA) (Disc 2)',
-    rom: [
+    roms: [
       new ROM({ name: 'Panzer Dragoon Saga (USA) (Disc 2).cue', size: 366, crc32: '6c63097d' }),
       new ROM({
         name: 'Panzer Dragoon Saga (USA) (Disc 2) (Track 1).bin',
@@ -90,7 +91,7 @@ const games: Game[] = [
   }),
   new Game({
     name: 'Panzer Dragoon Saga (USA) (Disc 4)',
-    rom: [
+    roms: [
       new ROM({ name: 'Panzer Dragoon Saga (USA) (Disc 4).cue', size: 494, crc32: 'fb78c667' }),
       new ROM({
         name: 'Panzer Dragoon Saga (USA) (Disc 4) (Track 1).bin',
@@ -116,7 +117,7 @@ const games: Game[] = [
   }),
   new Game({
     name: 'Panzer Dragoon Saga (USA) (Disc 1)',
-    rom: [
+    roms: [
       new ROM({ name: 'Panzer Dragoon Saga (USA) (Disc 1).cue', size: 366, crc32: 'd60ab132' }),
       new ROM({
         name: 'Panzer Dragoon Saga (USA) (Disc 1) (Track 1).bin',
@@ -137,7 +138,7 @@ const games: Game[] = [
   }),
   new Game({
     name: 'Panzer Dragoon Saga (USA) (Disc 3)',
-    rom: [
+    roms: [
       new ROM({ name: 'Panzer Dragoon Saga (USA) (Disc 3).cue', size: 366, crc32: '05bb9eb8' }),
       new ROM({
         name: 'Panzer Dragoon Saga (USA) (Disc 3) (Track 1).bin',
@@ -159,7 +160,7 @@ const games: Game[] = [
   // TOSEC - single disc gdi/bin/raw
   new Game({
     name: 'Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial]',
-    rom: [
+    roms: [
       new ROM({
         name: 'Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial].gdi',
         size: 89,
@@ -173,7 +174,7 @@ const games: Game[] = [
   // TOSEC - multi-disc gdi/bin/raw
   new Game({
     name: 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!]',
-    rom: [
+    roms: [
       new ROM({
         name: 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].gdi',
         size: 87,
@@ -186,7 +187,7 @@ const games: Game[] = [
   }),
   new Game({
     name: 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!]',
-    rom: [
+    roms: [
       new ROM({
         name: 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].gdi',
         size: 87,
@@ -200,7 +201,7 @@ const games: Game[] = [
   // TOSEC - multi-disc gdi/bin/raw
   new Game({
     name: 'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]',
-    rom: [
+    roms: [
       new ROM({
         name: 'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].gdi',
         size: 87,
@@ -213,7 +214,7 @@ const games: Game[] = [
   }),
   new Game({
     name: 'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]',
-    rom: [
+    roms: [
       new ROM({
         name: 'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].gdi',
         size: 87,
@@ -226,13 +227,13 @@ const games: Game[] = [
   }),
 ];
 
-const dat = new LogiqxDAT(new Header(), games);
+const dat = new LogiqxDAT({ header: new Header(), games });
 
 async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
   return Promise.all(
     dat.getGames().map(async (game) => {
       return new WriteCandidate(
-        game,
+        new SingleValueGame({ ...game }),
         await Promise.all(
           game.getRoms().map(async (rom) => {
             const file = await rom.toFile();

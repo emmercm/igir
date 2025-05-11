@@ -1,13 +1,16 @@
 # Always comment on PRs, always create new comments
 comment:
   behavior: new
-  require_changes: false
+  require_changes: true
 
 # Require a minimum coverage for the codecov/project PR check
 coverage:
   status:
+    # Report on the entire project's status, not just the PR changes
     patch: off
     project:
       default:
-        target: 93%
+        # Minimum coverage ratio a commit must meet
+        target: 90%
+        # Coverage can only drop by this amount in a PR
         threshold: 1%

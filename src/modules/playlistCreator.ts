@@ -116,22 +116,21 @@ export default class PlaylistCreator extends Module {
     this.progressBar.incrementProgress();
 
     const commonDirectory = PlaylistCreator.getCommonDirectory(playlistFiles);
-    const playlistLines =
-      playlistFiles
-        .map((file) =>
-          file
-            .getFilePath()
-            .slice(commonDirectory.length)
-            .replace(/^[\\/]/, '')
-            .replace(/[\\/]/g, '/'),
-        )
-        .sort()
-        .join('\n') + '\n';
+    const playlistLines = `${playlistFiles
+      .map((file) =>
+        file
+          .getFilePath()
+          .slice(commonDirectory.length)
+          .replace(/^[\\/]/, '')
+          .replaceAll(/[\\/]/g, '/'),
+      )
+      .sort()
+      .join('\n')}\n`;
 
     if (!(await FsPoly.exists(commonDirectory))) {
       await FsPoly.mkdir(commonDirectory, { recursive: true });
     }
-    const playlistLocation = path.join(commonDirectory, playlistBasename + '.m3u');
+    const playlistLocation = path.join(commonDirectory, `${playlistBasename}.m3u`);
     this.progressBar.logInfo(`${dat.getName()}: creating playlist '${playlistLocation}'`);
     await FsPoly.writeFile(playlistLocation, playlistLines);
     return playlistLocation;

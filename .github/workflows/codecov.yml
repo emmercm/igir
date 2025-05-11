@@ -30,11 +30,14 @@ jobs:
     needs:
       - codecov-lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       # Setup and install
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
       - uses: volta-cli/action@v4
-      - run: npm ci
+      - run: npm ci --foreground-scripts
       - run: |
           sudo apt-get update
           sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0

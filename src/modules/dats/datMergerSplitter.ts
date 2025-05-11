@@ -2,8 +2,6 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
-import Machine from '../../types/dats/mame/machine.js';
 import Parent from '../../types/dats/parent.js';
 import ROM from '../../types/dats/rom.js';
 import Options, { MergeMode } from '../../types/options.js';
@@ -44,7 +42,7 @@ export default class DATMergerSplitter extends Module {
     }, new Map<string, Game>());
 
     this.progressBar.logTrace(
-      `${dat.getName()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
     this.progressBar.reset(dat.getGames().length);
@@ -52,9 +50,9 @@ export default class DATMergerSplitter extends Module {
     const newGames = dat
       .getParents()
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
-    const newDat = new LogiqxDAT(dat.getHeader(), newGames);
+    const newDat = dat.withGames(newGames);
     this.progressBar.logTrace(
-      `${newDat.getName()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length !== 1 ? 's' : ''}`,
+      `${newDat.getName()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${newDat.getName()}: done merging & splitting`);
@@ -67,14 +65,14 @@ export default class DATMergerSplitter extends Module {
     // Sanitization
     games = games.map((game) =>
       game.withProps({
-        rom: game
+        roms: game
           .getRoms()
           // Get rid of ROMs that haven't been dumped yet
           .filter((rom) => rom.getStatus() !== 'nodump')
           // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
           // name, size, and checksum but with a different "region" (e.g. neogeo).
           .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
-        disk: game
+        disks: game
           .getDisks()
           // Get rid of ROMs that haven't been dumped yet
           .filter((disk) => disk.getStatus() !== 'nodump'),
@@ -83,12 +81,9 @@ export default class DATMergerSplitter extends Module {
 
     // 'full' types expect device ROMs to be included
     if (this.options.getMergeRoms() === MergeMode.FULLNONMERGED) {
-      games = games.map((game) => {
-        if (!(game instanceof Machine)) {
-          return game;
-        }
-        return game.withProps({
-          rom: [
+      games = games.map((game) =>
+        game.withProps({
+          roms: [
             ...game
               .getDeviceRefs()
               // De-duplicate DeviceRef names
@@ -102,8 +97,8 @@ export default class DATMergerSplitter extends Module {
               ),
             ...game.getRoms(),
           ],
-        });
-      });
+        }),
+      );
     }
 
     // Non-'full' types expect BIOS files to be in their own set
@@ -128,12 +123,12 @@ export default class DATMergerSplitter extends Module {
         // the child.
         if (!biosGame.getIsBios()) {
           biosGame = biosGame.withProps({
-            rom: biosGame.getRoms().filter((rom) => rom.getBios() !== undefined),
+            roms: biosGame.getRoms().filter((rom) => rom.getBios() !== undefined),
           });
         }
 
         return game.withProps({
-          rom: DATMergerSplitter.diffGameRoms(biosGame.getRoms(), game.getRoms()),
+          roms: DATMergerSplitter.diffGameRoms(biosGame.getRoms(), game.getRoms()),
         });
       });
     }
@@ -160,8 +155,8 @@ export default class DATMergerSplitter extends Module {
         }
 
         return game.withProps({
-          rom: DATMergerSplitter.diffGameRoms(parentGame.getRoms(), game.getRoms()),
-          disk: DATMergerSplitter.diffGameRoms(parentGame.getDisks(), game.getDisks()),
+          roms: DATMergerSplitter.diffGameRoms(parentGame.getRoms(), game.getRoms()),
+          disks: DATMergerSplitter.diffGameRoms(parentGame.getDisks(), game.getDisks()),
         });
       });
     }
@@ -193,9 +188,9 @@ export default class DATMergerSplitter extends Module {
       ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()),
     );
     return [
-      new Machine({
+      new Game({
         ...parentGame,
-        rom: allRomsDeduplicated,
+        roms: allRomsDeduplicated,
       }),
     ];
   }

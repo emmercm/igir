@@ -1,12 +1,14 @@
+import Logger from '../../src/console/logger.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import DAT from '../../src/types/dats/dat.js';
-import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../../src/types/dats/release.js';
 import ROM from '../../src/types/dats/rom.js';
+import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import FileCache from '../../src/types/files/fileCache.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
@@ -14,24 +16,27 @@ import ROMWithFiles from '../../src/types/romWithFiles.js';
 import WriteCandidate from '../../src/types/writeCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-const gameWithNoRoms = new Game({
+const gameWithNoRoms = new SingleValueGame({
   name: 'game with no ROMs',
 });
-const gameWithOneRom = new Game({
+const gameWithOneRom = new SingleValueGame({
   name: 'game with one ROM',
-  rom: new ROM({ name: 'one.rom', size: 1, crc32: '12345678' }),
+  roms: new ROM({ name: 'one.rom', size: 1, crc32: '12345678' }),
   release: [new Release('game with one ROM', 'USA'), new Release('game with one ROM', 'EUR')],
 });
-const gameWithTwoRoms = new Game({
+const gameWithTwoRoms = new SingleValueGame({
   name: 'game with two ROMs',
-  rom: [
+  roms: [
     new ROM({ name: 'two.a', size: 2, crc32: 'abcdef90' }),
     new ROM({ name: 'two.b', size: 3, crc32: '09876543' }),
   ],
 });
-const dat = new LogiqxDAT(new Header(), [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms]);
+const dat = new LogiqxDAT({
+  header: new Header(),
+  games: [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms],
+});
 
-async function generateCandidates(games: Game[]): Promise<WriteCandidate[]> {
+async function generateCandidates(games: SingleValueGame[]): Promise<WriteCandidate[]> {
   return Promise.all(
     games.map(
       async (game) =>
@@ -69,7 +74,7 @@ async function runFixdatCreator(
           dat: [fixdatPath],
         }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache()),
+        new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
       ).scan()
     )[0];
   } finally {

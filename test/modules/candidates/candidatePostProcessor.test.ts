@@ -1,10 +1,10 @@
 import path from 'node:path';
 
 import CandidatePostProcessor from '../../../src/modules/candidates/candidatePostProcessor.js';
-import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/types/dats/rom.js';
+import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
@@ -20,30 +20,30 @@ const singleRomGames = [
   'Brilliant',
 ].map(
   (name) =>
-    new Game({
+    new SingleValueGame({
       name,
-      rom: new ROM({ name: `${name}.rom`, size: 0, crc32: '00000000' }),
+      roms: new ROM({ name: `${name}.rom`, size: 0, crc32: '00000000' }),
     }),
 );
 const subDirRomGames = ['Cheerful', 'Confident', 'Cool'].map(
   (name) =>
-    new Game({
+    new SingleValueGame({
       name,
-      rom: new ROM({ name: `disk1\\${name}.rom`, size: 0, crc32: '00000000' }),
+      roms: new ROM({ name: `disk1\\${name}.rom`, size: 0, crc32: '00000000' }),
     }),
 );
 const multiRomGames = ['Dainty', 'Daring', 'Dazzling', 'Dedicated'].map(
   (name) =>
-    new Game({
+    new SingleValueGame({
       name,
-      rom: [
+      roms: [
         new ROM({ name: `${name}.cue`, size: 0, crc32: '00000000' }),
         new ROM({ name: `${name} (Track 01).bin`, size: 0, crc32: '00000000' }),
       ],
     }),
 );
 const games = [...singleRomGames, ...subDirRomGames, ...multiRomGames];
-const dat = new LogiqxDAT(new Header(), games);
+const dat = new LogiqxDAT({ header: new Header(), games });
 
 async function runCandidatePostProcessor(options: Options): Promise<WriteCandidate[]> {
   const candidates = await Promise.all(

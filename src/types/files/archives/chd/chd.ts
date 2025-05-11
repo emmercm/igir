@@ -154,7 +154,7 @@ export default class Chd extends Archive {
           this.tempSingletonFilePath,
           (await util.promisify(fs.readFile)(this.tempSingletonFilePath))
             .toString()
-            .replace(/\r?\n/g, '\r\n'),
+            .replaceAll(/\r?\n/g, '\r\n'),
         );
       } else if (info.type === CHDType.DVD_ROM) {
         await chdman.extractDvd({
@@ -174,13 +174,16 @@ export default class Chd extends Archive {
     });
 
     const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
-    let filePath = this.tempSingletonFilePath!;
+    if (this.tempSingletonFilePath === undefined || this.tempSingletonDirPath === undefined) {
+      throw new Error('CHD singleton path is required (this should never happen!)');
+    }
+    let filePath = this.tempSingletonFilePath;
     if (
       extractedEntryPath &&
-      (await FsPoly.exists(path.join(this.tempSingletonDirPath!, extractedEntryPath)))
+      (await FsPoly.exists(path.join(this.tempSingletonDirPath, extractedEntryPath)))
     ) {
       // The entry path is the name of a real extracted file, use that
-      filePath = path.join(this.tempSingletonDirPath!, extractedEntryPath);
+      filePath = path.join(this.tempSingletonDirPath, extractedEntryPath);
     }
 
     // Parse the entry path for any extra start/stop parameters
@@ -202,8 +205,8 @@ export default class Chd extends Archive {
       setTimeout(async () => {
         await this.tempSingletonMutex.runExclusive(async () => {
           this.tempSingletonHandles -= 1;
-          if (this.tempSingletonHandles <= 0) {
-            await FsPoly.rm(this.tempSingletonDirPath!, { recursive: true, force: true });
+          if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {
+            await FsPoly.rm(this.tempSingletonDirPath, { recursive: true, force: true });
             this.tempSingletonDirPath = undefined;
           }
         });

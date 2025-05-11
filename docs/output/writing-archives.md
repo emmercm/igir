@@ -6,9 +6,71 @@ Igir supports creating `.zip` archives with the `igir zip` [command](../commands
 
     It is intentional that Igir only supports `.zip` archives right now.
 
-    `.zip` archives store CRC32 information in their "central directory" which helps drastically speed up Igir's file scanning, and they are easy to create without proprietary tools (e.g. 7-Zip, Rar).
+    `.zip` archives store CRC32 information in their "central directory" which helps drastically speed up Igir's file scanning, and zip archives are easy to create without proprietary tools (e.g. 7-Zip, Rar).
 
 See the [reading archives](../input/reading-archives.md) page for more information on archive formats and their capabilities.
+
+## TorrentZip
+
+Igir adheres to the [TorrentZip](https://sourceforge.net/projects/trrntzip/) standard for zip files. This standard allows ROM managers to write byte-for-byte identical zip files given the same input files. Some technical details about the standard can be found on [RomVault's wiki](https://wiki.romvault.com/doku.php?id=torrentzip).
+
+TorrentZip is particularly useful with how the MAME community likes to distribute ROMs. Different MAME versions can have different sets of ROMs (which is what requires set ["rebuilding" or "fixing"](../usage/arcade.md#example-re-building-a-rom-set)). A person can take a set of ROMs for an old MAME version, rebuild them for the new MAME version, and then join a BitTorrent tracker and skip downloading the correct files they already have. TorrentZip's deterministic format means zip files themselves will have the same checksum every time.
+
+### RVZSTD
+
+The original TorrentZip format uses the widely supported [DEFLATE](https://en.wikipedia.org/wiki/Deflate) compression algorithm. Gordon J from RomVault has since extended the structured zip format to support [Zstandard ("Zstd")](https://en.wikipedia.org/wiki/Zstd) compression, which can compress files smaller than DEFLATE with less processing power.
+
+Although the zip format officially added support for Zstd compression in [June 2020](https://en.wikipedia.org/wiki/ZIP_(file_format)#Version_history), support among archive programs and OSes remains quite low. Igir uses the old DEFLATE algorithm by default, but you can instead switch to using RVZSTD with the option:
+
+```text
+--zip-format rvzstd
+```
+
+### Implications for testing
+
+When Igir [tests](../commands.md#test) written zip files, it will test to make sure they're valid a TorrentZip or RVSTD file, whichever was specified. This means that zip files that aren't of the expected structured format will be considered invalid, even if they contain all expected files. This isn't a problem for the `igir zip` command which will rewrite the zip as necessary, but it could be a problem if you have invalid zips in your input paths and omit the command.
+
+The [`--overwrite-invalid` option](options.md#overwriting-files) can help you convert your collection between different zip formats like this:
+
+=== ":fontawesome-brands-windows: Windows"
+
+    ```batch
+    igir move zip test ^
+      --dat "DATs\" ^
+      --input "ROMs\" ^
+      --output "ROMs\" ^
+      --dir-mirror ^
+      --zip-format <format> ^
+      --overwrite-invalid
+    ```
+
+=== ":fontawesome-brands-apple: macOS"
+
+    ```shell
+    igir move zip test \
+      --dat "DATs/" \
+      --input "ROMs/" \
+      --output "ROMs/" \
+      --dir-mirror \
+      --zip-format <format> \
+      --overwrite-invalid
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir move zip test \
+      --dat "DATs/" \
+      --input "ROMs/" \
+      --output "ROMs/" \
+      --dir-mirror \
+      --zip-format <format> \
+      --overwrite-invalid
+    ```
+
+!!! tip
+
+    You can test if zip files in input directories are valid TorrentZip archives without writing anything with the [`igir test` command](../commands.md#test).
 
 ## Example: zipping a ROM collection
 

@@ -63,6 +63,7 @@ When using [DATs](../dats/introduction.md), you can make use of console & game i
 - `{region}` each of the game's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 - `{language}` each of the game's language(s) (e.g. `EN`, `ES`, `JA`)
 - `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
+- `{category}` the game's "category" (only some DATs provide this)
 - `{genre}` the game's "genre" (most DATs don't provide this)
 
 ## File information
@@ -82,10 +83,10 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{batocera}` the [Batocera](../usage/desktop/batocera.md) emulator's directory for the ROM
 - `{es}` the [EmulationStation](../usage/desktop/emulationstation.md) emulator's directory for the ROM
 - `{funkeyos}` the [FunKey OS](../usage/handheld/funkeyos.md) emulator's directory for the ROM
-- `{minui}` the [MinUI](../usage/handheld/minui.md) emulator's directory for the ROM
-- `{miyoocfw}` the [MiyooCFW](../usage/handheld/miyoocfw.md) emulator's directory for the ROM
 - `{jelos}` the [JELOS](../usage/handheld/jelos.md) emulator's directory for the ROM
+- `{minui}` the [MinUI](../usage/handheld/minui.md) emulator's directory for the ROM
 - `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
+- `{miyoocfw}` the [MiyooCFW](../usage/handheld/miyoocfw.md) emulator's directory for the ROM
 - `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
 - `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
 - `{retrodeck}` the [RetroDECK](../usage/desktop/retrodeck.md) emulator's directory for the ROM

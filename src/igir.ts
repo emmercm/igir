@@ -110,7 +110,7 @@ export default class Igir {
         this.logger.trace('not using a file for the file cache');
       }
     }
-    const fileFactory = new FileFactory(fileCache);
+    const fileFactory = new FileFactory(fileCache, this.logger);
 
     // Scan and process input files
     let dats = await this.processDATScanner(fileFactory);
@@ -139,7 +139,7 @@ export default class Igir {
 
     // Process every DAT
     datProcessProgressBar.logTrace(
-      `processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`,
+      `processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
     );
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
       datProcessProgressBar.incrementProgress();
@@ -226,7 +226,7 @@ export default class Igir {
       datProcessProgressBar.incrementDone();
     });
     datProcessProgressBar.logTrace(
-      `done processing ${dats.length.toLocaleString()} DAT${dats.length !== 1 ? 's' : ''}`,
+      `done processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
     );
 
     datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');
@@ -528,7 +528,10 @@ export default class Igir {
           new CandidatePostProcessor(this.options, progressBar).process(dat, candidates),
         // Validate candidates
         (candidates): WriteCandidate[] => {
-          const invalidCandidates = new CandidateValidator(progressBar).validate(dat, candidates);
+          const invalidCandidates = new CandidateValidator(this.options, progressBar).validate(
+            dat,
+            candidates,
+          );
           if (invalidCandidates.length > 0) {
             // Return zero candidates if any candidates failed to validate
             return [];
@@ -570,7 +573,6 @@ export default class Igir {
               }),
               dat,
               candidate.getGame(),
-              undefined,
               romWithFiles.getRom(),
               romWithFiles.getInputFile(),
             ).dir,
@@ -589,7 +591,7 @@ export default class Igir {
     }
 
     const progressBar = this.logger.addProgressBar('Deleting moved files');
-    const deletedFilePaths = await new MovedROMDeleter(progressBar).delete(
+    const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
       rawRomFiles,
       movedRomsToDelete,
       datsToWrittenFiles,

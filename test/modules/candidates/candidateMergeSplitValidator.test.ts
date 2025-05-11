@@ -1,10 +1,11 @@
 import CandidateMergeSplitValidator from '../../../src/modules/candidates/candidateMergeSplitValidator.js';
 import DAT from '../../../src/types/dats/dat.js';
+import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
-import Machine from '../../../src/types/dats/mame/machine.js';
 import ROM from '../../../src/types/dats/rom.js';
+import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
 import File from '../../../src/types/files/file.js';
 import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
 import ROMWithFiles from '../../../src/types/romWithFiles.js';
@@ -15,29 +16,32 @@ async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
   const dummyFile = await File.fileOf({ filePath: '' });
   return dat.getGames().map((game) => {
     return new WriteCandidate(
-      game,
+      new SingleValueGame({ ...game }),
       game.getRoms().map((rom) => new ROMWithFiles(rom, dummyFile, dummyFile)),
     );
   });
 }
 
 describe('missing parents', () => {
-  const dat = new LogiqxDAT(new Header(), [
-    new Machine({
-      name: 'solo',
-      rom: new ROM(),
-    }),
-    new Machine({
-      name: 'parent',
-      cloneOf: 'grandparent',
-      rom: new ROM(),
-    }),
-    new Machine({
-      name: 'child',
-      cloneOf: 'parent',
-      rom: new ROM(),
-    }),
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      new Game({
+        name: 'solo',
+        roms: new ROM(),
+      }),
+      new Game({
+        name: 'parent',
+        cloneOf: 'grandparent',
+        roms: new ROM(),
+      }),
+      new Game({
+        name: 'child',
+        cloneOf: 'parent',
+        roms: new ROM(),
+      }),
+    ],
+  });
 
   test.each(
     Object.values(MergeMode)
@@ -69,25 +73,28 @@ describe('missing parents', () => {
 });
 
 describe('device refs', () => {
-  const dat = new LogiqxDAT(new Header(), [
-    new Machine({
-      name: 'game one',
-      rom: new ROM(),
-      // Invalid device ref, there is no machine of the same name
-      deviceRef: new DeviceRef('controller'),
-    }),
-    new Machine({
-      name: 'game two',
-      rom: new ROM(),
-      // Valid device ref, there is a machine of the same name
-      deviceRef: new DeviceRef('screen'),
-    }),
-    new Machine({
-      name: 'screen',
-      rom: new ROM(),
-      isDevice: 'yes',
-    }),
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [
+      new Game({
+        name: 'game one',
+        roms: new ROM(),
+        // Invalid device ref, there is no machine of the same name
+        deviceRef: new DeviceRef('controller'),
+      }),
+      new Game({
+        name: 'game two',
+        roms: new ROM(),
+        // Valid device ref, there is a machine of the same name
+        deviceRef: new DeviceRef('screen'),
+      }),
+      new Game({
+        name: 'screen',
+        roms: new ROM(),
+        isDevice: 'yes',
+      }),
+    ],
+  });
 
   it('should return no missing device refs for fullnonmerged sets', async () => {
     const options = new Options({

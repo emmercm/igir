@@ -11,9 +11,9 @@ const singleDiscGames: Game[] = [
   new Game({
     // PlayStation 1
     name: 'Metal Gear Solid - VR Missions (USA)',
-    category: 'Games',
+    categories: 'Games',
     description: 'Metal Gear Solid - VR Missions (USA)',
-    rom: [
+    roms: [
       new ROM({ name: 'Metal Gear Solid - VR Missions (USA).cue', size: 102, crc32: '7a5818df' }),
       new ROM({
         name: 'Metal Gear Solid - VR Missions (USA).bin',
@@ -25,9 +25,9 @@ const singleDiscGames: Game[] = [
   new Game({
     // Dreamcast
     name: 'Jet Grind Radio (USA)',
-    category: 'Games',
+    categories: 'Games',
     description: 'Gauntlet Legends (USA)',
-    rom: [
+    roms: [
       new ROM({ name: 'Jet Grind Radio (USA).cue', size: 357, crc32: '96f06d56' }),
       new ROM({ name: 'Jet Grind Radio (USA) (Track 1).bin', size: 1_425_312, crc32: 'af3d3ea0' }),
       new ROM({ name: 'Jet Grind Radio (USA) (Track 2).bin', size: 1_589_952, crc32: '8557fcaa' }),
@@ -43,7 +43,7 @@ const singleDiscGames: Game[] = [
     // Dreamcast
     name: 'Seaman v1.001 (2000)(Sega)(US)[!][req. microphone]',
     description: 'Seaman v1.001 (2000)(Sega)(US)[!][req. microphone]',
-    rom: [
+    roms: [
       new ROM({
         name: 'Seaman v1.001 (2000)(Sega)(US)[!][req. microphone].gdi',
         size: 88,
@@ -60,9 +60,9 @@ const multiDiscGames: Game[] = [
   // Redump
   new Game({
     name: 'Final Fantasy IX (USA) (Disc 1)',
-    category: 'Games',
+    categories: 'Games',
     description: 'Final Fantasy IX (USA) (Disc 1)',
-    rom: [
+    roms: [
       new ROM({ name: 'Final Fantasy IX (USA) (Disc 1).cue', size: 97, crc32: '141d342f' }),
       new ROM({
         name: 'Final Fantasy IX (USA) (Disc 1).bin',
@@ -73,9 +73,9 @@ const multiDiscGames: Game[] = [
   }),
   new Game({
     name: 'Final Fantasy IX (USA) (Disc 2)',
-    category: 'Games',
+    categories: 'Games',
     description: 'Final Fantasy IX (USA) (Disc 2)',
-    rom: [
+    roms: [
       new ROM({ name: 'Final Fantasy IX (USA) (Disc 2).cue', size: 97, crc32: '154012fe' }),
       new ROM({
         name: 'Final Fantasy IX (USA) (Disc 2).bin',
@@ -86,9 +86,9 @@ const multiDiscGames: Game[] = [
   }),
   new Game({
     name: 'Final Fantasy IX (USA) (Disc 3)',
-    category: 'Games',
+    categories: 'Games',
     description: 'Final Fantasy IX (USA) (Disc 3)',
-    rom: [
+    roms: [
       new ROM({ name: 'Final Fantasy IX (USA) (Disc 3).cue', size: 97, crc32: 'a35bf28e' }),
       new ROM({
         name: 'Final Fantasy IX (USA) (Disc 3).bin',
@@ -99,9 +99,9 @@ const multiDiscGames: Game[] = [
   }),
   new Game({
     name: 'Final Fantasy IX (USA) (Disc 4)',
-    category: 'Games',
+    categories: 'Games',
     description: 'Final Fantasy IX (USA) (Disc 4)',
-    rom: [
+    roms: [
       new ROM({ name: 'Final Fantasy IX (USA) (Disc 4).cue', size: 97, crc32: '17fa5f5c' }),
       new ROM({
         name: 'Final Fantasy IX (USA) (Disc 4).bin',
@@ -114,7 +114,7 @@ const multiDiscGames: Game[] = [
   new Game({
     name: 'Tales of Symphonia (2004)(Namco)(US)(Disc 1 of 2)',
     description: 'Tales of Symphonia (2004)(Namco)(US)(Disc 1 of 2)',
-    rom: new ROM({
+    roms: new ROM({
       name: 'Tales of Symphonia (2004)(Namco)(US)(Disc 1 of 2).iso',
       size: 1_459_978_240,
       crc32: '7fe3b9f7',
@@ -123,7 +123,7 @@ const multiDiscGames: Game[] = [
   new Game({
     name: 'Tales of Symphonia (2004)(Namco)(US)(Disc 2 of 2)',
     description: 'Tales of Symphonia (2004)(Namco)(US)(Disc 2 of 2)',
-    rom: new ROM({
+    roms: new ROM({
       name: 'Tales of Symphonia (2004)(Namco)(US)(Disc 2 of 2).iso',
       size: 1_459_978_240,
       crc32: 'a65645eb',
@@ -136,7 +136,7 @@ const multiDiscGamesWithConflictingRoms: Game[] = [
   new Game({
     name: 'D2 v1.000 (2000)(Sega)(US)(Disc 1 of 4)[!][10S]',
     description: 'D2 v1.000 (2000)(Sega)(US)(Disc 1 of 4)[!][10S]',
-    rom: [
+    roms: [
       new ROM({
         name: 'D2 v1.000 (2000)(Sega)(US)(Disc 1 of 4)[!][10S].gdi',
         size: 87,
@@ -150,7 +150,7 @@ const multiDiscGamesWithConflictingRoms: Game[] = [
   new Game({
     name: 'D2 v1.000 (2000)(Sega)(US)(Disc 2 of 4)[!][13S]',
     description: 'D2 v1.000 (2000)(Sega)(US)(Disc 2 of 4)[!][13S]',
-    rom: [
+    roms: [
       new ROM({
         name: 'D2 v1.000 (2000)(Sega)(US)(Disc 2 of 4)[!][13S].gdi',
         size: 87,
@@ -164,7 +164,7 @@ const multiDiscGamesWithConflictingRoms: Game[] = [
   new Game({
     name: 'D2 v1.000 (2000)(Sega)(US)(Disc 3 of 4)[!]',
     description: 'D2 v1.000 (2000)(Sega)(US)(Disc 3 of 4)[!]',
-    rom: [
+    roms: [
       new ROM({
         name: 'D2 v1.000 (2000)(Sega)(US)(Disc 3 of 4)[!].gdi',
         size: 87,
@@ -178,7 +178,7 @@ const multiDiscGamesWithConflictingRoms: Game[] = [
   new Game({
     name: 'D2 v1.000 (2000)(Sega)(US)(Disc 4 of 4)[!][4S]',
     description: 'D2 v1.000 (2000)(Sega)(US)(Disc 4 of 4)[!][4S]',
-    rom: [
+    roms: [
       new ROM({
         name: 'D2 v1.000 (2000)(Sega)(US)(Disc 4 of 4)[!][4S].gdi',
         size: 87,
@@ -193,7 +193,7 @@ const multiDiscGamesWithConflictingRoms: Game[] = [
 
 it('should do nothing if no games are present', () => {
   const options = new Options({ mergeDiscs: true });
-  const dat = new LogiqxDAT(new Header(), []);
+  const dat = new LogiqxDAT({ header: new Header() });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 
@@ -202,11 +202,10 @@ it('should do nothing if no games are present', () => {
 
 it('should do nothing if option not enabled', () => {
   const options = new Options({ mergeDiscs: false });
-  const dat = new LogiqxDAT(new Header(), [
-    ...singleDiscGames,
-    ...multiDiscGames,
-    ...multiDiscGamesWithConflictingRoms,
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [...singleDiscGames, ...multiDiscGames, ...multiDiscGamesWithConflictingRoms],
+  });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 
@@ -215,7 +214,7 @@ it('should do nothing if option not enabled', () => {
 
 it('should do nothing if no multi-disc games', () => {
   const options = new Options({ mergeDiscs: true });
-  const dat = new LogiqxDAT(new Header(), singleDiscGames);
+  const dat = new LogiqxDAT({ header: new Header(), games: singleDiscGames });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 
@@ -225,11 +224,10 @@ it('should do nothing if no multi-disc games', () => {
 
 it('should merge multi-disc games and leave single disc games alone', () => {
   const options = new Options({ mergeDiscs: true });
-  const dat = new LogiqxDAT(new Header(), [
-    ...singleDiscGames,
-    ...multiDiscGames,
-    ...multiDiscGamesWithConflictingRoms,
-  ]);
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [...singleDiscGames, ...multiDiscGames, ...multiDiscGamesWithConflictingRoms],
+  });
 
   const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
 

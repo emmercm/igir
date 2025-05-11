@@ -12,6 +12,13 @@ import { Memoize } from 'typescript-memoize';
 import Defaults from '../globals/defaults.js';
 import ExpectedError from '../types/expectedError.js';
 
+export const MoveResult = {
+  COPIED: 1,
+  RENAMED: 2,
+} as const;
+export type MoveResultKey = keyof typeof MoveResult;
+export type MoveResultValue = (typeof MoveResult)[MoveResultKey];
+
 export type FsWalkCallback = (increment: number) => void;
 
 /**
@@ -194,7 +201,8 @@ export default class FsPoly {
   static async hardlink(target: string, link: string): Promise<void> {
     const targetResolved = path.resolve(target);
     try {
-      return await fs.promises.link(targetResolved, link);
+      await fs.promises.link(targetResolved, link);
+      return;
     } catch (error) {
       if (this.onDifferentDrives(targetResolved, link)) {
         throw new ExpectedError(`can't hard link files on different drives: ${error}`);
@@ -269,7 +277,7 @@ export default class FsPoly {
    * @returns if {@param filePath} is on a samba path
    */
   static isSamba(filePath: string): boolean {
-    const normalizedPath = filePath.replace(/[\\/]/g, path.sep);
+    const normalizedPath = filePath.replaceAll(/[\\/]/g, path.sep);
     if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
       return true;
     }
@@ -285,7 +293,7 @@ export default class FsPoly {
       return false;
     }
     return filePathDrive.filesystem
-      .replace(/[\\/]/g, path.sep)
+      .replaceAll(/[\\/]/g, path.sep)
       .startsWith(`${path.sep}${path.sep}`);
   }
 
@@ -335,11 +343,11 @@ export default class FsPoly {
     return (
       filePath
         // Make the filename Windows legal
-        .replace(/:/g, ';')
+        .replaceAll(':', ';')
         // Make the filename everything else legal
-        .replace(/[<>:"|?*]/g, '_')
+        .replaceAll(/[<>:"|?*]/g, '_')
         // Normalize the path separators
-        .replace(/[\\/]/g, pathSep)
+        .replaceAll(/[\\/]/g, pathSep)
         // Revert the Windows drive letter
         .replace(/^([a-z]);\\/i, '$1:\\')
     );
@@ -386,27 +394,30 @@ export default class FsPoly {
   /**
    * Move the file {@param oldPath} to {@param newPath}, retrying failures.
    */
-  static async mv(oldPath: string, newPath: string, attempt = 1): Promise<void> {
+  static async mv(oldPath: string, newPath: string, attempt = 1): Promise<MoveResultValue> {
     // Can't rename across drives
     if (this.onDifferentDrives(oldPath, newPath)) {
-      await this.copyFile(oldPath, newPath);
+      const newPathTemp = await this.mktemp(newPath);
+      await this.copyFile(oldPath, newPathTemp);
+      await this.mv(newPathTemp, newPath);
       await this.rm(oldPath, { force: true });
-      return;
+      return MoveResult.COPIED;
     }
 
     try {
-      return await fs.promises.rename(oldPath, newPath);
+      await fs.promises.rename(oldPath, newPath);
+      return MoveResult.RENAMED;
     } catch (error) {
+      // Can't rename across drives
+      if (['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+        await this.copyFile(oldPath, newPath);
+        await this.rm(oldPath, { force: true });
+        return MoveResult.COPIED;
+      }
+
       // These are the same error codes that `graceful-fs` catches
       if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
         throw error;
-      }
-
-      // Can't rename across drives
-      if (!['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
-        await this.copyFile(oldPath, newPath);
-        await this.rm(oldPath, { force: true });
-        return;
       }
 
       // Backoff with jitter
@@ -493,7 +504,7 @@ export default class FsPoly {
     };
 
     if (!(await this.exists(pathLike))) {
-      if (optionsWithRetry?.force) {
+      if (optionsWithRetry.force) {
         return;
       }
       throw new ExpectedError(`can't rm, path doesn't exist: ${pathLike}`);
@@ -520,7 +531,7 @@ export default class FsPoly {
     };
 
     if (!this.existsSync(pathLike)) {
-      if (optionsWithRetry?.force) {
+      if (optionsWithRetry.force) {
         return;
       }
       throw new ExpectedError(`can't rmSync, path doesn't exist: ${pathLike}`);
@@ -552,7 +563,7 @@ export default class FsPoly {
    */
   static sizeReadable(bytes: number, decimals = 1): string {
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
     return `${Number.parseFloat((bytes / k ** i).toFixed(decimals))}${sizes[i]}`;
   }
@@ -600,11 +611,13 @@ export default class FsPoly {
     // Create the file if it doesn't already exist
     const file = await fs.promises.open(filePath, 'a');
 
-    // Ensure the file's `atime` and `mtime` are updated
-    const date = new Date();
-    await util.promisify(fs.futimes)(file.fd, date, date);
-
-    await file.close();
+    try {
+      // Ensure the file's `atime` and `mtime` are updated
+      const date = new Date();
+      await util.promisify(fs.futimes)(file.fd, date, date);
+    } finally {
+      await file.close();
+    }
   }
 
   /**
@@ -633,7 +646,7 @@ export default class FsPoly {
 
     // Depth-first search directories first
     const directories = entries
-      .filter((entry, idx) => entryIsDirectory[idx])
+      .filter((_entry, idx) => entryIsDirectory[idx])
       .map((entry) => path.join(pathLike.toString(), entry.name));
     for (const directory of directories) {
       const subDirFiles = await this.walk(directory);
@@ -644,7 +657,7 @@ export default class FsPoly {
     }
 
     const files = entries
-      .filter((entry, idx) => !entryIsDirectory[idx])
+      .filter((_entry, idx) => !entryIsDirectory[idx])
       .map((entry) => path.join(pathLike.toString(), entry.name));
     if (callback) {
       callback(files.length);
@@ -663,8 +676,11 @@ export default class FsPoly {
     options?: ObjectEncodingOptions,
   ): Promise<void> {
     const file = await fs.promises.open(filePath, 'w');
-    await file.writeFile(data, options);
-    await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
-    await file.close();
+    try {
+      await file.writeFile(data, options);
+      await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
+    } finally {
+      await file.close();
+    }
   }
 }

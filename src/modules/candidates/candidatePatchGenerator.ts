@@ -43,7 +43,7 @@ export default class CandidatePatchGenerator extends Module {
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${crcToPatches.size} unique patch${crcToPatches.size !== 1 ? 'es' : ''} found`,
+      `${dat.getName()}: ${crcToPatches.size} unique patch${crcToPatches.size === 1 ? '' : 'es'} found`,
     );
 
     const patchedCandidates = this.build(dat, candidates, crcToPatches);
@@ -55,10 +55,10 @@ export default class CandidatePatchGenerator extends Module {
   private static indexPatchesByCrcBefore(patches: Patch[]): Map<string, Patch[]> {
     return patches.reduce((map, patch) => {
       const key = patch.getCrcBefore();
-      if (!map.has(key)) {
-        map.set(key, [patch]);
-      } else {
+      if (map.has(key)) {
         map.get(key)?.push(patch);
+      } else {
+        map.set(key, [patch]);
       }
       return map;
     }, new Map<string, Patch[]>());
@@ -93,8 +93,13 @@ export default class CandidatePatchGenerator extends Module {
     const candidatePatches = unpatchedCandidate
       .getRomsWithFiles()
       .flatMap((romWithFiles) => romWithFiles.getInputFile())
-      .filter((inputFile) => inputFile.getCrc32() !== undefined)
-      .flatMap((inputFile) => crcToPatches.get(inputFile.getCrc32()!))
+      .flatMap((inputFile) => {
+        const inputFileCrc32 = inputFile.getCrc32();
+        if (inputFileCrc32 === undefined) {
+          return [];
+        }
+        return crcToPatches.get(inputFileCrc32);
+      })
       .filter((patch) => patch !== undefined);
 
     // No relevant patches found, no new candidates generated
@@ -121,7 +126,7 @@ export default class CandidatePatchGenerator extends Module {
 
               // Build a new output file
               const extMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(romWithFiles.getRom().getName());
-              const extractedFileName = patchedRomName + (extMatch !== null ? extMatch[1] : '');
+              const extractedFileName = patchedRomName + (extMatch === null ? '' : extMatch[1]);
               if (outputFile instanceof ArchiveEntry) {
                 outputFile = await ArchiveEntry.entryOf({
                   archive: outputFile.getArchive().withFilePath(patchedRomName),
@@ -148,7 +153,7 @@ export default class CandidatePatchGenerator extends Module {
 
               // Build a new ROM from the output file's info
               const romName = path.join(
-                path.dirname(rom.getName().replace(/[\\/]/g, path.sep)),
+                path.dirname(rom.getName().replaceAll(/[\\/]/g, path.sep)),
                 path.basename(outputFile.getExtractedFilePath()),
               );
               rom = new ROM({
@@ -168,7 +173,7 @@ export default class CandidatePatchGenerator extends Module {
 
         // Build a new Game from the ROM's info
         const gameName = path.join(
-          path.dirname(unpatchedCandidate.getGame().getName().replace(/[\\/]/g, path.sep)),
+          path.dirname(unpatchedCandidate.getGame().getName().replaceAll(/[\\/]/g, path.sep)),
           patchedRomName,
         );
         const patchedGame = unpatchedCandidate.getGame().withProps({

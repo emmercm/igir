@@ -4,10 +4,10 @@ import path from 'node:path';
 import Temp from '../../src/globals/temp.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
-import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
+import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import DATStatus from '../../src/types/datStatus.js';
 import File from '../../src/types/files/file.js';
 import Options, { OptionsProps } from '../../src/types/options.js';
@@ -20,12 +20,12 @@ import ProgressBarFake from '../console/progressBarFake.js';
  *  test the interaction of combining multiple DATStatus.
  */
 
-const datStatusEmpty = new DATStatus(new LogiqxDAT(new Header({ name: 'Empty' }), []), []);
+const datStatusEmpty = new DATStatus(new LogiqxDAT({ header: new Header({ name: 'Empty' }) }), []);
 
 const gamesSingle = [
-  new Game({
+  new SingleValueGame({
     name: 'One',
-    rom: [new ROM({ name: 'One.rom', size: 123, crc32: 'abcdef01' })],
+    roms: [new ROM({ name: 'One.rom', size: 123, crc32: 'abcdef01' })],
   }),
 ];
 async function buildDatStatusSingle(): Promise<DATStatus> {
@@ -43,25 +43,28 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
         ),
     ),
   );
-  return new DATStatus(new LogiqxDAT(new Header({ name: 'Single' }), gamesSingle), candidates);
+  return new DATStatus(
+    new LogiqxDAT({ header: new Header({ name: 'Single' }), games: gamesSingle }),
+    candidates,
+  );
 }
 
 const gamesMultiple = [
-  new Game({
+  new SingleValueGame({
     name: 'Two',
-    rom: [new ROM({ name: 'Two.rom', size: 234, crc32: 'bcdef012' })],
+    roms: [new ROM({ name: 'Two.rom', size: 234, crc32: 'bcdef012' })],
   }),
-  new Game({
+  new SingleValueGame({
     name: 'Three',
-    rom: [new ROM({ name: 'Three.rom', size: 345, crc32: 'cdef0123' })],
+    roms: [new ROM({ name: 'Three.rom', size: 345, crc32: 'cdef0123' })],
   }),
-  new Game({
+  new SingleValueGame({
     name: 'Four',
-    rom: [new ROM({ name: 'Four.rom', size: 456, crc32: 'def01234' })],
+    roms: [new ROM({ name: 'Four.rom', size: 456, crc32: 'def01234' })],
   }),
-  new Game({
+  new SingleValueGame({
     name: 'Five',
-    rom: [],
+    roms: [],
   }),
 ];
 async function buildDatStatusMultiple(): Promise<DATStatus> {
@@ -79,7 +82,10 @@ async function buildDatStatusMultiple(): Promise<DATStatus> {
         ),
     ),
   );
-  return new DATStatus(new LogiqxDAT(new Header({ name: 'Multiple' }), gamesMultiple), candidates);
+  return new DATStatus(
+    new LogiqxDAT({ header: new Header({ name: 'Multiple' }), games: gamesMultiple }),
+    candidates,
+  );
 }
 
 async function wrapReportGenerator(

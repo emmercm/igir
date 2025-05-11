@@ -27,7 +27,10 @@ describe('fromObject', () => {
   </game>
 </datafile>`;
     const obj = DATObject.fromXmlString(xml);
-    const dat = LogiqxDAT.fromObject(obj.datafile!);
+    if (obj.datafile === undefined) {
+      throw new Error('XML missing root <datafile> tag');
+    }
+    const dat = LogiqxDAT.fromObject(obj.datafile);
 
     expect(dat.getName()).toEqual('Nintendo - Game Boy (Parent-Clone)');
 

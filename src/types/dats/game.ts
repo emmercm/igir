@@ -5,6 +5,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import Internationalization from '../internationalization.js';
 import Disk from './disk.js';
+import DeviceRef from './mame/deviceRef.js';
 import Release from './release.js';
 import ROM from './rom.js';
 
@@ -67,8 +68,8 @@ export interface GameProps {
   // readonly year?: string;
   readonly release?: Release | Release[];
   // readonly biosset?: unknown;
-  readonly rom?: ROM | ROM[];
-  readonly disk?: Disk | Disk[];
+  readonly roms?: ROM | ROM[];
+  readonly disks?: Disk | Disk[];
   // readonly sample?: unknown;
   // readonly archive?: unknown;
 
@@ -76,7 +77,7 @@ export interface GameProps {
   // @see https://datomatic.no-intro.org/stuff/schema_nointro_datfile_v3.xsd
 
   // @see http://wiki.redump.org/index.php?title=Redump_Search_Parameters#Category
-  readonly category?: string | string[];
+  readonly categories?: string | string[];
   readonly description?: string;
   readonly id?: string;
   readonly cloneOfId?: string;
@@ -87,7 +88,7 @@ export interface GameProps {
   // readonly mechanical?: 'yes' | 'no';
   // readonly runnable?: 'yes' | 'no';
   readonly manufacturer?: string;
-  // readonly deviceRef: DeviceRef | DeviceRef[];
+  readonly deviceRef?: DeviceRef | DeviceRef[];
   // readonly chip?: unknown;
   // readonly display?: unknown;
   // readonly sound?: unknown;
@@ -132,19 +133,19 @@ export default class Game implements GameProps {
   @Transform(({ value }: { value: undefined | Release | Release[] }) => value ?? [])
   readonly release: Release | Release[];
 
-  @Expose()
+  @Expose({ name: 'rom' })
   @Type(() => ROM)
   @Transform(({ value }: { value: undefined | ROM | ROM[] }) => value ?? [])
-  readonly rom: ROM | ROM[];
+  readonly roms: ROM | ROM[];
 
-  @Expose()
+  @Expose({ name: 'disk' })
   @Type(() => Disk)
   @Transform(({ value }: { value: undefined | Disk | Disk[] }) => value ?? [])
-  readonly disk: Disk | Disk[];
+  readonly disks: Disk | Disk[];
 
-  @Expose()
+  @Expose({ name: 'category' })
   @Transform(({ value }: { value: undefined | string | string[] }) => value ?? [])
-  readonly category: string | string[];
+  readonly categories: string | string[];
 
   @Expose()
   readonly description?: string;
@@ -158,11 +159,16 @@ export default class Game implements GameProps {
   @Expose({ name: 'isdevice' })
   readonly isDevice: 'yes' | 'no' = 'no';
 
-  @Expose({ name: 'genre' })
-  readonly genre?: string;
-
   @Expose()
   readonly manufacturer?: string;
+
+  @Expose({ name: 'device_ref' })
+  @Type(() => DeviceRef)
+  @Transform(({ value }: { value: undefined | DeviceRef | DeviceRef[] }) => value ?? [])
+  readonly deviceRef: DeviceRef | DeviceRef[];
+
+  @Expose({ name: 'genre' })
+  readonly genre?: string;
 
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
@@ -170,16 +176,17 @@ export default class Game implements GameProps {
     this.cloneOf = props?.cloneOf;
     this.romOf = props?.romOf;
     this.release = props?.release ?? [];
-    this.rom = props?.rom ?? [];
-    this.disk = props?.disk ?? [];
+    this.roms = props?.roms ?? [];
+    this.disks = props?.disks ?? [];
 
-    this.category = props?.category ?? [];
+    this.categories = props?.categories ?? [];
     this.description = props?.description;
     this.id = props?.id;
     this.cloneOfId = props?.cloneOfId;
 
     this.isDevice = props?.isDevice ?? this.isDevice;
     this.manufacturer = props?.manufacturer;
+    this.deviceRef = props?.deviceRef ?? [];
 
     this.genre = props?.genre;
   }
@@ -199,21 +206,21 @@ export default class Game implements GameProps {
         cloneofid: this.cloneOfId,
         isdevice: this.getIsDevice() ? 'yes' : undefined,
       },
-      ...(this.description !== undefined
-        ? {
+      ...(this.description === undefined
+        ? {}
+        : {
             description: {
               _: this.description,
             },
-          }
-        : {}),
+          }),
       category: this.getCategories().map((category) => ({ _: category })),
-      ...(this.manufacturer !== undefined
-        ? {
+      ...(this.manufacturer === undefined
+        ? {}
+        : {
             manufacturer: {
               _: this.manufacturer,
             },
-          }
-        : {}),
+          }),
       release: this.getReleases().map((release) => release.toXmlDatObj()),
       rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
       disk: this.getDisks().map((disk) => disk.toXmlDatObj()),
@@ -227,10 +234,10 @@ export default class Game implements GameProps {
   }
 
   getCategories(): string[] {
-    if (Array.isArray(this.category)) {
-      return this.category;
+    if (Array.isArray(this.categories)) {
+      return this.categories;
     }
-    return [this.category];
+    return [this.categories];
   }
 
   /**
@@ -247,6 +254,13 @@ export default class Game implements GameProps {
     return this.isDevice === 'yes';
   }
 
+  getDeviceRefs(): DeviceRef[] {
+    if (Array.isArray(this.deviceRef)) {
+      return this.deviceRef;
+    }
+    return [this.deviceRef];
+  }
+
   getGenre(): string | undefined {
     return this.genre;
   }
@@ -259,17 +273,17 @@ export default class Game implements GameProps {
   }
 
   getRoms(): ROM[] {
-    if (Array.isArray(this.rom)) {
-      return this.rom;
+    if (Array.isArray(this.roms)) {
+      return this.roms;
     }
-    return [this.rom];
+    return [this.roms];
   }
 
   getDisks(): Disk[] {
-    if (Array.isArray(this.disk)) {
-      return this.disk;
+    if (Array.isArray(this.disks)) {
+      return this.disks;
     }
-    return [this.disk];
+    return [this.disks];
   }
 
   getCloneOf(): string | undefined {
@@ -300,7 +314,11 @@ export default class Game implements GameProps {
     // Letter revision
     const revLetterMatches = /\(Rev\s*([A-Z])\)/i.exec(this.getName());
     if (revLetterMatches && revLetterMatches.length >= 2) {
-      return revLetterMatches[1].toUpperCase().codePointAt(0)! - 'A'.codePointAt(0)! + 1;
+      return (
+        (revLetterMatches[1].toUpperCase().codePointAt(0) as number) -
+        ('A'.codePointAt(0) as number) +
+        1
+      );
     }
 
     // TOSEC versions
@@ -685,7 +703,7 @@ export default class Game implements GameProps {
     }
 
     for (const regionOption of Internationalization.REGION_OPTIONS) {
-      if (regionOption.regex && this.getName().match(regionOption.regex)) {
+      if (regionOption.regex?.test(this.getName())) {
         return [regionOption.region.toUpperCase()];
       }
     }

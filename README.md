@@ -56,15 +56,14 @@ Here is the full help message which shows all available options and a number of 
 ```help
 $ igir --help
 
- ______   ______   ______  _______
-|      \ /      \ |      \|       \
- \$$$$$$|  $$$$$$\ \$$$$$$| $$$$$$$\
-  | $$  | $$|    \  | $$  | $$    $$   ROM collection manager
-  | $$  | $$|    \  | $$  | $$    $$   https://igir.io/
-  | $$  | $$ \$$$$  | $$  | $$$$$$$\
- _| $$_ | $$__| $$ _| $$_ | $$  | $$   v3.3.0
-|   $$ \ \$$    $$|   $$ \| $$  | $$
- \$$$$$$  \$$$$$$  \$$$$$$ \$$   \$$
+   @@@@@@   @@@@@@     @@@@@@    @@@@@@@@
+ @@      @@  @@      @@      @@         @@
+ @@      @@  @@      @@      @@         @@   ROM collection manager
+   @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
+          @@@     @@@@        @@@
+     @@   @@        @@   @@   @@       @@    v3.4.2
+     @@   @@        @@   @@   @@       @@
+     @@   @@@@@@@@@@@@   @@   @@       @@
 
 
 Usage: igir [commands..] [options]
@@ -269,6 +268,8 @@ Advanced usage:
     {region}          The region of the ROM release (e.g. "USA"), each ROM can have multiple
     {language}        The language of the ROM release (e.g. "En"), each ROM can have multiple
     {type}            The type of the game (e.g. "Retail", "Demo", "Prototype")
+    {category}        The DAT-defined category of the game (e.g. "Games", "Demos", "Multimedia
+    ")
     {genre}           The DAT-defined genre of the game
 
     {inputDirname}    The input file's dirname
@@ -344,4 +345,10 @@ Even better, if you feel comfortable writing code, please feel free to submit a 
   <a href="https://github.com/emmercm/igir/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement"><img alt="GitHub: feature requests" src="https://img.shields.io/github/issues/emmercm/igir/enhancement?color=%234BBCBC&label=feature%20requests&logo=github&logoColor=white"></a>
   <a href="https://github.com/emmercm/igir/discussions"><img alt="GitHub: discussions" src="https://img.shields.io/github/discussions/emmercm/igir?logo=github&logoColor=white"></a>
   <a href="https://hacktoberfest.com/"><img alt="Hacktoberfest: participant" src="https://img.shields.io/badge/hacktoberfest-participant-orange?logo=digitalocean&logoColor=white"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/emmercm/igir/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=emmercm/igir" alt="List of contributors" />
+  </a>
 </p>

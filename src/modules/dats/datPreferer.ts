@@ -2,7 +2,6 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
 import Options, { PreferRevision } from '../../types/options.js';
 import Module from '../module.js';
 
@@ -53,7 +52,7 @@ export default class DATPreferer extends Module {
           return undefined;
         }
         this.progressBar.logTrace(
-          `${dat.getName()}: ${parent.getName()} (parent): ${parent.getGames().length.toLocaleString()} game${parent.getGames().length !== 1 ? 's' : ''} before preferring`,
+          `${dat.getName()}: ${parent.getName()} (parent): ${parent.getGames().length.toLocaleString()} game${parent.getGames().length === 1 ? '' : 's'} before preferring`,
         );
 
         const preferredGame = parent
@@ -63,14 +62,14 @@ export default class DATPreferer extends Module {
         return preferredGame?.withProps({ cloneOf: undefined });
       })
       .filter((game) => game !== undefined);
-    const preferredDat = new LogiqxDAT(dat.getHeader(), preferredGames);
+    const preferredDat = dat.withGames(preferredGames);
 
     const size = preferredDat
       .getGames()
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${preferredDat.getName()}: preferred to ${preferredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${preferredGames.length !== 1 ? 's' : ''} (${FsPoly.sizeReadable(size)})`,
+      `${preferredDat.getName()}: preferred to ${preferredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${preferredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
     );
 
     this.progressBar.logTrace(`${preferredDat.getName()}: done preferring DAT games`);

@@ -61,17 +61,20 @@
     {
       matchPackageNames: ['node'],
       groupName: 'Node.js',
+      // Keep Node.js on the 'current' major version (as opposed to LTS)
+      versioning: 'node',
+      allowedVersions: '/^\\d*[02468]\\./',
       // The Docker images (used to build executables) frequently don't get published until days
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
-      minimumReleaseAge: '7 days',
+      minimumReleaseAge: '5 days',
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time'
     },
 
     // Don't update some packages in GitHub Actions workflows
     {
-      matchFileNames: ['.github/workflows/**'],
-      matchPackageNames: ['python'],
+      matchManagers: ['github-actions'],
+      matchDepNames: ['python'],
       enabled: false,
     },
 
@@ -126,7 +129,7 @@
         },
       },
 
-      // Update chdman, maxcso immediately
+      // Update chdman, dolphin-tool, maxcso immediately
       {
         groupName: null,
         matchPackageNames: [
@@ -145,15 +148,11 @@
         groupName: 'dev dependencies',
         matchDepTypes: ['devDependencies'],
         excludePackageNames: [
-          '@types/7zip-min',
-          '@types/archiver',
           '@types/async',
           '@types/cli-progress',
-          '@types/figlet',
           '@types/micromatch',
           '@types/semver',
           '@types/tar',
-          '@types/unzipper',
           '@types/xml2js',
           '@types/yargs',
         ],

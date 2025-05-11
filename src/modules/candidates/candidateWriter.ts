@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 
 import { Semaphore } from 'async-mutex';
@@ -7,13 +8,13 @@ import ElasticSemaphore from '../../elasticSemaphore.js';
 import Defaults from '../../globals/defaults.js';
 import KeyedMutex from '../../keyedMutex.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import FsPoly from '../../polyfill/fsPoly.js';
+import FsPoly, { MoveResult, MoveResultValue } from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import Options from '../../types/options.js';
+import Options, { ZipFormat, ZipFormatValue } from '../../types/options.js';
 import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
@@ -71,7 +72,7 @@ export default class CandidateWriter extends Module {
     }
 
     // Return early if we shouldn't write (are only reporting)
-    if (!this.options.shouldWrite()) {
+    if (!this.options.shouldWrite() && !this.options.shouldTest()) {
       return {
         wrote: writtenFiles,
         moved: [],
@@ -84,7 +85,7 @@ export default class CandidateWriter extends Module {
     );
 
     this.progressBar.logTrace(
-      `${dat.getName()}: writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
       this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
@@ -97,12 +98,14 @@ export default class CandidateWriter extends Module {
       writableCandidates.map(async (candidate) =>
         CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
           this.progressBar.incrementProgress();
-          this.progressBar.logTrace(`${dat.getName()}: ${candidate.getName()}: writing candidate`);
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+          );
 
           await this.writeCandidate(dat, candidate);
 
           this.progressBar.logTrace(
-            `${dat.getName()}: ${candidate.getName()}: done writing candidate`,
+            `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
           );
           this.progressBar.incrementDone();
         }),
@@ -110,7 +113,7 @@ export default class CandidateWriter extends Module {
     );
 
     this.progressBar.logTrace(
-      `${dat.getName()}: done writing ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
     const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
@@ -125,16 +128,6 @@ export default class CandidateWriter extends Module {
   }
 
   private async writeCandidate(dat: DAT, candidate: WriteCandidate): Promise<void> {
-    const writeNeeded = candidate
-      .getRomsWithFiles()
-      .some((romWithFiles) => !romWithFiles.getOutputFile().equals(romWithFiles.getInputFile()));
-    if (!writeNeeded) {
-      this.progressBar.logDebug(
-        `${dat.getName()}: ${candidate.getName()}: input and output files are the same, skipping`,
-      );
-      return;
-    }
-
     const totalKilobytes =
       candidate
         .getRomsWithFiles()
@@ -190,27 +183,40 @@ export default class CandidateWriter extends Module {
 
     // If the output file already exists, see if we need to do anything
     if (await FsPoly.exists(outputZip.getFilePath())) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+      if (
+        this.options.shouldWrite() &&
+        !this.options.getOverwrite() &&
+        !this.options.getOverwriteInvalid()
+      ) {
         this.progressBar.logDebug(
           `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
         );
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
+      if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
         const existingTest = await this.testZipContents(
           dat,
           candidate,
           outputZip.getFilePath(),
           inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
         );
-        if (!existingTest) {
+        if (this.options.shouldWrite() && !existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, existing zip has the expected contents`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
+          );
+          return;
+        }
+        if (!this.options.shouldWrite() && existingTest) {
+          this.progressBar.logError(
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: ${existingTest}`,
           );
           return;
         }
       }
+    }
+    if (!this.options.shouldWrite()) {
+      return;
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
@@ -246,7 +252,9 @@ export default class CandidateWriter extends Module {
       return;
     }
 
-    inputToOutputZipEntries.forEach(([inputRomFile]) => this.enqueueFileDeletion(inputRomFile));
+    inputToOutputZipEntries.forEach(([inputRomFile]) => {
+      this.enqueueFileDeletion(inputRomFile);
+    });
   }
 
   private async testZipContents(
@@ -259,19 +267,21 @@ export default class CandidateWriter extends Module {
       `${dat.getName()}: ${candidate.getName()}: ${zipFilePath}: testing zip`,
     );
 
+    const zipFile = new Zip(zipFilePath);
+
     const expectedEntriesByPath = expectedArchiveEntries.reduce((map, entry) => {
       map.set(entry.getEntryPath(), entry);
       return map;
     }, new Map<string, ArchiveEntry<Zip>>());
 
-    const checksumBitmask = expectedArchiveEntries.reduce(
+    const checksumBitmask = expectedArchiveEntries.reduce<number>(
       (bitmask, entry) => bitmask | entry.getChecksumBitmask(),
-      ChecksumBitmask.CRC32 as number,
+      ChecksumBitmask.CRC32,
     );
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await new Zip(zipFilePath).getArchiveEntries(checksumBitmask);
+      archiveEntries = await zipFile.getArchiveEntries(checksumBitmask);
     } catch (error) {
       return `failed to get archive contents: ${error}`;
     }
@@ -284,17 +294,14 @@ export default class CandidateWriter extends Module {
       return `has ${actualEntriesByPath.size.toLocaleString()} files, expected ${expectedEntriesByPath.size.toLocaleString()}`;
     }
 
-    const entryPaths = [...expectedEntriesByPath.keys()];
-    for (const entryPath of entryPaths) {
-      const expectedFile = expectedEntriesByPath.get(entryPath)!;
-
+    for (const [entryPath, expectedFile] of expectedEntriesByPath.entries()) {
       // Check existence
       if (!actualEntriesByPath.has(entryPath)) {
         return `is missing the file ${entryPath}`;
       }
 
       // Check checksum
-      const actualFile = actualEntriesByPath.get(entryPath)!;
+      const actualFile = actualEntriesByPath.get(entryPath) as ArchiveEntry<Zip>;
       if (
         actualFile.getSha256() &&
         expectedFile.getSha256() &&
@@ -339,6 +346,14 @@ export default class CandidateWriter extends Module {
       }
     }
 
+    if (this.options.getZipFormat() === ZipFormat.TORRENTZIP && !(await zipFile.isTorrentZip())) {
+      return 'is not a valid TorrentZip file';
+    }
+
+    if (this.options.getZipFormat() === ZipFormat.RVZSTD && !(await zipFile.isRVZSTD())) {
+      return 'is not a valid RVZSTD file';
+    }
+
     this.progressBar.logTrace(
       `${dat.getName()}: ${candidate.getName()}: ${zipFilePath}: test passed`,
     );
@@ -355,18 +370,36 @@ export default class CandidateWriter extends Module {
       `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
     );
 
+    // The same input file may have contention with being raw-moved and used as an input file
+    // for a zip (here), so we need to lock all input paths if we're moving
+    const lockedFilePaths = this.options.shouldMove()
+      ? inputToOutputZipEntries
+          .map(([input]) => input.getFilePath())
+          .reduce(ArrayPoly.reduceUnique(), [])
+      : [];
+    await CandidateWriter.MOVE_MUTEX.acquireMultiple(lockedFilePaths);
+
     try {
       await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
-      await outputZip.createArchive(inputToOutputZipEntries);
+      const compressorThreads = Math.ceil(
+        os.cpus().length / Math.max(CandidateWriter.FILESIZE_SEMAPHORE.openLocks(), 1),
+      );
+      await outputZip.createArchive(
+        inputToOutputZipEntries,
+        this.options.getZipFormat() as ZipFormatValue,
+        compressorThreads,
+      );
     } catch (error) {
       this.progressBar.logError(
         `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
       );
       return false;
+    } finally {
+      await CandidateWriter.MOVE_MUTEX.releaseMultiple(lockedFilePaths);
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length !== 1 ? 'ies' : 'y'}`,
+      `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
     );
     return true;
   }
@@ -402,7 +435,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length !== 1 ? 's' : ''}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -410,10 +443,10 @@ export default class CandidateWriter extends Module {
     const uniqueInputToOutputEntriesMap = uniqueInputToOutputEntries.reduce(
       (map, [inputRomFile, outputRomFile]) => {
         const key = inputRomFile.getFilePath();
-        if (!map.has(key)) {
-          map.set(key, [[inputRomFile, outputRomFile]]);
-        } else {
+        if (map.has(key)) {
           map.get(key)?.push([inputRomFile, outputRomFile]);
+        } else {
+          map.set(key, [[inputRomFile, outputRomFile]]);
         }
         return map;
       },
@@ -435,7 +468,7 @@ export default class CandidateWriter extends Module {
     outputRomFile: File,
   ): Promise<void> {
     // Input and output are the exact same, maybe do nothing
-    if (outputRomFile.equals(inputRomFile)) {
+    if (this.options.shouldWrite() && outputRomFile.equals(inputRomFile)) {
       const wasMoved =
         this.options.shouldMove() &&
         (await CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), () =>
@@ -453,32 +486,45 @@ export default class CandidateWriter extends Module {
     const outputFilePath = outputRomFile.getFilePath();
 
     // If the output file already exists, see if we need to do anything
-    if (!this.options.getOverwrite() && (await FsPoly.exists(outputFilePath))) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+    if (await FsPoly.exists(outputFilePath)) {
+      if (
+        this.options.shouldWrite() &&
+        !this.options.getOverwrite() &&
+        !this.options.getOverwriteInvalid()
+      ) {
         this.progressBar.logDebug(
           `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
         );
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
+      if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
         const existingTest = await this.testWrittenRaw(
           dat,
           candidate,
           outputFilePath,
           outputRomFile,
         );
-        if (!existingTest) {
+        if (this.options.shouldWrite() && !existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, existing file is what was expected`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
+          );
+          return;
+        }
+        if (!this.options.shouldWrite() && existingTest) {
+          this.progressBar.logError(
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: ${existingTest}`,
           );
           return;
         }
       }
     }
+    if (!this.options.shouldWrite()) {
+      return;
+    }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    let written = false;
+    let written: MoveResultValue | undefined;
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
       if (this.options.shouldMove()) {
         written = await this.moveRawFile(dat, candidate, inputRomFile, outputFilePath);
@@ -486,11 +532,13 @@ export default class CandidateWriter extends Module {
         written = await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath);
       }
 
-      if (written && !this.options.shouldTest()) {
+      if (written !== undefined && !this.options.shouldTest()) {
         // Successfully written, unknown if valid
         break;
       }
-      if (written && this.options.shouldTest()) {
+      if (written === MoveResult.COPIED && this.options.shouldTest()) {
+        // Only test the output file if it was copied, we don't need to test the file if it was
+        // just renamed
         const writtenTest = await this.testWrittenRaw(
           dat,
           candidate,
@@ -522,16 +570,21 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     inputRomFile: File,
     outputFilePath: string,
-  ): Promise<boolean> {
+  ): Promise<MoveResultValue | undefined> {
     // Lock the input file, we can't handle concurrent moves
     return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
-      const movedFilePath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
-      if (movedFilePath) {
+      const movedInputPath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
+      if (movedInputPath) {
+        if (movedInputPath === outputFilePath) {
+          // Do nothing
+          return undefined;
+        }
+
         // The file was already moved, we shouldn't move it again
         return this.copyRawFile(
           dat,
           candidate,
-          inputRomFile.withFilePath(movedFilePath),
+          inputRomFile.withFilePath(movedInputPath),
           outputFilePath,
         );
       }
@@ -552,14 +605,14 @@ export default class CandidateWriter extends Module {
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-        await FsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
+        const moveResult = await FsPoly.mv(inputRomFile.getFilePath(), outputFilePath);
         CandidateWriter.FILE_PATH_MOVES.set(inputRomFile.getFilePath(), outputFilePath);
-        return true;
+        return moveResult;
       } catch (error) {
         this.progressBar.logError(
           `${dat.getName()}: ${candidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
         );
-        return false;
+        return undefined;
       }
     });
   }
@@ -569,7 +622,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     inputRomFile: File,
     outputFilePath: string,
-  ): Promise<boolean> {
+  ): Promise<MoveResultValue | undefined> {
     this.progressBar.logInfo(
       `${dat.getName()}: ${candidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
     );
@@ -580,12 +633,12 @@ export default class CandidateWriter extends Module {
       const tempRawFile = await FsPoly.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile);
       await FsPoly.mv(tempRawFile, outputFilePath);
-      return true;
+      return MoveResult.COPIED;
     } catch (error) {
       this.progressBar.logError(
         `${dat.getName()}: ${candidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
       );
-      return false;
+      return undefined;
     }
   }
 
@@ -701,7 +754,7 @@ export default class CandidateWriter extends Module {
     }
 
     const linkPath = outputRomFile.getFilePath();
-    let targetPath = inputRomFile.getFilePath();
+    let targetPath = path.resolve(inputRomFile.getFilePath());
     if (this.options.getSymlink() && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       targetPath = await FsPoly.symlinkRelativePath(targetPath, linkPath);
@@ -709,14 +762,18 @@ export default class CandidateWriter extends Module {
 
     // If the output file already exists, see if we need to do anything
     if (await FsPoly.exists(linkPath)) {
-      if (!this.options.getOverwrite() && !this.options.getOverwriteInvalid()) {
+      if (
+        this.options.shouldWrite() &&
+        !this.options.getOverwrite() &&
+        !this.options.getOverwriteInvalid()
+      ) {
         this.progressBar.logDebug(
           `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file`,
         );
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
+      if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
         let existingTest;
         if (this.options.getSymlink()) {
           existingTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
@@ -726,15 +783,24 @@ export default class CandidateWriter extends Module {
             inputRomFile.getFilePath(),
           );
         }
-        if (!existingTest) {
+        if (this.options.shouldWrite() && !existingTest) {
           this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, existing link is what was expected`,
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, the existing link is correct`,
+          );
+          return;
+        }
+        if (!this.options.shouldWrite() && existingTest) {
+          this.progressBar.logError(
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: ${existingTest}`,
           );
           return;
         }
       }
 
       await FsPoly.rm(linkPath, { force: true });
+    }
+    if (!this.options.shouldWrite()) {
+      return;
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);

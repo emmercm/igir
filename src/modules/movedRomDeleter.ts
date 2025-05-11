@@ -8,6 +8,7 @@ import DAT from '../types/dats/dat.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import File from '../types/files/file.js';
+import Options from '../types/options.js';
 import Module from './module.js';
 
 /**
@@ -16,8 +17,11 @@ import Module from './module.js';
  * reading input {@link File}s from disk.
  */
 export default class MovedROMDeleter extends Module {
-  constructor(progressBar: ProgressBar) {
+  private readonly options: Options;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, MovedROMDeleter.name);
+    this.options = options;
   }
 
   /**
@@ -28,6 +32,11 @@ export default class MovedROMDeleter extends Module {
     movedRoms: File[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
+    if (!this.options.shouldWrite()) {
+      // We shouldn't cause any change to the output directory
+      return [];
+    }
+
     if (movedRoms.length === 0) {
       return [];
     }
@@ -49,13 +58,13 @@ export default class MovedROMDeleter extends Module {
       async (filePath: string) => FsPoly.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
-      (filePath, idx) => existingFilePathsCheck.at(idx) === true,
+      (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
     );
 
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     this.progressBar.reset(existingFilePaths.length);
     this.progressBar.logTrace(
-      `deleting ${existingFilePaths.length.toLocaleString()} moved file${existingFilePaths.length !== 1 ? 's' : ''}`,
+      `deleting ${existingFilePaths.length.toLocaleString()} moved file${existingFilePaths.length === 1 ? '' : 's'}`,
     );
 
     const filePathChunks = existingFilePaths.reduce(
@@ -64,7 +73,7 @@ export default class MovedROMDeleter extends Module {
     );
     for (const filePathChunk of filePathChunks) {
       this.progressBar.logInfo(
-        `deleting moved file${filePathChunk.length !== 1 ? 's' : ''}:\n${filePathChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
+        `deleting moved file${filePathChunk.length === 1 ? '' : 's'}:\n${filePathChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
       );
       await Promise.all(
         filePathChunk.map(async (filePath) => {
@@ -141,7 +150,7 @@ export default class MovedROMDeleter extends Module {
         const unmovedEntries = [...unmovedFiles, ...unmovedArchiveEntries];
         if (unmovedEntries.length > 0) {
           this.progressBar.logWarn(
-            `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length !== 1 ? 'ies were' : 'y was'} unmatched:\n${unmovedEntries
+            `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedEntries
               .sort()
               .map((entry) => `  ${entry.toString()}`)
               .join('\n')}`,

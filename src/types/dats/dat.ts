@@ -6,15 +6,26 @@ import Game from './game.js';
 import Header from './logiqx/header.js';
 import Parent from './parent.js';
 
+export interface DATProps {
+  filePath?: string;
+}
+
 /**
  * The base class for other DAT classes.
  */
 export default abstract class DAT {
+  readonly filePath?: string;
   private parents: Parent[] = [];
+
+  protected constructor(props?: DATProps) {
+    this.filePath = props?.filePath;
+  }
 
   abstract getHeader(): Header;
 
   abstract getGames(): Game[];
+
+  abstract withGames(games: Game[]): DAT;
 
   /**
    * Group all {@link Game} clones together into one {@link Parent}. If no parent/clone information
@@ -88,6 +99,10 @@ export default abstract class DAT {
     return this;
   }
 
+  getFilePath(): string | undefined {
+    return this.filePath;
+  }
+
   getParents(): Parent[] {
     return this.parents;
   }
@@ -110,10 +125,10 @@ export default abstract class DAT {
         .replace('Non-Redump', '!Redump')
         .replace('Source Code', 'S.Code')
         // Cleanup
-        .replace(/-( +-)+/g, '- ')
+        .replaceAll(/-( +-)+/g, '- ')
         .replace(/^[ -]+/, '')
         .replace(/[ -]+$/, '')
-        .replace(/  +/g, ' ')
+        .replaceAll(/  +/g, ' ')
         .trim()
     );
   }
@@ -136,7 +151,7 @@ export default abstract class DAT {
 
   getRequiredRomChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) =>
+    this.getGames().forEach((game) => {
       game.getRoms().forEach((rom) => {
         if (rom.getCrc32() && rom.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
@@ -147,14 +162,14 @@ export default abstract class DAT {
         } else if (rom.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      }),
-    );
+      });
+    });
     return checksumBitmask;
   }
 
   getRequiredDiskChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) =>
+    this.getGames().forEach((game) => {
       game.getDisks().forEach((disk) => {
         if (disk.getCrc32() && disk.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
@@ -165,8 +180,8 @@ export default abstract class DAT {
         } else if (disk.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      }),
-    );
+      });
+    });
     return checksumBitmask;
   }
 

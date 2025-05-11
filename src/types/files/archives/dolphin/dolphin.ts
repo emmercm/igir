@@ -46,7 +46,7 @@ export default abstract class Dolphin extends Archive {
     ];
   }
 
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
     await dolphinTool.convert({
       inputFilename: this.getFilePath(),
       outputFilename: extractedFilePath,

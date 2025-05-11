@@ -37,7 +37,8 @@ export default class DriveSemaphore {
   async runExclusive<V>(file: File | string, runnable: () => V | Promise<V>): Promise<V> {
     const filePathDisk = DriveSemaphore.getDiskForFile(file);
     const driveSemaphore = await this.driveSemaphoresMutex.runExclusive(() => {
-      if (!this.driveSemaphores.has(filePathDisk)) {
+      let semaphore = this.driveSemaphores.get(filePathDisk);
+      if (semaphore === undefined) {
         // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
         //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
         let maxKilobytes = Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES;
@@ -48,10 +49,11 @@ export default class DriveSemaphore {
           maxKilobytes = 1;
         }
 
-        this.driveSemaphores.set(filePathDisk, new ElasticSemaphore(maxKilobytes));
+        semaphore = new ElasticSemaphore(maxKilobytes);
+        this.driveSemaphores.set(filePathDisk, semaphore);
       }
 
-      return this.driveSemaphores.get(filePathDisk)!;
+      return semaphore;
     });
 
     const fileSizeKilobytes =
@@ -86,10 +88,10 @@ export default class DriveSemaphore {
       })
       .reduce((map, [file, idx]) => {
         const key = DriveSemaphore.getDiskForFile(file);
-        if (!map.has(key)) {
-          map.set(key, [[file, idx]]);
-        } else {
+        if (map.has(key)) {
           map.get(key)?.push([file, idx]);
+        } else {
+          map.set(key, [[file, idx]]);
         }
         return map;
       }, new Map<string, [K, number][]>());
@@ -132,7 +134,7 @@ export default class DriveSemaphore {
 
   private static getDiskForFile(file: File | string): string {
     const filePath = file instanceof File ? file.getFilePath() : file;
-    const filePathNormalized = filePath.replace(/[\\/]/g, path.sep);
+    const filePathNormalized = filePath.replaceAll(/[\\/]/g, path.sep);
 
     // Try to get the path of the drive this file is on
     const filePathDisk = FsPoly.diskResolved(filePathNormalized);

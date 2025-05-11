@@ -39,7 +39,7 @@ export default class DATGameInferrer extends Module {
    */
   async infer(romFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(
-      `inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length !== 1 ? 's' : ''}`,
+      `inferring DATs for ${romFiles.length.toLocaleString()} ROM${romFiles.length === 1 ? '' : 's'}`,
     );
 
     const normalizedInputPaths = this.options
@@ -57,16 +57,16 @@ export default class DATGameInferrer extends Module {
         ? matchedInputPaths
         : [DATGameInferrer.DEFAULT_DAT_NAME]
       ).forEach((inputPath) => {
-        if (!map.has(inputPath)) {
-          map.set(inputPath, [file]);
-        } else {
+        if (map.has(inputPath)) {
           map.get(inputPath)?.push(file);
+        } else {
+          map.set(inputPath, [file]);
         }
       });
       return map;
     }, new Map<string, File[]>());
     this.progressBar.logTrace(
-      `inferred ${inputPathsToRomFiles.size.toLocaleString()} DAT${inputPathsToRomFiles.size !== 1 ? 's' : ''}`,
+      `inferred ${inputPathsToRomFiles.size.toLocaleString()} DAT${inputPathsToRomFiles.size === 1 ? '' : 's'}`,
     );
 
     const dats = await Promise.all(
@@ -110,7 +110,7 @@ export default class DATGameInferrer extends Module {
           .map(
             (romFile) =>
               new ROM({
-                name: path.basename(romFile.getExtractedFilePath()),
+                name: romFile.getExtractedFilePath(),
                 size: romFile.getSize(),
                 crc32: romFile.getCrc32(),
                 md5: romFile.getMd5(),
@@ -122,7 +122,7 @@ export default class DATGameInferrer extends Module {
         return new Game({
           name: gameName,
           description: gameName,
-          rom: roms,
+          roms: roms,
         });
       })
       // Filter out duplicate games
@@ -134,7 +134,7 @@ export default class DATGameInferrer extends Module {
       description: datName,
     });
 
-    return new LogiqxDAT(header, games);
+    return new LogiqxDAT({ header, games });
   }
 
   /**
@@ -180,10 +180,10 @@ export default class DATGameInferrer extends Module {
       if (key === undefined) {
         return map;
       }
-      if (!map.has(key)) {
-        map.set(key, [romFile]);
-      } else {
+      if (map.has(key)) {
         map.get(key)?.push(romFile);
+      } else {
+        map.set(key, [romFile]);
       }
       return map;
     }, new Map<string, File[]>());
@@ -227,7 +227,7 @@ export default class DATGameInferrer extends Module {
 
   private inferArchiveEntries(romFiles: File[]): [string, ArchiveEntry<Archive>[]][] {
     this.progressBar.logTrace(
-      `inferring games from archives from ${romFiles.length.toLocaleString()} file${romFiles.length !== 1 ? 's' : ''}`,
+      `inferring games from archives from ${romFiles.length.toLocaleString()} file${romFiles.length === 1 ? '' : 's'}`,
     );
 
     // For archives, assume the entire archive is one game
@@ -235,10 +235,10 @@ export default class DATGameInferrer extends Module {
       .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
       .reduce((map, file) => {
         const archivePath = file.getFilePath();
-        if (!map.has(archivePath)) {
-          map.set(archivePath, [file]);
-        } else {
+        if (map.has(archivePath)) {
           map.get(archivePath)?.push(file);
+        } else {
+          map.set(archivePath, [file]);
         }
         return map;
       }, new Map<string, ArchiveEntry<Archive>[]>());
@@ -255,7 +255,7 @@ export default class DATGameInferrer extends Module {
   private async inferBinCueFiles(romFiles: File[]): Promise<[string, File[]][]> {
     const rawFiles = romFiles.filter((file) => !(file instanceof ArchiveEntry));
     this.progressBar.logTrace(
-      `inferring games from cue files from ${rawFiles.length.toLocaleString()} non-archive${rawFiles.length !== 1 ? 's' : ''}`,
+      `inferring games from cue files from ${rawFiles.length.toLocaleString()} non-archive${rawFiles.length === 1 ? '' : 's'}`,
     );
 
     const rawFilePathsToFiles = rawFiles.reduce((map, file) => {
@@ -299,7 +299,7 @@ export default class DATGameInferrer extends Module {
   private async inferGdiFiles(romFiles: File[]): Promise<[string, File[]][]> {
     const rawFiles = romFiles.filter((file) => !(file instanceof ArchiveEntry));
     this.progressBar.logTrace(
-      `inferring games from gdi files from ${rawFiles.length.toLocaleString()} non-archive${rawFiles.length !== 1 ? 's' : ''}`,
+      `inferring games from gdi files from ${rawFiles.length.toLocaleString()} non-archive${rawFiles.length === 1 ? '' : 's'}`,
     );
 
     const rawFilePathsToFiles = rawFiles.reduce((map, file) => {
@@ -321,7 +321,7 @@ export default class DATGameInferrer extends Module {
                 .split(/\r?\n/)
                 .filter((line) => line.length > 0)
                 // Replace the chdman-generated track files with TOSEC-style track filenames
-                .map((line) => line.replace(filePrefix, 'track').replace(/"/g, ''))
+                .map((line) => line.replace(filePrefix, 'track').replaceAll('"', ''))
                 .join('\r\n')}\r\n`;
 
               const trackFilePaths = gdiContents
@@ -354,17 +354,17 @@ export default class DATGameInferrer extends Module {
 
   private inferRawFiles(romFiles: File[]): [string, File[]][] {
     this.progressBar.logTrace(
-      `inferring games from raw files from ${romFiles.length.toLocaleString()} file${romFiles.length !== 1 ? 's' : ''}`,
+      `inferring games from raw files from ${romFiles.length.toLocaleString()} file${romFiles.length === 1 ? '' : 's'}`,
     );
 
     const results = romFiles
       .filter((file) => !(file instanceof ArchiveEntry))
       .reduce((map, file) => {
         const gameName = DATGameInferrer.getGameName(file);
-        if (!map.has(gameName)) {
-          map.set(gameName, [file]);
-        } else {
+        if (map.has(gameName)) {
           map.get(gameName)?.push(file);
+        } else {
+          map.set(gameName, [file]);
         }
         return map;
       }, new Map<string, File[]>());

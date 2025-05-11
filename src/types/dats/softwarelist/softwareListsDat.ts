@@ -1,22 +1,26 @@
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
+import { Expose, plainToClassFromExist, Transform, Type } from 'class-transformer';
 
-import DAT from '../dat.js';
+import DAT, { DATProps } from '../dat.js';
 import Game from '../game.js';
 import Header from '../logiqx/header.js';
 import SoftwareListDAT from './softwareListDat.js';
 
+export interface SoftwareListsDATProps extends DATProps {
+  softwarelist?: SoftwareListDAT | SoftwareListDAT[];
+}
+
 /**
  * MAME-schema DAT that documents {@link SoftwareListDAT}s.
  */
-export default class SoftwareListsDAT extends DAT {
+export default class SoftwareListsDAT extends DAT implements SoftwareListsDATProps {
   @Expose()
   @Type(() => SoftwareListDAT)
   @Transform(({ value }: { value: undefined | SoftwareListDAT | SoftwareListDAT[] }) => value ?? [])
-  readonly softwarelist: SoftwareListDAT | SoftwareListDAT[];
+  readonly softwarelist?: SoftwareListDAT | SoftwareListDAT[];
 
-  constructor() {
-    super();
-    this.softwarelist = [];
+  constructor(props?: SoftwareListsDATProps) {
+    super(props);
+    this.softwarelist = props?.softwarelist;
     this.generateGameNamesToParents();
   }
 
@@ -24,8 +28,11 @@ export default class SoftwareListsDAT extends DAT {
    * Construct a {@link SoftwareListsDAT} from a generic object, such as one from reading an XML
    * file.
    */
-  static fromObject(obj: object): SoftwareListsDAT {
-    return plainToInstance(SoftwareListsDAT, obj, {
+  static fromObject(obj: object, props?: DATProps): SoftwareListsDAT {
+    // WARN(cemmer): plainToClassFromExist requires all class properties to be undefined, it will
+    // not overwrite properties with a defined value
+    const dat = new SoftwareListsDAT(props);
+    return plainToClassFromExist(dat, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     }).generateGameNamesToParents();
@@ -43,6 +50,9 @@ export default class SoftwareListsDAT extends DAT {
   }
 
   private getSoftwareLists(): SoftwareListDAT[] {
+    if (this.softwarelist === undefined) {
+      return [];
+    }
     if (Array.isArray(this.softwarelist)) {
       return this.softwarelist;
     }
@@ -51,5 +61,10 @@ export default class SoftwareListsDAT extends DAT {
 
   getGames(): Game[] {
     return this.getSoftwareLists().flatMap((softwareList) => softwareList.getGames());
+  }
+
+  withGames(games: Game[]): DAT {
+    // This DAT is a list of DATs, so we need to type change here
+    return new SoftwareListDAT({ ...this, software: games });
   }
 }

@@ -2,7 +2,6 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
-import Machine from '../../types/dats/mame/machine.js';
 import Options, { MergeMode } from '../../types/options.js';
 import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
@@ -67,7 +66,7 @@ export default class CandidateMergeSplitValidator extends Module {
         }
 
         // Validate dependent devices were found
-        if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED && game instanceof Machine) {
+        if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED) {
           const missingDeviceGames = game
             .getDeviceRefs()
             .map((deviceRef) => datGamesIndexed.get(deviceRef.getName()))
@@ -92,7 +91,7 @@ export default class CandidateMergeSplitValidator extends Module {
 
         if (missingDependencies.length > 0) {
           this.progressBar.logWarn(
-            `${dat.getName()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length !== 1 ? 's' : ''}: ${missingDependencies.join(', ')}`,
+            `${dat.getName()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length === 1 ? '' : 's'}: ${missingDependencies.join(', ')}`,
           );
         }
         return missingDependencies;

@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../src/console/logger.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import Temp from '../../src/globals/temp.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
@@ -23,11 +25,15 @@ it('should do nothing if no ROMs moved', async () => {
       input: ['./test/fixtures/roms'],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
 
-  await new MovedROMDeleter(new ProgressBarFake()).delete(romFiles, [], new Map());
+  await new MovedROMDeleter(new Options({ commands: ['copy'] }), new ProgressBarFake()).delete(
+    romFiles,
+    [],
+    new Map(),
+  );
 
   const exists = Promise.all(romFiles.map(async (romFile) => FsPoly.exists(romFile.getFilePath())));
   expect(exists).not.toContain(false);
@@ -45,7 +51,7 @@ describe('should delete archives', () => {
         [
           new Game({
             name: 'Euro Demo 42 (Europe)',
-            rom: [
+            roms: [
               new ROM({ name: 'Euro Demo 42 (Europe).cue', size: 1374, crc32: '96b2b896' }),
               new ROM({
                 name: 'Euro Demo 42 (Europe) (Track 01).bin',
@@ -117,7 +123,7 @@ describe('should delete archives', () => {
         [
           new Game({
             name: 'Zero 4 Champ II (Japan)',
-            rom: [
+            roms: [
               new ROM({ name: 'Zero 4 Champ II (Japan).cue', size: 4187, crc32: 'a8c5c66e' }),
               new ROM({
                 name: 'Zero 4 Champ II (Japan) (Track 01).bin',
@@ -338,7 +344,7 @@ describe('should delete archives', () => {
           }),
           new Game({
             name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan)',
-            rom: [
+            roms: [
               new ROM({
                 name: 'Adventure Quiz - Capcom World + Hatena no Daibouken (Japan).cue',
                 size: 984,
@@ -396,7 +402,7 @@ describe('should delete archives', () => {
           output: 'output',
         });
 
-        const dat = new LogiqxDAT(new Header(), games);
+        const dat = new LogiqxDAT({ header: new Header(), games });
 
         const rawRomFiles = (
           await Promise.all(
@@ -426,11 +432,10 @@ describe('should delete archives', () => {
         const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
 
         const deletedFilePaths = (
-          await new MovedROMDeleter(new ProgressBarFake()).delete(
-            inputRoms,
-            movedRoms,
-            datsToWrittenRoms,
-          )
+          await new MovedROMDeleter(
+            new Options({ commands: ['copy'] }),
+            new ProgressBarFake(),
+          ).delete(inputRoms, movedRoms, datsToWrittenRoms)
         )
           .map((filePath) => filePath.replace(inputPath + path.sep, ''))
           .sort();

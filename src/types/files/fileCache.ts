@@ -150,7 +150,7 @@ export default class FileCache {
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Archive>[]> {
+  ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
     if (stats.size === 0) {

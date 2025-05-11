@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../../../src/console/logger.js';
+import { LogLevel } from '../../../../src/console/logLevel.js';
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
@@ -27,6 +29,8 @@ import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER);
+
 describe('getArchiveEntries', () => {
   test.each([
     ...new Set([
@@ -51,7 +55,7 @@ describe('getArchiveEntries', () => {
     ]),
   ])("should throw when the file doesn't exist: %s", async (extension) => {
     const tempFile = (await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
-    await expect(new FileFactory(new FileCache()).filesFrom(tempFile)).rejects.toThrow();
+    await expect(new FileFactory(new FileCache(), LOGGER).filesFrom(tempFile)).rejects.toThrow();
   });
 
   test.each([
@@ -88,7 +92,7 @@ describe('getArchiveEntries', () => {
   ])(
     'should enumerate the single file archive: %s',
     async (filePath, expectedEntryPath, expectedCrc) => {
-      const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      const entries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
       expect(entries).toHaveLength(1);
 
       const entry = entries[0];
@@ -131,7 +135,7 @@ describe('getArchiveEntries', () => {
       ],
     ],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
-    const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
+    const entries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
     expect(entries).toHaveLength(expectedEntries.length);
 
     for (const [idx, entry] of entries.entries()) {
@@ -156,7 +160,7 @@ describe('extractEntryToFile', () => {
         ],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     const archives = archiveEntries
       .filter((entry) => entry instanceof ArchiveEntry)

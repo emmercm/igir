@@ -1,28 +1,45 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream, { Readable } from 'node:stream';
 
-import archiver, { Archiver } from 'archiver';
+import {
+  CompressionMethod,
+  TZValidator,
+  TZWriter,
+  ValidationResult,
+  ValidationResultValue,
+} from '@igir/torrentzip';
+import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
 import async from 'async';
-import unzipper, { Entry, File as ZipFile } from 'unzipper';
+import { Mutex } from 'async-mutex';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
-import StreamPoly from '../../../polyfill/streamPoly.js';
-import Timer from '../../../timer.js';
 import ExpectedError from '../../expectedError.js';
+import { ZipFormat, ZipFormatValue } from '../../options.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
 export default class Zip extends Archive {
+  private readonly zipReader: ZipReader;
+
+  private readonly tzValidateMutex = new Mutex();
+  private tzValidateModifiedTimeMillis?: number;
+  private tzValidateResult?: ValidationResultValue;
+
+  constructor(filePath: string) {
+    super(filePath);
+    this.zipReader = new ZipReader(this.getFilePath());
+  }
+
   protected new(filePath: string): Archive {
     return new Zip(filePath);
   }
 
   static getExtensions(): string[] {
-    return ['.zip', '.apk', '.ipa', '.jar', '.pk3'];
+    return ['.zip', '.zip64', '.apk', '.ipa', '.jar', '.pk3'];
   }
 
   getExtension(): string {
@@ -30,53 +47,19 @@ export default class Zip extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
-    // https://github.com/ZJONSSON/node-unzipper/issues/280
-    // UTF-8 entry names are not decoded correctly
-    // But this is mitigated by `extractEntryToStream()` and therefore `extractEntryToFile()` both
-    //  using `unzipper.Open.file()` as well, so mangled filenames here will still extract fine
-    const archive = await unzipper.Open.file(this.getFilePath());
+    const entries = await this.zipReader.centralDirectoryFileHeaders();
 
     return async.mapLimit(
-      archive.files.filter((entryFile) => entryFile.type === 'File'),
+      entries.filter((entry) => !entry.isDirectory()),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entryFile: ZipFile): Promise<ArchiveEntry<this>> => {
-        // We have to filter these out here because `Entry.stream()` will fail, and even though it
-        // will emit a catchable error, the stream will never be released
-        if (entryFile.compressionMethod === 12) {
-          throw new ExpectedError("BZip2 isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 14) {
-          throw new ExpectedError("LZMA isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 20 || entryFile.compressionMethod === 93) {
-          throw new ExpectedError("Zstandard isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod === 98) {
-          throw new ExpectedError("PPMd isn't supported for .zip files");
-        }
-        if (entryFile.compressionMethod !== 0 && entryFile.compressionMethod !== 8) {
-          throw new ExpectedError('only STORE and DEFLATE methods are supported for .zip files');
-        }
-
+      async (entryFile: CentralDirectoryFileHeader): Promise<ArchiveEntry<this>> => {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
-          const entryStream = entryFile
-            .stream()
-            // Ignore FILE_ENDED exceptions. This may cause entries to have an empty path, which
-            // may lead to unexpected behavior, but at least this won't crash because of an
-            // unhandled exception on the stream.
-            .on('error', () => {
-              // @typescript-eslint/no-empty-function
-            });
+          const entryStream = await entryFile.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
           try {
             checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
           } finally {
-            /**
-             * In the case the callback doesn't read the entire stream, {@link unzipper} will leave
-             * the file handle open. Drain the stream so the file handle can be released. The stream
-             * cannot be destroyed by the callback, or this will never resolve!
-             */
-            await StreamPoly.autodrain(entryStream);
+            entryStream.destroy();
           }
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
@@ -84,9 +67,9 @@ export default class Zip extends Archive {
         return ArchiveEntry.entryOf(
           {
             archive: this,
-            entryPath: entryFile.path,
-            size: entryFile.uncompressedSize,
-            crc32: crc32 ?? entryFile.crc32.toString(16),
+            entryPath: entryFile.fileNameResolved(),
+            size: entryFile.uncompressedSizeResolved(),
+            crc32: crc32 ?? entryFile.uncompressedCrc32String(),
             ...checksumsWithoutCrc,
           },
           checksumBitmask,
@@ -119,150 +102,138 @@ export default class Zip extends Archive {
     start = 0,
   ): Promise<T> {
     if (start > 0) {
-      // Zip library doesn't support starting the stream at some offset
+      // Can't start the stream at an uncompressed offset
       return super.extractEntryToStream(entryPath, callback, start);
     }
 
-    const archive = await unzipper.Open.file(this.getFilePath());
-
-    const entry = archive.files
-      .filter((entryFile) => entryFile.type === 'File')
-      .find((entryFile) => entryFile.path === entryPath.replace(/[\\/]/g, '/'));
+    // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
+    const entries = await this.zipReader.centralDirectoryFileHeaders();
+    const entry = entries.find(
+      (entryFile) =>
+        entryFile.fileNameResolved().replaceAll(/[\\/]/g, '/') ===
+        entryPath.replaceAll(/[\\/]/g, '/'),
+    );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
       throw new ExpectedError(`didn't find entry '${entryPath}'`);
     }
 
-    let stream: Entry;
+    let entryStream: stream.Readable;
     try {
-      stream = entry.stream();
+      entryStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
     }
 
     try {
-      return await callback(stream);
+      return await callback(entryStream);
     } finally {
-      /**
-       * In the case the callback doesn't read the entire stream, {@link unzipper} will leave the
-       * file handle open. Drain the stream so the file handle can be released. The stream cannot
-       * be destroyed by the callback, or this will never resolve!
-       * TODO(cemmer): this takes forever to drain with large files, e.g. during extension correction
-       */
-      await StreamPoly.autodrain(stream);
+      entryStream.destroy();
     }
   }
 
-  async createArchive(inputToOutput: [File, ArchiveEntry<Zip>][]): Promise<void> {
+  async createArchive(
+    inputToOutput: [File, ArchiveEntry<Zip>][],
+    zipFormat: ZipFormatValue,
+    compressorThreads: number,
+  ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
     const tempZipFile = await FsPoly.mktemp(this.getFilePath());
-    const writeStream = fs.createWriteStream(tempZipFile);
-
-    // Start writing the zip file
-    const zipFile = archiver('zip', {
-      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
-      zlib: {
-        chunkSize: 256 * 1024, // 256KiB buffer to/from zlib, defaults to 16KiB
-        level: 9,
-        memLevel: 9, // history buffer size, max, defaults to 8
-      },
-    });
-    zipFile.pipe(writeStream);
+    const torrentZip = await TZWriter.open(
+      tempZipFile,
+      zipFormat === ZipFormat.RVZSTD ? CompressionMethod.ZSTD : CompressionMethod.DEFLATE,
+    );
 
     // Write each entry
     try {
-      await Zip.addArchiveEntries(zipFile, inputToOutput);
+      await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads);
     } catch (error) {
-      zipFile.abort();
+      await torrentZip.close();
       await FsPoly.rm(tempZipFile, { force: true });
       throw error;
     }
 
-    // Finalize writing the zip file
-    await zipFile.finalize();
-    await new Promise<void>((resolve) => {
-      // We are writing to a file, so we want to wait on the 'close' event which indicates the file
-      // descriptor has been closed. 'finished' will also fire before 'close' does.
-      writeStream.on('close', resolve);
-    });
-
-    return FsPoly.mv(tempZipFile, this.getFilePath());
+    await torrentZip.finalize();
+    await FsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(
-    zipFile: Archiver,
+    torrentZip: TZWriter,
     inputToOutput: [File, ArchiveEntry<Zip>][],
+    compressorThreads: number,
   ): Promise<void> {
-    let zipFileError: Error | undefined;
-    const catchError = (err: Error): void => {
-      zipFileError = err;
-    };
-    zipFile.on('error', catchError);
-    zipFile.on('warning', (err) => {
-      if (err.code !== 'ENOENT') {
-        catchError(err);
+    // TZWriter needs files to be sorted by lowercase
+    const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) => {
+      const pathLowerA = outputA.getEntryPath().toLowerCase();
+      const pathLowerB = outputB.getEntryPath().toLowerCase();
+      if (pathLowerA < pathLowerB) {
+        return -1;
+      } else if (pathLowerA > pathLowerB) {
+        return 1;
       }
+      return 0;
     });
 
-    // Keep track of what entries have been written to the temp file on disk
-    const writtenEntries = new Set<string>();
-    zipFile.on('entry', (entry) => {
-      writtenEntries.add(entry.name);
-    });
-
-    // Write all archive entries to the zip
-    await async.eachLimit(
-      inputToOutput,
-      /**
-       * {@link archiver} uses a sequential, async queue internally:
-       * @see https://github.com/archiverjs/node-archiver/blob/b5cc14cc97cc64bdca32c0cbe9d660b5b979be7c/lib/core.js#L52
-       * Because of that, we should/can limit the number of open input file handles open. But we
-       *  also want to make sure the queue processing stays busy. Use 3 as a middle-ground.
-       */
-      3,
-      async ([inputFile, outputArchiveEntry]: [File, ArchiveEntry<Zip>]): Promise<void> => {
-        const streamProcessor = async (stream: Readable): Promise<void> => {
-          // Catch stream errors such as `ENOENT: no such file or directory`
-          stream.on('error', catchError);
-
-          const entryName = outputArchiveEntry.getEntryPath().replace(/[\\/]/g, '/');
-          zipFile.append(stream, {
-            name: entryName,
-          });
-
-          // Leave the input stream open until we're done writing it
-          await new Promise<void>((resolve) => {
-            const timer = Timer.setInterval(() => {
-              if (writtenEntries.has(entryName) || zipFileError) {
-                timer.cancel();
-                resolve();
-              }
-            }, 10);
-          });
-        };
-
-        try {
-          await inputFile.createPatchedReadStream(streamProcessor);
-        } catch (error) {
-          // Reading the file can throw an exception, so we have to handle that or this will hang
-          if (error instanceof Error) {
-            catchError(error);
-          } else if (typeof error === 'string') {
-            catchError(new Error(error));
-          } else {
-            catchError(
-              new Error(
-                `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}'`,
-              ),
-            );
-          }
-        }
-      },
-    );
-
-    if (zipFileError) {
-      throw zipFileError;
+    for (const [inputFile, outputArchiveEntry] of inputToOutputSorted) {
+      // TZWriter requires files to be compressed sequentially
+      try {
+        await new Promise((resolve, reject) => {
+          inputFile
+            .createPatchedReadStream(async (readable) => {
+              readable.on('error', reject);
+              await torrentZip.addStream(
+                readable,
+                outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
+                inputFile.getSize(),
+                compressorThreads,
+              );
+            })
+            .then(resolve)
+            .catch(reject);
+        });
+      } catch (error) {
+        throw new Error(
+          `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}': ${error}`,
+        );
+      }
     }
+  }
+
+  async isTorrentZip(): Promise<boolean> {
+    try {
+      return (await this.tzValidate()) === ValidationResult.VALID_TORRENTZIP;
+    } catch {
+      // Likely a zip reading failure
+      return false;
+    }
+  }
+
+  async isRVZSTD(): Promise<boolean> {
+    try {
+      return (await this.tzValidate()) === ValidationResult.VALID_RVZSTD;
+    } catch {
+      // Likely a zip reading failure
+      return false;
+    }
+  }
+
+  /**
+   * Cache TZValidator results as long as this file hasn't been modified.
+   */
+  private async tzValidate(): Promise<ValidationResultValue> {
+    return this.tzValidateMutex.runExclusive(async () => {
+      const modifiedTimeMillis = (await FsPoly.stat(this.getFilePath())).mtimeMs;
+      if (
+        this.tzValidateResult !== undefined &&
+        modifiedTimeMillis === this.tzValidateModifiedTimeMillis
+      ) {
+        return this.tzValidateResult;
+      }
+
+      this.tzValidateResult = await TZValidator.validate(this.zipReader);
+      this.tzValidateModifiedTimeMillis = modifiedTimeMillis;
+      return this.tzValidateResult;
+    });
   }
 }

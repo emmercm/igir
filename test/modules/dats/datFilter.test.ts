@@ -16,7 +16,7 @@ function expectFilteredDAT(
   gamesArr: Game[][],
   expectedGameCount: number,
 ): void {
-  const dat = new LogiqxDAT(new Header(), gamesArr.flat());
+  const dat = new LogiqxDAT({ header: new Header(), games: gamesArr.flat() });
   const filteredDat = buildDATFilter(options).filter(dat);
   expect(filteredDat.getGames()).toHaveLength(expectedGameCount);
 }
@@ -63,7 +63,7 @@ function buildGameWithRegionLanguage(
       });
       const game = new Game({
         name: `${romName}${language ? ` (${language})` : ''}`, // all games need to have unique names
-        rom: [rom],
+        roms: [rom],
         release: releases,
         ...gameOptionsArr[idx],
       });
@@ -137,7 +137,7 @@ it('should not re-elect a new parent if not filtered out', () => {
     'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
     'Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)',
   ].map((name) => new Game({ name, cloneOf: parent.getName() }));
-  const dat = new LogiqxDAT(new Header(), [parent, ...children]);
+  const dat = new LogiqxDAT({ header: new Header(), games: [parent, ...children] });
   expect(dat.getParents()).toHaveLength(1);
 
   const filteredDat = new DATFilter(options, new ProgressBarFake()).filter(dat);
@@ -173,7 +173,7 @@ it('should not leave children abandoned', () => {
     'Legend of Zelda, The (USA) (Rev 1) (Virtual Console)',
     'Zelda no Densetsu 1 - The Hyrule Fantasy (Japan)',
   ].map((name) => new Game({ name, cloneOf: parent.getName() }));
-  const dat = new LogiqxDAT(new Header(), [parent, ...children]);
+  const dat = new LogiqxDAT({ header: new Header(), games: [parent, ...children] });
   expect(dat.getParents()).toHaveLength(1);
 
   const filteredDat = new DATFilter(options, new ProgressBarFake()).filter(dat);
@@ -516,17 +516,17 @@ describe('category', () => {
       // Nintendo - Super Nintendo Entertainment System (20240317-134803).dat
       new Game({
         name: 'Gargoyles (USA) (Proto) (1994-07-19)',
-        category: ['Games', 'Preproduction'],
+        categories: ['Games', 'Preproduction'],
       }),
-      new Game({ name: 'Harvest Moon (USA) (Beta)', category: 'Games' }),
+      new Game({ name: 'Harvest Moon (USA) (Beta)', categories: 'Games' }),
       new Game({
         name: 'Peru - Operation Chavin de Huantar (USA) (Demo) (Unl)',
-        category: ['Demos', 'Games'],
+        categories: ['Demos', 'Games'],
       }),
       new Game({ name: 'Super Game Boy (World) (Rev 2)' }),
       new Game({
         name: 'Super Game Boy (Japan, USA) (En) (Beta) (1994-03-23)',
-        category: ['Applications', 'Preproduction'],
+        categories: ['Applications', 'Preproduction'],
       }),
     ],
   ];

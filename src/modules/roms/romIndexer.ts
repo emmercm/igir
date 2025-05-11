@@ -31,7 +31,7 @@ export default class ROMIndexer extends Module {
    */
   index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(
-      `indexing ${files.length.toLocaleString()} file${files.length !== 1 ? 's' : ''}`,
+      `indexing ${files.length.toLocaleString()} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
     this.progressBar.reset(files.length);
@@ -39,10 +39,12 @@ export default class ROMIndexer extends Module {
     // Index the files
     const result = IndexedFiles.fromFiles(files);
     // Then apply some sorting preferences
-    Object.keys(result).forEach((checksum) => this.sortMap(result[checksum as keyof AllChecksums]));
+    Object.keys(result).forEach((checksum) => {
+      this.sortMap(result[checksum as keyof AllChecksums]);
+    });
 
     this.progressBar.logTrace(
-      `found ${result.getSize()} unique file${result.getSize() !== 1 ? 's' : ''}`,
+      `found ${result.getSize()} unique file${result.getSize() === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done indexing files');

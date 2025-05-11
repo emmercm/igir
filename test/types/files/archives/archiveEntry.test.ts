@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Logger from '../../../../src/console/logger.js';
+import { LogLevel } from '../../../../src/console/logLevel.js';
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
@@ -15,6 +17,8 @@ import ROMHeader from '../../../../src/types/files/romHeader.js';
 import Options from '../../../../src/types/options.js';
 import IPSPatch from '../../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
+
+const LOGGER = new Logger(LogLevel.NEVER);
 
 describe('getEntryPath', () => {
   test.each(['something.rom', path.join('foo', 'bar.rom')])(
@@ -51,7 +55,7 @@ describe('getSize', () => {
     ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', 1_671_168],
   ])('%s', (filePath, expectedSize) => {
     it("should get the file's size", async () => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0];
 
@@ -68,7 +72,7 @@ describe('getSize', () => {
         const tempLink = path.join(tempDir, `link_${path.basename(filePath)}`);
         await FsPoly.hardlink(tempFile, tempLink);
 
-        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
+        const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries[0];
 
@@ -84,7 +88,7 @@ describe('getSize', () => {
         const tempLink = path.join(tempDir, path.basename(filePath));
         await FsPoly.symlink(path.resolve(filePath), tempLink);
 
-        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
+        const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries[0];
 
@@ -100,7 +104,7 @@ describe('getSize', () => {
         const tempLink = path.join(tempDir, path.basename(filePath));
         await FsPoly.symlink(await FsPoly.symlinkRelativePath(filePath, tempLink), tempLink);
 
-        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(tempLink);
+        const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(tempLink);
         expect(archiveEntries).toHaveLength(1);
         const archiveEntry = archiveEntries[0];
 
@@ -139,7 +143,7 @@ describe('getCrc32', () => {
     // other
     ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', '5eb3d183'],
   ])('should hash the full archive entry: %s', async (filePath, expectedCrc) => {
-    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
+    const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
     expect(archiveEntries).toHaveLength(1);
     const archiveEntry = archiveEntries[0];
 
@@ -183,7 +187,7 @@ describe('getCrc32WithoutHeader', () => {
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedCrc) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
       const archiveEntry = archiveEntries[0];
 
@@ -205,11 +209,13 @@ describe('getCrc32WithoutHeader', () => {
   ])(
     'should hash the archive entry without the header when header is given and present in file: %s',
     async (filePath, expectedCrc) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(filePath);
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).not.toEqual(expectedCrc);
       expect(archiveEntry.getCrc32WithoutHeader()).toEqual(expectedCrc);
@@ -253,7 +259,7 @@ describe('getMd5', () => {
     // other
     ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedMd5) => {
-    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+    const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
       filePath,
       ChecksumBitmask.MD5,
     );
@@ -302,7 +308,7 @@ describe('getMd5WithoutHeader', () => {
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedMd5) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         filePath,
         ChecksumBitmask.MD5,
       );
@@ -329,14 +335,16 @@ describe('getMd5WithoutHeader', () => {
   ])(
     'should hash the archive entry without the header when header is given and present in file: %s',
     async (filePath, expectedMd5) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         filePath,
         ChecksumBitmask.MD5,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
@@ -386,7 +394,7 @@ describe('getSha1', () => {
     // other
     ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha1) => {
-    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+    const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
       filePath,
       ChecksumBitmask.SHA1,
     );
@@ -441,7 +449,7 @@ describe('getSha1WithoutHeader', () => {
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedSha1) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         filePath,
         ChecksumBitmask.SHA1,
       );
@@ -474,14 +482,16 @@ describe('getSha1WithoutHeader', () => {
   ])(
     'should hash the archive entry without the header when header is given and present in file: %s',
     async (filePath, expectedSha1) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         filePath,
         ChecksumBitmask.SHA1,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
@@ -576,7 +586,7 @@ describe('getSha256', () => {
     // other
     ['./test/fixtures/roms/nkit/GameCube-240pSuite-1.19.nkit.iso', undefined],
   ])('should hash the full archive entry: %s', async (filePath, expectedSha256) => {
-    const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+    const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
       filePath,
       ChecksumBitmask.SHA256,
     );
@@ -676,7 +686,7 @@ describe('getSha256WithoutHeader', () => {
   ])(
     'should hash the full archive entry when no header given: %s',
     async (filePath, expectedSha256) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         filePath,
         ChecksumBitmask.SHA256,
       );
@@ -709,14 +719,16 @@ describe('getSha256WithoutHeader', () => {
   ])(
     'should hash the archive entry without the header when header is given and present in file: %s',
     async (filePath, expectedSha256) => {
-      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         filePath,
         ChecksumBitmask.SHA256,
       );
       expect(archiveEntries).toHaveLength(1);
-      const archiveEntry = await archiveEntries[0].withFileHeader(
-        ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath())!,
-      );
+      const header = ROMHeader.headerFromFilename(archiveEntries[0].getExtractedFilePath());
+      if (header === undefined) {
+        throw new Error(`couldn't get header for: ${archiveEntries[0].getExtractedFilePath()}`);
+      }
+      const archiveEntry = await archiveEntries[0].withFileHeader(header);
 
       expect(archiveEntry.getCrc32()).toBeDefined();
       expect(archiveEntry.getCrc32WithoutHeader()).toBeDefined();
@@ -744,7 +756,7 @@ describe('extractEntryToFile', () => {
         ],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
@@ -786,7 +798,7 @@ describe('copyToTempFile', () => {
         ],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
@@ -823,7 +835,7 @@ describe('createReadStream', () => {
         ],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache()),
+      new FileFactory(new FileCache(), LOGGER),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
