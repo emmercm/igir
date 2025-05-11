@@ -90,7 +90,7 @@ export default class OutputFactory {
     inputFile: File,
     romBasenames?: string[],
   ): OutputPath {
-    if (!options.shouldWrite()) {
+    if (!options.shouldWrite() && !options.shouldDir2Dat() && !options.shouldFixdat()) {
       // If we're not writing anything to the output, then just return the input as the output
       return new OutputPath({
         ...path.parse(inputFile.getFilePath()),

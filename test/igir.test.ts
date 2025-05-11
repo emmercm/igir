@@ -1292,7 +1292,7 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
-      expect(writtenFixdats).toHaveLength(3);
+      expect(writtenFixdats).toHaveLength(2);
 
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:
       //  diagnostic_test_cartridge.a78
@@ -1313,10 +1313,6 @@ describe('with explicit DATs', () => {
       //  UMD
       //  GameCube-240pSuite-1.19
       expect(writtenFixdats[1]).toMatch(/^One fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
-
-      // The "Patchable" DAT should have missing ROMs because some ROMs are only found in archives:
-      //  Best.rom
-      expect(writtenFixdats[2]).toMatch(/^Patchable fixdat \([0-9]{8}-[0-9]{6}\)\.dat$/);
 
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
