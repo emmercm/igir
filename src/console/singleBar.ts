@@ -91,7 +91,7 @@ export default class SingleBar extends ProgressBar {
   /**
    * TODO(cemmer)
    */
-  addChildBar(options: SingleBarOptions): ProgressBar {
+  addChildBar(options?: SingleBarOptions): ProgressBar {
     return this.multiBar.addSingleBar(
       this.logger,
       {
@@ -109,11 +109,19 @@ export default class SingleBar extends ProgressBar {
     return this.indentSize;
   }
 
+  getSymbol(): ColoredSymbol | undefined {
+    return this.symbol;
+  }
+
   setSymbol(symbol: ColoredSymbol): void {
     if (this.symbol === symbol) {
       return;
     }
     this.symbol = symbol;
+  }
+
+  getName(): string | undefined {
+    return this.name;
   }
 
   setName(name: string): void {
@@ -177,7 +185,9 @@ export default class SingleBar extends ProgressBar {
    * TODO(cemmer)
    */
   finish(finishedMessage?: string): void {
-    this.setSymbol(ProgressBarSymbol.DONE);
+    if (this.symbol?.symbol) {
+      this.setSymbol(ProgressBarSymbol.DONE);
+    }
 
     if (this.total > 0) {
       this.setCompleted(this.total);
@@ -255,7 +265,7 @@ export default class SingleBar extends ProgressBar {
       output += `\n${' '.repeat(this.indentSize + (this.symbol?.symbol ? 2 : 0))}${this.getBar()} `;
     }
 
-    this.lastOutput = output;
+    this.lastOutput = output.trimEnd();
     return this.lastOutput;
   }
 
