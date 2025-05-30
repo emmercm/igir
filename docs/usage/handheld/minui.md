@@ -4,7 +4,7 @@
 
 ## BIOS Files
 
-MinUI is strictly *bring your own BIOS*. You can find information on the required BIOS files [here](https://github.com/shauninman/MinUI/blob/main/skeleton/EXTRAS/README.txt)
+MinUI is strictly *bring your own BIOS*. You can find information on the required BIOS files [in the docs](https://github.com/shauninman/MinUI/blob/main/skeleton/EXTRAS/README.txt).
 
 !!! info
 
@@ -31,7 +31,7 @@ MinUI uses the names unter /Roms on the SD card in a more creative way than most
 
 MinUI requires multi-file releases to be grouped into subdirectories (bin/cue releases of the PS1 for example). It is recommended to use the [`--dir-game-subdir multiple` option](../../output/path-options.md), which is the default at this time.
 
-More details about these features can be found [here](https://github.com/shauninman/MinUI/tree/main/skeleton/BASE) under the sections `Roms` and `Disc-based games`.
+More details about these features can be found [in GitHub](https://github.com/shauninman/MinUI/tree/main/skeleton/BASE) under the sections `Roms` and `Disc-based games`.
 
 === ":fontawesome-brands-windows: Windows"
 
