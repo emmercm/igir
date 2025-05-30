@@ -32,7 +32,7 @@ export default class MovedROMDeleter extends Module {
     movedRoms: File[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
-    if (!this.options.shouldWrite()) {
+    if (!this.options.shouldMove()) {
       // We shouldn't cause any change to the output directory
       return [];
     }
