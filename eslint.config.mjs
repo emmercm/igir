@@ -211,11 +211,11 @@ export default [
 
       // ***** unicorn:recommended *****
       // Fixes
-      'unicorn/no-array-push-push': [
+      'unicorn/prefer-single-call': [
         'error',
         {
           // Readable#push() doesn't have a rest parameter 😡
-          ignore: ['readable'],
+          ignore: ['readable.push'],
         },
       ],
       // Style and clarity preference differences
