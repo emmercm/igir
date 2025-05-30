@@ -2,7 +2,7 @@ import semver from 'semver';
 
 import Logger from '../console/logger.js';
 import { LogLevel } from '../console/logLevel.js';
-import ProgressBarCLI from '../console/progressBarCli.js';
+import MultiBar from '../console/multiBar.js';
 
 /**
  * Check if the current Node.js version has reached EOL and log if it has.
@@ -46,20 +46,22 @@ export default class EndOfLifeChecker {
       if (semver.satisfies(nodejsVersion, `^${majorVersion}`)) {
         if (now > endOfLifeDate) {
           // We are past the EOL of a known version, warn and return
-          ProgressBarCLI.log(
-            this.logger,
-            LogLevel.WARN,
-            `Node.js v${majorVersion} reached end-of-life on ${endOfLifeDate.toDateString()}, you should update to an actively maintained LTS version`,
+          MultiBar.log(
+            this.logger.formatMessage(
+              LogLevel.WARN,
+              `Node.js v${majorVersion} reached end-of-life on ${endOfLifeDate.toDateString()}, you should update to an actively maintained LTS version`,
+            ),
           );
           return;
         }
 
         if (majorVersion % 2 === 1) {
           // We are within the support period of a non-LTS version, warn and return
-          ProgressBarCLI.log(
-            this.logger,
-            LogLevel.WARN,
-            `Node.js v${majorVersion} has a very short support window (ending on ${endOfLifeDate.toDateString()}), you should consider using an LTS version`,
+          MultiBar.log(
+            this.logger.formatMessage(
+              LogLevel.WARN,
+              `Node.js v${majorVersion} has a very short support window (ending on ${endOfLifeDate.toDateString()}), you should consider using an LTS version`,
+            ),
           );
           return;
         }
@@ -71,10 +73,11 @@ export default class EndOfLifeChecker {
     const coercedVersion = semver.coerce(nodejsVersion);
     if (coercedVersion && coercedVersion.major % 2 === 1) {
       // We are on an unknown non-LTS version, warn and return
-      ProgressBarCLI.log(
-        this.logger,
-        LogLevel.WARN,
-        `Node.js v${coercedVersion.major} has a very short support window, you should consider using an LTS version`,
+      MultiBar.log(
+        this.logger.formatMessage(
+          LogLevel.WARN,
+          `Node.js v${coercedVersion.major} has a very short support window, you should consider using an LTS version`,
+        ),
       );
     }
   }

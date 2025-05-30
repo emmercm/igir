@@ -34,7 +34,7 @@ export default class ROMIndexer extends Module {
       `indexing ${files.length.toLocaleString()} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
-    this.progressBar.reset(files.length);
+    this.progressBar.resetProgress(files.length);
 
     // Index the files
     const result = IndexedFiles.fromFiles(files);

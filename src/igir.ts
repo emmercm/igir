@@ -6,8 +6,8 @@ import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
 import Logger from './console/logger.js';
+import MultiBar from './console/multiBar.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
-import ProgressBarCLI from './console/progressBarCli.js';
 import Package from './globals/package.js';
 import Temp from './globals/temp.js';
 import CandidateArchiveFileHasher from './modules/candidates/candidateArchiveFileHasher.js';
@@ -123,13 +123,19 @@ export default class Igir {
     const patches = await this.processPatchScanner(fileFactory);
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = this.logger.addProgressBar(
-      chalk.underline('Processing DATs'),
-      ProgressBarSymbol.NONE,
-      dats.length,
-    );
+    const datProcessProgressBar = this.logger.addProgressBar({
+      name: chalk.underline('Processing DATs'),
+      symbol: ProgressBarSymbol.NONE,
+      total: dats.length,
+      progressBarSizeMultiplier: 2,
+    });
     if (dats.length === 0) {
       dats = await new DATGameInferrer(this.options, datProcessProgressBar).infer(roms);
+      datProcessProgressBar.setTotal(dats.length);
+    }
+    if (dats.length <= 1) {
+      // If there's only one DAT, then it's redundant to show this progress bar
+      datProcessProgressBar.delete();
     }
 
     const datsToWrittenFiles = new Map<DAT, File[]>();
@@ -142,13 +148,13 @@ export default class Igir {
       `processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
     );
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
-      datProcessProgressBar.incrementProgress();
+      datProcessProgressBar.incrementInProgress();
 
-      const progressBar = this.logger.addProgressBar(
-        dat.getDisplayName(),
-        ProgressBarSymbol.WAITING,
-        dat.getParents().length,
-      );
+      const progressBar = this.logger.addProgressBar({
+        name: dat.getDisplayName(),
+        symbol: ProgressBarSymbol.WAITING,
+        total: dat.getParents().length,
+      });
       const processedDat = this.processDAT(progressBar, dat);
 
       // Generate and filter ROM candidates
@@ -206,7 +212,7 @@ export default class Igir {
       // Write the output report
       const datStatus = new StatusGenerator(progressBar).generate(processedDat, candidates);
       datsStatuses.push(datStatus);
-      progressBar.done(
+      progressBar.finish(
         [
           datStatus.toConsole(this.options),
           dir2DatPath ? `dir2dat: ${dir2DatPath}` : undefined,
@@ -223,13 +229,13 @@ export default class Igir {
         progressBar.delete();
       }
 
-      datProcessProgressBar.incrementDone();
+      datProcessProgressBar.incrementCompleted();
     });
     datProcessProgressBar.logTrace(
       `done processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
     );
 
-    datProcessProgressBar.doneItems(dats.length, 'DAT', 'processed');
+    datProcessProgressBar.finishWithItems(dats.length, 'DAT', 'processed');
     datProcessProgressBar.delete();
 
     // Delete moved ROMs
@@ -241,7 +247,7 @@ export default class Igir {
     // Generate the report
     await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
 
-    ProgressBarCLI.stop();
+    MultiBar.stop();
 
     Timer.cancelAll();
   }
@@ -306,7 +312,9 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar('Scanning for DATs');
+    const progressBar = this.logger.addProgressBar({
+      name: 'Scanning for DATs',
+    });
     let dats = await new DATScanner(this.options, progressBar, fileFactory).scan();
     if (dats.length === 0) {
       throw new ExpectedError('No valid DAT files found!');
@@ -328,11 +336,15 @@ export default class Igir {
     }
 
     if (this.options.getDatCombine()) {
-      progressBar.reset(1);
+      progressBar.resetProgress(1);
       dats = [new DATCombiner(progressBar).combine(dats)];
     }
 
-    progressBar.doneItems(dats.length, 'DAT', this.options.getDatCombine() ? 'combined' : 'found');
+    progressBar.finishWithItems(
+      dats.length,
+      'DAT',
+      this.options.getDatCombine() ? 'combined' : 'found',
+    );
     progressBar.freeze();
     return dats;
   }
@@ -443,7 +455,9 @@ export default class Igir {
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
     const romScannerProgressBarName = 'Scanning for ROMs';
-    const romProgressBar = this.logger.addProgressBar(romScannerProgressBarName);
+    const romProgressBar = this.logger.addProgressBar({
+      name: romScannerProgressBarName,
+    });
 
     const rawRomFiles = await new ROMScanner(this.options, romProgressBar, fileFactory).scan(
       checksumBitmask,
@@ -461,7 +475,7 @@ export default class Igir {
     const indexedRomFiles = new ROMIndexer(this.options, romProgressBar).index(romFilesWithHeaders);
 
     romProgressBar.setName(romScannerProgressBarName); // reset
-    romProgressBar.doneItems(romFilesWithHeaders.length, 'file', 'found');
+    romProgressBar.finishWithItems(romFilesWithHeaders.length, 'file', 'found');
     romProgressBar.freeze();
 
     return indexedRomFiles;
@@ -472,9 +486,11 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar('Scanning for patches');
+    const progressBar = this.logger.addProgressBar({
+      name: 'Scanning for patches',
+    });
     const patches = await new PatchScanner(this.options, progressBar, fileFactory).scan();
-    progressBar.doneItems(patches.length, 'patch', 'found');
+    progressBar.finishWithItems(patches.length, 'patch', 'found');
     progressBar.freeze();
     return patches;
   }
@@ -590,13 +606,13 @@ export default class Igir {
       return;
     }
 
-    const progressBar = this.logger.addProgressBar('Deleting moved files');
+    const progressBar = this.logger.addProgressBar({ name: 'Deleting moved files' });
     const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
       rawRomFiles,
       movedRomsToDelete,
       datsToWrittenFiles,
     );
-    progressBar.doneItems(deletedFilePaths.length, 'moved file', 'deleted');
+    progressBar.finishWithItems(deletedFilePaths.length, 'moved file', 'deleted');
     if (deletedFilePaths.length > 0) {
       progressBar.freeze();
     } else {
@@ -612,14 +628,14 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar('Cleaning output directory');
+    const progressBar = this.logger.addProgressBar({ name: 'Cleaning output directory' });
     const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
     const writtenFilesToExclude = [...datsToWrittenFiles.values()].flat();
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar).clean(
       uniqueDirsToClean,
       writtenFilesToExclude,
     );
-    progressBar.doneItems(filesCleaned.length, 'file', 'recycled');
+    progressBar.finishWithItems(filesCleaned.length, 'file', 'recycled');
     progressBar.freeze();
     return filesCleaned;
   }
@@ -633,10 +649,10 @@ export default class Igir {
       return;
     }
 
-    const reportProgressBar = this.logger.addProgressBar(
-      'Generating report',
-      ProgressBarSymbol.WRITING,
-    );
+    const reportProgressBar = this.logger.addProgressBar({
+      name: 'Generating report',
+      symbol: ProgressBarSymbol.WRITING,
+    });
     await new ReportGenerator(this.options, reportProgressBar).generate(
       scannedRomFiles,
       cleanedOutputFiles,

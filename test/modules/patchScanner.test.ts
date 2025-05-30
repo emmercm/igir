@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -15,7 +16,7 @@ function createPatchScanner(patch: string[], patchExclude: string[] = []): Patch
   return new PatchScanner(
     new Options({ patch, patchExclude }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
   );
 }
 
