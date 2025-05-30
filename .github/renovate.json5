@@ -93,6 +93,13 @@
       schedule: 'at any time'
     },
 
+    // Perform major version updates immediately
+    {
+      matchUpdateTypes: ['major'],
+      // Renovate's defaults for these options (overrides our global defaults)
+      schedule: 'at any time'
+    },
+
     // Disable automatic merging of GitHub Actions major version updates
     {
       matchManagers: ['github-actions'],
