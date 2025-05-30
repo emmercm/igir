@@ -82,6 +82,17 @@ export const FixExtensionInverted = Object.fromEntries(
   Object.entries(FixExtension).map(([key, value]) => [value, key]),
 ) as Record<FixExtensionValue, FixExtensionKey>;
 
+export const MoveDeleteDirs = {
+  NEVER: 1,
+  AUTO: 2,
+  ALWAYS: 3,
+} as const;
+export type MoveDeleteDirsKey = keyof typeof MoveDeleteDirs;
+export type MoveDeleteDirsValue = (typeof MoveDeleteDirs)[MoveDeleteDirsKey];
+export const MoveDeleteDirsInverted = Object.fromEntries(
+  Object.entries(MoveDeleteDirs).map(([key, value]) => [value, key]),
+) as Record<MoveDeleteDirsValue, MoveDeleteDirsKey>;
+
 export const PreferRevision = {
   OLDER: 1,
   NEWER: 2,
@@ -137,6 +148,8 @@ export interface OptionsProps {
   readonly fixExtension?: string;
   readonly overwrite?: boolean;
   readonly overwriteInvalid?: boolean;
+
+  readonly moveDeleteDirs?: string;
 
   readonly cleanExclude?: string[];
   readonly cleanBackup?: string;
@@ -285,6 +298,8 @@ export default class Options implements OptionsProps {
   readonly overwrite: boolean;
 
   readonly overwriteInvalid: boolean;
+
+  readonly moveDeleteDirs?: string;
 
   readonly cleanExclude: string[];
 
@@ -468,6 +483,8 @@ export default class Options implements OptionsProps {
     this.fixExtension = options?.fixExtension;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
+
+    this.moveDeleteDirs = options?.moveDeleteDirs;
 
     this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
@@ -1051,6 +1068,16 @@ export default class Options implements OptionsProps {
 
   getOverwriteInvalid(): boolean {
     return this.overwriteInvalid;
+  }
+
+  getMoveDeleteDirs(): MoveDeleteDirsValue | undefined {
+    const moveDeleteDirsMode = Object.keys(MoveDeleteDirs).find(
+      (mode) => mode.toLowerCase() === this.moveDeleteDirs?.toLowerCase(),
+    );
+    if (!moveDeleteDirsMode) {
+      return undefined;
+    }
+    return MoveDeleteDirs[moveDeleteDirsMode as MoveDeleteDirsKey];
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
