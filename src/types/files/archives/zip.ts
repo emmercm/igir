@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
+import util from 'node:util';
 
 import {
   CompressionMethod,
@@ -13,7 +14,9 @@ import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
 import async from 'async';
 import { Mutex } from 'async-mutex';
 
+import { ProgressCallback } from '../../../console/progressBar.js';
 import Defaults from '../../../globals/defaults.js';
+import FsCopyTransform, { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import ExpectedError from '../../expectedError.js';
 import { ZipFormat, ZipFormatValue } from '../../options.js';
@@ -78,22 +81,23 @@ export default class Zip extends Archive {
     );
   }
 
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    entryPath: string,
+    extractedFilePath: string,
+    callback?: FsCopyCallback,
+  ): Promise<void> {
     const extractedDir = path.dirname(extractedFilePath);
     if (!(await FsPoly.exists(extractedDir))) {
       await FsPoly.mkdir(extractedDir, { recursive: true });
     }
 
-    return this.extractEntryToStream(
-      entryPath,
-      async (stream) =>
-        new Promise((resolve, reject) => {
-          const writeStream = fs.createWriteStream(extractedFilePath);
-          writeStream.on('close', resolve);
-          writeStream.on('error', reject);
-          stream.pipe(writeStream);
-        }),
-    );
+    return this.extractEntryToStream(entryPath, async (readable) => {
+      await util.promisify(stream.pipeline)(
+        readable,
+        new FsCopyTransform(callback),
+        fs.createWriteStream(extractedFilePath),
+      );
+    });
   }
 
   async extractEntryToStream<T>(
@@ -136,6 +140,7 @@ export default class Zip extends Archive {
     inputToOutput: [File, ArchiveEntry<Zip>][],
     zipFormat: ZipFormatValue,
     compressorThreads: number,
+    callback?: ProgressCallback,
   ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
@@ -145,23 +150,21 @@ export default class Zip extends Archive {
       zipFormat === ZipFormat.RVZSTD ? CompressionMethod.ZSTD : CompressionMethod.DEFLATE,
     );
 
-    // Write each entry
     try {
-      await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads);
-    } catch (error) {
+      await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads, callback);
+      await torrentZip.finalize();
+      await FsPoly.mv(tempZipFile, this.getFilePath());
+    } finally {
       await torrentZip.close();
       await FsPoly.rm(tempZipFile, { force: true });
-      throw error;
     }
-
-    await torrentZip.finalize();
-    await FsPoly.mv(tempZipFile, this.getFilePath());
   }
 
   private static async addArchiveEntries(
     torrentZip: TZWriter,
     inputToOutput: [File, ArchiveEntry<Zip>][],
     compressorThreads: number,
+    callback?: ProgressCallback,
   ): Promise<void> {
     // TZWriter needs files to be sorted by lowercase
     const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) => {
@@ -175,9 +178,13 @@ export default class Zip extends Archive {
       return 0;
     });
 
+    let sizeWritten = 0;
+    const sizeTotal = inputToOutputSorted.reduce((sum, [, output]) => sum + output.getSize(), 0);
+
     for (const [inputFile, outputArchiveEntry] of inputToOutputSorted) {
       // TZWriter requires files to be compressed sequentially
       try {
+        let lastProgress = 0;
         await new Promise((resolve, reject) => {
           inputFile
             .createPatchedReadStream(async (readable) => {
@@ -187,11 +194,19 @@ export default class Zip extends Archive {
                 outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
                 inputFile.getSize(),
                 compressorThreads,
+                (progress) => {
+                  if (!callback) {
+                    return;
+                  }
+                  lastProgress = progress;
+                  callback(sizeWritten + progress, sizeTotal);
+                },
               );
             })
             .then(resolve)
             .catch(reject);
         });
+        sizeWritten += lastProgress;
       } catch (error) {
         throw new Error(
           `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}': ${error}`,

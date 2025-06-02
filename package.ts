@@ -44,7 +44,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
   return results;
 };
 
-const logger = new Logger(LogLevel.TRACE);
+const logger = new Logger(LogLevel.TRACE, process.stdout);
 
 const argv = await yargs(process.argv.slice(2))
   .locale('en')

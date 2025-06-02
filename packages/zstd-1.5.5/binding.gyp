@@ -36,6 +36,7 @@
         "VCLinkerTool": {
           "AdditionalOptions": [
             "/Brepro",
+            "/deterministic",
             "/NOLOGO",
             "/OPT:REF",
             "/DEBUG:NONE"
