@@ -3,6 +3,6 @@
   "main": "index.js",
   "type": "module",
   "dependencies": {
-    "zstd-napi": "0.0.10"
+    "zstd-napi": "0.0.11"
   }
 }
