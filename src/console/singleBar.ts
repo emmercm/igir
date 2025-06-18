@@ -37,7 +37,7 @@ const clamp = (val: number | undefined, min: number, max: number): number =>
   Math.min(Math.max(val ?? 0, min), max);
 
 /**
- * TODO(cemmer)
+ * A single progress bar, to be used within a {@link MultiBar}.
  */
 export default class SingleBar extends ProgressBar {
   private static readonly BAR_SIZE = 30;
@@ -89,7 +89,7 @@ export default class SingleBar extends ProgressBar {
   }
 
   /**
-   * TODO(cemmer)
+   * A child progress bar to this progress bar.
    */
   addChildBar(options?: SingleBarOptions): ProgressBar {
     return this.multiBar.addSingleBar(
@@ -132,7 +132,7 @@ export default class SingleBar extends ProgressBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Reset the completed, in-progress, and total values of the progress bar.
    */
   resetProgress(total: number): void {
     if (this.displayDelay !== undefined) {
@@ -145,22 +145,19 @@ export default class SingleBar extends ProgressBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Increment the completed count by the given increment (default: 1).
    */
   incrementCompleted(increment = 1): void {
     this.completed += increment;
     this.inProgress = Math.max(this.inProgress - increment, 0);
   }
 
-  /**
-   * TODO(cemmer)
-   */
   setCompleted(completed: number): void {
     this.completed = completed;
   }
 
   /**
-   * TODO(cemmer)
+   * Increment the in-progress count by the given increment (default: 1).
    */
   incrementInProgress(increment = 1): void {
     this.inProgress += increment;
@@ -171,7 +168,7 @@ export default class SingleBar extends ProgressBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Increment the total count by the given increment (default: 1).
    */
   incrementTotal(increment = 1): void {
     this.total += increment;
@@ -182,7 +179,7 @@ export default class SingleBar extends ProgressBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Set the completed value to the total, and store a finished message.
    */
   finish(finishedMessage?: string): void {
     if (this.symbol?.symbol) {
@@ -204,7 +201,7 @@ export default class SingleBar extends ProgressBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Queue a log message to be printed to the terminal.
    */
   log(logLevel: LogLevelValue, message: string): void {
     if (this.logger.getLogLevel() > logLevel && this.logger.getLogLevel() !== LogLevel.ALWAYS) {
@@ -215,21 +212,21 @@ export default class SingleBar extends ProgressBar {
   }
 
   /**
-   * TODO(cemmer)
+   * Log this {@link SingleBar}'s last output and freeze it.
    */
   freeze(): void {
     this.multiBar.freezeSingleBar(this);
   }
 
   /**
-   * TODO(cemmer)
+   * Delete this {@link SingleBar} from the {@link MultiBar}.
    */
   delete(): void {
     this.multiBar.removeSingleBar(this);
   }
 
   /**
-   * TODO(cemmer)
+   * Return the formatted output of this progress bar.
    */
   format(): string {
     if (
@@ -271,6 +268,7 @@ export default class SingleBar extends ProgressBar {
 
   private getBar(): string {
     let bar = '';
+    // TODO(cemmer): ?
     // if (this.showProgressNewline) {
     //   bar += `\n${' '.repeat((this.symbol ? 2 : 0) + this.indentSize)}`;
     // }

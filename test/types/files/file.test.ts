@@ -437,8 +437,8 @@ describe('createReadStream', () => {
 
     const temp = await FsPoly.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
-      await raw.createReadStream(async (stream) => {
-        const contents = (await bufferPoly.fromReadable(stream)).toString();
+      await raw.createReadStream(async (readable) => {
+        const contents = (await bufferPoly.fromReadable(readable)).toString();
         expect(contents).toBeTruthy();
       });
     }

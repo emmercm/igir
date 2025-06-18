@@ -43,8 +43,8 @@ describe('headerFromFileStream', () => {
     expect(headeredRoms).toHaveLength(6);
 
     for (const headeredRom of headeredRoms) {
-      await headeredRom.createReadStream(async (stream) => {
-        const fileHeader = await ROMHeader.headerFromFileStream(stream);
+      await headeredRom.createReadStream(async (readable) => {
+        const fileHeader = await ROMHeader.headerFromFileStream(readable);
         expect(fileHeader).toBeDefined();
         expect(fileHeader?.getName()).toBeTruthy();
       });
@@ -66,8 +66,8 @@ describe('headerFromFileStream', () => {
     expect(headeredRoms.length).toBeGreaterThan(0);
 
     for (const headeredRom of headeredRoms) {
-      await headeredRom.createReadStream(async (stream) => {
-        const fileHeader = await ROMHeader.headerFromFileStream(stream);
+      await headeredRom.createReadStream(async (readable) => {
+        const fileHeader = await ROMHeader.headerFromFileStream(readable);
         expect(fileHeader).toBeUndefined();
       });
     }

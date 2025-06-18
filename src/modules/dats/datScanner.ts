@@ -159,8 +159,8 @@ export default class DATScanner extends Scanner {
       dat = await this.parseMameListxml(datFile);
     }
 
-    dat ??= await datFile.createReadStream(async (stream) => {
-      const fileContents = (await bufferPoly.fromReadable(stream)).toString();
+    dat ??= await datFile.createReadStream(async (readable) => {
+      const fileContents = (await bufferPoly.fromReadable(readable)).toString();
       return this.parseDatContents(datFile, fileContents);
     });
 

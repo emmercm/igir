@@ -3,7 +3,7 @@ import stream, { TransformCallback } from 'node:stream';
 export type FsCopyCallback = (progress: number) => void;
 
 /**
- * TODO(cemmer)
+ * A stream transformer that tracks how many bytes have been read and calls a callback.
  */
 export default class FsCopyTransform extends stream.Transform {
   private readonly fsCopyCallback?: FsCopyCallback;
@@ -15,7 +15,7 @@ export default class FsCopyTransform extends stream.Transform {
   }
 
   /**
-   * TODO(cemmer)
+   * Process the stream.
    */
   _transform(chunk: Buffer, _encoding: BufferEncoding, callback: TransformCallback): void {
     this.progress += chunk.length;

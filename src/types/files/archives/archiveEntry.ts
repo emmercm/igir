@@ -182,7 +182,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<ChecksumProps> {
     return archive.extractEntryToStream(
       entryPath,
-      async (stream) => FileChecksums.hashStream(stream, checksumBitmask),
+      async (readable) => FileChecksums.hashStream(readable, checksumBitmask),
       fileHeader?.getDataOffsetBytes() ?? 0,
     );
   }

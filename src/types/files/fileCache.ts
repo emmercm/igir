@@ -224,8 +224,8 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const header = await file.createReadStream(async (stream) =>
-          ROMHeader.headerFromFileStream(stream),
+        const header = await file.createReadStream(async (readable) =>
+          ROMHeader.headerFromFileStream(readable),
         );
         return {
           fileSize: stats.size,
@@ -266,8 +266,8 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const signature = await file.createReadStream(async (stream) =>
-          FileSignature.signatureFromFileStream(stream),
+        const signature = await file.createReadStream(async (readable) =>
+          FileSignature.signatureFromFileStream(readable),
         );
         return {
           fileSize: stats.size,

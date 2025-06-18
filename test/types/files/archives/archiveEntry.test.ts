@@ -843,8 +843,8 @@ describe('createReadStream', () => {
     const temp = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       for (const archiveEntry of archiveEntries) {
-        await archiveEntry.createReadStream(async (stream) => {
-          const contents = (await bufferPoly.fromReadable(stream)).toString();
+        await archiveEntry.createReadStream(async (readable) => {
+          const contents = (await bufferPoly.fromReadable(readable)).toString();
           expect(contents).toBeTruthy();
         });
       }

@@ -45,7 +45,7 @@ export default class FileChecksums {
   ): Promise<ChecksumProps> {
     return File.createStreamFromFile(
       filePath,
-      async (stream) => FileChecksums.hashStream(stream, checksumBitmask),
+      async (readable) => FileChecksums.hashStream(readable, checksumBitmask),
       start,
       end,
     );
