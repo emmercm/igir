@@ -6,7 +6,7 @@
     "install": "node-gyp-build"
   },
   "dependencies": {
-    "node-addon-api": "8.3.1",
+    "node-addon-api": "8.4.0",
     "node-gyp": "11.2.0",
     "node-gyp-build": "4.8.4"
   },
