@@ -156,6 +156,7 @@
         excludePackageNames: [
           '@types/async',
           '@types/cli-progress',
+          '@types/graceful-fs',
           '@types/micromatch',
           '@types/semver',
           '@types/tar',
