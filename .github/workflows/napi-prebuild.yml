@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   path-filter:
-    if: ${{ github.actor != 'github-actions[bot]' }}
+    if: ${{ github.actor == 'emmercm' }}
     permissions:
       pull-requests: read
     runs-on: ubuntu-latest
