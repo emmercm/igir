@@ -1,3 +1,7 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
+#   Contents: read and write
+#   Pull Requests: read and write
+
 name: Node-API Prebuild
 
 on:
@@ -141,7 +145,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           # Token needed to trigger Actions on push
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           path: packages/
