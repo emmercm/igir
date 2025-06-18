@@ -110,7 +110,7 @@
     "@jest/globals": "30.0.0",
     "@types/async": "3.2.24",
     "@types/cli-progress": "3.11.6",
-    "@types/graceful-fs": "^4.1.9",
+    "@types/graceful-fs": "4.1.9",
     "@types/jest": "29.5.14",
     "@types/micromatch": "4.0.9",
     "@types/node": "22.15.21",
