@@ -35,7 +35,9 @@ it('should do nothing if no ROMs moved', async () => {
     new Map(),
   );
 
-  const exists = Promise.all(romFiles.map(async (romFile) => FsPoly.exists(romFile.getFilePath())));
+  const exists = await Promise.all(
+    romFiles.map(async (romFile) => FsPoly.exists(romFile.getFilePath())),
+  );
   expect(exists).not.toContain(false);
 });
 
