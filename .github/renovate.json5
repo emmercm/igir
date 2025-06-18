@@ -62,8 +62,7 @@
       matchPackageNames: ['node'],
       groupName: 'Node.js',
       // Keep Node.js on the 'current' major version (as opposed to LTS)
-      versioning: 'node',
-      allowedVersions: '/^\\d*[02468]\\./',
+      allowedVersions: '/^v?\\d*[02468]\\./',
       // The Docker images (used to build executables) frequently don't get published until days
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
       minimumReleaseAge: '5 days',
@@ -89,6 +88,13 @@
       matchUpdateTypes: ['pin'],
       commitMessageAction: 'pin',
       groupName: 'dependency ranges',
+      // Renovate's defaults for these options (overrides our global defaults)
+      schedule: 'at any time'
+    },
+
+    // Perform major version updates immediately
+    {
+      matchUpdateTypes: ['major'],
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time'
     },
@@ -150,6 +156,7 @@
         excludePackageNames: [
           '@types/async',
           '@types/cli-progress',
+          '@types/graceful-fs',
           '@types/micromatch',
           '@types/semver',
           '@types/tar',
