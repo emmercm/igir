@@ -172,9 +172,41 @@ export default class MultiBar {
     }
 
     this.renderTimer?.cancel();
+    this.renderTimer = Timer.setTimeout(
+      () => {
+        this.clearAndRender();
+      },
+      Math.max(1000 / MultiBar.RENDER_MIN_FPS),
+    );
 
+    const outputLines = this.singleBars
+      .flatMap((singleBar) => {
+        const lines = singleBar
+          .format()
+          .split('\n')
+          .filter((line) => line !== '');
+        if (singleBar.getIndentSize() === 0) {
+          return ['', ...lines];
+        }
+        return lines;
+      })
+      .slice(0, this.terminalRows - 1)
+      .map((line) => {
+        const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
+        if (stripChars <= 0) {
+          return `${MultiBar.OUTPUT_PADDING}${line}`;
+        }
+        return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
+      });
+    const output = `${outputLines.join('\n')}\n`;
+
+    if (output === this.lastOutput && MultiBar.logQueue.length === 0) {
+      // Nothing new to render
+      return;
+    }
+
+    // Clear the terminal
     if (this.terminal instanceof tty.WriteStream) {
-      // Clear the terminal
       // TODO(cemmer): some kind of line diffing algorithm so not every line has to be repainted
       let rows = 0;
       for (const char of this.lastOutput) {
@@ -198,37 +230,10 @@ export default class MultiBar {
     }
 
     // Write the progress bars
-    const outputLines = this.singleBars
-      .flatMap((singleBar) => {
-        const lines = singleBar
-          .format()
-          .split('\n')
-          .filter((line) => line !== '');
-        if (singleBar.getIndentSize() === 0) {
-          return ['', ...lines];
-        }
-        return lines;
-      })
-      .slice(0, this.terminalRows - 1)
-      .map((line) => {
-        const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
-        if (stripChars <= 0) {
-          return `${MultiBar.OUTPUT_PADDING}${line}`;
-        }
-        return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
-      });
-    const output = `${outputLines.join('\n')}\n`;
     if (this.terminal instanceof tty.WriteStream) {
       this.terminal.write(output);
     }
     this.lastOutput = output;
-
-    this.renderTimer = Timer.setTimeout(
-      () => {
-        this.clearAndRender();
-      },
-      Math.max(1000 / MultiBar.RENDER_MIN_FPS),
-    );
   }
 
   /**

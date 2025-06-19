@@ -245,7 +245,7 @@ export default class SingleBar extends ProgressBar {
     }
 
     if (this.finishedMessage) {
-      output += `${this.name} ${this.finishedMessage}`;
+      output += `${this.name} ${CHALK_PROGRESS_IN_PROGRESS('»')} ${this.finishedMessage}`;
       this.lastOutput = output;
       return this.lastOutput;
     }

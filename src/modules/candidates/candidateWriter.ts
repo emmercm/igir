@@ -392,6 +392,18 @@ export default class CandidateWriter extends Module {
     progressBar: ProgressBar,
   ): Promise<boolean> {
     this.progressBar.logInfo(
+      [
+        `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:`,
+        inputToOutputZipEntries.map(([input, output]) => {
+          if (input.getFilePath() === output.getFilePath()) {
+            return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
+          }
+          return `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}'`;
+        }),
+      ].join('\n'),
+    );
+
+    this.progressBar.logInfo(
       `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
     );
 
