@@ -22,16 +22,20 @@ Here are some examples of common mistakes:
 
 This correction behavior can be controlled with the following option:
 
-- `--fix-extension never`
-
-  Don't correct any ROM filename extensions. If a DAT doesn't provide a ROM filename, a default name of `<game name>.rom` will be used.
-
-- `--fix-extension auto` (default)
-
-  When not using DATs (no [`--dat <path>` option](../dats/processing.md) was provided), or when a DAT doesn't specify the filename for a ROM, then try to correct the filename extension.
-
-- `--fix-extension always`
-
-  Always try to correct filename extensions, ignoring the information provided by DATs. You likely don't want this option.
+| Mode                             | Description                                                                                                                                                                             |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--fix-extension always`         | Always try to correct filename extensions, ignoring the information provided by DATs. You likely don't want this option.                                                                |
+| `--fix-extension auto` (default) | When not using DATs (no [`--dat <path>` option](../dats/processing.md) was provided), or when a DAT doesn't specify the filename for a ROM, then try to correct the filename extension. |
+| `--fix-extension never`          | Don't correct any ROM filename extensions. If a DAT doesn't provide a ROM filename, a default name of `<game name>.rom` will be used.                                                   |
 
 See the `igir --help` message for the list of all known file types.
+
+## Deleting empty directories when moving
+
+When moving files with the [`igir move` command](../commands.md#move), by default Igir will delete any subdirectories that are left empty after the move. This behavior can be changed with the `--move-delete-dirs <mode>` option:
+
+| Mode                                | Description                                                                                                   |
+|-------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `--move-delete-dirs always`         | Delete every empty subdirectory in every input path, regardless of whether a file was moved out of it or not. |
+| `--move-delete-dirs auto` (default) | Delete subdirectories in every input path that had a file moved out of it.                                    |
+| `--move-delete-dirs never`          | Never delete any input directories.                                                                           |

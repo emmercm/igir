@@ -136,7 +136,7 @@ Only include games whose category matches the provided regular expression.
 --no-bios, --only-bios
 ```
 
-Filter out, or only include games that are marked `bios="yes"` in the DAT, or contain `[BIOS]` in their name, e.g.:
+Filter out, or only include games that are marked `isbios="yes"` in the DAT, or contain `[BIOS]` in their name, e.g.:
 
 ```text
 [BIOS] Nintendo Game Boy Boot ROM (World) (Rev 1)

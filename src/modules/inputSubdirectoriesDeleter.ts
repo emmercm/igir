@@ -9,8 +9,6 @@ import File from '../types/files/file.js';
 import Options, { MoveDeleteDirs } from '../types/options.js';
 import Module from './module.js';
 
-// TODO(cemmer): docs
-
 /**
  * After all output {@link File}s have been written, delete any empty subdirectories that had
  * {@link File}s moved out of them. This needs to happen after all writing has finished to guarantee
