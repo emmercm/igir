@@ -23,6 +23,8 @@ export const WalkMode = {
   FILES: 1,
   DIRECTORIES: 2,
 } as const;
+export type WalkModeKey = keyof typeof WalkMode;
+export type WalkModeValue = (typeof WalkMode)[WalkModeKey];
 export type FsWalkCallback = (increment: number) => void;
 
 /**
@@ -645,7 +647,7 @@ export default class FsPoly {
    */
   static async walk(
     pathLike: PathLike,
-    mode: WalkMode,
+    mode: WalkModeValue,
     callback?: FsWalkCallback,
   ): Promise<string[]> {
     let output: string[] = [];
