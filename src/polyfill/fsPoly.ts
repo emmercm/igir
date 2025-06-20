@@ -263,6 +263,22 @@ export default class FsPoly {
   }
 
   /**
+   * @returns if {@param pathLike} is a file, following symbolic links
+   */
+  static async isFile(pathLike: string): Promise<boolean> {
+    try {
+      const lstat = await fs.promises.lstat(pathLike);
+      if (lstat.isSymbolicLink()) {
+        const link = await this.readlinkResolved(pathLike);
+        return await this.isFile(link);
+      }
+      return lstat.isFile();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * @returns if {@param pathLike} has at least one related hardlink
    */
   static async isHardlink(pathLike: PathLike): Promise<boolean> {
