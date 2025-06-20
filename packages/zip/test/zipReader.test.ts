@@ -5,13 +5,15 @@ import url from 'node:url';
 import util from 'node:util';
 
 import Temp from '../../../src/globals/temp.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import { CompressionMethodValue } from '../src/fileRecord.js';
 import ZipReader from '../src/zipReader.js';
 
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
-const fixtures = (await FsPoly.walk(dirname)).filter((filePath) => !filePath.endsWith('.ts'));
+const fixtures = (await FsPoly.walk(dirname, WalkMode.FILES)).filter(
+  (filePath) => !filePath.endsWith('.ts'),
+);
 
 describe('entries', () => {
   const emptyFixtures = fixtures.filter((filePath) => path.basename(filePath) === 'empty.zip');

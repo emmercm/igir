@@ -7,7 +7,7 @@ import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
 import DATScanner from '../src/modules/dats/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
-import FsPoly from '../src/polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../src/polyfill/fsPoly.js';
 import FileCache from '../src/types/files/fileCache.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
@@ -56,7 +56,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
   return (
     await Promise.all(
-      (await FsPoly.walk(outputDir)).map(async (filePath) => {
+      (await FsPoly.walk(outputDir, WalkMode.FILES)).map(async (filePath) => {
         try {
           return await fileFactory.filesFrom(filePath);
         } catch {
@@ -80,12 +80,16 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options(optionsProps);
 
   const inputFilesBefore = (
-    await Promise.all(options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath)))
+    await Promise.all(
+      options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath, WalkMode.FILES)),
+    )
   )
     .flat()
     .reduce(ArrayPoly.reduceUnique(), []);
   const outputFilesBefore =
-    options.getOutput() === Temp.getTempDir() ? [] : await FsPoly.walk(options.getOutputDirRoot()); // the output dir is a parent of the input dir, ignore all output
+    options.getOutput() === Temp.getTempDir()
+      ? []
+      : await FsPoly.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
 
   await new Igir(options, LOGGER).main();
 
@@ -105,7 +109,9 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
           .sort((a, b) => a[0].localeCompare(b[0]));
 
   const inputFilesAfter = (
-    await Promise.all(options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath)))
+    await Promise.all(
+      options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath, WalkMode.FILES)),
+    )
   )
     .flat()
     .reduce(ArrayPoly.reduceUnique(), []);
@@ -121,7 +127,9 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     .sort();
 
   const outputFilesAfter =
-    options.getOutput() === Temp.getTempDir() ? [] : await FsPoly.walk(options.getOutputDirRoot()); // the output dir is a parent of the input dir, ignore all output
+    options.getOutput() === Temp.getTempDir()
+      ? []
+      : await FsPoly.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
   const cleanedFiles = outputFilesBefore
     .filter((filePath) => !outputFilesAfter.includes(filePath))
     .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
@@ -300,7 +308,7 @@ describe('with explicit DATs', () => {
         }),
       );
 
-      const inputFiles = await FsPoly.walk(inputTemp);
+      const inputFiles = await FsPoly.walk(inputTemp, WalkMode.FILES);
       await Promise.all(inputFiles.map(async (inputFile) => fs.promises.chmod(inputFile, '0444')));
 
       // When running igir with the clean command
@@ -421,7 +429,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
-      const inputFiles = await FsPoly.walk(inputDir);
+      const inputFiles = await FsPoly.walk(inputDir, WalkMode.FILES);
       const inputHardlinks = await Promise.all(
         inputFiles.map(async (inputFile) => {
           const symlink = `${inputFile}.symlink`;
@@ -464,7 +472,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
-      const inputFiles = await FsPoly.walk(inputDir);
+      const inputFiles = await FsPoly.walk(inputDir, WalkMode.FILES);
       const inputSymlinks = await Promise.all(
         inputFiles.map(async (inputFile) => {
           const symlink = `${inputFile}.symlink`;

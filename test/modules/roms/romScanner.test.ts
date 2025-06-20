@@ -6,7 +6,7 @@ import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
@@ -202,7 +202,7 @@ describe('multiple files', () => {
       await FsPoly.mkdir(filesDir);
 
       const romFiles = await Promise.all(
-        (await FsPoly.walk('test/fixtures/roms')).map(async (romFile) => {
+        (await FsPoly.walk('test/fixtures/roms', WalkMode.FILES)).map(async (romFile) => {
           // Make a copy of the original file to ensure it's on the same drive
           const tempFile = path.join(filesDir, romFile);
           await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
@@ -246,7 +246,7 @@ describe('multiple files', () => {
     // Given some symlinked files
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
-      const romFiles = await FsPoly.walk('test/fixtures/roms');
+      const romFiles = await FsPoly.walk('test/fixtures/roms', WalkMode.FILES);
       await Promise.all(
         romFiles.map(async (romFile, idx) => {
           const tempLink = path.join(tempDir, romFile);

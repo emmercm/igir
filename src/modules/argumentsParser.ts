@@ -20,6 +20,8 @@ import Options, {
   InputChecksumArchivesModeInverted,
   MergeMode,
   MergeModeInverted,
+  MoveDeleteDirs,
+  MoveDeleteDirsInverted,
   PreferRevision,
   ZipFormat,
   ZipFormatInverted,
@@ -82,6 +84,7 @@ export default class ArgumentsParser {
     const groupPatchInput = 'Patch input options:';
     const groupRomOutputPath = 'ROM output path options (processed in order):';
     const groupRomOutput = 'ROM writing options:';
+    const groupRomMove = 'move command options:';
     const groupRomClean = 'clean command options:';
     const groupRomZip = 'zip command options:';
     const groupRomLink = 'link command options:';
@@ -492,6 +495,15 @@ export default class ArgumentsParser {
           );
         }
         return true;
+      })
+
+      .option('move-delete-dirs', {
+        group: groupRomMove,
+        description: 'Delete empty subdirectories from the input directories after moving ROMs',
+        choices: Object.keys(MoveDeleteDirs).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: MoveDeleteDirsInverted[MoveDeleteDirs.AUTO].toLowerCase(),
       })
 
       .option('clean-exclude', {

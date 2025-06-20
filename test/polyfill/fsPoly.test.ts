@@ -220,6 +220,10 @@ describe('isExecutable', () => {
   // TODO(cemmer)
 });
 
+describe('isFile', () => {
+  // TODO(cemmer)
+});
+
 describe('isHardlink', () => {
   it('should return true for a hardlink', async () => {
     const tempFileTarget = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
