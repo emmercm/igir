@@ -14,7 +14,7 @@ import { LogLevel, LogLevelValue } from '../console/logLevel.js';
 import Defaults from '../globals/defaults.js';
 import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
+import FsPoly, { FsWalkCallback, WalkMode, WalkModeValue } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
@@ -744,13 +744,14 @@ export default class Options implements OptionsProps {
   private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
     return Options.scanPaths(
       this.input,
+      WalkMode.FILES,
       walkCallback,
       this.shouldWrite() || !(this.shouldReport() || this.shouldFixdat()),
     );
   }
 
   private async scanInputExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.inputExclude, undefined, false);
+    return Options.scanPaths(this.inputExclude, WalkMode.FILES, undefined, false);
   }
 
   /**
@@ -762,8 +763,16 @@ export default class Options implements OptionsProps {
     return inputFiles.filter((inputPath) => !inputExcludeFiles.has(inputPath));
   }
 
+  /**
+   * Scan for subdirectories in the input paths.
+   */
+  async scanInputSubdirectories(walkCallback?: FsWalkCallback): Promise<string[]> {
+    return Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
+  }
+
   private static async scanPaths(
     globPatterns: string[],
+    walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
     requireFiles = true,
   ): Promise<string[]> {
@@ -771,46 +780,25 @@ export default class Options implements OptionsProps {
     const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
     let globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
-      const paths = await this.globPath(uniqueGlobPattern, walkCallback);
+      const paths = await this.globPath(uniqueGlobPattern, walkMode, walkCallback);
       // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
       // size limit
       globbedPaths = [...globbedPaths, ...paths];
     }
 
-    // Filter to non-directories
-    const isNonDirectory = await async.mapLimit(
-      globbedPaths,
-      Defaults.MAX_FS_THREADS,
-      async (file: string): Promise<boolean> => {
-        if (!(await FsPoly.exists(file)) && URLPoly.canParse(file)) {
-          // Treat URLs as files (and not directories)
-          return true;
-        }
-
-        try {
-          return !(await FsPoly.isDirectory(file));
-        } catch {
-          // Assume errors mean the path doesn't exist
-          return false;
-        }
-      },
-    );
-    const globbedFiles = globbedPaths.filter(
-      (inputPath, idx) => isNonDirectory[idx] && isNotJunk(path.basename(inputPath)),
-    );
-
-    if (requireFiles && globbedFiles.length === 0) {
+    if (requireFiles && globbedPaths.length === 0) {
       throw new ExpectedError(
         `no files found in director${globPatterns.length === 1 ? 'y' : 'ies'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`,
       );
     }
 
     // Remove duplicates
-    return globbedFiles.reduce(ArrayPoly.reduceUnique(), []);
+    return globbedPaths.reduce(ArrayPoly.reduceUnique(), []);
   }
 
   private static async globPath(
     inputPath: string,
+    walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Windows will report that \\.\nul doesn't exist, catch it explicitly
@@ -820,7 +808,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await FsPoly.isDirectory(inputPath)) {
-      return FsPoly.walk(inputPath, walkCallback);
+      return FsPoly.walk(inputPath, walkMode, walkCallback);
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -842,7 +830,10 @@ export default class Options implements OptionsProps {
     }
 
     // Otherwise, process it as a glob pattern
-    const globbedPaths = await fg(inputPathEscaped, { onlyFiles: true });
+    const globbedPaths = await fg(inputPathEscaped, {
+      onlyFiles: walkMode === WalkMode.FILES,
+      onlyDirectories: walkMode === WalkMode.DIRECTORIES,
+    });
     if (globbedPaths.length === 0) {
       if (URLPoly.canParse(inputPath)) {
         // Allow URLs, let the scanner modules deal with them
@@ -856,7 +847,7 @@ export default class Options implements OptionsProps {
     if (walkCallback !== undefined) {
       walkCallback(globbedPaths.length);
     }
-    if (process.platform === 'win32') {
+    if (path.sep !== '/') {
       return globbedPaths.map((globbedPath) => globbedPath.replaceAll(/[\\/]/g, path.sep));
     }
     return globbedPaths;
@@ -932,11 +923,11 @@ export default class Options implements OptionsProps {
   }
 
   private async scanDatFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.dat, walkCallback);
+    return Options.scanPaths(this.dat, WalkMode.FILES, walkCallback);
   }
 
   private async scanDatExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.datExclude, undefined, false);
+    return Options.scanPaths(this.datExclude, WalkMode.FILES, undefined, false);
   }
 
   /**
@@ -986,11 +977,11 @@ export default class Options implements OptionsProps {
   }
 
   private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.patch, walkCallback);
+    return Options.scanPaths(this.patch, WalkMode.FILES, walkCallback);
   }
 
   private async scanPatchExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patchExclude, undefined, false);
+    return Options.scanPaths(this.patchExclude, WalkMode.FILES, undefined, false);
   }
 
   getOutput(): string {
@@ -1081,7 +1072,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude, undefined, false);
+    return Options.scanPaths(this.cleanExclude, WalkMode.FILES, undefined, false);
   }
 
   /**
@@ -1102,7 +1093,7 @@ export default class Options implements OptionsProps {
       (await this.scanCleanExcludeFiles()).map((filePath) => path.normalize(filePath)),
     );
 
-    return (await Options.scanPaths(outputDirs, walkCallback, false))
+    return (await Options.scanPaths(outputDirs, WalkMode.FILES, walkCallback, false))
       .filter(
         (filePath) =>
           !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),

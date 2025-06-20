@@ -19,6 +19,12 @@ export const MoveResult = {
 export type MoveResultKey = keyof typeof MoveResult;
 export type MoveResultValue = (typeof MoveResult)[MoveResultKey];
 
+export const WalkMode = {
+  FILES: 1,
+  DIRECTORIES: 2,
+} as const;
+export type WalkModeKey = keyof typeof WalkMode;
+export type WalkModeValue = (typeof WalkMode)[WalkModeKey];
 export type FsWalkCallback = (increment: number) => void;
 
 /**
@@ -639,13 +645,17 @@ export default class FsPoly {
   /**
    * Return every file in {@param pathLike}, recursively.
    */
-  static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
+  static async walk(
+    pathLike: PathLike,
+    walkMode: WalkModeValue,
+    callback?: FsWalkCallback,
+  ): Promise<string[]> {
     let output: string[] = [];
 
     let entries: fs.Dirent[];
     try {
       entries = (await fs.promises.readdir(pathLike, { withFileTypes: true })).filter((entry) =>
-        isNotJunk(path.basename(entry.name)),
+        isNotJunk(entry.name),
       );
     } catch {
       return [];
@@ -665,20 +675,22 @@ export default class FsPoly {
       .filter((_entry, idx) => entryIsDirectory[idx])
       .map((entry) => path.join(pathLike.toString(), entry.name));
     for (const directory of directories) {
-      const subDirFiles = await this.walk(directory);
+      const subPaths = await this.walk(directory, walkMode);
       if (callback) {
-        callback(subDirFiles.length);
+        callback(subPaths.length);
       }
-      output = [...output, ...subDirFiles];
+      output = [...output, ...(walkMode === WalkMode.DIRECTORIES ? [directory] : []), ...subPaths];
     }
 
-    const files = entries
-      .filter((_entry, idx) => !entryIsDirectory[idx])
-      .map((entry) => path.join(pathLike.toString(), entry.name));
-    if (callback) {
-      callback(files.length);
+    if (walkMode === WalkMode.FILES) {
+      const files = entries
+        .filter((_entry, idx) => !entryIsDirectory[idx])
+        .map((entry) => path.join(pathLike.toString(), entry.name));
+      if (callback) {
+        callback(files.length);
+      }
+      output = [...output, ...files];
     }
-    output = [...output, ...files];
 
     return output;
   }

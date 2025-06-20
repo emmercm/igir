@@ -1,14 +1,15 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import async from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../polyfill/fsPoly.js';
 import File from '../types/files/file.js';
-import Options from '../types/options.js';
+import Options, { MoveDeleteDirs } from '../types/options.js';
 import Module from './module.js';
+
+// TODO(cemmer): docs
 
 /**
  * After all output {@link File}s have been written, delete any empty subdirectories that had
@@ -32,7 +33,13 @@ export default class InputSubdirectoriesDeleter extends Module {
       return [];
     }
 
-    if (movedRoms.length === 0) {
+    if (this.options.getMoveDeleteDirs() === MoveDeleteDirs.NEVER) {
+      // We shouldn't do anything
+      return [];
+    }
+
+    if (movedRoms.length === 0 && this.options.getMoveDeleteDirs() !== MoveDeleteDirs.ALWAYS) {
+      // We shouldn't do anything
       return [];
     }
 
@@ -40,13 +47,21 @@ export default class InputSubdirectoriesDeleter extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     this.progressBar.reset(0);
 
-    const movedDirs = new Set(
-      movedRoms.map((movedRom) => path.dirname(path.resolve(movedRom.getFilePath()))),
-    );
+    let dirsToMaybeDelete: Set<string>;
+    if (this.options.getMoveDeleteDirs() === MoveDeleteDirs.ALWAYS) {
+      // Consider every subdirectory in the input directories
+      dirsToMaybeDelete = new Set(await this.options.scanInputSubdirectories());
+    } else {
+      // Only consider subdirectories that had files moved out of them
+      dirsToMaybeDelete = new Set(
+        movedRoms.map((movedRom) => path.dirname(movedRom.getFilePath())),
+      );
+    }
+
     const inputPathsNormalized = new Set(
       this.options.getInputPaths().map((inputPath) => path.normalize(inputPath)),
     );
-    const deletedDirs = await this.walkAndDelete([...movedDirs], [...inputPathsNormalized]);
+    const deletedDirs = await this.walkAndDelete([...dirsToMaybeDelete], [...inputPathsNormalized]);
 
     this.progressBar.logTrace('done deleting empty input subdirectories');
     return deletedDirs;
@@ -56,18 +71,15 @@ export default class InputSubdirectoriesDeleter extends Module {
     dirPaths: string[],
     inputPathsNormalized: string[],
   ): Promise<string[]> {
-    const deletedDirs: string[] = [];
-
-    const emptyDirs = await async.filterLimit(
+    const deletedDirs = await async.filterLimit(
       dirPaths,
       Defaults.MAX_FS_THREADS,
       async (dirPath: string) => {
         try {
-          if (await this.isEmptyDir(dirPath)) {
+          if ((await FsPoly.walk(dirPath, WalkMode.FILES)).length === 0) {
             this.progressBar.incrementTotal(1);
             this.progressBar.incrementProgress();
             await FsPoly.rm(dirPath, { recursive: true, force: true });
-            deletedDirs.push(dirPath);
             return true;
           }
         } catch {
@@ -78,12 +90,13 @@ export default class InputSubdirectoriesDeleter extends Module {
     );
 
     const parentDirs = new Set(
-      emptyDirs
+      deletedDirs
         .map((emptyDir) => path.dirname(emptyDir))
         .filter((parentDir) => {
           const parentDirNormalized = path.normalize(parentDir);
-          return inputPathsNormalized.some((inputPath) =>
-            parentDirNormalized.startsWith(inputPath),
+          return inputPathsNormalized.some(
+            (inputPath) =>
+              parentDirNormalized.startsWith(inputPath) && parentDirNormalized !== inputPath,
           );
         }),
     );
@@ -93,25 +106,5 @@ export default class InputSubdirectoriesDeleter extends Module {
 
     const deletedParentDirs = await this.walkAndDelete([...parentDirs], inputPathsNormalized);
     return [...deletedDirs, ...deletedParentDirs];
-  }
-
-  private async isEmptyDir(dirPath: string): Promise<boolean> {
-    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
-    for (const entry of entries) {
-      const entryPath = path.join(dirPath, entry.name);
-      if (entry.isFile() || (entry.isSymbolicLink() && (await FsPoly.isFile(entryPath)))) {
-        // This directory contains a file, it is not empty
-        return false;
-      }
-      if (
-        (entry.isDirectory() ||
-          (entry.isSymbolicLink() && (await FsPoly.isDirectory(entryPath)))) &&
-        !(await this.isEmptyDir(entryPath))
-      ) {
-        // If any subdirectory is not empty, then this directory is not empty
-        return false;
-      }
-    }
-    return true;
   }
 }
