@@ -30,16 +30,71 @@ async function createTempFiles(): Promise<string> {
   return tempDir;
 }
 
-it('should do nothing if not moving files', () => {
-  // TODO(cemmer)
+it('should do nothing if not moving files', async () => {
+  const tempDir = await createTempFiles();
+  try {
+    const options = new Options({
+      commands: ['copy'],
+      input: [tempDir],
+      moveDeleteDirs: MoveDeleteDirsInverted[MoveDeleteDirs.AUTO].toLowerCase(),
+    });
+
+    const deletedDirs = await new InputSubdirectoriesDeleter(options, new ProgressBarFake()).delete(
+      [],
+    );
+
+    // No directories were deleted
+    expect(deletedDirs).toHaveLength(0);
+  } finally {
+    await FsPoly.rm(tempDir, { recursive: true, force: true });
+  }
 });
 
-it('should do nothing if option is "never"', () => {
-  // TODO(cemmer)
+it('should do nothing if option is "never"', async () => {
+  const tempDir = await createTempFiles();
+  try {
+    const options = new Options({
+      commands: ['move'],
+      input: [tempDir],
+      moveDeleteDirs: MoveDeleteDirsInverted[MoveDeleteDirs.NEVER].toLowerCase(),
+    });
+
+    // Files were moved, and they're no longer in the input directory
+    const tempFilePaths = await FsPoly.walk(tempDir, WalkMode.FILES);
+    const tempFiles = await Promise.all(
+      tempFilePaths.map(async (filePath) => File.fileOf({ filePath })),
+    );
+    await Promise.all(tempFilePaths.map(async (filePath) => FsPoly.rm(filePath)));
+
+    const deletedDirs = await new InputSubdirectoriesDeleter(options, new ProgressBarFake()).delete(
+      tempFiles,
+    );
+
+    // No directories were deleted
+    expect(deletedDirs).toHaveLength(0);
+  } finally {
+    await FsPoly.rm(tempDir, { recursive: true, force: true });
+  }
 });
 
-it('should do nothing if no ROMs were moved', () => {
-  // TODO(cemmer)
+it('should do nothing if no ROMs were moved and option isn\'t "always"', async () => {
+  const tempDir = await createTempFiles();
+  try {
+    const options = new Options({
+      commands: ['move'],
+      input: [tempDir],
+      moveDeleteDirs: MoveDeleteDirsInverted[MoveDeleteDirs.AUTO].toLowerCase(),
+    });
+
+    const deletedDirs = await new InputSubdirectoriesDeleter(options, new ProgressBarFake()).delete(
+      [],
+    );
+
+    // No directories were deleted
+    expect(deletedDirs).toHaveLength(0);
+  } finally {
+    await FsPoly.rm(tempDir, { recursive: true, force: true });
+  }
 });
 
 it('should delete empty directories even if no ROMs were moved when option is "always"', async () => {
