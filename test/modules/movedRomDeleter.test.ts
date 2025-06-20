@@ -434,10 +434,11 @@ describe('should delete archives', () => {
         const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
 
         const deletedFilePaths = (
-          await new MovedROMDeleter(
-            new Options({ commands: ['copy'] }),
-            new ProgressBarFake(),
-          ).delete(inputRoms, movedRoms, datsToWrittenRoms)
+          await new MovedROMDeleter(options, new ProgressBarFake()).delete(
+            inputRoms,
+            movedRoms,
+            datsToWrittenRoms,
+          )
         )
           .map((filePath) => filePath.replace(inputPath + path.sep, ''))
           .sort();

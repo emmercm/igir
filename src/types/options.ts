@@ -3,15 +3,12 @@ import 'reflect-metadata';
 import os from 'node:os';
 import path from 'node:path';
 
-import async from 'async';
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
-import { isNotJunk } from 'junk';
 import micromatch from 'micromatch';
 import moment from 'moment';
 
 import { LogLevel, LogLevelValue } from '../console/logLevel.js';
-import Defaults from '../globals/defaults.js';
 import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly, { FsWalkCallback, WalkMode, WalkModeValue } from '../polyfill/fsPoly.js';
