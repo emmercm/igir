@@ -403,12 +403,14 @@ export default class FileSignature {
       };
 
       stream.on('data', (chunk: Buffer) => {
-        chunks.push(chunk);
+        if (chunk.length > 0) {
+          chunks.push(chunk);
+        }
 
         // Stop reading when we get enough data, trigger a 'close' event
         if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
           resolveHeader();
-          // WARN(cemmer): whatever created the stream may need to drain it!
+          stream.destroy();
         }
       });
 

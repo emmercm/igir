@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -20,7 +21,7 @@ import Options from '../../../src/types/options.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 // Run DATGameInferrer, but condense all DATs down to one
 async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT> {

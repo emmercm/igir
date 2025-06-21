@@ -2,6 +2,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 
 import Temp from '../../../globals/temp.js';
+import { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -23,7 +24,11 @@ export default abstract class Archive {
 
   abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
 
-  abstract extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void>;
+  abstract extractEntryToFile(
+    entryPath: string,
+    extractedFilePath: string,
+    callback?: FsCopyCallback,
+  ): Promise<void>;
 
   async extractEntryToTempFile<T>(
     entryPath: string,

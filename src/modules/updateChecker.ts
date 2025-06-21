@@ -4,7 +4,7 @@ import semver from 'semver';
 
 import Logger from '../console/logger.js';
 import { LogLevel } from '../console/logLevel.js';
-import ProgressBarCLI from '../console/progressBarCli.js';
+import MultiBar from '../console/multiBar.js';
 import Package from '../globals/package.js';
 import BufferPoly from '../polyfill/bufferPoly.js';
 
@@ -30,10 +30,11 @@ export default class UpdateChecker {
     }
 
     if (npmVersion && semver.lt(Package.VERSION, npmVersion)) {
-      ProgressBarCLI.log(
-        this.logger,
-        LogLevel.NOTICE,
-        `An update is available for ${Package.NAME}: v${npmVersion}`,
+      MultiBar.log(
+        this.logger.formatMessage(
+          LogLevel.NOTICE,
+          `An update is available for ${Package.NAME}: v${npmVersion}`,
+        ),
       );
     }
   }

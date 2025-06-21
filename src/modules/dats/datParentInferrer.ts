@@ -34,7 +34,7 @@ export default class DATParentInferrer extends Module {
       `${dat.getName()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
-    this.progressBar.reset(dat.getGames().length);
+    this.progressBar.resetProgress(dat.getGames().length);
 
     // Group games by their stripped names
     const strippedNamesToGames = dat.getGames().reduce((map, game) => {
