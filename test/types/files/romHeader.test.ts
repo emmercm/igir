@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -9,7 +10,7 @@ import ROMHeader from '../../../src/types/files/romHeader.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 describe('headerFromFilename', () => {
   test.each(['rom.a78', 'rom.lnx', 'rom.nes', 'rom.fds', 'rom.smc', 'rom.zip.fds'])(
@@ -42,8 +43,8 @@ describe('headerFromFileStream', () => {
     expect(headeredRoms).toHaveLength(6);
 
     for (const headeredRom of headeredRoms) {
-      await headeredRom.createReadStream(async (stream) => {
-        const fileHeader = await ROMHeader.headerFromFileStream(stream);
+      await headeredRom.createReadStream(async (readable) => {
+        const fileHeader = await ROMHeader.headerFromFileStream(readable);
         expect(fileHeader).toBeDefined();
         expect(fileHeader?.getName()).toBeTruthy();
       });
@@ -65,8 +66,8 @@ describe('headerFromFileStream', () => {
     expect(headeredRoms.length).toBeGreaterThan(0);
 
     for (const headeredRom of headeredRoms) {
-      await headeredRom.createReadStream(async (stream) => {
-        const fileHeader = await ROMHeader.headerFromFileStream(stream);
+      await headeredRom.createReadStream(async (readable) => {
+        const fileHeader = await ROMHeader.headerFromFileStream(readable);
         expect(fileHeader).toBeUndefined();
       });
     }

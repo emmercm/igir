@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import which from 'which';
 
@@ -15,7 +16,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
   return new DATScanner(
     new Options(props),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER)),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
   );
 }
 

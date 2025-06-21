@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../../../src/console/logger.js';
 import { LogLevel } from '../../../../src/console/logLevel.js';
@@ -13,7 +14,7 @@ import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options, { ZipFormat } from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 async function findRoms(input: string): Promise<File[]> {
   return new ROMScanner(
@@ -73,7 +74,7 @@ describe('createArchive', () => {
       // When the file is being zipped
       // Then any underlying exception will be re-thrown
       const zip = inputToOutput[0][1].getArchive() as Zip;
-      await expect(zip.createArchive(inputToOutput, ZipFormat.TORRENTZIP)).rejects.toThrow();
+      await expect(zip.createArchive(inputToOutput, ZipFormat.TORRENTZIP, 1)).rejects.toThrow();
 
       // And we were able to continue
       expect(true).toEqual(true);
@@ -110,6 +111,7 @@ describe('createArchive', () => {
             ],
           ],
           ZipFormat.TORRENTZIP,
+          1,
         );
 
         await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toEqual(true);
@@ -148,6 +150,7 @@ describe('createArchive', () => {
             ],
           ],
           ZipFormat.RVZSTD,
+          1,
         );
 
         await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toEqual(false);

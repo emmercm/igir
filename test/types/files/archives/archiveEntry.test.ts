@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../../../src/console/logger.js';
 import { LogLevel } from '../../../../src/console/logLevel.js';
@@ -18,7 +19,7 @@ import Options from '../../../../src/types/options.js';
 import IPSPatch from '../../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 describe('getEntryPath', () => {
   test.each(['something.rom', path.join('foo', 'bar.rom')])(
@@ -842,8 +843,8 @@ describe('createReadStream', () => {
     const temp = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       for (const archiveEntry of archiveEntries) {
-        await archiveEntry.createReadStream(async (stream) => {
-          const contents = (await bufferPoly.fromReadable(stream)).toString();
+        await archiveEntry.createReadStream(async (readable) => {
+          const contents = (await bufferPoly.fromReadable(readable)).toString();
           expect(contents).toBeTruthy();
         });
       }

@@ -31,7 +31,7 @@ export default class FixdatCreator extends Module {
 
     this.progressBar.logTrace(`${originalDat.getName()}: generating a fixdat`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-    this.progressBar.reset(1);
+    this.progressBar.resetProgress(1);
 
     /**
      * Create an easily searchable index of every {@link ROM} that has a {@link WriteCandidate}
