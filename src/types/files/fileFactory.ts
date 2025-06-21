@@ -1,3 +1,5 @@
+import async from 'async';
+
 import Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
 import ProgressBarCLI from '../../console/progressBarCli.js';
@@ -7,6 +9,9 @@ import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
 import Chd from './archives/chd/chd.js';
+import ChdBinCue from './archives/chd/chdBinCue.js';
+import ChdGdi from './archives/chd/chdGdi.js';
+import ChdRaw from './archives/chd/chdRaw.js';
 import Gcz from './archives/dolphin/gcz.js';
 import Rvz from './archives/dolphin/rvz.js';
 import Wia from './archives/dolphin/wia.js';
@@ -55,8 +60,15 @@ export default class FileFactory {
     }
 
     try {
-      const entries = await this.entriesFromArchiveExtension(filePath, archiveChecksumBitmask);
-      if (entries !== undefined) {
+      const archives = this.archiveFromArchiveExtension(filePath);
+      const entries = (
+        await async.mapLimit(archives, 1, async (archive: Archive) =>
+          this.entriesFromArchive(archive, archiveChecksumBitmask),
+        )
+      )
+        .filter((entries) => entries !== undefined)
+        .flat();
+      if (entries.length > 0) {
         return entries;
       }
       return [await this.fileFrom(filePath, fileChecksumBitmask)];
@@ -85,49 +97,10 @@ export default class FileFactory {
    *
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  private async entriesFromArchiveExtension(
-    filePath: string,
+  private async entriesFromArchive(
+    archive: Archive,
     checksumBitmask: number,
-    fileExt = filePath.replace(/.+?(?=(\.[a-zA-Z0-9]+)+)/, ''),
   ): Promise<ArchiveEntry<Archive>[] | undefined> {
-    let archive: Archive;
-    if (Zip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Zip(filePath);
-    } else if (Tar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Tar(filePath);
-    } else if (Rar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Rar(filePath);
-    } else if (Gzip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Gzip(filePath);
-    } else if (SevenZip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new SevenZip(filePath);
-    } else if (Z.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Z(filePath);
-    } else if (ZipSpanned.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new ZipSpanned(filePath);
-    } else if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new ZipX(filePath);
-    } else if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Cso(filePath);
-    } else if (Dax.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Dax(filePath);
-    } else if (Zso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Zso(filePath);
-    } else if (Gcz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Gcz(filePath);
-    } else if (Rvz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Rvz(filePath);
-    } else if (Wia.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Wia(filePath);
-    } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new Chd(filePath);
-    } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
-      archive = new NkitIso(filePath);
-    } else {
-      // The file path doesn't have a known archive extension
-      return undefined;
-    }
-
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
     } catch (error) {
@@ -136,10 +109,52 @@ export default class FileFactory {
       ProgressBarCLI.log(
         this.logger,
         LogLevel.WARN,
-        `${filePath}: failed to parse ${fileExt.replace(/^\./, '')} file: ${error}`,
+        `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
       );
       return undefined;
     }
+  }
+
+  private archiveFromArchiveExtension(
+    filePath: string,
+    fileExt = filePath.replace(/.+?(?=(\.[a-zA-Z0-9]+)+)/, ''),
+  ): Archive[] {
+    if (Zip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Zip(filePath)];
+    } else if (Tar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Tar(filePath)];
+    } else if (Rar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Rar(filePath)];
+    } else if (Gzip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Gzip(filePath)];
+    } else if (SevenZip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new SevenZip(filePath)];
+    } else if (Z.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Z(filePath)];
+    } else if (ZipSpanned.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new ZipSpanned(filePath)];
+    } else if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new ZipX(filePath)];
+    } else if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Cso(filePath)];
+    } else if (Dax.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Dax(filePath)];
+    } else if (Zso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Zso(filePath)];
+    } else if (Gcz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Gcz(filePath)];
+    } else if (Rvz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Rvz(filePath)];
+    } else if (Wia.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Wia(filePath)];
+    } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new ChdBinCue(filePath), new ChdGdi(filePath), new ChdRaw(filePath)];
+    } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new NkitIso(filePath)];
+    }
+
+    // The file path doesn't have a known archive extension
+    return [];
   }
 
   /**
@@ -166,7 +181,14 @@ export default class FileFactory {
     }
     // Note that the signature might not be of an archive
 
-    return this.entriesFromArchiveExtension(filePath, checksumBitmask, signature.getExtension());
+    const archives = this.archiveFromArchiveExtension(filePath, signature.getExtension());
+    return (
+      await async.mapLimit(archives, 1, async (archive: Archive) =>
+        this.entriesFromArchive(archive, checksumBitmask),
+      )
+    )
+      .filter((entries) => entries !== undefined)
+      .flat();
   }
 
   static isExtensionArchive(filePath: string): boolean {

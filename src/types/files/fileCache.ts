@@ -159,7 +159,7 @@ export default class FileCache {
     }
     const cacheKey = await this.getCacheKey(
       archive.getFilePath(),
-      undefined,
+      archive.constructor.name,
       ValueType.ARCHIVE_CHECKSUMS,
     );
 

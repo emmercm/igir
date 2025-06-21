@@ -1,54 +1,44 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import stream, { Readable } from 'node:stream';
 import util from 'node:util';
 
 import { File as CueFile, parse, Track, TrackDataType } from '@gplane/cue';
-import chdman from 'chdman';
 
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
+import StreamPoly from '../../../../polyfill/streamPoly.js';
 import ExpectedError from '../../../expectedError.js';
-import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
-import Archive from '../archive.js';
+import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
+import Chd from './chd.js';
 
 /**
  * https://github.com/putnam/binmerge
  */
 export default class ChdBinCueParser {
-  public static async getArchiveEntriesBinCue<T extends Archive>(
+  public static async getArchiveEntriesBinCue<T extends Chd>(
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const tempFile = await FsPoly.mktemp(
-      path.join(Temp.getTempDir(), path.basename(archive.getFilePath())),
-    );
-
-    const tempDir = path.dirname(tempFile);
-    if (!(await FsPoly.exists(tempDir))) {
-      await FsPoly.mkdir(tempDir, { recursive: true });
-    }
-
-    const cueFile = `${tempFile}.cue`;
-    const binFile = `${tempFile}.bin`;
+    const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd-cue'));
 
     try {
-      await chdman.extractCd({
-        inputFilename: archive.getFilePath(),
-        outputFilename: cueFile,
-        outputBinFilename: binFile,
-      });
-      return await this.parseCue(archive, cueFile, binFile, checksumBitmask);
+      const cueFile = (await archive.extractArchiveEntries(tempDir)).find((filePath) =>
+        filePath.endsWith('.cue'),
+      );
+      if (cueFile === undefined) {
+        throw new ExpectedError('failed to extract .cue file');
+      }
+      return await this.parseCue(archive, cueFile, checksumBitmask);
     } finally {
-      await FsPoly.rm(cueFile, { force: true });
-      await FsPoly.rm(binFile, { force: true });
+      await FsPoly.rm(tempDir, { recursive: true, force: true });
     }
   }
 
-  private static async parseCue<T extends Archive>(
+  private static async parseCue<T extends Chd>(
     archive: T,
     cueFilePath: string,
-    binFilePath: string,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
     const cueData = await util.promisify(fs.readFile)(cueFilePath);
@@ -59,7 +49,7 @@ export default class ChdBinCueParser {
     const binFiles = (
       await Promise.all(
         cueSheet.files.flatMap(async (file) =>
-          this.parseCueFile(archive, file, binFilePath, checksumBitmask),
+          this.parseCueFile(archive, file, path.dirname(cueFilePath), checksumBitmask),
         ),
       )
     ).flat();
@@ -78,60 +68,77 @@ export default class ChdBinCueParser {
     return [cueFile, ...binFiles];
   }
 
-  private static async parseCueFile<T extends Archive>(
+  private static async parseCueFile<T extends Chd>(
     archive: T,
     file: CueFile,
-    binFilePath: string,
+    binFileDir: string,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
     // Determine the global block size from the first track in the file
-    const filePath = path.join(path.dirname(binFilePath), file.name);
+    const filePath = path.join(binFileDir, file.name);
     const fileSize = await FsPoly.size(filePath);
     const firstTrack = file.tracks.at(0);
     if (!firstTrack) {
+      // The file has no tracks, so we can't extract anything
       return [];
     }
     const globalBlockSize = ChdBinCueParser.parseCueTrackBlockSize(firstTrack);
     let nextItemTimeOffset = Math.floor(fileSize / globalBlockSize);
 
-    const { name: archiveName } = path.parse(archive.getFilePath());
-    return (
-      await Promise.all(
-        file.tracks
-          .reverse()
-          .flatMap(async (track) => {
-            const firstIndex = track.indexes.at(0);
-            if (!firstIndex) {
-              return undefined;
-            }
+    const archiveEntries: ArchiveEntry<T>[] = [];
+    for (const track of [...file.tracks].reverse()) {
+      const firstIndex = track.indexes.at(0);
+      if (!firstIndex) {
+        // The track has no indexes, so we can't extract anything
+        continue;
+      }
 
-            const [minutes, seconds, fields] = firstIndex.startingTime;
-            const startingTimeOffset = fields + seconds * 75 + minutes * 60 * 75;
-            const sectors = nextItemTimeOffset - startingTimeOffset;
-            nextItemTimeOffset = startingTimeOffset;
-            const trackOffset = startingTimeOffset * globalBlockSize;
-            const trackSize = sectors * globalBlockSize;
+      const startingTimeOffset = ChdBinCueParser.calculateLength(firstIndex.startingTime);
+      const sectors = nextItemTimeOffset - startingTimeOffset;
+      nextItemTimeOffset = startingTimeOffset;
+      const trackOffset = startingTimeOffset * globalBlockSize;
+      const trackSize = sectors * globalBlockSize;
 
-            const checksums = await FileChecksums.hashFile(
-              binFilePath,
-              checksumBitmask,
-              trackOffset,
-              trackOffset + trackSize - 1,
-            );
+      // chdman doesn't extract tracks with their pregap data, but Redump expects it to be
+      // in .bin files, so we need to add the pregap before calculating checksums
+      // let pregap = 0;
+      // if (track.preGap !== undefined) {
+      //   if (file.tracks.length > 1) {
+      //     throw new ExpectedError(`can't add a pregap to a file with multiple tracks`);
+      //   }
+      //   if (trackOffset !== 0) {
+      //     throw new ExpectedError(`can't add a pregap to the middle of a file`);
+      //   }
+      //   pregap = await ChdBinCueParser.addPregap(track.preGap, filePath, globalBlockSize);
+      // }
+      // trackSize += pregap;
 
-            return ArchiveEntry.entryOf(
-              {
-                archive,
-                entryPath: `${archiveName} (Track ${track.trackNumber}).bin|${trackSize}@${trackOffset}`,
-                size: trackSize,
-                ...checksums,
-              },
-              checksumBitmask,
-            );
-          })
-          .reverse(),
-      )
-    ).filter((entry) => entry !== undefined);
+      let checksums: ChecksumProps;
+      const pregapSize = ChdBinCueParser.calculateLength(track.preGap) * globalBlockSize;
+      const readStream = fs.createReadStream(filePath);
+      try {
+        const pregappedStream =
+          pregapSize > 0
+            ? StreamPoly.concat(Readable.from(Buffer.alloc(pregapSize)), readStream)
+            : readStream;
+        checksums = await FileChecksums.hashStream(pregappedStream, checksumBitmask);
+      } finally {
+        readStream.close();
+      }
+
+      archiveEntries.push(
+        await ArchiveEntry.entryOf(
+          {
+            archive,
+            entryPath: `${file.name}|${trackSize}+${pregapSize}@${trackOffset}`,
+            size: trackSize + pregapSize,
+            ...checksums,
+          },
+          checksumBitmask,
+        ),
+      );
+    }
+    return archiveEntries.reverse();
   }
 
   private static parseCueTrackBlockSize(firstTrack: Track): number {
@@ -156,5 +163,37 @@ export default class ChdBinCueParser {
         throw new ExpectedError(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
       }
     }
+  }
+
+  private static calculateLength(minuteSecondFrame: [number, number, number] | undefined): number {
+    if (minuteSecondFrame === undefined) {
+      return 0;
+    }
+    const [minutes, seconds, frames] = minuteSecondFrame;
+    return minutes * 60 * 75 + seconds * 75 + frames;
+  }
+
+  private static async addPregap(
+    pregap: [number, number, number],
+    binFilePath: string,
+    globalBlockSize: number,
+  ): Promise<number> {
+    const [minutes, seconds, fields] = pregap;
+    const bytes = (fields + seconds * 75 + minutes * 60 * 75) * globalBlockSize;
+
+    const tempBinFile = await FsPoly.mktemp(binFilePath);
+    try {
+      // Prepend the pregap to the bin file
+      await fs.promises.writeFile(tempBinFile, Buffer.alloc(bytes));
+      await util.promisify(stream.pipeline)(
+        fs.createReadStream(binFilePath),
+        fs.createWriteStream(tempBinFile, { flags: 'a' }),
+      );
+      await FsPoly.mv(tempBinFile, binFilePath);
+    } finally {
+      await FsPoly.rm(tempBinFile, { force: true });
+    }
+
+    return bytes;
   }
 }
