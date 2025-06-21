@@ -128,6 +128,6 @@ describe('finish', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.setTotal(10);
     singleBar.finish('finished');
-    expect(stripAnsi(singleBar.format())).toEqual('test finished');
+    expect(stripAnsi(singleBar.format())).toEqual('test » finished');
   });
 });
