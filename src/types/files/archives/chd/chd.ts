@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import { read } from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
@@ -10,6 +9,7 @@ import { Memoize } from 'typescript-memoize';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../../polyfill/streamPoly.js';
+import Timer from '../../../../timer.js';
 import ExpectedError from '../../../expectedError.js';
 import File from '../../file.js';
 import Archive from '../archive.js';
@@ -97,7 +97,8 @@ export default abstract class Chd extends Archive {
       );
     } finally {
       // Give a grace period before deleting the temp file, the next read may be of the same file
-      setTimeout(async () => {
+      // TODO(cemmer): this is making tests needlessly slow
+      Timer.setTimeout(async () => {
         await this.tempSingletonMutex.runExclusive(async () => {
           this.tempSingletonHandles -= 1;
           if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {

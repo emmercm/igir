@@ -45,14 +45,14 @@ export default class FileFactory {
   async filesFrom(
     filePath: string,
     fileChecksumBitmask: number = ChecksumBitmask.CRC32,
-    archiveChecksumBitmask = fileChecksumBitmask,
+    checksumBitmask = fileChecksumBitmask,
   ): Promise<File[]> {
     if (URLPoly.canParse(filePath)) {
       return [await File.fileOf({ filePath })];
     }
 
     if (!FileFactory.isExtensionArchive(filePath)) {
-      const entries = await this.entriesFromArchiveSignature(filePath, archiveChecksumBitmask);
+      const entries = await this.entriesFromArchiveSignature(filePath, checksumBitmask);
       if (entries !== undefined) {
         return entries;
       }
@@ -61,17 +61,20 @@ export default class FileFactory {
 
     try {
       const archives = this.archiveFromArchiveExtension(filePath);
+      if (archives.length === 0) {
+        // The file isn't actually an archive
+        return [await this.fileFrom(filePath, fileChecksumBitmask)];
+      }
       const entries = (
         await async.mapLimit(archives, 1, async (archive: Archive) =>
-          this.entriesFromArchive(archive, archiveChecksumBitmask),
+          this.entriesFromArchive(archive, checksumBitmask),
         )
-      )
-        .filter((entries) => entries !== undefined)
-        .flat();
-      if (entries.length > 0) {
-        return entries;
+      ).flat();
+      if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
+        // The file isn't actually an archive
+        return [await this.fileFrom(filePath, fileChecksumBitmask)];
       }
-      return [await this.fileFrom(filePath, fileChecksumBitmask)];
+      return entries.filter((entry) => entry !== undefined);
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         throw new ExpectedError(`file doesn't exist: ${filePath}`);
@@ -182,13 +185,20 @@ export default class FileFactory {
     // Note that the signature might not be of an archive
 
     const archives = this.archiveFromArchiveExtension(filePath, signature.getExtension());
-    return (
+    if (archives.length === 0) {
+      // The file isn't actually an archive
+      return undefined;
+    }
+    const entries = (
       await async.mapLimit(archives, 1, async (archive: Archive) =>
         this.entriesFromArchive(archive, checksumBitmask),
       )
-    )
-      .filter((entries) => entries !== undefined)
-      .flat();
+    ).flat();
+    if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
+      // The file isn't actually an archive
+      return undefined;
+    }
+    return entries.filter((entry) => entry !== undefined);
   }
 
   static isExtensionArchive(filePath: string): boolean {

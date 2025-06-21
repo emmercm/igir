@@ -44,6 +44,11 @@ export default class ChdGdi extends Chd {
       (await util.promisify(fs.readFile)(gdiFile)).toString().replaceAll(/\r?\n/g, '\r\n'),
     );
 
+    await FsPoly.mv(
+      gdiFile,
+      path.join(outputDirectory, `${path.parse(this.getFilePath()).name}.gdi`),
+    );
+
     return await FsPoly.walk(outputDirectory);
   }
 }
