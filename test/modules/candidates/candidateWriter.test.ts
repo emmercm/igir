@@ -18,7 +18,6 @@ import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js'
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
-import Timer from '../../../src/timer.js';
 import DAT from '../../../src/types/dats/dat.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';

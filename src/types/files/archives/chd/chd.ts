@@ -97,16 +97,18 @@ export default abstract class Chd extends Archive {
       );
     } finally {
       // Give a grace period before deleting the temp file, the next read may be of the same file
-      // TODO(cemmer): this is making tests needlessly slow
-      Timer.setTimeout(async () => {
-        await this.tempSingletonMutex.runExclusive(async () => {
-          this.tempSingletonHandles -= 1;
-          if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {
-            await FsPoly.rm(this.tempSingletonDirPath, { recursive: true, force: true });
-            this.tempSingletonDirPath = undefined;
-          }
-        });
-      }, 5000);
+      Timer.setTimeout(
+        async () => {
+          await this.tempSingletonMutex.runExclusive(async () => {
+            this.tempSingletonHandles -= 1;
+            if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {
+              await FsPoly.rm(this.tempSingletonDirPath, { recursive: true, force: true });
+              this.tempSingletonDirPath = undefined;
+            }
+          });
+        },
+        process.env.NODE_ENV === 'test' ? 0 : 5000,
+      );
     }
   }
 

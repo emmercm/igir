@@ -60,24 +60,30 @@ export default class ChdGdiParser {
       .map((line) => line.replace(filePrefix, 'track').replaceAll('"', ''))
       .join('\r\n')}\r\n`;
 
-    const gdiFile = await ArchiveEntry.entryOf({
-      archive,
-      entryPath: path.basename(gdiFilePath),
-      size: gdiContents.length,
-      ...(await FileChecksums.hashData(gdiContents, checksumBitmask)),
-    });
+    const gdiFile = await ArchiveEntry.entryOf(
+      {
+        archive,
+        entryPath: path.basename(gdiFilePath),
+        size: gdiContents.length,
+        ...(await FileChecksums.hashData(gdiContents, checksumBitmask)),
+      },
+      checksumBitmask,
+    );
 
     const binRawFiles = await async.mapLimit(
       binRawFilePaths,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (binRawFilePath: string): Promise<ArchiveEntry<T>> => {
         try {
-          return await ArchiveEntry.entryOf({
-            archive,
-            entryPath: path.basename(binRawFilePath).replace(filePrefix, 'track'),
-            size: await FsPoly.size(binRawFilePath),
-            ...(await FileChecksums.hashFile(binRawFilePath, checksumBitmask)),
-          });
+          return await ArchiveEntry.entryOf(
+            {
+              archive,
+              entryPath: path.basename(binRawFilePath).replace(filePrefix, 'track'),
+              size: await FsPoly.size(binRawFilePath),
+              ...(await FileChecksums.hashFile(binRawFilePath, checksumBitmask)),
+            },
+            checksumBitmask,
+          );
         } catch (error) {
           if (error instanceof Error) {
             throw error;
