@@ -21,7 +21,7 @@ import MameDAT from '../../types/dats/mame/mameDat.js';
 import ROM from '../../types/dats/rom.js';
 import SoftwareListDAT from '../../types/dats/softwarelist/softwareListDat.js';
 import SoftwareListsDAT from '../../types/dats/softwarelist/softwareListsDat.js';
-import ExpectedError from '../../types/expectedError.js';
+import IgirException from '../../types/exceptions/igirException.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
@@ -108,7 +108,7 @@ export default class DATScanner extends Scanner {
             ChecksumBitmask.NONE,
           );
         } catch (error) {
-          throw new ExpectedError(`failed to download '${datFile.toString()}': ${error}`);
+          throw new IgirException(`failed to download '${datFile.toString()}': ${error}`);
         }
       })
     ).flat();

@@ -12,7 +12,7 @@ import Logger from './src/console/logger.js';
 import { LogLevel } from './src/console/logLevel.js';
 import Package from './src/globals/package.js';
 import FsPoly from './src/polyfill/fsPoly.js';
-import ExpectedError from './src/types/expectedError.js';
+import IgirException from './src/types/exceptions/igirException.js';
 
 interface FileFilter extends GlobOptions {
   include?: string;
@@ -26,7 +26,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
       const includeNormalized = filter.include.replaceAll('\\', '/');
       const include = fg.globSync(includeNormalized, filter).map((file) => path.resolve(file));
       if (include.length === 0) {
-        throw new ExpectedError(`glob pattern '${includeNormalized}' returned no paths`);
+        throw new IgirException(`glob pattern '${includeNormalized}' returned no paths`);
       }
       results = [...results, ...include];
     }
@@ -36,7 +36,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
         fg.globSync(excludeNormalized, filter).map((file) => path.resolve(file)),
       );
       if (exclude.size === 0) {
-        throw new ExpectedError(`glob pattern '${excludeNormalized}' returned no paths`);
+        throw new IgirException(`glob pattern '${excludeNormalized}' returned no paths`);
       }
       results = results.filter((result) => !exclude.has(result));
     }
@@ -56,7 +56,7 @@ const argv = await yargs(process.argv.slice(2))
   })
   .check((_argv) => {
     if (!_argv.input || !fs.existsSync(_argv.input)) {
-      throw new ExpectedError(`input directory '${_argv.input}' doesn't exist`);
+      throw new IgirException(`input directory '${_argv.input}' doesn't exist`);
     }
     return true;
   })
@@ -172,7 +172,7 @@ await caxa({
 await FsPoly.rm(prebuilds, { recursive: true });
 
 if (!(await FsPoly.exists(output))) {
-  throw new ExpectedError(`output file '${output}' doesn't exist`);
+  throw new IgirException(`output file '${output}' doesn't exist`);
 }
 logger.info(`Output: ${FsPoly.sizeReadable(await FsPoly.size(output))}`);
 

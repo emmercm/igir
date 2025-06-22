@@ -8,7 +8,7 @@ import fg from 'fast-glob';
 import Defaults from '../../../../globals/defaults.js';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
-import ExpectedError from '../../../expectedError.js';
+import IgirException from '../../../exceptions/igirException.js';
 import FileChecksums from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
@@ -29,11 +29,11 @@ export default class ChdGdiParser {
         filePath.endsWith('.gdi'),
       );
       if (gdiFilePath === undefined) {
-        throw new ExpectedError(`failed to extract .gdi file`);
+        throw new IgirException(`failed to extract .gdi file`);
       }
       binRawFilePaths = await fg(`${fg.convertPathToPattern(tempDir)}/*.{bin,raw}`);
       if (binRawFilePaths.length === 0) {
-        throw new ExpectedError(
+        throw new IgirException(
           `failed to find bin/raw files for GD-ROM: ${archive.getFilePath()}`,
         );
       }

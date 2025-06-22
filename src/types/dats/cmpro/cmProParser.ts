@@ -1,4 +1,4 @@
-import ExpectedError from '../../expectedError.js';
+import IgirException from '../../exceptions/igirException.js';
 
 export interface DATProps extends CMProObject {
   clrmamepro?: ClrMameProProps;
@@ -174,7 +174,7 @@ export default class CMProParser {
 
   private parseQuotedString(): string {
     if (this.contents.charAt(this.pos) !== '"') {
-      throw new ExpectedError('invalid quoted string');
+      throw new IgirException('invalid quoted string');
     }
     this.pos += 1;
 
@@ -195,7 +195,7 @@ export default class CMProParser {
       }
     }
 
-    throw new ExpectedError('invalid quoted string');
+    throw new IgirException('invalid quoted string');
   }
 
   private parseUnquotedString(): string {

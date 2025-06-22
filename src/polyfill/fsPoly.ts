@@ -11,7 +11,7 @@ import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
 
 import Defaults from '../globals/defaults.js';
-import ExpectedError from '../types/expectedError.js';
+import IgirException from '../types/exceptions/igirException.js';
 import FsCopyTransform, { FsCopyCallback } from './fsCopyTransform.js';
 
 export const MoveResult = {
@@ -222,7 +222,7 @@ export default class FsPoly {
       return;
     } catch (error) {
       if (this.onDifferentDrives(targetResolved, link)) {
-        throw new ExpectedError(`can't hard link files on different drives: ${error}`);
+        throw new IgirException(`can't hard link files on different drives: ${error}`);
       }
       throw error;
     }
@@ -421,7 +421,7 @@ export default class FsPoly {
         return filePath;
       }
     }
-    throw new ExpectedError('failed to generate non-existent temp file');
+    throw new IgirException('failed to generate non-existent temp file');
   }
 
   /**
@@ -484,7 +484,7 @@ export default class FsPoly {
    */
   static async readlink(pathLike: PathLike): Promise<string> {
     if (!(await this.isSymlink(pathLike))) {
-      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike.toString()}`);
+      throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
     return fs.promises.readlink(pathLike);
   }
@@ -494,7 +494,7 @@ export default class FsPoly {
    */
   static readlinkSync(pathLike: PathLike): string {
     if (!this.isSymlinkSync(pathLike)) {
-      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike.toString()}`);
+      throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
     return fs.readlinkSync(pathLike);
   }
@@ -526,7 +526,7 @@ export default class FsPoly {
    */
   static async realpath(pathLike: PathLike): Promise<string> {
     if (!(await this.exists(pathLike))) {
-      throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike.toString()}`);
+      throw new IgirException(`can't get realpath of non-existent path: ${pathLike.toString()}`);
     }
     return fs.promises.realpath(pathLike);
   }
@@ -545,7 +545,7 @@ export default class FsPoly {
       if (optionsWithRetry.force) {
         return;
       }
-      throw new ExpectedError(`can't rm, path doesn't exist: ${pathLike}`);
+      throw new IgirException(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
     if (await this.isDirectory(pathLike)) {
@@ -572,7 +572,7 @@ export default class FsPoly {
       if (optionsWithRetry.force) {
         return;
       }
-      throw new ExpectedError(`can't rmSync, path doesn't exist: ${pathLike}`);
+      throw new IgirException(`can't rmSync, path doesn't exist: ${pathLike}`);
     }
 
     if (this.isDirectorySync(pathLike)) {

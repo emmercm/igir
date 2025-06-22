@@ -5,7 +5,7 @@ import tar from 'tar';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
-import ExpectedError from '../../expectedError.js';
+import IgirException from '../../exceptions/igirException.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -92,7 +92,7 @@ export default class Tar extends Archive {
       [entryPath.replaceAll(/[\\/]/g, '/')],
     );
     if (!(await FsPoly.exists(extractedFilePath))) {
-      throw new ExpectedError(`didn't find extracted file '${entryPath}'`);
+      throw new IgirException(`didn't find extracted file '${entryPath}'`);
     }
   }
 }
