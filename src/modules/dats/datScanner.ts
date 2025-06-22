@@ -6,6 +6,7 @@ import async from 'async';
 
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DriveSemaphore from '../../driveSemaphore.js';
+import GameGrouper from '../../gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
 import bufferPoly from '../../polyfill/bufferPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
@@ -464,20 +465,28 @@ export default class DATScanner extends Scanner {
 
     this.progressBar.logTrace(`${datFile.toString()}: parsed SMDB, deserializing to DAT`);
 
-    const games = rows.map((row) => {
-      const rom = new ROM({
-        name: row.name,
-        size: Number.parseInt(row.size !== undefined && row.size.length > 0 ? row.size : '0', 10),
-        crc32: row.crc,
-        md5: row.md5,
-        sha1: row.sha1,
-        sha256: row.sha256,
-      });
-      const gameName = row.name.replace(/\.[^.]*$/, '');
+    const rowNamesToRows = GameGrouper.groupMultiDiscGames(rows, (row) =>
+      row.name.replace(/\.[^.]*$/, ''),
+    );
+    const games = [...rowNamesToRows.entries()].map(([gameName, rows]) => {
+      const roms = rows.map(
+        (row) =>
+          new ROM({
+            name: row.name,
+            size: Number.parseInt(
+              row.size !== undefined && row.size.length > 0 ? row.size : '0',
+              10,
+            ),
+            crc32: row.crc,
+            md5: row.md5,
+            sha1: row.sha1,
+            sha256: row.sha256,
+          }),
+      );
       return new Game({
         name: gameName,
         description: gameName,
-        roms: rom,
+        roms,
       });
     });
 

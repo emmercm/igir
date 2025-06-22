@@ -166,7 +166,7 @@ describe('single files', () => {
         'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842.dat',
       ),
       13_770,
-      13_774,
+      13_770,
       13_772,
     ],
     [
