@@ -11,7 +11,7 @@ import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../../polyfill/streamPoly.js';
 import Timer from '../../../../timer.js';
-import ExpectedError from '../../../expectedError.js';
+import IgirException from '../../../exceptions/igirException.js';
 import File from '../../file.js';
 import Archive from '../archive.js';
 
@@ -53,7 +53,7 @@ export default abstract class Chd extends Archive {
       const extractedFiles = await this.extractArchiveEntries(this.tempSingletonDirPath);
       if (extractedFiles.length === 0) {
         this.tempSingletonDirPath = undefined;
-        throw new ExpectedError(`failed to extract`);
+        throw new IgirException(`failed to extract`);
       }
     });
 
@@ -94,7 +94,7 @@ export default abstract class Chd extends Archive {
         streamEnd,
       );
     } catch (error) {
-      throw new ExpectedError(
+      throw new IgirException(
         `failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`,
       );
     } finally {

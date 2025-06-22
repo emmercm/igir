@@ -29,7 +29,7 @@ export default class ChdGdiParser {
         filePath.endsWith('.gdi'),
       );
       if (gdiFilePath === undefined) {
-        throw new ExpectedError(`failed to extract .gdi file`);
+        throw new IgirException(`failed to extract .gdi file`);
       }
       binRawFilePaths = await fg(`${fg.convertPathToPattern(tempDir)}/*.{bin,raw}`);
       if (binRawFilePaths.length === 0) {

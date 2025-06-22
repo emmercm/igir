@@ -8,7 +8,7 @@ import { File as CueFile, parse, Track, TrackDataType } from '@gplane/cue';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../../polyfill/streamPoly.js';
-import ExpectedError from '../../../expectedError.js';
+import IgirException from '../../../exceptions/igirException.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
@@ -28,7 +28,7 @@ export default class ChdBinCueParser {
         filePath.endsWith('.cue'),
       );
       if (cueFile === undefined) {
-        throw new ExpectedError('failed to extract .cue file');
+        throw new IgirException('failed to extract .cue file');
       }
       return await this.parseCue(archive, cueFile, checksumBitmask);
     } finally {
@@ -152,7 +152,7 @@ export default class ChdBinCueParser {
         return 2336;
       }
       default: {
-        throw new ExpectedError(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
+        throw new IgirException(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
       }
     }
   }
