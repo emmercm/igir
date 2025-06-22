@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
-import FsPoly from '../../../../polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../../../../polyfill/fsPoly.js';
 import { ChecksumBitmask, ChecksumBitmaskValue } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -43,7 +43,7 @@ export default class ChdBinCue extends Chd {
 
     return [
       cueFile,
-      ...(await FsPoly.walk(outputDirectory)).filter((filePath) =>
+      ...(await FsPoly.walk(outputDirectory, WalkMode.FILES)).filter((filePath) =>
         / \(Track [0-9]+\)\.bin$/.test(filePath),
       ),
     ];
