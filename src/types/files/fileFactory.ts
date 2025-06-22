@@ -151,6 +151,8 @@ export default class FileFactory {
     } else if (Wia.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Wia(filePath)];
     } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      // Unfortunately, some CHDs such as GD-ROMs can be extracted to different formats (bin/cue,
+      // gdi/bin/raw, etc.), so we may need to scan the file a few different ways
       return [new ChdBinCue(filePath), new ChdGdi(filePath), new ChdRaw(filePath)];
     } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new NkitIso(filePath)];

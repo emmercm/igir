@@ -21,7 +21,7 @@ export default class ChdBinCueParser {
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd-cue'));
+    const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd-bin-cue'));
 
     try {
       const cueFile = (await archive.extractArchiveEntries(tempDir)).find((filePath) =>
@@ -98,28 +98,20 @@ export default class ChdBinCueParser {
       nextItemTimeOffset = startingTimeOffset;
       const trackOffset = startingTimeOffset * globalBlockSize;
       const trackSize = sectors * globalBlockSize;
-
-      // chdman doesn't extract tracks with their pregap data, but Redump expects it to be
-      // in .bin files, so we need to add the pregap before calculating checksums
-      // let pregap = 0;
-      // if (track.preGap !== undefined) {
-      //   if (file.tracks.length > 1) {
-      //     throw new ExpectedError(`can't add a pregap to a file with multiple tracks`);
-      //   }
-      //   if (trackOffset !== 0) {
-      //     throw new ExpectedError(`can't add a pregap to the middle of a file`);
-      //   }
-      //   pregap = await ChdBinCueParser.addPregap(track.preGap, filePath, globalBlockSize);
-      // }
-      // trackSize += pregap;
-
-      let checksums: ChecksumProps;
       const pregapSize = ChdBinCueParser.calculateLength(track.preGap) * globalBlockSize;
+      const postgapSize = ChdBinCueParser.calculateLength(track.postGap) * globalBlockSize;
+
+      // Calculate checksums, including the pregap
+      let checksums: ChecksumProps;
       const readStream = fs.createReadStream(filePath);
       try {
         const pregappedStream =
-          pregapSize > 0
-            ? StreamPoly.concat(Readable.from(Buffer.alloc(pregapSize)), readStream)
+          pregapSize + postgapSize > 0
+            ? StreamPoly.concat(
+                Readable.from(Buffer.alloc(pregapSize)),
+                readStream,
+                Readable.from(Buffer.alloc(postgapSize)),
+              )
             : readStream;
         checksums = await FileChecksums.hashStream(pregappedStream, checksumBitmask);
       } finally {
@@ -130,8 +122,8 @@ export default class ChdBinCueParser {
         await ArchiveEntry.entryOf(
           {
             archive,
-            entryPath: `${file.name}|${trackSize}+${pregapSize}@${trackOffset}`,
-            size: trackSize + pregapSize,
+            entryPath: `${file.name}|${trackSize}+${pregapSize}+${postgapSize}@${trackOffset}`,
+            size: trackSize + pregapSize + postgapSize,
             ...checksums,
           },
           checksumBitmask,
@@ -171,29 +163,5 @@ export default class ChdBinCueParser {
     }
     const [minutes, seconds, frames] = minuteSecondFrame;
     return minutes * 60 * 75 + seconds * 75 + frames;
-  }
-
-  private static async addPregap(
-    pregap: [number, number, number],
-    binFilePath: string,
-    globalBlockSize: number,
-  ): Promise<number> {
-    const [minutes, seconds, fields] = pregap;
-    const bytes = (fields + seconds * 75 + minutes * 60 * 75) * globalBlockSize;
-
-    const tempBinFile = await FsPoly.mktemp(binFilePath);
-    try {
-      // Prepend the pregap to the bin file
-      await fs.promises.writeFile(tempBinFile, Buffer.alloc(bytes));
-      await util.promisify(stream.pipeline)(
-        fs.createReadStream(binFilePath),
-        fs.createWriteStream(tempBinFile, { flags: 'a' }),
-      );
-      await FsPoly.mv(tempBinFile, binFilePath);
-    } finally {
-      await FsPoly.rm(tempBinFile, { force: true });
-    }
-
-    return bytes;
   }
 }
