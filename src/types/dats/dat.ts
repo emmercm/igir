@@ -195,7 +195,10 @@ export default abstract class DAT {
         sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
       },
       cdata: true,
-    }).buildObject(this.toXmlDatObj());
+    })
+      .buildObject(this.toXmlDatObj())
+      .replaceAll('<xml_comment>', '<!-- ')
+      .replaceAll('</xml_comment>', ' -->');
   }
 
   private toXmlDatObj(): object {
