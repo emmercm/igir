@@ -112,7 +112,7 @@ export default class FileFactory {
       MultiBar.log(
         this.logger.formatMessage(
           LogLevel.WARN,
-          `${filePath}: failed to parse ${archive.getExtension()} file: ${error}`,
+          `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
         ),
       );
       return undefined;
