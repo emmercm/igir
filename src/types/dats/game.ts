@@ -109,6 +109,10 @@ export interface GameProps {
   // @see https://github.com/libretro/libretro-database/tree/master/metadat/genre
 
   readonly genre?: string;
+
+  // ********** IGIR FIELDS **********
+
+  readonly dir2datSource?: string;
 }
 
 /**
@@ -170,6 +174,8 @@ export default class Game implements GameProps {
   @Expose({ name: 'genre' })
   readonly genre?: string;
 
+  readonly dir2datSource?: string;
+
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
     this.isBios = props?.isBios ?? this.isBios;
@@ -189,6 +195,8 @@ export default class Game implements GameProps {
     this.deviceRef = props?.deviceRef ?? [];
 
     this.genre = props?.genre;
+
+    this.dir2datSource = props?.dir2datSource;
   }
 
   /**
@@ -206,6 +214,11 @@ export default class Game implements GameProps {
         cloneofid: this.cloneOfId,
         isdevice: this.getIsDevice() ? 'yes' : undefined,
       },
+      ...(this.dir2datSource === undefined
+        ? {}
+        : {
+            xml_comment: this.dir2datSource,
+          }),
       ...(this.description === undefined
         ? {}
         : {

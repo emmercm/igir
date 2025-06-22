@@ -124,6 +124,11 @@ export default class DATGameInferrer extends Module {
           name: gameName,
           description: gameName,
           roms: roms,
+          dir2datSource: gameRomFiles
+            .map((romFile) => romFile.getFilePath())
+            .reduce(ArrayPoly.reduceUnique(), [])
+            .sort()
+            .join(', '),
         });
       })
       // Filter out duplicate games
