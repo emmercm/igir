@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream, { Readable } from 'node:stream';
+import util from 'node:util';
 
 import { Mutex } from 'async-mutex';
 import chdman, { CHDInfo, ChdmanBinaryPreference } from 'chdman';
@@ -30,16 +31,9 @@ export default abstract class Chd extends Archive {
   }
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
-    return this.extractEntryToStreamCached(
-      entryPath,
-      async (stream) =>
-        new Promise((resolve, reject) => {
-          const writeStream = fs.createWriteStream(extractedFilePath);
-          writeStream.on('close', resolve);
-          writeStream.on('error', reject);
-          stream.pipe(writeStream);
-        }),
-    );
+    return this.extractEntryToStreamCached(entryPath, async (readable) => {
+      await util.promisify(stream.pipeline)(readable, fs.createWriteStream(extractedFilePath));
+    });
   }
 
   abstract extractArchiveEntries(outputDirectory: string): Promise<string[]>;

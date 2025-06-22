@@ -52,7 +52,7 @@ export default class DATScanner extends Scanner {
   async scan(): Promise<DAT[]> {
     this.progressBar.logTrace('scanning DAT files');
     this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
-    this.progressBar.reset(0);
+    this.progressBar.resetProgress(0);
 
     const datFilePaths = await this.options.scanDatFilesWithoutExclusions((increment) => {
       this.progressBar.incrementTotal(increment);
@@ -63,7 +63,7 @@ export default class DATScanner extends Scanner {
     this.progressBar.logTrace(
       `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
-    this.progressBar.reset(datFilePaths.length);
+    this.progressBar.resetProgress(datFilePaths.length);
 
     this.progressBar.logTrace('enumerating DAT archives');
     const datFiles = await this.getUniqueFilesFromPaths(
@@ -71,10 +71,10 @@ export default class DATScanner extends Scanner {
       this.options.getReaderThreads(),
       ChecksumBitmask.CRC32,
     );
-    this.progressBar.reset(datFiles.length);
+    this.progressBar.resetProgress(datFiles.length);
 
     const downloadedDats = await this.downloadDats(datFiles);
-    this.progressBar.reset(downloadedDats.length);
+    this.progressBar.resetProgress(downloadedDats.length);
     const parsedDats = await this.parseDatFiles(downloadedDats);
 
     this.progressBar.logTrace('done scanning DAT files');
@@ -122,19 +122,20 @@ export default class DATScanner extends Scanner {
 
     return (
       await new DriveSemaphore(this.options.getReaderThreads()).map(datFiles, async (datFile) => {
-        this.progressBar.incrementProgress();
-        const waitingMessage = `${datFile.toString()} ...`;
-        this.progressBar.addWaitingMessage(waitingMessage);
+        this.progressBar.incrementInProgress();
+        const childBar = this.progressBar.addChildBar({
+          name: datFile.toString(),
+        });
 
         let dat: DAT | undefined;
         try {
           dat = await this.parseDatFile(datFile);
         } catch (error) {
           this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
+          childBar.delete();
         }
 
-        this.progressBar.incrementDone();
-        this.progressBar.removeWaitingMessage(waitingMessage);
+        this.progressBar.incrementCompleted();
 
         if (dat && this.shouldFilterOut(dat)) {
           return undefined;
@@ -158,8 +159,8 @@ export default class DATScanner extends Scanner {
       dat = await this.parseMameListxml(datFile);
     }
 
-    dat ??= await datFile.createReadStream(async (stream) => {
-      const fileContents = (await bufferPoly.fromReadable(stream)).toString();
+    dat ??= await datFile.createReadStream(async (readable) => {
+      const fileContents = (await bufferPoly.fromReadable(readable)).toString();
       return this.parseDatContents(datFile, fileContents);
     });
 

@@ -42,7 +42,7 @@ export default class DirectoryCleaner extends Module {
 
     this.progressBar.logTrace('cleaning files in output');
     this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
-    this.progressBar.reset(0);
+    this.progressBar.resetProgress(0);
 
     // If there is nothing to clean, then don't do anything
     const filesToClean = await this.options.scanOutputFilesWithoutCleanExclusions(
@@ -63,7 +63,7 @@ export default class DirectoryCleaner extends Module {
       this.progressBar.logTrace(
         `cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length === 1 ? '' : 's'}`,
       );
-      this.progressBar.reset(filesToClean.length);
+      this.progressBar.resetProgress(filesToClean.length);
       if (this.options.getCleanDryRun()) {
         this.progressBar.logInfo(
           `paths skipped from cleaning (dry run):\n${filesToClean.map((filePath) => `  ${filePath}`).join('\n')}`,
@@ -84,7 +84,7 @@ export default class DirectoryCleaner extends Module {
     try {
       let emptyDirs = await DirectoryCleaner.getEmptyDirs(dirsToClean);
       while (emptyDirs.length > 0) {
-        this.progressBar.reset(emptyDirs.length);
+        this.progressBar.resetProgress(emptyDirs.length);
         this.progressBar.logTrace(
           `cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
         );
@@ -120,7 +120,7 @@ export default class DirectoryCleaner extends Module {
           `failed to recycle ${filePathsChunk.length} path${filePathsChunk.length === 1 ? '' : 's'}: ${error}`,
         );
       }
-      this.progressBar.update(i);
+      this.progressBar.setCompleted(i);
     }
 
     // ...but if that doesn't work, delete the leftovers
@@ -175,7 +175,7 @@ export default class DirectoryCleaner extends Module {
         } catch (error) {
           this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
         }
-        this.progressBar.incrementProgress();
+        this.progressBar.incrementInProgress();
       });
     });
   }

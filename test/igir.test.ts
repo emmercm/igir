@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
@@ -22,7 +23,7 @@ import Options, {
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 interface TestOutput {
   outputFilesAndCrcs: string[][];

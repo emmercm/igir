@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import { ZipReader } from '@igir/zip';
 import { jest } from '@jest/globals';
@@ -68,7 +69,7 @@ test.each([
         dirDatName: true,
         disableCache: true,
       }),
-      new Logger(LogLevel.NEVER),
+      new Logger(LogLevel.NEVER, new PassThrough()),
     ).main();
 
     const writtenFiles = (await FsPoly.walk(tempDir)).sort();

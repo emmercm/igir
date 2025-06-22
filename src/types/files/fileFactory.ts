@@ -2,7 +2,7 @@ import async from 'async';
 
 import Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
-import ProgressBarCLI from '../../console/progressBarCli.js';
+import MultiBar from '../../console/multiBar.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import ExpectedError from '../expectedError.js';
 import Archive from './archives/archive.js';
@@ -109,10 +109,11 @@ export default class FileFactory {
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
       // may be an incomplete/corrupted file
-      ProgressBarCLI.log(
-        this.logger,
-        LogLevel.WARN,
-        `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
+      MultiBar.log(
+        this.logger.formatMessage(
+          LogLevel.WARN,
+          `${filePath}: failed to parse ${archive.getExtension()} file: ${error}`,
+        ),
       );
       return undefined;
     }

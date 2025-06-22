@@ -1,5 +1,6 @@
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import DriveSemaphore from '../../driveSemaphore.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import FileFactory from '../../types/files/fileFactory.js';
@@ -58,7 +59,7 @@ export default class CandidateArchiveFileHasher extends Module {
       `${dat.getName()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
-    this.progressBar.reset(archiveFileCount);
+    this.progressBar.resetProgress(archiveFileCount);
 
     const hashedCandidates = this.hashArchiveFiles(dat, candidates);
 
@@ -89,33 +90,40 @@ export default class CandidateArchiveFileHasher extends Module {
             }
 
             return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(inputFile, async () => {
-              this.progressBar.incrementProgress();
-              const waitingMessage = `${inputFile.toString()} ...`;
-              this.progressBar.addWaitingMessage(waitingMessage);
+              this.progressBar.incrementInProgress();
               this.progressBar.logTrace(
                 `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${inputFile.toString()}`,
               );
-
-              const hashedInputFile = await this.fileFactory.archiveFileFrom(
-                inputFile.getArchive(),
-                inputFile.getChecksumBitmask(),
-              );
-              // {@link CandidateGenerator} would have copied undefined values from the input
-              //  file, so we need to modify the expected output file as well for testing
-              const hashedOutputFile = outputFile.withProps({
-                size: hashedInputFile.getSize(),
-                crc32: hashedInputFile.getCrc32(),
-                md5: hashedInputFile.getMd5(),
-                sha1: hashedInputFile.getSha1(),
-                sha256: hashedInputFile.getSha256(),
+              const childBar = this.progressBar.addChildBar({
+                // TODO(cemmer): render incremental progress
+                name: inputFile.toString(),
+                total: inputFile.getSize(),
+                progressFormatter: FsPoly.sizeReadable,
               });
-              const hashedRomWithFiles = romWithFiles
-                .withInputFile(hashedInputFile)
-                .withOutputFile(hashedOutputFile);
 
-              this.progressBar.removeWaitingMessage(waitingMessage);
-              this.progressBar.incrementDone();
-              return hashedRomWithFiles;
+              try {
+                const hashedInputFile = await this.fileFactory.archiveFileFrom(
+                  inputFile.getArchive(),
+                  inputFile.getChecksumBitmask(),
+                );
+                // {@link CandidateGenerator} would have copied undefined values from the input
+                //  file, so we need to modify the expected output file as well for testing
+                const hashedOutputFile = outputFile.withProps({
+                  size: hashedInputFile.getSize(),
+                  crc32: hashedInputFile.getCrc32(),
+                  md5: hashedInputFile.getMd5(),
+                  sha1: hashedInputFile.getSha1(),
+                  sha256: hashedInputFile.getSha256(),
+                });
+                const hashedRomWithFiles = romWithFiles
+                  .withInputFile(hashedInputFile)
+                  .withOutputFile(hashedOutputFile);
+
+                this.progressBar.incrementCompleted();
+                return hashedRomWithFiles;
+              } finally {
+                childBar.delete();
+              }
             });
           }),
         );

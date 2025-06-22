@@ -56,29 +56,33 @@ export default class CandidateGenerator extends Module {
 
     this.progressBar.logTrace(`${dat.getName()}: generating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
-    this.progressBar.reset(dat.getGames().length);
+    this.progressBar.resetProgress(dat.getGames().length);
 
     // For each game, try to generate a candidate
     await Promise.all(
       dat.getGames().map(async (game) =>
         CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
-          this.progressBar.incrementProgress();
-          const waitingMessage = `${game.getName()} ...`;
-          this.progressBar.addWaitingMessage(waitingMessage);
+          this.progressBar.incrementInProgress();
+          const childBar = this.progressBar.addChildBar({
+            name: game.getName(),
+          });
 
-          const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
-          if (gameCandidates.length > 0) {
-            this.progressBar.logTrace(
-              `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
-                .getRomsWithFiles()
-                .map((rwf) => rwf.getInputFile().toString())
-                .join(', ')}`,
-            );
+          try {
+            const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
+            if (gameCandidates.length > 0) {
+              this.progressBar.logTrace(
+                `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
+                  .getRomsWithFiles()
+                  .map((rwf) => rwf.getInputFile().toString())
+                  .join(', ')}`,
+              );
+            }
+            candidates = [...candidates, ...gameCandidates];
+          } finally {
+            childBar.delete();
           }
-          candidates = [...candidates, ...gameCandidates];
 
-          this.progressBar.removeWaitingMessage(waitingMessage);
-          this.progressBar.incrementDone();
+          this.progressBar.incrementCompleted();
         }),
       ),
     );
