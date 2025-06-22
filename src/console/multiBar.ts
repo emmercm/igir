@@ -21,6 +21,10 @@ export default class MultiBar {
   private static readonly logQueue: string[] = [];
   private static lastPrintedLog?: string;
 
+  private readonly exitHandler = (): void => {
+    this.stop();
+  };
+
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
   private lastOutput = '';
@@ -38,15 +42,9 @@ export default class MultiBar {
       this.terminal.write('\x1B[?25l');
     }
 
-    process.once('exit', () => {
-      this.stop();
-    });
-    process.once('SIGINT', () => {
-      this.stop();
-    });
-    process.once('SIGTERM', () => {
-      this.stop();
-    });
+    process.once('exit', this.exitHandler);
+    process.once('SIGINT', this.exitHandler);
+    process.once('SIGTERM', this.exitHandler);
 
     // Set a maximum size for the MultiBar based on terminal size
     if (this.terminal instanceof tty.WriteStream) {
@@ -254,6 +252,10 @@ export default class MultiBar {
     if (this.stopped) {
       return;
     }
+
+    process.off('exit', this.exitHandler);
+    process.off('SIGINT', this.exitHandler);
+    process.off('SIGTERM', this.exitHandler);
 
     // One last render
     this.clearAndRender();

@@ -9,13 +9,13 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
 import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
 
 jest.setTimeout(5 * 60 * 1000); // 5min for QEMU cross-build testing
 
-const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms')))
+const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms'), WalkMode.FILES))
   .filter((filePath) => filePath.endsWith('.zip'))
   .filter((filePath) => !filePath.includes('invalid'));
 test.each(zipFiles)('fixtures should be invalid TorrentZip/RVZSTD files: %s', async (zipFile) => {
@@ -50,7 +50,7 @@ test.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])(
         new Logger(LogLevel.NEVER, new PassThrough()),
       ).main();
 
-      const writtenFiles = await FsPoly.walk(tempDir);
+      const writtenFiles = await FsPoly.walk(tempDir, WalkMode.FILES);
       for (const writtenFile of writtenFiles) {
         await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
           VALIDATION_MAP[zipFormat],

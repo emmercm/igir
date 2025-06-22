@@ -1,6 +1,6 @@
 import FsPoly from '../../polyfill/fsPoly.js';
 import IOFile from '../../polyfill/ioFile.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -149,7 +149,7 @@ class VcdiffHeader {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
       await patchFile.close();
-      throw new ExpectedError(
+      throw new IgirException(
         `Vcdiff patch header is invalid: ${patchFile.getPathLike().toString()}`,
       );
     }
@@ -170,7 +170,7 @@ class VcdiffHeader {
          *    bytes "59 5A", only the starting bytes "FD 37 7A 58 5A 00" (after the above number)
          */
         await patchFile.close();
-        throw new ExpectedError(
+        throw new IgirException(
           `unsupported Vcdiff secondary decompressor ${VcdiffSecondaryCompressionInverted[secondaryDecompressorId]}: ${patchFile.getPathLike().toString()}`,
         );
       }
@@ -181,7 +181,7 @@ class VcdiffHeader {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
       if (codeTableLength) {
         await patchFile.close();
-        throw new ExpectedError(
+        throw new IgirException(
           `can't parse Vcdiff application-defined code table: ${patchFile.getPathLike().toString()}`,
         );
       }
@@ -562,7 +562,7 @@ export default class VcdiffPatch extends Patch {
             instruction.mode,
           );
         } else {
-          throw new ExpectedError(`Vcdiff instruction ${instruction.type} isn't supported`);
+          throw new IgirException(`Vcdiff instruction ${instruction.type} isn't supported`);
         }
       }
     }

@@ -7,7 +7,7 @@ import Disk from './dats/disk.js';
 import Game from './dats/game.js';
 import ROM from './dats/rom.js';
 import SingleValueGame from './dats/singleValueGame.js';
-import ExpectedError from './expectedError.js';
+import TokenReplacementException from './exceptions/tokenReplacementException.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import ArchiveFile from './files/archives/archiveFile.js';
 import File from './files/file.js';
@@ -122,7 +122,7 @@ export default class OutputFactory {
    * *************************
    */
 
-  static getDir(
+  private static getDir(
     options: Options,
     dat: DAT,
     game?: SingleValueGame,
@@ -211,8 +211,8 @@ export default class OutputFactory {
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
-      throw new ExpectedError(
-        `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')} for ${outputRomFilename ?? inputRomPath ?? game?.getName()}`,
+      throw new TokenReplacementException(
+        `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')}`,
       );
     }
 

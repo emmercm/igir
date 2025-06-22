@@ -1,6 +1,6 @@
 import FsPoly from '../../polyfill/fsPoly.js';
 import IOFile from '../../polyfill/ioFile.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -28,12 +28,12 @@ export default class APSGBAPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(APSGBAPatch.FILE_SIGNATURE.length);
       if (!header.equals(APSGBAPatch.FILE_SIGNATURE)) {
-        throw new ExpectedError(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);
+        throw new IgirException(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);
       }
 
       const originalSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== originalSize) {
-        throw new ExpectedError(
+        throw new IgirException(
           `APS (GBA) patch expected ROM size of ${FsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`,
         );
       }

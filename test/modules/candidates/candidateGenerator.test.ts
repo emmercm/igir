@@ -596,6 +596,15 @@ describe('token replacement', () => {
       path.join('output', 'Games', 'Advance Wars - Dual Strike (USA, Australia).nds'),
     ]);
   });
+
+  it('should not replace {dummy}', async () => {
+    const options = new Options({
+      commands: ['copy'],
+      output: 'output/{dummy}',
+    });
+    const candidates = await candidateGenerator(options, dat, await files);
+    expect(candidates).toHaveLength(0);
+  });
 });
 
 describe.each(['copy', 'move'])('raw writing: %s', (command) => {

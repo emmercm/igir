@@ -11,7 +11,7 @@ import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
 
 import Defaults from '../globals/defaults.js';
-import ExpectedError from '../types/expectedError.js';
+import IgirException from '../types/exceptions/igirException.js';
 import FsCopyTransform, { FsCopyCallback } from './fsCopyTransform.js';
 
 export const MoveResult = {
@@ -21,6 +21,12 @@ export const MoveResult = {
 export type MoveResultKey = keyof typeof MoveResult;
 export type MoveResultValue = (typeof MoveResult)[MoveResultKey];
 
+export const WalkMode = {
+  FILES: 1,
+  DIRECTORIES: 2,
+} as const;
+export type WalkModeKey = keyof typeof WalkMode;
+export type WalkModeValue = (typeof WalkMode)[WalkModeKey];
 export type FsWalkCallback = (increment: number) => void;
 
 /**
@@ -216,7 +222,7 @@ export default class FsPoly {
       return;
     } catch (error) {
       if (this.onDifferentDrives(targetResolved, link)) {
-        throw new ExpectedError(`can't hard link files on different drives: ${error}`);
+        throw new IgirException(`can't hard link files on different drives: ${error}`);
       }
       throw error;
     }
@@ -268,6 +274,22 @@ export default class FsPoly {
     try {
       await fs.promises.access(pathLike, fs.constants.X_OK);
       return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * @returns if {@param pathLike} is a file, following symbolic links
+   */
+  static async isFile(pathLike: string): Promise<boolean> {
+    try {
+      const lstat = await fs.promises.lstat(pathLike);
+      if (lstat.isSymbolicLink()) {
+        const link = await this.readlinkResolved(pathLike);
+        return await this.isFile(link);
+      }
+      return lstat.isFile();
     } catch {
       return false;
     }
@@ -399,7 +421,7 @@ export default class FsPoly {
         return filePath;
       }
     }
-    throw new ExpectedError('failed to generate non-existent temp file');
+    throw new IgirException('failed to generate non-existent temp file');
   }
 
   /**
@@ -462,7 +484,7 @@ export default class FsPoly {
    */
   static async readlink(pathLike: PathLike): Promise<string> {
     if (!(await this.isSymlink(pathLike))) {
-      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike.toString()}`);
+      throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
     return fs.promises.readlink(pathLike);
   }
@@ -472,7 +494,7 @@ export default class FsPoly {
    */
   static readlinkSync(pathLike: PathLike): string {
     if (!this.isSymlinkSync(pathLike)) {
-      throw new ExpectedError(`can't readlink of non-symlink: ${pathLike.toString()}`);
+      throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
     return fs.readlinkSync(pathLike);
   }
@@ -504,7 +526,7 @@ export default class FsPoly {
    */
   static async realpath(pathLike: PathLike): Promise<string> {
     if (!(await this.exists(pathLike))) {
-      throw new ExpectedError(`can't get realpath of non-existent path: ${pathLike.toString()}`);
+      throw new IgirException(`can't get realpath of non-existent path: ${pathLike.toString()}`);
     }
     return fs.promises.realpath(pathLike);
   }
@@ -523,7 +545,7 @@ export default class FsPoly {
       if (optionsWithRetry.force) {
         return;
       }
-      throw new ExpectedError(`can't rm, path doesn't exist: ${pathLike}`);
+      throw new IgirException(`can't rm, path doesn't exist: ${pathLike}`);
     }
 
     if (await this.isDirectory(pathLike)) {
@@ -550,7 +572,7 @@ export default class FsPoly {
       if (optionsWithRetry.force) {
         return;
       }
-      throw new ExpectedError(`can't rmSync, path doesn't exist: ${pathLike}`);
+      throw new IgirException(`can't rmSync, path doesn't exist: ${pathLike}`);
     }
 
     if (this.isDirectorySync(pathLike)) {
@@ -639,13 +661,17 @@ export default class FsPoly {
   /**
    * Return every file in {@param pathLike}, recursively.
    */
-  static async walk(pathLike: PathLike, callback?: FsWalkCallback): Promise<string[]> {
+  static async walk(
+    pathLike: PathLike,
+    walkMode: WalkModeValue,
+    callback?: FsWalkCallback,
+  ): Promise<string[]> {
     let output: string[] = [];
 
     let entries: fs.Dirent[];
     try {
       entries = (await fs.promises.readdir(pathLike, { withFileTypes: true })).filter((entry) =>
-        isNotJunk(path.basename(entry.name)),
+        isNotJunk(entry.name),
       );
     } catch {
       return [];
@@ -665,20 +691,22 @@ export default class FsPoly {
       .filter((_entry, idx) => entryIsDirectory[idx])
       .map((entry) => path.join(pathLike.toString(), entry.name));
     for (const directory of directories) {
-      const subDirFiles = await this.walk(directory);
+      const subPaths = await this.walk(directory, walkMode);
       if (callback) {
-        callback(subDirFiles.length);
+        callback(subPaths.length);
       }
-      output = [...output, ...subDirFiles];
+      output = [...output, ...(walkMode === WalkMode.DIRECTORIES ? [directory] : []), ...subPaths];
     }
 
-    const files = entries
-      .filter((_entry, idx) => !entryIsDirectory[idx])
-      .map((entry) => path.join(pathLike.toString(), entry.name));
-    if (callback) {
-      callback(files.length);
+    if (walkMode === WalkMode.FILES) {
+      const files = entries
+        .filter((_entry, idx) => !entryIsDirectory[idx])
+        .map((entry) => path.join(pathLike.toString(), entry.name));
+      if (callback) {
+        callback(files.length);
+      }
+      output = [...output, ...files];
     }
-    output = [...output, ...files];
 
     return output;
   }

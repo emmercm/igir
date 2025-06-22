@@ -10,6 +10,7 @@ import Disk from '../../types/dats/disk.js';
 import Game from '../../types/dats/game.js';
 import ROM from '../../types/dats/rom.js';
 import SingleValueGame from '../../types/dats/singleValueGame.js';
+import TokenReplacementException from '../../types/exceptions/tokenReplacementException.js';
 import Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
@@ -79,6 +80,14 @@ export default class CandidateGenerator extends Module {
               );
             }
             candidates = [...candidates, ...gameCandidates];
+          } catch (error) {
+            // Ignore token replacement errors, just don't add the candidate
+            if (!(error instanceof TokenReplacementException)) {
+              throw error;
+            }
+            this.progressBar.logDebug(
+              `${dat.getName()}: ${game.getName()}: failed to generate candidate: ${error.message}`,
+            );
           } finally {
             childBar.delete();
           }

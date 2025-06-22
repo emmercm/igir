@@ -8,6 +8,8 @@ export default {
       const gameName = gameNameMapper(value);
 
       const gameNameStripped = gameName
+        // HTGD SMBD
+        .replace(/ ?\(Track [0-9]+\)/i, '')
         // Redump
         .replace(/ ?\(Dis[ck] [0-9]+\)/i, '')
         // TOSEC

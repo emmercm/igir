@@ -18,7 +18,7 @@ import PatchScanner from '../../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import DAT from '../../../src/types/dats/dat.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
@@ -66,7 +66,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   }
 
   return Promise.all(
-    (await FsPoly.walk(dirPath)).sort().map(async (filePath) => {
+    (await FsPoly.walk(dirPath, WalkMode.FILES)).sort().map(async (filePath) => {
       const stats = await fs.promises.lstat(filePath);
       // Hard-code properties that can change with file reads
       stats.atime = new Date(0);
@@ -75,6 +75,8 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       stats.ctime = new Date(0);
       stats.ctimeMs = 0;
       stats.nlink = 0;
+      // Hard-code properties that Ubuntu sometimes reports false negatives for
+      stats.blocks = 0;
 
       return [filePath.replace(dirPath + path.sep, ''), stats];
     }),

@@ -1,5 +1,5 @@
 import IOFile from '../../polyfill/ioFile.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -22,7 +22,7 @@ export default class IPSPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (IPSPatch.FILE_SIGNATURES.every((fileSignature) => !header.equals(fileSignature))) {
-        throw new ExpectedError(`IPS patch header is invalid: ${this.getFile().toString()}`);
+        throw new IgirException(`IPS patch header is invalid: ${this.getFile().toString()}`);
       }
 
       let offsetSize = 3;

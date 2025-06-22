@@ -11,7 +11,7 @@ import { LogLevel } from '../../../src/console/logLevel.js';
 import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import IOFile from '../../../src/polyfill/ioFile.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
@@ -72,7 +72,7 @@ test.each([
       new Logger(LogLevel.NEVER, new PassThrough()),
     ).main();
 
-    const writtenFiles = (await FsPoly.walk(tempDir)).sort();
+    const writtenFiles = (await FsPoly.walk(tempDir, WalkMode.FILES)).sort();
     const writtenFilesHashed = await Promise.all(
       writtenFiles.map(async (filePath) => {
         const checksums = await FileChecksums.hashFile(filePath, ChecksumBitmask.CRC32);

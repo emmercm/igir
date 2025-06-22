@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import IOFile from '../../../polyfill/ioFile.js';
-import ExpectedError from '../../expectedError.js';
+import IgirException from '../../exceptions/igirException.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -21,7 +21,7 @@ export default class NkitIso extends Archive {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async extractEntryToFile(): Promise<void> {
-    throw new ExpectedError("extraction isn't supported for NKit ISO files");
+    throw new IgirException("extraction isn't supported for NKit ISO files");
   }
 
   async getArchiveEntries(): Promise<ArchiveEntry<this>[]> {

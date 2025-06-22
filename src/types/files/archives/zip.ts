@@ -18,7 +18,7 @@ import { ProgressCallback } from '../../../console/progressBar.js';
 import Defaults from '../../../globals/defaults.js';
 import FsCopyTransform, { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
-import ExpectedError from '../../expectedError.js';
+import IgirException from '../../exceptions/igirException.js';
 import { ZipFormat, ZipFormatValue } from '../../options.js';
 import File from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
@@ -119,7 +119,7 @@ export default class Zip extends Archive {
     );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
-      throw new ExpectedError(`didn't find entry '${entryPath}'`);
+      throw new IgirException(`didn't find entry '${entryPath}'`);
     }
 
     let entryStream: stream.Readable;

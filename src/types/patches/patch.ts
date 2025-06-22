@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import IOFile from '../../polyfill/ioFile.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import File from '../files/file.js';
 
 export default abstract class Patch {
@@ -26,7 +26,7 @@ export default abstract class Patch {
       return matches[2].toLowerCase();
     }
 
-    throw new ExpectedError(`couldn't parse base file CRC for patch: ${fileBasename}`);
+    throw new IgirException(`couldn't parse base file CRC for patch: ${fileBasename}`);
   }
 
   getFile(): File {
