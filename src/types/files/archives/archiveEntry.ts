@@ -3,6 +3,7 @@ import { Readable } from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
+import { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
@@ -164,11 +165,12 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryPath;
   }
 
-  async extractToFile(extractedFilePath: string): Promise<void> {
+  async extractToFile(extractedFilePath: string, callback?: FsCopyCallback): Promise<void> {
     return ArchiveEntry.extractEntryToFile(
       this.getArchive(),
       this.getEntryPath(),
       extractedFilePath,
+      callback,
     );
   }
 
@@ -180,7 +182,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<ChecksumProps> {
     return archive.extractEntryToStream(
       entryPath,
-      async (stream) => FileChecksums.hashStream(stream, checksumBitmask),
+      async (readable) => FileChecksums.hashStream(readable, checksumBitmask),
       fileHeader?.getDataOffsetBytes() ?? 0,
     );
   }
@@ -189,8 +191,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     archive: Archive,
     entryPath: string,
     extractedFilePath: string,
+    callback?: FsCopyCallback,
   ): Promise<void> {
-    return archive.extractEntryToFile(entryPath, extractedFilePath);
+    return archive.extractEntryToFile(entryPath, extractedFilePath, callback);
   }
 
   async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {

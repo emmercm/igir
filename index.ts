@@ -6,7 +6,8 @@ import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
-import ProgressBarCLI from './src/console/progressBarCli.js';
+import { LogLevel } from './src/console/logLevel.js';
+import MultiBar from './src/console/multiBar.js';
 import Package from './src/globals/package.js';
 import Igir from './src/igir.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
@@ -18,7 +19,7 @@ import Options from './src/types/options.js';
 // Monkey-patch 'fs' to help prevent Windows EMFILE errors
 gracefulFs.gracefulify(realFs);
 
-const logger = new Logger();
+const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();
 
 if (!semver.satisfies(process.version, Package.ENGINES_NODE)) {
@@ -27,7 +28,7 @@ if (!semver.satisfies(process.version, Package.ENGINES_NODE)) {
 }
 
 process.once('SIGINT', () => {
-  ProgressBarCLI.stop();
+  MultiBar.stop();
   logger.newLine();
   logger.notice(`Exiting ${Package.NAME} early`);
   process.exit(0);
@@ -67,9 +68,9 @@ try {
   void new UpdateChecker(logger).check();
 
   await new Igir(options, logger).main();
-  ProgressBarCLI.stop();
+  MultiBar.stop();
 } catch (error) {
-  ProgressBarCLI.stop();
+  MultiBar.stop();
   if (error instanceof ExpectedError) {
     logger.error(error);
   } else if (error instanceof Error && error.stack) {

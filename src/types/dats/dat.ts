@@ -121,9 +121,6 @@ export default abstract class DAT {
   getDisplayName(): string {
     return (
       this.getName()
-        // No-Intro
-        .replace('Non-Redump', '!Redump')
-        .replace('Source Code', 'S.Code')
         // Cleanup
         .replaceAll(/-( +-)+/g, '- ')
         .replace(/^[ -]+/, '')
@@ -198,7 +195,10 @@ export default abstract class DAT {
         sysID: 'http://www.logiqx.com/Dats/datafile.dtd',
       },
       cdata: true,
-    }).buildObject(this.toXmlDatObj());
+    })
+      .buildObject(this.toXmlDatObj())
+      .replaceAll('<xml_comment>', '<!-- ')
+      .replaceAll('</xml_comment>', ' -->');
   }
 
   private toXmlDatObj(): object {

@@ -99,12 +99,14 @@ export default class PatchFactory {
       };
 
       stream.on('data', (chunk: Buffer) => {
-        chunks.push(chunk);
+        if (chunk.length > 0) {
+          chunks.push(chunk);
+        }
 
         // Stop reading when we get enough data, trigger a 'close' event
         if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= length) {
           resolveHeader();
-          // WARN(cemmer): whatever created the stream may need to drain it!
+          stream.destroy();
         }
       });
 
@@ -114,8 +116,8 @@ export default class PatchFactory {
   }
 
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
-    const fileHeader = await file.createReadStream(async (stream) =>
-      PatchFactory.readHeaderHex(stream, this.MAX_HEADER_LENGTH_BYTES),
+    const fileHeader = await file.createReadStream(async (readable) =>
+      PatchFactory.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
     );
 
     const parsers = Object.values(this.PATCH_PARSERS);

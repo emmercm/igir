@@ -118,11 +118,17 @@ export default class DATGameInferrer extends Module {
                 sha256: romFile.getSha256(),
               }),
           )
-          .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()));
+          .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()))
+          .sort((a, b) => a.getName().localeCompare(b.getName()));
         return new Game({
           name: gameName,
           description: gameName,
           roms: roms,
+          dir2datSource: gameRomFiles
+            .map((romFile) => romFile.getFilePath())
+            .reduce(ArrayPoly.reduceUnique(), [])
+            .sort()
+            .join(', '),
         });
       })
       // Filter out duplicate games
@@ -234,11 +240,11 @@ export default class DATGameInferrer extends Module {
     const archivePathsToArchiveEntries = romFiles
       .filter((file): file is ArchiveEntry<Archive> => file instanceof ArchiveEntry)
       .reduce((map, file) => {
-        const archivePath = file.getFilePath();
-        if (map.has(archivePath)) {
-          map.get(archivePath)?.push(file);
+        const key = `${file.getFilePath()}|${file.getArchive().constructor.name}`;
+        if (map.has(key)) {
+          map.get(key)?.push(file);
         } else {
-          map.set(archivePath, [file]);
+          map.set(key, [file]);
         }
         return map;
       }, new Map<string, ArchiveEntry<Archive>[]>());

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
@@ -22,7 +23,7 @@ import Options, {
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 interface TestOutput {
   outputFilesAndCrcs: string[][];
@@ -77,7 +78,10 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 }
 
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
-  const options = new Options(optionsProps);
+  const options = new Options({
+    ...optionsProps,
+    readerThreads: 4,
+  });
 
   const inputFilesBefore = (
     await Promise.all(
@@ -211,8 +215,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Optical Game (Disc 2).chd')}|track03.bin`, '61a363f1'],
         [`${path.join('One', 'Optical Game (Disc 2).chd')}|track04.bin`, 'fc5ff5a0'],
         [path.join('One', 'Optical Game.m3u'), '8da7b4ae'],
-        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
-        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -280,8 +284,8 @@ describe('with explicit DATs', () => {
         ['Optical Game (Disc 2).chd|track02.raw', 'abc178d5'],
         ['Optical Game (Disc 2).chd|track03.bin', '61a363f1'],
         ['Optical Game (Disc 2).chd|track04.bin', 'fc5ff5a0'],
-        [`${path.join('Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
-        [`${path.join('Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -324,8 +328,8 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [`${path.join('-', 'One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
-        [`${path.join('-', 'One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('-', 'One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('-', 'One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
         [
           `${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`,
           'f6cc9b1c',
@@ -606,8 +610,8 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
         [path.join('igir combined', 'S', 'speed_test_v51.smc'), '9adca6cc'],
-        [`${path.join('igir combined', 'T', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
-        [`${path.join('igir combined', 'T', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('igir combined', 'T', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('igir combined', 'T', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
         [path.join('igir combined', 'T', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'T', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('igir combined', 'T', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -758,8 +762,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five.zip')}|Five.rom`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five.zip')}|Four.rom`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five.zip')}|Three.rom`, 'ff46c5d8'],
-        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
-        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
         [`${path.join('One', 'UMD.zip')}|UMD.iso`, 'e90f7cf5'],
         [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
         [`${path.join('Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
@@ -886,8 +890,8 @@ describe('with explicit DATs', () => {
         ['Patchable.zip|Best.rom', '1e3d78cf'],
         ['Patchable.zip|C01173E.rom', 'dfaebe28'],
         ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
-        [`${path.join('Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
-        [`${path.join('Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1000,11 +1004,11 @@ describe('with explicit DATs', () => {
         ],
         [path.join('One', 'Optical Game.m3u'), '8da7b4ae'],
         [
-          `${path.join('One', 'Three Four Five', '2048')}| -> ${path.join('<input>', 'chd', '2048.chd')}|`,
+          `${path.join('One', 'Three Four Five', '2048')}|2048 -> ${path.join('<input>', 'chd', '2048.chd')}|2048`,
           'xxxxxxxx',
         ], // hard disk
         [
-          `${path.join('One', 'Three Four Five', '4096')}| -> ${path.join('<input>', 'chd', '4096.chd')}|`,
+          `${path.join('One', 'Three Four Five', '4096')}|4096 -> ${path.join('<input>', 'chd', '4096.chd')}|4096`,
           'xxxxxxxx',
         ], // hard disk
         [
@@ -1137,8 +1141,8 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Optical Game (Disc 2)', 'track02.raw'), 'abc178d5'],
         [path.join('One', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
         [path.join('One', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
-        [`${path.join('One', 'Three Four Five', '2048')}|`, 'xxxxxxxx'], // hard disk
-        [`${path.join('One', 'Three Four Five', '4096')}|`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -1345,9 +1349,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         [path.join('#1', '0F09A40.rom'), '2f943e86'],
-        [path.join('#1', '2048.chd|'), 'xxxxxxxx'], // hard disk
+        [`${path.join('#1', '2048.chd')}|2048`, 'xxxxxxxx'], // hard disk
         [path.join('#2', '3708F2C.rom'), '20891c9f'],
-        [path.join('#2', '4096.chd|'), 'xxxxxxxx'], // hard disk
+        [`${path.join('#2', '4096.chd')}|4096`, 'xxxxxxxx'], // hard disk
         [path.join('#3', '612644F.rom'), 'f7591b29'],
         [path.join('#3', '65D1206.rom'), '20323455'],
         [path.join('#4', '92C85C9.rom'), '06692159'],
@@ -1430,9 +1434,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['0F09A40.rom', '2f943e86'],
-        ['2048.rom', 'd774f042'],
+        ['2048', 'd774f042'],
         ['3708F2C.rom', '20891c9f'],
-        ['4096.rom', '2e19ca09'],
+        ['4096', '2e19ca09'],
         ['612644F.rom', 'f7591b29'],
         ['65D1206.rom', '20323455'],
         ['92C85C9.rom', '06692159'],
@@ -1524,9 +1528,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         ['0F09A40.zip|0F09A40.rom', '2f943e86'],
-        ['2048.zip|2048.rom', 'd774f042'],
+        ['2048.zip|2048', 'd774f042'],
         ['3708F2C.zip|3708F2C.rom', '20891c9f'],
-        ['4096.zip|4096.rom', '2e19ca09'],
+        ['4096.zip|4096', '2e19ca09'],
         ['612644F.zip|612644F.rom', 'f7591b29'],
         ['65D1206.zip|65D1206.rom', '20323455'],
         ['92C85C9.zip|92C85C9.rom', '06692159'],
@@ -1596,12 +1600,18 @@ describe('with inferred DATs', () => {
           `0F09A40.rom -> ${path.join('..', 'input', 'roms', 'patchable', '0F09A40.rom')}`,
           '2f943e86',
         ],
-        [`2048.chd| -> ${path.join('..', 'input', 'roms', 'chd', '2048.chd|')}`, 'xxxxxxxx'], // hard disk
+        [
+          `2048.chd|2048 -> ${path.join('..', 'input', 'roms', 'chd', '2048.chd')}|2048`,
+          'xxxxxxxx',
+        ], // hard disk
         [
           `3708F2C.rom -> ${path.join('..', 'input', 'roms', 'patchable', '3708F2C.rom')}`,
           '20891c9f',
         ],
-        [`4096.chd| -> ${path.join('..', 'input', 'roms', 'chd', '4096.chd|')}`, 'xxxxxxxx'], // hard disk
+        [
+          `4096.chd|4096 -> ${path.join('..', 'input', 'roms', 'chd', '4096.chd')}|4096`,
+          'xxxxxxxx',
+        ], // hard disk
         [
           `612644F.rom -> ${path.join('..', 'input', 'roms', 'patchable', '612644F.rom')}`,
           'f7591b29',
@@ -1859,10 +1869,10 @@ describe('with inferred DATs', () => {
         '0F09A40.rom',
         '1/one.rom',
         '2/two.rom',
-        '2048.rom',
+        '2048',
         '3/three.rom',
         '3708F2C.rom',
-        '4096.rom',
+        '4096',
         '612644F.rom',
         '65D1206.rom',
         '92C85C9.rom',

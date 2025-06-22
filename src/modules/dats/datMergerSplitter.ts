@@ -45,7 +45,7 @@ export default class DATMergerSplitter extends Module {
       `${dat.getName()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
-    this.progressBar.reset(dat.getGames().length);
+    this.progressBar.resetProgress(dat.getGames().length);
 
     const newGames = dat
       .getParents()
@@ -74,7 +74,7 @@ export default class DATMergerSplitter extends Module {
           .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
         disks: game
           .getDisks()
-          // Get rid of ROMs that haven't been dumped yet
+          // Get rid of disks that haven't been dumped yet
           .filter((disk) => disk.getStatus() !== 'nodump'),
       }),
     );
@@ -161,13 +161,13 @@ export default class DATMergerSplitter extends Module {
       });
     }
 
-    const parentGame = games.find((game) => game.isParent());
+    const parentGames = games.filter((game) => game.isParent());
     const cloneGames = games.filter((game) => game.isClone());
 
     // For everything other than 'merged' we keep the same number of games
     if (this.options.getMergeRoms() !== MergeMode.MERGED) {
-      if (parentGame) {
-        return [parentGame, ...cloneGames];
+      if (parentGames.length > 0) {
+        return [...parentGames, ...cloneGames];
       }
       return cloneGames;
     }
@@ -182,14 +182,14 @@ export default class DATMergerSplitter extends Module {
           }),
       ),
     );
-    const allRoms = [...cloneRoms, ...(parentGame ? parentGame.getRoms() : [])];
+    const allRoms = [...cloneRoms, ...parentGames.flatMap((parentGame) => parentGame.getRoms())];
     // And remove any duplicate ROMs, even if the duplicates exist only in clones and not the parent
     const allRomsDeduplicated = allRoms.filter(
       ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()),
     );
     return [
       new Game({
-        ...parentGame,
+        ...parentGames[0],
         roms: allRomsDeduplicated,
       }),
     ];

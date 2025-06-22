@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import { CompressionMethodValue } from '@igir/torrentzip/index.js';
 import { ZipReader } from '@igir/zip';
@@ -46,7 +47,7 @@ test.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])(
           dirDatName: true,
           disableCache: true,
         }),
-        new Logger(LogLevel.NEVER),
+        new Logger(LogLevel.NEVER, new PassThrough()),
       ).main();
 
       const writtenFiles = await FsPoly.walk(tempDir, WalkMode.FILES);

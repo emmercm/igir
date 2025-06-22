@@ -1,12 +1,14 @@
 import fs, { OpenMode, PathLike } from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream, { Readable } from 'node:stream';
+import util from 'node:util';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
 import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
+import FsCopyTransform, { FsCopyCallback } from '../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import IOFile from '../../polyfill/ioFile.js';
 import URLPoly from '../../polyfill/urlPoly.js';
@@ -269,8 +271,8 @@ export default class File implements FileProps {
 
   // Other functions
 
-  async extractToFile(destinationPath: string): Promise<void> {
-    await FsPoly.copyFile(this.getFilePath(), destinationPath);
+  async extractToFile(destinationPath: string, callback?: FsCopyCallback): Promise<void> {
+    await FsPoly.copyFile(this.getFilePath(), destinationPath, callback);
   }
 
   async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
@@ -304,7 +306,7 @@ export default class File implements FileProps {
     });
   }
 
-  async extractAndPatchToFile(destinationPath: string): Promise<void> {
+  async extractAndPatchToFile(destinationPath: string, callback?: FsCopyCallback): Promise<void> {
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
@@ -312,10 +314,11 @@ export default class File implements FileProps {
     if (start <= 0) {
       if (patch) {
         // Patch the file and don't remove its header
+        // TODO(cemmer): implement callback
         return patch.createPatchedFile(this, destinationPath);
       }
       // Copy the file and don't remove its header
-      return this.extractToFile(destinationPath);
+      return this.extractToFile(destinationPath, callback);
     }
 
     // Complex case: create a temp file with the header removed
@@ -328,13 +331,13 @@ export default class File implements FileProps {
       try {
         await File.createStreamFromFile(
           tempFile,
-          async (stream) =>
-            new Promise<void>((resolve, reject) => {
-              const writeStream = fs.createWriteStream(destinationPath);
-              writeStream.on('close', resolve);
-              writeStream.on('error', reject);
-              stream.pipe(writeStream);
-            }),
+          async (readable) => {
+            await util.promisify(stream.pipeline)(
+              readable,
+              new FsCopyTransform(callback),
+              fs.createWriteStream(destinationPath),
+            );
+          },
           start,
         );
         return;
@@ -343,16 +346,13 @@ export default class File implements FileProps {
       }
     }
     // Extract this file removing its header
-    return this.createReadStream(
-      async (stream) =>
-        new Promise((resolve, reject) => {
-          const writeStream = fs.createWriteStream(destinationPath);
-          writeStream.on('close', resolve);
-          writeStream.on('error', reject);
-          stream.pipe(writeStream);
-        }),
-      start,
-    );
+    return this.createReadStream(async (readable) => {
+      await util.promisify(stream.pipeline)(
+        readable,
+        new FsCopyTransform(callback),
+        fs.createWriteStream(destinationPath),
+      );
+    }, start);
   }
 
   async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {

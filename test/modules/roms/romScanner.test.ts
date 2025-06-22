@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -15,11 +16,15 @@ import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options, { OptionsProps } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
   return new ROMScanner(
-    new Options({ input, inputExclude }),
+    new Options({
+      input,
+      inputExclude,
+      readerThreads: 4,
+    }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
   );
@@ -70,20 +75,12 @@ it('should not throw on bad archives', async () => {
 });
 
 describe('multiple files', () => {
-  it('should scan multiple files with no exclusions', async () => {
-    const expectedRomFiles = 104;
-    await expect(createRomScanner(['test/fixtures/roms']).scan()).resolves.toHaveLength(
-      expectedRomFiles,
-    );
-    await expect(
-      createRomScanner(['test/fixtures/roms/*', 'test/fixtures/roms/**/*']).scan(),
-    ).resolves.toHaveLength(expectedRomFiles);
-    await expect(createRomScanner(['test/fixtures/roms/**/*']).scan()).resolves.toHaveLength(
-      expectedRomFiles,
-    );
-    await expect(
-      createRomScanner(['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}']).scan(),
-    ).resolves.toHaveLength(expectedRomFiles);
+  test.each([
+    [['test/fixtures/roms'], 104],
+    [['test/fixtures/roms/**/*'], 104],
+    [['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}'], 104],
+  ])('should scan multiple files with no exclusions: %s', async (input, expectedRomFiles) => {
+    await expect(createRomScanner(input).scan()).resolves.toHaveLength(expectedRomFiles);
   });
 
   test.each([
