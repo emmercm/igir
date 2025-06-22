@@ -104,20 +104,29 @@ export default class DATMergerSplitter extends Module {
     // Non-'full' types expect BIOS files to be in their own set
     if (this.options.getMergeRoms() !== MergeMode.FULLNONMERGED) {
       games = games.map((game) => {
-        const romOf = game.getRomOf();
-        if (!romOf) {
+        if (game.getRomOf() === undefined) {
           // This game doesn't use an external BIOS
           return game;
         }
 
-        let biosGame = gameNamesToGames.get(romOf);
-        if (!biosGame) {
-          // Invalid romOf attribute, external BIOS not found
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${game.getName()} references an invalid BIOS: ${romOf}`,
-          );
+        // Look for this game's root ancestor, which might be a BIOS
+        let biosGame: Game | undefined;
+        let romOf: string | undefined = game.getRomOf();
+        while (romOf !== undefined) {
+          const romOfGame = gameNamesToGames.get(romOf);
+          if (romOfGame === undefined) {
+            // Invalid romOf attribute, external BIOS not found
+            this.progressBar.logTrace(`${dat.getName()}: invalid romOf: ${romOf}`);
+            return game;
+          }
+          biosGame = romOfGame;
+          romOf = biosGame.getRomOf();
+        }
+        if (biosGame === undefined) {
+          // This shouldn't happen, but if it does, just ignore
           return game;
         }
+
         // If the referenced `romOf` game is not a BIOS, then it must be a parent game.
         // Reduce the non-BIOS parent to only its BIOS ROMs, so that they can be excluded from
         // the child.
