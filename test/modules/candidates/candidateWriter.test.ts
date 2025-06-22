@@ -104,6 +104,7 @@ async function candidateWriter(
     inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
+    readerThreads: 4,
   });
 
   let romFiles: File[] = [];
@@ -1170,9 +1171,9 @@ describe('extract', () => {
       '**/!(header*)/*',
       [
         '0F09A40.rom',
-        '2048.rom',
+        '2048',
         '3708F2C.rom',
-        '4096.rom',
+        '4096',
         '612644F.rom',
         '65D1206.rom',
         '92C85C9.rom',
@@ -1311,9 +1312,9 @@ describe('extract', () => {
       '**/!(header*)/*',
       [
         '0F09A40.rom',
-        '2048.rom',
+        '2048',
         '3708F2C.rom',
-        '4096.rom',
+        '4096',
         '612644F.rom',
         '65D1206.rom',
         '92C85C9.rom',
