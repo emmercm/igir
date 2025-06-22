@@ -268,10 +268,6 @@ export default class SingleBar extends ProgressBar {
 
   private getBar(): string {
     let bar = '';
-    // TODO(cemmer): ?
-    // if (this.showProgressNewline) {
-    //   bar += `\n${' '.repeat((this.symbol ? 2 : 0) + this.indentSize)}`;
-    // }
 
     const symbolColor =
       (this.indentSize === 0 ? this.symbol?.color : undefined) ?? CHALK_PROGRESS_COMPLETE_DEFAULT;

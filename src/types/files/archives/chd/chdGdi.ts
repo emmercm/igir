@@ -4,7 +4,7 @@ import util from 'node:util';
 
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
-import FsPoly from '../../../../polyfill/fsPoly.js';
+import FsPoly, { WalkMode } from '../../../../polyfill/fsPoly.js';
 import { ChecksumBitmask, ChecksumBitmaskValue } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -49,6 +49,6 @@ export default class ChdGdi extends Chd {
       path.join(outputDirectory, `${path.parse(this.getFilePath()).name}.gdi`),
     );
 
-    return await FsPoly.walk(outputDirectory);
+    return await FsPoly.walk(outputDirectory, WalkMode.FILES);
   }
 }

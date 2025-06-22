@@ -30,6 +30,7 @@ import DATScanner from './modules/dats/datScanner.js';
 import Dir2DatCreator from './modules/dir2DatCreator.js';
 import DirectoryCleaner from './modules/directoryCleaner.js';
 import FixdatCreator from './modules/fixdatCreator.js';
+import InputSubdirectoriesDeleter from './modules/inputSubdirectoriesDeleter.js';
 import MovedROMDeleter from './modules/movedRomDeleter.js';
 import PatchScanner from './modules/patchScanner.js';
 import PlaylistCreator from './modules/playlistCreator.js';
@@ -612,6 +613,10 @@ export default class Igir {
       movedRomsToDelete,
       datsToWrittenFiles,
     );
+
+    progressBar.setName('Deleting empty input subdirectories');
+    await new InputSubdirectoriesDeleter(this.options, progressBar).delete(movedRomsToDelete);
+
     progressBar.finishWithItems(deletedFilePaths.length, 'moved file', 'deleted');
     if (deletedFilePaths.length > 0) {
       progressBar.freeze();
