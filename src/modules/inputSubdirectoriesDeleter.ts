@@ -43,7 +43,7 @@ export default class InputSubdirectoriesDeleter extends Module {
 
     this.progressBar.logTrace('deleting empty input subdirectories');
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
-    this.progressBar.reset(0);
+    this.progressBar.resetProgress(0);
 
     let dirsToMaybeDelete: Set<string>;
     if (this.options.getMoveDeleteDirs() === MoveDeleteDirs.ALWAYS) {
@@ -76,7 +76,7 @@ export default class InputSubdirectoriesDeleter extends Module {
         try {
           if ((await FsPoly.walk(dirPath, WalkMode.FILES)).length === 0) {
             this.progressBar.incrementTotal(1);
-            this.progressBar.incrementProgress();
+            this.progressBar.incrementInProgress(1);
             await FsPoly.rm(dirPath, { recursive: true, force: true });
             return true;
           }
