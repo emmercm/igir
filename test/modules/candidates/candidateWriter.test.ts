@@ -75,6 +75,8 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       stats.ctime = new Date(0);
       stats.ctimeMs = 0;
       stats.nlink = 0;
+      // Hard-code properties that Ubuntu sometimes reports false negatives for
+      stats.blocks = 0;
 
       return [filePath.replace(dirPath + path.sep, ''), stats];
     }),
