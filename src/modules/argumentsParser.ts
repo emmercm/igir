@@ -7,7 +7,7 @@ import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
-import ExpectedError from '../types/expectedError.js';
+import IgirException from '../types/exceptions/igirException.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../types/files/fileChecksums.js';
 import ROMHeader from '../types/files/romHeader.js';
 import Internationalization from '../types/internationalization.js';
@@ -157,7 +157,7 @@ export default class ArgumentsParser {
               checkArgv._.includes(command) &&
               ['copy', 'move'].every((write) => !checkArgv._.includes(write))
             ) {
-              throw new ExpectedError(
+              throw new IgirException(
                 `Command "${command}" also requires the commands copy or move`,
               );
             }
@@ -168,7 +168,7 @@ export default class ArgumentsParser {
               checkArgv._.includes(command) &&
               ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))
             ) {
-              throw new ExpectedError(
+              throw new IgirException(
                 `Command "${command}" requires one of the commands: copy, move, or link`,
               );
             }
@@ -206,7 +206,7 @@ export default class ArgumentsParser {
         );
         if (!checkArgv.input && needInput.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required argument for command${needInput.length === 1 ? '' : 's'} ${needInput.join(', ')}: --input <path>`,
           );
         }
@@ -232,12 +232,12 @@ export default class ArgumentsParser {
           checkArgv['input-checksum-min'] !==
             ChecksumBitmaskInverted[ChecksumBitmask.CRC32].toUpperCase()
         ) {
-          throw new ExpectedError(
+          throw new IgirException(
             'Arguments input-checksum-quick and input-checksum-min are mutually exclusive',
           );
         }
         if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-max']) {
-          throw new ExpectedError(
+          throw new IgirException(
             'Arguments input-checksum-quick and input-checksum-max are mutually exclusive',
           );
         }
@@ -271,7 +271,7 @@ export default class ArgumentsParser {
           inputChecksumMax !== undefined &&
           inputChecksumMin > inputChecksumMax
         ) {
-          throw new ExpectedError(
+          throw new IgirException(
             'Invalid --input-checksum-min & --input-checksum-max, the min must be less than the max',
           );
         }
@@ -299,7 +299,7 @@ export default class ArgumentsParser {
           return true;
         }
         if (checkArgv.dat && checkArgv.dat.length > 0 && checkArgv._.includes('dir2dat')) {
-          throw new ExpectedError('Argument "--dat" cannot be used with the command "dir2dat"');
+          throw new IgirException('Argument "--dat" cannot be used with the command "dir2dat"');
         }
         return true;
       })
@@ -355,7 +355,7 @@ export default class ArgumentsParser {
         }
         const needDat = ['report'].filter((command) => checkArgv._.includes(command));
         if ((!checkArgv.dat || checkArgv.dat.length === 0) && needDat.length > 0) {
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required argument for commands ${needDat.join(', ')}: --dat`,
           );
         }
@@ -429,7 +429,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         // Re-implement `implies: 'dir-letter'`, which isn't possible with a default value
         if (checkArgv['dir-letter-count'] > 1 && !checkArgv['dir-letter']) {
-          throw new ExpectedError('Missing dependent arguments:\n dir-letter-count -> dir-letter');
+          throw new IgirException('Missing dependent arguments:\n dir-letter-count -> dir-letter');
         }
         return true;
       })
@@ -487,7 +487,7 @@ export default class ArgumentsParser {
         );
         if (!checkArgv.output && needOutput.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required argument for command${needOutput.length === 1 ? '' : 's'} ${needOutput.join(', ')}: --output <path>`,
           );
         }
@@ -519,7 +519,7 @@ export default class ArgumentsParser {
         );
         if (!checkArgv._.includes('clean') && needClean.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required command for option${needClean.length === 1 ? '' : 's'} ${needClean.join(', ')}: clean`,
           );
         }
@@ -553,7 +553,7 @@ export default class ArgumentsParser {
           (option) => checkArgv[option] !== undefined,
         );
         if (!checkArgv._.includes('zip') && needZip.length > 0) {
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required command for option${needZip.length === 1 ? '' : 's'} ${needZip.join(', ')}: zip`,
           );
         }
@@ -574,7 +574,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option] !== undefined);
         if (!checkArgv._.includes('link') && needLinkCommand.length > 0) {
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required command for option${needLinkCommand.length === 1 ? '' : 's'} ${needLinkCommand.join(', ')}: link`,
           );
         }
@@ -617,7 +617,7 @@ export default class ArgumentsParser {
           checkArgv['merge-roms'] !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           !checkArgv.dat
         ) {
-          throw new ExpectedError('Missing dependent arguments:\n merge-roms -> dat');
+          throw new IgirException('Missing dependent arguments:\n merge-roms -> dat');
         }
         return true;
       })
@@ -675,7 +675,7 @@ export default class ArgumentsParser {
           (lang) => !Internationalization.LANGUAGES.includes(lang),
         );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
-          throw new ExpectedError(
+          throw new IgirException(
             `Invalid --filter-language language${invalidLangs.length === 1 ? '' : 's'}: ${invalidLangs.join(', ')}`,
           );
         }
@@ -695,7 +695,7 @@ export default class ArgumentsParser {
           (lang) => !Internationalization.REGION_CODES.includes(lang),
         );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
-          throw new ExpectedError(
+          throw new IgirException(
             `Invalid --filter-region region${invalidRegions.length === 1 ? '' : 's'}: ${invalidRegions.join(', ')}`,
           );
         }
@@ -809,7 +809,7 @@ export default class ArgumentsParser {
           (lang) => !Internationalization.LANGUAGES.includes(lang),
         );
         if (invalidLangs !== undefined && invalidLangs.length > 0) {
-          throw new ExpectedError(
+          throw new IgirException(
             `Invalid --prefer-language language${invalidLangs.length === 1 ? '' : 's'}: ${invalidLangs.join(', ')}`,
           );
         }
@@ -830,7 +830,7 @@ export default class ArgumentsParser {
           (lang) => !Internationalization.REGION_CODES.includes(lang),
         );
         if (invalidRegions !== undefined && invalidRegions.length > 0) {
-          throw new ExpectedError(
+          throw new IgirException(
             `Invalid --prefer-region region${invalidRegions.length === 1 ? '' : 's'}: ${invalidRegions.join(', ')}`,
           );
         }
@@ -874,7 +874,7 @@ export default class ArgumentsParser {
       .check((checkArgv) => {
         if (checkArgv._.includes('playlist') && checkArgv['playlist-extensions'].length === 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required argument for command playlist: --playlist-extensions <exts>`,
           );
         }
@@ -892,7 +892,7 @@ export default class ArgumentsParser {
         const needDir2Dat = ['dir2dat-output'].filter((option) => checkArgv[option] !== undefined);
         if (!checkArgv._.includes('dir2dat') && needDir2Dat.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required command for option${needDir2Dat.length === 1 ? '' : 's'} ${needDir2Dat.join(', ')}: dir2dat`,
           );
         }
@@ -910,7 +910,7 @@ export default class ArgumentsParser {
         const needFixdat = ['fixdat-output'].filter((option) => checkArgv[option] !== undefined);
         if (!checkArgv._.includes('fixdat') && needFixdat.length > 0) {
           // TODO(cememr): print help message
-          throw new ExpectedError(
+          throw new IgirException(
             `Missing required command for option${needFixdat.length === 1 ? '' : 's'} ${needFixdat.join(', ')}: fixdat`,
           );
         }
@@ -1113,7 +1113,7 @@ Example use cases:
           throw err;
         }
         this.logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
-        throw new ExpectedError(msg);
+        throw new IgirException(msg);
       });
 
     const yargsArgv = yargsParser

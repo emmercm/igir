@@ -1,6 +1,6 @@
 import FsPoly from '../../polyfill/fsPoly.js';
 import IOFile from '../../polyfill/ioFile.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -19,12 +19,12 @@ class PPFHeader {
   static async fromFilePoly(inputRomFile: File, patchFile: IOFile): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
     if (!header.startsWith(PPFHeader.FILE_SIGNATURE.toString())) {
-      throw new ExpectedError(`PPF patch header is invalid: ${patchFile.getPathLike().toString()}`);
+      throw new IgirException(`PPF patch header is invalid: ${patchFile.getPathLike().toString()}`);
     }
     const encoding = (await patchFile.readNext(1)).readUInt8();
     const version = encoding + 1;
     if (!header.endsWith(`${version}0`)) {
-      throw new ExpectedError(
+      throw new IgirException(
         `PPF patch header has an invalid version: ${patchFile.getPathLike().toString()}`,
       );
     }
@@ -35,7 +35,7 @@ class PPFHeader {
     if (version === 2) {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
-        throw new ExpectedError(
+        throw new IgirException(
           `PPF patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
@@ -46,7 +46,7 @@ class PPFHeader {
       undoDataAvailable = (await patchFile.readNext(1)).readUInt8() === 0x01;
       patchFile.skipNext(1); // dummy
     } else {
-      throw new ExpectedError(
+      throw new IgirException(
         `PPF v${version} isn't supported: ${patchFile.getPathLike().toString()}`,
       );
     }

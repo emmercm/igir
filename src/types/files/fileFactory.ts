@@ -2,7 +2,7 @@ import Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
 import MultiBar from '../../console/multiBar.js';
 import URLPoly from '../../polyfill/urlPoly.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import Archive from './archives/archive.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
@@ -62,7 +62,7 @@ export default class FileFactory {
       return [await this.fileFrom(filePath, fileChecksumBitmask)];
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-        throw new ExpectedError(`file doesn't exist: ${filePath}`);
+        throw new IgirException(`file doesn't exist: ${filePath}`);
       }
       if (typeof error === 'string') {
         throw new Error(error);

@@ -9,7 +9,7 @@ import { Memoize } from 'typescript-memoize';
 
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
-import ExpectedError from '../../../expectedError.js';
+import IgirException from '../../../exceptions/igirException.js';
 import File from '../../file.js';
 import { ChecksumBitmask, ChecksumBitmaskValue } from '../../fileChecksums.js';
 import Archive from '../archive.js';
@@ -156,11 +156,11 @@ export default class Chd extends Archive {
           binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
         });
       } else {
-        throw new ExpectedError(`couldn't detect CHD type for: ${this.getFilePath()}`);
+        throw new IgirException(`couldn't detect CHD type for: ${this.getFilePath()}`);
       }
 
       if (!(await FsPoly.exists(this.tempSingletonFilePath))) {
-        throw new ExpectedError(
+        throw new IgirException(
           `failed to extract ${this.getFilePath()}|${entryPath} to ${this.tempSingletonFilePath}`,
         );
       }
@@ -190,7 +190,7 @@ export default class Chd extends Archive {
     try {
       return await File.createStreamFromFile(filePath, callback, streamStart, streamEnd);
     } catch (error) {
-      throw new ExpectedError(
+      throw new IgirException(
         `failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`,
       );
     } finally {

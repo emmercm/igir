@@ -18,7 +18,7 @@ import FsPoly, { FsWalkCallback } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
-import ExpectedError from './expectedError.js';
+import IgirException from './exceptions/igirException.js';
 import File from './files/file.js';
 import {
   ChecksumBitmask,
@@ -783,7 +783,7 @@ export default class Options implements OptionsProps {
     );
 
     if (requireFiles && globbedFiles.length === 0) {
-      throw new ExpectedError(
+      throw new IgirException(
         `no files found in director${globPatterns.length === 1 ? 'y' : 'ies'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`,
       );
     }

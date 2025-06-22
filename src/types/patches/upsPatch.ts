@@ -1,6 +1,6 @@
 import FsPoly from '../../polyfill/fsPoly.js';
 import IOFile from '../../polyfill/ioFile.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
@@ -38,14 +38,14 @@ export default class UPSPatch extends Patch {
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
       const patchChecksumsActual = await FileChecksums.hashData(patchData, ChecksumBitmask.CRC32);
       if (patchChecksumsActual.crc32 !== patchChecksumExpected) {
-        throw new ExpectedError(
+        throw new IgirException(
           `UPS patch is invalid, CRC of contents (${patchChecksumsActual.crc32}) doesn't match expected (${patchChecksumExpected}): ${file.toString()}`,
         );
       }
     });
 
     if (crcBefore.length !== 8 || crcAfter.length !== 8) {
-      throw new ExpectedError(`couldn't parse base file CRC for patch: ${file.toString()}`);
+      throw new IgirException(`couldn't parse base file CRC for patch: ${file.toString()}`);
     }
 
     return new UPSPatch(file, crcBefore, crcAfter, targetSize);
@@ -55,12 +55,12 @@ export default class UPSPatch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
-        throw new ExpectedError(`UPS patch header is invalid: ${this.getFile().toString()}`);
+        throw new IgirException(`UPS patch header is invalid: ${this.getFile().toString()}`);
       }
 
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
-        throw new ExpectedError(
+        throw new IgirException(
           `UPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
@@ -123,7 +123,7 @@ export default class UPSPatch extends Patch {
       buffer.push(Buffer.of(sourceByte ^ xorByte));
     }
 
-    throw new ExpectedError(
+    throw new IgirException(
       `UPS patch failed to read 0x00 block termination: ${patchFile.getPathLike().toString()}`,
     );
   }

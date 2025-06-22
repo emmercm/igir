@@ -7,7 +7,7 @@ import chdman from 'chdman';
 
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
-import ExpectedError from '../../../expectedError.js';
+import IgirException from '../../../exceptions/igirException.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -153,7 +153,7 @@ export default class ChdBinCueParser {
         return 2336;
       }
       default: {
-        throw new ExpectedError(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
+        throw new IgirException(`unknown track type ${TrackDataType[firstTrack.dataType]}`);
       }
     }
   }

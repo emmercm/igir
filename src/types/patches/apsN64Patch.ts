@@ -1,5 +1,5 @@
 import IOFile from '../../polyfill/ioFile.js';
-import ExpectedError from '../expectedError.js';
+import IgirException from '../exceptions/igirException.js';
 import File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -48,7 +48,7 @@ export default class APSN64Patch extends Patch {
         patchFile.skipNext(5); // padding
         targetSize = (await patchFile.readNext(4)).readUInt32LE();
       } else {
-        throw new ExpectedError(
+        throw new IgirException(
           `APS (N64) patch type ${patchType} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
@@ -61,7 +61,7 @@ export default class APSN64Patch extends Patch {
     return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
       const header = await patchFile.readNext(APSN64Patch.FILE_SIGNATURE.length);
       if (!header.equals(APSN64Patch.FILE_SIGNATURE)) {
-        throw new ExpectedError(`APS (N64) patch header is invalid: ${this.getFile().toString()}`);
+        throw new IgirException(`APS (N64) patch header is invalid: ${this.getFile().toString()}`);
       }
 
       if (this.patchType === APSN64PatchType.SIMPLE) {
@@ -69,7 +69,7 @@ export default class APSN64Patch extends Patch {
       } else if (this.patchType === APSN64PatchType.N64) {
         patchFile.seek(78);
       } else {
-        throw new ExpectedError(
+        throw new IgirException(
           `APS (N64) patch type ${this.patchType} isn't supported: ${patchFile.getPathLike().toString()}`,
         );
       }
