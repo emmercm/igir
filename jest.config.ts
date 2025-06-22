@@ -40,7 +40,7 @@ const jestConfig = async (): Promise<Config> => {
 
     // Many tests are I/O-bound, and possibly contend with each other; increase
     // the test timeout globally
-    testTimeout: 30_000,
+    testTimeout: 45_000,
 
     // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
     extensionsToTreatAsEsm: ['.ts'],

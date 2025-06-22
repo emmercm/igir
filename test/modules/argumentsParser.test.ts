@@ -15,6 +15,7 @@ import {
   GameSubdirMode,
   InputChecksumArchivesMode,
   MergeMode,
+  MoveDeleteDirs,
   PreferRevision,
   ZipFormat,
 } from '../../src/types/options.js';
@@ -221,6 +222,8 @@ describe('options', () => {
     expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
+
+    expect(options.getMoveDeleteDirs()).toEqual(MoveDeleteDirs.AUTO);
 
     expect(options.getCleanBackup()).toBeUndefined();
     expect(options.getCleanDryRun()).toEqual(false);
@@ -1912,6 +1915,43 @@ describe('options', () => {
           .scanOutputFilesWithoutCleanExclusions([outputDir], [])
       ).length,
     ).toEqual(0);
+  });
+
+  it('should parse "move-delete-dirs"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getMoveDeleteDirs()).toEqual(
+      MoveDeleteDirs.AUTO,
+    );
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--move-delete-dirs', 'foobar'])
+        .getMoveDeleteDirs(),
+    ).toThrow(/invalid values/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--move-delete-dirs', 'never'])
+        .getMoveDeleteDirs(),
+    ).toEqual(MoveDeleteDirs.NEVER);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--move-delete-dirs', 'auto'])
+        .getMoveDeleteDirs(),
+    ).toEqual(MoveDeleteDirs.AUTO);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--move-delete-dirs', 'always'])
+        .getMoveDeleteDirs(),
+    ).toEqual(MoveDeleteDirs.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--move-delete-dirs',
+          'always',
+          '--move-delete-dirs',
+          'never',
+        ])
+        .getMoveDeleteDirs(),
+    ).toEqual(MoveDeleteDirs.NEVER);
   });
 
   it('should parse "clean-backup"', () => {

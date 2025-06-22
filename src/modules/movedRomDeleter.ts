@@ -14,7 +14,7 @@ import Module from './module.js';
 
 /**
  * After all output {@link File}s have been written, delete any input {@link File}s that were
- * "moved." This needs to happen after all writing has finished in order to guarantee we're done
+ * "moved." This needs to happen after all writing has finished to guarantee that we're done
  * reading input {@link File}s from disk.
  */
 export default class MovedROMDeleter extends Module {
@@ -33,7 +33,7 @@ export default class MovedROMDeleter extends Module {
     movedRoms: File[],
     datsToWrittenFiles: Map<DAT, File[]>,
   ): Promise<string[]> {
-    if (!this.options.shouldWrite()) {
+    if (!this.options.shouldMove()) {
       // We shouldn't cause any change to the output directory
       return [];
     }
@@ -92,7 +92,7 @@ export default class MovedROMDeleter extends Module {
   }
 
   /**
-   * Archives that do not have all of their file entries matched should not be deleted during
+   * Archives that don't have all of their file entries matched shouldn't be deleted during
    *  moving.
    */
   private filterOutPartiallyConsumedArchives(movedRoms: File[], inputRoms: File[]): string[] {
@@ -195,7 +195,7 @@ export default class MovedROMDeleter extends Module {
 
   /**
    * When an input directory is also used as the output directory, and a file is matched multiple
-   *  times, do not delete the input file if it is in a correct location.
+   *  times, don't delete the input file if it is in a correct location.
    */
   private static filterOutWrittenFiles(
     movedRoms: string[],
