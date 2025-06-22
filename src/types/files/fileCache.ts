@@ -35,7 +35,7 @@ const ValueType = {
 };
 
 export default class FileCache {
-  private static readonly VERSION = 4;
+  private static readonly VERSION = 5;
 
   private cache: Cache<CacheValue> = new Cache<CacheValue>();
 

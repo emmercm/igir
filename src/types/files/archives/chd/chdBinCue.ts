@@ -44,7 +44,7 @@ export default class ChdBinCue extends Chd {
     return [
       cueFile,
       ...(await FsPoly.walk(outputDirectory)).filter((filePath) =>
-        / \(Track [0-9]+\)\.bin$/.exec(filePath),
+        / \(Track [0-9]+\)\.bin$/.test(filePath),
       ),
     ];
   }

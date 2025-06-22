@@ -244,7 +244,7 @@ export default class Game implements GameProps {
    * Is this game a collection of BIOS file(s).
    */
   getIsBios(): boolean {
-    return this.isBios === 'yes' || /\[BIOS\]/i.exec(this.name) !== null;
+    return this.isBios === 'yes' || /\[BIOS\]/i.test(this.name);
   }
 
   /**
@@ -345,28 +345,28 @@ export default class Game implements GameProps {
    * Is this game aftermarket (released after the last known console release)?
    */
   isAftermarket(): boolean {
-    return /\(Aftermarket[a-z0-9. ]*\)/i.exec(this.name) !== null;
+    return /\(Aftermarket[a-z0-9. ]*\)/i.test(this.name);
   }
 
   /**
    * Is this game an alpha pre-release?
    */
   isAlpha(): boolean {
-    return /\(Alpha[a-z0-9. ]*\)/i.exec(this.name) !== null;
+    return /\(Alpha[a-z0-9. ]*\)/i.test(this.name);
   }
 
   /**
    * Is this game an alternate release?
    */
   isAlternate(): boolean {
-    return /\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i.exec(this.name) !== null;
+    return /\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i.test(this.name);
   }
 
   /**
    * Is this game a "bad" dump?
    */
   isBad(): boolean {
-    if (/\[b[0-9]*\]/.exec(this.name) !== null) {
+    if (/\[b[0-9]*\]/.test(this.name)) {
       return true;
     }
     if (this.isVerified()) {
@@ -383,7 +383,7 @@ export default class Game implements GameProps {
    * Is this game a beta pre-release?
    */
   isBeta(): boolean {
-    return /\(Beta[a-z0-9. ]*\)/i.exec(this.name) !== null;
+    return /\(Beta[a-z0-9. ]*\)/i.test(this.name);
   }
 
   /**
@@ -397,14 +397,14 @@ export default class Game implements GameProps {
    * Is this game a "cracked" release (has copy protection removed)?
    */
   isCracked(): boolean {
-    return /\[cr([0-9]+| [^\]]+)?\]/.exec(this.name) !== null;
+    return /\[cr([0-9]+| [^\]]+)?\]/.test(this.name);
   }
 
   /**
    * Does this game contain debug symbols?
    */
   isDebug(): boolean {
-    return /\(Debug[a-z0-9. ]*\)/i.exec(this.name) !== null;
+    return /\(Debug[a-z0-9. ]*\)/i.test(this.name);
   }
 
   public static readonly DEMO_REGEX = new RegExp(
@@ -437,21 +437,21 @@ export default class Game implements GameProps {
    * Is this game an enhancement chip? Primarily for SNES
    */
   isEnhancementChip(): boolean {
-    return /\(Enhancement Chip\)/i.exec(this.name) !== null;
+    return /\(Enhancement Chip\)/i.test(this.name);
   }
 
   /**
    * Is this game "fixed" (altered to run better in emulation)?
    */
   isFixed(): boolean {
-    return /\[f[0-9]*\]/.exec(this.name) !== null;
+    return /\[f[0-9]*\]/.test(this.name);
   }
 
   /**
    * Is this game community homebrew?
    */
   isHomebrew(): boolean {
-    return /\(Homebrew[a-z0-9. ]*\)/i.exec(this.name) !== null;
+    return /\(Homebrew[a-z0-9. ]*\)/i.test(this.name);
   }
 
   /**
@@ -462,14 +462,14 @@ export default class Game implements GameProps {
    * https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
    */
   isMIA(): boolean {
-    return /\[MIA\]/i.exec(this.name) !== null;
+    return /\[MIA\]/i.test(this.name);
   }
 
   /**
    * Is this game an overdump (contains excess data)?
    */
   isOverdump(): boolean {
-    return /\[o[0-9]*\]/.exec(this.name) !== null;
+    return /\[o[0-9]*\]/.test(this.name);
   }
 
   /**
@@ -483,9 +483,7 @@ export default class Game implements GameProps {
    * Is this game pirated (probably has copyright information removed)?
    */
   isPirated(): boolean {
-    return (
-      /\(Pirate[a-z0-9. ]*\)/i.exec(this.name) !== null || /\[p[0-9]*\]/.exec(this.name) !== null
-    );
+    return /\(Pirate[a-z0-9. ]*\)/i.test(this.name) || /\[p[0-9]*\]/.test(this.name);
   }
 
   /**
@@ -493,7 +491,7 @@ export default class Game implements GameProps {
    */
   isProgram(): boolean {
     return (
-      /\([a-z0-9. ]*Program\)|(Check|Sample) Program/i.exec(this.name) !== null ||
+      /\([a-z0-9. ]*Program\)|(Check|Sample) Program/i.test(this.name) ||
       this.getCategories().some((category) => category.toLowerCase() === 'applications')
     );
   }
@@ -503,7 +501,7 @@ export default class Game implements GameProps {
    */
   isPrototype(): boolean {
     return (
-      /\([^)]*Proto[a-z0-9. ]*\)/i.exec(this.name) !== null ||
+      /\([^)]*Proto[a-z0-9. ]*\)/i.test(this.name) ||
       this.getCategories().some((category) => category.toLowerCase() === 'preproduction')
     );
   }
@@ -512,21 +510,21 @@ export default class Game implements GameProps {
    * Is this game a sample?
    */
   isSample(): boolean {
-    return /\([^)]*Sample[a-z0-9. ]*\)/i.exec(this.name) !== null;
+    return /\([^)]*Sample[a-z0-9. ]*\)/i.test(this.name);
   }
 
   /**
    * Is this game translated by the community?
    */
   isTranslated(): boolean {
-    return /\[T[+-][^\]]+\]/.exec(this.name) !== null;
+    return /\[T[+-][^\]]+\]/.test(this.name);
   }
 
   /**
    * Is this game unlicensed (but was still physically produced and sold)?
    */
   isUnlicensed(): boolean {
-    return /\(Unl[a-z0-9. ]*\)/i.exec(this.name) !== null;
+    return /\(Unl[a-z0-9. ]*\)/i.test(this.name);
   }
 
   /**
@@ -541,7 +539,7 @@ export default class Game implements GameProps {
    * @see https://en.wikipedia.org/wiki/Bung_Enterprises
    */
   hasBungFix(): boolean {
-    return /\(Bung\)|\[bf\]/i.exec(this.name) !== null;
+    return /\(Bung\)|\[bf\]/i.test(this.name);
   }
 
   /**
@@ -549,8 +547,8 @@ export default class Game implements GameProps {
    */
   hasHack(): boolean {
     return (
-      /\(Hack\)/i.exec(this.name) !== null ||
-      /\[h[a-zA-Z90-9+]*\]/.exec(this.name) !== null ||
+      /\(Hack\)/i.test(this.name) ||
+      /\[h[a-zA-Z90-9+]*\]/.test(this.name) ||
       (this.manufacturer?.toLowerCase().includes('hack') ?? false)
     );
   }
@@ -559,7 +557,7 @@ export default class Game implements GameProps {
    * Does this game have a trainer?
    */
   hasTrainer(): boolean {
-    return /\[t[0-9]*\]/.exec(this.name) !== null;
+    return /\[t[0-9]*\]/.test(this.name);
   }
 
   /**
