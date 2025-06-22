@@ -342,7 +342,7 @@ export default class DATScanner extends Scanner {
     /**
      * Validation that this might be a CMPro file.
      */
-    if (/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.exec(fileContents) === null) {
+    if (!/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.test(fileContents)) {
       return undefined;
     }
 
@@ -504,10 +504,10 @@ export default class DATScanner extends Scanner {
         .validate(
           (row: SmdbRow) =>
             row.name &&
-            (/^[0-9a-f]{8}$/.exec(row.crc) !== null ||
-              /^[0-9a-f]{32}$/.exec(row.md5) !== null ||
-              /^[0-9a-f]{40}$/.exec(row.sha1) !== null ||
-              /^[0-9a-f]{64}$/.exec(row.sha256) !== null),
+            (/^[0-9a-f]{8}$/.test(row.crc) ||
+              /^[0-9a-f]{32}$/.test(row.md5) ||
+              /^[0-9a-f]{40}$/.test(row.sha1) ||
+              /^[0-9a-f]{64}$/.test(row.sha256)),
         )
         .on('error', reject)
         .on('data', (row: SmdbRow) => {
