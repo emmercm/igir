@@ -104,6 +104,7 @@ async function candidateWriter(
     inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
+    readerThreads: 4,
   });
 
   let romFiles: File[] = [];

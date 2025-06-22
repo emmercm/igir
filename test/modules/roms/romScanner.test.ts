@@ -20,7 +20,11 @@ const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
   return new ROMScanner(
-    new Options({ input, inputExclude }),
+    new Options({
+      input,
+      inputExclude,
+      readerThreads: 4,
+    }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
   );

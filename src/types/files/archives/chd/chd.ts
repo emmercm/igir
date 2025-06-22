@@ -109,7 +109,7 @@ export default abstract class Chd extends Archive {
             }
           });
         },
-        process.env.NODE_ENV === 'test' ? 100 : 5000,
+        process.env.NODE_ENV === 'test' ? 0 : 5000,
       );
     }
   }

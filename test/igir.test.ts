@@ -78,7 +78,10 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 }
 
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
-  const options = new Options(optionsProps);
+  const options = new Options({
+    ...optionsProps,
+    readerThreads: 4,
+  });
 
   const inputFilesBefore = (
     await Promise.all(options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath)))
