@@ -986,7 +986,7 @@ export default class Options implements OptionsProps {
   getOutputDirRoot(): string {
     const outputSplit = this.getOutput().split(/[\\/]/);
     for (let i = 0; i < outputSplit.length; i += 1) {
-      if (/\{[a-zA-Z]+\}/.exec(outputSplit[i]) !== null) {
+      if (/\{[a-zA-Z]+\}/.test(outputSplit[i])) {
         return outputSplit.slice(0, i).join(path.sep);
       }
     }

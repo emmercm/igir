@@ -7,6 +7,7 @@ import FsPoly from '../polyfill/fsPoly.js';
 import DAT from '../types/dats/dat.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
+import ChdBinCue from '../types/files/archives/chd/chdBinCue.js';
 import File from '../types/files/file.js';
 import Options from '../types/options.js';
 import Module from './module.js';
@@ -115,12 +116,17 @@ export default class MovedROMDeleter extends Module {
           (inputFile) => inputFile instanceof ArchiveEntry,
         );
 
-        const unmovedFiles = inputFilesForPath.filter(
-          (inputFile) =>
-            !(inputFile instanceof ArchiveEntry) &&
-            // The input archive entry needs to have been explicitly moved
-            !movedEntryHashCodes.has(inputFile.hashCode()),
-        );
+        const unmovedFiles = inputFilesForPath.filter((inputFile) => {
+          if (inputFile instanceof ArchiveEntry) {
+            // We're only considering input non-archives
+            return false;
+          }
+          if (movedEntryHashCodes.has(inputFile.hashCode())) {
+            // The input file was moved
+            return false;
+          }
+          return true;
+        });
 
         if (inputFileIsArchive && unmovedFiles.length === 0) {
           // The input file is an archive, and it was fully extracted OR the archive file itself was
@@ -130,16 +136,25 @@ export default class MovedROMDeleter extends Module {
 
         const unmovedArchiveEntries = inputFilesForPath.filter((inputFile) => {
           if (!(inputFile instanceof ArchiveEntry)) {
+            // We're only considering input archives
             return false;
           }
-
+          if (movedEntryHashCodes.has(inputFile.hashCode())) {
+            // The input archive entry was moved
+            return false;
+          }
           if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
             // If the input archive was written as a raw archive, then consider it moved
             return false;
           }
-
-          // Otherwise, the input archive entry needs to have been explicitly moved
-          return !movedEntryHashCodes.has(inputFile.hashCode());
+          if (
+            inputFile.getArchive() instanceof ChdBinCue &&
+            inputFile.getExtractedFilePath().toLowerCase().endsWith('.cue')
+          ) {
+            // Ignore the .cue file from CHDs
+            return false;
+          }
+          return true;
         });
 
         if (inputFileIsArchive && unmovedArchiveEntries.length === 0) {

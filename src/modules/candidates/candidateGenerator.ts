@@ -15,6 +15,7 @@ import Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import Chd from '../../types/files/archives/chd/chd.js';
+import ChdBinCue from '../../types/files/archives/chd/chdBinCue.js';
 import NkitIso from '../../types/files/archives/nkitIso.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
@@ -316,7 +317,7 @@ export default class CandidateGenerator extends Module {
         // If there is a CHD with every .bin file, and we're raw-copying it, then assume its .cue
         // file is accurate
         return (
-          inputArchive instanceof Chd &&
+          inputArchive instanceof ChdBinCue &&
           !gameRoms.some(
             (rom) => this.options.shouldZipRom(rom) || this.options.shouldExtractRom(rom),
           ) &&
@@ -379,13 +380,16 @@ export default class CandidateGenerator extends Module {
           `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
         );
         let archiveEntry = inputFiles.find(
-          (inputFile) => inputFile.getFilePath() === archiveWithEveryRom.getFilePath(),
+          (inputFile) =>
+            inputFile.getFilePath() === archiveWithEveryRom.getFilePath() &&
+            inputFile instanceof ArchiveEntry &&
+            inputFile.getArchive() === archiveWithEveryRom,
         );
 
         if (
           !archiveEntry &&
           rom.getName().toLowerCase().endsWith('.cue') &&
-          archiveWithEveryRom instanceof Chd
+          archiveWithEveryRom instanceof ChdBinCue
         ) {
           // We assumed this CHD was fine above, find its .cue file
           archiveEntry = filesByPath
@@ -704,29 +708,36 @@ export default class CandidateGenerator extends Module {
    * the .cue file is accurate.
    */
   private static onlyCueFilesMissingFromChd(game: Game, foundRoms: ROM[]): boolean {
+    if (foundRoms.length === 0) {
+      // No ROMs were found, including any .bin files
+      return false;
+    }
+
     // Only games with only bin/cue files can have only a cue file missing
-    const allCueBin = game
-      .getRoms()
-      .flat()
-      .every((rom) => ['.bin', '.cue'].includes(path.extname(rom.getName()).toLowerCase()));
-    if (foundRoms.length === 0 || !allCueBin) {
+    let hasCue = false;
+    let hasBin = false;
+    let hasOther = false;
+    for (const rom of game.getRoms()) {
+      const romName = rom.getName().toLowerCase();
+      if (romName.endsWith('.cue')) {
+        hasCue = true;
+      } else if (romName.endsWith('.bin')) {
+        hasBin = true;
+      } else {
+        hasOther = true;
+      }
+    }
+    if (!hasCue || !hasBin || hasOther) {
+      // This is not a .cue/.bin only game
       return false;
     }
 
     const foundRomNames = new Set(foundRoms.map((rom) => rom.getName()));
-    const missingCueRoms = game
+    return game
       .getRoms()
-      .filter(
-        (rom) =>
-          !foundRomNames.has(rom.getName()) && path.extname(rom.getName()).toLowerCase() === '.cue',
+      .every(
+        (rom) => foundRomNames.has(rom.getName()) || rom.getName().toLowerCase().endsWith('.cue'),
       );
-    const missingNonCueRoms = game
-      .getRoms()
-      .filter(
-        (rom) =>
-          !foundRomNames.has(rom.getName()) && path.extname(rom.getName()).toLowerCase() !== '.cue',
-      );
-    return missingCueRoms.length > 0 && missingNonCueRoms.length === 0;
   }
 
   private hasExcessFiles(
@@ -743,13 +754,31 @@ export default class CandidateGenerator extends Module {
         const inputFile = romWithFiles.getInputFile();
         return indexedFiles
           .findFiles(romWithFiles.getRom())
-          ?.find((foundFile) => foundFile.getFilePath() === inputFile.getFilePath());
+          ?.find(
+            (foundFile) =>
+              foundFile.getFilePath() === inputFile.getFilePath() &&
+              inputFile instanceof ArchiveEntry &&
+              foundFile instanceof ArchiveEntry &&
+              inputFile.getArchive() === foundFile.getArchive(),
+          );
       })
       .filter((inputFile) => inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile);
     // ...then translate those ArchiveEntries into a list of unique Archives
     const inputArchives = inputArchiveEntries
       .map((archiveEntry) => archiveEntry.getArchive())
       .filter(ArrayPoly.filterUniqueMapped((archive) => archive.getFilePath()));
+
+    if (
+      inputArchives.length === 1 &&
+      inputArchives[0] instanceof ChdBinCue &&
+      CandidateGenerator.onlyCueFilesMissingFromChd(
+        game,
+        romsWithFiles.map((romWithFiles) => romWithFiles.getRom()),
+      )
+    ) {
+      // We couldn't match the CHD's .cue files, so don't consider them as excess
+      return false;
+    }
 
     for (const inputArchive of inputArchives) {
       const unusedEntries = this.findArchiveUnusedEntryPaths(
@@ -790,7 +819,10 @@ export default class CandidateGenerator extends Module {
     const archiveEntryHashCodes = new Set(
       inputFiles
         .filter(
-          (file) => file.getFilePath() === archive.getFilePath() && file instanceof ArchiveEntry,
+          (file) =>
+            file.getFilePath() === archive.getFilePath() &&
+            file instanceof ArchiveEntry &&
+            file.getArchive() === archive,
         )
         .map((entry) => entry.hashCode()),
     );
@@ -799,11 +831,17 @@ export default class CandidateGenerator extends Module {
     return (indexedFiles.getFilesByFilePath().get(archive.getFilePath()) ?? []).filter(
       (file): file is ArchiveEntry<Archive> => {
         if (!(file instanceof ArchiveEntry)) {
+          // A non-archive file exists at the same path as the archive (this shouldn't happen)
+          return false;
+        }
+        if (file.getArchive() !== archive) {
+          // This archive entry is coming from a different archive at the same path (probably a
+          // different archive type)
           return false;
         }
 
         return (
-          (!(archive instanceof Chd) ||
+          (!(archive instanceof ChdBinCue) ||
             !file.getExtractedFilePath().toLowerCase().endsWith('.cue')) &&
           !archiveEntryHashCodes.has(file.hashCode())
         );

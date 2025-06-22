@@ -1,5 +1,3 @@
-import async from 'async';
-
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import Timer from '../../timer.js';
@@ -37,7 +35,7 @@ const ValueType = {
 };
 
 export default class FileCache {
-  private static readonly VERSION = 4;
+  private static readonly VERSION = 5;
 
   private cache: Cache<CacheValue> = new Cache<CacheValue>();
 
@@ -75,10 +73,8 @@ export default class FileCache {
         .sort(() => Math.random() - 0.5)
         .slice(0, Defaults.MAX_FS_THREADS);
 
-      await async.eachLimit(
-        cacheKeyFilePaths,
-        Defaults.MAX_FS_THREADS,
-        async ([cacheKey, filePath]) => {
+      await Promise.all(
+        cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
           if (!(await FsPoly.exists(filePath))) {
             // Delete the related cache keys
             const inode = (await this.cache.get(cacheKey))?.value as number;
@@ -87,7 +83,7 @@ export default class FileCache {
             // Delete the inode key from the cache
             await this.cache.delete(cacheKey);
           }
-        },
+        }),
       );
     }, 5000);
   }
@@ -159,7 +155,7 @@ export default class FileCache {
     }
     const cacheKey = await this.getCacheKey(
       archive.getFilePath(),
-      undefined,
+      archive.constructor.name,
       ValueType.ARCHIVE_CHECKSUMS,
     );
 

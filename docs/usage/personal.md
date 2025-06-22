@@ -78,7 +78,6 @@ npx --yes igir@latest move zip test clean report \
 # Disc-based consoles, 4th+ generations
 npx --yes igir@latest move test clean report \
   --dat "./Redump*.zip" \
-  --dat-name-regex-exclude "/Dreamcast/i" \
   --input "./Redump/" \
   "${INPUTS[@]}" \
   `# Let maxcso calculate CSO CRC32s, don't checksum compressed discs (we only care about the contents)` \
@@ -87,24 +86,6 @@ npx --yes igir@latest move test clean report \
   --patch "./Patches/" \
   --output "./Redump/" \
   --dir-dat-name \
-  --overwrite-invalid \
-  --only-retail \
-  --single \
-  --prefer-language EN \
-  --prefer-region USA,WORLD,EUR,JPN \
-  --prefer-revision newer \
-  -v
-
-# Dreamcast (because TOSEC catalogs chdman-compatible .gdi files and Redump catalogs .bin/.cue)
-npx --yes igir@latest move test clean report \
-  --dat "./TOSEC*.zip" \
-  --dat-name-regex "/Dreamcast/i" \
-  --dat-combine \
-  --input "./TOSEC/" \
-  "${INPUTS[@]}" \
-  --input-checksum-archives never \
-  --patch "./Patches/" \
-  --output "./TOSEC/Sega Dreamcast" \
   --overwrite-invalid \
   --only-retail \
   --single \
