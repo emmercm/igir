@@ -1,8 +1,11 @@
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import { Semaphore } from 'async-mutex';
+
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import Defaults from '../../src/globals/defaults.js';
 import Temp from '../../src/globals/temp.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
@@ -419,10 +422,11 @@ describe('should delete archives', () => {
         ).flat();
 
         const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(rawRomFiles);
-        const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-          dat,
-          indexedRomFiles,
-        );
+        const candidates = await new CandidateGenerator(
+          options,
+          new ProgressBarFake(),
+          new Semaphore(Defaults.MAX_FS_THREADS),
+        ).generate(dat, indexedRomFiles);
 
         const inputRoms = rawRomFiles;
         const movedRoms = candidates

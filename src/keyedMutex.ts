@@ -108,4 +108,16 @@ export default class KeyedMutex {
       await this.release(key);
     }
   }
+
+  /**
+   * Run a {@link runnable} exclusively for the given {@link keys}. Be wary of deadlocks!
+   */
+  async runExclusiveForKeys<V>(keys: string[], runnable: () => V | Promise<V>): Promise<V> {
+    await this.acquireMultiple(keys);
+    try {
+      return await runnable();
+    } finally {
+      await this.releaseMultiple(keys);
+    }
+  }
 }

@@ -3,8 +3,11 @@ import 'jest-extended';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import { Semaphore } from 'async-mutex';
+
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
@@ -33,6 +36,7 @@ it('should do nothing with no candidates', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new Semaphore(Defaults.MAX_FS_THREADS),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -64,6 +68,7 @@ it('should do nothing when no ROMs need correcting', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new Semaphore(Defaults.MAX_FS_THREADS),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -150,6 +155,7 @@ it('should correct ROMs without DATs', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new Semaphore(Defaults.MAX_FS_THREADS),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);
@@ -201,6 +207,7 @@ it('should correct ROMs with missing filenames', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new Semaphore(Defaults.MAX_FS_THREADS),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);

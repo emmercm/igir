@@ -1,8 +1,11 @@
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import { Semaphore } from 'async-mutex';
+
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import Defaults from '../../../src/globals/defaults.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
@@ -27,10 +30,11 @@ async function runCombinedCandidateGenerator(
   const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFiles);
-  const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-    dat,
-    indexedRomFiles,
-  );
+  const candidates = await new CandidateGenerator(
+    options,
+    new ProgressBarFake(),
+    new Semaphore(Defaults.MAX_FS_THREADS),
+  ).generate(dat, indexedRomFiles);
 
   return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 }

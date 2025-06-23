@@ -1,5 +1,8 @@
 import path from 'node:path';
 
+import { Semaphore } from 'async-mutex';
+
+import Defaults from '../../../src/globals/defaults.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
@@ -74,7 +77,11 @@ async function candidateGenerator(
 ): Promise<WriteCandidate[]> {
   const resolvedFiles = await Promise.all(files);
   const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(resolvedFiles);
-  return new CandidateGenerator(options, new ProgressBarFake()).generate(dat, indexedFiles);
+  return new CandidateGenerator(
+    options,
+    new ProgressBarFake(),
+    new Semaphore(Defaults.MAX_FS_THREADS),
+  ).generate(dat, indexedFiles);
 }
 
 describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
@@ -879,10 +886,11 @@ describe('MAME v0.260', () => {
       dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
     });
 
-    const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-      mameDat,
-      await mameIndexedFiles,
-    );
+    const candidates = await new CandidateGenerator(
+      options,
+      new ProgressBarFake(),
+      new Semaphore(Defaults.MAX_FS_THREADS),
+    ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
@@ -918,10 +926,11 @@ describe('MAME v0.260', () => {
       excludeDisks: true,
     });
 
-    const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-      mameDat,
-      await mameIndexedFiles,
-    );
+    const candidates = await new CandidateGenerator(
+      options,
+      new ProgressBarFake(),
+      new Semaphore(Defaults.MAX_FS_THREADS),
+    ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())

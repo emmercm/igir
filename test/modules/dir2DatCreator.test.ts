@@ -3,8 +3,11 @@ import 'jest-extended';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import { Semaphore } from 'async-mutex';
+
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import Defaults from '../../src/globals/defaults.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import DATGameInferrer from '../../src/modules/dats/datGameInferrer.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
@@ -39,10 +42,11 @@ it('should do nothing if dir2dat command not provided', async () => {
   const [inferredDat] = inferredDats;
 
   // And candidates
-  const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-    inferredDat,
-    new ROMIndexer(options, new ProgressBarFake()).index(files),
-  );
+  const candidates = await new CandidateGenerator(
+    options,
+    new ProgressBarFake(),
+    new Semaphore(Defaults.MAX_FS_THREADS),
+  ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
   const dir2dat = await new Dir2DatCreator(options, new ProgressBarFake()).create(
@@ -72,10 +76,11 @@ it('should write a valid DAT', async () => {
   const [inferredDat] = inferredDats;
 
   // And candidates
-  const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-    inferredDat,
-    new ROMIndexer(options, new ProgressBarFake()).index(files),
-  );
+  const candidates = await new CandidateGenerator(
+    options,
+    new ProgressBarFake(),
+    new Semaphore(Defaults.MAX_FS_THREADS),
+  ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
   const dir2dat = await new Dir2DatCreator(options, new ProgressBarFake()).create(
@@ -155,10 +160,11 @@ it('should use the candidates for games and ROMs', async () => {
   const [inferredDat] = inferredDats;
 
   // And candidates
-  const candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-    inferredDat,
-    new ROMIndexer(options, new ProgressBarFake()).index(files),
-  );
+  const candidates = await new CandidateGenerator(
+    options,
+    new ProgressBarFake(),
+    new Semaphore(Defaults.MAX_FS_THREADS),
+  ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When manipulating the candidates
   const updatedCandidates = candidates.map(

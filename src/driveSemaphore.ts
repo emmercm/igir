@@ -35,6 +35,7 @@ export default class DriveSemaphore {
    * Run a {@link runnable} exclusively for the given {@link file}.
    */
   async runExclusive<V>(file: File | string, runnable: () => V | Promise<V>): Promise<V> {
+    // Get the drive-specific semaphore
     const filePathDisk = DriveSemaphore.getDiskForFile(file);
     const driveSemaphore = await this.driveSemaphoresMutex.runExclusive(() => {
       let semaphore = this.driveSemaphores.get(filePathDisk);
