@@ -32,6 +32,11 @@ export default abstract class DAT {
    * exists, then there will be one {@link Parent} for every {@link Game}.
    */
   protected generateGameNamesToParents(): this {
+    if (this.getGames().length === 0) {
+      // Nothing to do
+      return this;
+    }
+
     const gameNamesToParents = new Map<string, Parent>();
     const gameIdsToParents = new Map<string, Parent>();
 
