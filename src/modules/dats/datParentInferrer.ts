@@ -261,9 +261,14 @@ export default class DATParentInferrer extends Module {
       if (retailParent) {
         if (retailParent.hashCode() === game.hashCode()) {
           // This game is the parent
-          return game.withProps({ cloneOf: undefined });
+          return game.withProps({ cloneOf: undefined, cloneOfId: undefined });
         }
-        return game.withProps({ cloneOf: retailParent.getName() });
+        if (retailParent.getId() !== undefined) {
+          // id/cloneofid-based DAT
+          return game.withProps({ cloneOfId: retailParent.getId(), cloneOf: undefined });
+        }
+        // name/cloneof-based DAT
+        return game.withProps({ cloneOfId: undefined, cloneOf: retailParent.getName() });
       }
 
       // Assume this game's non-retail parent.
@@ -273,9 +278,14 @@ export default class DATParentInferrer extends Module {
       //  likely a commonly used option.
       if (idx === 0) {
         // This game is the parent
-        return game.withProps({ cloneOf: undefined });
+        return game.withProps({ cloneOf: undefined, cloneOfId: undefined });
       }
-      return game.withProps({ cloneOf: games[0].getName() });
+      if (games[0].getId() !== undefined) {
+        // id/cloneofid-based DAT
+        return game.withProps({ cloneOfId: games[0].getId(), cloneOf: undefined });
+      }
+      // name/cloneof-based DAT
+      return game.withProps({ cloneOfId: undefined, cloneOf: games[0].getName() });
     });
   }
 }
