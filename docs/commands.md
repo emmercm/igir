@@ -26,7 +26,13 @@ Files that match to multiple ROMs in [DATs](dats/introduction.md) will be copied
 
 Create a link in the output directory to a file in the input directory.
 
-By default, hard links are created, similar to [ln(1)](https://linux.die.net/man/1/ln). Use the `--symlink` option to create symbolic links.
+Three different types of links can be created:
+
+| Link mode                                              | Description                                                                                                                                                                                                                                     | What happens when the source file is deleted                                             |
+|--------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| Hard link<br><br>`--link-mode hardlink` (default)      | The link file and source file are the exact same file on disk. If either file is changed then all other hard linked files will also reflect those changes.<br><br><i>Supported by most filesystems other than FAT, FAT16, FAT32, and exFAT.</i> | ✅ The linked file isn't changed in any way.                                              |
+| Symbolic link ("symlink")<br><br>`--link-mode symlink` | The link file is a shortcut to the source file. Symlinks generally require administrator privileges on Windows.<br><br><i>Supported by most filesystems other than FAT, FAT16, FAT32, and exFAT.</i>                                            | ❌ The linked file's shortcut is broken, which will cause issues with reading or writing. |
+| Reflink (copy-on-write)<br><br>`--link-mode reflink`   | The link file and source file will be the same file on disk, _until_ any data is changed, at which point the source file is copied to the link location.<br><br><i>Supported by APFS (macOS) and some Linux filesystems.</i>                    | ✅ The linked file isn't changed in any way.                                              |
 
 ## ROM extracting & zipping
 

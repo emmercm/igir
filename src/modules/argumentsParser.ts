@@ -18,6 +18,8 @@ import Options, {
   GameSubdirModeInverted,
   InputChecksumArchivesMode,
   InputChecksumArchivesModeInverted,
+  LinkMode,
+  LinkModeInverted,
   MergeMode,
   MergeModeInverted,
   MoveDeleteDirs,
@@ -572,16 +574,18 @@ export default class ArgumentsParser {
         return true;
       })
 
-      .option('symlink', {
+      .option('link-mode', {
         group: groupRomLink,
-        description: 'Creates symbolic links instead of hard links',
-        type: 'boolean',
+        description: 'File linking mode',
+        choices: Object.keys(LinkMode).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: LinkModeInverted[LinkMode.HARDLINK].toLowerCase(),
       })
       .option('symlink-relative', {
         group: groupRomLink,
         description: 'Create symlinks as relative to the target path, as opposed to absolute',
         type: 'boolean',
-        implies: 'symlink',
       })
       .check((checkArgv) => {
         const needLinkCommand = ['symlink'].filter((option) => checkArgv[option] !== undefined);
@@ -589,6 +593,13 @@ export default class ArgumentsParser {
           throw new IgirException(
             `Missing required command for option${needLinkCommand.length === 1 ? '' : 's'} ${needLinkCommand.join(', ')}: link`,
           );
+        }
+        if (
+          checkArgv['symlink-relative'] &&
+          (checkArgv['link-mode'] as string).toLowerCase() !==
+            LinkModeInverted[LinkMode.SYMLINK].toLowerCase()
+        ) {
+          throw new IgirException('Missing dependent arguments:\n symlink-relative -> link-mode');
         }
         return true;
       })
@@ -1012,7 +1023,8 @@ export default class ArgumentsParser {
 
       .check((checkArgv) => {
         if (
-          checkArgv.mergeRoms !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
+          (checkArgv.mergeRoms as string).toLowerCase() !==
+            MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.dirMirror || checkArgv.dirLetter)
         ) {
           this.logger.warn(
@@ -1021,7 +1033,8 @@ export default class ArgumentsParser {
         }
 
         if (
-          checkArgv.mergeRoms !== MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
+          (checkArgv.mergeRoms as string).toLowerCase() !==
+            MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.noBios || checkArgv.noDevice)
         ) {
           this.logger.warn(
@@ -1032,7 +1045,8 @@ export default class ArgumentsParser {
         if (
           checkArgv.single &&
           !checkArgv.preferParent &&
-          checkArgv.mergeRoms === MergeModeInverted[MergeMode.SPLIT].toLowerCase()
+          (checkArgv.mergeRoms as string).toLowerCase() ===
+            MergeModeInverted[MergeMode.SPLIT].toLowerCase()
         ) {
           this.logger.warn(
             `--single may leave '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,

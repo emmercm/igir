@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
+import IgirException from '../../src/types/exceptions/igirException.js';
 
 describe('canSymlink', () => {
   it('should not throw', async () => {
@@ -14,7 +15,60 @@ describe('copyDir', () => {
   // TODO(cemmer)
 });
 
-describe('copyFile', () => {
+describe.each([
+  ['copyFile', FsPoly.copyFile.bind(FsPoly)],
+  ['hardlink', FsPoly.hardlink.bind(FsPoly)],
+  ['reflink', FsPoly.reflink.bind(FsPoly)],
+  ['symlink', FsPoly.symlink.bind(FsPoly)],
+])('%s', (_, writeFunction) => {
+  it("should throw when source file doesn't exist", async () => {
+    const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
+    const tempDest = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'dest'));
+    await expect(writeFunction(tempSrc, tempDest)).rejects.toThrow(IgirException);
+  });
+
+  it("should throw when destination folder doesn't exist", async () => {
+    const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
+    const tempDest = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'nonexistent', 'dest'));
+    try {
+      await FsPoly.touch(tempSrc);
+      await expect(writeFunction(tempSrc, tempDest)).rejects.toThrow(IgirException);
+    } finally {
+      await FsPoly.rm(tempSrc);
+    }
+  });
+
+  it('should copy a file', async () => {
+    const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
+    const tempDest = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'dest'));
+    try {
+      await FsPoly.touch(tempSrc);
+      await expect(FsPoly.exists(tempDest)).resolves.toEqual(false);
+      await writeFunction(tempSrc, tempDest);
+      await expect(FsPoly.exists(tempDest)).resolves.toEqual(true);
+    } finally {
+      await FsPoly.rm(tempSrc);
+      await FsPoly.rm(tempDest);
+    }
+  });
+
+  it('should overwrite an existing file', async () => {
+    const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
+    const tempDest = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'dest'));
+    try {
+      await FsPoly.touch(tempSrc);
+      await FsPoly.touch(tempDest);
+      await expect(FsPoly.exists(tempDest)).resolves.toEqual(true);
+      await writeFunction(tempSrc, tempDest);
+      await expect(FsPoly.exists(tempDest)).resolves.toEqual(true);
+    } finally {
+      await FsPoly.rm(tempSrc);
+      await FsPoly.rm(tempDest);
+    }
+  });
+});
+
+describe('copyFileCow', () => {
   // TODO(cemmer)
 });
 
@@ -267,39 +321,6 @@ describe('isHardlink', () => {
   it('should return false for non-existent file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await expect(FsPoly.isHardlink(tempFile)).resolves.toEqual(false);
-  });
-});
-
-describe('hardlink', () => {
-  it('should create a hard link', async () => {
-    const tempFileTarget = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
-    const tempFileLink = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
-
-    try {
-      await FsPoly.touch(tempFileTarget);
-
-      await FsPoly.hardlink(tempFileTarget, tempFileLink);
-      await expect(FsPoly.isHardlink(tempFileLink)).resolves.toEqual(true);
-      await expect(FsPoly.isHardlink(tempFileTarget)).resolves.toEqual(true);
-    } finally {
-      await FsPoly.rm(tempFileTarget, { force: true });
-      await FsPoly.rm(tempFileLink, { force: true });
-    }
-  });
-
-  it('should not overwrite an existing file', async () => {
-    const tempFileTarget = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'target'));
-    const tempFileLink = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'link'));
-
-    try {
-      await FsPoly.touch(tempFileTarget);
-      await FsPoly.touch(tempFileLink);
-
-      await expect(FsPoly.hardlink(tempFileTarget, tempFileLink)).rejects.toThrow();
-    } finally {
-      await FsPoly.rm(tempFileTarget, { force: true });
-      await FsPoly.rm(tempFileLink, { force: true });
-    }
   });
 });
 
