@@ -21,21 +21,20 @@ import Module from '../module.js';
  *  2. The DAT-supplied ROM name is falsey
  */
 export default class CandidateExtensionCorrector extends Module {
-  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
-
   private readonly options: Options;
-
   private readonly fileFactory: FileFactory;
+  private readonly readerSemaphore: Semaphore;
 
-  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    readerSemaphore: Semaphore,
+  ) {
     super(progressBar, CandidateExtensionCorrector.name);
     this.options = options;
     this.fileFactory = fileFactory;
-
-    // This will be the same value globally, but we can't know the value at file import time
-    if (options.getReaderThreads() < CandidateExtensionCorrector.THREAD_SEMAPHORE.getValue()) {
-      CandidateExtensionCorrector.THREAD_SEMAPHORE.setValue(options.getReaderThreads());
-    }
+    this.readerSemaphore = readerSemaphore;
   }
 
   /**
@@ -144,7 +143,7 @@ export default class CandidateExtensionCorrector extends Module {
       return correctedRom;
     }
 
-    await CandidateExtensionCorrector.THREAD_SEMAPHORE.runExclusive(async () => {
+    await this.readerSemaphore.runExclusive(async () => {
       this.progressBar.incrementInProgress();
       this.progressBar.logTrace(
         `${dat.getName()}: ${candidate.getName()}: correcting extension for: ${romWithFiles

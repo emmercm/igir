@@ -5,8 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import { Semaphore } from 'async-mutex';
+
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
@@ -127,10 +130,11 @@ async function candidateWriter(
     new FileFactory(new FileCache(), LOGGER),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
-  let candidates = await new CandidateGenerator(options, new ProgressBarFake()).generate(
-    dat,
-    indexedRomFiles,
-  );
+  let candidates = await new CandidateGenerator(
+    options,
+    new ProgressBarFake(),
+    new Semaphore(Defaults.MAX_FS_THREADS),
+  ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
@@ -147,11 +151,16 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new Semaphore(Defaults.MAX_FS_THREADS),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
   // When
-  await new CandidateWriter(options, new ProgressBarFake()).write(dat, candidates);
+  await new CandidateWriter(
+    options,
+    new ProgressBarFake(),
+    new Semaphore(Defaults.MAX_FS_THREADS),
+  ).write(dat, candidates);
 
   // Then
   return walkAndStat(outputTemp);

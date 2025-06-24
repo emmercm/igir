@@ -27,14 +27,17 @@ export interface CandidateWriterResults {
  * Copy or move output ROM files, if applicable.
  */
 export default class CandidateWriter extends Module {
-  // The maximum number of candidates that can be written at once
-  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
-
   // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
   //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
   private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
     Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
   );
+
+  // Prevent concurrent writes to the same output file
+  private static readonly OUTPUT_PATHS_MUTEX = new KeyedMutex(1000);
+
+  // Keep track of written files, to warn on conflicts
+  private static readonly OUTPUT_PATHS_WRITTEN = new Map<string, DAT>();
 
   // When moving input files, process input file paths exclusively
   private static readonly MOVE_MUTEX = new KeyedMutex(1000);
@@ -43,17 +46,14 @@ export default class CandidateWriter extends Module {
   private static readonly FILE_PATH_MOVES = new Map<string, string>();
 
   private readonly options: Options;
+  private readonly writerSemaphore: Semaphore;
 
   private readonly filesQueuedForDeletion: File[] = [];
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBar, writerSemaphore: Semaphore) {
     super(progressBar, CandidateWriter.name);
     this.options = options;
-
-    // This will be the same value globally, but we can't know the value at file import time
-    if (options.getWriterThreads() < CandidateWriter.THREAD_SEMAPHORE.getValue()) {
-      CandidateWriter.THREAD_SEMAPHORE.setValue(options.getWriterThreads());
-    }
+    this.writerSemaphore = writerSemaphore;
   }
 
   /**
@@ -94,22 +94,54 @@ export default class CandidateWriter extends Module {
     }
     this.progressBar.resetProgress(writableCandidates.length);
 
+    const writeCandidatesSorted = writableCandidates.sort((a, b) => {
+      // First, prefer candidates with fewer files
+      if (a.getRomsWithFiles().length !== b.getRomsWithFiles().length) {
+        return a.getRomsWithFiles().length - b.getRomsWithFiles().length;
+      }
+      // Otherwise, stable sort by name
+      return a.getName().localeCompare(b.getName());
+    });
+
     await Promise.all(
-      writableCandidates.map(async (candidate) =>
-        CandidateWriter.THREAD_SEMAPHORE.runExclusive(async () => {
-          this.progressBar.incrementInProgress();
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
-          );
+      writeCandidatesSorted.map(async (candidate) => {
+        // First, limit writes by the global max number of threads allowed
+        await this.writerSemaphore.runExclusive(async () => {
+          // Then, restrict concurrent writes to the same output paths
+          const outputFilePaths = candidate
+            .getRomsWithFiles()
+            .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath());
+          await CandidateWriter.OUTPUT_PATHS_MUTEX.runExclusiveForKeys(
+            outputFilePaths,
+            async () => {
+              // Then, limit writing too much data to one disk
+              const totalKilobytes =
+                candidate
+                  .getRomsWithFiles()
+                  .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) /
+                1024;
+              await CandidateWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
+                this.progressBar.incrementInProgress();
+                this.progressBar.logTrace(
+                  `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+                );
 
-          await this.writeCandidate(dat, candidate);
+                if (this.options.shouldLink()) {
+                  await this.writeLink(dat, candidate);
+                } else {
+                  await this.writeZip(dat, candidate);
+                  await this.writeRaw(dat, candidate);
+                }
 
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+                this.progressBar.logTrace(
+                  `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+                );
+                this.progressBar.incrementCompleted();
+              }, totalKilobytes);
+            },
           );
-          this.progressBar.incrementCompleted();
-        }),
-      ),
+        });
+      }),
     );
 
     this.progressBar.logTrace(
@@ -125,21 +157,6 @@ export default class CandidateWriter extends Module {
       wrote: writtenFiles,
       moved: movedFiles,
     };
-  }
-
-  private async writeCandidate(dat: DAT, candidate: WriteCandidate): Promise<void> {
-    const totalKilobytes =
-      candidate
-        .getRomsWithFiles()
-        .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) / 1024;
-    await CandidateWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
-      if (this.options.shouldLink()) {
-        await this.writeLink(dat, candidate);
-      } else {
-        await this.writeZip(dat, candidate);
-        await this.writeRaw(dat, candidate);
-      }
-    }, totalKilobytes);
   }
 
   private static async ensureOutputDirExists(outputFilePath: string): Promise<void> {
@@ -188,9 +205,15 @@ export default class CandidateWriter extends Module {
           !this.options.getOverwrite() &&
           !this.options.getOverwriteInvalid()
         ) {
-          this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
-          );
+          if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputZip.getFilePath())) {
+            this.progressBar.logWarn(
+              `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())?.getName()}'`,
+            );
+          } else {
+            this.progressBar.logDebug(
+              `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
+            );
+          }
           return;
         }
 
@@ -203,7 +226,7 @@ export default class CandidateWriter extends Module {
           );
           if (this.options.shouldWrite() && !existingTest) {
             this.progressBar.logDebug(
-              `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
+              `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
             );
             return;
           }
@@ -214,25 +237,21 @@ export default class CandidateWriter extends Module {
             return;
           }
         }
+
+        if (
+          this.options.shouldWrite() &&
+          CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputZip.getFilePath())
+        ) {
+          this.progressBar.logWarn(
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())?.getName()}'`,
+          );
+        }
       }
       if (!this.options.shouldWrite()) {
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
-        const existingTest = await this.testZipContents(
-          dat,
-          candidate,
-          outputZip.getFilePath(),
-          inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
-        );
-        if (!existingTest) {
-          this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
-          );
-          return;
-        }
-      }
+      CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputZip.getFilePath(), dat);
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
       let written = false;
@@ -414,35 +433,33 @@ export default class CandidateWriter extends Module {
           .map(([input]) => input.getFilePath())
           .reduce(ArrayPoly.reduceUnique(), [])
       : [];
-    await CandidateWriter.MOVE_MUTEX.acquireMultiple(lockedFilePaths);
+    return await CandidateWriter.MOVE_MUTEX.runExclusiveForKeys(lockedFilePaths, async () => {
+      try {
+        await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
+        const compressorThreads = Math.ceil(
+          os.cpus().length / Math.max(CandidateWriter.FILESIZE_SEMAPHORE.openLocks(), 1),
+        );
+        await outputZip.createArchive(
+          inputToOutputZipEntries,
+          this.options.getZipFormat() as ZipFormatValue,
+          compressorThreads,
+          (progress, total) => {
+            progressBar.setCompleted(progress);
+            progressBar.setTotal(total);
+          },
+        );
+      } catch (error) {
+        this.progressBar.logError(
+          `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
+        );
+        return false;
+      }
 
-    try {
-      await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
-      const compressorThreads = Math.ceil(
-        os.cpus().length / Math.max(CandidateWriter.FILESIZE_SEMAPHORE.openLocks(), 1),
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
       );
-      await outputZip.createArchive(
-        inputToOutputZipEntries,
-        this.options.getZipFormat() as ZipFormatValue,
-        compressorThreads,
-        (progress, total) => {
-          progressBar.setCompleted(progress);
-          progressBar.setTotal(total);
-        },
-      );
-    } catch (error) {
-      this.progressBar.logError(
-        `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
-      );
-      return false;
-    } finally {
-      await CandidateWriter.MOVE_MUTEX.releaseMultiple(lockedFilePaths);
-    }
-
-    this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
-    );
-    return true;
+      return true;
+    });
   }
 
   /**
@@ -538,9 +555,15 @@ export default class CandidateWriter extends Module {
           !this.options.getOverwrite() &&
           !this.options.getOverwriteInvalid()
         ) {
-          this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
-          );
+          if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputFilePath)) {
+            this.progressBar.logWarn(
+              `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)?.getName()}'`,
+            );
+          } else {
+            this.progressBar.logDebug(
+              `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
+            );
+          }
           return;
         }
 
@@ -553,7 +576,7 @@ export default class CandidateWriter extends Module {
           );
           if (this.options.shouldWrite() && !existingTest) {
             this.progressBar.logDebug(
-              `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
+              `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
             );
             return;
           }
@@ -564,25 +587,21 @@ export default class CandidateWriter extends Module {
             return;
           }
         }
+
+        if (
+          this.options.shouldWrite() &&
+          CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputFilePath)
+        ) {
+          this.progressBar.logWarn(
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)?.getName()}'`,
+          );
+        }
       }
       if (!this.options.shouldWrite()) {
         return;
       }
 
-      if (this.options.getOverwriteInvalid()) {
-        const existingTest = await this.testWrittenRaw(
-          dat,
-          candidate,
-          outputFilePath,
-          outputRomFile,
-        );
-        if (!existingTest) {
-          this.progressBar.logDebug(
-            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
-          );
-          return;
-        }
-      }
+      CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputFilePath, dat);
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
       let written: MoveResultValue | undefined;
@@ -842,9 +861,15 @@ export default class CandidateWriter extends Module {
         !this.options.getOverwrite() &&
         !this.options.getOverwriteInvalid()
       ) {
-        this.progressBar.logDebug(
-          `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file`,
-        );
+        if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(linkPath)) {
+          this.progressBar.logWarn(
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)?.getName()}'`,
+          );
+        } else {
+          this.progressBar.logDebug(
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file`,
+          );
+        }
         return;
       }
 
@@ -872,11 +897,19 @@ export default class CandidateWriter extends Module {
         }
       }
 
+      if (this.options.shouldWrite() && CandidateWriter.OUTPUT_PATHS_WRITTEN.has(linkPath)) {
+        this.progressBar.logWarn(
+          `${dat.getName()}: ${candidate.getName()}: ${linkPath}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)?.getName()}'`,
+        );
+      }
+
       await FsPoly.rm(linkPath, { force: true });
     }
     if (!this.options.shouldWrite()) {
       return;
     }
+
+    CandidateWriter.OUTPUT_PATHS_WRITTEN.set(linkPath, dat);
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {

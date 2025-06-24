@@ -2,6 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import async from 'async';
+import { Semaphore } from 'async-mutex';
 import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
@@ -144,6 +145,10 @@ export default class Igir {
     let movedRomsToDelete: File[] = [];
     const datsStatuses: DATStatus[] = [];
 
+    // Semaphores
+    const readerSemaphore = new Semaphore(this.options.getReaderThreads());
+    const writerSemaphore = new Semaphore(this.options.getWriterThreads());
+
     // Process every DAT
     datProcessProgressBar.logTrace(
       `processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
@@ -162,6 +167,7 @@ export default class Igir {
       const candidates = await this.generateCandidates(
         progressBar,
         fileFactory,
+        readerSemaphore,
         processedDat,
         indexedRoms,
         patches,
@@ -169,10 +175,11 @@ export default class Igir {
       romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
-      const writerResults = await new CandidateWriter(this.options, progressBar).write(
-        processedDat,
-        candidates,
-      );
+      const writerResults = await new CandidateWriter(
+        this.options,
+        progressBar,
+        writerSemaphore,
+      ).write(processedDat, candidates);
       movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
       datsToWrittenFiles.set(processedDat, writerResults.wrote);
 
@@ -513,6 +520,7 @@ export default class Igir {
   private async generateCandidates(
     progressBar: ProgressBar,
     fileFactory: FileFactory,
+    readerSemaphore: Semaphore,
     dat: DAT,
     indexedRoms: IndexedFiles,
     patches: Patch[],
@@ -521,16 +529,21 @@ export default class Igir {
       [
         // Generate the initial set of candidates
         async (): Promise<WriteCandidate[]> =>
-          new CandidateGenerator(this.options, progressBar).generate(dat, indexedRoms),
+          new CandidateGenerator(this.options, progressBar, readerSemaphore).generate(
+            dat,
+            indexedRoms,
+          ),
         // Add patched candidates
         async (candidates): Promise<WriteCandidate[]> =>
           new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
         // Correct output filename extensions
         async (candidates): Promise<WriteCandidate[]> =>
-          new CandidateExtensionCorrector(this.options, progressBar, fileFactory).correct(
-            dat,
-            candidates,
-          ),
+          new CandidateExtensionCorrector(
+            this.options,
+            progressBar,
+            fileFactory,
+            readerSemaphore,
+          ).correct(dat, candidates),
         /**
          * Delay calculating checksums for {@link ArchiveFile}s until after the above steps for
          * efficiency

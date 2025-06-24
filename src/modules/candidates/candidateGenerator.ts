@@ -31,18 +31,13 @@ import Module from '../module.js';
  * and return a set of candidate files.
  */
 export default class CandidateGenerator extends Module {
-  private static readonly THREAD_SEMAPHORE = new Semaphore(Number.MAX_SAFE_INTEGER);
-
   private readonly options: Options;
+  private readonly readerSemaphore: Semaphore;
 
-  constructor(options: Options, progressBar: ProgressBar) {
+  constructor(options: Options, progressBar: ProgressBar, readerSemaphore: Semaphore) {
     super(progressBar, CandidateGenerator.name);
     this.options = options;
-
-    // This will be the same value globally, but we can't know the value at file import time
-    if (options.getReaderThreads() < CandidateGenerator.THREAD_SEMAPHORE.getValue()) {
-      CandidateGenerator.THREAD_SEMAPHORE.setValue(options.getReaderThreads());
-    }
+    this.readerSemaphore = readerSemaphore;
   }
 
   /**
@@ -63,7 +58,7 @@ export default class CandidateGenerator extends Module {
     // For each game, try to generate a candidate
     await Promise.all(
       dat.getGames().map(async (game) =>
-        CandidateGenerator.THREAD_SEMAPHORE.runExclusive(async () => {
+        this.readerSemaphore.runExclusive(async () => {
           this.progressBar.incrementInProgress();
           const childBar = this.progressBar.addChildBar({
             name: game.getName(),
