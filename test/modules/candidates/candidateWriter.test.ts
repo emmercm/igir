@@ -1523,7 +1523,7 @@ describe('extract', () => {
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
             .sort(),
-        ).toIncludeSameMembers(expectedDeletedInputPaths.sort());
+        ).toEqual(expectedDeletedInputPaths.sort());
       });
     },
   );
