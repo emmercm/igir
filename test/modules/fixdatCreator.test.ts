@@ -1,9 +1,9 @@
+import os from 'node:os';
 import { PassThrough } from 'node:stream';
 
 import DriveSemaphore from '../../src/async/driveSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
-import Defaults from '../../src/globals/defaults.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
@@ -79,7 +79,7 @@ async function runFixdatCreator(
         }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-        new DriveSemaphore(Defaults.MAX_FS_THREADS),
+        new DriveSemaphore(os.cpus().length),
       ).scan()
     )[0];
   } finally {

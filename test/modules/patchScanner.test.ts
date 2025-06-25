@@ -5,7 +5,6 @@ import { PassThrough } from 'node:stream';
 import DriveSemaphore from '../../src/async/driveSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
-import Defaults from '../../src/globals/defaults.js';
 import Temp from '../../src/globals/temp.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
@@ -19,7 +18,7 @@ function createPatchScanner(patch: string[], patchExclude: string[] = []): Patch
     new Options({ patch, patchExclude }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(Defaults.MAX_FS_THREADS),
+    new DriveSemaphore(os.cpus().length),
   );
 }
 

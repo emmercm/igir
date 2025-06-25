@@ -1,10 +1,10 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import Defaults from '../../../src/globals/defaults.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -41,7 +41,7 @@ describe('headerFromFileStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(Defaults.MAX_FS_THREADS),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(headeredRoms).toHaveLength(6);
 
@@ -65,7 +65,7 @@ describe('headerFromFileStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(Defaults.MAX_FS_THREADS),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);
 

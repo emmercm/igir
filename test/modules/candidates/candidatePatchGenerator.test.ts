@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -6,7 +7,6 @@ import { Semaphore } from 'async-mutex';
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import Defaults from '../../../src/globals/defaults.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import CandidatePatchGenerator from '../../../src/modules/candidates/candidatePatchGenerator.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
@@ -43,14 +43,14 @@ async function runPatchCandidateGenerator(dat: DAT, romFiles: File[]): Promise<W
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new Semaphore(os.cpus().length),
   ).generate(dat, indexedRomFiles);
 
   const patches = await new PatchScanner(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(Defaults.MAX_FS_THREADS),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   return new CandidatePatchGenerator(new ProgressBarFake()).generate(dat, candidates, patches);
@@ -77,7 +77,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(Defaults.MAX_FS_THREADS),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -97,7 +97,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(Defaults.MAX_FS_THREADS),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -121,14 +121,14 @@ describe('with explicit DATs', () => {
         options,
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(Defaults.MAX_FS_THREADS),
+        new DriveSemaphore(os.cpus().length),
       ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(Defaults.MAX_FS_THREADS),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
 
     // And pre-assert all Game names and ROM names have path separators in them

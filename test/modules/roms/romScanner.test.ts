@@ -28,7 +28,7 @@ function createRomScanner(input: string[], inputExclude: string[] = []): ROMScan
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(Defaults.MAX_FS_THREADS),
+    new DriveSemaphore(os.cpus().length),
   );
 }
 
@@ -103,7 +103,7 @@ describe('multiple files', () => {
         new Options(optionsProps),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(Defaults.MAX_FS_THREADS),
+        new DriveSemaphore(os.cpus().length),
       ).scan(checksumBitmask, true);
       expect(scannedFiles).toHaveLength(expectedRomFiles);
     },
@@ -119,7 +119,7 @@ describe('multiple files', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(Defaults.MAX_FS_THREADS),
+      new DriveSemaphore(os.cpus().length),
     ).scan(ChecksumBitmask.CRC32, false);
 
     const extensionsWithoutCrc32 = scannedFiles

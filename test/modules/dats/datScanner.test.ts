@@ -7,7 +7,6 @@ import which from 'which';
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import Defaults from '../../../src/globals/defaults.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -21,7 +20,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(Defaults.MAX_FS_THREADS),
+    new DriveSemaphore(os.cpus().length),
   );
 }
 
