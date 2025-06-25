@@ -51,7 +51,7 @@ import FileCache from './types/files/fileCache.js';
 import { ChecksumBitmask } from './types/files/fileChecksums.js';
 import FileFactory from './types/files/fileFactory.js';
 import IndexedFiles from './types/indexedFiles.js';
-import Options, { InputChecksumArchivesMode } from './types/options.js';
+import Options, { InputChecksumArchivesMode, LinkMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
 import Patch from './types/patches/patch.js';
 import WriteCandidate from './types/writeCandidate.js';
@@ -77,7 +77,11 @@ export default class Igir {
 
     // Windows 10 may require admin privileges to symlink at all
     // @see https://github.com/nodejs/node/issues/18518
-    if (this.options.shouldLink() && this.options.getSymlink() && process.platform === 'win32') {
+    if (
+      this.options.shouldLink() &&
+      this.options.getLinkMode() === LinkMode.SYMLINK &&
+      process.platform === 'win32'
+    ) {
       this.logger.trace('checking Windows for symlink permissions');
       if (!(await FsPoly.canSymlink(Temp.getTempDir()))) {
         if (!(await isAdmin())) {
@@ -90,7 +94,7 @@ export default class Igir {
       this.logger.trace('Windows has symlink permissions');
     }
 
-    if (this.options.shouldLink() && !this.options.getSymlink()) {
+    if (this.options.shouldLink() && this.options.getLinkMode() === LinkMode.HARDLINK) {
       const outputDirRoot = this.options.getOutputDirRoot();
       if (!(await FsPoly.canHardlink(outputDirRoot))) {
         const outputDisk = FsPoly.diskResolved(outputDirRoot);
