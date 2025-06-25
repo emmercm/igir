@@ -191,9 +191,10 @@ describe('multiple files', () => {
   });
 
   it('should scan hard links', async () => {
-    const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan()).sort((a, b) =>
-      a.toString().localeCompare(b.toString()),
-    );
+    const romDir = path.join('test', 'fixtures', 'roms');
+    const scannedRealFiles = (await createRomScanner([romDir]).scan())
+      .map((file) => [file.toString(), file.getCrc32() ?? ''])
+      .sort((a, b) => a[0].localeCompare(b[0]));
 
     // Given some hard linked files
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -202,7 +203,7 @@ describe('multiple files', () => {
       await FsPoly.mkdir(filesDir);
 
       const romFiles = await Promise.all(
-        (await FsPoly.walk('test/fixtures/roms', WalkMode.FILES)).map(async (romFile) => {
+        (await FsPoly.walk(romDir, WalkMode.FILES)).map(async (romFile) => {
           // Make a copy of the original file to ensure it's on the same drive
           const tempFile = path.join(filesDir, romFile);
           await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
@@ -223,30 +224,27 @@ describe('multiple files', () => {
       );
 
       // When scanning symlinked files
-      const scannedSymlinks = (await createRomScanner([linksDir]).scan()).sort((a, b) =>
-        a.toString().localeCompare(b.toString()),
-      );
+      const scannedHardLinks = (await createRomScanner([linksDir]).scan())
+        .map((file) => [file.toString().replace(linksDir + path.sep, ''), file.getCrc32() ?? ''])
+        .sort((a, b) => a[0].localeCompare(b[0]));
 
       // Then the files scan successfully
-      expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
-      for (const [idx, scannedSymlink] of scannedSymlinks.entries()) {
-        expect(scannedSymlink.getSize()).toEqual(scannedRealFiles[idx].getSize());
-        expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
-      }
+      expect(scannedHardLinks).toEqual(scannedRealFiles);
     } finally {
       await FsPoly.rm(tempDir, { recursive: true });
     }
   });
 
   it('should scan symlinks', async () => {
-    const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan()).sort((a, b) =>
-      a.toString().localeCompare(b.toString()),
-    );
+    const romDir = path.join('test', 'fixtures', 'roms');
+    const scannedRealFiles = (await createRomScanner([romDir]).scan())
+      .map((file) => [file.toString(), file.getCrc32() ?? ''])
+      .sort((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked files
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
-      const romFiles = await FsPoly.walk('test/fixtures/roms', WalkMode.FILES);
+      const romFiles = await FsPoly.walk(romDir, WalkMode.FILES);
       await Promise.all(
         romFiles.map(async (romFile, idx) => {
           const tempLink = path.join(tempDir, romFile);
@@ -262,16 +260,18 @@ describe('multiple files', () => {
       );
 
       // When scanning symlinked files
-      const scannedSymlinks = (await createRomScanner([tempDir]).scan()).sort((a, b) =>
-        a.toString().localeCompare(b.toString()),
-      );
+      const scannedSymlinks = (await createRomScanner([tempDir]).scan())
+        .map((file) => [
+          file
+            .toString()
+            .replace(tempDir + path.sep, '')
+            .replace(/ -> .+$/, ''),
+          file.getCrc32() ?? '',
+        ])
+        .sort((a, b) => a[0].localeCompare(b[0]));
 
       // Then the files scan successfully
-      expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
-      for (const [idx, scannedSymlink] of scannedSymlinks.entries()) {
-        expect(scannedSymlink.getSize()).toEqual(scannedRealFiles[idx].getSize());
-        expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
-      }
+      expect(scannedSymlinks).toEqual(scannedRealFiles);
     } finally {
       await FsPoly.rm(tempDir, { recursive: true });
     }
@@ -281,9 +281,9 @@ describe('multiple files', () => {
     const realRomDir = path.join('test', 'fixtures', 'roms');
     const romDirs = await FsPoly.dirs(realRomDir);
 
-    const scannedRealFiles = (await createRomScanner(romDirs).scan()).sort((a, b) =>
-      a.toString().localeCompare(b.toString()),
-    );
+    const scannedRealFiles = (await createRomScanner(romDirs).scan())
+      .map((file) => [file.toString(), file.getCrc32() ?? ''])
+      .sort((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked dirs
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -303,16 +303,12 @@ describe('multiple files', () => {
       );
 
       // When scanning symlink dirs
-      const scannedSymlinks = (await createRomScanner([tempDir]).scan()).sort((a, b) =>
-        a.toString().localeCompare(b.toString()),
-      );
+      const scannedSymlinks = (await createRomScanner([tempDir]).scan())
+        .map((file) => [file.toString().replace(tempDir + path.sep, ''), file.getCrc32() ?? ''])
+        .sort((a, b) => a[0].localeCompare(b[0]));
 
       // Then the dirs scan successfully
-      expect(scannedSymlinks).toHaveLength(scannedRealFiles.length);
-      for (const [idx, scannedSymlink] of scannedSymlinks.entries()) {
-        expect(scannedSymlink.getSize()).toEqual(scannedRealFiles[idx].getSize());
-        expect(scannedSymlink.getCrc32()).toEqual(scannedRealFiles[idx].getCrc32());
-      }
+      expect(scannedSymlinks).toEqual(scannedRealFiles);
     } finally {
       await FsPoly.rm(tempDir, { recursive: true });
     }
