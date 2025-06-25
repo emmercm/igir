@@ -624,7 +624,8 @@ export default class Igir {
       return;
     }
 
-    const progressBar = this.logger.addProgressBar({ name: 'Deleting moved files' });
+    const progressBarName = 'Deleting moved files';
+    const progressBar = this.logger.addProgressBar({ name: progressBarName });
     const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
       rawRomFiles,
       movedRomsToDelete,
@@ -634,6 +635,7 @@ export default class Igir {
     progressBar.setName('Deleting empty input subdirectories');
     await new InputSubdirectoriesDeleter(this.options, progressBar).delete(movedRomsToDelete);
 
+    progressBar.setName(progressBarName);
     progressBar.finishWithItems(deletedFilePaths.length, 'moved file', 'deleted');
     if (deletedFilePaths.length > 0) {
       progressBar.freeze();
