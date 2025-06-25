@@ -192,7 +192,7 @@ describe('multiple files', () => {
 
   it('should scan hard links', async () => {
     const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan()).sort((a, b) =>
-      a.getFilePath().localeCompare(b.getFilePath()),
+      a.toString().localeCompare(b.toString()),
     );
 
     // Given some hard linked files
@@ -224,7 +224,7 @@ describe('multiple files', () => {
 
       // When scanning symlinked files
       const scannedSymlinks = (await createRomScanner([linksDir]).scan()).sort((a, b) =>
-        a.getFilePath().localeCompare(b.getFilePath()),
+        a.toString().localeCompare(b.toString()),
       );
 
       // Then the files scan successfully
@@ -240,7 +240,7 @@ describe('multiple files', () => {
 
   it('should scan symlinks', async () => {
     const scannedRealFiles = (await createRomScanner(['test/fixtures/roms']).scan()).sort((a, b) =>
-      a.getFilePath().localeCompare(b.getFilePath()),
+      a.toString().localeCompare(b.toString()),
     );
 
     // Given some symlinked files
@@ -263,7 +263,7 @@ describe('multiple files', () => {
 
       // When scanning symlinked files
       const scannedSymlinks = (await createRomScanner([tempDir]).scan()).sort((a, b) =>
-        a.getFilePath().localeCompare(b.getFilePath()),
+        a.toString().localeCompare(b.toString()),
       );
 
       // Then the files scan successfully
@@ -282,7 +282,7 @@ describe('multiple files', () => {
     const romDirs = await FsPoly.dirs(realRomDir);
 
     const scannedRealFiles = (await createRomScanner(romDirs).scan()).sort((a, b) =>
-      a.getFilePath().localeCompare(b.getFilePath()),
+      a.toString().localeCompare(b.toString()),
     );
 
     // Given some symlinked dirs
@@ -304,7 +304,7 @@ describe('multiple files', () => {
 
       // When scanning symlink dirs
       const scannedSymlinks = (await createRomScanner([tempDir]).scan()).sort((a, b) =>
-        a.getFilePath().localeCompare(b.getFilePath()),
+        a.toString().localeCompare(b.toString()),
       );
 
       // Then the dirs scan successfully
