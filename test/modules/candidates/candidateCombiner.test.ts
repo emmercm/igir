@@ -5,6 +5,7 @@ import { PassThrough } from 'node:stream';
 import { Semaphore } from 'async-mutex';
 
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
@@ -34,7 +35,7 @@ async function runCombinedCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(os.cpus().length),
+    new MappableSemaphore(os.cpus().length),
   ).generate(dat, indexedRomFiles);
 
   return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);

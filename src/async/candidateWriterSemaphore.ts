@@ -1,18 +1,17 @@
 import path from 'node:path';
 
-import async from 'async';
-
 import Defaults from '../globals/defaults.js';
 import WriteCandidate from '../types/writeCandidate.js';
 import ElasticSemaphore from './elasticSemaphore.js';
 import KeyedMutex from './keyedMutex.js';
+import MappableSemaphore from './mappableSemaphore.js';
 
 /**
  * A wrapper for an `async-mutex` {@link Semaphore} that limits how many writes can be in progress
  * at once. To be used by {@link CandidateWriter}.
  */
 export default class CandidateWriterSemaphore {
-  private readonly threads: number;
+  private readonly mappableSemaphore: MappableSemaphore;
 
   private readonly outputPathsMutex = new KeyedMutex(1000);
 
@@ -25,7 +24,7 @@ export default class CandidateWriterSemaphore {
   private _openLocks = 0;
 
   constructor(threads: number) {
-    this.threads = threads;
+    this.mappableSemaphore = new MappableSemaphore(threads);
   }
 
   /**
@@ -45,7 +44,7 @@ export default class CandidateWriterSemaphore {
     });
 
     // First, limit writes by the global max number of threads allowed
-    return async.mapLimit(candidatesSorted, this.threads, async (candidate: WriteCandidate) => {
+    return this.mappableSemaphore.map(candidatesSorted, async (candidate: WriteCandidate) => {
       // Then, restrict concurrent writes to the same output paths
       const outputFilePaths = candidate
         .getRomsWithFiles()

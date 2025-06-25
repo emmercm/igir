@@ -2,12 +2,12 @@ import os from 'node:os';
 import path from 'node:path';
 
 import async from 'async';
-import { Semaphore } from 'async-mutex';
 import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
 import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
 import DriveSemaphore from './async/driveSemaphore.js';
+import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
 import Logger from './console/logger.js';
 import MultiBar from './console/multiBar.js';
@@ -122,7 +122,7 @@ export default class Igir {
 
     // Semaphores
     const driveSemaphore = new DriveSemaphore(this.options.getReaderThreads());
-    const readerSemaphore = new Semaphore(this.options.getReaderThreads());
+    const readerSemaphore = new MappableSemaphore(this.options.getReaderThreads());
     const writerSemaphore = new CandidateWriterSemaphore(this.options.getWriterThreads());
 
     // Scan and process input files
@@ -545,7 +545,7 @@ export default class Igir {
     progressBar: ProgressBar,
     fileFactory: FileFactory,
     driveSemaphore: DriveSemaphore,
-    readerSemaphore: Semaphore,
+    readerSemaphore: MappableSemaphore,
     dat: DAT,
     indexedRoms: IndexedFiles,
     patches: Patch[],

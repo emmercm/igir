@@ -5,10 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { Semaphore } from 'async-mutex';
-
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
@@ -137,7 +136,7 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(os.cpus().length),
+    new MappableSemaphore(os.cpus().length),
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
@@ -156,7 +155,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.cpus().length),
+    new MappableSemaphore(os.cpus().length),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
