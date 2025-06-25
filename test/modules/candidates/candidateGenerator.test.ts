@@ -1,8 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import { Semaphore } from 'async-mutex';
-
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';

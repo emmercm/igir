@@ -2,8 +2,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { Semaphore } from 'async-mutex';
-
 import DriveSemaphore from '../../src/async/driveSemaphore.js';
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
