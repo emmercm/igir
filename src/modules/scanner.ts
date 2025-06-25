@@ -1,7 +1,7 @@
 import { CHDInfo, CHDType } from 'chdman';
 
+import DriveSemaphore from '../async/driveSemaphore.js';
 import ProgressBar from '../console/progressBar.js';
-import DriveSemaphore from '../driveSemaphore.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
@@ -19,6 +19,7 @@ import Module from './module.js';
  */
 export default abstract class Scanner extends Module {
   protected readonly options: Options;
+  protected readonly driveSemaphore: DriveSemaphore;
 
   private readonly fileFactory: FileFactory;
 
@@ -26,21 +27,22 @@ export default abstract class Scanner extends Module {
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
     loggerPrefix: string,
   ) {
     super(progressBar, loggerPrefix);
     this.options = options;
+    this.driveSemaphore = driveSemaphore;
     this.fileFactory = fileFactory;
   }
 
   protected async getFilesFromPaths(
     filePaths: string[],
-    threads: number,
     checksumBitmask: number,
     checksumArchives = false,
   ): Promise<File[]> {
     return (
-      await new DriveSemaphore(threads).map(filePaths, async (inputFile) => {
+      await this.driveSemaphore.map(filePaths, async (inputFile) => {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
@@ -62,13 +64,12 @@ export default abstract class Scanner extends Module {
 
   protected async getUniqueFilesFromPaths(
     filePaths: string[],
-    threads: number,
     checksumBitmask: ChecksumBitmaskValue,
   ): Promise<File[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       throw new Error('must provide ChecksumBitmask when getting unique files');
     }
-    const foundFiles = await this.getFilesFromPaths(filePaths, threads, checksumBitmask);
+    const foundFiles = await this.getFilesFromPaths(filePaths, checksumBitmask);
     return foundFiles.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
   }
 

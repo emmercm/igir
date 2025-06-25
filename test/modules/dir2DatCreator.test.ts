@@ -5,6 +5,7 @@ import { PassThrough } from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
+import DriveSemaphore from '../../src/async/driveSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import Defaults from '../../src/globals/defaults.js';
@@ -34,6 +35,7 @@ it('should do nothing if dir2dat command not provided', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   // And a DAT
@@ -68,6 +70,7 @@ it('should write a valid DAT', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   // And a DAT
@@ -104,6 +107,7 @@ it('should write a valid DAT', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
@@ -152,6 +156,7 @@ it('should use the candidates for games and ROMs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   // And a DAT
@@ -203,6 +208,7 @@ it('should use the candidates for games and ROMs', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;

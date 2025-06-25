@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import DriveSemaphore from '../src/async/driveSemaphore.js';
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
+import Defaults from '../src/globals/defaults.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
 import DATScanner from '../src/modules/dats/datScanner.js';
@@ -82,8 +84,8 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
     ...optionsProps,
-    readerThreads: 8,
-    writerThreads: 4,
+    readerThreads: Defaults.MAX_FS_THREADS,
+    writerThreads: Defaults.MAX_FS_THREADS,
   });
 
   const inputFilesBefore = (
@@ -1860,6 +1862,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
+        new DriveSemaphore(Defaults.MAX_FS_THREADS),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]

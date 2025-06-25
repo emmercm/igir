@@ -3,6 +3,7 @@ import { PassThrough } from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Defaults from '../../../src/globals/defaults.js';
@@ -48,6 +49,7 @@ it('should do nothing if option not specified', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   // When
@@ -78,6 +80,7 @@ it('should combine candidates', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   // When

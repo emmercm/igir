@@ -1,4 +1,4 @@
-import ElasticSemaphore from '../src/elasticSemaphore.js';
+import ElasticSemaphore from '../../src/async/elasticSemaphore.js';
 
 describe('runExclusive', () => {
   test.each([-1, 0, 1, 10, 1_000_000])('should accept any weight: %s', async (weight) => {

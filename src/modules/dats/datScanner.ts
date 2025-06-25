@@ -4,8 +4,8 @@ import path from 'node:path';
 import { parse } from '@fast-csv/parse';
 import async from 'async';
 
+import DriveSemaphore from '../../async/driveSemaphore.js';
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import DriveSemaphore from '../../driveSemaphore.js';
 import GameGrouper from '../../gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
 import bufferPoly from '../../polyfill/bufferPoly.js';
@@ -43,8 +43,13 @@ interface SmdbRow {
  * representation.
  */
 export default class DATScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
-    super(options, progressBar, fileFactory, DATScanner.name);
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
+  ) {
+    super(options, progressBar, fileFactory, driveSemaphore, DATScanner.name);
   }
 
   /**
@@ -67,11 +72,7 @@ export default class DATScanner extends Scanner {
     this.progressBar.resetProgress(datFilePaths.length);
 
     this.progressBar.logTrace('enumerating DAT archives');
-    const datFiles = await this.getUniqueFilesFromPaths(
-      datFilePaths,
-      this.options.getReaderThreads(),
-      ChecksumBitmask.CRC32,
-    );
+    const datFiles = await this.getUniqueFilesFromPaths(datFilePaths, ChecksumBitmask.CRC32);
     this.progressBar.resetProgress(datFiles.length);
 
     const downloadedDats = await this.downloadDats(datFiles);
@@ -104,7 +105,6 @@ export default class DATScanner extends Scanner {
           );
           return await this.getFilesFromPaths(
             [downloadedDatFile.getFilePath()],
-            this.options.getReaderThreads(),
             ChecksumBitmask.NONE,
           );
         } catch (error) {
@@ -122,7 +122,7 @@ export default class DATScanner extends Scanner {
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
     return (
-      await new DriveSemaphore(this.options.getReaderThreads()).map(datFiles, async (datFile) => {
+      await this.driveSemaphore.map(datFiles, async (datFile) => {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: datFile.toString(),

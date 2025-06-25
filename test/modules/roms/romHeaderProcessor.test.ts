@@ -1,8 +1,10 @@
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
@@ -23,6 +25,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -32,6 +35,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -52,6 +56,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(1);
@@ -65,6 +70,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -74,6 +80,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -91,6 +98,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -98,6 +106,7 @@ describe('extension has possible header', () => {
       new Options(),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -117,6 +126,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -127,6 +137,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -144,6 +155,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -154,6 +166,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);

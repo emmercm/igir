@@ -3,6 +3,7 @@ import { PassThrough } from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Defaults from '../../../src/globals/defaults.js';
@@ -49,6 +50,7 @@ async function runPatchCandidateGenerator(dat: DAT, romFiles: File[]): Promise<W
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   return new CandidatePatchGenerator(new ProgressBarFake()).generate(dat, candidates, patches);
@@ -75,6 +77,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -94,6 +97,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -117,12 +121,14 @@ describe('with explicit DATs', () => {
         options,
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
+        new DriveSemaphore(Defaults.MAX_FS_THREADS),
       ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
 
     // And pre-assert all Game names and ROM names have path separators in them

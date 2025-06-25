@@ -1,8 +1,10 @@
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import DriveSemaphore from '../../../../src/async/driveSemaphore.js';
 import Logger from '../../../../src/console/logger.js';
 import { LogLevel } from '../../../../src/console/logLevel.js';
+import Defaults from '../../../../src/globals/defaults.js';
 import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import FsPoly from '../../../../src/polyfill/fsPoly.js';
@@ -23,6 +25,7 @@ async function findRoms(input: string): Promise<File[]> {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 }
 

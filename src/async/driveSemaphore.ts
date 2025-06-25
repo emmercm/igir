@@ -3,10 +3,10 @@ import path from 'node:path';
 import async from 'async';
 import { Mutex, Semaphore } from 'async-mutex';
 
+import Defaults from '../globals/defaults.js';
+import FsPoly from '../polyfill/fsPoly.js';
+import File from '../types/files/file.js';
 import ElasticSemaphore from './elasticSemaphore.js';
-import Defaults from './globals/defaults.js';
-import FsPoly from './polyfill/fsPoly.js';
-import File from './types/files/file.js';
 
 /**
  * Wrapper for an `async-mutex` {@link Semaphore} that limits how many files can be processed at

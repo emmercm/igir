@@ -7,6 +7,8 @@ import { PassThrough } from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
+import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Defaults from '../../../src/globals/defaults.js';
@@ -111,8 +113,6 @@ async function candidateWriter(
     inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
-    readerThreads: 8,
-    writerThreads: 4,
   });
 
   let romFiles: File[] = [];
@@ -121,6 +121,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
   } catch {
     /* ignored */
@@ -131,6 +132,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
   let candidates = await new CandidateGenerator(
@@ -143,6 +145,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     candidates = await new CandidatePatchGenerator(new ProgressBarFake()).generate(
       dat,
@@ -162,7 +165,7 @@ async function candidateWriter(
   await new CandidateWriter(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new CandidateWriterSemaphore(Defaults.MAX_FS_THREADS),
   ).write(dat, candidates);
 
   // Then

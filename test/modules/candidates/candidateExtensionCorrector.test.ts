@@ -5,6 +5,7 @@ import { PassThrough } from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Defaults from '../../../src/globals/defaults.js';
@@ -119,6 +120,7 @@ it('should correct ROMs without DATs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -175,6 +177,7 @@ it('should correct ROMs with missing filenames', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());

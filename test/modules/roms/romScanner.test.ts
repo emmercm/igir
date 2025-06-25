@@ -2,8 +2,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
@@ -23,10 +25,10 @@ function createRomScanner(input: string[], inputExclude: string[] = []): ROMScan
     new Options({
       input,
       inputExclude,
-      readerThreads: 4,
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   );
 }
 
@@ -101,6 +103,7 @@ describe('multiple files', () => {
         new Options(optionsProps),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
+        new DriveSemaphore(Defaults.MAX_FS_THREADS),
       ).scan(checksumBitmask, true);
       expect(scannedFiles).toHaveLength(expectedRomFiles);
     },
@@ -116,6 +119,7 @@ describe('multiple files', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan(ChecksumBitmask.CRC32, false);
 
     const extensionsWithoutCrc32 = scannedFiles

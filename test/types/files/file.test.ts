@@ -1,8 +1,10 @@
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../src/polyfill/bufferPoly.js';
@@ -410,6 +412,7 @@ describe('copyToTempFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(raws).toHaveLength(10);
 
@@ -432,6 +435,7 @@ describe('createReadStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(Defaults.MAX_FS_THREADS),
     ).scan();
     expect(raws).toHaveLength(9);
 

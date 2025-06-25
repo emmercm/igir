@@ -3,6 +3,7 @@ import { PassThrough } from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
+import DriveSemaphore from '../../src/async/driveSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import Defaults from '../../src/globals/defaults.js';
@@ -30,6 +31,7 @@ it('should do nothing if no ROMs moved', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
+    new DriveSemaphore(Defaults.MAX_FS_THREADS),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
 

@@ -2,7 +2,7 @@ import tty from 'node:tty';
 
 import stripAnsi from 'strip-ansi';
 
-import Timer from '../timer.js';
+import Timer from '../async/timer.js';
 import Logger from './logger.js';
 import SingleBar, { SingleBarOptions } from './singleBar.js';
 

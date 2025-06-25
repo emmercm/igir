@@ -5,9 +5,9 @@ import zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
 
-import KeyedMutex from '../keyedMutex.js';
+import KeyedMutex from '../async/keyedMutex.js';
+import Timer from '../async/timer.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import Timer from '../timer.js';
 
 export interface CacheProps {
   filePath?: string;

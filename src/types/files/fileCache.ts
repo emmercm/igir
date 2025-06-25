@@ -1,6 +1,6 @@
+import Timer from '../../async/timer.js';
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
-import Timer from '../../timer.js';
 import Cache from '../cache.js';
 import Archive from './archives/archive.js';
 import ArchiveEntry, { ArchiveEntryProps } from './archives/archiveEntry.js';

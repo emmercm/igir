@@ -1,3 +1,4 @@
+import DriveSemaphore from '../../async/driveSemaphore.js';
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
@@ -10,8 +11,13 @@ import Scanner from '../scanner.js';
  * representation.
  */
 export default class ROMScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
-    super(options, progressBar, fileFactory, ROMScanner.name);
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
+  ) {
+    super(options, progressBar, fileFactory, driveSemaphore, ROMScanner.name);
   }
 
   /**
@@ -34,12 +40,7 @@ export default class ROMScanner extends Scanner {
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HASHING);
     this.progressBar.resetProgress(romFilePaths.length);
 
-    const files = await this.getFilesFromPaths(
-      romFilePaths,
-      this.options.getReaderThreads(),
-      checksumBitmask,
-      checksumArchives,
-    );
+    const files = await this.getFilesFromPaths(romFilePaths, checksumBitmask, checksumArchives);
 
     this.progressBar.logTrace('done scanning ROM files');
     return files;
