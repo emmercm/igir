@@ -1,4 +1,6 @@
-import { Semaphore } from 'async-mutex';
+import path from 'node:path';
+
+import async from 'async';
 
 import Defaults from '../globals/defaults.js';
 import WriteCandidate from '../types/writeCandidate.js';
@@ -10,7 +12,7 @@ import KeyedMutex from './keyedMutex.js';
  * at once. To be used by {@link CandidateWriter}.
  */
 export default class CandidateWriterSemaphore {
-  private readonly threadsSemaphore: Semaphore;
+  private readonly threads: number;
 
   private readonly outputPathsMutex = new KeyedMutex(1000);
 
@@ -23,29 +25,42 @@ export default class CandidateWriterSemaphore {
   private _openLocks = 0;
 
   constructor(threads: number) {
-    this.threadsSemaphore = new Semaphore(threads);
+    this.threads = threads;
   }
 
   /**
-   * Run some {@link callback}.
+   * Run some {@link callback}. for every {@link candidates}.
    */
-  async runExclusive(candidate: WriteCandidate, callback: () => Promise<void>): Promise<void> {
+  async map<T>(
+    candidates: WriteCandidate[],
+    callback: (candidate: WriteCandidate) => Promise<T>,
+  ): Promise<T[]> {
+    const candidatesSorted = candidates.sort((a, b) => {
+      // First, prefer candidates with fewer files
+      if (a.getRomsWithFiles().length !== b.getRomsWithFiles().length) {
+        return a.getRomsWithFiles().length - b.getRomsWithFiles().length;
+      }
+      // Otherwise, stable sort by name
+      return a.getName().localeCompare(b.getName());
+    });
+
     // First, limit writes by the global max number of threads allowed
-    await this.threadsSemaphore.runExclusive(async () => {
+    return async.mapLimit(candidatesSorted, this.threads, async (candidate: WriteCandidate) => {
       // Then, restrict concurrent writes to the same output paths
       const outputFilePaths = candidate
         .getRomsWithFiles()
-        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath());
-      await this.outputPathsMutex.runExclusiveForKeys(outputFilePaths, async () => {
+        .map((romWithFiles) => path.normalize(romWithFiles.getOutputFile().getFilePath()));
+      return await this.outputPathsMutex.runExclusiveForKeys(outputFilePaths, async () => {
         // Then, limit writing too much data to one disk
         const totalKilobytes =
           candidate
             .getRomsWithFiles()
             .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) / 1024;
-        await this.filesizeSemaphore.runExclusive(async () => {
+        return await this.filesizeSemaphore.runExclusive(async () => {
           this._openLocks += 1;
-          await callback();
+          const result = await callback(candidate);
           this._openLocks -= 1;
+          return result;
         }, totalKilobytes);
       });
     });

@@ -82,37 +82,24 @@ export default class CandidateWriter extends Module {
     }
     this.progressBar.resetProgress(writableCandidates.length);
 
-    const writeCandidatesSorted = writableCandidates.sort((a, b) => {
-      // First, prefer candidates with fewer files
-      if (a.getRomsWithFiles().length !== b.getRomsWithFiles().length) {
-        return a.getRomsWithFiles().length - b.getRomsWithFiles().length;
+    await this.semaphore.map(writableCandidates, async (candidate) => {
+      this.progressBar.incrementInProgress();
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+      );
+
+      if (this.options.shouldLink()) {
+        await this.writeLink(dat, candidate);
+      } else {
+        await this.writeZip(dat, candidate);
+        await this.writeRaw(dat, candidate);
       }
-      // Otherwise, stable sort by name
-      return a.getName().localeCompare(b.getName());
+
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+      );
+      this.progressBar.incrementCompleted();
     });
-
-    await Promise.all(
-      writeCandidatesSorted.map(async (candidate) =>
-        this.semaphore.runExclusive(candidate, async () => {
-          this.progressBar.incrementInProgress();
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
-          );
-
-          if (this.options.shouldLink()) {
-            await this.writeLink(dat, candidate);
-          } else {
-            await this.writeZip(dat, candidate);
-            await this.writeRaw(dat, candidate);
-          }
-
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
-          );
-          this.progressBar.incrementCompleted();
-        }),
-      ),
-    );
 
     this.progressBar.logTrace(
       `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
