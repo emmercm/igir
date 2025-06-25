@@ -19,6 +19,8 @@ import Options, {
   GameSubdirModeInverted,
   InputChecksumArchivesMode,
   InputChecksumArchivesModeInverted,
+  LinkMode,
+  LinkModeInverted,
   OptionsProps,
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
@@ -80,7 +82,8 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
     ...optionsProps,
-    readerThreads: 4,
+    readerThreads: 8,
+    writerThreads: 4,
   });
 
   const inputFilesBefore = (
@@ -908,7 +911,7 @@ describe('with explicit DATs', () => {
         dirDatName: true,
         dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
-        symlink: true,
+        linkMode: LinkModeInverted[LinkMode.SYMLINK].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
       });
 
@@ -1591,7 +1594,7 @@ describe('with inferred DATs', () => {
         ],
         output: outputTemp,
         fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
-        symlink: true,
+        linkMode: LinkModeInverted[LinkMode.SYMLINK].toLowerCase(),
         symlinkRelative: true,
       });
 

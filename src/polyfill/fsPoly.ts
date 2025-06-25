@@ -27,6 +27,7 @@ export const WalkMode = {
 } as const;
 export type WalkModeKey = keyof typeof WalkMode;
 export type WalkModeValue = (typeof WalkMode)[WalkModeKey];
+
 export type FsWalkCallback = (increment: number) => void;
 
 /**
@@ -117,7 +118,15 @@ export default class FsPoly {
     callback?: FsCopyCallback,
     attempt = 1,
   ): Promise<void> {
-    const previouslyExisted = await this.exists(src);
+    if (!(await this.exists(src))) {
+      throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
+    }
+    const destDir = path.dirname(dest);
+    if (!(await this.exists(destDir))) {
+      throw new IgirException(`can't copy '${src}' to nonexistent directory '${destDir}'`);
+    }
+
+    const destPreviouslyExisted = await this.exists(dest);
 
     try {
       await util.promisify(stream.pipeline)(
@@ -148,7 +157,7 @@ export default class FsPoly {
       await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
     }
 
-    if (previouslyExisted) {
+    if (destPreviouslyExisted) {
       // Windows doesn't update mtime on overwrite?
       await this.touch(dest);
     }
@@ -217,6 +226,18 @@ export default class FsPoly {
    */
   static async hardlink(target: string, link: string): Promise<void> {
     const targetResolved = path.resolve(target);
+
+    if (!(await this.exists(targetResolved))) {
+      throw new IgirException(`can't link nonexistent file '${targetResolved}' to '${link}'`);
+    }
+    const linkDir = path.dirname(link);
+    if (!(await this.exists(linkDir))) {
+      throw new IgirException(
+        `can't link '${targetResolved}' to nonexistent directory '${linkDir}'`,
+      );
+    }
+
+    await this.rm(link, { force: true });
     try {
       await fs.promises.link(targetResolved, link);
       return;
@@ -532,6 +553,56 @@ export default class FsPoly {
   }
 
   /**
+   * Copy {@param src} to {@param dest}, overwriting any existing file, and ensuring {@param dest}
+   * is writable.
+   */
+  static async reflink(src: string, dest: string, attempt = 1): Promise<void> {
+    if (!(await this.exists(src))) {
+      throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
+    }
+    const destDir = path.dirname(dest);
+    if (!(await this.exists(destDir))) {
+      throw new IgirException(`can't copy '${src}' to nonexistent directory '${destDir}'`);
+    }
+
+    const destPreviouslyExisted = await this.exists(dest);
+
+    try {
+      await fs.promises.copyFile(src, dest, fs.constants.COPYFILE_FICLONE);
+    } catch (error) {
+      if (((error as NodeJS.ErrnoException).code ?? '') === 'ENOTSUP') {
+        throw new IgirException('reflinks are not supported on this filesystem');
+      }
+
+      // These are the same error codes that `graceful-fs` catches
+      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+        throw error;
+      }
+
+      // Backoff with jitter
+      if (attempt >= 5) {
+        throw error;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
+      });
+      return this.reflink(src, dest, attempt + 1);
+    }
+
+    // Ensure the destination file is writable
+    const stat = await this.stat(dest);
+    const chmodOwnerWrite = 0o222; // Node.js' default for file creation is 0o666 (rw)
+    if (!(stat.mode & chmodOwnerWrite)) {
+      await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
+    }
+
+    if (destPreviouslyExisted) {
+      // Windows doesn't update mtime on overwrite?
+      await this.touch(dest);
+    }
+  }
+
+  /**
    * Deletes the file or directory {@param pathLike} with the options {@param options}, retrying
    * failures.
    */
@@ -612,7 +683,19 @@ export default class FsPoly {
    * Note: {@param target} should be processed with `path.resolve()` to create absolute path
    * symlinks
    */
-  static async symlink(target: PathLike, link: PathLike): Promise<void> {
+  static async symlink(target: string, link: string): Promise<void> {
+    const targetAbsolute = path.isAbsolute(target) ? target : path.join(path.dirname(link), target);
+    if (!(await this.exists(targetAbsolute))) {
+      throw new IgirException(`can't link nonexistent file '${targetAbsolute}' to '${link}'`);
+    }
+    const linkDir = path.dirname(link);
+    if (!(await this.exists(linkDir))) {
+      throw new IgirException(
+        `can't link '${targetAbsolute}' to nonexistent directory '${linkDir}'`,
+      );
+    }
+
+    await this.rm(link, { force: true });
     return util.promisify(fs.symlink)(target, link);
   }
 

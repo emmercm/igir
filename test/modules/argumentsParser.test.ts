@@ -14,6 +14,7 @@ import {
   FixExtension,
   GameSubdirMode,
   InputChecksumArchivesMode,
+  LinkMode,
   MergeMode,
   MoveDeleteDirs,
   PreferRevision,
@@ -231,7 +232,7 @@ describe('options', () => {
     expect(options.getZipFormat()).toEqual(ZipFormat.TORRENTZIP);
     expect(options.getZipDatName()).toEqual(false);
 
-    expect(options.getSymlink()).toEqual(false);
+    expect(options.getLinkMode()).toEqual(LinkMode.HARDLINK);
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
@@ -2160,33 +2161,35 @@ describe('options', () => {
     ).toEqual(false);
   });
 
-  it('should parse "symlink"', () => {
-    expect(() =>
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--symlink']).getSymlink(),
-    ).toThrow(/missing required command/i);
-    expect(argumentsParser.parse(['link', ...dummyRequiredArgs]).getSymlink()).toEqual(false);
-    expect(argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink']).getSymlink()).toEqual(
-      true,
+  it('should parse "link-mode"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getLinkMode()).toEqual(
+      LinkMode.HARDLINK,
     );
-    expect(
-      argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'true']).getSymlink(),
-    ).toEqual(true);
-    expect(
-      argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', 'false']).getSymlink(),
-    ).toEqual(false);
-    expect(
-      argumentsParser.parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink']).getSymlink(),
-    ).toEqual(true);
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--link-mode', 'foobar'])
+        .getLinkMode(),
+    ).toThrow(/invalid values/i);
     expect(
       argumentsParser
-        .parse(['link', ...dummyRequiredArgs, '--symlink', 'false', '--symlink', 'true'])
-        .getSymlink(),
-    ).toEqual(true);
+        .parse([...dummyCommandAndRequiredArgs, '--link-mode', 'hardlink'])
+        .getLinkMode(),
+    ).toEqual(LinkMode.HARDLINK);
     expect(
       argumentsParser
-        .parse(['link', ...dummyRequiredArgs, '--symlink', 'true', '--symlink', 'false'])
-        .getSymlink(),
-    ).toEqual(false);
+        .parse([...dummyCommandAndRequiredArgs, '--link-mode', 'symlink'])
+        .getLinkMode(),
+    ).toEqual(LinkMode.SYMLINK);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--link-mode', 'reflink'])
+        .getLinkMode(),
+    ).toEqual(LinkMode.REFLINK);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--link-mode', 'symlink', '--link-mode', 'reflink'])
+        .getLinkMode(),
+    ).toEqual(LinkMode.REFLINK);
   });
 
   it('should parse "symlink-relative"', () => {
@@ -2195,17 +2198,31 @@ describe('options', () => {
     ).toThrow(/dependent|implication/i);
     expect(
       argumentsParser
-        .parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative'])
+        .parse(['link', ...dummyRequiredArgs, '--link-mode', 'symlink', '--symlink-relative'])
         .getSymlinkRelative(),
     ).toEqual(true);
     expect(
       argumentsParser
-        .parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'true'])
+        .parse([
+          'link',
+          ...dummyRequiredArgs,
+          '--link-mode',
+          'symlink',
+          '--symlink-relative',
+          'true',
+        ])
         .getSymlinkRelative(),
     ).toEqual(true);
     expect(
       argumentsParser
-        .parse(['link', ...dummyRequiredArgs, '--symlink', '--symlink-relative', 'false'])
+        .parse([
+          'link',
+          ...dummyRequiredArgs,
+          '--link-mode',
+          'symlink',
+          '--symlink-relative',
+          'false',
+        ])
         .getSymlinkRelative(),
     ).toEqual(false);
     expect(
@@ -2213,7 +2230,8 @@ describe('options', () => {
         .parse([
           'link',
           ...dummyRequiredArgs,
-          '--symlink',
+          '--link-mode',
+          'symlink',
           '--symlink-relative',
           '--symlink-relative',
         ])
@@ -2224,7 +2242,8 @@ describe('options', () => {
         .parse([
           'link',
           ...dummyRequiredArgs,
-          '--symlink',
+          '--link-mode',
+          'symlink',
           '--symlink-relative',
           'false',
           '--symlink-relative',
@@ -2237,7 +2256,8 @@ describe('options', () => {
         .parse([
           'link',
           ...dummyRequiredArgs,
-          '--symlink',
+          '--link-mode',
+          'symlink',
           '--symlink-relative',
           'true',
           '--symlink-relative',

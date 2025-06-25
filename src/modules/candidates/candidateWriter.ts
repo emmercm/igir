@@ -14,7 +14,7 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import Options, { ZipFormat, ZipFormatValue } from '../../types/options.js';
+import Options, { LinkMode, ZipFormat, ZipFormatValue } from '../../types/options.js';
 import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
@@ -849,7 +849,7 @@ export default class CandidateWriter extends Module {
 
     const linkPath = outputRomFile.getFilePath();
     let targetPath = path.resolve(inputRomFile.getFilePath());
-    if (this.options.getSymlink() && this.options.getSymlinkRelative()) {
+    if (this.options.getLinkMode() === LinkMode.SYMLINK && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       targetPath = await FsPoly.symlinkRelativePath(targetPath, linkPath);
     }
@@ -875,13 +875,15 @@ export default class CandidateWriter extends Module {
 
       if (!this.options.shouldWrite() || this.options.getOverwriteInvalid()) {
         let existingTest;
-        if (this.options.getSymlink()) {
+        if (this.options.getLinkMode() === LinkMode.SYMLINK) {
           existingTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
-        } else {
+        } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
           existingTest = await CandidateWriter.testWrittenHardlink(
             linkPath,
             inputRomFile.getFilePath(),
           );
+        } else {
+          existingTest = await this.testWrittenRaw(dat, candidate, linkPath, outputRomFile);
         }
         if (this.options.shouldWrite() && !existingTest) {
           this.progressBar.logDebug(
@@ -902,8 +904,6 @@ export default class CandidateWriter extends Module {
           `${dat.getName()}: ${candidate.getName()}: ${linkPath}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)?.getName()}'`,
         );
       }
-
-      await FsPoly.rm(linkPath, { force: true });
     }
     if (!this.options.shouldWrite()) {
       return;
@@ -921,13 +921,15 @@ export default class CandidateWriter extends Module {
       }
       if (written && this.options.shouldTest()) {
         let writtenTest;
-        if (this.options.getSymlink()) {
+        if (this.options.getLinkMode() === LinkMode.SYMLINK) {
           writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
-        } else {
+        } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
           writtenTest = await CandidateWriter.testWrittenHardlink(
             linkPath,
             inputRomFile.getFilePath(),
           );
+        } else {
+          writtenTest = await this.testWrittenRaw(dat, candidate, linkPath, outputRomFile);
         }
         if (!writtenTest) {
           // Successfully validated
@@ -952,16 +954,21 @@ export default class CandidateWriter extends Module {
   ): Promise<boolean> {
     try {
       await CandidateWriter.ensureOutputDirExists(linkPath);
-      if (this.options.getSymlink()) {
+      if (this.options.getLinkMode() === LinkMode.SYMLINK) {
         this.progressBar.logInfo(
           `${dat.getName()}: ${candidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`,
         );
         await FsPoly.symlink(targetPath, linkPath);
-      } else {
+      } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
         this.progressBar.logInfo(
           `${dat.getName()}: ${candidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`,
         );
         await FsPoly.hardlink(targetPath, linkPath);
+      } else {
+        this.progressBar.logInfo(
+          `${dat.getName()}: ${candidate.getName()}: creating reflink '${targetPath}' → '${linkPath}'`,
+        );
+        await FsPoly.reflink(targetPath, linkPath);
       }
       return true;
     } catch (error) {

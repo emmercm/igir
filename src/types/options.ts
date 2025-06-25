@@ -38,6 +38,20 @@ export const InputChecksumArchivesModeInverted = Object.fromEntries(
   Object.entries(InputChecksumArchivesMode).map(([key, value]) => [value, key]),
 ) as Record<InputChecksumArchivesModeValue, InputChecksumArchivesModeKey>;
 
+export const LinkMode = {
+  // Create hard links to the original files
+  HARDLINK: 1,
+  // Create symbolic links to the original files
+  SYMLINK: 2,
+  // Create copy-on-write links to the original files
+  REFLINK: 3,
+} as const;
+export type LinkModeKey = keyof typeof LinkMode;
+export type LinkModeValue = (typeof LinkMode)[keyof typeof LinkMode];
+export const LinkModeInverted = Object.fromEntries(
+  Object.entries(LinkMode).map(([key, value]) => [value, key]),
+) as Record<LinkModeValue, LinkModeKey>;
+
 export const MergeMode = {
   // Clones contain all parent ROMs, all games contain BIOS & device ROMs
   FULLNONMERGED: 1,
@@ -156,7 +170,7 @@ export interface OptionsProps {
   readonly zipExclude?: string;
   readonly zipDatName?: boolean;
 
-  readonly symlink?: boolean;
+  readonly linkMode?: string;
   readonly symlinkRelative?: boolean;
 
   readonly header?: string;
@@ -310,7 +324,7 @@ export default class Options implements OptionsProps {
 
   readonly zipDatName: boolean;
 
-  readonly symlink: boolean;
+  readonly linkMode?: string;
 
   readonly symlinkRelative: boolean;
 
@@ -493,7 +507,7 @@ export default class Options implements OptionsProps {
     this.zipExclude = options?.zipExclude ?? '';
     this.zipDatName = options?.zipDatName ?? false;
 
-    this.symlink = options?.symlink ?? false;
+    this.linkMode = options?.linkMode;
     this.symlinkRelative = options?.symlinkRelative ?? false;
 
     this.header = options?.header ?? '';
@@ -1124,8 +1138,14 @@ export default class Options implements OptionsProps {
     return this.zipDatName;
   }
 
-  getSymlink(): boolean {
-    return this.symlink;
+  getLinkMode(): LinkModeValue | undefined {
+    const linkMode = Object.keys(LinkMode).find(
+      (mode) => mode.toLowerCase() === this.linkMode?.toLowerCase(),
+    );
+    if (!linkMode) {
+      return undefined;
+    }
+    return LinkMode[linkMode as LinkModeKey];
   }
 
   getSymlinkRelative(): boolean {
