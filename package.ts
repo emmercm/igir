@@ -12,6 +12,7 @@ import Logger from './src/console/logger.js';
 import { LogLevel } from './src/console/logLevel.js';
 import Package from './src/globals/package.js';
 import FsPoly from './src/polyfill/fsPoly.js';
+import Timer from './src/timer.js';
 import IgirException from './src/types/exceptions/igirException.js';
 
 interface FileFilter extends GlobOptions {
@@ -193,4 +194,5 @@ const procOutput = await new Promise<string>((resolve, reject) => {
 });
 logger.trace(procOutput);
 
+Timer.cancelAll();
 logger.info('Finished!');

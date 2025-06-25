@@ -6,6 +6,7 @@ import fg from 'fast-glob';
 import Logger from './src/console/logger.js';
 import { LogLevel } from './src/console/logLevel.js';
 import FsPoly from './src/polyfill/fsPoly.js';
+import Timer from './src/timer.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
 
@@ -121,4 +122,5 @@ if (process.platform !== 'win32') {
   });
 }
 
+Timer.cancelAll();
 logger.info('Finished!');
