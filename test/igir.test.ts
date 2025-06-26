@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -84,8 +83,8 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
     ...optionsProps,
-    readerThreads: os.cpus().length,
-    writerThreads: os.cpus().length,
+    readerThreads: 2,
+    writerThreads: 2,
   });
 
   const inputFilesBefore = (
@@ -1862,7 +1861,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.cpus().length),
+        new DriveSemaphore(2),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]

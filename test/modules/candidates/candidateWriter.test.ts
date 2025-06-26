@@ -109,7 +109,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(2),
     ).scan();
   } catch {
     /* ignored */
@@ -118,7 +118,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(2),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
 
@@ -128,14 +128,14 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(2),
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(2),
     ).scan();
     candidates = await new CandidatePatchGenerator(new ProgressBarFake()).generate(
       dat,
@@ -147,16 +147,15 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(2),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
   // When
-  await new CandidateWriter(
-    options,
-    new ProgressBarFake(),
-    new CandidateWriterSemaphore(os.cpus().length),
-  ).write(dat, candidates);
+  await new CandidateWriter(options, new ProgressBarFake(), new CandidateWriterSemaphore(2)).write(
+    dat,
+    candidates,
+  );
 
   // Then
   return walkAndStat(outputTemp);
