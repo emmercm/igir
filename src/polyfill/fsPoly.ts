@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import fs, { MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions } from 'node:fs';
+import { PathOrFileDescriptor } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import stream from 'node:stream';
@@ -512,6 +513,13 @@ export default class FsPoly {
       return false;
     }
     return this.diskResolved(one) !== this.diskResolved(two);
+  }
+
+  /**
+   * @returns the contents of the file.
+   */
+  static async readFile(pathLike: PathOrFileDescriptor): Promise<Buffer<ArrayBuffer>> {
+    return util.promisify(fs.readFile)(pathLike);
   }
 
   /**

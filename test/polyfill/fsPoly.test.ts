@@ -482,6 +482,10 @@ describe('mv', () => {
   // TODO(cemmer)
 });
 
+describe('readFile', () => {
+  // TODO(cemmer)
+});
+
 describe('readlink', () => {
   it('should throw on hard links', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));

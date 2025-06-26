@@ -4,6 +4,7 @@ import fs, { Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
+import util from 'node:util';
 
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
@@ -70,7 +71,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 
   return Promise.all(
     (await FsPoly.walk(dirPath, WalkMode.FILES)).sort().map(async (filePath) => {
-      const stats = await fs.promises.lstat(filePath);
+      const stats = await util.promisify(fs.lstat)(filePath);
       // Hard-code properties that can change with file reads
       stats.atime = new Date(0);
       stats.atimeMs = 0;

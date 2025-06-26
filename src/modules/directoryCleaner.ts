@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 import async from 'async';
 import { Semaphore } from 'async-mutex';
@@ -194,7 +195,7 @@ export default class DirectoryCleaner extends Module {
     if (!(await FsPoly.exists(dirsToClean))) {
       return [];
     }
-    const subPaths = (await fs.promises.readdir(dirsToClean))
+    const subPaths = (await util.promisify(fs.readdir)(dirsToClean))
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirsToClean, basename));
 
