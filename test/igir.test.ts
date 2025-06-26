@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import util from 'node:util';
@@ -1867,7 +1866,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.cpus().length),
+        new DriveSemaphore(2),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]

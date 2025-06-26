@@ -20,7 +20,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(2),
   );
 }
 

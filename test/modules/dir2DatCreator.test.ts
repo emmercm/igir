@@ -1,6 +1,5 @@
 import 'jest-extended';
 
-import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -34,7 +33,7 @@ it('should do nothing if dir2dat command not provided', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(2),
   ).scan();
 
   // And a DAT
@@ -46,7 +45,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(2),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
@@ -69,7 +68,7 @@ it('should write a valid DAT', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(2),
   ).scan();
 
   // And a DAT
@@ -81,7 +80,7 @@ it('should write a valid DAT', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(2),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
@@ -106,7 +105,7 @@ it('should write a valid DAT', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(2),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
@@ -155,7 +154,7 @@ it('should use the candidates for games and ROMs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(2),
   ).scan();
 
   // And a DAT
@@ -167,7 +166,7 @@ it('should use the candidates for games and ROMs', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(2),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When manipulating the candidates
@@ -207,7 +206,7 @@ it('should use the candidates for games and ROMs', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(2),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;

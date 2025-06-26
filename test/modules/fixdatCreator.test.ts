@@ -1,4 +1,3 @@
-import os from 'node:os';
 import { PassThrough } from 'node:stream';
 
 import DriveSemaphore from '../../src/async/driveSemaphore.js';
@@ -79,7 +78,7 @@ async function runFixdatCreator(
         }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-        new DriveSemaphore(os.cpus().length),
+        new DriveSemaphore(2),
       ).scan()
     )[0];
   } finally {

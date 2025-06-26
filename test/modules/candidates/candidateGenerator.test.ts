@@ -1,4 +1,3 @@
-import os from 'node:os';
 import path from 'node:path';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
@@ -76,11 +75,10 @@ async function candidateGenerator(
 ): Promise<WriteCandidate[]> {
   const resolvedFiles = await Promise.all(files);
   const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(resolvedFiles);
-  return new CandidateGenerator(
-    options,
-    new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
-  ).generate(dat, indexedFiles);
+  return new CandidateGenerator(options, new ProgressBarFake(), new MappableSemaphore(2)).generate(
+    dat,
+    indexedFiles,
+  );
 }
 
 describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
@@ -888,7 +886,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new MappableSemaphore(os.cpus().length),
+      new MappableSemaphore(2),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
@@ -928,7 +926,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new MappableSemaphore(os.cpus().length),
+      new MappableSemaphore(2),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
