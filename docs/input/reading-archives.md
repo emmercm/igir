@@ -8,20 +8,20 @@ Igir supports most common archive formats:
 
 | Extension                                                        | Contains file CRC32s | Igir can extract without a third-party binary | Igir can checksum without temporary files |
 |------------------------------------------------------------------|----------------------|-----------------------------------------------|-------------------------------------------|
-| `.7z`                                                            | ✅                    | ❌ `7za`                                       | ❌                                         |
-| `.chd`                                                           | ❌ SHA1               | ❌ `chdman`<sup>1</sup>                        | ⚠️ SHA1 only for hard drive images        |
-| `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ `maxcso`                                    | ⚠️ CRC32 only                             |
-| `.gcz`                                                           | ❌                    | ❌ `dolphin-tool`                              | ⚠️ CRC32, MD5, and SHA1 only              |
-| `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ `7za`                                       | ❌                                         |
+| `.7z`                                                            | ✅                    | ❌ Uses bundled `7za`                          | ❌                                         |
+| `.chd`                                                           | ❌ SHA1               | ❌ Uses bundled `chdman`<sup>1</sup>           | ⚠️ SHA1 only for hard drive images        |
+| `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ Uses bundled `maxcso`                       | ⚠️ CRC32 only                             |
+| `.gcz`                                                           | ❌                    | ❌ Uses bundled `dolphin-tool`                 | ⚠️ CRC32, MD5, and SHA1 only              |
+| `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ Uses bundled `7za`                          | ❌                                         |
 | `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                       | ✅                                         |
 | `.rar`                                                           | ✅                    | ✅                                             | ❌                                         |
-| `.rvz`, `.wia`                                                   | ❌                    | ❌ `dolphin-tool`                              | ⚠️ CRC32, MD5, and SHA1 only              |
+| `.rvz`, `.wia`                                                   | ❌                    | ❌ Uses bundled `dolphin-tool`                 | ⚠️ CRC32, MD5, and SHA1 only              |
 | `.tar`                                                           | ❌                    | ✅                                             | ✅                                         |
 | `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅                                         |
-| `.z01`                                                           | ✅                    | ❌ `7za`                                       | ❌                                         |
+| `.z01`                                                           | ✅                    | ❌ Uses bundled `7za`                          | ❌                                         |
 | `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                    | ✅                                             | ✅                                         |
-| `.zip.001`                                                       | ✅                    | ❌ `7za`                                       | ❌                                         |
-| `.zipx`                                                          | ✅                    | ❌ `7za`                                       | ❌                                         |
+| `.zip.001`                                                       | ✅                    | ❌ Uses bundled `7za`                          | ❌                                         |
+| `.zipx`                                                          | ✅                    | ❌ Uses bundled `7za`                          | ❌                                         |
 
 <small>
 <sup>1</sup> may require you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
