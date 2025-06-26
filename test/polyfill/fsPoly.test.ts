@@ -57,14 +57,13 @@ describe.each([
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
-      await (await IOFile.fileOfSize(tempSrc, 'w', 1024)).close();
+      await (await IOFile.fileOfSize(tempSrc, 'w', 512 * 1024)).close();
 
-      const tempDestPaths = await Promise.all(
-        [...Array.from({ length: 100 }).keys()].map(async () =>
-          FsPoly.mktemp(path.join(tempDir, 'dest')),
+      await Promise.all(
+        [...Array.from({ length: 256 }).keys()].map(async (number) =>
+          writeFunction(tempSrc, path.join(tempDir, `dest.${number}`)),
         ),
       );
-      await Promise.all(tempDestPaths.map(async (tempDest) => writeFunction(tempSrc, tempDest)));
     } finally {
       await FsPoly.rm(tempDir, { recursive: true, force: true });
     }
