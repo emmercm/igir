@@ -819,7 +819,7 @@ export default class FsPoly {
     const file = await util.promisify(fs.open)(filePath, 'w');
     try {
       await util.promisify(fs.writeFile)(file, data, options);
-      await util.promisify(fs.fsync)(file); // emulate fs.promises.writeFile() flush:true added in v21.0.0
+      await util.promisify(fs.fsync)(file); // emulate fs.writeFile() flush:true added in v21.0.0
     } finally {
       await util.promisify(fs.close)(file);
     }
