@@ -136,7 +136,11 @@ export default class FsPoly {
       );
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
-      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+      if (
+        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
+          (error as NodeJS.ErrnoException).code ?? '',
+        )
+      ) {
         throw error;
       }
 
@@ -575,7 +579,11 @@ export default class FsPoly {
       }
 
       // These are the same error codes that `graceful-fs` catches
-      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+      if (
+        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
+          (error as NodeJS.ErrnoException).code ?? '',
+        )
+      ) {
         throw error;
       }
 
