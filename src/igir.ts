@@ -2,10 +2,13 @@ import os from 'node:os';
 import path from 'node:path';
 
 import async from 'async';
-import { Semaphore } from 'async-mutex';
 import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
+import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
+import DriveSemaphore from './async/driveSemaphore.js';
+import MappableSemaphore from './async/mappableSemaphore.js';
+import Timer from './async/timer.js';
 import Logger from './console/logger.js';
 import MultiBar from './console/multiBar.js';
 import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
@@ -42,7 +45,6 @@ import ROMScanner from './modules/roms/romScanner.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
-import Timer from './timer.js';
 import DAT from './types/dats/dat.js';
 import DATStatus from './types/datStatus.js';
 import IgirException from './types/exceptions/igirException.js';
@@ -118,15 +120,21 @@ export default class Igir {
     }
     const fileFactory = new FileFactory(fileCache, this.logger);
 
+    // Semaphores
+    const driveSemaphore = new DriveSemaphore(this.options.getReaderThreads());
+    const readerSemaphore = new MappableSemaphore(this.options.getReaderThreads());
+    const writerSemaphore = new CandidateWriterSemaphore(this.options.getWriterThreads());
+
     // Scan and process input files
-    let dats = await this.processDATScanner(fileFactory);
+    let dats = await this.processDATScanner(fileFactory, driveSemaphore);
     const indexedRoms = await this.processROMScanner(
       fileFactory,
+      driveSemaphore,
       this.determineScanningBitmask(dats),
       this.determineScanningChecksumArchives(dats),
     );
     const roms = indexedRoms.getFiles();
-    const patches = await this.processPatchScanner(fileFactory);
+    const patches = await this.processPatchScanner(fileFactory, driveSemaphore);
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar({
@@ -149,10 +157,6 @@ export default class Igir {
     let movedRomsToDelete: File[] = [];
     const datsStatuses: DATStatus[] = [];
 
-    // Semaphores
-    const readerSemaphore = new Semaphore(this.options.getReaderThreads());
-    const writerSemaphore = new Semaphore(this.options.getWriterThreads());
-
     // Process every DAT
     datProcessProgressBar.logTrace(
       `processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
@@ -171,6 +175,7 @@ export default class Igir {
       const candidates = await this.generateCandidates(
         progressBar,
         fileFactory,
+        driveSemaphore,
         readerSemaphore,
         processedDat,
         indexedRoms,
@@ -315,7 +320,10 @@ export default class Igir {
     return undefined;
   }
 
-  private async processDATScanner(fileFactory: FileFactory): Promise<DAT[]> {
+  private async processDATScanner(
+    fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
+  ): Promise<DAT[]> {
     if (this.options.shouldDir2Dat()) {
       return [];
     }
@@ -327,7 +335,7 @@ export default class Igir {
     const progressBar = this.logger.addProgressBar({
       name: 'Scanning for DATs',
     });
-    let dats = await new DATScanner(this.options, progressBar, fileFactory).scan();
+    let dats = await new DATScanner(this.options, progressBar, fileFactory, driveSemaphore).scan();
     if (dats.length === 0) {
       throw new IgirException('No valid DAT files found!');
     }
@@ -463,6 +471,7 @@ export default class Igir {
 
   private async processROMScanner(
     fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
@@ -471,16 +480,19 @@ export default class Igir {
       name: romScannerProgressBarName,
     });
 
-    const rawRomFiles = await new ROMScanner(this.options, romProgressBar, fileFactory).scan(
-      checksumBitmask,
-      checksumArchives,
-    );
+    const rawRomFiles = await new ROMScanner(
+      this.options,
+      romProgressBar,
+      fileFactory,
+      driveSemaphore,
+    ).scan(checksumBitmask, checksumArchives);
 
     romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(
       this.options,
       romProgressBar,
       fileFactory,
+      driveSemaphore,
     ).process(rawRomFiles);
 
     romProgressBar.setName('Indexing ROMs');
@@ -493,7 +505,10 @@ export default class Igir {
     return indexedRomFiles;
   }
 
-  private async processPatchScanner(fileFactory: FileFactory): Promise<Patch[]> {
+  private async processPatchScanner(
+    fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
+  ): Promise<Patch[]> {
     if (!this.options.getPatchFileCount()) {
       return [];
     }
@@ -501,7 +516,12 @@ export default class Igir {
     const progressBar = this.logger.addProgressBar({
       name: 'Scanning for patches',
     });
-    const patches = await new PatchScanner(this.options, progressBar, fileFactory).scan();
+    const patches = await new PatchScanner(
+      this.options,
+      progressBar,
+      fileFactory,
+      driveSemaphore,
+    ).scan();
     progressBar.finishWithItems(patches.length, 'patch', 'found');
     progressBar.freeze();
     return patches;
@@ -524,7 +544,8 @@ export default class Igir {
   private async generateCandidates(
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    readerSemaphore: Semaphore,
+    driveSemaphore: DriveSemaphore,
+    readerSemaphore: MappableSemaphore,
     dat: DAT,
     indexedRoms: IndexedFiles,
     patches: Patch[],
@@ -553,10 +574,12 @@ export default class Igir {
          * efficiency
          */
         async (candidates): Promise<WriteCandidate[]> =>
-          new CandidateArchiveFileHasher(this.options, progressBar, fileFactory).hash(
-            dat,
-            candidates,
-          ),
+          new CandidateArchiveFileHasher(
+            this.options,
+            progressBar,
+            fileFactory,
+            driveSemaphore,
+          ).hash(dat, candidates),
         // Finalize output file paths
         (candidates): WriteCandidate[] =>
           new CandidatePostProcessor(this.options, progressBar).process(dat, candidates),

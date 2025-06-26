@@ -322,11 +322,11 @@ export default class File implements FileProps {
     }
 
     // Complex case: create a temp file with the header removed
-    const tempFile = await FsPoly.mktemp(
-      path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
-    );
     if (patch) {
       // Create a patched temp file, then copy it without removing its header
+      const tempFile = await FsPoly.mktemp(
+        path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
+      );
       await patch.createPatchedFile(this, tempFile);
       try {
         await File.createStreamFromFile(
@@ -345,6 +345,7 @@ export default class File implements FileProps {
         await FsPoly.rm(tempFile, { force: true });
       }
     }
+
     // Extract this file removing its header
     return this.createReadStream(async (readable) => {
       await util.promisify(stream.pipeline)(

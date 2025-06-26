@@ -1,12 +1,9 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import { Semaphore } from 'async-mutex';
-
+import CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.js';
+import KeyedMutex from '../../async/keyedMutex.js';
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import ElasticSemaphore from '../../elasticSemaphore.js';
-import Defaults from '../../globals/defaults.js';
-import KeyedMutex from '../../keyedMutex.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FsPoly, { MoveResult, MoveResultValue } from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
@@ -27,15 +24,6 @@ export interface CandidateWriterResults {
  * Copy or move output ROM files, if applicable.
  */
 export default class CandidateWriter extends Module {
-  // WARN(cemmer): there is an undocumented semaphore max value that can be used, the full
-  //  4,700,372,992 bytes of a DVD+R will cause runExclusive() to never run or return.
-  private static readonly FILESIZE_SEMAPHORE = new ElasticSemaphore(
-    Defaults.MAX_READ_WRITE_CONCURRENT_KILOBYTES,
-  );
-
-  // Prevent concurrent writes to the same output file
-  private static readonly OUTPUT_PATHS_MUTEX = new KeyedMutex(1000);
-
   // Keep track of written files, to warn on conflicts
   private static readonly OUTPUT_PATHS_WRITTEN = new Map<string, DAT>();
 
@@ -46,14 +34,14 @@ export default class CandidateWriter extends Module {
   private static readonly FILE_PATH_MOVES = new Map<string, string>();
 
   private readonly options: Options;
-  private readonly writerSemaphore: Semaphore;
+  private readonly semaphore: CandidateWriterSemaphore;
 
   private readonly filesQueuedForDeletion: File[] = [];
 
-  constructor(options: Options, progressBar: ProgressBar, writerSemaphore: Semaphore) {
+  constructor(options: Options, progressBar: ProgressBar, semaphore: CandidateWriterSemaphore) {
     super(progressBar, CandidateWriter.name);
     this.options = options;
-    this.writerSemaphore = writerSemaphore;
+    this.semaphore = semaphore;
   }
 
   /**
@@ -94,55 +82,24 @@ export default class CandidateWriter extends Module {
     }
     this.progressBar.resetProgress(writableCandidates.length);
 
-    const writeCandidatesSorted = writableCandidates.sort((a, b) => {
-      // First, prefer candidates with fewer files
-      if (a.getRomsWithFiles().length !== b.getRomsWithFiles().length) {
-        return a.getRomsWithFiles().length - b.getRomsWithFiles().length;
+    await this.semaphore.map(writableCandidates, async (candidate) => {
+      this.progressBar.incrementInProgress();
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+      );
+
+      if (this.options.shouldLink()) {
+        await this.writeLink(dat, candidate);
+      } else {
+        await this.writeZip(dat, candidate);
+        await this.writeRaw(dat, candidate);
       }
-      // Otherwise, stable sort by name
-      return a.getName().localeCompare(b.getName());
+
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
+      );
+      this.progressBar.incrementCompleted();
     });
-
-    await Promise.all(
-      writeCandidatesSorted.map(async (candidate) => {
-        // First, limit writes by the global max number of threads allowed
-        await this.writerSemaphore.runExclusive(async () => {
-          // Then, restrict concurrent writes to the same output paths
-          const outputFilePaths = candidate
-            .getRomsWithFiles()
-            .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath());
-          await CandidateWriter.OUTPUT_PATHS_MUTEX.runExclusiveForKeys(
-            outputFilePaths,
-            async () => {
-              // Then, limit writing too much data to one disk
-              const totalKilobytes =
-                candidate
-                  .getRomsWithFiles()
-                  .reduce((sum, romWithFiles) => sum + romWithFiles.getInputFile().getSize(), 0) /
-                1024;
-              await CandidateWriter.FILESIZE_SEMAPHORE.runExclusive(async () => {
-                this.progressBar.incrementInProgress();
-                this.progressBar.logTrace(
-                  `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
-                );
-
-                if (this.options.shouldLink()) {
-                  await this.writeLink(dat, candidate);
-                } else {
-                  await this.writeZip(dat, candidate);
-                  await this.writeRaw(dat, candidate);
-                }
-
-                this.progressBar.logTrace(
-                  `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
-                );
-                this.progressBar.incrementCompleted();
-              }, totalKilobytes);
-            },
-          );
-        });
-      }),
-    );
 
     this.progressBar.logTrace(
       `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
@@ -350,21 +307,21 @@ export default class CandidateWriter extends Module {
         expectedFile.getSha256() &&
         actualFile.getSha256() !== expectedFile.getSha256()
       ) {
-        return `has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
+        return `entry '${entryPath}' has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
       }
       if (
         actualFile.getSha1() &&
         expectedFile.getSha1() &&
         actualFile.getSha1() !== expectedFile.getSha1()
       ) {
-        return `has the SHA1 ${actualFile.getSha1()}, expected ${expectedFile.getSha1()}`;
+        return `entry '${entryPath}' has the SHA1 ${actualFile.getSha1()}, expected ${expectedFile.getSha1()}`;
       }
       if (
         actualFile.getMd5() &&
         expectedFile.getMd5() &&
         actualFile.getMd5() !== expectedFile.getMd5()
       ) {
-        return `has the MD5 ${actualFile.getMd5()}, expected ${expectedFile.getMd5()}`;
+        return `entry '${entryPath}' has the MD5 ${actualFile.getMd5()}, expected ${expectedFile.getMd5()}`;
       }
       if (
         actualFile.getCrc32() &&
@@ -372,7 +329,7 @@ export default class CandidateWriter extends Module {
         expectedFile.getCrc32() !== '00000000' &&
         actualFile.getCrc32() !== expectedFile.getCrc32()
       ) {
-        return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
+        return `entry '${entryPath}' has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
       }
 
       // Check size
@@ -384,7 +341,7 @@ export default class CandidateWriter extends Module {
           continue;
         }
         if (actualFile.getSize() !== expectedFile.getSize()) {
-          return `has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+          return `entry '${entryPath}' has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
         }
       }
     }
@@ -437,7 +394,7 @@ export default class CandidateWriter extends Module {
       try {
         await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
         const compressorThreads = Math.ceil(
-          os.cpus().length / Math.max(CandidateWriter.FILESIZE_SEMAPHORE.openLocks(), 1),
+          os.cpus().length / Math.max(this.semaphore.openLocks(), 1),
         );
         await outputZip.createArchive(
           inputToOutputZipEntries,

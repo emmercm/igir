@@ -1,4 +1,4 @@
-import DriveSemaphore from '../src/driveSemaphore.js';
+import DriveSemaphore from '../../src/async/driveSemaphore.js';
 
 describe('map', () => {
   it('should handle thrown errors', async () => {

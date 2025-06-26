@@ -30,7 +30,8 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     outputs:
-      changes: ${{ steps.filter.outputs.changes }}
+      should-test: ${{ steps.filter.outputs.should-test }}
+      should-delete-prebuilds: ${{ steps.filter.outputs.should-delete-prebuilds }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,17 +40,22 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            changes:
+            should-test:
               - '.github/workflows/node-test.yml'
               - 'packages/**'
               - 'src/**'
               - 'test/**'
               - '*'
+            should-delete-prebuilds:
+              - '.github/workflows/napi-prebuild.yml'
+              - 'packages/zlib*/**'
+              - 'packages/zstd*/**'
+              - 'package*.json'
 
   node-lint:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    if: ${{ needs.path-filter.outputs.should-test == 'true' }}
     runs-on: ubuntu-latest
     steps:
       # Setup and install
@@ -69,7 +75,7 @@ jobs:
   node-unit:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    if: ${{ needs.path-filter.outputs.should-test == 'true' }}
     name: node-unit (${{ matrix.os }}, ${{ matrix.node-version || 'package.json' }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
@@ -95,10 +101,10 @@ jobs:
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - shell: bash
-        run: |
-          rm -rf packages/*/prebuilds
-          npm ci --foreground-scripts
+      - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
+        shell: bash
+        run: rm -rf packages/*/prebuilds
+      - run: npm ci --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
@@ -110,8 +116,8 @@ jobs:
   node-e2e:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
-    name: node-unit (${{ matrix.node-version || 'package.json' }})
+    if: ${{ needs.path-filter.outputs.should-test == 'true' }}
+    name: node-e2e (${{ matrix.node-version || 'package.json' }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -136,8 +142,8 @@ jobs:
   node-package:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
-    name: node-unit (${{ matrix.node-version || 'package.json' }})
+    if: ${{ needs.path-filter.outputs.should-test == 'true' }}
+    name: node-package (${{ matrix.node-version || 'package.json' }})
     runs-on: ubuntu-latest
     strategy:
       matrix:

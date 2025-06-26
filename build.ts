@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import fg from 'fast-glob';
 
+import Timer from './src/async/timer.js';
 import Logger from './src/console/logger.js';
 import { LogLevel } from './src/console/logLevel.js';
 import FsPoly from './src/polyfill/fsPoly.js';
@@ -121,4 +122,5 @@ if (process.platform !== 'win32') {
   });
 }
 
+Timer.cancelAll();
 logger.info('Finished!');

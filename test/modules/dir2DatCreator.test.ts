@@ -1,13 +1,13 @@
 import 'jest-extended';
 
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { Semaphore } from 'async-mutex';
-
+import DriveSemaphore from '../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
-import Defaults from '../../src/globals/defaults.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import DATGameInferrer from '../../src/modules/dats/datGameInferrer.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
@@ -34,6 +34,7 @@ it('should do nothing if dir2dat command not provided', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // And a DAT
@@ -45,7 +46,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new MappableSemaphore(os.cpus().length),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
@@ -68,6 +69,7 @@ it('should write a valid DAT', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // And a DAT
@@ -79,7 +81,7 @@ it('should write a valid DAT', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new MappableSemaphore(os.cpus().length),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When writing the DAT to disk
@@ -104,6 +106,7 @@ it('should write a valid DAT', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
@@ -152,6 +155,7 @@ it('should use the candidates for games and ROMs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // And a DAT
@@ -163,7 +167,7 @@ it('should use the candidates for games and ROMs', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new MappableSemaphore(os.cpus().length),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
   // When manipulating the candidates
@@ -203,6 +207,7 @@ it('should use the candidates for games and ROMs', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;

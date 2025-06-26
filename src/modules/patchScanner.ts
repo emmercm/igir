@@ -1,5 +1,5 @@
+import DriveSemaphore from '../async/driveSemaphore.js';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
-import DriveSemaphore from '../driveSemaphore.js';
 import File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import FileFactory from '../types/files/fileFactory.js';
@@ -12,8 +12,13 @@ import Scanner from './scanner.js';
  * Scan for {@link Patch}es and parse them into the correct supported type.
  */
 export default class PatchScanner extends Scanner {
-  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
-    super(options, progressBar, fileFactory, PatchScanner.name);
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
+  ) {
+    super(options, progressBar, fileFactory, driveSemaphore, PatchScanner.name);
   }
 
   /**
@@ -32,33 +37,26 @@ export default class PatchScanner extends Scanner {
     );
     this.progressBar.resetProgress(patchFilePaths.length);
 
-    const patchFiles = await this.getUniqueFilesFromPaths(
-      patchFilePaths,
-      this.options.getReaderThreads(),
-      ChecksumBitmask.CRC32,
-    );
+    const patchFiles = await this.getUniqueFilesFromPaths(patchFilePaths, ChecksumBitmask.CRC32);
     this.progressBar.resetProgress(patchFiles.length);
 
     const patches = (
-      await new DriveSemaphore(this.options.getReaderThreads()).map(
-        patchFiles,
-        async (patchFile) => {
-          this.progressBar.incrementInProgress();
+      await this.driveSemaphore.map(patchFiles, async (patchFile) => {
+        this.progressBar.incrementInProgress();
 
-          const childBar = this.progressBar.addChildBar({
-            name: patchFile.toString(),
-          });
-          try {
-            return await this.patchFromFile(patchFile);
-          } catch (error) {
-            this.progressBar.logWarn(`${patchFile.toString()}: failed to parse patch: ${error}`);
-            return undefined;
-          } finally {
-            childBar.delete();
-            this.progressBar.incrementCompleted();
-          }
-        },
-      )
+        const childBar = this.progressBar.addChildBar({
+          name: patchFile.toString(),
+        });
+        try {
+          return await this.patchFromFile(patchFile);
+        } catch (error) {
+          this.progressBar.logWarn(`${patchFile.toString()}: failed to parse patch: ${error}`);
+          return undefined;
+        } finally {
+          childBar.delete();
+          this.progressBar.incrementCompleted();
+        }
+      })
     ).filter((patch) => patch !== undefined);
 
     this.progressBar.logTrace('done scanning patch files');

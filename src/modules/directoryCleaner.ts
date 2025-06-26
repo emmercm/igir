@@ -6,6 +6,7 @@ import { Semaphore } from 'async-mutex';
 import { isNotJunk } from 'junk';
 import trash from 'trash';
 
+import MappableSemaphore from '../async/mappableSemaphore.js';
 import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -154,29 +155,27 @@ export default class DirectoryCleaner extends Module {
   }
 
   private async backupFiles(backupDir: string, filePaths: string[]): Promise<void> {
-    const semaphore = new Semaphore(this.options.getWriterThreads());
-    await async.mapLimit(filePaths, Defaults.MAX_FS_THREADS, async (filePath: string) => {
-      await semaphore.runExclusive(async () => {
-        let backupPath = path.join(backupDir, path.basename(filePath));
-        let increment = 0;
-        while (await FsPoly.exists(backupPath)) {
-          increment += 1;
-          const { name, ext } = path.parse(filePath);
-          backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
-        }
+    const semaphore = new MappableSemaphore(this.options.getWriterThreads());
+    await semaphore.map(filePaths, async (filePath) => {
+      let backupPath = path.join(backupDir, path.basename(filePath));
+      let increment = 0;
+      while (await FsPoly.exists(backupPath)) {
+        increment += 1;
+        const { name, ext } = path.parse(filePath);
+        backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
+      }
 
-        this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
-        const backupPathDir = path.dirname(backupPath);
-        if (!(await FsPoly.exists(backupPathDir))) {
-          await FsPoly.mkdir(backupPathDir, { recursive: true });
-        }
-        try {
-          await FsPoly.mv(filePath, backupPath);
-        } catch (error) {
-          this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
-        }
-        this.progressBar.incrementInProgress();
-      });
+      this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
+      const backupPathDir = path.dirname(backupPath);
+      if (!(await FsPoly.exists(backupPathDir))) {
+        await FsPoly.mkdir(backupPathDir, { recursive: true });
+      }
+      try {
+        await FsPoly.mv(filePath, backupPath);
+      } catch (error) {
+        this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
+      }
+      this.progressBar.incrementInProgress();
     });
   }
 
@@ -192,6 +191,9 @@ export default class DirectoryCleaner extends Module {
     }
 
     // Find all subdirectories and files in the directory
+    if (!(await FsPoly.exists(dirsToClean))) {
+      return [];
+    }
     const subPaths = (await fs.promises.readdir(dirsToClean))
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirsToClean, basename));

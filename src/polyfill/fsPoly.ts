@@ -136,12 +136,16 @@ export default class FsPoly {
       );
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
-      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+      if (
+        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
+          (error as NodeJS.ErrnoException).code ?? '',
+        )
+      ) {
         throw error;
       }
 
       // Backoff with jitter
-      if (attempt >= 5) {
+      if (attempt >= 10) {
         throw error;
       }
       await new Promise((resolve) => {
@@ -480,7 +484,7 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 5) {
+      if (attempt >= 10) {
         throw error;
       }
       await new Promise((resolve) => {
@@ -575,12 +579,16 @@ export default class FsPoly {
       }
 
       // These are the same error codes that `graceful-fs` catches
-      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+      if (
+        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
+          (error as NodeJS.ErrnoException).code ?? '',
+        )
+      ) {
         throw error;
       }
 
       // Backoff with jitter
-      if (attempt >= 5) {
+      if (attempt >= 10) {
         throw error;
       }
       await new Promise((resolve) => {

@@ -1,4 +1,4 @@
-import Timer from '../src/timer.js';
+import Timer from '../../src/async/timer.js';
 
 describe('setTimeout', () => {
   it('should resolve', async () => {

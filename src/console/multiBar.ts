@@ -2,13 +2,20 @@ import tty from 'node:tty';
 
 import stripAnsi from 'strip-ansi';
 
-import Timer from '../timer.js';
+import Timer from '../async/timer.js';
 import Logger from './logger.js';
 import SingleBar, { SingleBarOptions } from './singleBar.js';
 
 export interface MultiBarOptions {
   writable: tty.WriteStream | NodeJS.WritableStream;
 }
+
+const exitHandler = (): void => {
+  MultiBar.stop();
+};
+process.once('exit', exitHandler);
+process.once('SIGINT', exitHandler);
+process.once('SIGTERM', exitHandler);
 
 /**
  * A wrapper for multiple {@link SingleBar}s. Should be treated as a singleton.
@@ -20,10 +27,6 @@ export default class MultiBar {
   private static readonly multiBars: MultiBar[] = [];
   private static readonly logQueue: string[] = [];
   private static lastPrintedLog?: string;
-
-  private readonly exitHandler = (): void => {
-    this.stop();
-  };
 
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
@@ -41,10 +44,6 @@ export default class MultiBar {
     if (this.terminal instanceof tty.WriteStream) {
       this.terminal.write('\x1B[?25l');
     }
-
-    process.once('exit', this.exitHandler);
-    process.once('SIGINT', this.exitHandler);
-    process.once('SIGTERM', this.exitHandler);
 
     // Set a maximum size for the MultiBar based on terminal size
     if (this.terminal instanceof tty.WriteStream) {
@@ -252,10 +251,6 @@ export default class MultiBar {
     if (this.stopped) {
       return;
     }
-
-    process.off('exit', this.exitHandler);
-    process.off('SIGINT', this.exitHandler);
-    process.off('SIGTERM', this.exitHandler);
 
     // One last render
     this.clearAndRender();

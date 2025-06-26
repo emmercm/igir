@@ -7,10 +7,10 @@ import { Mutex } from 'async-mutex';
 import chdman, { CHDInfo, ChdmanBinaryPreference } from 'chdman';
 import { Memoize } from 'typescript-memoize';
 
+import Timer from '../../../../async/timer.js';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../../polyfill/streamPoly.js';
-import Timer from '../../../../timer.js';
 import IgirException from '../../../exceptions/igirException.js';
 import File from '../../file.js';
 import Archive from '../archive.js';
@@ -104,12 +104,13 @@ export default abstract class Chd extends Archive {
           await this.tempSingletonMutex.runExclusive(async () => {
             this.tempSingletonHandles -= 1;
             if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {
-              await FsPoly.rm(this.tempSingletonDirPath, { recursive: true, force: true });
+              const tempSingletonDirPath = this.tempSingletonDirPath;
               this.tempSingletonDirPath = undefined;
+              await FsPoly.rm(tempSingletonDirPath, { recursive: true, force: true });
             }
           });
         },
-        process.env.NODE_ENV === 'test' ? 0 : 5000,
+        process.env.NODE_ENV === 'test' ? 100 : 5000,
       );
     }
   }

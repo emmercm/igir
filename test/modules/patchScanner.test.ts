@@ -2,6 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
+import DriveSemaphore from '../../src/async/driveSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import Temp from '../../src/globals/temp.js';
@@ -17,6 +18,7 @@ function createPatchScanner(patch: string[], patchExclude: string[] = []): Patch
     new Options({ patch, patchExclude }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
+    new DriveSemaphore(os.cpus().length),
   );
 }
 

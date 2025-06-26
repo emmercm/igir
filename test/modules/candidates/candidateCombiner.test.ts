@@ -1,11 +1,11 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { Semaphore } from 'async-mutex';
-
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import Defaults from '../../../src/globals/defaults.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
@@ -33,7 +33,7 @@ async function runCombinedCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new MappableSemaphore(os.cpus().length),
   ).generate(dat, indexedRomFiles);
 
   return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
@@ -48,6 +48,7 @@ it('should do nothing if option not specified', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // When
@@ -78,6 +79,7 @@ it('should combine candidates', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // When

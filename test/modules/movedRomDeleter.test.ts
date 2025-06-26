@@ -1,11 +1,11 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { Semaphore } from 'async-mutex';
-
+import DriveSemaphore from '../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
-import Defaults from '../../src/globals/defaults.js';
 import Temp from '../../src/globals/temp.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
@@ -30,6 +30,7 @@ it('should do nothing if no ROMs moved', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
 
@@ -425,7 +426,7 @@ describe('should delete archives', () => {
         const candidates = await new CandidateGenerator(
           options,
           new ProgressBarFake(),
-          new Semaphore(Defaults.MAX_FS_THREADS),
+          new MappableSemaphore(os.cpus().length),
         ).generate(dat, indexedRomFiles);
 
         const inputRoms = rawRomFiles;

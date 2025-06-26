@@ -7,7 +7,7 @@ import IgirException from '../../src/types/exceptions/igirException.js';
 
 describe('canSymlink', () => {
   it('should not throw', async () => {
-    await expect(FsPoly.canSymlink(Temp.getTempDir())).resolves.not.toThrow();
+    await expect(FsPoly.canSymlink(Temp.getTempDir())).resolves.toBeDefined();
   });
 });
 
@@ -674,7 +674,7 @@ describe('rm', () => {
   it('should not throw on forcing missing file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
-    await expect(FsPoly.rm(tempFile, { force: true })).resolves.not.toThrow();
+    await expect(FsPoly.rm(tempFile, { force: true })).resolves.toEqual(undefined);
   });
 
   it('should delete an existing file', async () => {

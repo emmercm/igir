@@ -1,6 +1,6 @@
 import { Mutex } from 'async-mutex';
 
-import ArrayPoly from './polyfill/arrayPoly.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 
 /**
  * Wrapper for `async-mutex` {@link Mutex}es to run code exclusively for a key.

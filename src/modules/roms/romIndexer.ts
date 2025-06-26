@@ -92,7 +92,7 @@ export default class ROMIndexer extends Module {
         }
 
         // Otherwise, be deterministic
-        return fileOne.getFilePath().localeCompare(fileTwo.getFilePath());
+        return fileOne.toString().localeCompare(fileTwo.toString());
       }),
     );
   }

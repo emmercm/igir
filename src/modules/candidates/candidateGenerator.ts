@@ -1,7 +1,6 @@
 import path from 'node:path';
 
-import { Semaphore } from 'async-mutex';
-
+import MappableSemaphore from '../../async/mappableSemaphore.js';
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
@@ -32,9 +31,9 @@ import Module from '../module.js';
  */
 export default class CandidateGenerator extends Module {
   private readonly options: Options;
-  private readonly readerSemaphore: Semaphore;
+  private readonly readerSemaphore: MappableSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar, readerSemaphore: Semaphore) {
+  constructor(options: Options, progressBar: ProgressBar, readerSemaphore: MappableSemaphore) {
     super(progressBar, CandidateGenerator.name);
     this.options = options;
     this.readerSemaphore = readerSemaphore;
@@ -56,41 +55,37 @@ export default class CandidateGenerator extends Module {
     this.progressBar.resetProgress(dat.getGames().length);
 
     // For each game, try to generate a candidate
-    await Promise.all(
-      dat.getGames().map(async (game) =>
-        this.readerSemaphore.runExclusive(async () => {
-          this.progressBar.incrementInProgress();
-          const childBar = this.progressBar.addChildBar({
-            name: game.getName(),
-          });
+    await this.readerSemaphore.map(dat.getGames(), async (game) => {
+      this.progressBar.incrementInProgress();
+      const childBar = this.progressBar.addChildBar({
+        name: game.getName(),
+      });
 
-          try {
-            const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
-            if (gameCandidates.length > 0) {
-              this.progressBar.logTrace(
-                `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
-                  .getRomsWithFiles()
-                  .map((rwf) => rwf.getInputFile().toString())
-                  .join(', ')}`,
-              );
-            }
-            candidates = [...candidates, ...gameCandidates];
-          } catch (error) {
-            // Ignore token replacement errors, just don't add the candidate
-            if (!(error instanceof TokenReplacementException)) {
-              throw error;
-            }
-            this.progressBar.logDebug(
-              `${dat.getName()}: ${game.getName()}: failed to generate candidate: ${error.message}`,
-            );
-          } finally {
-            childBar.delete();
-          }
+      try {
+        const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
+        if (gameCandidates.length > 0) {
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
+              .getRomsWithFiles()
+              .map((rwf) => rwf.getInputFile().toString())
+              .join(', ')}`,
+          );
+        }
+        candidates = [...candidates, ...gameCandidates];
+      } catch (error) {
+        // Ignore token replacement errors, just don't add the candidate
+        if (!(error instanceof TokenReplacementException)) {
+          throw error;
+        }
+        this.progressBar.logDebug(
+          `${dat.getName()}: ${game.getName()}: failed to generate candidate: ${error.message}`,
+        );
+      } finally {
+        childBar.delete();
+      }
 
-          this.progressBar.incrementCompleted();
-        }),
-      ),
-    );
+      this.progressBar.incrementCompleted();
+    });
 
     const size = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())

@@ -1,8 +1,7 @@
+import os from 'node:os';
 import path from 'node:path';
 
-import { Semaphore } from 'async-mutex';
-
-import Defaults from '../../../src/globals/defaults.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
@@ -80,7 +79,7 @@ async function candidateGenerator(
   return new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new MappableSemaphore(os.cpus().length),
   ).generate(dat, indexedFiles);
 }
 
@@ -889,7 +888,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new Semaphore(Defaults.MAX_FS_THREADS),
+      new MappableSemaphore(os.cpus().length),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
@@ -929,7 +928,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new Semaphore(Defaults.MAX_FS_THREADS),
+      new MappableSemaphore(os.cpus().length),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates

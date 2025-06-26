@@ -5,26 +5,24 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { Semaphore } from 'async-mutex';
-
+import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
+import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import CandidatePatchGenerator from '../../../src/modules/candidates/candidatePatchGenerator.js';
 import CandidateWriter from '../../../src/modules/candidates/candidateWriter.js';
+import DATCombiner from '../../../src/modules/dats/datCombiner.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import PatchScanner from '../../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import DAT from '../../../src/types/dats/dat.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import Archive from '../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import File from '../../../src/types/files/file.js';
@@ -88,15 +86,6 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
   );
 }
 
-async function datInferrer(options: Options, romFiles: File[]): Promise<DAT> {
-  // Run DATGameInferrer, but condense all DATs down to one
-  const datGames = (
-    await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles)
-  ).flatMap((dat) => dat.getGames());
-  // TODO(cemmer): filter to unique games / remove duplicates
-  return new LogiqxDAT({ header: new Header({ name: 'ROMWriter Test' }), games: datGames });
-}
-
 async function candidateWriter(
   optionsProps: OptionsProps,
   inputTemp: string,
@@ -111,8 +100,7 @@ async function candidateWriter(
     inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
     ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
     output: outputTemp,
-    readerThreads: 8,
-    writerThreads: 4,
+    dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
 
   let romFiles: File[] = [];
@@ -121,28 +109,33 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
   } catch {
     /* ignored */
   }
-
-  const dat = await datInferrer(options, romFiles);
   const romFilesWithHeaders = await new ROMHeaderProcessor(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
+    new DriveSemaphore(os.cpus().length),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
+
+  const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+  const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
+
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new MappableSemaphore(os.cpus().length),
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     candidates = await new CandidatePatchGenerator(new ProgressBarFake()).generate(
       dat,
@@ -154,7 +147,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new MappableSemaphore(os.cpus().length),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
@@ -162,7 +155,7 @@ async function candidateWriter(
   await new CandidateWriter(
     options,
     new ProgressBarFake(),
-    new Semaphore(Defaults.MAX_FS_THREADS),
+    new CandidateWriterSemaphore(os.cpus().length),
   ).write(dat, candidates);
 
   // Then
@@ -792,67 +785,67 @@ describe('zip', () => {
     [
       '**/!(chd)/*',
       [
-        ['ROMWriter Test.zip|0F09A40.rom', '2f943e86'],
-        ['ROMWriter Test.zip|3708F2C.rom', '20891c9f'],
-        ['ROMWriter Test.zip|612644F.rom', 'f7591b29'],
-        ['ROMWriter Test.zip|65D1206.rom', '20323455'],
-        ['ROMWriter Test.zip|92C85C9.rom', '06692159'],
-        ['ROMWriter Test.zip|allpads.nes', '9180a163'],
-        ['ROMWriter Test.zip|before.rom', '0361b321'],
-        ['ROMWriter Test.zip|best.rom', '1e3d78cf'],
-        ['ROMWriter Test.zip|C01173E.rom', 'dfaebe28'],
-        [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM (Track 1).bin')}`, '49ca35fb'],
-        [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM (Track 2).bin')}`, '0316f720'],
-        [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM (Track 3).bin')}`, 'a320af40'],
-        [`ROMWriter Test.zip|${path.join('CD-ROM', 'CD-ROM.cue')}`, '4ce39e73'],
-        ['ROMWriter Test.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
-        ['ROMWriter Test.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
-        ['ROMWriter Test.zip|empty.rom', '00000000'],
-        ['ROMWriter Test.zip|fds_joypad_test.fds', '1e58456d'],
-        ['ROMWriter Test.zip|five.rom', '3e5daf67'],
-        ['ROMWriter Test.zip|fizzbuzz.nes', '370517b5'],
-        ['ROMWriter Test.zip|foobar.lnx', 'b22c9747'],
-        ['ROMWriter Test.zip|four.rom', '1cf3ca74'],
-        [`ROMWriter Test.zip|${path.join('fourfive', 'five.rom')}`, '3e5daf67'],
-        [`ROMWriter Test.zip|${path.join('fourfive', 'four.rom')}`, '1cf3ca74'],
-        [`ROMWriter Test.zip|GameCube-240pSuite-1.19.iso`, '5eb3d183'],
-        [`ROMWriter Test.zip|${path.join('GD-ROM', 'GD-ROM.gdi')}`, 'f16f621c'],
-        [`ROMWriter Test.zip|${path.join('GD-ROM', 'track01.bin')}`, '9796ed9a'],
-        [`ROMWriter Test.zip|${path.join('GD-ROM', 'track02.raw')}`, 'abc178d5'],
-        [`ROMWriter Test.zip|${path.join('GD-ROM', 'track03.bin')}`, '61a363f1'],
-        [`ROMWriter Test.zip|${path.join('GD-ROM', 'track04.bin')}`, 'fc5ff5a0'],
-        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.7z')}`, 'df941cc9'],
-        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.rar')}`, 'df941cc9'],
-        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.tar.gz')}`, 'df941cc9'],
-        [`ROMWriter Test.zip|${path.join('invalid', 'invalid.zip')}`, 'df941cc9'],
-        ['ROMWriter Test.zip|KDULVQN.rom', 'b1c303e4'],
-        ['ROMWriter Test.zip|LCDTestROM.lnx', '2d251538'],
-        ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
-        ['ROMWriter Test.zip|one.rom', 'f817a89f'],
-        [`ROMWriter Test.zip|${path.join('onetwothree', '1', 'one.rom')}`, 'f817a89f'],
-        [`ROMWriter Test.zip|${path.join('onetwothree', '2', 'two.rom')}`, '96170874'],
-        [`ROMWriter Test.zip|${path.join('onetwothree', '3', 'three.rom')}`, 'ff46c5d8'],
-        ['ROMWriter Test.zip|speed_test_v51.sfc', '8beffd94'],
-        ['ROMWriter Test.zip|speed_test_v51.smc', '9adca6cc'],
-        ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
-        ['ROMWriter Test.zip|two.rom', '96170874'],
-        ['ROMWriter Test.zip|UMD.iso', 'e90f7cf5'],
-        ['ROMWriter Test.zip|unknown.rom', '377a7727'],
+        ['igir combined.zip|0F09A40.rom', '2f943e86'],
+        ['igir combined.zip|3708F2C.rom', '20891c9f'],
+        ['igir combined.zip|612644F.rom', 'f7591b29'],
+        ['igir combined.zip|65D1206.rom', '20323455'],
+        ['igir combined.zip|92C85C9.rom', '06692159'],
+        ['igir combined.zip|allpads.nes', '9180a163'],
+        ['igir combined.zip|before.rom', '0361b321'],
+        ['igir combined.zip|best.rom', '1e3d78cf'],
+        ['igir combined.zip|C01173E.rom', 'dfaebe28'],
+        [`igir combined.zip|${path.join('CD-ROM', 'CD-ROM (Track 1).bin')}`, '49ca35fb'],
+        [`igir combined.zip|${path.join('CD-ROM', 'CD-ROM (Track 2).bin')}`, '0316f720'],
+        [`igir combined.zip|${path.join('CD-ROM', 'CD-ROM (Track 3).bin')}`, 'a320af40'],
+        [`igir combined.zip|${path.join('CD-ROM', 'CD-ROM.cue')}`, '4ce39e73'],
+        ['igir combined.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
+        ['igir combined.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+        ['igir combined.zip|empty.rom', '00000000'],
+        ['igir combined.zip|fds_joypad_test.fds', '1e58456d'],
+        ['igir combined.zip|five.rom', '3e5daf67'],
+        ['igir combined.zip|fizzbuzz.nes', '370517b5'],
+        ['igir combined.zip|foobar.lnx', 'b22c9747'],
+        ['igir combined.zip|four.rom', '1cf3ca74'],
+        [`igir combined.zip|${path.join('fourfive', 'five.rom')}`, '3e5daf67'],
+        [`igir combined.zip|${path.join('fourfive', 'four.rom')}`, '1cf3ca74'],
+        [`igir combined.zip|GameCube-240pSuite-1.19.iso`, '5eb3d183'],
+        [`igir combined.zip|${path.join('GD-ROM', 'GD-ROM.gdi')}`, 'f16f621c'],
+        [`igir combined.zip|${path.join('GD-ROM', 'track01.bin')}`, '9796ed9a'],
+        [`igir combined.zip|${path.join('GD-ROM', 'track02.raw')}`, 'abc178d5'],
+        [`igir combined.zip|${path.join('GD-ROM', 'track03.bin')}`, '61a363f1'],
+        [`igir combined.zip|${path.join('GD-ROM', 'track04.bin')}`, 'fc5ff5a0'],
+        [`igir combined.zip|${path.join('invalid', 'invalid.7z')}`, 'df941cc9'],
+        [`igir combined.zip|${path.join('invalid', 'invalid.rar')}`, 'df941cc9'],
+        [`igir combined.zip|${path.join('invalid', 'invalid.tar.gz')}`, 'df941cc9'],
+        [`igir combined.zip|${path.join('invalid', 'invalid.zip')}`, 'df941cc9'],
+        ['igir combined.zip|KDULVQN.rom', 'b1c303e4'],
+        ['igir combined.zip|LCDTestROM.lnx', '2d251538'],
+        ['igir combined.zip|loremipsum.rom', '70856527'],
+        ['igir combined.zip|one.rom', 'f817a89f'],
+        [`igir combined.zip|${path.join('onetwothree', '1', 'one.rom')}`, 'f817a89f'],
+        [`igir combined.zip|${path.join('onetwothree', '2', 'two.rom')}`, '96170874'],
+        [`igir combined.zip|${path.join('onetwothree', '3', 'three.rom')}`, 'ff46c5d8'],
+        ['igir combined.zip|speed_test_v51.sfc', '8beffd94'],
+        ['igir combined.zip|speed_test_v51.smc', '9adca6cc'],
+        ['igir combined.zip|three.rom', 'ff46c5d8'],
+        ['igir combined.zip|two.rom', '96170874'],
+        ['igir combined.zip|UMD.iso', 'e90f7cf5'],
+        ['igir combined.zip|unknown.rom', '377a7727'],
       ],
     ],
     [
       'raw/*',
       [
-        ['ROMWriter Test.zip|empty.rom', '00000000'],
-        ['ROMWriter Test.zip|five.rom', '3e5daf67'],
-        ['ROMWriter Test.zip|fizzbuzz.nes', '370517b5'],
-        ['ROMWriter Test.zip|foobar.lnx', 'b22c9747'],
-        ['ROMWriter Test.zip|four.rom', '1cf3ca74'],
-        ['ROMWriter Test.zip|loremipsum.rom', '70856527'],
-        ['ROMWriter Test.zip|one.rom', 'f817a89f'],
-        ['ROMWriter Test.zip|three.rom', 'ff46c5d8'],
-        ['ROMWriter Test.zip|two.rom', '96170874'],
-        ['ROMWriter Test.zip|unknown.rom', '377a7727'],
+        ['igir combined.zip|empty.rom', '00000000'],
+        ['igir combined.zip|five.rom', '3e5daf67'],
+        ['igir combined.zip|fizzbuzz.nes', '370517b5'],
+        ['igir combined.zip|foobar.lnx', 'b22c9747'],
+        ['igir combined.zip|four.rom', '1cf3ca74'],
+        ['igir combined.zip|loremipsum.rom', '70856527'],
+        ['igir combined.zip|one.rom', 'f817a89f'],
+        ['igir combined.zip|three.rom', 'ff46c5d8'],
+        ['igir combined.zip|two.rom', '96170874'],
+        ['igir combined.zip|unknown.rom', '377a7727'],
       ],
     ],
   ])(
@@ -1301,7 +1294,6 @@ describe('extract', () => {
       // Given
       const options = new Options({
         commands: ['copy', 'extract', 'test'],
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
@@ -1491,7 +1483,6 @@ describe('extract', () => {
         // Given
         const options = new Options({
           commands: ['move', 'extract', 'test'],
-          dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         });
         const romFilesBefore = await walkAndStat(path.join(inputTemp, 'roms'));
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
@@ -1522,7 +1513,7 @@ describe('extract', () => {
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
             .sort(),
-        ).toIncludeSameMembers(expectedDeletedInputPaths.sort());
+        ).toEqual(expectedDeletedInputPaths.sort());
       });
     },
   );

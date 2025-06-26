@@ -1,5 +1,5 @@
+import DriveSemaphore from '../../async/driveSemaphore.js';
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import DriveSemaphore from '../../driveSemaphore.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import DAT from '../../types/dats/dat.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
@@ -14,21 +14,20 @@ import Module from '../module.js';
  * candidate filtering module.
  */
 export default class CandidateArchiveFileHasher extends Module {
-  private static readonly DRIVE_SEMAPHORE = new DriveSemaphore(Number.MAX_SAFE_INTEGER);
-
   private readonly options: Options;
-
   private readonly fileFactory: FileFactory;
+  private readonly driveSemaphore: DriveSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
+  ) {
     super(progressBar, CandidateArchiveFileHasher.name);
     this.options = options;
     this.fileFactory = fileFactory;
-
-    // This will be the same value globally, but we can't know the value at file import time
-    if (options.getReaderThreads() < CandidateArchiveFileHasher.DRIVE_SEMAPHORE.getValue()) {
-      CandidateArchiveFileHasher.DRIVE_SEMAPHORE.setValue(options.getReaderThreads());
-    }
+    this.driveSemaphore = driveSemaphore;
   }
 
   /**
@@ -89,7 +88,7 @@ export default class CandidateArchiveFileHasher extends Module {
               return romWithFiles;
             }
 
-            return CandidateArchiveFileHasher.DRIVE_SEMAPHORE.runExclusive(inputFile, async () => {
+            return this.driveSemaphore.runExclusive(inputFile, async () => {
               this.progressBar.incrementInProgress();
               this.progressBar.logTrace(
                 `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${inputFile.toString()}`,

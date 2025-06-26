@@ -192,7 +192,7 @@ it('should delete hard links', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = await FsPoly.walk(tempDir, WalkMode.FILES);
+    const remainingPaths = (await FsPoly.walk(tempDir, WalkMode.FILES)).sort();
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
@@ -230,7 +230,7 @@ it('should delete symlinks', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = await FsPoly.walk(tempDir, WalkMode.FILES);
+    const remainingPaths = (await FsPoly.walk(tempDir, WalkMode.FILES)).sort();
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,

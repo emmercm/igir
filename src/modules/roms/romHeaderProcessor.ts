@@ -1,7 +1,7 @@
 import async from 'async';
 
+import DriveSemaphore from '../../async/driveSemaphore.js';
 import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import DriveSemaphore from '../../driveSemaphore.js';
 import Defaults from '../../globals/defaults.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import File from '../../types/files/file.js';
@@ -16,16 +16,19 @@ import Module from '../module.js';
  */
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
-
   private readonly fileFactory: FileFactory;
-
   private readonly driveSemaphore: DriveSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar, fileFactory: FileFactory) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    driveSemaphore: DriveSemaphore,
+  ) {
     super(progressBar, ROMHeaderProcessor.name);
     this.options = options;
     this.fileFactory = fileFactory;
-    this.driveSemaphore = new DriveSemaphore(this.options.getReaderThreads());
+    this.driveSemaphore = driveSemaphore;
   }
 
   /**
