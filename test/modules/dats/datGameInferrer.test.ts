@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { PassThrough } from 'node:stream';
 
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
@@ -45,7 +46,7 @@ test.each([
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(2),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // When

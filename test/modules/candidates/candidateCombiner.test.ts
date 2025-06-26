@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -32,7 +33,7 @@ async function runCombinedCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(2),
+    new MappableSemaphore(os.cpus().length),
   ).generate(dat, indexedRomFiles);
 
   return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
@@ -47,7 +48,7 @@ it('should do nothing if option not specified', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(2),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // When
@@ -78,7 +79,7 @@ it('should combine candidates', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(2),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
 
   // When
