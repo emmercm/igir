@@ -131,6 +131,9 @@ export default abstract class ProgressBar {
    * Log an ERROR message.
    */
   logError(message: string): void {
+    if (process.platform === 'win32' && process.env.NODE_ENV === 'test') {
+      console.trace(message);
+    }
     this.log(LogLevel.ERROR, message);
   }
 
