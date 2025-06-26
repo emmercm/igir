@@ -117,7 +117,12 @@ export default class FsPoly {
    * Copy {@param src} to {@param dest}, overwriting any existing file, and ensuring {@param dest}
    * is writable.
    */
-  static async copyFile(src: string, dest: string, callback?: FsCopyCallback): Promise<void> {
+  static async copyFile(
+    src: string,
+    dest: string,
+    callback?: FsCopyCallback,
+    attempt = 1,
+  ): Promise<void> {
     if (!(await this.exists(src))) {
       throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
     }
@@ -128,11 +133,37 @@ export default class FsPoly {
 
     const destPreviouslyExisted = await this.exists(dest);
 
-    await util.promisify(stream.pipeline)(
-      fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
-      new FsCopyTransform(callback),
-      fs.createWriteStream(dest),
-    );
+    try {
+      if (process.platform === 'win32') {
+        // Windows seems to have a lower limit on the number of open files, causing issues with
+        // streaming between file handles. Use the `graceful-fs` patched file copy.
+        await util.promisify(fs.copyFile)(src, dest);
+      } else {
+        await util.promisify(stream.pipeline)(
+          fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+          new FsCopyTransform(callback),
+          fs.createWriteStream(dest),
+        );
+      }
+    } catch (error) {
+      // These are the same error codes that `graceful-fs` catches
+      if (
+        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
+          (error as NodeJS.ErrnoException).code ?? '',
+        )
+      ) {
+        throw error;
+      }
+
+      // Backoff with jitter
+      if (attempt >= 5) {
+        throw error;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
+      });
+      return this.copyFile(src, dest, callback, attempt + 1);
+    }
 
     // Ensure the destination file is writable
     const stat = await this.stat(dest);
@@ -452,7 +483,7 @@ export default class FsPoly {
       return MoveResult.RENAMED;
     } catch (error) {
       // Can't rename across drives
-      if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
+      if (['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
         await this.copyFile(oldPath, newPath, callback);
         await this.rm(oldPath, { force: true });
         return MoveResult.COPIED;
@@ -547,7 +578,7 @@ export default class FsPoly {
    * Copy {@param src} to {@param dest}, overwriting any existing file, and ensuring {@param dest}
    * is writable.
    */
-  static async reflink(src: string, dest: string): Promise<void> {
+  static async reflink(src: string, dest: string, attempt = 1): Promise<void> {
     if (!(await this.exists(src))) {
       throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
     }
@@ -561,10 +592,27 @@ export default class FsPoly {
     try {
       await util.promisify(fs.copyFile)(src, dest, fs.constants.COPYFILE_FICLONE);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOTSUP') {
+      if (((error as NodeJS.ErrnoException).code ?? '') === 'ENOTSUP') {
         throw new IgirException('reflinks are not supported on this filesystem');
       }
-      throw error;
+
+      // These are the same error codes that `graceful-fs` catches
+      if (
+        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
+          (error as NodeJS.ErrnoException).code ?? '',
+        )
+      ) {
+        throw error;
+      }
+
+      // Backoff with jitter
+      if (attempt >= 10) {
+        throw error;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
+      });
+      return this.reflink(src, dest, attempt + 1);
     }
 
     // Ensure the destination file is writable
