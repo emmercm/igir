@@ -164,7 +164,7 @@ export default class FsPoly {
     const stat = await this.stat(dest);
     const chmodOwnerWrite = 0o222; // Node.js' default for file creation is 0o666 (rw)
     if (!(stat.mode & chmodOwnerWrite)) {
-      await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
+      await util.promisify(fs.chmod)(dest, stat.mode | chmodOwnerWrite);
     }
 
     if (destPreviouslyExisted) {
@@ -177,7 +177,7 @@ export default class FsPoly {
    * @returns all the directories in {@param dirPath}, non-recursively
    */
   static async dirs(dirPath: string): Promise<string[]> {
-    const readDir = (await fs.promises.readdir(dirPath))
+    const readDir = (await util.promisify(fs.readdir)(dirPath))
       .filter((filePath) => isNotJunk(path.basename(filePath)))
       .map((filePath) => path.join(dirPath, filePath));
 
@@ -212,7 +212,7 @@ export default class FsPoly {
    */
   static async exists(pathLike: PathLike): Promise<boolean> {
     try {
-      await fs.promises.lstat(pathLike);
+      await util.promisify(fs.lstat)(pathLike);
       return true;
     } catch {
       return false;
@@ -249,7 +249,7 @@ export default class FsPoly {
 
     await this.rm(link, { force: true });
     try {
-      await fs.promises.link(targetResolved, link);
+      await util.promisify(fs.link)(targetResolved, link);
       return;
     } catch (error) {
       if (this.onDifferentDrives(targetResolved, link)) {
@@ -271,7 +271,7 @@ export default class FsPoly {
    */
   static async isDirectory(pathLike: string): Promise<boolean> {
     try {
-      const lstat = await fs.promises.lstat(pathLike);
+      const lstat = await util.promisify(fs.lstat)(pathLike);
       if (lstat.isSymbolicLink()) {
         const link = await this.readlinkResolved(pathLike);
         return await this.isDirectory(link);
@@ -303,7 +303,7 @@ export default class FsPoly {
    */
   static async isExecutable(pathLike: PathLike): Promise<boolean> {
     try {
-      await fs.promises.access(pathLike, fs.constants.X_OK);
+      await util.promisify(fs.access)(pathLike, fs.constants.X_OK);
       return true;
     } catch {
       return false;
@@ -315,7 +315,7 @@ export default class FsPoly {
    */
   static async isFile(pathLike: string): Promise<boolean> {
     try {
-      const lstat = await fs.promises.lstat(pathLike);
+      const lstat = await util.promisify(fs.lstat)(pathLike);
       if (lstat.isSymbolicLink()) {
         const link = await this.readlinkResolved(pathLike);
         return await this.isFile(link);
@@ -366,7 +366,7 @@ export default class FsPoly {
    */
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
     try {
-      return (await fs.promises.lstat(pathLike)).isSymbolicLink();
+      return (await util.promisify(fs.lstat)(pathLike)).isSymbolicLink();
     } catch {
       return false;
     }
@@ -421,7 +421,7 @@ export default class FsPoly {
    * Makes the directory {@param pathLike} with the options {@param options}.
    */
   static async mkdir(pathLike: PathLike, options?: MakeDirectoryOptions): Promise<void> {
-    await fs.promises.mkdir(pathLike, options);
+    await util.promisify(fs.mkdir)(pathLike, options);
   }
 
   /**
@@ -433,11 +433,11 @@ export default class FsPoly {
 
     try {
       await this.mkdir(rootDirProcessed, { recursive: true });
-      return await fs.promises.mkdtemp(rootDirProcessed);
+      return await util.promisify(fs.mkdtemp)(rootDirProcessed);
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
-      return fs.promises.mkdtemp(backupDir);
+      return util.promisify(fs.mkdtemp)(backupDir);
     }
   }
 
@@ -474,7 +474,7 @@ export default class FsPoly {
     }
 
     try {
-      await fs.promises.rename(oldPath, newPath);
+      await util.promisify(fs.rename)(oldPath, newPath);
       return MoveResult.RENAMED;
     } catch (error) {
       // Can't rename across drives
@@ -517,7 +517,7 @@ export default class FsPoly {
     if (!(await this.isSymlink(pathLike))) {
       throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
-    return fs.promises.readlink(pathLike);
+    return util.promisify(fs.readlink)(pathLike);
   }
 
   /**
@@ -559,7 +559,7 @@ export default class FsPoly {
     if (!(await this.exists(pathLike))) {
       throw new IgirException(`can't get realpath of non-existent path: ${pathLike.toString()}`);
     }
-    return fs.promises.realpath(pathLike);
+    return util.promisify(fs.realpath)(pathLike);
   }
 
   /**
@@ -578,7 +578,7 @@ export default class FsPoly {
     const destPreviouslyExisted = await this.exists(dest);
 
     try {
-      await fs.promises.copyFile(src, dest, fs.constants.COPYFILE_FICLONE);
+      await util.promisify(fs.copyFile)(src, dest, fs.constants.COPYFILE_FICLONE);
     } catch (error) {
       if (((error as NodeJS.ErrnoException).code ?? '') === 'ENOTSUP') {
         throw new IgirException('reflinks are not supported on this filesystem');
@@ -607,7 +607,7 @@ export default class FsPoly {
     const stat = await this.stat(dest);
     const chmodOwnerWrite = 0o222; // Node.js' default for file creation is 0o666 (rw)
     if (!(stat.mode & chmodOwnerWrite)) {
-      await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
+      await util.promisify(fs.chmod)(dest, stat.mode | chmodOwnerWrite);
     }
 
     if (destPreviouslyExisted) {
@@ -634,12 +634,12 @@ export default class FsPoly {
     }
 
     if (await this.isDirectory(pathLike)) {
-      await fs.promises.rm(pathLike, {
+      await util.promisify(fs.rm)(pathLike, {
         ...optionsWithRetry,
         recursive: true,
       });
     } else {
-      await fs.promises.unlink(pathLike);
+      await util.promisify(fs.unlink)(pathLike);
     }
   }
 
@@ -730,7 +730,7 @@ export default class FsPoly {
    * @returns the stats of {@param pathLike}
    */
   static async stat(pathLike: PathLike): Promise<fs.Stats> {
-    return fs.promises.stat(pathLike);
+    return util.promisify(fs.stat)(pathLike);
   }
 
   /**
@@ -744,14 +744,14 @@ export default class FsPoly {
     }
 
     // Create the file if it doesn't already exist
-    const file = await fs.promises.open(filePath, 'a');
+    const file = await util.promisify(fs.open)(filePath, 'a');
 
     try {
       // Ensure the file's `atime` and `mtime` are updated
       const date = new Date();
-      await util.promisify(fs.futimes)(file.fd, date, date);
+      await util.promisify(fs.futimes)(file, date, date);
     } finally {
-      await file.close();
+      await util.promisify(fs.close)(file);
     }
   }
 
@@ -767,8 +767,8 @@ export default class FsPoly {
 
     let entries: fs.Dirent[];
     try {
-      entries = (await fs.promises.readdir(pathLike, { withFileTypes: true })).filter((entry) =>
-        isNotJunk(entry.name),
+      entries = (await util.promisify(fs.readdir)(pathLike, { withFileTypes: true })).filter(
+        (entry) => isNotJunk(entry.name),
       );
     } catch {
       return [];
@@ -816,12 +816,12 @@ export default class FsPoly {
     data: string | Uint8Array,
     options?: ObjectEncodingOptions,
   ): Promise<void> {
-    const file = await fs.promises.open(filePath, 'w');
+    const file = await util.promisify(fs.open)(filePath, 'w');
     try {
-      await file.writeFile(data, options);
-      await file.sync(); // emulate fs.promises.writeFile() flush:true added in v21.0.0
+      await util.promisify(fs.writeFile)(file, data, options);
+      await util.promisify(fs.fsync)(file); // emulate fs.promises.writeFile() flush:true added in v21.0.0
     } finally {
-      await file.close();
+      await util.promisify(fs.close)(file);
     }
   }
 }
