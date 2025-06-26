@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
+import IOFile from '../../src/polyfill/ioFile.js';
 import IgirException from '../../src/types/exceptions/igirException.js';
 
 describe('canSymlink', () => {
@@ -38,7 +39,7 @@ describe.each([
     }
   });
 
-  it('should copy a file', async () => {
+  it('should write a file', async () => {
     const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
     const tempDest = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'dest'));
     try {
@@ -49,6 +50,23 @@ describe.each([
     } finally {
       await FsPoly.rm(tempSrc);
       await FsPoly.rm(tempDest);
+    }
+  });
+
+  it('should handle a lot of concurrency', async () => {
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
+      await (await IOFile.fileOfSize(tempSrc, 'w', 1024)).close();
+
+      const tempDestPaths = await Promise.all(
+        [...Array.from({ length: 100 }).keys()].map(async () =>
+          FsPoly.mktemp(path.join(tempDir, 'dest')),
+        ),
+      );
+      await Promise.all(tempDestPaths.map(async (tempDest) => writeFunction(tempSrc, tempDest)));
+    } finally {
+      await FsPoly.rm(tempDir, { recursive: true, force: true });
     }
   });
 
