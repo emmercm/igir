@@ -26,7 +26,7 @@ export default class MappableSemaphore extends Semaphore {
       return async.mapLimit(values, this.threads, callback);
     }
 
-    return async.mapLimit(values, this.threads, async (value: IN) =>
+    return async.mapLimit(values, Math.floor(this.threads * 1.5), async (value: IN) =>
       this.runExclusive(async () => callback(value)),
     );
   }
