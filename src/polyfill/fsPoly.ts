@@ -483,7 +483,7 @@ export default class FsPoly {
       return MoveResult.RENAMED;
     } catch (error) {
       // Can't rename across drives
-      if (['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+      if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
         await this.copyFile(oldPath, newPath, callback);
         await this.rm(oldPath, { force: true });
         return MoveResult.COPIED;
@@ -592,7 +592,7 @@ export default class FsPoly {
     try {
       await util.promisify(fs.copyFile)(src, dest, fs.constants.COPYFILE_FICLONE);
     } catch (error) {
-      if (((error as NodeJS.ErrnoException).code ?? '') === 'ENOTSUP') {
+      if ((error as NodeJS.ErrnoException).code === 'ENOTSUP') {
         throw new IgirException('reflinks are not supported on this filesystem');
       }
 
