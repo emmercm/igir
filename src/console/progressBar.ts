@@ -124,6 +124,9 @@ export default abstract class ProgressBar {
    * Log a WARN message.
    */
   logWarn(message: string): void {
+    if (process.platform === 'win32' && process.env.NODE_ENV === 'test') {
+      console.trace(message);
+    }
     this.log(LogLevel.WARN, message);
   }
 

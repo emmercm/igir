@@ -307,21 +307,21 @@ export default class CandidateWriter extends Module {
         expectedFile.getSha256() &&
         actualFile.getSha256() !== expectedFile.getSha256()
       ) {
-        return `has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
+        return `entry '${entryPath}' has the SHA256 ${actualFile.getSha256()}, expected ${expectedFile.getSha256()}`;
       }
       if (
         actualFile.getSha1() &&
         expectedFile.getSha1() &&
         actualFile.getSha1() !== expectedFile.getSha1()
       ) {
-        return `has the SHA1 ${actualFile.getSha1()}, expected ${expectedFile.getSha1()}`;
+        return `entry '${entryPath}' has the SHA1 ${actualFile.getSha1()}, expected ${expectedFile.getSha1()}`;
       }
       if (
         actualFile.getMd5() &&
         expectedFile.getMd5() &&
         actualFile.getMd5() !== expectedFile.getMd5()
       ) {
-        return `has the MD5 ${actualFile.getMd5()}, expected ${expectedFile.getMd5()}`;
+        return `entry '${entryPath}' has the MD5 ${actualFile.getMd5()}, expected ${expectedFile.getMd5()}`;
       }
       if (
         actualFile.getCrc32() &&
@@ -329,7 +329,7 @@ export default class CandidateWriter extends Module {
         expectedFile.getCrc32() !== '00000000' &&
         actualFile.getCrc32() !== expectedFile.getCrc32()
       ) {
-        return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
+        return `entry '${entryPath}' has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
       }
 
       // Check size
@@ -341,7 +341,7 @@ export default class CandidateWriter extends Module {
           continue;
         }
         if (actualFile.getSize() !== expectedFile.getSize()) {
-          return `has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+          return `entry '${entryPath}' has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
         }
       }
     }

@@ -191,6 +191,9 @@ export default class DirectoryCleaner extends Module {
     }
 
     // Find all subdirectories and files in the directory
+    if (!(await FsPoly.exists(dirsToClean))) {
+      return [];
+    }
     const subPaths = (await fs.promises.readdir(dirsToClean))
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirsToClean, basename));
