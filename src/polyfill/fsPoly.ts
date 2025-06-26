@@ -131,8 +131,8 @@ export default class FsPoly {
     try {
       if (process.platform === 'win32') {
         // Windows seems to have a lower limit on the number of open files, causing issues with
-        // streaming between file handles
-        await fs.promises.copyFile(src, dest);
+        // streaming between file handles. Use the `graceful-fs` patched file copy.
+        await util.promisify(fs.copyFile)(src, dest);
       } else {
         await util.promisify(stream.pipeline)(
           fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
@@ -151,7 +151,7 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 10) {
+      if (attempt >= 5) {
         throw error;
       }
       await new Promise((resolve) => {
@@ -490,7 +490,7 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 10) {
+      if (attempt >= 5) {
         throw error;
       }
       await new Promise((resolve) => {
