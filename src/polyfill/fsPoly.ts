@@ -145,7 +145,7 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 5) {
+      if (attempt >= 10) {
         throw error;
       }
       await new Promise((resolve) => {
@@ -484,7 +484,7 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 5) {
+      if (attempt >= 10) {
         throw error;
       }
       await new Promise((resolve) => {
@@ -588,7 +588,7 @@ export default class FsPoly {
       }
 
       // Backoff with jitter
-      if (attempt >= 5) {
+      if (attempt >= 10) {
         throw error;
       }
       await new Promise((resolve) => {
