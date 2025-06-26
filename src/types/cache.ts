@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 import v8 from 'node:v8';
 import zlib from 'node:zlib';
 
@@ -148,7 +149,7 @@ export default class Cache<V> {
     }
 
     try {
-      const compressed = await fs.promises.readFile(this.filePath);
+      const compressed = await util.promisify(fs.readFile)(this.filePath);
       if (compressed.length === 0) {
         return this;
       }
