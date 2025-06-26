@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
+import util from 'node:util';
 
 import DriveSemaphore from '../src/async/driveSemaphore.js';
 import Logger from '../src/console/logger.js';
@@ -66,13 +67,9 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
   return (
     await Promise.all(
-      (await FsPoly.walk(outputDir, WalkMode.FILES)).map(async (filePath) => {
-        try {
-          return await fileFactory.filesFrom(filePath);
-        } catch {
-          return [];
-        }
-      }),
+      (await FsPoly.walk(outputDir, WalkMode.FILES)).map(async (filePath) =>
+        fileFactory.filesFrom(filePath),
+      ),
     )
   )
     .flat()
@@ -323,7 +320,9 @@ describe('with explicit DATs', () => {
       );
 
       const inputFiles = await FsPoly.walk(inputTemp, WalkMode.FILES);
-      await Promise.all(inputFiles.map(async (inputFile) => fs.promises.chmod(inputFile, '0444')));
+      await Promise.all(
+        inputFiles.map(async (inputFile) => util.promisify(fs.chmod)(inputFile, '0444')),
+      );
 
       // When running igir with the clean command
       const result = await runIgir({
