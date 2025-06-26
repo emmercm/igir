@@ -1,6 +1,7 @@
 import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 import { path7za } from '7zip-bin';
 import caxa from 'caxa';
@@ -84,7 +85,7 @@ await esbuild.build({
   packages: 'external',
   format: 'esm',
   // Fix `file:` dependencies
-  alias: (await fs.promises.readdir(path.join(input, 'packages'), { withFileTypes: true }))
+  alias: (await util.promisify(fs.readdir)(path.join(input, 'packages'), { withFileTypes: true }))
     .filter((dirent) => dirent.isDirectory())
     .reduce<Record<string, string>>((record, dirent) => {
       record[`@igir/${dirent.name}`] = path.join(dirent.parentPath, dirent.name);
