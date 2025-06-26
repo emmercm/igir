@@ -27,7 +27,7 @@
 
 A video of an example use case:
 
-<a href="https://asciinema.org/a/bZHvtbqyQlRfkHIuZXxmtDbiU" target="_blank"><img src="https://asciinema.org/a/bZHvtbqyQlRfkHIuZXxmtDbiU.svg" alt="asciicast" style="width:100%" /></a>
+<a href="https://asciinema.org/a/xE6kMquCPFYtpvhsiQfS0eS7c" target="_blank"><img src="https://asciinema.org/a/xE6kMquCPFYtpvhsiQfS0eS7c.svg" alt="asciicast" style="width:100%" /></a>
 
 With Igir you can manage a ROM collection of any size:
 
