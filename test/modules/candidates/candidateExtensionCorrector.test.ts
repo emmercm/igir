@@ -1,6 +1,5 @@
 import 'jest-extended';
 
-import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -37,7 +36,7 @@ it('should do nothing with no candidates', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.cpus().length),
+    new Semaphore(2),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -69,7 +68,7 @@ it('should do nothing when no ROMs need correcting', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.cpus().length),
+    new Semaphore(2),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -120,7 +119,7 @@ it('should correct ROMs without DATs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(2),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -157,7 +156,7 @@ it('should correct ROMs without DATs', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new Semaphore(os.cpus().length),
+      new Semaphore(2),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);
@@ -177,7 +176,7 @@ it('should correct ROMs with missing filenames', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(2),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -210,7 +209,7 @@ it('should correct ROMs with missing filenames', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new Semaphore(os.cpus().length),
+      new Semaphore(2),
     ).correct(dat, candidates);
 
     expectcorrectedCandidates(candidates, correctedCandidates);
