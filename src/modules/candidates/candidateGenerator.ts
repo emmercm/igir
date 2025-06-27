@@ -912,50 +912,39 @@ export default class CandidateGenerator extends Module {
         ),
       ),
     );
-    const writeCandidates = await Promise.all(
-      (singleValueGames.length > 0 ? singleValueGames : [new SingleValueGame({ ...game })]).map(
-        async (singleValueGame) => {
-          const romWithFiles = (
-            await Promise.all(
-              foundRomsWithFiles.map(async (romWithFiles) => {
-                const outputFile = await this.getOutputFile(
-                  dat,
-                  singleValueGame,
-                  romWithFiles.getRom(),
-                  romWithFiles.getInputFile(),
-                );
-                if (!outputFile) {
-                  return undefined;
-                }
-                return new ROMWithFiles(
-                  romWithFiles.getRom(),
-                  romWithFiles.getInputFile(),
-                  outputFile,
-                );
-              }),
-            )
-          ).filter((romWithFiles) => romWithFiles !== undefined);
-          return new WriteCandidate(singleValueGame, romWithFiles);
-        },
-      ),
-    );
+    const writeCandidates = (
+      await Promise.all(
+        (singleValueGames.length > 0 ? singleValueGames : [new SingleValueGame({ ...game })]).map(
+          async (singleValueGame) => {
+            const romWithFiles = (
+              await Promise.all(
+                foundRomsWithFiles.map(async (romWithFiles) => {
+                  const outputFile = await this.getOutputFile(
+                    dat,
+                    singleValueGame,
+                    romWithFiles.getRom(),
+                    romWithFiles.getInputFile(),
+                  );
+                  if (!outputFile) {
+                    return undefined;
+                  }
+                  return new ROMWithFiles(
+                    romWithFiles.getRom(),
+                    romWithFiles.getInputFile(),
+                    outputFile,
+                  );
+                }),
+              )
+            ).filter((romWithFiles) => romWithFiles !== undefined);
+            return new WriteCandidate(singleValueGame, romWithFiles);
+          },
+        ),
+      )
+    ).filter(ArrayPoly.filterUniqueMapped((candidate) => candidate.hashCode()));
 
-    return (
-      writeCandidates
-        // Deduplicate ROMWithFiles within the candidates
-        .map((writeCandidate) => {
-          const uniqueRomsWithFiles = writeCandidate
-            .getRomsWithFiles()
-            .filter(
-              ArrayPoly.filterUniqueMapped(
-                (romWithFiles) =>
-                  `${romWithFiles.getInputFile().toString()}|${romWithFiles.getOutputFile().toString()}`,
-              ),
-            );
-          return writeCandidate.withRomsWithFiles(uniqueRomsWithFiles);
-        })
-        // Deduplicate WriteCandidates
-        .filter(ArrayPoly.filterUniqueMapped((candidate) => candidate.hashCode()))
-    );
+    // Note: we're explicitly not de-duplicating input+output pairs here, even though they might
+    //  all be the same for every ROM in the case of raw-copying/moving an archive; it is expected
+    //  that CandidateWriter is smart enough to not duplicate the file writes
+    return writeCandidates;
   }
 }
