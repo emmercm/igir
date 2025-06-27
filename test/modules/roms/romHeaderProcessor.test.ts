@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -24,7 +25,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -34,7 +35,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -55,7 +56,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(1);
@@ -69,7 +70,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -79,7 +80,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -97,7 +98,7 @@ describe('extension has possible header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -105,7 +106,7 @@ describe('extension has possible header', () => {
       new Options(),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -125,7 +126,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -136,7 +137,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);
@@ -154,7 +155,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
 
@@ -165,7 +166,7 @@ describe('should read file for header', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).process(inputRomFiles);
 
     expect(processedRomFiles).toHaveLength(inputRomFiles.length);

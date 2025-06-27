@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -29,7 +30,7 @@ it('should do nothing if no ROMs moved', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(2),
+    new DriveSemaphore(os.cpus().length),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
 
@@ -425,7 +426,7 @@ describe('should delete archives', () => {
         const candidates = await new CandidateGenerator(
           options,
           new ProgressBarFake(),
-          new MappableSemaphore(2),
+          new MappableSemaphore(os.cpus().length),
         ).generate(dat, indexedRomFiles);
 
         const inputRoms = rawRomFiles;

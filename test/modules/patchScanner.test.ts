@@ -18,7 +18,7 @@ function createPatchScanner(patch: string[], patchExclude: string[] = []): Patch
     new Options({ patch, patchExclude }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(2),
+    new DriveSemaphore(os.cpus().length),
   );
 }
 
