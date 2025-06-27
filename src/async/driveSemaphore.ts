@@ -23,14 +23,6 @@ export default class DriveSemaphore {
     this.threadsSemaphore = new Semaphore(threads);
   }
 
-  getValue(): number {
-    return this.threadsSemaphore.getValue();
-  }
-
-  setValue(threads: number): void {
-    this.threadsSemaphore.setValue(threads);
-  }
-
   /**
    * Run a {@link runnable} exclusively for the given {@link file}.
    */
@@ -78,24 +70,58 @@ export default class DriveSemaphore {
     files: K[],
     runnable: (file: K) => V | Promise<V>,
   ): Promise<V[]> {
-    // Sort the files, then "stripe" them by their disk path for fair processing among disks
-    const disksToFiles = files
+    return DriveSemaphore.balanceAcrossDisks(files, async (filesWithIndex) =>
+      // Limit the number of ongoing threads to something reasonable
+      async.mapLimit(
+        filesWithIndex,
+        Defaults.MAX_FS_THREADS,
+        async ([file, idx]: [K, number]): Promise<[V, number]> => {
+          try {
+            const val = await this.runExclusive(file, async () => runnable(file));
+            return [val, idx];
+          } catch (error) {
+            if (error instanceof Error) {
+              throw error;
+            } else if (typeof error === 'string') {
+              throw new Error(error);
+            } else {
+              throw new Error('failed to execute runnable');
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  private static async balanceAcrossDisks<K extends File | string, V>(
+    files: K[],
+    callback: (files: [K, number][]) => Promise<[V, number][]>,
+  ): Promise<V[]> {
+    // Sort the files by their path, to put files on the same disk together
+    const disksAndFiles = files
       // Remember the original ordering of the files by its index
       .map((file, idx) => [file, idx] satisfies [K, number])
       .sort(([a], [b]) => {
         const aPath = a instanceof File ? a.getFilePath() : a.toString();
         const bPath = b instanceof File ? b.getFilePath() : b.toString();
         return aPath.localeCompare(bPath);
-      })
-      .reduce((map, [file, idx]) => {
-        const key = DriveSemaphore.getDiskForFile(file);
-        if (map.has(key)) {
-          map.get(key)?.push([file, idx]);
-        } else {
-          map.set(key, [[file, idx]]);
-        }
-        return map;
-      }, new Map<string, [K, number][]>());
+      });
+    const disksToFiles = disksAndFiles.reduce((map, [file, idx]) => {
+      const key = DriveSemaphore.getDiskForFile(file);
+      if (map.has(key)) {
+        map.get(key)?.push([file, idx]);
+      } else {
+        map.set(key, [[file, idx]]);
+      }
+      return map;
+    }, new Map<string, [K, number][]>());
+
+    if (disksToFiles.size <= 1) {
+      // Everything is on the same disk, we don't need to do any extra work
+      return (await callback(disksAndFiles)).map((pair) => pair[0]);
+    }
+
+    // "Stripe" the files by their disk path for fair processing among disks
     const maxFilesOnAnyDisk = [...disksToFiles.values()].reduce(
       (max, filesForDisk) => Math.max(max, filesForDisk.length),
       0,
@@ -109,25 +135,7 @@ export default class DriveSemaphore {
       filesStriped = [...filesStriped, ...batch];
     }
 
-    // Limit the number of ongoing threads to something reasonable
-    const results = await async.mapLimit(
-      filesStriped,
-      Defaults.MAX_FS_THREADS,
-      async ([file, idx]: [K, number]): Promise<[V, number]> => {
-        try {
-          const val = await this.runExclusive(file, async () => runnable(file));
-          return [val, idx];
-        } catch (error) {
-          if (error instanceof Error) {
-            throw error;
-          } else if (typeof error === 'string') {
-            throw new Error(error);
-          } else {
-            throw new Error('failed to execute runnable');
-          }
-        }
-      },
-    );
+    const results = await callback(filesStriped);
 
     // Put the values back in order
     return results.sort(([, aIdx], [, bIdx]) => aIdx - bIdx).map(([result]) => result);
