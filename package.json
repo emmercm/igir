@@ -81,7 +81,7 @@
     "chalk": "5.4.1",
     "chdman": "0.277.2",
     "class-transformer": "0.5.1",
-    "dolphin-tool": "0.2503.1",
+    "dolphin-tool": "0.2506.0",
     "fast-glob": "3.3.3",
     "fast-xml-parser": "5.2.5",
     "graceful-fs": "4.2.11",
@@ -155,6 +155,6 @@
     "node": ">=16.13.2"
   },
   "volta": {
-    "node": "24.2.0"
+    "node": "24.3.0"
   }
 }
