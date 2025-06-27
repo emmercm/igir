@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
@@ -276,7 +275,7 @@ async function playlistCreator(
 
   return Promise.all(
     writtenFiles.sort().map(async (filePath) => {
-      const contents = (await fs.promises.readFile(filePath)).toString().trim().split('\n');
+      const contents = (await FsPoly.readFile(filePath)).toString().trim().split('\n');
       await FsPoly.rm(filePath, { force: true });
       return [filePath.replace(Temp.getTempDir() + path.sep, ''), contents] satisfies [
         string,

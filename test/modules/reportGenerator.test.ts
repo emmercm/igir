@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
@@ -108,7 +107,7 @@ async function wrapReportGenerator(
   );
 
   try {
-    const contents = (await fs.promises.readFile(reportOutput)).toString();
+    const contents = (await FsPoly.readFile(reportOutput)).toString();
     await callback(contents);
   } finally {
     await FsPoly.rm(reportOutput);

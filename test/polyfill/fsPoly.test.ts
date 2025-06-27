@@ -31,8 +31,8 @@ describe.each([
   it("should throw when destination folder doesn't exist", async () => {
     const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
     const tempDest = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'nonexistent', 'dest'));
+    await FsPoly.touch(tempSrc);
     try {
-      await FsPoly.touch(tempSrc);
       await expect(writeFunction(tempSrc, tempDest)).rejects.toThrow(IgirException);
     } finally {
       await FsPoly.rm(tempSrc);
@@ -60,9 +60,11 @@ describe.each([
       await (await IOFile.fileOfSize(tempSrc, 'w', 512 * 1024)).close();
 
       await Promise.all(
-        [...Array.from({ length: 256 }).keys()].map(async (number) =>
-          writeFunction(tempSrc, path.join(tempDir, `dest.${number}`)),
-        ),
+        [...Array.from({ length: 256 }).keys()].map(async (number) => {
+          const tempDest = path.join(tempDir, `dest.${number}`);
+          await writeFunction(tempSrc, tempDest);
+          await expect(FsPoly.exists(tempDest)).resolves.toEqual(true);
+        }),
       );
     } finally {
       await FsPoly.rm(tempDir, { recursive: true, force: true });
@@ -479,6 +481,10 @@ describe('mktemp', () => {
 });
 
 describe('mv', () => {
+  // TODO(cemmer)
+});
+
+describe('readFile', () => {
   // TODO(cemmer)
 });
 

@@ -39,7 +39,7 @@ export default class ChdGdi extends Chd {
     });
 
     // Apply TOSEC-style CRLF line separators to the .gdi file
-    await util.promisify(fs.writeFile)(
+    await FsPoly.writeFile(
       gdiFile,
       (await util.promisify(fs.readFile)(gdiFile)).toString().replaceAll(/\r?\n/g, '\r\n'),
     );
