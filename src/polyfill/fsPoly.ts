@@ -134,17 +134,11 @@ export default class FsPoly {
     const destPreviouslyExisted = await this.exists(dest);
 
     try {
-      if (process.platform === 'win32') {
-        // Windows seems to have a lower limit on the number of open files, causing issues with
-        // streaming between file handles. Use the `graceful-fs` patched file copy.
-        await util.promisify(fs.copyFile)(src, dest);
-      } else {
-        await util.promisify(stream.pipeline)(
-          fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
-          new FsCopyTransform(callback),
-          fs.createWriteStream(dest),
-        );
-      }
+      await util.promisify(stream.pipeline)(
+        fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+        new FsCopyTransform(callback),
+        fs.createWriteStream(dest),
+      );
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
       if (
