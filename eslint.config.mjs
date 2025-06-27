@@ -260,6 +260,22 @@ export default [
     },
   },
 
+  // Restrict fs.promises for most files
+  {
+    files: ['**/*.ts'],
+    ignores: ['packages/**', 'src/polyfill/ioFile.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'fs',
+          property: 'promises',
+          message: 'Use util.promisify() instead to take advantage of graceful-fs',
+        },
+      ],
+    },
+  },
+
   // Ignore JSDoc requirements for some files
   {
     files: [
