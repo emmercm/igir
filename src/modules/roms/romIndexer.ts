@@ -4,6 +4,7 @@ import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
+import Dolphin from '../../types/files/archives/dolphin/dolphin.js';
 import Maxcso from '../../types/files/archives/maxcso/maxcso.js';
 import Rar from '../../types/files/archives/rar.js';
 import SevenZip from '../../types/files/archives/sevenZip/sevenZip.js';
@@ -98,7 +99,7 @@ export default class ROMIndexer extends Module {
   }
 
   /**
-   * This ordering should match {@link FileFactory#entriesFromArchiveExtension}
+   * This ordering should match {@link FileFactory#archiveFromArchiveExtension}
    */
   private static archiveEntryPriority(file: File): number {
     if (!(file instanceof ArchiveEntry)) {
@@ -119,8 +120,11 @@ export default class ROMIndexer extends Module {
     if (file.getArchive() instanceof Maxcso) {
       return 5;
     }
-    if (file.getArchive() instanceof Chd) {
+    if (file.getArchive() instanceof Dolphin) {
       return 6;
+    }
+    if (file.getArchive() instanceof Chd) {
+      return 7;
     }
     return 99;
   }
