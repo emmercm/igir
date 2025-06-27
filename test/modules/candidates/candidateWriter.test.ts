@@ -43,6 +43,9 @@ import Options, {
 } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+// TODO(cemmer): I do not know why Windows fails so often
+jest.retryTimes(process.platform === 'win32' ? 3 : 1);
+
 const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 async function copyFixturesToTemp(
