@@ -31,8 +31,8 @@ describe.each([
   it("should throw when destination folder doesn't exist", async () => {
     const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
     const tempDest = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'nonexistent', 'dest'));
+    await FsPoly.touch(tempSrc);
     try {
-      await FsPoly.touch(tempSrc);
       await expect(writeFunction(tempSrc, tempDest)).rejects.toThrow(IgirException);
     } finally {
       await FsPoly.rm(tempSrc);

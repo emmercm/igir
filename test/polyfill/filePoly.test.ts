@@ -5,6 +5,10 @@ import Temp from '../../src/globals/temp.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import filePoly from '../../src/polyfill/ioFile.js';
 
+if (!(await FsPoly.exists(Temp.getTempDir()))) {
+  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+}
+
 describe('fileOfSize', () => {
   it('should delete an existing file', async () => {
     const size = 8080;
