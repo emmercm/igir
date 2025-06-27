@@ -6,6 +6,8 @@ import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import util from 'node:util';
 
+import async from 'async';
+
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
@@ -69,8 +71,10 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
 
-  return Promise.all(
-    (await FsPoly.walk(dirPath, WalkMode.FILES)).sort().map(async (filePath) => {
+  return async.mapLimit(
+    await FsPoly.walk(dirPath, WalkMode.FILES),
+    os.cpus().length,
+    async (filePath: string): Promise<[string, fs.Stats]> => {
       const stats = await util.promisify(fs.lstat)(filePath);
       // Hard-code properties that can change with file reads
       stats.atime = new Date(0);
@@ -83,7 +87,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       stats.blocks = 0;
 
       return [filePath.replace(dirPath + path.sep, ''), stats];
-    }),
+    },
   );
 }
 
