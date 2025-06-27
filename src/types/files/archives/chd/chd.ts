@@ -50,16 +50,7 @@ export default abstract class Chd extends Archive {
       }
       this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
 
-      let extractedFiles: string[];
-      try {
-        extractedFiles = await this.extractArchiveEntries(this.tempSingletonDirPath);
-      } catch (error) {
-        // TODO(cemmer): REMOVE DEBUG!
-        if (process.env.NODE_ENV === 'test') {
-          console.log(error);
-        }
-        throw error;
-      }
+      const extractedFiles = await this.extractArchiveEntries(this.tempSingletonDirPath);
       if (extractedFiles.length === 0) {
         this.tempSingletonDirPath = undefined;
         throw new IgirException(`failed to extract`);

@@ -45,16 +45,10 @@ async function copyFixturesToTemp(
 
   // Set up the input directory
   const inputTemp = path.join(temp, 'input');
-  if (await FsPoly.exists(inputTemp)) {
-    throw new Error(`${inputTemp} should not exist yet!`);
-  }
   await FsPoly.copyDir(path.join('test', 'fixtures'), inputTemp);
 
   // Set up the output directory
   const outputTemp = path.join(temp, 'output');
-  if (await FsPoly.exists(outputTemp)) {
-    throw new Error(`${outputTemp} should not exist yet!`);
-  }
 
   try {
     // Call the callback
