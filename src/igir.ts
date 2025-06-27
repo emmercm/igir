@@ -199,7 +199,9 @@ export default class Igir {
       );
       datsToWrittenFiles.set(processedDat, [
         ...(datsToWrittenFiles.get(processedDat) ?? []),
-        ...(await Promise.all(playlistPaths.map(async (filePath) => File.fileOf({ filePath })))),
+        ...(await readerSemaphore.map(playlistPaths, async (filePath) =>
+          File.fileOf({ filePath }),
+        )),
       ]);
 
       // Write a dir2dat

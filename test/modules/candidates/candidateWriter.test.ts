@@ -4,6 +4,9 @@ import fs, { Stats } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
+import util from 'node:util';
+
+import async from 'async';
 
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
@@ -68,9 +71,11 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
 
-  return Promise.all(
-    (await FsPoly.walk(dirPath, WalkMode.FILES)).sort().map(async (filePath) => {
-      const stats = await fs.promises.lstat(filePath);
+  return async.mapLimit(
+    await FsPoly.walk(dirPath, WalkMode.FILES),
+    os.cpus().length,
+    async (filePath: string): Promise<[string, fs.Stats]> => {
+      const stats = await util.promisify(fs.lstat)(filePath);
       // Hard-code properties that can change with file reads
       stats.atime = new Date(0);
       stats.atimeMs = 0;
@@ -82,7 +87,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       stats.blocks = 0;
 
       return [filePath.replace(dirPath + path.sep, ''), stats];
-    }),
+    },
   );
 }
 
@@ -109,7 +114,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
   } catch {
     /* ignored */
@@ -118,7 +123,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(2),
+    new DriveSemaphore(os.cpus().length),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
 
@@ -128,14 +133,14 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(2),
+    new MappableSemaphore(os.cpus().length),
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     candidates = await new CandidatePatchGenerator(new ProgressBarFake()).generate(
       dat,
@@ -147,15 +152,16 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new MappableSemaphore(2),
+    new MappableSemaphore(os.cpus().length),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
   // When
-  await new CandidateWriter(options, new ProgressBarFake(), new CandidateWriterSemaphore(2)).write(
-    dat,
-    candidates,
-  );
+  await new CandidateWriter(
+    options,
+    new ProgressBarFake(),
+    new CandidateWriterSemaphore(os.cpus().length),
+  ).write(dat, candidates);
 
   // Then
   return walkAndStat(outputTemp);

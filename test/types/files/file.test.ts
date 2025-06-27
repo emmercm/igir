@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -411,7 +412,7 @@ describe('copyToTempFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(raws).toHaveLength(10);
 
@@ -434,7 +435,7 @@ describe('createReadStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     expect(raws).toHaveLength(9);
 

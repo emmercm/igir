@@ -57,9 +57,13 @@ export default class DATPreferer extends Module {
 
         const preferredGame = parent
           .getGames()
-          .sort((a, b) => this.sort(a, b))
+          .map((game, idx): [Game, number] => [game, idx])
+          .sort((one, two) => this.sort(one, two))
           .at(0);
-        return preferredGame?.withProps({ cloneOf: undefined });
+        if (preferredGame === undefined) {
+          return undefined;
+        }
+        return preferredGame[0].withProps({ cloneOf: undefined });
       })
       .filter((game) => game !== undefined);
     const preferredDat = dat.withGames(preferredGames);
@@ -84,17 +88,19 @@ export default class DATPreferer extends Module {
    *******************
    */
 
-  private sort(a: Game, b: Game): number {
+  private sort(one: [Game, number], two: [Game, number]): number {
     return (
-      this.preferGameRegexSort(a, b) ||
-      this.preferRomRegexSort(a, b) ||
-      this.preferVerifiedSort(a, b) ||
-      this.preferGoodSort(a, b) ||
-      this.preferLanguagesSort(a, b) ||
-      this.preferRegionsSort(a, b) ||
-      this.preferRevisionSort(a, b) ||
-      this.preferRetailSort(a, b) ||
-      this.preferParentSort(a, b)
+      this.preferGameRegexSort(one[0], two[0]) ||
+      this.preferRomRegexSort(one[0], two[0]) ||
+      this.preferVerifiedSort(one[0], two[0]) ||
+      this.preferGoodSort(one[0], two[0]) ||
+      this.preferLanguagesSort(one[0], two[0]) ||
+      this.preferRegionsSort(one[0], two[0]) ||
+      this.preferRevisionSort(one[0], two[0]) ||
+      this.preferRetailSort(one[0], two[0]) ||
+      this.preferParentSort(one[0], two[0]) ||
+      // If there's truly no preference, then sort by the original index
+      one[1] - two[1]
     );
   }
 

@@ -1,11 +1,13 @@
 import crypto from 'node:crypto';
 import fs, { MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions } from 'node:fs';
+import { PathOrFileDescriptor } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import stream from 'node:stream';
 import util from 'node:util';
 
 import async from 'async';
+import gracefulFs from 'graceful-fs';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
@@ -13,6 +15,9 @@ import { Memoize } from 'typescript-memoize';
 import Defaults from '../globals/defaults.js';
 import IgirException from '../types/exceptions/igirException.js';
 import FsCopyTransform, { FsCopyCallback } from './fsCopyTransform.js';
+
+// Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
+gracefulFs.gracefulify(fs);
 
 export const MoveResult = {
   COPIED: 1,
@@ -129,17 +134,11 @@ export default class FsPoly {
     const destPreviouslyExisted = await this.exists(dest);
 
     try {
-      if (process.platform === 'win32') {
-        // Windows seems to have a lower limit on the number of open files, causing issues with
-        // streaming between file handles. Use the `graceful-fs` patched file copy.
-        await util.promisify(fs.copyFile)(src, dest);
-      } else {
-        await util.promisify(stream.pipeline)(
-          fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
-          new FsCopyTransform(callback),
-          fs.createWriteStream(dest),
-        );
-      }
+      await util.promisify(stream.pipeline)(
+        fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
+        new FsCopyTransform(callback),
+        fs.createWriteStream(dest),
+      );
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
       if (
@@ -478,7 +477,7 @@ export default class FsPoly {
       return MoveResult.RENAMED;
     } catch (error) {
       // Can't rename across drives
-      if (['EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+      if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
         await this.copyFile(oldPath, newPath, callback);
         await this.rm(oldPath, { force: true });
         return MoveResult.COPIED;
@@ -508,6 +507,13 @@ export default class FsPoly {
       return false;
     }
     return this.diskResolved(one) !== this.diskResolved(two);
+  }
+
+  /**
+   * @returns the contents of the file.
+   */
+  static async readFile(pathLike: PathOrFileDescriptor): Promise<Buffer<ArrayBuffer>> {
+    return util.promisify(fs.readFile)(pathLike);
   }
 
   /**
@@ -580,7 +586,7 @@ export default class FsPoly {
     try {
       await util.promisify(fs.copyFile)(src, dest, fs.constants.COPYFILE_FICLONE);
     } catch (error) {
-      if (((error as NodeJS.ErrnoException).code ?? '') === 'ENOTSUP') {
+      if ((error as NodeJS.ErrnoException).code === 'ENOTSUP') {
         throw new IgirException('reflinks are not supported on this filesystem');
       }
 
