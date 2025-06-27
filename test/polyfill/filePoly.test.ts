@@ -1,10 +1,13 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import Defaults from '../../src/globals/defaults.js';
 import Temp from '../../src/globals/temp.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import filePoly from '../../src/polyfill/ioFile.js';
+
+if (!(await FsPoly.exists(Temp.getTempDir()))) {
+  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+}
 
 describe('fileOfSize', () => {
   it('should delete an existing file', async () => {
@@ -182,7 +185,7 @@ describe('write', () => {
         await expect(file.write(Buffer.from('ABCDEF01'))).rejects.toThrow();
         await file.close();
 
-        const contents = await fs.promises.readFile(tempFile);
+        const contents = await FsPoly.readFile(tempFile);
         expect(contents).toEqual(
           Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'),
         );
@@ -201,7 +204,7 @@ describe('write', () => {
         await file.write(Buffer.from('ABCDEF01'));
         await file.close();
 
-        const contents = await fs.promises.readFile(tempFile);
+        const contents = await FsPoly.readFile(tempFile);
         expect(contents).toEqual(Buffer.from('ABCDEF01\x00\x00\x00\x00\x00\x00\x00\x00'));
       } finally {
         await FsPoly.rm(tempFile);
@@ -216,7 +219,7 @@ describe('write', () => {
         await file.write(Buffer.from('ABCDEF01'));
         await file.close();
 
-        const contents = await fs.promises.readFile(tempFile);
+        const contents = await FsPoly.readFile(tempFile);
         expect(contents).toEqual(Buffer.from('ABCDEF01'));
       } finally {
         await FsPoly.rm(tempFile);
@@ -235,7 +238,7 @@ describe('writeAt', () => {
         await expect(file.writeAt(Buffer.from('ABCDEF01'), 4)).rejects.toThrow();
         await file.close();
 
-        const contents = await fs.promises.readFile(tempFile);
+        const contents = await FsPoly.readFile(tempFile);
         expect(contents).toEqual(
           Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'),
         );
@@ -254,7 +257,7 @@ describe('writeAt', () => {
         await file.writeAt(Buffer.from('ABCDEF01'), 6);
         await file.close();
 
-        const contents = await fs.promises.readFile(tempFile);
+        const contents = await FsPoly.readFile(tempFile);
         expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00ABCDEF01\x00\x00'));
       } finally {
         await FsPoly.rm(tempFile);
@@ -269,7 +272,7 @@ describe('writeAt', () => {
         await file.writeAt(Buffer.from('ABCDEF01'), 6);
         await file.close();
 
-        const contents = await fs.promises.readFile(tempFile);
+        const contents = await FsPoly.readFile(tempFile);
         expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00ABCDEF01'));
       } finally {
         await FsPoly.rm(tempFile);
