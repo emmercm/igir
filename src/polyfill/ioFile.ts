@@ -132,7 +132,7 @@ export default class IOFile {
     if (this.size <= Defaults.MAX_MEMORY_FILE_SIZE) {
       if (!this.fileBuffer) {
         this.tempBuffer = Buffer.alloc(0);
-        this.fileBuffer = await fs.promises.readFile(this.fileHandle);
+        this.fileBuffer = await FsPoly.readFile(this.fileHandle.fd);
       }
       return Buffer.from(this.fileBuffer.subarray(position, position + size));
     }

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 import type { Config } from 'jest';
 
@@ -12,7 +13,9 @@ const jestConfig = async (): Promise<Config> => {
     ].map(async (moduleName) => {
       const modulePath = path.join('node_modules', moduleName);
       const packagePath = path.join(modulePath, 'package.json');
-      const packageJson = JSON.parse((await fs.promises.readFile(packagePath)).toString()) as {
+      const packageJson = JSON.parse(
+        (await util.promisify(fs.readFile)(packagePath)).toString(),
+      ) as {
         main: string | undefined;
         exports:
           | {
@@ -28,18 +31,21 @@ const jestConfig = async (): Promise<Config> => {
         (packageJson.exports === undefined ? undefined : packageJson.exports['.'].import);
       delete packageJson.exports;
 
-      await fs.promises.writeFile(packagePath, JSON.stringify(packageJson, undefined, 2));
+      await util.promisify(fs.writeFile)(packagePath, JSON.stringify(packageJson, undefined, 2));
     }),
   );
 
   return {
     preset: 'ts-jest',
     testEnvironment: 'node',
+    randomize: true,
+    verbose: true,
 
     setupFilesAfterEnv: ['jest-extended/all'],
 
-    // Many tests are I/O-bound, and possibly contend with each other; increase
-    // the test timeout globally
+    // Many tests are I/O-bound, and possibly contend with each other; reduce
+    // the parallelism and increase the test timeout globally
+    maxWorkers: '50%',
     testTimeout: 45_000,
 
     // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support

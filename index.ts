@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-import realFs from 'node:fs';
-
-import gracefulFs from 'graceful-fs';
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
@@ -15,9 +12,6 @@ import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';
 import UpdateChecker from './src/modules/updateChecker.js';
 import IgirException from './src/types/exceptions/igirException.js';
 import Options from './src/types/options.js';
-
-// Monkey-patch 'fs' to help prevent Windows EMFILE errors
-gracefulFs.gracefulify(realFs);
 
 const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();

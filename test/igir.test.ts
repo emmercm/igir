@@ -1,6 +1,10 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
+import util from 'node:util';
+
+import async from 'async';
 
 import DriveSemaphore from '../src/async/driveSemaphore.js';
 import Logger from '../src/console/logger.js';
@@ -58,15 +62,12 @@ async function copyFixturesToTemp(
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
+
   return (
-    await Promise.all(
-      (await FsPoly.walk(outputDir, WalkMode.FILES)).map(async (filePath) => {
-        try {
-          return await fileFactory.filesFrom(filePath);
-        } catch {
-          return [];
-        }
-      }),
+    await async.mapLimit(
+      await FsPoly.walk(outputDir, WalkMode.FILES),
+      os.cpus().length,
+      async (filePath: string) => fileFactory.filesFrom(filePath),
     )
   )
     .flat()
@@ -83,8 +84,8 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
     ...optionsProps,
-    readerThreads: 2,
-    writerThreads: 2,
+    readerThreads: os.cpus().length,
+    writerThreads: os.cpus().length,
   });
 
   const inputFilesBefore = (
@@ -317,7 +318,9 @@ describe('with explicit DATs', () => {
       );
 
       const inputFiles = await FsPoly.walk(inputTemp, WalkMode.FILES);
-      await Promise.all(inputFiles.map(async (inputFile) => fs.promises.chmod(inputFile, '0444')));
+      await Promise.all(
+        inputFiles.map(async (inputFile) => util.promisify(fs.chmod)(inputFile, '0444')),
+      );
 
       // When running igir with the clean command
       const result = await runIgir({
@@ -1861,7 +1864,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(2),
+        new DriveSemaphore(os.cpus().length),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]
