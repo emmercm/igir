@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
@@ -759,7 +760,7 @@ describe('extractEntryToFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
@@ -802,7 +803,7 @@ describe('copyToTempFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
@@ -840,7 +841,7 @@ describe('createReadStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(2),
+      new DriveSemaphore(os.cpus().length),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
