@@ -754,10 +754,9 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
           // Then the Archive is used for every input file
           expect(candidates).toHaveLength(1);
-
           const firstCandidate = candidates[0];
           const romsWithFiles = firstCandidate.getRomsWithFiles();
-          expect(romsWithFiles).toHaveLength(1);
+          expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
 
           for (const romsWithFile of romsWithFiles) {
             const inputFile = romsWithFile.getInputFile();
@@ -801,10 +800,9 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
           // Then the Archive is used for every input file
           expect(candidates).toHaveLength(1);
-
           const firstCandidate = candidates[0];
           const romsWithFiles = firstCandidate.getRomsWithFiles();
-          expect(romsWithFiles).toHaveLength(1);
+          expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
 
           for (const romsWithFile of romsWithFiles) {
             const inputFile = romsWithFile.getInputFile();
