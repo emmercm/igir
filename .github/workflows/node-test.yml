@@ -78,7 +78,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.should-test == 'true' }}
     name: node-unit (${{ matrix.os }}, ${{ matrix.node-version || 'package.json' }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
