@@ -6,7 +6,6 @@ import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import util from 'node:util';
 
-import { jest } from '@jest/globals';
 import async from 'async';
 
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
@@ -43,9 +42,6 @@ import Options, {
   ZipFormatInverted,
 } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-// TODO(cemmer): I do not know why Windows fails so often
-jest.retryTimes(process.platform === 'win32' ? 3 : 1);
 
 const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
