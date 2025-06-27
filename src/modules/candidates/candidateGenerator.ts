@@ -48,44 +48,45 @@ export default class CandidateGenerator extends Module {
       return [];
     }
 
-    let candidates: WriteCandidate[] = [];
-
     this.progressBar.logTrace(`${dat.getName()}: generating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.resetProgress(dat.getGames().length);
 
     // For each game, try to generate a candidate
-    await this.readerSemaphore.map(dat.getGames(), async (game) => {
-      this.progressBar.incrementInProgress();
-      const childBar = this.progressBar.addChildBar({
-        name: game.getName(),
-      });
+    const candidates = (
+      await this.readerSemaphore.map(dat.getGames(), async (game) => {
+        this.progressBar.incrementInProgress();
+        const childBar = this.progressBar.addChildBar({
+          name: game.getName(),
+        });
 
-      try {
-        const gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
-        if (gameCandidates.length > 0) {
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
-              .getRomsWithFiles()
-              .map((rwf) => rwf.getInputFile().toString())
-              .join(', ')}`,
+        let gameCandidates: WriteCandidate[] = [];
+        try {
+          gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
+          if (gameCandidates.length > 0) {
+            this.progressBar.logTrace(
+              `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
+                .getRomsWithFiles()
+                .map((rwf) => rwf.getInputFile().toString())
+                .join(', ')}`,
+            );
+          }
+        } catch (error) {
+          // Ignore token replacement errors, just don't add the candidate
+          if (!(error instanceof TokenReplacementException)) {
+            throw error;
+          }
+          this.progressBar.logDebug(
+            `${dat.getName()}: ${game.getName()}: failed to generate candidate: ${error.message}`,
           );
+        } finally {
+          childBar.delete();
         }
-        candidates = [...candidates, ...gameCandidates];
-      } catch (error) {
-        // Ignore token replacement errors, just don't add the candidate
-        if (!(error instanceof TokenReplacementException)) {
-          throw error;
-        }
-        this.progressBar.logDebug(
-          `${dat.getName()}: ${game.getName()}: failed to generate candidate: ${error.message}`,
-        );
-      } finally {
-        childBar.delete();
-      }
 
-      this.progressBar.incrementCompleted();
-    });
+        this.progressBar.incrementCompleted();
+        return gameCandidates;
+      })
+    ).flat();
 
     const size = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
@@ -175,9 +176,19 @@ export default class CandidateGenerator extends Module {
     game: Game,
     romsToInputFiles: [ROM, File[]][],
   ): [ROM, File[]][] {
+    if (romsToInputFiles.length === 0) {
+      // There aren't any ROMs, so there's nothing to filter
+      return romsToInputFiles;
+    }
+
     const singleValueGame = new SingleValueGame({ ...game });
 
     return romsToInputFiles.map(([rom, inputFiles]): [ROM, File[]] => {
+      if (inputFiles.length === 0) {
+        // There aren't any matched files, so there's nothing to filter
+        return [rom, inputFiles];
+      }
+
       const rawCopying =
         this.options.shouldWrite() &&
         !this.options.shouldExtractRom(rom) &&
@@ -224,6 +235,11 @@ export default class CandidateGenerator extends Module {
     romsAndInputFiles: [ROM, File[]][],
     indexedFiles: IndexedFiles,
   ): Map<ROM, File> {
+    if (romsAndInputFiles.length === 0) {
+      // There aren't any ROMs, so there's nothing to find
+      return new Map();
+    }
+
     const archiveWithEveryRom = this.findArchiveFileWithEveryRomForGame(
       dat,
       game,
@@ -239,14 +255,8 @@ export default class CandidateGenerator extends Module {
       romsAndInputFiles
         .filter(([, inputFiles]) => inputFiles.length > 0)
         .map(([rom, inputFiles]) => {
-          // Filter and rank the input files, we want to return the best match
-          const rankedInputFiles = inputFiles.sort((a, b) => {
-            // There is no legal archive that contains every ROM, prefer using raw files instead
-            const aArchiveEntry = a instanceof ArchiveEntry ? 1 : 0;
-            const bArchiveEntry = b instanceof ArchiveEntry ? 1 : 0;
-            return aArchiveEntry - bArchiveEntry;
-          });
-          return [rom, rankedInputFiles[0]];
+          // Trust that ROMIndexer applied any preferences we wanted
+          return [rom, inputFiles[0]];
         }),
     );
   }
@@ -588,6 +598,7 @@ export default class CandidateGenerator extends Module {
     foundRomsWithFiles: ROMWithFiles[],
   ): Promise<ROMWithFiles[]> {
     if (foundRomsWithFiles.length === 0) {
+      // There aren't any ROMs
       return foundRomsWithFiles;
     }
 
@@ -651,6 +662,11 @@ export default class CandidateGenerator extends Module {
       return false;
     }
 
+    // If there are less than two files to write, then there can't be any conflicts
+    if (romsWithFiles.length < 2) {
+      return false;
+    }
+
     // For all the ROMs for a Game+Release, find all non-archive output files that have a duplicate
     //  output file path. In other words, there are multiple input files that want to write to the
     //  same output file.
@@ -698,6 +714,11 @@ export default class CandidateGenerator extends Module {
    * the .cue file is accurate.
    */
   private static onlyCueFilesMissingFromChd(game: Game, foundRoms: ROM[]): boolean {
+    if (game.getRoms().length < 2) {
+      // The game has to have at least two ROMs to have a .cue and at least one .bin
+      return false;
+    }
+
     if (foundRoms.length === 0) {
       // No ROMs were found, including any .bin files
       return false;
@@ -736,6 +757,11 @@ export default class CandidateGenerator extends Module {
     romsWithFiles: ROMWithFiles[],
     indexedFiles: IndexedFiles,
   ): boolean {
+    if (romsWithFiles.length === 0) {
+      // No matching files were found, so there can't be any excess
+      return false;
+    }
+
     // For this Game, find every input file that is an ArchiveEntry
     const inputArchiveEntries = romsWithFiles
       // We need to rehydrate information from IndexedFiles because raw-copying/moving archives
