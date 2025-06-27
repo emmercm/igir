@@ -60,9 +60,11 @@ describe.each([
       await (await IOFile.fileOfSize(tempSrc, 'w', 512 * 1024)).close();
 
       await Promise.all(
-        [...Array.from({ length: 256 }).keys()].map(async (number) =>
-          writeFunction(tempSrc, path.join(tempDir, `dest.${number}`)),
-        ),
+        [...Array.from({ length: 256 }).keys()].map(async (number) => {
+          const tempDest = path.join(tempDir, `dest.${number}`);
+          await writeFunction(tempSrc, tempDest);
+          await expect(FsPoly.exists(tempDest)).resolves.toEqual(true);
+        }),
       );
     } finally {
       await FsPoly.rm(tempDir, { recursive: true, force: true });
