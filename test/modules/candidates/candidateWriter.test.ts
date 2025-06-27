@@ -6,6 +6,7 @@ import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import util from 'node:util';
 
+import { jest } from '@jest/globals';
 import async from 'async';
 
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
