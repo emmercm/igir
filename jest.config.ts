@@ -38,11 +38,14 @@ const jestConfig = async (): Promise<Config> => {
   return {
     preset: 'ts-jest',
     testEnvironment: 'node',
+    randomize: true,
+    verbose: true,
 
     setupFilesAfterEnv: ['jest-extended/all'],
 
-    // Many tests are I/O-bound, and possibly contend with each other; increase
-    // the test timeout globally
+    // Many tests are I/O-bound, and possibly contend with each other; reduce
+    // the parallelism and increase the test timeout globally
+    maxWorkers: process.platform === 'win32' ? 1 : '50%',
     testTimeout: 45_000,
 
     // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
