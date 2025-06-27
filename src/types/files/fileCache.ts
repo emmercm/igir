@@ -24,7 +24,6 @@ interface CacheValue {
 }
 
 const ValueType = {
-  INODE: 'I',
   FILE_CHECKSUMS: 'F',
   ARCHIVE_CHECKSUMS: 'A',
   // ROM headers and file signatures may not be found for files, and that is a valid result that
@@ -65,7 +64,6 @@ export default class FileCache {
     // Delete keys for deleted files
     Timer.setTimeout(async () => {
       const cacheKeyFilePaths = [...this.cache.keys()]
-        .filter((cacheKey) => cacheKey.endsWith(`|${ValueType.INODE}`))
         .map((cacheKey): [string, string] => [cacheKey, cacheKey.split('|')[1]])
         // Don't delete the key if it's for a disk that isn't mounted right now
         .filter(([, filePath]) => FsPoly.diskResolved(filePath) !== undefined)
@@ -76,11 +74,7 @@ export default class FileCache {
       await Promise.all(
         cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
           if (!(await FsPoly.exists(filePath))) {
-            // Delete the related cache keys
-            const inode = (await this.cache.get(cacheKey))?.value as number;
-            await this.cache.delete(new RegExp(`^V${FileCache.VERSION}\\|${inode}\\|`));
-
-            // Delete the inode key from the cache
+            // Delete the file path key from the cache
             await this.cache.delete(cacheKey);
           }
         }),
@@ -99,7 +93,7 @@ export default class FileCache {
   async getOrComputeFileChecksums(filePath: string, checksumBitmask: number): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
-    const cacheKey = await this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS);
+    const cacheKey = this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
@@ -153,7 +147,7 @@ export default class FileCache {
       // An empty file can't have entries
       return [];
     }
-    const cacheKey = await this.getCacheKey(
+    const cacheKey = this.getCacheKey(
       archive.getFilePath(),
       archive.constructor.name,
       ValueType.ARCHIVE_CHECKSUMS,
@@ -211,7 +205,7 @@ export default class FileCache {
       // An empty file can't have a header
       return undefined;
     }
-    const cacheKey = await this.getCacheKey(
+    const cacheKey = this.getCacheKey(
       file.getFilePath(),
       file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
       ValueType.ROM_HEADER,
@@ -253,7 +247,7 @@ export default class FileCache {
       // An empty file can't have a signature
       return undefined;
     }
-    const cacheKey = await this.getCacheKey(
+    const cacheKey = this.getCacheKey(
       file.getFilePath(),
       file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
       ValueType.FILE_SIGNATURE,
@@ -288,19 +282,7 @@ export default class FileCache {
     return FileSignature.signatureFromName(cachedSignatureName);
   }
 
-  private async getCacheKey(
-    filePath: string,
-    entryPath: string | undefined,
-    valueType: string,
-  ): Promise<string> {
-    const stats = await FsPoly.stat(filePath);
-    const inodeKey = `V${FileCache.VERSION}|${filePath}|${ValueType.INODE}`;
-    await this.cache.set(inodeKey, {
-      fileSize: stats.size,
-      modifiedTimeMillis: stats.mtimeMs,
-      value: stats.ino,
-    });
-
-    return `V${FileCache.VERSION}|${stats.ino}|${entryPath ?? ''}|${valueType}`;
+  private getCacheKey(filePath: string, entryPath: string | undefined, valueType: string): string {
+    return `V${FileCache.VERSION}|${filePath}|${entryPath ?? ''}|${valueType}`;
   }
 }
