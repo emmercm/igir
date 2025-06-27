@@ -84,8 +84,8 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
     ...optionsProps,
-    readerThreads: 2,
-    writerThreads: 2,
+    readerThreads: os.cpus().length,
+    writerThreads: os.cpus().length,
   });
 
   const inputFilesBefore = (
@@ -1864,7 +1864,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(2),
+        new DriveSemaphore(os.cpus().length),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]
