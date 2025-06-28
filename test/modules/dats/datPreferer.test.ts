@@ -284,7 +284,7 @@ describe('prefer languages', () => {
     const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
     expect(preferredDat.getGames().map((game) => game.getName())).toEqual([
       '1080 Snowboarding (Europe) (En,Ja,Fr,De)',
-      'Carmageddon 64 (Europe) (En,Fr,De,Es)',
+      'Carmageddon 64 (Europe) (En,Fr,Es,It)',
       'Drakkhen (World) (Evercade)',
       'Extreme-G (Europe) (En,Fr,De,Es,It)',
       'Hexen (Europe)',

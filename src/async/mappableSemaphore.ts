@@ -17,13 +17,8 @@ export default class MappableSemaphore extends Semaphore {
    */
   async map<IN, OUT>(values: IN[], callback: (value: IN) => OUT | Promise<OUT>): Promise<OUT[]> {
     if (values.length === 0) {
-      // Don't incur any overhead
+      // Don't incur any semaphore overhead
       return [];
-    }
-
-    if (this.threads === 1) {
-      // Don't incur the overhead of `async-mutex` if `async` is already limiting concurrency
-      return async.mapLimit(values, this.threads, callback);
     }
 
     return async.mapLimit(values, Math.floor(this.threads * 1.5), async (value: IN) =>

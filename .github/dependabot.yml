@@ -14,7 +14,7 @@ updates:
     # Disable non-security updates, let Renovate handle it
     open-pull-requests-limit: 0
     labels: []
-    # Disable rebasing, let .github/workflows/gh-automerge-rebase.yml handle it
+    # Disable rebasing, let .github/workflows/gh-merge-queue.yml handle it
     rebase-strategy: disabled
   - package-ecosystem: pip
     directory: "/"
@@ -26,6 +26,6 @@ updates:
     # Disable non-security updates, let Renovate handle it
     open-pull-requests-limit: 0
     labels: [ ]
-    # Disable rebasing, let .github/workflows/gh-automerge-rebase.yml handle it
+    # Disable rebasing, let .github/workflows/gh-merge-queue.yml handle it
     rebase-strategy: disabled
   # Note: .github/workflows/gh-dependabot-automerge.yml will auto-merge these PRs

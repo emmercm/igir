@@ -16,10 +16,9 @@ concurrency:
 jobs:
   rename:
     permissions:
-      # actions/checkout@v4
+      # actions/checkout
       contents: read
       # `gh` CLI
-      repository-projects: read
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
