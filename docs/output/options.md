@@ -14,11 +14,11 @@ ROM dumpers don't always do a good job of using the generally accepted filename 
 
 Here are some examples of common mistakes:
 
-| Incorrect extensions                                                                                                        | Correct extension                    |
-|-----------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
-| `.fc` Nintendo Family Computer<br>`.nez` Nintendo Entertainment System<br>`.unh` Nintendo Entertainment System (Unheadered) | `.nes` Nintendo Entertainment System |
-| `.sgb` Nintendo Super Game Boy                                                                                              | `.gb` Nintendo Game Boy              |
-| `.bin` Sega Mega Drive / Genesis<br>`.gen` Sega Genesis                                                                     | `.md` Sega Mega Drive                |
+| Incorrect extensions                                                                                                                   | Correct extension                    |
+|----------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
+| `.fc` Nintendo Family Computer<br>`.nez` Nintendo Entertainment System<br>`.unh` Nintendo Entertainment System (Unheadered/Headerless) | `.nes` Nintendo Entertainment System |
+| `.sgb` Nintendo Super Game Boy                                                                                                         | `.gb` Nintendo Game Boy              |
+| `.bin` Sega Mega Drive / Genesis<br>`.gen` Sega Genesis                                                                                | `.md` Sega Mega Drive                |
 
 This correction behavior can be controlled with the following option:
 

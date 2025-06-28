@@ -63,7 +63,7 @@ ROMs-Sorted/
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-<script src="https://asciinema.org/a/J6RnpFif6QJrkageFvKH39btk.js" id="asciicast-J6RnpFif6QJrkageFvKH39btk" async="true"></script>
+<script src="https://asciinema.org/a/pik2U4gYm5IUAyI7rv3oCcv8e.js" id="asciicast-pik2U4gYm5IUAyI7rv3oCcv8e" async="true"></script>
 
 !!! info
 
@@ -133,7 +133,7 @@ ROMs-Sorted/
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).zip
 ```
 
-<script src="https://asciinema.org/a/WAip4pJrNIKk0IGamov7Js4ba.js" id="asciicast-WAip4pJrNIKk0IGamov7Js4ba" async="true"></script>
+<script src="https://asciinema.org/a/m7o42qqA2WnuJTkT0pmkyXhDF.js" id="asciicast-m7o42qqA2WnuJTkT0pmkyXhDF" async="true"></script>
 
 ### Flash cart 1G1R
 
@@ -205,7 +205,7 @@ Your flash cart might then look something like this:
     └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
 ```
 
-<script src="https://asciinema.org/a/GxXyngUlZ5Xg8pCh6GhJdDc4t.js" id="asciicast-GxXyngUlZ5Xg8pCh6GhJdDc4t" async="true"></script>
+<script src="https://asciinema.org/a/eYjKMw6MnXqX2qpIbwf8Ip418.js" id="asciicast-eYjKMw6MnXqX2qpIbwf8Ip418" async="true"></script>
 
 ## Without DATs
 
@@ -246,7 +246,7 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
       --dir-mirror
     ```
 
-<script src="https://asciinema.org/a/cD0dtLJEypOEi27aSyGsrLxIO.js" id="asciicast-cD0dtLJEypOEi27aSyGsrLxIO" async="true"></script>
+<script src="https://asciinema.org/a/yNFkiZPTQqhQTdXEFjy8NnhOm.js" id="asciicast-yNFkiZPTQqhQTdXEFjy8NnhOm" async="true"></script>
 
 ### Fixing file extensions
 
@@ -282,4 +282,4 @@ Igir is able to detect more than 60 ROM and archive file types and automatically
       --fix-extension always
     ```
 
-<script src="https://asciinema.org/a/kqfIeEsHcQhOWwnBFS69n5els.js" id="asciicast-kqfIeEsHcQhOWwnBFS69n5els" async="true"></script>
+<script src="https://asciinema.org/a/3SfkqMOkuO82HMgPYQ6Tivbbf.js" id="asciicast-3SfkqMOkuO82HMgPYQ6Tivbbf" async="true"></script>

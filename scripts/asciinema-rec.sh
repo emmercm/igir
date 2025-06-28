@@ -22,20 +22,62 @@ if [[ "${1:-}" == "play" ]]; then
   # shellcheck disable=SC2317
   npx() {
     shift # discard "igir@latest"
-    node ../dist/index.js "$@" --dat-name-regex-exclude "/encrypted|headerless|3ds/i" --disable-cache
+    node ../dist/index.js "$@" --dat-name-regex-exclude "/3ds|encrypted|headerless|unofficial/i" --disable-cache
   }
   # shellcheck disable=SC2317
   tree() {
-    command tree -N "$@"
+    command tree -N -n "$@"
   }
   # BEGIN PLAYBACK
 
-  # ts-node ./index.ts copy zip clean -d demo/No-Intro*.zip -i GB/ -i NES/ -o demo/roms/ -D
-  pei 'tree -L 1 .'
-  echo "" && sleep 2
-  pei 'npx igir@latest copy zip report --dat "No-Intro*.zip" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name --only-retail'
-  echo "" && sleep 2
-  pei 'tree -L 1 ROMs-Sorted/'
+  # README.md, docs/cli.md
+#  pei 'tree -L 2 .'
+#  echo "" && sleep 2
+#  pei 'npx igir@latest copy zip report --dat "No-Intro*.zip" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name --only-retail'
+#  echo "" && sleep 2
+#  pei 'tree -L 1 ROMs-Sorted/'
+
+  # docs/installation.md - copy extract ROMs-Sorted/
+#  pei 'tree -L 2 .'
+#  echo "" && sleep 2
+#  pei 'npx igir@latest copy extract --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name'
+#  echo "" && sleep 2
+#  pei 'tree -L 2 .'
+
+  # docs/usage/basic.md - copy zip test ROMs-Sorted/
+#  pei 'tree .'
+#  echo "" && sleep 2
+#  pei 'npx igir@latest copy zip test --dat "No-Intro*.zip" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name'
+#  echo "" && sleep 2
+#  pei "tree ROMs-Sorted/"
+
+  # docs/usage/basic.md - move zip test clean report ROMs-New/
+#  pei 'tree .'
+#  echo "" && sleep 2
+#  pei 'npx igir@latest move zip test clean report --dat "No-Intro*.zip" --input ROMs-New/ --input ROMs-Sorted/ --output ROMs-Sorted/ --dir-dat-name'
+#  echo "" && sleep 2
+#  pei "tree ROMs-Sorted/"
+
+  # docs/usage/basic.md - copy extract test clean /Volumes/FLASHCART/
+#  pei 'tree .'
+#  echo "" && sleep 2
+#  pei 'npx igir@latest copy extract test clean --dat "No-Intro*.zip" --input "ROMs-Sorted/Nintendo - Game Boy (Parent-Clone)" --output /Volumes/FLASHCART/ --dir-letter --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN'
+#  echo "" && sleep 2
+#  pei "tree /Volumes/FLASHCART"
+
+  # docs/usage/basic.md - move extract test --dir-mirror
+#  pei 'tree ROMs/'
+#  echo "" && sleep 2
+#  pei 'npx igir@latest move extract test --input ROMs/ --output ROMs/ --dir-mirror'
+#  echo "" && sleep 2
+#  pei 'tree ROMs/'
+
+  # docs/usage/basic.md - move extract test --fix-extension
+#  pei 'tree ROMs/'
+#  echo "" && sleep 2
+#  pei 'npx igir@latest move extract test --input ROMs/ --output ROMs/ --dir-mirror --fix-extension always'
+#  echo "" && sleep 2
+#  pei 'tree ROMs/'
 
   # END PLAYBACK
   exit 0
@@ -80,12 +122,12 @@ npm --version &> /dev/null || exit 1
 npm run build
 
 # Clean any previous output
-rm -rf "${DEMO_DIR}/roms-sorted"
-rm -rf "${DEMO_DIR}/*.csv"
+rm -rf "${DEMO_DIR}/ROMs-Sorted"
+rm -rf "${DEMO_DIR}/"*.csv
 
 clear
 if [[ "${1:-}" == "rec" ]]; then
-  asciinema rec --command "$0 play"
+  asciinema rec --cols 115 --command "$0 play"
 else
   $0 play
   echo ""

@@ -2,7 +2,7 @@
 
 Igir uses a series of live-updating progress bars to indicate what it is currently working on and how much processing is left to do.
 
-<script src="https://asciinema.org/a/bZHvtbqyQlRfkHIuZXxmtDbiU.js" id="asciicast-bZHvtbqyQlRfkHIuZXxmtDbiU" async="true"></script>
+<script src="https://asciinema.org/a/xE6kMquCPFYtpvhsiQfS0eS7c.js" id="asciicast-xE6kMquCPFYtpvhsiQfS0eS7c" async="true"></script>
 
 See the [internal operations](advanced/internals.md#order-of-operations) page for more information on every processing that Igir might do.
 
