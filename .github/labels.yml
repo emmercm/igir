@@ -57,3 +57,8 @@
 - name: ongoing
   description: Discussions to be kept open
   color: 'ffffff'
+
+# Labels to control CI actions
+- name: renovate/rebase
+  description: Label to request a rebase from Renovate
+  color: '318BE3'
