@@ -110,7 +110,7 @@
     "yargs": "17.7.2"
   },
   "devDependencies": {
-    "@jest/globals": "30.0.2",
+    "@jest/globals": "30.0.3",
     "@types/async": "3.2.24",
     "@types/cli-progress": "3.11.6",
     "@types/graceful-fs": "4.1.9",
@@ -135,7 +135,7 @@
     "eslint-plugin-prettier": "5.5.0",
     "eslint-plugin-simple-import-sort": "12.1.1",
     "eslint-plugin-unicorn": "59.0.1",
-    "jest": "30.0.2",
+    "jest": "30.0.3",
     "jest-extended": "6.0.0",
     "prettier": "3.6.0",
     "ts-jest": "29.4.0",
