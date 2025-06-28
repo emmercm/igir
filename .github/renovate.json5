@@ -46,9 +46,9 @@
   prHourlyLimit: 0, // no limit
   automerge: true,
   platformAutomerge: true, // default
-  // Rely on the PR Rebaser GitHub Action to do this. PRs will merge in the order they are created,
-  //  so the `prPriority` option SHOULD be respected.
-  rebaseWhen: 'conflicted', // separate PRs updating the lockfile are likely to conflict each other
+  // Rely on the `.github/workflows/gh-merge-queue.yml` workflow to manage rebasing
+  rebaseWhen: 'never',
+  rebaseLabel: 'renovate/rebase',
   updateNotScheduled: true, // default
 
   // Stability settings: don't raise a PR until a dependency is at least 3 days old

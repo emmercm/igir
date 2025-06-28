@@ -21,7 +21,7 @@ for example:
 npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
 ```
 
-<script src="https://asciinema.org/a/IFU8rU8k800TMVWb9xXv4Jbsv.js" id="asciicast-IFU8rU8k800TMVWb9xXv4Jbsv" async="true"></script>
+<script src="https://asciinema.org/a/ocqHh6Rb5ZUOhswX8PQ4sw57d.js" id="asciicast-ocqHh6Rb5ZUOhswX8PQ4sw57d" async="true"></script>
 
 !!! tip
 
@@ -75,6 +75,6 @@ brew upgrade igir
 ## Via downloaded executable
 
 [![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)
-![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fregistry.npmjs.org%2Figir%2Flatest&query=volta.node&logo=node.js&logoColor=white&label=Node.js&color=66cc33)
+[![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fregistry.npmjs.org%2Figir%2Flatest&query=volta.node&logo=node.js&logoColor=white&label=Node.js&color=66cc33)]((https://nodejs.org/en/download/))
 
 If you don't want to download Node.js, you can download executables for various OSes from the [GitHub releases](https://github.com/emmercm/igir/releases) page.

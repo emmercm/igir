@@ -27,7 +27,7 @@
 
 A video of an example use case:
 
-<a href="https://asciinema.org/a/bZHvtbqyQlRfkHIuZXxmtDbiU" target="_blank"><img src="https://asciinema.org/a/bZHvtbqyQlRfkHIuZXxmtDbiU.svg" alt="asciicast" style="width:100%" /></a>
+<a href="https://asciinema.org/a/xE6kMquCPFYtpvhsiQfS0eS7c" target="_blank"><img src="https://asciinema.org/a/xE6kMquCPFYtpvhsiQfS0eS7c.svg" alt="asciicast" style="width:100%" /></a>
 
 With Igir you can manage a ROM collection of any size:
 
@@ -61,10 +61,9 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v3.4.2
+     @@   @@        @@   @@   @@       @@    v4.0.0
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
-
 
 Usage: igir [commands..] [options]
 
@@ -126,6 +125,8 @@ ROM output path options (processed in order):
                              ee below)                                                [string]
       --dir-mirror           Use the input subdirectory structure for the output directory
                                                                                      [boolean]
+      --dir-dat-mirror       Use the DAT subdirectory structure for the output directory
+                                                                                     [boolean]
   -D, --dir-dat-name         Use the DAT name as the output subdirectory             [boolean]
       --dir-dat-description  Use the DAT description as the output subdirectory      [boolean]
       --dir-letter           Group games in an output subdirectory by the first --dir-letter-c
@@ -148,6 +149,10 @@ ROM writing options:
       --overwrite-invalid  Overwrite files in the output directory that are the wrong filesize
                            , checksum, or zip contents                               [boolean]
 
+move command options:
+      --move-delete-dirs  Delete empty subdirectories from the input directories after moving
+                          ROMs          [choices: "never", "auto", "always"] [default: "auto"]
+
 clean command options:
   -C, --clean-exclude  Path(s) to files to exclude from cleaning (supports globbing)   [array]
       --clean-backup   Directory to move cleaned files to (instead of being recycled) [string]
@@ -155,12 +160,15 @@ clean command options:
                        d                                                             [boolean]
 
 zip command options:
+      --zip-format    The structure format to use for written zip files
+                                     [choices: "torrentzip", "rvzstd"] [default: "torrentzip"]
   -Z, --zip-exclude   Glob pattern of ROM filenames to exclude from zipping           [string]
       --zip-dat-name  Group all ROMs from the same DAT into the same zip archive, if not exclu
                       ded from zipping (enforces --dat-threads 1)                    [boolean]
 
 link command options:
-      --symlink           Creates symbolic links instead of hard links               [boolean]
+      --link-mode         File linking mode
+                             [choices: "hardlink", "symlink", "reflink"] [default: "hardlink"]
       --symlink-relative  Create symlinks as relative to the target path, as opposed to absolu
                           te                                                         [boolean]
 
@@ -246,7 +254,7 @@ report command options:
                                     [string] [default: "./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
 
 Help & debug options:
-      --dat-threads     Number of DATs to process in parallel            [number] [default: 3]
+      --dat-threads     Number of DATs to process in parallel            [number] [default: 2]
       --reader-threads  Maximum number of ROMs to read in parallel per disk
                                                                          [number] [default: 8]
       --writer-threads  Maximum number of ROMs to write in parallel      [number] [default: 4]
