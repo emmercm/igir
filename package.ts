@@ -74,27 +74,10 @@ logger.info(`Input: '${input}'`);
 const output = path.resolve(argv.output);
 logger.info(`Output: '${output}'`);
 
-// Generate the ./dist directory
-logger.info(`Bundling with 'esbuild' ...`);
-await FsPoly.rm('dist', { recursive: true, force: true });
-await esbuild.build({
-  entryPoints: ['index.ts'],
-  outfile: path.join(input, 'dist', 'bundle.js'),
-  platform: 'node',
-  bundle: true,
-  packages: 'external',
-  format: 'esm',
-  // Fix `file:` dependencies
-  alias: (await util.promisify(fs.readdir)(path.join(input, 'packages'), { withFileTypes: true }))
-    .filter((dirent) => dirent.isDirectory())
-    .reduce<Record<string, string>>((record, dirent) => {
-      record[`@igir/${dirent.name}`] = path.join(dirent.parentPath, dirent.name);
-      return record;
-    }, {}),
-});
-
 // By default, a normal Windows user doesn't have symlink privileges, so the caxa stub will fail to
 // uncompress with an error "A required privilege is not held by the client."
+// This requires a lot of steps because we can't let caxa or any other tool invoke npm once we
+// manually resolve the symlinks.
 if (process.platform === 'win32') {
   // Reinstall only production dependencies
   try {
@@ -122,7 +105,26 @@ if (process.platform === 'win32') {
     npm.on('error', reject);
   });
 
-  // Except install caxa back
+  // Install esbuild back
+  // We can't do this deletion & reinstallation after running esbuild because it seems to keep the
+  // esbuild.exe open such that it can't be deleted
+  const esbuildVersion = JSON.parse(
+    (await FsPoly.readFile(path.join(input, 'package.json'))).toString(),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  ).devDependencies.esbuild as string;
+  await new Promise((resolve, reject) => {
+    logger.info(`Running 'npm install esbuild@${esbuildVersion}' ...`);
+    const npm = child_process.spawn(
+      'npm',
+      ['install', '--no-package-lock', '--no-save', `esbuild@${esbuildVersion}`],
+      { windowsHide: true },
+    );
+    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
+    npm.on('close', resolve);
+    npm.on('error', reject);
+  });
+
+  // Install caxa back
   const caxaVersion = JSON.parse(
     (await FsPoly.readFile(path.join(input, 'package.json'))).toString(),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -157,6 +159,25 @@ if (process.platform === 'win32') {
       }),
   );
 }
+
+// Generate the ./dist directory
+logger.info(`Bundling with 'esbuild' ...`);
+await FsPoly.rm('dist', { recursive: true, force: true });
+await esbuild.build({
+  entryPoints: ['index.ts'],
+  outfile: path.join(input, 'dist', 'bundle.js'),
+  platform: 'node',
+  bundle: true,
+  packages: 'external',
+  format: 'esm',
+  // Fix `file:` dependencies
+  alias: (await util.promisify(fs.readdir)(path.join(input, 'packages'), { withFileTypes: true }))
+    .filter((dirent) => dirent.isDirectory())
+    .reduce<Record<string, string>>((record, dirent) => {
+      record[`@igir/${dirent.name}`] = path.join(dirent.parentPath, dirent.name);
+      return record;
+    }, {}),
+});
 
 // Generate the prebuilds directory
 const prebuilds = path.join('dist', 'prebuilds');
