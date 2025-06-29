@@ -137,6 +137,7 @@
     "eslint-plugin-unicorn": "59.0.1",
     "jest": "30.0.3",
     "jest-extended": "6.0.0",
+    "prebuildify": "^6.0.1",
     "prettier": "3.6.0",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
