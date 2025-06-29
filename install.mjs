@@ -14,7 +14,8 @@ while (!(await path.join(packageDirectory, 'package.json'))) {
  * Unfortunately, there is a sticky situation with Node-API:
  *  - `prebuildify` can only build one target from a binding.gyp at a time
  *  - The `node-gyp-build` install script can build all targets from a binding.gyp because node-gyp
- *    can handle it, but it will only look for a single *.node prebuild file
+ *    can handle it, but it will only look for a single *.node prebuild file when code uses it
+ *    to find prebuilds
  * So we're stuck with this `npm install` script that will run `node-gyp-build` if necessary,
  * separately for each distinct Node-API package.
  *
@@ -27,7 +28,12 @@ await Promise.all(
     (napiPackage) =>
       new Promise((resolve, reject) => {
         const nodeGypBuild = child_process.spawn(
-          path.join(packageDirectory, 'node_modules', '.bin', 'node-gyp-build'),
+          path.join(
+            packageDirectory,
+            'node_modules',
+            '.bin',
+            'node-gyp-build' + (process.platform === 'win32' ? '.exe' : ''),
+          ),
           [],
           {
             windowsHide: true,
