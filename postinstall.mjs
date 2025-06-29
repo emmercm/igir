@@ -18,19 +18,26 @@ await Promise.all(
   [path.join('packages', 'zlib-1.1.3'), path.join('packages', 'zstd-1.5.5')].map(
     (napiPackage) =>
       new Promise((resolve, reject) => {
-        const nodeGypBuild = child_process.spawn(
-          path.join(
-            import.meta.dirname,
-            'node_modules',
-            '.bin',
-            'node-gyp-build' + (process.platform === 'win32' ? '.cmd' : ''),
-          ),
-          [],
-          {
-            windowsHide: true,
-            cwd: napiPackage,
-          },
-        );
+        let nodeGypBuild;
+        nodeGypBuild =
+          process.platform === 'win32'
+            ? child_process.spawn(
+                'cmd.exe',
+                [
+                  '/c',
+                  path.join(import.meta.dirname, 'node_modules', '.bin', 'node-gyp-build.cmd'),
+                ],
+                {
+                  cwd: napiPackage,
+                },
+              )
+            : child_process.spawn(
+                path.join(import.meta.dirname, 'node_modules', '.bin', 'node-gyp-build'),
+                [],
+                {
+                  cwd: napiPackage,
+                },
+              );
         nodeGypBuild.stderr.on('data', (data) => process.stderr.write(data));
         nodeGypBuild.on('close', resolve);
         nodeGypBuild.on('error', reject);
