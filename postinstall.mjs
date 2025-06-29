@@ -22,7 +22,24 @@ await Promise.all(
           cwd: napiPackage,
           windowsHide: true,
         });
-        proc.stderr.on('data', (data) => process.stderr.write(data));
+        proc.stdout.on('data', (data) =>
+          process.stdout.write(
+            data
+              .toString()
+              .split('\n')
+              .map((line) => napiPackage + ': ' + line)
+              .join('\n'),
+          ),
+        );
+        proc.stderr.on('data', (data) =>
+          process.stderr.write(
+            data
+              .toString()
+              .split('\n')
+              .map((line) => napiPackage + ': ' + line)
+              .join('\n'),
+          ),
+        );
         proc.on('close', resolve);
         proc.on('error', reject);
       }),
