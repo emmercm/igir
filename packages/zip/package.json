@@ -1,8 +1,0 @@
-{
-  "name": "@igir/zip",
-  "main": "index.js",
-  "type": "module",
-  "dependencies": {
-    "zstd-napi": "0.0.11"
-  }
-}

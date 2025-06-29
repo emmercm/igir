@@ -1,6 +1,6 @@
 import stream from 'node:stream';
 
-import zstd, { ZstdThreadedCompressorInstance } from '@igir/zstd-1.5.5';
+import zstd, { ZstdThreadedCompressorInstance } from '../../zstd-1.5.5/index.js';
 
 /**
  * A Transform stream that compresses data using zstd with multithreading support.

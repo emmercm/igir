@@ -32,7 +32,8 @@
   "funding": "https://github.com/sponsors/emmercm",
   "type": "module",
   "files": [
-    "dist",
+    "dist/",
+    "install.mjs",
     "!**/test/**",
     "!**/*.test.*",
     "!**/jest.*"
@@ -52,6 +53,7 @@
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
     "preinstall": "node --eval \"if(require('fs').existsSync('index.ts')){require('fs').rmSync('dist',{recursive:true,force:true});}\"",
+    "install": "node install.mjs",
     "postinstall": "node --eval \"if(require('fs').existsSync('.git')===false && require('fs').existsSync('dist')===false){process.exit(1);}\" || npm run build",
     "start": "node --loader ts-node/esm index.ts",
     "build": "node --loader ts-node/esm build.ts",
@@ -74,10 +76,6 @@
     "@fast-csv/format": "5.0.2",
     "@fast-csv/parse": "5.0.2",
     "@gplane/cue": "0.2.0",
-    "@igir/torrentzip": "file:packages/torrentzip",
-    "@igir/torrentzip-dist": "file:dist/packages/torrentzip",
-    "@igir/zip": "file:packages/zip",
-    "@igir/zip-dist": "file:dist/packages/zip",
     "@node-rs/crc32": "1.10.6",
     "7zip-min": "2.1.0",
     "async": "3.2.6",
@@ -96,6 +94,7 @@
     "micromatch": "4.0.8",
     "moment": "2.30.1",
     "node-disk-info": "1.3.0",
+    "node-gyp-build": "^4.8.4",
     "node-unrar-js": "2.0.2",
     "reflect-metadata": "0.2.2",
     "semver": "7.7.2",
@@ -107,7 +106,8 @@
     "typescript-memoize": "1.1.1",
     "wrap-ansi": "8.1.0",
     "xml2js": "0.6.2",
-    "yargs": "17.7.2"
+    "yargs": "17.7.2",
+    "zstd-napi": "^0.0.12"
   },
   "devDependencies": {
     "@jest/globals": "30.0.3",
@@ -140,7 +140,6 @@
     "prettier": "3.6.0",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
-    "tsc-alias": "1.8.16",
     "typescript": "5.8.3",
     "typescript-eslint": "8.35.0",
     "which": "5.0.0"

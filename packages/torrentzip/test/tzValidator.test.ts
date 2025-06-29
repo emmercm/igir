@@ -1,8 +1,6 @@
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { CompressionMethodValue } from '@igir/torrentzip/index.js';
-import { ZipReader } from '@igir/zip';
 import { jest } from '@jest/globals';
 
 import Logger from '../../../src/console/logger.js';
@@ -11,7 +9,9 @@ import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
+import { ZipReader } from '../../zip/index.js';
 import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
+import { CompressionMethodValue } from '../src/tzWriter.js';
 
 jest.setTimeout(5 * 60 * 1000); // 5min for QEMU cross-build testing
 

@@ -3,7 +3,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { ZipReader } from '@igir/zip';
 import { jest } from '@jest/globals';
 
 import Logger from '../../../src/console/logger.js';
@@ -15,6 +14,7 @@ import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import IOFile from '../../../src/polyfill/ioFile.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
+import { ZipReader } from '../../zip/index.js';
 import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
 import TZWriter, { CompressionMethod, CompressionMethodValue } from '../src/tzWriter.js';
 

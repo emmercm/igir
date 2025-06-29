@@ -33,15 +33,6 @@ await new Promise((resolve, reject) => {
   tsc.on('close', resolve);
   tsc.on('error', reject);
 });
-await new Promise((resolve, reject) => {
-  logger.info(`Running 'tsc-alias' ...`);
-  const tscAlias = child_process.spawn('npm', ['exec', 'tsc-alias', '--'], {
-    windowsHide: true,
-  });
-  tscAlias.stderr.on('data', (data: Buffer) => process.stderr.write(data));
-  tscAlias.on('close', resolve);
-  tscAlias.on('error', reject);
-});
 
 logger.info(`Copying additional files ...`);
 /**
@@ -82,7 +73,6 @@ await copyfiles(
     'packages/*/prebuilds/**',
     'packages/*/binding.cpp',
     'packages/*/binding.gyp',
-    'packages/*/package.json',
   ],
   [
     'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
