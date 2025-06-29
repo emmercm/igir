@@ -19,12 +19,7 @@ await Promise.all(
     (napiPackage) =>
       new Promise((resolve, reject) => {
         const nodeGypBuild = child_process.spawn(
-          path.join(
-            import.meta.dirname,
-            'node_modules',
-            '.bin',
-            'node-gyp-build' + (process.platform === 'win32') ? '.exe' : '',
-          ),
+          path.join(import.meta.dirname, 'node_modules', '.bin', 'node-gyp-build'),
           [],
           {
             windowsHide: true,
