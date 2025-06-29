@@ -93,6 +93,71 @@ await esbuild.build({
     }, {}),
 });
 
+// By default, a normal Windows user doesn't have symlink privileges, so the caxa stub will fail to
+// uncompress with an error "A required privilege is not held by the client."
+if (process.platform === 'win32') {
+  // Reinstall only production dependencies
+  try {
+    await FsPoly.rm(path.join(input, 'node_modules'), { recursive: true });
+  } catch {
+    /* ignored */
+  }
+  await new Promise((resolve, reject) => {
+    logger.info("Running 'npm ci' ...");
+    const npm = child_process.spawn('npm', ['ci', '--omit=dev'], { windowsHide: true, cwd: input });
+    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
+    npm.on('close', resolve);
+    npm.on('error', reject);
+  });
+
+  // De-duplicate those dependencies (normally caxa does this for us)
+  await new Promise((resolve, reject) => {
+    logger.info("Running 'npm dedupe' ...");
+    const npm = child_process.spawn('npm', ['dedupe', '--omit=dev'], {
+      windowsHide: true,
+      cwd: input,
+    });
+    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
+    npm.on('close', resolve);
+    npm.on('error', reject);
+  });
+
+  // Except install caxa back
+  const caxaVersion = JSON.parse(
+    (await FsPoly.readFile(path.join(input, 'package.json'))).toString(),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  ).devDependencies.caxa as string;
+  await new Promise((resolve, reject) => {
+    logger.info(`Running 'npm install caxa@${caxaVersion}' ...`);
+    const npm = child_process.spawn(
+      'npm',
+      ['install', '--no-package-lock', '--no-save', `caxa@${caxaVersion}`],
+      { windowsHide: true },
+    );
+    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
+    npm.on('close', resolve);
+    npm.on('error', reject);
+  });
+
+  // Resolve the symlinked directories
+  await Promise.all(
+    (
+      await util.promisify(fs.readdir)(path.join(input, 'node_modules', '@igir'), {
+        withFileTypes: true,
+      })
+    )
+      .filter((dirent) => dirent.isSymbolicLink())
+      .map(async (dirent) => {
+        const dir = path.join(dirent.parentPath, dirent.name);
+        const validSymlink = await FsPoly.exists(await FsPoly.readlinkResolved(dir));
+        await FsPoly.rm(dir, { recursive: true });
+        if (validSymlink) {
+          await FsPoly.copyDir(path.join(input, 'packages', dirent.name), dir);
+        }
+      }),
+  );
+}
+
 // Generate the prebuilds directory
 const prebuilds = path.join('dist', 'prebuilds');
 await FsPoly.rm(prebuilds, { recursive: true, force: true });
@@ -170,6 +235,8 @@ await caxa({
     `{{caxa}}/node_modules/.bin/node${process.platform === 'win32' ? '.exe' : ''}`,
     '{{caxa}}/dist/bundle.js',
   ],
+  // Don't let caxa invoke any npm commands, otherwise it may revert changes made above!
+  dedupe: process.platform !== 'win32',
 });
 await FsPoly.rm(prebuilds, { recursive: true });
 

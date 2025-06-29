@@ -626,26 +626,42 @@ export default class FsPoly {
    * Deletes the file or directory {@param pathLike} with the options {@param options}, retrying
    * failures.
    */
-  static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
+  static async rm(filePath: string, options: RmOptions = {}, attempt = 1): Promise<void> {
     const optionsWithRetry = {
       maxRetries: 2,
       ...options,
     };
 
-    if (!(await this.exists(pathLike))) {
+    if (!(await this.exists(filePath))) {
       if (optionsWithRetry.force) {
         return;
       }
-      throw new IgirException(`can't rm, path doesn't exist: ${pathLike}`);
+      throw new IgirException(`can't rm, path doesn't exist: ${filePath}`);
     }
 
-    if (await this.isDirectory(pathLike)) {
-      await util.promisify(fs.rm)(pathLike, {
-        ...optionsWithRetry,
-        recursive: true,
+    try {
+      if (await this.isDirectory(filePath)) {
+        await util.promisify(fs.rm)(filePath, {
+          ...optionsWithRetry,
+          recursive: true,
+        });
+      } else {
+        await util.promisify(fs.unlink)(filePath);
+      }
+    } catch (error) {
+      // `graceful-fs` doesn't retry these for rm() or unlink() but probably should
+      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
+        throw error;
+      }
+
+      // Backoff with jitter
+      if (attempt >= 5) {
+        throw error;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
-    } else {
-      await util.promisify(fs.unlink)(pathLike);
+      return this.rm(filePath, options, attempt + 1);
     }
   }
 
