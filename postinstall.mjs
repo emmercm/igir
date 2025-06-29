@@ -16,7 +16,6 @@ import util from 'node:util';
  * npm packages, but that's a lot of overhead for code that is so tightly coupled together and not
  * meant for public reuse.
  */
-const nodeGypBuild = path.join(import.meta.dirname, 'node_modules', '.bin', 'node-gyp-build');
 await Promise.all(
   [path.join('packages', 'zlib-1.1.3'), path.join('packages', 'zstd-1.5.5')].map(
     async (napiPackage) => {
@@ -26,21 +25,28 @@ await Promise.all(
       } catch {
         /* ignored */
       }
+
       await new Promise((resolve, reject) => {
-        const proc = child_process.spawn(
-          nodeGypBuild + (process.platform === 'win32' ? '.cmd' : ''),
-          [],
-          {
-            cwd: napiPackage,
-            windowsHide: true,
-          },
+        const nodeGypBuild = path.join(
+          import.meta.dirname,
+          'node_modules',
+          '.bin',
+          'node-gyp-build',
         );
+        const proc =
+          process.platform === 'win32'
+            ? child_process.spawn('cmd.exe', ['/c', `${nodeGypBuild}.cmd`], {
+                cwd: napiPackage,
+                windowsHide: true,
+              })
+            : child_process.spawn(nodeGypBuild, [], { cwd: napiPackage });
+
         proc.stdout.on('data', (data) =>
           process.stdout.write(
             data
               .toString()
               .split('\n')
-              .map((line) => napiPackage + ': ' + line)
+              .map((line) => `${napiPackage}: ${line}`)
               .join('\n'),
           ),
         );
@@ -49,7 +55,7 @@ await Promise.all(
             data
               .toString()
               .split('\n')
-              .map((line) => napiPackage + ': ' + line)
+              .map((line) => `${napiPackage}: ${line}`)
               .join('\n'),
           ),
         );
