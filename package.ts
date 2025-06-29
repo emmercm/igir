@@ -76,72 +76,7 @@ logger.info(`Output: '${output}'`);
 
 // By default, a normal Windows user doesn't have symlink privileges, so the caxa stub will fail to
 // uncompress with an error "A required privilege is not held by the client."
-// This requires a lot of steps because we can't let caxa or any other tool invoke npm once we
-// manually resolve the symlinks.
 if (process.platform === 'win32') {
-  // Reinstall only production dependencies
-  try {
-    await FsPoly.rm(path.join(input, 'node_modules'), { recursive: true });
-  } catch {
-    /* ignored */
-  }
-  await new Promise((resolve, reject) => {
-    logger.info("Running 'npm ci' ...");
-    const npm = child_process.spawn('npm', ['ci', '--omit=dev'], { windowsHide: true, cwd: input });
-    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
-    npm.on('close', resolve);
-    npm.on('error', reject);
-  });
-
-  // De-duplicate those dependencies (normally caxa does this for us)
-  await new Promise((resolve, reject) => {
-    logger.info("Running 'npm dedupe' ...");
-    const npm = child_process.spawn('npm', ['dedupe', '--omit=dev'], {
-      windowsHide: true,
-      cwd: input,
-    });
-    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
-    npm.on('close', resolve);
-    npm.on('error', reject);
-  });
-
-  // Install esbuild back
-  // We can't do this deletion & reinstallation after running esbuild because it seems to keep the
-  // esbuild.exe open such that it can't be deleted
-  const esbuildVersion = JSON.parse(
-    (await FsPoly.readFile(path.join(input, 'package.json'))).toString(),
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  ).devDependencies.esbuild as string;
-  await new Promise((resolve, reject) => {
-    logger.info(`Running 'npm install esbuild@${esbuildVersion}' ...`);
-    const npm = child_process.spawn(
-      'npm',
-      ['install', '--no-package-lock', '--no-save', `esbuild@${esbuildVersion}`],
-      { windowsHide: true },
-    );
-    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
-    npm.on('close', resolve);
-    npm.on('error', reject);
-  });
-
-  // Install caxa back
-  const caxaVersion = JSON.parse(
-    (await FsPoly.readFile(path.join(input, 'package.json'))).toString(),
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  ).devDependencies.caxa as string;
-  await new Promise((resolve, reject) => {
-    logger.info(`Running 'npm install caxa@${caxaVersion}' ...`);
-    const npm = child_process.spawn(
-      'npm',
-      ['install', '--no-package-lock', '--no-save', `caxa@${caxaVersion}`],
-      { windowsHide: true },
-    );
-    npm.stderr.on('data', (data: Buffer) => process.stderr.write(data));
-    npm.on('close', resolve);
-    npm.on('error', reject);
-  });
-
-  // Resolve the symlinked directories
   await Promise.all(
     (
       await util.promisify(fs.readdir)(path.join(input, 'node_modules', '@igir'), {
@@ -192,12 +127,21 @@ await FsPoly.copyDir(
   path.join(prebuilds, `${process.platform}-${process.arch}`),
 );
 
+const devDependencies = Object.keys(
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+  JSON.parse((await FsPoly.readFile(path.join(input, 'package.json'))).toString()).devDependencies,
+);
+
 const include = new Set(
   fileFilter([
     // Start with the files we need
     { include: 'dist{,/**}', onlyFiles: false },
     { include: 'node_modules{,/**}', onlyFiles: false },
     { include: 'package*.json' },
+    // Exclude devDependencies
+    ...devDependencies.map((devDependency) => ({
+      exclude: path.join('node_modules', devDependency, '**'),
+    })),
     // Exclude unnecessary JavaScript files
     { exclude: '**/jest.config.(js|ts|mjs|cjs|json)' },
     { exclude: '**/tsconfig*' },
