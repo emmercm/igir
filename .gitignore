@@ -106,6 +106,7 @@ dist
 
 # Custom
 dist/
+/package
 packages/*/build/**
 packages/*/package-lock.json
 ./prebuilds/
