@@ -1,6 +1,15 @@
 import child_process from 'node:child_process';
 import path from 'node:path';
 
+let packageDirectory = path.resolve(import.meta.dirname);
+while (!(await path.join(packageDirectory, 'package.json'))) {
+  const parentDirectory = path.dirname(packageDirectory);
+  if (parentDirectory === packageDirectory) {
+    throw new Error(`couldn't find package.json`);
+  }
+  packageDirectory = parentDirectory;
+}
+
 /**
  * Unfortunately, there is a sticky situation with Node-API:
  *  - `prebuildify` can only build one target from a binding.gyp at a time
@@ -18,7 +27,7 @@ await Promise.all(
     (napiPackage) =>
       new Promise((resolve, reject) => {
         const nodeGypBuild = child_process.spawn(
-          path.join(import.meta.dirname, 'node_modules', '.bin', 'node-gyp-build'),
+          path.join(packageDirectory, 'node_modules', '.bin', 'node-gyp-build'),
           [],
           {
             windowsHide: true,
