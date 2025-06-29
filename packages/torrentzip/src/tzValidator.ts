@@ -1,6 +1,6 @@
-import { CompressionMethod, ZipReader } from '@igir/zip';
 import { crc32 } from '@node-rs/crc32';
 
+import { CompressionMethod, ZipReader } from '../../zip/index.js';
 import CP437Encoder from './cp437Encoder.js';
 
 export const ValidationResult = {

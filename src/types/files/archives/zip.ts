@@ -3,17 +3,17 @@ import path from 'node:path';
 import stream, { Readable } from 'node:stream';
 import util from 'node:util';
 
+import async from 'async';
+import { Mutex } from 'async-mutex';
+
 import {
   CompressionMethod,
   TZValidator,
   TZWriter,
   ValidationResult,
   ValidationResultValue,
-} from '@igir/torrentzip';
-import { CentralDirectoryFileHeader, ZipReader } from '@igir/zip';
-import async from 'async';
-import { Mutex } from 'async-mutex';
-
+} from '../../../../packages/torrentzip/index.js';
+import { CentralDirectoryFileHeader, ZipReader } from '../../../../packages/zip/index.js';
 import { ProgressCallback } from '../../../console/progressBar.js';
 import Defaults from '../../../globals/defaults.js';
 import FsCopyTransform, { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';

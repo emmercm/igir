@@ -9,6 +9,7 @@ import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -87,10 +88,9 @@ export default [
   },
   eslintPluginPrettierRecommended, // MUST BE THE LAST PLUGIN!
 
-  // Rule overrides
+  // Language options
   {
     files: ['**/*.ts'],
-
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -98,12 +98,23 @@ export default [
         tsconfigRootDir: __dirname,
       },
       sourceType: 'module',
-
       globals: {
         ...eslintPluginJest.environments.globals.globals,
       },
     },
+  },
+  {
+    files: ['**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
 
+  // Rule overrides
+  {
+    // Rules for all JavaScript files
     rules: {
       // ***** Files *****
       'unicorn/filename-case': [
@@ -135,27 +146,9 @@ export default [
       'jsdoc/require-returns': 'off',
       'jsdoc/no-blank-blocks': 'error',
 
-      // ***** Types *****
-
       // ***** Promises *****
-      // Require any function or method that returns a Promise to be marked async.
-      '@typescript-eslint/promise-function-async': ['error'],
-
-      // ***** Classes *****
-      '@typescript-eslint/prefer-readonly': 'error',
-      // A lot of utility classes contain private functions that shouldn't be exposed
-      '@typescript-eslint/no-extraneous-class': [
-        'error',
-        {
-          allowStaticOnly: true,
-        },
-      ],
-      // TODO(cemmer)
-      '@typescript-eslint/no-misused-spread': 'off',
 
       // ***** Functions *****
-      // Require explicit return types on functions and class methods.
-      '@typescript-eslint/explicit-function-return-type': 'error',
 
       // ***** Errors *****
 
@@ -163,34 +156,10 @@ export default [
       eqeqeq: 'error',
 
       // ***** Conditionals *****
-      // Don't allow unnecessary conditional checks, such as when a value is always true, which can also help catch cases
-      // such as accidentally checking `if([]){}` vs. `if([].length){}`
-      '@typescript-eslint/strict-boolean-expressions': [
-        'error',
-        {
-          allowAny: true,
-          allowNullableBoolean: true,
-          allowNullableString: true,
-        },
-      ],
 
       // ***** Loops *****
 
       // ***** Objects *****
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          /*** @eslint/js defaults ***/
-          vars: 'all',
-          caughtErrors: 'all',
-          reportUsedIgnorePattern: false,
-          /*** Overrides ***/
-          args: 'all',
-          argsIgnorePattern: '^_',
-          // Allow the use of destructuring to remove keys from an object
-          ignoreRestSiblings: true,
-        },
-      ],
 
       // ***** Arrays *****
       'no-restricted-syntax': [
@@ -239,15 +208,72 @@ export default [
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
 
+      // ***** plugin:jest/recommended *****
+      // A lot of test files define their own expect functions
+      'jest/expect-expect': 'off',
+    },
+  },
+  {
+    // Rules for TypeScript files
+    files: ['**/*.ts'],
+    rules: {
+      // ***** Types *****
+
+      // ***** Promises *****
+      // Require any function or method that returns a Promise to be marked async.
+      '@typescript-eslint/promise-function-async': ['error'],
+
+      // ***** Classes *****
+      '@typescript-eslint/prefer-readonly': 'error',
+      // A lot of utility classes contain private functions that shouldn't be exposed
+      '@typescript-eslint/no-extraneous-class': [
+        'error',
+        {
+          allowStaticOnly: true,
+        },
+      ],
+      // TODO(cemmer)
+      '@typescript-eslint/no-misused-spread': 'off',
+
+      // ***** Functions *****
+      // Require explicit return types on functions and class methods.
+      '@typescript-eslint/explicit-function-return-type': 'error',
+
+      // ***** Conditionals *****
+      // Don't allow unnecessary conditional checks, such as when a value is always true, which can also help catch cases
+      // such as accidentally checking `if([]){}` vs. `if([].length){}`
+      '@typescript-eslint/strict-boolean-expressions': [
+        'error',
+        {
+          allowAny: true,
+          allowNullableBoolean: true,
+          allowNullableString: true,
+        },
+      ],
+
+      // ***** Objects *****
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          /*** @eslint/js defaults ***/
+          vars: 'all',
+          caughtErrors: 'all',
+          reportUsedIgnorePattern: false,
+          /*** Overrides ***/
+          args: 'all',
+          argsIgnorePattern: '^_',
+          // Allow the use of destructuring to remove keys from an object
+          ignoreRestSiblings: true,
+        },
+      ],
+
+      // ********** Recommended Overrides **********
+
       // ***** plugin:@typescript-eslint/recommended *****
       // There are a few places where this needs to be allowed, but only a few, so warn on them
       '@typescript-eslint/no-floating-promises': 'warn',
       // There are a few places where this needs to be allowed, but only a few, so warn on them
       '@typescript-eslint/no-unused-expressions': 'warn',
-
-      // ***** plugin:jest/recommended *****
-      // A lot of test files define their own expect functions
-      'jest/expect-expect': 'off',
     },
   },
 

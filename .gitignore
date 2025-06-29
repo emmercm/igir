@@ -106,6 +106,7 @@ dist
 
 # Custom
 dist/
+/package
 packages/*/build/**
 packages/*/package-lock.json
 ./prebuilds/
@@ -116,6 +117,7 @@ site/
 igir
 igir.exe
 !test/*.sh
+!packages/*
 
 # DATs
 *.dat
@@ -202,8 +204,8 @@ igir.exe
 
 # Always commit fixtures
 !packages/zip/test/**/*.zip
-!test/fixtures/dats/*
-!test/fixtures/dats/*/*
-!test/fixtures/patches/*
-!test/fixtures/roms/*
-!test/fixtures/roms/*/*
+!packages/igir/test/fixtures/dats/*
+!packages/igir/test/fixtures/dats/*/*
+!packages/igir/test/fixtures/patches/*
+!packages/igir/test/fixtures/roms/*
+!packages/igir/test/fixtures/roms/*/*
