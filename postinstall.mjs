@@ -1,5 +1,7 @@
 import child_process from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
 /**
  * Unfortunately, there is a sticky situation with Node-API:
@@ -14,14 +16,25 @@ import path from 'node:path';
  * npm packages, but that's a lot of overhead for code that is so tightly coupled together and not
  * meant for public reuse.
  */
+const nodeGypBuild = path.join(import.meta.dirname, 'node_modules', '.bin', 'node-gyp-build');
 await Promise.all(
   [path.join('packages', 'zlib-1.1.3'), path.join('packages', 'zstd-1.5.5')].map(
-    (napiPackage) =>
-      new Promise((resolve, reject) => {
-        const proc = child_process.spawn('npx', ['node-gyp-build'], {
-          cwd: napiPackage,
-          windowsHide: true,
-        });
+    async (napiPackage) => {
+      try {
+        await util.promisify(fs.stat)('dist');
+        napiPackage = path.join('dist', napiPackage);
+      } catch {
+        /* ignored */
+      }
+      await new Promise((resolve, reject) => {
+        const proc = child_process.spawn(
+          nodeGypBuild + (process.platform === 'win32' ? '.cmd' : ''),
+          [],
+          {
+            cwd: napiPackage,
+            windowsHide: true,
+          },
+        );
         proc.stdout.on('data', (data) =>
           process.stdout.write(
             data
@@ -42,6 +55,7 @@ await Promise.all(
         );
         proc.on('close', resolve);
         proc.on('error', reject);
-      }),
+      });
+    },
   ),
 );
