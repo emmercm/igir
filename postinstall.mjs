@@ -23,7 +23,7 @@ await Promise.all(
             import.meta.dirname,
             'node_modules',
             '.bin',
-            'node-gyp-build' + (process.platform === 'win32' ? '.exe' : ''),
+            'node-gyp-build' + (process.platform === 'win32' ? '.cmd' : ''),
           ),
           [],
           {
