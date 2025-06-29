@@ -68,7 +68,6 @@ async function copyfiles(
 }
 await copyfiles(
   [
-    'tsconfig.json',
     'packages/*/deps/**',
     'packages/*/prebuilds/**',
     'packages/*/binding.cpp',
