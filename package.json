@@ -102,7 +102,7 @@
     "strip-ansi": "7.1.0",
     "tar": "6.2.1",
     "terminal-size": "4.0.0",
-    "trash": "8.1.1",
+    "trash": "9.0.0",
     "typescript-memoize": "1.1.1",
     "wrap-ansi": "8.1.0",
     "xml2js": "0.6.2",
