@@ -92,6 +92,13 @@
       schedule: 'at any time'
     },
 
+    // Perform version rollbacks immediately
+    {
+      matchDepTypes: ['rollback'],
+      // Renovate's defaults for these options (overrides our global defaults)
+      schedule: 'at any time'
+    },
+
     // Perform major version updates immediately
     {
       matchUpdateTypes: ['major'],
