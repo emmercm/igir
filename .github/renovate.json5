@@ -125,15 +125,6 @@
         // Only group non-major updates
         matchUpdateTypes: ['patch', 'minor']
       },
-      {
-        matchDepTypes: ['dependencies'],
-        // Be strict about Node.js version compatability (from package's `engines.node`)
-        constraintsFiltering: 'strict',
-        rollbackPrs: true,
-        rollback: {
-          prPriority: 10,
-        },
-      },
 
       // Update chdman, dolphin-tool, maxcso immediately
       {
