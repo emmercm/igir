@@ -94,7 +94,7 @@
 
     // Perform version rollbacks immediately
     {
-      matchDepTypes: ['rollback'],
+      matchUpdateTypes: ['rollback'],
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time'
     },
