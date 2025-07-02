@@ -15,7 +15,7 @@
   vulnerabilityAlerts: {
     labels: ["security"],
     platformAutomerge: true,
-    // Renovate"s defaults for `vulnerabilityAlerts`
+    // Renovate's defaults for `vulnerabilityAlerts`
     groupName: "",
     schedule: [],
     dependencyDashboardApproval: false,
@@ -62,7 +62,7 @@
       // The Docker images (used to build executables) frequently don"t get published until days
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
       minimumReleaseAge: "5 days",
-      // Renovate"s defaults for these options (overrides our global defaults)
+      // Renovate's defaults for these options (overrides our global defaults)
       schedule: "at any time",
     },
 
@@ -84,21 +84,21 @@
       matchUpdateTypes: ["pin"],
       commitMessageAction: "pin",
       groupName: "dependency ranges",
-      // Renovate"s defaults for these options (overrides our global defaults)
+      // Renovate's defaults for these options (overrides our global defaults)
       schedule: "at any time",
     },
 
     // Perform version rollbacks immediately
     {
       matchDepTypes: ["rollback"],
-      // Renovate"s defaults for these options (overrides our global defaults)
+      // Renovate's defaults for these options (overrides our global defaults)
       schedule: "at any time",
     },
 
     // Perform major version updates immediately
     {
       matchUpdateTypes: ["major"],
-      // Renovate"s defaults for these options (overrides our global defaults)
+      // Renovate's defaults for these options (overrides our global defaults)
       schedule: "at any time",
     },
 
