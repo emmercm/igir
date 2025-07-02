@@ -2644,6 +2644,8 @@
       
         
       
+        
+      
     
     
     
@@ -2690,7 +2692,30 @@
   
   
     <li class="md-nav__item">
-      <a href="../../rom-dumping/" class="md-nav__link">
+      <a href="../../misc/torrentzip/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TorrentZip Specification
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../misc/rom-dumping/" class="md-nav__link">
         
   
   
@@ -2948,11 +2973,10 @@
 </div>
 <p>See the <a href="../../input/reading-archives/">reading archives</a> page for more information on archive formats and their capabilities.</p>
 <h2 id="torrentzip">TorrentZip</h2>
-<p>Igir adheres to the <a href="https://sourceforge.net/projects/trrntzip/">TorrentZip</a> standard for zip files. This standard allows ROM managers to write byte-for-byte identical zip files given the same input files. Some technical details about the standard can be found on <a href="https://wiki.romvault.com/doku.php?id=torrentzip">RomVault's wiki</a>.</p>
-<p>TorrentZip is particularly useful with how the MAME community likes to distribute ROMs. Different MAME versions can have different sets of ROMs (which is what requires set <a href="../../usage/arcade/#example-re-building-a-rom-set">"rebuilding" or "fixing"</a>). A person can take a set of ROMs for an old MAME version, rebuild them for the new MAME version, and then join a BitTorrent tracker and skip downloading the correct files they already have. TorrentZip's deterministic format means zip files themselves will have the same checksum every time.</p>
+<p>Igir adheres to the <a href="../../misc/torrentzip/">TorrentZip</a> standard for zip files. This standard allows ROM managers to write byte-for-byte identical zip files given the same input files.</p>
 <h3 id="rvzstd">RVZSTD</h3>
 <p>The original TorrentZip format uses the widely supported <a href="https://en.wikipedia.org/wiki/Deflate">DEFLATE</a> compression algorithm. Gordon J from RomVault has since extended the structured zip format to support <a href="https://en.wikipedia.org/wiki/Zstd">Zstandard ("Zstd")</a> compression, which can compress files smaller than DEFLATE with less processing power.</p>
-<p>Although the zip format officially added support for Zstd compression in <a href="https://en.wikipedia.org/wiki/ZIP_(file_format)#Version_history">June 2020</a>, support among archive programs and OSes remains quite low. Igir uses the old DEFLATE algorithm by default, but you can instead switch to using RVZSTD with the option:</p>
+<p>Although the zip format officially added support for Zstd compression in <a href="https://en.wikipedia.org/wiki/ZIP_(file_format)#Version_history">June 2020</a>, support among archive programs and OSes remains quite low. Igir uses the old DEFLATE algorithm by default, but you can instead switch to using Zstandard with the option:</p>
 <div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>--zip-format rvzstd
 </span></code></pre></div>
 <h3 id="implications-for-testing">Implications for testing</h3>
@@ -3106,7 +3130,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 11, 2025 01:10:13 UTC">May 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 2, 2025 01:18:34 UTC">July 2, 2025</span>
   </span>
 
     
