@@ -1,225 +1,150 @@
 {
-  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: [
-    'config:recommended',
-  ],
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended"],
   dependencyDashboard: true,
   configMigration: true,
-
-  // Personal preferences
-  timezone: 'America/Los_Angeles',
-  assignees: ['@emmercm'],
-  reviewers: ['@emmercm'],
-  assignAutomerge: false, // default
-
-  // Open PRs immediately for vulnerability alerts
-  // Requires "dependency graph" as well as Dependabot "alerts" and "security updates" enabled for the repo
+  timezone: "America/Los_Angeles",
+  assignees: ["@emmercm"],
+  reviewers: ["@emmercm"],
+  assignAutomerge: false,
   vulnerabilityAlerts: {
-    labels: ['security'],
+    labels: ["security"],
     platformAutomerge: true,
-    // Renovate's defaults for `vulnerabilityAlerts`
-    groupName: '',
+    groupName: "",
     schedule: [],
     dependencyDashboardApproval: false,
-    minimumReleaseAge: '',
-    rangeStrategy: 'update-lockfile',
-    commitMessageSuffix: '[SECURITY]',
-    branchTopic: '{{{datasource}}}-{{{depName}}}-vulnerability',
-    prCreation: 'immediate',
+    minimumReleaseAge: "",
+    rangeStrategy: "update-lockfile",
+    commitMessageSuffix: "[SECURITY]",
+    branchTopic: "{{{datasource}}}-{{{depName}}}-vulnerability",
+    prCreation: "immediate",
   },
-  // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
-  transitiveRemediation: true,
-
-  // Use pseudo semantic commit (and therefore PR title) commit messages
-  // "{{{commitMessagePrefix}}} {{{commitMessageAction}}} {{{commitMessageTopic}}} {{{commitMessageExtra}}} {{{commitMessageSuffix}}}"
-  commitMessagePrefix: 'Chore:',
-  commitMessageAction: 'update',
-
-  // Separate potentially breaking updates, group others
+  commitMessagePrefix: "Chore:",
+  commitMessageAction: "update",
   separateMultipleMajor: true,
-  separateMajorMinor: true, // default
-  separateMinorPatch: false, // default
-
-  // Allow auto-merging of PRs, but reduce their spam on the commit log
-  schedule: 'on the 27th day of the month',
-  prCreation: 'immediate', // default
-  prHourlyLimit: 0, // no limit
+  separateMajorMinor: true,
+  separateMinorPatch: false,
+  schedule: "on the 27th day of the month",
+  prCreation: "immediate",
+  prHourlyLimit: 0,
   automerge: true,
-  platformAutomerge: true, // default
-  // Rely on the `.github/workflows/gh-merge-queue.yml` workflow to manage rebasing
-  rebaseWhen: 'never',
-  rebaseLabel: 'renovate/rebase',
-  updateNotScheduled: true, // default
-
-  // Stability settings: don't raise a PR until a dependency is at least 3 days old
-  rangeStrategy: 'pin',
-  minimumReleaseAge: '3 days',
-  internalChecksFilter: 'strict',
-
+  platformAutomerge: true,
+  rebaseWhen: "never",
+  rebaseLabel: "renovate/rebase",
+  updateNotScheduled: true,
+  rangeStrategy: "pin",
+  minimumReleaseAge: "3 days",
+  internalChecksFilter: "strict",
   packageRules: [
-    // Update Node.js versions immediately
     {
-      matchPackageNames: ['node'],
-      groupName: 'Node.js',
-      // Keep Node.js on the 'current' major version (as opposed to LTS)
-      allowedVersions: '/^v?\\d*[02468]\\./',
-      // The Docker images (used to build executables) frequently don't get published until days
-      //  after the Node.js version was updated, so try to prevent immediately failing PRs
-      minimumReleaseAge: '5 days',
-      // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      matchPackageNames: ["node"],
+      groupName: "Node.js",
+      allowedVersions: "/^v?\\d*[02468]\\./",
+      minimumReleaseAge: "5 days",
+      schedule: "at any time",
     },
-
-    // Don't update some packages in GitHub Actions workflows
     {
-      matchManagers: ['github-actions'],
-      matchDepNames: ['python'],
+      matchManagers: ["github-actions"],
+      matchDepNames: ["python"],
       enabled: false,
     },
-
-    // Group any/all package files in the docs/ directory
     {
-      matchFileNames: ['docs/**'],
-      groupName: 'docs dependencies'
+      matchFileNames: ["docs/**"],
+      groupName: "docs dependencies",
     },
-
-    // Perform dependency pinning immediately
     {
-      matchUpdateTypes: ['pin'],
-      commitMessageAction: 'pin',
-      groupName: 'dependency ranges',
-      // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      matchUpdateTypes: ["pin"],
+      commitMessageAction: "pin",
+      groupName: "dependency ranges",
+      schedule: "at any time",
     },
-
-    // Perform version rollbacks immediately
     {
-      matchDepTypes: ['rollback'],
-      // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      matchDepTypes: ["rollback"],
+      schedule: "at any time",
     },
-
-    // Perform major version updates immediately
     {
-      matchUpdateTypes: ['major'],
-      // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      matchUpdateTypes: ["major"],
+      schedule: "at any time",
     },
-
-    // Disable automatic merging of GitHub Actions major version updates
     {
-      matchManagers: ['github-actions'],
-      matchUpdateTypes: ['major'],
-      automerge: false
-    }
+      matchManagers: ["github-actions"],
+      matchUpdateTypes: ["major"],
+      automerge: false,
+    },
   ],
-
   npm: {
     lockFileMaintenance: {
-      // These options are required to override the `lockFileMaintenance` defaults
       enabled: true,
-      schedule: 'on the 28th day of the month', // one day after the above, to de-conflict
-      commitMessageAction: 'update', // same as above
-      commitMessageTopic: 'lockfile',
+      schedule: "on the 28th day of the month",
+      commitMessageAction: "update",
+      commitMessageTopic: "lockfile",
     },
-
     packageRules: [
-      // Dependencies
       {
-        // Group dependencies and their `@types/*` packages together
-        groupName: 'dependencies',
-        matchDepTypes: ['dependencies', 'devDependencies'],
-        // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
+        groupName: "dependencies",
+        matchDepTypes: ["dependencies", "devDependencies"],
+        matchUpdateTypes: ["patch", "minor"],
       },
       {
-        matchDepTypes: ['dependencies'],
-        // Be strict about Node.js version compatability (from package's `engines.node`)
-        constraintsFiltering: 'strict',
+        matchDepTypes: ["dependencies"],
+        constraintsFiltering: "strict",
         rollbackPrs: true,
         rollback: {
           prPriority: 10,
         },
       },
-
-      // Update chdman, dolphin-tool, maxcso immediately
       {
         groupName: null,
+        matchPackageNames: ["chdman", "dolphin-tool", "maxcso"],
+        schedule: "at any time",
+        minimumReleaseAge: "0 hours",
+      },
+      {
+        groupName: "dev dependencies",
+        matchDepTypes: ["devDependencies"],
+        matchUpdateTypes: ["patch", "minor"],
         matchPackageNames: [
-          'chdman',
-          'dolphin-tool',
-          'maxcso'
+          "!@types/async",
+          "!@types/cli-progress",
+          "!@types/graceful-fs",
+          "!@types/micromatch",
+          "!@types/semver",
+          "!@types/tar",
+          "!@types/xml2js",
+          "!@types/yargs",
         ],
-        schedule: 'at any time',
-        minimumReleaseAge: '0 hours'
-      },
-
-      // Dev dependencies
-      {
-        // Group devDependencies together, minus type definitions for dependencies
-        // https://github.com/renovatebot/renovate/issues/519
-        groupName: 'dev dependencies',
-        matchDepTypes: ['devDependencies'],
-        excludePackageNames: [
-          '@types/async',
-          '@types/cli-progress',
-          '@types/graceful-fs',
-          '@types/micromatch',
-          '@types/semver',
-          '@types/tar',
-          '@types/xml2js',
-          '@types/yargs',
-        ],
-        // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
       },
       {
-        // Group ESLint together so files can be fixed automatically
-        matchPackagePatterns: [
-          'typescript-eslint',
-          '^@typescript-eslint',
-          '^eslint',
-        ],
-        groupName: 'ESLint',
-        // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
-      },
-      {
-        // Update TypeScript-related ESLint more frequently so that TypeScript can update
-        matchPackagePatterns: [
-          'typescript-eslint',
-          '^@typescript-eslint/',
-        ],
-        matchUpdateTypes: ['major', 'minor'],
-        schedule: 'at any time',
-        rebaseWhen: 'behind-base-branch'
-      },
-      {
-        // Group Jest together because of peerDependencies
+        groupName: "ESLint",
+        matchUpdateTypes: ["patch", "minor"],
         matchPackageNames: [
-          '@jest/globals',
-          '@types/jest',
-          'jest',
-          'ts-jest',
+          "/typescript-eslint/",
+          "/^@typescript-eslint/",
+          "/^eslint/",
         ],
-        groupName: 'Jest',
-        // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
       },
       {
-        // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)
-        matchPackageNames: ['typescript'],
-        groupName: 'TypeScript',
+        matchUpdateTypes: ["major", "minor"],
+        schedule: "at any time",
+        rebaseWhen: "behind-base-branch",
+        matchPackageNames: ["/typescript-eslint/", "/^@typescript-eslint//"],
+      },
+      {
+        matchPackageNames: ["@jest/globals", "@types/jest", "jest", "ts-jest"],
+        groupName: "Jest",
+        matchUpdateTypes: ["patch", "minor"],
+      },
+      {
+        matchPackageNames: ["typescript"],
+        groupName: "TypeScript",
         prPriority: -10,
-        schedule: 'at any time',
-        rebaseWhen: 'behind-base-branch'
+        schedule: "at any time",
+        rebaseWhen: "behind-base-branch",
       },
-
-      // Everything else
       {
-        matchDepTypes: ['optionalDependencies', 'peerDependencies', 'engines'],
+        matchDepTypes: ["optionalDependencies", "peerDependencies", "engines"],
         enabled: false,
-      }
-    ]
-  }
+      },
+    ],
+  },
 }
