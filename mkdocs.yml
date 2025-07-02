@@ -126,7 +126,8 @@ nav:
       - advanced/troubleshooting.md
       - advanced/internals.md
     - Misc:
-      - rom-dumping.md
+      - misc/torrentzip.md
+      - misc/rom-dumping.md
     - Terms and Conditions:
       - contributing.md
       - license.md
@@ -168,6 +169,7 @@ plugins:
         'output/arcade.md': 'usage/arcade.md'
         'overview.md': 'introduction.md'
         'reporting.md': 'output/reporting.md'
+        'rom-dumping.md': 'misc/rom-dumping.md'
         'rom-filtering.md': 'roms/filtering-preferences.md'
         'rom-headers.md': 'roms/headers.md'
         'rom-patching.md': 'roms/patching.md'

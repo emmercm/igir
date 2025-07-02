@@ -12,15 +12,13 @@ See the [reading archives](../input/reading-archives.md) page for more informati
 
 ## TorrentZip
 
-Igir adheres to the [TorrentZip](https://sourceforge.net/projects/trrntzip/) standard for zip files. This standard allows ROM managers to write byte-for-byte identical zip files given the same input files. Some technical details about the standard can be found on [RomVault's wiki](https://wiki.romvault.com/doku.php?id=torrentzip).
-
-TorrentZip is particularly useful with how the MAME community likes to distribute ROMs. Different MAME versions can have different sets of ROMs (which is what requires set ["rebuilding" or "fixing"](../usage/arcade.md#example-re-building-a-rom-set)). A person can take a set of ROMs for an old MAME version, rebuild them for the new MAME version, and then join a BitTorrent tracker and skip downloading the correct files they already have. TorrentZip's deterministic format means zip files themselves will have the same checksum every time.
+Igir adheres to the [TorrentZip](../misc/torrentzip.md) standard for zip files. This standard allows ROM managers to write byte-for-byte identical zip files given the same input files.
 
 ### RVZSTD
 
 The original TorrentZip format uses the widely supported [DEFLATE](https://en.wikipedia.org/wiki/Deflate) compression algorithm. Gordon J from RomVault has since extended the structured zip format to support [Zstandard ("Zstd")](https://en.wikipedia.org/wiki/Zstd) compression, which can compress files smaller than DEFLATE with less processing power.
 
-Although the zip format officially added support for Zstd compression in [June 2020](https://en.wikipedia.org/wiki/ZIP_(file_format)#Version_history), support among archive programs and OSes remains quite low. Igir uses the old DEFLATE algorithm by default, but you can instead switch to using RVZSTD with the option:
+Although the zip format officially added support for Zstd compression in [June 2020](https://en.wikipedia.org/wiki/ZIP_(file_format)#Version_history), support among archive programs and OSes remains quite low. Igir uses the old DEFLATE algorithm by default, but you can instead switch to using Zstandard with the option:
 
 ```text
 --zip-format rvzstd
