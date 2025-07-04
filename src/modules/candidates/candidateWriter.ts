@@ -634,6 +634,7 @@ export default class CandidateWriter extends Module {
       if (
         inputRomFile instanceof ArchiveEntry ||
         inputRomFile.getFileHeader() !== undefined ||
+        inputRomFile.getPaddings().length > 0 ||
         inputRomFile.getPatch() !== undefined
       ) {
         // The file can't be moved as-is, it needs to get copied

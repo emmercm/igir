@@ -429,12 +429,21 @@ export default class CandidateGenerator extends Module {
     // If the input file is headered...
     if (
       inputFile.getFileHeader() &&
-      // ...and we can rewrite the file
+      // ...and we can't rewrite the file
       !this.options.shouldWrite()
     ) {
-      // ...then forget the input file's header, so that it doesn't report as incorrect
-      // when tested
+      // ...then forget the input file's header, so that it doesn't report as incorrect when tested
       inputFile = inputFile.withoutFileHeader();
+    }
+
+    // If the file is trimmed...
+    if (
+      inputFile.getPaddings().length > 0 &&
+      // ...and we can't rewrite the file
+      !this.options.shouldWrite()
+    ) {
+      // ...then forget the input file's padding, so that it doesn't report as incorrect when tested
+      inputFile = inputFile.withPaddings([]);
     }
 
     // If the input file is headered...
@@ -455,6 +464,22 @@ export default class CandidateGenerator extends Module {
       inputFile = inputFile.withoutFileHeader();
     }
 
+    // If the input file is trimmed...
+    if (
+      inputFile.getPaddings().length > 0 &&
+      // ...and we want a trimmed ROM
+      ((inputFile.getCrc32() !== undefined && inputFile.getCrc32() === rom.getCrc32()) ||
+        (inputFile.getMd5() !== undefined && inputFile.getMd5() === rom.getMd5()) ||
+        (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1()) ||
+        (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
+    ) {
+      // ...then forget the input file's padding, so that we don't later remove it
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${game.getName()}: not adding padding, ignoring that file is trimmed: ${inputFile.toString()}`,
+      );
+      inputFile = inputFile.withPaddings([]);
+    }
+
     // If the input file is headered...
     if (
       inputFile.getFileHeader() &&
@@ -473,6 +498,31 @@ export default class CandidateGenerator extends Module {
         `${dat.getName()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`,
       );
       return [rom, undefined];
+    }
+
+    // If the input file is trimmed...
+    if (inputFile.getPaddings().length > 0) {
+      const desiredPadding = inputFile.getPaddings().find((padding) => {
+        return (
+          (padding.getCrc32() !== undefined && padding.getCrc32() === rom.getCrc32()) ||
+          (padding.getMd5() !== undefined && padding.getMd5() === rom.getMd5()) ||
+          (padding.getSha1() !== undefined && padding.getSha1() === rom.getSha1()) ||
+          (padding.getSha256() !== undefined && padding.getSha256() === rom.getSha256())
+        );
+      });
+      // ...and we want a padded ROM
+      if (desiredPadding !== undefined) {
+        // ...and we're writing file links
+        if (this.options.shouldLink()) {
+          // ...then we can't use this file
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${game.getName()}: can't use trimmed ROM as target for link: ${inputFile.toString()}`,
+          );
+          return [rom, undefined];
+        }
+        // Otherwise, only remember the padding that we want
+        inputFile = inputFile.withPaddings([desiredPadding]);
+      }
     }
 
     const singleValueGame = new SingleValueGame({ ...game });
@@ -521,13 +571,30 @@ export default class CandidateGenerator extends Module {
         inputFile.getFileHeader() &&
         // ...and we want an unheadered ROM
         ((inputFile.getCrc32WithoutHeader() !== undefined &&
-          inputFile.getCrc32WithoutHeader() !== rom.getCrc32()) ||
+          inputFile.getCrc32WithoutHeader() === rom.getCrc32()) ||
           (inputFile.getMd5WithoutHeader() !== undefined &&
-            inputFile.getMd5WithoutHeader() !== rom.getMd5()) ||
+            inputFile.getMd5WithoutHeader() === rom.getMd5()) ||
           (inputFile.getSha1WithoutHeader() !== undefined &&
-            inputFile.getSha1WithoutHeader() !== rom.getSha1()) ||
+            inputFile.getSha1WithoutHeader() === rom.getSha1()) ||
           (inputFile.getSha256WithoutHeader() !== undefined &&
-            inputFile.getSha256WithoutHeader() !== rom.getSha256()))
+            inputFile.getSha256WithoutHeader() === rom.getSha256()))
+      ) {
+        // ...then we can't use this archive as-is
+        return false;
+      }
+
+      if (
+        // If the input file is trimmed...
+        inputFile.getPaddings().length > 0 &&
+        // ...and we want a padded ROM
+        inputFile.getPaddings().some((padding) => {
+          return (
+            (padding.getCrc32() !== undefined && padding.getCrc32() === rom.getCrc32()) ||
+            (padding.getMd5() !== undefined && padding.getMd5() === rom.getMd5()) ||
+            (padding.getSha1() !== undefined && padding.getSha1() === rom.getSha1()) ||
+            (padding.getSha256() !== undefined && padding.getSha256() === rom.getSha256())
+          );
+        })
       ) {
         // ...then we can't use this archive as-is
         return false;
@@ -887,12 +954,29 @@ export default class CandidateGenerator extends Module {
     let outputFileSha1 = inputFile.getSha1();
     let outputFileSha256 = inputFile.getSha256();
     let outputFileSize = inputFile.getSize();
+
     if (inputFile.getFileHeader()) {
       outputFileCrc32 = inputFile.getCrc32WithoutHeader();
       outputFileMd5 = inputFile.getMd5WithoutHeader();
       outputFileSha1 = inputFile.getSha1WithoutHeader();
       outputFileSha256 = inputFile.getSha256WithoutHeader();
       outputFileSize = inputFile.getSizeWithoutHeader();
+    }
+
+    const desiredPadding = inputFile.getPaddings().find((padding) => {
+      return (
+        (padding.getCrc32() !== undefined && padding.getCrc32() === rom.getCrc32()) ||
+        (padding.getMd5() !== undefined && padding.getMd5() === rom.getMd5()) ||
+        (padding.getSha1() !== undefined && padding.getSha1() === rom.getSha1()) ||
+        (padding.getSha256() !== undefined && padding.getSha256() === rom.getSha256())
+      );
+    });
+    if (desiredPadding !== undefined) {
+      outputFileCrc32 = desiredPadding.getCrc32();
+      outputFileMd5 = desiredPadding.getMd5();
+      outputFileSha1 = desiredPadding.getSha1();
+      outputFileSha256 = desiredPadding.getSha256();
+      outputFileSize = desiredPadding.getPaddedSize();
     }
 
     // Determine the output file type

@@ -9,6 +9,7 @@ import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
 import ROMHeader from '../romHeader.js';
+import ROMPadding from '../romPadding.js';
 import Archive from './archive.js';
 
 export interface ArchiveEntryProps<A extends Archive> extends Omit<FileProps, 'filePath'> {
@@ -219,6 +220,13 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
+  withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {
+    return new ArchiveEntry({
+      ...this,
+      ...props,
+    });
+  }
+
   withFilePath(filePath: string): ArchiveEntry<A> {
     if (this.getArchive().getFilePath() === filePath) {
       return this;
@@ -244,7 +252,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       {
         ...this,
         fileHeader,
-        patch: undefined, // don't allow a patch
+        paddings: [],
+        patch: undefined,
       },
       this.getChecksumBitmask(),
     );
@@ -264,10 +273,12 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
-  withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {
+  withPaddings(paddings: ROMPadding[]): ArchiveEntry<A> {
     return new ArchiveEntry({
       ...this,
-      ...props,
+      fileHeader: paddings.length > 0 ? undefined : this.getFileHeader(),
+      paddings,
+      patch: paddings.length > 0 ? undefined : this.getPatch(),
     });
   }
 
@@ -278,7 +289,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
     return new ArchiveEntry({
       ...this,
-      fileHeader: undefined, // don't allow a file header
+      fileHeader: undefined,
+      paddings: [],
       patch,
     });
   }

@@ -108,9 +108,9 @@ export default class ChdBinCueParser {
         const pregappedStream =
           pregapSize + postgapSize > 0
             ? StreamPoly.concat(
-                Readable.from(Buffer.alloc(pregapSize)),
+                StreamPoly.staticReadable(pregapSize, 0x00),
                 readStream,
-                Readable.from(Buffer.alloc(postgapSize)),
+                StreamPoly.staticReadable(postgapSize, 0x00),
               )
             : readStream;
         checksums = await FileChecksums.hashStream(pregappedStream, checksumBitmask);

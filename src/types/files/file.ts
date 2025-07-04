@@ -15,6 +15,7 @@ import URLPoly from '../../polyfill/urlPoly.js';
 import Patch from '../patches/patch.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
 import ROMHeader from './romHeader.js';
+import ROMPadding from './romPadding.js';
 
 export interface FileProps extends ChecksumProps {
   readonly filePath: string;
@@ -26,6 +27,7 @@ export interface FileProps extends ChecksumProps {
   readonly sha256WithoutHeader?: string;
   readonly symlinkSource?: string;
   readonly fileHeader?: ROMHeader;
+  readonly paddings?: ROMPadding[];
   readonly patch?: Patch;
 }
 
@@ -64,6 +66,8 @@ export default class File implements FileProps {
 
   readonly fileHeader?: ROMHeader;
 
+  readonly paddings: ROMPadding[];
+
   readonly patch?: Patch;
 
   protected constructor(fileProps: FileProps) {
@@ -95,6 +99,7 @@ export default class File implements FileProps {
     this.isUrl = isUrl;
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
+    this.paddings = fileProps.paddings ?? [];
     this.patch = fileProps.patch;
   }
 
@@ -175,6 +180,7 @@ export default class File implements FileProps {
       sha256WithoutHeader: finalSha256WithoutHeader,
       symlinkSource: finalSymlinkSource,
       fileHeader: fileProps.fileHeader,
+      paddings: fileProps.paddings,
       patch: fileProps.patch,
     });
   }
@@ -251,6 +257,10 @@ export default class File implements FileProps {
     return this.fileHeader;
   }
 
+  getPaddings(): ROMPadding[] {
+    return this.paddings;
+  }
+
   getPatch(): Patch | undefined {
     return this.patch;
   }
@@ -307,6 +317,8 @@ export default class File implements FileProps {
   }
 
   async extractAndPatchToFile(destinationPath: string, callback?: FsCopyCallback): Promise<void> {
+    // TODO(cemmer): pad
+
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
@@ -356,11 +368,16 @@ export default class File implements FileProps {
     }, start);
   }
 
-  async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {
+  async createReadStream<T>(
+    callback: (readable: Readable) => T | Promise<T>,
+    start = 0,
+  ): Promise<T> {
     return File.createStreamFromFile(this.getFilePath(), callback, start);
   }
 
-  async createPatchedReadStream<T>(callback: (stream: Readable) => T | Promise<T>): Promise<T> {
+  async createPatchedReadStream<T>(callback: (readable: Readable) => T | Promise<T>): Promise<T> {
+    // TODO(cemmer): pad
+
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
@@ -383,7 +400,7 @@ export default class File implements FileProps {
 
   static async createStreamFromFile<T>(
     filePath: PathLike,
-    callback: (stream: Readable) => Promise<T> | T,
+    callback: (readable: Readable) => Promise<T> | T,
     start?: number,
     end?: number,
   ): Promise<T> {
@@ -480,7 +497,8 @@ export default class File implements FileProps {
       {
         ...this,
         fileHeader,
-        patch: undefined, // don't allow a patch
+        paddings: [],
+        patch: undefined,
       },
       this.getChecksumBitmask(),
     );
@@ -500,6 +518,15 @@ export default class File implements FileProps {
     });
   }
 
+  withPaddings(paddings: ROMPadding[]): File {
+    return new File({
+      ...this,
+      fileHeader: paddings.length > 0 ? undefined : this.getFileHeader(),
+      paddings,
+      patch: paddings.length > 0 ? undefined : this.getPatch(),
+    });
+  }
+
   withPatch(patch: Patch): File {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;
@@ -508,6 +535,7 @@ export default class File implements FileProps {
     return new File({
       ...this,
       fileHeader: undefined,
+      paddings: [],
       patch,
     });
   }
@@ -547,7 +575,9 @@ export default class File implements FileProps {
     return (
       this.getFilePath() === other.getFilePath() &&
       this.hashCode() === other.hashCode() &&
-      this.getFileHeader() === other.getFileHeader()
+      this.getFileHeader() === other.getFileHeader() &&
+      this.getPaddings().length === other.getPaddings().length &&
+      this.getPaddings().every((padding, idx) => padding === other.getPaddings()[idx])
     );
   }
 }
