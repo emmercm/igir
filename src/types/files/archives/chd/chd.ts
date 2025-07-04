@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import stream, { Readable } from 'node:stream';
+import stream, { Readable, Stream } from 'node:stream';
 import util from 'node:util';
 
 import { Mutex } from 'async-mutex';
@@ -82,9 +82,9 @@ export default abstract class Chd extends Archive {
           if (pregapSize + postgapSize > 0) {
             return callback(
               StreamPoly.concat(
-                Readable.from(Buffer.alloc(pregapSize)),
+                StreamPoly.staticReadable(pregapSize, 0x00),
                 readable,
-                Readable.from(Buffer.alloc(postgapSize)),
+                StreamPoly.staticReadable(postgapSize, 0x00),
               ),
             );
           }

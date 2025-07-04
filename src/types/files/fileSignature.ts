@@ -7,6 +7,13 @@ interface SignaturePiece {
   value: Buffer;
 }
 
+const CanBeTrimmed = {
+  NO: 0,
+  YES: 1,
+} as const;
+type CanBeTrimmedKey = keyof typeof CanBeTrimmed;
+type CanBeTrimmedValue = (typeof CanBeTrimmed)[CanBeTrimmedKey];
+
 export default class FileSignature {
   // @see https://en.wikipedia.org/wiki/List_of_file_signatures
   // @see https://www.garykessler.net/library/file_sigs.html
@@ -130,7 +137,11 @@ export default class FileSignature {
     x64: new FileSignature('.x64', [{ value: Buffer.from('43154164', 'hex') }]),
 
     // Nintendo - Nintendo 3DS
-    // TODO(cemmer): .3ds/.cci
+    '3ds': new FileSignature(
+      '.3ds',
+      [{ offset: 0x1_00, value: Buffer.from('NCSD') }],
+      CanBeTrimmed.YES,
+    ),
     // @see https://www.3dbrew.org/wiki/3DSX_Format
     '3dsx': new FileSignature('.3dsx', [{ value: Buffer.from('3DSX') }]),
     // @see https://www.3dbrew.org/wiki/CIA
@@ -186,15 +197,19 @@ export default class FileSignature {
 
     // Nintendo - Game Boy Advance
     // @see http://problemkaputt.de/gbatek.htm#gbacartridges
-    gba: new FileSignature('.gba', [
-      {
-        offset: 0x04,
-        value: Buffer.from(
-          '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
-          'hex',
-        ),
-      },
-    ]), // logo
+    gba: new FileSignature(
+      '.gba',
+      [
+        {
+          offset: 0x04,
+          value: Buffer.from(
+            '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
+            'hex',
+          ),
+        }, // logo
+      ],
+      CanBeTrimmed.YES,
+    ),
 
     // Nintendo - Game Boy Color
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
@@ -221,15 +236,20 @@ export default class FileSignature {
 
     // Nintendo - Nintendo DS (encrypted & decrypted)
     // @see http://dsibrew.org/wiki/DSi_cartridge_header
-    nds: new FileSignature('.nds', [
-      {
-        offset: 0xc0,
-        value: Buffer.from(
-          '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
-        ),
-      }, // logo
-      { offset: 0x1_5c, value: Buffer.from('56CF', 'hex') }, // logo checksum
-    ]),
+    nds: new FileSignature(
+      '.nds',
+      [
+        {
+          offset: 0xc0,
+          value: Buffer.from(
+            '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
+            'hex',
+          ),
+        }, // logo
+        { offset: 0x1_5c, value: Buffer.from('56CF', 'hex') }, // logo checksum
+      ],
+      CanBeTrimmed.YES,
+    ),
 
     // Nintendo - Nintendo Entertainment System
     // @see https://www.nesdev.org/wiki/INES
@@ -376,12 +396,17 @@ export default class FileSignature {
     );
 
   private readonly extension: string;
-
   private readonly fileSignatures: SignaturePiece[];
+  private readonly _canBeTrimmed: CanBeTrimmedValue;
 
-  constructor(extension: string, fileSignatures: SignaturePiece[]) {
+  constructor(
+    extension: string,
+    fileSignatures: SignaturePiece[],
+    canBeTrimmed: CanBeTrimmedValue = CanBeTrimmed.NO,
+  ) {
     this.extension = extension;
     this.fileSignatures = fileSignatures;
+    this._canBeTrimmed = canBeTrimmed;
   }
 
   static getKnownSignatureCount(): number {
@@ -423,9 +448,9 @@ export default class FileSignature {
     return this.SIGNATURES[name];
   }
 
-  static async signatureFromFileStream(stream: Readable): Promise<FileSignature | undefined> {
+  static async signatureFromFileStream(readable: Readable): Promise<FileSignature | undefined> {
     const fileHeader = await FileSignature.readHeaderBuffer(
-      stream,
+      readable,
       0,
       this.MAX_HEADER_LENGTH_BYTES,
     );
@@ -455,5 +480,9 @@ export default class FileSignature {
 
   getExtension(): string {
     return this.extension;
+  }
+
+  canBeTrimmed(): boolean {
+    return this._canBeTrimmed === CanBeTrimmed.YES;
   }
 }

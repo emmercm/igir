@@ -32,6 +32,7 @@ import FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';
 import FileSignature from './fileSignature.js';
 import ROMHeader from './romHeader.js';
+import ROMPadding from './romPadding.js';
 
 export default class FileFactory {
   private readonly fileCache: FileCache;
@@ -233,5 +234,9 @@ export default class FileFactory {
 
   async signatureFrom(file: File): Promise<FileSignature | undefined> {
     return this.fileCache.getOrComputeFileSignature(file);
+  }
+
+  async paddingsFrom(file: File): Promise<ROMPadding[]> {
+    return this.fileCache.getOrComputeFilePaddings(file);
   }
 }

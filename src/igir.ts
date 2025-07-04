@@ -42,6 +42,7 @@ import ReportGenerator from './modules/reportGenerator.js';
 import ROMHeaderProcessor from './modules/roms/romHeaderProcessor.js';
 import ROMIndexer from './modules/roms/romIndexer.js';
 import ROMScanner from './modules/roms/romScanner.js';
+import ROMTrimProcessor from './modules/roms/romTrimProcessor.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
@@ -497,11 +498,21 @@ export default class Igir {
       driveSemaphore,
     ).process(rawRomFiles);
 
+    romProgressBar.setName('Detecting ROM trimming');
+    const romFilesWithTrimming = await new ROMTrimProcessor(
+      this.options,
+      romProgressBar,
+      fileFactory,
+      driveSemaphore,
+    ).process(romFilesWithHeaders);
+
     romProgressBar.setName('Indexing ROMs');
-    const indexedRomFiles = new ROMIndexer(this.options, romProgressBar).index(romFilesWithHeaders);
+    const indexedRomFiles = new ROMIndexer(this.options, romProgressBar).index(
+      romFilesWithTrimming,
+    );
 
     romProgressBar.setName(romScannerProgressBarName); // reset
-    romProgressBar.finishWithItems(romFilesWithHeaders.length, 'file', 'found');
+    romProgressBar.finishWithItems(romFilesWithTrimming.length, 'file', 'found');
     romProgressBar.freeze();
 
     return indexedRomFiles;

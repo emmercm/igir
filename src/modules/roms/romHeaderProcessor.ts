@@ -100,7 +100,7 @@ export default class ROMHeaderProcessor extends Module {
     /**
      * If the input file is from an archive, and we're not zipping or extracting, then we have no
      * chance to remove the header, so we shouldn't bother detecting one.
-     * Matches {@link CandidateGenerator#buildCandidateForGame}
+     * Matches {@link CandidateGenerator#buildCandidatesForGame}
      */
     if (
       inputFile instanceof ArchiveEntry &&
