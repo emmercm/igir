@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Git ref (refs/heads/<branch>, refs/tags/<tag>, etc.) or SHA'
+        description: 'Git branch'
         required: true
         type: string
 
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ref: ${{ inputs.ref || github.sha || github.ref }}
+  ref: ${{ inputs.ref || github.ref }}
 
 jobs:
   path-filter:
