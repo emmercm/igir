@@ -8,10 +8,19 @@ on:
   push:
     branches-ignore:
       - 'main'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (refs/heads/<branch>, refs/tags/<tag>, etc.) or SHA'
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  ref: ${{ inputs.ref || github.sha || github.ref }}
 
 jobs:
   path-filter:
@@ -63,6 +72,7 @@ jobs:
       # Setup and install
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@v4
         with:
@@ -143,6 +153,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.ref }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - uses: actions/download-artifact@v4
