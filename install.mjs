@@ -1,6 +1,7 @@
 import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import url from 'node:url';
 import util from 'node:util';
 
 /**
@@ -17,7 +18,7 @@ import util from 'node:util';
  * meant for public reuse.
  */
 
-let modulesParentDir = import.meta.dirname;
+let modulesParentDir = path.dirname(url.fileURLToPath(import.meta.url));
 while (!fs.existsSync(path.join(modulesParentDir, 'node_modules'))) {
   const nextParentDir = path.dirname(modulesParentDir);
   if (nextParentDir === modulesParentDir) {
