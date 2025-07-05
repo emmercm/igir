@@ -68,7 +68,7 @@ jobs:
     needs:
       - path-filter
       - commit-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' && needs.commit-filter.outputs.changes == 'false' }}
+    if: ${{ (needs.path-filter.outputs.changes == 'true' && needs.commit-filter.outputs.changes == 'false') || github.event_name == 'workflow_dispatch' }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -103,6 +103,7 @@ jobs:
         run: |
           set -x
           npm ci --ignore-scripts
+          pip install setuptools
           rm -rf packages/*/prebuilds
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
