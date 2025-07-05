@@ -10,10 +10,10 @@ name: GitHub Merge Queue
 
 on:
   push:
-    branches:
-      - 'main'
-      - '*feature*'
-      - '**/*feature*'
+#    branches:
+#      - 'main'
+#      - '*feature*'
+#      - '**/*feature*'
   schedule:
     # Every hour
     - cron: '0 * * * *'
@@ -41,7 +41,7 @@ jobs:
       # actions/checkout
       contents: read
       # `gh` CLI
-      pull-requests: read
+      pull-requests: write
       issues: write
     runs-on: ubuntu-latest
     steps:
@@ -50,6 +50,9 @@ jobs:
       - run: |
           author="app/renovate"
           label="renovate/rebase"
+
+          # DEBUG
+          gh pr list --search "author:${author} sort:created-asc -label:${label}" --limit 100 --json number,mergeable,autoMergeRequest | jq
 
           eligible_prs="$(gh pr list --search "author:${author} sort:created-asc -label:${label}" --limit 100 --json number,mergeable,autoMergeRequest --jq '.[] | select(.mergeable == "CONFLICTING" and .autoMergeRequest != null) | .number')"
           if [[ "${eligible_prs}" == "" ]]; then
