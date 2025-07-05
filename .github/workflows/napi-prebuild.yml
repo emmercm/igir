@@ -23,8 +23,30 @@ env:
   ref: ${{ inputs.ref || github.ref }}
 
 jobs:
+  # Only prebuild if necessary
   path-filter:
     if: ${{ github.actor == 'emmercm' }}
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            changes:
+              - '.github/workflows/napi-prebuild.yml'
+              - 'packages/zlib*/**'
+              - 'packages/zstd*/**'
+              - 'package*.json'
+
+  # Prevent committed prebuilds from prebuilding again, because of non-deterministic builds
+  commit-filter:
     permissions:
       pull-requests: read
     runs-on: ubuntu-latest
@@ -40,15 +62,13 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-              - '.github/workflows/napi-prebuild.yml'
-              - 'packages/zlib*/**'
-              - 'packages/zstd*/**'
-              - 'package*.json'
+              - 'packages/*/prebuilds/**'
 
   prebuild:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+      - commit-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' && needs.commit-filter.outputs.changes == 'false' }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
