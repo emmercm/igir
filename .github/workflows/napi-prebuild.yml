@@ -103,6 +103,7 @@ jobs:
         run: |
           set -x
           npm ci --ignore-scripts
+          pip install setuptools
           rm -rf packages/*/prebuilds
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
