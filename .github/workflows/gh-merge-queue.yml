@@ -41,6 +41,7 @@ jobs:
       # actions/checkout
       contents: read
       # `gh` CLI
+      pull-requests: read
       issues: write
     runs-on: ubuntu-latest
     steps:
