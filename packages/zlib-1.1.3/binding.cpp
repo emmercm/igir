@@ -46,7 +46,7 @@ private:
 
   Napi::Value CompressChunk(const Napi::CallbackInfo& info);
   Napi::Value End(const Napi::CallbackInfo& info);
-  Napi::Value Finalize(const Napi::CallbackInfo& info);
+  Napi::Value Dispose(const Napi::CallbackInfo& info);
 };
 
 Napi::FunctionReference Deflater::constructor;
@@ -55,7 +55,7 @@ Napi::Object Deflater::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "Deflater", {
     InstanceMethod("compressChunk", &Deflater::CompressChunk),
     InstanceMethod("end", &Deflater::End),
-    InstanceMethod("finalize", &Deflater::Finalize), // New method for resource cleanup
+    InstanceMethod("dispose", &Deflater::Dispose), // New method for resource cleanup
   });
 
   constructor = Napi::Persistent(func);
@@ -308,7 +308,7 @@ Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
   return Napi::Buffer<uint8_t>::Copy(env, output.data(), output.size());
 }
 
-Napi::Value Deflater::Finalize(const Napi::CallbackInfo& info) {
+Napi::Value Deflater::Dispose(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
   // Just clean up resources without trying to get final data
