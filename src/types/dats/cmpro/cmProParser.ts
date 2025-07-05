@@ -85,7 +85,7 @@ export default class CMProParser {
   /**
    * Parse the CMPro DAT's file contents.
    */
-  public parse(): DATProps {
+  parse(): DATProps {
     this.pos = 0;
 
     const result: CMProObject = {};

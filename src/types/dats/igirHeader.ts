@@ -1,8 +1,8 @@
 import moment from 'moment';
 
 import Package from '../../globals/package.js';
-import Options from '../options.js';
-import DAT from './dat.js';
+import type Options from '../options.js';
+import type DAT from './dat.js';
 import Header from './logiqx/header.js';
 
 /**

@@ -259,7 +259,7 @@ export default class File implements FileProps {
     return this.isUrl;
   }
 
-  public getChecksumBitmask(): number {
+  getChecksumBitmask(): number {
     return (
       this.checksumBitmask ??
       (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0) |

@@ -10,7 +10,8 @@ import { LogLevel } from '../../../src/console/logLevel.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options, { OptionsProps } from '../../../src/types/options.js';
+import type { OptionsProps } from '../../../src/types/options.js';
+import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 function createDatScanner(props: OptionsProps): DATScanner {

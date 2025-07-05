@@ -1,6 +1,7 @@
 import path from 'node:path';
 
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
@@ -10,9 +11,10 @@ import Rar from '../../types/files/archives/rar.js';
 import SevenZip from '../../types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../types/files/archives/tar.js';
 import Zip from '../../types/files/archives/zip.js';
-import File from '../../types/files/file.js';
-import IndexedFiles, { AllChecksums, ChecksumsToFiles } from '../../types/indexedFiles.js';
-import Options from '../../types/options.js';
+import type File from '../../types/files/file.js';
+import type { AllChecksums, ChecksumsToFiles } from '../../types/indexedFiles.js';
+import IndexedFiles from '../../types/indexedFiles.js';
+import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**

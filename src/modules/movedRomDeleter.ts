@@ -1,15 +1,16 @@
 import async from 'async';
 
-import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import type ProgressBar from '../console/progressBar.js';
+import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import DAT from '../types/dats/dat.js';
+import type DAT from '../types/dats/dat.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import ChdBinCue from '../types/files/archives/chd/chdBinCue.js';
-import File from '../types/files/file.js';
-import Options from '../types/options.js';
+import type File from '../types/files/file.js';
+import type Options from '../types/options.js';
 import Module from './module.js';
 
 /**

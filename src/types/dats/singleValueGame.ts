@@ -1,4 +1,5 @@
-import Game, { GameProps } from './game.js';
+import type { GameProps } from './game.js';
+import Game from './game.js';
 
 export interface SingleValueGameProps
   extends Omit<GameProps, 'regions' | 'languages' | 'categories'> {

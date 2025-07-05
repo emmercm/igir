@@ -1,4 +1,4 @@
-import Game from './game.js';
+import type Game from './game.js';
 
 /**
  * A container of {@link Game}s that are all related together by parent/clone {@link DAT} info.

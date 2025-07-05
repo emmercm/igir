@@ -1,13 +1,14 @@
-import tty from 'node:tty';
+import type tty from 'node:tty';
 
 import chalk from 'chalk';
 import moment from 'moment';
 
 import Package from '../globals/package.js';
-import { LogLevel, LogLevelInverted, LogLevelValue } from './logLevel.js';
+import type { LogLevelValue } from './logLevel.js';
+import { LogLevel, LogLevelInverted } from './logLevel.js';
 import MultiBar from './multiBar.js';
-import ProgressBar from './progressBar.js';
-import { SingleBarOptions } from './singleBar.js';
+import type ProgressBar from './progressBar.js';
+import type { SingleBarOptions } from './singleBar.js';
 
 /**
  * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.

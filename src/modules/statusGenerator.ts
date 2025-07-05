@@ -1,7 +1,7 @@
-import ProgressBar from '../console/progressBar.js';
-import DAT from '../types/dats/dat.js';
+import type ProgressBar from '../console/progressBar.js';
+import type DAT from '../types/dats/dat.js';
 import DATStatus from '../types/datStatus.js';
-import WriteCandidate from '../types/writeCandidate.js';
+import type WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**

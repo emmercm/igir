@@ -1,4 +1,4 @@
-import Archive from '../archive.js';
+import type Archive from '../archive.js';
 import Maxcso from './maxcso.js';
 
 export default class Cso extends Maxcso {

@@ -1,5 +1,5 @@
-import Archive from '../archive.js';
-import ArchiveEntry from '../archiveEntry.js';
+import type Archive from '../archive.js';
+import type ArchiveEntry from '../archiveEntry.js';
 import Tar from '../tar.js';
 import SevenZip from './sevenZip.js';
 

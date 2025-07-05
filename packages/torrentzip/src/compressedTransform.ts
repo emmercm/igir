@@ -1,4 +1,5 @@
-import stream, { TransformCallback } from 'node:stream';
+import type { TransformCallback } from 'node:stream';
+import stream from 'node:stream';
 
 /**
  * A stream transform to calculate the size of a post-compression file.

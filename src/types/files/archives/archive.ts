@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import type { Readable } from 'node:stream';
 
 import Temp from '../../../globals/temp.js';
-import { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
+import type { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import File from '../file.js';
-import ArchiveEntry from './archiveEntry.js';
+import type ArchiveEntry from './archiveEntry.js';
 
 export default abstract class Archive {
   private readonly filePath: string;

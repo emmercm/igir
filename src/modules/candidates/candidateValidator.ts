@@ -1,8 +1,9 @@
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import DAT from '../../types/dats/dat.js';
-import Options from '../../types/options.js';
-import WriteCandidate from '../../types/writeCandidate.js';
+import type DAT from '../../types/dats/dat.js';
+import type Options from '../../types/options.js';
+import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

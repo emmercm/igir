@@ -1,27 +1,32 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import stream, { Readable } from 'node:stream';
+import type { Readable } from 'node:stream';
+import stream from 'node:stream';
 import util from 'node:util';
 
 import async from 'async';
 import { Mutex } from 'async-mutex';
 
+import type { ValidationResultValue } from '../../../../packages/torrentzip/index.js';
 import {
   CompressionMethod,
   TZValidator,
   TZWriter,
   ValidationResult,
-  ValidationResultValue,
 } from '../../../../packages/torrentzip/index.js';
-import { CentralDirectoryFileHeader, ZipReader } from '../../../../packages/zip/index.js';
-import { ProgressCallback } from '../../../console/progressBar.js';
+import type { CentralDirectoryFileHeader } from '../../../../packages/zip/index.js';
+import { ZipReader } from '../../../../packages/zip/index.js';
+import type { ProgressCallback } from '../../../console/progressBar.js';
 import Defaults from '../../../globals/defaults.js';
-import FsCopyTransform, { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
+import type { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
+import FsCopyTransform from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import IgirException from '../../exceptions/igirException.js';
-import { ZipFormat, ZipFormatValue } from '../../options.js';
-import File from '../file.js';
-import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
+import type { ZipFormatValue } from '../../options.js';
+import { ZipFormat } from '../../options.js';
+import type File from '../file.js';
+import type { ChecksumProps } from '../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 

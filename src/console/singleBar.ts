@@ -3,10 +3,12 @@ import isUnicodeSupported from 'is-unicode-supported';
 import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
 import TimePoly from '../polyfill/timePoly.js';
-import Logger from './logger.js';
-import { LogLevel, LogLevelValue } from './logLevel.js';
-import MultiBar from './multiBar.js';
-import ProgressBar, { ColoredSymbol, ProgressBarSymbol } from './progressBar.js';
+import type Logger from './logger.js';
+import type { LogLevelValue } from './logLevel.js';
+import { LogLevel } from './logLevel.js';
+import type MultiBar from './multiBar.js';
+import type { ColoredSymbol } from './progressBar.js';
+import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
 
 export interface SingleBarOptions {
   displayDelay?: number;

@@ -1,13 +1,13 @@
-import { Readable } from 'node:stream';
+import type { Readable } from 'node:stream';
 
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import File from '../files/file.js';
+import type File from '../files/file.js';
 import APSPatch from './apsPatch.js';
 import BPSPatch from './bpsPatch.js';
 import DPSPatch from './dpsPatch.js';
 import IPSPatch from './ipsPatch.js';
 import NinjaPatch from './ninjaPatch.js';
-import Patch from './patch.js';
+import type Patch from './patch.js';
 import PPFPatch from './ppfPatch.js';
 import UPSPatch from './upsPatch.js';
 import VcdiffPatch from './vcdiffPatch.js';

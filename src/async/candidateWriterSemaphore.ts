@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import Defaults from '../globals/defaults.js';
-import WriteCandidate from '../types/writeCandidate.js';
+import type WriteCandidate from '../types/writeCandidate.js';
 import ElasticSemaphore from './elasticSemaphore.js';
 import KeyedMutex from './keyedMutex.js';
 import MappableSemaphore from './mappableSemaphore.js';

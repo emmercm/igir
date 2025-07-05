@@ -1,4 +1,4 @@
-import ProgressBar from '../console/progressBar.js';
+import type ProgressBar from '../console/progressBar.js';
 
 /**
  * Base class for "modules," classes that have one method to perform some specific action.

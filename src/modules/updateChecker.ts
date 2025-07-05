@@ -2,7 +2,7 @@ import https from 'node:https';
 
 import semver from 'semver';
 
-import Logger from '../console/logger.js';
+import type Logger from '../console/logger.js';
 import { LogLevel } from '../console/logLevel.js';
 import MultiBar from '../console/multiBar.js';
 import Package from '../globals/package.js';

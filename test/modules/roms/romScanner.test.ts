@@ -14,7 +14,8 @@ import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options, { OptionsProps } from '../../../src/types/options.js';
+import type { OptionsProps } from '../../../src/types/options.js';
+import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());

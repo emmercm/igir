@@ -1,8 +1,8 @@
 import path from 'node:path';
 
-import IOFile from '../../polyfill/ioFile.js';
+import type IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
-import File from '../files/file.js';
+import type File from '../files/file.js';
 
 export default abstract class Patch {
   private readonly file: File;

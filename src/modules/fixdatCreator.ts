@@ -1,12 +1,13 @@
 import path from 'node:path';
 
-import ProgressBar, { ProgressBarSymbol } from '../console/progressBar.js';
+import type ProgressBar from '../console/progressBar.js';
+import { ProgressBarSymbol } from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import DAT from '../types/dats/dat.js';
+import type DAT from '../types/dats/dat.js';
 import IgirHeader from '../types/dats/igirHeader.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
-import Options from '../types/options.js';
-import WriteCandidate from '../types/writeCandidate.js';
+import type Options from '../types/options.js';
+import type WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**

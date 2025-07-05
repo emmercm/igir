@@ -1,17 +1,19 @@
-import { CHDInfo, CHDType } from 'chdman';
+import type { CHDInfo } from 'chdman';
+import { CHDType } from 'chdman';
 
-import DriveSemaphore from '../async/driveSemaphore.js';
-import ProgressBar from '../console/progressBar.js';
+import type DriveSemaphore from '../async/driveSemaphore.js';
+import type ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Chd from '../types/files/archives/chd/chd.js';
 import Gzip from '../types/files/archives/sevenZip/gzip.js';
 import Tar from '../types/files/archives/tar.js';
-import File from '../types/files/file.js';
-import { ChecksumBitmask, ChecksumBitmaskValue } from '../types/files/fileChecksums.js';
-import FileFactory from '../types/files/fileFactory.js';
-import Options from '../types/options.js';
+import type File from '../types/files/file.js';
+import type { ChecksumBitmaskValue } from '../types/files/fileChecksums.js';
+import { ChecksumBitmask } from '../types/files/fileChecksums.js';
+import type FileFactory from '../types/files/fileFactory.js';
+import type Options from '../types/options.js';
 import Module from './module.js';
 
 /**

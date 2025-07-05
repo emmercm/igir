@@ -16,7 +16,7 @@ interface LanguageOptions {
  * A static class of regions and languages that can be parsed and understood.
  */
 export default class Internationalization {
-  public static readonly REGION_OPTIONS: RegionOptions[] = [
+  static readonly REGION_OPTIONS: RegionOptions[] = [
     // Specific countries
     { region: 'ARG', long: 'Argentina', language: 'ES', regex: /\(AR\)/i },
     {
@@ -188,7 +188,7 @@ export default class Internationalization {
   ];
 
   // In no particular order
-  public static readonly LANGUAGE_OPTIONS: LanguageOptions[] = [
+  static readonly LANGUAGE_OPTIONS: LanguageOptions[] = [
     { short: 'DA', long: 'DAN' },
     { short: 'DE', long: 'GER' },
     { short: 'EL' },
@@ -207,23 +207,23 @@ export default class Internationalization {
     { short: 'ZH', long: 'CHI' },
   ];
 
-  public static readonly REGION_CODES = this.REGION_OPTIONS.map((regionOption) =>
+  static readonly REGION_CODES = this.REGION_OPTIONS.map((regionOption) =>
     regionOption.region.toUpperCase(),
   )
     .filter((region) => region.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
-  public static readonly REGION_NAMES = this.REGION_OPTIONS.map((regionOption) => regionOption.long)
+  static readonly REGION_NAMES = this.REGION_OPTIONS.map((regionOption) => regionOption.long)
     .filter((region) => region.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
     .sort();
 
-  public static readonly REGION_REGEX = this.REGION_OPTIONS.map(
+  static readonly REGION_REGEX = this.REGION_OPTIONS.map(
     (regionOptions) => regionOptions.regex,
   ).filter((regex) => regex !== undefined);
 
-  public static readonly LANGUAGES = this.REGION_OPTIONS.map((regionOption) =>
+  static readonly LANGUAGES = this.REGION_OPTIONS.map((regionOption) =>
     regionOption.language.toUpperCase(),
   )
     .filter((language) => language.length > 0)

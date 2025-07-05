@@ -5,7 +5,7 @@ import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
-import DAT from '../../../src/types/dats/dat.js';
+import type DAT from '../../../src/types/dats/dat.js';
 import Disk from '../../../src/types/dats/disk.js';
 import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
@@ -22,7 +22,7 @@ import File from '../../../src/types/files/file.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import IndexedFiles from '../../../src/types/indexedFiles.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/types/options.js';
-import WriteCandidate from '../../../src/types/writeCandidate.js';
+import type WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const gameWithNoRoms = new Game({

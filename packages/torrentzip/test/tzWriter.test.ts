@@ -15,8 +15,10 @@ import IOFile from '../../../src/polyfill/ioFile.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
 import { ZipReader } from '../../zip/index.js';
-import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
-import TZWriter, { CompressionMethod, CompressionMethodValue } from '../src/tzWriter.js';
+import type { ValidationResultValue } from '../src/tzValidator.js';
+import TZValidator, { ValidationResult } from '../src/tzValidator.js';
+import type { CompressionMethodValue } from '../src/tzWriter.js';
+import TZWriter, { CompressionMethod } from '../src/tzWriter.js';
 
 jest.setTimeout(5 * 60 * 1000); // 5min for large files
 

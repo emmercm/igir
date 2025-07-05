@@ -1,7 +1,7 @@
 /**
  * A collection of static array utility functions.
  */
-export default class ArrayPoly {
+export default {
   /**
    * Filter elements in an array to only unique values, using the result of a mapper function to
    * test for equality. Usage:
@@ -10,7 +10,7 @@ export default class ArrayPoly {
    * ['a', 'b', 'c', 'a', 'A', 'C'].filter(ArrayPoly.filterUniqueMapped((str) => str.toUpperCase());
    * </code>
    */
-  public static filterUniqueMapped<T>(
+  filterUniqueMapped<T>(
     mapper: (arg: T) => unknown,
   ): (value: T, idx: number, values: T[]) => boolean {
     const seenMappedValues = new Set<unknown>();
@@ -27,7 +27,7 @@ export default class ArrayPoly {
       }
       return false;
     };
-  }
+  },
 
   /**
    * Reduce elements in an array to chunks of size {@link limit}.
@@ -36,9 +36,7 @@ export default class ArrayPoly {
    * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce(ArrayPoly.reduceChunk(3), []);
    * </code>
    */
-  public static reduceChunk<T>(
-    limit: number,
-  ): (previous: T[][], current: T, idx: number, array: T[]) => T[][] {
+  reduceChunk<T>(limit: number): (previous: T[][], current: T, idx: number, array: T[]) => T[][] {
     return (previous: T[][], _current: T, idx: number, array: T[]): T[][] => {
       if (idx === 0) {
         if (limit <= 0) {
@@ -55,7 +53,7 @@ export default class ArrayPoly {
 
       return previous;
     };
-  }
+  },
 
   /**
    * Reduce elements in an array to only unique values. Usage:
@@ -64,7 +62,7 @@ export default class ArrayPoly {
    * [1, 2, 3, 1, 1, 3].reduce(ArrayPoly.reduceUnique(), []);
    * </code>
    */
-  public static reduceUnique<T>(): (previous: T[], current: T, idx: number, array: T[]) => T[] {
+  reduceUnique<T>(): (previous: T[], current: T, idx: number, array: T[]) => T[] {
     return (previous: T[], _current: T, idx: number, array: T[]): T[] => {
       if (array.length <= 1) {
         // Arrays that are empty or only have one element are already unique
@@ -76,5 +74,5 @@ export default class ArrayPoly {
       }
       return previous;
     };
-  }
-}
+  },
+};

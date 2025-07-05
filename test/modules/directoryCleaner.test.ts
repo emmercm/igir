@@ -4,7 +4,8 @@ import Temp from '../../src/globals/temp.js';
 import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
 import FsPoly, { WalkMode } from '../../src/polyfill/fsPoly.js';
 import File from '../../src/types/files/file.js';
-import Options, { OptionsProps } from '../../src/types/options.js';
+import type { OptionsProps } from '../../src/types/options.js';
+import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');

@@ -1,9 +1,10 @@
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import DAT from '../../types/dats/dat.js';
-import Options from '../../types/options.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../types/dats/dat.js';
+import type Options from '../../types/options.js';
 import OutputFactory from '../../types/outputFactory.js';
-import ROMWithFiles from '../../types/romWithFiles.js';
-import WriteCandidate from '../../types/writeCandidate.js';
+import type ROMWithFiles from '../../types/romWithFiles.js';
+import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

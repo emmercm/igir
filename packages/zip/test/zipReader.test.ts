@@ -7,7 +7,7 @@ import util from 'node:util';
 import Temp from '../../../src/globals/temp.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
-import { CompressionMethodValue } from '../src/fileRecord.js';
+import type { CompressionMethodValue } from '../src/fileRecord.js';
 import ZipReader from '../src/zipReader.js';
 
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));

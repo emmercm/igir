@@ -2,8 +2,9 @@ import path from 'node:path';
 
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
-import { ChecksumBitmask, ChecksumBitmaskValue } from '../../fileChecksums.js';
-import Archive from '../archive.js';
+import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
+import { ChecksumBitmask } from '../../fileChecksums.js';
+import type Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
 

@@ -1,8 +1,10 @@
-import chalk, { ChalkInstance } from 'chalk';
+import type { ChalkInstance } from 'chalk';
+import chalk from 'chalk';
 import isUnicodeSupported from 'is-unicode-supported';
 
-import { LogLevel, LogLevelValue } from './logLevel.js';
-import { SingleBarOptions } from './singleBar.js';
+import type { LogLevelValue } from './logLevel.js';
+import { LogLevel } from './logLevel.js';
+import type { SingleBarOptions } from './singleBar.js';
 
 /**
  * @see https://www.toptal.com/designers/htmlarrows/symbols/

@@ -1,13 +1,14 @@
 import async from 'async';
 
-import DriveSemaphore from '../../async/driveSemaphore.js';
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import File from '../../types/files/file.js';
-import FileFactory from '../../types/files/fileFactory.js';
+import type File from '../../types/files/file.js';
+import type FileFactory from '../../types/files/fileFactory.js';
 import ROMHeader from '../../types/files/romHeader.js';
-import Options from '../../types/options.js';
+import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**

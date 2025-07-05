@@ -1,12 +1,13 @@
 import { writeToString } from '@fast-csv/format';
-import chalk, { ChalkInstance } from 'chalk';
+import type { ChalkInstance } from 'chalk';
+import chalk from 'chalk';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
-import DAT from './dats/dat.js';
-import Game from './dats/game.js';
-import File from './files/file.js';
-import Options from './options.js';
-import WriteCandidate from './writeCandidate.js';
+import type DAT from './dats/dat.js';
+import type Game from './dats/game.js';
+import type File from './files/file.js';
+import type Options from './options.js';
+import type WriteCandidate from './writeCandidate.js';
 
 const ROMType = {
   GAME: 'games',

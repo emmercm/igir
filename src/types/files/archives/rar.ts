@@ -2,7 +2,8 @@ import path from 'node:path';
 
 import async from 'async';
 import { Mutex } from 'async-mutex';
-import { createExtractorFromFile, FileHeader } from 'node-unrar-js/dist/index.js';
+import type { FileHeader } from 'node-unrar-js/dist/index.js';
+import { createExtractorFromFile } from 'node-unrar-js/dist/index.js';
 
 import Defaults from '../../../globals/defaults.js';
 import IgirException from '../../exceptions/igirException.js';

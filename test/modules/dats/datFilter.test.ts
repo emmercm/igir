@@ -1,10 +1,12 @@
 import DATFilter from '../../../src/modules/dats/datFilter.js';
-import Game, { GameProps } from '../../../src/types/dats/game.js';
+import type { GameProps } from '../../../src/types/dats/game.js';
+import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
-import Options, { OptionsProps } from '../../../src/types/options.js';
+import type { OptionsProps } from '../../../src/types/options.js';
+import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 function buildDATFilter(options: OptionsProps = {}): DATFilter {

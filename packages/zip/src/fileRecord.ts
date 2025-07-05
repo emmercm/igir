@@ -1,5 +1,5 @@
 import CP437Decoder from './cp437Decoder.js';
-import { IZip64ExtendedInformation } from './fileRecordUtil.js';
+import type { IZip64ExtendedInformation } from './fileRecordUtil.js';
 import TimestampUtil from './timestampUtil.js';
 
 export interface IFileRecord {

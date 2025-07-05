@@ -9,7 +9,7 @@ import Temp from '../../../../src/globals/temp.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
 import FsPoly from '../../../../src/polyfill/fsPoly.js';
-import Archive from '../../../../src/types/files/archives/archive.js';
+import type Archive from '../../../../src/types/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Chd from '../../../../src/types/files/archives/chd/chd.js';
 import Gcz from '../../../../src/types/files/archives/dolphin/gcz.js';

@@ -1,4 +1,4 @@
-import File from '../files/file.js';
+import type File from '../files/file.js';
 import APSGBAPatch from './apsGbaPatch.js';
 import APSN64Patch from './apsN64Patch.js';
 import Patch from './patch.js';

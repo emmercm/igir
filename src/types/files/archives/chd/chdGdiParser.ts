@@ -11,13 +11,13 @@ import FsPoly from '../../../../polyfill/fsPoly.js';
 import IgirException from '../../../exceptions/igirException.js';
 import FileChecksums from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
-import Chd from './chd.js';
+import type Chd from './chd.js';
 
 /**
  * https://dreamcast.wiki/GDI_format
  */
 export default class ChdGdiParser {
-  public static async getArchiveEntriesGdRom<T extends Chd>(
+  static async getArchiveEntriesGdRom<T extends Chd>(
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {

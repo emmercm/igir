@@ -420,7 +420,7 @@ export default class Game implements GameProps {
     return /\(Debug[a-z0-9. ]*\)/i.test(this.name);
   }
 
-  public static readonly DEMO_REGEX = new RegExp(
+  static readonly DEMO_REGEX = new RegExp(
     [
       '\\(Demo[a-z0-9. -]*\\)',
       '@barai',

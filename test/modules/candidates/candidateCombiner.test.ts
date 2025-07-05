@@ -12,11 +12,11 @@ import DATCombiner from '../../../src/modules/dats/datCombiner.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import File from '../../../src/types/files/file.js';
+import type File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import Options from '../../../src/types/options.js';
-import WriteCandidate from '../../../src/types/writeCandidate.js';
+import type WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());

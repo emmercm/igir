@@ -1,9 +1,10 @@
 import fs from 'node:fs';
-import stream from 'node:stream';
+import type stream from 'node:stream';
 
 import CP437Decoder from './cp437Decoder.js';
-import EndOfCentralDirectory from './endOfCentralDirectory.js';
-import FileRecord, { CompressionMethodValue, IFileRecord } from './fileRecord.js';
+import type EndOfCentralDirectory from './endOfCentralDirectory.js';
+import type { CompressionMethodValue, IFileRecord } from './fileRecord.js';
+import FileRecord from './fileRecord.js';
 import FileRecordUtil from './fileRecordUtil.js';
 import LocalFileHeader from './localFileHeader.js';
 
