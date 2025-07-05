@@ -1,5 +1,5 @@
-import ROM from './dats/rom.js';
-import File from './files/file.js';
+import type ROM from './dats/rom.js';
+import type File from './files/file.js';
 
 /**
  * A container holding a {@link ROM}, a found input {@link File}, and a desired output {@link File}.

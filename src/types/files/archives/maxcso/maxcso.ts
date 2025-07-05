@@ -2,7 +2,8 @@ import path from 'node:path';
 
 import maxcso, { MaxcsoBinaryPreference } from 'maxcso';
 
-import { ChecksumBitmask, ChecksumBitmaskValue } from '../../fileChecksums.js';
+import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
+import { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 

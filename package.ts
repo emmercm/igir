@@ -5,7 +5,8 @@ import path from 'node:path';
 import { path7za } from '7zip-bin';
 import caxa from 'caxa';
 import esbuild from 'esbuild';
-import fg, { Options as GlobOptions } from 'fast-glob';
+import type { Options as GlobOptions } from 'fast-glob';
+import fg from 'fast-glob';
 import yargs from 'yargs';
 
 import Timer from './src/async/timer.js';

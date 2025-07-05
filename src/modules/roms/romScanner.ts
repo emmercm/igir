@@ -1,9 +1,10 @@
-import DriveSemaphore from '../../async/driveSemaphore.js';
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import File from '../../types/files/file.js';
+import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import Options from '../../types/options.js';
+import type FileFactory from '../../types/files/fileFactory.js';
+import type Options from '../../types/options.js';
 import Scanner from '../scanner.js';
 
 /**

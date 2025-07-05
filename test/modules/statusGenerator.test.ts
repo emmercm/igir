@@ -5,7 +5,7 @@ import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.
 import DATPreferer from '../../src/modules/dats/datPreferer.js';
 import ROMIndexer from '../../src/modules/roms/romIndexer.js';
 import StatusGenerator from '../../src/modules/statusGenerator.js';
-import DAT from '../../src/types/dats/dat.js';
+import type DAT from '../../src/types/dats/dat.js';
 import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
@@ -14,7 +14,8 @@ import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import ArchiveFile from '../../src/types/files/archives/archiveFile.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
-import Options, { OptionsProps } from '../../src/types/options.js';
+import type { OptionsProps } from '../../src/types/options.js';
+import Options from '../../src/types/options.js';
 import IPSPatch from '../../src/types/patches/ipsPatch.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import WriteCandidate from '../../src/types/writeCandidate.js';

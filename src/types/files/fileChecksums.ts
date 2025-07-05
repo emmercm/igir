@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
-import { Readable, Stream } from 'node:stream';
+import type { Stream } from 'node:stream';
+import { Readable } from 'node:stream';
 
 import { crc32 } from '@node-rs/crc32';
 
@@ -25,19 +26,16 @@ export interface ChecksumProps {
   sha256?: string;
 }
 
-export default class FileChecksums {
-  public static async hashData(
-    data: Buffer | string,
-    checksumBitmask: number,
-  ): Promise<ChecksumProps> {
+export default {
+  async hashData(data: Buffer | string, checksumBitmask: number): Promise<ChecksumProps> {
     const readable = new Readable();
     readable.push(data);
     // eslint-disable-next-line unicorn/no-null
     readable.push(null);
     return this.hashStream(readable, checksumBitmask);
-  }
+  },
 
-  public static async hashFile(
+  async hashFile(
     filePath: string,
     checksumBitmask: number,
     start?: number,
@@ -45,13 +43,13 @@ export default class FileChecksums {
   ): Promise<ChecksumProps> {
     return File.createStreamFromFile(
       filePath,
-      async (readable) => FileChecksums.hashStream(readable, checksumBitmask),
+      async (readable) => this.hashStream(readable, checksumBitmask),
       start,
       end,
     );
-  }
+  },
 
-  public static async hashStream(stream: Stream, checksumBitmask: number): Promise<ChecksumProps> {
+  async hashStream(stream: Stream, checksumBitmask: number): Promise<ChecksumProps> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
       // WARN(cemmer): this may leave the stream un-drained and therefore some file handles open!
@@ -93,5 +91,5 @@ export default class FileChecksums {
 
       stream.on('error', reject);
     });
-  }
-}
+  },
+};

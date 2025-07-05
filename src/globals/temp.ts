@@ -18,11 +18,11 @@ export default class Temp {
     moment().format('YYYYMMDD-HHmmss'),
   );
 
-  public static getTempDir(): string {
+  static getTempDir(): string {
     return this.globalTempDir;
   }
 
-  public static setTempDir(globalTempDir: string): void {
+  static setTempDir(globalTempDir: string): void {
     this.globalTempDir = globalTempDir;
   }
 }

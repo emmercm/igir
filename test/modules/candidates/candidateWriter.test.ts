@@ -1,6 +1,7 @@
 import 'jest-extended';
 
-import fs, { Stats } from 'node:fs';
+import type { Stats } from 'node:fs';
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
@@ -26,18 +27,18 @@ import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js'
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import Archive from '../../../src/types/files/archives/archive.js';
-import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import type Archive from '../../../src/types/files/archives/archive.js';
+import type ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
+import type { OptionsProps } from '../../../src/types/options.js';
 import Options, {
   GameSubdirMode,
   GameSubdirModeInverted,
   LinkMode,
   LinkModeInverted,
-  OptionsProps,
   ZipFormat,
   ZipFormatInverted,
 } from '../../../src/types/options.js';

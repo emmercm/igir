@@ -50,28 +50,28 @@ export default class Cache<V> {
   /**
    * Return if a key exists in the cache, waiting for any existing operations to complete first.
    */
-  public async has(key: string): Promise<boolean> {
+  async has(key: string): Promise<boolean> {
     return this.keyedMutex.runExclusiveForKey(key, () => this.keyValues.has(key));
   }
 
   /**
    * Return all the keys that exist in the cache.
    */
-  public keys(): Set<string> {
+  keys(): Set<string> {
     return new Set(this.keyValues.keys());
   }
 
   /**
    * Return the count of keys in the cache.
    */
-  public size(): number {
+  size(): number {
     return this.keyValues.size;
   }
 
   /**
    * Get the value of a key in the cache, waiting for any existing operations to complete first.
    */
-  public async get(key: string): Promise<V | undefined> {
+  async get(key: string): Promise<V | undefined> {
     return this.keyedMutex.runExclusiveForKey(key, () => this.keyValues.get(key));
   }
 
@@ -79,7 +79,7 @@ export default class Cache<V> {
    * Get the value of a key in the cache if it exists, or compute a value and set it in the cache
    * otherwise.
    */
-  public async getOrCompute(
+  async getOrCompute(
     key: string,
     runnable: (key: string) => V | Promise<V>,
     shouldRecompute?: (value: V) => boolean | Promise<boolean>,
@@ -101,7 +101,7 @@ export default class Cache<V> {
   /**
    * Set the value of a key in the cache.
    */
-  public async set(key: string, val: V): Promise<void> {
+  async set(key: string, val: V): Promise<void> {
     return this.keyedMutex.runExclusiveForKey(key, () => {
       this.setUnsafe(key, val);
     });
@@ -118,7 +118,7 @@ export default class Cache<V> {
   /**
    * Delete a key in the cache.
    */
-  public async delete(key: string | RegExp): Promise<void> {
+  async delete(key: string | RegExp): Promise<void> {
     let keysToDelete: string[];
     if (key instanceof RegExp) {
       keysToDelete = [...this.keys().keys()].filter((k) => k.match(key) !== null);
@@ -142,7 +142,7 @@ export default class Cache<V> {
   /**
    * Load the cache from a file.
    */
-  public async load(): Promise<Cache<V>> {
+  async load(): Promise<Cache<V>> {
     if (this.filePath === undefined || !(await FsPoly.exists(this.filePath))) {
       // Cache doesn't exist, so there is nothing to load
       return this;
@@ -181,7 +181,7 @@ export default class Cache<V> {
   /**
    * Save the cache to a file.
    */
-  public async save(): Promise<void> {
+  async save(): Promise<void> {
     try {
       await this.saveMutex.runExclusive(async () => {
         // Clear any existing timeout

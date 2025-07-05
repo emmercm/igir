@@ -15,14 +15,14 @@ export interface DATObjectProps {
 /**
  * Class to hold some static parsing methods.
  */
-export default class DATObject {
+export default {
   /**
    * Parse the contents of an XML file to a {@link DATObjectProps} object.
    */
-  public static fromXmlString(xmlContents: string): DATObjectProps {
+  fromXmlString(xmlContents: string): DATObjectProps {
     return new XMLParser({
       ignoreAttributes: false,
       attributeNamePrefix: '',
     }).parse(xmlContents) as DATObjectProps;
-  }
-}
+  },
+};

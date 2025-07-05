@@ -4,19 +4,19 @@ import util from 'node:util';
 
 import { parse } from '@gplane/cue';
 
-import ProgressBar from '../../console/progressBar.js';
+import type ProgressBar from '../../console/progressBar.js';
 import Package from '../../globals/package.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import DAT from '../../types/dats/dat.js';
+import type DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import Header from '../../types/dats/logiqx/header.js';
 import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
 import ROM from '../../types/dats/rom.js';
-import Archive from '../../types/files/archives/archive.js';
+import type Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import File from '../../types/files/file.js';
-import { ChecksumProps } from '../../types/files/fileChecksums.js';
-import Options from '../../types/options.js';
+import type File from '../../types/files/file.js';
+import type { ChecksumProps } from '../../types/files/fileChecksums.js';
+import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**
