@@ -41,7 +41,7 @@ jobs:
       # actions/checkout
       contents: read
       # `gh` CLI
-      pull-requests: read
+      pull-requests: write
       issues: write
     runs-on: ubuntu-latest
     steps:
@@ -50,8 +50,12 @@ jobs:
       - run: |
           author="app/renovate"
           label="renovate/rebase"
+          pr_search="author:${author} sort:created-asc -label:${label}"
 
-          eligible_prs="$(gh pr list --search "author:${author} sort:created-asc -label:${label}" --limit 100 --json number,mergeable,autoMergeRequest --jq '.[] | select(.mergeable == "CONFLICTING" and .autoMergeRequest != null) | .number')"
+          echo "Renovate PRs found:"
+          gh pr list --search "${pr_search}" --json number --jq '.[] | .number' | cat
+
+          eligible_prs="$(gh pr list --search "${pr_search}" --limit 100 --json number,mergeable,autoMergeRequest --jq '.[] | select(.mergeable == "CONFLICTING" and .autoMergeRequest != null) | .number')"
           if [[ "${eligible_prs}" == "" ]]; then
             echo "No eligible PRs found"
             exit 0
