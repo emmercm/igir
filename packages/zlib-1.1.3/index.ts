@@ -43,7 +43,7 @@ export interface DeflaterInstance {
    * Release resources without attempting to retrieve final data
    * Use this for cleanup in error scenarios
    */
-  finalize(): void;
+  dispose(): void;
 }
 
 export const ZlibCompressionLevel = {
