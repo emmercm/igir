@@ -79,7 +79,7 @@
     "async": "3.2.6",
     "async-mutex": "0.5.0",
     "chalk": "5.4.1",
-    "chdman": "0.277.2",
+    "chdman": "0.278.0",
     "class-transformer": "0.5.1",
     "dolphin-tool": "0.2506.0",
     "fast-glob": "3.3.3",
@@ -102,11 +102,11 @@
     "strip-ansi": "7.1.0",
     "tar": "6.2.1",
     "terminal-size": "4.0.0",
-    "trash": "9.0.0",
+    "trash": "8.1.1",
     "typescript-memoize": "1.1.1",
-    "wrap-ansi": "9.0.0",
+    "wrap-ansi": "8.1.0",
     "xml2js": "0.6.2",
-    "yargs": "18.0.0",
+    "yargs": "17.7.2",
     "zstd-napi": "0.0.12"
   },
   "devDependencies": {
