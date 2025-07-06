@@ -19,10 +19,10 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@v3
         with:
+          base: ${{ github.ref }}
           filters: |
             changes:
               - 'package*.json'
-          base: ${{ github.ref }}
 
   node-install-hold:
     needs:

@@ -23,19 +23,19 @@ env:
   ref: ${{ inputs.ref || github.ref }}
 
 jobs:
-  # Only prebuild if necessary
   path-filter:
     if: ${{ github.actor == 'emmercm' }}
     permissions:
       pull-requests: read
     runs-on: ubuntu-latest
     outputs:
-      changes: ${{ steps.filter.outputs.changes }}
+      changes: ${{ steps.branch-filter.outputs.changes == 'true' && steps.commit-filter.outputs.changes == 'false' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
-      - id: filter
+      # Prebuild if any relevant source file has changed
+      - id: branch-filter
         uses: dorny/paths-filter@v3
         with:
           filters: |
@@ -44,19 +44,8 @@ jobs:
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'
-
-  # Prevent committed prebuilds from prebuilding again, because of non-deterministic builds
-  commit-filter:
-    permissions:
-      pull-requests: read
-    runs-on: ubuntu-latest
-    outputs:
-      changes: ${{ steps.filter.outputs.changes }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.ref }}
-      - id: filter
+      # DON'T prebuild if the last commit was prebuilds
+      - id: commit-filter
         uses: dorny/paths-filter@v3
         with:
           base: ${{ github.ref }}
@@ -67,8 +56,7 @@ jobs:
   prebuild:
     needs:
       - path-filter
-      - commit-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' && needs.commit-filter.outputs.changes == 'false' }}
+    if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -103,7 +91,7 @@ jobs:
         run: |
           set -x
           npm ci --ignore-scripts
-          rm -rf packages/*/prebuilds
+
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
       - id: linux-vars
@@ -129,6 +117,7 @@ jobs:
             set -x
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
+              rm -rf prebuilds
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
               touch prebuilds/.gitkeep
               cd ../..
@@ -139,12 +128,14 @@ jobs:
             rm -rf packages/*/build
             npm ci --foreground-scripts
             npm run test:unit packages
+
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
         run: |
           set -x
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
+            rm -rf prebuilds
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
             touch prebuilds/.gitkeep
             cd ../..
