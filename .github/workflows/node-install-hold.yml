@@ -45,7 +45,7 @@ jobs:
         with:
           message: |
             ## :hand: Dependency holds
-            A `package*.json` file changed in this pull request. As a notice, these dependencies are being held back by the project's minimum supported Node.js version:
+            A `package*.json` file changed in this pull request. As a notice, these dependencies are potentially being held back by the project's minimum supported Node.js version:
             ```json
             ${{ steps.install-hold.outputs.JSON }}
             ```
