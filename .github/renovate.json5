@@ -133,6 +133,7 @@
         matchUpdateTypes: ['patch', 'minor']
       },
       {
+        matchDepTypes: ['dependencies', 'devDependencies'],
         // Be strict about Node.js version compatability (from package's `engines.node`)
         constraintsFiltering: 'strict',
         rollbackPrs: true,
