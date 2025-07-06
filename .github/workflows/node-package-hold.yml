@@ -31,6 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
+      - run: npm ci
       - id: install-hold
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
@@ -43,6 +44,7 @@ jobs:
         with:
           message: |
             ## :arrow_down:
+            These dependencies are being held back by the current Node.js version:
             ```json
             ${{ steps.install-hold.outputs.JSON }}
             ```
