@@ -133,12 +133,11 @@
         matchUpdateTypes: ['patch', 'minor']
       },
       {
-        matchDepTypes: ['dependencies'],
         // Be strict about Node.js version compatability (from package's `engines.node`)
         constraintsFiltering: 'strict',
         rollbackPrs: true,
         rollback: {
-          prPriority: 10,
+          prPriority: -10,
         },
       },
 
@@ -192,7 +191,6 @@
         ],
         matchUpdateTypes: ['major', 'minor'],
         schedule: 'at any time',
-        rebaseWhen: 'behind-base-branch'
       },
       {
         // Group Jest together because of peerDependencies
@@ -210,9 +208,8 @@
         // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)
         matchPackageNames: ['typescript'],
         groupName: 'TypeScript',
-        prPriority: -10,
+        prPriority: -20,
         schedule: 'at any time',
-        rebaseWhen: 'behind-base-branch'
       },
 
       // Everything else
