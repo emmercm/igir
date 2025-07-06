@@ -61,7 +61,7 @@ const heldBackDependencies = Object.entries(packageJson)
           semver.lt(packageVersion, dependencyPackage.version) &&
           !semver.subset(enginesNode, dependencyPackage.engines.node)
         ) {
-          process.stderr.write(' ⬇️\n');
+          process.stderr.write(' ✋\n');
           return [packageNameVersion, dependencyPackage.engines.node];
         }
 

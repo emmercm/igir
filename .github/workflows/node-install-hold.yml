@@ -43,7 +43,7 @@ jobs:
       - uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
-            ## :arrow_down: Dependency holds
+            ## :hand: Dependency holds
             These dependencies are being held back by the current Node.js version:
             ```json
             ${{ steps.install-hold.outputs.JSON }}
