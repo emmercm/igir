@@ -136,7 +136,7 @@
     "eslint-plugin-prettier": "5.5.0",
     "eslint-plugin-simple-import-sort": "12.1.1",
     "eslint-plugin-unicorn": "59.0.1",
-    "globals": "16.2.0",
+    "globals": "13.24.0",
     "jest": "30.0.3",
     "jest-extended": "6.0.0",
     "prebuildify": "6.0.1",
