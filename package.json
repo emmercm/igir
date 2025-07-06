@@ -148,16 +148,13 @@
     "which": "5.0.0"
   },
   "//engines": [
-    "Requires ^12.20.0 || ^14.13.1 || >=16.0.0 for ES6 modules, even though `tsc` can target ES5 or lower",
-    "Requires ^14.18.0 || >=16.0.0 for `node:` prefixed built-in modules that many dependencies use",
-    "Requires ^14.18.0 || >=16.3.0 for `os.devNull`",
-    "Requires >=16.6.0 for `Array.prototype.at()`",
-    "Requires >=16.7.0 for `fs.cp()`",
-    "Requires >=16.13.2 for ES2022",
-    "Requires >=16.14.0 for node-gyp@10.0.0"
+    "Requires ^18.17.0 || >=20.5.0 for node-gyp >=11.0.0",
+    "Requires ^18 || ^20 || >= 21 for node-addon-api >=8.0.0",
+    "Requires ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0 for jest >=30.0.0",
+    "Requires ^18.18.0 || ^20.9.0 || >=21.1.0 for eslint >=9.0.0"
   ],
   "engines": {
-    "node": ">=16.14.0"
+    "node": ">=18.18.0"
   },
   "volta": {
     "node": "24.3.0"

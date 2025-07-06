@@ -41,7 +41,7 @@ const heldBackDependencies = Object.entries(packageJson)
   .map(([dependencyType, dependencies]) => {
     const heldBackDependencies = Object.entries(dependencies as Record<string, string>)
       .map(([packageName, packageVersion]) => {
-        process.stderr.write(packageName);
+        process.stderr.write(`${dependencyType}: ${packageName}`);
         const dependencyPackage = JSON.parse(
           spawnSync('npm', ['view', '--json', `${packageName}@latest`], {
             windowsHide: true,
