@@ -89,14 +89,16 @@
       commitMessageAction: 'pin',
       groupName: 'dependency ranges',
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      schedule: 'at any time',
+      recreateWhen: 'always'
     },
 
     // Perform version rollbacks immediately
     {
       matchUpdateTypes: ['rollback'],
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      schedule: 'at any time',
+      recreateWhen: 'always',
     },
 
     // Perform major version updates immediately
