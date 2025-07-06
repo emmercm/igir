@@ -53,9 +53,10 @@
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
     "install": "node install.mjs",
+    "install:hold": "node --loader ts-node/esm scripts/installHold.ts",
     "start": "node --loader ts-node/esm index.ts",
-    "build": "node --loader ts-node/esm build.ts",
-    "package": "npm run build && node --loader ts-node/esm package.ts",
+    "build": "node --loader ts-node/esm scripts/build.ts",
+    "package": "npm run build && node --loader ts-node/esm scripts/package.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run lint",
