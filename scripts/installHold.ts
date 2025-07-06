@@ -22,7 +22,7 @@ interface PackageJson {
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(
-  (await util.promisify(fs.readFile)(path.join(__dirname, 'package.json'))).toString(),
+  (await util.promisify(fs.readFile)(path.join(__dirname, '..', 'package.json'))).toString(),
 ) as PackageJson;
 const enginesNode = packageJson.engines?.node;
 if (!enginesNode) {

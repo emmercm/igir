@@ -1,4 +1,4 @@
-name: Node.js Package Update Holds
+name: Node.js Dependency Holds
 
 on:
   pull_request:
