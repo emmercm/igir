@@ -37,13 +37,13 @@ jobs:
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           {
             echo "JSON<<$EOF"
-            npm run install:hold
+            npm run --silent install:hold
             echo "$EOF"
           } >> "${GITHUB_OUTPUT}"
       - uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
-            ## :arrow_down:
+            ## :arrow_down: Dependency holds
             These dependencies are being held back by the current Node.js version:
             ```json
             ${{ steps.install-hold.outputs.JSON }}
