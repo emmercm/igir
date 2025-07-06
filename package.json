@@ -111,7 +111,7 @@
     "zstd-napi": "0.0.12"
   },
   "devDependencies": {
-    "@jest/globals": "30.0.3",
+    "@jest/globals": "27.5.1",
     "@types/async": "3.2.24",
     "@types/cli-progress": "3.11.6",
     "@types/graceful-fs": "4.1.9",
