@@ -2,8 +2,8 @@ import xml2js from 'xml2js';
 
 import FsPoly from '../../polyfill/fsPoly.js';
 import { ChecksumBitmask } from '../files/fileChecksums.js';
-import Game from './game.js';
-import Header from './logiqx/header.js';
+import type Game from './game.js';
+import type Header from './logiqx/header.js';
 import Parent from './parent.js';
 
 export interface DATProps {

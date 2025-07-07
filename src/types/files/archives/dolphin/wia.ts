@@ -1,4 +1,4 @@
-import Archive from '../archive.js';
+import type Archive from '../archive.js';
 import Dolphin from './dolphin.js';
 
 export default class Wia extends Dolphin {

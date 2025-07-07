@@ -1,8 +1,9 @@
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
-import DAT from '../../types/dats/dat.js';
-import Game from '../../types/dats/game.js';
-import Options from '../../types/options.js';
+import type DAT from '../../types/dats/dat.js';
+import type Game from '../../types/dats/game.js';
+import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**

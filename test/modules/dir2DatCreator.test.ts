@@ -15,7 +15,7 @@ import Dir2DatCreator from '../../src/modules/dir2DatCreator.js';
 import ROMIndexer from '../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../src/modules/roms/romScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
-import DAT from '../../src/types/dats/dat.js';
+import type DAT from '../../src/types/dats/dat.js';
 import FileCache from '../../src/types/files/fileCache.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';

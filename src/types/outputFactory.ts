@@ -1,19 +1,21 @@
-import path, { ParsedPath } from 'node:path';
+import type { ParsedPath } from 'node:path';
+import path from 'node:path';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import DAT from './dats/dat.js';
+import type DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
-import Game from './dats/game.js';
-import ROM from './dats/rom.js';
-import SingleValueGame from './dats/singleValueGame.js';
+import type Game from './dats/game.js';
+import type ROM from './dats/rom.js';
+import type SingleValueGame from './dats/singleValueGame.js';
 import TokenReplacementException from './exceptions/tokenReplacementException.js';
 import ArchiveEntry from './files/archives/archiveEntry.js';
 import ArchiveFile from './files/archives/archiveFile.js';
-import File from './files/file.js';
+import type File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import GameConsole from './gameConsole.js';
-import Options, { FixExtension, GameSubdirMode } from './options.js';
+import type Options from './options.js';
+import { FixExtension, GameSubdirMode } from './options.js';
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.

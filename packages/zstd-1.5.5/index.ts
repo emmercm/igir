@@ -40,7 +40,7 @@ interface ZstdBinding {
    * Returns the version of the zstd library.
    * @returns Version string (e.g. "1.5.2")
    */
-  getZstdVersion(): string;
+  getZstdVersion: () => string;
 }
 
 /**
@@ -53,14 +53,14 @@ export interface ZstdThreadedCompressorInstance {
    * @param chunk Buffer containing data to compress
    * @returns Promise resolving to a Buffer containing compressed data
    */
-  compressChunk(chunk: Buffer): Promise<Buffer>;
+  compressChunk: (chunk: Buffer) => Promise<Buffer>;
 
   /**
    * Finalizes the compression stream asynchronously.
    * After calling this method, the compressor cannot be used anymore.
    * @returns Promise resolving to a Buffer containing final compressed data
    */
-  end(): Promise<Buffer>;
+  end: () => Promise<Buffer>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
