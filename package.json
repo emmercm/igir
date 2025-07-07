@@ -123,7 +123,7 @@
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.33",
-    "@typescript-eslint/eslint-plugin": "8.35.0",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "8.35.0",
     "auto-changelog": "2.5.0",
     "caxa": "3.0.1",
