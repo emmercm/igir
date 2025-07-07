@@ -9,12 +9,12 @@ import type { Options as GlobOptions } from 'fast-glob';
 import fg from 'fast-glob';
 import yargs from 'yargs';
 
-import Timer from './src/async/timer.js';
-import Logger from './src/console/logger.js';
-import { LogLevel } from './src/console/logLevel.js';
-import Package from './src/globals/package.js';
-import FsPoly from './src/polyfill/fsPoly.js';
-import IgirException from './src/types/exceptions/igirException.js';
+import Timer from '../src/async/timer.js';
+import Logger from '../src/console/logger.js';
+import { LogLevel } from '../src/console/logLevel.js';
+import Package from '../src/globals/package.js';
+import FsPoly from '../src/polyfill/fsPoly.js';
+import IgirException from '../src/types/exceptions/igirException.js';
 
 interface FileFilter extends GlobOptions {
   include?: string;
