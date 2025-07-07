@@ -111,7 +111,7 @@
     "zstd-napi": "0.0.12"
   },
   "devDependencies": {
-    "@jest/globals": "28.1.3",
+    "@jest/globals": "29.7.0",
     "@types/async": "3.2.24",
     "@types/cli-progress": "3.11.6",
     "@types/graceful-fs": "4.1.9",
@@ -154,7 +154,7 @@
     "Requires ^18.18.0 || ^20.9.0 || >=21.1.0 for eslint >=9.0.0"
   ],
   "engines": {
-    "node": ">=18.18.0"
+    "node": "^18.18.0 || ^20.5.0 || >=21"
   },
   "volta": {
     "node": "24.3.0"
