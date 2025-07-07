@@ -13,6 +13,7 @@ import semver from 'semver';
 
 interface PackageJson {
   version: string;
+  versions?: string[];
   engines?: { node?: string };
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
@@ -40,38 +41,62 @@ const heldBackDependencies = Object.entries(packageJson)
   .filter(([dependencyType]) => dependencyTypes.has(dependencyType))
   .map(([dependencyType, dependencies]) => {
     const heldBackDependencies = Object.entries(dependencies as Record<string, string>)
-      .map(([packageName, packageVersion]) => {
-        process.stderr.write(`${dependencyType}: ${packageName}`);
-        const dependencyPackage = JSON.parse(
-          spawnSync('npm', ['view', '--json', `${packageName}@latest`], {
+      .map(([depPackageName, depPackageVersion]): [string, Record<string, unknown> | undefined] => {
+        process.stderr.write(`${dependencyType}: ${depPackageName} ... `);
+        const depPackageJsonLatest = JSON.parse(
+          spawnSync('npm', ['view', '--json', `${depPackageName}@latest`], {
             windowsHide: true,
           }).stdout.toString(),
         ) as PackageJson;
-        process.stderr.write(
-          `@${dependencyPackage.version}: ${dependencyPackage.engines?.node ?? ''}`,
-        );
-        const packageNameVersion = `${packageName}@${dependencyPackage.version}`;
 
-        if (!dependencyPackage.engines?.node) {
-          process.stderr.write('❓\n');
-          return [packageNameVersion, undefined];
+        const depPackageNewerVersions = semver
+          .sort(depPackageJsonLatest.versions ?? [])
+          .filter(
+            (remoteVersion) =>
+              semver.gt(remoteVersion, depPackageVersion) &&
+              semver.parse(remoteVersion)?.prerelease.length === 0,
+          );
+        if (depPackageNewerVersions.length === 0) {
+          process.stderr.write('✅\n');
+          return [depPackageName, undefined];
+        }
+        process.stderr.write('⬆️\n');
+
+        const depPackageHeldVersions = depPackageNewerVersions
+          .map((remoteVersion): [string, string | undefined] => {
+            process.stdout.write(`  ${depPackageName}@${remoteVersion} ... `);
+            const depPackageJson = JSON.parse(
+              spawnSync('npm', ['view', '--json', `${depPackageName}@${remoteVersion}`], {
+                windowsHide: true,
+              }).stdout.toString(),
+            ) as PackageJson;
+
+            if (!depPackageJson.engines?.node) {
+              process.stderr.write('❓\n');
+              return [remoteVersion, undefined];
+            }
+
+            process.stderr.write(`${depPackageJson.engines.node} `);
+
+            if (semver.subset(enginesNode, depPackageJson.engines.node)) {
+              process.stderr.write('✅\n');
+              return [remoteVersion, undefined];
+            }
+
+            process.stderr.write('✋\n');
+            return [remoteVersion, depPackageJson.engines.node];
+          })
+          .filter(([, depPackageEnginesNode]) => depPackageEnginesNode);
+        if (depPackageHeldVersions.length === 0) {
+          return [depPackageName, undefined];
         }
 
-        if (
-          semver.lt(packageVersion, dependencyPackage.version) &&
-          !semver.subset(enginesNode, dependencyPackage.engines.node)
-        ) {
-          process.stderr.write(' ✋\n');
-          return [packageNameVersion, dependencyPackage.engines.node];
-        }
-
-        process.stderr.write(' ✅️\n');
-        return [packageNameVersion, undefined];
+        return [depPackageName, Object.fromEntries(depPackageHeldVersions)];
       })
       .filter(([, packageEnginesNode]) => packageEnginesNode);
     return [dependencyType, Object.fromEntries(heldBackDependencies)] satisfies [
       string,
-      Record<string, string>,
+      Record<string, unknown>,
     ];
   });
 
