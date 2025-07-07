@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 
-import yargs, { Argv } from 'yargs';
+import type { Argv } from 'yargs';
+import yargs from 'yargs';
 
-import Logger from '../console/logger.js';
+import type Logger from '../console/logger.js';
 import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';

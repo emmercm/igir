@@ -3,9 +3,10 @@ import path from 'node:path';
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
 import FsPoly, { WalkMode } from '../../../../polyfill/fsPoly.js';
-import { ChecksumBitmask, ChecksumBitmaskValue } from '../../fileChecksums.js';
-import Archive from '../archive.js';
-import ArchiveEntry from '../archiveEntry.js';
+import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
+import { ChecksumBitmask } from '../../fileChecksums.js';
+import type Archive from '../archive.js';
+import type ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
 import ChdBinCueParser from './chdBinCueParser.js';
 

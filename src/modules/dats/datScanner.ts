@@ -4,15 +4,18 @@ import path from 'node:path';
 import { parse } from '@fast-csv/parse';
 import async from 'async';
 
-import DriveSemaphore from '../../async/driveSemaphore.js';
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
 import GameGrouper from '../../gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
 import bufferPoly from '../../polyfill/bufferPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
-import CMProParser, { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
-import DAT from '../../types/dats/dat.js';
-import DATObject, { DATObjectProps } from '../../types/dats/datObject.js';
+import type { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
+import CMProParser from '../../types/dats/cmpro/cmProParser.js';
+import type DAT from '../../types/dats/dat.js';
+import type { DATObjectProps } from '../../types/dats/datObject.js';
+import DATObject from '../../types/dats/datObject.js';
 import Disk from '../../types/dats/disk.js';
 import Game from '../../types/dats/game.js';
 import Header from '../../types/dats/logiqx/header.js';
@@ -23,10 +26,10 @@ import SoftwareListDAT from '../../types/dats/softwarelist/softwareListDat.js';
 import SoftwareListsDAT from '../../types/dats/softwarelist/softwareListsDat.js';
 import IgirException from '../../types/exceptions/igirException.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import File from '../../types/files/file.js';
+import type File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import Options from '../../types/options.js';
+import type FileFactory from '../../types/files/fileFactory.js';
+import type Options from '../../types/options.js';
 import Scanner from '../scanner.js';
 
 interface SmdbRow {

@@ -17,7 +17,7 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
 import Zip from '../../src/types/files/archives/zip.js';
-import File from '../../src/types/files/file.js';
+import type File from '../../src/types/files/file.js';
 import FileCache from '../../src/types/files/fileCache.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';

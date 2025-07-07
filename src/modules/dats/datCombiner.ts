@@ -1,9 +1,9 @@
 import moment from 'moment';
 
-import ProgressBar from '../../console/progressBar.js';
+import type ProgressBar from '../../console/progressBar.js';
 import Package from '../../globals/package.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import DAT from '../../types/dats/dat.js';
+import type DAT from '../../types/dats/dat.js';
 import Header from '../../types/dats/logiqx/header.js';
 import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
 import Module from '../module.js';
