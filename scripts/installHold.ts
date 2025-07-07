@@ -41,8 +41,10 @@ const heldBackDependencies = Object.entries(packageJson)
   .filter(([dependencyType]) => dependencyTypes.has(dependencyType))
   .map(([dependencyType, dependencies]) => {
     const heldBackDependencies = Object.entries(dependencies as Record<string, string>)
-      .map(([depPackageName, depPackageVersion]): [string, Record<string, unknown> | undefined] => {
-        process.stderr.write(`${dependencyType}: ${depPackageName} ... `);
+      .map(([depPackageName, depPackageVersion]): [string, Record<string, unknown>] | undefined => {
+        const depPackageNameVersion = `${depPackageName}@${depPackageVersion}`;
+
+        process.stderr.write(`${dependencyType}: ${depPackageNameVersion} ... `);
         const depPackageJsonLatest = JSON.parse(
           spawnSync('npm', ['view', '--json', `${depPackageName}@latest`], {
             windowsHide: true,
@@ -58,12 +60,12 @@ const heldBackDependencies = Object.entries(packageJson)
           );
         if (depPackageNewerVersions.length === 0) {
           process.stderr.write('✅\n');
-          return [depPackageName, undefined];
+          return undefined;
         }
         process.stderr.write('⬆️\n');
 
         const depPackageHeldVersions = depPackageNewerVersions
-          .map((remoteVersion): [string, string | undefined] => {
+          .map((remoteVersion): [string, string] | undefined => {
             process.stderr.write(`  ${depPackageName}@${remoteVersion} ... `);
             const depPackageJson = JSON.parse(
               spawnSync('npm', ['view', '--json', `${depPackageName}@${remoteVersion}`], {
@@ -73,27 +75,27 @@ const heldBackDependencies = Object.entries(packageJson)
 
             if (!depPackageJson.engines?.node) {
               process.stderr.write('❓\n');
-              return [remoteVersion, undefined];
+              return undefined;
             }
 
             process.stderr.write(`${depPackageJson.engines.node} `);
 
             if (semver.subset(enginesNode, depPackageJson.engines.node)) {
               process.stderr.write('✅\n');
-              return [remoteVersion, undefined];
+              return undefined;
             }
 
             process.stderr.write('✋\n');
             return [remoteVersion, depPackageJson.engines.node];
           })
-          .filter(([, depPackageEnginesNode]) => depPackageEnginesNode);
+          .filter((value) => value !== undefined);
         if (depPackageHeldVersions.length === 0) {
-          return [depPackageName, undefined];
+          return undefined;
         }
 
-        return [depPackageName, Object.fromEntries(depPackageHeldVersions)];
+        return [depPackageNameVersion, Object.fromEntries(depPackageHeldVersions)];
       })
-      .filter(([, packageEnginesNode]) => packageEnginesNode);
+      .filter((value) => value !== undefined);
     return [dependencyType, Object.fromEntries(heldBackDependencies)] satisfies [
       string,
       Record<string, unknown>,
