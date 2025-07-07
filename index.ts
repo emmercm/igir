@@ -11,7 +11,7 @@ import ArgumentsParser from './src/modules/argumentsParser.js';
 import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';
 import UpdateChecker from './src/modules/updateChecker.js';
 import IgirException from './src/types/exceptions/igirException.js';
-import Options from './src/types/options.js';
+import type Options from './src/types/options.js';
 
 const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();

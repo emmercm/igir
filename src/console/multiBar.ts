@@ -3,8 +3,9 @@ import tty from 'node:tty';
 import stripAnsi from 'strip-ansi';
 
 import Timer from '../async/timer.js';
-import Logger from './logger.js';
-import SingleBar, { SingleBarOptions } from './singleBar.js';
+import type Logger from './logger.js';
+import type { SingleBarOptions } from './singleBar.js';
+import SingleBar from './singleBar.js';
 
 export interface MultiBarOptions {
   writable: tty.WriteStream | NodeJS.WritableStream;

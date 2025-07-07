@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import type fs from 'node:fs';
 
 import CP437Decoder from './cp437Decoder.js';
 
@@ -33,15 +33,15 @@ export interface IZip64EndOfCentralDirectoryRecord extends IEndOfCentralDirector
  * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#End_of_central_directory_record_(EOCD)
  */
 export default class EndOfCentralDirectory {
-  public static readonly END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
+  static readonly END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
     '06054b50',
     'hex',
   ).reverse();
-  public static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIGNATURE = Buffer.from(
+  static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIGNATURE = Buffer.from(
     '07064b50',
     'hex',
   ).reverse();
-  public static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
+  static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
     '06064b50',
     'hex',
   ).reverse();

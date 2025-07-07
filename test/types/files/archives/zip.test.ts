@@ -10,7 +10,7 @@ import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
-import File from '../../../../src/types/files/file.js';
+import type File from '../../../../src/types/files/file.js';
 import FileCache from '../../../../src/types/files/fileCache.js';
 import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options, { ZipFormat } from '../../../../src/types/options.js';

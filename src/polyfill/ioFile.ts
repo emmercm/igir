@@ -1,5 +1,6 @@
-import fs, { OpenMode, PathLike } from 'node:fs';
-import { FileHandle } from 'node:fs/promises';
+import type { OpenMode, PathLike } from 'node:fs';
+import fs from 'node:fs';
+import type { FileHandle } from 'node:fs/promises';
 
 import Defaults from '../globals/defaults.js';
 import FsPoly from './fsPoly.js';
