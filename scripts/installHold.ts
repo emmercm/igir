@@ -64,7 +64,7 @@ const heldBackDependencies = Object.entries(packageJson)
 
         const depPackageHeldVersions = depPackageNewerVersions
           .map((remoteVersion): [string, string | undefined] => {
-            process.stdout.write(`  ${depPackageName}@${remoteVersion} ... `);
+            process.stderr.write(`  ${depPackageName}@${remoteVersion} ... `);
             const depPackageJson = JSON.parse(
               spawnSync('npm', ['view', '--json', `${depPackageName}@${remoteVersion}`], {
                 windowsHide: true,
