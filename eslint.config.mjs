@@ -184,7 +184,7 @@ export default [
         'error',
         {
           // Readable#push() doesn't have a rest parameter 😡
-          ignore: ['readable.push'],
+          ignore: ['readable'],
         },
       ],
       // Style and clarity preference differences
