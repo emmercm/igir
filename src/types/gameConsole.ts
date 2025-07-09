@@ -76,10 +76,12 @@ export default class GameConsole {
     // Acorn
     new GameConsole(/Archimedes/i, [], {
       mister: 'ARCHIE',
+      romm: 'acorn-archimedes',
     }),
     new GameConsole(/Atom/i, [], {
       batocera: 'atom',
       mister: 'AcornAtom',
+      romm: 'atom'
     }),
     // Amstrad
     new GameConsole(/CPC/i, [], {
@@ -111,6 +113,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Apple-I',
+        romm: 'apple-i'
       },
     ),
     new GameConsole(/Apple.*IIe?/i, ['.do', '.nib', '.po'], {
@@ -250,6 +253,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Supervision8000',
+        romm: 'super-vision-8000'
       },
     ),
     new GameConsole(/RX[ -]?78/i, [], {
@@ -310,6 +314,7 @@ export default class GameConsole {
         emulationstation: 'pv1000',
         mister: 'Casio_PV-1000',
         retrodeck: 'pv1000',
+        romm: 'casio-pv-1000',
       },
     ),
     new GameConsole(
@@ -391,7 +396,7 @@ export default class GameConsole {
         batocera: 'c128',
         jelos: 'c128',
         mister: 'C128',
-        romm: 'c64',
+        romm: 'c128',
       },
     ),
     new GameConsole(/Plus.*4/i, [], {
@@ -430,6 +435,7 @@ export default class GameConsole {
         mister: 'Arcadia',
         pocket: 'arcadia',
         retrodeck: 'arcadia',
+        romm: 'arcadia-2001',
       },
     ),
     // Entex
@@ -443,6 +449,7 @@ export default class GameConsole {
         emulationstation: 'avision',
         mister: 'AVision',
         pocket: 'avision',
+        romm: 'adventure-vision',
       },
     ),
     // Epoch
@@ -472,6 +479,7 @@ export default class GameConsole {
       {
         emulationstation: 'supracan',
         batocera: 'supracan',
+        romm: 'super-acan',
       },
     ),
     // GamePark
@@ -620,6 +628,7 @@ export default class GameConsole {
     new GameConsole(/J2ME/i, ['.jar'], {
       emulationstation: 'j2me',
       retrodeck: 'j2me',
+      romm: 'j2me',
     }),
     new GameConsole(/Palm OS/i, ['.pqa', '.prc'], {
       emulationstation: 'palm',
@@ -629,6 +638,7 @@ export default class GameConsole {
     new GameConsole(/Symbian/i, ['.sis', '.sisx', '.symbian'], {
       emulationstation: 'symbian',
       retrodeck: 'symbian',
+      romm: 'symbian',
     }),
     // Nichibutsu
     new GameConsole(
@@ -737,7 +747,7 @@ export default class GameConsole {
       mister: 'GameNWatch',
       onion: 'GW',
       retrodeck: 'gameandwatch',
-      romm: 'game-and-watch',
+      romm: 'g-and-w',
     }),
     new GameConsole(/GameCube/i, ['.gcm', '.gcz'], {
       batocera: 'gc',
@@ -803,7 +813,7 @@ export default class GameConsole {
       batocera: 'n64dd',
       emulationstation: 'n64dd',
       retrodeck: 'n64dd',
-      romm: 'nintendo-64dd',
+      romm: '64dd',
     }),
     new GameConsole(
       /(\W|^)3DS(\W|$)|Nintendo 3DS/i,
@@ -961,6 +971,7 @@ export default class GameConsole {
         batocera: 'cdi',
         emulationstation: 'cdimono1',
         retrodeck: 'cdimono1',
+        romm: 'philips-cd-i',
       },
     ),
     new GameConsole(
@@ -986,6 +997,7 @@ export default class GameConsole {
       ],
       {
         pocket: 'studio2',
+        romm: 'rca-studio-ii',
       },
     ),
     // Sega
@@ -1262,6 +1274,7 @@ export default class GameConsole {
       ],
       {
         twmenu: 'm5',
+        romm: 'sord-m5',
       },
     ),
     // Texas Instruments
@@ -1269,7 +1282,7 @@ export default class GameConsole {
       emulationstation: 'ti99',
       mister: 'TI-99_4A',
       retrodeck: 'ti99',
-      romm: 'ti-99',
+      romm: 'ti-994a',
     }),
     // Tiger
     new GameConsole(/Game.?com/i, ['.tgc'], {
@@ -1299,6 +1312,7 @@ export default class GameConsole {
         mister: 'CreatiVision',
         pocket: 'creativision',
         retrodeck: 'crvision',
+        romm: 'creativision',
       },
     ),
     new GameConsole(
