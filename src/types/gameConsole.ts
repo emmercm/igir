@@ -81,7 +81,7 @@ export default class GameConsole {
     new GameConsole(/Atom/i, [], {
       batocera: 'atom',
       mister: 'AcornAtom',
-      romm: 'atom'
+      romm: 'atom',
     }),
     // Amstrad
     new GameConsole(/CPC/i, [], {
@@ -113,7 +113,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Apple-I',
-        romm: 'apple-i'
+        romm: 'apple-i',
       },
     ),
     new GameConsole(/Apple.*IIe?/i, ['.do', '.nib', '.po'], {
@@ -253,7 +253,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Supervision8000',
-        romm: 'super-vision-8000'
+        romm: 'super-vision-8000',
       },
     ),
     new GameConsole(/RX[ -]?78/i, [], {
