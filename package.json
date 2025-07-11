@@ -33,7 +33,7 @@
   "type": "module",
   "files": [
     "dist/",
-    "install.mjs",
+    "postinstall.mjs",
     "!**/test/**",
     "!**/*.test.*",
     "!**/jest.*"
@@ -52,8 +52,8 @@
   },
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
-    "install": "node install.mjs",
     "install:hold": "node --loader ts-node/esm scripts/installHold.ts",
+    "postinstall": "node postinstall.mjs",
     "start": "node --loader ts-node/esm index.ts",
     "build": "node --loader ts-node/esm scripts/build.ts",
     "package": "npm run build && node --loader ts-node/esm scripts/package.ts",
