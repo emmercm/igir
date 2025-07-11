@@ -168,7 +168,6 @@
           '@types/graceful-fs',
           '@types/micromatch',
           '@types/semver',
-          '@types/tar',
           '@types/xml2js',
           '@types/yargs',
         ],
