@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import stream from 'node:stream';
 
-import tar from 'tar';
+import * as tar from 'tar';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
@@ -34,7 +35,7 @@ export default class Tar extends Archive {
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
     // calculate the CRCs
     let errorMessage: string | undefined;
-    const writeStream = new tar.Parse({
+    const writeStream = new tar.Parser({
       onwarn: (code, message): void => {
         errorMessage = `${code}: ${message}`;
       },
@@ -45,8 +46,13 @@ export default class Tar extends Archive {
     readStream.pipe(writeStream);
 
     // Note: entries are read sequentially, so entry streams need to be fully read or resumed
-    writeStream.on('entry', async (entry) => {
-      const checksums = await FileChecksums.hashStream(entry, checksumBitmask);
+    writeStream.on('entry', async (entry: tar.ReadEntry) => {
+      const checksums = await FileChecksums.hashStream(
+        // NOTE(cemmer): minipass is 99% stream.Stream-compatible, and I don't want to introduce it
+        // and its types into the project just for this single line of code
+        entry as unknown as stream.Stream,
+        checksumBitmask,
+      );
       archiveEntryPromises.push(
         ArchiveEntry.entryOf(
           {
