@@ -1,4 +1,5 @@
-import ROM, { ROMProps } from './rom.js';
+import type { ROMProps } from './rom.js';
+import ROM from './rom.js';
 
 interface DiskProps extends Omit<ROMProps, 'size'> {
   size?: number;

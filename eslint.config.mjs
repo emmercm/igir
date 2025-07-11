@@ -180,11 +180,11 @@ export default [
 
       // ***** unicorn:recommended *****
       // Fixes
-      'unicorn/prefer-single-call': [
+      'unicorn/no-array-push-push': [
         'error',
         {
           // Readable#push() doesn't have a rest parameter 😡
-          ignore: ['readable.push'],
+          ignore: ['readable'],
         },
       ],
       // Style and clarity preference differences
@@ -219,11 +219,20 @@ export default [
     rules: {
       // ***** Types *****
 
+      // ***** Imports *****
+      '@typescript-eslint/consistent-type-exports': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-import-type-side-effects': 'error',
+
       // ***** Promises *****
       // Require any function or method that returns a Promise to be marked async.
       '@typescript-eslint/promise-function-async': ['error'],
 
+      // ***** Interfaces *****
+      '@typescript-eslint/method-signature-style': 'error',
+
       // ***** Classes *****
+      '@typescript-eslint/explicit-member-accessibility': ['error', { accessibility: 'no-public' }],
       '@typescript-eslint/prefer-readonly': 'error',
       // A lot of utility classes contain private functions that shouldn't be exposed
       '@typescript-eslint/no-extraneous-class': [

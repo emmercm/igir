@@ -1,11 +1,12 @@
-import DriveSemaphore from '../../async/driveSemaphore.js';
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
-import DAT from '../../types/dats/dat.js';
+import type DAT from '../../types/dats/dat.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import Options from '../../types/options.js';
-import WriteCandidate from '../../types/writeCandidate.js';
+import type FileFactory from '../../types/files/fileFactory.js';
+import type Options from '../../types/options.js';
+import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

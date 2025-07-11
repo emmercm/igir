@@ -1,13 +1,15 @@
 import fs from 'node:fs';
 import os from 'node:os';
-import stream, { Readable } from 'node:stream';
+import type { Readable } from 'node:stream';
+import stream from 'node:stream';
 import util from 'node:util';
 
 import { crc32 } from '@node-rs/crc32';
 
 import CompressedTransform from './compressedTransform.js';
 import CP437Encoder from './cp437Encoder.js';
-import ProgressTransform, { ProgressCallback } from './progressTransform.js';
+import type { ProgressCallback } from './progressTransform.js';
+import ProgressTransform from './progressTransform.js';
 import UncompressedTransform from './uncompressedTransform.js';
 import ZlibDeflateTransform from './zlibDeflateTransform.js';
 import ZstdCompressTransform from './zstdCompressTransform.js';

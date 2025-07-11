@@ -1,11 +1,12 @@
 import path from 'node:path';
 
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import DAT from '../../types/dats/dat.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../types/dats/dat.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import File from '../../types/files/file.js';
-import Patch from '../../types/patches/patch.js';
+import type Patch from '../../types/patches/patch.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
 import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
