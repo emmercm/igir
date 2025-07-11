@@ -180,11 +180,11 @@ export default [
 
       // ***** unicorn:recommended *****
       // Fixes
-      'unicorn/prefer-single-call': [
+      'unicorn/no-array-push-push': [
         'error',
         {
           // Readable#push() doesn't have a rest parameter 😡
-          ignore: ['readable.push'],
+          ignore: ['readable'],
         },
       ],
       // Style and clarity preference differences
