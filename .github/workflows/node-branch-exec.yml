@@ -17,8 +17,8 @@ on:
       - 'test/**'
       - '*'
   push:
-    #branches:
-    #  - 'main'
+    branches:
+      - 'main'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -31,6 +31,10 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: volta-cli/action@v4
       - run: |
           npx --yes pkg-pr-new publish --compact --bin --json pkg.json --comment=off
           cat pkg.json
