@@ -16,7 +16,7 @@ export interface ColoredSymbol {
   symbol: string;
   color: ChalkInstance;
 }
-export const ProgressBarSymbol = {
+export const ProgressBarSymbol: Record<string, ColoredSymbol> = {
   NONE: { symbol: '', color: chalk.reset },
   WAITING: { symbol: UNICODE_SUPPORTED ? '⋯' : '…', color: chalk.grey },
   DONE: { symbol: UNICODE_SUPPORTED ? '✓' : '√', color: chalk.green },
@@ -43,7 +43,7 @@ export const ProgressBarSymbol = {
   WRITING: { symbol: UNICODE_SUPPORTED ? '✎' : '»', color: chalk.yellow },
   RECYCLING: { symbol: UNICODE_SUPPORTED ? '♻' : '»', color: chalk.blue },
   DELETING: { symbol: UNICODE_SUPPORTED ? '✕' : 'X', color: chalk.red },
-} satisfies Record<string, ColoredSymbol>;
+} as const;
 
 export type ProgressCallback = (progress: number, total: number) => void;
 
