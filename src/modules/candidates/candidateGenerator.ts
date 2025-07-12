@@ -476,7 +476,7 @@ export default class CandidateGenerator extends Module {
         (inputFile.getSha1() !== undefined && inputFile.getSha1() === rom.getSha1()) ||
         (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
     ) {
-      // ...then forget the input file's padding, so that we don't later remove it
+      // ...then forget the input file's padding, so that we don't later add it back
       this.progressBar.logTrace(
         `${dat.getName()}: ${game.getName()}: not adding padding, ignoring that file is trimmed: ${inputFile.toString()}`,
       );
@@ -574,13 +574,13 @@ export default class CandidateGenerator extends Module {
         inputFile.getFileHeader() &&
         // ...and we want an unheadered ROM
         ((inputFile.getCrc32WithoutHeader() !== undefined &&
-          inputFile.getCrc32WithoutHeader() === rom.getCrc32()) ||
+          inputFile.getCrc32WithoutHeader() !== rom.getCrc32()) ||
           (inputFile.getMd5WithoutHeader() !== undefined &&
-            inputFile.getMd5WithoutHeader() === rom.getMd5()) ||
+            inputFile.getMd5WithoutHeader() !== rom.getMd5()) ||
           (inputFile.getSha1WithoutHeader() !== undefined &&
-            inputFile.getSha1WithoutHeader() === rom.getSha1()) ||
+            inputFile.getSha1WithoutHeader() !== rom.getSha1()) ||
           (inputFile.getSha256WithoutHeader() !== undefined &&
-            inputFile.getSha256WithoutHeader() === rom.getSha256()))
+            inputFile.getSha256WithoutHeader() !== rom.getSha256()))
       ) {
         // ...then we can't use this archive as-is
         return false;
