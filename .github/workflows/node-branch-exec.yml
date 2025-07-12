@@ -41,7 +41,7 @@ jobs:
 
       # Package
       - run: |
-          npx --yes pkg-pr-new publish --compact --bin --json pkg.json --comment=off
+          npx --yes pkg-pr-new publish --compact --bin --comment=off
           cat pkg.json
 
       # Comment
