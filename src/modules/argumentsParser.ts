@@ -92,6 +92,7 @@ export default class ArgumentsParser {
     const groupRomZip = 'zip command options:';
     const groupRomLink = 'link command options:';
     const groupRomHeader = 'ROM header options:';
+    const groupRomTrimmed = 'Trimmed ROM options:';
     const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
     const groupRomPriority = 'One game, one ROM (1G1R) options:';
@@ -607,7 +608,7 @@ export default class ArgumentsParser {
 
       .option('header', {
         group: groupRomHeader,
-        description: 'Glob pattern of input filenames to force header processing for',
+        description: 'Glob pattern of input filenames to force header detection for',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -625,6 +626,15 @@ export default class ArgumentsParser {
             }
             return val.split(',').map((v) => `.${v.trim().replace(/^\.+/, '')}`);
           }),
+      })
+
+      .option('trimmed-glob', {
+        group: groupRomTrimmed,
+        description: 'Glob pattern of input filenames to force trimming detection for',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        implies: 'dat',
       })
 
       .option('merge-roms', {

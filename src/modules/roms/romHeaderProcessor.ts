@@ -111,6 +111,11 @@ export default class ROMHeaderProcessor extends Module {
       return false;
     }
 
+    if (inputFile.getSize() === 0) {
+      // It can't have a header
+      return false;
+    }
+
     return (
       ROMHeader.headerFromFilename(inputFile.getExtractedFilePath()) !== undefined ||
       this.options.shouldReadFileForHeader(inputFile.getExtractedFilePath())

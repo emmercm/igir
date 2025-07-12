@@ -104,6 +104,10 @@ export default class ROMTrimProcessor extends Module {
   }
 
   private fileNeedsProcessing(inputFile: File): boolean {
+    if (this.options.shouldReadFileForTrimming(inputFile.getFilePath())) {
+      return true;
+    }
+
     if (inputFile.getSize() === 0 || (inputFile.getSize() & (inputFile.getSize() - 1)) === 0) {
       // Is a power of two, so it isn't trimmed
       return false;
