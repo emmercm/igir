@@ -31,13 +31,20 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      # Setup
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: volta-cli/action@v4
       - run: |
+          npm ci
+
+      # Package
+      - run: |
           npx --yes pkg-pr-new publish --compact --bin --json pkg.json --comment=off
           cat pkg.json
+
+      # Comment
       - uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
