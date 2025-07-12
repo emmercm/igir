@@ -10,7 +10,8 @@ import File from './file.js';
 import { ChecksumBitmask } from './fileChecksums.js';
 import FileSignature from './fileSignature.js';
 import ROMHeader from './romHeader.js';
-import ROMPadding, { ROMPaddingProps } from './romPadding.js';
+import type { ROMPaddingProps } from './romPadding.js';
+import ROMPadding from './romPadding.js';
 
 interface CacheValue {
   fileSize: number;

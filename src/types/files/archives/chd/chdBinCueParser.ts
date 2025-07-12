@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Readable } from 'node:stream';
 import util from 'node:util';
 
 import type { File as CueFile, Track } from '@gplane/cue';

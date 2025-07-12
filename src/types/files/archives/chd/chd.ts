@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import stream, { Readable, Stream } from 'node:stream';
+import stream, { Readable } from 'node:stream';
 import util from 'node:util';
 
 import { Mutex } from 'async-mutex';
