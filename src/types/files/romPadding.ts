@@ -1,5 +1,6 @@
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 
+import FsReadTransform, { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import StreamPoly from '../../polyfill/streamPoly.js';
 import File from './file.js';
 import FileChecksums from './fileChecksums.js';
@@ -75,7 +76,7 @@ export default class ROMPadding implements ROMPaddingProps {
     return this.sha256;
   }
 
-  static async paddingsFromFile(file: File): Promise<ROMPadding[]> {
+  static async paddingsFromFile(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
     const paddedSize = Math.pow(2, Math.ceil(Math.log(file.getSize()) / Math.log(2)));
     if (paddedSize === file.getSize()) {
       // The file isn't trimmed
@@ -83,7 +84,12 @@ export default class ROMPadding implements ROMPaddingProps {
     }
 
     return file.createReadStream(async (readable) => {
-      const splitStreams = StreamPoly.split(readable, this.POSSIBLE_FILL_BYTES.length);
+      const readableWithCallback =
+        callback === undefined
+          ? readable
+          : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
+
+      const splitStreams = StreamPoly.split(readableWithCallback, this.POSSIBLE_FILL_BYTES.length);
 
       return Promise.all(
         this.POSSIBLE_FILL_BYTES.map(async (fillByte, idx) => {

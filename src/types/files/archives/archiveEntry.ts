@@ -3,8 +3,8 @@ import { Readable } from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
-import { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
+import { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
@@ -166,7 +166,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryPath;
   }
 
-  async extractToFile(extractedFilePath: string, callback?: FsCopyCallback): Promise<void> {
+  async extractToFile(extractedFilePath: string, callback?: FsReadCallback): Promise<void> {
     return ArchiveEntry.extractEntryToFile(
       this.getArchive(),
       this.getEntryPath(),
@@ -192,7 +192,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     archive: Archive,
     entryPath: string,
     extractedFilePath: string,
-    callback?: FsCopyCallback,
+    callback?: FsReadCallback,
   ): Promise<void> {
     return archive.extractEntryToFile(entryPath, extractedFilePath, callback);
   }

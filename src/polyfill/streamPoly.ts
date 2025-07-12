@@ -1,11 +1,20 @@
 import stream from 'node:stream';
 
+import type { ErrnoException } from 'fast-glob/out/types/index.js';
+
+import Defaults from '../globals/defaults.js';
+
 export default {
   /**
    * Concatenate multiple readable streams into a single readable stream.
    */
   concat(...readables: stream.Readable[]): stream.Readable {
-    const out = new stream.PassThrough();
+    if (readables.length === 1) {
+      // Don't incur the overhead of any passthroughs
+      return readables[0];
+    }
+
+    const out = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
     let current = 0;
     let activeStream: stream.Readable | undefined = undefined;
     let destroyed = false;
@@ -60,7 +69,7 @@ export default {
     maxLength: number,
     fillString: string | number,
   ): stream.Readable {
-    const output = new stream.PassThrough();
+    const output = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
     let readableBytesRead = 0;
 
     readable.on('data', (chunk: Buffer) => {
@@ -87,10 +96,18 @@ export default {
    * read concurrently by multiple consumers.
    */
   split(readable: stream.Readable, count: number): stream.Readable[] {
+    if (count === 0) {
+      return [];
+    }
+    if (count === 1) {
+      // Don't incur the overhead of any passthroughs
+      return [readable];
+    }
+
     const outputs: stream.Readable[] = [];
 
     for (let i = 0; i < count; i++) {
-      const output = new stream.PassThrough();
+      const output = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
       readable.on('data', output.write.bind(output));
       readable.on('end', output.end.bind(output));
       readable.on('error', output.destroy.bind(output));
@@ -122,5 +139,29 @@ export default {
         }
       },
     });
+  },
+
+  /**
+   * Return a new readable stream that has had the specified transforms applied to it.
+   * This differs from {@link stream.pipeline} in that it returns a readable stream.
+   */
+  withTransforms(readable: stream.Readable, ...transforms: stream.Transform[]): stream.Readable {
+    if (transforms.length === 0) {
+      // Don't incur the overhead of any passthroughs
+      return readable;
+    }
+
+    const output = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
+    Reflect.apply(stream.pipeline, undefined, [
+      readable,
+      ...transforms,
+      output,
+      (err?: ErrnoException): void => {
+        if (err) {
+          output.destroy(err);
+        }
+      },
+    ]);
+    return output;
   },
 };

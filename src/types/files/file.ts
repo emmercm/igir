@@ -2,14 +2,13 @@ import fs, { OpenMode, PathLike } from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
-import util from 'node:util';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
 import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
-import FsCopyTransform, { FsCopyCallback } from '../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import FsReadTransform, { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import Patch from '../patches/patch.js';
@@ -281,7 +280,7 @@ export default class File implements FileProps {
 
   // Other functions
 
-  async extractToFile(destinationPath: string, callback?: FsCopyCallback): Promise<void> {
+  async extractToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
     await FsPoly.copyFile(this.getFilePath(), destinationPath, callback);
   }
 
@@ -316,8 +315,8 @@ export default class File implements FileProps {
     });
   }
 
-  async extractAndPatchToFile(destinationPath: string, callback?: FsCopyCallback): Promise<void> {
-    // TODO(cemmer): pad
+  async extractAndPatchToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
+    // TODO(cemmer): option to re-pad a trimmed ROM
 
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
@@ -344,11 +343,12 @@ export default class File implements FileProps {
         await File.createStreamFromFile(
           tempFile,
           async (readable) => {
-            await util.promisify(stream.pipeline)(
-              readable,
-              new FsCopyTransform(callback),
-              fs.createWriteStream(destinationPath),
-            );
+            const writeStream = fs.createWriteStream(destinationPath);
+            if (callback) {
+              await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+            } else {
+              await stream.promises.pipeline(readable, writeStream);
+            }
           },
           start,
         );
@@ -360,11 +360,12 @@ export default class File implements FileProps {
 
     // Extract this file removing its header
     return this.createReadStream(async (readable) => {
-      await util.promisify(stream.pipeline)(
-        readable,
-        new FsCopyTransform(callback),
-        fs.createWriteStream(destinationPath),
-      );
+      const writeStream = fs.createWriteStream(destinationPath);
+      if (callback) {
+        await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readable, writeStream);
+      }
     }, start);
   }
 
@@ -376,7 +377,7 @@ export default class File implements FileProps {
   }
 
   async createPatchedReadStream<T>(callback: (readable: Readable) => T | Promise<T>): Promise<T> {
-    // TODO(cemmer): pad
+    // TODO(cemmer): option to re-pad a trimmed ROM
 
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();

@@ -4,17 +4,17 @@ import type DriveSemaphore from '../../async/driveSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
+import FsPoly from '../../polyfill/fsPoly.js';
 import type File from '../../types/files/file.js';
 import type FileFactory from '../../types/files/fileFactory.js';
 import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**
- * TODO(cemmer)
+ * For every input {@link File} found, attempt to find any {@link ROMPadding} present and resolve
+ * its padded checksums.
  */
 export default class ROMTrimProcessor extends Module {
-  private static readonly POSSIBLE_FILL_BYTES = [0x00, 0xff];
-
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
   private readonly driveSemaphore: DriveSemaphore;
@@ -32,7 +32,7 @@ export default class ROMTrimProcessor extends Module {
   }
 
   /**
-   * TODO(cemmer)
+   * Process each {@link File}, finding any {@link ROMPadding} present.
    */
   async process(inputRomFiles: File[]): Promise<File[]> {
     if (inputRomFiles.length === 0) {
@@ -70,12 +70,13 @@ export default class ROMTrimProcessor extends Module {
           this.progressBar.incrementInProgress();
           const childBar = this.progressBar.addChildBar({
             name: inputFile.toString(),
+            total: inputFile.getSize(),
+            progressFormatter: FsPoly.sizeReadable,
           });
-          // TODO(cemmer): why isn't this creating the progress bar?
 
           let fileWithTrimming: File;
           try {
-            fileWithTrimming = await this.getFile(inputFile);
+            fileWithTrimming = await this.getFile(inputFile, childBar);
           } catch (error) {
             this.progressBar.logError(
               `${inputFile.toString()}: failed to process ROM trimming: ${error}`,
@@ -111,14 +112,16 @@ export default class ROMTrimProcessor extends Module {
     return true;
   }
 
-  private async getFile(inputFile: File): Promise<File> {
+  private async getFile(inputFile: File, progressBar: ProgressBar): Promise<File> {
     const fileSignature = await this.fileFactory.signatureFrom(inputFile);
     if (!fileSignature?.canBeTrimmed()) {
       // This file isn't known to be trimmable
       return inputFile;
     }
 
-    const paddings = await this.fileFactory.paddingsFrom(inputFile);
+    const paddings = await this.fileFactory.paddingsFrom(inputFile, (progress) => {
+      progressBar.setCompleted(progress);
+    });
     if (paddings.length === 0) {
       // This file isn't trimmed
       return inputFile;

@@ -12,8 +12,8 @@ import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**
- * For every input {@link ROM} file found, attempt to find a matching {@link Header} and resolve its
- * header-less checksum.
+ * For every input {@link File} file found, attempt to find a matching {@link Header} and resolve
+ * its header-less checksums.
  */
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;

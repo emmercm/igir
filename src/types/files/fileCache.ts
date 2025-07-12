@@ -1,13 +1,14 @@
 import Timer from '../../async/timer.js';
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import Cache from '../cache.js';
 import type Archive from './archives/archive.js';
 import type { ArchiveEntryProps } from './archives/archiveEntry.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import type { FileProps } from './file.js';
 import File from './file.js';
-import { ChecksumBitmask } from './fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from './fileChecksums.js';
 import FileSignature from './fileSignature.js';
 import ROMHeader from './romHeader.js';
 import type { ROMPaddingProps } from './romPadding.js';
@@ -97,7 +98,11 @@ export default class FileCache {
     await this.cache.save();
   }
 
-  async getOrComputeFileChecksums(filePath: string, checksumBitmask: number): Promise<File> {
+  async getOrComputeFileChecksums(
+    filePath: string,
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
     const cacheKey = this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS);
@@ -108,7 +113,14 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        computedFile = await File.fileOf({ filePath }, checksumBitmask);
+        const checksums = await FileChecksums.hashFile(
+          filePath,
+          checksumBitmask,
+          undefined,
+          undefined,
+          callback,
+        );
+        computedFile = await File.fileOf({ filePath, ...checksums }, checksumBitmask);
         return {
           fileSize: stats.size,
           modifiedTimeMillis: stats.mtimeMs,
@@ -289,7 +301,7 @@ export default class FileCache {
     return FileSignature.signatureFromName(cachedSignatureName);
   }
 
-  async getOrComputeFilePaddings(file: File): Promise<ROMPadding[]> {
+  async getOrComputeFilePaddings(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     if (stats.size === 0) {
@@ -305,7 +317,7 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const paddings = await ROMPadding.paddingsFromFile(file);
+        const paddings = await ROMPadding.paddingsFromFile(file, callback);
         return {
           fileSize: stats.size,
           modifiedTimeMillis: stats.mtimeMs,
