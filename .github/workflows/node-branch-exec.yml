@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   npm-exec:
-    if: github.event.action != 'closed'
+    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
@@ -57,7 +57,7 @@ jobs:
           comment-tag: npm-exec
 
   npm-exec-comment-update:
-    if: github.event.action == 'closed' && github.event.pull_request.merged
+    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged }}
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
