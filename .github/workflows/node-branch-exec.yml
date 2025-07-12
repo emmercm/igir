@@ -51,6 +51,9 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - uses: volta-cli/action@v4
+      - run: |
+          npx --yes "${{ needs.pkg-pr-new.outputs.package_url }}" --help
       - uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
@@ -69,6 +72,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: volta-cli/action@v4
+      - run: |
+          npx --yes "https://pkg.pr.new/${{ steps.package.outputs.PACKAGE_NAME }}@${{ github.event.pull_request.base.ref }}" --help
       - id: package
         run: |
           echo "PACKAGE_NAME=$(jq --raw-output '.name' package.json)" >> "${GITHUB_OUTPUT}"
