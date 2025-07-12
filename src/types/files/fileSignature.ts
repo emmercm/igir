@@ -19,7 +19,7 @@ export default class FileSignature {
   // @see https://www.garykessler.net/library/file_sigs.html
   // @see https://file-extension.net/seeker/
   // @see https://gbatemp.net/threads/help-with-rom-iso-console-identification.611378/
-  private static readonly SIGNATURES: Record<string, FileSignature> = {
+  private static readonly SIGNATURES_UNSORTED: Record<string, FileSignature> = {
     // ********** GENERAL **********
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -371,24 +371,22 @@ export default class FileSignature {
     pbp: new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x00\x00\x01\x00') }]),
   };
 
-  private static readonly SIGNATURES_SORTED = Object.values(FileSignature.SIGNATURES).sort(
-    (a, b) => {
-      // 1. Prefer files that check multiple signatures
-      const sigsCountDiff = b.fileSignatures.length - a.fileSignatures.length;
-      if (sigsCountDiff !== 0) {
-        return sigsCountDiff;
-      }
+  static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).sort((a, b) => {
+    // 1. Prefer files that check multiple signatures
+    const sigsCountDiff = b.signaturePieces.length - a.signaturePieces.length;
+    if (sigsCountDiff !== 0) {
+      return sigsCountDiff;
+    }
 
-      // 2. Prefer signatures of longer length
-      return (
-        b.fileSignatures.reduce((sum, sig) => sum + sig.value.length, 0) -
-        a.fileSignatures.reduce((sum, sig) => sum + sig.value.length, 0)
-      );
-    },
-  );
+    // 2. Prefer signatures of longer length
+    return (
+      b.signaturePieces.reduce((sum, sig) => sum + sig.value.length, 0) -
+      a.signaturePieces.reduce((sum, sig) => sum + sig.value.length, 0)
+    );
+  });
 
-  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileSignature.SIGNATURES)
-    .flatMap((romSignature) => romSignature.fileSignatures)
+  private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileSignature.SIGNATURES_UNSORTED)
+    .flatMap((romSignature) => romSignature.signaturePieces)
     .reduce(
       (max, fileSignature) =>
         Math.max(max, (fileSignature.offset ?? 0) + fileSignature.value.length),
@@ -396,7 +394,7 @@ export default class FileSignature {
     );
 
   private readonly extension: string;
-  private readonly fileSignatures: SignaturePiece[];
+  private readonly signaturePieces: SignaturePiece[];
   private readonly _canBeTrimmed: CanBeTrimmedValue;
 
   constructor(
@@ -405,12 +403,8 @@ export default class FileSignature {
     canBeTrimmed: CanBeTrimmedValue = CanBeTrimmed.NO,
   ) {
     this.extension = extension;
-    this.fileSignatures = fileSignatures;
+    this.signaturePieces = fileSignatures;
     this._canBeTrimmed = canBeTrimmed;
-  }
-
-  static getKnownSignatureCount(): number {
-    return this.SIGNATURES_SORTED.length;
   }
 
   private static async readHeaderBuffer(
@@ -445,7 +439,7 @@ export default class FileSignature {
   }
 
   static signatureFromName(name: string): FileSignature | undefined {
-    return this.SIGNATURES[name];
+    return this.SIGNATURES_UNSORTED[name];
   }
 
   static async signatureFromFileStream(readable: Readable): Promise<FileSignature | undefined> {
@@ -455,8 +449,8 @@ export default class FileSignature {
       this.MAX_HEADER_LENGTH_BYTES,
     );
 
-    for (const romSignature of this.SIGNATURES_SORTED) {
-      const signatureMatch = romSignature.fileSignatures.every((fileSignature) => {
+    for (const romSignature of this.SIGNATURES) {
+      const signatureMatch = romSignature.signaturePieces.every((fileSignature) => {
         const signatureValue = fileHeader.subarray(
           fileSignature.offset ?? 0,
           (fileSignature.offset ?? 0) + fileSignature.value.length,
@@ -473,13 +467,17 @@ export default class FileSignature {
 
   @Memoize()
   getName(): string {
-    return Object.keys(FileSignature.SIGNATURES).find(
-      (name) => FileSignature.SIGNATURES[name] === this,
+    return Object.keys(FileSignature.SIGNATURES_UNSORTED).find(
+      (name) => FileSignature.SIGNATURES_UNSORTED[name] === this,
     ) as string;
   }
 
   getExtension(): string {
     return this.extension;
+  }
+
+  getSignaturePieces(): SignaturePiece[] {
+    return this.signaturePieces;
   }
 
   canBeTrimmed(): boolean {

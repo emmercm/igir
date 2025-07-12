@@ -117,10 +117,12 @@ export default class ROMTrimProcessor extends Module {
   }
 
   private async getFile(inputFile: File, progressBar: ProgressBar): Promise<File> {
-    const fileSignature = await this.fileFactory.signatureFrom(inputFile);
-    if (!fileSignature?.canBeTrimmed()) {
-      // This file isn't known to be trimmable
-      return inputFile;
+    if (!this.options.shouldReadFileForTrimming(inputFile.getFilePath())) {
+      const fileSignature = await this.fileFactory.signatureFrom(inputFile);
+      if (!fileSignature?.canBeTrimmed()) {
+        // This file isn't known to be trimmable
+        return inputFile;
+      }
     }
 
     const paddings = await this.fileFactory.paddingsFrom(inputFile, (progress) => {

@@ -37,7 +37,7 @@ const ValueType = {
   // gets cached. But when the list of known headers or signatures changes, we may be able to find
   // a non-undefined result. So these dynamic values help with cache busting.
   ROM_HEADER: `H${ROMHeader.getKnownHeaderCount()}`,
-  FILE_SIGNATURE: `S${FileSignature.getKnownSignatureCount()}`,
+  FILE_SIGNATURE: `S${FileSignature.SIGNATURES.length}`,
   ROM_PADDING: `P${ROMPadding.getKnownFillBytesCount()}`,
 };
 
