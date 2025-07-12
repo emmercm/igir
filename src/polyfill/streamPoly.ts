@@ -143,7 +143,8 @@ export default {
 
   /**
    * Return a new readable stream that has had the specified transforms applied to it.
-   * This differs from {@link stream.pipeline} in that it returns a readable stream.
+   * This differs from {@link stream.pipeline} in that it returns a readable stream, NOT a writable
+   * stream.
    */
   withTransforms(readable: stream.Readable, ...transforms: stream.Transform[]): stream.Readable {
     if (transforms.length === 0) {

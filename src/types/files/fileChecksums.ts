@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import type { Stream } from 'node:stream';
+import type stream from 'node:stream';
 import { Readable } from 'node:stream';
 
 import { crc32 } from '@node-rs/crc32';
@@ -54,18 +54,20 @@ export default {
   },
 
   async hashStream(
-    stream: Stream,
+    readable: stream.Readable,
     checksumBitmask: number,
     callback?: FsReadCallback,
   ): Promise<ChecksumProps> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
-      // WARN(cemmer): this may leave the stream un-drained and therefore some file handles open!
+      // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
       return {};
     }
 
     const streamWithCallback =
-      callback === undefined ? stream : StreamPoly.withTransforms(new FsReadTransform(callback));
+      callback === undefined
+        ? readable
+        : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
 
     return new Promise((resolve, reject) => {
       let crc: number | undefined;
