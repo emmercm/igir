@@ -33,7 +33,7 @@
   "type": "module",
   "files": [
     "dist/",
-    "install.mjs",
+    "postinstall.mjs",
     "!**/test/**",
     "!**/*.test.*",
     "!**/jest.*"
@@ -52,8 +52,8 @@
   },
   "scripts": {
     "cache:clear": "npm cache clean --force && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache",
-    "install": "node install.mjs",
     "install:hold": "node --loader ts-node/esm scripts/installHold.ts",
+    "postinstall": "node postinstall.mjs",
     "start": "node --loader ts-node/esm index.ts",
     "build": "node --loader ts-node/esm scripts/build.ts",
     "package": "npm run build && node --loader ts-node/esm scripts/package.ts",
@@ -101,7 +101,7 @@
     "semver": "7.7.2",
     "simple-statistics": "7.8.8",
     "strip-ansi": "7.1.0",
-    "tar": "6.2.1",
+    "tar": "7.4.3",
     "terminal-size": "4.0.0",
     "trash": "9.0.0",
     "typescript-memoize": "1.1.1",
@@ -119,7 +119,6 @@
     "@types/micromatch": "4.0.9",
     "@types/node": "22.16.0",
     "@types/semver": "7.7.0",
-    "@types/tar": "6.1.13",
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.33",
