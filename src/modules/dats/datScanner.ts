@@ -9,6 +9,7 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import GameGrouper from '../../gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import bufferPoly from '../../polyfill/bufferPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import type { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
@@ -185,6 +186,7 @@ export default class DATScanner extends Scanner {
         dat
           .getGames()[0]
           .getRoms()
+          .filter(ArrayPoly.filterUniqueMapped((rom) => `${rom.getName()}|${rom.hashCode()}`))
           .map((rom) => {
             // Use the ROM's filename without its extension as the game name
             const { dir, name } = path.parse(rom.getName());
