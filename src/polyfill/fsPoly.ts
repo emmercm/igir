@@ -14,7 +14,7 @@ import { Memoize } from 'typescript-memoize';
 
 import Defaults from '../globals/defaults.js';
 import IgirException from '../types/exceptions/igirException.js';
-import FsCopyTransform, { FsCopyCallback } from './fsCopyTransform.js';
+import FsReadTransform, { FsReadCallback } from './fsReadTransform.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
 gracefulFs.gracefulify(fs);
@@ -120,7 +120,7 @@ export default class FsPoly {
   static async copyFile(
     src: string,
     dest: string,
-    callback?: FsCopyCallback,
+    callback?: FsReadCallback,
     attempt = 1,
   ): Promise<void> {
     if (!(await this.exists(src))) {
@@ -134,11 +134,15 @@ export default class FsPoly {
     const destPreviouslyExisted = await this.exists(dest);
 
     try {
-      await util.promisify(stream.pipeline)(
-        fs.createReadStream(src, { highWaterMark: Defaults.FILE_READING_CHUNK_SIZE }),
-        new FsCopyTransform(callback),
-        fs.createWriteStream(dest),
-      );
+      const readStream = fs.createReadStream(src, {
+        highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+      });
+      const writeStream = fs.createWriteStream(dest);
+      if (callback) {
+        await stream.promises.pipeline(readStream, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readStream, writeStream);
+      }
     } catch (error) {
       // These are the same error codes that `graceful-fs` catches
       if (
@@ -460,7 +464,7 @@ export default class FsPoly {
   static async mv(
     oldPath: string,
     newPath: string,
-    callback?: FsCopyCallback,
+    callback?: FsReadCallback,
     attempt = 1,
   ): Promise<MoveResultValue> {
     // Can't rename across drives

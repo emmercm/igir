@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import type { Readable } from 'node:stream';
 import stream from 'node:stream';
-import util from 'node:util';
 
 import { crc32 } from '@node-rs/crc32';
 
@@ -105,7 +104,7 @@ export default class TZWriter {
     // Write the file data
     const uncompressedTransform = new UncompressedTransform();
     const compressedTransform = new CompressedTransform();
-    await util.promisify(stream.pipeline)(
+    await stream.promises.pipeline(
       readable,
       uncompressedTransform,
       new ProgressTransform(progressCallback),

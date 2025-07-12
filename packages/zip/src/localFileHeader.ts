@@ -1,9 +1,10 @@
 import fs from 'node:fs';
-import stream, { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 import zlib from 'node:zlib';
 
 import zstd from 'zstd-napi';
 
+import StreamPoly from '../../../src/polyfill/streamPoly.js';
 import type CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
 import type { CompressionMethodValue, IFileRecord } from './fileRecord.js';
 import FileRecord, { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
@@ -180,13 +181,13 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return this file's uncompressed/decompressed stream.
    */
-  uncompressedStream(highWaterMark?: number): stream.Readable {
+  uncompressedStream(highWaterMark?: number): stream.Stream {
     switch (this.compressionMethod) {
       case CompressionMethod.STORE: {
         return this.compressedStream(highWaterMark);
       }
       case CompressionMethod.DEFLATE: {
-        return LocalFileHeader.pipeline(
+        return StreamPoly.withTransforms(
           this.compressedStream(highWaterMark),
           zlib.createInflateRaw(),
           new ZipBombProtector(this.uncompressedSizeResolved()),
@@ -194,7 +195,7 @@ export default class LocalFileHeader extends FileRecord {
       }
       case CompressionMethod.ZSTD_DEPRECATED:
       case CompressionMethod.ZSTD: {
-        return LocalFileHeader.pipeline(
+        return StreamPoly.withTransforms(
           this.compressedStream(),
           // TODO(cemmer): replace with zlib in Node.js 24
           new zstd.DecompressStream(),
@@ -207,23 +208,5 @@ export default class LocalFileHeader extends FileRecord {
         );
       }
     }
-  }
-
-  /**
-   * {@link stream.pipeline} returns a {@link stream.Writable} which doesn't let us pipe through
-   * more steps, so use an intermediate {@link stream.PassThrough} to allow for further piping.
-   */
-  private static pipeline(
-    inputStream: stream.Readable,
-    transformOne: stream.Transform,
-    transformTwo: stream.Transform,
-  ): stream.Readable {
-    const outputStream = new PassThrough();
-    stream.pipeline(inputStream, transformOne, transformTwo, outputStream, (err) => {
-      if (err) {
-        outputStream.destroy(err);
-      }
-    });
-    return outputStream;
   }
 }

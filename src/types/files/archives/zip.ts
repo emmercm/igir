@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Readable } from 'node:stream';
 import stream from 'node:stream';
-import util from 'node:util';
 
 import async from 'async';
 import { Mutex } from 'async-mutex';
@@ -18,9 +17,9 @@ import type { CentralDirectoryFileHeader } from '../../../../packages/zip/index.
 import { ZipReader } from '../../../../packages/zip/index.js';
 import type { ProgressCallback } from '../../../console/progressBar.js';
 import Defaults from '../../../globals/defaults.js';
-import type { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
-import FsCopyTransform from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
+import FsReadTransform from '../../../polyfill/fsReadTransform.js';
 import IgirException from '../../exceptions/igirException.js';
 import type { ZipFormatValue } from '../../options.js';
 import { ZipFormat } from '../../options.js';
@@ -89,7 +88,7 @@ export default class Zip extends Archive {
   async extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
-    callback?: FsCopyCallback,
+    callback?: FsReadCallback,
   ): Promise<void> {
     const extractedDir = path.dirname(extractedFilePath);
     if (!(await FsPoly.exists(extractedDir))) {
@@ -97,11 +96,12 @@ export default class Zip extends Archive {
     }
 
     return this.extractEntryToStream(entryPath, async (readable) => {
-      await util.promisify(stream.pipeline)(
-        readable,
-        new FsCopyTransform(callback),
-        fs.createWriteStream(extractedFilePath),
-      );
+      const writeStream = fs.createWriteStream(extractedFilePath);
+      if (callback) {
+        await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readable, writeStream);
+      }
     });
   }
 

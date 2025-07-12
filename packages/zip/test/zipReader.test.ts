@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
 import url from 'node:url';
-import util from 'node:util';
 
 import Temp from '../../../src/globals/temp.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
@@ -542,7 +541,7 @@ describe('compressedStream', () => {
       );
 
       try {
-        await util.promisify(stream.pipeline)(
+        await stream.promises.pipeline(
           await entry.compressedStream(),
           fs.createWriteStream(tempFile),
         );
@@ -574,7 +573,7 @@ describe('uncompressedStream', () => {
       );
 
       try {
-        await util.promisify(stream.pipeline)(
+        await stream.promises.pipeline(
           await entry.uncompressedStream(),
           fs.createWriteStream(tempFile),
         );

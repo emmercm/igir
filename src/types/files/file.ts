@@ -2,19 +2,19 @@ import fs, { OpenMode, PathLike } from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
-import util from 'node:util';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
 import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
-import FsCopyTransform, { FsCopyCallback } from '../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import FsReadTransform, { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import Patch from '../patches/patch.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
 import ROMHeader from './romHeader.js';
+import ROMPadding from './romPadding.js';
 
 export interface FileProps extends ChecksumProps {
   readonly filePath: string;
@@ -26,6 +26,7 @@ export interface FileProps extends ChecksumProps {
   readonly sha256WithoutHeader?: string;
   readonly symlinkSource?: string;
   readonly fileHeader?: ROMHeader;
+  readonly paddings?: ROMPadding[];
   readonly patch?: Patch;
 }
 
@@ -64,6 +65,8 @@ export default class File implements FileProps {
 
   readonly fileHeader?: ROMHeader;
 
+  readonly paddings: ROMPadding[];
+
   readonly patch?: Patch;
 
   protected constructor(fileProps: FileProps) {
@@ -95,6 +98,7 @@ export default class File implements FileProps {
     this.isUrl = isUrl;
     this.symlinkSource = fileProps.symlinkSource;
     this.fileHeader = fileProps.fileHeader;
+    this.paddings = fileProps.paddings ?? [];
     this.patch = fileProps.patch;
   }
 
@@ -175,6 +179,7 @@ export default class File implements FileProps {
       sha256WithoutHeader: finalSha256WithoutHeader,
       symlinkSource: finalSymlinkSource,
       fileHeader: fileProps.fileHeader,
+      paddings: fileProps.paddings,
       patch: fileProps.patch,
     });
   }
@@ -251,6 +256,10 @@ export default class File implements FileProps {
     return this.fileHeader;
   }
 
+  getPaddings(): ROMPadding[] {
+    return this.paddings;
+  }
+
   getPatch(): Patch | undefined {
     return this.patch;
   }
@@ -271,7 +280,7 @@ export default class File implements FileProps {
 
   // Other functions
 
-  async extractToFile(destinationPath: string, callback?: FsCopyCallback): Promise<void> {
+  async extractToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
     await FsPoly.copyFile(this.getFilePath(), destinationPath, callback);
   }
 
@@ -306,7 +315,9 @@ export default class File implements FileProps {
     });
   }
 
-  async extractAndPatchToFile(destinationPath: string, callback?: FsCopyCallback): Promise<void> {
+  async extractAndPatchToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
+    // TODO(cemmer): option to re-pad a trimmed ROM
+
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
@@ -332,11 +343,12 @@ export default class File implements FileProps {
         await File.createStreamFromFile(
           tempFile,
           async (readable) => {
-            await util.promisify(stream.pipeline)(
-              readable,
-              new FsCopyTransform(callback),
-              fs.createWriteStream(destinationPath),
-            );
+            const writeStream = fs.createWriteStream(destinationPath);
+            if (callback) {
+              await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+            } else {
+              await stream.promises.pipeline(readable, writeStream);
+            }
           },
           start,
         );
@@ -348,19 +360,25 @@ export default class File implements FileProps {
 
     // Extract this file removing its header
     return this.createReadStream(async (readable) => {
-      await util.promisify(stream.pipeline)(
-        readable,
-        new FsCopyTransform(callback),
-        fs.createWriteStream(destinationPath),
-      );
+      const writeStream = fs.createWriteStream(destinationPath);
+      if (callback) {
+        await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readable, writeStream);
+      }
     }, start);
   }
 
-  async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {
+  async createReadStream<T>(
+    callback: (readable: Readable) => T | Promise<T>,
+    start = 0,
+  ): Promise<T> {
     return File.createStreamFromFile(this.getFilePath(), callback, start);
   }
 
-  async createPatchedReadStream<T>(callback: (stream: Readable) => T | Promise<T>): Promise<T> {
+  async createPatchedReadStream<T>(callback: (readable: Readable) => T | Promise<T>): Promise<T> {
+    // TODO(cemmer): option to re-pad a trimmed ROM
+
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
@@ -383,7 +401,7 @@ export default class File implements FileProps {
 
   static async createStreamFromFile<T>(
     filePath: PathLike,
-    callback: (stream: Readable) => Promise<T> | T,
+    callback: (readable: Readable) => Promise<T> | T,
     start?: number,
     end?: number,
   ): Promise<T> {
@@ -480,7 +498,8 @@ export default class File implements FileProps {
       {
         ...this,
         fileHeader,
-        patch: undefined, // don't allow a patch
+        paddings: [],
+        patch: undefined,
       },
       this.getChecksumBitmask(),
     );
@@ -500,6 +519,15 @@ export default class File implements FileProps {
     });
   }
 
+  withPaddings(paddings: ROMPadding[]): File {
+    return new File({
+      ...this,
+      fileHeader: paddings.length > 0 ? undefined : this.getFileHeader(),
+      paddings,
+      patch: paddings.length > 0 ? undefined : this.getPatch(),
+    });
+  }
+
   withPatch(patch: Patch): File {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;
@@ -508,6 +536,7 @@ export default class File implements FileProps {
     return new File({
       ...this,
       fileHeader: undefined,
+      paddings: [],
       patch,
     });
   }
@@ -547,7 +576,9 @@ export default class File implements FileProps {
     return (
       this.getFilePath() === other.getFilePath() &&
       this.hashCode() === other.hashCode() &&
-      this.getFileHeader() === other.getFileHeader()
+      this.getFileHeader() === other.getFileHeader() &&
+      this.getPaddings().length === other.getPaddings().length &&
+      this.getPaddings().every((padding, idx) => padding === other.getPaddings()[idx])
     );
   }
 }

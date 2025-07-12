@@ -124,6 +124,7 @@ igir.exe
 *.dtd
 
 # ROMs
+*.3ds
 *.7z
 *.a500
 *.a52

@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
-import util from 'node:util';
 
 import { Mutex } from 'async-mutex';
 import chdman, { CHDInfo, ChdmanBinaryPreference } from 'chdman';
@@ -32,7 +31,7 @@ export default abstract class Chd extends Archive {
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     return this.extractEntryToStreamCached(entryPath, async (readable) => {
-      await util.promisify(stream.pipeline)(readable, fs.createWriteStream(extractedFilePath));
+      await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
     });
   }
 
@@ -82,9 +81,9 @@ export default abstract class Chd extends Archive {
           if (pregapSize + postgapSize > 0) {
             return callback(
               StreamPoly.concat(
-                Readable.from(Buffer.alloc(pregapSize)),
+                StreamPoly.staticReadable(pregapSize, 0x00),
                 readable,
-                Readable.from(Buffer.alloc(postgapSize)),
+                StreamPoly.staticReadable(postgapSize, 0x00),
               ),
             );
           }

@@ -95,7 +95,6 @@ export default class CandidateArchiveFileHasher extends Module {
                 `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${inputFile.toString()}`,
               );
               const childBar = this.progressBar.addChildBar({
-                // TODO(cemmer): render incremental progress
                 name: inputFile.toString(),
                 total: inputFile.getSize(),
                 progressFormatter: FsPoly.sizeReadable,
@@ -105,6 +104,9 @@ export default class CandidateArchiveFileHasher extends Module {
                 const hashedInputFile = await this.fileFactory.archiveFileFrom(
                   inputFile.getArchive(),
                   inputFile.getChecksumBitmask(),
+                  (progress) => {
+                    childBar.setCompleted(progress);
+                  },
                 );
                 // {@link CandidateGenerator} would have copied undefined values from the input
                 //  file, so we need to modify the expected output file as well for testing
