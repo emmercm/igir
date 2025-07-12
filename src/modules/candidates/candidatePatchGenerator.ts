@@ -139,6 +139,7 @@ export default class CandidatePatchGenerator extends Module {
                   size: patch.getSizeAfter(),
                   crc32: patch.getCrcAfter(),
                   fileHeader: outputFile.getFileHeader(),
+                  paddings: outputFile.getPaddings(),
                   patch: outputFile.getPatch(),
                 });
               } else {
@@ -148,6 +149,7 @@ export default class CandidatePatchGenerator extends Module {
                   size: patch.getSizeAfter(),
                   crc32: patch.getCrcAfter(),
                   fileHeader: outputFile.getFileHeader(),
+                  paddings: outputFile.getPaddings(),
                   patch: outputFile.getPatch(),
                 });
               }

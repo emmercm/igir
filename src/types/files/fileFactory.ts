@@ -3,6 +3,7 @@ import async from 'async';
 import type Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
 import MultiBar from '../../console/multiBar.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import IgirException from '../exceptions/igirException.js';
 import type Archive from './archives/archive.js';
@@ -32,6 +33,7 @@ import type FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';
 import type FileSignature from './fileSignature.js';
 import type ROMHeader from './romHeader.js';
+import type ROMPadding from './romPadding.js';
 
 export default class FileFactory {
   private readonly fileCache: FileCache;
@@ -86,12 +88,23 @@ export default class FileFactory {
     }
   }
 
-  async fileFrom(filePath: string, checksumBitmask: number): Promise<File> {
-    return this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask);
+  async fileFrom(
+    filePath: string,
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<File> {
+    return this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask, callback);
   }
 
-  async archiveFileFrom(archive: Archive, checksumBitmask: number): Promise<ArchiveFile> {
-    return new ArchiveFile(archive, await this.fileFrom(archive.getFilePath(), checksumBitmask));
+  async archiveFileFrom(
+    archive: Archive,
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveFile> {
+    return new ArchiveFile(
+      archive,
+      await this.fileFrom(archive.getFilePath(), checksumBitmask, callback),
+    );
   }
 
   /**
@@ -233,5 +246,9 @@ export default class FileFactory {
 
   async signatureFrom(file: File): Promise<FileSignature | undefined> {
     return this.fileCache.getOrComputeFileSignature(file);
+  }
+
+  async paddingsFrom(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
+    return this.fileCache.getOrComputeFilePaddings(file, callback);
   }
 }

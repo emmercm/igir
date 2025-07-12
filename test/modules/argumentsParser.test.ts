@@ -2349,6 +2349,30 @@ describe('options', () => {
     ).toEqual(true);
   });
 
+  it('should parse "trimmed-glob"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--trimmed-glob', '**/*']),
+    ).toThrow(/dependent|implication/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--trimmed-glob', '**/*'])
+        .shouldReadFileForTrimming('file.rom'),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--trimmed-glob',
+          '**/*',
+          '--trimmed-glob',
+          'nope',
+        ])
+        .shouldReadFileForTrimming('file.rom'),
+    ).toEqual(false);
+  });
+
   it('should parse "single"', () => {
     expect(
       argumentsParser

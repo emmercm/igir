@@ -12,8 +12,8 @@ import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**
- * For every input {@link ROM} file found, attempt to find a matching {@link Header} and resolve its
- * header-less checksum.
+ * For every input {@link File} file found, attempt to find a matching {@link Header} and resolve
+ * its header-less checksums.
  */
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
@@ -101,13 +101,18 @@ export default class ROMHeaderProcessor extends Module {
     /**
      * If the input file is from an archive, and we're not zipping or extracting, then we have no
      * chance to remove the header, so we shouldn't bother detecting one.
-     * Matches {@link CandidateGenerator#buildCandidateForGame}
+     * Matches {@link CandidateGenerator#buildCandidatesForGame}
      */
     if (
       inputFile instanceof ArchiveEntry &&
       !this.options.shouldZip() &&
       !this.options.shouldExtract()
     ) {
+      return false;
+    }
+
+    if (inputFile.getSize() === 0) {
+      // It can't have a header
       return false;
     }
 

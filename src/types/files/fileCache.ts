@@ -1,15 +1,18 @@
 import Timer from '../../async/timer.js';
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import Cache from '../cache.js';
 import type Archive from './archives/archive.js';
 import type { ArchiveEntryProps } from './archives/archiveEntry.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import type { FileProps } from './file.js';
 import File from './file.js';
-import { ChecksumBitmask } from './fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from './fileChecksums.js';
 import FileSignature from './fileSignature.js';
 import ROMHeader from './romHeader.js';
+import type { ROMPaddingProps } from './romPadding.js';
+import ROMPadding from './romPadding.js';
 
 interface CacheValue {
   fileSize: number;
@@ -22,7 +25,9 @@ interface CacheValue {
     | ArchiveEntryProps<Archive>[]
     // getOrComputeFileHeader(), getOrComputeFileSignature()
     | string
-    | undefined;
+    | undefined
+    // getOrComputeFilePaddings()
+    | ROMPaddingProps[];
 }
 
 const ValueType = {
@@ -32,7 +37,8 @@ const ValueType = {
   // gets cached. But when the list of known headers or signatures changes, we may be able to find
   // a non-undefined result. So these dynamic values help with cache busting.
   ROM_HEADER: `H${ROMHeader.getKnownHeaderCount()}`,
-  FILE_SIGNATURE: `S${FileSignature.getKnownSignatureCount()}`,
+  FILE_SIGNATURE: `S${FileSignature.SIGNATURES.length}`,
+  ROM_PADDING: `P${ROMPadding.getKnownFillBytesCount()}`,
 };
 
 export default class FileCache {
@@ -92,7 +98,11 @@ export default class FileCache {
     await this.cache.save();
   }
 
-  async getOrComputeFileChecksums(filePath: string, checksumBitmask: number): Promise<File> {
+  async getOrComputeFileChecksums(
+    filePath: string,
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
     const cacheKey = this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS);
@@ -103,7 +113,14 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        computedFile = await File.fileOf({ filePath }, checksumBitmask);
+        const checksums = await FileChecksums.hashFile(
+          filePath,
+          checksumBitmask,
+          undefined,
+          undefined,
+          callback,
+        );
+        computedFile = await File.fileOf({ filePath, ...checksums }, checksumBitmask);
         return {
           fileSize: stats.size,
           modifiedTimeMillis: stats.mtimeMs,
@@ -282,6 +299,52 @@ export default class FileCache {
       return undefined;
     }
     return FileSignature.signatureFromName(cachedSignatureName);
+  }
+
+  async getOrComputeFilePaddings(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
+    // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
+    const stats = await FsPoly.stat(file.getFilePath());
+    if (stats.size === 0) {
+      // An empty file can't have any padding
+      return [];
+    }
+    const cacheKey = this.getCacheKey(
+      file.getFilePath(),
+      file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
+      ValueType.ROM_PADDING,
+    );
+
+    const cachedValue = await this.cache.getOrCompute(
+      cacheKey,
+      async () => {
+        const paddings = await ROMPadding.paddingsFromFile(file, callback);
+        return {
+          fileSize: stats.size,
+          modifiedTimeMillis: stats.mtimeMs,
+          value: paddings.map((padding) => padding.toROMPaddingProps()),
+        };
+      },
+      (cached) => {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+          // Recompute if the file has changed since being cached
+          return true;
+        }
+
+        const cachedPadding = cached.value as ROMPaddingProps[];
+        const checksumBitmask = file.getChecksumBitmask();
+        const existingBitmask =
+          (cachedPadding.every((props) => props.crc32 !== undefined) ? ChecksumBitmask.CRC32 : 0) |
+          (cachedPadding.every((props) => props.md5 !== undefined) ? ChecksumBitmask.MD5 : 0) |
+          (cachedPadding.every((props) => props.sha1 !== undefined) ? ChecksumBitmask.SHA1 : 0) |
+          (cachedPadding.every((props) => props.sha256 !== undefined) ? ChecksumBitmask.SHA256 : 0);
+        const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
+        // We need checksums that haven't been cached yet
+        return remainingBitmask > 0;
+      },
+    );
+
+    const cachedPaddingsJson = cachedValue.value as ROMPaddingProps[];
+    return cachedPaddingsJson.map((props) => ROMPadding.fileOfObject(props));
   }
 
   private getCacheKey(filePath: string, entryPath: string | undefined, valueType: string): string {

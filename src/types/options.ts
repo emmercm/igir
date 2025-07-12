@@ -176,6 +176,8 @@ export interface OptionsProps {
   readonly header?: string;
   readonly removeHeaders?: string[];
 
+  readonly trimmedGlob?: string;
+
   readonly mergeRoms?: string;
   readonly mergeDiscs?: boolean;
   readonly excludeDisks?: boolean;
@@ -328,9 +330,11 @@ export default class Options implements OptionsProps {
 
   readonly symlinkRelative: boolean;
 
-  readonly header: string;
+  readonly header?: string;
 
   readonly removeHeaders?: string[];
+
+  readonly trimmedGlob?: string;
 
   readonly mergeRoms?: string;
 
@@ -510,8 +514,10 @@ export default class Options implements OptionsProps {
     this.linkMode = options?.linkMode;
     this.symlinkRelative = options?.symlinkRelative ?? false;
 
-    this.header = options?.header ?? '';
+    this.header = options?.header;
     this.removeHeaders = options?.removeHeaders;
+
+    this.trimmedGlob = options?.trimmedGlob;
 
     this.mergeRoms = options?.mergeRoms;
     this.mergeDiscs = options?.mergeDiscs ?? false;
@@ -1152,17 +1158,25 @@ export default class Options implements OptionsProps {
     return this.symlinkRelative;
   }
 
-  private getHeader(): string {
-    return this.header;
-  }
-
   /**
    * Should a file have its contents read to detect any {@link Header}?
    */
   shouldReadFileForHeader(filePath: string): boolean {
     return (
-      this.getHeader().length > 0 &&
-      micromatch.isMatch(filePath.replace(/^.[\\/]/, ''), this.getHeader())
+      this.header !== undefined &&
+      this.header.length > 0 &&
+      micromatch.isMatch(filePath.replace(/^.[\\/]/, ''), this.header)
+    );
+  }
+
+  /**
+   * Should a file have its contents read to detect any {@link ROMPadding}?
+   */
+  shouldReadFileForTrimming(filePath: string): boolean {
+    return (
+      this.trimmedGlob !== undefined &&
+      this.trimmedGlob.length > 0 &&
+      micromatch.isMatch(filePath.replace(/^.[\\/]/, ''), this.trimmedGlob)
     );
   }
 

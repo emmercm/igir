@@ -22,7 +22,7 @@ it('should do nothing if no parent/clone info is present', () => {
   expect(result).toEqual(dat);
 });
 
-test.each(Object.values(MergeMode).map((mode) => MergeModeInverted[mode].toLowerCase()))(
+test.each(Object.values(MergeModeInverted))(
   'should do nothing if no parent/clone info is present: %s',
   (mergeRoms) => {
     // Given

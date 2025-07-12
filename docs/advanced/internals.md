@@ -9,6 +9,7 @@ Igir runs these steps in the following order:
 1. Scan each DAT input path for every file and parse them, if provided (`--dat <path>`)
 2. Scan each ROM input path for every file (`--input <path>`)
    - Detect headers in those files, if applicable (see [header docs](../roms/headers.md))
+   - Detect trimming of those files, if applicable (see [trimming docs](../roms/trimming.md))
 3. Scan each patch input path for every file (`--patch <path>`) (see [patching docs](../roms/patching.md))
 4. Then for each DAT:
    - Parent/clone information is inferred if the DAT has none (see [DATs docs](../dats/processing.md#parentclone-inference))

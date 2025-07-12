@@ -1,9 +1,12 @@
 import crypto from 'node:crypto';
-import type { Stream } from 'node:stream';
+import type stream from 'node:stream';
 import { Readable } from 'node:stream';
 
 import { crc32 } from '@node-rs/crc32';
 
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
+import FsReadTransform from '../../polyfill/fsReadTransform.js';
+import StreamPoly from '../../polyfill/streamPoly.js';
 import File from './file.js';
 
 export const ChecksumBitmask = {
@@ -40,21 +43,31 @@ export default {
     checksumBitmask: number,
     start?: number,
     end?: number,
+    callback?: FsReadCallback,
   ): Promise<ChecksumProps> {
     return File.createStreamFromFile(
       filePath,
-      async (readable) => this.hashStream(readable, checksumBitmask),
+      async (readable) => this.hashStream(readable, checksumBitmask, callback),
       start,
       end,
     );
   },
 
-  async hashStream(stream: Stream, checksumBitmask: number): Promise<ChecksumProps> {
+  async hashStream(
+    readable: stream.Readable,
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ChecksumProps> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
-      // WARN(cemmer): this may leave the stream un-drained and therefore some file handles open!
+      // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
       return {};
     }
+
+    const streamWithCallback =
+      callback === undefined
+        ? readable
+        : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
 
     return new Promise((resolve, reject) => {
       let crc: number | undefined;
@@ -63,7 +76,7 @@ export default {
       const sha256 =
         checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
-      stream.on('data', (chunk: Buffer) => {
+      streamWithCallback.on('data', (chunk: Buffer) => {
         if (checksumBitmask & ChecksumBitmask.CRC32) {
           crc = crc32(chunk, crc);
         }
@@ -77,7 +90,7 @@ export default {
           sha256.update(chunk);
         }
       });
-      stream.on('end', () => {
+      streamWithCallback.on('end', () => {
         resolve({
           crc32:
             crc?.toString(16).padStart(8, '0') ??
@@ -89,7 +102,7 @@ export default {
         });
       });
 
-      stream.on('error', reject);
+      streamWithCallback.on('error', reject);
     });
   },
 };

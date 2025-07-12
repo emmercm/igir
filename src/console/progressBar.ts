@@ -26,6 +26,7 @@ export const ProgressBarSymbol: Record<string, ColoredSymbol> = {
   DAT_PARSING: { symbol: 'Σ', color: chalk.magenta },
   ROM_HASHING: { symbol: '#', color: chalk.magenta },
   ROM_HEADER_DETECTION: { symbol: '^', color: chalk.magenta },
+  ROM_TRIMMING_DETECTION: { symbol: UNICODE_SUPPORTED ? '⌵' : 'v', color: chalk.magenta },
   ROM_INDEXING: { symbol: '♦', color: chalk.magenta },
   // Processing a single DAT
   DAT_GROUPING_SIMILAR: { symbol: '∩', color: chalk.cyan },
@@ -42,7 +43,7 @@ export const ProgressBarSymbol: Record<string, ColoredSymbol> = {
   WRITING: { symbol: UNICODE_SUPPORTED ? '✎' : '»', color: chalk.yellow },
   RECYCLING: { symbol: UNICODE_SUPPORTED ? '♻' : '»', color: chalk.blue },
   DELETING: { symbol: UNICODE_SUPPORTED ? '✕' : 'X', color: chalk.red },
-};
+} as const;
 
 export type ProgressCallback = (progress: number, total: number) => void;
 

@@ -111,6 +111,7 @@ nav:
       - roms/sets.md
       - roms/filtering-preferences.md
       - roms/headers.md
+      - roms/trimming.md
       - roms/patching.md
     - File Outputs:
       - output/path-options.md

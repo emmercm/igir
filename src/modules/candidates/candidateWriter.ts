@@ -640,7 +640,7 @@ export default class CandidateWriter extends Module {
         inputRomFile.getFileHeader() !== undefined ||
         inputRomFile.getPatch() !== undefined
       ) {
-        // The file can't be moved as-is, it needs to get copied
+        // The file can't be moved as-is, it needs to be modified during copying
         return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
       }
 

@@ -157,9 +157,9 @@ export default class CandidateExtensionCorrector extends Module {
       });
 
       try {
-        let romSignature: FileSignature | undefined;
+        let fileSignature: FileSignature | undefined;
         try {
-          romSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
+          fileSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
         } catch (error) {
           this.progressBar.logError(
             `${dat.getName()}: failed to correct file extension for '${romWithFiles
@@ -167,12 +167,12 @@ export default class CandidateExtensionCorrector extends Module {
               .toString()}': ${error}`,
           );
         }
-        if (romSignature) {
+        if (fileSignature) {
           // ROM file signature found, use the appropriate extension
           const { dir, name } = path.parse(correctedRom.getName());
           const correctedRomName = path.format({
             dir,
-            name: name + romSignature.getExtension(),
+            name: name + fileSignature.getExtension(),
           });
           correctedRom = correctedRom.withName(correctedRomName);
         }

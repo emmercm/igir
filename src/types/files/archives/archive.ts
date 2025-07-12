@@ -2,8 +2,8 @@ import path from 'node:path';
 import type { Readable } from 'node:stream';
 
 import Temp from '../../../globals/temp.js';
-import type { FsCopyCallback } from '../../../polyfill/fsCopyTransform.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import File from '../file.js';
 import type ArchiveEntry from './archiveEntry.js';
 
@@ -27,7 +27,7 @@ export default abstract class Archive {
   abstract extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
-    callback?: FsCopyCallback,
+    callback?: FsReadCallback,
   ): Promise<void>;
 
   async extractEntryToTempFile<T>(
