@@ -1,18 +1,22 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.js';
+import type CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.js';
 import KeyedMutex from '../../async/keyedMutex.js';
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import FsPoly, { MoveResult, MoveResultValue } from '../../polyfill/fsPoly.js';
-import DAT from '../../types/dats/dat.js';
+import type { MoveResultValue } from '../../polyfill/fsPoly.js';
+import FsPoly, { MoveResult } from '../../polyfill/fsPoly.js';
+import type DAT from '../../types/dats/dat.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import Options, { LinkMode, ZipFormat, ZipFormatValue } from '../../types/options.js';
-import WriteCandidate from '../../types/writeCandidate.js';
+import type { ZipFormatValue } from '../../types/options.js';
+import type Options from '../../types/options.js';
+import { LinkMode, ZipFormat } from '../../types/options.js';
+import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 export interface CandidateWriterResults {

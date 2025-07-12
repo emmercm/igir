@@ -15,7 +15,7 @@ const zlib = nodeGypBuild(__dirname) as {
    * Get the zlib library version
    * @returns Version string (e.g. "1.1.3")
    */
-  getZlibVersion(): string;
+  getZlibVersion: () => string;
 
   // Flush mode constants
   Z_NO_FLUSH: number;
@@ -31,19 +31,19 @@ export interface DeflaterInstance {
    * @param flush Flush mode (Z_NO_FLUSH, Z_SYNC_FLUSH, Z_FULL_FLUSH, Z_FINISH, Z_BLOCK)
    * @returns Compressed data buffer
    */
-  compressChunk(chunk: Buffer, flush?: number): Buffer;
+  compressChunk: (chunk: Buffer, flush?: number) => Buffer;
 
   /**
    * Finalize compression and return any remaining compressed data
    * @returns Final compressed data buffer
    */
-  end(): Buffer;
+  end: () => Buffer;
 
   /**
    * Release resources without attempting to retrieve final data
    * Use this for cleanup in error scenarios
    */
-  finalize(): void;
+  dispose: () => void;
 }
 
 export const ZlibCompressionLevel = {

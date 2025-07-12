@@ -1,6 +1,8 @@
-import stream, { TransformCallback } from 'node:stream';
+import type { TransformCallback } from 'node:stream';
+import stream from 'node:stream';
 
-import zlib, { DeflaterInstance } from '../../zlib-1.1.3/index.js';
+import type { DeflaterInstance } from '../../zlib-1.1.3/index.js';
+import zlib from '../../zlib-1.1.3/index.js';
 
 /**
  * A Transform stream that compresses data using zlib.

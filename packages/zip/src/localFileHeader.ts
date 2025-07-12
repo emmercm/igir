@@ -4,13 +4,9 @@ import zlib from 'node:zlib';
 
 import zstd from 'zstd-napi';
 
-import CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
-import FileRecord, {
-  CompressionMethod,
-  CompressionMethodInverted,
-  CompressionMethodValue,
-  IFileRecord,
-} from './fileRecord.js';
+import type CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
+import type { CompressionMethodValue, IFileRecord } from './fileRecord.js';
+import FileRecord, { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
 import FileRecordUtil from './fileRecordUtil.js';
 import ZipBombProtector from './zipBombProtector.js';
 
@@ -24,8 +20,8 @@ export interface ILocalFileHeader extends IFileRecord {
  * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#Local_file_header
  */
 export default class LocalFileHeader extends FileRecord {
-  public static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
-  public static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
+  static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
+  static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
 
   // Size with the signature, and without variable length fields at the end
   private static readonly LOCAL_FILE_HEADER_SIZE = 30;

@@ -8,10 +8,19 @@ on:
   push:
     branches-ignore:
       - 'main'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git branch'
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  ref: ${{ inputs.ref || github.ref }}
 
 jobs:
   path-filter:
@@ -20,25 +29,34 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     outputs:
-      changes: ${{ steps.filter.outputs.changes }}
+      changes: ${{ steps.branch-filter.outputs.changes == 'true' && steps.commit-filter.outputs.changes == 'false' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.ref }}
-      - id: filter
+      # Prebuild if any relevant source file has changed
+      - id: branch-filter
         uses: dorny/paths-filter@v3
         with:
-          base: ${{ github.ref }}
           filters: |
             changes:
               - '.github/workflows/napi-prebuild.yml'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
+              - 'package*.json'
+      # DON'T prebuild if the last commit was prebuilds
+      - id: commit-filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            changes:
+              - 'packages/*/prebuilds/**'
 
   prebuild:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -62,6 +80,7 @@ jobs:
       # Setup and install
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@v4
         with:
@@ -72,7 +91,7 @@ jobs:
         run: |
           set -x
           npm ci --ignore-scripts
-          rm -rf packages/*/prebuilds
+
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@v3
       - id: linux-vars
@@ -98,6 +117,7 @@ jobs:
             set -x
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
+              rm -rf prebuilds
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
               touch prebuilds/.gitkeep
               cd ../..
@@ -108,12 +128,14 @@ jobs:
             rm -rf packages/*/build
             npm ci --foreground-scripts
             npm run test:unit packages
+
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         id: build
         run: |
           set -x
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
+            rm -rf prebuilds
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
             touch prebuilds/.gitkeep
             cd ../..
@@ -142,6 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.ref }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - uses: actions/download-artifact@v4

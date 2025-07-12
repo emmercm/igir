@@ -3,10 +3,10 @@ import path from 'node:path';
 
 import fg from 'fast-glob';
 
-import Timer from './src/async/timer.js';
-import Logger from './src/console/logger.js';
-import { LogLevel } from './src/console/logLevel.js';
-import FsPoly from './src/polyfill/fsPoly.js';
+import Timer from '../src/async/timer.js';
+import Logger from '../src/console/logger.js';
+import { LogLevel } from '../src/console/logLevel.js';
+import FsPoly from '../src/polyfill/fsPoly.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
 

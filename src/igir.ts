@@ -9,9 +9,10 @@ import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
 import DriveSemaphore from './async/driveSemaphore.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
-import Logger from './console/logger.js';
+import type Logger from './console/logger.js';
 import MultiBar from './console/multiBar.js';
-import ProgressBar, { ProgressBarSymbol } from './console/progressBar.js';
+import type ProgressBar from './console/progressBar.js';
+import { ProgressBarSymbol } from './console/progressBar.js';
 import Package from './globals/package.js';
 import Temp from './globals/temp.js';
 import CandidateArchiveFileHasher from './modules/candidates/candidateArchiveFileHasher.js';
@@ -46,18 +47,18 @@ import ROMTrimProcessor from './modules/roms/romTrimProcessor.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
-import DAT from './types/dats/dat.js';
-import DATStatus from './types/datStatus.js';
+import type DAT from './types/dats/dat.js';
+import type DATStatus from './types/datStatus.js';
 import IgirException from './types/exceptions/igirException.js';
 import File from './types/files/file.js';
 import FileCache from './types/files/fileCache.js';
 import { ChecksumBitmask } from './types/files/fileChecksums.js';
 import FileFactory from './types/files/fileFactory.js';
-import IndexedFiles from './types/indexedFiles.js';
+import type IndexedFiles from './types/indexedFiles.js';
 import Options, { InputChecksumArchivesMode, LinkMode } from './types/options.js';
 import OutputFactory from './types/outputFactory.js';
-import Patch from './types/patches/patch.js';
-import WriteCandidate from './types/writeCandidate.js';
+import type Patch from './types/patches/patch.js';
+import type WriteCandidate from './types/writeCandidate.js';
 
 /**
  * The main class that coordinates file scanning, processing, and writing.

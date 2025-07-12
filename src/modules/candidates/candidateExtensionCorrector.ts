@@ -1,18 +1,20 @@
 import path from 'node:path';
 
-import { Semaphore } from 'async-mutex';
+import type { Semaphore } from 'async-mutex';
 
-import ProgressBar, { ProgressBarSymbol } from '../../console/progressBar.js';
-import DAT from '../../types/dats/dat.js';
-import ROM from '../../types/dats/rom.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../types/dats/dat.js';
+import type ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import FileSignature from '../../types/files/fileSignature.js';
-import Options, { FixExtension } from '../../types/options.js';
+import type FileFactory from '../../types/files/fileFactory.js';
+import type FileSignature from '../../types/files/fileSignature.js';
+import type Options from '../../types/options.js';
+import { FixExtension } from '../../types/options.js';
 import OutputFactory from '../../types/outputFactory.js';
-import ROMWithFiles from '../../types/romWithFiles.js';
-import WriteCandidate from '../../types/writeCandidate.js';
+import type ROMWithFiles from '../../types/romWithFiles.js';
+import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

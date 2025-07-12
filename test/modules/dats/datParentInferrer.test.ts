@@ -1,5 +1,5 @@
 import DATParentInferrer from '../../../src/modules/dats/datParentInferrer.js';
-import DAT from '../../../src/types/dats/dat.js';
+import type DAT from '../../../src/types/dats/dat.js';
 import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';

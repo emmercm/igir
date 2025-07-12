@@ -33,6 +33,8 @@ jobs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ref }}
       - id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -42,7 +44,6 @@ jobs:
               - 'packages/**'
               - 'src/**'
               - '*'
-          ref: ${{ env.ref }}
 
   node-compile:
     needs:

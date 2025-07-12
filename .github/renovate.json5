@@ -89,14 +89,16 @@
       commitMessageAction: 'pin',
       groupName: 'dependency ranges',
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      schedule: 'at any time',
+      recreateWhen: 'always'
     },
 
     // Perform version rollbacks immediately
     {
       matchUpdateTypes: ['rollback'],
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      schedule: 'at any time',
+      recreateWhen: 'always',
     },
 
     // Perform major version updates immediately
@@ -133,12 +135,12 @@
         matchUpdateTypes: ['patch', 'minor']
       },
       {
-        matchDepTypes: ['dependencies'],
+        matchDepTypes: ['dependencies', 'devDependencies'],
         // Be strict about Node.js version compatability (from package's `engines.node`)
         constraintsFiltering: 'strict',
         rollbackPrs: true,
         rollback: {
-          prPriority: 10,
+          prPriority: -10,
         },
       },
 
@@ -166,7 +168,6 @@
           '@types/graceful-fs',
           '@types/micromatch',
           '@types/semver',
-          '@types/tar',
           '@types/xml2js',
           '@types/yargs',
         ],
@@ -192,7 +193,6 @@
         ],
         matchUpdateTypes: ['major', 'minor'],
         schedule: 'at any time',
-        rebaseWhen: 'behind-base-branch'
       },
       {
         // Group Jest together because of peerDependencies
@@ -210,9 +210,8 @@
         // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)
         matchPackageNames: ['typescript'],
         groupName: 'TypeScript',
-        prPriority: -10,
+        prPriority: -20,
         schedule: 'at any time',
-        rebaseWhen: 'behind-base-branch'
       },
 
       // Everything else

@@ -10,8 +10,9 @@ import Igir from '../../../src/igir.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
 import { ZipReader } from '../../zip/index.js';
-import TZValidator, { ValidationResult, ValidationResultValue } from '../src/tzValidator.js';
-import { CompressionMethodValue } from '../src/tzWriter.js';
+import type { ValidationResultValue } from '../src/tzValidator.js';
+import TZValidator, { ValidationResult } from '../src/tzValidator.js';
+import type { CompressionMethodValue } from '../src/tzWriter.js';
 
 jest.setTimeout(5 * 60 * 1000); // 5min for QEMU cross-build testing
 

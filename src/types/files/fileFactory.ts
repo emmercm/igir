@@ -1,12 +1,12 @@
 import async from 'async';
 
-import Logger from '../../console/logger.js';
+import type Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
 import MultiBar from '../../console/multiBar.js';
 import URLPoly from '../../polyfill/urlPoly.js';
 import IgirException from '../exceptions/igirException.js';
-import Archive from './archives/archive.js';
-import ArchiveEntry from './archives/archiveEntry.js';
+import type Archive from './archives/archive.js';
+import type ArchiveEntry from './archives/archiveEntry.js';
 import ArchiveFile from './archives/archiveFile.js';
 import Chd from './archives/chd/chd.js';
 import ChdBinCue from './archives/chd/chdBinCue.js';
@@ -28,11 +28,11 @@ import ZipX from './archives/sevenZip/zipX.js';
 import Tar from './archives/tar.js';
 import Zip from './archives/zip.js';
 import File from './file.js';
-import FileCache from './fileCache.js';
+import type FileCache from './fileCache.js';
 import { ChecksumBitmask } from './fileChecksums.js';
-import FileSignature from './fileSignature.js';
-import ROMHeader from './romHeader.js';
-import ROMPadding from './romPadding.js';
+import type FileSignature from './fileSignature.js';
+import type ROMHeader from './romHeader.js';
+import type ROMPadding from './romPadding.js';
 
 export default class FileFactory {
   private readonly fileCache: FileCache;

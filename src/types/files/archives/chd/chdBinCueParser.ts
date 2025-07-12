@@ -3,21 +3,23 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import util from 'node:util';
 
-import { File as CueFile, parse, Track, TrackDataType } from '@gplane/cue';
+import type { File as CueFile, Track } from '@gplane/cue';
+import { parse, TrackDataType } from '@gplane/cue';
 
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../../polyfill/streamPoly.js';
 import IgirException from '../../../exceptions/igirException.js';
-import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../../fileChecksums.js';
+import type { ChecksumProps } from '../../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
-import Chd from './chd.js';
+import type Chd from './chd.js';
 
 /**
  * https://github.com/putnam/binmerge
  */
 export default class ChdBinCueParser {
-  public static async getArchiveEntriesBinCue<T extends Chd>(
+  static async getArchiveEntriesBinCue<T extends Chd>(
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
