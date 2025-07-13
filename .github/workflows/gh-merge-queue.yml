@@ -10,7 +10,7 @@ name: GitHub Merge Queue
 
 on:
   # A PR merge has occurred, or a PR is no longer eligible for the queue; move on to the next PR
-  pull_request:
+  pull_request_target:
     types:
       - closed
       - converted_to_draft
