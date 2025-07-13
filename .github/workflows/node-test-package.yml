@@ -84,6 +84,7 @@ jobs:
   npm-exec-comment:
     if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     needs:
+      - pkg-pr-new
       - test-npx
       - test-npm-install-global
     permissions:
