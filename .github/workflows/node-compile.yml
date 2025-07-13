@@ -78,6 +78,7 @@ jobs:
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
+          set -x
           echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
 
           DOCKER_ARCH=${{ matrix.docker_arch }}
@@ -208,5 +209,5 @@ jobs:
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
-          allowed-skips: node-compile
           jobs: ${{ toJSON(needs) }}
+          allowed-skips: node-compile

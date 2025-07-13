@@ -32,8 +32,8 @@ jobs:
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
-          allowed-skips: dry-run
           jobs: ${{ toJSON(needs) }}
+          allowed-skips: dry-run
 
   sync:
     if: github.event_name == 'push'
