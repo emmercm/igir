@@ -4,11 +4,6 @@ name: Codecov
 
 on:
   pull_request:
-    types:
-      # - edited  # PR's base branch was changed
-      - opened
-      - reopened
-      - synchronize  # PR's branch was edited (i.e. new commits)
   push:
     branches:
       - 'main'

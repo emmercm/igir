@@ -4,11 +4,6 @@ name: GitHub Pages
 
 on:
   pull_request:
-    types:
-      # - edited  # PR's base branch was changed
-      - opened
-      - reopened
-      - synchronize  # PR's branch was edited (i.e. new commits)
   release:
     types:
       - published
