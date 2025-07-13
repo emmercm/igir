@@ -14,11 +14,11 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  ref: ${{ inputs.ref || github.ref }}
+  ref: ${{ inputs.ref || github.head_ref }}
 
 jobs:
   path-filter:
