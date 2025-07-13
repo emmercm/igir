@@ -2,7 +2,7 @@ name: Node.js Test Package
 
 on:
   # pull_request_target required for pull-requests:write permission on fork PRs
-  pull_request:
+  pull_request_target:
     types:
       # Types run for by default
       - opened
