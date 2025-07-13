@@ -10,12 +10,6 @@ on:
       - synchronize
       # Merged
       - closed
-    paths:
-      - 'node-test-package.yml'
-      - 'packages/**'
-      - 'src/**'
-      - 'test/**'
-      - '*'
   push:
     branches:
       - 'main'
@@ -98,6 +92,7 @@ jobs:
   test-package-status-check:
     if: always()
     needs:
+      - pkg-pr-new
       - test-npx
       - test-npm-install-global
     runs-on: ubuntu-latest
@@ -105,6 +100,7 @@ jobs:
       - uses: re-actors/alls-green@release/v1
         with:
           jobs: ${{ toJSON(needs) }}
+          allowed-skips: test-npx, test-npm-install-global
 
   npm-exec-comment:
     if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
