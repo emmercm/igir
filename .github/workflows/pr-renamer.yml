@@ -75,11 +75,11 @@ jobs:
       # Required for `gh` CLI
       - uses: actions/checkout@v4
       - id: gh-pr-edit
-        run: gh pr edit "${{ github.event.pull_request.number }}" --title "${NEW_TITLE}"
         env:
           GH_TOKEN: ${{ github.token }}
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           NEW_TITLE: ${{ steps.title-massager.outputs.NEW_TITLE }}
+        run: gh pr edit "${{ github.event.pull_request.number }}" --title "${NEW_TITLE}"
       - if: '!cancelled()'
         uses: thollander/actions-comment-pull-request@v3
         with:
