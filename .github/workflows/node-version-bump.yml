@@ -36,6 +36,7 @@ jobs:
       # Bump the version and commit to the default branch
       - id: bump-and-commit
         run: |
+          set -x
           npm run "bump:${{ inputs.increment }}"
           git add --all
 

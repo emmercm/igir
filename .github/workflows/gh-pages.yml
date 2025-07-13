@@ -103,8 +103,8 @@ jobs:
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
-          allowed-skips: lint, build
           jobs: ${{ toJSON(needs) }}
+          allowed-skips: lint, build
 
   deploy:
     if: ${{ github.event_name != 'pull_request' }}
