@@ -37,6 +37,7 @@ jobs:
       # Required for `gh` CLI
       - uses: actions/checkout@v4
       - run: |
+          set -x
           pr_search="sort:created-asc"
 
           echo "PRs found:"
@@ -70,6 +71,7 @@ jobs:
       # Required for `gh` CLI
       - uses: actions/checkout@v4
       - run: |
+          set -x
           author="app/renovate"
           pr_search="author:${author} sort:created-asc -label:${{ env.renovate_rebase_label }}"
 

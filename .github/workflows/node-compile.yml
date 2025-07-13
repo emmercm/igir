@@ -78,6 +78,7 @@ jobs:
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
+          set -x
           echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
 
           DOCKER_ARCH=${{ matrix.docker_arch }}

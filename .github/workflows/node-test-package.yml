@@ -85,7 +85,6 @@ jobs:
           npm install --global "${{ needs.pkg-pr-new.outputs.package_url }}"
           PATH="$(npm get prefix --global)/bin:$PATH"
           export PATH
-          echo "PATH=${PATH}"
           igir --help
 
   # !!! This check should be required by GitHub !!!
