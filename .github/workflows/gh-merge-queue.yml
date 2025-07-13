@@ -9,13 +9,7 @@
 name: GitHub Merge Queue
 
 on:
-  # A PR merge has occurred, move on to the next PR
-  push:
-    branches:
-      - 'main'
-      - '*feature*'
-      - '**/*feature*'
-  # A PR is no longer eligible for the queue, and it might have been at the head
+  # A PR merge has occurred, or a PR is no longer eligible for the queue; move on to the next PR
   pull_request:
     types:
       - closed
