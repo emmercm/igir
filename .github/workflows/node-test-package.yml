@@ -4,10 +4,11 @@ on:
   # pull_request_target required for pull-requests:write permission on fork PRs
   pull_request:
     types:
-      # - edited  # PR's base branch was changed
+      # Types run for by default
       - opened
       - reopened
-      - synchronize  # PR's branch was edited (i.e. new commits)
+      - synchronize
+      # Merged
       - closed
     paths:
       - 'node-test-package.yml'
@@ -87,7 +88,8 @@ jobs:
       - shell: bash
         run: |
           npm install --global "${{ needs.pkg-pr-new.outputs.package_url }}"
-          export PATH="$(npm get prefix --global):$PATH"
+          PATH="$(npm get prefix --global):$PATH"
+          export PATH
           igir --help
 
   # !!! This check should be required by GitHub !!!
