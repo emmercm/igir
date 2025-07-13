@@ -57,7 +57,7 @@ jobs:
           - ubuntu-latest
           - ubuntu-24.04-arm
           - macos-latest
-          - macos-latest-large
+          - macos-13
           - windows-latest
           - windows-11-arm
     steps:
@@ -79,7 +79,7 @@ jobs:
           - ubuntu-latest
           - ubuntu-24.04-arm
           - macos-latest
-          - macos-latest-large
+          - macos-13
           - windows-latest
           - windows-11-arm
     steps:
