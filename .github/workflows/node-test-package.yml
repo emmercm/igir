@@ -84,8 +84,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
-      - run: |
+      - shell: bash
+        run: |
           npm install --global "${{ needs.pkg-pr-new.outputs.package_url }}"
+          export PATH="$(npm get prefix --global):$PATH"
           igir --help
 
   # !!! This check should be required by GitHub !!!
