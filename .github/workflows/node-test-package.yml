@@ -47,10 +47,20 @@ jobs:
     if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     needs:
       - pkg-pr-new
-    permissions:
-      pull-requests: write
-    runs-on: ubuntu-latest
+    name: test-npx (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-latest
+          - macos-latest-large
+          - windows-latest
+          - windows-11-arm
     steps:
+      - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
       - run: |
           npx --yes "${{ needs.pkg-pr-new.outputs.package_url }}" --help
@@ -59,10 +69,20 @@ jobs:
     if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     needs:
       - pkg-pr-new
-    permissions:
-      pull-requests: write
-    runs-on: ubuntu-latest
+    name: test-npm-install-global (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - macos-latest
+          - macos-latest-large
+          - windows-latest
+          - windows-11-arm
     steps:
+      - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
       - run: |
           npm install --global "${{ needs.pkg-pr-new.outputs.package_url }}"
