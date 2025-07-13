@@ -87,6 +87,7 @@ jobs:
       - uses: volta-cli/action@v4
       - shell: bash
         run: |
+          set -x
           npm install --global "${{ needs.pkg-pr-new.outputs.package_url }}"
           PATH="$(npm get prefix --global):$PATH"
           export PATH
