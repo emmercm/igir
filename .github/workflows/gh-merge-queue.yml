@@ -40,7 +40,7 @@ jobs:
           pr_search="sort:created-asc"
 
           echo "PRs found:"
-          gh pr list --search "${pr_search}" --json number,name --jq '.[] | [.number, .name] | @tsv' | cat
+          gh pr list --search "${pr_search}" --json number,title --jq '.[] | [.number, .title] | @tsv' | cat
 
           eligible_prs="$(gh pr list --search "${pr_search}" --json number,isDraft,mergeable,mergeStateStatus,autoMergeRequest --jq '.[] | select(.isDraft==false and .mergeable=="MERGEABLE" and .mergeStateStatus=="BEHIND" and .autoMergeRequest!=null) | .number')"
           if [[ "${eligible_prs}" == "" ]]; then
@@ -74,7 +74,7 @@ jobs:
           pr_search="author:${author} sort:created-asc -label:${{ env.renovate_rebase_label }}"
 
           echo "Renovate PRs found:"
-          gh pr list --search "${pr_search}" --json number,name --jq '.[] | [.number, .name] | @tsv' | cat
+          gh pr list --search "${pr_search}" --json number,title --jq '.[] | [.number, .title] | @tsv' | cat
 
           eligible_prs="$(gh pr list --search "${pr_search}" --json number,isDraft,mergeable,autoMergeRequest --jq '.[] | select(.isDraft==false and .mergeable=="CONFLICTING" and .autoMergeRequest!=null) | .number')"
           if [[ "${eligible_prs}" == "" ]]; then
