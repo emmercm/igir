@@ -103,6 +103,6 @@ jobs:
       # Required for `gh` CLI
       - uses: actions/checkout@v4
       - run: |
-          gh pr edit "${number}" --remove-label "${{ env.renovate_rebase_label }}"
+          gh pr edit "${{ github.event.pull_request.number }}" --remove-label "${{ env.renovate_rebase_label }}"
         env:
           GH_TOKEN: ${{ github.token }}
