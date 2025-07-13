@@ -45,8 +45,11 @@ jobs:
       # DON'T prebuild if this PR is a version bump PR
       - id: branch-filter
         shell: bash
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          echo "VERSION_PR=$(if [[ "${{ github.event.pull_request.head.ref }} " =~ ^([^/]+/)?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo true; else echo false; fi)" >> "${GITHUB_OUTPUT}"
+          echo "VERSION_PR=$(if [[ "${HEAD_REF}" =~ ^([^/]+/)?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo true; else echo false; fi)" >> "${GITHUB_OUTPUT}"
       # DON'T prebuild if the last commit was prebuilds
       - id: commit-filter
         uses: dorny/paths-filter@v3
