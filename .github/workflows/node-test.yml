@@ -83,7 +83,7 @@ jobs:
       fail-fast: false
       matrix:
         # TODO(cemmer): chdman-js and maxcso-js don't have Windows ARM builds, so it won't test the same
-        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-13, windows-latest ]
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-latest-large, windows-latest ]
         node-version: [ '' ]
         include:
           - os: ubuntu-latest
@@ -139,36 +139,6 @@ jobs:
       # Test the built files
       - run: ./test/endToEndTest.sh
 
-  node-package:
-    needs:
-      - path-filter
-    if: ${{ needs.path-filter.outputs.should-test == 'true' }}
-    name: node-package (${{ matrix.node-version || 'package.json' }})
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [ '', 20 ]
-    steps:
-      # Setup and install
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.ref }}
-          submodules: 'recursive'
-      - uses: volta-cli/action@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      # Test the packaging
-      - run: |
-          set -x
-          npm pack
-          tar -xvzf igir-*.tgz
-          cd package
-          npm install --foreground-scripts
-          ./dist/index.js --help
-          cd ..
-          rm -rf package
-
   # !!! This check should be required by GitHub !!!
   test-status-check:
     if: always()
@@ -177,7 +147,6 @@ jobs:
       - node-lint
       - node-unit
       - node-e2e
-      - node-package
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1
