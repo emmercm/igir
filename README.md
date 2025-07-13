@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v4.0.2
+     @@   @@        @@   @@   @@       @@    v4.1.0
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -173,10 +173,13 @@ link command options:
                           te                                                         [boolean]
 
 ROM header options:
-      --header          Glob pattern of input filenames to force header processing for[string]
+      --header          Glob pattern of input filenames to force header detection for [string]
   -H, --remove-headers  Remove known headers from ROMs, optionally limited to a list of comma-
                         separated file extensions (supported: .a78, .fds, .lnx, .nes, .smc)
                                                                                       [string]
+
+Trimmed ROM options:
+      --trimmed-glob  Glob pattern of input filenames to force trimming detection for [string]
 
 ROM set options (requires DATs):
       --merge-roms             ROM merge/split mode (requires DATs with parent/clone informati
