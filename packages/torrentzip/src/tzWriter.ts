@@ -11,7 +11,8 @@ import type { ProgressCallback } from './progressTransform.js';
 import ProgressTransform from './progressTransform.js';
 import UncompressedTransform from './uncompressedTransform.js';
 import ZlibDeflateTransform from './zlibDeflateTransform.js';
-import ZstdCompressTransform from './zstdCompressTransform.js';
+import ZstdNonThreadedCompressTransform from './zstdNonThreadedCompressTransform.js';
+import ZstdThreadedCompressTransform from './zstdThreadedCompressTransform.js';
 
 export const CompressionMethod = {
   DEFLATE: 'DEFLATE',
@@ -103,14 +104,20 @@ export default class TZWriter {
 
     // Write the file data
     const uncompressedTransform = new UncompressedTransform();
+    let compressorTransform: stream.Transform;
+    if (this.compressionMethod === CompressionMethod.DEFLATE) {
+      compressorTransform = new ZlibDeflateTransform();
+    } else if (uncompressedSize === 0) {
+      compressorTransform = new ZstdNonThreadedCompressTransform();
+    } else {
+      compressorTransform = new ZstdThreadedCompressTransform(compressorThreads);
+    }
     const compressedTransform = new CompressedTransform();
     await stream.promises.pipeline(
       readable,
       uncompressedTransform,
       new ProgressTransform(progressCallback),
-      this.compressionMethod === CompressionMethod.DEFLATE
-        ? new ZlibDeflateTransform()
-        : new ZstdCompressTransform(compressorThreads),
+      compressorTransform,
       compressedTransform,
       fs.createWriteStream(os.devNull, {
         fd: this.fileHandle.fd,

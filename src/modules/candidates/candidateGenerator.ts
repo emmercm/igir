@@ -19,6 +19,7 @@ import ChdBinCue from '../../types/files/archives/chd/chdBinCue.js';
 import NkitIso from '../../types/files/archives/nkitIso.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
+import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
 import type IndexedFiles from '../../types/indexedFiles.js';
 import type Options from '../../types/options.js';
 import { ZipFormat } from '../../types/options.js';
@@ -112,10 +113,21 @@ export default class CandidateGenerator extends Module {
       ...(this.options.getExcludeDisks() ? [] : game.getDisks()),
     ];
 
-    const romsAndInputFiles = gameRoms.map((rom): [ROM, File[]] => [
-      rom,
-      indexedFiles.findFiles(rom) ?? [],
-    ]);
+    const romsAndInputFiles = gameRoms.map((rom): [ROM, File[]] => {
+      if (
+        !this.options.shouldLink() &&
+        rom.getSize() === 0 &&
+        (rom.getCrc32() === '00000000' ||
+          rom.getMd5() === 'd41d8cd98f00b204e9800998ecf8427e' ||
+          rom.getSha1() === 'da39a3ee5e6b4b0d3255bfef95601890afd80709' ||
+          rom.getSha256() === 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+      ) {
+        // It's an empty file, we always know how to create those
+        return [rom, [ZeroSizeFile.getInstance()]];
+      }
+
+      return [rom, indexedFiles.findFiles(rom) ?? []];
+    });
     const romsAndLegalInputFiles = this.filterLegalInputFilesForGame(dat, game, romsAndInputFiles);
     const romsToOptimalInputFile = this.findOptimalInputFileForGame(
       dat,

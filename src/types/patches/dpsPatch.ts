@@ -17,7 +17,7 @@ export default class DPSPatch extends Patch {
   }
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
+    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       patchFile.skipNext(64); // patch name
       patchFile.skipNext(64); // patch author
       patchFile.skipNext(64); // patch version

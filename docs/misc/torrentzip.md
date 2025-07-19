@@ -1,3 +1,8 @@
+---
+search:
+  boost: 0.5
+---
+
 # TorrentZip Specification
 
 !!! note
@@ -58,16 +63,16 @@ For TorrentZip archives to be deterministic (compress the same every time), they
 
 **Directories:**
 
-- Directory entries are permitted (those of size 0 and CRC-32 of `00000000`), but should only be included when its existence can't be inferred from another file entry.
+- Directory entries are permitted (entries with a `/` at the end of the filename, an uncompressed size of 0, and an uncompressed CRC-32 of `00000000`), but should only be included when its existence can't be inferred from another file entry.
 
-  For example, `b/` is a legal directory entry here:
+  For example, `b/` is a legal directory entry here because it has no files inside of it:
 
   ```text
   a/a1.rom
   b/
   ```
 
-  but `a/` is not a legal directory here:
+  but `a/` is not a legal directory here as its existence can be inferred from the file `a/a1.rom`:
 
   ```text
   a/
@@ -97,6 +102,7 @@ RVZSTD:
   - `ZSTD_c_targetLength`: 256 (bytes)
   - `ZSTD_c_strategy`: `ZSTD_btultra2`
 - Using streaming compression (`ZSTD_compressStream2()`), with `ZSTD_c_nbWorkers` >0
+  - _Except_ if the uncompressed file is empty (is of size 0), in which case `ZSTD_compress()` should be used (no streaming and no workers/threads)
 - With no other options set (the defaults are used), such as:
   - Long-distance matching (`ZSTD_c_enableLongDistanceMatching` default OFF, `ZSTD_c_ldm*` options)
   - Frame checksums (`ZSTD_c_checksumFlag` default OFF)

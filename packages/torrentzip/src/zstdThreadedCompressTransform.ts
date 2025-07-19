@@ -4,9 +4,9 @@ import type { ZstdThreadedCompressorInstance } from '../../zstd-1.5.5/index.js';
 import zstd from '../../zstd-1.5.5/index.js';
 
 /**
- * A Transform stream that compresses data using zstd with multithreading support.
+ * A Transform stream that compresses data using zstd streaming/asynchronous compression.
  */
-export default class ZstdCompressTransform extends stream.Transform {
+export default class ZstdThreadedCompressTransform extends stream.Transform {
   private readonly compressor: ZstdThreadedCompressorInstance;
   private compressorEnded = false;
 

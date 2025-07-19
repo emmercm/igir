@@ -332,8 +332,46 @@ Napi::Value ThreadedCompressor::End(const Napi::CallbackInfo& info) {
     return deferred->Promise();
 }
 
+
+// Synchronous non-threaded compression
+Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    if (info.Length() < 2 || !info[0].IsBuffer() || !info[1].IsNumber()) {
+        Napi::TypeError::New(env, "Expected (Buffer input, Number compressionLevel)").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    Napi::Buffer<uint8_t> inputBuffer = info[0].As<Napi::Buffer<uint8_t>>();
+    int compressionLevel = info[1].As<Napi::Number>().Int32Value();
+
+    if (compressionLevel < 1 || compressionLevel > 22) {
+        Napi::RangeError::New(env, "Compression level must be between 1 and 22").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    size_t bound = ZSTD_compressBound(inputBuffer.Length());
+    std::vector<uint8_t> compressed(bound);
+
+    size_t compressedSize = ZSTD_compress(
+        compressed.data(),
+        compressed.size(),
+        inputBuffer.Data(),
+        inputBuffer.Length(),
+        compressionLevel
+    );
+
+    if (ZSTD_isError(compressedSize)) {
+        Napi::Error::New(env, std::string("Compression error: ") + ZSTD_getErrorName(compressedSize)).ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+
+    return Napi::Buffer<uint8_t>::Copy(env, compressed.data(), compressedSize);
+}
+
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     ThreadedCompressor::Init(env, exports);
+    exports.Set("compressNonThreaded", Napi::Function::New(env, CompressNonThreaded));
     exports.Set("getZstdVersion", Napi::Function::New(env, GetZstdVersion));
     return exports;
 }
