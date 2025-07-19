@@ -3039,12 +3039,12 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 <p><strong>Directories:</strong></p>
 <ul>
 <li>
-<p>Directory entries are permitted (those of size 0 and CRC-32 of <code>00000000</code>), but should only be included when its existence can't be inferred from another file entry.</p>
-<p>For example, <code>b/</code> is a legal directory entry here:</p>
+<p>Directory entries are permitted (entries with a <code>/</code> at the end of the filename, an uncompressed size of 0, and an uncompressed CRC-32 of <code>00000000</code>), but should only be included when its existence can't be inferred from another file entry.</p>
+<p>For example, <code>b/</code> is a legal directory entry here because it has no files inside of it:</p>
 <div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>a/a1.rom
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>b/
 </span></code></pre></div>
-<p>but <code>a/</code> is not a legal directory here:</p>
+<p>but <code>a/</code> is not a legal directory here as its existence can be inferred from the file <code>a/a1.rom</code>:</p>
 <div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>a/
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>a/a1.rom
 </span></code></pre></div>
@@ -3074,7 +3074,10 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 <li><code>ZSTD_c_strategy</code>: <code>ZSTD_btultra2</code></li>
 </ul>
 </li>
-<li>Using streaming compression (<code>ZSTD_compressStream2()</code>), with <code>ZSTD_c_nbWorkers</code> &gt;0</li>
+<li>Using streaming compression (<code>ZSTD_compressStream2()</code>), with <code>ZSTD_c_nbWorkers</code> &gt;0<ul>
+<li><em>Except</em> if the uncompressed file is empty (is of size 0), in which case <code>ZSTD_compress()</code> should be used (no streaming and no workers/threads)</li>
+</ul>
+</li>
 <li>With no other options set (the defaults are used), such as:<ul>
 <li>Long-distance matching (<code>ZSTD_c_enableLongDistanceMatching</code> default OFF, <code>ZSTD_c_ldm*</code> options)</li>
 <li>Frame checksums (<code>ZSTD_c_checksumFlag</code> default OFF)</li>
@@ -3412,7 +3415,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 2, 2025 01:18:34 UTC">July 2, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2025 20:26:42 UTC">July 19, 2025</span>
   </span>
 
     
