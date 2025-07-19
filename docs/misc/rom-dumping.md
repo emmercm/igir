@@ -1,3 +1,8 @@
+---
+search:
+  boost: 0.5
+---
+
 # ROM Dumping
 
 !!! danger

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream, { PassThrough } from 'node:stream';
 
 import { jest } from '@jest/globals';
 
@@ -26,6 +26,10 @@ const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [CompressionMethod.DEFLATE]: ValidationResult.VALID_TORRENTZIP,
   [CompressionMethod.ZSTD]: ValidationResult.VALID_RVZSTD,
 } as const;
+
+if (!(await FsPoly.exists(Temp.getTempDir()))) {
+  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+}
 
 test.each([
   [
@@ -134,7 +138,6 @@ const assertSingleFileZip = async (
       os.cpus().length,
     );
     await tempZip.finalize();
-    await tempZip.close();
 
     // Validate
     await expect(TZValidator.validate(new ZipReader(tempZipPath))).resolves.toEqual(
@@ -225,6 +228,40 @@ test.each([
     expectedZipMd5: string,
   ) => {
     await assertSingleFileZip('small', fileSize, expectedRawMd5, compressionMethod, expectedZipMd5);
+  },
+);
+
+test.each([
+  [['one/'], CompressionMethod.DEFLATE, 'bcd06b377b442dc43e56c5e75a641ee7'],
+  [['one/'], CompressionMethod.ZSTD, 'b3faf018ff2a10c5809819eabd841e48'],
+  [['one/', 'two/'], CompressionMethod.DEFLATE, 'c9c03c1fa878389cd3f573610c6ceee6'],
+  [['one/', 'two/'], CompressionMethod.ZSTD, '2c9a080899c748b07959a62b3f8a0abb'],
+  [['parent/child/'], CompressionMethod.DEFLATE, 'a436823832cca61bbe9349ea35281b83'],
+  [['parent/child/'], CompressionMethod.ZSTD, '2d4cb1f99cb28a5dc9c83defa96d32a6'],
+])(
+  'should compress directories correctly: %s',
+  async (inputDirectories, compressionMethod: CompressionMethodValue, expectedZipMd5) => {
+    const tempZipPath = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'dir.zip'));
+    try {
+      const tempZip = await TZWriter.open(tempZipPath, compressionMethod);
+      for (const inputDirectory of inputDirectories) {
+        const readable = new stream.Readable({
+          read(): void {
+            this.push(Buffer.alloc(0));
+            // eslint-disable-next-line unicorn/no-null
+            this.push(null);
+          },
+        });
+        await tempZip.addStream(readable, inputDirectory, 0, os.cpus().length);
+      }
+      await tempZip.finalize();
+
+      expect((await FileChecksums.hashFile(tempZipPath, ChecksumBitmask.MD5)).md5).toEqual(
+        expectedZipMd5,
+      );
+    } finally {
+      await FsPoly.rm(tempZipPath, { force: true });
+    }
   },
 );
 
