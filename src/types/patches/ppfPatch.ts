@@ -16,7 +16,7 @@ class PPFHeader {
     this.undoDataAvailable = undoDataAvailable;
   }
 
-  static async fromFilePoly(inputRomFile: File, patchFile: IOFile): Promise<PPFHeader> {
+  static async fromIOFile(inputRomFile: File, patchFile: IOFile): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
     if (!header.startsWith(PPFHeader.FILE_SIGNATURE.toString())) {
       throw new IgirException(`PPF patch header is invalid: ${patchFile.getPathLike().toString()}`);
@@ -73,8 +73,8 @@ export default class PPFPatch extends Patch {
   }
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
-      const header = await PPFHeader.fromFilePoly(inputRomFile, patchFile);
+    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+      const header = await PPFHeader.fromIOFile(inputRomFile, patchFile);
 
       return PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header);
     });

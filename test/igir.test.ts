@@ -193,6 +193,7 @@ describe('with explicit DATs', () => {
         [path.join('Headerless', 'allpads.nes'), '6339abe6'],
         [path.join('Headerless', 'color_test.nes'), 'c9c1b7aa'],
         [`${path.join('Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
+        [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [
@@ -274,6 +275,7 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
+        ['Empty.rom', '00000000'],
         // Fizzbuzz.nes is explicitly missing!
         ['Foobar.lnx', 'b22c9747'],
         ['GameCube-240pSuite-1.19.gcz|GameCube-240pSuite-1.19.iso', '5eb3d183'],
@@ -391,6 +393,7 @@ describe('with explicit DATs', () => {
         ],
         ['one.rom', '00000000'], // explicitly not deleted, it is not in an extension subdirectory
         [`${path.join('rar', 'Headered', 'LCDTestROM.lnx.rar')}|LCDTestROM.lnx`, '2d251538'],
+        [path.join('rom', 'One', 'Empty.rom'), '00000000'],
         [path.join('rom', 'One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('rom', 'One', 'One Three', 'Three.rom'), 'ff46c5d8'],
         [path.join('rom', 'One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
@@ -460,6 +463,16 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
+        [
+          path.join(
+            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
+            'SD2SNES',
+            '4 SPC',
+            '@Place SPC Pack Here',
+          ),
+          '00000000',
+        ],
+        [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
@@ -503,6 +516,16 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
+        [
+          path.join(
+            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
+            'SD2SNES',
+            '4 SPC',
+            '@Place SPC Pack Here',
+          ),
+          '00000000',
+        ],
+        [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
@@ -551,6 +574,7 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'C', 'C01173E.rom'), 'dfaebe28'],
         [path.join('igir combined', 'C', 'color_test.nes'), 'c9c1b7aa'],
         [path.join('igir combined', 'D', 'diagnostic_test_cartridge.a78'), 'f6cc9b1c'],
+        [path.join('igir combined', 'E', 'Empty.rom'), '00000000'],
         [path.join('igir combined', 'F', 'fds_joypad_test.fds'), '1e58456d'],
         [path.join('igir combined', 'F', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('igir combined', 'F', 'Foobar.lnx'), 'b22c9747'],
@@ -681,6 +705,16 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
+        [
+          path.join(
+            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
+            'SD2SNES',
+            '4 SPC',
+            '@Place SPC Pack Here',
+          ),
+          '00000000',
+        ],
+        [path.join('One', 'Empty.rom'), '00000000'],
         // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
       ]);
@@ -701,6 +735,16 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
+        [
+          path.join(
+            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
+            'SD2SNES',
+            '4 SPC',
+            '@Place SPC Pack Here',
+          ),
+          '00000000',
+        ],
+        [path.join('One', 'Empty.rom'), '00000000'],
         // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
       ]);
@@ -739,6 +783,7 @@ describe('with explicit DATs', () => {
         [`${path.join('Headerless', 'fds_joypad_test.zip')}|fds_joypad_test.fds`, '3ecbac61'],
         [`${path.join('Headerless', 'LCDTestROM.zip')}|LCDTestROM.lyx`, '42583855'],
         [`${path.join('Headerless', 'speed_test_v51.zip')}|speed_test_v51.sfc`, '8beffd94'],
+        [`${path.join('One', 'Empty.zip')}|Empty.rom`, '00000000'],
         [`${path.join('One', 'Fizzbuzz.zip')}|Fizzbuzz.nes`, '370517b5'],
         [`${path.join('One', 'Foobar.zip')}|Foobar.lnx`, 'b22c9747'],
         [
@@ -860,6 +905,7 @@ describe('with explicit DATs', () => {
         ['Headerless.zip|fds_joypad_test.fds', '3ecbac61'],
         ['Headerless.zip|LCDTestROM.lyx', '42583855'],
         ['Headerless.zip|speed_test_v51.sfc', '8beffd94'],
+        ['One.zip|Empty.rom', '00000000'],
         ['One.zip|Fizzbuzz.nes', '370517b5'],
         ['One.zip|Foobar.lnx', 'b22c9747'],
         ['One.zip|GameCube-240pSuite-1.19.iso', '5eb3d183'],
@@ -952,6 +998,7 @@ describe('with explicit DATs', () => {
           `${path.join('Headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc -> ${path.join('<input>', 'headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`,
           '8beffd94',
         ],
+        [`${path.join('One', 'Empty.rom')} -> ${path.join('<input>', 'empty.rom')}`, '00000000'],
         [
           `${path.join('One', 'Fizzbuzz.nes')} -> ${path.join('<input>', 'raw', 'fizzbuzz.nes')}`,
           '370517b5',
@@ -1124,6 +1171,7 @@ describe('with explicit DATs', () => {
         [path.join('Headerless', 'fds_joypad_test.fds'), '3ecbac61'],
         [path.join('Headerless', 'LCDTestROM.lyx'), '42583855'],
         [path.join('Headerless', 'speed_test_v51.sfc'), '8beffd94'],
+        [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('One', 'GameCube-240pSuite-1.19.iso'), '5eb3d183'],
@@ -1489,7 +1537,7 @@ describe('with inferred DATs', () => {
         path.join('7z', 'invalid.7z'),
         path.join('chd', 'GD-ROM.chd'),
         path.join('cso', 'UMD.cso'),
-        'empty.rom',
+        // Note: empty.rom is missing because we don't use input files to write empty files
         'foobar.lnx',
         path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
         path.join('headered', 'LCDTestROM.lnx.rar'),
@@ -1899,6 +1947,7 @@ describe('with inferred DATs', () => {
         'best.rom',
         'color_test.nes',
         'diagnostic_test_cartridge.a78',
+        'empty.rom',
         'fds_joypad_test.fds',
         'five.rom',
         'fizzbuzz.nes',

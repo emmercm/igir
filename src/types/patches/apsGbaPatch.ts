@@ -15,7 +15,7 @@ export default class APSGBAPatch extends Patch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
 
-    await file.extractToTempFilePoly('r', async (patchFile) => {
+    await file.extractToTempIOFile('r', async (patchFile) => {
       patchFile.seek(APSGBAPatch.FILE_SIGNATURE.length);
       patchFile.skipNext(4); // original file size
       targetSize = (await patchFile.readNext(4)).readUInt32LE();
@@ -25,7 +25,7 @@ export default class APSGBAPatch extends Patch {
   }
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
+    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(APSGBAPatch.FILE_SIGNATURE.length);
       if (!header.equals(APSGBAPatch.FILE_SIGNATURE)) {
         throw new IgirException(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);

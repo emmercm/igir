@@ -271,10 +271,10 @@ export default class File implements FileProps {
   getChecksumBitmask(): number {
     return (
       this.checksumBitmask ??
-      (this.getCrc32()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.CRC32 : 0) |
-        (this.getMd5()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.MD5 : 0) |
-        (this.getSha1()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA1 : 0) |
-        (this.getSha256()?.replace(/^0+|0+$/, '') ? ChecksumBitmask.SHA256 : 0)
+      (this.getCrc32() ? ChecksumBitmask.CRC32 : 0) |
+        (this.getMd5() ? ChecksumBitmask.MD5 : 0) |
+        (this.getSha1() ? ChecksumBitmask.SHA1 : 0) |
+        (this.getSha256() ? ChecksumBitmask.SHA256 : 0)
     );
   }
 
@@ -292,7 +292,7 @@ export default class File implements FileProps {
     if (!(await FsPoly.exists(tempDir))) {
       await FsPoly.mkdir(tempDir, { recursive: true });
     }
-    await FsPoly.copyFile(this.getFilePath(), tempFile);
+    await this.extractToFile(tempFile);
 
     try {
       return await callback(tempFile);
@@ -301,16 +301,16 @@ export default class File implements FileProps {
     }
   }
 
-  async extractToTempFilePoly<T>(
+  async extractToTempIOFile<T>(
     flags: OpenMode,
-    callback: (filePoly: IOFile) => T | Promise<T>,
+    callback: (ioFile: IOFile) => T | Promise<T>,
   ): Promise<T> {
     return this.extractToTempFile(async (tempFile) => {
-      const filePoly = await IOFile.fileFrom(tempFile, flags);
+      const ioFile = await IOFile.fileFrom(tempFile, flags);
       try {
-        return await callback(filePoly);
+        return await callback(ioFile);
       } finally {
-        await filePoly.close();
+        await ioFile.close();
       }
     });
   }
