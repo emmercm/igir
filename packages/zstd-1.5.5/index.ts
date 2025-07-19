@@ -37,8 +37,13 @@ interface ZstdBinding {
   ) => ZstdThreadedCompressorInstance;
 
   /**
+   * Compress data without using threads.
+   */
+  compressNonThreaded: (input: Buffer, compressionLevel: number) => Buffer;
+
+  /**
    * Returns the version of the zstd library.
-   * @returns Version string (e.g. "1.5.2")
+   * @returns Version string (e.g. "1.5.5")
    */
   getZstdVersion: () => string;
 }

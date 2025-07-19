@@ -330,23 +330,18 @@ export default class CandidateWriter extends Module {
       if (
         actualFile.getCrc32() &&
         expectedFile.getCrc32() &&
-        expectedFile.getCrc32() !== '00000000' &&
         actualFile.getCrc32() !== expectedFile.getCrc32()
       ) {
         return `entry '${entryPath}' has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
       }
 
       // Check size
-      if (actualFile.getCrc32() && expectedFile.getCrc32()) {
-        if (!expectedFile.getSize()) {
-          this.progressBar.logWarn(
-            `${dat.getName()}: ${candidate.getName()}: ${expectedFile.toString()}: can't test, expected size is unknown`,
-          );
-          continue;
-        }
-        if (actualFile.getSize() !== expectedFile.getSize()) {
-          return `entry '${entryPath}' has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
-        }
+      if (
+        actualFile.getCrc32() &&
+        expectedFile.getCrc32() &&
+        actualFile.getSize() !== expectedFile.getSize()
+      ) {
+        return `entry '${entryPath}' has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
       }
     }
 
@@ -741,23 +736,14 @@ export default class CandidateWriter extends Module {
     if (
       actualFile.getCrc32() &&
       expectedFile.getCrc32() &&
-      expectedFile.getCrc32() !== '00000000' &&
       actualFile.getCrc32() !== expectedFile.getCrc32()
     ) {
       return `has the CRC32 ${actualFile.getCrc32()}, expected ${expectedFile.getCrc32()}`;
     }
 
     // Check size
-    if (actualFile.getCrc32()) {
-      if (actualFile.getCrc32() && !expectedFile.getSize()) {
-        this.progressBar.logWarn(
-          `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: can't test, expected size is unknown`,
-        );
-        return undefined;
-      }
-      if (actualFile.getSize() !== expectedFile.getSize()) {
-        return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
-      }
+    if (actualFile.getCrc32() && actualFile.getSize() !== expectedFile.getSize()) {
+      return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
     }
 
     this.progressBar.logTrace(

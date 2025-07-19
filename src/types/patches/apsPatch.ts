@@ -12,7 +12,7 @@ export default abstract class APSPatch extends Patch {
   static readonly FILE_SIGNATURE = Buffer.from('APS1');
 
   static async patchFrom(file: File): Promise<Patch> {
-    return file.extractToTempFilePoly('r', async (patchFile) => {
+    return file.extractToTempIOFile('r', async (patchFile) => {
       patchFile.seek(APSPatch.FILE_SIGNATURE.length);
 
       const byteFive = (await patchFile.readNext(1)).toString();
