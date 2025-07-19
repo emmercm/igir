@@ -42,7 +42,7 @@ export default class NinjaPatch extends Patch {
   }
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
+    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
         throw new IgirException(`NINJA patch header is invalid: ${this.getFile().toString()}`);

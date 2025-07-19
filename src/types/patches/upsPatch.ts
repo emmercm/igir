@@ -23,7 +23,7 @@ export default class UPSPatch extends Patch {
     let crcAfter = '';
     let targetSize = 0;
 
-    await file.extractToTempFilePoly('r', async (patchFile) => {
+    await file.extractToTempIOFile('r', async (patchFile) => {
       patchFile.seek(UPSPatch.FILE_SIGNATURE.length);
       await Patch.readUpsUint(patchFile); // source size
       targetSize = await Patch.readUpsUint(patchFile);
@@ -52,7 +52,7 @@ export default class UPSPatch extends Patch {
   }
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
+    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
         throw new IgirException(`UPS patch header is invalid: ${this.getFile().toString()}`);

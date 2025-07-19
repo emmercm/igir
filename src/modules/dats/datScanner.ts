@@ -149,7 +149,6 @@ export default class DATScanner extends Scanner {
       })
     )
       .filter((dat) => dat !== undefined)
-      .map((dat) => this.sanitizeDat(dat))
       .sort((a, b) => a.getName().localeCompare(b.getName()));
   }
 
@@ -563,27 +562,5 @@ export default class DATScanner extends Scanner {
     }
 
     return false;
-  }
-
-  private sanitizeDat(dat: DAT): DAT {
-    const games = dat.getGames().map((game) => {
-      const roms = game
-        .getRoms()
-        // Games have to have at least one ROM with a non-empty checksum
-        .filter(
-          (rom) =>
-            this.options.shouldDir2Dat() ||
-            ((rom.getCrc32() === undefined || rom.getCrc32() !== '00000000') &&
-              (rom.getMd5() === undefined || rom.getMd5() !== 'd41d8cd98f00b204e9800998ecf8427e') &&
-              (rom.getSha1() === undefined ||
-                rom.getSha1() !== 'da39a3ee5e6b4b0d3255bfef95601890afd80709') &&
-              (rom.getSha256() === undefined ||
-                rom.getSha256() !==
-                  'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')),
-        );
-      return game.withProps({ roms: roms });
-    });
-
-    return dat.withGames(games);
   }
 }

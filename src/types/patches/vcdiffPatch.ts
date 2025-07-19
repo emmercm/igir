@@ -145,7 +145,7 @@ class VcdiffHeader {
     this.codeTable = codeTable;
   }
 
-  static async fromFilePoly(patchFile: IOFile): Promise<VcdiffHeader> {
+  static async fromIOFile(patchFile: IOFile): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
       await patchFile.close();
@@ -236,7 +236,7 @@ class VcdiffWindow {
     this.copyAddressesData = copyAddressesData;
   }
 
-  static async fromFilePoly(patchFile: IOFile): Promise<VcdiffWindow> {
+  static async fromIOFile(patchFile: IOFile): Promise<VcdiffWindow> {
     const winIndicator = (await patchFile.readNext(1)).readUInt8() as VcdiffWinIndicatorValue;
     let sourceSegmentSize = 0;
     let sourceSegmentPosition = 0;
@@ -470,9 +470,9 @@ export default class VcdiffPatch extends Patch {
   }
 
   async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempFilePoly('r', async (patchFile) => {
+    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const copyCache = new VcdiffCache();
-      const header = await VcdiffHeader.fromFilePoly(patchFile);
+      const header = await VcdiffHeader.fromIOFile(patchFile);
 
       return VcdiffPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header, copyCache);
     });
@@ -510,7 +510,7 @@ export default class VcdiffPatch extends Patch {
     let targetWindowPosition = 0;
 
     while (!patchFile.isEOF()) {
-      const window = await VcdiffWindow.fromFilePoly(patchFile);
+      const window = await VcdiffWindow.fromIOFile(patchFile);
       copyCache.reset();
 
       await this.applyPatchWindow(

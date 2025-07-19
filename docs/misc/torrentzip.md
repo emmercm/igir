@@ -97,6 +97,7 @@ RVZSTD:
   - `ZSTD_c_targetLength`: 256 (bytes)
   - `ZSTD_c_strategy`: `ZSTD_btultra2`
 - Using streaming compression (`ZSTD_compressStream2()`), with `ZSTD_c_nbWorkers` >0
+  - _Except_ if the uncompressed file is empty (is of size 0), in which case `ZSTD_compress()` should be used (no streaming and no workers/threads)
 - With no other options set (the defaults are used), such as:
   - Long-distance matching (`ZSTD_c_enableLongDistanceMatching` default OFF, `ZSTD_c_ldm*` options)
   - Frame checksums (`ZSTD_c_checksumFlag` default OFF)
