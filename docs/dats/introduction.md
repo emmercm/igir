@@ -35,14 +35,17 @@ A number of different release groups maintain sets of DATs, the most popular are
 And some less popular release groups are:
 
 - [TOSEC](https://www.tosecdev.org/downloads/category/22-datfiles)
+- [GoodTools](https://github.com/Eggmansworld/Datfiles/releases/tag/goodtools) (home computers, gen 1-5 consoles)
 - [EmulationArchive (trurip)](http://database.trurip.org/)
 - [libretro (RetroArch)](https://www.libretro.com/):
   - [Custom DATs](https://github.com/libretro/libretro-database/tree/master/dat) (specific games, some optical media-based consoles)
   - [Mirrored DATs](https://github.com/libretro/libretro-database/tree/master/metadat) (No-Intro and Redump/trurip/TOSEC DATs)
   - [FinalBurn NEO](https://github.com/libretro/FBNeo/tree/master/dats) (arcade, gen 1-4 consoles)
 - [ADVANsCEne](https://www.advanscene.com/html/dats.php) (GBA, DS, 3DS, PSP, PS Vita)
-- [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME ListXMLs with some unnecessary metadata removed, e.g. inputs, DIP switches, and ports)
-- [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME merged, non-merged, and split sets _without_ parent/clone information)
+- Arcade:
+  - [progetto-SNAPS](https://www.progettosnaps.net/dats/MAME/) (MAME ListXMLs with some unnecessary metadata removed, e.g. inputs, DIP switches, and ports)
+  - [pleasuredome](https://pleasuredome.github.io/pleasuredome/mame/) (MAME merged, non-merged, and split sets _without_ parent/clone information)
+  - [TeknoParrot](https://github.com/Eggmansworld/Datfiles/releases/tag/teknoparrot) (modern arcade)
 
 ## Parent/clone (P/C) DATs
 
