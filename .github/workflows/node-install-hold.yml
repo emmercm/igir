@@ -19,6 +19,7 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@v3
         with:
+          # TODO(cemmer): this is broken, have to use the 'push' event
           base: ${{ github.ref }}
           filters: |
             changes:

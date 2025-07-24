@@ -78,7 +78,8 @@ jobs:
           - os: macos-13
           - os: macos-latest
           - os: windows-latest
-          - os: windows-11-arm
+          # TODO(cemmer): Node.js didn't start publishing Windows ARM64 images until v20
+          #- os: windows-11-arm
     steps:
       # Setup and install
       - uses: actions/checkout@v4
