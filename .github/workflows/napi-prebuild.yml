@@ -125,7 +125,6 @@ jobs:
               cd "${dir}"
               rm -rf prebuilds
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
-              touch prebuilds/.gitkeep
               cd ../..
             done
             ls -alR packages/*/prebuilds/
@@ -139,11 +138,11 @@ jobs:
         id: build
         run: |
           set -x
+          node --print 'process'
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
             rm -rf prebuilds
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
-            touch prebuilds/.gitkeep
             cd ../..
           done
           ls -alR packages/*/prebuilds/
@@ -153,8 +152,6 @@ jobs:
           npm ci --foreground-scripts
           npm run test:unit packages
 
-      - run: |
-          ls -alR packages/*/prebuilds/
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
@@ -178,7 +175,6 @@ jobs:
           path: packages/
           merge-multiple: true
       - run: |
-          rm packages/*/prebuilds/.gitkeep
           ls -alR packages/*/prebuilds/
       - id: bump-and-commit
         run: |
