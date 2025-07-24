@@ -82,11 +82,11 @@ jobs:
         node-version: [ '' ]
         include:
           - os: ubuntu-latest
-            node-version: 20
+            node-version: 18
           - os: macos-latest
-            node-version: 20
+            node-version: 18
           - os: windows-latest
-            node-version: 20
+            node-version: 18
     steps:
       # Setup and install
       - uses: actions/checkout@v4
@@ -117,7 +117,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ '', 20 ]
+        node-version: [ '', 18 ]
     steps:
       # Setup and install
       - uses: actions/checkout@v4
