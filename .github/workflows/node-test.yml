@@ -86,7 +86,7 @@ jobs:
           - os: macos-latest
             node-version: 18
           - os: windows-latest
-            node-version: 18
+            node-version: 20
     steps:
       # Setup and install
       - uses: actions/checkout@v4
