@@ -757,6 +757,7 @@ export default class FsPoly {
     const file = await util.promisify(fs.open)(filePath, 'a');
 
     try {
+      await util.promisify(fs.fsync)(file); // emulate fs.writeFile() flush:true added in v21.0.0
       // Ensure the file's `atime` and `mtime` are updated
       const date = new Date();
       await util.promisify(fs.futimes)(file, date, date);
