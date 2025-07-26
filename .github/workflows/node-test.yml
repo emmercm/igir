@@ -59,6 +59,15 @@ jobs:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
       - run: npm ci
       # Lint the source files
       - run: npm start -- --help
@@ -96,6 +105,15 @@ jobs:
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
         run: rm -rf packages/*/prebuilds
@@ -127,6 +145,15 @@ jobs:
       - uses: volta-cli/action@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
       - run: npm ci --foreground-scripts
       - run: |
           sudo apt-get update

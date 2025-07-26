@@ -71,6 +71,15 @@ jobs:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
 
       # Compile and upload
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
@@ -190,6 +199,15 @@ jobs:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
       - run: npm ci
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update

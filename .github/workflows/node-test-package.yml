@@ -29,6 +29,15 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: volta-cli/action@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
       - id: pkg-pr-new
         run: |
           set -x
