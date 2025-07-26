@@ -177,6 +177,7 @@ export interface OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
+  readonly trimScanArchives?: boolean;
 
   readonly mergeRoms?: string;
   readonly mergeDiscs?: boolean;
@@ -335,6 +336,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
+
+  readonly trimScanArchives: boolean;
 
   readonly mergeRoms?: string;
 
@@ -518,6 +521,7 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.trimmedGlob = options?.trimmedGlob;
+    this.trimScanArchives = options?.trimScanArchives ?? false;
 
     this.mergeRoms = options?.mergeRoms;
     this.mergeDiscs = options?.mergeDiscs ?? false;
@@ -1178,6 +1182,10 @@ export default class Options implements OptionsProps {
       this.trimmedGlob.length > 0 &&
       micromatch.isMatch(filePath.replace(/^.[\\/]/, ''), this.trimmedGlob)
     );
+  }
+
+  getTrimScanArchives(): boolean {
+    return this.trimScanArchives;
   }
 
   /**

@@ -235,6 +235,8 @@ describe('options', () => {
     expect(options.getLinkMode()).toEqual(LinkMode.HARDLINK);
     expect(options.getSymlinkRelative()).toEqual(false);
 
+    expect(options.getTrimScanArchives()).toEqual(false);
+
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
     expect(options.getMergeDiscs()).toEqual(false);
     expect(options.getExcludeDisks()).toEqual(false);
@@ -2370,6 +2372,76 @@ describe('options', () => {
           'nope',
         ])
         .shouldReadFileForTrimming('file.rom'),
+    ).toEqual(false);
+  });
+
+  it('should parse "trim-scan-archives"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--trim-scan-archives']),
+    ).toThrow(/dependent|implication/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--trim-scan-archives'])
+        .getTrimScanArchives(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--trim-scan-archives',
+          'true',
+        ])
+        .getTrimScanArchives(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--trim-scan-archives',
+          'false',
+        ])
+        .getTrimScanArchives(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--trim-scan-archives',
+          '--trim-scan-archives',
+        ])
+        .getTrimScanArchives(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--trim-scan-archives',
+          'false',
+          '--trim-scan-archives',
+          'true',
+        ])
+        .getTrimScanArchives(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--dat',
+          os.devNull,
+          '--trim-scan-archives',
+          'true',
+          '--trim-scan-archives',
+          'false',
+        ])
+        .getTrimScanArchives(),
     ).toEqual(false);
   });
 
