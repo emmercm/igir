@@ -35,7 +35,7 @@ jobs:
           pr_search="sort:created-asc"
 
           # Wait for the merge state status to be updated
-          [ "${{ github.event.action }}" == "closed" ] && sleep 15
+          [[ "${{ github.event.action }}" == "closed" ]] && sleep 15
 
           echo "PRs found:"
           gh pr list --search "${pr_search}" --json number,title,mergeable,mergeStateStatus --jq '.[] | [.number, .title, .mergeable, .mergeStateStatus] | @tsv' | cat
