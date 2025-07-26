@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v4.1.1
+     @@   @@        @@   @@   @@       @@    v4.1.2
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -179,7 +179,10 @@ ROM header options:
                                                                                       [string]
 
 Trimmed ROM options:
-      --trimmed-glob  Glob pattern of input filenames to force trimming detection for [string]
+      --trimmed-glob        Glob pattern of input filenames to force trimming detection for
+                                                                                      [string]
+      --trim-scan-archives  Detect trimming for files within archives (off by default)
+                                                                                     [boolean]
 
 ROM set options (requires DATs):
       --merge-roms             ROM merge/split mode (requires DATs with parent/clone informati
