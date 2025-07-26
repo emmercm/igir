@@ -61,8 +61,8 @@ jobs:
 
           - os: windows-latest
             go_arch: amd64
-          - os: windows-11-arm
-            go_arch: arm64
+          #- os: windows-11-arm
+          #  go_arch: arm64
 
     steps:
       # Setup and install

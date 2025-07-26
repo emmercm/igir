@@ -13,6 +13,7 @@ import ArchiveEntry from './files/archives/archiveEntry.js';
 import ArchiveFile from './files/archives/archiveFile.js';
 import type File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
+import ZeroSizeFile from './files/zeroSizeFile.js';
 import GameConsole from './gameConsole.js';
 import type Options from './options.js';
 import { FixExtension, GameSubdirMode } from './options.js';
@@ -146,7 +147,12 @@ export default class OutputFactory {
       ),
     );
 
-    if (options.getDirMirror() && options.getInputPaths().length > 0 && inputFile?.getFilePath()) {
+    if (
+      options.getDirMirror() &&
+      options.getInputPaths().length > 0 &&
+      !(inputFile instanceof ZeroSizeFile) &&
+      inputFile?.getFilePath()
+    ) {
       const mirroredFilePath = options
         .getInputPaths()
         .map((inputPath) => path.resolve(inputPath))
