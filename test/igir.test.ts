@@ -1468,7 +1468,13 @@ describe('with inferred DATs', () => {
       await runIgir({
         commands: ['move', 'test'],
         input: [inputDir],
+        inputExclude: [
+          path.join(inputTemp, '**', 'invalid.*'),
+          // Note: need to exclude some ROMs to prevent duplicate output paths
+          path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
+        ],
         output: inputDir,
+        dirMirror: true,
       });
 
       await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
