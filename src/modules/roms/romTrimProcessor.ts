@@ -5,6 +5,7 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import type File from '../../types/files/file.js';
 import type FileFactory from '../../types/files/fileFactory.js';
 import type Options from '../../types/options.js';
@@ -106,6 +107,10 @@ export default class ROMTrimProcessor extends Module {
   private fileNeedsProcessing(inputFile: File): boolean {
     if (this.options.shouldReadFileForTrimming(inputFile.getFilePath())) {
       return true;
+    }
+
+    if (inputFile instanceof ArchiveEntry && !this.options.getTrimScanArchives()) {
+      return false;
     }
 
     if (inputFile.getSize() === 0 || (inputFile.getSize() & (inputFile.getSize() - 1)) === 0) {

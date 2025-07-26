@@ -18,7 +18,7 @@ Igir can process these file types:
 
 Igir can detect these files from their signature even if the file extension is wrong.
 
-If you wish to force trimming detection of other file types (not recommended), you can use the `--trimmed-glob` option like this:
+If you wish to force trimming detection of other file types (not recommended), you can use the `--trimmed-glob <glob>` option like this:
 
 ```shell
 igir [commands..] --dat <dats> --input <input> --trimmed-glob "*.rom"
@@ -43,3 +43,15 @@ Igir detects the "correct" size for a ROM by rounding the trimmed file's size up
 Even though each console has a padding byte that is most common (above), this isn't a guarantee, so Igir will calculate two different sets of checksums using both `0x00` and `0xFF` padding bytes.
 
 Like other calculated checksums, checksums of the padded files are cached to speed up subsequent runs.
+
+## Trimmed ROMs in archives
+
+It does not make sense to archive trimmed ROMs. Even the simplest of compression algorithms will compress ROM padding to just a few bytes, so trimming before archiving will have very little effect.
+
+To save processing time, Igir will not detect ROM trimming for files in archives. If you need to enable this behavior, you can use the option:
+
+```text
+--trim-scan-archives
+```
+
+You can also force trimming detection using the `--trimmed-glob <glob>` option described above.

@@ -636,6 +636,12 @@ export default class ArgumentsParser {
         requiresArg: true,
         implies: 'dat',
       })
+      .option('trim-scan-archives', {
+        group: groupRomTrimmed,
+        description: 'Detect trimming for files within archives (off by default)',
+        type: 'boolean',
+        implies: 'dat',
+      })
 
       .option('merge-roms', {
         group: groupRomSet,
