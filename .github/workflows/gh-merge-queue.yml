@@ -34,8 +34,11 @@ jobs:
           set -x
           pr_search="sort:created-asc"
 
+          # Wait for the merge state status to be updated
+          [ "${{ github.event.action }}" == "closed" ] && sleep 15
+
           echo "PRs found:"
-          gh pr list --search "${pr_search}" --json number,title --jq '.[] | [.number, .title] | @tsv' | cat
+          gh pr list --search "${pr_search}" --json number,title,mergeable,mergeStateStatus --jq '.[] | [.number, .title, .mergeable, .mergeStateStatus] | @tsv' | cat
 
           eligible_prs="$(gh pr list --search "${pr_search}" --json number,isDraft,mergeable,mergeStateStatus,autoMergeRequest --jq '.[] | select(.isDraft==false and .mergeable=="MERGEABLE" and .mergeStateStatus=="BEHIND" and .autoMergeRequest!=null) | .number')"
           if [[ "${eligible_prs}" == "" ]]; then
