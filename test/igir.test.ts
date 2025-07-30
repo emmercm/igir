@@ -454,7 +454,7 @@ describe('with explicit DATs', () => {
 
       const result = await runIgir({
         commands: ['copy', 'extract'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: inputHardlinks,
         output: outputTemp,
         dirDatName: true,
@@ -507,7 +507,7 @@ describe('with explicit DATs', () => {
 
       const result = await runIgir({
         commands: ['copy', 'extract'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: inputSymlinks,
         output: outputTemp,
         dirDatName: true,
@@ -698,7 +698,7 @@ describe('with explicit DATs', () => {
 
       const result = await runIgir({
         commands: ['copy'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input,
         output: outputTemp,
         dirDatName: true,
@@ -727,7 +727,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms', 'zip')],
         output: outputTemp,
         dirDatName: true,
@@ -1283,7 +1283,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['report'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         reportOutput: path.join(outputTemp, 'report.csv'),
@@ -1982,7 +1982,7 @@ describe('with inferred DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: [command, 'dir2dat', 'clean'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         // TODO(cemmer): debug why this is failing candidate validation
         inputExclude: [path.join(inputTemp, 'roms', 'discs')],

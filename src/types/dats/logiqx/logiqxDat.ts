@@ -78,6 +78,6 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
   }
 
   withGames(games: Game[]): DAT {
-    return new LogiqxDAT({ ...this, games });
+    return new LogiqxDAT({ ...this, games, machine: [] });
   }
 }

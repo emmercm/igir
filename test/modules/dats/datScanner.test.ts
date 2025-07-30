@@ -14,13 +14,20 @@ import type { OptionsProps } from '../../../src/types/options.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+
 function createDatScanner(props: OptionsProps): DATScanner {
   return new DATScanner(
     new Options({
       ...props,
+      datExclude: [
+        ...(props.datExclude ?? []),
+        // Exclude MAME DATs which can take a long time to parse
+        path.join('test', 'fixtures', 'dats', 'mame'),
+      ],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
+    new FileFactory(new FileCache(), LOGGER),
     new DriveSemaphore(os.cpus().length),
   );
 }
@@ -76,9 +83,9 @@ describe('multiple files', () => {
     [['test/fixtures/dats']],
     [['test/fixtures/dats/**']],
     [['test/fixtures/dats/**', 'test/fixtures/**/*.dat']],
-    [[path.join(process.cwd(), 'test', 'fixtures', '**', '*.{dat,txt,zip}')]],
-    [['test/fixtures/**/*.{dat,txt,zip}']],
-    [['test/fixtures/**/*.{dat,txt,zip}', 'test/fixtures/**/*.{dat,txt,zip}']],
+    [[path.join(process.cwd(), 'test', 'fixtures', '**', '*.{dat,txt,xml,zip}')]],
+    [['test/fixtures/**/*.{dat,txt,xml,zip}']],
+    [['test/fixtures/**/*.{dat,txt,xml,zip}', 'test/fixtures/**/*.{dat,txt,xml,zip}']],
   ])('no files are path excluded: %s', async (dat) => {
     await expect(createDatScanner({ dat }).scan()).resolves.toHaveLength(totalDatFiles);
   });
@@ -159,48 +166,17 @@ describe('single files', () => {
   });
 
   test.each([
-    [
-      path.join(
-        'test',
-        'fixtures',
-        'dats',
-        'snes',
-        'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842.dat',
-      ),
-      13_770,
-      13_770,
-      13_774,
-    ],
-    [
-      path.join(
-        'test',
-        'fixtures',
-        'dats',
-        'snes',
-        'libretro-database-snes-b768da11d5d7075e2a721d44c74bf3dcbeeb8f98.dat',
-      ),
-      3851,
-      3851,
-      3851,
-    ],
+    [path.join('test', 'fixtures', 'dats', 'mame', 'mame0*'), 21_371, 48_574, 362_783],
+    [path.join('test', 'fixtures', 'dats', 'mame', 'mame2003-plus-libretro-*'), 2926, 5258, 80_837],
+    [path.join('test', 'fixtures', 'dats', 'snes', 'HTGD-snes-*.dat'), 13_770, 13_770, 13_774],
+    [path.join('test', 'fixtures', 'dats', 'snes', 'libretro-database-snes-*'), 3851, 3851, 3851],
     [
       path.join('test', 'fixtures', 'dats', 'snes', 'mame0263-getsoftlist-snes.dat'),
       1909,
       3690,
       4271,
     ],
-    [
-      path.join(
-        'test',
-        'fixtures',
-        'dats',
-        'snes',
-        'mame-hash-snes-ed45a4f2234147bde0d8ee960c118066330886b3.dat',
-      ),
-      1909,
-      3690,
-      4271,
-    ],
+    [path.join('test', 'fixtures', 'dats', 'snes', 'mame-hash-snes-*.dat'), 1909, 3690, 4271],
     [
       path.join(
         'test',
@@ -226,9 +202,14 @@ describe('single files', () => {
       4111,
     ],
   ])(
-    'should parse the single SNES DAT: %s',
+    'should parse the single DAT: %s',
     async (datPath, expectedParents, expectedGames, expectedRoms) => {
-      const dats = await createDatScanner({ dat: [datPath] }).scan();
+      const dats = await new DATScanner(
+        new Options({ dat: [datPath] }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache(), LOGGER),
+        new DriveSemaphore(os.cpus().length),
+      ).scan();
       expect(dats).toHaveLength(1);
       const dat = dats[0];
       expect(dat.getParents().length).toBeLessThanOrEqual(dat.getGames().length);
