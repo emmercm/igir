@@ -68,7 +68,7 @@ export default class PatchScanner extends Scanner {
     const patchForFilename = await PatchFactory.patchFromFilename(file);
     if (patchForFilename) {
       this.progressBar.logTrace(
-        `${file.toString()}: found patch by extension: ${typeof patchForFilename}`,
+        `${file.toString()}: found patch type by extension: ${patchForFilename.constructor.name}`,
       );
       return patchForFilename;
     }
@@ -76,7 +76,7 @@ export default class PatchScanner extends Scanner {
     const patchForFileContents = await PatchFactory.patchFromFileContents(file);
     if (patchForFileContents) {
       this.progressBar.logTrace(
-        `${file.toString()}: found patch by contents: ${typeof patchForFileContents}`,
+        `${file.toString()}: found patch type by contents: ${patchForFileContents.constructor.name}`,
       );
       return patchForFileContents;
     }

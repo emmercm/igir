@@ -101,7 +101,7 @@ export default abstract class Scanner extends Module {
       }
 
       if (filesFromPath.length === 0) {
-        this.progressBar.logWarn(`${filePath}: found no files in path`);
+        this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
       }
       return filesFromPath;
     } catch (error) {
