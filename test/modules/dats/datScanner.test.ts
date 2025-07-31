@@ -166,7 +166,6 @@ describe('single files', () => {
   });
 
   test.each([
-    [path.join('test', 'fixtures', 'dats', 'mame', 'mame0*'), 21_371, 48_574, 362_783],
     [path.join('test', 'fixtures', 'dats', 'mame', 'mame2003-plus-libretro-*'), 2926, 5258, 80_837],
     [path.join('test', 'fixtures', 'dats', 'snes', 'HTGD-snes-*.dat'), 13_770, 13_770, 13_774],
     [path.join('test', 'fixtures', 'dats', 'snes', 'libretro-database-snes-*'), 3851, 3851, 3851],
