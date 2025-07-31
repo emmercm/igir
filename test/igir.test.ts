@@ -463,15 +463,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
@@ -516,15 +507,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
@@ -705,15 +687,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
@@ -735,15 +708,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
