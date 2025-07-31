@@ -762,26 +762,17 @@ export default class Options implements OptionsProps {
     return this.input;
   }
 
-  private async scanInputFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(
-      this.input,
-      WalkMode.FILES,
-      walkCallback,
-      this.shouldWrite() || !(this.shouldReport() || this.shouldFixdat()),
-    );
-  }
-
-  private async scanInputExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.inputExclude, WalkMode.FILES, undefined, false);
-  }
-
   /**
    * Scan for input files, and input files to exclude, and return the difference.
    */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    const inputFiles = await this.scanInputFiles(walkCallback);
-    const inputExcludeFiles = new Set(await this.scanInputExcludeFiles());
-    return inputFiles.filter((inputPath) => !inputExcludeFiles.has(inputPath));
+    return Options.scanPathsWithoutExclusions(
+      this.input,
+      this.inputExclude,
+      WalkMode.FILES,
+      walkCallback,
+      this.shouldWrite() || !(this.shouldReport() || this.shouldFixdat()),
+    );
   }
 
   /**
@@ -815,6 +806,26 @@ export default class Options implements OptionsProps {
 
     // Remove duplicates
     return globbedPaths.reduce(ArrayPoly.reduceUnique(), []);
+  }
+
+  private static async scanPathsWithoutExclusions(
+    includeGlobPatterns: string[],
+    excludeGlobPatterns: string[],
+    walkMode: WalkModeValue,
+    walkCallback?: FsWalkCallback,
+    requireIncludeFiles = true,
+  ): Promise<string[]> {
+    const includePaths = await this.scanPaths(
+      includeGlobPatterns,
+      walkMode,
+      walkCallback,
+      requireIncludeFiles,
+    );
+    const excludePaths = await this.scanPaths(excludeGlobPatterns, walkMode, undefined, false);
+    const excludePathsSet = new Set(excludePaths.map((filePath) => path.resolve(filePath)));
+    return includePaths.filter(
+      (filePath) => excludePathsSet.size === 0 || !excludePathsSet.has(path.resolve(filePath)),
+    );
   }
 
   private static async globPath(
@@ -943,21 +954,16 @@ export default class Options implements OptionsProps {
     return this.dat;
   }
 
-  private async scanDatFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.dat, WalkMode.FILES, walkCallback);
-  }
-
-  private async scanDatExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.datExclude, WalkMode.FILES, undefined, false);
-  }
-
   /**
    * Scan for DAT files, and DAT files to exclude, and return the difference.
    */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    const datFiles = await this.scanDatFiles(walkCallback);
-    const datExcludeFiles = new Set(await this.scanDatExcludeFiles());
-    return datFiles.filter((inputPath) => !datExcludeFiles.has(inputPath));
+    return Options.scanPathsWithoutExclusions(
+      this.dat,
+      this.datExclude,
+      WalkMode.FILES,
+      walkCallback,
+    );
   }
 
   getDatNameRegex(): RegExp[] | undefined {
@@ -992,17 +998,12 @@ export default class Options implements OptionsProps {
    * Scan for patch files, and patch files to exclude, and return the difference.
    */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    const patchFiles = await this.scanPatchFiles(walkCallback);
-    const patchExcludeFiles = new Set(await this.scanPatchExcludeFiles());
-    return patchFiles.filter((patchPath) => !patchExcludeFiles.has(patchPath));
-  }
-
-  private async scanPatchFiles(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.patch, WalkMode.FILES, walkCallback);
-  }
-
-  private async scanPatchExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.patchExclude, WalkMode.FILES, undefined, false);
+    return Options.scanPathsWithoutExclusions(
+      this.patch,
+      this.patchExclude,
+      WalkMode.FILES,
+      walkCallback,
+    );
   }
 
   getOutput(): string {
