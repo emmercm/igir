@@ -573,7 +573,7 @@ export default class Igir {
             indexedRoms,
           ),
         // Add patched candidates
-        async (candidates): Promise<WriteCandidate[]> =>
+        (candidates): WriteCandidate[] =>
           new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
         // Correct output filename extensions
         async (candidates): Promise<WriteCandidate[]> =>

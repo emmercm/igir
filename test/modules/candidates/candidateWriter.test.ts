@@ -143,7 +143,7 @@ async function candidateWriter(
       new FileFactory(new FileCache(), LOGGER),
       new DriveSemaphore(os.cpus().length),
     ).scan();
-    candidates = await new CandidatePatchGenerator(new ProgressBarFake()).generate(
+    candidates = new CandidatePatchGenerator(new ProgressBarFake()).generate(
       dat,
       candidates,
       patches,
