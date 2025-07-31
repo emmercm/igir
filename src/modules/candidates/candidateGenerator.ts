@@ -731,6 +731,15 @@ export default class CandidateGenerator extends Module {
     foundRomsWithFiles: ROMWithFiles[],
     missingRoms: ROM[],
   ): void {
+    if (
+      foundRomsWithFiles.every(
+        (romWithFiles) => romWithFiles.getInputFile() instanceof ZeroSizeFile,
+      )
+    ) {
+      // We didn't find any actual files on disk, so prevent some log spam
+      return;
+    }
+
     let message = `${dat.getName()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length === 1 ? '' : 's'}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length === 1 ? '' : 's'}`;
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;

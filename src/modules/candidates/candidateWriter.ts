@@ -156,6 +156,10 @@ export default class CandidateWriter extends Module {
 
     const childBar = this.progressBar.addChildBar({
       name: outputZip.getFilePath(),
+      total: inputToOutputZipEntries.reduce(
+        (sum, [, outputEntry]) => sum + outputEntry.getSize(),
+        0,
+      ),
       progressFormatter: FsPoly.sizeReadable,
     });
     try {
@@ -501,6 +505,7 @@ export default class CandidateWriter extends Module {
 
     const childBar = this.progressBar.addChildBar({
       name: outputFilePath,
+      total: outputRomFile.getSize(),
       progressFormatter: FsPoly.sizeReadable,
     });
     try {
