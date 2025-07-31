@@ -41,6 +41,7 @@ jobs:
             [[ "${pr_list}" == "" ]] && break
             # At least one PR is not in an 'UNKNOWN' state
             echo "${pr_list}" | grep -v "UNKNOWN" && break
+            echo "$(echo "${pr_list}" | wc -l | awk '{print $1}') PRs in an 'UNKNOWN' mergeable state, waiting ..."
             sleep 5
           done
 
@@ -86,6 +87,7 @@ jobs:
             [[ "${pr_list}" == "" ]] && break
             # At least one PR is not in an 'UNKNOWN' state
             echo "${pr_list}" | grep -v "UNKNOWN" && break
+            echo "$(echo "${pr_list}" | wc -l | awk '{print $1}') PRs in an 'UNKNOWN' mergeable state, waiting ..."
             sleep 5
           done
 
