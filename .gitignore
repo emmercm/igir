@@ -208,8 +208,8 @@ igir.exe
 
 # Always commit fixtures
 !packages/zip/test/**/*.zip
-!packages/igir/test/fixtures/dats/*
-!packages/igir/test/fixtures/dats/*/*
-!packages/igir/test/fixtures/patches/*
-!packages/igir/test/fixtures/roms/*
-!packages/igir/test/fixtures/roms/*/*
+!test/fixtures/dats/*
+!test/fixtures/dats/*/*
+!test/fixtures/patches/*
+!test/fixtures/roms/*
+!test/fixtures/roms/*/*

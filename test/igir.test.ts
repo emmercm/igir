@@ -454,7 +454,7 @@ describe('with explicit DATs', () => {
 
       const result = await runIgir({
         commands: ['copy', 'extract'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: inputHardlinks,
         output: outputTemp,
         dirDatName: true,
@@ -463,15 +463,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
@@ -507,7 +498,7 @@ describe('with explicit DATs', () => {
 
       const result = await runIgir({
         commands: ['copy', 'extract'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: inputSymlinks,
         output: outputTemp,
         dirDatName: true,
@@ -516,15 +507,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         [path.join('One', 'Fizzbuzz.nes'), '370517b5'],
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
@@ -698,22 +680,13 @@ describe('with explicit DATs', () => {
 
       const result = await runIgir({
         commands: ['copy'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input,
         output: outputTemp,
         dirDatName: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
@@ -727,7 +700,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['move'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms', 'zip')],
         output: outputTemp,
         dirDatName: true,
@@ -735,15 +708,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [
-          path.join(
-            'HTGD-snes-c411a8e9d909cc4b03027c115be61822af8ad842',
-            'SD2SNES',
-            '4 SPC',
-            '@Place SPC Pack Here',
-          ),
-          '00000000',
-        ],
         [path.join('One', 'Empty.rom'), '00000000'],
         // NOTE: a number of ROMs are missing here because their archives have incorrect entry paths
         [`${path.join('One', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
@@ -1283,7 +1247,7 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['report'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         reportOutput: path.join(outputTemp, 'report.csv'),
@@ -1982,7 +1946,7 @@ describe('with inferred DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: [command, 'dir2dat', 'clean'],
-        dat: [path.join(inputTemp, 'dats')],
+        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         // TODO(cemmer): debug why this is failing candidate validation
         inputExclude: [path.join(inputTemp, 'roms', 'discs')],
