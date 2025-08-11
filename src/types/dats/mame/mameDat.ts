@@ -6,6 +6,7 @@ import Header from '../logiqx/header.js';
 
 export interface MameDATProps extends DATProps {
   machine?: Game | Game[];
+  game?: Game | Game[];
 }
 
 /**
@@ -26,9 +27,16 @@ export default class MameDAT extends DAT implements MameDATProps {
   @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
   readonly machine?: Game | Game[];
 
+  // NOTE(cemmer): this is non-standard, but some DATs such as 'mame2003-plus-libretro' use it
+  @Expose()
+  @Type(() => Game)
+  @Transform(({ value }: { value: undefined | Game | Game[] }) => value ?? [])
+  readonly game?: Game | Game[];
+
   constructor(props?: MameDATProps) {
     super(props);
     this.machine = props?.machine;
+    this.game = props?.game;
     this.generateGameNamesToParents();
   }
 
@@ -52,16 +60,26 @@ export default class MameDAT extends DAT implements MameDATProps {
   }
 
   getGames(): Game[] {
-    if (this.machine === undefined) {
-      return [];
-    }
     if (Array.isArray(this.machine)) {
-      return this.machine;
+      if (this.machine.length > 0) {
+        return this.machine;
+      }
+    } else if (this.machine) {
+      return [this.machine];
     }
-    return [this.machine];
+
+    if (Array.isArray(this.game)) {
+      if (this.game.length > 0) {
+        return this.game;
+      }
+    } else if (this.game) {
+      return [this.game];
+    }
+
+    return [];
   }
 
   withGames(games: Game[]): DAT {
-    return new MameDAT({ ...this, machine: games });
+    return new MameDAT({ ...this, machine: games, games: [] });
   }
 }
