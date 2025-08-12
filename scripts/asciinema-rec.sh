@@ -19,12 +19,12 @@ if [[ "${1:-}" == "play" ]]; then
   export DEMO_COMMENT_COLOR="\033[0;90m"
   cd "${DEMO_DIR}"
   # NOTE(cemmer): these have to be functions, `pei` won't pick up on aliases
-  # shellcheck disable=SC2317
+  # shellcheck disable=SC2317,SC2329
   npx() {
     shift # discard "igir@latest"
     node ../dist/index.js "$@" --dat-name-regex-exclude "/3ds|encrypted|headerless|unofficial/i" --disable-cache
   }
-  # shellcheck disable=SC2317
+  # shellcheck disable=SC2317,SC2329
   tree() {
     command tree -N -n "$@"
   }
