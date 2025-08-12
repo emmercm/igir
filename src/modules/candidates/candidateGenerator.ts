@@ -625,11 +625,7 @@ export default class CandidateGenerator extends Module {
         return false;
       }
 
-      if (
-        this.options.getPatchFileCount() > 0 &&
-        !(this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom)) &&
-        !(rom instanceof Disk)
-      ) {
+      if (this.options.getPatchFileCount() > 0 && !(rom instanceof Disk)) {
         // We might want to patch this file, but won't be able to, so we can't use this archive
         return false;
       }
