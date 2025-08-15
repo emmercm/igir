@@ -54,7 +54,7 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-              - 'packages/*/prebuilds/**'
+              - 'packages/*/prebuilds*/**'
 
   prebuild:
     needs:
@@ -65,7 +65,7 @@ jobs:
       run:
         shell: bash
     timeout-minutes: 30 # QEMU cross-builds
-    name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch }})
+    name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch || 'default' }})
     strategy:
       fail-fast: false
       matrix:
@@ -163,7 +163,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
-          path: packages/*/prebuilds/
+          path: packages/*/prebuilds*/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -178,16 +178,18 @@ jobs:
           ref: ${{ env.ref }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - run: |
+          rm -rf packages/*/prebuilds*/
       - uses: actions/download-artifact@v5
         with:
           path: packages/
           merge-multiple: true
       - run: |
-          ls -alR packages/*/prebuilds/
+          ls -alR packages/*/prebuilds*/
       - id: bump-and-commit
         run: |
           set -x
-          git add --all packages/*/prebuilds
+          git add --all packages/*/prebuilds*
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
