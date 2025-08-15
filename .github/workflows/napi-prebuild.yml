@@ -189,6 +189,7 @@ jobs:
       - id: bump-and-commit
         run: |
           set -x
+          git status
           git add --all packages/*/prebuilds*
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
