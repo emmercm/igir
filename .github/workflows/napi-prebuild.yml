@@ -190,7 +190,8 @@ jobs:
         run: |
           set -x
           git status
-          git add --all packages/*
+          git add --all packages
+          git status
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
