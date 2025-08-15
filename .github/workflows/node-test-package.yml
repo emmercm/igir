@@ -67,7 +67,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
       - run: |
-          NODE_OPTIONS="--foreground-scripts" npx --yes "${{ needs.pkg-pr-new.outputs.package_url }}" --help
+          #npx --yes "${{ needs.pkg-pr-new.outputs.package_url }}" --help
+          npm exec --yes --foreground-scripts "${{ needs.pkg-pr-new.outputs.package_url }}" -- --help
 
   test-npm-install-global:
     if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
