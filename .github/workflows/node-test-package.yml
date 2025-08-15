@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
       - run: |
-          npx --yes "${{ needs.pkg-pr-new.outputs.package_url }}" --help
+          NODE_OPTIONS="--foreground-scripts" npx --yes "${{ needs.pkg-pr-new.outputs.package_url }}" --help
 
   test-npm-install-global:
     if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
@@ -91,7 +91,7 @@ jobs:
       - shell: bash
         run: |
           set -x
-          npm install --global "${{ needs.pkg-pr-new.outputs.package_url }}"
+          npm install --global --foreground-scripts "${{ needs.pkg-pr-new.outputs.package_url }}"
           PATH="$(npm get prefix --global)/bin:$PATH"
           export PATH
           igir --help
