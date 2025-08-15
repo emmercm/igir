@@ -135,7 +135,7 @@ jobs:
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "prebuilds-$(basename "$(pwd)")"
               cd ../..
             done
-            ls -alR packages/*/prebuilds*/
+            find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
 
             # Test the build
             rm -rf packages/*/build
@@ -153,7 +153,7 @@ jobs:
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "prebuilds-$(basename "$(pwd)")"
             cd ../..
           done
-          ls -alR packages/*/prebuilds*/
+          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
 
           # Test the build
           rm -rf packages/*/build
@@ -180,9 +180,9 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
           set -x
-          ls -alR packages/*/prebuilds*/
+          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
           rm -rf packages/*/prebuilds*/
-          ls -alR packages/*/prebuilds*/
+          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
       - uses: actions/download-artifact@v5
         with:
           path: packages/
@@ -190,7 +190,7 @@ jobs:
       - id: bump-and-commit
         run: |
           set -x
-          ls -alR packages/*/prebuilds*/
+          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
           git status
           git add --all packages
           git status
