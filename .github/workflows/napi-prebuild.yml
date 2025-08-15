@@ -179,7 +179,10 @@ jobs:
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
+          set -x
+          ls -alR packages/*/prebuilds*/
           rm -rf packages/*/prebuilds*/
+          ls -alR packages/*/prebuilds*/
       - uses: actions/download-artifact@v5
         with:
           path: packages/
