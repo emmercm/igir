@@ -72,7 +72,7 @@
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {
-    "@aws-crypto/crc32": "^5.2.0",
+    "@aws-crypto/crc32": "5.2.0",
     "@fast-csv/format": "5.0.2",
     "@fast-csv/parse": "5.0.2",
     "@gplane/cue": "0.2.0",
