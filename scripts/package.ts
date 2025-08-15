@@ -47,6 +47,7 @@ const fileFilter = (filters: FileFilter[]): string[] => {
 };
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
+logger.info('========== PACKAGING ==========');
 
 const argv = await yargs(process.argv.slice(2))
   .locale('en')
@@ -168,7 +169,6 @@ await caxa({
     '{{caxa}}/dist/bundle.js',
   ],
 });
-await FsPoly.rm(prebuilds, { recursive: true });
 
 if (!(await FsPoly.exists(output))) {
   throw new IgirException(`output file '${output}' doesn't exist`);
