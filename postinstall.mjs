@@ -40,10 +40,10 @@ for (let napiPackage of [
     /* ignored */
   }
 
-  // Do nothing if `node-gyp-build` can find a prebuild
-  const prebuildsDirectory = path.join(napiPackage, `prebuilds-${path.basename(napiPackage)}`);
+  // Do nothing if `node-gyp-build` can find a prebuild or a full build
+  const addonDirectory = path.join(napiPackage, `addon-${path.basename(napiPackage)}`);
   try {
-    nodeGypBuild(prebuildsDirectory);
+    nodeGypBuild(addonDirectory);
     continue;
   } catch {
     /* ignored */
@@ -81,4 +81,15 @@ for (let napiPackage of [
     proc.on('close', resolve);
     proc.on('error', reject);
   });
+
+  // Relocate the build output to the addon directory
+  try {
+    await util.promisify(fs.stat)(addonDirectory);
+  } catch {
+    await util.promisify(fs.mkdir)(addonDirectory);
+  }
+  await util.promisify(fs.rename)(
+    path.join(napiPackage, 'build'),
+    path.join(addonDirectory, 'build'),
+  );
 }

@@ -89,14 +89,14 @@ await esbuild.build({
 
 // Generate the prebuilds directory
 for (const napiPackage of ['zlib-1.1.3', 'zstd-1.5.5']) {
-  const prebuildsDirectory = path.join('dist', `prebuilds-${napiPackage}`, 'prebuilds');
+  const prebuildsDirectory = path.join('dist', `addon-${napiPackage}`, 'prebuilds');
   await FsPoly.rm(prebuildsDirectory, { recursive: true, force: true });
   await FsPoly.copyDir(
     path.join(
       input,
       'packages',
       napiPackage,
-      `prebuilds-${napiPackage}`,
+      `addon-${napiPackage}`,
       'prebuilds',
       `${process.platform}-${process.arch}`,
     ),

@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read and write
 
-name: Node-API Prebuild
+name: Node Native Addons Prebuild
 
 on:
   # Note: dorny/paths-filter can't use 'pull_request' with the 'base' option
@@ -54,6 +54,7 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
+              - 'packages/*/addon*/**'
               - 'packages/*/prebuilds*/**'
 
   prebuild:
@@ -131,11 +132,11 @@ jobs:
             node --print 'process'
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
-              rm -rf prebuilds*
-              ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "prebuilds-$(basename "$(pwd)")"
+              rm -rf addon* prebuilds*
+              ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
               cd ../..
             done
-            find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
+            find packages/*/addon* -type f -print0 | xargs -0 ls -al
 
             # Test the build
             rm -rf packages/*/build
@@ -149,11 +150,11 @@ jobs:
           node --print 'process'
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
-            rm -rf prebuilds*
-            ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "prebuilds-$(basename "$(pwd)")"
+            rm -rf addon* prebuilds*
+            ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
             cd ../..
           done
-          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
 
           # Test the build
           rm -rf packages/*/build
@@ -163,7 +164,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
-          path: packages/*/prebuilds*/
+          path: packages/*/addon*/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -180,9 +181,9 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
           set -x
-          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
-          rm -rf packages/*/prebuilds*/
-          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
+          rm -rf packages/*/addon*/ ackages/*/prebuilds*/
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
       - uses: actions/download-artifact@v5
         with:
           path: packages/
@@ -190,7 +191,7 @@ jobs:
       - id: bump-and-commit
         run: |
           set -x
-          find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
           git add --all packages
           git status
 

@@ -70,7 +70,7 @@ async function copyfiles(
 await copyfiles(
   [
     'packages/*/deps/**',
-    'packages/*/prebuilds*/**',
+    'packages/*/addon*/**',
     'packages/*/binding.cpp',
     'packages/*/binding.gyp',
   ],
