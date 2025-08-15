@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import type stream from 'node:stream';
 import { Readable } from 'node:stream';
 
-import { crc32 } from '@node-rs/crc32';
+import { Crc32 } from '@aws-crypto/crc32';
 
 import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import FsReadTransform from '../../polyfill/fsReadTransform.js';
@@ -69,31 +69,23 @@ export default {
         ? readable
         : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
 
+    const crc = checksumBitmask & ChecksumBitmask.CRC32 ? new Crc32() : undefined;
     return new Promise((resolve, reject) => {
-      let crc: number | undefined;
       const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
       const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
       const sha256 =
         checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
       streamWithCallback.on('data', (chunk: Buffer) => {
-        if (checksumBitmask & ChecksumBitmask.CRC32) {
-          crc = crc32(chunk, crc);
-        }
-        if (md5) {
-          md5.update(chunk);
-        }
-        if (sha1) {
-          sha1.update(chunk);
-        }
-        if (sha256) {
-          sha256.update(chunk);
-        }
+        crc?.update(chunk);
+        md5?.update(chunk);
+        sha1?.update(chunk);
+        sha256?.update(chunk);
       });
       streamWithCallback.on('end', () => {
         resolve({
           crc32:
-            crc?.toString(16).padStart(8, '0') ??
+            crc?.digest().toString(16).padStart(8, '0') ??
             // Empty files won't emit any data, default to the empty file CRC32
             (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
           md5: md5?.digest('hex').padStart(32, '0'),
