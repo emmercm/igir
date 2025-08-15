@@ -4,6 +4,8 @@ import path from 'node:path';
 import url from 'node:url';
 import util from 'node:util';
 
+import nodeGypBuild from 'node-gyp-build';
+
 /**
  * Unfortunately, there is a sticky situation with Node-API:
  *  - `prebuildify` can only build one target from a binding.gyp at a time
@@ -38,6 +40,16 @@ for (let napiPackage of [
     /* ignored */
   }
 
+  // Do nothing if `node-gyp-build` can find a prebuild
+  const prebuildsDirectory = path.join(napiPackage, `prebuilds-${path.basename(napiPackage)}`);
+  try {
+    nodeGypBuild(prebuildsDirectory);
+    continue;
+  } catch {
+    /* ignored */
+  }
+
+  // Run a build if no prebuild was found
   await new Promise((resolve, reject) => {
     const nodeGypBuild = path.join(modulesParentDir, 'node_modules', '.bin', 'node-gyp-build');
     const proc =

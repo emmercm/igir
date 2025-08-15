@@ -87,16 +87,21 @@ await esbuild.build({
 });
 
 // Generate the prebuilds directory
-const prebuilds = path.join('dist', 'prebuilds');
-await FsPoly.rm(prebuilds, { recursive: true, force: true });
-await FsPoly.copyDir(
-  path.join(input, 'packages', 'zlib-1.1.3', 'prebuilds', `${process.platform}-${process.arch}`),
-  path.join(prebuilds, `${process.platform}-${process.arch}`),
-);
-await FsPoly.copyDir(
-  path.join(input, 'packages', 'zstd-1.5.5', 'prebuilds', `${process.platform}-${process.arch}`),
-  path.join(prebuilds, `${process.platform}-${process.arch}`),
-);
+for (const napiPackage of ['zlib-1.1.3', 'zstd-1.5.5']) {
+  const prebuildsDirectory = path.join('dist', `prebuilds-${napiPackage}`, 'prebuilds');
+  await FsPoly.rm(prebuildsDirectory, { recursive: true, force: true });
+  await FsPoly.copyDir(
+    path.join(
+      input,
+      'packages',
+      napiPackage,
+      `prebuilds-${napiPackage}`,
+      'prebuilds',
+      `${process.platform}-${process.arch}`,
+    ),
+    path.join(prebuildsDirectory, `${process.platform}-${process.arch}`),
+  );
+}
 
 const include = new Set(
   fileFilter([

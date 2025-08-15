@@ -69,5 +69,5 @@ export interface ZstdThreadedCompressorInstance {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-const zstd = nodeGypBuild(__dirname) as ZstdBinding;
+const zstd = nodeGypBuild(path.join(__dirname, 'prebuilds-zstd-1.5.5')) as ZstdBinding;
 export default zstd;

@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-const zlib = nodeGypBuild(__dirname) as {
+const zlib = nodeGypBuild(path.join(__dirname, 'prebuilds-zlib-1.1.3')) as {
   Deflater: new (level?: number) => DeflaterInstance;
 
   /**
