@@ -110,11 +110,14 @@ jobs:
           run: |
             # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
             set -eo pipefail
-
             set -x
+
+            # Package the executable and test it before compressing it
             npm ci
             npm run package -- . igir
             ./igir --help
+            ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
+            ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
             tar cvf - igir | gzip --best > "${{ env.BIN_OUTPUT }}"
 
             {
@@ -122,6 +125,7 @@ jobs:
               ls -alh igir "${{ env.BIN_OUTPUT }}"
               echo '```'
             } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: sudo chown -R "$(id -u):$(id -g)" .
 
@@ -133,9 +137,12 @@ jobs:
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${NODE_ARCH}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
+          # Package the executable and test it before compressing it
           npm ci
           npm run package -- . igir
           ./igir --help
+          ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
+          ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
           tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
           {
@@ -172,7 +179,11 @@ jobs:
             Pop-Location
           }
 
+          # Package the executable and test it before compressing it
           npm run package -- . igir.exe
+          .\igir.exe --help
+          .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
+          .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
           Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
 
           echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
