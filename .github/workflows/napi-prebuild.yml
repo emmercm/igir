@@ -184,11 +184,10 @@ jobs:
         with:
           path: packages/
           merge-multiple: true
-      - run: |
-          ls -alR packages/*/prebuilds*/
       - id: bump-and-commit
         run: |
           set -x
+          ls -alR packages/*/prebuilds*/
           git status
           git add --all packages
           git status
