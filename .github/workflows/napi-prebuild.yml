@@ -192,6 +192,7 @@ jobs:
           set -x
           find packages/*/prebuilds* -type f -print0 | xargs -0 ls -al
           git status
+          git check-ignore --verbose -- packages
           git add --all packages
           git status
 
