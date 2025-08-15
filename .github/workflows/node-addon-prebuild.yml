@@ -182,7 +182,7 @@ jobs:
       - run: |
           set -x
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
-          rm -rf packages/*/addon*/ ackages/*/prebuilds*/
+          rm -rf packages/*/addon*/ packages/*/prebuilds*/
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
       - uses: actions/download-artifact@v5
         with:
