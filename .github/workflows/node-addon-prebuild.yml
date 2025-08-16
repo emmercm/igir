@@ -34,7 +34,7 @@ jobs:
     outputs:
       changes: ${{ steps.change-filter.outputs.changes == 'true' && steps.commit-filter.outputs.changes == 'false' && 'true' || 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
       # Prebuild if any relevant source file has changed
@@ -83,7 +83,7 @@ jobs:
           #- os: windows-11-arm
     steps:
       # Setup and install
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -174,7 +174,7 @@ jobs:
       - prebuild
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
           # Token needed to trigger Actions on push

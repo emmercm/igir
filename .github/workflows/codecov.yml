@@ -16,7 +16,7 @@ jobs:
   codecov-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: formsort/action-check-codecov-config@v1
 
   # !!! The codecov/project check should be required by GitHub !!!
@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 15
     steps:
       # Setup and install
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: 'recursive'
       - uses: volta-cli/action@v4

@@ -73,7 +73,7 @@ jobs:
 
           echo "NEW_TITLE=${NEW_TITLE}" >> "${GITHUB_OUTPUT}"
       # Required for `gh` CLI
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: gh-pr-edit
         env:
           GH_TOKEN: ${{ github.token }}
