@@ -27,7 +27,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
       - id: filter
@@ -45,7 +45,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}
-    name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch }})
+    name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
     strategy:
       fail-fast: false
       matrix:
@@ -66,7 +66,7 @@ jobs:
 
     steps:
       # Setup and install
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -110,11 +110,14 @@ jobs:
           run: |
             # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
             set -eo pipefail
-
             set -x
+
+            # Package the executable and test it before compressing it
             npm ci
             npm run package -- . igir
             ./igir --help
+            ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
+            ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
             tar cvf - igir | gzip --best > "${{ env.BIN_OUTPUT }}"
 
             {
@@ -122,6 +125,7 @@ jobs:
               ls -alh igir "${{ env.BIN_OUTPUT }}"
               echo '```'
             } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: sudo chown -R "$(id -u):$(id -g)" .
 
@@ -133,9 +137,12 @@ jobs:
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${NODE_ARCH}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
+          # Package the executable and test it before compressing it
           npm ci
           npm run package -- . igir
           ./igir --help
+          ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
+          ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
           tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
           {
@@ -172,7 +179,11 @@ jobs:
             Pop-Location
           }
 
+          # Package the executable and test it before compressing it
           npm run package -- . igir.exe
+          .\igir.exe --help
+          .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
+          .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
           Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
 
           echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
@@ -194,7 +205,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Get the package version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -211,7 +222,7 @@ jobs:
       - run: npm ci
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.NPM_PKG_VERSION }}

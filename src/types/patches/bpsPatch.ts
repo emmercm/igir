@@ -119,12 +119,12 @@ export default class BPSPatch extends Patch {
         await targetFile.write(data);
       } else if (action === BPSAction.SOURCE_COPY) {
         const offset = await Patch.readUpsUint(patchFile);
-        sourceRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
+        sourceRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
         await targetFile.write(await sourceFile.readAt(sourceRelativeOffset, length));
         sourceRelativeOffset += length;
       } else if (action === BPSAction.TARGET_COPY) {
         const offset = await Patch.readUpsUint(patchFile);
-        targetRelativeOffset += (offset & 1 ? -1 : +1) * (offset >> 1);
+        targetRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
         // WARN: you explicitly can't read the target file all at once, you have to read byte by
         // byte, because later iterations of the loop may need to read data that was changed by
         // earlier iterations of the loop.

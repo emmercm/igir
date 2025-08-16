@@ -48,7 +48,7 @@ export default class Logger {
     if (this.logLevel > logLevel) {
       return;
     }
-    this.stream.write(`${this.formatMessage(logLevel, String(message).toString())}\n`);
+    this.stream.write(`${this.formatMessage(logLevel, String(message))}\n`);
   };
 
   /**
