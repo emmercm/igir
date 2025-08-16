@@ -72,10 +72,10 @@
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {
+    "@aws-crypto/crc32": "5.2.0",
     "@fast-csv/format": "5.0.2",
     "@fast-csv/parse": "5.0.2",
     "@gplane/cue": "0.2.0",
-    "@node-rs/crc32": "1.10.6",
     "7zip-min": "2.1.0",
     "async": "3.2.6",
     "async-mutex": "0.5.0",
