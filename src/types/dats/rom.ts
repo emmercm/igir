@@ -22,6 +22,12 @@ export interface ROMProps extends ChecksumProps {
 
   // readonly serial?: string;
   // readonly header?: string;
+
+  // ********** MAME FIELDS **********
+
+  // readonly offset?: string;
+  // readonly optional?: string;
+  // readonly region?: string;
 }
 
 /**
