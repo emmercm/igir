@@ -116,7 +116,7 @@ jobs:
             ${{ runner.os }}-
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
-        run: rm -rf packages/*/prebuilds
+        run: rm -rf packages/*/addon* packages/*/prebuilds*
       - run: npm ci --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
