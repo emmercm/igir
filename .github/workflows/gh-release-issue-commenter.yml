@@ -20,6 +20,8 @@ jobs:
           fetch-tags: true
 
       - shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -x
 
