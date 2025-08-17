@@ -77,6 +77,15 @@
       enabled: false,
     },
 
+    // Pin GitHub Actions actions to their digest hashes, remembering the semver in a comment
+    {
+      // helpers:pinGitHubActionDigestsToSemver
+      matchDepTypes: ['action'],
+      pinDigests: true,
+      extractVersion: '^(?<version>v?\\d+\\.\\d+\\.\\d+)$',
+      versioning: 'regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$'
+    },
+
     // Group any/all package files in the docs/ directory
     {
       matchFileNames: ['docs/**'],
@@ -110,7 +119,7 @@
 
     // Disable automatic merging of GitHub Actions major version updates
     {
-      matchManagers: ['github-actions'],
+      matchDepTypes: ['action'],
       matchUpdateTypes: ['major'],
       automerge: false
     }
