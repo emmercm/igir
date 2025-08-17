@@ -26,7 +26,7 @@ jobs:
       - run: gh pr merge "${{ github.event.pull_request.number }}" --disable-auto
         env:
           GH_TOKEN: ${{ github.token }}
-      - uses: thollander/actions-comment-pull-request@v3
+      - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             ## :warning: Disabling auto-merge
@@ -42,7 +42,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: thollander/actions-comment-pull-request@v3
+      - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: Deleting
           mode: delete
