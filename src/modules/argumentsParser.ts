@@ -384,6 +384,18 @@ export default class ArgumentsParser {
         type: 'array',
         requiresArg: true,
       })
+      .check((checkArgv) => {
+        const illegalPatchCommands = ['link'].filter((command) => checkArgv._.includes(command));
+        if (illegalPatchCommands.length > 0) {
+          const patchOptions = ['patch', 'patch-exclude'].filter((option) => checkArgv[option]);
+          if (patchOptions.length > 0) {
+            throw new IgirException(
+              `Argument${patchOptions.length === 1 ? '' : 's'} ${patchOptions.map((opt) => `"${opt}"`).join(', ')} cannot be used with the command${illegalPatchCommands.length === 1 ? '' : 's'} ${illegalPatchCommands.map((cmd) => `"${cmd}"`).join(', ')}`,
+            );
+          }
+        }
+        return true;
+      })
 
       .option('output', {
         group: groupRomOutputPath,
