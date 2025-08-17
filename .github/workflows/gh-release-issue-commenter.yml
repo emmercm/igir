@@ -27,10 +27,6 @@ jobs:
           CURR_PUBLISHED="${{ github.event.release.published_at }}"
           RELEASE_HTML_URL="${{ github.event.release.html_url }}"
 
-          CURR_TAG="v4.1.2"
-          CURR_PUBLISHED="2025-07-26T04:52:44Z"
-          RELEASE_HTML_URL="https://github.com/emmercm/igir/releases/tag/v4.1.2"
-
           # Determine release tag range
           PREV_TAG="$(gh release list \
             --limit 100 \
