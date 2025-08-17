@@ -119,7 +119,7 @@
 
     // Disable automatic merging of GitHub Actions major version updates
     {
-      matchManagers: ['github-actions'],
+      matchDepTypes: ['action'],
       matchUpdateTypes: ['major'],
       automerge: false
     }
