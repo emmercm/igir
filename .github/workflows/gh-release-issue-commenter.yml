@@ -1,0 +1,90 @@
+name: GitHub Release Issue Commenter
+
+on:
+  pull_request: # TODO(cemmer): DEBUG!
+  release:
+    types:
+      - published
+
+jobs:
+  comment:
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - shell: bash
+        run: |
+          set -x
+
+          CURR_TAG="${{ github.event.release.tag_name }}"
+          CURR_PUBLISHED="${{ github.event.release.published_at }}"
+
+          # TODO(cemmer): DEBUG!
+          CURR_TAG="v4.1.2"
+          CURR_PUBLISHED="2025-07-26T04:52:44Z"
+
+          # Determine release tag range
+          PREV_TAG="$(gh release list \
+            --limit 100 \
+            --json tagName,publishedAt,isDraft \
+            --jq "[.[]
+              | select(.isDraft == false)
+              | select(.publishedAt != null)
+              | select(.tagName != \"${CURR_TAG}\")
+              | select(.publishedAt < \"${CURR_PUBLISHED}\")]
+             | sort_by(.publishedAt)
+             | last?
+             | .tagName // empty")"
+          if [ -n "${PREV_TAG}" ]; then
+            echo "Previous release tag: ${PREV_TAG}"
+            RANGE="${PREV_TAG}..${CURR_TAG}"
+          else
+            echo "No previous release found; scanning all commits reachable by ${CURR_TAG}"
+            RANGE="${CURR_TAG}"
+          fi
+
+          # Get the commits from the tag range
+          mapfile -t COMMITS < <(git rev-list "${RANGE}")
+          echo "Found ${#COMMITS[@]} commits in range ${RANGE}"
+
+          # Get the PRs associated with the commits
+          declare -A PRS_SET=()
+          for sha in "${COMMITS[@]}"; do
+            PRS_FOR_COMMIT=$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/commits/${sha}/pulls" \
+              --jq '.[].number' 2>/dev/null || true)
+            if [ -n "${PRS_FOR_COMMIT}" ]; then
+              while IFS= read -r pr; do
+                [ -n "$pr" ] && PRS_SET["$pr"]=1
+              done <<< "${PRS_FOR_COMMIT}"
+            fi
+          done
+          if [ ${#PRS_SET[@]} -eq 0 ]; then
+            echo "No pull requests found in this release range."
+            exit 0
+          fi
+          echo "Found ${#PRS_SET[@]} unique PRs in the release range."
+
+          # Get the issues resolved by the PRs
+          declare -A ISSUES_SET=()
+          for pr in "${!PRS_SET[@]}"; do
+            ISSUE_NUMBERS=$(gh pr view "${pr}" --repo "${REPO}" --json closingIssuesReferences --jq '.closingIssuesReferences[].number' 2>/dev/null || true)
+            if [ -n "${ISSUE_NUMBERS}" ]; then
+              while IFS= read -r issue; do
+                [ -n "$issue" ] && ISSUES_SET["$issue"]=1
+              done <<< "${ISSUE_NUMBERS}"
+            fi
+          done
+          if [ ${#ISSUES_SET[@]} -eq 0 ]; then
+            echo "No issues were resolved by PRs in this release."
+            exit 0
+          fi
+          echo "Will comment on ${#ISSUES_SET[@]} issues."
