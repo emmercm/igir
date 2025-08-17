@@ -652,7 +652,7 @@ describe('options', () => {
     );
     expect(() =>
       argumentsParser.parse([...dummyCommandAndRequiredArgs, 'dir2dat', '--dat', os.devNull]),
-    ).toThrow();
+    ).toThrow(/cannot be used/i);
     await expect(
       argumentsParser.parse(dummyCommandAndRequiredArgs).scanDatFilesWithoutExclusions(),
     ).rejects.toThrow(/no files found/i);
@@ -1121,6 +1121,17 @@ describe('options', () => {
   });
 
   it('should parse "patch"', async () => {
+    expect(() =>
+      argumentsParser.parse([
+        'link',
+        '--input',
+        os.devNull,
+        '--patch',
+        os.devNull,
+        '--output',
+        os.devNull,
+      ]),
+    ).toThrow(/cannot be used/i);
     await expect(
       argumentsParser
         .parse([
