@@ -4,6 +4,8 @@ import path from 'node:path';
 import url from 'node:url';
 import util from 'node:util';
 
+import nodeGypBuild from 'node-gyp-build';
+
 /**
  * Unfortunately, there is a sticky situation with Node-API:
  *  - `prebuildify` can only build one target from a binding.gyp at a time
@@ -38,6 +40,16 @@ for (let napiPackage of [
     /* ignored */
   }
 
+  // Do nothing if `node-gyp-build` can find a prebuild or a full build
+  const addonDirectory = path.join(napiPackage, `addon-${path.basename(napiPackage)}`);
+  try {
+    nodeGypBuild(addonDirectory);
+    continue;
+  } catch {
+    /* ignored */
+  }
+
+  // Run a build if no prebuild was found
   await new Promise((resolve, reject) => {
     const nodeGypBuild = path.join(modulesParentDir, 'node_modules', '.bin', 'node-gyp-build');
     const proc =
@@ -69,4 +81,15 @@ for (let napiPackage of [
     proc.on('close', resolve);
     proc.on('error', reject);
   });
+
+  // Relocate the build output to the addon directory
+  try {
+    await util.promisify(fs.stat)(addonDirectory);
+  } catch {
+    await util.promisify(fs.mkdir)(addonDirectory);
+  }
+  await util.promisify(fs.rename)(
+    path.join(napiPackage, 'build'),
+    path.join(addonDirectory, 'build'),
+  );
 }

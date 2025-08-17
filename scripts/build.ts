@@ -9,6 +9,7 @@ import { LogLevel } from '../src/console/logLevel.js';
 import FsPoly from '../src/polyfill/fsPoly.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
+logger.info('========== BUILDING ==========');
 
 const output = 'dist';
 logger.info(`Output: '${output}'`);
@@ -69,7 +70,7 @@ async function copyfiles(
 await copyfiles(
   [
     'packages/*/deps/**',
-    'packages/*/prebuilds/**',
+    'packages/*/addon*/**',
     'packages/*/binding.cpp',
     'packages/*/binding.gyp',
   ],

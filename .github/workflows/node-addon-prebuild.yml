@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read and write
 
-name: Node-API Prebuild
+name: Node Native Addons Prebuild
 
 on:
   # Note: dorny/paths-filter can't use 'pull_request' with the 'base' option
@@ -34,7 +34,7 @@ jobs:
     outputs:
       changes: ${{ steps.change-filter.outputs.changes == 'true' && steps.commit-filter.outputs.changes == 'false' && 'true' || 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
       # Prebuild if any relevant source file has changed
@@ -54,7 +54,8 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-              - 'packages/*/prebuilds/**'
+              - 'packages/*/addon*/**'
+              - 'packages/*/prebuilds*/**'
 
   prebuild:
     needs:
@@ -65,7 +66,7 @@ jobs:
       run:
         shell: bash
     timeout-minutes: 30 # QEMU cross-builds
-    name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch }})
+    name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch || 'default' }})
     strategy:
       fail-fast: false
       matrix:
@@ -82,7 +83,7 @@ jobs:
           #- os: windows-11-arm
     steps:
       # Setup and install
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -131,11 +132,11 @@ jobs:
             node --print 'process'
             find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
-              rm -rf prebuilds
-              ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
+              rm -rf addon* prebuilds*
+              ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
               cd ../..
             done
-            ls -alR packages/*/prebuilds/
+            find packages/*/addon* -type f -print0 | xargs -0 ls -al
 
             # Test the build
             rm -rf packages/*/build
@@ -149,11 +150,11 @@ jobs:
           node --print 'process'
           find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
-            rm -rf prebuilds
-            ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip
+            rm -rf addon* prebuilds*
+            ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
             cd ../..
           done
-          ls -alR packages/*/prebuilds/
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
 
           # Test the build
           rm -rf packages/*/build
@@ -163,7 +164,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
-          path: packages/*/prebuilds/
+          path: packages/*/addon*/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -173,21 +174,26 @@ jobs:
       - prebuild
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.ref }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - run: |
+          set -x
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
+          rm -rf packages/*/addon*/ packages/*/prebuilds*/
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
       - uses: actions/download-artifact@v5
         with:
           path: packages/
           merge-multiple: true
-      - run: |
-          ls -alR packages/*/prebuilds/
       - id: bump-and-commit
         run: |
           set -x
-          git add --all packages/*/prebuilds
+          find packages/*/addon* -type f -print0 | xargs -0 ls -al
+          git add --all packages
+          git status
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
