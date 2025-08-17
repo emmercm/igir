@@ -80,7 +80,7 @@
     "async": "3.2.6",
     "async-mutex": "0.5.0",
     "chalk": "5.4.1",
-    "chdman": "0.278.0",
+    "chdman": "0.279.0",
     "class-transformer": "0.5.1",
     "dolphin-tool": "0.2506.0",
     "fast-glob": "3.3.3",
