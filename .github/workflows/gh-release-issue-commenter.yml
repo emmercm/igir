@@ -23,8 +23,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -x
-
           REPO="${GITHUB_REPOSITORY}"
           CURR_TAG="${{ github.event.release.tag_name }}"
           CURR_PUBLISHED="${{ github.event.release.published_at }}"
