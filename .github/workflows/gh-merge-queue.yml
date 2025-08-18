@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Required for `gh` CLI
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - run: |
           set -x
           pr_search="sort:created-asc"
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Required for `gh` CLI
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - run: |
           set -x
           author="app/renovate"
@@ -119,7 +119,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Required for `gh` CLI
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - run: |
           gh pr edit "${{ github.event.pull_request.number }}" --remove-label "${{ env.renovate_rebase_label }}"
         env:

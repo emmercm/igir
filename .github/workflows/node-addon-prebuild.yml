@@ -34,7 +34,7 @@ jobs:
     outputs:
       changes: ${{ steps.change-filter.outputs.changes == 'true' && steps.commit-filter.outputs.changes == 'false' && 'true' || 'false' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
       # Prebuild if any relevant source file has changed
@@ -83,7 +83,7 @@ jobs:
           #- os: windows-11-arm
     steps:
       # Setup and install
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -174,7 +174,7 @@ jobs:
       - prebuild
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           # Token needed to trigger Actions on push
@@ -184,7 +184,7 @@ jobs:
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
           rm -rf packages/*/addon*/ packages/*/prebuilds*/
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
           path: packages/
           merge-multiple: true
