@@ -28,7 +28,7 @@ jobs:
       should-test: ${{ steps.filter.outputs.should-test }}
       should-delete-prebuilds: ${{ steps.filter.outputs.should-delete-prebuilds }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
       - id: filter
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Setup and install
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -98,7 +98,7 @@ jobs:
             node-version: 20
     steps:
       # Setup and install
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -138,7 +138,7 @@ jobs:
         node-version: [ '', 18 ]
     steps:
       # Setup and install
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
