@@ -78,9 +78,9 @@
 
     // Perform dependency pinning immediately
     {
-      matchUpdateTypes: ['pin'],
+      matchUpdateTypes: ['pin', 'pinDigest'],
       commitMessageAction: 'pin',
-      groupName: 'dependency ranges',
+      groupName: 'version ranges',
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
       recreateWhen: 'always',
