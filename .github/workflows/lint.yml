@@ -11,22 +11,22 @@ jobs:
   renovate-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: rinchsan/renovate-config-validator@v0.2.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: rinchsan/renovate-config-validator@a12a2b98cd4db923c33d1ce407c57afb43f3ff59 # v0.2.0
         with:
           pattern: 'renovate.json5'
 
   shellcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
 
   workflow-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
       - run: go install github.com/rhysd/actionlint/cmd/actionlint@latest
       - run: actionlint

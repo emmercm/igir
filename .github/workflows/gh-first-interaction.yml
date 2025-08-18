@@ -10,7 +10,7 @@ jobs:
     name: Welcome First Time Contributors
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/first-interaction@v3
+      - uses: actions/first-interaction@753c925c8d1ac6fede23781875376600628d9b5d # v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           pr-message: |

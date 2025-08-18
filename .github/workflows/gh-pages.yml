@@ -31,7 +31,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
       - id: filter
@@ -49,7 +49,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
       - run: docker run --rm --volume "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD041 MD046 -- "**/*.md"
@@ -60,7 +60,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
@@ -112,7 +112,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date

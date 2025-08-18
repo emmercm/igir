@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Required for `gh` CLI
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - run: gh pr merge "${{ github.event.pull_request.number }}" --squash --auto
         env:
           GH_TOKEN: ${{ github.token }}
