@@ -4,6 +4,19 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag (e.g. "v1.0.0")'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.tag || github.event.release.tag_name }}
+  cancel-in-progress: true
+
+env:
+  tag: ${{ input.tag || github.event.release.tag_name }}
 
 jobs:
   comment:
@@ -23,9 +36,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           REPO="${GITHUB_REPOSITORY}"
-          CURR_TAG="${{ github.event.release.tag_name }}"
-          CURR_PUBLISHED="${{ github.event.release.published_at }}"
-          RELEASE_HTML_URL="${{ github.event.release.html_url }}"
+          CURR_TAG="${{ env.tag }}"
+          CURR_PUBLISHED=" $(gh release view "${CURR_TAG}" --json publishedAt --jq '.publishedAt')"
+          RELEASE_HTML_URL=" $(gh release view "${CURR_TAG}" --json url --jq '.url')"
 
           # Determine release tag range
           PREV_TAG="$(gh release list \
@@ -113,7 +126,7 @@ jobs:
               echo " - Comment for ${CURR_TAG} already exists on #${issue}; skipping."
               continue
             fi
-            echo gh issue comment "${issue}" --body "${COMMENT_BODY}"
+            gh issue comment "${issue}" --body "${COMMENT_BODY}"
             echo " - Commented on #${issue}"
           done
 
