@@ -132,7 +132,7 @@ jobs:
       - uses: re-actors/alls-green@release/v1
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: test-npx, test-npm-install-global
+          allowed-skips: pkg-pr-new, test-npx, test-npm-install-global
 
   npm-exec-branch-comment:
     if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
