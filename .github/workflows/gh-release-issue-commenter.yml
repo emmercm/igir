@@ -37,8 +37,8 @@ jobs:
         run: |
           REPO="${GITHUB_REPOSITORY}"
           CURR_TAG="${{ env.tag }}"
-          CURR_PUBLISHED=" $(gh release view "${CURR_TAG}" --json publishedAt --jq '.publishedAt')"
-          RELEASE_HTML_URL=" $(gh release view "${CURR_TAG}" --json url --jq '.url')"
+          CURR_PUBLISHED="$(gh release view "${CURR_TAG}" --json publishedAt --jq '.publishedAt')"
+          RELEASE_HTML_URL="$(gh release view "${CURR_TAG}" --json url --jq '.url')"
 
           # Determine release tag range
           PREV_TAG="$(gh release list \
@@ -58,6 +58,7 @@ jobs:
           else
             echo "No previous release found; scanning all commits reachable by ${CURR_TAG}"
             RANGE="${CURR_TAG}"
+            exit 1
           fi
 
           # Get the commits from the tag range
