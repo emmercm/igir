@@ -1,4 +1,4 @@
-import { crc32 } from '@node-rs/crc32';
+import { Crc32 } from '@aws-crypto/crc32';
 
 import type { ZipReader } from '../../zip/index.js';
 import { CompressionMethod } from '../../zip/index.js';
@@ -118,9 +118,9 @@ export default {
     }
 
     // Validate the zip comment
-    const cdfhCrc32 = crc32(
-      Buffer.concat(centralDirectoryFileHeaders.map((fileHeader) => fileHeader.raw)),
-    )
+    const cdfhCrc32 = new Crc32()
+      .update(Buffer.concat(centralDirectoryFileHeaders.map((fileHeader) => fileHeader.raw)))
+      .digest()
       .toString(16)
       .padStart(8, '0')
       .toUpperCase();
