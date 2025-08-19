@@ -31,7 +31,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -40,7 +40,7 @@ jobs:
 
       # Check to see if the package.json version has changed
       - id: check
-        uses: EndBug/version-check@v2
+        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2.1.5
         with:
           # NOTE: `diff-search:true` is preferred so that only the exact commit that bumps the
           #   version triggers this workflow, but `workflow_dispatch` doesn't carry commit or
@@ -50,9 +50,9 @@ jobs:
           file-url: ${{ github.event_name == 'workflow_dispatch' && 'https://unpkg.com/igir/package.json' || '' }}
 
       - if: steps.check.outputs.changed == 'true'
-        uses: volta-cli/action@v4
+        uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
       - if: steps.check.outputs.changed == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.npm
@@ -80,7 +80,7 @@ jobs:
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
         id: release-drafter
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6.1.0
         with:
           name: v${{ steps.check.outputs.version }}
           tag: v${{ steps.check.outputs.version }}
@@ -116,7 +116,7 @@ jobs:
               | jq --raw-output '.[0].number')
           echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
       - if: ${{ steps.release-drafter.outputs.id }}
-        uses: thollander/actions-comment-pull-request@v3
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             ## :octocat: GitHub release

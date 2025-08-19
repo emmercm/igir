@@ -67,39 +67,23 @@
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
       minimumReleaseAge: '5 days',
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
-    },
-
-    // Don't update some packages in GitHub Actions workflows
-    {
-      matchManagers: ['github-actions'],
-      matchDepNames: ['python'],
-      enabled: false,
-    },
-
-    // Pin GitHub Actions actions to their digest hashes, remembering the semver in a comment
-    {
-      // helpers:pinGitHubActionDigestsToSemver
-      matchDepTypes: ['action'],
-      pinDigests: true,
-      extractVersion: '^(?<version>v?\\d+\\.\\d+\\.\\d+)$',
-      versioning: 'regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$'
+      schedule: 'at any time',
     },
 
     // Group any/all package files in the docs/ directory
     {
       matchFileNames: ['docs/**'],
-      groupName: 'docs dependencies'
+      groupName: 'docs dependencies',
     },
 
     // Perform dependency pinning immediately
     {
-      matchUpdateTypes: ['pin'],
+      matchUpdateTypes: ['pin', 'pinDigest'],
       commitMessageAction: 'pin',
-      groupName: 'dependency ranges',
+      groupName: 'version ranges',
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
-      recreateWhen: 'always'
+      recreateWhen: 'always',
     },
 
     // Perform version rollbacks immediately
@@ -114,16 +98,44 @@
     {
       matchUpdateTypes: ['major'],
       // Renovate's defaults for these options (overrides our global defaults)
-      schedule: 'at any time'
+      schedule: 'at any time',
     },
-
-    // Disable automatic merging of GitHub Actions major version updates
-    {
-      matchDepTypes: ['action'],
-      matchUpdateTypes: ['major'],
-      automerge: false
-    }
   ],
+
+  "github-actions": {
+    packageRules: [
+      // Don't update some non-action packages
+      {
+        matchDepNames: ['python'],
+        enabled: false,
+      },
+
+      // Pin actions to their digest hashes, remembering the semver in a comment
+      {
+        // helpers:pinGitHubActionDigests
+        matchDepTypes: ['action'],
+        pinDigests: true,
+        // helpers:pinGitHubActionDigestsToSemver
+        extractVersion: '^(?<version>v?\\d+\\.\\d+\\.\\d+)$',
+        versioning: 'regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$',
+      },
+
+      // Disable automatic merging of major action version updates -- these don't get tested programmatically
+      {
+        matchDepTypes: ['action'],
+        matchUpdateTypes: ['major'],
+        automerge: false,
+      },
+
+      // Group non-major actions updates together
+      {
+        matchDepTypes: ['action'],
+        matchUpdateTypes: ['patch', 'minor'],
+        groupName: 'GitHub Actions',
+        schedule: 'on the 26th day of the month',
+      }
+    ]
+  },
 
   npm: {
     lockFileMaintenance: {
@@ -141,7 +153,7 @@
         groupName: 'dependencies',
         matchDepTypes: ['dependencies', 'devDependencies'],
         // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
+        matchUpdateTypes: ['patch', 'minor'],
       },
       {
         matchDepTypes: ['dependencies', 'devDependencies'],

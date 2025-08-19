@@ -16,7 +16,7 @@ jobs:
   codecov-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - uses: formsort/action-check-codecov-config@v1
 
   # !!! The codecov/project check should be required by GitHub !!!
@@ -28,11 +28,11 @@ jobs:
     timeout-minutes: 15
     steps:
       # Setup and install
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           submodules: 'recursive'
-      - uses: volta-cli/action@v4
-      - uses: actions/cache@v4
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
+      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.npm
@@ -48,7 +48,7 @@ jobs:
 
       # Run test coverage
       - run: npm run test:coverage
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
