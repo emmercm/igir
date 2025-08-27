@@ -127,7 +127,7 @@
     "auto-changelog": "2.5.0",
     "caxa": "3.0.1",
     "esbuild": "0.25.9",
-    "eslint": "9.33.0",
+    "eslint": "9.34.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "28.14.0",
