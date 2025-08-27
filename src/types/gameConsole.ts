@@ -113,7 +113,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Apple-I',
-        romm: 'apple-i',
+        romm: 'apple',
       },
     ),
     new GameConsole(/Apple.*IIe?/i, ['.do', '.nib', '.po'], {
@@ -517,6 +517,7 @@ export default class GameConsole {
       {
         emulationstation: 'gmaster',
         retrodeck: 'gmaster',
+        romm: 'hartung',
       },
     ),
     // Interton
@@ -589,7 +590,7 @@ export default class GameConsole {
       mister: 'MSX',
       onion: 'MSX',
       retrodeck: 'msx2',
-      romm: 'msx2',
+      romm: 'msx2plus',
     }),
     new GameConsole(/MSX TurboR/i, [], {
       adam: 'MSX',
@@ -598,7 +599,7 @@ export default class GameConsole {
       mister: 'MSX',
       onion: 'MSX',
       retrodeck: 'msxturbor',
-      romm: 'msx',
+      romm: 'msx-turbo',
     }),
     new GameConsole(
       /Xbox/i,
@@ -682,7 +683,7 @@ export default class GameConsole {
         onion: 'PCECD',
         pocket: 'pcecd',
         retrodeck: 'pcenginecd',
-        romm: 'turbografx-16-slash-pc-engine-cd',
+        romm: 'turbografxa-cd',
       },
     ),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
@@ -1085,7 +1086,7 @@ export default class GameConsole {
       onion: 'MD',
       pocket: 'genesis',
       retrodeck: 'megadrive',
-      romm: 'genesis-slash-megadrive',
+      romm: 'genesis',
       twmenu: 'gen',
     }),
     new GameConsole(
@@ -1141,7 +1142,7 @@ export default class GameConsole {
       mister: 'ZX81',
       onion: 'ZXEIGHTYONE',
       retrodeck: 'zx81',
-      romm: 'sinclair-zx81',
+      romm: 'zx80',
     }),
     new GameConsole(/ZX[ -]?81/i, [], {
       batocera: 'zx81',
@@ -1149,7 +1150,7 @@ export default class GameConsole {
       jelos: 'zx81',
       mister: 'ZX81',
       retrodeck: 'zx81',
-      romm: 'sinclair-zx81',
+      romm: 'zx81',
     }),
     new GameConsole(/ZX[ -]?Spectrum/i, ['.scl', '.szx', '.z80'], {
       adam: 'ZX',
@@ -1224,7 +1225,7 @@ export default class GameConsole {
       miyoocfw: 'PS1',
       onion: 'PS',
       retrodeck: 'psx',
-      romm: 'ps',
+      romm: 'psx',
     }),
     new GameConsole(
       /PlayStation 2|ps2/i,
@@ -1282,7 +1283,7 @@ export default class GameConsole {
       emulationstation: 'ti99',
       mister: 'TI-99_4A',
       retrodeck: 'ti99',
-      romm: 'ti-994a',
+      romm: 'ti-99',
     }),
     // Tiger
     new GameConsole(/Game.?com/i, ['.tgc'], {
