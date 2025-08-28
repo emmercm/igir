@@ -664,7 +664,7 @@ export default class GameConsole {
       onion: 'PCE',
       pocket: 'pce',
       retrodeck: 'pcengine',
-      romm: 'turbografx16--1',
+      romm: 'tg16',
       twmenu: 'tg16',
     }),
     new GameConsole(
@@ -683,7 +683,7 @@ export default class GameConsole {
         onion: 'PCECD',
         pocket: 'pcecd',
         retrodeck: 'pcenginecd',
-        romm: 'turbografxa-cd',
+        romm: 'turbografx-cd',
       },
     ),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
@@ -1338,7 +1338,7 @@ export default class GameConsole {
       onion: 'SUPERVISION',
       pocket: 'supervision',
       retrodeck: 'supervision',
-      romm: 'watara-slash-quickshot-supervision',
+      romm: 'supervision',
     }),
     // Wellback
     new GameConsole(/Mega Duck/i, ['.md1', '.md2'], {
