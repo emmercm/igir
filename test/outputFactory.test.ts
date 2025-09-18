@@ -1041,3 +1041,34 @@ describe('should respect "--dir-game-subdir"', () => {
     expect(outputPath.format()).toEqual(path.join(os.devNull, 'game', 'Dummy.rom'));
   });
 });
+
+describe('multi-rom games with path structure included in game name', () => {
+  const game = new SingleValueGame({
+    name: 'Top10/A-D/Cool Game',
+    roms: [
+      new ROM({ name: 'Top10/A-D/Cool Game.cue', size: 0, crc32: '' }),
+      new ROM({ name: 'Top10/A-D/Cool Game (Track 01).bin', size: 0, crc32: '' }),
+    ],
+  });
+
+  it('should not duplicate directory structure for multi-ROM games', async () => {
+    const options = new Options({
+      commands: ['copy'],
+      output: os.devNull,
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+    });
+
+    const outputPaths = await Promise.all(
+      game
+        .getRoms()
+        .map(async (rom) =>
+          OutputFactory.getPath(options, dummyDat, game, rom, await rom.toFile()),
+        ),
+    );
+
+    expect(outputPaths[0].format()).toEqual(path.join(os.devNull, 'Top10', 'A-D', 'Cool Game.cue'));
+    expect(outputPaths[1].format()).toEqual(
+      path.join(os.devNull, 'Top10', 'A-D', 'Cool Game (Track 01).bin'),
+    );
+  });
+});
