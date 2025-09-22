@@ -2,9 +2,11 @@ name: Node.js Compile
 
 on:
   pull_request:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:
