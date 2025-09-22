@@ -82,7 +82,7 @@
     "chalk": "5.6.0",
     "chdman": "0.279.0",
     "class-transformer": "0.5.1",
-    "dolphin-tool": "0.2506.1",
+    "dolphin-tool": "0.2509.0",
     "fast-glob": "3.3.3",
     "fast-xml-parser": "5.2.5",
     "graceful-fs": "4.2.11",
