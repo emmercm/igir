@@ -58,7 +58,7 @@ jobs:
           - os: ubuntu-latest
             docker_arch: linux/arm64/v8
 
-          - os: macos-13
+          - os: macos-15-intel
           - os: macos-latest
 
           - os: windows-latest

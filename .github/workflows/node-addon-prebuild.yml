@@ -76,7 +76,7 @@ jobs:
             docker_arch: linux/amd64
           - os: ubuntu-24.04-arm
             docker_arch: linux/arm64/v8
-          - os: macos-13
+          - os: macos-15-intel
           - os: macos-latest
           - os: windows-latest
           # TODO(cemmer): Node.js didn't start publishing Windows ARM64 images until v20
