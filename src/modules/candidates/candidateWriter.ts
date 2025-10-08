@@ -617,6 +617,11 @@ export default class CandidateWriter extends Module {
     outputFilePath: string,
     progressBar: ProgressBar,
   ): Promise<MoveResultValue | undefined> {
+    // Special case: ZeroSizeFile can't be moved
+    if (inputRomFile instanceof ZeroSizeFile) {
+      return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
+    }
+
     // Lock the input file, we can't handle concurrent moves
     return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
       const movedInputPath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
@@ -651,12 +656,6 @@ export default class CandidateWriter extends Module {
 
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
-
-        // Special case: ZeroSizeFile can't be moved
-        if (inputRomFile instanceof ZeroSizeFile) {
-          await inputRomFile.extractToFile(outputFilePath);
-          return MoveResult.COPIED;
-        }
 
         const moveResult = await FsPoly.mv(
           inputRomFile.getFilePath(),
