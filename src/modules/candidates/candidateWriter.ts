@@ -13,6 +13,7 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
+import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
 import type { ZipFormatValue } from '../../types/options.js';
 import type Options from '../../types/options.js';
 import { LinkMode, ZipFormat } from '../../types/options.js';
@@ -616,6 +617,11 @@ export default class CandidateWriter extends Module {
     outputFilePath: string,
     progressBar: ProgressBar,
   ): Promise<MoveResultValue | undefined> {
+    // Special case: ZeroSizeFile can't be moved
+    if (inputRomFile instanceof ZeroSizeFile) {
+      return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
+    }
+
     // Lock the input file, we can't handle concurrent moves
     return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
       const movedInputPath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
