@@ -13,6 +13,7 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
+import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
 import type { ZipFormatValue } from '../../types/options.js';
 import type Options from '../../types/options.js';
 import { LinkMode, ZipFormat } from '../../types/options.js';
@@ -650,6 +651,12 @@ export default class CandidateWriter extends Module {
 
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
+
+        // Special case: ZeroSizeFile can't be moved
+        if (inputRomFile instanceof ZeroSizeFile) {
+          await inputRomFile.extractToFile(outputFilePath);
+          return MoveResult.COPIED;
+        }
 
         const moveResult = await FsPoly.mv(
           inputRomFile.getFilePath(),
