@@ -131,7 +131,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.should-test == 'true' }}
     name: node-e2e (${{ matrix.node-version || 'package.json' }})
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 10
     strategy:
       matrix:
