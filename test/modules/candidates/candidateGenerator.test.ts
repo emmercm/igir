@@ -72,10 +72,9 @@ const datWithFourGames = new LogiqxDAT({
 async function candidateGenerator(
   options: Options,
   dat: DAT,
-  files: (File | Promise<File>)[],
+  files: File[],
 ): Promise<WriteCandidate[]> {
-  const resolvedFiles = await Promise.all(files);
-  const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(resolvedFiles);
+  const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(files);
   return new CandidateGenerator(
     options,
     new ProgressBarFake(),
@@ -284,7 +283,11 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then
     expect(candidates).toHaveLength(3);
@@ -318,7 +321,11 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then
     expect(candidates).toHaveLength(3);
@@ -348,7 +355,11 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then
     expect(
@@ -395,7 +406,11 @@ describe('with different input files for every game ROM', () => {
       const options = new Options({ commands: ['copy', command] });
 
       // When
-      const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+      const candidates = await candidateGenerator(
+        options,
+        datWithFourGames,
+        await Promise.all(filePromises),
+      );
 
       // Then there should still be 3 candidates, with the input -> output:
       //  (nothing) -> game with no ROMs
@@ -419,7 +434,11 @@ describe('with different input files for every game ROM', () => {
     const options = new Options({ commands: ['copy'] });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then there should be 2 candidates, with the input -> output:
     //  (nothing) -> game with no ROMs
@@ -618,7 +637,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
   describe('allow excess sets', () => {
     const archive = new Zip('input.zip');
-    const files = [
+    const filePromises = [
       // Matches a game with two ROMs
       File.fileOf({ filePath: 'two.a', size: 2, crc32: 'abcdef90' }),
       ArchiveEntry.entryOf({
@@ -644,7 +663,11 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       });
 
       // When
-      const candidates = await candidateGenerator(allowExcessOptions, datWithFourGames, files);
+      const candidates = await candidateGenerator(
+        allowExcessOptions,
+        datWithFourGames,
+        await Promise.all(filePromises),
+      );
 
       // Then
       expect(candidates).toHaveLength(1);
@@ -658,7 +681,11 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       });
 
       // When
-      const candidates = await candidateGenerator(allowExcessOptions, datWithFourGames, files);
+      const candidates = await candidateGenerator(
+        allowExcessOptions,
+        datWithFourGames,
+        await Promise.all(filePromises),
+      );
 
       // Then
       expect(candidates).toHaveLength(2);

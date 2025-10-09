@@ -122,8 +122,8 @@
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.33",
-    "@typescript-eslint/eslint-plugin": "8.43.0",
-    "@typescript-eslint/parser": "8.43.0",
+    "@typescript-eslint/eslint-plugin": "8.44.0",
+    "@typescript-eslint/parser": "8.44.0",
     "auto-changelog": "2.5.0",
     "caxa": "3.0.1",
     "esbuild": "0.25.10",
@@ -140,10 +140,10 @@
     "jest-extended": "4.0.2",
     "prebuildify": "6.0.1",
     "prettier": "3.6.2",
-    "ts-jest": "29.4.1",
+    "ts-jest": "29.4.4",
     "ts-node": "10.9.2",
     "typescript": "5.9.2",
-    "typescript-eslint": "8.43.0",
+    "typescript-eslint": "8.44.0",
     "which": "5.0.0"
   },
   "//engines": [
@@ -156,6 +156,6 @@
     "node": "^18.20.0 || ^20.11.0 || >=22"
   },
   "volta": {
-    "node": "24.7.0"
+    "node": "24.9.0"
   }
 }
