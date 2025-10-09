@@ -356,11 +356,11 @@ export default class FsPoly {
     if (
       // Standard UNC: \\Server\Share\Path
       // Extended UNC: \\?\UNC\Server\Share\Path
-      normalizedPath.startsWith('\\\\') ||
+      filePath.startsWith(`\\\\`) ||
       // smb://[user[:password]@]server/share[/path]
-      normalizedPath.toLowerCase().startsWith('smb://') ||
+      filePath.toLowerCase().startsWith('smb://') ||
       // /mnt/smb/share/folder/
-      normalizedPath.toLowerCase().startsWith('/mnt/smb/')
+      filePath.toLowerCase().startsWith('/mnt/smb/')
     ) {
       return true;
     }
