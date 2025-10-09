@@ -58,8 +58,10 @@ async function processFile(
 }
 
 describe.each(
-  FileSignature.SIGNATURES.filter((signature) => !signature.canBeTrimmed()).slice(0, 5),
-)('not known trimmable signature: %s', (fileSignature) => {
+  FileSignature.SIGNATURES.filter((signature) => !signature.canBeTrimmed())
+    .slice(0, 5)
+    .map((fileSignature) => [fileSignature.getExtension(), fileSignature]),
+)('not known trimmable signature: %s', (_, fileSignature) => {
   describe.each([0x00, 0xff])('padding byte: %s', (paddingByte) => {
     describe.each([10, 11, 12, 13].map((pow) => Math.pow(2, pow)))('size: %s', (size) => {
       it('should not return paddings with default options', async () => {
@@ -88,36 +90,38 @@ describe.each(
   });
 });
 
-describe.each(FileSignature.SIGNATURES.filter((signature) => signature.canBeTrimmed()))(
-  'known trimmable signature: %s',
-  (fileSignature) => {
-    describe.each([0x00, 0xff])('padding byte: %s', (paddingByte) => {
-      describe.each([10, 11, 12, 13].map((pow) => Math.pow(2, pow)))('size: %s', (size) => {
-        it('should not process any files when no DATs provided', async () => {
-          const processedFile = await processFile({}, fileSignature, size * 0.75, paddingByte);
-          expect(processedFile.getPaddings()).toHaveLength(0);
-        });
+describe.each(
+  FileSignature.SIGNATURES.filter((signature) => signature.canBeTrimmed()).map((fileSignature) => [
+    fileSignature.getExtension(),
+    fileSignature,
+  ]),
+)('known trimmable signature: %s', (_, fileSignature) => {
+  describe.each([0x00, 0xff])('padding byte: %s', (paddingByte) => {
+    describe.each([10, 11, 12, 13].map((pow) => Math.pow(2, pow)))('size: %s', (size) => {
+      it('should not process any files when no DATs provided', async () => {
+        const processedFile = await processFile({}, fileSignature, size * 0.75, paddingByte);
+        expect(processedFile.getPaddings()).toHaveLength(0);
+      });
 
-        it('should not return any paddings if the file is not trimmed', async () => {
-          const processedFile = await processFile(
-            { dat: [os.devNull] },
-            fileSignature,
-            size,
-            paddingByte,
-          );
-          expect(processedFile.getPaddings()).toHaveLength(0);
-        });
+      it('should not return any paddings if the file is not trimmed', async () => {
+        const processedFile = await processFile(
+          { dat: [os.devNull] },
+          fileSignature,
+          size,
+          paddingByte,
+        );
+        expect(processedFile.getPaddings()).toHaveLength(0);
+      });
 
-        it('should return paddings if the file is trimmed', async () => {
-          const processedFile = await processFile(
-            { dat: [os.devNull] },
-            fileSignature,
-            size * 0.75,
-            paddingByte,
-          );
-          expect(processedFile.getPaddings()).toHaveLength(2);
-        });
+      it('should return paddings if the file is trimmed', async () => {
+        const processedFile = await processFile(
+          { dat: [os.devNull] },
+          fileSignature,
+          size * 0.75,
+          paddingByte,
+        );
+        expect(processedFile.getPaddings()).toHaveLength(2);
       });
     });
-  },
-);
+  });
+});

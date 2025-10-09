@@ -936,22 +936,24 @@ describe('should respect "--dir-letter"', () => {
 });
 
 describe('should respect "--dir-game-subdir"', () => {
-  test.each([
-    new SingleValueGame({
-      name: 'game',
-    }),
-    new SingleValueGame({
-      name: 'game',
-      roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-    }),
-    new SingleValueGame({
-      name: 'game',
-      roms: [
-        new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-        new ROM({ name: 'two.rom', size: 0, crc32: '' }),
-      ],
-    }),
-  ])('"never": %s', async (game) => {
+  test.each(
+    [
+      new SingleValueGame({
+        name: 'game',
+      }),
+      new SingleValueGame({
+        name: 'game',
+        roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+      }),
+      new SingleValueGame({
+        name: 'game',
+        roms: [
+          new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+          new ROM({ name: 'two.rom', size: 0, crc32: '' }),
+        ],
+      }),
+    ].map((game) => [game.getName(), game]),
+  )('"never": %s', async (_, game) => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,
