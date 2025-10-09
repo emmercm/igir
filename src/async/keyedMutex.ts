@@ -9,7 +9,7 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
 export default class KeyedMutex {
   private readonly keyMutexes = new Map<string, MutexInterface>();
 
-  private readonly keyMutexesMutex = withTimeout(new Mutex(), 100);
+  private readonly keyMutexesMutex = withTimeout(new Mutex(), 1000, new Error('global mutex'));
 
   private keyMutexesLru = new Set<string>();
 
@@ -45,7 +45,7 @@ export default class KeyedMutex {
       const mutexes = keys.reduce(ArrayPoly.reduceUnique(), []).map((key) => {
         let mutex = this.keyMutexes.get(key);
         if (mutex === undefined) {
-          mutex = withTimeout(new Mutex(), 100);
+          mutex = withTimeout(new Mutex(), 1000, new Error(`mutex for '${key}'`));
           this.keyMutexes.set(key, mutex);
 
           // Expire least recently used keys
