@@ -1,4 +1,5 @@
-import { Mutex } from 'async-mutex';
+import type { MutexInterface } from 'async-mutex';
+import { Mutex, withTimeout } from 'async-mutex';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 
@@ -6,9 +7,9 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
  * Wrapper for `async-mutex` {@link Mutex}es to run code exclusively for a key.
  */
 export default class KeyedMutex {
-  private readonly keyMutexes = new Map<string, Mutex>();
+  private readonly keyMutexes = new Map<string, MutexInterface>();
 
-  private readonly keyMutexesMutex = new Mutex();
+  private readonly keyMutexesMutex = withTimeout(new Mutex(), 100);
 
   private keyMutexesLru = new Set<string>();
 
@@ -44,7 +45,7 @@ export default class KeyedMutex {
       const mutexes = keys.reduce(ArrayPoly.reduceUnique(), []).map((key) => {
         let mutex = this.keyMutexes.get(key);
         if (mutex === undefined) {
-          mutex = new Mutex();
+          mutex = withTimeout(new Mutex(), 100);
           this.keyMutexes.set(key, mutex);
 
           // Expire least recently used keys

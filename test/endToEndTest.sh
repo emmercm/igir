@@ -25,6 +25,15 @@ npm run build
 cd dist
 # Note: this will require `npm run build` to copy prebuilds
 
+./index.js move test \
+  --input "../test/fixtures/roms/" \
+  --input-exclude "../test/fixtures/**/invalid.*" \
+  --input-exclude "../test/fixtures/roms/discs" \
+  --output "../test/fixtures/roms/" \
+  --dir-mirror \
+  -vvv
+exit 0
+
 test_igir() {
   echo "--------------------------------------------------"
   temp="$(mktemp -d)"
