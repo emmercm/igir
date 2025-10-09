@@ -3,6 +3,7 @@ import type { Readable } from 'node:stream';
 
 import FsPoly from '../../polyfill/fsPoly.js';
 import StreamPoly from '../../polyfill/streamPoly.js';
+import IgirException from '../exceptions/igirException.js';
 import File from './file.js';
 
 export default class ZeroSizeFile extends File {
@@ -37,5 +38,26 @@ export default class ZeroSizeFile extends File {
   async createReadStream<T>(callback: (readable: Readable) => Promise<T> | T): Promise<T> {
     const readable = StreamPoly.staticReadable(0, 0x00);
     return callback(readable);
+  }
+
+  withProps(): File {
+    return this;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async withFileHeader(): Promise<File> {
+    throw new IgirException(`${this.constructor.name} can't have a header`);
+  }
+
+  withoutFileHeader(): File {
+    throw new IgirException(`${this.constructor.name} can't have a header`);
+  }
+
+  withPaddings(): File {
+    throw new IgirException(`${this.constructor.name} can't be padded`);
+  }
+
+  withPatch(): File {
+    throw new IgirException(`${this.constructor.name} can't be patched`);
   }
 }
