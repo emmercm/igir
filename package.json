@@ -140,7 +140,7 @@
     "jest-extended": "4.0.2",
     "prebuildify": "6.0.1",
     "prettier": "3.6.2",
-    "ts-jest": "29.4.1",
+    "ts-jest": "29.4.4",
     "ts-node": "10.9.2",
     "typescript": "5.9.2",
     "typescript-eslint": "8.44.0",
@@ -156,6 +156,6 @@
     "node": "^18.20.0 || ^20.11.0 || >=22"
   },
   "volta": {
-    "node": "24.7.0"
+    "node": "24.9.0"
   }
 }
