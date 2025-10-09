@@ -349,7 +349,19 @@ export default class FsPoly {
    */
   static isSamba(filePath: string): boolean {
     const normalizedPath = filePath.replaceAll(/[\\/]/g, path.sep);
-    if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
+    if (normalizedPath === os.devNull) {
+      return false;
+    }
+
+    if (
+      // Standard UNC: \\Server\Share\Path
+      // Extended UNC: \\?\UNC\Server\Share\Path
+      normalizedPath.startsWith('\\\\') ||
+      // smb://[user[:password]@]server/share[/path]
+      normalizedPath.toLowerCase().startsWith('smb://') ||
+      // /mnt/smb/share/folder/
+      normalizedPath.toLowerCase().startsWith('/mnt/smb/')
+    ) {
       return true;
     }
 
