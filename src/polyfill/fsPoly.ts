@@ -43,6 +43,10 @@ export default class FsPoly {
   // https://github.com/cristiammercado/node-disk-info/issues/36
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private static readonly DRIVES = (() => {
+    if (process.platform === 'win32') {
+      // https://support.microsoft.com/en-us/topic/windows-management-instrumentation-command-line-wmic-removal-from-windows-e9e83c7f-4992-477f-ba1d-96f694b8665d
+      return [];
+    }
     try {
       return nodeDiskInfo.getDiskInfoSync();
     } catch {
