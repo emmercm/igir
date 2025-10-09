@@ -155,11 +155,13 @@ jobs:
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
       - run: npm ci --foreground-scripts
-      - run: |
+      - if: ${{ runner.os == 'Linux' }}
+        run: |
           sudo apt-get update
           sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       # Test the built files
-      - run: ./test/endToEndTest.sh
+      - shell: bash
+        run: ./test/endToEndTest.sh
 
   # !!! This check should be required by GitHub !!!
   test-status-check:
