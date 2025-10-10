@@ -43,6 +43,10 @@ export default class FsPoly {
   // https://github.com/cristiammercado/node-disk-info/issues/36
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private static readonly DRIVES = (() => {
+    if (process.platform === 'win32') {
+      // https://support.microsoft.com/en-us/topic/windows-management-instrumentation-command-line-wmic-removal-from-windows-e9e83c7f-4992-477f-ba1d-96f694b8665d
+      return [];
+    }
     try {
       return nodeDiskInfo.getDiskInfoSync();
     } catch {
@@ -345,7 +349,19 @@ export default class FsPoly {
    */
   static isSamba(filePath: string): boolean {
     const normalizedPath = filePath.replaceAll(/[\\/]/g, path.sep);
-    if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
+    if (normalizedPath === os.devNull) {
+      return false;
+    }
+
+    if (
+      // Standard UNC: \\Server\Share\Path
+      // Extended UNC: \\?\UNC\Server\Share\Path
+      filePath.startsWith(`\\\\`) ||
+      // smb://[user[:password]@]server/share[/path]
+      filePath.toLowerCase().startsWith('smb://') ||
+      // /mnt/smb/share/folder/
+      filePath.toLowerCase().startsWith('/mnt/smb/')
+    ) {
       return true;
     }
 
