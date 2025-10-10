@@ -48,7 +48,7 @@ export default class KeyedMutex {
           this.keyMutexes.set(key, mutex);
 
           // Expire least recently used keys
-          if (this.maxSize !== undefined) {
+          if (this.maxSize !== undefined && this.keyMutexes.size > this.maxSize) {
             [...this.keyMutexesLru]
               .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
               .slice(this.maxSize)
