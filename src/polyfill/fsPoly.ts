@@ -7,7 +7,6 @@ import stream from 'node:stream';
 import util from 'node:util';
 
 import async from 'async';
-import gracefulFs from 'graceful-fs';
 import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
@@ -17,7 +16,7 @@ import IgirException from '../types/exceptions/igirException.js';
 import FsReadTransform, { FsReadCallback } from './fsReadTransform.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
-gracefulFs.gracefulify(fs);
+// gracefulFs.gracefulify(fs);
 
 export const MoveResult = {
   COPIED: 1,
