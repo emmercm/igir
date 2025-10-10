@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { platform } from 'node:os';
 import path from 'node:path';
 import util from 'node:util';
 
@@ -45,7 +46,7 @@ const jestConfig = async (): Promise<Config> => {
 
     // Many tests are I/O-bound, and possibly contend with each other; reduce
     // the parallelism and increase the test timeout globally
-    maxWorkers: '50%',
+    maxWorkers: process.platform === 'win32' ? '25%' : '75%',
     testTimeout: 45_000,
 
     // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
