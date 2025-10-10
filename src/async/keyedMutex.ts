@@ -48,13 +48,15 @@ export default class KeyedMutex {
           this.keyMutexes.set(key, mutex);
 
           // Expire least recently used keys
-          [...this.keyMutexesLru]
-            .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
-            .slice(this.maxSize ?? Number.MAX_SAFE_INTEGER)
-            .forEach((lruKey) => {
-              this.keyMutexes.delete(lruKey);
-              this.keyMutexesLru.delete(lruKey);
-            });
+          if (this.maxSize !== undefined) {
+            [...this.keyMutexesLru]
+              .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
+              .slice(this.maxSize)
+              .forEach((lruKey) => {
+                this.keyMutexes.delete(lruKey);
+                this.keyMutexesLru.delete(lruKey);
+              });
+          }
         }
         return mutex;
       });

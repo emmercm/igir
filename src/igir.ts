@@ -7,6 +7,7 @@ import isAdmin from 'is-admin';
 
 import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
 import DriveSemaphore from './async/driveSemaphore.js';
+import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
 import type Logger from './console/logger.js';
@@ -126,6 +127,7 @@ export default class Igir {
     const driveSemaphore = new DriveSemaphore(this.options.getReaderThreads());
     const readerSemaphore = new MappableSemaphore(this.options.getReaderThreads());
     const writerSemaphore = new CandidateWriterSemaphore(this.options.getWriterThreads());
+    const moveMutex = new FileMoveMutex(this.options.getReaderThreads() * 100);
 
     // Scan and process input files
     let dats = await this.processDATScanner(fileFactory, driveSemaphore);
@@ -190,6 +192,7 @@ export default class Igir {
         this.options,
         progressBar,
         writerSemaphore,
+        moveMutex,
       ).write(processedDat, candidates);
       movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
       datsToWrittenFiles.set(processedDat, writerResults.wrote);
