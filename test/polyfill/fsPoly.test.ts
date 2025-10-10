@@ -351,9 +351,12 @@ describe('isSamba', () => {
     },
   );
 
-  test.each(['//foo/bar', '\\\\foo\\bar'])('should return true: %s', (filePath) => {
-    expect(FsPoly.isSamba(filePath)).toEqual(true);
-  });
+  test.each(['\\\\foo\\bar', 'smb://foo/bar', '/mnt/smb/foo/bar'])(
+    'should return true: %s',
+    (filePath) => {
+      expect(FsPoly.isSamba(filePath)).toEqual(true);
+    },
+  );
 });
 
 describe('isSymlink', () => {
