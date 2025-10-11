@@ -11,6 +11,7 @@ import async from 'async';
 
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
 import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -162,6 +163,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new CandidateWriterSemaphore(os.cpus().length),
+    new FileMoveMutex(),
   ).write(dat, candidates);
 
   // Then
