@@ -113,7 +113,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Apple-I',
-        romm: 'apple-i',
+        romm: 'apple',
       },
     ),
     new GameConsole(/Apple.*IIe?/i, ['.do', '.nib', '.po'], {
@@ -545,7 +545,7 @@ export default class GameConsole {
         onion: 'ODYSSEY',
         pocket: 'odyssey2',
         retrodeck: 'odyssey2',
-        romm: 'odyssey-2-slash-videopac-g7000',
+        romm: 'odyssey-2',
       },
     ),
     // Mattel
@@ -663,7 +663,7 @@ export default class GameConsole {
       onion: 'PCE',
       pocket: 'pce',
       retrodeck: 'pcengine',
-      romm: 'turbografx16--1',
+      romm: 'tg16',
       twmenu: 'tg16',
     }),
     new GameConsole(
@@ -682,7 +682,7 @@ export default class GameConsole {
         onion: 'PCECD',
         pocket: 'pcecd',
         retrodeck: 'pcenginecd',
-        romm: 'turbografx-16-slash-pc-engine-cd',
+        romm: 'turbografx-cd',
       },
     ),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
@@ -1085,7 +1085,7 @@ export default class GameConsole {
       onion: 'MD',
       pocket: 'genesis',
       retrodeck: 'megadrive',
-      romm: 'genesis-slash-megadrive',
+      romm: 'genesis',
       twmenu: 'gen',
     }),
     new GameConsole(
@@ -1141,7 +1141,7 @@ export default class GameConsole {
       mister: 'ZX81',
       onion: 'ZXEIGHTYONE',
       retrodeck: 'zx81',
-      romm: 'sinclair-zx81',
+      romm: 'zx81',
     }),
     new GameConsole(/ZX[ -]?81/i, [], {
       batocera: 'zx81',
@@ -1149,7 +1149,7 @@ export default class GameConsole {
       jelos: 'zx81',
       mister: 'ZX81',
       retrodeck: 'zx81',
-      romm: 'sinclair-zx81',
+      romm: 'zx81',
     }),
     new GameConsole(/ZX[ -]?Spectrum/i, ['.scl', '.szx', '.z80'], {
       adam: 'ZX',
@@ -1224,7 +1224,7 @@ export default class GameConsole {
       miyoocfw: 'PS1',
       onion: 'PS',
       retrodeck: 'psx',
-      romm: 'ps',
+      romm: 'psx',
     }),
     new GameConsole(
       /PlayStation 2|ps2/i,
@@ -1337,7 +1337,7 @@ export default class GameConsole {
       onion: 'SUPERVISION',
       pocket: 'supervision',
       retrodeck: 'supervision',
-      romm: 'watara-slash-quickshot-supervision',
+      romm: 'supervision',
     }),
     // Wellback
     new GameConsole(/Mega Duck/i, ['.md1', '.md2'], {
