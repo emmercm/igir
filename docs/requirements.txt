@@ -1,4 +1,4 @@
-mkdocs-material==9.6.20
+mkdocs-material==9.6.22
 
 mkdocs-exclude-search==0.6.6
 mkdocs-git-committers-plugin-2==2.5.0
