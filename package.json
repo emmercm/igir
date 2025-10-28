@@ -117,7 +117,7 @@
     "@types/graceful-fs": "4.1.9",
     "@types/jest": "30.0.0",
     "@types/micromatch": "4.0.10",
-    "@types/node": "22.18.12",
+    "@types/node": "24.9.1",
     "@types/semver": "7.7.1",
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
