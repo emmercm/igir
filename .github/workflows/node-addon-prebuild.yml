@@ -34,7 +34,7 @@ jobs:
     outputs:
       changes: ${{ steps.change-filter.outputs.changes == 'true' && steps.commit-filter.outputs.changes == 'false' && 'true' || 'false' }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           ref: ${{ env.ref }}
       # Prebuild if any relevant source file has changed
@@ -83,7 +83,7 @@ jobs:
           #- os: windows-11-arm
     steps:
       # Setup and install
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -106,7 +106,7 @@ jobs:
           npm ci --ignore-scripts
 
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
@@ -174,7 +174,7 @@ jobs:
       - prebuild
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           ref: ${{ env.ref }}
           # Token needed to trigger Actions on push
