@@ -65,7 +65,7 @@ jobs:
 
       # Create the pull request, and optionally mark it as auto-merge
       - id: create-pull-request
-        uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7.0.11
         with:
           # GitHub won't run workflows off of events from the `github-actions` user
           # But also, I want the PR to be created under my name for cosmetic reasons
