@@ -101,7 +101,7 @@
     "semver": "7.7.3",
     "simple-statistics": "7.8.8",
     "strip-ansi": "7.1.2",
-    "tar": "7.5.2",
+    "tar": "7.5.3",
     "terminal-size": "4.0.0",
     "trash": "9.0.0",
     "typescript-memoize": "1.1.1",
