@@ -161,7 +161,7 @@ jobs:
           npm ci --foreground-scripts
           npm run test:unit packages
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
           path: packages/*/addon*/
@@ -184,7 +184,7 @@ jobs:
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
           rm -rf packages/*/addon*/ packages/*/prebuilds*/
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: packages/
           merge-multiple: true
