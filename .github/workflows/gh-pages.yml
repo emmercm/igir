@@ -31,7 +31,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
       - id: filter
@@ -49,7 +49,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
       - run: docker run --rm --volume "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD041 MD046 -- "**/*.md"
@@ -60,7 +60,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
@@ -72,7 +72,7 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           restore-keys: |
@@ -87,7 +87,7 @@ jobs:
       - run: mkdocs build --strict --verbose
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
@@ -112,7 +112,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
@@ -124,7 +124,7 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
@@ -137,7 +137,7 @@ jobs:
       - run: mkdocs gh-deploy --strict --verbose --force
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
