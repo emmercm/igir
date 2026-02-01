@@ -29,7 +29,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
       - id: filter
@@ -68,7 +68,7 @@ jobs:
 
     steps:
       # Setup and install
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -193,7 +193,7 @@ jobs:
           Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
           echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ env.BIN_OUTPUT }}
           path: ${{ env.BIN_OUTPUT }}
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Get the package version
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
@@ -224,7 +224,7 @@ jobs:
       - run: npm ci
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           tag_name: v${{ env.NPM_PKG_VERSION }}
