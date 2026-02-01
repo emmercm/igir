@@ -84,7 +84,7 @@
     "class-transformer": "0.5.1",
     "dolphin-tool": "0.2512.0",
     "fast-glob": "3.3.3",
-    "fast-xml-parser": "5.3.3",
+    "fast-xml-parser": "5.3.4",
     "graceful-fs": "4.2.11",
     "is-admin": "4.0.0",
     "is-unicode-supported": "2.1.0",
