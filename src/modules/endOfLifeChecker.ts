@@ -8,7 +8,7 @@ import MultiBar from '../console/multiBar.js';
  * Check if the current Node.js version has reached EOL and log if it has.
  */
 export default class EndOfLifeChecker {
-  private static readonly END_OF_LIFE_DATES = [
+  private static readonly END_OF_SECURITY_SUPPORT_DATES = [
     [4, new Date('2018-04-30')],
     [5, new Date('2016-06-30')],
     [6, new Date('2019-04-30')],
@@ -30,6 +30,7 @@ export default class EndOfLifeChecker {
     [22, new Date('2027-04-30')],
     [23, new Date('2025-06-01')],
     [24, new Date('2028-04-30')],
+    [25, new Date('2026-06-01')],
   ] satisfies [number, Date][];
 
   private readonly logger: Logger;
@@ -42,7 +43,7 @@ export default class EndOfLifeChecker {
    * Check the current Node.js version.
    */
   check(nodejsVersion: string, now = new Date()): void {
-    for (const [majorVersion, endOfLifeDate] of EndOfLifeChecker.END_OF_LIFE_DATES) {
+    for (const [majorVersion, endOfLifeDate] of EndOfLifeChecker.END_OF_SECURITY_SUPPORT_DATES) {
       if (semver.satisfies(nodejsVersion, `^${majorVersion}`)) {
         if (now > endOfLifeDate) {
           // We are past the EOL of a known version, warn and return

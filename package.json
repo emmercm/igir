@@ -146,14 +146,8 @@
     "typescript-eslint": "8.53.0",
     "which": "5.0.0"
   },
-  "//engines": [
-    "Requires ^18.17.0 || >=20.5.0 for node-gyp >=11.0.0",
-    "Requires ^18 || ^20 || >= 21 for node-addon-api >=8.0.0",
-    "Requires ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0 for jest >=30.0.0",
-    "Requires ^18.18.0 || ^20.9.0 || >=21.1.0 for eslint >=9.0.0"
-  ],
   "engines": {
-    "node": "^18.20.0 || ^20.11.0 || >=22"
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
   },
   "volta": {
     "node": "24.10.0"
