@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
 import util from 'node:util';
 
 import async from 'async';
@@ -30,19 +29,7 @@ import Options, {
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
-let LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
-if (
-  process.env.NODE_ENV === 'test' &&
-  process.argv.some((arg) => arg.startsWith('--testNamePattern'))
-) {
-  LOGGER = new Logger(LogLevel.TRACE, process.stdout);
-}
-
-interface TestOutput {
-  outputFilesAndCrcs: string[][];
-  movedFiles: string[];
-  cleanedFiles: string[];
-}
+const LOGGER = new Logger(LogLevel.TRACE, process.stdout);
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
