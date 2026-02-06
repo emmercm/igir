@@ -5,6 +5,7 @@ import type DriveSemaphore from '../async/driveSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import TimePoly from '../polyfill/timePoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Chd from '../types/files/archives/chd/chd.js';
 import Gzip from '../types/files/archives/sevenZip/gzip.js';
@@ -45,6 +46,8 @@ export default abstract class Scanner extends Module {
   ): Promise<File[]> {
     return (
       await this.driveSemaphore.map(filePaths, async (inputFile) => {
+        const start = TimePoly.hrtimeMillis();
+
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
@@ -59,6 +62,7 @@ export default abstract class Scanner extends Module {
         }
 
         this.progressBar.incrementCompleted();
+        this.progressBar.logTrace(`(${TimePoly.hrtimeMillis(start)}) ${inputFile}`);
         return files;
       })
     ).flat();
