@@ -114,10 +114,10 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       ? []
       : await FsPoly.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
 
+  // For debugging: enable trace logging if the 'help' option is provided
   const logger = options.getHelp() ? new Logger(LogLevel.TRACE, process.stdout) : LOGGER;
   await new Igir(options, logger).main();
 
-  logger.trace('before output file walking');
   const outputFilesAndCrcs =
     options.getOutput() === Temp.getTempDir()
       ? // The output dir defaulted to the temp dir because we aren't writing ROMs, ignore all output
@@ -132,7 +132,6 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
           .flat()
           .filter(ArrayPoly.filterUniqueMapped((tuple) => tuple[0]))
           .sort((a, b) => a[0].localeCompare(b[0]));
-  logger.trace(`walked ${outputFilesAndCrcs.length} output files`);
 
   const inputFilesAfter = (
     await Promise.all(
@@ -141,7 +140,6 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   )
     .flat()
     .reduce(ArrayPoly.reduceUnique(), []);
-  logger.trace(`walked ${inputFilesAfter.length} input files`);
   const movedFiles = inputFilesBefore
     .filter((filePath) => !inputFilesAfter.includes(filePath))
     .map((filePath) => {
@@ -152,7 +150,6 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       return replaced;
     })
     .sort();
-  logger.trace(`found ${movedFiles.length} moved files`);
 
   const outputFilesAfter =
     options.getOutput() === Temp.getTempDir()

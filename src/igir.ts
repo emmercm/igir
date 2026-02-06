@@ -165,7 +165,6 @@ export default class Igir {
       `processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
     );
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
-      this.logger.trace(`### ${dat.getName()}`);
       datProcessProgressBar.incrementInProgress();
 
       const progressBar = this.logger.addProgressBar({
