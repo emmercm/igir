@@ -183,7 +183,7 @@ export default class GameConsole {
         pocket: '2600',
         retrodeck: 'atari2600',
         romm: 'atari2600',
-        spruce: 'ATARI
+        spruce: 'ATARI',
         twmenu: 'a26',
       },
     ),
