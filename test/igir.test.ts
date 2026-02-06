@@ -30,7 +30,13 @@ import Options, {
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+let LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+if (
+  process.env.NODE_ENV === 'test' &&
+  process.argv.some((arg) => arg.startsWith('--testNamePattern'))
+) {
+  LOGGER = new Logger(LogLevel.TRACE, process.stdout);
+}
 
 interface TestOutput {
   outputFilesAndCrcs: string[][];
