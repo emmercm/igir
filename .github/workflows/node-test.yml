@@ -126,7 +126,8 @@ jobs:
       # Test the source files
       - run: |
           node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose "--testNamePattern=^with inferred DATs should move to the same directory$" --runTestsByPath "test/igir.test.ts"
-          npm run test:unit
+          node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose "--testNamePattern=^with inferred DATs should move to the same directory$" --runTestsByPath "test/igir.test.ts"
+          node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose "--testNamePattern=^with inferred DATs should move to the same directory$" --runTestsByPath "test/igir.test.ts"
 
   # !!! This check should be required by GitHub !!!
   test-status-check:
