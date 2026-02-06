@@ -86,7 +86,7 @@ export default class KeyedMutex {
    */
   private static async acquireMultipleWithDeadlockProtection(
     mutexes: Mutex[],
-    timeoutMillis = process.env.NODE_ENV === 'test' ? 1000 : 15_000,
+    timeoutMillis = 15_000,
   ): Promise<void> {
     // Add +/-10% jitter to try to prevent the exact same deadlock from happening
     const timeoutWithJitter =
@@ -122,12 +122,6 @@ export default class KeyedMutex {
         if (error !== E_TIMEOUT) {
           // The error was something other than a timeout, throw it
           throw error;
-        }
-
-        if (process.env.NODE_ENV === 'test') {
-          console.log(
-            `acquired only ${mutexesAcquired.length.toLocaleString()}/${mutexes.length.toLocaleString()} in ${timeoutMillis}ms`,
-          );
         }
       }
     }
