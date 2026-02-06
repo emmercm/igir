@@ -86,9 +86,12 @@ export default class KeyedMutex {
    */
   private static async acquireMultipleWithDeadlockProtection(
     mutexes: Mutex[],
-    timeoutMillis = 15_000,
+    timeoutMillis = process.env.NODE_ENV === 'test' ? 1000 : 15_000,
   ): Promise<void> {
-    const mutexesWithTimeout = mutexes.map((mutex) => withTimeout(mutex, timeoutMillis));
+    // Add +/-10% jitter to try to prevent the exact same deadlock from happening
+    const timeoutWithJitter =
+      timeoutMillis - timeoutMillis * 0.1 + Math.random() * (timeoutMillis * 0.2);
+    const mutexesWithTimeout = mutexes.map((mutex) => withTimeout(mutex, timeoutWithJitter));
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
