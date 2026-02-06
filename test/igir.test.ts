@@ -66,19 +66,33 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
   const files = await FsPoly.walk(outputDir, WalkMode.FILES);
 
   return (
-    await async.mapLimit(files, os.cpus().length, async (filePath: string) =>
-      fileFactory.filesFrom(filePath),
+    (
+      await async.mapLimit(files, os.cpus().length, async (filePath: string) =>
+        fileFactory.filesFrom(filePath),
+      )
     )
-  )
-    .flat()
-    .map((file) => [
-      file
-        .toString()
-        .replace(inputDir, '<input>')
-        .replace(outputDir + path.sep, ''),
-      file.getCrc32() ?? '',
-    ])
-    .sort((a, b) => a[0].localeCompare(b[0]));
+      .flat()
+      .map(
+        (file) =>
+          [
+            file
+              .toString()
+              .replace(inputDir, '<input>')
+              .replace(outputDir + path.sep, ''),
+            file.getCrc32() ?? '',
+          ] satisfies [string, string],
+      )
+      .sort((a, b) => {
+        const pathCompare = a[0].localeCompare(b[0]);
+        if (pathCompare !== 0) {
+          return pathCompare;
+        }
+        return a[1].localeCompare(b[1]);
+      })
+      // Some CHDs, such as raw ones, will produce multiple checksums for the same path. Just pick
+      // the first one
+      .filter(ArrayPoly.filterUniqueMapped((tuple) => tuple[0]))
+  );
 }
 
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
@@ -116,7 +130,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
           )
         )
           .flat()
-          .filter((tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx)
+          .filter(ArrayPoly.filterUniqueMapped((tuple) => tuple[0]))
           .sort((a, b) => a[0].localeCompare(b[0]));
   logger.trace(`walked ${outputFilesAndCrcs.length} output files`);
 
@@ -226,8 +240,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Optical Game (Disc 2).chd')}|track03.bin`, '61a363f1'],
         [`${path.join('One', 'Optical Game (Disc 2).chd')}|track04.bin`, 'fc5ff5a0'],
         [path.join('One', 'Optical Game.m3u'), '8da7b4ae'],
-        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
-        [`${path.join('One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -296,8 +310,8 @@ describe('with explicit DATs', () => {
         ['Optical Game (Disc 2).chd|track02.raw', 'abc178d5'],
         ['Optical Game (Disc 2).chd|track03.bin', '61a363f1'],
         ['Optical Game (Disc 2).chd|track04.bin', 'fc5ff5a0'],
-        [`${path.join('Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
-        [`${path.join('Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -342,8 +356,8 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [`${path.join('-', 'One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
-        [`${path.join('-', 'One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('-', 'One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('-', 'One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [
           `${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`,
           'f6cc9b1c',
@@ -628,8 +642,8 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
         [path.join('igir combined', 'S', 'speed_test_v51.smc'), '9adca6cc'],
-        [`${path.join('igir combined', 'T', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
-        [`${path.join('igir combined', 'T', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('igir combined', 'T', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('igir combined', 'T', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('igir combined', 'T', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'T', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('igir combined', 'T', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -783,8 +797,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five.zip')}|Five.rom`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five.zip')}|Four.rom`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five.zip')}|Three.rom`, 'ff46c5d8'],
-        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
-        [`${path.join('One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [`${path.join('One', 'UMD.zip')}|UMD.iso`, 'e90f7cf5'],
         [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
         [`${path.join('Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
@@ -912,8 +926,8 @@ describe('with explicit DATs', () => {
         ['Patchable.zip|Best.rom', '1e3d78cf'],
         ['Patchable.zip|C01173E.rom', 'dfaebe28'],
         ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
-        [`${path.join('Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
-        [`${path.join('Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1028,12 +1042,12 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Optical Game.m3u'), '8da7b4ae'],
         [
           `${path.join('One', 'Three Four Five', '2048')}|2048 -> ${path.join('<input>', 'chd', '2048.chd')}|2048`,
-          'xxxxxxxx',
-        ], // hard disk
+          'd774f042',
+        ], // raw
         [
           `${path.join('One', 'Three Four Five', '4096')}|4096 -> ${path.join('<input>', 'chd', '4096.chd')}|4096`,
-          'xxxxxxxx',
-        ], // hard disk
+          '2e19ca09',
+        ], // raw
         [
           `${path.join('One', 'Three Four Five', 'Five.rom')} -> ${path.join('<input>', 'raw', 'five.rom')}`,
           '3e5daf67',
@@ -1165,8 +1179,8 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Optical Game (Disc 2)', 'track02.raw'), 'abc178d5'],
         [path.join('One', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
         [path.join('One', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
-        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'xxxxxxxx'], // hard disk
-        [`${path.join('One', 'Three Four Five', '4096')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -1373,9 +1387,9 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         [path.join('#1', '0F09A40.rom'), '2f943e86'],
-        [`${path.join('#1', '2048.chd')}|2048`, 'xxxxxxxx'], // hard disk
+        [`${path.join('#1', '2048.chd')}|2048`, 'd774f042'], // raw
         [path.join('#2', '3708F2C.rom'), '20891c9f'],
-        [`${path.join('#2', '4096.chd')}|4096`, 'xxxxxxxx'], // hard disk
+        [`${path.join('#2', '4096.chd')}|4096`, '2e19ca09'], // raw
         [path.join('#3', '612644F.rom'), 'f7591b29'],
         [path.join('#3', '65D1206.rom'), '20323455'],
         [path.join('#4', '92C85C9.rom'), '06692159'],
@@ -1434,7 +1448,7 @@ describe('with inferred DATs', () => {
       const inputDir = path.join(inputTemp, 'roms');
       const inputBefore = await walkWithCrc(inputDir, inputDir);
 
-      await runIgir({
+      const result = await runIgir({
         commands: ['move', 'test'],
         input: [inputDir],
         inputExclude: [
@@ -1447,8 +1461,10 @@ describe('with inferred DATs', () => {
         help: true,
       });
 
-      await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
-      await expect(walkWithCrc(inputTemp, outputTemp)).resolves.toHaveLength(0);
+      expect(result.outputFilesAndCrcs).toEqual(inputBefore);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+      await expect(FsPoly.walk(outputTemp, WalkMode.FILES)).resolves.toHaveLength(0);
     });
   });
 
@@ -1633,16 +1649,16 @@ describe('with inferred DATs', () => {
         ],
         [
           `2048.chd|2048 -> ${path.join('..', 'input', 'roms', 'chd', '2048.chd')}|2048`,
-          'xxxxxxxx',
-        ], // hard disk
+          'd774f042',
+        ], // raw
         [
           `3708F2C.rom -> ${path.join('..', 'input', 'roms', 'patchable', '3708F2C.rom')}`,
           '20891c9f',
         ],
         [
           `4096.chd|4096 -> ${path.join('..', 'input', 'roms', 'chd', '4096.chd')}|4096`,
-          'xxxxxxxx',
-        ], // hard disk
+          '2e19ca09',
+        ], // raw
         [
           `612644F.rom -> ${path.join('..', 'input', 'roms', 'patchable', '612644F.rom')}`,
           'f7591b29',
