@@ -1455,7 +1455,6 @@ describe('with inferred DATs', () => {
         ],
         output: inputDir,
         dirMirror: true,
-        help: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual(inputBefore);
