@@ -31,6 +31,12 @@ import ProgressBarFake from './console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.TRACE, process.stdout);
 
+interface TestOutput {
+  outputFilesAndCrcs: string[][];
+  movedFiles: string[];
+  cleanedFiles: string[];
+}
+
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
@@ -75,6 +81,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 }
 
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
+  LOGGER.trace('--------------------------------------------------');
   const options = new Options({
     ...optionsProps,
     readerThreads: os.cpus().length,
