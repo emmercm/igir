@@ -194,6 +194,11 @@ export default class Logger {
    * Return a copy of this Logger with a new string prefix.
    */
   withLoggerPrefix(prefix: string): Logger {
-    return new Logger(this.logLevel, this.stream, this.multiBar, prefix);
+    return new Logger(
+      this.logLevel,
+      this.stream,
+      this.multiBar,
+      (this.loggerPrefix ?? '') + prefix,
+    );
   }
 }

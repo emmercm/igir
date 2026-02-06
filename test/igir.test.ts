@@ -1439,6 +1439,7 @@ describe('with inferred DATs', () => {
         ],
         output: inputDir,
         dirMirror: true,
+        help: true,
       });
 
       await expect(walkWithCrc(inputDir, inputDir)).resolves.toEqual(inputBefore);
