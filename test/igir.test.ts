@@ -64,7 +64,6 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
 
   const files = await FsPoly.walk(outputDir, WalkMode.FILES);
-  console.log(`${outputDir}: walked ${files.length}} files`);
 
   return (
     await async.mapLimit(files, os.cpus().length, async (filePath: string) =>
@@ -101,11 +100,10 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       ? []
       : await FsPoly.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
 
-  await new Igir(
-    options,
-    options.getHelp() ? new Logger(LogLevel.TRACE, process.stdout) : LOGGER,
-  ).main();
+  const logger = options.getHelp() ? new Logger(LogLevel.TRACE, process.stdout) : LOGGER;
+  await new Igir(options, logger).main();
 
+  logger.trace('before output file walking');
   const outputFilesAndCrcs =
     options.getOutput() === Temp.getTempDir()
       ? // The output dir defaulted to the temp dir because we aren't writing ROMs, ignore all output
@@ -120,6 +118,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
           .flat()
           .filter((tuple, idx, tuples) => tuples.findIndex((dupe) => dupe[0] === tuple[0]) === idx)
           .sort((a, b) => a[0].localeCompare(b[0]));
+  logger.trace(`walked ${outputFilesAndCrcs.length} output files`);
 
   const inputFilesAfter = (
     await Promise.all(
@@ -128,6 +127,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   )
     .flat()
     .reduce(ArrayPoly.reduceUnique(), []);
+  logger.trace(`walked ${inputFilesAfter.length} input files`);
   const movedFiles = inputFilesBefore
     .filter((filePath) => !inputFilesAfter.includes(filePath))
     .map((filePath) => {
@@ -138,6 +138,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       return replaced;
     })
     .sort();
+  logger.trace(`found ${movedFiles.length} moved files`);
 
   const outputFilesAfter =
     options.getOutput() === Temp.getTempDir()
@@ -1439,7 +1440,7 @@ describe('with inferred DATs', () => {
         inputExclude: [
           path.join(inputTemp, '**', 'invalid.*'),
           // Note: need to exclude some ROMs to prevent duplicate output paths
-          path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
+          path.join(inputTemp, 'roms', 'chd'),
         ],
         output: inputDir,
         dirMirror: true,
