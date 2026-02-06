@@ -255,6 +255,7 @@ export default class MultiBar {
 
     // One last render
     this.clearAndRender();
+    this.renderTimer?.cancel();
 
     // Freeze (and delete) any lingering progress bars
     const singleBarsCopy = [...this.singleBars];
