@@ -122,8 +122,8 @@
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.35",
-    "@typescript-eslint/eslint-plugin": "8.53.0",
-    "@typescript-eslint/parser": "8.53.0",
+    "@typescript-eslint/eslint-plugin": "8.54.0",
+    "@typescript-eslint/parser": "8.54.0",
     "auto-changelog": "2.5.0",
     "caxa": "3.0.1",
     "esbuild": "0.27.2",
@@ -143,7 +143,7 @@
     "ts-jest": "29.4.6",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.53.0",
+    "typescript-eslint": "8.54.0",
     "which": "5.0.0"
   },
   "//engines": [
