@@ -55,6 +55,10 @@ interface OutputTokens {
   // @see https://docs.romm.app/latest/Platforms-and-Players/Supported-Platforms/
   romm?: string;
 
+  // SpruceOS ROMs go in the /Roms/{onion} directory:
+  // @see https://onionui.github.io/docs/emulators
+  spruce?: string;
+  
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
   // @see https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms
   twmenu?: string;
@@ -93,6 +97,7 @@ export default class GameConsole {
       onion: 'CPC',
       retrodeck: 'amstradcpc',
       romm: 'acpc',
+      spruce: 'CPC',
       twmenu: 'cpc',
     }),
     new GameConsole(
@@ -137,6 +142,7 @@ export default class GameConsole {
       pocket: 'arduboy',
       retrodeck: 'arduboy',
       romm: 'arduboy',
+      spruce: 'ARDUBOY',
     }),
     // Atari
     new GameConsole(/800|8-bit Family/, ['.atr', '.atx'], {
@@ -147,6 +153,7 @@ export default class GameConsole {
       onion: 'EIGHTHUNDRED',
       retrodeck: 'atari800',
       romm: 'atari8bit',
+      spruce: 'EIGHTHUNDRED',
     }),
     new GameConsole(
       /2600/,
@@ -176,6 +183,7 @@ export default class GameConsole {
         pocket: '2600',
         retrodeck: 'atari2600',
         romm: 'atari2600',
+        spruce: 'ATARI
         twmenu: 'a26',
       },
     ),
@@ -188,6 +196,7 @@ export default class GameConsole {
       onion: 'FIFTYTWOHUNDRED',
       retrodeck: 'atari5200',
       romm: 'atari5200',
+      spruce: 'FIFTYTWOHUNDRED',
       twmenu: 'a52',
     }),
     new GameConsole(/7800/, ['.a78'], {
@@ -199,7 +208,8 @@ export default class GameConsole {
       onion: 'SEVENTYEIGHTHUNDRED',
       pocket: '7800',
       retrodeck: 'atari7800',
-      romm: 'atari7800',
+      romm: 'atari7800',      
+      spruce: 'SEVENTYEIGHTHUNDRED',
       twmenu: 'a78',
     }),
     new GameConsole(/Jaguar/i, ['.j64'], {
@@ -221,6 +231,7 @@ export default class GameConsole {
       onion: 'LYNX',
       retrodeck: 'atarilynx',
       romm: 'lynx',
+      spruce: 'LYNX',
     }),
     new GameConsole(/Atari.*ST/i, ['.msa', '.st', '.stx'], {
       batocera: 'atarist',
@@ -230,6 +241,7 @@ export default class GameConsole {
       onion: 'ATARIST',
       retrodeck: 'atarist',
       romm: 'atari-st',
+      spruce: 'ATARIST',
     }),
     // Bally
     new GameConsole(
@@ -271,6 +283,7 @@ export default class GameConsole {
       pocket: 'wonderswan',
       retrodeck: 'wonderswan',
       romm: 'wonderswan',
+      spruce: 'WS',
       twmenu: 'ws',
     }),
     new GameConsole(/WonderSwan Color/i, ['.wsc'], {
@@ -285,6 +298,7 @@ export default class GameConsole {
       pocket: 'wonderswan',
       retrodeck: 'wonderswancolor',
       romm: 'wonderswan-color',
+      spruce: 'WSC',
       twmenu: 'ws',
     }),
     // Bit Corporation
@@ -336,6 +350,7 @@ export default class GameConsole {
       pocket: 'amiga',
       retrodeck: 'amiga',
       romm: 'amiga',
+      spruce: 'AMIGA',
     }),
     new GameConsole(
       /Amiga CD32/i,
@@ -386,6 +401,7 @@ export default class GameConsole {
       onion: 'COMMODORE',
       retrodeck: 'c64',
       romm: 'c64',
+      spruce: 'COMMODORE',
     }),
     new GameConsole(
       /Commodore C?128/i,
@@ -409,6 +425,7 @@ export default class GameConsole {
       onion: 'VIC20',
       retrodeck: 'vic20',
       romm: 'vic-20',
+      spruce: 'VIC20',
     }),
     // Coleco
     new GameConsole(/ColecoVision/i, ['.col'], {
@@ -421,6 +438,7 @@ export default class GameConsole {
       pocket: 'coleco',
       retrodeck: 'colecovision',
       romm: 'colecovision',
+      spruce: 'COLECO',
       twmenu: 'col',
     }),
     // Emerson
@@ -469,6 +487,7 @@ export default class GameConsole {
       pocket: 'channel_f',
       retrodeck: 'channelf',
       romm: 'fairchild-channel-f',
+      spruce: 'FAIRCHILD',
     }),
     // Funtech
     new GameConsole(
@@ -507,6 +526,7 @@ export default class GameConsole {
       pocket: 'vectrex',
       retrodeck: 'vectrex',
       romm: 'vectrex',
+      spruce: 'VECTREX',
     }),
     // Hartung
     new GameConsole(
@@ -546,6 +566,7 @@ export default class GameConsole {
         pocket: 'odyssey2',
         retrodeck: 'odyssey2',
         romm: 'odyssey-2-slash-videopac-g7000',
+        spruce: 'ODYSSEY',
       },
     ),
     // Mattel
@@ -559,6 +580,7 @@ export default class GameConsole {
       pocket: 'intv',
       retrodeck: 'intellivision',
       romm: 'intellivision',
+      spruce: 'INTELLIVISION',
     }),
     // Microsoft
     new GameConsole(/MSX/i, ['.mx1'], {
@@ -571,6 +593,7 @@ export default class GameConsole {
       pocket: 'msx',
       retrodeck: 'msx',
       romm: 'msx',
+      spruce: 'MSX',
     }),
     new GameConsole(/MSX2/i, ['.mx2'], {
       adam: 'MSX',
@@ -581,6 +604,7 @@ export default class GameConsole {
       onion: 'MSX',
       retrodeck: 'msx2',
       romm: 'msx2',
+      spruce: 'MSX',
     }),
     new GameConsole(/MSX2+/i, [], {
       adam: 'MSX',
@@ -590,6 +614,7 @@ export default class GameConsole {
       onion: 'MSX',
       retrodeck: 'msx2',
       romm: 'msx2',
+      spruce: 'MSX',
     }),
     new GameConsole(/MSX TurboR/i, [], {
       adam: 'MSX',
@@ -599,6 +624,7 @@ export default class GameConsole {
       onion: 'MSX',
       retrodeck: 'msxturbor',
       romm: 'msx',
+      spruce: 'MSX',
     }),
     new GameConsole(
       /Xbox/i,
@@ -664,6 +690,7 @@ export default class GameConsole {
       pocket: 'pce',
       retrodeck: 'pcengine',
       romm: 'turbografx16--1',
+      spruce: 'PCE',
       twmenu: 'tg16',
     }),
     new GameConsole(
@@ -683,6 +710,7 @@ export default class GameConsole {
         pocket: 'pcecd',
         retrodeck: 'pcenginecd',
         romm: 'turbografx-16-slash-pc-engine-cd',
+        spruce: 'PCECD',
       },
     ),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
@@ -694,6 +722,7 @@ export default class GameConsole {
       pocket: 'pce',
       retrodeck: 'supergrafx',
       romm: 'supergrafx',
+      spruce: 'SGFX',
     }),
     new GameConsole(/PC[ -]?88(01)?/i, ['.d88'], {
       batocera: 'pc88',
@@ -711,6 +740,7 @@ export default class GameConsole {
       onion: 'PCNINETYEIGHT',
       retrodeck: 'pc98',
       romm: 'pc-9800-series',
+      spruce: 'PC98',
     }),
     new GameConsole(/PC-FX/i, [], {
       emulationstation: 'pcfx',
@@ -723,6 +753,7 @@ export default class GameConsole {
       adam: 'TIC80',
       emulationstation: 'tic80',
       retrodeck: 'tic80',
+      spruce: 'TIC80',
     }),
     // Nintendo
     new GameConsole(/FDS|(Famicom|Family) Computer Disk System/i, ['.fds'], {
@@ -738,6 +769,7 @@ export default class GameConsole {
       pocket: 'nes',
       retrodeck: 'fds',
       romm: 'fds',
+      spruce: 'FDS',
     }),
     new GameConsole(/Game (and|&) Watch/i, ['.mgw'], {
       adam: 'GW',
@@ -748,6 +780,7 @@ export default class GameConsole {
       onion: 'GW',
       retrodeck: 'gameandwatch',
       romm: 'g-and-w',
+      spruce: 'GW',
     }),
     new GameConsole(/GameCube/i, ['.gcm', '.gcz'], {
       batocera: 'gc',
@@ -769,6 +802,7 @@ export default class GameConsole {
       pocket: 'gb',
       retrodeck: 'gb',
       romm: 'gb',
+      spruce: 'GB',
       twmenu: 'gb',
     }),
     new GameConsole(/GBA|Game ?Boy Advance/i, ['.gba'], {
@@ -784,6 +818,7 @@ export default class GameConsole {
       pocket: 'gba',
       retrodeck: 'gba',
       romm: 'gba',
+      spruce: 'GBA',
       twmenu: 'gba',
     }),
     new GameConsole(/GBC|Game ?Boy Color/i, ['.gbc'], {
@@ -799,6 +834,7 @@ export default class GameConsole {
       pocket: 'gbc',
       retrodeck: 'gbc',
       romm: 'gbc',
+      spruce: 'GBC',
       twmenu: 'gb',
     }),
     new GameConsole(/Nintendo 64|N64/i, ['.d64', '.n64', '.v64', '.z64'], {
@@ -808,6 +844,7 @@ export default class GameConsole {
       mister: 'N64',
       retrodeck: 'n64',
       romm: 'n64',
+      spruce: 'N64',
     }),
     new GameConsole(/Nintendo 64DD|N64DD/i, ['.ndd'], {
       batocera: 'n64dd',
@@ -833,6 +870,7 @@ export default class GameConsole {
       onion: 'NDS',
       retrodeck: 'nds',
       romm: 'nds',
+      spruce: 'NDS',
       twmenu: 'nds',
     }),
     new GameConsole(/(\W|^)NDSi(\W|$)|Nintendo DSi([Ww]are)?/i, ['.dsi'], {
@@ -857,6 +895,7 @@ export default class GameConsole {
         pocket: 'nes',
         retrodeck: 'nes',
         romm: 'nes',
+        spruce: 'FC',
         twmenu: 'nes',
       },
     ),
@@ -873,6 +912,7 @@ export default class GameConsole {
       pocket: 'poke_mini',
       retrodeck: 'pokemini',
       romm: 'pokemon-mini',
+      spruce: 'POKE',
     }),
     new GameConsole(/Satellaview/i, ['.bs'], {
       batocera: 'satellaview',
@@ -883,6 +923,7 @@ export default class GameConsole {
       pocket: 'snes',
       retrodeck: 'satellaview',
       romm: 'satellaview',
+      spruce: 'SATELLAVIEW',
     }),
     new GameConsole(/Sufami/i, [], {
       batocera: 'sufami',
@@ -890,6 +931,7 @@ export default class GameConsole {
       jelos: 'sufami',
       onion: 'SUFAMI',
       retrodeck: 'sufami',
+      spruce: 'SUFAMI',
     }),
     new GameConsole(
       /(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i,
@@ -907,6 +949,7 @@ export default class GameConsole {
         pocket: 'snes',
         retrodeck: 'snes',
         romm: 'snes',
+        spruce: 'SFC',
         twmenu: 'snes',
       },
     ),
@@ -925,6 +968,7 @@ export default class GameConsole {
       onion: 'VB',
       retrodeck: 'virtualboy',
       romm: 'virtualboy',
+      spruce: 'VB',
     }),
     new GameConsole(
       /Wii/i,
@@ -987,6 +1031,7 @@ export default class GameConsole {
         onion: 'VIDEOPAC',
         retrodeck: 'videopac',
         romm: 'odyssey-2-slash-videopac-g7000',
+        spruce: 'VIDEOPAC',
       },
     ),
     // RCA
@@ -1011,6 +1056,7 @@ export default class GameConsole {
       onion: 'THIRTYTWOX',
       retrodeck: 'sega32x',
       romm: 'sega32',
+      spruce: 'THIRTYTWOX'
     }),
     new GameConsole(
       /Dreamcast/i,
@@ -1023,6 +1069,7 @@ export default class GameConsole {
         jelos: 'dreamcast',
         retrodeck: 'dreamcast',
         romm: 'dc',
+        spruce: 'DC',
       },
     ),
     new GameConsole(/Game Gear/i, ['.gg'], {
@@ -1038,6 +1085,7 @@ export default class GameConsole {
       pocket: 'gg',
       retrodeck: 'gamegear',
       romm: 'gamegear',
+      spruce: 'GG',
       twmenu: 'gg',
     }),
     new GameConsole(/Master System/i, ['.sms'], {
@@ -1053,6 +1101,7 @@ export default class GameConsole {
       pocket: 'sms',
       retrodeck: 'mastersystem',
       romm: 'sms',
+      spruce: 'MS',
       twmenu: 'sms',
     }),
     new GameConsole(
@@ -1071,6 +1120,7 @@ export default class GameConsole {
         onion: 'SEGACD',
         retrodeck: 'segacd',
         romm: 'segacd',
+        spruce: 'SEGACD',
       },
     ),
     new GameConsole(/Mega Drive|Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], {
@@ -1086,6 +1136,7 @@ export default class GameConsole {
       pocket: 'genesis',
       retrodeck: 'megadrive',
       romm: 'genesis-slash-megadrive',
+      spruce: 'MD',
       twmenu: 'gen',
     }),
     new GameConsole(
@@ -1099,6 +1150,7 @@ export default class GameConsole {
         jelos: 'saturn',
         retrodeck: 'saturn',
         romm: 'saturn',
+        spruce: 'SATURN',
       },
     ),
     new GameConsole(/SG[ -]?1000/i, ['.sc', '.sg'], {
@@ -1111,6 +1163,7 @@ export default class GameConsole {
       pocket: 'sg1000',
       retrodeck: 'sg-1000',
       romm: 'sg1000',
+      spruce: 'SEGASGONE',
       twmenu: 'sg',
     }),
     // Sharp
@@ -1134,6 +1187,7 @@ export default class GameConsole {
       onion: 'X68000',
       retrodeck: 'x68000',
       romm: 'sharp-x68000',
+      spruce: 'X68000',
     }),
     // Sinclair
     new GameConsole(/ZX[ -]?80/i, [], {
@@ -1160,6 +1214,7 @@ export default class GameConsole {
       onion: 'ZXS',
       retrodeck: 'zxspectrum',
       romm: 'zxs',
+      spruce: 'ZXS',
     }),
     // SNK
     new GameConsole(/Neo ?Geo/i, [], {
@@ -1173,6 +1228,7 @@ export default class GameConsole {
       pocket: 'ng',
       retrodeck: 'neogeo',
       romm: 'neogeomvs',
+      spruce: 'NEOGEO',
     }),
     new GameConsole(
       /Neo ?Geo CD/i,
@@ -1186,6 +1242,7 @@ export default class GameConsole {
         onion: 'NEOCD',
         retrodeck: 'neogeocd',
         romm: 'neo-geo-cd',
+        spruce: 'NEOCD',
       },
     ),
     new GameConsole(/Neo ?Geo Pocket/i, ['.ngp'], {
@@ -1198,6 +1255,7 @@ export default class GameConsole {
       onion: 'NGP',
       retrodeck: 'ngp',
       romm: 'neo-geo-pocket',
+      spruce: 'NGP',
       twmenu: 'ngp',
     }),
     new GameConsole(/Neo ?Geo Pocket Color/i, ['.ngc', '.ngpc', '.npc'], {
@@ -1210,6 +1268,7 @@ export default class GameConsole {
       onion: 'NGP',
       retrodeck: 'ngpc',
       romm: 'neo-geo-pocket-color',
+      sprue: 'NGPC',
       twmenu: 'ngp',
     }),
     // Sony
@@ -1225,6 +1284,7 @@ export default class GameConsole {
       onion: 'PS',
       retrodeck: 'psx',
       romm: 'ps',
+      spruce: 'PS',
     }),
     new GameConsole(
       /PlayStation 2|ps2/i,
@@ -1252,6 +1312,7 @@ export default class GameConsole {
       jelos: 'psp',
       retrodeck: 'psp',
       romm: 'psp',
+      spruce: 'PSP',
     }),
     new GameConsole(/PlayStation ?Vita|psvita/i, ['.psvita'], {
       batocera: 'psvita',
@@ -1338,6 +1399,7 @@ export default class GameConsole {
       pocket: 'supervision',
       retrodeck: 'supervision',
       romm: 'watara-slash-quickshot-supervision',
+      spruce: 'SUPERVISION',
     }),
     // Wellback
     new GameConsole(/Mega Duck/i, ['.md1', '.md2'], {
@@ -1348,6 +1410,7 @@ export default class GameConsole {
       pocket: 'mega_duck',
       retrodeck: 'megaduck',
       romm: 'mega-duck-slash-cougar-boy',
+      spruce: 'MEGADUCK',
     }),
   ];
 
@@ -1428,6 +1491,12 @@ export default class GameConsole {
 
   getRomM(): string | undefined {
     return this.outputTokens.romm;
+  }
+  
+}
+
+  getSpruce(): string | undefined {
+    return this.outputTokens.spruce;
   }
 
   getTWMenu(): string | undefined {
