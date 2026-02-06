@@ -62,7 +62,7 @@ export default abstract class Scanner extends Module {
         }
 
         this.progressBar.incrementCompleted();
-        this.progressBar.logTrace(`(${TimePoly.hrtimeMillis(start)}) ${inputFile}`);
+        this.progressBar.logTrace(`(${TimePoly.hrtimeMillis(start)}ms) ${inputFile}`);
         return files;
       })
     ).flat();
