@@ -126,6 +126,41 @@ jobs:
       # Test the source files
       - run: npm run test:unit
 
+  node-e2e:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.should-test == 'true' }}
+    name: node-e2e (${{ matrix.node-version || 'package.json' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node-version: [ '', 18 ]
+    steps:
+      # Setup and install
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.ref }}
+          submodules: 'recursive'
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
+      - run: npm ci --foreground-scripts
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
+      # Test the built files
+      - run: ./test/endToEndTest.sh
+
   # !!! This check should be required by GitHub !!!
   test-status-check:
     if: always()
@@ -133,6 +168,7 @@ jobs:
       - path-filter
       - node-lint
       - node-unit
+      - node-e2e
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1

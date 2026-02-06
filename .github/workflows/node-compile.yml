@@ -1,0 +1,244 @@
+name: Node.js Compile
+
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag (e.g. "v1.0.0")'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.tag || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ref: ${{ inputs.tag && format('refs/tags/{0}',inputs.tag) || github.sha || github.ref }}
+
+jobs:
+  path-filter:
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-latest
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.ref }}
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            changes:
+              - '.github/workflows/node-compile.yml'
+              - 'packages/**'
+              - 'src/**'
+              - '*'
+
+  node-compile:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
+    runs-on: ${{ matrix.os }}
+    name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # docker manifest inspect node:<version> | jq '.manifests[].platform'
+          - os: ubuntu-latest
+            docker_arch: linux/amd64
+          - os: ubuntu-latest
+            docker_arch: linux/arm64/v8
+
+          - os: macos-15-intel
+          - os: macos-latest
+
+          - os: windows-latest
+            go_arch: amd64
+          #- os: windows-11-arm
+          #  go_arch: arm64
+
+    steps:
+      # Setup and install
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.ref }}
+          submodules: 'recursive'
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
+
+      # Compile and upload
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      - id: linux-vars
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          set -x
+          echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+
+          DOCKER_ARCH=${{ matrix.docker_arch }}
+          DOCKER_ARCH=${DOCKER_ARCH/linux\//}
+          DOCKER_ARCH=${DOCKER_ARCH//\//}
+          echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
+
+          NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH}.tar.gz"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
+          shell: bash
+          options: |
+            --platform ${{ matrix.docker_arch }}
+            --volume ${{ github.workspace }}:/build
+            --workdir /build
+          run: |
+            # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
+            set -eo pipefail
+            set -x
+
+            # Package the executable and test it before compressing it
+            npm ci
+            npm run package -- . igir
+            ./igir --help
+            ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
+            ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
+            tar cvf - igir | gzip --best > "${{ env.BIN_OUTPUT }}"
+
+            {
+              echo '```text'
+              ls -alh igir "${{ env.BIN_OUTPUT }}"
+              echo '```'
+            } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: sudo chown -R "$(id -u):$(id -g)" .
+
+      - if: ${{ startsWith(matrix.os, 'macos') }}
+        run: |
+          set -x
+          NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+          NODE_ARCH=$(node --print 'process.arch')
+          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${NODE_ARCH}.tar.gz"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+
+          # Package the executable and test it before compressing it
+          npm ci
+          npm run package -- . igir
+          ./igir --help
+          ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
+          ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
+          tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
+
+          {
+            echo '```text'
+            ls -alh igir "${BIN_OUTPUT}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - if: ${{ startsWith(matrix.os, 'windows') }}
+        shell: pwsh
+        run: |
+          Set-PSDebug -Trace 1
+          $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
+          $NODE_ARCH=$(node --print 'process.arch')
+          $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${{ runner.os }}-${NODE_ARCH}.zip"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
+
+          # Install dependencies...
+          npm ci
+          if ($NODE_ARCH -notin @("ia32", "x64")) {
+            # ...and use a version of 7zip-bin that includes this arch
+            npm install 7zip-bin@">=5.2.0"
+          }
+          if ($NODE_ARCH -notin @("x64")) {
+            # ...and build the missing caxa stub
+            Push-Location
+            cd node_modules\caxa
+            npm install
+            node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows "GOARCH=${{ matrix.go_arch }}" go build -o "stubs\stub--win32--${NODE_ARCH}" stubs\stub.go
+            $stubSeparatorBytes = [System.Text.Encoding]::ASCII.GetBytes("`nCAXACAXACAXA`n")
+            $stubFileStream = [System.IO.File]::Open([System.IO.Path]::GetFullPath("stubs\stub--win32--${NODE_ARCH}", $PWD), 'Append', 'Write')
+            $stubFileStream.Write($stubSeparatorBytes, 0, $stubSeparatorBytes.Length)
+            $stubFileStream.Close()
+            Pop-Location
+          }
+
+          # Package the executable and test it before compressing it
+          npm run package -- . igir.exe
+          .\igir.exe --help
+          .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
+          .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
+          Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
+
+          echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
+          Get-ChildItem igir.exe >> "${env:GITHUB_STEP_SUMMARY}"
+          Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
+          echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ${{ env.BIN_OUTPUT }}
+          path: ${{ env.BIN_OUTPUT }}
+          if-no-files-found: error
+          retention-days: 7
+
+  release-update:
+    if: ${{ github.event_name != 'pull_request' }}
+    needs:
+      - node-compile
+    runs-on: ubuntu-latest
+    steps:
+      # Get the package version
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.ref }}
+          submodules: 'recursive'
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: |
+            ~/.npm
+            ~\AppData\Roaming\npm-cache
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
+      - run: npm ci
+      - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
+      # Download and update
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          tag_name: v${{ env.NPM_PKG_VERSION }}
+          files: igir-*/*
+
+  # !!! This check should be required by GitHub !!!
+  compile-status-check:
+    if: always()
+    needs:
+      - path-filter
+      - node-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: node-compile
