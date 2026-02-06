@@ -55,8 +55,8 @@ interface OutputTokens {
   // @see https://docs.romm.app/latest/Platforms-and-Players/Supported-Platforms/
   romm?: string;
 
-  // SpruceOS ROMs go in the /Roms/{onion} directory:
-  // @see https://onionui.github.io/docs/emulators
+  // SpruceOS ROMs go in the /Roms/{spruce} directory:
+  // @see https://github.com/spruceUI/spruceOS/wiki/11.-Adding-Games
   spruce?: string;
   
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
