@@ -253,6 +253,7 @@ export default class Igir {
         progressBar.delete();
       }
 
+      progressBar.logTrace('done processing DAT');
       datProcessProgressBar.incrementCompleted();
     });
     datProcessProgressBar.logTrace(
