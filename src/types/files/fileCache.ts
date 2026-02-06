@@ -1,4 +1,3 @@
-import Timer from '../../async/timer.js';
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';

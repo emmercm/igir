@@ -70,7 +70,7 @@ export default class Igir {
 
   constructor(options: Options, logger: Logger) {
     this.options = options;
-    this.logger = options.getHelp() ? logger.withLoggerPrefix('⚠️⚠️⚠️') : logger;
+    this.logger = logger;
   }
 
   /**
