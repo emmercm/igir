@@ -63,11 +63,12 @@ async function copyFixturesToTemp(
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
 
+  const files = await FsPoly.walk(outputDir, WalkMode.FILES);
+  console.log(`walking files: ${files.length}}`);
+
   return (
-    await async.mapLimit(
-      await FsPoly.walk(outputDir, WalkMode.FILES),
-      os.cpus().length,
-      async (filePath: string) => fileFactory.filesFrom(filePath),
+    await async.mapLimit(files, os.cpus().length, async (filePath: string) =>
+      fileFactory.filesFrom(filePath),
     )
   )
     .flat()
