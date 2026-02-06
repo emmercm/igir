@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
 import util from 'node:util';
 
 import async from 'async';
@@ -29,7 +30,7 @@ import Options, {
 } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.TRACE, process.stdout);
+const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 interface TestOutput {
   outputFilesAndCrcs: string[][];
@@ -81,7 +82,6 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 }
 
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
-  LOGGER.trace('--------------------------------------------------');
   const options = new Options({
     ...optionsProps,
     readerThreads: os.cpus().length,
@@ -100,7 +100,10 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       ? []
       : await FsPoly.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
 
-  await new Igir(options, LOGGER).main();
+  await new Igir(
+    options,
+    options.getHelp() ? new Logger(LogLevel.TRACE, process.stdout) : LOGGER,
+  ).main();
 
   const outputFilesAndCrcs =
     options.getOutput() === Temp.getTempDir()

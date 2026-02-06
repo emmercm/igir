@@ -11,7 +11,6 @@ import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
 import type Logger from './console/logger.js';
-import MultiBar from './console/multiBar.js';
 import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import Package from './globals/package.js';
