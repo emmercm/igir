@@ -64,7 +64,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
 
   const files = await FsPoly.walk(outputDir, WalkMode.FILES);
-  console.log(`walking files: ${files.length}}`);
+  console.log(`${outputDir}: walked ${files.length}} files`);
 
   return (
     await async.mapLimit(files, os.cpus().length, async (filePath: string) =>
