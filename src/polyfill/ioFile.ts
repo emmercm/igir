@@ -29,7 +29,7 @@ export default class IOFile {
   }
 
   /**
-   * Return a new {@link IOFile} from a {@param pathLike}, with the {@param flags} mode.
+   * Return a new {@link IOFile} from a {@link pathLike}, with the {@link flags} mode.
    */
   static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<IOFile> {
     return new IOFile(
@@ -49,8 +49,8 @@ export default class IOFile {
   }
 
   /**
-   * Return a new {@link IOFile} of size {@param size} from a {@param pathLike}, with the
-   * {@param flags} mode. If the {@param pathLike} already exists, the existing file will be
+   * Return a new {@link IOFile} of size {@link size} from a {@link pathLike}, with the
+   * {@link flags} mode. If the {@link pathLike} already exists, the existing file will be
    * deleted.
    */
   static async fileOfSize(pathLike: string, flags: OpenMode, size: number): Promise<IOFile> {
@@ -90,21 +90,21 @@ export default class IOFile {
   }
 
   /**
-   * Seek to a specific {@param position} in the file
+   * Seek to a specific {@link position} in the file
    */
   seek(position: number): void {
     this.readPosition = position;
   }
 
   /**
-   * Seek to the current position plus {@param size}
+   * Seek to the current position plus {@link size}
    */
   skipNext(size: number): void {
     this.readPosition += size;
   }
 
   /**
-   * @returns the next {@param size} bytes from the current seek position, without changing the
+   * @returns the next {@link size} bytes from the current seek position, without changing the
    * seek position
    */
   async peekNext(size: number): Promise<Buffer> {
@@ -112,7 +112,7 @@ export default class IOFile {
   }
 
   /**
-   * @returns the next {@param size} bytes from the current seek position, also incrementing the
+   * @returns the next {@link size} bytes from the current seek position, also incrementing the
    * seek position the same amount
    */
   async readNext(size: number): Promise<Buffer> {
@@ -122,7 +122,7 @@ export default class IOFile {
   }
 
   /**
-   * @returns bytes of size {@param size} at the seek position {@param offset}
+   * @returns bytes of size {@link size} at the seek position {@link offset}
    */
   async readAt(position: number, size: number): Promise<Buffer> {
     if (size > this.tempBuffer.length) {
@@ -152,7 +152,7 @@ export default class IOFile {
   }
 
   /**
-   * Write {@param buffer} to the current seek position
+   * Write {@link buffer} to the current seek position
    */
   async write(buffer: Buffer): Promise<number> {
     const bytesWritten = await this.writeAt(buffer, this.readPosition);
@@ -161,7 +161,7 @@ export default class IOFile {
   }
 
   /**
-   * Write {@param buffer} at the seek position {@param offset}
+   * Write {@link buffer} at the seek position {@link offset}
    */
   async writeAt(buffer: Buffer, position: number): Promise<number> {
     const { bytesWritten } = await this.fileHandle.write(buffer, 0, buffer.length, position);
