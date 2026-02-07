@@ -91,6 +91,7 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
 - `{retrodeck}` the [RetroDECK](../usage/desktop/retrodeck.md) emulator's directory for the ROM
 - `{romm}` the [RomM](../usage/desktop/romm.md) manager directory for the ROM
+- `{spruce}` the [SpruceOS](../usage/handheld/spruceos.md) emulator's directory for the ROM
 - `{twmenu}` the [TWiLightMenu++](../usage/handheld/twmenu.md) emulator's directory for the ROM
 
 !!! tip
