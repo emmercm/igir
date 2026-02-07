@@ -59,7 +59,7 @@ export default class ROMIndexer extends Module {
     const outputDirDisk = FsPoly.diskResolved(outputDir);
 
     [...checksumsToFiles.values()].forEach((files) =>
-      files.sort((fileOne, fileTwo) => {
+      files.toSorted((fileOne, fileTwo) => {
         // Prefer un-archived files because they're less expensive to process
         const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
         const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);

@@ -210,7 +210,7 @@ export default class FsPoly {
         .map((drive) => drive.mounted)
         .filter((mountPath) => mountPath !== '/')
         // Sort by mount points with the deepest number of subdirectories first
-        .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length)
+        .toSorted((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length)
     );
   }
 
@@ -368,7 +368,7 @@ export default class FsPoly {
     const resolvedPath = path.resolve(normalizedPath);
     const filePathDrive = this.DRIVES
       // Sort by mount points with the deepest number of subdirectories first
-      .sort((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
+      .toSorted((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
       .find((drive) => resolvedPath.startsWith(drive.mounted));
 
     if (!filePathDrive) {

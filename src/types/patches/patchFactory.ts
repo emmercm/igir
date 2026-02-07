@@ -73,7 +73,7 @@ export default class PatchFactory {
     return Object.values(PatchFactory.PATCH_PARSERS)
       .flatMap((parser) => parser.extensions)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
   }
 
   static async patchFromFilename(file: File): Promise<Patch | undefined> {

@@ -105,7 +105,7 @@ export default {
     // Validate filename sorting
     const fileNamesLowerCaseSorted = centralDirectoryFileHeaders
       .map((fileHeader) => fileHeader.fileNameResolved().toLowerCase())
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         if (a < b) {
           return -1;
         } else if (a > b) {

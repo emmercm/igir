@@ -101,7 +101,7 @@ export default class DriveSemaphore {
     const disksAndFiles = files
       // Remember the original ordering of the files by its index
       .map((file, idx) => [file, idx] satisfies [K, number])
-      .sort(([a], [b]) => {
+      .toSorted(([a], [b]) => {
         const aPath = a instanceof File ? a.getFilePath() : (a satisfies string);
         const bPath = b instanceof File ? b.getFilePath() : (b satisfies string);
         return aPath.localeCompare(bPath);
@@ -138,7 +138,7 @@ export default class DriveSemaphore {
     const results = await callback(filesStriped);
 
     // Put the values back in order
-    return results.sort(([, aIdx], [, bIdx]) => aIdx - bIdx).map(([result]) => result);
+    return results.toSorted(([, aIdx], [, bIdx]) => aIdx - bIdx).map(([result]) => result);
   }
 
   private static getDiskForFile(file: File | string): string {
