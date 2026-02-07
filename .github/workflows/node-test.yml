@@ -87,14 +87,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO(cemmer): chdman-js and maxcso-js don't have Windows ARM builds, so it won't test the same
+        # TODO(cemmer): maxcso-js doesn't have a Windows ARM build, so it won't test the same
         os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest ]
         node-version: [ '' ]
         include:
           - os: ubuntu-latest
-            node-version: 18
+            node-version: 20
           - os: macos-latest
-            node-version: 18
+            node-version: 20
           - os: windows-latest
             node-version: 20
     steps:
@@ -137,7 +137,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ '', 18 ]
+        node-version: [ '', 20 ]
     steps:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
