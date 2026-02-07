@@ -56,9 +56,9 @@ interface OutputTokens {
   romm?: string;
 
   // SpruceOS ROMs go in the /Roms/{spruce} directory:
-  // @see https://github.com/spruceUI/spruceOS/wiki/11.-Adding-Games
+  // @see https://github.com/spruceUI/spruceOS/wiki/11.-Adding-Games/
   spruce?: string;
-  
+
   // TWiLightMenu++ Roms go into the /roms subfolder on the 3DS/DSi SD card
   // @see https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms
   twmenu?: string;
@@ -208,7 +208,7 @@ export default class GameConsole {
       onion: 'SEVENTYEIGHTHUNDRED',
       pocket: '7800',
       retrodeck: 'atari7800',
-      romm: 'atari7800',      
+      romm: 'atari7800',
       spruce: 'SEVENTYEIGHTHUNDRED',
       twmenu: 'a78',
     }),
@@ -1056,7 +1056,7 @@ export default class GameConsole {
       onion: 'THIRTYTWOX',
       retrodeck: 'sega32x',
       romm: 'sega32',
-      spruce: 'THIRTYTWOX'
+      spruce: 'THIRTYTWOX',
     }),
     new GameConsole(
       /Dreamcast/i,
@@ -1492,8 +1492,6 @@ export default class GameConsole {
   getRomM(): string | undefined {
     return this.outputTokens.romm;
   }
-  
-}
 
   getSpruce(): string | undefined {
     return this.outputTokens.spruce;
