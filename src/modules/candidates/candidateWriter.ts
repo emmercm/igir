@@ -455,7 +455,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} raw file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -495,7 +495,7 @@ export default class CandidateWriter extends Module {
         (await this.moveMutex.wasMoved(inputRomFile.getFilePath()));
       if (!wasMoved) {
         this.progressBar.logDebug(
-          `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+          `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
         );
         return;
       }
@@ -805,7 +805,7 @@ export default class CandidateWriter extends Module {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
       this.progressBar.logDebug(
-        `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+        `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
       );
       return;
     }

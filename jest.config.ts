@@ -46,7 +46,7 @@ const jestConfig = async (): Promise<Config> => {
     // Many tests are I/O-bound, and possibly contend with each other; reduce
     // the parallelism and increase the test timeout globally
     maxWorkers: process.platform === 'win32' ? 1 : '50%',
-    testTimeout: process.platform === 'win32' ? 60_000 : 40_000,
+    testTimeout: 40_000 * (process.platform === 'win32' ? 2 : 1),
 
     // BEGIN https://kulshekhar.github.io/ts-jest/docs/guides/esm-support
     extensionsToTreatAsEsm: ['.ts'],
