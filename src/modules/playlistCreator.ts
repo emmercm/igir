@@ -125,7 +125,7 @@ export default class PlaylistCreator extends Module {
           .replace(/^[\\/]/, '')
           .replaceAll(/[\\/]/g, '/'),
       )
-      .sort()
+      .toSorted()
       .join('\n')}\n`;
 
     if (!(await FsPoly.exists(commonDirectory))) {

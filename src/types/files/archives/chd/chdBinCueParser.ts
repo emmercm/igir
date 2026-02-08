@@ -87,7 +87,7 @@ export default class ChdBinCueParser {
     let nextItemTimeOffset = Math.floor(fileSize / globalBlockSize);
 
     const archiveEntries: ArchiveEntry<T>[] = [];
-    for (const track of [...file.tracks].reverse()) {
+    for (const track of file.tracks.toReversed()) {
       const firstIndex = track.indexes.at(0);
       if (!firstIndex) {
         // The track has no indexes, so we can't extract anything
@@ -131,7 +131,7 @@ export default class ChdBinCueParser {
         ),
       );
     }
-    return archiveEntries.reverse();
+    return archiveEntries.toReversed();
   }
 
   private static parseCueTrackBlockSize(firstTrack: Track): number {

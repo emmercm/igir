@@ -58,8 +58,8 @@ export default class ROMIndexer extends Module {
     const outputDir = this.options.getOutputDirRoot();
     const outputDirDisk = FsPoly.diskResolved(outputDir);
 
-    [...checksumsToFiles.values()].forEach((files) =>
-      files.sort((fileOne, fileTwo) => {
+    [...checksumsToFiles.entries()].forEach(([checksum, files]) => {
+      const sortedFiles = files.toSorted((fileOne, fileTwo) => {
         // Prefer un-archived files because they're less expensive to process
         const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
         const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);
@@ -96,8 +96,9 @@ export default class ROMIndexer extends Module {
 
         // Otherwise, be deterministic
         return fileOne.toString().localeCompare(fileTwo.toString());
-      }),
-    );
+      });
+      checksumsToFiles.set(checksum, sortedFiles);
+    });
   }
 
   /**

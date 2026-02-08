@@ -80,7 +80,7 @@ test.each([
       new Logger(LogLevel.NEVER, new PassThrough()),
     ).main();
 
-    const writtenFiles = (await FsPoly.walk(tempDir, WalkMode.FILES)).sort();
+    const writtenFiles = (await FsPoly.walk(tempDir, WalkMode.FILES)).toSorted();
     const writtenFilesHashed = await Promise.all(
       writtenFiles.map(async (filePath) => {
         const checksums = await FileChecksums.hashFile(filePath, ChecksumBitmask.CRC32);

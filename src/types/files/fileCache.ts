@@ -76,7 +76,7 @@ export default class FileCache {
         // Don't delete the key if it's for a disk that isn't mounted right now
         .filter(([, filePath]) => FsPoly.diskResolved(filePath) !== undefined)
         // Only process a reasonably sized subset of the keys
-        .sort(() => Math.random() - 0.5)
+        .toSorted(() => Math.random() - 0.5)
         .slice(0, Defaults.MAX_FS_THREADS);
 
       await Promise.all(

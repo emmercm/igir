@@ -111,10 +111,9 @@ it('should delete empty directories even if no ROMs were moved when option is "a
     );
 
     // The directories that had files moved out of them were deleted
-    expect(deletedDirs.map((dirPath) => dirPath.replace(tempDir + path.sep, '')).sort()).toEqual([
-      path.join('GB', 'EUR'),
-      path.join('NES', 'JPN'),
-    ]);
+    expect(
+      deletedDirs.map((dirPath) => dirPath.replace(tempDir + path.sep, '')).toSorted(),
+    ).toEqual([path.join('GB', 'EUR'), path.join('NES', 'JPN')]);
   } finally {
     await FsPoly.rm(tempDir, {
       recursive: true,
@@ -146,7 +145,7 @@ it('should delete empty directories that had ROMs moved out of them', async () =
     // The directories that had files moved out of them were deleted
     const deletedTempDirs = deletedDirs
       .map((dirPath) => dirPath.replace(tempDir + path.sep, ''))
-      .sort();
+      .toSorted();
     expect(deletedTempDirs).toContain('GB');
     expect(deletedTempDirs).toContain('NES');
   } finally {
