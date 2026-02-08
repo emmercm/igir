@@ -67,7 +67,7 @@ export default class DATDiscMerger extends Module {
       const duplicateRomNames = [...romNamesToCount.entries()]
         .filter(([, count]) => count > 1)
         .map(([romName]) => romName)
-        .sort();
+        .toSorted();
       if (duplicateRomNames.length > 1) {
         // De-conflict the filenames by adding a subfolder of the original game's name
         const deconflictedRoms = games.flatMap((game) =>

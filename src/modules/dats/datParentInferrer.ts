@@ -50,7 +50,7 @@ export default class DATParentInferrer extends Module {
       return map;
     }, new Map<string, Game[]>());
     const groupedGames = [...strippedNamesToGames.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .toSorted((a, b) => a[0].localeCompare(b[0]))
       .map(([, games]) => games);
 
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));

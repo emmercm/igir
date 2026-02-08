@@ -201,7 +201,7 @@ export default class DATStatus {
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort((a, b) => a.getName().localeCompare(b.getName()))
+      .toSorted((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         let status: GameStatusValue = GameStatus.MISSING;
 
@@ -327,7 +327,7 @@ export default class DATStatus {
       .flatMap((type) => romTypesToValues.get(type))
       .filter((value) => value !== undefined)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
   }
 
   private static getAllowedTypes(options: Options): ROMTypeValue[] {

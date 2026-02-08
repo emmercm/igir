@@ -167,7 +167,7 @@ export default class MovedROMDeleter extends Module {
         if (unmovedEntries.length > 0) {
           this.progressBar.logWarn(
             `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedEntries
-              .sort()
+              .toSorted()
               .map((entry) => `  ${entry.toString()}`)
               .join('\n')}`,
           );

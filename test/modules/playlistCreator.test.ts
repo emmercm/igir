@@ -274,7 +274,7 @@ async function playlistCreator(
   );
 
   return Promise.all(
-    writtenFiles.sort().map(async (filePath) => {
+    writtenFiles.toSorted().map(async (filePath) => {
       const contents = (await FsPoly.readFile(filePath)).toString().trim().split('\n');
       await FsPoly.rm(filePath, { force: true });
       return [filePath.replace(Temp.getTempDir() + path.sep, ''), contents] satisfies [

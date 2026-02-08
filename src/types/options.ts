@@ -487,7 +487,7 @@ export default class Options implements OptionsProps {
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
 
-    this.output = options?.output?.replace(/[\\/]/g, path.sep);
+    this.output = options?.output?.replaceAll(/[\\/]/g, path.sep);
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatMirror = options?.dirDatMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
@@ -507,7 +507,7 @@ export default class Options implements OptionsProps {
     this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
-    this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
+    this.cleanBackup = options?.cleanBackup?.replaceAll(/[\\/]/g, path.sep);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipFormat = options?.zipFormat;
@@ -575,9 +575,9 @@ export default class Options implements OptionsProps {
 
     this.playlistExtensions = options?.playlistExtensions ?? [];
 
-    this.dir2datOutput = options?.dir2datOutput?.replace(/[\\/]/g, path.sep);
+    this.dir2datOutput = options?.dir2datOutput?.replaceAll(/[\\/]/g, path.sep);
 
-    this.fixdatOutput = options?.fixdatOutput?.replace(/[\\/]/g, path.sep);
+    this.fixdatOutput = options?.fixdatOutput?.replaceAll(/[\\/]/g, path.sep);
 
     this.reportOutput = (options?.reportOutput ?? process.cwd()).replaceAll(/[\\/]/g, path.sep);
 
@@ -1120,7 +1120,7 @@ export default class Options implements OptionsProps {
         (filePath) =>
           !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),
       )
-      .sort();
+      .toSorted();
   }
 
   getCleanBackup(): string | undefined {
