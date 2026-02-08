@@ -98,6 +98,8 @@ it('should return something if some candidates have conflicting paths', async ()
     new ProgressBarFake(),
   ).validate(dat, candidates);
 
-  const invalidCandidateNames = invalidCandidates.map((candidate) => candidate.getName()).sort();
+  const invalidCandidateNames = invalidCandidates
+    .map((candidate) => candidate.getName())
+    .toSorted();
   expect(invalidCandidateNames).toEqual(['game four', 'game three', 'game two']);
 });

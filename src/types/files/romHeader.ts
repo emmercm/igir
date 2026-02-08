@@ -62,7 +62,7 @@ export default class ROMHeader {
     return Object.values(this.HEADERS)
       .map((header) => header.headeredFileExtension)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
   }
 
   static getKnownHeaderCount(): number {

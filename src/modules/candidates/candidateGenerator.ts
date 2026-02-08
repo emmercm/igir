@@ -358,7 +358,7 @@ export default class CandidateGenerator extends Module {
         }
         return true;
       })
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         // First, prefer the archive with the least number of entries
         const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
         const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
@@ -765,7 +765,7 @@ export default class CandidateGenerator extends Module {
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
       // Only return one copy of duplicate output paths
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
     if (duplicateOutputPaths.length === 0) {
       // There are no duplicate non-archive output file paths
       return false;
