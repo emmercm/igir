@@ -21,8 +21,10 @@ export interface ILocalFileHeader extends IFileRecord {
  * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#Local_file_header
  */
 export default class LocalFileHeader extends FileRecord {
-  static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').toReversed();
-  static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').toReversed();
+  // eslint-disable-next-line unicorn/no-array-reverse
+  static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
+  // eslint-disable-next-line unicorn/no-array-reverse
+  static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
 
   // Size with the signature, and without variable length fields at the end
   private static readonly LOCAL_FILE_HEADER_SIZE = 30;

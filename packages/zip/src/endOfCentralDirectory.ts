@@ -36,15 +36,18 @@ export default class EndOfCentralDirectory {
   static readonly END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
     '06054b50',
     'hex',
-  ).toReversed();
+    // eslint-disable-next-line unicorn/no-array-reverse
+  ).reverse();
   static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIGNATURE = Buffer.from(
     '07064b50',
     'hex',
-  ).toReversed();
+    // eslint-disable-next-line unicorn/no-array-reverse
+  ).reverse();
   static readonly ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE = Buffer.from(
     '06064b50',
     'hex',
-  ).toReversed();
+    // eslint-disable-next-line unicorn/no-array-reverse
+  ).reverse();
 
   // Size with the signature, and without variable length fields at the end
   private static readonly END_OF_CENTRAL_DIRECTORY_RECORD_SIZE = 22;
