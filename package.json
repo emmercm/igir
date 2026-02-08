@@ -107,7 +107,7 @@
     "typescript-memoize": "1.1.1",
     "wrap-ansi": "9.0.2",
     "xml2js": "0.6.2",
-    "yargs": "17.7.2",
+    "yargs": "18.0.0",
     "zstd-napi": "0.0.12"
   },
   "devDependencies": {
