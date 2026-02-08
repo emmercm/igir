@@ -379,6 +379,10 @@ export default class OutputFactory {
       output = output.replace('{minui}', minui);
     }
 
+    const spruce = gameConsole.getSpruce();
+    if (spruce) {
+      output = output.replace('{spruce}', spruce);
+    }
     return output;
   }
 
