@@ -456,7 +456,7 @@ export default class FsPoly {
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
-      return util.promisify(fs.mkdtemp)(backupDir);
+      return await util.promisify(fs.mkdtemp)(backupDir);
     }
   }
 
@@ -533,7 +533,7 @@ export default class FsPoly {
    * @returns the contents of the file.
    */
   static async readFile(pathLike: PathOrFileDescriptor): Promise<Buffer<ArrayBuffer>> {
-    return util.promisify(fs.readFile)(pathLike);
+    return await util.promisify(fs.readFile)(pathLike);
   }
 
   /**
@@ -543,7 +543,7 @@ export default class FsPoly {
     if (!(await this.isSymlink(pathLike))) {
       throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
-    return util.promisify(fs.readlink)(pathLike);
+    return await util.promisify(fs.readlink)(pathLike);
   }
 
   /**
@@ -585,7 +585,7 @@ export default class FsPoly {
     if (!(await this.exists(pathLike))) {
       throw new IgirException(`can't get realpath of non-existent path: ${pathLike.toString()}`);
     }
-    return util.promisify(fs.realpath)(pathLike);
+    return await util.promisify(fs.realpath)(pathLike);
   }
 
   /**
@@ -736,7 +736,7 @@ export default class FsPoly {
     }
 
     await this.rm(link, { force: true });
-    return util.promisify(fs.symlink)(target, link);
+    await util.promisify(fs.symlink)(target, link);
   }
 
   /**
@@ -756,7 +756,7 @@ export default class FsPoly {
    * @returns the stats of {@link pathLike}
    */
   static async stat(pathLike: PathLike): Promise<fs.Stats> {
-    return util.promisify(fs.stat)(pathLike);
+    return await util.promisify(fs.stat)(pathLike);
   }
 
   /**
