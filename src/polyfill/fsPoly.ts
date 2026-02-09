@@ -200,17 +200,22 @@ export default class FsPoly {
    */
   static diskResolved(filePath: string): string | undefined {
     const filePathResolved = path.resolve(filePath);
-    return this.disksSync().find((mountPath) => filePathResolved.startsWith(mountPath));
+    return this.disksSync().find((drive) => filePathResolved.startsWith(drive.mounted))?.mounted;
   }
 
   @Memoize()
-  private static disksSync(): string[] {
+  // https://github.com/cristiammercado/node-disk-info/issues/36
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  private static disksSync() {
     return (
       this.DRIVES.filter((drive) => drive.available > 0)
-        .map((drive) => drive.mounted)
-        .filter((mountPath) => mountPath !== '/')
+        .filter(
+          // Evidently the typing of 'node-disk-info' is wrong, the mounted path can be undefined
+          // https://github.com/emmercm/igir/issues/1862
+          (drive) => (drive.mounted as string | undefined) !== undefined && drive.mounted !== '/',
+        )
         // Sort by mount points with the deepest number of subdirectories first
-        .toSorted((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length)
+        .toSorted((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
     );
   }
 
@@ -366,10 +371,7 @@ export default class FsPoly {
     }
 
     const resolvedPath = path.resolve(normalizedPath);
-    const filePathDrive = this.DRIVES
-      // Sort by mount points with the deepest number of subdirectories first
-      .toSorted((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
-      .find((drive) => resolvedPath.startsWith(drive.mounted));
+    const filePathDrive = this.disksSync().find((drive) => resolvedPath.startsWith(drive.mounted));
 
     if (!filePathDrive) {
       // Assume 'false' by default
