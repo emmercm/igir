@@ -169,6 +169,19 @@ export default [
           message:
             "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'",
         },
+        // @typescript-eslint/return-await for util.promisify()
+        {
+          selector:
+            "ReturnStatement > CallExpression[callee.type='CallExpression'][callee.callee.name='promisify']",
+          message:
+            "Directly returning a promisified call loses the stack trace. Use 'return await' instead.",
+        },
+        {
+          selector:
+            "ReturnStatement > CallExpression[callee.type='CallExpression'][callee.callee.object.name='util'][callee.callee.property.name='promisify']",
+          message:
+            "Directly returning a promisified call loses the stack trace. Use 'return await' instead.",
+        },
       ],
 
       // ***** Numbers *****
@@ -303,6 +316,7 @@ export default [
       'no-restricted-properties': [
         'error',
         {
+          // TODO(cemmer): https://github.com/isaacs/node-graceful-fs/issues/160
           object: 'fs',
           property: 'promises',
           message: 'Use util.promisify() instead to take advantage of graceful-fs',
