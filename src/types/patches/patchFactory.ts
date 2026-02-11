@@ -89,30 +89,22 @@ export default class PatchFactory {
   }
 
   private static async readHeaderHex(stream: Readable, length: number): Promise<string> {
-    return new Promise((resolve, reject) => {
-      stream.resume();
+    const chunks: Buffer[] = [];
+    let readBytes = 0;
 
-      const chunks: Buffer[] = [];
-      const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks).subarray(0, length).toString('hex').toLowerCase();
-        resolve(header);
-      };
+    for await (const chunk of stream as AsyncIterable<Buffer>) {
+      if (chunk.length > 0) {
+        chunks.push(chunk);
+        readBytes += chunk.length;
+      }
 
-      stream.on('data', (chunk: Buffer) => {
-        if (chunk.length > 0) {
-          chunks.push(chunk);
-        }
+      // Stop reading when we get enough data, trigger a 'close' event
+      if (readBytes >= length) {
+        break;
+      }
+    }
 
-        // Stop reading when we get enough data, trigger a 'close' event
-        if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= length) {
-          resolveHeader();
-          stream.destroy();
-        }
-      });
-
-      stream.on('end', resolveHeader);
-      stream.on('error', reject);
-    });
+    return Buffer.concat(chunks).subarray(0, length).toString('hex').toLowerCase();
   }
 
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
