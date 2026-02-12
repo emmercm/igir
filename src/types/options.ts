@@ -782,7 +782,10 @@ export default class Options implements OptionsProps {
     return Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
   }
 
-  private static async scanPaths(
+  /**
+   * Scan for files or directories given some glob patterns.
+   */
+  static async scanPaths(
     globPatterns: string[],
     walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
@@ -854,7 +857,7 @@ export default class Options implements OptionsProps {
     // fg only uses forward-slash path separators
     const inputPathNormalized = inputPath.replaceAll('\\', '/');
     // Try to handle globs a little more intelligently (see the JSDoc below)
-    const inputPathEscaped = await this.sanitizeGlobPattern(inputPathNormalized);
+    const inputPathEscaped = this.sanitizeGlobPattern(inputPathNormalized);
 
     if (!inputPathEscaped) {
       // fast-glob will throw with empty-ish inputs
@@ -892,21 +895,18 @@ export default class Options implements OptionsProps {
    * and then tack on the glob at the end.
    * Example problematic paths:
    * ./TOSEC - DAT Pack - Complete (3983) (TOSEC-v2023-07-10)/TOSEC-ISO/Sega*
+   * ./No-Intro/Nintendo - Nintendo 64 (BigEndian)*\/**
    */
-  private static async sanitizeGlobPattern(globPattern: string): Promise<string> {
-    const pathsSplit = globPattern.split(/[\\/]/);
-    for (let i = 0; i < pathsSplit.length; i += 1) {
-      const subPath = pathsSplit.slice(0, i + 1).join('/');
-      if (subPath !== '' && !(await FsPoly.exists(subPath))) {
-        const dirname = pathsSplit.slice(0, i).join('/');
-        if (dirname === '') {
-          // fg won't let you escape empty strings
-          return pathsSplit.slice(i).join('/');
-        }
-        return `${fg.escapePath(dirname)}/${pathsSplit.slice(i).join('/')}`;
-      }
-    }
-    return globPattern;
+  private static sanitizeGlobPattern(globPattern: string): string {
+    return (
+      globPattern
+        // Escape parentheticals that aren't an extglob and probably aren't a "logical OR"
+        .replaceAll(/(^|[^?*+@!])\(([^|)]+)\)/g, '$1{\\(,}$2{\\),}')
+        // Escape curly braces that probably aren't a brace expression
+        .replaceAll(/\{([^.,}]+)\}/g, '{\\{,}$1{\\},}')
+        // Escape square brackets that might not be a regular expression character class
+        .replaceAll(/\[([^\]]+)\]/g, '{[$1],\\[$1\\]}')
+    );
   }
 
   getInputChecksumQuick(): boolean {
