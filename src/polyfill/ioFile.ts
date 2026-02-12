@@ -17,7 +17,7 @@ export default class IOFile {
 
   private readonly size: number;
 
-  private tempBuffer: Buffer;
+  private tempBuffer?: Buffer;
 
   private readPosition = 0;
 
@@ -30,13 +30,16 @@ export default class IOFile {
     this.fileHandle = fileHandle;
     this.fileMode = fileMode;
     this.size = size;
-    this.tempBuffer = Buffer.allocUnsafe(0);
   }
 
   /**
    * Return a new {@link IOFile} from a {@link pathLike}, with the {@link mode} mode.
    */
-  static async fileFrom(pathLike: PathLike, mode: OpenMode): Promise<IOFile> {
+  static async fileFrom(
+    pathLike: PathLike,
+    mode: OpenMode,
+    expectedSize?: number,
+  ): Promise<IOFile> {
     /**
      * "On Linux, positional writes don't work when the file is opened in append mode. The
      *  kernel ignores the position argument and always appends the data to the end of the
@@ -49,7 +52,7 @@ export default class IOFile {
       pathLike,
       await fs.promises.open(pathLike, finalMode),
       finalMode,
-      await FsPoly.size(pathLike),
+      expectedSize ?? (await FsPoly.size(pathLike)),
     );
   }
 
@@ -63,12 +66,12 @@ export default class IOFile {
       await FsPoly.rm(pathLike, { force: true });
     }
 
-    const write = await this.fileFrom(pathLike, 'wx');
+    const write = await this.fileFrom(pathLike, 'wx', size);
     let written = 0;
+    const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
     while (written < size) {
-      const buffer = Buffer.alloc(Math.min(size - written, Defaults.FILE_READING_CHUNK_SIZE));
-      await write.write(buffer);
-      written += buffer.length;
+      const sizeToWrite = Math.min(size - written, buffer.length);
+      written += await write.write(buffer.subarray(0, sizeToWrite));
     }
     await write.close();
 
@@ -139,7 +142,7 @@ export default class IOFile {
       return Buffer.from(this.fileBuffer.subarray(position, position + size));
     }
 
-    if (size > this.tempBuffer.length) {
+    if (this.tempBuffer === undefined || size > this.tempBuffer.length) {
       this.tempBuffer = Buffer.allocUnsafe(Math.max(size, Defaults.FILE_READING_CHUNK_SIZE));
     }
 
@@ -150,7 +153,7 @@ export default class IOFile {
     } catch {
       // NOTE(cemmer): Windows will give "EINVAL: invalid argument, read" when reading out of
       //  bounds, but other OSes don't. Swallow the error.
-      return Buffer.alloc(0);
+      return Buffer.allocUnsafe(0);
     }
 
     return Buffer.from(this.tempBuffer.subarray(0, bytesRead));
@@ -181,7 +184,15 @@ export default class IOFile {
       if (position + buffer.length > this.fileBuffer.length) {
         this.fileBuffer = Buffer.concat([
           this.fileBuffer,
-          Buffer.alloc(position + buffer.length - this.fileBuffer.length),
+          Buffer.alloc(
+            Math.max(
+              // We only need this many more bytes to write the requested bytes...
+              position + buffer.length - this.fileBuffer.length,
+              // ...but if we know the final file size, just allocate the full amount,
+              // because constant buffer allocation can be very expensive
+              this.size,
+            ),
+          ),
         ]);
       }
 
