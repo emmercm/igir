@@ -488,9 +488,8 @@ export default class Igir {
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
-    const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = this.logger.addProgressBar({
-      name: romScannerProgressBarName,
+      name: 'Scanning for ROMs',
     });
 
     const rawRomFiles = await new ROMScanner(
@@ -499,6 +498,7 @@ export default class Igir {
       fileFactory,
       driveSemaphore,
     ).scan(checksumBitmask, checksumArchives);
+    const romScannerProgressBarName = romProgressBar.getName();
 
     romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(
@@ -521,7 +521,7 @@ export default class Igir {
       romFilesWithTrimming,
     );
 
-    romProgressBar.setName(romScannerProgressBarName); // reset
+    romProgressBar.setName(romScannerProgressBarName ?? ''); // reset
     romProgressBar.finishWithItems(romFilesWithTrimming.length, 'file', 'found');
     romProgressBar.freeze();
 
