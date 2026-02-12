@@ -13,6 +13,8 @@ export default class IOFile {
 
   private readonly fileHandle: FileHandle;
 
+  private readonly fileMode: fs.Mode;
+
   private readonly size: number;
 
   private tempBuffer: Buffer;
@@ -23,29 +25,30 @@ export default class IOFile {
 
   private wroteToMemory = false;
 
-  private constructor(pathLike: PathLike, fileHandle: FileHandle, size: number) {
+  private constructor(pathLike: PathLike, fileHandle: FileHandle, fileMode: fs.Mode, size: number) {
     this.pathLike = pathLike;
     this.fileHandle = fileHandle;
+    this.fileMode = fileMode;
     this.size = size;
-    this.tempBuffer = Buffer.allocUnsafe(Math.min(this.size, Defaults.FILE_READING_CHUNK_SIZE));
+    this.tempBuffer = Buffer.allocUnsafe(0);
   }
 
   /**
-   * Return a new {@link IOFile} from a {@link pathLike}, with the {@link flags} mode.
+   * Return a new {@link IOFile} from a {@link pathLike}, with the {@link mode} mode.
    */
-  static async fileFrom(pathLike: PathLike, flags: OpenMode): Promise<IOFile> {
+  static async fileFrom(pathLike: PathLike, mode: OpenMode): Promise<IOFile> {
+    /**
+     * "On Linux, positional writes don't work when the file is opened in append mode. The
+     *  kernel ignores the position argument and always appends the data to the end of the
+     *  file."
+     * @see https://nodejs.org/api/fs.html#file-system-flags
+     */
+    const finalMode = mode.toString().startsWith('a') ? 'r+' : mode;
+
     return new IOFile(
       pathLike,
-      await fs.promises.open(
-        pathLike,
-        /**
-         * "On Linux, positional writes don't work when the file is opened in append mode. The
-         *  kernel ignores the position argument and always appends the data to the end of the
-         *  file."
-         * @see https://nodejs.org/api/fs.html#file-system-flags
-         */
-        flags.toString().startsWith('a') ? 'r+' : flags,
-      ),
+      await fs.promises.open(pathLike, finalMode),
+      finalMode,
       await FsPoly.size(pathLike),
     );
   }
@@ -69,7 +72,7 @@ export default class IOFile {
     }
     await write.close();
 
-    return this.fileFrom(pathLike, flags);
+    return await this.fileFrom(pathLike, flags);
   }
 
   getPathLike(): PathLike {
@@ -110,7 +113,7 @@ export default class IOFile {
    * seek position
    */
   async peekNext(size: number): Promise<Buffer> {
-    return this.readAt(this.readPosition, size);
+    return await this.readAt(this.readPosition, size);
   }
 
   /**
@@ -137,7 +140,7 @@ export default class IOFile {
     }
 
     if (size > this.tempBuffer.length) {
-      this.tempBuffer = Buffer.allocUnsafe(size);
+      this.tempBuffer = Buffer.allocUnsafe(Math.max(size, Defaults.FILE_READING_CHUNK_SIZE));
     }
 
     // If the file is large, read from the open file handle
@@ -167,7 +170,10 @@ export default class IOFile {
    */
   async writeAt(buffer: Buffer, position: number): Promise<number> {
     // If the file is small, write to memory
-    if (this.fileBuffer !== undefined || this.size <= Defaults.MAX_MEMORY_FILE_SIZE) {
+    if (
+      (this.fileBuffer !== undefined || this.size <= Defaults.MAX_MEMORY_FILE_SIZE) &&
+      /w|a|r\+/.test(this.fileMode.toString())
+    ) {
       // Read into the file buffer (if we haven't already)
       this.fileBuffer ??= await FsPoly.readFile(this.fileHandle.fd);
 
@@ -175,7 +181,7 @@ export default class IOFile {
       if (position + buffer.length > this.fileBuffer.length) {
         this.fileBuffer = Buffer.concat([
           this.fileBuffer,
-          Buffer.allocUnsafe(position + buffer.length - this.fileBuffer.length),
+          Buffer.alloc(position + buffer.length - this.fileBuffer.length),
         ]);
       }
 
@@ -204,6 +210,6 @@ export default class IOFile {
       await this.fileHandle.write(this.fileBuffer, 0, this.fileBuffer.length, 0);
     }
 
-    return this.fileHandle.close();
+    await this.fileHandle.close();
   }
 }
