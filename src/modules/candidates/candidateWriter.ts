@@ -505,7 +505,8 @@ export default class CandidateWriter extends Module {
 
     const childBar = this.progressBar.addChildBar({
       name: outputFilePath,
-      total: outputRomFile.getSize(),
+      // Files being patched might not have a known final size, just guess it as the input size
+      total: outputRomFile.getSize() > 0 ? outputRomFile.getSize() : inputRomFile.getSize(),
       progressFormatter: FsPoly.sizeReadable,
     });
     try {

@@ -1,4 +1,5 @@
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -36,7 +37,6 @@ const VcdiffDeltaIndicator = {
   INSTCOMP: 0x02,
   ADDRCOMP: 0x04,
 } as const;
-// type VcdiffDeltaIndicatorValue = (typeof VcdiffDeltaIndicator)[keyof typeof VcdiffDeltaIndicator];
 
 const VcdiffCopyAddressMode = {
   SELF: 0,
@@ -260,16 +260,25 @@ class VcdiffWindow {
     const addsAndRunsData = await patchFile.readNext(addsAndRunsDataLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.DATACOMP) {
       // TODO(cemmer)
+      throw new IgirException(
+        `unsupported Vcdiff compression of instruction data (DATACOMP): ${patchFile.getPathLike().toString()}`,
+      );
     }
 
     const instructionsAndSizesData = await patchFile.readNext(instructionsAndSizesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.INSTCOMP) {
       // TODO(cemmer)
+      throw new IgirException(
+        `unsupported Vcdiff compression of delta instructions (INSTCOMP): ${patchFile.getPathLike().toString()}`,
+      );
     }
 
     const copyAddressesData = await patchFile.readNext(copyAddressesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.ADDRCOMP) {
       // TODO(cemmer)
+      throw new IgirException(
+        `unsupported Vcdiff compression of instruction addresses (ADDRCOMP): ${patchFile.getPathLike().toString()}`,
+      );
     }
 
     return new VcdiffWindow(
@@ -285,6 +294,10 @@ class VcdiffWindow {
 
   isEOF(): boolean {
     return this.instructionsAndSizeOffset >= this.instructionsAndSizesData.length;
+  }
+
+  getProgressPercentage(): number {
+    return this.instructionsAndSizeOffset / this.instructionsAndSizesData.length;
   }
 
   readInstructionIndex(): number {
@@ -469,12 +482,23 @@ export default class VcdiffPatch extends Patch {
     return new VcdiffPatch(file, crcBefore);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromIOFile(patchFile);
 
-      return VcdiffPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header, copyCache);
+      return VcdiffPatch.writeOutputFile(
+        inputRomFile,
+        outputRomPath,
+        patchFile,
+        header,
+        copyCache,
+        callback,
+      );
     });
   }
 
@@ -484,6 +508,7 @@ export default class VcdiffPatch extends Patch {
     patchFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
+    callback?: FsReadCallback,
   ): Promise<void> {
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
@@ -492,7 +517,14 @@ export default class VcdiffPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await VcdiffPatch.applyPatch(patchFile, sourceFile, targetFile, header, copyCache);
+        await VcdiffPatch.applyPatch(
+          patchFile,
+          sourceFile,
+          targetFile,
+          header,
+          copyCache,
+          callback,
+        );
       } finally {
         await targetFile.close();
         await sourceFile.close();
@@ -506,12 +538,26 @@ export default class VcdiffPatch extends Patch {
     targetFile: IOFile,
     header: VcdiffHeader,
     copyCache: VcdiffCache,
+    callback?: FsReadCallback,
   ): Promise<void> {
     let targetWindowPosition = 0;
 
     while (!patchFile.isEOF()) {
+      const windowStartOffset = patchFile.getPosition();
       const window = await VcdiffWindow.fromIOFile(patchFile);
+      const windowEndOffset = patchFile.getPosition();
       copyCache.reset();
+
+      const startPercentage = windowStartOffset / patchFile.getSize();
+      const windowSizePercentage = (windowEndOffset - windowStartOffset) / patchFile.getSize();
+      const patchWindowCallback =
+        callback === undefined
+          ? undefined
+          : (((windowProgressPercentage: number): void => {
+              const progressPercentage =
+                startPercentage + windowSizePercentage * windowProgressPercentage;
+              callback(Math.floor(progressPercentage * targetFile.getSize()));
+            }) satisfies FsReadCallback);
 
       await this.applyPatchWindow(
         sourceFile,
@@ -520,6 +566,7 @@ export default class VcdiffPatch extends Patch {
         copyCache,
         targetWindowPosition,
         window,
+        patchWindowCallback,
       );
 
       targetWindowPosition += window.deltaEncodingTargetWindowSize;
@@ -533,8 +580,13 @@ export default class VcdiffPatch extends Patch {
     copyCache: VcdiffCache,
     targetWindowPosition: number,
     window: VcdiffWindow,
+    callback?: FsReadCallback,
   ): Promise<void> {
     while (!window.isEOF()) {
+      if (callback !== undefined) {
+        callback(window.getProgressPercentage());
+      }
+
       const instructionCodeIdx = window.readInstructionIndex();
 
       for (let i = 0; i <= 1; i += 1) {

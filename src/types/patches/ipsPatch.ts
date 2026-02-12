@@ -1,3 +1,4 @@
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -18,7 +19,11 @@ export default class IPSPatch extends Patch {
     return new IPSPatch(file, crcBefore);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (IPSPatch.FILE_SIGNATURES.every((fileSignature) => !header.equals(fileSignature))) {
@@ -38,6 +43,7 @@ export default class IPSPatch extends Patch {
         patchFile,
         offsetSize,
         eofString,
+        callback,
       );
     });
   }
@@ -48,12 +54,13 @@ export default class IPSPatch extends Patch {
     patchFile: IOFile,
     offsetSize: number,
     eofString: string,
+    callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString);
+      await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString, callback);
     } finally {
       await targetFile.close();
     }
@@ -64,6 +71,7 @@ export default class IPSPatch extends Patch {
     targetFile: IOFile,
     offsetSize: number,
     eofString: string,
+    callback?: FsReadCallback,
   ): Promise<void> {
     while (!patchFile.isEOF()) {
       const offsetPeek = await patchFile.peekNext(eofString.length);
@@ -83,6 +91,11 @@ export default class IPSPatch extends Patch {
         data = await patchFile.readNext(size);
       }
       await targetFile.writeAt(data, offset);
+
+      if (callback !== undefined) {
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      }
     }
   }
 }

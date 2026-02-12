@@ -1,3 +1,4 @@
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -57,7 +58,11 @@ export default class APSN64Patch extends Patch {
     return new APSN64Patch(patchType, file, crcBefore, targetSize);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(APSN64Patch.FILE_SIGNATURE.length);
       if (!header.equals(APSN64Patch.FILE_SIGNATURE)) {
@@ -74,7 +79,7 @@ export default class APSN64Patch extends Patch {
         );
       }
 
-      return APSN64Patch.writeOutputFile(inputRomFile, outputRomPath, patchFile);
+      return APSN64Patch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -82,18 +87,23 @@ export default class APSN64Patch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      await APSN64Patch.applyPatch(patchFile, targetFile);
+      await APSN64Patch.applyPatch(patchFile, targetFile, callback);
     } finally {
       await targetFile.close();
     }
   }
 
-  private static async applyPatch(patchFile: IOFile, targetFile: IOFile): Promise<void> {
+  private static async applyPatch(
+    patchFile: IOFile,
+    targetFile: IOFile,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const offset = (await patchFile.readNext(4)).readUInt32LE();
       const size = (await patchFile.readNext(1)).readUInt8();
@@ -110,6 +120,11 @@ export default class APSN64Patch extends Patch {
       }
 
       await targetFile.writeAt(data, offset);
+
+      if (callback !== undefined) {
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      }
     }
   }
 }
