@@ -17,7 +17,7 @@ exec docker run \
   --volume "${GITHUB_ENV}:${GITHUB_ENV}" \
   --volume "${GITHUB_OUTPUT}:${GITHUB_OUTPUT}" \
   --volume "${GITHUB_STEP_SUMMARY}:${GITHUB_STEP_SUMMARY}" \
-  --volume "run_file:run_file" \
+  --volume "run_file:/run_file" \
   --env GITHUB_ENV \
   --env GITHUB_OUTPUT \
   --env GITHUB_STEP_SUMMARY \
@@ -25,4 +25,4 @@ exec docker run \
   ${INPUT_OPTIONS} \
   "--entrypoint=${INPUT_SHELL}" \
   "${INPUT_IMAGE}" \
-  -c "run_file"
+  -c "ls -al \$GITHUB_STEP_SUMMARY; /run_file"
