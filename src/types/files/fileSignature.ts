@@ -110,7 +110,21 @@ export default class FileSignature {
       { offset: 0x64, value: Buffer.from('ACTUAL CART DATA STARTS HERE') },
     ]),
 
+    // Atari - Jaguar
+    jag: new FileSignature('.jag', [{ value: Buffer.from('JAGR') }]),
+    jag_wrapped: new FileSignature('.jag', [{ offset: 0x1c, value: Buffer.from('JAGR') }]),
+    // j64: new FileSignature('.j64', [{ value: Buffer.from('\xF6') }]),
+
     // Atari - Lynx
+    // @see https://web.mit.edu/freebsd/head/contrib/file/magic/Magdir/console
+    bll_bs93: new FileSignature('.bll', [
+      { value: Buffer.from('\x80\x08') },
+      { offset: 0x6, value: Buffer.from('BS93') },
+    ]),
+    bll_lynx: new FileSignature('.bll', [
+      { value: Buffer.from('\x80\x08') },
+      { offset: 0x6, value: Buffer.from('LYNX') },
+    ]),
     lnx: new FileSignature('.lnx', [{ value: Buffer.from('LYNX') }]),
 
     // Commodore
