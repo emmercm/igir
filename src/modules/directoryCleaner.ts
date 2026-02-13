@@ -106,7 +106,7 @@ export default class DirectoryCleaner extends Module {
     }
 
     this.progressBar.logTrace('done cleaning files in output');
-    return filesToClean.sort();
+    return filesToClean.toSorted();
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {

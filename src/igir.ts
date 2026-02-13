@@ -52,7 +52,7 @@ import type DATStatus from './types/datStatus.js';
 import IgirException from './types/exceptions/igirException.js';
 import File from './types/files/file.js';
 import FileCache from './types/files/fileCache.js';
-import { ChecksumBitmask } from './types/files/fileChecksums.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from './types/files/fileChecksums.js';
 import FileFactory from './types/files/fileFactory.js';
 import type IndexedFiles from './types/indexedFiles.js';
 import Options, { InputChecksumArchivesMode, LinkMode } from './types/options.js';
@@ -114,7 +114,11 @@ export default class Igir {
     } else {
       const cachePath = await this.getCachePath();
       if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
-        this.logger.trace(`loading the file cache at '${cachePath}'`);
+        if (await FsPoly.exists(cachePath)) {
+          this.logger.trace(`loading the existing file cache at '${cachePath}'`);
+        } else {
+          this.logger.trace(`creating a new file cache at '${cachePath}'`);
+        }
         await fileCache.loadFile(cachePath);
       } else {
         this.logger.trace('not using a file for the file cache');
@@ -399,7 +403,9 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
+          this.logger.trace(
+            `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
+          );
         });
     }
 
@@ -417,7 +423,9 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(`${dat.getName()}: needs ${bitmask} file checksums for ROMs, enabling`);
+          this.logger.trace(
+            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
+          );
         });
 
       if (this.options.getExcludeDisks()) {
@@ -437,7 +445,7 @@ export default class Igir {
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
           this.logger.trace(
-            `${dat.getName()}: needs ${bitmask} file checksums for disks, enabling`,
+            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,
           );
         });
     });
@@ -480,9 +488,8 @@ export default class Igir {
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
-    const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = this.logger.addProgressBar({
-      name: romScannerProgressBarName,
+      name: 'Scanning for ROMs',
     });
 
     const rawRomFiles = await new ROMScanner(
@@ -491,6 +498,7 @@ export default class Igir {
       fileFactory,
       driveSemaphore,
     ).scan(checksumBitmask, checksumArchives);
+    const romScannerProgressBarName = romProgressBar.getName();
 
     romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(
@@ -513,7 +521,7 @@ export default class Igir {
       romFilesWithTrimming,
     );
 
-    romProgressBar.setName(romScannerProgressBarName); // reset
+    romProgressBar.setName(romScannerProgressBarName ?? ''); // reset
     romProgressBar.finishWithItems(romFilesWithTrimming.length, 'file', 'found');
     romProgressBar.freeze();
 

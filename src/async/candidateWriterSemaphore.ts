@@ -34,7 +34,7 @@ export default class CandidateWriterSemaphore {
     candidates: WriteCandidate[],
     callback: (candidate: WriteCandidate) => Promise<T>,
   ): Promise<T[]> {
-    const candidatesSorted = candidates.sort((a, b) => {
+    const candidatesSorted = candidates.toSorted((a, b) => {
       // First, prefer candidates with fewer files
       if (a.getRomsWithFiles().length !== b.getRomsWithFiles().length) {
         return a.getRomsWithFiles().length - b.getRomsWithFiles().length;

@@ -82,7 +82,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
             file.getCrc32() ?? '',
           ] satisfies [string, string],
       )
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         const pathCompare = a[0].localeCompare(b[0]);
         if (pathCompare !== 0) {
           return pathCompare;
@@ -131,7 +131,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
         )
           .flat()
           .filter(ArrayPoly.filterUniqueMapped((tuple) => tuple[0]))
-          .sort((a, b) => a[0].localeCompare(b[0]));
+          .toSorted((a, b) => a[0].localeCompare(b[0]));
 
   const inputFilesAfter = (
     await Promise.all(
@@ -149,7 +149,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       });
       return replaced;
     })
-    .sort();
+    .toSorted();
 
   const outputFilesAfter =
     options.getOutput() === Temp.getTempDir()
@@ -158,7 +158,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const cleanedFiles = outputFilesBefore
     .filter((filePath) => !outputFilesAfter.includes(filePath))
     .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
-    .sort();
+    .toSorted();
 
   return {
     outputFilesAndCrcs,
@@ -1908,7 +1908,7 @@ describe('with inferred DATs', () => {
         .flatMap((game) => game.getRoms())
         .map((rom) => rom.getName())
         .reduce(ArrayPoly.reduceUnique(), [])
-        .sort();
+        .toSorted();
       expect(roms).toEqual([
         '0F09A40.rom',
         '1/one.rom',

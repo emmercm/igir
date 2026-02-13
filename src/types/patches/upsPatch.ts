@@ -29,10 +29,13 @@ export default class UPSPatch extends Patch {
       targetSize = await Patch.readUpsUint(patchFile);
 
       patchFile.seek(patchFile.getSize() - 12);
+      // eslint-disable-next-line unicorn/no-array-reverse
       crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
+      // eslint-disable-next-line unicorn/no-array-reverse
       crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
 
       // Validate the patch contents
+      // eslint-disable-next-line unicorn/no-array-reverse
       const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
       patchFile.seek(0);
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);

@@ -521,7 +521,7 @@ describe('zip', () => {
           entry.toString().replace(outputTemp + path.sep, ''),
           entry.getCrc32() ?? '',
         ])
-        .sort((a, b) => a[0].localeCompare(b[0]));
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
@@ -632,7 +632,7 @@ describe('zip', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
       )
         .map((pair) => pair[0])
-        .sort();
+        .toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -763,7 +763,7 @@ describe('zip', () => {
           await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
         )
           .map((pair) => pair[0])
-          .sort();
+          .toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -783,8 +783,8 @@ describe('zip', () => {
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .sort(),
-        ).toEqual(expectedDeletedInputPaths.sort());
+            .toSorted(),
+        ).toEqual(expectedDeletedInputPaths.toSorted());
       });
     },
   );
@@ -883,7 +883,7 @@ describe('zip', () => {
             entry.toString().replace(outputTemp + path.sep, ''),
             entry.getCrc32() ?? '',
           ])
-          .sort((a, b) => a[0].localeCompare(b[0]));
+          .toSorted((a, b) => a[0].localeCompare(b[0]));
         expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
       });
     },
@@ -1176,7 +1176,7 @@ describe('extract', () => {
           entry.toString().replace(outputTemp + path.sep, ''),
           entry.getCrc32() ?? '',
         ])
-        .sort((a, b) => a[0].localeCompare(b[0]));
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
@@ -1311,7 +1311,7 @@ describe('extract', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
       )
         .map((pair) => pair[0])
-        .sort();
+        .toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1500,7 +1500,7 @@ describe('extract', () => {
           await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
         )
           .map((pair) => pair[0])
-          .sort();
+          .toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1520,8 +1520,8 @@ describe('extract', () => {
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .sort(),
-        ).toEqual(expectedDeletedInputPaths.sort());
+            .toSorted(),
+        ).toEqual(expectedDeletedInputPaths.toSorted());
       });
     },
   );
@@ -1799,7 +1799,7 @@ describe('raw', () => {
           entry.toString().replace(outputTemp + path.sep, ''),
           entry.getCrc32() ?? '',
         ])
-        .sort((a, b) => a[0].localeCompare(b[0]));
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
     });
   });
@@ -1906,7 +1906,7 @@ describe('raw', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
       )
         .map((pair) => pair[0])
-        .sort();
+        .toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -2095,7 +2095,7 @@ describe('raw', () => {
           await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
         )
           .map((pair) => pair[0])
-          .sort();
+          .toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -2115,8 +2115,8 @@ describe('raw', () => {
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .sort(),
-        ).toEqual(expectedDeletedInputPaths.sort());
+            .toSorted(),
+        ).toEqual(expectedDeletedInputPaths.toSorted());
       });
     },
   );

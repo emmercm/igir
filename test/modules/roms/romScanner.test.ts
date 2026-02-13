@@ -127,7 +127,7 @@ describe('multiple files', () => {
       .filter((file) => !file.getCrc32())
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
     expect(extensionsWithoutCrc32).toEqual(['.chd', '.tar.gz']);
 
     const entriesWithMd5 = scannedFiles
@@ -140,7 +140,7 @@ describe('multiple files', () => {
       .filter((file) => file.getSha1() !== undefined)
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
     expect(extensionsWithSha1).toEqual(['.chd', '.gcz', '.rvz', '.wia']);
 
     const entriesWithSha256 = scannedFiles
@@ -195,7 +195,7 @@ describe('multiple files', () => {
     const romDir = path.join('test', 'fixtures', 'roms');
     const scannedRealFiles = (await createRomScanner([romDir]).scan())
       .map((file) => [file.toString(), file.getCrc32() ?? ''])
-      .sort((a, b) => a[0].localeCompare(b[0]));
+      .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some hard linked files
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -227,7 +227,7 @@ describe('multiple files', () => {
       // When scanning symlinked files
       const scannedHardLinks = (await createRomScanner([linksDir]).scan())
         .map((file) => [file.toString().replace(linksDir + path.sep, ''), file.getCrc32() ?? ''])
-        .sort((a, b) => a[0].localeCompare(b[0]));
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
 
       // Then the files scan successfully
       expect(scannedHardLinks).toEqual(scannedRealFiles);
@@ -240,7 +240,7 @@ describe('multiple files', () => {
     const romDir = path.join('test', 'fixtures', 'roms');
     const scannedRealFiles = (await createRomScanner([romDir]).scan())
       .map((file) => [file.toString(), file.getCrc32() ?? ''])
-      .sort((a, b) => a[0].localeCompare(b[0]));
+      .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked files
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -269,7 +269,7 @@ describe('multiple files', () => {
             .replace(/ -> .+$/, ''),
           file.getCrc32() ?? '',
         ])
-        .sort((a, b) => a[0].localeCompare(b[0]));
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
 
       // Then the files scan successfully
       expect(scannedSymlinks).toEqual(scannedRealFiles);
@@ -284,7 +284,7 @@ describe('multiple files', () => {
 
     const scannedRealFiles = (await createRomScanner(romDirs).scan())
       .map((file) => [file.toString(), file.getCrc32() ?? ''])
-      .sort((a, b) => a[0].localeCompare(b[0]));
+      .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked dirs
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -306,7 +306,7 @@ describe('multiple files', () => {
       // When scanning symlink dirs
       const scannedSymlinks = (await createRomScanner([tempDir]).scan())
         .map((file) => [file.toString().replace(tempDir + path.sep, ''), file.getCrc32() ?? ''])
-        .sort((a, b) => a[0].localeCompare(b[0]));
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
 
       // Then the dirs scan successfully
       expect(scannedSymlinks).toEqual(scannedRealFiles);
