@@ -2,6 +2,6 @@ FROM docker:29
 
 RUN apk add bash
 
-COPY entrypoint.sh /entrypoint.sh
+COPY .github/actions/docker-run-action/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
