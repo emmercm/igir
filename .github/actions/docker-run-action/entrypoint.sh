@@ -8,6 +8,5 @@ if [ -n "${INPUT_DOCKER_NETWORK}" ]; then
   INPUT_OPTIONS="${INPUT_OPTIONS} --network ${INPUT_DOCKER_NETWORK}"
 fi
 
-echo "${INPUT_RUN}" > /input_run
 # shellcheck disable=SC2086
-exec docker run --volume "/var/run/docker.sock":"/var/run/docker.sock" ${INPUT_OPTIONS} "--entrypoint=${INPUT_SHELL}" "${INPUT_IMAGE}" -c "/input_run"
+exec docker run --volume "/var/run/docker.sock":"/var/run/docker.sock" ${INPUT_OPTIONS} "--entrypoint=${INPUT_SHELL}" "${INPUT_IMAGE}" -c 'echo $INPUT_RUN'
