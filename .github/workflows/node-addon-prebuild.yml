@@ -119,7 +119,7 @@ jobs:
           echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         id: build-docker
-        uses: maus007/docker-run-action-fork@v1
+        uses: ./.github/actions/docker-run-action
         with:
           image: node:${{ steps.linux-vars.outputs.VERSIONS_NODE }}
           shell: bash

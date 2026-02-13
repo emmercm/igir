@@ -102,7 +102,7 @@ jobs:
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: maus007/docker-run-action-fork@v1
+        uses: ./.github/actions/docker-run-action
         with:
           image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
           shell: bash
