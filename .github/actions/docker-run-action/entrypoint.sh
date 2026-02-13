@@ -13,8 +13,10 @@ exec docker run \
   --volume "/var/run/docker.sock:/var/run/docker.sock" \
   --volume "${GITHUB_ENV}:${GITHUB_ENV}" \
   --volume "${GITHUB_OUTPUT}:${GITHUB_OUTPUT}" \
+  --volume "${GITHUB_STEP_SUMMARY}:${GITHUB_STEP_SUMMARY}" \
   --env GITHUB_ENV \
   --env GITHUB_OUTPUT \
+  --env GITHUB_STEP_SUMMARY \
   --env INPUT_RUN \
   ${INPUT_OPTIONS} \
   "--entrypoint=${INPUT_SHELL}" \
