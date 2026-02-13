@@ -8,10 +8,9 @@ if [ -n "${INPUT_DOCKER_NETWORK}" ]; then
   INPUT_OPTIONS="${INPUT_OPTIONS} --network ${INPUT_DOCKER_NETWORK}"
 fi
 
-touch "${GITHUB_ENV}"
-touch "${GITHUB_OUTPUT}"
-touch "${GITHUB_STEP_SUMMARY}"
 echo "${INPUT_RUN}" > run_file && chmod +x run_file
+pwd
+ls -al
 
 # shellcheck disable=SC2086
 exec docker run \
