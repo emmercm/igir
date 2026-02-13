@@ -8,7 +8,8 @@ if [ -n "${INPUT_DOCKER_NETWORK}" ]; then
   INPUT_OPTIONS="${INPUT_OPTIONS} --network ${INPUT_DOCKER_NETWORK}"
 fi
 
-touch "${GITHUB_STEP_SUMMARY}"
+ls -al "${GITHUB_STEP_SUMMARY}"
+echo "${INPUT_RUN}" > run_file && chmod +x run_file
 
 # shellcheck disable=SC2086
 exec docker run \
@@ -16,6 +17,7 @@ exec docker run \
   --volume "${GITHUB_ENV}:${GITHUB_ENV}" \
   --volume "${GITHUB_OUTPUT}:${GITHUB_OUTPUT}" \
   --volume "${GITHUB_STEP_SUMMARY}:${GITHUB_STEP_SUMMARY}" \
+  --volume "run_file:run_file" \
   --env GITHUB_ENV \
   --env GITHUB_OUTPUT \
   --env GITHUB_STEP_SUMMARY \
@@ -23,4 +25,4 @@ exec docker run \
   ${INPUT_OPTIONS} \
   "--entrypoint=${INPUT_SHELL}" \
   "${INPUT_IMAGE}" \
-  -c "echo \"\${INPUT_RUN}\" > run_file && chmod +x run_file && ${INPUT_SHELL} run_file"
+  -c "run_file"
