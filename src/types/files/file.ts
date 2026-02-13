@@ -325,8 +325,7 @@ export default class File implements FileProps {
     if (start <= 0) {
       if (patch) {
         // Patch the file and don't remove its header
-        // TODO(cemmer): implement callback
-        return patch.createPatchedFile(this, destinationPath);
+        return patch.createPatchedFile(this, destinationPath, callback);
       }
       // Copy the file and don't remove its header
       return this.extractToFile(destinationPath, callback);
@@ -338,7 +337,7 @@ export default class File implements FileProps {
       const tempFile = await FsPoly.mktemp(
         path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
       );
-      await patch.createPatchedFile(this, tempFile);
+      await patch.createPatchedFile(this, tempFile, callback);
       try {
         await File.createStreamFromFile(
           tempFile,

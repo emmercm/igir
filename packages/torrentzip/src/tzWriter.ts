@@ -222,7 +222,7 @@ export default class TZWriter {
 
     const extraFieldLength = 20 + (localFileHeaderRelativeOffset >= 0xff_ff_ff_ff ? 8 : 0);
 
-    const buffer = Buffer.alloc(localFileHeader.length + extraFieldLength);
+    const buffer = Buffer.allocUnsafe(localFileHeader.length + extraFieldLength);
     localFileHeader.copy(buffer, 0);
     if (buffer.readUInt16LE(4) < 45) {
       buffer.writeUInt16LE(45, 4); // version needed (for zip64)

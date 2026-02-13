@@ -1,4 +1,5 @@
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -24,7 +25,11 @@ export default class APSGBAPatch extends Patch {
     return new APSGBAPatch(file, crcBefore, undefined, targetSize);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(APSGBAPatch.FILE_SIGNATURE.length);
       if (!header.equals(APSGBAPatch.FILE_SIGNATURE)) {
@@ -40,7 +45,7 @@ export default class APSGBAPatch extends Patch {
 
       patchFile.skipNext(4); // patched size
 
-      return APSGBAPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile);
+      return APSGBAPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -48,6 +53,7 @@ export default class APSGBAPatch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
@@ -56,7 +62,7 @@ export default class APSGBAPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await APSGBAPatch.applyPatch(patchFile, sourceFile, targetFile);
+        await APSGBAPatch.applyPatch(patchFile, sourceFile, targetFile, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();
@@ -68,6 +74,7 @@ export default class APSGBAPatch extends Patch {
     patchFile: IOFile,
     sourceFile: IOFile,
     targetFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const offset = (await patchFile.readNext(4)).readUInt32LE();
@@ -81,6 +88,11 @@ export default class APSGBAPatch extends Patch {
         targetData[idx] = (idx < sourceData.length ? sourceData[idx] : 0x00) ^ xorDatum;
       }
       await targetFile.writeAt(targetData, offset);
+
+      if (callback !== undefined) {
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      }
     }
   }
 }

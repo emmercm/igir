@@ -1,4 +1,5 @@
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -54,7 +55,11 @@ export default class UPSPatch extends Patch {
     return new UPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
@@ -69,7 +74,7 @@ export default class UPSPatch extends Patch {
       }
       await Patch.readUpsUint(patchFile); // target size
 
-      return UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile);
+      return UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -77,6 +82,7 @@ export default class UPSPatch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     // TODO(cemmer): we don't actually need a temp file, we're not modifying the input
     return inputRomFile.extractToTempFile(async (tempRomFile) => {
@@ -86,7 +92,7 @@ export default class UPSPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await UPSPatch.applyPatch(patchFile, sourceFile, targetFile);
+        await UPSPatch.applyPatch(patchFile, sourceFile, targetFile, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();
@@ -98,6 +104,7 @@ export default class UPSPatch extends Patch {
     patchFile: IOFile,
     sourceFile: IOFile,
     targetFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
       const relativeOffset = await Patch.readUpsUint(patchFile);
@@ -109,6 +116,11 @@ export default class UPSPatch extends Patch {
 
       sourceFile.skipNext(1);
       targetFile.skipNext(1);
+
+      if (callback !== undefined) {
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      }
     }
   }
 

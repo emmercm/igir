@@ -1,4 +1,5 @@
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -58,7 +59,11 @@ export default class BPSPatch extends Patch {
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
@@ -78,7 +83,7 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile);
+      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -86,6 +91,7 @@ export default class BPSPatch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     return inputRomFile.extractToTempIOFile('r', async (inputRomIOFile) => {
       const targetFile = await IOFile.fileOfSize(
@@ -95,7 +101,7 @@ export default class BPSPatch extends Patch {
       );
 
       try {
-        await BPSPatch.applyPatch(patchFile, inputRomIOFile, targetFile);
+        await BPSPatch.applyPatch(patchFile, inputRomIOFile, targetFile, callback);
       } finally {
         await targetFile.close();
       }
@@ -106,6 +112,7 @@ export default class BPSPatch extends Patch {
     patchFile: IOFile,
     sourceFile: IOFile,
     targetFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;
@@ -137,6 +144,11 @@ export default class BPSPatch extends Patch {
         }
       } else {
         throw new IgirException(`BPS action ${action} isn't supported`);
+      }
+
+      if (callback !== undefined) {
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
       }
     }
   }
