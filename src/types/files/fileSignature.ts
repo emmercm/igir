@@ -104,6 +104,17 @@ export default class FileSignature {
 
     // ********** ROMs - SPECIFIC **********
 
+    // Apple
+    // @see https://applesaucefdc.com/a2r/
+    a2r: new FileSignature('.a2r', [{ value: Buffer.from('A2R3\xFF\x0A\x0D\x0A') }]),
+    // @see https://www.kryoflux.com/download/kryoflux_stream_protocol_rev1.1.pdf
+    kryoflux_raw: new FileSignature('.raw', [
+      { value: Buffer.from('\x0D\x04') }, // start of KFInfo block
+      { offset: 0x4, value: Buffer.from('host_date=') }, // typical first info
+    ]),
+    // @see https://applesaucefdc.com/woz/reference2/
+    woz: new FileSignature('.woz', [{ value: Buffer.from('WOZ2\xFF\x0A\x0D\x0A') }]),
+
     // Atari - 7800
     a78: new FileSignature('.a78', [
       { offset: 1, value: Buffer.from('ATARI7800') },
@@ -159,7 +170,7 @@ export default class FileSignature {
     // @see http://n64dev.org/romformats.html
     n64: new FileSignature('.n64', [{ value: Buffer.from('40123780', 'hex') }]), // little endian
     v64: new FileSignature('.v64', [{ value: Buffer.from('37804012', 'hex') }]), // byte-swapped
-    z64: new FileSignature('.z64', [{ value: Buffer.from('80371240', 'hex') }]), // native
+    z64: new FileSignature('.z64', [{ value: Buffer.from('80371240', 'hex') }]), // big endian / "native"
 
     // Nintendo - Nintendo 64 Disk Drive
     ndd: new FileSignature('.ndd', [{ value: Buffer.from('E848D31610', 'hex') }]),
@@ -178,9 +189,9 @@ export default class FileSignature {
     // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
     nkit_iso: new FileSignature('.nkit.iso', [{ offset: 0x2_00, value: Buffer.from('NKIT') }]),
     // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
-    rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]), // "RVZ\x01"
+    rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]),
     // TODO(cemmer): .tgc
-    wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]), // "WIA\x01"
+    wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]),
 
     // Nintendo - Game Boy
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
@@ -412,30 +423,20 @@ export default class FileSignature {
     start: number,
     end: number,
   ): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      stream.resume();
+    const chunks: Buffer[] = [];
 
-      const chunks: Buffer[] = [];
-      const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks).subarray(start, end);
-        resolve(header);
-      };
+    for await (const chunk of stream as AsyncIterable<Buffer>) {
+      if (chunk.length > 0) {
+        chunks.push(chunk);
+      }
 
-      stream.on('data', (chunk: Buffer) => {
-        if (chunk.length > 0) {
-          chunks.push(chunk);
-        }
+      // Stop reading when we get enough data, trigger a 'close' event
+      if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
+        break;
+      }
+    }
 
-        // Stop reading when we get enough data, trigger a 'close' event
-        if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
-          resolveHeader();
-          stream.destroy();
-        }
-      });
-
-      stream.on('end', resolveHeader);
-      stream.on('error', reject);
-    });
+    return Buffer.concat(chunks).subarray(start, end);
   }
 
   static signatureFromName(name: string): FileSignature | undefined {
