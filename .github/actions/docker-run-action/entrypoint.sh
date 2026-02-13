@@ -14,7 +14,6 @@ exec docker run \
   --mount "type=bind,source=/home/runner/work/_temp/_github_home,target=/github/home" \
   --mount "type=bind,source=/home/runner/work/_temp/_github_workflow,target=/github/workflow" \
   --mount "type=bind,source=/home/runner/work/_temp/_runner_file_commands,target=/github/file_commands" \
-  --mount "type=bind,source=$(pwd)/run_file,target=/run_file,readonly" \
   --env GITHUB_ENV \
   --env GITHUB_OUTPUT \
   --env GITHUB_STEP_SUMMARY \
