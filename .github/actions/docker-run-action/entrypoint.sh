@@ -10,6 +10,7 @@ fi
 
 ls -al "${GITHUB_STEP_SUMMARY}"
 echo "${INPUT_RUN}" > run_file && chmod +x run_file
+ls -al
 
 # shellcheck disable=SC2086
 exec docker run \
@@ -25,4 +26,4 @@ exec docker run \
   ${INPUT_OPTIONS} \
   "--entrypoint=${INPUT_SHELL}" \
   "${INPUT_IMAGE}" \
-  -c "echo \$GITHUB_STEP_SUMMARY; ls -al \$GITHUB_STEP_SUMMARY; /run_file"
+  -c "echo \$GITHUB_STEP_SUMMARY; ls -al /github/file_commands; ls -al \$GITHUB_STEP_SUMMARY; /run_file"
