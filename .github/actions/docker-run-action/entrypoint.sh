@@ -8,6 +8,8 @@ if [ -n "${INPUT_DOCKER_NETWORK}" ]; then
   INPUT_OPTIONS="${INPUT_OPTIONS} --network ${INPUT_DOCKER_NETWORK}"
 fi
 
+touch "${GITHUB_STEP_SUMMARY}"
+
 # shellcheck disable=SC2086
 exec docker run \
   --volume "/var/run/docker.sock:/var/run/docker.sock" \

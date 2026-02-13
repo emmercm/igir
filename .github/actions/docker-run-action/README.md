@@ -1,6 +1,6 @@
 # docker-run-action
 
-[addnab/docker-run-action@v3](https://github.com/addnab/docker-run-action), except it solves:
+[addnab/docker-run-action@v3](https://github.com/addnab/docker-run-action), except it addresses:
 
 - https://github.com/addnab/docker-run-action/issues/62 Docker image version that's too old
 - https://github.com/addnab/docker-run-action/issues/41 inability to use `$GITHUB_OUTPUT`

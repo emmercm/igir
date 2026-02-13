@@ -113,7 +113,6 @@ jobs:
           run: |
             set -x
             uname -a
-            node --print 'process'
 
             # Package the executable and test it before compressing it
             npm ci
