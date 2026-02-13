@@ -207,8 +207,9 @@ export default class Igir {
       );
       datsToWrittenFiles.set(processedDat, [
         ...(datsToWrittenFiles.get(processedDat) ?? []),
-        ...(await readerSemaphore.map(playlistPaths, async (filePath) =>
-          File.fileOf({ filePath }),
+        ...(await readerSemaphore.map(
+          playlistPaths,
+          async (filePath) => await File.fileOf({ filePath }),
         )),
       ]);
 
@@ -310,7 +311,7 @@ export default class Igir {
 
     // Next, try to use an already existing path
     const exists = await Promise.all(
-      cachePathCandidates.map(async (pathCandidate) => FsPoly.exists(pathCandidate)),
+      cachePathCandidates.map(async (pathCandidate) => await FsPoly.exists(pathCandidate)),
     );
     const existsCachePath = cachePathCandidates.find((_, idx) => exists[idx]);
     if (existsCachePath !== undefined) {
@@ -319,7 +320,7 @@ export default class Igir {
 
     // Next, try to find a writable path
     const writable = await Promise.all(
-      cachePathCandidates.map(async (pathCandidate) => FsPoly.isWritable(pathCandidate)),
+      cachePathCandidates.map(async (pathCandidate) => await FsPoly.isWritable(pathCandidate)),
     );
     const writableCachePath = cachePathCandidates.find((_, idx) => writable[idx]);
     if (writableCachePath !== undefined) {
@@ -573,11 +574,11 @@ export default class Igir {
     indexedRoms: IndexedFiles,
     patches: Patch[],
   ): Promise<WriteCandidate[]> {
-    return (
+    return await (
       [
         // Generate the initial set of candidates
         async (): Promise<WriteCandidate[]> =>
-          new CandidateGenerator(this.options, progressBar, readerSemaphore).generate(
+          await new CandidateGenerator(this.options, progressBar, readerSemaphore).generate(
             dat,
             indexedRoms,
           ),
@@ -586,7 +587,7 @@ export default class Igir {
           new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
         // Correct output filename extensions
         async (candidates): Promise<WriteCandidate[]> =>
-          new CandidateExtensionCorrector(
+          await new CandidateExtensionCorrector(
             this.options,
             progressBar,
             fileFactory,
@@ -597,7 +598,7 @@ export default class Igir {
          * efficiency
          */
         async (candidates): Promise<WriteCandidate[]> =>
-          new CandidateArchiveFileHasher(
+          await new CandidateArchiveFileHasher(
             this.options,
             progressBar,
             fileFactory,
@@ -630,7 +631,7 @@ export default class Igir {
     ).reduce(
       async (candidatesPromise, processor) => {
         const candidates = await candidatesPromise;
-        return processor(candidates);
+        return await processor(candidates);
       },
       Promise.resolve([] as WriteCandidate[]),
     );

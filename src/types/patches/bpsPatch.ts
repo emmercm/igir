@@ -64,7 +64,7 @@ export default class BPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
         throw new IgirException(`BPS patch header is invalid: ${this.getFile().toString()}`);
@@ -83,7 +83,7 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -93,7 +93,7 @@ export default class BPSPatch extends Patch {
     patchFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return inputRomFile.extractToTempIOFile('r', async (inputRomIOFile) => {
+    await inputRomFile.extractToTempIOFile('r', async (inputRomIOFile) => {
       const targetFile = await IOFile.fileOfSize(
         outputRomPath,
         'r+',

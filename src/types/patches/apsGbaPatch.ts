@@ -30,7 +30,7 @@ export default class APSGBAPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(APSGBAPatch.FILE_SIGNATURE.length);
       if (!header.equals(APSGBAPatch.FILE_SIGNATURE)) {
         throw new IgirException(`APS (GBA) patch header is invalid: ${this.getFile().toString()}`);
@@ -45,7 +45,7 @@ export default class APSGBAPatch extends Patch {
 
       patchFile.skipNext(4); // patched size
 
-      return APSGBAPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await APSGBAPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -55,7 +55,7 @@ export default class APSGBAPatch extends Patch {
     patchFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return inputRomFile.extractToTempFile(async (tempRomFile) => {
+    await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
       await FsPoly.copyFile(tempRomFile, outputRomPath);

@@ -229,7 +229,7 @@ const games: Game[] = [
 const dat = new LogiqxDAT({ header: new Header(), games });
 
 async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
-  return Promise.all(
+  return await Promise.all(
     dat.getGames().map(async (game) => {
       return new WriteCandidate(
         new SingleValueGame({ ...game }),
@@ -273,7 +273,7 @@ async function playlistCreator(
     candidates,
   );
 
-  return Promise.all(
+  return await Promise.all(
     writtenFiles.toSorted().map(async (filePath) => {
       const contents = (await FsPoly.readFile(filePath)).toString().trim().split('\n');
       await FsPoly.rm(filePath, { force: true });

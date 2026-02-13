@@ -49,8 +49,9 @@ export default class ChdBinCueParser {
 
     const binFiles = (
       await Promise.all(
-        cueSheet.files.flatMap(async (file) =>
-          this.parseCueFile(archive, file, path.dirname(cueFilePath), checksumBitmask),
+        cueSheet.files.flatMap(
+          async (file) =>
+            await this.parseCueFile(archive, file, path.dirname(cueFilePath), checksumBitmask),
         ),
       )
     ).flat();

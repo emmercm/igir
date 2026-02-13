@@ -57,7 +57,7 @@ export default class MovedROMDeleter extends Module {
     const existingFilePathsCheck = await async.mapLimit(
       filePathsToDelete,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => FsPoly.exists(filePath),
+      async (filePath: string) => await FsPoly.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,

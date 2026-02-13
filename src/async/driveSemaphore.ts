@@ -56,9 +56,9 @@ export default class DriveSemaphore {
 
     // First, limit the number of threads per drive, which will better balance the processing of
     // files on different drives vs. processing files sequentially
-    return driveSemaphore.runExclusive(
+    return await driveSemaphore.runExclusive(
       // Second, limit the overall number of threads
-      async () => this.threadsSemaphore.runExclusive(async () => runnable()),
+      async () => await this.threadsSemaphore.runExclusive(async () => await runnable()),
       fileSizeKilobytes,
     );
   }
@@ -70,26 +70,28 @@ export default class DriveSemaphore {
     files: K[],
     runnable: (file: K) => V | Promise<V>,
   ): Promise<V[]> {
-    return DriveSemaphore.balanceAcrossDisks(files, async (filesWithIndex) =>
-      // Limit the number of ongoing threads to something reasonable
-      async.mapLimit(
-        filesWithIndex,
-        Defaults.MAX_FS_THREADS,
-        async ([file, idx]: [K, number]): Promise<[V, number]> => {
-          try {
-            const val = await this.runExclusive(file, async () => runnable(file));
-            return [val, idx];
-          } catch (error) {
-            if (error instanceof Error) {
-              throw error;
-            } else if (typeof error === 'string') {
-              throw new Error(error);
-            } else {
-              throw new Error('failed to execute runnable');
+    return await DriveSemaphore.balanceAcrossDisks(
+      files,
+      async (filesWithIndex) =>
+        // Limit the number of ongoing threads to something reasonable
+        await async.mapLimit(
+          filesWithIndex,
+          Defaults.MAX_FS_THREADS,
+          async ([file, idx]: [K, number]): Promise<[V, number]> => {
+            try {
+              const val = await this.runExclusive(file, async () => await runnable(file));
+              return [val, idx];
+            } catch (error) {
+              if (error instanceof Error) {
+                throw error;
+              } else if (typeof error === 'string') {
+                throw new Error(error);
+              } else {
+                throw new Error('failed to execute runnable');
+              }
             }
-          }
-        },
-      ),
+          },
+        ),
     );
   }
 

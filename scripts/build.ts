@@ -46,12 +46,14 @@ async function copyfiles(
 ): Promise<void> {
   const excludeFiles = new Set(
     (
-      await Promise.all(excludeGlobs.map(async (glob) => fg(glob, { caseSensitiveMatch: false })))
+      await Promise.all(
+        excludeGlobs.map(async (glob) => await fg(glob, { caseSensitiveMatch: false })),
+      )
     ).flat(),
   );
 
   const inputFiles = (
-    await Promise.all(inputGlobs.map(async (glob) => fg(glob, { caseSensitiveMatch: false })))
+    await Promise.all(inputGlobs.map(async (glob) => await fg(glob, { caseSensitiveMatch: false })))
   )
     .flat()
     .filter((inputFile) => !excludeFiles.has(inputFile));

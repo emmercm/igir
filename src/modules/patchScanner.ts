@@ -44,7 +44,7 @@ export default class PatchScanner extends Scanner {
     const patches = this.parsePatchFiles(patchFiles);
 
     this.progressBar.logTrace('done scanning patch files');
-    return patches;
+    return await patches;
   }
 
   private async parsePatchFiles(patchFiles: File[]): Promise<Patch[]> {

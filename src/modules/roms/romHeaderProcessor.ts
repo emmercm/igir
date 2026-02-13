@@ -62,7 +62,7 @@ export default class ROMHeaderProcessor extends Module {
           return inputFile;
         }
 
-        return this.driveSemaphore.runExclusive(inputFile, async () => {
+        return await this.driveSemaphore.runExclusive(inputFile, async () => {
           this.progressBar.incrementInProgress();
           const childBar = this.progressBar.addChildBar({
             name: inputFile.toString(),
@@ -131,7 +131,7 @@ export default class ROMHeaderProcessor extends Module {
       this.progressBar.logTrace(
         `${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`,
       );
-      return inputFile.withFileHeader(headerForFileStream);
+      return await inputFile.withFileHeader(headerForFileStream);
     }
     this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);
     return inputFile;

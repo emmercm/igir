@@ -412,7 +412,7 @@ export default class FileSignature {
     start: number,
     end: number,
   ): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       stream.resume();
 
       const chunks: Buffer[] = [];
