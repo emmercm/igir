@@ -73,7 +73,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     return [];
   }
 
-  return async.mapLimit(
+  return await async.mapLimit(
     await FsPoly.walk(dirPath, WalkMode.FILES),
     os.cpus().length,
     async (filePath: string): Promise<[string, fs.Stats]> => {
@@ -167,7 +167,7 @@ async function candidateWriter(
   ).write(dat, candidates);
 
   // Then
-  return walkAndStat(outputTemp);
+  return await walkAndStat(outputTemp);
 }
 
 it('should not do anything if there are no candidates', async () => {
@@ -511,8 +511,11 @@ describe('zip', () => {
 
       const writtenRomsAndCrcs = (
         await Promise.all(
-          outputFiles.map(async ([outputPath]) =>
-            new FileFactory(new FileCache(), LOGGER).filesFrom(path.join(outputTemp, outputPath)),
+          outputFiles.map(
+            async ([outputPath]) =>
+              await new FileFactory(new FileCache(), LOGGER).filesFrom(
+                path.join(outputTemp, outputPath),
+              ),
           ),
         )
       )
@@ -1166,8 +1169,11 @@ describe('extract', () => {
 
       const writtenRomsAndCrcs = (
         await Promise.all(
-          outputFiles.map(async ([outputPath]) =>
-            new FileFactory(new FileCache(), LOGGER).filesFrom(path.join(outputTemp, outputPath)),
+          outputFiles.map(
+            async ([outputPath]) =>
+              await new FileFactory(new FileCache(), LOGGER).filesFrom(
+                path.join(outputTemp, outputPath),
+              ),
           ),
         )
       )
@@ -1789,8 +1795,11 @@ describe('raw', () => {
 
       const writtenRomsAndCrcs = (
         await Promise.all(
-          outputFiles.map(async ([outputPath]) =>
-            new FileFactory(new FileCache(), LOGGER).filesFrom(path.join(outputTemp, outputPath)),
+          outputFiles.map(
+            async ([outputPath]) =>
+              await new FileFactory(new FileCache(), LOGGER).filesFrom(
+                path.join(outputTemp, outputPath),
+              ),
           ),
         )
       )

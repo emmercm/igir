@@ -42,7 +42,7 @@ const dat = new LogiqxDAT({
 });
 
 async function generateCandidates(games: SingleValueGame[]): Promise<WriteCandidate[]> {
-  return Promise.all(
+  return await Promise.all(
     games.map(
       async (game) =>
         new WriteCandidate(

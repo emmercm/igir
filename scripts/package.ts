@@ -85,6 +85,7 @@ await esbuild.build({
   bundle: true,
   packages: 'external',
   format: 'esm',
+  // TODO(cemmer): enable source maps here and in caxa runtime?
 });
 
 // Generate the prebuilds directory
@@ -133,7 +134,7 @@ const includeSize = (
       if (await FsPoly.isDirectory(file)) {
         return 0;
       }
-      return FsPoly.size(file);
+      return await FsPoly.size(file);
     }),
   )
 ).reduce((sum, size) => sum + size, 0);
@@ -150,7 +151,7 @@ const excludeSize = (
       if (await FsPoly.isDirectory(file)) {
         return 0;
       }
-      return FsPoly.size(file);
+      return await FsPoly.size(file);
     }),
   )
 ).reduce((sum, size) => sum + size, 0);

@@ -11,7 +11,7 @@ import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
-  return Promise.all(
+  return await Promise.all(
     dat.getGames().map(
       async (game) =>
         new WriteCandidate(

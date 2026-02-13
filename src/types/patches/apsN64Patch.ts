@@ -63,7 +63,7 @@ export default class APSN64Patch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(APSN64Patch.FILE_SIGNATURE.length);
       if (!header.equals(APSN64Patch.FILE_SIGNATURE)) {
         throw new IgirException(`APS (N64) patch header is invalid: ${this.getFile().toString()}`);
@@ -79,7 +79,7 @@ export default class APSN64Patch extends Patch {
         );
       }
 
-      return APSN64Patch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await APSN64Patch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 

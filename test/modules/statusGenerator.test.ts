@@ -82,14 +82,17 @@ async function candidateGenerator(
       dat
         .getGames()
         .filter((game) => gameNames.includes(game.getName()))
-        .map(async (game) => Promise.all(game.getRoms().map(async (rom) => rom.toFile()))),
+        .map(
+          async (game) => await Promise.all(game.getRoms().map(async (rom) => await rom.toFile())),
+        ),
     )
   ).flat();
   const romsIndexed = new ROMIndexer(options, new ProgressBarFake()).index(roms);
-  return new CandidateGenerator(options, new ProgressBarFake(), new MappableSemaphore(2)).generate(
-    dat,
-    romsIndexed,
-  );
+  return await new CandidateGenerator(
+    options,
+    new ProgressBarFake(),
+    new MappableSemaphore(2),
+  ).generate(dat, romsIndexed);
 }
 
 describe('toConsole', () => {

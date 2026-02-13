@@ -47,7 +47,7 @@ export default class NinjaPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
         throw new IgirException(`NINJA patch header is invalid: ${this.getFile().toString()}`);
@@ -67,7 +67,7 @@ export default class NinjaPatch extends Patch {
       patchFile.skipNext(512); // website
       patchFile.skipNext(1074); // info
 
-      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 

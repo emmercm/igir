@@ -171,7 +171,7 @@ export default class DATScanner extends Scanner {
 
     dat ??= await datFile.createReadStream(async (readable) => {
       const fileContents = (await bufferPoly.fromReadable(readable)).toString();
-      return this.parseDatContents(datFile, fileContents);
+      return await this.parseDatContents(datFile, fileContents);
     });
 
     if (!dat) {
@@ -255,7 +255,7 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    return this.parseDatContents(mameExecutable, fileContents);
+    return await this.parseDatContents(mameExecutable, fileContents);
   }
 
   private async parseDatContents(datFile: File, fileContents: string): Promise<DAT | undefined> {
@@ -512,7 +512,7 @@ export default class DATScanner extends Scanner {
   }
 
   private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const rows: SmdbRow[] = [];
 
       const stream = parse<SmdbRow, SmdbRow>({

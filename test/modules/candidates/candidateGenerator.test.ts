@@ -75,7 +75,7 @@ async function candidateGenerator(
   files: File[],
 ): Promise<WriteCandidate[]> {
   const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(files);
-  return new CandidateGenerator(
+  return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
     new MappableSemaphore(os.cpus().length),
@@ -502,7 +502,7 @@ describe('token replacement', () => {
   });
 
   const files = Promise.all(
-    dat.getGames().flatMap((game) => game.getRoms().map(async (rom) => rom.toFile())),
+    dat.getGames().flatMap((game) => game.getRoms().map(async (rom) => await rom.toFile())),
   );
 
   it('should replace {region}', async () => {
@@ -704,14 +704,14 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         dat
           .getGames()
           .flatMap((game) => game.getRoms())
-          .map(async (rom) => rom.toFile()),
+          .map(async (rom) => await rom.toFile()),
       );
       const archive = new Zip('archive.zip');
       const archiveEntries = await Promise.all(
         dat
           .getGames()
           .flatMap((game) => game.getRoms())
-          .map(async (rom) => rom.toArchiveEntry(archive)),
+          .map(async (rom) => await rom.toArchiveEntry(archive)),
       );
       const files = [...rawFiles, ...archiveEntries];
 
@@ -745,7 +745,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
           dat
             .getGames()
             .flatMap((game) => game.getRoms())
-            .map(async (rom) => rom.toFile()),
+            .map(async (rom) => await rom.toFile()),
         );
 
         // When
@@ -770,14 +770,14 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
           dat
             .getGames()
             .flatMap((game) => game.getRoms())
-            .map(async (rom) => rom.toFile()),
+            .map(async (rom) => await rom.toFile()),
         );
         const archive = new Zip('archive.zip');
         const archiveEntries = await Promise.all(
           dat
             .getGames()
             .flatMap((game) => game.getRoms())
-            .map(async (rom) => rom.toArchiveEntry(archive)),
+            .map(async (rom) => await rom.toArchiveEntry(archive)),
         );
         const files = [...rawFiles, ...archiveEntries];
 
@@ -807,14 +807,14 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
           dat
             .getGames()
             .flatMap((game) => game.getRoms())
-            .map(async (rom) => rom.toFile()),
+            .map(async (rom) => await rom.toFile()),
         );
         const archive = new Zip('archive.zip');
         const archiveEntries = await Promise.all(
           dat
             .getGames()
             .flatMap((game) => game.getRoms())
-            .map(async (rom) => rom.toArchiveEntry(archive)),
+            .map(async (rom) => await rom.toArchiveEntry(archive)),
         );
         const files = [
           ...rawFiles,
@@ -901,7 +901,7 @@ describe('MAME v0.260', () => {
     mameDat
       .getGames()
       .flatMap((game) => [...game.getRoms(), ...game.getDisks()])
-      .map(async (rom) => rom.toFile()),
+      .map(async (rom) => await rom.toFile()),
   )
     .then((files) => files.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode())))
     .then((files) => IndexedFiles.fromFiles(files));

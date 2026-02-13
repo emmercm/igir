@@ -35,7 +35,7 @@ export default {
     readable.push(data);
     // eslint-disable-next-line unicorn/no-null
     readable.push(null);
-    return this.hashStream(readable, checksumBitmask);
+    return await this.hashStream(readable, checksumBitmask);
   },
 
   async hashFile(
@@ -45,9 +45,9 @@ export default {
     end?: number,
     callback?: FsReadCallback,
   ): Promise<ChecksumProps> {
-    return File.createStreamFromFile(
+    return await File.createStreamFromFile(
       filePath,
-      async (readable) => this.hashStream(readable, checksumBitmask, callback),
+      async (readable) => await this.hashStream(readable, checksumBitmask, callback),
       start,
       end,
     );

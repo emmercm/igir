@@ -60,7 +60,7 @@ export default class UPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(UPSPatch.FILE_SIGNATURE)) {
         throw new IgirException(`UPS patch header is invalid: ${this.getFile().toString()}`);
@@ -74,7 +74,7 @@ export default class UPSPatch extends Patch {
       }
       await Patch.readUpsUint(patchFile); // target size
 
-      return UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await UPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -85,7 +85,7 @@ export default class UPSPatch extends Patch {
     callback?: FsReadCallback,
   ): Promise<void> {
     // TODO(cemmer): we don't actually need a temp file, we're not modifying the input
-    return inputRomFile.extractToTempFile(async (tempRomFile) => {
+    await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
       await FsPoly.copyFile(tempRomFile, outputRomPath);

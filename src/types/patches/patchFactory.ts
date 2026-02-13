@@ -82,7 +82,7 @@ export default class PatchFactory {
     const parsers = Object.values(this.PATCH_PARSERS);
     for (const parser of parsers) {
       if (parser.extensions.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-        return parser.factory(file);
+        return await parser.factory(file);
       }
     }
     return undefined;
@@ -108,8 +108,8 @@ export default class PatchFactory {
   }
 
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
-    const fileHeader = await file.createReadStream(async (readable) =>
-      PatchFactory.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
+    const fileHeader = await file.createReadStream(
+      async (readable) => await PatchFactory.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
     );
 
     const parsers = Object.values(this.PATCH_PARSERS);
@@ -119,7 +119,7 @@ export default class PatchFactory {
           fileHeader.startsWith(fileSignature.toString('hex')),
         )
       ) {
-        return parser.factory(file);
+        return await parser.factory(file);
       }
     }
     return undefined;

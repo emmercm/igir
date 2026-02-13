@@ -97,7 +97,7 @@ export default class EndOfCentralDirectory {
     }
 
     // Parse the EOCD
-    return this.readEndOfCentralDirectoryRecordZip(fileHandle, filePosition + eocdPosition);
+    return await this.readEndOfCentralDirectoryRecordZip(fileHandle, filePosition + eocdPosition);
   }
 
   private static async readEndOfCentralDirectoryRecordZip(

@@ -40,7 +40,7 @@ export default class UpdateChecker {
   }
 
   private static async getVersion(packageName: string): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       https
         .get(
           `https://registry.npmjs.org/${packageName}/latest`,

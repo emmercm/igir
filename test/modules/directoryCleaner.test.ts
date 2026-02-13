@@ -33,8 +33,8 @@ async function runOutputCleaner(
 
   try {
     const writtenRomFilesToExclude = await Promise.all(
-      writtenFilePathsToExclude.map(async (filePath) =>
-        File.fileOf({ filePath: path.join(tempInputDir, filePath) }),
+      writtenFilePathsToExclude.map(
+        async (filePath) => await File.fileOf({ filePath: path.join(tempInputDir, filePath) }),
       ),
     );
 

@@ -487,11 +487,11 @@ export default class VcdiffPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const copyCache = new VcdiffCache();
       const header = await VcdiffHeader.fromIOFile(patchFile);
 
-      return VcdiffPatch.writeOutputFile(
+      await VcdiffPatch.writeOutputFile(
         inputRomFile,
         outputRomPath,
         patchFile,
@@ -510,7 +510,7 @@ export default class VcdiffPatch extends Patch {
     copyCache: VcdiffCache,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return inputRomFile.extractToTempFile(async (tempRomFile) => {
+    await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
       await FsPoly.copyFile(tempRomFile, outputRomPath);

@@ -22,7 +22,7 @@ export default class DPSPatch extends Patch {
     outputRomPath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       patchFile.skipNext(64); // patch name
       patchFile.skipNext(64); // patch author
       patchFile.skipNext(64); // patch version
@@ -36,7 +36,7 @@ export default class DPSPatch extends Patch {
         );
       }
 
-      return DPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
+      await DPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -46,7 +46,7 @@ export default class DPSPatch extends Patch {
     patchFile: IOFile,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return inputRomFile.extractToTempFile(async (tempRomFile) => {
+    await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
       await FsPoly.copyFile(tempRomFile, outputRomPath);

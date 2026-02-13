@@ -67,8 +67,10 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 
   return (
     (
-      await async.mapLimit(files, os.cpus().length, async (filePath: string) =>
-        fileFactory.filesFrom(filePath),
+      await async.mapLimit(
+        files,
+        os.cpus().length,
+        async (filePath: string) => await fileFactory.filesFrom(filePath),
       )
     )
       .flat()
@@ -104,7 +106,9 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 
   const inputFilesBefore = (
     await Promise.all(
-      options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath, WalkMode.FILES)),
+      options
+        .getInputPaths()
+        .map(async (inputPath) => await FsPoly.walk(inputPath, WalkMode.FILES)),
     )
   )
     .flat()
@@ -126,7 +130,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
           await Promise.all(
             options
               .getInputPaths()
-              .map(async (inputPath) => walkWithCrc(inputPath, options.getOutputDirRoot())),
+              .map(async (inputPath) => await walkWithCrc(inputPath, options.getOutputDirRoot())),
           )
         )
           .flat()
@@ -135,7 +139,9 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 
   const inputFilesAfter = (
     await Promise.all(
-      options.getInputPaths().map(async (inputPath) => FsPoly.walk(inputPath, WalkMode.FILES)),
+      options
+        .getInputPaths()
+        .map(async (inputPath) => await FsPoly.walk(inputPath, WalkMode.FILES)),
     )
   )
     .flat()
@@ -169,14 +175,14 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 
 describe('with explicit DATs', () => {
   it('should throw on all invalid dats', async () => {
-    await expect(async () =>
-      new Igir(
+    await expect(async () => {
+      await new Igir(
         new Options({
           dat: ['src/*'],
         }),
         LOGGER,
-      ).main(),
-    ).rejects.toThrow(/no valid dat files/i);
+      ).main();
+    }).rejects.toThrow(/no valid dat files/i);
   });
 
   it('should copy, playlist, and test without caching', async () => {
@@ -337,7 +343,9 @@ describe('with explicit DATs', () => {
 
       const inputFiles = await FsPoly.walk(inputTemp, WalkMode.FILES);
       await Promise.all(
-        inputFiles.map(async (inputFile) => util.promisify(fs.chmod)(inputFile, '0444')),
+        inputFiles.map(async (inputFile) => {
+          await util.promisify(fs.chmod)(inputFile, '0444');
+        }),
       );
 
       // When running igir with the clean command

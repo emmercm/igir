@@ -51,7 +51,7 @@ export default class Cache<V> {
    * Return if a key exists in the cache, waiting for any existing operations to complete first.
    */
   async has(key: string): Promise<boolean> {
-    return this.keyedMutex.runExclusiveForKey(key, () => this.keyValues.has(key));
+    return await this.keyedMutex.runExclusiveForKey(key, () => this.keyValues.has(key));
   }
 
   /**
@@ -72,7 +72,7 @@ export default class Cache<V> {
    * Get the value of a key in the cache, waiting for any existing operations to complete first.
    */
   async get(key: string): Promise<V | undefined> {
-    return this.keyedMutex.runExclusiveForKey(key, () => this.keyValues.get(key));
+    return await this.keyedMutex.runExclusiveForKey(key, () => this.keyValues.get(key));
   }
 
   /**
@@ -84,7 +84,7 @@ export default class Cache<V> {
     runnable: (key: string) => V | Promise<V>,
     shouldRecompute?: (value: V) => boolean | Promise<boolean>,
   ): Promise<V> {
-    return this.keyedMutex.runExclusiveForKey(key, async () => {
+    return await this.keyedMutex.runExclusiveForKey(key, async () => {
       if (this.keyValues.has(key)) {
         const existingValue = this.keyValues.get(key) as V;
         if (shouldRecompute === undefined || !(await shouldRecompute(existingValue))) {
@@ -102,7 +102,7 @@ export default class Cache<V> {
    * Set the value of a key in the cache.
    */
   async set(key: string, val: V): Promise<void> {
-    return this.keyedMutex.runExclusiveForKey(key, () => {
+    await this.keyedMutex.runExclusiveForKey(key, () => {
       this.setUnsafe(key, val);
     });
   }
@@ -175,7 +175,9 @@ export default class Cache<V> {
       return;
     }
 
-    this.saveToFileTimeout = Timer.setTimeout(async () => this.save(), this.fileFlushMillis);
+    this.saveToFileTimeout = Timer.setTimeout(async () => {
+      await this.save();
+    }, this.fileFlushMillis);
   }
 
   /**
