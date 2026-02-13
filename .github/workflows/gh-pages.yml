@@ -83,7 +83,9 @@ jobs:
         with:
           python-version: 3.x
       - run: |
+          set -x
           pip install --requirement docs/requirements.txt
+          sudo apt-get update
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
         env:
@@ -133,7 +135,9 @@ jobs:
         with:
           python-version: 3.x
       - run: |
+          set -x
           pip install --requirement docs/requirements.txt
+          sudo apt-get update
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs gh-deploy --strict --verbose --force
         env:
