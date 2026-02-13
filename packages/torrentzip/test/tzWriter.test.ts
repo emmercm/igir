@@ -7,7 +7,6 @@ import { jest } from '@jest/globals';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
@@ -112,16 +111,7 @@ const assertSingleFileZip = async (
     if (!(await FsPoly.exists(tempFileDir))) {
       await FsPoly.mkdir(tempFileDir, { recursive: true });
     }
-    const tempFile = await IOFile.fileOfSize(tempFilePath, 'w', fileSize);
-    const emptyBuffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
-    let position = 0;
-    while (position < fileSize) {
-      await tempFile.writeAt(
-        emptyBuffer.subarray(0, Math.min(emptyBuffer.length, fileSize - position)),
-        position,
-      );
-      position += emptyBuffer.length;
-    }
+    const tempFile = await IOFile.fileOfSize(tempFilePath, 'r', fileSize);
     await tempFile.close();
 
     // Sanity check the temp file
@@ -247,7 +237,7 @@ test.each([
       for (const inputDirectory of inputDirectories) {
         const readable = new stream.Readable({
           read(): void {
-            this.push(Buffer.alloc(0));
+            this.push(Buffer.allocUnsafe(0));
             // eslint-disable-next-line unicorn/no-null
             this.push(null);
           },

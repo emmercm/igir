@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import type IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -53,7 +54,11 @@ export default abstract class Patch {
       .trim();
   }
 
-  abstract createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void>;
+  abstract createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void>;
 
   protected static async readUpsUint(fp: IOFile): Promise<number> {
     let data = 0;

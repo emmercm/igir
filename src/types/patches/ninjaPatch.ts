@@ -1,3 +1,4 @@
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -41,7 +42,11 @@ export default class NinjaPatch extends Patch {
     return new NinjaPatch(file, crcBefore);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     return this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(5);
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
@@ -62,7 +67,7 @@ export default class NinjaPatch extends Patch {
       patchFile.skipNext(512); // website
       patchFile.skipNext(1074); // info
 
-      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile);
+      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -70,6 +75,7 @@ export default class NinjaPatch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
@@ -77,6 +83,11 @@ export default class NinjaPatch extends Patch {
     try {
       while (!patchFile.isEOF()) {
         await this.applyCommand(patchFile, targetFile);
+
+        if (callback !== undefined) {
+          const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+          callback(Math.floor(progressPercentage * targetFile.getSize()));
+        }
       }
     } finally {
       await targetFile.close();
