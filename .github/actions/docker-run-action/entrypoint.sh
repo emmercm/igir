@@ -8,10 +8,6 @@ if [ -n "${INPUT_DOCKER_NETWORK}" ]; then
   INPUT_OPTIONS="${INPUT_OPTIONS} --network ${INPUT_DOCKER_NETWORK}"
 fi
 
-echo "${INPUT_RUN}" > run_file && chmod +x run_file
-pwd
-ls -al
-
 # shellcheck disable=SC2086
 exec docker run \
   --mount "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock" \
@@ -22,7 +18,8 @@ exec docker run \
   --env GITHUB_ENV \
   --env GITHUB_OUTPUT \
   --env GITHUB_STEP_SUMMARY \
+  --env INPUT_RUN \
   ${INPUT_OPTIONS} \
   "--entrypoint=${INPUT_SHELL}" \
   "${INPUT_IMAGE}" \
-  -c "echo \$GITHUB_STEP_SUMMARY; ls -al /github/file_commands; ls -al \$GITHUB_STEP_SUMMARY; /run_file"
+  -c "echo \"\${INPUT_RUN}\" > run_file && ${INPUT_SHELL} run_file"
