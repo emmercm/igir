@@ -35,7 +35,7 @@ async function processFile(
   const trimmedContents = Buffer.alloc(size, paddingByte);
   fileSignature.getSignaturePieces().forEach((signaturePiece) => {
     if (signaturePiece.value === undefined) {
-      throw new Error("dynamic signature pieces aren't unsupported");
+      throw new Error('only static header values are supported in this test fixture');
     }
     signaturePiece.value.copy(trimmedContents, signaturePiece.offset);
   });
