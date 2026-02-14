@@ -49,6 +49,8 @@ for (let napiPackage of [
     /* ignored */
   }
 
+  process.stdout.write(`Building ${path.basename(napiPackage)} ...\n`);
+
   // Run a build if no prebuild was found
   await new Promise((resolve, reject) => {
     const nodeGypBuild = path.join(modulesParentDir, 'node_modules', '.bin', 'node-gyp-build');
@@ -92,4 +94,48 @@ for (let napiPackage of [
     path.join(napiPackage, 'build'),
     path.join(addonDirectory, 'build'),
   );
+}
+
+/**
+ * zstd-napi uses https://www.npmjs.com/package/prebuild-install to download prebuilds from
+ * https://github.com/drakedevel/zstd-napi/releases, but Homebrew has some network sandboxing
+ * behavior that will prevent downloading them. Ensure the bindings are still built.
+ */
+
+const zstdNapi = path.join(modulesParentDir, 'node_modules', 'zstd-napi');
+const zstdNapiBinding = path.join(zstdNapi, 'build', 'Release', 'binding.node');
+if (fs.existsSync(zstdNapi) && !fs.existsSync(zstdNapiBinding)) {
+  process.stdout.write(`Building ${path.basename(zstdNapi)} ...\n`);
+
+  await new Promise((resolve, reject) => {
+    const proc = child_process.spawn(
+      `npm${process.platform === 'win32' ? '.exe' : ''}`,
+      ['run', 'build'],
+      {
+        cwd: zstdNapi,
+        windowsHide: true,
+      },
+    );
+
+    proc.stdout.on('data', (data) =>
+      process.stdout.write(
+        data
+          .toString()
+          .split('\n')
+          .map((line) => `${path.basename(zstdNapi)}: ${line}`)
+          .join('\n'),
+      ),
+    );
+    proc.stderr.on('data', (data) =>
+      process.stderr.write(
+        data
+          .toString()
+          .split('\n')
+          .map((line) => `${path.basename(zstdNapi)}: ${line}`)
+          .join('\n'),
+      ),
+    );
+    proc.on('close', resolve);
+    proc.on('error', reject);
+  });
 }

@@ -46,6 +46,7 @@ jobs:
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'
+              - 'postinstall.mjs'
 
   node-lint:
     needs:
@@ -118,7 +119,9 @@ jobs:
             ${{ runner.os }}-
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
-        run: rm -rf packages/*/addon* packages/*/prebuilds*
+        run: |
+          rm -rf packages/*/addon* packages/*/prebuilds*
+          rm -rf node_modules/zstd-napi
       - run: npm ci --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
