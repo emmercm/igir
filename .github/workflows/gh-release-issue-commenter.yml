@@ -32,8 +32,6 @@ jobs:
           fetch-tags: true
 
       - shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           REPO="${GITHUB_REPOSITORY}"
           CURR_TAG="${{ env.tag }}"
@@ -132,3 +130,5 @@ jobs:
           done
 
           echo "Done."
+        env:
+          GH_TOKEN: ${{ github.token }}

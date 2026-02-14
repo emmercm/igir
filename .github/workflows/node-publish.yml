@@ -59,6 +59,8 @@ jobs:
             "repos/${GITHUB_REPOSITORY}/commits/${GIT_SHA}/pulls" \
             --jq '.[0].number')
           echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
