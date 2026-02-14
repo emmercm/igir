@@ -46,6 +46,7 @@ jobs:
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'
+              - 'postinstall.mjs'
 
   node-lint:
     needs:
@@ -83,7 +84,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.should-test == 'true' }}
     name: node-unit (${{ matrix.os }}, ${{ matrix.node-version || 'package.json' }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: ${{ (startsWith(matrix.os, 'windows') || needs.path-filter.outputs.should-delete-prebuilds) && 40 || 20 }}
     strategy:
       fail-fast: false
       matrix:
@@ -116,10 +117,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
+      - run: npm ci --ignore-scripts
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
-        run: rm -rf packages/*/addon* packages/*/prebuilds*
-      - run: npm ci --foreground-scripts
+        run: |
+          rm -rf packages/*/addon* packages/*/prebuilds*
+          rm -rf node_modules/zstd-napi/build
+      - run: npm install --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update

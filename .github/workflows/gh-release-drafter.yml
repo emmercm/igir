@@ -105,8 +105,6 @@ jobs:
       # Comment back on the PR that caused this push
       - if: ${{ steps.release-drafter.outputs.id }}
         id: pr-finder
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           GIT_SHA=$(git rev-parse HEAD)
           echo "${GIT_SHA}"
@@ -114,6 +112,8 @@ jobs:
             "repos/${GITHUB_REPOSITORY}/commits/${GIT_SHA}/pulls" \
             --jq '.[0].number')
           echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - if: ${{ steps.release-drafter.outputs.id }}
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:

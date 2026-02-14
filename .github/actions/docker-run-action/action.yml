@@ -1,0 +1,32 @@
+name: 'Docker Run Action'
+description: 'Run a command in a new container'
+inputs:
+  image:
+    description: 'Image'
+    required: true
+  options:
+    description: 'Options'
+    required: false
+  run:
+    description: 'Run command in container'
+    required: false
+  shell:
+    description: 'Use a specific shell'
+    required: false
+    default: sh
+  registry:
+    description: 'Registry'
+    required: false
+  username:
+    description: 'Username'
+    required: false
+  password:
+    description: 'Password'
+    required: false
+  docker_network:
+    description: 'Docker Network ID'
+    default: ${{ job.container.network }}
+    required: false
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

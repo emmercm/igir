@@ -30,7 +30,7 @@ export default abstract class Chd extends Archive {
   }
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
-    return this.extractEntryToStreamCached(entryPath, async (readable) => {
+    await this.extractEntryToStreamCached(entryPath, async (readable) => {
       await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
     });
   }
@@ -79,7 +79,7 @@ export default abstract class Chd extends Archive {
         filePath,
         async (readable) => {
           if (pregapSize + postgapSize > 0) {
-            return callback(
+            return await callback(
               StreamPoly.concat(
                 StreamPoly.staticReadable(pregapSize, 0x00),
                 readable,
@@ -87,7 +87,7 @@ export default abstract class Chd extends Archive {
               ),
             );
           }
-          return callback(readable);
+          return await callback(readable);
         },
         streamStart,
         streamEnd,
@@ -116,7 +116,7 @@ export default abstract class Chd extends Archive {
 
   @Memoize()
   async getInfo(): Promise<CHDInfo> {
-    return chdman.info({
+    return await chdman.info({
       inputFilename: this.getFilePath(),
       binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
     });

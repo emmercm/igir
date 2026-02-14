@@ -1,4 +1,5 @@
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -16,8 +17,12 @@ export default class DPSPatch extends Patch {
     return new DPSPatch(file, crcBefore);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       patchFile.skipNext(64); // patch name
       patchFile.skipNext(64); // patch author
       patchFile.skipNext(64); // patch version
@@ -31,7 +36,7 @@ export default class DPSPatch extends Patch {
         );
       }
 
-      return DPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile);
+      await DPSPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -39,15 +44,16 @@ export default class DPSPatch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
-    return inputRomFile.extractToTempFile(async (tempRomFile) => {
+    await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
       await FsPoly.copyFile(tempRomFile, outputRomPath);
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await DPSPatch.applyPatch(patchFile, sourceFile, targetFile);
+        await DPSPatch.applyPatch(patchFile, sourceFile, targetFile, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();
@@ -59,6 +65,7 @@ export default class DPSPatch extends Patch {
     patchFile: IOFile,
     sourceFile: IOFile,
     targetFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize()) {
       const mode = (await patchFile.readNext(1)).readUInt8();
@@ -79,6 +86,11 @@ export default class DPSPatch extends Patch {
       }
 
       await targetFile.writeAt(data, outputOffset);
+
+      if (callback !== undefined) {
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      }
     }
   }
 }

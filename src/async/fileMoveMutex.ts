@@ -16,7 +16,7 @@ export default class FileMoveMutex extends KeyedMutex {
       movedFile: string | undefined,
     ) => [V, string | undefined] | Promise<[V, string | undefined]>,
   ): Promise<V> {
-    return this.runExclusiveForKey(inputFilePath, async () => {
+    return await this.runExclusiveForKey(inputFilePath, async () => {
       const movedFile = this.movedFiles.get(inputFilePath);
       const [result, outputFilePath] = await runnable(movedFile);
       if (outputFilePath !== undefined && outputFilePath !== inputFilePath) {
@@ -36,7 +36,7 @@ export default class FileMoveMutex extends KeyedMutex {
     }
 
     // It's maybe in the process of moving, so we need to wait
-    return this.runExclusiveForKey(filePath, () => {
+    return await this.runExclusiveForKey(filePath, () => {
       return this.movedFiles.has(filePath);
     });
   }

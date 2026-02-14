@@ -33,7 +33,7 @@ export default abstract class Maxcso extends Archive {
   }
 
   async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
-    return maxcso.decompress({
+    await maxcso.decompress({
       inputFilename: this.getFilePath(),
       outputFilename: extractedFilePath,
       binaryPreference: MaxcsoBinaryPreference.PREFER_PATH_BINARY,

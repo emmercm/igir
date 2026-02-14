@@ -73,7 +73,7 @@ export default class PatchFactory {
     return Object.values(PatchFactory.PATCH_PARSERS)
       .flatMap((parser) => parser.extensions)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
   }
 
   static async patchFromFilename(file: File): Promise<Patch | undefined> {
@@ -82,42 +82,34 @@ export default class PatchFactory {
     const parsers = Object.values(this.PATCH_PARSERS);
     for (const parser of parsers) {
       if (parser.extensions.some((ext) => filePath.toLowerCase().endsWith(ext))) {
-        return parser.factory(file);
+        return await parser.factory(file);
       }
     }
     return undefined;
   }
 
   private static async readHeaderHex(stream: Readable, length: number): Promise<string> {
-    return new Promise((resolve, reject) => {
-      stream.resume();
+    const chunks: Buffer[] = [];
+    let readBytes = 0;
 
-      const chunks: Buffer[] = [];
-      const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks).subarray(0, length).toString('hex').toLowerCase();
-        resolve(header);
-      };
+    for await (const chunk of stream as AsyncIterable<Buffer>) {
+      if (chunk.length > 0) {
+        chunks.push(chunk);
+        readBytes += chunk.length;
+      }
 
-      stream.on('data', (chunk: Buffer) => {
-        if (chunk.length > 0) {
-          chunks.push(chunk);
-        }
+      // Stop reading when we get enough data, trigger a 'close' event
+      if (readBytes >= length) {
+        break;
+      }
+    }
 
-        // Stop reading when we get enough data, trigger a 'close' event
-        if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= length) {
-          resolveHeader();
-          stream.destroy();
-        }
-      });
-
-      stream.on('end', resolveHeader);
-      stream.on('error', reject);
-    });
+    return Buffer.concat(chunks).subarray(0, length).toString('hex').toLowerCase();
   }
 
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
-    const fileHeader = await file.createReadStream(async (readable) =>
-      PatchFactory.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
+    const fileHeader = await file.createReadStream(
+      async (readable) => await PatchFactory.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
     );
 
     const parsers = Object.values(this.PATCH_PARSERS);
@@ -127,7 +119,7 @@ export default class PatchFactory {
           fileHeader.startsWith(fileSignature.toString('hex')),
         )
       ) {
-        return parser.factory(file);
+        return await parser.factory(file);
       }
     }
     return undefined;
