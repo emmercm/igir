@@ -49,7 +49,7 @@ for (let napiPackage of [
     /* ignored */
   }
 
-  process.stdout.write(`Building ${path.basename(napiPackage)} ...\n`);
+  process.stdout.write(`${napiPackage}: building from source ...\n\n`);
 
   // Run a build if no prebuild was found
   await new Promise((resolve, reject) => {
@@ -105,7 +105,7 @@ for (let napiPackage of [
 const zstdNapi = path.join(modulesParentDir, 'node_modules', 'zstd-napi');
 const zstdNapiBinding = path.join(zstdNapi, 'build', 'Release', 'binding.node');
 if (fs.existsSync(zstdNapi) && !fs.existsSync(zstdNapiBinding)) {
-  process.stdout.write(`Building ${path.basename(zstdNapi)} ...\n`);
+  process.stdout.write(`${path.basename(zstdNapi)}: building from source ...\n\n`);
 
   await new Promise((resolve, reject) => {
     const proc = child_process.spawn(
