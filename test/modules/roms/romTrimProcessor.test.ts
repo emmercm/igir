@@ -34,6 +34,9 @@ async function processFile(
 
   const trimmedContents = Buffer.alloc(size, paddingByte);
   fileSignature.getSignaturePieces().forEach((signaturePiece) => {
+    if (signaturePiece.value === undefined) {
+      throw new Error("dynamic signature pieces aren't unsupported");
+    }
     signaturePiece.value.copy(trimmedContents, signaturePiece.offset);
   });
   const tempTrimmedFilePath = await FsPoly.mktemp(
@@ -59,6 +62,11 @@ async function processFile(
 
 describe.each(
   FileSignature.SIGNATURES.filter((signature) => !signature.canBeTrimmed())
+    .filter((fileSignature) =>
+      fileSignature
+        .getSignaturePieces()
+        .every((signaturePiece) => signaturePiece.value !== undefined),
+    )
     .slice(0, 5)
     .map((fileSignature) => [fileSignature.getExtension(), fileSignature]),
 )('not known trimmable signature: %s', (_, fileSignature) => {
