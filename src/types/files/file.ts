@@ -189,7 +189,7 @@ export default class File implements FileProps {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     });
-    return this.fileOf(deserialized);
+    return await this.fileOf(deserialized);
   }
 
   toFileProps(): FileProps {
@@ -305,7 +305,7 @@ export default class File implements FileProps {
     flags: OpenMode,
     callback: (ioFile: IOFile) => T | Promise<T>,
   ): Promise<T> {
-    return this.extractToTempFile(async (tempFile) => {
+    return await this.extractToTempFile(async (tempFile) => {
       const ioFile = await IOFile.fileFrom(tempFile, flags);
       try {
         return await callback(ioFile);
@@ -325,11 +325,12 @@ export default class File implements FileProps {
     if (start <= 0) {
       if (patch) {
         // Patch the file and don't remove its header
-        // TODO(cemmer): implement callback
-        return patch.createPatchedFile(this, destinationPath);
+        await patch.createPatchedFile(this, destinationPath, callback);
+        return;
       }
       // Copy the file and don't remove its header
-      return this.extractToFile(destinationPath, callback);
+      await this.extractToFile(destinationPath, callback);
+      return;
     }
 
     // Complex case: create a temp file with the header removed
@@ -338,7 +339,7 @@ export default class File implements FileProps {
       const tempFile = await FsPoly.mktemp(
         path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
       );
-      await patch.createPatchedFile(this, tempFile);
+      await patch.createPatchedFile(this, tempFile, callback);
       try {
         await File.createStreamFromFile(
           tempFile,
@@ -359,7 +360,7 @@ export default class File implements FileProps {
     }
 
     // Extract this file removing its header
-    return this.createReadStream(async (readable) => {
+    await this.createReadStream(async (readable) => {
       const writeStream = fs.createWriteStream(destinationPath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -373,7 +374,7 @@ export default class File implements FileProps {
     callback: (readable: Readable) => T | Promise<T>,
     start = 0,
   ): Promise<T> {
-    return File.createStreamFromFile(this.getFilePath(), callback, start);
+    return await File.createStreamFromFile(this.getFilePath(), callback, start);
   }
 
   async createPatchedReadStream<T>(callback: (readable: Readable) => T | Promise<T>): Promise<T> {
@@ -384,7 +385,7 @@ export default class File implements FileProps {
 
     // Simple case: create a read stream at an offset
     if (!patch) {
-      return this.createReadStream(callback, start);
+      return await this.createReadStream(callback, start);
     }
 
     // Complex case: create a temp patched file and then create read stream at an offset
@@ -427,7 +428,7 @@ export default class File implements FileProps {
       await FsPoly.mkdir(fileDir, { recursive: true });
     }
 
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       https
         .get(
           this.getFilePath(),
@@ -443,7 +444,7 @@ export default class File implements FileProps {
             ) {
               // Handle redirects
               File.fileOf({ filePath: res.headers.location })
-                .then(async (file) => file.downloadToPath(filePath))
+                .then(async (file) => await file.downloadToPath(filePath))
                 .then(resolve)
                 .catch(reject);
               res.destroy();
@@ -473,7 +474,7 @@ export default class File implements FileProps {
       lastUrlSegment === undefined ? 'temp' : FsPoly.makeLegal(decodeURIComponent(lastUrlSegment));
 
     const filePath = await FsPoly.mktemp(path.join(Temp.getTempDir(), tempPrefix));
-    return this.downloadToPath(filePath);
+    return await this.downloadToPath(filePath);
   }
 
   withProps(props: Omit<FileProps, 'filePath' | 'fileHeader' | 'patch'>): File {
@@ -494,7 +495,7 @@ export default class File implements FileProps {
     if (fileHeader === this.fileHeader) {
       return this;
     }
-    return File.fileOf(
+    return await File.fileOf(
       {
         ...this,
         fileHeader,

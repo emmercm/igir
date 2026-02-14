@@ -169,19 +169,6 @@ export default [
           message:
             "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'",
         },
-        // @typescript-eslint/return-await for util.promisify()
-        {
-          selector:
-            "ReturnStatement > CallExpression[callee.type='CallExpression'][callee.callee.name='promisify']",
-          message:
-            "Directly returning a promisified call loses the stack trace. Use 'return await' instead.",
-        },
-        {
-          selector:
-            "ReturnStatement > CallExpression[callee.type='CallExpression'][callee.callee.object.name='util'][callee.callee.property.name='promisify']",
-          message:
-            "Directly returning a promisified call loses the stack trace. Use 'return await' instead.",
-        },
       ],
 
       // ***** Numbers *****
@@ -240,6 +227,8 @@ export default [
       // ***** Promises *****
       // Require any function or method that returns a Promise to be marked async.
       '@typescript-eslint/promise-function-async': ['error'],
+      // Be even more strict than @typescript-eslint/strict-type-checked
+      '@typescript-eslint/return-await': ['error', 'always'],
 
       // ***** Interfaces *****
       '@typescript-eslint/method-signature-style': 'error',

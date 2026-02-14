@@ -129,7 +129,7 @@ it('should correct ROMs without DATs', async () => {
       inputFiles.map(async (inputFile) => {
         const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
         await inputFile.extractToFile(tempFile);
-        return File.fileOf({ filePath: tempFile });
+        return await File.fileOf({ filePath: tempFile });
       }),
     );
 
@@ -186,7 +186,7 @@ it('should correct ROMs with missing filenames', async () => {
       inputFiles.map(async (inputFile) => {
         const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
         await inputFile.extractToFile(tempFile);
-        return File.fileOf({ filePath: tempFile });
+        return await File.fileOf({ filePath: tempFile });
       }),
     );
 

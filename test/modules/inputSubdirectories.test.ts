@@ -62,9 +62,13 @@ it('should do nothing if option is "never"', async () => {
     // Files were moved, and they're no longer in the input directory
     const tempFilePaths = await FsPoly.walk(tempDir, WalkMode.FILES);
     const tempFiles = await Promise.all(
-      tempFilePaths.map(async (filePath) => File.fileOf({ filePath })),
+      tempFilePaths.map(async (filePath) => await File.fileOf({ filePath })),
     );
-    await Promise.all(tempFilePaths.map(async (filePath) => FsPoly.rm(filePath)));
+    await Promise.all(
+      tempFilePaths.map(async (filePath) => {
+        await FsPoly.rm(filePath);
+      }),
+    );
 
     const deletedDirs = await new InputSubdirectoriesDeleter(options, new ProgressBarFake()).delete(
       tempFiles,
@@ -134,9 +138,13 @@ it('should delete empty directories that had ROMs moved out of them', async () =
     // Files were moved, and they're no longer in the input directory
     const tempFilePaths = await FsPoly.walk(tempDir, WalkMode.FILES);
     const tempFiles = await Promise.all(
-      tempFilePaths.map(async (filePath) => File.fileOf({ filePath })),
+      tempFilePaths.map(async (filePath) => await File.fileOf({ filePath })),
     );
-    await Promise.all(tempFilePaths.map(async (filePath) => FsPoly.rm(filePath)));
+    await Promise.all(
+      tempFilePaths.map(async (filePath) => {
+        await FsPoly.rm(filePath);
+      }),
+    );
 
     const deletedDirs = await new InputSubdirectoriesDeleter(options, new ProgressBarFake()).delete(
       tempFiles,

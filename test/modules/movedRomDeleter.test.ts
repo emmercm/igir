@@ -41,7 +41,7 @@ it('should do nothing if no ROMs moved', async () => {
   );
 
   const exists = await Promise.all(
-    romFiles.map(async (romFile) => FsPoly.exists(romFile.getFilePath())),
+    romFiles.map(async (romFile) => await FsPoly.exists(romFile.getFilePath())),
   );
   expect(exists).not.toContain(false);
 });
@@ -425,7 +425,9 @@ describe('should delete archives', () => {
               const zipPath = path.join(inputPath, `${game.getName()}.zip`);
               await FsPoly.touch(zipPath);
               const zip = new Zip(zipPath);
-              return Promise.all(game.getRoms().map(async (rom) => rom.toArchiveEntry(zip)));
+              return await Promise.all(
+                game.getRoms().map(async (rom) => await rom.toArchiveEntry(zip)),
+              );
             }),
           )
         ).flat();

@@ -129,7 +129,7 @@ export default class CentralDirectoryFileHeader extends FileRecord {
           position: position + fixedLengthBuffer.length,
         });
       } else {
-        variableLengthBuffer = Buffer.alloc(0);
+        variableLengthBuffer = Buffer.allocUnsafe(0);
       }
 
       const fileName = Buffer.from(variableLengthBuffer.subarray(0, fileNameLength));

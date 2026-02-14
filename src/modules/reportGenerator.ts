@@ -38,7 +38,7 @@ export default class ReportGenerator extends Module {
         datStatuses
           .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
           .toSorted((a, b) => a.getDATName().localeCompare(b.getDATName()))
-          .map(async (datsStatus) => datsStatus.toCsv(this.options)),
+          .map(async (datsStatus) => await datsStatus.toCsv(this.options)),
       )
     )
       .filter((csv) => csv.length > 0)
