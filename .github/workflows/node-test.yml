@@ -110,21 +110,20 @@ jobs:
       - id: npm-cache-dir
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - if: ${{ needs.path-filter.outputs.should-delete-prebuilds != 'true' }}
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
-      - run: npm install --ignore-scripts
+      - run: npm ci --ignore-scripts
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
         run: |
           rm -rf packages/*/addon* packages/*/prebuilds*
           rm -rf node_modules/zstd-napi
-      - run: npm ci --foreground-scripts
+      - run: npm install --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update

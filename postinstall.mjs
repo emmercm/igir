@@ -49,7 +49,7 @@ for (let napiPackage of [
     /* ignored */
   }
 
-  process.stdout.write(`${napiPackage}: building from source ...\n\n`);
+  process.stdout.write(`\n${napiPackage}: building from source ...\n\n`);
 
   // Run a build if no prebuild was found
   await new Promise((resolve, reject) => {
