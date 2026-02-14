@@ -1,4 +1,5 @@
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -72,11 +73,15 @@ export default class PPFPatch extends Patch {
     return new PPFPatch(file, crcBefore);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await PPFHeader.fromIOFile(inputRomFile, patchFile);
 
-      return PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header);
+      await PPFPatch.writeOutputFile(inputRomFile, outputRomPath, patchFile, header, callback);
     });
   }
 
@@ -85,6 +90,7 @@ export default class PPFPatch extends Patch {
     outputRomPath: string,
     patchFile: IOFile,
     header: PPFHeader,
+    callback?: FsReadCallback,
   ): Promise<void> {
     await inputRomFile.extractToFile(outputRomPath);
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
@@ -92,6 +98,11 @@ export default class PPFPatch extends Patch {
     try {
       while (!patchFile.isEOF()) {
         await PPFPatch.applyPatchBlock(patchFile, targetFile, header);
+
+        if (callback !== undefined) {
+          const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+          callback(Math.floor(progressPercentage * targetFile.getSize()));
+        }
       }
     } finally {
       await targetFile.close();

@@ -383,7 +383,7 @@ export default class FileSignature {
     pbp: new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x00\x00\x01\x00') }]),
   };
 
-  static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).sort((a, b) => {
+  static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).toSorted((a, b) => {
     // 1. Prefer files that check multiple signatures
     const sigsCountDiff = b.signaturePieces.length - a.signaturePieces.length;
     if (sigsCountDiff !== 0) {
@@ -424,7 +424,7 @@ export default class FileSignature {
     start: number,
     end: number,
   ): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       stream.resume();
 
       const chunks: Buffer[] = [];

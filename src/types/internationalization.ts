@@ -212,12 +212,12 @@ export default class Internationalization {
   )
     .filter((region) => region.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
-    .sort();
+    .toSorted();
 
   static readonly REGION_NAMES = this.REGION_OPTIONS.map((regionOption) => regionOption.long)
     .filter((region) => region.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
-    .sort();
+    .toSorted();
 
   static readonly REGION_REGEX = this.REGION_OPTIONS.map(
     (regionOptions) => regionOptions.regex,
@@ -228,5 +228,5 @@ export default class Internationalization {
   )
     .filter((language) => language.length > 0)
     .reduce(ArrayPoly.reduceUnique(), [])
-    .sort();
+    .toSorted();
 }

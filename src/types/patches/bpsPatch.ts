@@ -1,4 +1,5 @@
 import FsPoly from '../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -33,10 +34,13 @@ export default class BPSPatch extends Patch {
       targetSize = await Patch.readUpsUint(patchFile);
 
       patchFile.seek(patchFile.getSize() - 12);
+      // eslint-disable-next-line unicorn/no-array-reverse
       crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
+      // eslint-disable-next-line unicorn/no-array-reverse
       crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
 
       // Validate the patch contents
+      // eslint-disable-next-line unicorn/no-array-reverse
       const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
       patchFile.seek(0);
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
@@ -55,8 +59,12 @@ export default class BPSPatch extends Patch {
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
-  async createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void> {
-    return this.getFile().extractToTempIOFile('r', async (patchFile) => {
+  async createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    await this.getFile().extractToTempIOFile('r', async (patchFile) => {
       const header = await patchFile.readNext(4);
       if (!header.equals(BPSPatch.FILE_SIGNATURE)) {
         throw new IgirException(`BPS patch header is invalid: ${this.getFile().toString()}`);
@@ -75,7 +83,7 @@ export default class BPSPatch extends Patch {
         patchFile.skipNext(metadataSize);
       }
 
-      return this.writeOutputFile(inputRomFile, outputRomPath, patchFile);
+      await this.writeOutputFile(inputRomFile, outputRomPath, patchFile, callback);
     });
   }
 
@@ -83,8 +91,9 @@ export default class BPSPatch extends Patch {
     inputRomFile: File,
     outputRomPath: string,
     patchFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
-    return inputRomFile.extractToTempIOFile('r', async (inputRomIOFile) => {
+    await inputRomFile.extractToTempIOFile('r', async (inputRomIOFile) => {
       const targetFile = await IOFile.fileOfSize(
         outputRomPath,
         'r+',
@@ -92,7 +101,7 @@ export default class BPSPatch extends Patch {
       );
 
       try {
-        await BPSPatch.applyPatch(patchFile, inputRomIOFile, targetFile);
+        await BPSPatch.applyPatch(patchFile, inputRomIOFile, targetFile, callback);
       } finally {
         await targetFile.close();
       }
@@ -103,6 +112,7 @@ export default class BPSPatch extends Patch {
     patchFile: IOFile,
     sourceFile: IOFile,
     targetFile: IOFile,
+    callback?: FsReadCallback,
   ): Promise<void> {
     let sourceRelativeOffset = 0;
     let targetRelativeOffset = 0;
@@ -134,6 +144,11 @@ export default class BPSPatch extends Patch {
         }
       } else {
         throw new IgirException(`BPS action ${action} isn't supported`);
+      }
+
+      if (callback !== undefined) {
+        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+        callback(Math.floor(progressPercentage * targetFile.getSize()));
       }
     }
   }

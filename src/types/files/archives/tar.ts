@@ -80,7 +80,7 @@ export default class Tar extends Archive {
       throw new Error(errorMessage);
     }
 
-    return Promise.all(archiveEntryPromises);
+    return await Promise.all(archiveEntryPromises);
   }
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {

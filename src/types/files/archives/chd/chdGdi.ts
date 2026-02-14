@@ -28,7 +28,7 @@ export default class ChdGdi extends Chd {
       return [];
     }
 
-    return ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
+    return await ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
   }
 
   async extractArchiveEntries(outputDirectory: string): Promise<string[]> {

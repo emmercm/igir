@@ -474,9 +474,9 @@ export default class CandidateWriter extends Module {
     );
     for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
       await Promise.all(
-        groupedInputToOutput.map(async ([inputRomFile, outputRomFile]) =>
-          this.writeRawSingle(dat, candidate, inputRomFile, outputRomFile),
-        ),
+        groupedInputToOutput.map(async ([inputRomFile, outputRomFile]) => {
+          await this.writeRawSingle(dat, candidate, inputRomFile, outputRomFile);
+        }),
       );
     }
   }
@@ -505,7 +505,8 @@ export default class CandidateWriter extends Module {
 
     const childBar = this.progressBar.addChildBar({
       name: outputFilePath,
-      total: outputRomFile.getSize(),
+      // Files being patched might not have a known final size, just guess it as the input size
+      total: outputRomFile.getSize() > 0 ? outputRomFile.getSize() : inputRomFile.getSize(),
       progressFormatter: FsPoly.sizeReadable,
     });
     try {
@@ -618,11 +619,11 @@ export default class CandidateWriter extends Module {
   ): Promise<MoveResultValue | undefined> {
     // Special case: ZeroSizeFile can't be moved
     if (inputRomFile instanceof ZeroSizeFile) {
-      return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
+      return await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
     }
 
     // Lock the input file, we can't handle concurrent moves
-    return this.moveMutex.moveFile(inputRomFile.getFilePath(), async (movedInputPath) => {
+    return await this.moveMutex.moveFile(inputRomFile.getFilePath(), async (movedInputPath) => {
       if (movedInputPath) {
         if (movedInputPath === outputFilePath) {
           // Do nothing

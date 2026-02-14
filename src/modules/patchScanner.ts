@@ -41,7 +41,23 @@ export default class PatchScanner extends Scanner {
     const patchFiles = await this.getUniqueFilesFromPaths(patchFilePaths, ChecksumBitmask.CRC32);
     this.progressBar.resetProgress(patchFiles.length);
 
-    const patches = (
+    const patches = this.parsePatchFiles(patchFiles);
+
+    this.progressBar.logTrace('done scanning patch files');
+    return await patches;
+  }
+
+  private async parsePatchFiles(patchFiles: File[]): Promise<Patch[]> {
+    this.progressBar.logTrace(
+      `parsing ${patchFiles.length.toLocaleString()} patch file${patchFiles.length === 1 ? '' : 's'}`,
+    );
+    if (patchFiles.length === 0) {
+      return [];
+    }
+    this.progressBar.setName('Parsing patches');
+    this.progressBar.setSymbol(ProgressBarSymbol.PATCH_PARSING);
+
+    return (
       await this.driveSemaphore.map(patchFiles, async (patchFile) => {
         this.progressBar.incrementInProgress();
 
@@ -59,9 +75,6 @@ export default class PatchScanner extends Scanner {
         }
       })
     ).filter((patch) => patch !== undefined);
-
-    this.progressBar.logTrace('done scanning patch files');
-    return patches;
   }
 
   private async patchFromFile(file: File): Promise<Patch | undefined> {

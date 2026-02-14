@@ -61,7 +61,7 @@ export default class CandidateValidator extends Module {
       .filter(([outputPath, candidates]) => {
         const uniqueCandidates = candidates
           .filter(ArrayPoly.filterUniqueMapped((candidate) => candidate.getGame()))
-          .sort();
+          .toSorted();
         if (uniqueCandidates.length < 2) {
           return false;
         }

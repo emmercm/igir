@@ -68,8 +68,10 @@ export default class FileFactory {
         return [await this.fileFrom(filePath, fileChecksumBitmask)];
       }
       const entries = (
-        await async.mapLimit(archives, 1, async (archive: Archive) =>
-          this.entriesFromArchive(archive, checksumBitmask),
+        await async.mapLimit(
+          archives,
+          1,
+          async (archive: Archive) => await this.entriesFromArchive(archive, checksumBitmask),
         )
       ).flat();
       if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
@@ -93,7 +95,7 @@ export default class FileFactory {
     checksumBitmask: number,
     callback?: FsReadCallback,
   ): Promise<File> {
-    return this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask, callback);
+    return await this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask, callback);
   }
 
   async archiveFileFrom(
@@ -206,8 +208,10 @@ export default class FileFactory {
       return undefined;
     }
     const entries = (
-      await async.mapLimit(archives, 1, async (archive: Archive) =>
-        this.entriesFromArchive(archive, checksumBitmask),
+      await async.mapLimit(
+        archives,
+        1,
+        async (archive: Archive) => await this.entriesFromArchive(archive, checksumBitmask),
       )
     ).flat();
     if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
@@ -241,14 +245,14 @@ export default class FileFactory {
   }
 
   async headerFrom(file: File): Promise<ROMHeader | undefined> {
-    return this.fileCache.getOrComputeFileHeader(file);
+    return await this.fileCache.getOrComputeFileHeader(file);
   }
 
   async signatureFrom(file: File): Promise<FileSignature | undefined> {
-    return this.fileCache.getOrComputeFileSignature(file);
+    return await this.fileCache.getOrComputeFileSignature(file);
   }
 
   async paddingsFrom(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
-    return this.fileCache.getOrComputeFilePaddings(file, callback);
+    return await this.fileCache.getOrComputeFilePaddings(file, callback);
   }
 }

@@ -24,7 +24,7 @@ export default class KeyedMutex {
    * Run a {@link runnable} exclusively across all keys.
    */
   async runExclusiveGlobally<V>(runnable: () => V | Promise<V>): Promise<V> {
-    return this.keyMutexesMutex.runExclusive(runnable);
+    return await this.keyMutexesMutex.runExclusive(runnable);
   }
 
   /**

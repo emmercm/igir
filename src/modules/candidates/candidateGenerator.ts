@@ -139,8 +139,8 @@ export default class CandidateGenerator extends Module {
 
     // For each Game's ROM, find the matching File
     const romsAndRomsWithFiles = (await Promise.all(
-      gameRoms.map(async (rom) =>
-        this.buildRomRomWithFilesPair(dat, game, rom, romsToOptimalInputFile),
+      gameRoms.map(
+        async (rom) => await this.buildRomRomWithFilesPair(dat, game, rom, romsToOptimalInputFile),
       ),
     )) satisfies [ROM, ROMWithFiles | undefined][];
     const foundRomsWithFiles = romsAndRomsWithFiles
@@ -358,7 +358,7 @@ export default class CandidateGenerator extends Module {
         }
         return true;
       })
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         // First, prefer the archive with the least number of entries
         const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
         const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
@@ -765,7 +765,7 @@ export default class CandidateGenerator extends Module {
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
       // Only return one copy of duplicate output paths
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
     if (duplicateOutputPaths.length === 0) {
       // There are no duplicate non-archive output file paths
       return false;
@@ -1007,7 +1007,7 @@ export default class CandidateGenerator extends Module {
         inputFile.getArchive() instanceof Zip)
     ) {
       // Should zip, return an archive entry within an output zip
-      return ArchiveEntry.entryOf({
+      return await ArchiveEntry.entryOf({
         archive: new Zip(outputFilePath),
         entryPath: outputPathParsed.entryPath,
         size: outputFileSize,
@@ -1018,7 +1018,7 @@ export default class CandidateGenerator extends Module {
       });
     }
     // Otherwise, return a raw file
-    return File.fileOf({
+    return await File.fileOf({
       filePath: outputFilePath,
       size: outputFileSize,
       crc32: outputFileCrc32,
