@@ -117,6 +117,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
+      - run: npm install --ignore-scripts
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
         run: |
