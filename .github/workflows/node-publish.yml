@@ -41,7 +41,6 @@ jobs:
         name: npm publish
         run: |
           set -x
-          npm whoami
           npm publish
           {
             echo "PACKAGE_NAME=$(jq --raw-output '.name' package.json)"
