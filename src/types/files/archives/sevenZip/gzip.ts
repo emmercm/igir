@@ -24,6 +24,6 @@ export default class Gzip extends SevenZip {
       /* ignored */
     }
 
-    return super.getArchiveEntries(checksumBitmask);
+    return await super.getArchiveEntries(checksumBitmask);
   }
 }

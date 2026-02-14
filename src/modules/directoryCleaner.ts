@@ -106,7 +106,7 @@ export default class DirectoryCleaner extends Module {
     }
 
     this.progressBar.logTrace('done cleaning files in output');
-    return filesToClean.sort();
+    return filesToClean.toSorted();
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
@@ -131,7 +131,8 @@ export default class DirectoryCleaner extends Module {
     const existingFilePathsCheck = await async.mapLimit(
       filePaths,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => existSemaphore.runExclusive(async () => FsPoly.exists(filePath)),
+      async (filePath: string) =>
+        await existSemaphore.runExclusive(async () => await FsPoly.exists(filePath)),
     );
     const existingFilePaths = filePaths.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -184,8 +185,10 @@ export default class DirectoryCleaner extends Module {
   private static async getEmptyDirs(dirsToClean: string | string[]): Promise<string[]> {
     if (Array.isArray(dirsToClean)) {
       return (
-        await async.mapLimit(dirsToClean, Defaults.MAX_FS_THREADS, async (dirToClean: string) =>
-          DirectoryCleaner.getEmptyDirs(dirToClean),
+        await async.mapLimit(
+          dirsToClean,
+          Defaults.MAX_FS_THREADS,
+          async (dirToClean: string) => await DirectoryCleaner.getEmptyDirs(dirToClean),
         )
       )
         .flat()
@@ -218,8 +221,10 @@ export default class DirectoryCleaner extends Module {
 
     // Otherwise, recurse and look for empty subdirectories
     return (
-      await async.mapLimit(subDirs, Defaults.MAX_FS_THREADS, async (subDir: string) =>
-        this.getEmptyDirs(subDir),
+      await async.mapLimit(
+        subDirs,
+        Defaults.MAX_FS_THREADS,
+        async (subDir: string) => await this.getEmptyDirs(subDir),
       )
     ).flat();
   }

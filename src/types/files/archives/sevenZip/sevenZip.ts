@@ -73,11 +73,11 @@ export default class SevenZip extends Archive {
       }
     });
 
-    return async.mapLimit(
+    return await async.mapLimit(
       filesIn7z.filter((result) => !result.attr?.startsWith('D')),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (result: _7z.ListItem): Promise<ArchiveEntry<this>> => {
-        return ArchiveEntry.entryOf(
+        return await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: result.name,

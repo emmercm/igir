@@ -70,8 +70,8 @@ export default class DATGameInferrer extends Module {
     );
 
     const dats = await Promise.all(
-      [...inputPathsToRomFiles.entries()].map(async ([inputPath, datRomFiles]) =>
-        this.createDAT(inputPath, datRomFiles),
+      [...inputPathsToRomFiles.entries()].map(
+        async ([inputPath, datRomFiles]) => await this.createDAT(inputPath, datRomFiles),
       ),
     );
 
@@ -119,7 +119,7 @@ export default class DATGameInferrer extends Module {
               }),
           )
           .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()))
-          .sort((a, b) => a.getName().localeCompare(b.getName()));
+          .toSorted((a, b) => a.getName().localeCompare(b.getName()));
         return new Game({
           name: gameName,
           description: gameName,
@@ -127,7 +127,7 @@ export default class DATGameInferrer extends Module {
           dir2datSource: gameRomFiles
             .map((romFile) => romFile.getFilePath())
             .reduce(ArrayPoly.reduceUnique(), [])
-            .sort()
+            .toSorted()
             .join(', '),
         });
       })

@@ -46,6 +46,7 @@ jobs:
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'
+              - 'postinstall.mjs'
 
   node-lint:
     needs:
@@ -83,18 +84,18 @@ jobs:
     if: ${{ needs.path-filter.outputs.should-test == 'true' }}
     name: node-unit (${{ matrix.os }}, ${{ matrix.node-version || 'package.json' }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: ${{ (startsWith(matrix.os, 'windows') || needs.path-filter.outputs.should-delete-prebuilds) && 40 || 20 }}
     strategy:
       fail-fast: false
       matrix:
-        # TODO(cemmer): chdman-js and maxcso-js don't have Windows ARM builds, so it won't test the same
+        # TODO(cemmer): maxcso-js doesn't have a Windows ARM build, so it won't test the same
         os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest ]
         node-version: [ '' ]
         include:
           - os: ubuntu-latest
-            node-version: 18
+            node-version: 20
           - os: macos-latest
-            node-version: 18
+            node-version: 20
           - os: windows-latest
             node-version: 20
     steps:
@@ -116,10 +117,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
+      - run: npm ci --ignore-scripts
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
-        run: rm -rf packages/*/addon* packages/*/prebuilds*
-      - run: npm ci --foreground-scripts
+        run: |
+          rm -rf packages/*/addon* packages/*/prebuilds*
+          rm -rf node_modules/zstd-napi/build
+      - run: npm install --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
           sudo apt-get update
@@ -137,7 +141,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        node-version: [ '', 18 ]
+        node-version: [ '', 20 ]
     steps:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

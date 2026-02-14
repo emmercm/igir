@@ -29,11 +29,11 @@ export default class Rar extends Archive {
     const rar = await createExtractorFromFile({
       filepath: this.getFilePath(),
     });
-    return async.mapLimit(
+    return await async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader: FileHeader): Promise<ArchiveEntry<this>> => {
-        return ArchiveEntry.entryOf(
+        return await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: fileHeader.name,

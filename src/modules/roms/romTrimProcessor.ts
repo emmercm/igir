@@ -67,7 +67,7 @@ export default class ROMTrimProcessor extends Module {
           return inputFile;
         }
 
-        return this.driveSemaphore.runExclusive(inputFile, async () => {
+        return await this.driveSemaphore.runExclusive(inputFile, async () => {
           this.progressBar.incrementInProgress();
           const childBar = this.progressBar.addChildBar({
             name: inputFile.toString(),

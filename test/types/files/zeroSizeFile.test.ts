@@ -50,17 +50,13 @@ describe('extractAndPatchToFile', () => {
 
 describe('createReadStream', () => {
   it('should create a readable of length zero', async () => {
-    const contents = await ZeroSizeFile.getInstance().createReadStream(
-      async (readable) =>
-        new Promise<Buffer>((resolve, reject) => {
-          const chunks: Buffer[] = [];
-          readable.on('data', (chunk: Buffer) => chunks.push(chunk));
-          readable.on('end', () => {
-            resolve(Buffer.concat(chunks));
-          });
-          readable.on('error', reject);
-        }),
-    );
+    const contents = await ZeroSizeFile.getInstance().createReadStream(async (readable) => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of readable as AsyncIterable<Buffer>) {
+        chunks.push(chunk);
+      }
+      return Buffer.concat(chunks);
+    });
     expect(contents).toBeDefined();
     expect(contents).toHaveLength(0);
   });
@@ -68,17 +64,13 @@ describe('createReadStream', () => {
 
 describe('createPatchedReadStream', () => {
   it('should create a readable of length zero', async () => {
-    const contents = await ZeroSizeFile.getInstance().createPatchedReadStream(
-      async (readable) =>
-        new Promise<Buffer>((resolve, reject) => {
-          const chunks: Buffer[] = [];
-          readable.on('data', (chunk: Buffer) => chunks.push(chunk));
-          readable.on('end', () => {
-            resolve(Buffer.concat(chunks));
-          });
-          readable.on('error', reject);
-        }),
-    );
+    const contents = await ZeroSizeFile.getInstance().createPatchedReadStream(async (readable) => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of readable as AsyncIterable<Buffer>) {
+        chunks.push(chunk);
+      }
+      return Buffer.concat(chunks);
+    });
     expect(contents).toBeDefined();
     expect(contents).toHaveLength(0);
   });

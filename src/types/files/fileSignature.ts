@@ -250,11 +250,38 @@ export default class FileSignature {
       ],
       CanBeTrimmed.YES,
     ),
+    dsi: new FileSignature(
+      '.dsi',
+      [
+        { offset: 0x0_12, value: Buffer.from('03', 'hex') }, // DSi-only unitcode
+        {
+          offset: 0xc0,
+          value: Buffer.from(
+            '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
+            'hex',
+          ),
+        }, // logo
+        { offset: 0x1_5c, value: Buffer.from('56CF', 'hex') }, // logo checksum
+      ],
+      CanBeTrimmed.YES,
+    ),
 
     // Nintendo - Nintendo Entertainment System
     // @see https://www.nesdev.org/wiki/INES
     // @see https://www.nesdev.org/wiki/NES_2.0
     nes: new FileSignature('.nes', [{ value: Buffer.from('NES\x1A') }]),
+
+    // Nintendo - Pokemon Mini
+    // @see https://www.pokemon-mini.net/documentation/cartridge/
+    min: new FileSignature('.min', [
+      { offset: 0x21_a4, value: Buffer.from('NINTENDO') },
+      {
+        offset: 0x21_bc,
+        value: Buffer.from(
+          '2P\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+        ),
+      },
+    ]),
 
     // Nintendo - Super Nintendo Entertainment System
     // @see https://snes.nesdev.org/wiki/ROM_header
@@ -371,7 +398,7 @@ export default class FileSignature {
     pbp: new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x00\x00\x01\x00') }]),
   };
 
-  static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).sort((a, b) => {
+  static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).toSorted((a, b) => {
     // 1. Prefer files that check multiple signatures
     const sigsCountDiff = b.signaturePieces.length - a.signaturePieces.length;
     if (sigsCountDiff !== 0) {
@@ -412,7 +439,7 @@ export default class FileSignature {
     start: number,
     end: number,
   ): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       stream.resume();
 
       const chunks: Buffer[] = [];

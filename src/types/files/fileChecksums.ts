@@ -35,7 +35,7 @@ export default {
     readable.push(data);
     // eslint-disable-next-line unicorn/no-null
     readable.push(null);
-    return this.hashStream(readable, checksumBitmask);
+    return await this.hashStream(readable, checksumBitmask);
   },
 
   async hashFile(
@@ -45,9 +45,9 @@ export default {
     end?: number,
     callback?: FsReadCallback,
   ): Promise<ChecksumProps> {
-    return File.createStreamFromFile(
+    return await File.createStreamFromFile(
       filePath,
-      async (readable) => this.hashStream(readable, checksumBitmask, callback),
+      async (readable) => await this.hashStream(readable, checksumBitmask, callback),
       start,
       end,
     );
@@ -70,31 +70,26 @@ export default {
         : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
 
     const crc = checksumBitmask & ChecksumBitmask.CRC32 ? new Crc32() : undefined;
-    return new Promise((resolve, reject) => {
-      const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
-      const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
-      const sha256 =
-        checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
+    const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
+    const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
+    const sha256 =
+      checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
-      streamWithCallback.on('data', (chunk: Buffer) => {
-        crc?.update(chunk);
-        md5?.update(chunk);
-        sha1?.update(chunk);
-        sha256?.update(chunk);
-      });
-      streamWithCallback.on('end', () => {
-        resolve({
-          crc32:
-            crc?.digest().toString(16).padStart(8, '0') ??
-            // Empty files won't emit any data, default to the empty file CRC32
-            (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
-          md5: md5?.digest('hex').padStart(32, '0'),
-          sha1: sha1?.digest('hex').padStart(40, '0'),
-          sha256: sha256?.digest('hex').padStart(64, '0'),
-        });
-      });
+    for await (const chunk of streamWithCallback as AsyncIterable<Buffer>) {
+      crc?.update(chunk);
+      md5?.update(chunk);
+      sha1?.update(chunk);
+      sha256?.update(chunk);
+    }
 
-      streamWithCallback.on('error', reject);
-    });
+    return {
+      crc32:
+        crc?.digest().toString(16).padStart(8, '0') ??
+        // Empty files won't emit any data, default to the empty file CRC32
+        (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
+      md5: md5?.digest('hex').padStart(32, '0'),
+      sha1: sha1?.digest('hex').padStart(40, '0'),
+      sha256: sha256?.digest('hex').padStart(64, '0'),
+    };
   },
 };

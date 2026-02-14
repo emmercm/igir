@@ -133,7 +133,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     });
-    return this.entryOf({ ...deserialized, archive });
+    return await this.entryOf({ ...deserialized, archive });
   }
 
   toEntryProps(): ArchiveEntryProps<A> {
@@ -167,7 +167,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   async extractToFile(extractedFilePath: string, callback?: FsReadCallback): Promise<void> {
-    return ArchiveEntry.extractEntryToFile(
+    await ArchiveEntry.extractEntryToFile(
       this.getArchive(),
       this.getEntryPath(),
       extractedFilePath,
@@ -181,9 +181,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     checksumBitmask: number,
     fileHeader?: ROMHeader,
   ): Promise<ChecksumProps> {
-    return archive.extractEntryToStream(
+    return await archive.extractEntryToStream(
       entryPath,
-      async (readable) => FileChecksums.hashStream(readable, checksumBitmask),
+      async (readable) => await FileChecksums.hashStream(readable, checksumBitmask),
       fileHeader?.getDataOffsetBytes() ?? 0,
     );
   }
@@ -194,11 +194,15 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    return archive.extractEntryToFile(entryPath, extractedFilePath, callback);
+    await archive.extractEntryToFile(entryPath, extractedFilePath, callback);
   }
 
   async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
-    return ArchiveEntry.extractEntryToTempFile(this.getArchive(), this.getEntryPath(), callback);
+    return await ArchiveEntry.extractEntryToTempFile(
+      this.getArchive(),
+      this.getEntryPath(),
+      callback,
+    );
   }
 
   private static async extractEntryToTempFile<T>(
@@ -206,18 +210,18 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     entryPath: string,
     callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
-    return archive.extractEntryToTempFile(entryPath, callback);
+    return await archive.extractEntryToTempFile(entryPath, callback);
   }
 
   async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {
     // Don't extract to memory if we need to manipulate the stream start point
     if (start > 0) {
-      return this.extractToTempFile(async (tempFile) =>
-        File.createStreamFromFile(tempFile, callback, start),
+      return await this.extractToTempFile(
+        async (tempFile) => await File.createStreamFromFile(tempFile, callback, start),
       );
     }
 
-    return this.archive.extractEntryToStream(this.getEntryPath(), callback);
+    return await this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
   withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {
@@ -248,7 +252,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     if (fileHeader === this.fileHeader) {
       return this;
     }
-    return ArchiveEntry.entryOf(
+    return await ArchiveEntry.entryOf(
       {
         ...this,
         fileHeader,

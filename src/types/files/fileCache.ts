@@ -76,7 +76,7 @@ export default class FileCache {
         // Don't delete the key if it's for a disk that isn't mounted right now
         .filter(([, filePath]) => FsPoly.diskResolved(filePath) !== undefined)
         // Only process a reasonably sized subset of the keys
-        .sort(() => Math.random() - 0.5)
+        .toSorted(() => Math.random() - 0.5)
         .slice(0, Defaults.MAX_FS_THREADS);
 
       await Promise.all(
@@ -153,7 +153,7 @@ export default class FileCache {
 
     // We didn't compute the file (cache hit), deserialize the properties into a full object
     const cachedFile = cachedValue.value as FileProps;
-    return File.fileOfObject(filePath, cachedFile);
+    return await File.fileOfObject(filePath, cachedFile);
   }
 
   async getOrComputeArchiveChecksums<T extends Archive>(
@@ -212,8 +212,8 @@ export default class FileCache {
     // We didn't compute the archive entries (cache hit), deserialize the properties into
     //  full objects
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
-    return Promise.all(
-      cachedEntries.map(async (props) => ArchiveEntry.entryOfObject(archive, props)),
+    return await Promise.all(
+      cachedEntries.map(async (props) => await ArchiveEntry.entryOfObject(archive, props)),
     );
   }
 
@@ -233,8 +233,8 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const header = await file.createReadStream(async (readable) =>
-          ROMHeader.headerFromFileStream(readable),
+        const header = await file.createReadStream(
+          async (readable) => await ROMHeader.headerFromFileStream(readable),
         );
         return {
           fileSize: stats.size,
@@ -275,8 +275,8 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const signature = await file.createReadStream(async (readable) =>
-          FileSignature.signatureFromFileStream(readable),
+        const signature = await file.createReadStream(
+          async (readable) => await FileSignature.signatureFromFileStream(readable),
         );
         return {
           fileSize: stats.size,

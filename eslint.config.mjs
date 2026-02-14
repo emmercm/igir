@@ -227,6 +227,8 @@ export default [
       // ***** Promises *****
       // Require any function or method that returns a Promise to be marked async.
       '@typescript-eslint/promise-function-async': ['error'],
+      // Be even more strict than @typescript-eslint/strict-type-checked
+      '@typescript-eslint/return-await': ['error', 'always'],
 
       // ***** Interfaces *****
       '@typescript-eslint/method-signature-style': 'error',
@@ -303,6 +305,7 @@ export default [
       'no-restricted-properties': [
         'error',
         {
+          // TODO(cemmer): https://github.com/isaacs/node-graceful-fs/issues/160
           object: 'fs',
           property: 'promises',
           message: 'Use util.promisify() instead to take advantage of graceful-fs',

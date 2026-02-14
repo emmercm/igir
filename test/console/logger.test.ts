@@ -32,7 +32,7 @@ class LoggerSpy {
 
   async getOutput(): Promise<string> {
     this.stream.end();
-    return this.spy;
+    return await this.spy;
   }
 }
 
