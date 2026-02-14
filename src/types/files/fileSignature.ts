@@ -271,6 +271,18 @@ export default class FileSignature {
     // @see https://www.nesdev.org/wiki/NES_2.0
     nes: new FileSignature('.nes', [{ value: Buffer.from('NES\x1A') }]),
 
+    // Nintendo - Pokemon Mini
+    // @see https://www.pokemon-mini.net/documentation/cartridge/
+    min: new FileSignature('.min', [
+      { offset: 0x21_a4, value: Buffer.from('NINTENDO') },
+      {
+        offset: 0x21_bc,
+        value: Buffer.from(
+          '2P\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+        ),
+      },
+    ]),
+
     // Nintendo - Super Nintendo Entertainment System
     // @see https://snes.nesdev.org/wiki/ROM_header
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
