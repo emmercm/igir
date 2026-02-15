@@ -766,7 +766,7 @@ export default class Options implements OptionsProps {
    * Scan for input files, and input files to exclude, and return the difference.
    */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.input,
       this.inputExclude,
       WalkMode.FILES,
@@ -779,7 +779,7 @@ export default class Options implements OptionsProps {
    * Scan for subdirectories in the input paths.
    */
   async scanInputSubdirectories(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
+    return await Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
   }
 
   /**
@@ -843,7 +843,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await FsPoly.isDirectory(inputPath)) {
-      return FsPoly.walk(inputPath, walkMode, walkCallback);
+      return await FsPoly.walk(inputPath, walkMode, walkCallback);
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -958,7 +958,7 @@ export default class Options implements OptionsProps {
    * Scan for DAT files, and DAT files to exclude, and return the difference.
    */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.dat,
       this.datExclude,
       WalkMode.FILES,
@@ -998,7 +998,7 @@ export default class Options implements OptionsProps {
    * Scan for patch files, and patch files to exclude, and return the difference.
    */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.patch,
       this.patchExclude,
       WalkMode.FILES,
@@ -1094,7 +1094,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude, WalkMode.FILES, undefined, false);
+    return await Options.scanPaths(this.cleanExclude, WalkMode.FILES, undefined, false);
   }
 
   /**

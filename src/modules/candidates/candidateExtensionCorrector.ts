@@ -90,7 +90,7 @@ export default class CandidateExtensionCorrector extends Module {
     dat: DAT,
     candidates: WriteCandidate[],
   ): Promise<WriteCandidate[]> {
-    return Promise.all(
+    return await Promise.all(
       candidates.map(async (candidate) => {
         const hashedRomsWithFiles = await Promise.all(
           candidate.getRomsWithFiles().map(async (romWithFiles) => {

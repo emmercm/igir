@@ -37,7 +37,7 @@ export default class ZeroSizeFile extends File {
 
   async createReadStream<T>(callback: (readable: Readable) => Promise<T> | T): Promise<T> {
     const readable = StreamPoly.staticReadable(0, 0x00);
-    return callback(readable);
+    return await callback(readable);
   }
 
   withProps(): File {

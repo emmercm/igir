@@ -56,7 +56,7 @@ export default class Zip extends Archive {
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
 
-    return async.mapLimit(
+    return await async.mapLimit(
       entries.filter((entry) => !entry.isDirectory()),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile: CentralDirectoryFileHeader): Promise<ArchiveEntry<this>> => {
@@ -71,7 +71,7 @@ export default class Zip extends Archive {
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
-        return ArchiveEntry.entryOf(
+        return await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: entryFile.fileNameResolved(),
@@ -95,7 +95,7 @@ export default class Zip extends Archive {
       await FsPoly.mkdir(extractedDir, { recursive: true });
     }
 
-    return this.extractEntryToStream(entryPath, async (readable) => {
+    await this.extractEntryToStream(entryPath, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -112,7 +112,7 @@ export default class Zip extends Archive {
   ): Promise<T> {
     if (start > 0) {
       // Can't start the stream at an uncompressed offset
-      return super.extractEntryToStream(entryPath, callback, start);
+      return await super.extractEntryToStream(entryPath, callback, start);
     }
 
     // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
@@ -242,7 +242,7 @@ export default class Zip extends Archive {
    * Cache TZValidator results as long as this file hasn't been modified.
    */
   private async tzValidate(): Promise<ValidationResultValue> {
-    return this.tzValidateMutex.runExclusive(async () => {
+    return await this.tzValidateMutex.runExclusive(async () => {
       const modifiedTimeMillis = (await FsPoly.stat(this.getFilePath())).mtimeMs;
       if (
         this.tzValidateResult !== undefined &&

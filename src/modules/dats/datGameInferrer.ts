@@ -70,8 +70,8 @@ export default class DATGameInferrer extends Module {
     );
 
     const dats = await Promise.all(
-      [...inputPathsToRomFiles.entries()].map(async ([inputPath, datRomFiles]) =>
-        this.createDAT(inputPath, datRomFiles),
+      [...inputPathsToRomFiles.entries()].map(
+        async ([inputPath, datRomFiles]) => await this.createDAT(inputPath, datRomFiles),
       ),
     );
 

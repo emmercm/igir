@@ -164,7 +164,8 @@ export default class FsPoly {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
-      return this.copyFile(src, dest, callback, attempt + 1);
+      await this.copyFile(src, dest, callback, attempt + 1);
+      return;
     }
 
     // Ensure the destination file is writable
@@ -520,7 +521,7 @@ export default class FsPoly {
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      return this.mv(oldPath, newPath, callback, attempt + 1);
+      return await this.mv(oldPath, newPath, callback, attempt + 1);
     }
   }
 
@@ -628,7 +629,8 @@ export default class FsPoly {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
-      return this.reflink(src, dest, attempt + 1);
+      await this.reflink(src, dest, attempt + 1);
+      return;
     }
 
     // Ensure the destination file is writable

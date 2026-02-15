@@ -102,7 +102,7 @@ jobs:
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: addnab/docker-run-action@v3
+        uses: ./.github/actions/docker-run-action
         with:
           image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
           shell: bash
@@ -111,9 +111,8 @@ jobs:
             --volume ${{ github.workspace }}:/build
             --workdir /build
           run: |
-            # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
-            set -eo pipefail
             set -x
+            uname -a
 
             # Package the executable and test it before compressing it
             npm ci

@@ -97,7 +97,7 @@ export default class EndOfCentralDirectory {
     }
 
     // Parse the EOCD
-    return this.readEndOfCentralDirectoryRecordZip(fileHandle, filePosition + eocdPosition);
+    return await this.readEndOfCentralDirectoryRecordZip(fileHandle, filePosition + eocdPosition);
   }
 
   private static async readEndOfCentralDirectoryRecordZip(
@@ -124,7 +124,7 @@ export default class EndOfCentralDirectory {
     let commentBuffer: Buffer<ArrayBuffer>;
     if (commentLength === 0) {
       // No need to read the comment
-      commentBuffer = Buffer.alloc(0);
+      commentBuffer = Buffer.allocUnsafe(0);
     } else if (commentLength < buffer.length) {
       // The comment is small, keep re-using the same buffer
       const readResult = await fileHandle.read({
@@ -136,7 +136,7 @@ export default class EndOfCentralDirectory {
     } else {
       // The comment is long, allocate a new buffer
       const readResult = await fileHandle.read({
-        buffer: Buffer.alloc(commentLength),
+        buffer: Buffer.allocUnsafe(commentLength),
         position: eocdPosition + this.END_OF_CENTRAL_DIRECTORY_RECORD_SIZE,
       });
       commentBuffer = readResult.buffer;
