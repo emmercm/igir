@@ -1,0 +1,21 @@
+{
+  "team_name": "igir Agent Team",
+  "rotation_order": ["engineering", "qa", "docs"],
+  "roles": {
+    "engineering": {
+      "title": "⚙️ The Engineer",
+      "description": "Core CLI development, file handling, format support",
+      "playbook": "playbooks/engineering.md"
+    },
+    "qa": {
+      "title": "🔍 QA Engineer",
+      "description": "Test coverage, test maintenance, CI reliability",
+      "playbook": "playbooks/qa.md"
+    },
+    "docs": {
+      "title": "📚 Documentation Specialist",
+      "description": "User guides, option documentation, examples",
+      "playbook": "playbooks/docs.md"
+    }
+  }
+}
