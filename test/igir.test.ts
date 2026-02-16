@@ -11,6 +11,7 @@ import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
+import ArgumentsParser from '../src/modules/argumentsParser.js';
 import DATScanner from '../src/modules/dats/datScanner.js';
 import ArrayPoly from '../src/polyfill/arrayPoly.js';
 import FsPoly, { WalkMode } from '../src/polyfill/fsPoly.js';
@@ -18,11 +19,10 @@ import FileCache from '../src/types/files/fileCache.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import type { OptionsProps } from '../src/types/options.js';
+import { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,
-  GameSubdirMode,
-  GameSubdirModeInverted,
   InputChecksumArchivesMode,
   InputChecksumArchivesModeInverted,
   LinkMode,
@@ -97,8 +97,14 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
   );
 }
 
+const defaultOptions = new Options({
+  ...new ArgumentsParser(LOGGER).parse(['--help']),
+  help: false,
+});
+
 async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
+    ...defaultOptions,
     ...optionsProps,
     readerThreads: os.cpus().length,
     writerThreads: os.cpus().length,
@@ -196,8 +202,6 @@ describe('with explicit DATs', () => {
           InputChecksumArchivesModeInverted[InputChecksumArchivesMode.NEVER].toLowerCase(),
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
         disableCache: true,
       });
@@ -290,7 +294,6 @@ describe('with explicit DATs', () => {
         inputChecksumArchives:
           InputChecksumArchivesModeInverted[InputChecksumArchivesMode.ALWAYS].toLowerCase(),
         output: outputTemp,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         single: true,
         preferParent: true,
         cachePath: inputTemp,
@@ -355,8 +358,6 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: path.join(outputTemp, '{outputExt}'),
         dirDatName: true,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
       });
 
@@ -482,7 +483,6 @@ describe('with explicit DATs', () => {
         input: inputHardlinks,
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         excludeDisks: true,
       });
 
@@ -526,7 +526,6 @@ describe('with explicit DATs', () => {
         input: inputSymlinks,
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
         excludeDisks: true,
       });
 
@@ -564,8 +563,6 @@ describe('with explicit DATs', () => {
         dirDatName: true,
         dirLetter: true,
         dirLetterCount: 1,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -749,7 +746,6 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -947,8 +943,6 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         linkMode: LinkModeInverted[LinkMode.SYMLINK].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
       });
@@ -1141,8 +1135,6 @@ describe('with explicit DATs', () => {
         patch: [path.join(inputTemp, 'patches')],
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -1255,8 +1247,6 @@ describe('with explicit DATs', () => {
           InputChecksumArchivesModeInverted[InputChecksumArchivesMode.NEVER].toLowerCase(),
         output: outputTemp,
         dirDatName: true,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
         disableCache: true,
       });
@@ -1292,7 +1282,6 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       const writtenFixdats = result.outputFilesAndCrcs
@@ -1338,7 +1327,6 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         fixdatOutput: outputTemp,
         reportOutput: path.join(outputTemp, 'report.csv'),
       });
@@ -1381,13 +1369,13 @@ describe('with inferred DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'test'],
-        input: [path.join(inputTemp, 'roms')],
+        input: [path.join(inputTemp, 'roms', '*', '**')],
         inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         output: outputTemp,
         dirLetter: true,
         dirLetterCount: 1,
         dirLetterLimit: 2,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.NEVER].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -1425,10 +1413,7 @@ describe('with inferred DATs', () => {
         [`${path.join('G', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
         [`${path.join('G', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
         [`${path.join('G', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
-        [path.join('I1', 'invalid.7z'), 'df941cc9'],
-        [path.join('I1', 'invalid.rar'), 'df941cc9'],
-        [path.join('I2', 'invalid.tar.gz'), 'df941cc9'],
-        [path.join('I2', 'invalid.zip'), 'df941cc9'],
+        [path.join('I', 'invalid'), 'df941cc9'],
         [path.join('K', 'KDULVQN.rom'), 'b1c303e4'],
         [path.join('L', 'LCDTestROM.lnx.rar|LCDTestROM.lnx'), '2d251538'],
         [`${path.join('L', 'loremipsum.zip')}|loremipsum.rom`, '70856527'],
@@ -1463,6 +1448,8 @@ describe('with inferred DATs', () => {
         ],
         output: inputDir,
         dirMirror: true,
+        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.NEVER].toLowerCase(),
+        fixExtension: FixExtensionInverted[FixExtension.NEVER].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual(inputBefore);
@@ -1479,8 +1466,6 @@ describe('with inferred DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         inputExclude: [path.join(inputTemp, 'roms', 'discs')], // test archive scanning + matching
         output: outputTemp,
-        dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -1511,10 +1496,7 @@ describe('with inferred DATs', () => {
         [path.join('GD-ROM', 'track02.raw'), 'abc178d5'],
         [path.join('GD-ROM', 'track03.bin'), '61a363f1'],
         [path.join('GD-ROM', 'track04.bin'), 'fc5ff5a0'],
-        ['invalid.7z', 'df941cc9'],
-        ['invalid.rar', 'df941cc9'],
-        ['invalid.tar.gz', 'df941cc9'],
-        ['invalid.zip', 'df941cc9'],
+        ['invalid', 'df941cc9'],
         ['KDULVQN.rom', 'b1c303e4'],
         ['LCDTestROM.lnx', '2d251538'],
         ['loremipsum.rom', '70856527'],
@@ -1575,6 +1557,7 @@ describe('with inferred DATs', () => {
           path.join(inputTemp, 'roms', 'headerless'), // de-conflict headered & headerless
         ],
         output: outputTemp,
+        fixExtension: FixExtensionInverted[FixExtension.NEVER].toLowerCase(),
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -1641,7 +1624,6 @@ describe('with inferred DATs', () => {
           path.join(inputTemp, 'roms', 'discs'), // de-conflict chd & discs
         ],
         output: outputTemp,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         linkMode: LinkModeInverted[LinkMode.SYMLINK].toLowerCase(),
         symlinkRelative: true,
       });
@@ -1762,10 +1744,7 @@ describe('with inferred DATs', () => {
           `GD-ROM.chd|track04.bin -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|track04.bin')}`,
           'fc5ff5a0',
         ],
-        [`invalid.7z -> ${path.join('..', 'input', 'roms', '7z', 'invalid.7z')}`, 'df941cc9'],
-        [`invalid.rar -> ${path.join('..', 'input', 'roms', '7z', 'invalid.7z')}`, 'df941cc9'],
-        [`invalid.tar.gz -> ${path.join('..', 'input', 'roms', '7z', 'invalid.7z')}`, 'df941cc9'],
-        [`invalid.zip -> ${path.join('..', 'input', 'roms', '7z', 'invalid.7z')}`, 'df941cc9'],
+        [`invalid -> ${path.join('..', 'input', 'roms', '7z', 'invalid.7z')}`, 'df941cc9'],
         [
           `KDULVQN.rom -> ${path.join('..', 'input', 'roms', 'patchable', 'KDULVQN.rom')}`,
           'b1c303e4',
@@ -1830,7 +1809,6 @@ describe('with inferred DATs', () => {
         commands: ['move', 'extract', 'test'],
         input: [path.join(inputTemp, 'roms', 'headered')],
         output: outputTemp,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         removeHeaders: [''], // all
       });
 
@@ -1866,7 +1844,6 @@ describe('with inferred DATs', () => {
         ],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         dir2datOutput: outputTemp,
       });
 
@@ -1888,7 +1865,6 @@ describe('with inferred DATs', () => {
         ],
         output: outputTemp,
         dirDatName: true,
-        fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
         dir2datOutput: outputTemp,
       });
 
@@ -1949,10 +1925,7 @@ describe('with inferred DATs', () => {
         'fizzbuzz.nes',
         'foobar.lnx',
         'four.rom',
-        'invalid.7z',
-        'invalid.rar',
-        'invalid.tar.gz',
-        'invalid.zip',
+        'invalid',
         'loremipsum.rom',
         'one.rom',
         'speed_test_v51.sfc',
@@ -1972,7 +1945,6 @@ describe('with inferred DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: [command, 'dir2dat', 'clean'],
-        dat: [path.join(inputTemp, 'dats', '*')],
         input: [path.join(inputTemp, 'roms')],
         // TODO(cemmer): debug why this is failing candidate validation
         inputExclude: [path.join(inputTemp, 'roms', 'discs')],
