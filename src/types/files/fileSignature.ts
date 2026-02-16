@@ -2,10 +2,22 @@ import { Readable } from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
-interface SignaturePiece {
+type SignaturePiece = {
   offset?: number;
-  value: Buffer;
-}
+} & (
+  | {
+      // Static values
+      value: Buffer;
+      length?: never;
+      match?: never;
+    }
+  | {
+      // Dynamic values
+      value?: never;
+      length: number;
+      match: (buffer: Buffer) => boolean;
+    }
+);
 
 const CanBeTrimmed = {
   NO: 0,
@@ -13,6 +25,52 @@ const CanBeTrimmed = {
 } as const;
 type CanBeTrimmedKey = keyof typeof CanBeTrimmed;
 type CanBeTrimmedValue = (typeof CanBeTrimmed)[CanBeTrimmedKey];
+
+function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
+  return {
+    offset: headerSize + 0x40_ff_b0,
+    length: 0x2e + 2,
+    match: (buffer): boolean => {
+      return [
+        headerSize + 0x7f_b0, // LoROM
+        headerSize + 0xff_b0, // HiROM
+        headerSize + 0x40_ff_b0, // ExHiROM
+      ].some((offset) => {
+        if (buffer.length < offset + 0x25 + 1) {
+          return false;
+        }
+        const romSpeedAndMemoryMapMode = buffer.readUInt8(offset + 0x25);
+        if ((romSpeedAndMemoryMapMode & 0b1110_0000) !== 0b0010_0000) {
+          // The upper 3 bits are always the same
+          return false;
+        }
+        const mapMode = romSpeedAndMemoryMapMode & 0x0f; // lower 4 bits
+        if (
+          ![
+            0b0000, // LoROM
+            0b0001, // HiROM
+            0b0010, // SDD-1
+            0b0011, // SA-1
+            0b0101, // ExHiROM
+          ].includes(mapMode)
+        ) {
+          return false;
+        }
+
+        if (buffer.length < offset + 0x2c + 2) {
+          return false;
+        }
+        const checksumComplement = buffer.readUInt16LE(offset + 0x2c);
+        const checksum = buffer.readUInt16LE(offset + 0x2e);
+        if (checksum === 0 || (checksumComplement ^ checksum) !== 0xff_ff) {
+          return false;
+        }
+
+        return true;
+      });
+    },
+  };
+}
 
 export default class FileSignature {
   // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -311,8 +369,11 @@ export default class FileSignature {
     // Nintendo - Super Nintendo Entertainment System
     // @see https://snes.nesdev.org/wiki/ROM_header
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
-    // TODO(cemmer): add checks from LoROM, HiROM, etc.
-    smc: new FileSignature('.smc', [{ offset: 3, value: Buffer.from('00'.repeat(509), 'hex') }]),
+    smc: new FileSignature('.smc', [
+      { offset: 3, value: Buffer.from('00'.repeat(509), 'hex') },
+      superNintendoDynamicPiece(512),
+    ]),
+    sfc: new FileSignature('.sfc', [superNintendoDynamicPiece(0)]),
     // @see https://file-extension.net/seeker/file_extension_smc
     // @see https://wiki.superfamicom.org/game-doctor
     smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\x00\x01ME DOCTOR SF 3') }]), // Game Doctor SF3?
@@ -424,24 +485,42 @@ export default class FileSignature {
   };
 
   static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).toSorted((a, b) => {
-    // 1. Prefer files that check multiple signatures
+    // 1. Prefer signatures that check a static value (to reduce processing time)
+    const dynamicSigsDiff =
+      (a.signaturePieces.some((signaturePiece) => signaturePiece.value !== undefined) ? 0 : 1) -
+      (b.signaturePieces.some((signaturePiece) => signaturePiece.value !== undefined) ? 0 : 1);
+    if (dynamicSigsDiff !== 0) {
+      return dynamicSigsDiff;
+    }
+
+    // 2. Prefer signatures that check multiple parts
     const sigsCountDiff = b.signaturePieces.length - a.signaturePieces.length;
     if (sigsCountDiff !== 0) {
       return sigsCountDiff;
     }
 
-    // 2. Prefer signatures of longer length
+    // 3. Prefer signatures of longer length
     return (
-      b.signaturePieces.reduce((sum, sig) => sum + sig.value.length, 0) -
-      a.signaturePieces.reduce((sum, sig) => sum + sig.value.length, 0)
+      b.signaturePieces.reduce(
+        (sum, signaturePiece) => sum + (signaturePiece.value?.length ?? signaturePiece.length ?? 0),
+        0,
+      ) -
+      a.signaturePieces.reduce(
+        (sum, signaturePiece) => sum + (signaturePiece.value?.length ?? signaturePiece.length ?? 0),
+        0,
+      )
     );
   });
 
   private static readonly MAX_HEADER_LENGTH_BYTES = Object.values(FileSignature.SIGNATURES_UNSORTED)
     .flatMap((romSignature) => romSignature.signaturePieces)
     .reduce(
-      (max, fileSignature) =>
-        Math.max(max, (fileSignature.offset ?? 0) + fileSignature.value.length),
+      (max, signaturePiece) =>
+        Math.max(
+          max,
+          (signaturePiece.offset ?? 0) +
+            (signaturePiece.value?.length ?? signaturePiece.length ?? 0),
+        ),
       0,
     );
 
@@ -465,14 +544,16 @@ export default class FileSignature {
     end: number,
   ): Promise<Buffer> {
     const chunks: Buffer[] = [];
+    let bytesRead = 0;
 
     for await (const chunk of stream as AsyncIterable<Buffer>) {
       if (chunk.length > 0) {
         chunks.push(chunk);
+        bytesRead += chunk.length;
       }
 
       // Stop reading when we get enough data, trigger a 'close' event
-      if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
+      if (bytesRead >= end) {
         break;
       }
     }
@@ -492,12 +573,16 @@ export default class FileSignature {
     );
 
     for (const romSignature of this.SIGNATURES) {
-      const signatureMatch = romSignature.signaturePieces.every((fileSignature) => {
-        const signatureValue = fileHeader.subarray(
-          fileSignature.offset ?? 0,
-          (fileSignature.offset ?? 0) + fileSignature.value.length,
-        );
-        return signatureValue.equals(fileSignature.value);
+      const signatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
+        if (signaturePiece.value === undefined) {
+          return signaturePiece.match(fileHeader);
+        } else {
+          const signatureValue = fileHeader.subarray(
+            signaturePiece.offset ?? 0,
+            (signaturePiece.offset ?? 0) + signaturePiece.value.length,
+          );
+          return signatureValue.equals(signaturePiece.value);
+        }
       });
       if (signatureMatch) {
         return romSignature;
