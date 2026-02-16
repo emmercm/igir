@@ -162,13 +162,38 @@ export default class FileSignature {
 
     // ********** ROMs - SPECIFIC **********
 
+    // Apple
+    // @see https://applesaucefdc.com/a2r/
+    a2r: new FileSignature('.a2r', [{ value: Buffer.from('A2R3\xFF\x0A\x0D\x0A') }]),
+    // @see https://www.kryoflux.com/download/kryoflux_stream_protocol_rev1.1.pdf
+    kryoflux_raw: new FileSignature('.raw', [
+      { value: Buffer.from('\x0D\x04') }, // start of KFInfo block
+      { offset: 0x4, value: Buffer.from('host_date=') }, // typical first info
+    ]),
+    // @see https://applesaucefdc.com/woz/reference2/
+    woz: new FileSignature('.woz', [{ value: Buffer.from('WOZ2\xFF\x0A\x0D\x0A') }]),
+
     // Atari - 7800
     a78: new FileSignature('.a78', [
       { offset: 1, value: Buffer.from('ATARI7800') },
       { offset: 0x64, value: Buffer.from('ACTUAL CART DATA STARTS HERE') },
     ]),
 
+    // Atari - Jaguar
+    jag: new FileSignature('.jag', [{ value: Buffer.from('JAGR') }]),
+    jag_wrapped: new FileSignature('.jag', [{ offset: 0x1c, value: Buffer.from('JAGR') }]),
+    // j64: new FileSignature('.j64', [{ value: Buffer.from('\xF6') }]),
+
     // Atari - Lynx
+    // @see https://web.mit.edu/freebsd/head/contrib/file/magic/Magdir/console
+    bll_bs93: new FileSignature('.bll', [
+      { value: Buffer.from('\x80\x08') },
+      { offset: 0x6, value: Buffer.from('BS93') },
+    ]),
+    bll_lynx: new FileSignature('.bll', [
+      { value: Buffer.from('\x80\x08') },
+      { offset: 0x6, value: Buffer.from('LYNX') },
+    ]),
     lnx: new FileSignature('.lnx', [{ value: Buffer.from('LYNX') }]),
 
     // Commodore
@@ -217,7 +242,7 @@ export default class FileSignature {
     // @see http://n64dev.org/romformats.html
     n64: new FileSignature('.n64', [{ value: Buffer.from('40123780', 'hex') }]), // little endian
     v64: new FileSignature('.v64', [{ value: Buffer.from('37804012', 'hex') }]), // byte-swapped
-    z64: new FileSignature('.z64', [{ value: Buffer.from('80371240', 'hex') }]), // native
+    z64: new FileSignature('.z64', [{ value: Buffer.from('80371240', 'hex') }]), // big endian / "native"
 
     // Nintendo - Nintendo 64 Disk Drive
     ndd: new FileSignature('.ndd', [{ value: Buffer.from('E848D31610', 'hex') }]),
@@ -236,9 +261,9 @@ export default class FileSignature {
     // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
     nkit_iso: new FileSignature('.nkit.iso', [{ offset: 0x2_00, value: Buffer.from('NKIT') }]),
     // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
-    rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]), // "RVZ\x01"
+    rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]),
     // TODO(cemmer): .tgc
-    wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]), // "WIA\x01"
+    wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]),
 
     // Nintendo - Game Boy
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
@@ -308,11 +333,38 @@ export default class FileSignature {
       ],
       CanBeTrimmed.YES,
     ),
+    dsi: new FileSignature(
+      '.dsi',
+      [
+        { offset: 0x0_12, value: Buffer.from('03', 'hex') }, // DSi-only unitcode
+        {
+          offset: 0xc0,
+          value: Buffer.from(
+            '24FFAE51699AA2213D84820A84E409AD11248B98C0817F21A352BE199309CE2010464A4AF82731EC58C7E83382E3CEBF85F4DF94CE4B09C194568AC01372A7FC9F844D73A3CA9A615897A327FC039876231DC7610304AE56BF38840040A70EFDFF52FE036F9530F197FBC08560D68025A963BE03014E38E2F9A234FFBB3E0344780090CB88113A9465C07C6387F03CAFD625E48B380AAC7221D4F807',
+            'hex',
+          ),
+        }, // logo
+        { offset: 0x1_5c, value: Buffer.from('56CF', 'hex') }, // logo checksum
+      ],
+      CanBeTrimmed.YES,
+    ),
 
     // Nintendo - Nintendo Entertainment System
     // @see https://www.nesdev.org/wiki/INES
     // @see https://www.nesdev.org/wiki/NES_2.0
     nes: new FileSignature('.nes', [{ value: Buffer.from('NES\x1A') }]),
+
+    // Nintendo - Pokemon Mini
+    // @see https://www.pokemon-mini.net/documentation/cartridge/
+    min: new FileSignature('.min', [
+      { offset: 0x21_a4, value: Buffer.from('NINTENDO') },
+      {
+        offset: 0x21_bc,
+        value: Buffer.from(
+          '2P\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+        ),
+      },
+    ]),
 
     // Nintendo - Super Nintendo Entertainment System
     // @see https://snes.nesdev.org/wiki/ROM_header
@@ -491,33 +543,22 @@ export default class FileSignature {
     start: number,
     end: number,
   ): Promise<Buffer> {
-    return await new Promise((resolve, reject) => {
-      stream.resume();
+    const chunks: Buffer[] = [];
+    let bytesRead = 0;
 
-      const chunks: Buffer[] = [];
-      let bytesRead = 0;
+    for await (const chunk of stream as AsyncIterable<Buffer>) {
+      if (chunk.length > 0) {
+        chunks.push(chunk);
+        bytesRead += chunk.length;
+      }
 
-      const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks).subarray(start, end);
-        resolve(header);
-      };
+      // Stop reading when we get enough data, trigger a 'close' event
+      if (bytesRead >= end) {
+        break;
+      }
+    }
 
-      stream.on('data', (chunk: Buffer) => {
-        if (chunk.length > 0) {
-          chunks.push(chunk);
-          bytesRead += chunk.length;
-        }
-
-        // Stop reading when we get enough data, trigger a 'close' event
-        if (bytesRead >= end) {
-          resolveHeader();
-          stream.destroy();
-        }
-      });
-
-      stream.on('end', resolveHeader);
-      stream.on('error', reject);
-    });
+    return Buffer.concat(chunks).subarray(start, end);
   }
 
   static signatureFromName(name: string): FileSignature | undefined {
