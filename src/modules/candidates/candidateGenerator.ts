@@ -651,8 +651,11 @@ export default class CandidateGenerator extends Module {
     }
     const inputArchive = (romsWithFiles[0].getInputFile() as ArchiveEntry<Archive>).getArchive();
 
-    // Checks for when every input file is from a zip
-    if (inputArchive instanceof Zip) {
+    // If we're allowed to re-zip archives, check if the zip file is a valid structured archive or not
+    if (
+      inputArchive instanceof Zip &&
+      romsWithFiles.every((romWithFiles) => this.options.shouldZipRom(romWithFiles.getRom()))
+    ) {
       if (
         this.options.getZipFormat() === ZipFormat.TORRENTZIP &&
         !(await inputArchive.isTorrentZip())

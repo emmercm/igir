@@ -75,7 +75,7 @@ it('should do nothing when no ROMs need correcting', async () => {
   expect(correctedCandidates).toBe(candidates);
 });
 
-function expectcorrectedCandidates(
+function expectCorrectedCandidates(
   candidates: WriteCandidate[],
   correctedCandidates: WriteCandidate[],
 ): void {
@@ -160,7 +160,7 @@ it('should correct ROMs without DATs', async () => {
       new Semaphore(os.cpus().length),
     ).correct(dat, candidates);
 
-    expectcorrectedCandidates(candidates, correctedCandidates);
+    expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
     await FsPoly.rm(tempDir, { recursive: true, force: true });
   }
@@ -213,7 +213,7 @@ it('should correct ROMs with missing filenames', async () => {
       new Semaphore(os.cpus().length),
     ).correct(dat, candidates);
 
-    expectcorrectedCandidates(candidates, correctedCandidates);
+    expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
     await FsPoly.rm(tempDir, { recursive: true, force: true });
   }

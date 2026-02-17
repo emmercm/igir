@@ -46,6 +46,10 @@ export default class WriteCandidate {
 
   // Immutable setters
 
+  withGame(game: SingleValueGame): WriteCandidate {
+    return new WriteCandidate(game, this.romsWithFiles);
+  }
+
   withRomsWithFiles(romsWithFiles: ROMWithFiles[]): WriteCandidate {
     if (
       romsWithFiles === this.romsWithFiles ||
