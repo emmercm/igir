@@ -1,5 +1,3 @@
-import 'jest-extended';
-
 import type { Stats } from 'node:fs';
 import fs from 'node:fs';
 import os from 'node:os';

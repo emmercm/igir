@@ -3,8 +3,6 @@ import os from 'node:os';
 import path from 'node:path';
 import stream, { PassThrough } from 'node:stream';
 
-import { jest } from '@jest/globals';
-
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
@@ -19,7 +17,7 @@ import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 import type { CompressionMethodValue } from '../src/tzWriter.js';
 import TZWriter, { CompressionMethod } from '../src/tzWriter.js';
 
-jest.setTimeout(5 * 60 * 1000); // 5min for large files
+// jest.setTimeout(5 * 60 * 1000); // 5min for large files
 
 const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [CompressionMethod.DEFLATE]: ValidationResult.VALID_TORRENTZIP,

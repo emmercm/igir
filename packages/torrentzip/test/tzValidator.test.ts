@@ -1,8 +1,6 @@
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import { jest } from '@jest/globals';
-
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
@@ -14,7 +12,7 @@ import type { ValidationResultValue } from '../src/tzValidator.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 import type { CompressionMethodValue } from '../src/tzWriter.js';
 
-jest.setTimeout(5 * 60 * 1000); // 5min for QEMU cross-build testing
+// jest.setTimeout(5 * 60 * 1000); // 5min for QEMU cross-build testing
 
 const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms'), WalkMode.FILES))
   .filter((filePath) => filePath.endsWith('.zip'))

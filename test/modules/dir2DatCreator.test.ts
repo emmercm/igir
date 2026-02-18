@@ -1,5 +1,3 @@
-import 'jest-extended';
-
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
@@ -220,12 +218,16 @@ it('should use the candidates for games and ROMs', async () => {
   expect(writtenDat.getHeader().getDescription()).toEqual(
     `${inferredDat.getHeader().getDescription()} dir2dat`,
   );
+
   expect(writtenDat.getParents()).toHaveLength(inferredDat.getParents().length);
-  expect(writtenDat.getParents().map((parent) => parent.getName())).not.toIncludeAnyMembers(
-    inferredDat.getParents().map((parent) => parent.getName()),
-  );
+  const writtenParentNames = new Set(writtenDat.getParents().map((parent) => parent.getName()));
+  for (const inferredParentName of inferredDat.getParents().map((parent) => parent.getName())) {
+    expect(writtenParentNames.has(inferredParentName)).toEqual(false);
+  }
+
   expect(writtenDat.getGames()).toHaveLength(inferredDat.getGames().length);
-  expect(writtenDat.getGames().map((game) => game.hashCode())).not.toIncludeAnyMembers(
-    inferredDat.getGames().map((game) => game.hashCode()),
-  );
+  const writtenGameHashes = new Set(writtenDat.getGames().map((game) => game.hashCode()));
+  for (const inferredGameHash of inferredDat.getGames().map((game) => game.hashCode())) {
+    expect(writtenGameHashes.has(inferredGameHash)).toEqual(false);
+  }
 });

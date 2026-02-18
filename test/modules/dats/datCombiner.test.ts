@@ -1,5 +1,3 @@
-import 'jest-extended';
-
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
 import type DAT from '../../../src/types/dats/dat.js';
 import Game from '../../../src/types/dats/game.js';
@@ -33,8 +31,13 @@ test.each([[1], [10], [100]])('should combine with any number of DATs: %s', (dat
 
   expect(combinedDat.getGames()).toHaveLength(GAME_COUNT);
 
-  const expectedGameNames = dats.flatMap((dat) => dat.getGames().map((game) => game.getName()));
-  expect(combinedDat.getGames().map((game) => game.getName())).toIncludeAllMembers(
-    expectedGameNames,
+  const expectedGameNames = new Set(
+    dats.flatMap((dat) => dat.getGames().map((game) => game.getName())),
   );
+  expect(
+    combinedDat
+      .getGames()
+      .map((game) => game.getName())
+      .toSorted(),
+  ).toEqual([...expectedGameNames].toSorted());
 });

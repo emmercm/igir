@@ -1,5 +1,3 @@
-import 'jest-extended';
-
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
