@@ -1,7 +1,6 @@
 name: Node.js Test Package
 
 on:
-  # pull_request_target required for pull-requests:write permission on fork PRs
   pull_request:
     types:
       # Types run for by default
@@ -139,7 +138,8 @@ jobs:
           allowed-skips: pkg-pr-new, test-npx, test-npm-install-global
 
   npm-exec-branch-comment:
-    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    # TODO(cemmer): need pull_request_target to comment
+    if: ${{ github.actor == 'emmercm' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     needs:
       - pkg-pr-new
       - test-npx
@@ -160,9 +160,10 @@ jobs:
           comment-tag: npm-exec
 
   npm-exec-merge-comment:
+    # TODO(cemmer): need pull_request_target to comment
+    if: ${{ github.actor == 'emmercm' && needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
