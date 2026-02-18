@@ -73,7 +73,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 
   return await async.mapLimit(
     await FsPoly.walk(dirPath, WalkMode.FILES),
-    os.cpus().length,
+    os.availableParallelism(),
     async (filePath: string): Promise<[string, fs.Stats]> => {
       const stats = await util.promisify(fs.lstat)(filePath);
       // Hard-code properties that can change with file reads
@@ -114,7 +114,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
   } catch {
     /* ignored */
@@ -123,7 +123,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
 
@@ -133,14 +133,14 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     candidates = new CandidatePatchGenerator(new ProgressBarFake()).generate(
       dat,
@@ -152,7 +152,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
@@ -160,7 +160,7 @@ async function candidateWriter(
   await new CandidateWriter(
     options,
     new ProgressBarFake(),
-    new CandidateWriterSemaphore(os.cpus().length),
+    new CandidateWriterSemaphore(os.availableParallelism()),
     new FileMoveMutex(),
   ).write(dat, candidates);
 

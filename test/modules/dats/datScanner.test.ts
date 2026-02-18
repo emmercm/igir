@@ -28,7 +28,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   );
 }
 
@@ -208,7 +208,7 @@ describe('single files', () => {
         new Options({ dat: [datPath] }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.cpus().length),
+        new DriveSemaphore(os.availableParallelism()),
       ).scan();
       expect(dats).toHaveLength(1);
       const dat = dats[0];

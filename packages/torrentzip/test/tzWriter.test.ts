@@ -123,7 +123,7 @@ const assertSingleFileZip = async (
       fs.createReadStream(tempFilePath, { highWaterMark: 33_554_432 * 2 }),
       fileName,
       fileSize,
-      os.cpus().length,
+      os.availableParallelism(),
     );
     await tempZip.finalize();
 
@@ -240,7 +240,7 @@ test.each([
             this.push(null);
           },
         });
-        await tempZip.addStream(readable, inputDirectory, 0, os.cpus().length);
+        await tempZip.addStream(readable, inputDirectory, 0, os.availableParallelism());
       }
       await tempZip.finalize();
 

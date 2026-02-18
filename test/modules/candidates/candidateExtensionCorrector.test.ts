@@ -35,7 +35,7 @@ it('should do nothing with no candidates', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.cpus().length),
+    new Semaphore(os.availableParallelism()),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -67,7 +67,7 @@ it('should do nothing when no ROMs need correcting', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.cpus().length),
+    new Semaphore(os.availableParallelism()),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -118,7 +118,7 @@ it('should correct ROMs without DATs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -155,7 +155,7 @@ it('should correct ROMs without DATs', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new Semaphore(os.cpus().length),
+      new Semaphore(os.availableParallelism()),
     ).correct(dat, candidates);
 
     expectCorrectedCandidates(candidates, correctedCandidates);
@@ -175,7 +175,7 @@ it('should correct ROMs with missing filenames', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -208,7 +208,7 @@ it('should correct ROMs with missing filenames', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new Semaphore(os.cpus().length),
+      new Semaphore(os.availableParallelism()),
     ).correct(dat, candidates);
 
     expectCorrectedCandidates(candidates, correctedCandidates);
