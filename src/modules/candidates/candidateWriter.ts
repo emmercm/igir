@@ -2,7 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import type CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.js';
-import KeyedMutex from '../../async/keyedMutex.js';
+import type FileMoveMutex from '../../async/fileMoveMutex.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
@@ -13,6 +13,7 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
+import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
 import type { ZipFormatValue } from '../../types/options.js';
 import type Options from '../../types/options.js';
 import { LinkMode, ZipFormat } from '../../types/options.js';
@@ -31,21 +32,22 @@ export default class CandidateWriter extends Module {
   // Keep track of written files, to warn on conflicts
   private static readonly OUTPUT_PATHS_WRITTEN = new Map<string, DAT>();
 
-  // When moving input files, process input file paths exclusively
-  private static readonly MOVE_MUTEX = new KeyedMutex(1000);
-
-  // When moving input files, keep track of files that have been moved
-  private static readonly FILE_PATH_MOVES = new Map<string, string>();
-
   private readonly options: Options;
-  private readonly semaphore: CandidateWriterSemaphore;
+  private readonly candidateSemaphore: CandidateWriterSemaphore;
+  private readonly moveMutex: FileMoveMutex;
 
   private readonly filesQueuedForDeletion: File[] = [];
 
-  constructor(options: Options, progressBar: ProgressBar, semaphore: CandidateWriterSemaphore) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    candidateSemaphore: CandidateWriterSemaphore,
+    moveMutex: FileMoveMutex,
+  ) {
     super(progressBar, CandidateWriter.name);
     this.options = options;
-    this.semaphore = semaphore;
+    this.candidateSemaphore = candidateSemaphore;
+    this.moveMutex = moveMutex;
   }
 
   /**
@@ -86,7 +88,7 @@ export default class CandidateWriter extends Module {
     }
     this.progressBar.resetProgress(writableCandidates.length);
 
-    await this.semaphore.map(writableCandidates, async (candidate) => {
+    await this.candidateSemaphore.map(writableCandidates, async (candidate) => {
       this.progressBar.incrementInProgress();
       this.progressBar.logTrace(
         `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
@@ -393,11 +395,11 @@ export default class CandidateWriter extends Module {
           .map(([input]) => input.getFilePath())
           .reduce(ArrayPoly.reduceUnique(), [])
       : [];
-    return await CandidateWriter.MOVE_MUTEX.runExclusiveForKeys(lockedFilePaths, async () => {
+    return await this.moveMutex.runExclusiveForKeys(lockedFilePaths, async () => {
       try {
         await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
         const compressorThreads = Math.ceil(
-          os.cpus().length / Math.max(this.semaphore.openLocks(), 1),
+          os.cpus().length / Math.max(this.candidateSemaphore.openLocks(), 1),
         );
         await outputZip.createArchive(
           inputToOutputZipEntries,
@@ -453,7 +455,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} raw file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -472,9 +474,9 @@ export default class CandidateWriter extends Module {
     );
     for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
       await Promise.all(
-        groupedInputToOutput.map(async ([inputRomFile, outputRomFile]) =>
-          this.writeRawSingle(dat, candidate, inputRomFile, outputRomFile),
-        ),
+        groupedInputToOutput.map(async ([inputRomFile, outputRomFile]) => {
+          await this.writeRawSingle(dat, candidate, inputRomFile, outputRomFile);
+        }),
       );
     }
   }
@@ -489,13 +491,11 @@ export default class CandidateWriter extends Module {
     if (this.options.shouldWrite() && outputRomFile.equals(inputRomFile)) {
       const wasMoved =
         this.options.shouldMove() &&
-        (await CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), () =>
-          CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath()),
-        )) !== undefined;
-
+        !(inputRomFile instanceof ZeroSizeFile) &&
+        (await this.moveMutex.wasMoved(inputRomFile.getFilePath()));
       if (!wasMoved) {
         this.progressBar.logDebug(
-          `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+          `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
         );
         return;
       }
@@ -505,7 +505,8 @@ export default class CandidateWriter extends Module {
 
     const childBar = this.progressBar.addChildBar({
       name: outputFilePath,
-      total: outputRomFile.getSize(),
+      // Files being patched might not have a known final size, just guess it as the input size
+      total: outputRomFile.getSize() > 0 ? outputRomFile.getSize() : inputRomFile.getSize(),
       progressFormatter: FsPoly.sizeReadable,
     });
     try {
@@ -616,23 +617,28 @@ export default class CandidateWriter extends Module {
     outputFilePath: string,
     progressBar: ProgressBar,
   ): Promise<MoveResultValue | undefined> {
+    // Special case: ZeroSizeFile can't be moved
+    if (inputRomFile instanceof ZeroSizeFile) {
+      return await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
+    }
+
     // Lock the input file, we can't handle concurrent moves
-    return CandidateWriter.MOVE_MUTEX.runExclusiveForKey(inputRomFile.getFilePath(), async () => {
-      const movedInputPath = CandidateWriter.FILE_PATH_MOVES.get(inputRomFile.getFilePath());
+    return await this.moveMutex.moveFile(inputRomFile.getFilePath(), async (movedInputPath) => {
       if (movedInputPath) {
         if (movedInputPath === outputFilePath) {
           // Do nothing
-          return undefined;
+          return [undefined, undefined];
         }
 
         // The file was already moved, we shouldn't move it again
-        return this.copyRawFile(
+        const copyResult = await this.copyRawFile(
           dat,
           candidate,
           inputRomFile.withFilePath(movedInputPath),
           outputFilePath,
           progressBar,
         );
+        return [copyResult, undefined];
       }
 
       if (
@@ -641,7 +647,14 @@ export default class CandidateWriter extends Module {
         inputRomFile.getPatch() !== undefined
       ) {
         // The file can't be moved as-is, it needs to be modified during copying
-        return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
+        const copyResult = await this.copyRawFile(
+          dat,
+          candidate,
+          inputRomFile,
+          outputFilePath,
+          progressBar,
+        );
+        return [copyResult, undefined];
       }
 
       this.progressBar.logInfo(
@@ -658,13 +671,12 @@ export default class CandidateWriter extends Module {
             progressBar.setCompleted(progress);
           },
         );
-        CandidateWriter.FILE_PATH_MOVES.set(inputRomFile.getFilePath(), outputFilePath);
-        return moveResult;
+        return [moveResult, outputFilePath];
       } catch (error) {
         this.progressBar.logError(
           `${dat.getName()}: ${candidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
         );
-        return undefined;
+        return [undefined, undefined];
       }
     });
   }
@@ -794,7 +806,7 @@ export default class CandidateWriter extends Module {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
       this.progressBar.logDebug(
-        `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+        `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
       );
       return;
     }

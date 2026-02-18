@@ -174,7 +174,7 @@
           'maxcso'
         ],
         schedule: 'at any time',
-        minimumReleaseAge: '0 hours'
+        minimumReleaseAge: '0 hours',
       },
 
       // Dev dependencies
@@ -193,7 +193,7 @@
           '@types/yargs',
         ],
         // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
+        matchUpdateTypes: ['patch', 'minor'],
       },
       {
         // Group ESLint together so files can be fixed automatically
@@ -204,7 +204,14 @@
         ],
         groupName: 'ESLint',
         // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
+        matchUpdateTypes: ['patch', 'minor'],
+      },
+      {
+        // Hold back ESLint major updates, plugins such as eslint-plugin-jest and
+        // eslint-plugin-unicorn usually need to be updated first
+        matchPackagePatterns: ['eslint'],
+        matchUpdateTypes: ['major'],
+        minimumReleaseAge: '14 days',
       },
       {
         // Update TypeScript-related ESLint more frequently so that TypeScript can update
@@ -225,7 +232,7 @@
         ],
         groupName: 'Jest',
         // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
+        matchUpdateTypes: ['patch', 'minor'],
       },
       {
         // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)

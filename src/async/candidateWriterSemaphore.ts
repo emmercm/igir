@@ -34,7 +34,7 @@ export default class CandidateWriterSemaphore {
     candidates: WriteCandidate[],
     callback: (candidate: WriteCandidate) => Promise<T>,
   ): Promise<T[]> {
-    const candidatesSorted = candidates.sort((a, b) => {
+    const candidatesSorted = candidates.toSorted((a, b) => {
       // First, prefer candidates with fewer files
       if (a.getRomsWithFiles().length !== b.getRomsWithFiles().length) {
         return a.getRomsWithFiles().length - b.getRomsWithFiles().length;
@@ -44,7 +44,7 @@ export default class CandidateWriterSemaphore {
     });
 
     // First, limit writes by the global max number of threads allowed
-    return this.mappableSemaphore.map(candidatesSorted, async (candidate: WriteCandidate) => {
+    return await this.mappableSemaphore.map(candidatesSorted, async (candidate: WriteCandidate) => {
       // Then, restrict concurrent writes to the same output paths
       const outputFilePaths = candidate
         .getRomsWithFiles()

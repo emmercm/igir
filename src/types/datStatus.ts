@@ -201,7 +201,7 @@ export default class DATStatus {
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort((a, b) => a.getName().localeCompare(b.getName()))
+      .toSorted((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         let status: GameStatusValue = GameStatus.MISSING;
 
@@ -249,7 +249,7 @@ export default class DATStatus {
           game.isBad(),
         );
       });
-    return writeToString(rows, {
+    return await writeToString(rows, {
       headers: [
         'DAT Name',
         'Game Name',
@@ -276,7 +276,9 @@ export default class DATStatus {
    * Return a string of CSV rows without headers for a certain {@link GameStatusValue}.
    */
   static async filesToCsv(filePaths: string[], status: GameStatusValue): Promise<string> {
-    return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
+    return await writeToString(
+      filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])),
+    );
   }
 
   private static buildCsvRow(
@@ -327,7 +329,7 @@ export default class DATStatus {
       .flatMap((type) => romTypesToValues.get(type))
       .filter((value) => value !== undefined)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
   }
 
   private static getAllowedTypes(options: Options): ROMTypeValue[] {

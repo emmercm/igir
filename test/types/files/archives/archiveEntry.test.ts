@@ -828,35 +828,31 @@ describe('copyToTempFile', () => {
   });
 });
 
-describe('createReadStream', () => {
-  it('should extract archived files', async () => {
-    // Note: this will only return valid archives with at least one file
-    const scannedFiles = await new ROMScanner(
-      new Options({
-        input: [path.join('test', 'fixtures', 'roms')],
-        inputExclude: [
-          // Can't extract NKit files
-          path.join('test', 'fixtures', 'roms', 'nkit'),
-        ],
-      }),
-      new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
-    ).scan();
-    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
+// Note: this will only return valid archives with at least one file
+const scannedFiles = await new ROMScanner(
+  new Options({
+    input: [path.join('test', 'fixtures', 'roms')],
+    inputExclude: [
+      // Can't extract NKit files
+      path.join('test', 'fixtures', 'roms', 'nkit'),
+    ],
+  }),
+  new ProgressBarFake(),
+  new FileFactory(new FileCache(), LOGGER),
+  new DriveSemaphore(os.cpus().length),
+).scan();
+const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
-    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
-    try {
-      for (const archiveEntry of archiveEntries) {
-        await archiveEntry.createReadStream(async (readable) => {
-          const contents = (await bufferPoly.fromReadable(readable)).toString();
-          expect(contents).toBeTruthy();
-        });
-      }
-    } finally {
-      await FsPoly.rm(temp, { recursive: true });
-    }
-  });
+describe('createReadStream', () => {
+  test.each(archiveEntries.map((file) => [file.toString(), file]))(
+    'should extract archived files: %s',
+    async (_, archiveEntry) => {
+      await archiveEntry.createReadStream(async (readable) => {
+        const contents = (await bufferPoly.fromReadable(readable)).toString();
+        expect(contents).toBeTruthy();
+      });
+    },
+  );
 });
 
 describe('withPatch', () => {

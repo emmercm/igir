@@ -43,6 +43,10 @@ export default class FsPoly {
   // https://github.com/cristiammercado/node-disk-info/issues/36
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private static readonly DRIVES = (() => {
+    if (process.platform === 'win32') {
+      // https://support.microsoft.com/en-us/topic/windows-management-instrumentation-command-line-wmic-removal-from-windows-e9e83c7f-4992-477f-ba1d-96f694b8665d
+      return [];
+    }
     try {
       return nodeDiskInfo.getDiskInfoSync();
     } catch {
@@ -95,7 +99,7 @@ export default class FsPoly {
   }
 
   /**
-   * Copy the contents of {@param src} to {@param dest}, recursively, respecting subdirectories.
+   * Copy the contents of {@link src} to {@link dest}, recursively, respecting subdirectories.
    */
   static async copyDir(src: string, dest: string): Promise<void> {
     await this.mkdir(dest, { recursive: true });
@@ -114,7 +118,7 @@ export default class FsPoly {
   }
 
   /**
-   * Copy {@param src} to {@param dest}, overwriting any existing file, and ensuring {@param dest}
+   * Copy {@link src} to {@link dest}, overwriting any existing file, and ensuring {@link dest}
    * is writable.
    */
   static async copyFile(
@@ -160,7 +164,8 @@ export default class FsPoly {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
-      return this.copyFile(src, dest, callback, attempt + 1);
+      await this.copyFile(src, dest, callback, attempt + 1);
+      return;
     }
 
     // Ensure the destination file is writable
@@ -177,7 +182,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns all the directories in {@param dirPath}, non-recursively
+   * @returns all the directories in {@link dirPath}, non-recursively
    */
   static async dirs(dirPath: string): Promise<string[]> {
     const readDir = (await util.promisify(fs.readdir)(dirPath))
@@ -192,26 +197,31 @@ export default class FsPoly {
   }
 
   /**
-   * @returns the path to the disk that {@param filePath} is on
+   * @returns the path to the disk that {@link filePath} is on
    */
   static diskResolved(filePath: string): string | undefined {
     const filePathResolved = path.resolve(filePath);
-    return this.disksSync().find((mountPath) => filePathResolved.startsWith(mountPath));
+    return this.disksSync().find((drive) => filePathResolved.startsWith(drive.mounted))?.mounted;
   }
 
   @Memoize()
-  private static disksSync(): string[] {
+  // https://github.com/cristiammercado/node-disk-info/issues/36
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  private static disksSync() {
     return (
       this.DRIVES.filter((drive) => drive.available > 0)
-        .map((drive) => drive.mounted)
-        .filter((mountPath) => mountPath !== '/')
+        .filter(
+          // Evidently the typing of 'node-disk-info' is wrong, the mounted path can be undefined
+          // https://github.com/emmercm/igir/issues/1862
+          (drive) => (drive.mounted as string | undefined) !== undefined && drive.mounted !== '/',
+        )
         // Sort by mount points with the deepest number of subdirectories first
-        .sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length)
+        .toSorted((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
     );
   }
 
   /**
-   * @returns if {@param pathLike} exists, not following symbolic links
+   * @returns if {@link pathLike} exists, not following symbolic links
    */
   static async exists(pathLike: PathLike): Promise<boolean> {
     try {
@@ -223,7 +233,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param pathLike} exists, not following symbolic links
+   * @returns if {@link pathLike} exists, not following symbolic links
    */
   static existsSync(pathLike: PathLike): boolean {
     try {
@@ -235,7 +245,7 @@ export default class FsPoly {
   }
 
   /**
-   * Create a hardlink at location {@param link} to the original file {@param target}.
+   * Create a hardlink at location {@link link} to the original file {@link target}.
    */
   static async hardlink(target: string, link: string): Promise<void> {
     const targetResolved = path.resolve(target);
@@ -263,14 +273,14 @@ export default class FsPoly {
   }
 
   /**
-   * @returns the index node of {@param pathLike}
+   * @returns the index node of {@link pathLike}
    */
   static async inode(pathLike: PathLike): Promise<number> {
     return (await this.stat(pathLike)).ino;
   }
 
   /**
-   * @returns if {@param pathLike} is a directory, following symbolic links
+   * @returns if {@link pathLike} is a directory, following symbolic links
    */
   static async isDirectory(pathLike: string): Promise<boolean> {
     try {
@@ -286,7 +296,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param pathLike} is a directory, following symbolic links
+   * @returns if {@link pathLike} is a directory, following symbolic links
    */
   static isDirectorySync(pathLike: string): boolean {
     try {
@@ -302,7 +312,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param pathLike} can be executed
+   * @returns if {@link pathLike} can be executed
    */
   static async isExecutable(pathLike: PathLike): Promise<boolean> {
     try {
@@ -314,7 +324,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param pathLike} is a file, following symbolic links
+   * @returns if {@link pathLike} is a file, following symbolic links
    */
   static async isFile(pathLike: string): Promise<boolean> {
     try {
@@ -330,7 +340,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param pathLike} has at least one related hardlink
+   * @returns if {@link pathLike} has at least one related hardlink
    */
   static async isHardlink(pathLike: PathLike): Promise<boolean> {
     try {
@@ -341,19 +351,28 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param filePath} is on a samba path
+   * @returns if {@link filePath} is on a samba path
    */
   static isSamba(filePath: string): boolean {
     const normalizedPath = filePath.replaceAll(/[\\/]/g, path.sep);
-    if (normalizedPath.startsWith(`${path.sep}${path.sep}`) && normalizedPath !== os.devNull) {
+    if (normalizedPath === os.devNull) {
+      return false;
+    }
+
+    if (
+      // Standard UNC: \\Server\Share\Path
+      // Extended UNC: \\?\UNC\Server\Share\Path
+      filePath.startsWith(`\\\\`) ||
+      // smb://[user[:password]@]server/share[/path]
+      filePath.toLowerCase().startsWith('smb://') ||
+      // /mnt/smb/share/folder/
+      filePath.toLowerCase().startsWith('/mnt/smb/')
+    ) {
       return true;
     }
 
     const resolvedPath = path.resolve(normalizedPath);
-    const filePathDrive = this.DRIVES
-      // Sort by mount points with the deepest number of subdirectories first
-      .sort((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
-      .find((drive) => resolvedPath.startsWith(drive.mounted));
+    const filePathDrive = this.disksSync().find((drive) => resolvedPath.startsWith(drive.mounted));
 
     if (!filePathDrive) {
       // Assume 'false' by default
@@ -365,7 +384,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param pathLike} is a symlink
+   * @returns if {@link pathLike} is a symlink
    */
   static async isSymlink(pathLike: PathLike): Promise<boolean> {
     try {
@@ -376,7 +395,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if {@param pathLike} is a symlink
+   * @returns if {@link pathLike} is a symlink
    */
   static isSymlinkSync(pathLike: PathLike): boolean {
     try {
@@ -387,7 +406,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns if the current runtime can write to {@param filePath}
+   * @returns if the current runtime can write to {@link filePath}
    */
   static async isWritable(filePath: string): Promise<boolean> {
     const exists = await this.exists(filePath);
@@ -421,7 +440,7 @@ export default class FsPoly {
   }
 
   /**
-   * Makes the directory {@param pathLike} with the options {@param options}.
+   * Makes the directory {@link pathLike} with the options {@link options}.
    */
   static async mkdir(pathLike: PathLike, options?: MakeDirectoryOptions): Promise<void> {
     await util.promisify(fs.mkdir)(pathLike, options);
@@ -440,7 +459,7 @@ export default class FsPoly {
     } catch {
       const backupDir = path.join(process.cwd(), 'tmp') + path.sep;
       await this.mkdir(backupDir, { recursive: true });
-      return util.promisify(fs.mkdtemp)(backupDir);
+      return await util.promisify(fs.mkdtemp)(backupDir);
     }
   }
 
@@ -459,7 +478,7 @@ export default class FsPoly {
   }
 
   /**
-   * Move the file {@param oldPath} to {@param newPath}, retrying failures.
+   * Move the file {@link oldPath} to {@link newPath}, retrying failures.
    */
   static async mv(
     oldPath: string,
@@ -502,7 +521,7 @@ export default class FsPoly {
 
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
       await this.rm(newPath, { force: true });
-      return this.mv(oldPath, newPath, callback, attempt + 1);
+      return await this.mv(oldPath, newPath, callback, attempt + 1);
     }
   }
 
@@ -517,21 +536,21 @@ export default class FsPoly {
    * @returns the contents of the file.
    */
   static async readFile(pathLike: PathOrFileDescriptor): Promise<Buffer<ArrayBuffer>> {
-    return util.promisify(fs.readFile)(pathLike);
+    return await util.promisify(fs.readFile)(pathLike);
   }
 
   /**
-   * @returns the target path for the symlink {@param pathLike}
+   * @returns the target path for the symlink {@link pathLike}
    */
   static async readlink(pathLike: PathLike): Promise<string> {
     if (!(await this.isSymlink(pathLike))) {
       throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
-    return util.promisify(fs.readlink)(pathLike);
+    return await util.promisify(fs.readlink)(pathLike);
   }
 
   /**
-   * @returns the target path for the symlink {@param pathLike}
+   * @returns the target path for the symlink {@link pathLike}
    */
   static readlinkSync(pathLike: PathLike): string {
     if (!this.isSymlinkSync(pathLike)) {
@@ -541,7 +560,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns the absolute target path for the symlink {@param link}
+   * @returns the absolute target path for the symlink {@link link}
    */
   static async readlinkResolved(link: string): Promise<string> {
     const source = await this.readlink(link);
@@ -552,7 +571,7 @@ export default class FsPoly {
   }
 
   /**
-   * @returns the absolute target path for the symlink {@param link}
+   * @returns the absolute target path for the symlink {@link link}
    */
   static readlinkResolvedSync(link: string): string {
     const source = this.readlinkSync(link);
@@ -563,17 +582,17 @@ export default class FsPoly {
   }
 
   /**
-   * @returns the fully resolved path to {@param pathLike}
+   * @returns the fully resolved path to {@link pathLike}
    */
   static async realpath(pathLike: PathLike): Promise<string> {
     if (!(await this.exists(pathLike))) {
       throw new IgirException(`can't get realpath of non-existent path: ${pathLike.toString()}`);
     }
-    return util.promisify(fs.realpath)(pathLike);
+    return await util.promisify(fs.realpath)(pathLike);
   }
 
   /**
-   * Copy {@param src} to {@param dest}, overwriting any existing file, and ensuring {@param dest}
+   * Copy {@link src} to {@link dest}, overwriting any existing file, and ensuring {@link dest}
    * is writable.
    */
   static async reflink(src: string, dest: string, attempt = 1): Promise<void> {
@@ -610,7 +629,8 @@ export default class FsPoly {
       await new Promise((resolve) => {
         setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
       });
-      return this.reflink(src, dest, attempt + 1);
+      await this.reflink(src, dest, attempt + 1);
+      return;
     }
 
     // Ensure the destination file is writable
@@ -627,7 +647,7 @@ export default class FsPoly {
   }
 
   /**
-   * Deletes the file or directory {@param pathLike} with the options {@param options}, retrying
+   * Deletes the file or directory {@link pathLike} with the options {@link options}, retrying
    * failures.
    */
   static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
@@ -654,7 +674,7 @@ export default class FsPoly {
   }
 
   /**
-   * Deletes the file or directory {@param pathLike} with the options {@param options}, retrying
+   * Deletes the file or directory {@link pathLike} with the options {@link options}, retrying
    * failures.
    */
   static rmSync(pathLike: string, options: RmOptions = {}): void {
@@ -702,9 +722,9 @@ export default class FsPoly {
   }
 
   /**
-   * Creates a relative symbolic link at {@param link} to the original file {@link target}
+   * Creates a relative symbolic link at {@link link} to the original file {@link target}
    *
-   * Note: {@param target} should be processed with `path.resolve()` to create absolute path
+   * Note: {@link target} should be processed with `path.resolve()` to create absolute path
    * symlinks
    */
   static async symlink(target: string, link: string): Promise<void> {
@@ -720,11 +740,11 @@ export default class FsPoly {
     }
 
     await this.rm(link, { force: true });
-    return util.promisify(fs.symlink)(target, link);
+    await util.promisify(fs.symlink)(target, link);
   }
 
   /**
-   * Creates a relative symbolic link at {@param link} to the original file {@link target}
+   * Creates a relative symbolic link at {@link link} to the original file {@link target}
    */
   static async symlinkRelativePath(target: string, link: string): Promise<string> {
     // NOTE(cemmer): macOS can be funny with files or links in system folders such as
@@ -737,10 +757,10 @@ export default class FsPoly {
   }
 
   /**
-   * @returns the stats of {@param pathLike}
+   * @returns the stats of {@link pathLike}
    */
   static async stat(pathLike: PathLike): Promise<fs.Stats> {
-    return util.promisify(fs.stat)(pathLike);
+    return await util.promisify(fs.stat)(pathLike);
   }
 
   /**
@@ -767,7 +787,7 @@ export default class FsPoly {
   }
 
   /**
-   * Return every file in {@param pathLike}, recursively.
+   * Return every file in {@link pathLike}, recursively.
    */
   static async walk(
     pathLike: PathLike,
@@ -820,7 +840,7 @@ export default class FsPoly {
   }
 
   /**
-   * Write {@param data} to {@param filePath}.
+   * Write {@link data} to {@link filePath}.
    */
   static async writeFile(
     filePath: PathLike,

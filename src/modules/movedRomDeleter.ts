@@ -57,7 +57,7 @@ export default class MovedROMDeleter extends Module {
     const existingFilePathsCheck = await async.mapLimit(
       filePathsToDelete,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => FsPoly.exists(filePath),
+      async (filePath: string) => await FsPoly.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -167,7 +167,7 @@ export default class MovedROMDeleter extends Module {
         if (unmovedEntries.length > 0) {
           this.progressBar.logWarn(
             `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedEntries
-              .sort()
+              .toSorted()
               .map((entry) => `  ${entry.toString()}`)
               .join('\n')}`,
           );

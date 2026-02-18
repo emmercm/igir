@@ -60,7 +60,7 @@ export default class DATPreferer extends Module {
         const preferredGame = parent
           .getGames()
           .map((game, idx): [Game, number] => [game, idx])
-          .sort((one, two) => this.sort(one, two))
+          .toSorted((one, two) => this.sort(one, two))
           .at(0);
         if (preferredGame === undefined) {
           return undefined;

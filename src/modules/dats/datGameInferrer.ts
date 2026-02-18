@@ -70,8 +70,8 @@ export default class DATGameInferrer extends Module {
     );
 
     const dats = await Promise.all(
-      [...inputPathsToRomFiles.entries()].map(async ([inputPath, datRomFiles]) =>
-        this.createDAT(inputPath, datRomFiles),
+      [...inputPathsToRomFiles.entries()].map(
+        async ([inputPath, datRomFiles]) => await this.createDAT(inputPath, datRomFiles),
       ),
     );
 
@@ -119,7 +119,7 @@ export default class DATGameInferrer extends Module {
               }),
           )
           .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()))
-          .sort((a, b) => a.getName().localeCompare(b.getName()));
+          .toSorted((a, b) => a.getName().localeCompare(b.getName()));
         return new Game({
           name: gameName,
           description: gameName,
@@ -127,7 +127,7 @@ export default class DATGameInferrer extends Module {
           dir2datSource: gameRomFiles
             .map((romFile) => romFile.getFilePath())
             .reduce(ArrayPoly.reduceUnique(), [])
-            .sort()
+            .toSorted()
             .join(', '),
         });
       })
@@ -363,10 +363,29 @@ export default class DATGameInferrer extends Module {
       `inferring games from raw files from ${romFiles.length.toLocaleString()} file${romFiles.length === 1 ? '' : 's'}`,
     );
 
+    // For each directory that the ROMs are in, count how many ROMs are in it
+    const dirnamesToFileCounts = romFiles.reduce((map, romFile) => {
+      const dirname = path.dirname(romFile.getFilePath());
+      map.set(dirname, (map.get(dirname) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>());
+
     const results = romFiles
       .filter((file) => !(file instanceof ArchiveEntry))
       .reduce((map, file) => {
-        const gameName = DATGameInferrer.getGameName(file);
+        let gameName: string;
+        if (
+          dirnamesToFileCounts.size > 1 &&
+          (dirnamesToFileCounts.get(path.dirname(file.getFilePath())) ?? 0) > 1
+        ) {
+          // There are multiple subdirectories in the input path,
+          // and the subdirectory this file is in has multiple ROMs,
+          // so assume ROMs belong to the same game
+          gameName = path.basename(path.dirname(file.getFilePath()));
+        } else {
+          gameName = DATGameInferrer.getGameName(file);
+        }
+
         if (map.has(gameName)) {
           map.get(gameName)?.push(file);
         } else {

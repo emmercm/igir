@@ -19,7 +19,7 @@ import ProgressBarFake from '../../../console/progressBarFake.js';
 const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
 
 async function findRoms(input: string): Promise<File[]> {
-  return new ROMScanner(
+  return await new ROMScanner(
     new Options({
       input: [input],
     }),
