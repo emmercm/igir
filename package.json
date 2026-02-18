@@ -60,7 +60,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run lint",
-    "test:unit": "node ./node_modules/.bin/vitest",
+    "test:unit": "node ./node_modules/vitest/vitest.mjs",
     "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
     "test:handles": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --detectOpenHandles",
     "bump:major": "npm version major --no-git-tag-version && npm run update:readme",
