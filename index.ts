@@ -13,6 +13,9 @@ import UpdateChecker from './src/modules/updateChecker.js';
 import IgirException from './src/types/exceptions/igirException.js';
 import type Options from './src/types/options.js';
 
+// Double the number of frames tracked in a stack trace
+Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 20);
+
 const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();
 

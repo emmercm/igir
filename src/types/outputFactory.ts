@@ -411,7 +411,7 @@ export default class OutputFactory {
 
     if (options.getDirLetterGroup()) {
       lettersToFilenames = [...lettersToFilenames.entries()]
-        .sort((a, b) => a[0].localeCompare(b[0]))
+        .toSorted((a, b) => a[0].localeCompare(b[0]))
         // Generate a tuple of [letter, Set(filenames)] for every subpath
         .reduce<[string, Set<string>][]>((arr, [letter, filenames]) => {
           // ROMs may have been grouped together into a subdirectory. For example, when a game has
@@ -428,7 +428,7 @@ export default class OutputFactory {
             return subPathMap;
           }, new Map<string, string[]>());
           const tuples = [...subPathsToFilenames.entries()]
-            .sort(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
+            .toSorted(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
             .map(
               ([, subPathFilenames]) =>
                 [letter, new Set(subPathFilenames)] satisfies [string, Set<string>],
@@ -476,7 +476,7 @@ export default class OutputFactory {
             return lettersMap;
           }
 
-          const subPaths = [...subPathsToFilenames.keys()].sort();
+          const subPaths = [...subPathsToFilenames.keys()].toSorted();
           const chunkSize = options.getDirLetterLimit();
           for (let i = 0; i < subPaths.length; i += chunkSize) {
             const chunk = subPaths

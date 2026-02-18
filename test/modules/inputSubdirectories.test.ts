@@ -62,9 +62,13 @@ it('should do nothing if option is "never"', async () => {
     // Files were moved, and they're no longer in the input directory
     const tempFilePaths = await FsPoly.walk(tempDir, WalkMode.FILES);
     const tempFiles = await Promise.all(
-      tempFilePaths.map(async (filePath) => File.fileOf({ filePath })),
+      tempFilePaths.map(async (filePath) => await File.fileOf({ filePath })),
     );
-    await Promise.all(tempFilePaths.map(async (filePath) => FsPoly.rm(filePath)));
+    await Promise.all(
+      tempFilePaths.map(async (filePath) => {
+        await FsPoly.rm(filePath);
+      }),
+    );
 
     const deletedDirs = await new InputSubdirectoriesDeleter(options, new ProgressBarFake()).delete(
       tempFiles,
@@ -111,10 +115,9 @@ it('should delete empty directories even if no ROMs were moved when option is "a
     );
 
     // The directories that had files moved out of them were deleted
-    expect(deletedDirs.map((dirPath) => dirPath.replace(tempDir + path.sep, '')).sort()).toEqual([
-      path.join('GB', 'EUR'),
-      path.join('NES', 'JPN'),
-    ]);
+    expect(
+      deletedDirs.map((dirPath) => dirPath.replace(tempDir + path.sep, '')).toSorted(),
+    ).toEqual([path.join('GB', 'EUR'), path.join('NES', 'JPN')]);
   } finally {
     await FsPoly.rm(tempDir, {
       recursive: true,
@@ -135,9 +138,13 @@ it('should delete empty directories that had ROMs moved out of them', async () =
     // Files were moved, and they're no longer in the input directory
     const tempFilePaths = await FsPoly.walk(tempDir, WalkMode.FILES);
     const tempFiles = await Promise.all(
-      tempFilePaths.map(async (filePath) => File.fileOf({ filePath })),
+      tempFilePaths.map(async (filePath) => await File.fileOf({ filePath })),
     );
-    await Promise.all(tempFilePaths.map(async (filePath) => FsPoly.rm(filePath)));
+    await Promise.all(
+      tempFilePaths.map(async (filePath) => {
+        await FsPoly.rm(filePath);
+      }),
+    );
 
     const deletedDirs = await new InputSubdirectoriesDeleter(options, new ProgressBarFake()).delete(
       tempFiles,
@@ -146,7 +153,7 @@ it('should delete empty directories that had ROMs moved out of them', async () =
     // The directories that had files moved out of them were deleted
     const deletedTempDirs = deletedDirs
       .map((dirPath) => dirPath.replace(tempDir + path.sep, ''))
-      .sort();
+      .toSorted();
     expect(deletedTempDirs).toContain('GB');
     expect(deletedTempDirs).toContain('NES');
   } finally {

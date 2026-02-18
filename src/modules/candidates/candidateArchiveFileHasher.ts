@@ -64,14 +64,14 @@ export default class CandidateArchiveFileHasher extends Module {
     const hashedCandidates = this.hashArchiveFiles(dat, candidates);
 
     this.progressBar.logTrace(`${dat.getName()}: done generating hashed ArchiveFile candidates`);
-    return hashedCandidates;
+    return await hashedCandidates;
   }
 
   private async hashArchiveFiles(
     dat: DAT,
     candidates: WriteCandidate[],
   ): Promise<WriteCandidate[]> {
-    return Promise.all(
+    return await Promise.all(
       candidates.map(async (candidate) => {
         const hashedRomsWithFiles = await Promise.all(
           candidate.getRomsWithFiles().map(async (romWithFiles) => {
@@ -89,7 +89,7 @@ export default class CandidateArchiveFileHasher extends Module {
               return romWithFiles;
             }
 
-            return this.driveSemaphore.runExclusive(inputFile, async () => {
+            return await this.driveSemaphore.runExclusive(inputFile, async () => {
               this.progressBar.incrementInProgress();
               this.progressBar.logTrace(
                 `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${inputFile.toString()}`,

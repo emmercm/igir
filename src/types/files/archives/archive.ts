@@ -63,8 +63,9 @@ export default abstract class Archive {
     callback: (stream: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    return this.extractEntryToTempFile(entryPath, async (tempFile) =>
-      File.createStreamFromFile(tempFile, callback, start),
+    return await this.extractEntryToTempFile(
+      entryPath,
+      async (tempFile) => await File.createStreamFromFile(tempFile, callback, start),
     );
   }
 

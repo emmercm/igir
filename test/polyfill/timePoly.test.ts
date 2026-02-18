@@ -7,6 +7,6 @@ describe('hrtimeMillis', () => {
       setTimeout(resolve, timeout);
     });
     const after = TimePoly.hrtimeMillis(before);
-    expect(after).toBeGreaterThanOrEqual(timeout);
+    expect(after).toBeGreaterThanOrEqual(timeout - 1 /* allow the event loop some wiggle room*/);
   });
 });

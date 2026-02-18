@@ -1,4 +1,6 @@
-import { Mutex } from 'async-mutex';
+import type { MutexInterface } from 'async-mutex';
+import { E_TIMEOUT } from 'async-mutex';
+import { Mutex, withTimeout } from 'async-mutex';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 
@@ -22,7 +24,7 @@ export default class KeyedMutex {
    * Run a {@link runnable} exclusively across all keys.
    */
   async runExclusiveGlobally<V>(runnable: () => V | Promise<V>): Promise<V> {
-    return this.keyMutexesMutex.runExclusive(runnable);
+    return await this.keyMutexesMutex.runExclusive(runnable);
   }
 
   /**
@@ -53,6 +55,7 @@ export default class KeyedMutex {
               .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
               .slice(this.maxSize)
               .forEach((lruKey) => {
+                this.keyMutexes.get(lruKey)?.release();
                 this.keyMutexes.delete(lruKey);
                 this.keyMutexesLru.delete(lruKey);
               });
@@ -70,7 +73,58 @@ export default class KeyedMutex {
       return mutexes;
     });
 
-    await Promise.all(mutexes.map(async (mutex) => mutex.acquire()));
+    await KeyedMutex.acquireMultipleWithDeadlockProtection(mutexes);
+  }
+
+  /**
+   * Trying to take multiple locks at once can lead to deadlocking. This is a naive deadlock
+   * resolution algorithm that requires all locks to be taken within {@link timeoutMillis}. If any
+   * lock can't be taken in the timeout, then any acquired locks will be released and all of them
+   * will be tried again. This semi-frequent releasing should help pending lockers make progress.
+   *
+   * This function will retry forever, which may still cause problems.
+   */
+  private static async acquireMultipleWithDeadlockProtection(
+    mutexes: Mutex[],
+    timeoutMillis = 15_000,
+  ): Promise<void> {
+    // Add +/-10% jitter to try to prevent the exact same deadlock from happening
+    const timeoutWithJitter =
+      timeoutMillis - timeoutMillis * 0.1 + Math.random() * (timeoutMillis * 0.2);
+    const mutexesWithTimeout = mutexes.map((mutex) => withTimeout(mutex, timeoutWithJitter));
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    while (true) {
+      const mutexesAcquired: MutexInterface[] = [];
+      let anyMutexRejected = false;
+
+      const acquirePromises = mutexesWithTimeout.map(async (mutex) => {
+        await mutex.acquire();
+        if (anyMutexRejected) {
+          // One of the mutexes couldn't lock, so we shouldn't keep any others
+          mutex.release();
+          return;
+        }
+        mutexesAcquired.push(mutex);
+      });
+
+      try {
+        await Promise.all(acquirePromises);
+        return;
+      } catch (error) {
+        // Release any mutexes locked, and wait on all pending mutex locks to be resolved
+        anyMutexRejected = true;
+        mutexesAcquired.forEach((mutex) => {
+          mutex.release();
+        });
+        await Promise.allSettled(acquirePromises);
+
+        if (error !== E_TIMEOUT) {
+          // The error was something other than a timeout, throw it
+          throw error;
+        }
+      }
+    }
   }
 
   /**
@@ -90,11 +144,7 @@ export default class KeyedMutex {
 
     await this.runExclusiveGlobally(() => {
       keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
-        const mutex = this.keyMutexes.get(key);
-        if (mutex === undefined) {
-          return;
-        }
-        mutex.release();
+        this.keyMutexes.get(key)?.release();
       });
     });
   }

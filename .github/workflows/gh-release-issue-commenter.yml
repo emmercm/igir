@@ -26,14 +26,12 @@ jobs:
       issues: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           fetch-tags: true
 
       - shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           REPO="${GITHUB_REPOSITORY}"
           CURR_TAG="${{ env.tag }}"
@@ -132,3 +130,5 @@ jobs:
           done
 
           echo "Done."
+        env:
+          GH_TOKEN: ${{ github.token }}

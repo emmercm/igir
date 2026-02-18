@@ -455,7 +455,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} raw file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -474,9 +474,9 @@ export default class CandidateWriter extends Module {
     );
     for (const groupedInputToOutput of uniqueInputToOutputEntriesMap.values()) {
       await Promise.all(
-        groupedInputToOutput.map(async ([inputRomFile, outputRomFile]) =>
-          this.writeRawSingle(dat, candidate, inputRomFile, outputRomFile),
-        ),
+        groupedInputToOutput.map(async ([inputRomFile, outputRomFile]) => {
+          await this.writeRawSingle(dat, candidate, inputRomFile, outputRomFile);
+        }),
       );
     }
   }
@@ -495,7 +495,7 @@ export default class CandidateWriter extends Module {
         (await this.moveMutex.wasMoved(inputRomFile.getFilePath()));
       if (!wasMoved) {
         this.progressBar.logDebug(
-          `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+          `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
         );
         return;
       }
@@ -505,7 +505,8 @@ export default class CandidateWriter extends Module {
 
     const childBar = this.progressBar.addChildBar({
       name: outputFilePath,
-      total: outputRomFile.getSize(),
+      // Files being patched might not have a known final size, just guess it as the input size
+      total: outputRomFile.getSize() > 0 ? outputRomFile.getSize() : inputRomFile.getSize(),
       progressFormatter: FsPoly.sizeReadable,
     });
     try {
@@ -618,11 +619,11 @@ export default class CandidateWriter extends Module {
   ): Promise<MoveResultValue | undefined> {
     // Special case: ZeroSizeFile can't be moved
     if (inputRomFile instanceof ZeroSizeFile) {
-      return this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
+      return await this.copyRawFile(dat, candidate, inputRomFile, outputFilePath, progressBar);
     }
 
     // Lock the input file, we can't handle concurrent moves
-    return this.moveMutex.moveFile(inputRomFile.getFilePath(), async (movedInputPath) => {
+    return await this.moveMutex.moveFile(inputRomFile.getFilePath(), async (movedInputPath) => {
       if (movedInputPath) {
         if (movedInputPath === outputFilePath) {
           // Do nothing
@@ -805,7 +806,7 @@ export default class CandidateWriter extends Module {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
       this.progressBar.logDebug(
-        `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output file is the same, skipping`,
+        `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
       );
       return;
     }

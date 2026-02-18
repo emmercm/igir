@@ -567,13 +567,13 @@ it('should prefer parents', () => {
       ...testGameWarlocked,
       ...testGameAdvanceWars,
       ...testGameDaveMirraFreestyleBmx2,
-    ].reverse(),
+    ].toReversed(),
   });
   const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
   expect(
     preferredDat
       .getGames()
-      .reverse()
+      .toReversed()
       .map((game) => game.getName()),
   ).toEqual([
     'Warlocked (USA)',

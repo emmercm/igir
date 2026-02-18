@@ -124,24 +124,24 @@ it('should write a valid DAT', async () => {
     writtenDat
       .getParents()
       .map((parent) => parent.getName())
-      .sort(),
+      .toSorted(),
   ).toEqual(
     inferredDat
       .getParents()
       .map((parent) => parent.getName())
-      .sort(),
+      .toSorted(),
   );
   expect(writtenDat.getGames()).toHaveLength(inferredDat.getGames().length);
   expect(
     writtenDat
       .getGames()
       .map((game) => game.hashCode())
-      .sort(),
+      .toSorted(),
   ).toEqual(
     inferredDat
       .getGames()
       .map((game) => game.hashCode())
-      .sort(),
+      .toSorted(),
   );
 });
 

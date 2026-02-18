@@ -1,7 +1,6 @@
 name: Node.js Test Package
 
 on:
-  # pull_request_target required for pull-requests:write permission on fork PRs
   pull_request:
     types:
       # Types run for by default
@@ -26,7 +25,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
       - id: filter
@@ -48,15 +47,16 @@ jobs:
       package_name: ${{ steps.pkg-pr-new.outputs.PACKAGE_NAME }}
       package_url: ${{ steps.pkg-pr-new.outputs.PACKAGE_URL }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: 'recursive'
       - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
-      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
-          path: |
-            ~/.npm
-            ~\AppData\Roaming\npm-cache
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
@@ -87,8 +87,11 @@ jobs:
           - windows-latest
           - windows-11-arm
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
+      # TODO(cemmer): https://github.com/npm/cli/issues/8710, fixed in npm v11.6.3 (Nov 19, 2025)
+      - if: ${{ startsWith(matrix.os, 'windows') }}
+        run: npm install -g npm@latest
       - run: |
           #npx --yes "${{ needs.pkg-pr-new.outputs.package_url }}" --help
           npm exec --yes --foreground-scripts "${{ needs.pkg-pr-new.outputs.package_url }}" -- --help
@@ -110,7 +113,7 @@ jobs:
           - windows-latest
           - windows-11-arm
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
       - shell: bash
         run: |
@@ -135,7 +138,8 @@ jobs:
           allowed-skips: pkg-pr-new, test-npx, test-npm-install-global
 
   npm-exec-branch-comment:
-    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    # TODO(cemmer): need pull_request_target to comment
+    if: ${{ github.event.pull_request.user.login == 'emmercm' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     needs:
       - pkg-pr-new
       - test-npx
@@ -156,14 +160,15 @@ jobs:
           comment-tag: npm-exec
 
   npm-exec-merge-comment:
+    # TODO(cemmer): need pull_request_target to comment
+    if: ${{ github.event.pull_request.user.login == 'emmercm' && needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
       - id: package
         run: |

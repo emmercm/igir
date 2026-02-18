@@ -219,6 +219,7 @@ export default class GameConsole {
       mister: 'AtariLynx',
       miyoocfw: 'LYNX',
       onion: 'LYNX',
+      pocket: 'lynx',
       retrodeck: 'atarilynx',
       romm: 'lynx',
     }),
@@ -384,6 +385,7 @@ export default class GameConsole {
       jelos: 'c64',
       mister: 'C64',
       onion: 'COMMODORE',
+      pocket: 'c64',
       retrodeck: 'c64',
       romm: 'c64',
     }),
@@ -517,6 +519,7 @@ export default class GameConsole {
       {
         emulationstation: 'gmaster',
         retrodeck: 'gmaster',
+        romm: 'hartung',
       },
     ),
     // Interton
@@ -589,7 +592,7 @@ export default class GameConsole {
       mister: 'MSX',
       onion: 'MSX',
       retrodeck: 'msx2',
-      romm: 'msx2',
+      romm: 'msx2plus',
     }),
     new GameConsole(/MSX TurboR/i, [], {
       adam: 'MSX',
@@ -598,7 +601,7 @@ export default class GameConsole {
       mister: 'MSX',
       onion: 'MSX',
       retrodeck: 'msxturbor',
-      romm: 'msx',
+      romm: 'msx-turbo',
     }),
     new GameConsole(
       /Xbox/i,
@@ -746,6 +749,7 @@ export default class GameConsole {
       jelos: 'gameandwatch',
       mister: 'GameNWatch',
       onion: 'GW',
+      pocket: 'gameandwatch',
       retrodeck: 'gameandwatch',
       romm: 'g-and-w',
     }),
@@ -1141,7 +1145,7 @@ export default class GameConsole {
       mister: 'ZX81',
       onion: 'ZXEIGHTYONE',
       retrodeck: 'zx81',
-      romm: 'zx81',
+      romm: 'zx80',
     }),
     new GameConsole(/ZX[ -]?81/i, [], {
       batocera: 'zx81',
@@ -1183,6 +1187,7 @@ export default class GameConsole {
         batocera: 'neogeocd',
         emulationstation: 'neogeocd',
         jelos: 'neocd',
+        mister: 'NeoGeo-CD',
         onion: 'NEOCD',
         retrodeck: 'neogeocd',
         romm: 'neo-geo-cd',
@@ -1282,7 +1287,7 @@ export default class GameConsole {
       emulationstation: 'ti99',
       mister: 'TI-99_4A',
       retrodeck: 'ti99',
-      romm: 'ti-994a',
+      romm: 'ti-99',
     }),
     // Tiger
     new GameConsole(/Game.?com/i, ['.tgc'], {
@@ -1369,8 +1374,7 @@ export default class GameConsole {
   }
 
   static getForDatName(consoleName: string): GameConsole | undefined {
-    return [...this.CONSOLES]
-      .reverse() // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
+    return this.CONSOLES.toReversed() // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
       .find((console) => console.getDatRegex().test(consoleName));
   }
 

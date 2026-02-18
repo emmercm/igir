@@ -11,7 +11,6 @@ import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
 import type Logger from './console/logger.js';
-import MultiBar from './console/multiBar.js';
 import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import Package from './globals/package.js';
@@ -53,7 +52,7 @@ import type DATStatus from './types/datStatus.js';
 import IgirException from './types/exceptions/igirException.js';
 import File from './types/files/file.js';
 import FileCache from './types/files/fileCache.js';
-import { ChecksumBitmask } from './types/files/fileChecksums.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from './types/files/fileChecksums.js';
 import FileFactory from './types/files/fileFactory.js';
 import type IndexedFiles from './types/indexedFiles.js';
 import Options, { InputChecksumArchivesMode, LinkMode } from './types/options.js';
@@ -115,7 +114,11 @@ export default class Igir {
     } else {
       const cachePath = await this.getCachePath();
       if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
-        this.logger.trace(`loading the file cache at '${cachePath}'`);
+        if (await FsPoly.exists(cachePath)) {
+          this.logger.trace(`loading the existing file cache at '${cachePath}'`);
+        } else {
+          this.logger.trace(`creating a new file cache at '${cachePath}'`);
+        }
         await fileCache.loadFile(cachePath);
       } else {
         this.logger.trace('not using a file for the file cache');
@@ -204,8 +207,9 @@ export default class Igir {
       );
       datsToWrittenFiles.set(processedDat, [
         ...(datsToWrittenFiles.get(processedDat) ?? []),
-        ...(await readerSemaphore.map(playlistPaths, async (filePath) =>
-          File.fileOf({ filePath }),
+        ...(await readerSemaphore.map(
+          playlistPaths,
+          async (filePath) => await File.fileOf({ filePath }),
         )),
       ]);
 
@@ -253,6 +257,7 @@ export default class Igir {
         progressBar.delete();
       }
 
+      progressBar.logTrace('done processing DAT');
       datProcessProgressBar.incrementCompleted();
     });
     datProcessProgressBar.logTrace(
@@ -270,8 +275,6 @@ export default class Igir {
 
     // Generate the report
     await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
-
-    MultiBar.stop();
 
     Timer.cancelAll();
   }
@@ -308,7 +311,7 @@ export default class Igir {
 
     // Next, try to use an already existing path
     const exists = await Promise.all(
-      cachePathCandidates.map(async (pathCandidate) => FsPoly.exists(pathCandidate)),
+      cachePathCandidates.map(async (pathCandidate) => await FsPoly.exists(pathCandidate)),
     );
     const existsCachePath = cachePathCandidates.find((_, idx) => exists[idx]);
     if (existsCachePath !== undefined) {
@@ -317,7 +320,7 @@ export default class Igir {
 
     // Next, try to find a writable path
     const writable = await Promise.all(
-      cachePathCandidates.map(async (pathCandidate) => FsPoly.isWritable(pathCandidate)),
+      cachePathCandidates.map(async (pathCandidate) => await FsPoly.isWritable(pathCandidate)),
     );
     const writableCachePath = cachePathCandidates.find((_, idx) => writable[idx]);
     if (writableCachePath !== undefined) {
@@ -401,7 +404,9 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(`generating a dir2dat, enabling ${bitmask} file checksums`);
+          this.logger.trace(
+            `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
+          );
         });
     }
 
@@ -419,7 +424,9 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(`${dat.getName()}: needs ${bitmask} file checksums for ROMs, enabling`);
+          this.logger.trace(
+            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
+          );
         });
 
       if (this.options.getExcludeDisks()) {
@@ -439,7 +446,7 @@ export default class Igir {
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
           this.logger.trace(
-            `${dat.getName()}: needs ${bitmask} file checksums for disks, enabling`,
+            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,
           );
         });
     });
@@ -482,9 +489,8 @@ export default class Igir {
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
-    const romScannerProgressBarName = 'Scanning for ROMs';
     const romProgressBar = this.logger.addProgressBar({
-      name: romScannerProgressBarName,
+      name: 'Scanning for ROMs',
     });
 
     const rawRomFiles = await new ROMScanner(
@@ -493,6 +499,7 @@ export default class Igir {
       fileFactory,
       driveSemaphore,
     ).scan(checksumBitmask, checksumArchives);
+    const romScannerProgressBarName = romProgressBar.getName();
 
     romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(
@@ -515,7 +522,7 @@ export default class Igir {
       romFilesWithTrimming,
     );
 
-    romProgressBar.setName(romScannerProgressBarName); // reset
+    romProgressBar.setName(romScannerProgressBarName ?? ''); // reset
     romProgressBar.finishWithItems(romFilesWithTrimming.length, 'file', 'found');
     romProgressBar.freeze();
 
@@ -567,11 +574,11 @@ export default class Igir {
     indexedRoms: IndexedFiles,
     patches: Patch[],
   ): Promise<WriteCandidate[]> {
-    return (
+    return await (
       [
         // Generate the initial set of candidates
         async (): Promise<WriteCandidate[]> =>
-          new CandidateGenerator(this.options, progressBar, readerSemaphore).generate(
+          await new CandidateGenerator(this.options, progressBar, readerSemaphore).generate(
             dat,
             indexedRoms,
           ),
@@ -580,7 +587,7 @@ export default class Igir {
           new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
         // Correct output filename extensions
         async (candidates): Promise<WriteCandidate[]> =>
-          new CandidateExtensionCorrector(
+          await new CandidateExtensionCorrector(
             this.options,
             progressBar,
             fileFactory,
@@ -591,7 +598,7 @@ export default class Igir {
          * efficiency
          */
         async (candidates): Promise<WriteCandidate[]> =>
-          new CandidateArchiveFileHasher(
+          await new CandidateArchiveFileHasher(
             this.options,
             progressBar,
             fileFactory,
@@ -624,7 +631,7 @@ export default class Igir {
     ).reduce(
       async (candidatesPromise, processor) => {
         const candidates = await candidatesPromise;
-        return processor(candidates);
+        return await processor(candidates);
       },
       Promise.resolve([] as WriteCandidate[]),
     );

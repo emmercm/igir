@@ -4,11 +4,13 @@ import type { Semaphore } from 'async-mutex';
 
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import ArrayPoly from '../../polyfill/arrayPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import type ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
-import type FileFactory from '../../types/files/fileFactory.js';
+import type File from '../../types/files/file.js';
+import FileFactory from '../../types/files/fileFactory.js';
 import type FileSignature from '../../types/files/fileSignature.js';
 import type Options from '../../types/options.js';
 import { FixExtension } from '../../types/options.js';
@@ -90,34 +92,44 @@ export default class CandidateExtensionCorrector extends Module {
     dat: DAT,
     candidates: WriteCandidate[],
   ): Promise<WriteCandidate[]> {
-    return Promise.all(
+    return await Promise.all(
       candidates.map(async (candidate) => {
-        const hashedRomsWithFiles = await Promise.all(
-          candidate.getRomsWithFiles().map(async (romWithFiles) => {
-            const correctedRom = await this.buildCorrectedRom(dat, candidate, romWithFiles);
+        // Correct the extension of ROMs
+        const correctedRoms = (
+          await Promise.all(
+            candidate.getRomsWithFiles().map(async (romWithFiles) => {
+              const correctedRom = await this.buildCorrectedRom(dat, candidate, romWithFiles);
+              return romWithFiles.withRom(correctedRom);
+            }),
+          )
+        )
+          // Eliminate duplicate ROMs caused by extension correction
+          .filter(ArrayPoly.filterUniqueMapped((romWithFiles) => romWithFiles.getRom().hashCode()));
 
-            // Using the corrected ROM name, build a new output path
-            const correctedOutputPath = OutputFactory.getPath(
-              this.options,
-              dat,
-              candidate.getGame(),
-              correctedRom,
-              romWithFiles.getInputFile(),
-            );
-            let correctedOutputFile = romWithFiles
-              .getOutputFile()
-              .withFilePath(correctedOutputPath.format());
-            if (correctedOutputFile instanceof ArchiveEntry) {
-              correctedOutputFile = correctedOutputFile.withEntryPath(
-                correctedOutputPath.entryPath,
-              );
-            }
+        const correctedGame = candidate
+          .getGame()
+          .withProps({ roms: correctedRoms.map((romWithFiles) => romWithFiles.getRom()) });
 
-            return romWithFiles.withRom(correctedRom).withOutputFile(correctedOutputFile);
-          }),
-        );
+        // Generate a new output path for every ROM; this must be done AFTER any duplicate ROMs
+        // have been removed
+        const correctedOutputPaths = correctedRoms.map((romWithFiles) => {
+          const correctedOutputPath = OutputFactory.getPath(
+            this.options,
+            dat,
+            correctedGame,
+            romWithFiles.getRom(),
+            romWithFiles.getInputFile(),
+          );
+          let correctedOutputFile = romWithFiles
+            .getOutputFile()
+            .withFilePath(correctedOutputPath.format());
+          if (correctedOutputFile instanceof ArchiveEntry) {
+            correctedOutputFile = correctedOutputFile.withEntryPath(correctedOutputPath.entryPath);
+          }
+          return romWithFiles.withOutputFile(correctedOutputFile);
+        });
 
-        return candidate.withRomsWithFiles(hashedRomsWithFiles);
+        return candidate.withGame(correctedGame).withRomsWithFiles(correctedOutputPaths);
       }),
     );
   }
@@ -131,7 +143,7 @@ export default class CandidateExtensionCorrector extends Module {
 
     if (correctedRom.getName().trim() === '') {
       // The ROM doesn't have any filename, default it. Because we never knew a file extension,
-      // doing this isn't considered "correction".
+      // doing this isn't considered a "correction".
       const romWithFilesIdx = candidate.getRomsWithFiles().indexOf(romWithFiles);
       correctedRom = correctedRom.withName(
         `${candidate
@@ -157,23 +169,12 @@ export default class CandidateExtensionCorrector extends Module {
       });
 
       try {
-        let fileSignature: FileSignature | undefined;
-        try {
-          fileSignature = await this.fileFactory.signatureFrom(romWithFiles.getInputFile());
-        } catch (error) {
-          this.progressBar.logError(
-            `${dat.getName()}: failed to correct file extension for '${romWithFiles
-              .getInputFile()
-              .toString()}': ${error}`,
-          );
-        }
-        if (fileSignature) {
-          // ROM file signature found, use the appropriate extension
-          const { dir, name } = path.parse(correctedRom.getName());
-          const correctedRomName = path.format({
-            dir,
-            name: name + fileSignature.getExtension(),
-          });
+        const correctedRomName = await this.correctFromFileSignature(
+          dat,
+          correctedRom,
+          romWithFiles.getInputFile(),
+        );
+        if (correctedRomName !== undefined) {
           correctedRom = correctedRom.withName(correctedRomName);
         }
       } finally {
@@ -184,5 +185,39 @@ export default class CandidateExtensionCorrector extends Module {
     });
 
     return correctedRom;
+  }
+
+  private async correctFromFileSignature(
+    dat: DAT,
+    correctedRom: ROM,
+    inputFile: File,
+  ): Promise<string | undefined> {
+    // Try to correct the name based on file signature
+    let fileSignature: FileSignature | undefined;
+    try {
+      fileSignature = await this.fileFactory.signatureFrom(inputFile);
+    } catch (error) {
+      this.progressBar.logError(
+        `${dat.getName()}: failed to correct file extension for '${inputFile.toString()}': ${error}`,
+      );
+    }
+    if (fileSignature !== undefined) {
+      const { dir, name } = path.parse(correctedRom.getName());
+      return path.format({
+        dir,
+        name: name + fileSignature.getExtension(),
+      });
+    }
+
+    // Strip the extension from files claiming to be an archive
+    const dotSplit = correctedRom.getName().split('.');
+    const archiveIndex = dotSplit.findIndex((_, idx) =>
+      FileFactory.isExtensionArchive(dotSplit.slice(0, idx + 1).join('.')),
+    );
+    if (archiveIndex !== -1) {
+      return dotSplit.slice(0, archiveIndex).join('.');
+    }
+
+    return undefined;
   }
 }
