@@ -139,7 +139,7 @@ jobs:
 
   npm-exec-branch-comment:
     # TODO(cemmer): need pull_request_target to comment
-    if: ${{ github.actor == 'emmercm' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    if: ${{ github.event.pull_request.user.login == 'emmercm' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     needs:
       - pkg-pr-new
       - test-npx
@@ -161,7 +161,7 @@ jobs:
 
   npm-exec-merge-comment:
     # TODO(cemmer): need pull_request_target to comment
-    if: ${{ github.actor == 'emmercm' && needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
+    if: ${{ github.event.pull_request.user.login == 'emmercm' && needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     needs:
       - path-filter
     permissions:
