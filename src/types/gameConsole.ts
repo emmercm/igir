@@ -548,7 +548,7 @@ export default class GameConsole {
         onion: 'ODYSSEY',
         pocket: 'odyssey2',
         retrodeck: 'odyssey2',
-        romm: 'odyssey-2-slash-videopac-g7000',
+        romm: 'odyssey-2',
       },
     ),
     // Mattel
