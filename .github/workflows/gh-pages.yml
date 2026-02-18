@@ -31,7 +31,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
       - id: filter
@@ -49,10 +49,11 @@ jobs:
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
-      - run: docker run --rm --volume "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD041 MD046 -- "**/*.md"
+      # TODO(cemmer): MD060, markdownlint doesn't like the way WebStorm aligns tables
+      - run: docker run --rm --volume "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD041 MD046 MD060 -- "**/*.md"
 
   build:
     needs:
@@ -60,7 +61,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.changes == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
@@ -72,22 +73,24 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           restore-keys: |
             mkdocs-v2-refs/heads/main
           path: .cache
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.x
       - run: |
+          set -x
           pip install --requirement docs/requirements.txt
+          sudo apt-get update
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs build --strict --verbose
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
@@ -112,7 +115,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
@@ -124,20 +127,22 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.x
       - run: |
+          set -x
           pip install --requirement docs/requirements.txt
+          sudo apt-get update
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
       - run: mkdocs gh-deploy --strict --verbose --force
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache

@@ -936,22 +936,24 @@ describe('should respect "--dir-letter"', () => {
 });
 
 describe('should respect "--dir-game-subdir"', () => {
-  test.each([
-    new SingleValueGame({
-      name: 'game',
-    }),
-    new SingleValueGame({
-      name: 'game',
-      roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-    }),
-    new SingleValueGame({
-      name: 'game',
-      roms: [
-        new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-        new ROM({ name: 'two.rom', size: 0, crc32: '' }),
-      ],
-    }),
-  ])('"never": %s', async (game) => {
+  test.each(
+    [
+      new SingleValueGame({
+        name: 'game',
+      }),
+      new SingleValueGame({
+        name: 'game',
+        roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+      }),
+      new SingleValueGame({
+        name: 'game',
+        roms: [
+          new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+          new ROM({ name: 'two.rom', size: 0, crc32: '' }),
+        ],
+      }),
+    ].map((game) => [game.getName(), game]),
+  )('"never": %s', async (_, game) => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,
@@ -968,31 +970,35 @@ describe('should respect "--dir-game-subdir"', () => {
     expect(outputPath.format()).toEqual(path.join(os.devNull, 'Dummy.rom'));
   });
 
-  test.each([
-    [
-      new SingleValueGame({
-        name: 'game',
-      }),
-      path.join(os.devNull, 'Dummy.rom'),
-    ],
-    [
-      new SingleValueGame({
-        name: 'game',
-        roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-      }),
-      path.join(os.devNull, 'Dummy.rom'),
-    ],
-    [
-      new SingleValueGame({
-        name: 'game',
-        roms: [
-          new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-          new ROM({ name: 'two.rom', size: 0, crc32: '' }),
+  test.each(
+    (
+      [
+        [
+          new SingleValueGame({
+            name: 'game',
+          }),
+          path.join(os.devNull, 'Dummy.rom'),
         ],
-      }),
-      path.join(os.devNull, 'game', 'Dummy.rom'),
-    ],
-  ])('"multiple": %s', async (game, expectedPath) => {
+        [
+          new SingleValueGame({
+            name: 'game',
+            roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+          }),
+          path.join(os.devNull, 'Dummy.rom'),
+        ],
+        [
+          new SingleValueGame({
+            name: 'game',
+            roms: [
+              new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+              new ROM({ name: 'two.rom', size: 0, crc32: '' }),
+            ],
+          }),
+          path.join(os.devNull, 'game', 'Dummy.rom'),
+        ],
+      ] satisfies [SingleValueGame, string][]
+    ).map(([game, expectedPath]) => [game.getName(), game, expectedPath]),
+  )('"multiple": %s', async (_, game, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,
@@ -1009,22 +1015,24 @@ describe('should respect "--dir-game-subdir"', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each([
-    new SingleValueGame({
-      name: 'game',
-    }),
-    new SingleValueGame({
-      name: 'game',
-      roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-    }),
-    new SingleValueGame({
-      name: 'game',
-      roms: [
-        new ROM({ name: 'one.rom', size: 0, crc32: '' }),
-        new ROM({ name: 'two.rom', size: 0, crc32: '' }),
-      ],
-    }),
-  ])('"always": %s', async (game) => {
+  test.each(
+    [
+      new SingleValueGame({
+        name: 'game',
+      }),
+      new SingleValueGame({
+        name: 'game',
+        roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+      }),
+      new SingleValueGame({
+        name: 'game',
+        roms: [
+          new ROM({ name: 'one.rom', size: 0, crc32: '' }),
+          new ROM({ name: 'two.rom', size: 0, crc32: '' }),
+        ],
+      }),
+    ].map((game) => [game.getName(), game]),
+  )('"always": %s', async (_, game) => {
     const options = new Options({
       commands: ['copy'],
       output: os.devNull,

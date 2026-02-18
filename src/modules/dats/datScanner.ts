@@ -96,6 +96,7 @@ export default class DATScanner extends Scanner {
     this.progressBar.logTrace(
       `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
+    this.progressBar.setName('Downloading DATs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
     return (
@@ -123,6 +124,10 @@ export default class DATScanner extends Scanner {
     this.progressBar.logTrace(
       `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
+    if (datFiles.length === 0) {
+      return [];
+    }
+    this.progressBar.setName('Parsing DATs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
     return (
@@ -137,6 +142,7 @@ export default class DATScanner extends Scanner {
           dat = await this.parseDatFile(datFile);
         } catch (error) {
           this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
+        } finally {
           childBar.delete();
         }
 
@@ -149,7 +155,7 @@ export default class DATScanner extends Scanner {
       })
     )
       .filter((dat) => dat !== undefined)
-      .sort((a, b) => a.getName().localeCompare(b.getName()));
+      .toSorted((a, b) => a.getName().localeCompare(b.getName()));
   }
 
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {
@@ -165,7 +171,7 @@ export default class DATScanner extends Scanner {
 
     dat ??= await datFile.createReadStream(async (readable) => {
       const fileContents = (await bufferPoly.fromReadable(readable)).toString();
-      return this.parseDatContents(datFile, fileContents);
+      return await this.parseDatContents(datFile, fileContents);
     });
 
     if (!dat) {
@@ -249,7 +255,7 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    return this.parseDatContents(mameExecutable, fileContents);
+    return await this.parseDatContents(mameExecutable, fileContents);
   }
 
   private async parseDatContents(datFile: File, fileContents: string): Promise<DAT | undefined> {
@@ -506,7 +512,7 @@ export default class DATScanner extends Scanner {
   }
 
   private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const rows: SmdbRow[] = [];
 
       const stream = parse<SmdbRow, SmdbRow>({

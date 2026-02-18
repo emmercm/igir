@@ -83,7 +83,7 @@ export default class ROMPadding implements ROMPaddingProps {
       return [];
     }
 
-    return file.createReadStream(async (readable) => {
+    return await file.createReadStream(async (readable) => {
       const readableWithCallback =
         callback === undefined
           ? readable
@@ -91,7 +91,7 @@ export default class ROMPadding implements ROMPaddingProps {
 
       const splitStreams = StreamPoly.split(readableWithCallback, this.POSSIBLE_FILL_BYTES.length);
 
-      return Promise.all(
+      return await Promise.all(
         this.POSSIBLE_FILL_BYTES.map(async (fillByte, idx) => {
           const paddedStream = StreamPoly.padEnd(splitStreams[idx], paddedSize, fillByte);
           const checksums = await FileChecksums.hashStream(paddedStream, file.getChecksumBitmask());

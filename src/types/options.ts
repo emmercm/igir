@@ -487,7 +487,7 @@ export default class Options implements OptionsProps {
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
 
-    this.output = options?.output?.replace(/[\\/]/g, path.sep);
+    this.output = options?.output?.replaceAll(/[\\/]/g, path.sep);
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatMirror = options?.dirDatMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
@@ -507,7 +507,7 @@ export default class Options implements OptionsProps {
     this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
-    this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
+    this.cleanBackup = options?.cleanBackup?.replaceAll(/[\\/]/g, path.sep);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipFormat = options?.zipFormat;
@@ -575,9 +575,9 @@ export default class Options implements OptionsProps {
 
     this.playlistExtensions = options?.playlistExtensions ?? [];
 
-    this.dir2datOutput = options?.dir2datOutput?.replace(/[\\/]/g, path.sep);
+    this.dir2datOutput = options?.dir2datOutput?.replaceAll(/[\\/]/g, path.sep);
 
-    this.fixdatOutput = options?.fixdatOutput?.replace(/[\\/]/g, path.sep);
+    this.fixdatOutput = options?.fixdatOutput?.replaceAll(/[\\/]/g, path.sep);
 
     this.reportOutput = (options?.reportOutput ?? process.cwd()).replaceAll(/[\\/]/g, path.sep);
 
@@ -766,7 +766,7 @@ export default class Options implements OptionsProps {
    * Scan for input files, and input files to exclude, and return the difference.
    */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.input,
       this.inputExclude,
       WalkMode.FILES,
@@ -779,10 +779,13 @@ export default class Options implements OptionsProps {
    * Scan for subdirectories in the input paths.
    */
   async scanInputSubdirectories(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
+    return await Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
   }
 
-  private static async scanPaths(
+  /**
+   * Scan for files or directories given some glob patterns.
+   */
+  static async scanPaths(
     globPatterns: string[],
     walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
@@ -840,7 +843,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await FsPoly.isDirectory(inputPath)) {
-      return FsPoly.walk(inputPath, walkMode, walkCallback);
+      return await FsPoly.walk(inputPath, walkMode, walkCallback);
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -854,7 +857,7 @@ export default class Options implements OptionsProps {
     // fg only uses forward-slash path separators
     const inputPathNormalized = inputPath.replaceAll('\\', '/');
     // Try to handle globs a little more intelligently (see the JSDoc below)
-    const inputPathEscaped = await this.sanitizeGlobPattern(inputPathNormalized);
+    const inputPathEscaped = this.sanitizeGlobPattern(inputPathNormalized);
 
     if (!inputPathEscaped) {
       // fast-glob will throw with empty-ish inputs
@@ -892,21 +895,18 @@ export default class Options implements OptionsProps {
    * and then tack on the glob at the end.
    * Example problematic paths:
    * ./TOSEC - DAT Pack - Complete (3983) (TOSEC-v2023-07-10)/TOSEC-ISO/Sega*
+   * ./No-Intro/Nintendo - Nintendo 64 (BigEndian)*\/**
    */
-  private static async sanitizeGlobPattern(globPattern: string): Promise<string> {
-    const pathsSplit = globPattern.split(/[\\/]/);
-    for (let i = 0; i < pathsSplit.length; i += 1) {
-      const subPath = pathsSplit.slice(0, i + 1).join('/');
-      if (subPath !== '' && !(await FsPoly.exists(subPath))) {
-        const dirname = pathsSplit.slice(0, i).join('/');
-        if (dirname === '') {
-          // fg won't let you escape empty strings
-          return pathsSplit.slice(i).join('/');
-        }
-        return `${fg.escapePath(dirname)}/${pathsSplit.slice(i).join('/')}`;
-      }
-    }
-    return globPattern;
+  private static sanitizeGlobPattern(globPattern: string): string {
+    return (
+      globPattern
+        // Escape parentheticals that aren't an extglob and probably aren't a "logical OR"
+        .replaceAll(/(^|[^?*+@!])\(([^|)]+)\)/g, '$1{\\(,}$2{\\),}')
+        // Escape curly braces that probably aren't a brace expression
+        .replaceAll(/\{([^.,}]+)\}/g, '{\\{,}$1{\\},}')
+        // Escape square brackets that might not be a regular expression character class
+        .replaceAll(/\[([^\]]+)\]/g, '{[$1],\\[$1\\]}')
+    );
   }
 
   getInputChecksumQuick(): boolean {
@@ -958,7 +958,7 @@ export default class Options implements OptionsProps {
    * Scan for DAT files, and DAT files to exclude, and return the difference.
    */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.dat,
       this.datExclude,
       WalkMode.FILES,
@@ -998,7 +998,7 @@ export default class Options implements OptionsProps {
    * Scan for patch files, and patch files to exclude, and return the difference.
    */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.patch,
       this.patchExclude,
       WalkMode.FILES,
@@ -1094,7 +1094,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude, WalkMode.FILES, undefined, false);
+    return await Options.scanPaths(this.cleanExclude, WalkMode.FILES, undefined, false);
   }
 
   /**
@@ -1120,7 +1120,7 @@ export default class Options implements OptionsProps {
         (filePath) =>
           !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),
       )
-      .sort();
+      .toSorted();
   }
 
   getCleanBackup(): string | undefined {

@@ -1,8 +1,10 @@
 import type { GameProps } from './game.js';
 import Game from './game.js';
 
-export interface SingleValueGameProps
-  extends Omit<GameProps, 'regions' | 'languages' | 'categories'> {
+export interface SingleValueGameProps extends Omit<
+  GameProps,
+  'regions' | 'languages' | 'categories'
+> {
   region?: string;
   language?: string;
   category?: string;

@@ -46,6 +46,10 @@ export default class WriteCandidate {
 
   // Immutable setters
 
+  withGame(game: SingleValueGame): WriteCandidate {
+    return new WriteCandidate(game, this.romsWithFiles);
+  }
+
   withRomsWithFiles(romsWithFiles: ROMWithFiles[]): WriteCandidate {
     if (
       romsWithFiles === this.romsWithFiles ||
@@ -67,7 +71,7 @@ export default class WriteCandidate {
     let hashCode = this.game.hashCode();
     hashCode += `|${this.romsWithFiles
       .map((romWithFiles) => romWithFiles.hashCode())
-      .sort()
+      .toSorted()
       .join(',')}`;
     return hashCode;
   }

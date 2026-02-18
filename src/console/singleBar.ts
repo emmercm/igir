@@ -238,7 +238,7 @@ export default class SingleBar extends ProgressBar {
     ) {
       return '';
     }
-    this.displayDelay = undefined;
+    this.displayDelay = undefined; // prevent unnecessary time math on the next format
 
     let output = ' '.repeat(this.indentSize);
 

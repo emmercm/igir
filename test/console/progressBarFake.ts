@@ -9,6 +9,10 @@ export default class ProgressBarFake extends ProgressBar {
     // @typescript-eslint/no-empty-function
   }
 
+  getName(): string | undefined {
+    return undefined;
+  }
+
   setName(): void {
     // @typescript-eslint/no-empty-function
   }

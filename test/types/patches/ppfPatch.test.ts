@@ -11,7 +11,7 @@ async function writeTemp(fileName: string, contents: string | Buffer): Promise<F
   const temp = await FsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
   await FsPoly.mkdir(path.dirname(temp), { recursive: true });
   await FsPoly.writeFile(temp, contents);
-  return File.fileOf({ filePath: temp });
+  return await File.fileOf({ filePath: temp });
 }
 
 describe('constructor', () => {
