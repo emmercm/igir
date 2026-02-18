@@ -20,9 +20,7 @@ export default class MameDAT extends DAT implements MameDATProps {
   // private readonly debug: 'yes' | 'no' = 'no';
 
   // @Expose()
-  // @Transform(({ value }: { value: undefined | string }) =>
-  //   value === undefined ? 0 : Number.parseInt(value),
-  // )
+  // TODO: when uncommenting this, it will need a @Transform
   // private readonly mameconfig: number = 0;
 
   @Expose()

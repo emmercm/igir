@@ -10,9 +10,7 @@ export default class DataArea {
   // readonly name?: string;
 
   // @Expose()
-  // @Transform(({ value }: { value: undefined | string }) =>
-  //   value === undefined ? 0 : Number.parseInt(value),
-  // )
+  // TODO: when uncommenting this, it will need a @Transform
   // readonly size?: number;
 
   @Expose()
