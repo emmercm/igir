@@ -43,7 +43,7 @@ SpruceOS has its BIOS folder at the root of the SD card at `/BIOS/`, per RetroAr
 
 ## ROMs
 
-SpruceOS uses its own folder structure similar to [OnionOS](../usage/handheld/onionos.md):
+SpruceOS uses its own folder structure similar to [OnionOS](onionos.md):
 
 === ":fontawesome-brands-windows: Windows"
 
