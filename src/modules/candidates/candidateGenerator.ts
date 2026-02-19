@@ -986,21 +986,22 @@ export default class CandidateGenerator extends Module {
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
-    const desiredPadding = inputFile.getPaddings().find((padding) => {
-      return (
-        (padding.getCrc32() !== undefined && padding.getCrc32() === rom.getCrc32()) ||
-        (padding.getMd5() !== undefined && padding.getMd5() === rom.getMd5()) ||
-        (padding.getSha1() !== undefined && padding.getSha1() === rom.getSha1()) ||
-        (padding.getSha256() !== undefined && padding.getSha256() === rom.getSha256())
-      );
-    });
-    if (desiredPadding !== undefined) {
-      outputFileCrc32 = desiredPadding.getCrc32();
-      outputFileMd5 = desiredPadding.getMd5();
-      outputFileSha1 = desiredPadding.getSha1();
-      outputFileSha256 = desiredPadding.getSha256();
-      outputFileSize = desiredPadding.getPaddedSize();
-    }
+    // TODO(cemmer): add this back when allowing file padding restoration
+    // const desiredPadding = inputFile.getPaddings().find((padding) => {
+    //   return (
+    //     (padding.getCrc32() !== undefined && padding.getCrc32() === rom.getCrc32()) ||
+    //     (padding.getMd5() !== undefined && padding.getMd5() === rom.getMd5()) ||
+    //     (padding.getSha1() !== undefined && padding.getSha1() === rom.getSha1()) ||
+    //     (padding.getSha256() !== undefined && padding.getSha256() === rom.getSha256())
+    //   );
+    // });
+    // if (desiredPadding !== undefined) {
+    //   outputFileCrc32 = desiredPadding.getCrc32();
+    //   outputFileMd5 = desiredPadding.getMd5();
+    //   outputFileSha1 = desiredPadding.getSha1();
+    //   outputFileSha256 = desiredPadding.getSha256();
+    //   outputFileSize = desiredPadding.getPaddedSize();
+    // }
 
     // Determine the output file type
     if (
