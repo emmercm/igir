@@ -13,7 +13,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 test.each([
   // One input path
-  [['test/fixtures/roms/**/*'], { roms: 36 }],
+  [['test/fixtures/roms/**/*'], { roms: 26 }],
   [['test/fixtures/roms/7z/*'], { '7z': 6 }],
   [['test/fixtures/roms/chd/*'], { chd: 4 }],
   [['test/fixtures/roms/cso/*'], { cso: 1 }],

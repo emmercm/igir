@@ -74,6 +74,8 @@ export default {
         });
         return true;
       },
+      parseTagValue: false, // don't try to parse any number-like values
+      parseAttributeValue: false, // don't try to parse any number-like values
       attributeNamePrefix: '',
     }).parse(xmlContents) as DATObjectProps;
   },

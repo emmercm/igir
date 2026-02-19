@@ -38,6 +38,14 @@ export default class ROM implements ROMProps {
   readonly name: string;
 
   @Expose()
+  @Transform(({ value }: { value: undefined | string | number }) => {
+    if (typeof value === 'number') {
+      return value;
+    } else if (typeof value === 'string') {
+      return Number.parseInt(value);
+    }
+    return 0;
+  })
   readonly size: number;
 
   @Expose({ name: 'crc' })

@@ -118,7 +118,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Apple-I',
-        romm: 'apple-i',
+        romm: 'apple',
       },
     ),
     new GameConsole(/Apple.*IIe?/i, ['.do', '.nib', '.po'], {
@@ -229,6 +229,7 @@ export default class GameConsole {
       mister: 'AtariLynx',
       miyoocfw: 'LYNX',
       onion: 'LYNX',
+      pocket: 'lynx',
       retrodeck: 'atarilynx',
       romm: 'lynx',
       spruce: 'LYNX',
@@ -399,6 +400,7 @@ export default class GameConsole {
       jelos: 'c64',
       mister: 'C64',
       onion: 'COMMODORE',
+      pocket: 'c64',
       retrodeck: 'c64',
       romm: 'c64',
       spruce: 'COMMODORE',
@@ -537,6 +539,7 @@ export default class GameConsole {
       {
         emulationstation: 'gmaster',
         retrodeck: 'gmaster',
+        romm: 'hartung',
       },
     ),
     // Interton
@@ -565,7 +568,7 @@ export default class GameConsole {
         onion: 'ODYSSEY',
         pocket: 'odyssey2',
         retrodeck: 'odyssey2',
-        romm: 'odyssey-2-slash-videopac-g7000',
+        romm: 'odyssey-2',
         spruce: 'ODYSSEY',
       },
     ),
@@ -613,7 +616,7 @@ export default class GameConsole {
       mister: 'MSX',
       onion: 'MSX',
       retrodeck: 'msx2',
-      romm: 'msx2',
+      romm: 'msx2plus',
       spruce: 'MSX',
     }),
     new GameConsole(/MSX TurboR/i, [], {
@@ -623,7 +626,7 @@ export default class GameConsole {
       mister: 'MSX',
       onion: 'MSX',
       retrodeck: 'msxturbor',
-      romm: 'msx',
+      romm: 'msx-turbo',
       spruce: 'MSX',
     }),
     new GameConsole(
@@ -689,7 +692,7 @@ export default class GameConsole {
       onion: 'PCE',
       pocket: 'pce',
       retrodeck: 'pcengine',
-      romm: 'turbografx16--1',
+      romm: 'tg16',
       spruce: 'PCE',
       twmenu: 'tg16',
     }),
@@ -709,7 +712,7 @@ export default class GameConsole {
         onion: 'PCECD',
         pocket: 'pcecd',
         retrodeck: 'pcenginecd',
-        romm: 'turbografx-16-slash-pc-engine-cd',
+        romm: 'turbografx-cd',
         spruce: 'PCECD',
       },
     ),
@@ -778,6 +781,7 @@ export default class GameConsole {
       jelos: 'gameandwatch',
       mister: 'GameNWatch',
       onion: 'GW',
+      pocket: 'gameandwatch',
       retrodeck: 'gameandwatch',
       romm: 'g-and-w',
       spruce: 'GW',
@@ -1135,7 +1139,7 @@ export default class GameConsole {
       onion: 'MD',
       pocket: 'genesis',
       retrodeck: 'megadrive',
-      romm: 'genesis-slash-megadrive',
+      romm: 'genesis',
       spruce: 'MD',
       twmenu: 'gen',
     }),
@@ -1195,7 +1199,7 @@ export default class GameConsole {
       mister: 'ZX81',
       onion: 'ZXEIGHTYONE',
       retrodeck: 'zx81',
-      romm: 'sinclair-zx81',
+      romm: 'zx80',
     }),
     new GameConsole(/ZX[ -]?81/i, [], {
       batocera: 'zx81',
@@ -1203,7 +1207,7 @@ export default class GameConsole {
       jelos: 'zx81',
       mister: 'ZX81',
       retrodeck: 'zx81',
-      romm: 'sinclair-zx81',
+      romm: 'zx81',
     }),
     new GameConsole(/ZX[ -]?Spectrum/i, ['.scl', '.szx', '.z80'], {
       adam: 'ZX',
@@ -1239,6 +1243,7 @@ export default class GameConsole {
         batocera: 'neogeocd',
         emulationstation: 'neogeocd',
         jelos: 'neocd',
+        mister: 'NeoGeo-CD',
         onion: 'NEOCD',
         retrodeck: 'neogeocd',
         romm: 'neo-geo-cd',
@@ -1283,7 +1288,7 @@ export default class GameConsole {
       miyoocfw: 'PS1',
       onion: 'PS',
       retrodeck: 'psx',
-      romm: 'ps',
+      romm: 'psx',
       spruce: 'PS',
     }),
     new GameConsole(
@@ -1343,7 +1348,7 @@ export default class GameConsole {
       emulationstation: 'ti99',
       mister: 'TI-99_4A',
       retrodeck: 'ti99',
-      romm: 'ti-994a',
+      romm: 'ti-99',
     }),
     // Tiger
     new GameConsole(/Game.?com/i, ['.tgc'], {
@@ -1398,7 +1403,7 @@ export default class GameConsole {
       onion: 'SUPERVISION',
       pocket: 'supervision',
       retrodeck: 'supervision',
-      romm: 'watara-slash-quickshot-supervision',
+      romm: 'supervision',
       spruce: 'SUPERVISION',
     }),
     // Wellback
