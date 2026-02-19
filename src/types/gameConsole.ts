@@ -87,6 +87,7 @@ export default class GameConsole {
       mister: 'AcornAtom',
       romm: 'atom',
     }),
+    // TODO: Acorn Electron
     // Amstrad
     new GameConsole(/CPC/i, [], {
       adam: 'AMSTRAD',
@@ -100,6 +101,7 @@ export default class GameConsole {
       spruce: 'CPC',
       twmenu: 'cpc',
     }),
+    // TODO: Amstrad GX4000
     new GameConsole(
       /PCW/i,
       [
@@ -133,6 +135,9 @@ export default class GameConsole {
       retrodeck: 'apple2gs',
       romm: 'apple-iigs',
     }),
+    // TODO: Apple III
+    // TODO: Apple Lisa
+    // TODO: Apple Pippin
     // Arduboy
     new GameConsole(/Arduboy/i, ['.arduboy', '.hex'], {
       batocera: 'arduboy',
@@ -220,6 +225,7 @@ export default class GameConsole {
       retrodeck: 'atarijaguar',
       romm: 'jaguar',
     }),
+    // TODO: Atari Jaguar CD
     new GameConsole(/Lynx/i, ['.lnx', '.lyx'], {
       adam: 'LYNX',
       batocera: 'lynx',
@@ -339,6 +345,7 @@ export default class GameConsole {
       ],
       {
         mister: 'Casio_PV-2000',
+        romm: 'casio-pv-2000',
       },
     ),
     // Commodore
@@ -473,6 +480,7 @@ export default class GameConsole {
       },
     ),
     // Epoch
+    // TODO: Epoch Cassette Vision
     new GameConsole(/Super Cassette Vision/i, [], {
       batocera: 'scv',
       emulationstation: 'scv',
@@ -555,6 +563,7 @@ export default class GameConsole {
       },
     ),
     // Magnavox
+    // TODO: Magnavox Odyssey
     new GameConsole(
       /Odyssey 2/i,
       [
@@ -573,6 +582,7 @@ export default class GameConsole {
       },
     ),
     // Mattel
+    // TODO: Mattel Aquarius
     new GameConsole(/Intellivision/i, ['.int'], {
       adam: 'INTELLI',
       batocera: 'intellivision',
@@ -759,6 +769,7 @@ export default class GameConsole {
       spruce: 'TIC80',
     }),
     // Nintendo
+    // TODO: Nintendo e-Reader
     new GameConsole(/FDS|(Famicom|Family) Computer Disk System/i, ['.fds'], {
       adam: 'FDS',
       batocera: 'fds',
@@ -929,12 +940,13 @@ export default class GameConsole {
       romm: 'satellaview',
       spruce: 'SATELLAVIEW',
     }),
-    new GameConsole(/Sufami/i, [], {
+    new GameConsole(/SuFami/i, [], {
       batocera: 'sufami',
       emulationstation: 'sufami',
       jelos: 'sufami',
       onion: 'SUFAMI',
       retrodeck: 'sufami',
+      romm: 'sufami-turbo',
       spruce: 'SUFAMI',
     }),
     new GameConsole(
@@ -962,6 +974,7 @@ export default class GameConsole {
       retrodeck: 'switch',
       romm: 'switch',
     }),
+    // TODO: Nintendo Switch 2
     new GameConsole(/Virtual Boy/i, ['.vb', '.vboy'], {
       adam: 'VB',
       batocera: 'virtualboy',
@@ -994,6 +1007,7 @@ export default class GameConsole {
       retrodeck: 'wiiu',
       romm: 'wiiu',
     }),
+    // TODO: Nokia N-Gage
     // Panasonic
     new GameConsole(
       /3DO/i,
@@ -1034,7 +1048,7 @@ export default class GameConsole {
         mister: 'Odyssey2',
         onion: 'VIDEOPAC',
         retrodeck: 'videopac',
-        romm: 'odyssey-2-slash-videopac-g7000',
+        romm: 'videopac-g7400',
         spruce: 'VIDEOPAC',
       },
     ),
@@ -1134,7 +1148,7 @@ export default class GameConsole {
       funkeyos: 'Sega Genesis',
       jelos: 'genesis',
       minui: 'Sega Genesis (MD)',
-      mister: 'Genesis',
+      mister: 'MegaDrive',
       miyoocfw: 'SMD',
       onion: 'MD',
       pocket: 'genesis',
@@ -1152,6 +1166,7 @@ export default class GameConsole {
         batocera: 'saturn',
         emulationstation: 'saturn',
         jelos: 'saturn',
+        mister: 'Saturn',
         retrodeck: 'saturn',
         romm: 'saturn',
         spruce: 'SATURN',
@@ -1221,6 +1236,7 @@ export default class GameConsole {
       spruce: 'ZXS',
     }),
     // SNK
+    // TODO: SNK Neo Geo AES (to separate from MVS)
     new GameConsole(/Neo ?Geo/i, [], {
       adam: 'NEOGEO',
       batocera: 'neogeo',
@@ -1273,7 +1289,7 @@ export default class GameConsole {
       onion: 'NGP',
       retrodeck: 'ngpc',
       romm: 'neo-geo-pocket-color',
-      sprue: 'NGPC',
+      spruce: 'NGPC',
       twmenu: 'ngp',
     }),
     // Sony
@@ -1311,6 +1327,8 @@ export default class GameConsole {
       retrodeck: 'ps3',
       romm: 'ps3',
     }),
+    // TODO: Sony PlayStation 4
+    // TODO: Sony PlayStation 5
     new GameConsole(/PlayStation ?Portable|psp/i, ['.cso'], {
       batocera: 'psp',
       emulationstation: 'psp',
@@ -1332,6 +1350,7 @@ export default class GameConsole {
       ],
       {},
     ),
+    // TODO: Sony PocketStation
     // Sord
     new GameConsole(
       /Sord[ -]M(5|five)/i,
@@ -1356,6 +1375,7 @@ export default class GameConsole {
       retrodeck: 'gamecom',
       romm: 'game-dot-com',
     }),
+    // TODO: Tiger Gizmondo
     // Timetop
     new GameConsole(
       /GameKing/i,
@@ -1366,6 +1386,7 @@ export default class GameConsole {
         pocket: 'game_king',
       },
     ),
+    // TODO: TomyTronic Scramble
     // VTech
     new GameConsole(
       /CreatiVision/i,
