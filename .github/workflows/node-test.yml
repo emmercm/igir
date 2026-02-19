@@ -71,8 +71,6 @@ jobs:
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
       - run: npm ci
-      # Lint the source files
-      - run: npm start -- --help
       - run: npm run lint
 
   # TODO(cemmer): check for deprecated dependencies
