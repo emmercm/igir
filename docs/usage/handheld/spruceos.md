@@ -2,7 +2,7 @@
 
 [SpruceOS](https://github.com/spruceUI/spruceOS) is a frontend overhaul for several devices, focusing on optimisation and debloating of the stock firmware they shipped with.
 
-Its folder structure is very similar to [OnionOS](../usage/handheld/onionos.md). However, SpruceOS supports additional consoles being emulated, most notably more optical media-based consoles, which may not work well on all devices.
+Its folder structure is very similar to [OnionOS](onionos.md). However, SpruceOS supports additional consoles being emulated, most notably more optical media-based consoles, which may not work well on all devices.
 
 ## BIOS
 
