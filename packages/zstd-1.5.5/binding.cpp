@@ -462,12 +462,12 @@ private:
     bool isEnd_;
 };
 
-class ThreadedDecompressor : public Napi::ObjectWrap<ThreadedDecompressor> {
+class Decompressor : public Napi::ObjectWrap<Decompressor> {
 public:
     static Napi::Object Init(Napi::Env env, Napi::Object exports) {
         Napi::Function func = DefineClass(env, "Decompressor", {
-            InstanceMethod("decompressChunk", &ThreadedDecompressor::DecompressChunk),
-            InstanceMethod("end", &ThreadedDecompressor::End), // Added End
+            InstanceMethod("decompressChunk", &Decompressor::DecompressChunk),
+            InstanceMethod("end", &Decompressor::End), // Added End
         });
         constructor = Napi::Persistent(func);
         constructor.SuppressDestruct();
@@ -475,12 +475,12 @@ public:
         return exports;
     }
 
-    ThreadedDecompressor(const Napi::CallbackInfo& info)
-        : Napi::ObjectWrap<ThreadedDecompressor>(info), dctx_(nullptr), finalized_(false) {
+    Decompressor(const Napi::CallbackInfo& info)
+        : Napi::ObjectWrap<Decompressor>(info), dctx_(nullptr), finalized_(false) {
         dctx_ = ZSTD_createDCtx();
     }
 
-    ~ThreadedDecompressor() {
+    ~Decompressor() {
         std::lock_guard<std::mutex> lock(mutex_);
         if (dctx_) ZSTD_freeDCtx(dctx_);
     }
@@ -528,11 +528,11 @@ private:
     bool finalized_;
 };
 
-Napi::FunctionReference ThreadedDecompressor::constructor;
+Napi::FunctionReference Decompressor::constructor;
 
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     ThreadedCompressor::Init(env, exports);
-    ThreadedDecompressor::Init(env, exports);
+    Decompressor::Init(env, exports);
     exports.Set("compressNonThreaded", Napi::Function::New(env, CompressNonThreaded));
     exports.Set("getZstdVersion", Napi::Function::New(env, GetZstdVersion));
     return exports;
