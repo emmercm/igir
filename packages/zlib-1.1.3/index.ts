@@ -1,14 +1,10 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import module from 'node:module';
 
-// @ts-expect-error @types/node-gyp-build doesn't exist
-import nodeGypBuild from 'node-gyp-build';
+import { getPrebuildPath } from './macros.js' with { type: 'macro' };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const require = module.createRequire(import.meta.url);
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-const zlib = nodeGypBuild(path.join(__dirname, 'addon-zlib-1.1.3')) as {
+export interface ZlibBinding {
   Deflater: new (level?: number) => DeflaterInstance;
 
   /**
@@ -22,7 +18,7 @@ const zlib = nodeGypBuild(path.join(__dirname, 'addon-zlib-1.1.3')) as {
   Z_SYNC_FLUSH: number;
   Z_FULL_FLUSH: number;
   Z_FINISH: number;
-};
+}
 
 export interface DeflaterInstance {
   /**
@@ -56,4 +52,11 @@ export type ZlibCompressionLevelKey = keyof typeof ZlibCompressionLevel;
 export type ZlibCompressionLevelValue =
   (typeof ZlibCompressionLevel)[keyof typeof ZlibCompressionLevel];
 
+const zlib = ((): ZlibBinding => {
+  try {
+    return require(getPrebuildPath()) as ZlibBinding;
+  } catch {
+    return require(`./addon-zlib-1.1.3/build/Release/zlib.node`) as ZlibBinding;
+  }
+})();
 export default zlib;

@@ -1,11 +1,9 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import module from 'node:module';
+import stream from 'node:stream';
 
-// @ts-expect-error @types/node-gyp-build doesn't exist
-import nodeGypBuild from 'node-gyp-build';
+import { getPrebuildPath } from './macros.js' with { type: 'macro' };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const require = module.createRequire(import.meta.url);
 
 /**
  * Options for configuring the {@link ThreadedCompressor}.
@@ -26,7 +24,7 @@ export interface ZstdThreadedCompressorOptions {
 }
 
 /**
- * Interface for the zstd native binding.
+ * Interface for the zstd native binding and high-level API.
  */
 interface ZstdBinding {
   /**
@@ -35,6 +33,11 @@ interface ZstdBinding {
   ThreadedCompressor: new (
     options?: ZstdThreadedCompressorOptions | number,
   ) => ZstdThreadedCompressorInstance;
+
+  /**
+   * The {@link Decompressor} class for streaming zstd decompression.
+   */
+  Decompressor: new () => ZstdDecompressorInstance;
 
   /**
    * Compress data without using threads.
@@ -68,6 +71,109 @@ export interface ZstdThreadedCompressorInstance {
   end: () => Promise<Buffer>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-const zstd = nodeGypBuild(path.join(__dirname, 'addon-zstd-1.5.5')) as ZstdBinding;
-export default zstd;
+/**
+ * Interface for the {@link Decompressor} instance methods.
+ */
+export interface ZstdDecompressorInstance {
+  /**
+   * Decompresses a chunk of data asynchronously.
+   * @param chunk Buffer containing compressed data
+   * @returns Promise resolving to a Buffer containing decompressed data
+   */
+  decompressChunk: (chunk: Buffer) => Promise<Buffer>;
+
+  /**
+   * Finalizes the decompression stream asynchronously and cleans up native resources.
+   * After calling this method, the decompressor cannot be used anymore.
+   * @returns Promise resolving to a Buffer containing any final decompressed data
+   */
+  end: () => Promise<Buffer>;
+}
+
+/**
+ * A Node.js Transform stream for Zstd decompression.
+ */
+export class ZstdDecompressStream extends stream.Transform {
+  private readonly decompressor: ZstdDecompressorInstance = new zstd.Decompressor();
+  private decompressorEnded = false;
+
+  /**
+   * Decompress the chunk and emit the result.
+   */
+  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: stream.TransformCallback): void {
+    if (this.decompressorEnded) {
+      callback(new Error('cannot decompress after the compressor has been ended'));
+      return;
+    }
+
+    this.decompressor
+      .decompressChunk(chunk)
+      .then((decompressedChunk) => {
+        if (decompressedChunk.length > 0) {
+          this.push(decompressedChunk);
+        }
+        callback();
+      })
+      .catch(callback);
+  }
+
+  /**
+   * @param callback Function to call when flushing is complete
+   */
+  _flush(callback: stream.TransformCallback): void {
+    this.finalizeDecompressor(callback);
+  }
+
+  /**
+   * Clean up native resources.
+   */
+  _destroy(err: Error | null, callback: (error: Error | null) => void): void {
+    this.cleanup((cleanupError) => {
+      if (cleanupError) {
+        callback(cleanupError);
+      } else {
+        callback(err);
+      }
+    });
+  }
+
+  /**
+   * Clean up method to be called when the stream ends.
+   */
+  private cleanup(callback: stream.TransformCallback): void {
+    this.finalizeDecompressor(callback);
+  }
+
+  /**
+   * Finalize the compressor and emit the final output.
+   */
+  private finalizeDecompressor(callback: stream.TransformCallback): void {
+    if (this.decompressorEnded) {
+      callback();
+      return;
+    }
+    this.decompressorEnded = true;
+
+    this.decompressor
+      .end()
+      .then((finalData) => {
+        if (finalData.length > 0) {
+          this.push(finalData);
+        }
+        callback();
+      })
+      .catch(callback);
+  }
+}
+
+const zstd = ((): ZstdBinding => {
+  try {
+    return require(getPrebuildPath()) as ZstdBinding;
+  } catch {
+    return require(`./addon-zstd-1.5.5/build/Release/binding.node`) as ZstdBinding;
+  }
+})();
+export default {
+  ...zstd,
+  DecompressStream: ZstdDecompressStream,
+};

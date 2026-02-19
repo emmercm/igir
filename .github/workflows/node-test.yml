@@ -122,7 +122,6 @@ jobs:
         shell: bash
         run: |
           rm -rf packages/*/addon* packages/*/prebuilds*
-          rm -rf node_modules/zstd-napi/build
       - run: npm install --foreground-scripts
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |

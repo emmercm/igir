@@ -2,9 +2,8 @@ import fs from 'node:fs';
 import stream from 'node:stream';
 import zlib from 'node:zlib';
 
-import zstd from 'zstd-napi';
-
 import StreamPoly from '../../../src/polyfill/streamPoly.js';
+import zstd from '../../zstd-1.5.5/index.js';
 import type CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
 import type { CompressionMethodValue, IFileRecord } from './fileRecord.js';
 import FileRecord, { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
