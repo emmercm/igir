@@ -130,7 +130,7 @@ export default class IndexedFiles {
       }
 
       for (const romPadding of file.getPaddings()) {
-        const paddedCrc32 = romPadding.getCrc32();
+        const paddedCrc32 = `${romPadding.getCrc32()}|${romPadding.getPaddedSize()}`;
         if (paddedCrc32) {
           if (crc32PaddedMap.has(paddedCrc32)) {
             crc32PaddedMap.get(paddedCrc32)?.push(file);
