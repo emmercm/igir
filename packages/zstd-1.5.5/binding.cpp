@@ -530,6 +530,15 @@ private:
 
 Napi::FunctionReference Decompressor::constructor;
 
+/*
+ *  _____       _ _
+ * |_   _|     (_) |
+ *   | |  _ __  _| |_
+ *   | | | '_ \| | __|
+ *  _| |_| | | | | |_
+ * |_____|_| |_|_|\__|
+ */
+
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     ThreadedCompressor::Init(env, exports);
     Decompressor::Init(env, exports);
