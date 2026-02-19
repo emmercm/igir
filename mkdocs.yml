@@ -87,6 +87,7 @@ nav:
         - usage/desktop/retrodeck.md
         - usage/desktop/retropie.md
         - usage/desktop/romm.md
+        - usage/handheld/spruceos.md
         - usage/handheld/twmenu.md
       - FPGA:
         - usage/hardware/mister.md
