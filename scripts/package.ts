@@ -7,6 +7,7 @@ import caxa from 'caxa';
 import esbuild from 'esbuild';
 import type { Options as GlobOptions } from 'fast-glob';
 import fg from 'fast-glob';
+import macros from 'unplugin-parcel-macros';
 import yargs from 'yargs';
 
 import Timer from '../src/async/timer.js';
@@ -85,6 +86,7 @@ await esbuild.build({
   bundle: true,
   packages: 'external',
   format: 'esm',
+  plugins: [macros.esbuild()],
   // TODO(cemmer): enable source maps here and in caxa runtime?
 });
 
