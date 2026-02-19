@@ -1,12 +1,12 @@
 # SpruceOS
 
-[SpruceOS](https://github.com/spruceUI/spruceOS) is a frontend overhaul for several devices with the focus of optimisation and debloating of the stock firmware they shipped with.
+[SpruceOS](https://github.com/spruceUI/spruceOS) is a frontend overhaul for several devices, focusing on optimisation and debloating of the stock firmware they shipped with.
 
-It's folder structure is very similar to [OnionOS](../usage/handheld/onionos.md), however SpruceOS supports additional consoles being emulated, most notably more optical media based consoles which may not work well on all devices.
+Its folder structure is very similar to [OnionOS](../usage/handheld/onionos.md). However, SpruceOS supports additional consoles being emulated, most notably more optical media-based consoles, which may not work well on all devices.
 
 ## BIOS
 
-SpruceOS has its BIOS folder at the root of the SD card at `/BIOS/` per RetroArch requirements. More information can be found on their wiki page on [adding BIOS]([10. Adding BIOS · spruceUI/spruceOS Wiki · GitHub](https://github.com/spruceUI/spruceOS/wiki/10.-Adding-BIOS):
+SpruceOS has its BIOS folder at the root of the SD card at `/BIOS/`, per RetroArch requirements. More information can be found on their wiki page on [adding BIOS]([10. Adding BIOS · spruceUI/spruceOS Wiki · GitHub](https://github.com/spruceUI/spruceOS/wiki/10.-Adding-BIOS):
 
 === ":fontawesome-brands-windows: Windows"
 
@@ -43,7 +43,7 @@ SpruceOS has its BIOS folder at the root of the SD card at `/BIOS/` per RetroArc
 
 ## ROMs
 
-SpruceOS uses its own folder structure similar to [OnionOS](../usage/handheld/onionos.md)
+SpruceOS uses its own folder structure similar to [OnionOS](../usage/handheld/onionos.md):
 
 === ":fontawesome-brands-windows: Windows"
 
