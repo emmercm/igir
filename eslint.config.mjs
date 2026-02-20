@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { FlatCompat } from '@eslint/eslintrc';
 import eslint from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
-import eslintPluginJest from 'eslint-plugin-jest';
+import eslintPluginVitest from '@vitest/eslint-plugin';
 import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
@@ -75,7 +75,17 @@ export default [
   eslintPluginUnicorn.configs.recommended,
   eslintPluginJsdoc.configs['flat/recommended-typescript-error'],
   {
-    ...eslintPluginJest.configs['flat/recommended'],
+    plugins: { vitest: eslintPluginVitest },
+    rules: {
+      ...eslintPluginVitest.configs.recommended.rules,
+      'vitest/expect-expect': 'off',
+      'vitest/no-unneeded-async-expect-function': 'off', // for Jest compatability for now
+    },
+    settings: {
+      vitest: {
+        typecheck: true,
+      },
+    },
   },
   {
     plugins: {
@@ -99,7 +109,7 @@ export default [
       },
       sourceType: 'module',
       globals: {
-        ...eslintPluginJest.environments.globals.globals,
+        ...eslintPluginVitest.environments.env.globals,
       },
     },
   },
@@ -207,10 +217,6 @@ export default [
       // ***** eslint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
-
-      // ***** plugin:jest/recommended *****
-      // A lot of test files define their own expect functions
-      'jest/expect-expect': 'off',
     },
   },
   {

@@ -2246,7 +2246,7 @@ describe('link', () => {
         expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
           outputFilesBefore.map((pair) => pair[0]),
         );
-        /* eslint-disable jest/no-conditional-expect */
+        /* eslint-disable vitest/no-conditional-expect */
         if (linkMode === LinkModeInverted[LinkMode.HARDLINK]) {
           // Hard links are always created with the same inode and times
           expect(outputFilesAfter).toEqual(outputFilesBefore);
@@ -2312,7 +2312,7 @@ describe('link', () => {
         expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
           outputFilesBefore.map((pair) => pair[0]),
         );
-        /* eslint-disable jest/no-conditional-expect */
+        /* eslint-disable vitest/no-conditional-expect */
         if (linkMode === LinkModeInverted[LinkMode.HARDLINK]) {
           // Hard links are always created with the same inode and times
           expect(outputFilesAfter).toEqual(outputFilesBefore);

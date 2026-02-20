@@ -207,8 +207,8 @@
         matchUpdateTypes: ['patch', 'minor'],
       },
       {
-        // Hold back ESLint major updates, plugins such as eslint-plugin-jest and
-        // eslint-plugin-unicorn usually need to be updated first
+        // Hold back ESLint major updates, plugins such as eslint-plugin-unicorn usually need to
+        // be updated first
         matchPackagePatterns: ['eslint'],
         matchUpdateTypes: ['major'],
         minimumReleaseAge: '14 days',
@@ -221,18 +221,6 @@
         ],
         matchUpdateTypes: ['major', 'minor'],
         schedule: 'at any time',
-      },
-      {
-        // Group Jest together because of peerDependencies
-        matchPackageNames: [
-          '@jest/globals',
-          '@types/jest',
-          'jest',
-          'ts-jest',
-        ],
-        groupName: 'Jest',
-        // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor'],
       },
       {
         // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)
