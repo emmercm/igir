@@ -690,7 +690,7 @@ export default class GameConsole {
       },
     ),
     // NEC
-    new GameConsole(/PC Engine|TurboGrafx/i, ['.pce'], {
+    new GameConsole(/PC Engine/i, ['.pce'], {
       adam: 'PCE',
       batocera: 'pcengine',
       emulationstation: 'pcengine',
@@ -706,8 +706,24 @@ export default class GameConsole {
       spruce: 'PCE',
       twmenu: 'tg16',
     }),
+    new GameConsole(/TurboGrafx/i, [], {
+      adam: 'PCE',
+      batocera: 'pcengine',
+      emulationstation: 'tg16', // differs from PC Engine
+      funkeyos: 'PCE-TurboGrafx',
+      jelos: 'tg16',
+      minui: 'TurboGrafx-16 (PCE)',
+      mister: 'TGFX16',
+      miyoocfw: 'PCE',
+      onion: 'PCE',
+      pocket: 'pce',
+      retrodeck: 'pcengine',
+      romm: 'tg16',
+      spruce: 'PCE',
+      twmenu: 'tg16',
+    }),
     new GameConsole(
-      /(PC Engine|TurboGrafx) CD/i,
+      /PC Engine CD/i,
       [
         /* '.bin', '.cue' */
       ],
@@ -726,6 +742,20 @@ export default class GameConsole {
         spruce: 'PCECD',
       },
     ),
+    new GameConsole(/TurboGrafx CD/i, [], {
+      adam: 'PCECD',
+      batocera: 'pcenginecd',
+      emulationstation: 'tg-cd', // differs from PC Engine CD
+      jelos: 'tg16cd',
+      minui: 'TurboGrafx-16 CD (PCE)',
+      mister: 'TGFX16-CD',
+      miyoocfw: 'PCE',
+      onion: 'PCECD',
+      pocket: 'pcecd',
+      retrodeck: 'pcenginecd',
+      romm: 'turbografx-cd',
+      spruce: 'PCECD',
+    }),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
       batocera: 'supergrafx',
       emulationstation: 'supergrafx',
@@ -1097,7 +1127,19 @@ export default class GameConsole {
       batocera: 'sega32x',
       emulationstation: 'sega32x',
       jelos: 'sega32x',
-      minui: 'Sega 32X (MD)', // added for sorting convenience
+      minui: 'Sega 32X (MD)',
+      mister: 'S32X',
+      onion: 'THIRTYTWOX',
+      retrodeck: 'sega32x',
+      romm: 'sega32',
+      spruce: 'THIRTYTWOX',
+    }),
+    new GameConsole(/(Super|Mega Drive) 32X/i, [], {
+      adam: '32X',
+      batocera: 'sega32x',
+      emulationstation: 'sega32xjp', // differs from Genesis 32X
+      jelos: 'sega32x',
+      minui: 'Sega 32X (MD)',
       mister: 'S32X',
       onion: 'THIRTYTWOX',
       retrodeck: 'sega32x',
@@ -1151,7 +1193,7 @@ export default class GameConsole {
       twmenu: 'sms',
     }),
     new GameConsole(
-      /(Mega|Sega) CD/i,
+      /Sega CD/i,
       [
         /* '.bin', '.cue' */
       ],
@@ -1160,7 +1202,7 @@ export default class GameConsole {
         batocera: 'segacd',
         emulationstation: 'segacd',
         jelos: 'segacd',
-        minui: 'Sega CD (MD)', // added for sorting convenience
+        minui: 'Sega CD (MD)',
         mister: 'MegaCD',
         miyoocfw: 'SMD',
         onion: 'SEGACD',
@@ -1169,6 +1211,19 @@ export default class GameConsole {
         spruce: 'SEGACD',
       },
     ),
+    new GameConsole(/Mega[ -]CD/i, [], {
+      adam: 'SEGACD',
+      batocera: 'segacd',
+      emulationstation: 'megacdjp', // differs from Sega CD
+      jelos: 'segacd',
+      minui: 'Sega CD (MD)',
+      mister: 'MegaCD',
+      miyoocfw: 'SMD',
+      onion: 'SEGACD',
+      retrodeck: 'segacd',
+      romm: 'segacd',
+      spruce: 'SEGACD',
+    }),
     new GameConsole(/Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], {
       adam: 'MD',
       batocera: 'megadrive',
@@ -1208,7 +1263,7 @@ export default class GameConsole {
       ],
       {
         batocera: 'saturn',
-        emulationstation: 'saturn',
+        emulationstation: 'saturn', // "saturnjp" is also available
         jelos: 'saturn',
         mister: 'Saturn',
         retrodeck: 'saturn',
@@ -1316,7 +1371,7 @@ export default class GameConsole {
       emulationstation: 'ngp',
       funkeyos: 'Neo Geo Pocket',
       jelos: 'ngp',
-      minui: 'Neo Geo Pocket (NGPC)', // added for sorting convenience
+      minui: 'Neo Geo Pocket (NGPC)',
       onion: 'NGP',
       retrodeck: 'ngp',
       romm: 'neo-geo-pocket',
@@ -1329,7 +1384,7 @@ export default class GameConsole {
       emulationstation: 'ngpc',
       funkeyos: 'Neo Geo Pocket',
       jelos: 'ngpc',
-      minui: 'Neo Geo Pocket Color (NGPC)', // added for sorting convenience
+      minui: 'Neo Geo Pocket Color (NGPC)',
       onion: 'NGP',
       retrodeck: 'ngpc',
       romm: 'neo-geo-pocket-color',
