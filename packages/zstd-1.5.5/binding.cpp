@@ -5,6 +5,17 @@
 #include <cstring>
 #include "deps/zstd/lib/zstd.h"
 
+/*
+ *   _____
+ *  / ____|
+ * | |     ___  _ __ ___  _ __  _ __ ___  ___ ___  ___  _ __
+ * | |    / _ \| '_ ` _ \| '_ \| '__/ _ \/ __/ __|/ _ \| '__|
+ * | |___| (_) | | | | | | |_) | | |  __/\__ \__ \ (_) | |
+ *  \_____\___/|_| |_| |_| .__/|_|  \___||___/___/\___/|_|
+ *                       | |
+ *                       |_|
+ */
+
 // Promise-based worker for compression operations
 class CompressPromiseWorker : public Napi::AsyncWorker {
 public:
@@ -369,8 +380,168 @@ Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
     return Napi::Buffer<uint8_t>::Copy(env, compressed.data(), compressedSize);
 }
 
+/*
+ *  _____
+ * |  __ \
+ * | |  | | ___  ___ ___  _ __ ___  _ __  _ __ ___  ___ ___  ___  _ __
+ * | |  | |/ _ \/ __/ _ \| '_ ` _ \| '_ \| '__/ _ \/ __/ __|/ _ \| '__|
+ * | |__| |  __/ (_| (_) | | | | | | |_) | | |  __/\__ \__ \ (_) | |
+ * |_____/ \___|\___\___/|_| |_| |_| .__/|_|  \___||___/___/\___/|_|
+ *                                 | |
+ *                                 |_|
+ */
+
+// Updated Decompress Worker to handle finalization
+class DecompressPromiseWorker : public Napi::AsyncWorker {
+public:
+    DecompressPromiseWorker(std::shared_ptr<Napi::Promise::Deferred> deferred,
+                            std::vector<uint8_t> input,
+                            ZSTD_DCtx* dctx,
+                            bool isEnd = false)
+        : Napi::AsyncWorker(deferred->Env()),
+          deferred_(deferred),
+          input_(std::move(input)),
+          dctx_(dctx),
+          isEnd_(isEnd) {}
+
+    void Execute() override {
+        if (!dctx_) {
+            SetError("Decompression context is invalid");
+            return;
+        }
+
+        // If this is just an 'end' call with no data, we check for truncation
+        if (isEnd_ && input_.empty()) {
+            // ZSTD_decompressStream returns 0 when a frame is completely decoded.
+            // If the context isn't at a frame boundary, it might be truncated.
+            // However, we'll focus on cleanup for this implementation.
+            ZSTD_freeDCtx(dctx_);
+            return;
+        }
+
+        ZSTD_inBuffer inBuff = { input_.data(), input_.size(), 0 };
+        const size_t outBuffSize = ZSTD_DStreamOutSize();
+        std::vector<uint8_t> tempBuffer(outBuffSize);
+
+        while (inBuff.pos < inBuff.size) {
+            ZSTD_outBuffer outBuff = { tempBuffer.data(), tempBuffer.size(), 0 };
+            size_t const ret = ZSTD_decompressStream(dctx_, &outBuff, &inBuff);
+
+            if (ZSTD_isError(ret)) {
+                SetError(std::string("Decompression error: ") + ZSTD_getErrorName(ret));
+                return;
+            }
+
+            if (outBuff.pos > 0) {
+                size_t currentSize = result_.size();
+                result_.resize(currentSize + outBuff.pos);
+                std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
+            }
+        }
+
+        if (isEnd_) {
+            ZSTD_freeDCtx(dctx_);
+        }
+    }
+
+    void OnOK() override {
+        Napi::HandleScope scope(Env());
+        deferred_->Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
+    }
+
+    void OnError(const Napi::Error& e) override {
+        Napi::HandleScope scope(Env());
+        deferred_->Reject(e.Value());
+    }
+
+private:
+    std::shared_ptr<Napi::Promise::Deferred> deferred_;
+    std::vector<uint8_t> input_;
+    ZSTD_DCtx* dctx_;
+    std::vector<uint8_t> result_;
+    bool isEnd_;
+};
+
+class Decompressor : public Napi::ObjectWrap<Decompressor> {
+public:
+    static Napi::Object Init(Napi::Env env, Napi::Object exports) {
+        Napi::Function func = DefineClass(env, "Decompressor", {
+            InstanceMethod("decompressChunk", &Decompressor::DecompressChunk),
+            InstanceMethod("end", &Decompressor::End), // Added End
+        });
+        constructor = Napi::Persistent(func);
+        constructor.SuppressDestruct();
+        exports.Set("Decompressor", func);
+        return exports;
+    }
+
+    Decompressor(const Napi::CallbackInfo& info)
+        : Napi::ObjectWrap<Decompressor>(info), dctx_(nullptr), finalized_(false) {
+        dctx_ = ZSTD_createDCtx();
+    }
+
+    ~Decompressor() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (dctx_) ZSTD_freeDCtx(dctx_);
+    }
+
+    Napi::Value DecompressChunk(const Napi::CallbackInfo& info) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        Napi::Env env = info.Env();
+
+        if (finalized_ || !dctx_) {
+            Napi::Error::New(env, "Decompressor finalized").ThrowAsJavaScriptException();
+            return env.Undefined();
+        }
+
+        auto inputBuffer = info[0].As<Napi::Buffer<uint8_t>>();
+        auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
+        std::vector<uint8_t> dataCopy(inputBuffer.Data(), inputBuffer.Data() + inputBuffer.Length());
+
+        (new DecompressPromiseWorker(deferred, std::move(dataCopy), dctx_))->Queue();
+        return deferred->Promise();
+    }
+
+    Napi::Value End(const Napi::CallbackInfo& info) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        Napi::Env env = info.Env();
+
+        auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
+
+        if (finalized_ || !dctx_) {
+            deferred->Resolve(Napi::Buffer<uint8_t>::New(env, 0));
+            return deferred->Promise();
+        }
+
+        ZSTD_DCtx* ctx_to_free = dctx_;
+        dctx_ = nullptr; // Hand off ownership to the worker
+        finalized_ = true;
+
+        (new DecompressPromiseWorker(deferred, {}, ctx_to_free, true))->Queue();
+        return deferred->Promise();
+    }
+
+private:
+    static Napi::FunctionReference constructor;
+    std::mutex mutex_;
+    ZSTD_DCtx* dctx_;
+    bool finalized_;
+};
+
+Napi::FunctionReference Decompressor::constructor;
+
+/*
+ *  _____       _ _
+ * |_   _|     (_) |
+ *   | |  _ __  _| |_
+ *   | | | '_ \| | __|
+ *  _| |_| | | | | |_
+ * |_____|_| |_|_|\__|
+ */
+
 Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     ThreadedCompressor::Init(env, exports);
+    Decompressor::Init(env, exports);
     exports.Set("compressNonThreaded", Napi::Function::New(env, CompressNonThreaded));
     exports.Set("getZstdVersion", Napi::Function::New(env, GetZstdVersion));
     return exports;
