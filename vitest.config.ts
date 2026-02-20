@@ -1,6 +1,29 @@
+import path from 'node:path';
+
 import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  plugins: [
+    {
+      name: 'native-addon-resolver',
+      resolveId(source, importer, options): { id: string; external: boolean } | undefined {
+        // Handle imports with { type: "file" } attribute
+        if (options.attributes.type === 'file' && source.endsWith('.node') && importer) {
+          const importerDir = path.dirname(importer);
+          return { id: path.resolve(importerDir, source), external: false };
+        }
+        return undefined;
+      },
+      load(id): string | undefined {
+        // For .node files imported with type: "file", return the path as a string
+        if (id.endsWith('.node')) {
+          return `export default ${JSON.stringify(id)};`;
+        }
+        return undefined;
+      },
+    },
+  ],
+
   test: {
     globals: true,
     environment: 'node',
