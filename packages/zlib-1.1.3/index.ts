@@ -1,6 +1,5 @@
 import module from 'node:module';
-
-import { getPrebuildPath } from './macros.js' with { type: 'macro' };
+import os from 'node:os';
 
 const require = module.createRequire(import.meta.url);
 
@@ -52,11 +51,41 @@ export type ZlibCompressionLevelKey = keyof typeof ZlibCompressionLevel;
 export type ZlibCompressionLevelValue =
   (typeof ZlibCompressionLevel)[keyof typeof ZlibCompressionLevel];
 
+// TODO(cemmer): this will cause compilers like Bun to include every architecture's prebuild
+//  into every binary, but Parcel import attribute macros require all code to be bundled
+import darwinArm64 from './addon-zlib-1.1.3/prebuilds/darwin-arm64/node.node' with { type: 'file' };
+import darwinX64 from './addon-zlib-1.1.3/prebuilds/darwin-x64/node.node' with { type: 'file' };
+import linuxArm64 from './addon-zlib-1.1.3/prebuilds/linux-arm64/node.node' with { type: 'file' };
+import linuxX64 from './addon-zlib-1.1.3/prebuilds/linux-x64/node.node' with { type: 'file' };
+import win32Arm64 from './addon-zlib-1.1.3/prebuilds/win32-arm64/node.node' with { type: 'file' };
+import win32X64 from './addon-zlib-1.1.3/prebuilds/win32-x64/node.node' with { type: 'file' };
+
 const zlib = ((): ZlibBinding => {
   try {
-    return require(getPrebuildPath()) as ZlibBinding;
+    console.log(`${os.platform()}-${os.arch()}`);
+    switch (`${os.platform()}-${os.arch()}`) {
+      case 'darwin-arm64': {
+        return require(darwinArm64) as ZlibBinding;
+      }
+      case 'darwin-x64': {
+        return require(darwinX64) as ZlibBinding;
+      }
+      case 'linux-arm64': {
+        return require(linuxArm64) as ZlibBinding;
+      }
+      case 'linux-x64': {
+        return require(linuxX64) as ZlibBinding;
+      }
+      case 'win32-arm64': {
+        return require(win32Arm64) as ZlibBinding;
+      }
+      case 'win32-x64': {
+        return require(win32X64) as ZlibBinding;
+      }
+    }
   } catch {
-    return require(`./addon-zlib-1.1.3/build/Release/zlib.node`) as ZlibBinding;
+    /* ignored */
   }
+  return require('./addon-zlib-1.1.3/build/Release/zlib.node') as ZlibBinding;
 })();
 export default zlib;
