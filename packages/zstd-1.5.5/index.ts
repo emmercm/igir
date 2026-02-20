@@ -196,8 +196,8 @@ const zstd = ((): ZstdBinding => {
         return require(win32X64) as ZstdBinding;
       }
     }
-  } catch (error) {
-    throw error;
+  } catch {
+    /* ignored */
   }
   return require('./addon-zstd-1.5.5/build/Release/binding.node') as ZstdBinding;
 })();

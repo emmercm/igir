@@ -62,7 +62,6 @@ import win32X64 from './addon-zlib-1.1.3/prebuilds/win32-x64/node.node' with { t
 
 const zlib = ((): ZlibBinding => {
   try {
-    console.log(`${os.platform()}-${os.arch()}`);
     switch (`${os.platform()}-${os.arch()}`) {
       case 'darwin-arm64': {
         return require(darwinArm64) as ZlibBinding;
