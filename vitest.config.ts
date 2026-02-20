@@ -39,10 +39,10 @@ export default defineConfig({
     // Don't run any compiled versions of the tests, if they exist
     exclude: [...configDefaults.exclude, 'dist/**'],
 
-    // coverage: {
-    //   provider: 'v8',
-    //   include: ['{packages,src}/**/*.{js,cjs,mjs,ts}'],
-    //   exclude: ['test/**'],
-    // },
+    coverage: {
+      provider: 'v8',
+      // include: ['{packages,src}/**/*.{js,cjs,mjs,ts}'],
+      exclude: ['test/**'],
+    },
   },
 });
