@@ -1,7 +1,6 @@
 import module from 'node:module';
+import os from 'node:os';
 import stream from 'node:stream';
-
-import { getPrebuildPath } from './macros.js' with { type: 'macro' };
 
 const require = module.createRequire(import.meta.url);
 
@@ -167,11 +166,33 @@ export class ZstdDecompressStream extends stream.Transform {
 }
 
 const zstd = ((): ZstdBinding => {
+  // TODO(cemmer): this will cause compilers like Bun to include every architecture's prebuild
+  //  into every binary, but Parcel import attribute macros require all code to be bundled
   try {
-    return require(getPrebuildPath()) as ZstdBinding;
+    switch (`${os.platform()}-${os.arch()}`) {
+      case 'darwin-arm64': {
+        return require(`./addon-zstd-1.5.5/prebuilds/darwin-arm64/node.node`) as ZstdBinding;
+      }
+      case 'darwin-x64': {
+        return require(`./addon-zstd-1.5.5/prebuilds/darwin-x64/node.node`) as ZstdBinding;
+      }
+      case 'linux-arm64': {
+        return require(`./addon-zstd-1.5.5/prebuilds/linux-arm64/node.node`) as ZstdBinding;
+      }
+      case 'linux-x64': {
+        return require(`./addon-zstd-1.5.5/prebuilds/linux-x64/node.node`) as ZstdBinding;
+      }
+      case 'win32-arm64': {
+        return require(`./addon-zstd-1.5.5/prebuilds/win32-arm64/node.node`) as ZstdBinding;
+      }
+      case 'win32-x64': {
+        return require(`./addon-zstd-1.5.5/prebuilds/win32-x64/node.node`) as ZstdBinding;
+      }
+    }
   } catch {
-    return require(`./addon-zstd-1.5.5/build/Release/binding.node`) as ZstdBinding;
+    /* ignored */
   }
+  return require(`./addon-zstd-1.5.5/build/Release/binding.node`) as ZstdBinding;
 })();
 export default {
   ...zstd,

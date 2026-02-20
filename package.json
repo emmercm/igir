@@ -143,7 +143,6 @@
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.0",
-    "unplugin-parcel-macros": "0.1.1",
     "which": "6.0.0"
   },
   "engines": {
