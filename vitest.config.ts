@@ -34,7 +34,7 @@ export default defineConfig({
     passWithNoTests: true,
 
     // maxWorkers: process.platform === 'win32' ? 1 : '50%',
-    testTimeout: 60_000,
+    testTimeout: 30_000 * (process.platform === 'win32' ? 2 : 1),
 
     // Don't run any compiled versions of the tests, if they exist
     exclude: [...configDefaults.exclude, 'dist/**'],
