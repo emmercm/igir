@@ -59,7 +59,7 @@ export default {
   /**
    * Parse the contents of an XML file to a {@link DATObjectProps} object.
    */
-  fromXmlString(xmlContents: string): DATObjectProps {
+  fromXmlString(xmlContents: Buffer | string): DATObjectProps {
     return new XMLParser({
       ignoreAttributes: false,
       ignoreDeclaration: true,
