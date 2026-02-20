@@ -30,6 +30,9 @@ jobs:
       # thollander/actions-comment-pull-request
       pull-requests: write
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      release_id: ${{ steps.release-drafter.outputs.id }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -125,8 +128,12 @@ jobs:
           comment-tag: gh-release
           pr-number: ${{ steps.pr-finder.outputs.PR_NUMBER }}
 
-      # Kick off binary compilation
-      - if: ${{ steps.release-drafter.outputs.id }}
-        uses: ./.github/workflows/node-compile.yml
-        with:
-          tag: v${{ steps.check.outputs.version }}
+  # Kick off binary compilation
+  compile:
+    if: ${{ needs.release.outputs.release_id }}
+    needs:
+      - release
+    uses: ./.github/workflows/node-compile.yml
+    with:
+      tag: v${{ needs.release.outputs.version }}
+    secrets: inherit
