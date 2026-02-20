@@ -521,9 +521,13 @@ export default class OutputFactory {
       output = path.join(dir, output);
     }
 
+    const gameNameContainsPathSeparators = /[\\/]/.test(game.getName());
+
     if (
       (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE &&
         game.getRoms().length > 1 &&
+        // Game name has directory structure 'built-in' (SMDB)
+        !gameNameContainsPathSeparators &&
         // Output file is an archive
         !FileFactory.isExtensionArchive(ext) &&
         !(inputFile instanceof ArchiveFile)) ||
