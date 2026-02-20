@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v4.3.0
+     @@   @@        @@   @@   @@       @@    v4.3.1
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -307,6 +307,7 @@ Advanced usage:
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g.
     "gb")
     {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
+    {spruce}    The ROM's emulator-specific /Roms/* directory for SpruceOS (e.g. "GB")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the
     DSi/3DS (e.g. "gb")
 
