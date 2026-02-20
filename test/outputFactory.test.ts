@@ -651,6 +651,32 @@ describe('token replacement', () => {
     },
   );
 
+  // Output Token {spruce}
+  test.each([
+    ['game.a78', path.join('Roms', 'SEVENTYEIGHTHUNDRED', 'game.a78')],
+    ['game.gb', path.join('Roms', 'GB', 'game.gb')],
+    ['game.nes', path.join('Roms', 'FC', 'game.nes')],
+  ])('should replace {spruce} for known extension: %s', async (outputRomFilename, expectedPath) => {
+    const options = new Options({ commands: ['copy'], output: 'Roms/{spruce}' });
+    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
+    expect(outputPath.format()).toEqual(expectedPath);
+  });
+
+  test.each(['game.bin', 'game.rom'])(
+    'should throw on {spruce} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{spruce}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+      await expect(async () =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      ).rejects.toThrow(/failed to replace/);
+    },
+  );
+
   // Output Token {twmenu}
   test.each([
     ['game.a26', path.join('roms', 'a26', 'game.a26')],

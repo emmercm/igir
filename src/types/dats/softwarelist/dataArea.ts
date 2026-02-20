@@ -10,6 +10,7 @@ export default class DataArea {
   // readonly name?: string;
 
   // @Expose()
+  // TODO: when uncommenting this, it will need a @Transform
   // readonly size?: number;
 
   @Expose()

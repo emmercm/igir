@@ -38,12 +38,13 @@ export default class ROM implements ROMProps {
   readonly name: string;
 
   @Expose()
-  @Transform(({ value }: { value: undefined | number | string }) => {
-    if (typeof value === 'string') {
-      // Vitest seems to need this?
-      return Number.parseInt(value, 10);
+  @Transform(({ value }: { value: undefined | string | number }) => {
+    if (typeof value === 'number') {
+      return value;
+    } else if (typeof value === 'string') {
+      return Number.parseInt(value);
     }
-    return value;
+    return 0;
   })
   readonly size: number;
 
