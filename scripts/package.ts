@@ -112,7 +112,7 @@ const include = new Set(
     { include: 'node_modules{,/**}', onlyFiles: false },
     { include: 'package*.json' },
     // Exclude unnecessary JavaScript files
-    { exclude: '**/jest.config.(js|ts|mjs|cjs|json)' },
+    { exclude: '**/*.config.(js|ts|mjs|cjs|json)' },
     { exclude: '**/tsconfig*' },
     { exclude: '**/*.d.ts' },
     { exclude: '**/*.(js|ts).map' },

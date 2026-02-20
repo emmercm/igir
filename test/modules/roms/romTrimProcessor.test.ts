@@ -50,7 +50,7 @@ async function processFile(
       options,
       new ProgressBarFake(),
       fileFactory,
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).process([tempTrimmedFile]);
 
     expect(processedFiles).toHaveLength(1);

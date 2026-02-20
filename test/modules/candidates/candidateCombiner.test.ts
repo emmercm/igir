@@ -33,7 +33,7 @@ async function runCombinedCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 
   return new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
@@ -48,7 +48,7 @@ it('should do nothing if option not specified', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).scan();
 
   // When
@@ -79,7 +79,7 @@ it('should combine candidates', async () => {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).scan();
 
   // When

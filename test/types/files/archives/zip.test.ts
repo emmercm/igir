@@ -25,7 +25,7 @@ async function findRoms(input: string): Promise<File[]> {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).scan();
 }
 

@@ -84,7 +84,7 @@ jobs:
     if: ${{ needs.path-filter.outputs.should-test == 'true' }}
     name: node-unit (${{ matrix.os }}, ${{ matrix.node-version || 'package.json' }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ (startsWith(matrix.os, 'windows') || needs.path-filter.outputs.should-delete-prebuilds) && 40 || 20 }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

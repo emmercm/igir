@@ -42,14 +42,14 @@ async function runPatchCandidateGenerator(dat: DAT, romFiles: File[]): Promise<W
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 
   const patches = await new PatchScanner(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).scan();
 
   return new CandidatePatchGenerator(new ProgressBarFake()).generate(dat, candidates, patches);
@@ -76,7 +76,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -96,7 +96,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -120,14 +120,14 @@ describe('with explicit DATs', () => {
         options,
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.cpus().length),
+        new DriveSemaphore(os.availableParallelism()),
       ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
 
     // And pre-assert all Game names and ROM names have path separators in them

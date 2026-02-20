@@ -501,7 +501,7 @@ describe('entries', () => {
       ]),
     ).toEqual(expected.get(filePath.replace(dirname, '')));
 
-    /* eslint-disable jest/no-conditional-expect */
+    /* eslint-disable vitest/no-conditional-expect */
     for (const entry of entries) {
       expect(entry.uncompressedCrc32String()).toHaveLength(8);
 
