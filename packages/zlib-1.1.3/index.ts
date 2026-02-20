@@ -52,7 +52,8 @@ export type ZlibCompressionLevelValue =
   (typeof ZlibCompressionLevel)[keyof typeof ZlibCompressionLevel];
 
 // TODO(cemmer): this will cause compilers like Bun to include every architecture's prebuild
-//  into every binary, but Parcel import attribute macros require all code to be bundled
+//  into every binary, but Parcel import attribute macros don't seem to be an option because Bun
+//  seems to only bundle paths referenced in imports and not require()s
 import darwinArm64 from './addon-zlib-1.1.3/prebuilds/darwin-arm64/node.node' with { type: 'file' };
 import darwinX64 from './addon-zlib-1.1.3/prebuilds/darwin-x64/node.node' with { type: 'file' };
 import linuxArm64 from './addon-zlib-1.1.3/prebuilds/linux-arm64/node.node' with { type: 'file' };
