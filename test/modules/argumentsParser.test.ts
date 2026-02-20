@@ -1266,7 +1266,9 @@ describe('options', () => {
       argumentsParser.parse([...dummyCommandAndRequiredArgs, '--patch-only']).getPatchOnly(),
     ).toThrow(/dependent|implication/i);
     expect(
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only']).getPatchOnly(),
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only'])
+        .getPatchOnly(),
     ).toEqual(true);
     expect(
       argumentsParser
