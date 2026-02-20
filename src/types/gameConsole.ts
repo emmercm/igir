@@ -47,6 +47,11 @@ interface OutputTokens {
   // @see https://openfpga-cores-inventory.github.io/analogue-pocket/
   pocket?: string;
 
+  // Rocknix ROMs go in the /roms/{rocknix} directory
+  // Rocknix is the continuation of the discontinued JELOS system
+  // @see https://github.com/ROCKNIX/distribution/blob/dev/documentation/PER_DEVICE_DOCUMENTATION/AMD64/SUPPORTED_EMULATORS_AND_CORES.md
+  rocknix?: string;
+  
   // RetroDECK ROMs go in the /roms/{retrodeck} directory:
   // @see https://github.com/XargonWan/RetroDECK/blob/main/es-configs/es_systems.xml
   retrodeck?: string;
@@ -431,6 +436,7 @@ export default class GameConsole {
     }),
     new GameConsole(/VIC[ -]?20/i, [], {
       emulationstation: 'vic20',
+      jelos: 'vic20',
       onion: 'VIC20',
       retrodeck: 'vic20',
       romm: 'vic-20',
@@ -484,6 +490,7 @@ export default class GameConsole {
     new GameConsole(/Super Cassette Vision/i, [], {
       batocera: 'scv',
       emulationstation: 'scv',
+      jelos: 'svc',
       retrodeck: 'scv',
       romm: 'epoch-super-cassette-vision',
     }),
@@ -666,11 +673,13 @@ export default class GameConsole {
     // Mobile
     new GameConsole(/J2ME/i, ['.jar'], {
       emulationstation: 'j2me',
+      jelos: 'j2me',
       retrodeck: 'j2me',
       romm: 'j2me',
     }),
     new GameConsole(/Palm OS/i, ['.pqa', '.prc'], {
       emulationstation: 'palm',
+      jelos: 'palm',
       retrodeck: 'palm',
       romm: 'palm-os',
     }),
@@ -757,6 +766,7 @@ export default class GameConsole {
     }),
     new GameConsole(/PC-FX/i, [], {
       emulationstation: 'pcfx',
+      jelos: 'pcfx',
       onion: 'PCFX',
       retrodeck: 'pcfx',
       romm: 'pc-fx',
@@ -765,6 +775,7 @@ export default class GameConsole {
     new GameConsole(/TIC-80/i, ['.tic'], {
       adam: 'TIC80',
       emulationstation: 'tic80',
+      jelos: 'tic-80',
       retrodeck: 'tic80',
       spruce: 'TIC80',
     }),
@@ -1032,6 +1043,7 @@ export default class GameConsole {
       {
         batocera: 'cdi',
         emulationstation: 'cdimono1',
+        jelos: 'cdi',
         retrodeck: 'cdimono1',
         romm: 'philips-cd-i',
       },
@@ -1340,6 +1352,7 @@ export default class GameConsole {
     new GameConsole(/PlayStation ?Vita|psvita/i, ['.psvita'], {
       batocera: 'psvita',
       emulationstation: 'psvita',
+      jelos: 'launcher',
       retrodeck: 'psvita',
       romm: 'psvita',
     }),
@@ -1512,6 +1525,10 @@ export default class GameConsole {
 
   getRetroDECK(): string | undefined {
     return this.outputTokens.retrodeck;
+  }
+
+  getRocknix(): string | undefined {
+    return this.outputTokens.jelos;
   }
 
   getRomM(): string | undefined {
