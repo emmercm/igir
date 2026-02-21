@@ -209,6 +209,7 @@ describe('options', () => {
     expect(options.getDatIgnoreParentClone()).toEqual(false);
 
     expect(options.getPatchFileCount()).toEqual(0);
+    expect(options.getPatchOnly()).toEqual(false);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatMirror()).toEqual(false);
@@ -1177,6 +1178,12 @@ describe('options', () => {
   });
 
   it('should parse "patch-exclude"', async () => {
+    await expect(
+      async () =>
+        await argumentsParser
+          .parse(['copy', '--input', os.devNull, '--patch-exclude', './src'])
+          .scanPatchFilesWithoutExclusions(),
+    ).rejects.toThrow(/dependent|implication/i);
     expect(
       (
         await argumentsParser
@@ -1252,6 +1259,64 @@ describe('options', () => {
           .scanPatchFilesWithoutExclusions()
       ).length,
     ).toEqual(0);
+  });
+
+  it('should parse "patch-only"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--patch-only']).getPatchOnly(),
+    ).toThrow(/dependent|implication/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only'])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only', 'true'])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only', 'false'])
+        .getPatchOnly(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          '--patch-only',
+        ])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          'false',
+          '--patch-only',
+          'true',
+        ])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          'true',
+          '--patch-only',
+          'false',
+        ])
+        .getPatchOnly(),
+    ).toEqual(false);
   });
 
   it('should parse "output"', () => {
