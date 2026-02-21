@@ -367,6 +367,7 @@ export default class FileSignature {
     ]),
 
     // Nintendo - Super Nintendo Entertainment System
+    // TODO(cemmer): .fig
     // @see https://snes.nesdev.org/wiki/ROM_header
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
     smc: new FileSignature('.smc', [

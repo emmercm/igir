@@ -145,6 +145,7 @@ export interface OptionsProps {
 
   readonly patch?: string[];
   readonly patchExclude?: string[];
+  readonly patchOnly?: boolean;
 
   readonly output?: string;
   readonly dirMirror?: boolean;
@@ -286,6 +287,8 @@ export default class Options implements OptionsProps {
   readonly patch: string[];
 
   readonly patchExclude: string[];
+
+  readonly patchOnly: boolean;
 
   readonly output?: string;
 
@@ -486,6 +489,7 @@ export default class Options implements OptionsProps {
     this.patchExclude = (options?.patchExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
+    this.patchOnly = options?.patchOnly ?? false;
 
     this.output = options?.output?.replaceAll(/[\\/]/g, path.sep);
     this.dirMirror = options?.dirMirror ?? false;
@@ -1004,6 +1008,10 @@ export default class Options implements OptionsProps {
       WalkMode.FILES,
       walkCallback,
     );
+  }
+
+  getPatchOnly(): boolean {
+    return this.patchOnly;
   }
 
   getOutput(): string {
