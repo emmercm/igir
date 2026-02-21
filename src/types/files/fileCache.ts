@@ -6,6 +6,7 @@ import Cache from '../cache.js';
 import type Archive from './archives/archive.js';
 import type { ArchiveEntryProps } from './archives/archiveEntry.js';
 import ArchiveEntry from './archives/archiveEntry.js';
+import Chd from './archives/chd/chd.js';
 import type { FileProps } from './file.js';
 import File from './file.js';
 import FileChecksums, { ChecksumBitmask } from './fileChecksums.js';
@@ -192,6 +193,11 @@ export default class FileCache {
         }
 
         const cachedEntries = cached.value as ArchiveEntryProps<T>[];
+        if (cachedEntries.length === 0) {
+          // A quick checksum scan may have prevented us from getting any entries from an archive
+          // (such as bin/cue CHDs), assume we want to re-scan the archive
+          return true;
+        }
         const existingBitmask =
           (cachedEntries.every((props) => props.crc32 !== undefined) ? ChecksumBitmask.CRC32 : 0) |
           (cachedEntries.every((props) => props.md5 !== undefined) ? ChecksumBitmask.MD5 : 0) |
