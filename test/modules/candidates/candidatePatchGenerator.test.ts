@@ -20,6 +20,7 @@ import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import type File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
+import type { OptionsProps } from '../../../src/types/options.js';
 import Options from '../../../src/types/options.js';
 import type WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -32,8 +33,13 @@ async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT
   return new DATCombiner(new ProgressBarFake()).combine(dats);
 }
 
-async function runPatchCandidateGenerator(dat: DAT, romFiles: File[]): Promise<WriteCandidate[]> {
+async function runPatchCandidateGenerator(
+  optionsProps: OptionsProps,
+  dat: DAT,
+  romFiles: File[],
+): Promise<WriteCandidate[]> {
   const options = new Options({
+    ...optionsProps,
     commands: ['extract'],
     patch: [path.join('test', 'fixtures', 'patches')],
   });
@@ -52,7 +58,11 @@ async function runPatchCandidateGenerator(dat: DAT, romFiles: File[]): Promise<W
     new DriveSemaphore(os.cpus().length),
   ).scan();
 
-  return new CandidatePatchGenerator(new ProgressBarFake()).generate(dat, candidates, patches);
+  return new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
+    dat,
+    candidates,
+    patches,
+  );
 }
 
 it('should do nothing with no games', async () => {
@@ -60,7 +70,7 @@ it('should do nothing with no games', async () => {
   const dat = new LogiqxDAT({ header: new Header() });
 
   // When
-  const candidates = await runPatchCandidateGenerator(dat, []);
+  const candidates = await runPatchCandidateGenerator({}, dat, []);
 
   // Then
   expect(candidates).toHaveLength(0);
@@ -81,7 +91,7 @@ describe('with inferred DATs', () => {
     const dat = await buildInferredDat(options, romFiles);
 
     // When
-    const candidates = await runPatchCandidateGenerator(dat, romFiles);
+    const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
     // Then
     expect(candidates).toHaveLength(6);
@@ -101,10 +111,52 @@ describe('with inferred DATs', () => {
     const dat = await buildInferredDat(options, romFiles);
 
     // When
-    const candidates = await runPatchCandidateGenerator(dat, romFiles);
+    const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
     // Then candidates have doubled
     expect(candidates).toHaveLength(romFiles.length * 2);
+    expect(
+      candidates.some((candidate) =>
+        candidate
+          .getRomsWithFiles()
+          .some((romWithFiles) => romWithFiles.getInputFile().getPatch() === undefined),
+      ),
+    ).toEqual(true);
+    expect(
+      candidates.some((candidate) =>
+        candidate
+          .getRomsWithFiles()
+          .some((romWithFiles) => romWithFiles.getInputFile().getPatch() !== undefined),
+      ),
+    ).toEqual(true);
+  });
+
+  it('should only create patch candidates with relevant patches', async () => {
+    // Given
+    const options = new Options({
+      input: [path.join('test', 'fixtures', 'roms', 'patchable')],
+      patchOnly: true,
+    });
+    const romFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new DriveSemaphore(os.cpus().length),
+    ).scan();
+    const dat = await buildInferredDat(options, romFiles);
+
+    // When
+    const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
+
+    // Then candidate count has remained the same
+    expect(candidates).toHaveLength(romFiles.length);
+    expect(
+      candidates.every((candidate) =>
+        candidate
+          .getRomsWithFiles()
+          .every((romWithFiles) => romWithFiles.getInputFile().getPatch() !== undefined),
+      ),
+    ).toEqual(true);
   });
 });
 
@@ -141,7 +193,7 @@ describe('with explicit DATs', () => {
     });
 
     // When
-    const candidates = await runPatchCandidateGenerator(dat, romFiles);
+    const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
     // Then all Game names and ROM names should maintain their path separators
     candidates.forEach((candidate) => {

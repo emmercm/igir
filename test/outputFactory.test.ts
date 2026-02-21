@@ -562,7 +562,7 @@ describe('token replacement', () => {
     ['Nintendo - Game Boy Color', path.join('gbc', 'Dummy.rom')],
     // Testing priority
     ['Nintendo - Family Computer Disk System (FDS) (Parent-Clone)', path.join('fds', 'Dummy.rom')],
-    ['Nintendo - Famicom [T-En] Collection', path.join('nes', 'Dummy.rom')],
+    ['Nintendo - Famicom [T-En] Collection', path.join('famicom', 'Dummy.rom')],
     [
       'Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)',
       path.join('nes', 'Dummy.rom'),
@@ -571,7 +571,7 @@ describe('token replacement', () => {
       'Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)',
       path.join('nes', 'Dummy.rom'),
     ],
-    ['Nintendo - Super Famicom [T-En] Collection', path.join('snes', 'Dummy.rom')],
+    ['Nintendo - Super Famicom [T-En] Collection', path.join('sfc', 'Dummy.rom')],
     [
       'Nintendo - Super Nintendo Entertainment System (Parent-Clone)',
       path.join('snes', 'Dummy.rom'),

@@ -226,6 +226,7 @@ export default class ArgumentsParser {
           'Path(s) to ROM files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'input',
       })
       .option('input-checksum-quick', {
         group: groupRomInput,
@@ -316,6 +317,7 @@ export default class ArgumentsParser {
           'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'dat',
       })
       .option('dat-name-regex', {
         group: groupDatInput,
@@ -383,11 +385,20 @@ export default class ArgumentsParser {
           'Path(s) to ROM patch files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'patch',
+      })
+      .option('patch-only', {
+        group: groupPatchInput,
+        description: 'Only write patched ROMs to the output directory',
+        type: 'boolean',
+        implies: 'patch',
       })
       .check((checkArgv) => {
         const illegalPatchCommands = ['link'].filter((command) => checkArgv._.includes(command));
         if (illegalPatchCommands.length > 0) {
-          const patchOptions = ['patch', 'patch-exclude'].filter((option) => checkArgv[option]);
+          const patchOptions = ['patch', 'patch-exclude', 'patch-only'].filter(
+            (option) => checkArgv[option],
+          );
           if (patchOptions.length > 0) {
             throw new IgirException(
               `Argument${patchOptions.length === 1 ? '' : 's'} ${patchOptions.map((opt) => `"${opt}"`).join(', ')} cannot be used with the command${illegalPatchCommands.length === 1 ? '' : 's'} ${illegalPatchCommands.map((cmd) => `"${cmd}"`).join(', ')}`,

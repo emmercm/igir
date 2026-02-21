@@ -584,7 +584,7 @@ export default class Igir {
           ),
         // Add patched candidates
         (candidates): WriteCandidate[] =>
-          new CandidatePatchGenerator(progressBar).generate(dat, candidates, patches),
+          new CandidatePatchGenerator(this.options, progressBar).generate(dat, candidates, patches),
         // Correct output filename extensions
         async (candidates): Promise<WriteCandidate[]> =>
           await new CandidateExtensionCorrector(
