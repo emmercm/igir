@@ -6,7 +6,6 @@ import Cache from '../cache.js';
 import type Archive from './archives/archive.js';
 import type { ArchiveEntryProps } from './archives/archiveEntry.js';
 import ArchiveEntry from './archives/archiveEntry.js';
-import Chd from './archives/chd/chd.js';
 import type { FileProps } from './file.js';
 import File from './file.js';
 import FileChecksums, { ChecksumBitmask } from './fileChecksums.js';
