@@ -25,7 +25,7 @@ env:
 jobs:
   release:
     permissions:
-      # actions/checkout@v4
+      # actions/checkout@v6
       contents: read
       # thollander/actions-comment-pull-request
       pull-requests: write
@@ -135,5 +135,5 @@ jobs:
       - release
     uses: ./.github/workflows/node-compile.yml
     with:
-      tag: v${{ needs.release.outputs.version }}
+      ref: ${{ env.ref }}
     secrets: inherit
