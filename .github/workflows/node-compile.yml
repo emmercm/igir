@@ -4,7 +4,7 @@ on:
   pull_request:
   workflow_call:
     inputs:
-      tag:
+      ref:
         required: true
         type: string
   workflow_dispatch:
