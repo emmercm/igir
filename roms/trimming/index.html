@@ -2535,10 +2535,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#trimmed-roms-in-archives" class="md-nav__link">
+  <a href="#controlling-detection-strategy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Trimmed ROMs in archives
+        Controlling detection strategy
       
     </span>
   </a>
@@ -3492,7 +3492,7 @@
 <h1 id="rom-trimming">ROM Trimming</h1>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Igir does not support creating trimmed ROMs, it only supports detecting trimmed ROMs and matching them against DAT files. To trim ROMs, you should use a tool such as <a href="https://eden.fm/ndstoykotrim/">NDSToky`oTrim</a>.</p>
+<p>Igir does not support creating trimmed ROMs, it only supports detecting trimmed ROMs and matching them against DAT files. To trim ROMs, you should use a tool such as <a href="https://eden.fm/ndstoykotrim/">NDSTokyoTrim</a>.</p>
 </div>
 <p>ROM chips found in cartridges typically come in sizes that are a power of two (e.g. 32KiB, 128KiB, 64MiB, 2GiB, etc.). Because people in the ROM community value preservation, <a href="../../misc/rom-dumping/">ROM dumps</a> typically contain full contents of the ROM chip. However, most games don't need <em>exactly</em> all the space on their ROM chip, so there is usually blank space at the end of the ROM in the form of <code>0x00</code> or <code>0xFF</code> bytes.</p>
 <p>It has become common to "trim" this padding at the end of ROM dumps for some handheld consoles, to save space on flash carts. Igir is able to detect ROMs that have been trimmed and add back their padding bytes so that they can be matched against <a href="../../dats/introduction/">DAT files</a>.</p>
@@ -3508,10 +3508,10 @@
 </thead>
 <tbody>
 <tr>
-<td>Nintendo - 3DS</td>
-<td><code>.3ds</code></td>
-<td><code>0xFF</code></td>
-<td>0.5, 1, 2 GiB</td>
+<td>Nintendo - Game Boy Advance</td>
+<td><code>.gba</code></td>
+<td><code>0x00</code></td>
+<td>4, 8, 16, 32 MiB</td>
 </tr>
 <tr>
 <td>Nintendo - DS</td>
@@ -3520,17 +3520,14 @@
 <td>8, 16, 32, 64, 128 MiB</td>
 </tr>
 <tr>
-<td>Nintendo - Game Boy Advance</td>
-<td><code>.gba</code></td>
-<td><code>0x00</code></td>
-<td>4, 8, 16, 32 MiB</td>
+<td>Nintendo - 3DS</td>
+<td><code>.3ds</code></td>
+<td><code>0xFF</code></td>
+<td>0.5, 1, 2 GiB</td>
 </tr>
 </tbody>
 </table>
 <p>Igir can detect these files from their signature even if the file extension is wrong.</p>
-<p>If you wish to force trimming detection of other file types (not recommended), you can use the <code>--trimmed-glob &lt;glob&gt;</code> option like this:</p>
-<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span>&lt;dats&gt;<span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;<span class="w"> </span>--trimmed-glob<span class="w"> </span><span class="s2">&quot;*.rom&quot;</span>
-</span></code></pre></div>
 <h2 id="padding-strategy">Padding strategy</h2>
 <p>Igir detects the "correct" size for a ROM by rounding the trimmed file's size up to the nearest power of two. Here are some examples:</p>
 <table>
@@ -3544,22 +3541,22 @@
 </thead>
 <tbody>
 <tr>
-<td>Nintendo - 3DS</td>
-<td><code>Heroes of Ruin (USA) (En,Fr,Es).3ds</code></td>
-<td>494.7MiB (96.6%)</td>
-<td>512MiB (2^29)</td>
+<td>Nintendo - Game Boy Advance</td>
+<td><code>2 Game Pack! - Uno + Skip-Bo (USA).gba</code></td>
+<td>3.9MiB (96.5%)</td>
+<td>4MiB (2^22)</td>
 </tr>
 <tr>
-<td>Nintendo - 3DS</td>
-<td><code>Steel Diver (USA) (En,Fr,Es).3ds</code></td>
-<td>175.5MiB (68.5%)</td>
-<td>256MiB (2^28)</td>
+<td>Nintendo - Game Boy Advance</td>
+<td><code>Golden Sun - The Lost Age (USA, Europe).gba</code></td>
+<td>15.5MiB (96.7%)</td>
+<td>16MiB (2^24)</td>
 </tr>
 <tr>
-<td>Nintendo - 3DS</td>
-<td><code>Theatrhythm Final Fantasy - Curtain Call (USA).3ds</code></td>
-<td>1.7GiB (83.1%)</td>
-<td>2GiB (2^31)</td>
+<td>Nintendo - Game Boy Advance</td>
+<td><code>Zone of the Enders - The Fist of Mars (USA).gba</code></td>
+<td>7.5MiB (94.4%)</td>
+<td>8MiB (2^23)</td>
 </tr>
 <tr>
 <td>Nintendo - DS</td>
@@ -3580,33 +3577,46 @@
 <td>32MiB (2^25)</td>
 </tr>
 <tr>
-<td>Nintendo - Game Boy Advance</td>
-<td><code>2 Game Pack! - Uno + Skip-Bo (USA).gba</code></td>
-<td>3.9MiB (96.5%)</td>
-<td>4MiB (2^22)</td>
+<td>Nintendo - 3DS</td>
+<td><code>Heroes of Ruin (USA) (En,Fr,Es).3ds</code></td>
+<td>494.7MiB (96.6%)</td>
+<td>512MiB (2^29)</td>
 </tr>
 <tr>
-<td>Nintendo - Game Boy Advance</td>
-<td><code>Golden Sun - The Lost Age (USA, Europe).gba</code></td>
-<td>15.5MiB (96.7%)</td>
-<td>16MiB (2^24)</td>
+<td>Nintendo - 3DS</td>
+<td><code>Steel Diver (USA) (En,Fr,Es).3ds</code></td>
+<td>175.5MiB (68.5%)</td>
+<td>256MiB (2^28)</td>
 </tr>
 <tr>
-<td>Nintendo - Game Boy Advance</td>
-<td><code>Zone of the Enders - The Fist of Mars (USA).gba</code></td>
-<td>7.5MiB (94.4%)</td>
-<td>8MiB (2^23)</td>
+<td>Nintendo - 3DS</td>
+<td><code>Theatrhythm Final Fantasy - Curtain Call (USA).3ds</code></td>
+<td>1.7GiB (83.1%)</td>
+<td>2GiB (2^31)</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If a game shipped on a cartridge that was larger than necessary, Igir may not calculate the correct padding. For example, <code>Mega Man Legacy Collection (USA).3ds</code> shipped on a 1GiB cartridge, but it only needed a 512MiB cartridge, as the decrypted ROM trims to 504.3MiB.</p>
+</div>
 <p>Even though each console has a padding byte that is most common (above), this isn't a guarantee, so Igir will calculate two different sets of checksums using both <code>0x00</code> and <code>0xFF</code> padding bytes.</p>
 <p>Like other calculated checksums, checksums of the padded files are cached to speed up subsequent runs.</p>
-<h2 id="trimmed-roms-in-archives">Trimmed ROMs in archives</h2>
-<p>It does not make sense to archive trimmed ROMs. Even the simplest of compression algorithms will compress ROM padding to just a few bytes, so trimming before archiving will have very little effect.</p>
-<p>To save processing time, Igir will not detect ROM trimming for files in archives. If you need to enable this behavior, you can use the option:</p>
-<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>--trim-scan-archives
+<h2 id="controlling-detection-strategy">Controlling detection strategy</h2>
+<p>With the default <code>--trim-scan-files auto</code> mode, Igir will only calculate padded ROM size &amp; checksums for known file types mentioned above. To save processing time (and because it generally doesn't make sense to archive trimmed ROMs), Igir will not calculate the padding for files in archives by default.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Igir uses <a href="https://en.wikipedia.org/wiki/List_of_file_signatures">file signatures</a> to determine the filetype of input files, similar to how the <a href="../../output/options/#fixing-rom-extensions"><code>--fix-extension</code> option</a> works.</p>
+</div>
+<p>Additional filetypes can have their padded size &amp; checksums calculated with any combination of:</p>
+<ul>
+<li><code>--trimmed-glob &lt;glob&gt;</code> to process all files that match the glob, including all files inside archives that match the glob</li>
+<li><code>--trim-scan-files always</code> to process all files that aren't in archives, regardless of their signature</li>
+<li><code>--trim-scan-archives</code> to process all files that are in archives, regardless of their signature</li>
+</ul>
+<p>All padding calculation can be turned off with the option:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>--trim-scan-files never
 </span></code></pre></div>
-<p>You can also force trimming detection using the <code>--trimmed-glob &lt;glob&gt;</code> option described above.</p>
 
 
 
@@ -3629,7 +3639,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 26, 2025 03:51:21 UTC">July 26, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 24, 2026 03:38:21 UTC">February 24, 2026</span>
   </span>
 
     
