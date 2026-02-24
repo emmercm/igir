@@ -14,6 +14,7 @@ import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import FileSignature from '../../../src/types/files/fileSignature.js';
 import type { OptionsProps } from '../../../src/types/options.js';
+import { TrimScanFiles, TrimScanFilesInverted } from '../../../src/types/options.js';
 import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -29,7 +30,10 @@ async function processFile(
   size: number,
   paddingByte: number,
 ): Promise<File> {
-  const options = new Options(optionsProps);
+  const options = new Options({
+    trimScanFiles: TrimScanFilesInverted[TrimScanFiles.AUTO].toLowerCase(),
+    ...optionsProps,
+  });
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
 
   const trimmedContents = Buffer.alloc(size, paddingByte);
@@ -82,12 +86,36 @@ describe.each(
         expect(processedFile.getPaddings()).toHaveLength(0);
       });
 
-      it('should return paddings when detection forced', async () => {
+      test.each(Object.values(TrimScanFilesInverted))(
+        'should return paddings when detection forced: %s',
+        async (trimScanFiles) => {
+          const processedFile = await processFile(
+            {
+              dat: [os.devNull],
+              trimmedGlob: '**/*',
+              trimScanFiles: trimScanFiles.toLowerCase(),
+            },
+            fileSignature,
+            size * 0.75,
+            paddingByte,
+          );
+          expect(processedFile.getPaddings()).toHaveLength(2);
+        },
+      );
+
+      it('should not return paddings with trim-scan-files=never', async () => {
         const processedFile = await processFile(
-          {
-            dat: [os.devNull],
-            trimmedGlob: '**/*',
-          },
+          { dat: [os.devNull], trimScanFiles: 'never' },
+          fileSignature,
+          size * 0.75,
+          paddingByte,
+        );
+        expect(processedFile.getPaddings()).toHaveLength(0);
+      });
+
+      it('should return paddings with trim-scan-files=always', async () => {
+        const processedFile = await processFile(
+          { dat: [os.devNull], trimScanFiles: 'always' },
           fileSignature,
           size * 0.75,
           paddingByte,
@@ -129,6 +157,16 @@ describe.each(
           paddingByte,
         );
         expect(processedFile.getPaddings()).toHaveLength(2);
+      });
+
+      it('should not return paddings with trim-scan-files=never', async () => {
+        const processedFile = await processFile(
+          { dat: [os.devNull], trimScanFiles: 'never' },
+          fileSignature,
+          size * 0.75,
+          paddingByte,
+        );
+        expect(processedFile.getPaddings()).toHaveLength(0);
       });
     });
   });

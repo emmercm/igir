@@ -220,9 +220,13 @@ export default class FileSignature {
     x64: new FileSignature('.x64', [{ value: Buffer.from('43154164', 'hex') }]),
 
     // Nintendo - Nintendo 3DS
+    // @see https://www.3dbrew.org/wiki/CCI
     '3ds': new FileSignature(
       '.3ds',
-      [{ offset: 0x1_00, value: Buffer.from('NCSD') }],
+      [
+        { offset: 0x1_00, value: Buffer.from('NCSD') },
+        { offset: 0x2_00, value: Buffer.from('FFFFFFFF', 'hex') },
+      ],
       CanBeTrimmed.YES,
     ),
     // @see https://www.3dbrew.org/wiki/3DSX_Format
@@ -367,6 +371,7 @@ export default class FileSignature {
     ]),
 
     // Nintendo - Super Nintendo Entertainment System
+    // TODO(cemmer): .fig
     // @see https://snes.nesdev.org/wiki/ROM_header
     // @see https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map
     smc: new FileSignature('.smc', [

@@ -46,6 +46,7 @@ export default abstract class Scanner extends Module {
     return (
       await this.driveSemaphore.map(filePaths, async (inputFile) => {
         this.progressBar.incrementInProgress();
+        // TODO: why does this never show?
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
         });
@@ -101,7 +102,13 @@ export default abstract class Scanner extends Module {
       }
 
       if (filesFromPath.length === 0) {
-        this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
+        if (this.options.getInputChecksumQuick()) {
+          this.progressBar.logWarn(
+            `${filePath}: didn't find any files in the archive, try disabling --input-checksum-quick`,
+          );
+        } else {
+          this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
+        }
       }
       return filesFromPath;
     } catch (error) {

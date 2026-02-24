@@ -4,22 +4,22 @@ on:
   pull_request:
   workflow_call:
     inputs:
-      tag:
+      ref:
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag (e.g. "v1.0.0")'
+      ref:
+        description: 'Git ref (refs/heads/<branch>, refs/tags/<tag>, etc.) or SHA'
         required: true
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.tag || github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.ref || github.ref }}
   cancel-in-progress: true
 
 env:
-  ref: ${{ inputs.tag && format('refs/tags/{0}',inputs.tag) || github.sha || github.ref }}
+  ref: ${{ inputs.ref || github.sha || github.ref }}
 
 jobs:
   path-filter:
@@ -204,6 +204,9 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     needs:
       - node-compile
+    permissions:
+      # actions/checkout@v6, `gh` CLI
+      contents: write
     runs-on: ubuntu-latest
     steps:
       # Get the package version
@@ -226,10 +229,9 @@ jobs:
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-      - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          tag_name: v${{ env.NPM_PKG_VERSION }}
-          files: igir-*/*
+      - run: gh release upload "v${{ env.NPM_PKG_VERSION }}" igir-*/*
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   # !!! This check should be required by GitHub !!!
   compile-status-check:

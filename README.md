@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v4.3.1
+     @@   @@        @@   @@   @@       @@    v4.3.2
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -119,6 +119,7 @@ Patch input options:
                        .xdelta)                                                        [array]
   -P, --patch-exclude  Path(s) to ROM patch files or archives to exclude from processing
                        (supports globbing)                                             [array]
+      --patch-only     Only write patched ROMs to the output directory               [boolean]
 
 ROM output path options (processed in order):
   -o, --output               Path to the ROM output directory (supports replaceable symbols,
@@ -180,7 +181,9 @@ ROM header options:
 
 Trimmed ROM options:
       --trimmed-glob        Glob pattern of input filenames to force trimming detection for
-                                                                                      [string]
+                            (overriding all options below)                            [string]
+      --trim-scan-files     Detect trimming for uncompressed files
+                                        [choices: "never", "auto", "always"] [default: "auto"]
       --trim-scan-archives  Detect trimming for files within archives (off by default)
                                                                                      [boolean]
 

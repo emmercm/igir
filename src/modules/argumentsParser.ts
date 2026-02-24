@@ -26,6 +26,8 @@ import Options, {
   MoveDeleteDirs,
   MoveDeleteDirsInverted,
   PreferRevision,
+  TrimScanFiles,
+  TrimScanFilesInverted,
   ZipFormat,
   ZipFormatInverted,
 } from '../types/options.js';
@@ -226,6 +228,7 @@ export default class ArgumentsParser {
           'Path(s) to ROM files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'input',
       })
       .option('input-checksum-quick', {
         group: groupRomInput,
@@ -316,6 +319,7 @@ export default class ArgumentsParser {
           'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'dat',
       })
       .option('dat-name-regex', {
         group: groupDatInput,
@@ -383,11 +387,20 @@ export default class ArgumentsParser {
           'Path(s) to ROM patch files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'patch',
+      })
+      .option('patch-only', {
+        group: groupPatchInput,
+        description: 'Only write patched ROMs to the output directory',
+        type: 'boolean',
+        implies: 'patch',
       })
       .check((checkArgv) => {
         const illegalPatchCommands = ['link'].filter((command) => checkArgv._.includes(command));
         if (illegalPatchCommands.length > 0) {
-          const patchOptions = ['patch', 'patch-exclude'].filter((option) => checkArgv[option]);
+          const patchOptions = ['patch', 'patch-exclude', 'patch-only'].filter(
+            (option) => checkArgv[option],
+          );
           if (patchOptions.length > 0) {
             throw new IgirException(
               `Argument${patchOptions.length === 1 ? '' : 's'} ${patchOptions.map((opt) => `"${opt}"`).join(', ')} cannot be used with the command${illegalPatchCommands.length === 1 ? '' : 's'} ${illegalPatchCommands.map((cmd) => `"${cmd}"`).join(', ')}`,
@@ -642,11 +655,20 @@ export default class ArgumentsParser {
 
       .option('trimmed-glob', {
         group: groupRomTrimmed,
-        description: 'Glob pattern of input filenames to force trimming detection for',
+        description:
+          'Glob pattern of input filenames to force trimming detection for (overriding all options below)',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         implies: 'dat',
+      })
+      .option('trim-scan-files', {
+        group: groupRomTrimmed,
+        description: 'Detect trimming for uncompressed files',
+        choices: Object.keys(TrimScanFiles).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: TrimScanFilesInverted[TrimScanFiles.AUTO].toLowerCase(),
       })
       .option('trim-scan-archives', {
         group: groupRomTrimmed,
