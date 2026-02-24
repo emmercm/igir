@@ -17,8 +17,6 @@ import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 import type { CompressionMethodValue } from '../src/tzWriter.js';
 import TZWriter, { CompressionMethod } from '../src/tzWriter.js';
 
-// jest.setTimeout(5 * 60 * 1000); // 5min for large files
-
 const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [CompressionMethod.DEFLATE]: ValidationResult.VALID_TORRENTZIP,
   [CompressionMethod.ZSTD]: ValidationResult.VALID_RVZSTD,
