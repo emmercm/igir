@@ -31,6 +31,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     outputs:
+      commit_hash: ${{ steps.pr-finder.outputs.GIT_SHA }}
       version: ${{ steps.check.outputs.version }}
       release_id: ${{ steps.release-drafter.outputs.id }}
     steps:
@@ -109,8 +110,9 @@ jobs:
       - if: ${{ steps.release-drafter.outputs.id }}
         id: pr-finder
         run: |
+          set -x
           GIT_SHA=$(git rev-parse HEAD)
-          echo "${GIT_SHA}"
+          echo "GIT_SHA=${GIT_SHA}" >> "${GITHUB_OUTPUT}"
           PR_NUMBER=$(gh api \
             "repos/${GITHUB_REPOSITORY}/commits/${GIT_SHA}/pulls" \
             --jq '.[0].number')
@@ -135,5 +137,5 @@ jobs:
       - release
     uses: ./.github/workflows/node-compile.yml
     with:
-      ref: ${{ env.ref }}
+      ref: v${{ needs.release.outputs.commit_hash }}
     secrets: inherit
