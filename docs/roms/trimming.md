@@ -58,6 +58,6 @@ Additional filetypes can have their padded size & checksums calculated with any 
 
 All padding calculation can be turned off with the option:
 
-```
+```text
 --trim-scan-files never
 ```
