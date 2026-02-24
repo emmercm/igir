@@ -69,6 +69,7 @@
     "update:readme": "./scripts/update-readme-help.sh",
     "prepack": "npm run build && npm run update:readme -- 72",
     "postpack": "npm run update:readme",
+    "docs:build": "mkdocs build --strict --verbose",
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {

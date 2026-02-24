@@ -18,6 +18,7 @@ import {
   MergeMode,
   MoveDeleteDirs,
   PreferRevision,
+  TrimScanFiles,
   ZipFormat,
 } from '../../src/types/options.js';
 
@@ -237,6 +238,7 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getTrimScanArchives()).toEqual(false);
+    expect(options.getTrimScanFiles()).toEqual(TrimScanFiles.AUTO);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
     expect(options.getMergeDiscs()).toEqual(false);
@@ -2449,6 +2451,38 @@ describe('options', () => {
         ])
         .shouldReadFileForTrimming('file.rom'),
     ).toEqual(false);
+  });
+
+  it('should parse "trim-scan-files"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'foobar']),
+    ).toThrow(/choices/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'never'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.NEVER);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'auto'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.AUTO);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'always'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--trim-scan-files',
+          'never',
+          '--trim-scan-files',
+          'always',
+        ])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.ALWAYS);
   });
 
   it('should parse "trim-scan-archives"', () => {

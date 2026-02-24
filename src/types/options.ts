@@ -104,6 +104,20 @@ export const MoveDeleteDirsInverted = Object.fromEntries(
   Object.entries(MoveDeleteDirs).map(([key, value]) => [value, key]),
 ) as Record<MoveDeleteDirsValue, MoveDeleteDirsKey>;
 
+export const TrimScanFiles = {
+  // Never scan any files for trimming detection
+  NEVER: 1,
+  // Scan files with a known trimmable signature (default)
+  AUTO: 2,
+  // Scan all non-archive files regardless of signature
+  ALWAYS: 3,
+} as const;
+export type TrimScanFilesKey = keyof typeof TrimScanFiles;
+export type TrimScanFilesValue = (typeof TrimScanFiles)[TrimScanFilesKey];
+export const TrimScanFilesInverted = Object.fromEntries(
+  Object.entries(TrimScanFiles).map(([key, value]) => [value, key]),
+) as Record<TrimScanFilesValue, TrimScanFilesKey>;
+
 export const PreferRevision = {
   OLDER: 1,
   NEWER: 2,
@@ -178,6 +192,7 @@ export interface OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
+  readonly trimScanFiles?: string;
   readonly trimScanArchives?: boolean;
 
   readonly mergeRoms?: string;
@@ -339,6 +354,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
+
+  readonly trimScanFiles?: string;
 
   readonly trimScanArchives: boolean;
 
@@ -525,6 +542,7 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.trimmedGlob = options?.trimmedGlob;
+    this.trimScanFiles = options?.trimScanFiles;
     this.trimScanArchives = options?.trimScanArchives ?? false;
 
     this.mergeRoms = options?.mergeRoms;
@@ -1191,6 +1209,16 @@ export default class Options implements OptionsProps {
       this.trimmedGlob.length > 0 &&
       micromatch.isMatch(filePath.replace(/^.[\\/]/, ''), this.trimmedGlob)
     );
+  }
+
+  getTrimScanFiles(): TrimScanFilesValue | undefined {
+    const trimScanFilesMode = Object.keys(TrimScanFiles).find(
+      (mode) => mode.toLowerCase() === this.trimScanFiles?.toLowerCase(),
+    );
+    if (!trimScanFilesMode) {
+      return undefined;
+    }
+    return TrimScanFiles[trimScanFilesMode as TrimScanFilesKey];
   }
 
   getTrimScanArchives(): boolean {

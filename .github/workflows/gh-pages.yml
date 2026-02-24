@@ -87,7 +87,7 @@ jobs:
           pip install --requirement docs/requirements.txt
           sudo apt-get update
           sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
-      - run: mkdocs build --strict --verbose
+      - run: npm run docs:build
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
       - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
