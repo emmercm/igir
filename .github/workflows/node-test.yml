@@ -70,7 +70,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
-      - run: npm ci
+      - run: npm ci --foreground-scripts
       # Lint the source files
       - run: npm start -- --help
       - run: npm run lint

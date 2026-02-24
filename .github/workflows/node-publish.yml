@@ -12,7 +12,7 @@ on:
 jobs:
   node-publish:
     permissions:
-      # actions/checkout@v4
+      # actions/checkout@v6
       contents: read
       # `npm publish --provenance`
       id-token: write
