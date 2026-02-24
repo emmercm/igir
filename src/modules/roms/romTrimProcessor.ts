@@ -9,6 +9,7 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import type File from '../../types/files/file.js';
 import type FileFactory from '../../types/files/fileFactory.js';
 import type Options from '../../types/options.js';
+import { TrimScanFiles } from '../../types/options.js';
 import Module from '../module.js';
 
 /**
@@ -109,6 +110,17 @@ export default class ROMTrimProcessor extends Module {
       return true;
     }
 
+    if (this.options.getTrimScanFiles() === TrimScanFiles.NEVER) {
+      return false;
+    }
+
+    if (
+      !(inputFile instanceof ArchiveEntry) &&
+      this.options.getTrimScanFiles() === TrimScanFiles.ALWAYS
+    ) {
+      return true;
+    }
+
     if (inputFile instanceof ArchiveEntry && !this.options.getTrimScanArchives()) {
       return false;
     }
@@ -122,7 +134,10 @@ export default class ROMTrimProcessor extends Module {
   }
 
   private async getFile(inputFile: File, progressBar: ProgressBar): Promise<File> {
-    if (!this.options.shouldReadFileForTrimming(inputFile.getFilePath())) {
+    if (
+      this.options.getTrimScanFiles() === TrimScanFiles.AUTO &&
+      !this.options.shouldReadFileForTrimming(inputFile.getFilePath())
+    ) {
       const fileSignature = await this.fileFactory.signatureFrom(inputFile);
       if (!fileSignature?.canBeTrimmed()) {
         // This file isn't known to be trimmable

@@ -1,6 +1,6 @@
 {
   "name": "igir",
-  "version": "4.3.1",
+  "version": "4.3.2",
   "description": "🕹 A zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.",
   "keywords": [
     "1g1r",
@@ -69,6 +69,7 @@
     "update:readme": "./scripts/update-readme-help.sh",
     "prepack": "npm run build && npm run update:readme -- 72",
     "postpack": "npm run update:readme",
+    "docs:build": "mkdocs build --strict --verbose",
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {
@@ -105,7 +106,7 @@
     "terminal-size": "4.0.1",
     "trash": "10.1.0",
     "typescript-memoize": "1.1.1",
-    "wrap-ansi": "9.0.2",
+    "wrap-ansi": "10.0.0",
     "xml2js": "0.6.2",
     "yargs": "18.0.0",
     "zstd-napi": "0.0.12"

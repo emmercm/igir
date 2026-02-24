@@ -26,6 +26,8 @@ import Options, {
   MoveDeleteDirs,
   MoveDeleteDirsInverted,
   PreferRevision,
+  TrimScanFiles,
+  TrimScanFilesInverted,
   ZipFormat,
   ZipFormatInverted,
 } from '../types/options.js';
@@ -653,11 +655,20 @@ export default class ArgumentsParser {
 
       .option('trimmed-glob', {
         group: groupRomTrimmed,
-        description: 'Glob pattern of input filenames to force trimming detection for',
+        description:
+          'Glob pattern of input filenames to force trimming detection for (overriding all options below)',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         implies: 'dat',
+      })
+      .option('trim-scan-files', {
+        group: groupRomTrimmed,
+        description: 'Detect trimming for uncompressed files',
+        choices: Object.keys(TrimScanFiles).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: TrimScanFilesInverted[TrimScanFiles.AUTO].toLowerCase(),
       })
       .option('trim-scan-archives', {
         group: groupRomTrimmed,
