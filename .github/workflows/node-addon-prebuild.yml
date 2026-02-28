@@ -185,7 +185,7 @@ jobs:
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
           rm -rf packages/*/addon*/ packages/*/prebuilds*/
           find packages/*/addon* -type f -print0 | xargs -0 ls -al
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: packages/
           merge-multiple: true
