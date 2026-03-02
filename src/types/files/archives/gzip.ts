@@ -59,7 +59,7 @@ export default class Gzip extends Archive {
       }
       const flags = header[3];
 
-      let filename = '';
+      let fname = '';
       if (flags & 0x08) {
         let offset = 10;
         if (flags & 0x04) {
@@ -68,10 +68,10 @@ export default class Gzip extends Archive {
         }
         // Parse FNAME header
         while (!file.isEOF()) {
-          filename += (await file.readAt(offset, 256)).toString('latin1');
-          const nullByteIdx = filename.indexOf('\0');
+          fname += (await file.readAt(offset, 256)).toString('latin1');
+          const nullByteIdx = fname.indexOf('\0');
           if (nullByteIdx !== -1) {
-            filename = filename.slice(0, nullByteIdx);
+            fname = fname.slice(0, nullByteIdx);
             break;
           }
         }
@@ -81,7 +81,7 @@ export default class Gzip extends Archive {
       const crc32 = footer.readUInt32LE().toString(16).toLowerCase();
       const size = footer.readUInt32LE(4);
 
-      return { fname: filename, crc32, size };
+      return { fname, crc32, size };
     } finally {
       await file.close();
     }
@@ -110,8 +110,7 @@ export default class Gzip extends Archive {
       },
     );
     try {
-      const result = await callback(readable);
-      return result;
+      return await callback(readable);
     } finally {
       readable.destroy();
     }
