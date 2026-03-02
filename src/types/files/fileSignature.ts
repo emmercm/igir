@@ -544,14 +544,14 @@ export default class FileSignature {
   }
 
   private static async readHeaderBuffer(
-    stream: Readable,
+    readable: Readable,
     start: number,
     end: number,
   ): Promise<Buffer> {
     const chunks: Buffer[] = [];
     let bytesRead = 0;
 
-    for await (const chunk of stream as AsyncIterable<Buffer>) {
+    for await (const chunk of readable as AsyncIterable<Buffer>) {
       if (chunk.length > 0) {
         chunks.push(chunk);
         bytesRead += chunk.length;

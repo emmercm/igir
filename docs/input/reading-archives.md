@@ -12,7 +12,7 @@ Igir supports most common archive formats:
 | `.chd`                                                           | ❌ SHA1               | ❌ Uses bundled `chdman`<sup>1</sup>           | ⚠️ SHA1 only for hard drive images        |
 | `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ Uses bundled `maxcso`                       | ⚠️ CRC32 only                             |
 | `.gcz`                                                           | ❌                    | ❌ Uses bundled `dolphin-tool`                 | ⚠️ CRC32, MD5, and SHA1 only              |
-| `.gz`, `.gzip`                                                   | ❌ CRC16              | ❌ Uses bundled `7za`                          | ❌                                         |
+| `.gz`, `.gzip`                                                   | ✅                    | ✅                                             | ✅                                         |
 | `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                       | ✅                                         |
 | `.rar`                                                           | ✅                    | ✅                                             | ❌                                         |
 | `.rvz`, `.wia`                                                   | ❌                    | ❌ Uses bundled `dolphin-tool`                 | ⚠️ CRC32, MD5, and SHA1 only              |
