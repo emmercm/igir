@@ -99,20 +99,32 @@ export default class Gzip extends Archive {
     _entryPath: string,
     callback: (readable: stream.Readable) => Promise<T> | T,
   ): Promise<T> {
-    const readable = stream.pipeline(
-      fs.createReadStream(this.getFilePath()),
-      zlib.createGunzip(),
-      (err) => {
-        // The manual .destroy() call below will cause an error here
-        if (err && err.code !== 'ABORT_ERR') {
-          throw err;
-        }
-      },
-    );
+    const source = fs.createReadStream(this.getFilePath());
+    const gunzip = zlib.createGunzip();
+    const pipelinePromise = stream.promises.pipeline(source, gunzip);
+
     try {
-      return await callback(readable);
-    } finally {
-      readable.destroy();
+      const result = await callback(gunzip);
+
+      gunzip.destroy();
+      source.destroy();
+      try {
+        await pipelinePromise;
+      } catch (error) {
+        // The .destroy() calls above can cause ABORT_ERR
+        if ((error as NodeJS.ErrnoException).code !== 'ABORT_ERR') {
+          throw error;
+        }
+      }
+
+      return result;
+    } catch (error) {
+      gunzip.destroy();
+      source.destroy();
+      await pipelinePromise.catch(() => {
+        /* ignored */
+      });
+      throw error;
     }
   }
 }
