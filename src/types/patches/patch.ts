@@ -22,9 +22,9 @@ export default abstract class Patch {
   }
 
   protected static getCrcFromPath(fileBasename: string): string {
-    const matches = /(^|[^a-z0-9])([a-f0-9]{8})([^a-z0-9]|$)/i.exec(fileBasename);
+    const matches = /(^|[^a-z0-9])(0x)?([a-f0-9]{8})([^a-z0-9]|$)/i.exec(fileBasename);
     if (matches && matches.length >= 3) {
-      return matches[2].toLowerCase();
+      return matches[3].toLowerCase();
     }
 
     throw new IgirException(`couldn't parse base file CRC for patch: ${fileBasename}`);
