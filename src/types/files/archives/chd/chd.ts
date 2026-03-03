@@ -39,7 +39,7 @@ export default abstract class Chd extends Archive {
 
   private async extractEntryToStreamCached<T>(
     entryPath: string,
-    callback: (stream: Readable) => Promise<T> | T,
+    callback: (readable: Readable) => Promise<T> | T,
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
       this.tempSingletonHandles += 1;

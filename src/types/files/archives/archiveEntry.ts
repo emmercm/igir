@@ -7,7 +7,7 @@ import FsPoly from '../../../polyfill/fsPoly.js';
 import { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
-import FileChecksums, { ChecksumBitmask, ChecksumProps } from '../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask, ChecksumPropsWithSize } from '../fileChecksums.js';
 import ROMHeader from '../romHeader.js';
 import ROMPadding from '../romPadding.js';
 import Archive from './archive.js';
@@ -57,9 +57,6 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
     if (await FsPoly.exists(archiveEntryProps.archive.getFilePath())) {
-      // Calculate size
-      finalSize = finalSize ?? 0;
-
       // Calculate checksums
       if (
         (!finalCrcWithHeader && checksumBitmask & ChecksumBitmask.CRC32) ||
@@ -77,6 +74,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
           archiveEntryProps.entryPath,
           checksumBitmask,
         );
+        finalSize ??= headeredChecksums.size;
         finalCrcWithHeader = headeredChecksums.crc32 ?? finalCrcWithHeader;
         finalMd5WithHeader = headeredChecksums.md5 ?? finalMd5WithHeader;
         finalSha1WithHeader = headeredChecksums.sha1 ?? finalSha1WithHeader;
@@ -99,7 +97,6 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSymlinkSource = await FsPoly.readlink(archiveEntryProps.archive.getFilePath());
       }
     } else {
-      finalSize = finalSize ?? 0;
       finalCrcWithHeader = finalCrcWithHeader ?? '';
     }
     finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
@@ -108,7 +105,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     finalSha256WithoutHeader = finalSha256WithoutHeader ?? finalSha256WithHeader;
 
     return new ArchiveEntry<A>({
-      size: finalSize,
+      size: finalSize ?? 0,
       crc32: finalCrcWithHeader,
       crc32WithoutHeader: finalCrcWithoutHeader,
       md5: finalMd5WithHeader,
@@ -180,7 +177,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     entryPath: string,
     checksumBitmask: number,
     fileHeader?: ROMHeader,
-  ): Promise<ChecksumProps> {
+  ): Promise<ChecksumPropsWithSize> {
     return await archive.extractEntryToStream(
       entryPath,
       async (readable) => await FileChecksums.hashStream(readable, checksumBitmask),
@@ -213,7 +210,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return await archive.extractEntryToTempFile(entryPath, callback);
   }
 
-  async createReadStream<T>(callback: (stream: Readable) => T | Promise<T>, start = 0): Promise<T> {
+  async createReadStream<T>(
+    callback: (readable: Readable) => T | Promise<T>,
+    start = 0,
+  ): Promise<T> {
     // Don't extract to memory if we need to manipulate the stream start point
     if (start > 0) {
       return await this.extractToTempFile(
