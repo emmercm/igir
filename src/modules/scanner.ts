@@ -7,7 +7,7 @@ import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Chd from '../types/files/archives/chd/chd.js';
-import Gzip from '../types/files/archives/sevenZip/gzip.js';
+import Gzip from '../types/files/archives/gzip.js';
 import Tar from '../types/files/archives/tar.js';
 import type File from '../types/files/file.js';
 import type { ChecksumBitmaskValue } from '../types/files/fileChecksums.js';
