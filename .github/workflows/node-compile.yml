@@ -4,22 +4,22 @@ on:
   pull_request:
   workflow_call:
     inputs:
-      tag:
+      ref:
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag (e.g. "v1.0.0")'
+      ref:
+        description: 'Git ref (refs/heads/<branch>, refs/tags/<tag>, etc.) or SHA'
         required: true
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.tag || github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.ref || github.ref }}
   cancel-in-progress: true
 
 env:
-  ref: ${{ inputs.tag && format('refs/tags/{0}',inputs.tag) || github.sha || github.ref }}
+  ref: ${{ inputs.ref || github.sha || github.ref }}
 
 jobs:
   path-filter:
@@ -76,7 +76,7 @@ jobs:
       - id: npm-cache-dir
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -193,7 +193,7 @@ jobs:
           Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
           echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ env.BIN_OUTPUT }}
           path: ${{ env.BIN_OUTPUT }}
@@ -204,6 +204,9 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     needs:
       - node-compile
+    permissions:
+      # actions/checkout@v6, `gh` CLI
+      contents: write
     runs-on: ubuntu-latest
     steps:
       # Get the package version
@@ -215,7 +218,7 @@ jobs:
       - id: npm-cache-dir
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -225,11 +228,10 @@ jobs:
       - run: npm ci
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-      - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          tag_name: v${{ env.NPM_PKG_VERSION }}
-          files: igir-*/*
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+      - run: gh release upload "v${{ env.NPM_PKG_VERSION }}" igir-*/*
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   # !!! This check should be required by GitHub !!!
   compile-status-check:

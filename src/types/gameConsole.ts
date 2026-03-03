@@ -690,7 +690,7 @@ export default class GameConsole {
       },
     ),
     // NEC
-    new GameConsole(/PC Engine|TurboGrafx/i, ['.pce'], {
+    new GameConsole(/PC Engine/i, ['.pce'], {
       adam: 'PCE',
       batocera: 'pcengine',
       emulationstation: 'pcengine',
@@ -706,8 +706,24 @@ export default class GameConsole {
       spruce: 'PCE',
       twmenu: 'tg16',
     }),
+    new GameConsole(/TurboGrafx/i, [], {
+      adam: 'PCE',
+      batocera: 'pcengine',
+      emulationstation: 'tg16', // differs from PC Engine
+      funkeyos: 'PCE-TurboGrafx',
+      jelos: 'tg16',
+      minui: 'TurboGrafx-16 (PCE)',
+      mister: 'TGFX16',
+      miyoocfw: 'PCE',
+      onion: 'PCE',
+      pocket: 'pce',
+      retrodeck: 'pcengine',
+      romm: 'tg16',
+      spruce: 'PCE',
+      twmenu: 'tg16',
+    }),
     new GameConsole(
-      /(PC Engine|TurboGrafx) CD/i,
+      /PC Engine CD/i,
       [
         /* '.bin', '.cue' */
       ],
@@ -726,6 +742,20 @@ export default class GameConsole {
         spruce: 'PCECD',
       },
     ),
+    new GameConsole(/TurboGrafx CD/i, [], {
+      adam: 'PCECD',
+      batocera: 'pcenginecd',
+      emulationstation: 'tg-cd', // differs from PC Engine CD
+      jelos: 'tg16cd',
+      minui: 'TurboGrafx-16 CD (PCE)',
+      mister: 'TGFX16-CD',
+      miyoocfw: 'PCE',
+      onion: 'PCECD',
+      pocket: 'pcecd',
+      retrodeck: 'pcenginecd',
+      romm: 'turbografx-cd',
+      spruce: 'PCECD',
+    }),
     new GameConsole(/SuperGrafx/i, ['.sgx'], {
       batocera: 'supergrafx',
       emulationstation: 'supergrafx',
@@ -894,26 +924,38 @@ export default class GameConsole {
       romm: 'nintendo-dsi',
       twmenu: 'dsiware',
     }), // try to map DSiWare
-    new GameConsole(
-      /(\W|^)NES(\W|$)|Famicom|Nintendo Entertainment System/i,
-      ['.fc', '.nes', '.nez'],
-      {
-        adam: 'FC',
-        batocera: 'nes',
-        emulationstation: 'nes',
-        funkeyos: 'NES',
-        jelos: 'nes',
-        minui: 'Nintendo Entertainment System (FC)',
-        mister: 'NES',
-        miyoocfw: 'NES',
-        onion: 'FC',
-        pocket: 'nes',
-        retrodeck: 'nes',
-        romm: 'nes',
-        spruce: 'FC',
-        twmenu: 'nes',
-      },
-    ),
+    new GameConsole(/Famicom/i, [], {
+      adam: 'FC',
+      batocera: 'nes',
+      emulationstation: 'famicom', // differs from NES
+      funkeyos: 'NES',
+      jelos: 'nes',
+      minui: 'Nintendo Entertainment System (FC)',
+      mister: 'NES',
+      miyoocfw: 'NES',
+      onion: 'FC',
+      pocket: 'nes',
+      retrodeck: 'nes',
+      romm: 'famicom', // differs from NES
+      spruce: 'FC',
+      twmenu: 'nes',
+    }),
+    new GameConsole(/(\W|^)NES(\W|$)|Nintendo Entertainment System/i, ['.fc', '.nes', '.nez'], {
+      adam: 'FC',
+      batocera: 'nes',
+      emulationstation: 'nes',
+      funkeyos: 'NES',
+      jelos: 'nes',
+      minui: 'Nintendo Entertainment System (FC)',
+      mister: 'NES',
+      miyoocfw: 'NES',
+      onion: 'FC',
+      pocket: 'nes',
+      retrodeck: 'nes',
+      romm: 'nes',
+      spruce: 'FC',
+      twmenu: 'nes',
+    }),
     new GameConsole(/Pokemon Mini/i, ['.min'], {
       adam: 'POKEMINI',
       batocera: 'pokemini',
@@ -949,8 +991,24 @@ export default class GameConsole {
       romm: 'sufami-turbo',
       spruce: 'SUFAMI',
     }),
+    new GameConsole(/Super Famicom/i, [], {
+      adam: 'SFC',
+      batocera: 'snes',
+      emulationstation: 'sfc', // differs from SNES
+      funkeyos: 'SNES',
+      jelos: 'snes',
+      minui: 'Super Nintendo Entertainment System (SFC)',
+      mister: 'SNES',
+      miyoocfw: 'SNES',
+      onion: 'SFC',
+      pocket: 'snes',
+      retrodeck: 'snes',
+      romm: 'sfam', // differs from SNES
+      spruce: 'SFC',
+      twmenu: 'snes',
+    }),
     new GameConsole(
-      /(\W|^)SNES(\W|$)|Super (Nintendo Entertainment System|Famicom)/i,
+      /(\W|^)SNES(\W|$)|Super Nintendo Entertainment System/i,
       ['.fig', '.sfc', '.smc', '.snes'],
       {
         adam: 'SFC',
@@ -1069,7 +1127,19 @@ export default class GameConsole {
       batocera: 'sega32x',
       emulationstation: 'sega32x',
       jelos: 'sega32x',
-      minui: 'Sega 32X (MD)', // added for sorting convenience
+      minui: 'Sega 32X (MD)',
+      mister: 'S32X',
+      onion: 'THIRTYTWOX',
+      retrodeck: 'sega32x',
+      romm: 'sega32',
+      spruce: 'THIRTYTWOX',
+    }),
+    new GameConsole(/(Super|Mega Drive) 32X/i, [], {
+      adam: '32X',
+      batocera: 'sega32x',
+      emulationstation: 'sega32xjp', // differs from Genesis 32X
+      jelos: 'sega32x',
+      minui: 'Sega 32X (MD)',
       mister: 'S32X',
       onion: 'THIRTYTWOX',
       retrodeck: 'sega32x',
@@ -1123,7 +1193,7 @@ export default class GameConsole {
       twmenu: 'sms',
     }),
     new GameConsole(
-      /(Mega|Sega) CD/i,
+      /Sega CD/i,
       [
         /* '.bin', '.cue' */
       ],
@@ -1132,7 +1202,7 @@ export default class GameConsole {
         batocera: 'segacd',
         emulationstation: 'segacd',
         jelos: 'segacd',
-        minui: 'Sega CD (MD)', // added for sorting convenience
+        minui: 'Sega CD (MD)',
         mister: 'MegaCD',
         miyoocfw: 'SMD',
         onion: 'SEGACD',
@@ -1141,10 +1211,39 @@ export default class GameConsole {
         spruce: 'SEGACD',
       },
     ),
-    new GameConsole(/Mega Drive|Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], {
+    new GameConsole(/Mega[ -]CD/i, [], {
+      adam: 'SEGACD',
+      batocera: 'segacd',
+      emulationstation: 'megacdjp', // differs from Sega CD
+      jelos: 'segacd',
+      minui: 'Sega CD (MD)',
+      mister: 'MegaCD',
+      miyoocfw: 'SMD',
+      onion: 'SEGACD',
+      retrodeck: 'segacd',
+      romm: 'segacd',
+      spruce: 'SEGACD',
+    }),
+    new GameConsole(/Genesis/i, ['.gen', '.md', '.mdx', '.sgd', '.smd'], {
       adam: 'MD',
       batocera: 'megadrive',
-      emulationstation: 'megadrive',
+      emulationstation: 'genesis',
+      funkeyos: 'Sega Genesis',
+      jelos: 'genesis',
+      minui: 'Sega Genesis (MD)',
+      mister: 'MegaDrive',
+      miyoocfw: 'SMD',
+      onion: 'MD',
+      pocket: 'genesis',
+      retrodeck: 'megadrive',
+      romm: 'genesis',
+      spruce: 'MD',
+      twmenu: 'gen',
+    }),
+    new GameConsole(/Mega Drive/i, [], {
+      adam: 'MD',
+      batocera: 'megadrive',
+      emulationstation: 'megadrivejp', // differs from Genesis
       funkeyos: 'Sega Genesis',
       jelos: 'genesis',
       minui: 'Sega Genesis (MD)',
@@ -1164,7 +1263,7 @@ export default class GameConsole {
       ],
       {
         batocera: 'saturn',
-        emulationstation: 'saturn',
+        emulationstation: 'saturn', // "saturnjp" is also available
         jelos: 'saturn',
         mister: 'Saturn',
         retrodeck: 'saturn',
@@ -1272,7 +1371,7 @@ export default class GameConsole {
       emulationstation: 'ngp',
       funkeyos: 'Neo Geo Pocket',
       jelos: 'ngp',
-      minui: 'Neo Geo Pocket (NGPC)', // added for sorting convenience
+      minui: 'Neo Geo Pocket (NGPC)',
       onion: 'NGP',
       retrodeck: 'ngp',
       romm: 'neo-geo-pocket',
@@ -1285,7 +1384,7 @@ export default class GameConsole {
       emulationstation: 'ngpc',
       funkeyos: 'Neo Geo Pocket',
       jelos: 'ngpc',
-      minui: 'Neo Geo Pocket Color (NGPC)', // added for sorting convenience
+      minui: 'Neo Geo Pocket Color (NGPC)',
       onion: 'NGP',
       retrodeck: 'ngpc',
       romm: 'neo-geo-pocket-color',

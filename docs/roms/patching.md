@@ -68,6 +68,16 @@ Patch filename:
 a8f1adf5 NBA Jam 22 v1.4.ppf
 ```
 
+## Only writing patched ROMs
+
+By default, Igir will write patched ROMs in _addition_ to un-patched ROMs. This includes any ROMs that do not have any matching patches in a `--patch <path>`.
+
+If you want to _only_ write patched ROMs to the output directory, you can use the option:
+
+```text
+--patch-only
+```
+
 ## Creating ROM patches
 
 Marc Robledo's [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/) site is a great resource for creating ROM patches in a number of common formats without the need to download any tools.

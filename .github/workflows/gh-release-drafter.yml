@@ -25,11 +25,15 @@ env:
 jobs:
   release:
     permissions:
-      # actions/checkout@v4
+      # actions/checkout@v6
       contents: read
       # thollander/actions-comment-pull-request
       pull-requests: write
     runs-on: ubuntu-latest
+    outputs:
+      commit_hash: ${{ steps.pr-finder.outputs.GIT_SHA }}
+      version: ${{ steps.check.outputs.version }}
+      release_id: ${{ steps.release-drafter.outputs.id }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -55,7 +59,7 @@ jobs:
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
       - if: steps.check.outputs.changed == 'true'
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -106,8 +110,9 @@ jobs:
       - if: ${{ steps.release-drafter.outputs.id }}
         id: pr-finder
         run: |
+          set -x
           GIT_SHA=$(git rev-parse HEAD)
-          echo "${GIT_SHA}"
+          echo "GIT_SHA=${GIT_SHA}" >> "${GITHUB_OUTPUT}"
           PR_NUMBER=$(gh api \
             "repos/${GITHUB_REPOSITORY}/commits/${GIT_SHA}/pulls" \
             --jq '.[0].number')
@@ -125,8 +130,12 @@ jobs:
           comment-tag: gh-release
           pr-number: ${{ steps.pr-finder.outputs.PR_NUMBER }}
 
-      # Kick off binary compilation
-      - if: ${{ steps.release-drafter.outputs.id }}
-        uses: ./.github/workflows/node-compile.yml
-        with:
-          tag: v${{ steps.check.outputs.version }}
+  # Kick off binary compilation
+  compile:
+    if: ${{ needs.release.outputs.release_id }}
+    needs:
+      - release
+    uses: ./.github/workflows/node-compile.yml
+    with:
+      ref: v${{ needs.release.outputs.commit_hash }}
+    secrets: inherit

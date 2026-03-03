@@ -10,7 +10,7 @@ import { ProgressBarSymbol } from '../../console/progressBar.js';
 import GameGrouper from '../../gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import bufferPoly from '../../polyfill/bufferPoly.js';
+import BufferPoly from '../../polyfill/bufferPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import type { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
 import CMProParser from '../../types/dats/cmpro/cmProParser.js';
@@ -170,7 +170,7 @@ export default class DATScanner extends Scanner {
     }
 
     dat ??= await datFile.createReadStream(async (readable) => {
-      const fileContents = (await bufferPoly.fromReadable(readable)).toString();
+      const fileContents = await BufferPoly.fromReadable(readable);
       return await this.parseDatContents(datFile, fileContents);
     });
 
@@ -258,8 +258,11 @@ export default class DATScanner extends Scanner {
     return await this.parseDatContents(mameExecutable, fileContents);
   }
 
-  private async parseDatContents(datFile: File, fileContents: string): Promise<DAT | undefined> {
-    if (!fileContents) {
+  private async parseDatContents(
+    datFile: File,
+    fileContents: Buffer | string,
+  ): Promise<DAT | undefined> {
+    if (fileContents.length === 0) {
       this.progressBar.logTrace(`${datFile.toString()}: file is empty`);
       return undefined;
     }
@@ -283,7 +286,7 @@ export default class DATScanner extends Scanner {
     return undefined;
   }
 
-  private parseXmlDat(datFile: File, fileContents: string): DAT | undefined {
+  private parseXmlDat(datFile: File, fileContents: Buffer | string): DAT | undefined {
     this.progressBar.logTrace(
       `${datFile.toString()}: attempting to parse ${FsPoly.sizeReadable(fileContents.length)} of XML`,
     );
@@ -349,11 +352,14 @@ export default class DATScanner extends Scanner {
     return undefined;
   }
 
-  private parseCmproDat(datFile: File, fileContents: string): DAT | undefined {
+  private parseCmproDat(datFile: File, fileContents: Buffer | string): DAT | undefined {
+    const fileContentsString =
+      typeof fileContents === 'string' ? fileContents : fileContents.toString();
+
     /**
      * Validation that this might be a CMPro file.
      */
-    if (!/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.test(fileContents)) {
+    if (!/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.test(fileContentsString)) {
       return undefined;
     }
 
@@ -361,7 +367,7 @@ export default class DATScanner extends Scanner {
 
     let cmproDat: DATProps;
     try {
-      cmproDat = new CMProParser(fileContents).parse();
+      cmproDat = new CMProParser(fileContentsString).parse();
     } catch (error) {
       this.progressBar.logTrace(`${datFile.toString()}: failed to parse CMPro DAT: ${error}`);
       return undefined;
@@ -456,7 +462,7 @@ export default class DATScanner extends Scanner {
    */
   private async parseSourceMaterialDatabase(
     datFile: File,
-    fileContents: string,
+    fileContents: Buffer | string,
   ): Promise<DAT | undefined> {
     this.progressBar.logTrace(`${datFile.toString()}: attempting to parse SMDB`);
 
@@ -511,7 +517,7 @@ export default class DATScanner extends Scanner {
     });
   }
 
-  private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
+  private static async parseSourceMaterialTsv(fileContents: Buffer | string): Promise<SmdbRow[]> {
     return await new Promise((resolve, reject) => {
       const rows: SmdbRow[] = [];
 

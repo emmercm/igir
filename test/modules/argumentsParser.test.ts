@@ -18,6 +18,7 @@ import {
   MergeMode,
   MoveDeleteDirs,
   PreferRevision,
+  TrimScanFiles,
   ZipFormat,
 } from '../../src/types/options.js';
 
@@ -209,6 +210,7 @@ describe('options', () => {
     expect(options.getDatIgnoreParentClone()).toEqual(false);
 
     expect(options.getPatchFileCount()).toEqual(0);
+    expect(options.getPatchOnly()).toEqual(false);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatMirror()).toEqual(false);
@@ -236,6 +238,7 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getTrimScanArchives()).toEqual(false);
+    expect(options.getTrimScanFiles()).toEqual(TrimScanFiles.AUTO);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
     expect(options.getMergeDiscs()).toEqual(false);
@@ -1177,6 +1180,12 @@ describe('options', () => {
   });
 
   it('should parse "patch-exclude"', async () => {
+    await expect(
+      async () =>
+        await argumentsParser
+          .parse(['copy', '--input', os.devNull, '--patch-exclude', './src'])
+          .scanPatchFilesWithoutExclusions(),
+    ).rejects.toThrow(/dependent|implication/i);
     expect(
       (
         await argumentsParser
@@ -1252,6 +1261,64 @@ describe('options', () => {
           .scanPatchFilesWithoutExclusions()
       ).length,
     ).toEqual(0);
+  });
+
+  it('should parse "patch-only"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--patch-only']).getPatchOnly(),
+    ).toThrow(/dependent|implication/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only'])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only', 'true'])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only', 'false'])
+        .getPatchOnly(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          '--patch-only',
+        ])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          'false',
+          '--patch-only',
+          'true',
+        ])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          'true',
+          '--patch-only',
+          'false',
+        ])
+        .getPatchOnly(),
+    ).toEqual(false);
   });
 
   it('should parse "output"', () => {
@@ -2384,6 +2451,38 @@ describe('options', () => {
         ])
         .shouldReadFileForTrimming('file.rom'),
     ).toEqual(false);
+  });
+
+  it('should parse "trim-scan-files"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'foobar']),
+    ).toThrow(/choices/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'never'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.NEVER);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'auto'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.AUTO);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'always'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--trim-scan-files',
+          'never',
+          '--trim-scan-files',
+          'always',
+        ])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.ALWAYS);
   });
 
   it('should parse "trim-scan-archives"', () => {

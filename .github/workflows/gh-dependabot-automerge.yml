@@ -12,7 +12,7 @@ jobs:
   dependabot-automerge:
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     permissions:
-      # actions/checkout@v4, `gh` CLI
+      # actions/checkout@v6, `gh` CLI
       contents: write
       # `gh` CLI
       repository-projects: read

@@ -29,8 +29,12 @@ export interface ChecksumProps {
   sha256?: string;
 }
 
+export interface ChecksumPropsWithSize extends ChecksumProps {
+  size?: number;
+}
+
 export default {
-  async hashData(data: Buffer | string, checksumBitmask: number): Promise<ChecksumProps> {
+  async hashData(data: Buffer | string, checksumBitmask: number): Promise<ChecksumPropsWithSize> {
     const readable = new Readable();
     readable.push(data);
     // eslint-disable-next-line unicorn/no-null
@@ -44,7 +48,7 @@ export default {
     start?: number,
     end?: number,
     callback?: FsReadCallback,
-  ): Promise<ChecksumProps> {
+  ): Promise<ChecksumPropsWithSize> {
     return await File.createStreamFromFile(
       filePath,
       async (readable) => await this.hashStream(readable, checksumBitmask, callback),
@@ -57,7 +61,7 @@ export default {
     readable: stream.Readable,
     checksumBitmask: number,
     callback?: FsReadCallback,
-  ): Promise<ChecksumProps> {
+  ): Promise<ChecksumPropsWithSize> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
       // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
@@ -69,6 +73,7 @@ export default {
         ? readable
         : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
 
+    let size = 0;
     const crc = checksumBitmask & ChecksumBitmask.CRC32 ? new Crc32() : undefined;
     const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
     const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
@@ -76,6 +81,7 @@ export default {
       checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
     for await (const chunk of streamWithCallback as AsyncIterable<Buffer>) {
+      size += chunk.length;
       crc?.update(chunk);
       md5?.update(chunk);
       sha1?.update(chunk);
@@ -83,6 +89,7 @@ export default {
     }
 
     return {
+      size,
       crc32:
         crc?.digest().toString(16).padStart(8, '0') ??
         // Empty files won't emit any data, default to the empty file CRC32
