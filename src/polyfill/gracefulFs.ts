@@ -351,6 +351,26 @@ export default {
       useQueue: true,
     }) as typeof fs.promises.copyFile;
 
+    fsToPatch.readdir = wrapCallbackMethod(fsToPatch.readdir as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.readdir;
+    fsToPatch.readdirSync = wrapSyncMethod(fsToPatch.readdirSync as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.readdirSync;
+    fsToPatch.promises.readdir = wrapPromiseMethod(fsToPatch.promises.readdir as AsyncFsMethod, {
+      useQueue: true,
+    }) as typeof fs.promises.readdir;
+
+    fsToPatch.open = wrapCallbackMethod(fsToPatch.open as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.open;
+    fsToPatch.openSync = wrapSyncMethod(fsToPatch.openSync as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.openSync;
+    fsToPatch.promises.open = wrapPromiseMethod(fsToPatch.promises.open as AsyncFsMethod, {
+      useQueue: true,
+    }) as typeof fs.promises.open;
+
     ////////// `graceful-fs` polyfill.js //////////
 
     fsToPatch.chown = wrapCallbackMethod(fsToPatch.chown as FsMethod) as typeof fs.chown;
