@@ -60,7 +60,7 @@ export default class SevenZip extends Archive {
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const iterator = new _7zIterator(this.getFilePath());
     for await (const entry of iterator) {
-      if (entry.path !== entryPath) {
+      if (entry.path !== entryPath.replaceAll(/[\\/]/g, '/')) {
         continue;
       }
 
