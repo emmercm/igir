@@ -88,7 +88,6 @@ const TRANSIENT_ERRNO_CODES = new Set([
   'ENFILE',
   // Everything below this did not exist in `graceful-fs` v4.2.11!
   'EWOULDBLOCK',
-  'ENOSPC',
   'ETXTBSY',
 ]);
 
@@ -119,7 +118,7 @@ class RetryQueue {
   private scheduleProcess(): void {
     if (this.timer !== undefined) return;
     // Compute backoff from the longest-waiting entry to avoid over-scheduling
-    const maxRetries = Math.max(...this.entries.map((e) => e.retryCount));
+    const maxRetries = this.entries.reduce((max, e) => Math.max(max, e.retryCount), 0);
     const delay = Math.min(
       Math.max(maxRetries, 1) * RETRY_BACKOFF_MULTIPLIER,
       RETRY_MAX_BACKOFF_MS,
@@ -261,43 +260,45 @@ function wrapPromiseMethod<T extends AsyncFsMethod>(originalFn: T, options?: Ret
       let backoff = 0;
 
       const attempt = (): void => {
-        originalFn
-          .apply(this, args)
-          .then(resolve)
-          .catch((error: unknown) => {
-            attempts++;
+        let innerPromise: Promise<unknown>;
+        try {
+          innerPromise = originalFn.apply(this, args);
+        } catch (error: unknown) {
+          reject(error instanceof Error ? error : new Error(String(error)));
+          return;
+        }
 
-            const exceeded =
-              Date.now() - startTime >= RETRY_TIMEOUT_MS ||
-              (options?.maxAttempts !== undefined && attempts >= options.maxAttempts);
+        innerPromise.then(resolve).catch((error: unknown) => {
+          attempts++;
 
-            if (
-              exceeded ||
-              !TRANSIENT_ERRNO_CODES.has((error as NodeJS.ErrnoException).code ?? '')
-            ) {
-              reject(error instanceof Error ? error : new Error(String(error)));
-              return;
-            }
+          const exceeded =
+            Date.now() - startTime >= RETRY_TIMEOUT_MS ||
+            (options?.maxAttempts !== undefined && attempts >= options.maxAttempts);
 
-            if (options?.useQueue) {
-              retryQueue.enqueue({
-                retry: attempt,
-                timeout: () => {
-                  reject(error instanceof Error ? error : new Error(String(error)));
-                },
-                startTime,
-                retryCount: attempts,
-              });
-            } else if (options?.backoff) {
-              backoff = Math.min(
-                Math.max(backoff * RETRY_BACKOFF_MULTIPLIER, 1),
-                RETRY_MAX_BACKOFF_MS,
-              );
-              setTimeout(attempt, backoff);
-            } else {
-              attempt();
-            }
-          });
+          if (exceeded || !TRANSIENT_ERRNO_CODES.has((error as NodeJS.ErrnoException).code ?? '')) {
+            reject(error instanceof Error ? error : new Error(String(error)));
+            return;
+          }
+
+          if (options?.useQueue) {
+            retryQueue.enqueue({
+              retry: attempt,
+              timeout: () => {
+                reject(error instanceof Error ? error : new Error(String(error)));
+              },
+              startTime,
+              retryCount: attempts,
+            });
+          } else if (options?.backoff) {
+            backoff = Math.min(
+              Math.max(backoff * RETRY_BACKOFF_MULTIPLIER, 1),
+              RETRY_MAX_BACKOFF_MS,
+            );
+            setTimeout(attempt, backoff);
+          } else {
+            attempt();
+          }
+        });
       };
       attempt();
     });
@@ -312,13 +313,6 @@ export default {
     /* eslint-disable @typescript-eslint/no-deprecated */
 
     ////////// `graceful-fs` graceful-fs.js //////////
-
-    fsToPatch.createReadStream = wrapSyncMethod(
-      fsToPatch.createReadStream as FsMethod,
-    ) as typeof fs.createReadStream;
-    fsToPatch.createWriteStream = wrapSyncMethod(
-      fsToPatch.createWriteStream as FsMethod,
-    ) as typeof fs.createWriteStream;
 
     fsToPatch.readFile = wrapCallbackMethod(fsToPatch.readFile as FsMethod, {
       useQueue: true,
@@ -380,6 +374,16 @@ export default {
       useQueue: true,
     }) as typeof fs.promises.open;
 
+    fsToPatch.opendir = wrapCallbackMethod(fsToPatch.opendir as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.opendir;
+    fsToPatch.opendirSync = wrapSyncMethod(
+      fsToPatch.opendirSync as FsMethod,
+    ) as typeof fs.opendirSync;
+    fsToPatch.promises.opendir = wrapPromiseMethod(fsToPatch.promises.opendir as AsyncFsMethod, {
+      useQueue: true,
+    }) as typeof fs.promises.opendir;
+
     ////////// `graceful-fs` polyfill.js //////////
 
     fsToPatch.chown = wrapCallbackMethod(fsToPatch.chown as FsMethod) as typeof fs.chown;
@@ -432,6 +436,9 @@ export default {
     fsToPatch.rename = wrapCallbackMethod(fsToPatch.rename as FsMethod, {
       backoff: true,
     }) as typeof fs.rename;
+    fsToPatch.promises.rename = wrapPromiseMethod(fsToPatch.promises.rename as AsyncFsMethod, {
+      backoff: true,
+    }) as typeof fs.promises.rename;
 
     fsToPatch.read = wrapCallbackMethod(fsToPatch.read as FsMethod, {
       maxAttempts: 10,
@@ -440,9 +447,50 @@ export default {
       maxAttempts: 10,
     }) as typeof fs.readSync;
 
+    fsToPatch.write = wrapCallbackMethod(fsToPatch.write as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.write;
+    fsToPatch.writeSync = wrapSyncMethod(fsToPatch.writeSync as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.writeSync;
+
     /*
      * Everything below this did not exist in `graceful-fs` v4.2.11!
      */
+
+    fsToPatch.access = wrapCallbackMethod(fsToPatch.access as FsMethod) as typeof fs.access;
+    fsToPatch.accessSync = wrapSyncMethod(fsToPatch.accessSync as FsMethod) as typeof fs.accessSync;
+    fsToPatch.promises.access = wrapPromiseMethod(
+      fsToPatch.promises.access as AsyncFsMethod,
+    ) as typeof fs.promises.access;
+
+    fsToPatch.fdatasync = wrapCallbackMethod(fsToPatch.fdatasync as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.fdatasync;
+    fsToPatch.fdatasyncSync = wrapSyncMethod(fsToPatch.fdatasyncSync as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.fdatasyncSync;
+
+    fsToPatch.fsync = wrapCallbackMethod(fsToPatch.fsync as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.fsync;
+    fsToPatch.fsyncSync = wrapSyncMethod(fsToPatch.fsyncSync as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.fsyncSync;
+
+    fsToPatch.ftruncate = wrapCallbackMethod(fsToPatch.ftruncate as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.ftruncate;
+    fsToPatch.ftruncateSync = wrapSyncMethod(fsToPatch.ftruncateSync as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.ftruncateSync;
+
+    fsToPatch.futimes = wrapCallbackMethod(fsToPatch.futimes as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.futimes;
+    fsToPatch.futimesSync = wrapSyncMethod(fsToPatch.futimesSync as FsMethod, {
+      maxAttempts: 10,
+    }) as typeof fs.futimesSync;
 
     fsToPatch.link = wrapCallbackMethod(fsToPatch.link as FsMethod) as typeof fs.link;
     fsToPatch.linkSync = wrapSyncMethod(fsToPatch.linkSync as FsMethod) as typeof fs.linkSync;
@@ -450,11 +498,55 @@ export default {
       fsToPatch.promises.link as AsyncFsMethod,
     ) as typeof fs.promises.link;
 
+    fsToPatch.lutimes = wrapCallbackMethod(fsToPatch.lutimes as FsMethod) as typeof fs.lutimes;
+    fsToPatch.lutimesSync = wrapSyncMethod(
+      fsToPatch.lutimesSync as FsMethod,
+    ) as typeof fs.lutimesSync;
+    fsToPatch.promises.lutimes = wrapPromiseMethod(
+      fsToPatch.promises.lutimes as AsyncFsMethod,
+    ) as typeof fs.promises.lutimes;
+
+    fsToPatch.mkdir = wrapCallbackMethod(fsToPatch.mkdir as FsMethod) as typeof fs.mkdir;
+    fsToPatch.mkdirSync = wrapSyncMethod(fsToPatch.mkdirSync as FsMethod) as typeof fs.mkdirSync;
+    fsToPatch.promises.mkdir = wrapPromiseMethod(
+      fsToPatch.promises.mkdir as AsyncFsMethod,
+    ) as typeof fs.promises.mkdir;
+
+    fsToPatch.mkdtemp = wrapCallbackMethod(fsToPatch.mkdtemp as FsMethod) as typeof fs.mkdtemp;
+    fsToPatch.mkdtempSync = wrapSyncMethod(
+      fsToPatch.mkdtempSync as FsMethod,
+    ) as typeof fs.mkdtempSync;
+    fsToPatch.promises.mkdtemp = wrapPromiseMethod(
+      fsToPatch.promises.mkdtemp as AsyncFsMethod,
+    ) as typeof fs.promises.mkdtemp;
+
+    fsToPatch.readlink = wrapCallbackMethod(fsToPatch.readlink as FsMethod) as typeof fs.readlink;
+    fsToPatch.readlinkSync = wrapSyncMethod(
+      fsToPatch.readlinkSync as FsMethod,
+    ) as typeof fs.readlinkSync;
+    fsToPatch.promises.readlink = wrapPromiseMethod(
+      fsToPatch.promises.readlink as AsyncFsMethod,
+    ) as typeof fs.promises.readlink;
+
+    fsToPatch.realpath = wrapCallbackMethod(fsToPatch.realpath as FsMethod) as typeof fs.realpath;
+    fsToPatch.realpathSync = wrapSyncMethod(
+      fsToPatch.realpathSync as FsMethod,
+    ) as typeof fs.realpathSync;
+    fsToPatch.promises.realpath = wrapPromiseMethod(
+      fsToPatch.promises.realpath as AsyncFsMethod,
+    ) as typeof fs.promises.realpath;
+
     fsToPatch.rm = wrapCallbackMethod(fsToPatch.rm as FsMethod) as typeof fs.rm;
     fsToPatch.rmSync = wrapSyncMethod(fsToPatch.rmSync as FsMethod) as typeof fs.rmSync;
     fsToPatch.promises.rm = wrapPromiseMethod(
       fsToPatch.promises.rm as AsyncFsMethod,
     ) as typeof fs.promises.rm;
+
+    fsToPatch.rmdir = wrapCallbackMethod(fsToPatch.rmdir as FsMethod) as typeof fs.rmdir;
+    fsToPatch.rmdirSync = wrapSyncMethod(fsToPatch.rmdirSync as FsMethod) as typeof fs.rmdirSync;
+    fsToPatch.promises.rmdir = wrapPromiseMethod(
+      fsToPatch.promises.rmdir as AsyncFsMethod,
+    ) as typeof fs.promises.rmdir;
 
     fsToPatch.symlink = wrapCallbackMethod(fsToPatch.symlink as FsMethod) as typeof fs.symlink;
     fsToPatch.symlinkSync = wrapSyncMethod(
@@ -464,11 +556,25 @@ export default {
       fsToPatch.promises.symlink as AsyncFsMethod,
     ) as typeof fs.promises.symlink;
 
+    fsToPatch.truncate = wrapCallbackMethod(fsToPatch.truncate as FsMethod) as typeof fs.truncate;
+    fsToPatch.truncateSync = wrapSyncMethod(
+      fsToPatch.truncateSync as FsMethod,
+    ) as typeof fs.truncateSync;
+    fsToPatch.promises.truncate = wrapPromiseMethod(
+      fsToPatch.promises.truncate as AsyncFsMethod,
+    ) as typeof fs.promises.truncate;
+
     fsToPatch.unlink = wrapCallbackMethod(fsToPatch.unlink as FsMethod) as typeof fs.unlink;
     fsToPatch.unlinkSync = wrapSyncMethod(fsToPatch.unlinkSync as FsMethod) as typeof fs.unlinkSync;
     fsToPatch.promises.unlink = wrapPromiseMethod(
       fsToPatch.promises.unlink as AsyncFsMethod,
     ) as typeof fs.promises.unlink;
+
+    fsToPatch.utimes = wrapCallbackMethod(fsToPatch.utimes as FsMethod) as typeof fs.utimes;
+    fsToPatch.utimesSync = wrapSyncMethod(fsToPatch.utimesSync as FsMethod) as typeof fs.utimesSync;
+    fsToPatch.promises.utimes = wrapPromiseMethod(
+      fsToPatch.promises.utimes as AsyncFsMethod,
+    ) as typeof fs.promises.utimes;
 
     return fsToPatch;
   },
