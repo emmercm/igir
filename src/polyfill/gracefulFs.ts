@@ -221,7 +221,10 @@ function wrapCallbackMethod<T extends FsMethod>(originalFn: T, options?: RetryOp
 /**
  * Creates a wrapped version of a synchronous FS function with blocking retry logic.
  */
-function wrapSyncMethod<T extends FsMethod>(originalFn: T, options?: RetryOptions): T {
+function wrapSyncMethod<T extends FsMethod>(
+  originalFn: T,
+  options?: Omit<RetryOptions, 'backoff' | 'useQueue'>,
+): T {
   return function (this: unknown, ...args: unknown[]): unknown {
     let attempts = 0;
     const startTime = Date.now();
@@ -309,19 +312,19 @@ export default {
 
     ////////// `graceful-fs` graceful-fs.js //////////
 
-    fsToPatch.createReadStream = wrapSyncMethod(fsToPatch.createReadStream as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.createReadStream;
-    fsToPatch.createWriteStream = wrapSyncMethod(fsToPatch.createWriteStream as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.createWriteStream;
+    fsToPatch.createReadStream = wrapSyncMethod(
+      fsToPatch.createReadStream as FsMethod,
+    ) as typeof fs.createReadStream;
+    fsToPatch.createWriteStream = wrapSyncMethod(
+      fsToPatch.createWriteStream as FsMethod,
+    ) as typeof fs.createWriteStream;
 
     fsToPatch.readFile = wrapCallbackMethod(fsToPatch.readFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.readFile;
-    fsToPatch.readFileSync = wrapSyncMethod(fsToPatch.readFileSync as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.readFileSync;
+    fsToPatch.readFileSync = wrapSyncMethod(
+      fsToPatch.readFileSync as FsMethod,
+    ) as typeof fs.readFileSync;
     fsToPatch.promises.readFile = wrapPromiseMethod(fsToPatch.promises.readFile as AsyncFsMethod, {
       useQueue: true,
     }) as typeof fs.promises.readFile;
@@ -329,9 +332,9 @@ export default {
     fsToPatch.writeFile = wrapCallbackMethod(fsToPatch.writeFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.writeFile;
-    fsToPatch.writeFileSync = wrapSyncMethod(fsToPatch.writeFileSync as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.writeFileSync;
+    fsToPatch.writeFileSync = wrapSyncMethod(
+      fsToPatch.writeFileSync as FsMethod,
+    ) as typeof fs.writeFileSync;
     fsToPatch.promises.writeFile = wrapPromiseMethod(
       fsToPatch.promises.writeFile as AsyncFsMethod,
       { useQueue: true },
@@ -340,9 +343,9 @@ export default {
     fsToPatch.appendFile = wrapCallbackMethod(fsToPatch.appendFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.appendFile;
-    fsToPatch.appendFileSync = wrapSyncMethod(fsToPatch.appendFileSync as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.appendFileSync;
+    fsToPatch.appendFileSync = wrapSyncMethod(
+      fsToPatch.appendFileSync as FsMethod,
+    ) as typeof fs.appendFileSync;
     fsToPatch.promises.appendFile = wrapPromiseMethod(
       fsToPatch.promises.appendFile as AsyncFsMethod,
       { useQueue: true },
@@ -351,9 +354,9 @@ export default {
     fsToPatch.copyFile = wrapCallbackMethod(fsToPatch.copyFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.copyFile;
-    fsToPatch.copyFileSync = wrapSyncMethod(fsToPatch.copyFileSync as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.copyFileSync;
+    fsToPatch.copyFileSync = wrapSyncMethod(
+      fsToPatch.copyFileSync as FsMethod,
+    ) as typeof fs.copyFileSync;
     fsToPatch.promises.copyFile = wrapPromiseMethod(fsToPatch.promises.copyFile as AsyncFsMethod, {
       useQueue: true,
     }) as typeof fs.promises.copyFile;
@@ -361,9 +364,9 @@ export default {
     fsToPatch.readdir = wrapCallbackMethod(fsToPatch.readdir as FsMethod, {
       useQueue: true,
     }) as typeof fs.readdir;
-    fsToPatch.readdirSync = wrapSyncMethod(fsToPatch.readdirSync as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.readdirSync;
+    fsToPatch.readdirSync = wrapSyncMethod(
+      fsToPatch.readdirSync as FsMethod,
+    ) as typeof fs.readdirSync;
     fsToPatch.promises.readdir = wrapPromiseMethod(fsToPatch.promises.readdir as AsyncFsMethod, {
       useQueue: true,
     }) as typeof fs.promises.readdir;
@@ -371,9 +374,7 @@ export default {
     fsToPatch.open = wrapCallbackMethod(fsToPatch.open as FsMethod, {
       useQueue: true,
     }) as typeof fs.open;
-    fsToPatch.openSync = wrapSyncMethod(fsToPatch.openSync as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.openSync;
+    fsToPatch.openSync = wrapSyncMethod(fsToPatch.openSync as FsMethod) as typeof fs.openSync;
     fsToPatch.promises.open = wrapPromiseMethod(fsToPatch.promises.open as AsyncFsMethod, {
       useQueue: true,
     }) as typeof fs.promises.open;
