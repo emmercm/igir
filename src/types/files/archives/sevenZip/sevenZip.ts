@@ -25,32 +25,6 @@ export default class SevenZip extends Archive {
   }
 
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
-    /**
-     * WARN(cemmer): even with the above mutex, {@link _7z.list} will still sometimes return no
-     * entries. This seems to happen more on older Node.js versions (v16, v18) and specific OSes
-     * (Linux). Most archives contain at least one file, so assume this is wrong and attempt again
-     * up to 5 times total.
-     */
-    const maxAttempts = 5;
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      const archiveEntries = await this.getArchiveEntriesNotCached(checksumBitmask);
-      if (archiveEntries.length > 0) {
-        return archiveEntries;
-      }
-
-      // Backoff with jitter
-      if (attempt >= maxAttempts) {
-        break;
-      }
-      await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
-      });
-    }
-
-    return [];
-  }
-
-  private async getArchiveEntriesNotCached(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     // Note: fs.createReadStream() is used for `graceful-fs`
     const stream = fs.createReadStream(this.getFilePath());
     try {
@@ -117,7 +91,7 @@ export default class SevenZip extends Archive {
         return;
       }
 
-      throw new IgirException(`failed to find archive entry`);
+      throw new IgirException(`failed to find archive entry '${entryPath}'`);
     } finally {
       stream.destroy();
     }
