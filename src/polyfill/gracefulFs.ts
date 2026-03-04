@@ -6,9 +6,9 @@
  *  - It's riddled with code that polyfills ancient Node.js versions
  *  - It doesn't include its own types, it requires a `@types` package
  *  - fs.promises.* functions aren't patched, requiring util.promisify()
- *  - fs.*chmod*() functions are retried
- *  - fs.*chown*() functions are retried
- *  - fs.*stat*() functions are retried
+ *  - fs.*chmod*() functions aren't retried
+ *  - fs.*chown*() functions aren't retried
+ *  - fs.*stat*() functions aren't retried
  */
 
 /**
