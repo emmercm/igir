@@ -105,7 +105,7 @@ interface QueueEntry {
 class RetryQueue {
   private readonly entries: QueueEntry[] = [];
 
-  private timer: ReturnType<typeof setTimeout> | undefined;
+  private timer: NodeJS.Timeout | undefined;
 
   /**
    * Adds a new entry to the queue and schedules processing if not already scheduled.
@@ -135,6 +135,7 @@ class RetryQueue {
 
     entry.retryCount++;
     if (Date.now() - entry.startTime >= RETRY_TIMEOUT_MS) {
+      // The operation has timed out, fail it
       entry.timeout();
     } else {
       entry.retry();
@@ -179,6 +180,7 @@ function wrapCallbackMethod<T extends FsMethod>(originalFn: T, options?: RetryOp
           attempts++;
 
           if (!err) {
+            // The operation succeeded
             userCallback(err, ...resultData);
             return;
           }
@@ -222,7 +224,6 @@ function wrapCallbackMethod<T extends FsMethod>(originalFn: T, options?: RetryOp
 function wrapSyncMethod<T extends FsMethod>(originalFn: T, options?: RetryOptions): T {
   return function (this: unknown, ...args: unknown[]): unknown {
     let attempts = 0;
-    let backoff = 0;
     const startTime = Date.now();
 
     for (;;) {
@@ -238,10 +239,7 @@ function wrapSyncMethod<T extends FsMethod>(originalFn: T, options?: RetryOption
           throw error;
         }
 
-        if (options?.backoff) {
-          backoff = Math.min(Math.max(backoff * RETRY_BACKOFF_MULTIPLIER, 1), RETRY_MAX_BACKOFF_MS);
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, backoff);
-        }
+        // Backoff isn't respected here on purpose, it doesn't make sense in a synchronous loop
       }
     }
   } as T;
@@ -263,15 +261,17 @@ function wrapPromiseMethod<T extends AsyncFsMethod>(originalFn: T, options?: Ret
           .apply(this, args)
           .then(resolve)
           .catch((error: unknown) => {
-            const fsError = error as NodeJS.ErrnoException;
             attempts++;
 
             const exceeded =
               Date.now() - startTime >= RETRY_TIMEOUT_MS ||
               (options?.maxAttempts !== undefined && attempts >= options.maxAttempts);
 
-            if (exceeded || !TRANSIENT_ERRNO_CODES.has(fsError.code ?? '')) {
-              reject(fsError);
+            if (
+              exceeded ||
+              !TRANSIENT_ERRNO_CODES.has((error as NodeJS.ErrnoException).code ?? '')
+            ) {
+              reject(error instanceof Error ? error : new Error(String(error)));
               return;
             }
 
@@ -279,7 +279,7 @@ function wrapPromiseMethod<T extends AsyncFsMethod>(originalFn: T, options?: Ret
               retryQueue.enqueue({
                 retry: attempt,
                 timeout: () => {
-                  reject(fsError);
+                  reject(error instanceof Error ? error : new Error(String(error)));
                 },
                 startTime,
                 retryCount: attempts,
