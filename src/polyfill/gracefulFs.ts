@@ -87,6 +87,7 @@ const TRANSIENT_ERRNO_CODES = new Set([
   'EMFILE',
   'ENFILE',
   // Everything below this did not exist in `graceful-fs` v4.2.11!
+  'EWOULDBLOCK',
   'ENOSPC',
   'ETXTBSY',
 ]);
