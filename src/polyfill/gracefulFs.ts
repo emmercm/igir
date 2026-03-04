@@ -4,7 +4,7 @@
  * There are many reasons for replacing `graceful-fs` with a custom module:
  *  - It appears to be abandoned, it hasn't had a release in 3 years
  *  - It's riddled with code that polyfills ancient Node.js versions
- *  - It doesn't include its own types, it requires a @types package
+ *  - It doesn't include its own types, it requires a `@types` package
  *  - fs.promises.* functions aren't patched, requiring util.promisify()
  *  - fs.*chmod*() functions are retried
  *  - fs.*chown*() functions are retried
