@@ -309,6 +309,13 @@ export default {
 
     ////////// `graceful-fs` graceful-fs.js //////////
 
+    fsToPatch.createReadStream = wrapSyncMethod(fsToPatch.createReadStream as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.createReadStream;
+    fsToPatch.createWriteStream = wrapSyncMethod(fsToPatch.createWriteStream as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.createWriteStream;
+
     fsToPatch.readFile = wrapCallbackMethod(fsToPatch.readFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.readFile;
