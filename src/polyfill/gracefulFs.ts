@@ -374,16 +374,6 @@ export default {
       useQueue: true,
     }) as typeof fs.promises.open;
 
-    fsToPatch.opendir = wrapCallbackMethod(fsToPatch.opendir as FsMethod, {
-      useQueue: true,
-    }) as typeof fs.opendir;
-    fsToPatch.opendirSync = wrapSyncMethod(
-      fsToPatch.opendirSync as FsMethod,
-    ) as typeof fs.opendirSync;
-    fsToPatch.promises.opendir = wrapPromiseMethod(fsToPatch.promises.opendir as AsyncFsMethod, {
-      useQueue: true,
-    }) as typeof fs.promises.opendir;
-
     ////////// `graceful-fs` polyfill.js //////////
 
     fsToPatch.chown = wrapCallbackMethod(fsToPatch.chown as FsMethod) as typeof fs.chown;
@@ -519,6 +509,16 @@ export default {
     fsToPatch.promises.mkdtemp = wrapPromiseMethod(
       fsToPatch.promises.mkdtemp as AsyncFsMethod,
     ) as typeof fs.promises.mkdtemp;
+
+    fsToPatch.opendir = wrapCallbackMethod(fsToPatch.opendir as FsMethod, {
+      useQueue: true,
+    }) as typeof fs.opendir;
+    fsToPatch.opendirSync = wrapSyncMethod(
+      fsToPatch.opendirSync as FsMethod,
+    ) as typeof fs.opendirSync;
+    fsToPatch.promises.opendir = wrapPromiseMethod(fsToPatch.promises.opendir as AsyncFsMethod, {
+      useQueue: true,
+    }) as typeof fs.promises.opendir;
 
     fsToPatch.readlink = wrapCallbackMethod(fsToPatch.readlink as FsMethod) as typeof fs.readlink;
     fsToPatch.readlinkSync = wrapSyncMethod(
