@@ -444,6 +444,26 @@ export default {
      * Everything below this did not exist in `graceful-fs` v4.2.11!
      */
 
+    fsToPatch.link = wrapCallbackMethod(fsToPatch.link as FsMethod) as typeof fs.link;
+    fsToPatch.linkSync = wrapSyncMethod(fsToPatch.linkSync as FsMethod) as typeof fs.linkSync;
+    fsToPatch.promises.link = wrapPromiseMethod(
+      fsToPatch.promises.link as AsyncFsMethod,
+    ) as typeof fs.promises.link;
+
+    fsToPatch.rm = wrapCallbackMethod(fsToPatch.rm as FsMethod) as typeof fs.rm;
+    fsToPatch.rmSync = wrapSyncMethod(fsToPatch.rmSync as FsMethod) as typeof fs.rmSync;
+    fsToPatch.promises.rm = wrapPromiseMethod(
+      fsToPatch.promises.rm as AsyncFsMethod,
+    ) as typeof fs.promises.rm;
+
+    fsToPatch.symlink = wrapCallbackMethod(fsToPatch.symlink as FsMethod) as typeof fs.symlink;
+    fsToPatch.symlinkSync = wrapSyncMethod(
+      fsToPatch.symlinkSync as FsMethod,
+    ) as typeof fs.symlinkSync;
+    fsToPatch.promises.symlink = wrapPromiseMethod(
+      fsToPatch.promises.symlink as AsyncFsMethod,
+    ) as typeof fs.promises.symlink;
+
     fsToPatch.unlink = wrapCallbackMethod(fsToPatch.unlink as FsMethod) as typeof fs.unlink;
     fsToPatch.unlinkSync = wrapSyncMethod(fsToPatch.unlinkSync as FsMethod) as typeof fs.unlinkSync;
     fsToPatch.promises.unlink = wrapPromiseMethod(
