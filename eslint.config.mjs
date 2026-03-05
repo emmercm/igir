@@ -71,6 +71,47 @@ export default [
     ...tseslint.configs.disableTypeChecked,
   },
 
+  // Custom plugins
+  {
+    plugins: {
+      local: {
+        rules: {
+          'no-fs-promisify': {
+            meta: {
+              type: 'suggestion',
+              docs: {
+                description: 'Use native fs.promises instead of util.promisify(fs.*)',
+              },
+              fixable: 'code', // This enables the --fix flag
+            },
+            create(context) {
+              return {
+                // Target: util.promisify(fs.someMethod)
+                'CallExpression[callee.object.name="util"][callee.property.name="promisify"][arguments.0.object.name="fs"]'(
+                  node,
+                ) {
+                  const fsMethodIdentifier = node.arguments[0].property;
+                  const methodName = fsMethodIdentifier.name;
+                  context.report({
+                    node,
+                    message: `Replace util.promisify(fs.${methodName}) with fs.promises.${methodName}.`,
+                    fix(fixer) {
+                      // Replaces the entire 'util.promisify(fs.method)' with 'fs.promises.method'
+                      return fixer.replaceText(node, `fs.promises.${methodName}`);
+                    },
+                  });
+                },
+              };
+            },
+          },
+        },
+      },
+    },
+    rules: {
+      'local/no-fs-promisify': 'error',
+    },
+  },
+
   // Third party configs
   eslintPluginUnicorn.configs.recommended,
   eslintPluginJsdoc.configs['flat/recommended-typescript-error'],
@@ -168,6 +209,12 @@ export default [
           selector: "CallExpression[callee.property.name='push'] > SpreadElement",
           message:
             "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'",
+        },
+        {
+          selector:
+            "CallExpression[callee.object.name='util'][callee.property.name='promisify'][arguments.0.object.name='fs']",
+          message:
+            "Directly use 'fs/promises' or 'fs.promises' instead of wrapping 'fs' methods in 'util.promisify'.",
         },
       ],
 
@@ -294,23 +341,6 @@ export default [
     files: ['src/types/files/archives/**/*.ts', 'src/types/patches/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
-    },
-  },
-
-  // Restrict fs.promises for most files
-  {
-    files: ['**/*.ts'],
-    ignores: ['packages/**', 'src/polyfill/ioFile.ts'],
-    rules: {
-      'no-restricted-properties': [
-        'error',
-        {
-          // TODO(cemmer): https://github.com/isaacs/node-graceful-fs/issues/160
-          object: 'fs',
-          property: 'promises',
-          message: 'Use util.promisify() instead to take advantage of graceful-fs',
-        },
-      ],
     },
   },
 
