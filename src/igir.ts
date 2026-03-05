@@ -302,7 +302,6 @@ export default class Igir {
     }
 
     const cachePathCandidates = [
-      path.join(Package.DIRECTORY, defaultFileName),
       path.join(os.homedir(), defaultFileName),
       path.join(process.cwd(), defaultFileName),
     ]

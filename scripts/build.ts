@@ -1,6 +1,9 @@
 import child_process from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
+import util from 'node:util';
 
+import esbuild from 'esbuild';
 import fg from 'fast-glob';
 
 import Timer from '../src/async/timer.js';
@@ -21,18 +24,32 @@ if (await FsPoly.exists(output)) {
 }
 
 // Transpile the TypeScript
-await new Promise((resolve, reject) => {
-  logger.info(`Running 'tsc' ...`);
-  const tsc = child_process.spawn(
-    'npm',
-    ['exec', 'tsc', '--', '--declaration', 'false', '--sourceMap', 'false'],
+logger.info(`Running 'esbuild' ...`);
+await esbuild.build({
+  entryPoints: await fg('!(node_modules|scripts|test|*.config){,/**/}!(*.test).ts'),
+  outdir: path.join(output),
+  platform: 'node',
+  bundle: false,
+  sourcemap: true,
+  packages: 'external',
+  format: 'esm',
+  plugins: [
     {
-      windowsHide: true,
+      name: 'transform-native-addon-imports',
+      setup(build): void {
+        build.onLoad({ filter: /packages[\\/].+[\\/]index\.ts$/ }, async (args) => {
+          const source = await util.promisify(fs.readFile)(args.path, 'utf8');
+          return {
+            contents: source.replaceAll(
+              /import\s+(\w+)\s+from\s+(['"].*?\.node['"])\s+with\s*\{[\s\S]*?type:\s*['"]file['"][\s\S]*?\};?/g,
+              'const $1 = $2;',
+            ),
+            loader: args.path.endsWith('.ts') ? 'ts' : 'js',
+          };
+        });
+      },
     },
-  );
-  tsc.stderr.on('data', (data: Buffer) => process.stderr.write(data));
-  tsc.on('close', resolve);
-  tsc.on('error', reject);
+  ],
 });
 
 logger.info(`Copying additional files ...`);
