@@ -88,11 +88,11 @@ export default class PatchFactory {
     return undefined;
   }
 
-  private static async readHeaderHex(stream: Readable, length: number): Promise<string> {
+  private static async readHeaderHex(readable: Readable, length: number): Promise<string> {
     const chunks: Buffer[] = [];
     let readBytes = 0;
 
-    for await (const chunk of stream as AsyncIterable<Buffer>) {
+    for await (const chunk of readable as AsyncIterable<Buffer>) {
       if (chunk.length > 0) {
         chunks.push(chunk);
         readBytes += chunk.length;

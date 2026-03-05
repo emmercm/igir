@@ -87,14 +87,14 @@ export default class ROMHeader {
   }
 
   private static async readHeaderHex(
-    stream: Readable,
+    readable: Readable,
     start: number,
     end: number,
   ): Promise<string> {
     const chunks: Buffer[] = [];
     let bytesRead = 0;
 
-    for await (const chunk of stream as AsyncIterable<Buffer>) {
+    for await (const chunk of readable as AsyncIterable<Buffer>) {
       if (chunk.length > 0) {
         chunks.push(chunk);
         bytesRead += chunk.length;
@@ -109,8 +109,8 @@ export default class ROMHeader {
     return Buffer.concat(chunks).subarray(start, end).toString('hex').toUpperCase();
   }
 
-  static async headerFromFileStream(stream: Readable): Promise<ROMHeader | undefined> {
-    const fileHeader = await ROMHeader.readHeaderHex(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
+  static async headerFromFileStream(readable: Readable): Promise<ROMHeader | undefined> {
+    const fileHeader = await ROMHeader.readHeaderHex(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
     for (const header of headers) {

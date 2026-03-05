@@ -60,7 +60,7 @@ export default abstract class Archive {
    */
   async extractEntryToStream<T>(
     entryPath: string,
-    callback: (stream: Readable) => Promise<T> | T,
+    callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
     return await this.extractEntryToTempFile(
