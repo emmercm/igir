@@ -399,7 +399,7 @@ export default class CandidateWriter extends Module {
       try {
         await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
         const compressorThreads = Math.ceil(
-          os.cpus().length / Math.max(this.candidateSemaphore.openLocks(), 1),
+          os.availableParallelism() / Math.max(this.candidateSemaphore.openLocks(), 1),
         );
         await outputZip.createArchive(
           inputToOutputZipEntries,

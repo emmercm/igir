@@ -41,7 +41,7 @@ describe('headerFromFileStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     expect(headeredRoms).toHaveLength(6);
 
@@ -65,7 +65,7 @@ describe('headerFromFileStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);
 
