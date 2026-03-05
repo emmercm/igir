@@ -42,69 +42,69 @@ test('resetProgress', () => {
   singleBar.incrementCompleted();
   singleBar.incrementInProgress();
   singleBar.incrementTotal();
-  expect(stripAnsi(singleBar.format())).toEndWith(' 1/1 [00:00:00] test');
+  expect(stripAnsi(singleBar.format()).endsWith(' 1/1 [00:00:00] test')).toEqual(true);
   singleBar.resetProgress(10);
-  expect(stripAnsi(singleBar.format())).toEndWith(' 0/10 test');
+  expect(stripAnsi(singleBar.format()).endsWith(' 0/10 test')).toEqual(true);
 });
 
 describe('incrementCompleted', () => {
   test('should increment one by default', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.incrementCompleted();
-    expect(stripAnsi(singleBar.format())).toEndWith(' 1/0 [00:00:00] test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 1/0 [00:00:00] test')).toEqual(true);
   });
 
   test('should increment multiple', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.incrementCompleted(2);
-    expect(stripAnsi(singleBar.format())).toEndWith(' 2/0 [00:00:00] test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 2/0 [00:00:00] test')).toEqual(true);
   });
 });
 
 test('setCompleted', () => {
   const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
   singleBar.setCompleted(3);
-  expect(stripAnsi(singleBar.format())).toEndWith(' 3/0 [00:00:00] test');
+  expect(stripAnsi(singleBar.format()).endsWith(' 3/0 [00:00:00] test')).toEqual(true);
 });
 
 describe('incrementInProgress', () => {
   test('should increment one by default', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.incrementInProgress();
-    expect(stripAnsi(singleBar.format())).toEndWith(' 0/0 test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 0/0 test')).toEqual(true);
   });
 
   test('should increment multiple', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.incrementInProgress(2);
-    expect(stripAnsi(singleBar.format())).toEndWith(' 0/0 test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 0/0 test')).toEqual(true);
   });
 });
 
 test('setInProgress', () => {
   const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
   singleBar.incrementInProgress(3);
-  expect(stripAnsi(singleBar.format())).toEndWith(' 0/0 test');
+  expect(stripAnsi(singleBar.format()).endsWith(' 0/0 test')).toEqual(true);
 });
 
 describe('incrementTotal', () => {
   test('should increment one by default', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.incrementTotal();
-    expect(stripAnsi(singleBar.format())).toEndWith(' 0/1 test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 0/1 test')).toEqual(true);
   });
 
   test('should increment multiple', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.incrementTotal(2);
-    expect(stripAnsi(singleBar.format())).toEndWith(' 0/2 test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 0/2 test')).toEqual(true);
   });
 });
 
 test('setTotal', () => {
   const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
   singleBar.setTotal(3);
-  expect(stripAnsi(singleBar.format())).toEndWith(' 0/3 test');
+  expect(stripAnsi(singleBar.format()).endsWith(' 0/3 test')).toEqual(true);
 });
 
 describe('finish', () => {
@@ -112,16 +112,16 @@ describe('finish', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
     singleBar.setTotal(10);
     singleBar.incrementInProgress();
-    expect(stripAnsi(singleBar.format())).toEndWith(' 0/10 test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 0/10 test')).toEqual(true);
     singleBar.finish();
-    expect(stripAnsi(singleBar.format())).toEndWith(' 10/10 [00:00:00] test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 10/10 [00:00:00] test')).toEqual(true);
   });
 
   test('should make completed one when no total', () => {
     const singleBar = new SingleBar(MULTIBAR, LOGGER, { name: 'test', showProgressNewline: false });
-    expect(stripAnsi(singleBar.format())).toEndWith(' 0/0 test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 0/0 test')).toEqual(true);
     singleBar.finish();
-    expect(stripAnsi(singleBar.format())).toEndWith(' 1/0 [00:00:00] test');
+    expect(stripAnsi(singleBar.format()).endsWith(' 1/0 [00:00:00] test')).toEqual(true);
   });
 
   test('should set a finished message', () => {

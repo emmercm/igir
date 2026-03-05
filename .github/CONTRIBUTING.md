@@ -87,7 +87,7 @@ npm start -- report --dat *.dat --input ROMs/
 
 ### Automated tests
 
-Igir uses [Jest](https://jestjs.io/) as its testing framework, and it uses [Codecov](https://about.codecov.io/) to ensure a minimum amount of test coverage.
+Igir uses [Vitest](https://vitest.dev/) as its testing framework, and it uses [Codecov](https://about.codecov.io/) to ensure a minimum amount of test coverage.
 
 All code changes must come with appropriate automated tests to prove correctness and to protect against future regressions.
 

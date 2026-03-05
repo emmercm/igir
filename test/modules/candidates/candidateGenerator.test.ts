@@ -78,7 +78,7 @@ async function candidateGenerator(
   return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedFiles);
 }
 
@@ -915,7 +915,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new MappableSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
@@ -955,7 +955,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new MappableSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates

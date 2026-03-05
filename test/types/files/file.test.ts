@@ -412,7 +412,7 @@ describe('copyToTempFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(10);
 
@@ -435,7 +435,7 @@ describe('createReadStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(9);
 
