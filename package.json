@@ -120,6 +120,7 @@
     "@types/yargs": "17.0.35",
     "@typescript-eslint/eslint-plugin": "8.56.1",
     "@typescript-eslint/parser": "8.56.1",
+    "@vitest/coverage-v8": "4.0.18",
     "@vitest/eslint-plugin": "1.6.9",
     "auto-changelog": "2.5.0",
     "caxa": "3.0.1",
