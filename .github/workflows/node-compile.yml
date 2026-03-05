@@ -48,6 +48,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
     strategy:
       fail-fast: false
@@ -109,6 +110,7 @@ jobs:
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
+            --env LZMA_NATIVE_DISABLE
             --volume ${{ github.workspace }}:/build
             --workdir /build
           run: |
