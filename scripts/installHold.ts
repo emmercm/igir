@@ -102,4 +102,8 @@ const heldBackDependencies = Object.entries(packageJson)
     ];
   });
 
-process.stdout.write(`${JSON.stringify(Object.fromEntries(heldBackDependencies), undefined, 2)}\n`);
+if (heldBackDependencies.length > 0) {
+  process.stdout.write(
+    `${JSON.stringify(Object.fromEntries(heldBackDependencies), undefined, 2)}\n`,
+  );
+}

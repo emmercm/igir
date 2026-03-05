@@ -52,7 +52,8 @@ jobs:
             npm run --silent install:hold
             echo "$EOF"
           } >> "${GITHUB_OUTPUT}"
-      - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
+      - if: ${{ steps.install-hold.outputs.JSON }}
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
             ## :hand: Dependency holds
