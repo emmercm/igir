@@ -5,7 +5,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
-import util from 'node:util';
 
 import async from 'async';
 
@@ -77,7 +76,7 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
     await FsPoly.walk(dirPath, WalkMode.FILES),
     os.cpus().length,
     async (filePath: string): Promise<[string, fs.Stats]> => {
-      const stats = await util.promisify(fs.lstat)(filePath);
+      const stats = await fs.promises.lstat(filePath);
       // Hard-code properties that can change with file reads
       stats.atime = new Date(0);
       stats.atimeMs = 0;

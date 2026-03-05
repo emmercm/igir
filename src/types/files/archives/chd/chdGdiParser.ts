@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import async from 'async';
 import fg from 'fast-glob';
@@ -49,7 +48,7 @@ export default class ChdGdiParser {
     binRawFilePaths: string[],
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const gdiExtractedContents = await util.promisify(fs.readFile)(gdiFilePath);
+    const gdiExtractedContents = await fs.promises.readFile(gdiFilePath);
 
     const { name: filePrefix } = path.parse(gdiFilePath);
     const gdiContents = `${gdiExtractedContents

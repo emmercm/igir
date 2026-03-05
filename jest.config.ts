@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import type { Config } from 'jest';
 
@@ -13,9 +12,7 @@ const jestConfig = async (): Promise<Config> => {
     ].map(async (moduleName) => {
       const modulePath = path.join('node_modules', moduleName);
       const packagePath = path.join(modulePath, 'package.json');
-      const packageJson = JSON.parse(
-        (await util.promisify(fs.readFile)(packagePath)).toString(),
-      ) as {
+      const packageJson = JSON.parse((await fs.promises.readFile(packagePath)).toString()) as {
         main: string | undefined;
         exports:
           | {
@@ -31,7 +28,7 @@ const jestConfig = async (): Promise<Config> => {
         (packageJson.exports === undefined ? undefined : packageJson.exports['.'].import);
       delete packageJson.exports;
 
-      await util.promisify(fs.writeFile)(packagePath, JSON.stringify(packageJson, undefined, 2));
+      await fs.promises.writeFile(packagePath, JSON.stringify(packageJson, undefined, 2));
     }),
   );
 
