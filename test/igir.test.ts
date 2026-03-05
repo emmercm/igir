@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
-import util from 'node:util';
 
 import async from 'async';
 
@@ -347,7 +346,7 @@ describe('with explicit DATs', () => {
       const inputFiles = await FsPoly.walk(inputTemp, WalkMode.FILES);
       await Promise.all(
         inputFiles.map(async (inputFile) => {
-          await util.promisify(fs.chmod)(inputFile, '0444');
+          await fs.promises.chmod(inputFile, '0444');
         }),
       );
 

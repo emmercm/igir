@@ -66,7 +66,7 @@ export default class IOFile {
       await FsPoly.rm(pathLike, { force: true });
     }
 
-    const write = await this.fileFrom(pathLike, 'wx', size);
+    const write = await this.fileFrom(pathLike, 'wx+', size);
     let written = 0;
     const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
     while (written < size) {
@@ -136,7 +136,7 @@ export default class IOFile {
     // If the file is small, read the entire file to memory and "read" from there
     if (this.fileBuffer !== undefined || this.size <= Defaults.MAX_MEMORY_FILE_SIZE) {
       // Read into the file buffer (if we haven't already)
-      this.fileBuffer ??= await FsPoly.readFile(this.fileHandle.fd);
+      this.fileBuffer ??= await this.fileHandle.readFile();
 
       // Read from the file buffer
       return Buffer.from(this.fileBuffer.subarray(position, position + size));
@@ -178,7 +178,7 @@ export default class IOFile {
       /w|a|r\+/.test(this.fileMode.toString())
     ) {
       // Read into the file buffer (if we haven't already)
-      this.fileBuffer ??= await FsPoly.readFile(this.fileHandle.fd);
+      this.fileBuffer ??= await this.fileHandle.readFile();
 
       // Expand the file buffer if we're writing past its size
       if (position + buffer.length > this.fileBuffer.length) {
