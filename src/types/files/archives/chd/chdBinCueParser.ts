@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import type { File as CueFile, Track } from '@gplane/cue';
 import { parse, TrackDataType } from '@gplane/cue';
@@ -42,7 +41,7 @@ export default class ChdBinCueParser {
     cueFilePath: string,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const cueData = await util.promisify(fs.readFile)(cueFilePath);
+    const cueData = await fs.promises.readFile(cueFilePath);
     const cueSheet = parse(cueData.toString(), {
       fatal: true,
     }).sheet;

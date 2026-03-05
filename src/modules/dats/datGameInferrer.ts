@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import { parse } from '@gplane/cue';
 
@@ -275,7 +274,7 @@ export default class DATGameInferrer extends Module {
           .filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'))
           .map(async (cueFile): Promise<[string, File[]] | undefined> => {
             try {
-              const cueData = await util.promisify(fs.readFile)(cueFile.getFilePath());
+              const cueData = await fs.promises.readFile(cueFile.getFilePath());
 
               const cueSheet = parse(cueData.toString(), {
                 fatal: true,
@@ -319,7 +318,7 @@ export default class DATGameInferrer extends Module {
           .filter((file) => file.getExtractedFilePath().toLowerCase().endsWith('.gdi'))
           .map(async (gdiFile): Promise<[string, File[]] | undefined> => {
             try {
-              const cueData = await util.promisify(fs.readFile)(gdiFile.getFilePath());
+              const cueData = await fs.promises.readFile(gdiFile.getFilePath());
 
               const { name: filePrefix } = path.parse(gdiFile.getFilePath());
               const gdiContents = `${cueData
