@@ -66,7 +66,7 @@ export default class IOFile {
       await FsPoly.rm(pathLike, { force: true });
     }
 
-    const write = await this.fileFrom(pathLike, 'wx', size);
+    const write = await this.fileFrom(pathLike, 'wx+', size);
     let written = 0;
     const buffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
     while (written < size) {
