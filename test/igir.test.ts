@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
-import util from 'node:util';
 
 import async from 'async';
 
@@ -69,7 +68,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
     (
       await async.mapLimit(
         files,
-        os.cpus().length,
+        os.availableParallelism(),
         async (filePath: string) => await fileFactory.filesFrom(filePath),
       )
     )
@@ -106,8 +105,8 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
     ...defaultOptions,
     ...optionsProps,
-    readerThreads: os.cpus().length,
-    writerThreads: os.cpus().length,
+    readerThreads: os.availableParallelism(),
+    writerThreads: os.availableParallelism(),
   });
 
   const inputFilesBefore = (
@@ -347,7 +346,7 @@ describe('with explicit DATs', () => {
       const inputFiles = await FsPoly.walk(inputTemp, WalkMode.FILES);
       await Promise.all(
         inputFiles.map(async (inputFile) => {
-          await util.promisify(fs.chmod)(inputFile, '0444');
+          await fs.promises.chmod(inputFile, '0444');
         }),
       );
 
@@ -1964,7 +1963,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.cpus().length),
+        new DriveSemaphore(os.availableParallelism()),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]

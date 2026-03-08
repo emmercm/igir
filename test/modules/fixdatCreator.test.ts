@@ -80,7 +80,7 @@ async function runFixdatCreator(
         }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-        new DriveSemaphore(os.cpus().length),
+        new DriveSemaphore(os.availableParallelism()),
       ).scan()
     )[0];
   } finally {

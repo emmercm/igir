@@ -412,7 +412,7 @@ describe('copyToTempFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(10);
 
@@ -435,7 +435,7 @@ describe('createReadStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(9);
 
@@ -451,9 +451,15 @@ describe('createReadStream', () => {
 });
 
 describe('withPatch', () => {
-  it('should attach a matching patch', async () => {
-    const file = await File.fileOf({ filePath: 'file.rom', size: 0, crc32: '00000000' });
-    const patch = IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' }));
+  test.each([
+    'patch deadbeef.ips',
+    'DEADBEEF patch.ips',
+    'patch [DEADbeef].ips',
+    'patch (deadBEEF).ips',
+    'patch 0xdeadbeef.ips',
+  ])('should attach a matching patch: %s', async (filePath) => {
+    const file = await File.fileOf({ filePath: 'file.rom', size: 0, crc32: 'DEADBEEF' });
+    const patch = IPSPatch.patchFrom(await File.fileOf({ filePath }));
     const patchedFile = file.withPatch(patch);
     expect(patchedFile.getPatch()).toEqual(patch);
   });

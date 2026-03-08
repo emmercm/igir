@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { FlatCompat } from '@eslint/eslintrc';
 import eslint from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
-import eslintPluginJest from 'eslint-plugin-jest';
+import eslintPluginVitest from '@vitest/eslint-plugin';
 import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
@@ -71,11 +71,62 @@ export default [
     ...tseslint.configs.disableTypeChecked,
   },
 
+  // Custom plugins
+  {
+    plugins: {
+      local: {
+        rules: {
+          'no-fs-promisify': {
+            meta: {
+              type: 'suggestion',
+              docs: {
+                description: 'Use native fs.promises instead of util.promisify(fs.*)',
+              },
+              fixable: 'code', // This enables the --fix flag
+            },
+            create(context) {
+              return {
+                // Target: util.promisify(fs.someMethod)
+                'CallExpression[callee.object.name="util"][callee.property.name="promisify"][arguments.0.object.name="fs"]'(
+                  node,
+                ) {
+                  const fsMethodIdentifier = node.arguments[0].property;
+                  const methodName = fsMethodIdentifier.name;
+                  context.report({
+                    node,
+                    message: `Replace util.promisify(fs.${methodName}) with fs.promises.${methodName}.`,
+                    fix(fixer) {
+                      // Replaces the entire 'util.promisify(fs.method)' with 'fs.promises.method'
+                      return fixer.replaceText(node, `fs.promises.${methodName}`);
+                    },
+                  });
+                },
+              };
+            },
+          },
+        },
+      },
+    },
+    rules: {
+      'local/no-fs-promisify': 'error',
+    },
+  },
+
   // Third party configs
   eslintPluginUnicorn.configs.recommended,
   eslintPluginJsdoc.configs['flat/recommended-typescript-error'],
   {
-    ...eslintPluginJest.configs['flat/recommended'],
+    plugins: { vitest: eslintPluginVitest },
+    rules: {
+      ...eslintPluginVitest.configs.recommended.rules,
+      'vitest/expect-expect': 'off',
+      'vitest/no-unneeded-async-expect-function': 'off', // for Jest compatability for now
+    },
+    settings: {
+      vitest: {
+        typecheck: true,
+      },
+    },
   },
   {
     plugins: {
@@ -99,7 +150,7 @@ export default [
       },
       sourceType: 'module',
       globals: {
-        ...eslintPluginJest.environments.globals.globals,
+        ...eslintPluginVitest.environments.env.globals,
       },
     },
   },
@@ -169,6 +220,12 @@ export default [
           message:
             "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'",
         },
+        {
+          selector:
+            "CallExpression[callee.object.name='util'][callee.property.name='promisify'][arguments.0.object.name='fs']",
+          message:
+            "Directly use 'fs/promises' or 'fs.promises' instead of wrapping 'fs' methods in 'util.promisify'.",
+        },
       ],
 
       // ***** Numbers *****
@@ -207,10 +264,6 @@ export default [
       // ***** eslint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
-
-      // ***** plugin:jest/recommended *****
-      // A lot of test files define their own expect functions
-      'jest/expect-expect': 'off',
     },
   },
   {
@@ -294,23 +347,6 @@ export default [
     files: ['src/types/files/archives/**/*.ts', 'src/types/patches/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
-    },
-  },
-
-  // Restrict fs.promises for most files
-  {
-    files: ['**/*.ts'],
-    ignores: ['packages/**', 'src/polyfill/ioFile.ts'],
-    rules: {
-      'no-restricted-properties': [
-        'error',
-        {
-          // TODO(cemmer): https://github.com/isaacs/node-graceful-fs/issues/160
-          object: 'fs',
-          property: 'promises',
-          message: 'Use util.promisify() instead to take advantage of graceful-fs',
-        },
-      ],
     },
   },
 

@@ -1,11 +1,8 @@
-import 'jest-extended';
-
 import type { Stats } from 'node:fs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
-import util from 'node:util';
 
 import async from 'async';
 
@@ -75,9 +72,9 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
 
   return await async.mapLimit(
     await FsPoly.walk(dirPath, WalkMode.FILES),
-    os.cpus().length,
+    os.availableParallelism(),
     async (filePath: string): Promise<[string, fs.Stats]> => {
-      const stats = await util.promisify(fs.lstat)(filePath);
+      const stats = await fs.promises.lstat(filePath);
       // Hard-code properties that can change with file reads
       stats.atime = new Date(0);
       stats.atimeMs = 0;
@@ -116,7 +113,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
   } catch {
     /* ignored */
@@ -125,7 +122,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new DriveSemaphore(os.availableParallelism()),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
 
@@ -135,14 +132,14 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new DriveSemaphore(os.availableParallelism()),
     ).scan();
     candidates = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
       dat,
@@ -154,7 +151,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
@@ -162,7 +159,7 @@ async function candidateWriter(
   await new CandidateWriter(
     options,
     new ProgressBarFake(),
-    new CandidateWriterSemaphore(os.cpus().length),
+    new CandidateWriterSemaphore(os.availableParallelism()),
     new FileMoveMutex(),
   ).write(dat, candidates);
 
@@ -2248,7 +2245,7 @@ describe('link', () => {
         expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
           outputFilesBefore.map((pair) => pair[0]),
         );
-        /* eslint-disable jest/no-conditional-expect */
+        /* eslint-disable vitest/no-conditional-expect */
         if (linkMode === LinkModeInverted[LinkMode.HARDLINK]) {
           // Hard links are always created with the same inode and times
           expect(outputFilesAfter).toEqual(outputFilesBefore);
@@ -2314,7 +2311,7 @@ describe('link', () => {
         expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
           outputFilesBefore.map((pair) => pair[0]),
         );
-        /* eslint-disable jest/no-conditional-expect */
+        /* eslint-disable vitest/no-conditional-expect */
         if (linkMode === LinkModeInverted[LinkMode.HARDLINK]) {
           // Hard links are always created with the same inode and times
           expect(outputFilesAfter).toEqual(outputFilesBefore);

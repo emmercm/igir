@@ -86,7 +86,7 @@ jobs:
 
       # Compile and upload
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
@@ -115,7 +115,7 @@ jobs:
             uname -a
 
             # Package the executable and test it before compressing it
-            npm ci
+            npm ci --foreground-scripts
             npm run package -- . igir
             ./igir --help
             ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
@@ -140,7 +140,7 @@ jobs:
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
           # Package the executable and test it before compressing it
-          npm ci
+          npm ci --foreground-scripts
           npm run package -- . igir
           ./igir --help
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
@@ -163,7 +163,7 @@ jobs:
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
           # Install dependencies...
-          npm ci
+          npm ci --foreground-scripts
           if ($NODE_ARCH -notin @("ia32", "x64")) {
             # ...and use a version of 7zip-bin that includes this arch
             npm install 7zip-bin@">=5.2.0"
