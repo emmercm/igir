@@ -162,6 +162,8 @@ await caxa({
   output,
   exclude: excludeGlobs,
   command: [
+    'env',
+    'LZMA_NATIVE_DISABLE=1',
     `{{caxa}}/node_modules/.bin/node${process.platform === 'win32' ? '.exe' : ''}`,
     '{{caxa}}/dist/bundle.js',
   ],
