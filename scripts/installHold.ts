@@ -102,7 +102,7 @@ const heldBackDependencies = Object.entries(packageJson)
     ];
   });
 
-if (heldBackDependencies.length > 0) {
+if (heldBackDependencies.reduce((sum, deps) => sum + deps.length, 0) > 0) {
   process.stdout.write(
     `${JSON.stringify(Object.fromEntries(heldBackDependencies), undefined, 2)}\n`,
   );
