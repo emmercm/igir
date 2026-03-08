@@ -77,6 +77,9 @@ const RETRY_TIMEOUT_MS = 60_000;
 /** Exponential backoff multiplier between retries. */
 const RETRY_BACKOFF_MULTIPLIER = 1.2;
 
+/** Minimim delay between retries. */
+const RETRY_MIN_BACKOFF_MS = 10;
+
 /** Maximum delay between retries. */
 const RETRY_MAX_BACKOFF_MS = 100;
 
@@ -120,7 +123,7 @@ class RetryQueue {
     // Compute backoff from the longest-waiting entry to avoid over-scheduling
     const maxRetries = this.entries.reduce((max, e) => Math.max(max, e.retryCount), 0);
     const delay = Math.min(
-      Math.max(maxRetries, 1) * RETRY_BACKOFF_MULTIPLIER,
+      Math.max(maxRetries * RETRY_BACKOFF_MULTIPLIER, RETRY_MIN_BACKOFF_MS),
       RETRY_MAX_BACKOFF_MS,
     );
     this.timer = setTimeout(() => {
@@ -205,7 +208,7 @@ function wrapCallbackMethod<T extends FsMethod>(originalFn: T, options?: RetryOp
             });
           } else if (options?.backoff) {
             backoff = Math.min(
-              Math.max(backoff * RETRY_BACKOFF_MULTIPLIER, 1),
+              Math.max(backoff * RETRY_BACKOFF_MULTIPLIER, RETRY_MIN_BACKOFF_MS),
               RETRY_MAX_BACKOFF_MS,
             );
             setTimeout(attempt, backoff);
@@ -292,7 +295,7 @@ function wrapPromiseMethod<T extends AsyncFsMethod>(originalFn: T, options?: Ret
             });
           } else if (options?.backoff) {
             backoff = Math.min(
-              Math.max(backoff * RETRY_BACKOFF_MULTIPLIER, 1),
+              Math.max(backoff * RETRY_BACKOFF_MULTIPLIER, RETRY_MIN_BACKOFF_MS),
               RETRY_MAX_BACKOFF_MS,
             );
             setTimeout(attempt, backoff);

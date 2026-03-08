@@ -119,12 +119,7 @@ export default class FsPoly {
    * Copy {@link src} to {@link dest}, overwriting any existing file, and ensuring {@link dest}
    * is writable.
    */
-  static async copyFile(
-    src: string,
-    dest: string,
-    callback?: FsReadCallback,
-    attempt = 1,
-  ): Promise<void> {
+  static async copyFile(src: string, dest: string, callback?: FsReadCallback): Promise<void> {
     if (!(await this.exists(src))) {
       throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
     }
@@ -135,35 +130,14 @@ export default class FsPoly {
 
     const destPreviouslyExisted = await this.exists(dest);
 
-    try {
-      const readStream = fs.createReadStream(src, {
-        highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
-      });
-      const writeStream = fs.createWriteStream(dest);
-      if (callback) {
-        await stream.promises.pipeline(readStream, new FsReadTransform(callback), writeStream);
-      } else {
-        await stream.promises.pipeline(readStream, writeStream);
-      }
-    } catch (error) {
-      // These are the same error codes that `graceful-fs` catches
-      if (
-        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
-          (error as NodeJS.ErrnoException).code ?? '',
-        )
-      ) {
-        throw error;
-      }
-
-      // Backoff with jitter
-      if (attempt >= 5) {
-        throw error;
-      }
-      await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
-      });
-      await this.copyFile(src, dest, callback, attempt + 1);
-      return;
+    const readStream = fs.createReadStream(src, {
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+    });
+    const writeStream = fs.createWriteStream(dest);
+    if (callback) {
+      await stream.promises.pipeline(readStream, new FsReadTransform(callback), writeStream);
+    } else {
+      await stream.promises.pipeline(readStream, writeStream);
     }
 
     // Ensure the destination file is writable
@@ -482,7 +456,6 @@ export default class FsPoly {
     oldPath: string,
     newPath: string,
     callback?: FsReadCallback,
-    attempt = 1,
   ): Promise<MoveResultValue> {
     // Can't rename across drives
     if (this.onDifferentDrives(oldPath, newPath)) {
@@ -504,22 +477,13 @@ export default class FsPoly {
         return MoveResult.COPIED;
       }
 
-      // These are the same error codes that `graceful-fs` catches
-      if (!['EACCES', 'EPERM', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '')) {
-        throw error;
-      }
-
-      // Backoff with jitter
-      if (attempt >= 5) {
-        throw error;
-      }
-      await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
-      });
-
       // Attempt to resolve Windows' "EBUSY: resource busy or locked"
-      await this.rm(newPath, { force: true });
-      return await this.mv(oldPath, newPath, callback, attempt + 1);
+      try {
+        await this.rm(newPath);
+        return await this.mv(oldPath, newPath, callback);
+      } catch {
+        throw error;
+      }
     }
   }
 
@@ -593,7 +557,7 @@ export default class FsPoly {
    * Copy {@link src} to {@link dest}, overwriting any existing file, and ensuring {@link dest}
    * is writable.
    */
-  static async reflink(src: string, dest: string, attempt = 1): Promise<void> {
+  static async reflink(src: string, dest: string): Promise<void> {
     if (!(await this.exists(src))) {
       throw new IgirException(`can't copy nonexistent file '${src}' to '${dest}'`);
     }
@@ -610,25 +574,10 @@ export default class FsPoly {
       if ((error as NodeJS.ErrnoException).code === 'ENOTSUP') {
         throw new IgirException('reflinks are not supported on this filesystem');
       }
-
-      // These are the same error codes that `graceful-fs` catches
-      if (
-        !['EACCES', 'EPERM', 'EBUSY', 'EMFILE', 'ENFILE'].includes(
-          (error as NodeJS.ErrnoException).code ?? '',
-        )
-      ) {
-        throw error;
+      if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
+        throw new IgirException('reflinks are not supported across filesystems');
       }
-
-      // Backoff with jitter
-      if (attempt >= 10) {
-        throw error;
-      }
-      await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * (2 ** (attempt - 1) * 10));
-      });
-      await this.reflink(src, dest, attempt + 1);
-      return;
+      throw error;
     }
 
     // Ensure the destination file is writable
