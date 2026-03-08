@@ -1,3 +1,6 @@
+// This must be imported before '7z-iterator'!
+import './lzmaNativeDisable.js';
+
 import path from 'node:path';
 
 import type { Entry, SevenZipEntry } from '7z-iterator';
