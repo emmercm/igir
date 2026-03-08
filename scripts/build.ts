@@ -1,7 +1,6 @@
 import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import esbuild from 'esbuild';
 import fg from 'fast-glob';
@@ -38,7 +37,7 @@ await esbuild.build({
       name: 'transform-native-addon-imports',
       setup(build): void {
         build.onLoad({ filter: /packages[\\/].+[\\/]index\.ts$/ }, async (args) => {
-          const source = await util.promisify(fs.readFile)(args.path, 'utf8');
+          const source = await fs.promises.readFile(args.path, 'utf8');
           return {
             contents: source.replaceAll(
               /import\s+(\w+)\s+from\s+(['"].*?\.node['"])\s+with\s*\{[\s\S]*?type:\s*['"]file['"][\s\S]*?\};?/g,
