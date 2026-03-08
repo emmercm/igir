@@ -27,9 +27,8 @@ export default class SevenZip extends Archive {
     const iterator = new _7zIterator(this.getFilePath());
     try {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for await (const _entry of iterator) {
-          // do nothing, just iterate everything so getStreamingOrder() works
+        for await (const entry of iterator) {
+          entry.destroy();
         }
       } catch (error) {
         if ((error as Error & { code: string }).code === 'CORRUPT_HEADER') {
@@ -68,6 +67,8 @@ export default class SevenZip extends Archive {
       for await (const entry of iterator) {
         if (entry.path === entryPath.replaceAll(/[\\/]/g, '/')) {
           foundEntry = entry;
+        } else {
+          entry.destroy();
         }
       }
       if (foundEntry === undefined) {
