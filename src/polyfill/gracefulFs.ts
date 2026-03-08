@@ -127,6 +127,7 @@ class RetryQueue {
       this.timer = undefined;
       this.process();
     }, delay);
+    this.timer.unref();
   }
 
   private process(): void {

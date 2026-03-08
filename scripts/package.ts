@@ -2,7 +2,6 @@ import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { path7za } from '7zip-bin';
 import caxa from 'caxa';
 import esbuild from 'esbuild';
 import type { Options as GlobOptions } from 'fast-glob';
@@ -123,9 +122,6 @@ const include = new Set(
         'node_modules/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
       caseSensitiveMatch: false,
     },
-    // Only include the exact 7zip-bin we need
-    { exclude: 'node_modules/{**/,}7zip-bin/**/7z*' },
-    { include: path7za },
   ]),
 );
 const includeSize = (
