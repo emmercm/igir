@@ -30,6 +30,9 @@ export default defineConfig({
     sequence: {
       shuffle: true,
     },
+
+    // Default Jest behavior
+    reporters: ['verbose'],
     watch: false,
     passWithNoTests: true,
 
