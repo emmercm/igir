@@ -33,6 +33,7 @@
   "type": "module",
   "files": [
     "dist/",
+    "!dist/**/package.json",
     "postinstall.mjs",
     "!**/test/**",
     "!**/*.test.*",
