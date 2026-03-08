@@ -20,6 +20,7 @@ concurrency:
 
 env:
   ref: ${{ inputs.ref || github.sha || github.ref }}
+  LZMA_NATIVE_DISABLE: 1  # https://github.com/kmalakoff/xz-compat
 
 jobs:
   path-filter:
@@ -47,6 +48,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
     strategy:
       fail-fast: false
@@ -108,6 +110,7 @@ jobs:
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
+            --env LZMA_NATIVE_DISABLE
             --volume ${{ github.workspace }}:/build
             --workdir /build
           run: |
@@ -164,10 +167,6 @@ jobs:
 
           # Install dependencies...
           npm ci --foreground-scripts
-          if ($NODE_ARCH -notin @("ia32", "x64")) {
-            # ...and use a version of 7zip-bin that includes this arch
-            npm install 7zip-bin@">=5.2.0"
-          }
           if ($NODE_ARCH -notin @("x64")) {
             # ...and build the missing caxa stub
             Push-Location

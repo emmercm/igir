@@ -10,6 +10,7 @@ export default class Timer {
 
   private constructor(timeoutId: NodeJS.Timeout) {
     this.timeoutId = timeoutId;
+    // TODO(cemmer): call timeoutId.unref() ?
     Timer.TIMERS.add(this);
   }
 
