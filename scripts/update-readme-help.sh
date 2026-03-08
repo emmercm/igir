@@ -10,7 +10,6 @@ cd "$(dirname "$0")/.."
 if [[ ! -d dist ]]; then
   npm run build
 fi
-cp package.json dist/
 
 README="README.md"
 HELP="\$ igir --help
