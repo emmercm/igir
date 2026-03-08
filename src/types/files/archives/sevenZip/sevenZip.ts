@@ -26,59 +26,66 @@ export default class SevenZip extends Archive {
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
     const iterator = new _7zIterator(this.getFilePath());
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for await (const _entry of iterator) {
-        // do nothing, just iterate everything so getStreamingOrder() works
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        for await (const _entry of iterator) {
+          // do nothing, just iterate everything so getStreamingOrder() works
+        }
+      } catch (error) {
+        if ((error as Error & { code: string }).code === 'CORRUPT_HEADER') {
+          // This will happen for valid archives with no files
+          return [];
+        }
+        throw error;
       }
-    } catch (error) {
-      if ((error as Error & { code: string }).code === 'CORRUPT_HEADER') {
-        // This will happen for valid archives with no files
-        return [];
-      }
-      throw error;
-    }
-    const entriesIn7z = iterator.getStreamingOrder();
+      const entriesIn7z = iterator.getStreamingOrder();
 
-    return await async.mapLimit(
-      entriesIn7z.filter((entry) => entry.type === 'file'),
-      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (entry: SevenZipEntry): Promise<ArchiveEntry<this>> => {
-        return await ArchiveEntry.entryOf(
-          {
-            archive: this,
-            entryPath: entry.path,
-            size: entry.size,
-            crc32: entry._crc?.toString(16).toLowerCase().padStart(8, '0'),
-            // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
-          },
-          checksumBitmask,
-        );
-      },
-    );
+      return await async.mapLimit(
+        entriesIn7z.filter((entry) => entry.type === 'file'),
+        Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+        async (entry: SevenZipEntry): Promise<ArchiveEntry<this>> => {
+          return await ArchiveEntry.entryOf(
+            {
+              archive: this,
+              entryPath: entry.path,
+              size: entry.size,
+              crc32: entry._crc?.toString(16).toLowerCase().padStart(8, '0'),
+              // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
+            },
+            checksumBitmask,
+          );
+        },
+      );
+    } finally {
+      iterator.end();
+    }
   }
 
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const iterator = new _7zIterator(this.getFilePath());
-    for await (const entry of iterator) {
-      if (entry.path !== entryPath.replaceAll(/[\\/]/g, '/')) {
-        continue;
-      }
-
-      const extractDir = await FsPoly.mktemp(path.join(extractedFilePath));
-      try {
-        await entry.create(extractDir, {});
-        // 7z-iterator doesn't let you specify the exact file path
-        const extractedFiles = await FsPoly.walk(extractDir, WalkMode.FILES);
-        if (extractedFiles.length === 0) {
-          throw new IgirException(`failed to extract`);
+    try {
+      for await (const entry of iterator) {
+        if (entry.path !== entryPath.replaceAll(/[\\/]/g, '/')) {
+          continue;
         }
-        await FsPoly.mv(extractedFiles[0], extractedFilePath);
-      } finally {
-        await FsPoly.rm(extractDir, { recursive: true, force: true });
-      }
 
+        const extractDir = await FsPoly.mktemp(path.join(extractedFilePath));
+        try {
+          await entry.create(extractDir, {});
+          // 7z-iterator doesn't let you specify the exact file path
+          const extractedFiles = await FsPoly.walk(extractDir, WalkMode.FILES);
+          if (extractedFiles.length === 0) {
+            throw new IgirException(`failed to extract`);
+          }
+          await FsPoly.mv(extractedFiles[0], extractedFilePath);
+        } finally {
+          await FsPoly.rm(extractDir, { recursive: true, force: true });
+        }
+
+        return;
+      }
+    } finally {
       iterator.end();
-      return;
     }
 
     throw new IgirException(`failed to find archive entry '${entryPath}'`);
