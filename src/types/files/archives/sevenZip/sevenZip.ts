@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import type { SevenZipEntry } from '7z-iterator';
+import type { Entry, SevenZipEntry } from '7z-iterator';
 import _7zIterator from '7z-iterator';
 import async from 'async';
 
@@ -64,30 +64,30 @@ export default class SevenZip extends Archive {
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const iterator = new _7zIterator(this.getFilePath());
     try {
+      let foundEntry: Entry | undefined = undefined;
       for await (const entry of iterator) {
-        if (entry.path !== entryPath.replaceAll(/[\\/]/g, '/')) {
-          continue;
+        if (entry.path === entryPath.replaceAll(/[\\/]/g, '/')) {
+          foundEntry = entry;
         }
+      }
+      if (foundEntry === undefined) {
+        throw new IgirException(`failed to find archive entry '${entryPath}'`);
+      }
 
-        const extractDir = await FsPoly.mktemp(path.join(extractedFilePath));
-        try {
-          await entry.create(extractDir, {});
-          // 7z-iterator doesn't let you specify the exact file path
-          const extractedFiles = await FsPoly.walk(extractDir, WalkMode.FILES);
-          if (extractedFiles.length === 0) {
-            throw new IgirException(`failed to extract`);
-          }
-          await FsPoly.mv(extractedFiles[0], extractedFilePath);
-        } finally {
-          await FsPoly.rm(extractDir, { recursive: true, force: true });
+      const extractDir = await FsPoly.mktemp(path.join(extractedFilePath));
+      try {
+        await foundEntry.create(extractDir, {});
+        // 7z-iterator doesn't let you specify the exact file path
+        const extractedFiles = await FsPoly.walk(extractDir, WalkMode.FILES);
+        if (extractedFiles.length === 0) {
+          throw new IgirException(`failed to extract`);
         }
-
-        return;
+        await FsPoly.mv(extractedFiles[0], extractedFilePath);
+      } finally {
+        await FsPoly.rm(extractDir, { recursive: true, force: true });
       }
     } finally {
       iterator.destroy();
     }
-
-    throw new IgirException(`failed to find archive entry '${entryPath}'`);
   }
 }
