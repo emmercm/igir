@@ -57,7 +57,7 @@ export default class SevenZip extends Archive {
         },
       );
     } finally {
-      iterator.end();
+      iterator.destroy();
     }
   }
 
@@ -85,7 +85,7 @@ export default class SevenZip extends Archive {
         return;
       }
     } finally {
-      iterator.end();
+      iterator.destroy();
     }
 
     throw new IgirException(`failed to find archive entry '${entryPath}'`);
