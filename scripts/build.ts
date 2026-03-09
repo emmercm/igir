@@ -21,41 +21,6 @@ if (await FsPoly.exists(output)) {
   await FsPoly.rm(output, { recursive: true });
 }
 
-interface BunPluginBuilder {
-  onResolve: (
-    options: { filter: RegExp },
-    callback: (args: { path: string }) => { path: string; namespace: string },
-  ) => void;
-  onLoad: (
-    options: { filter: RegExp; namespace: string },
-    callback: (args: { path: string }) => { contents: string; loader: string },
-  ) => void;
-}
-
-export const nativeAttributePlugin = {
-  name: 'native-attribute-loader',
-  setup(build: BunPluginBuilder): void {
-    // 1. Intercept any .node file resolution
-    build.onResolve({ filter: /\.node$/ }, (args) => {
-      return {
-        path: args.path,
-        namespace: 'native-node-shim',
-      };
-    });
-
-    // 2. Return a shim that uses the native import attribute
-    build.onLoad({ filter: /\.node$/, namespace: 'native-node-shim' }, (args) => {
-      return {
-        contents: `
-          import addon from ${JSON.stringify(args.path)} with { type: "native" };
-          export default addon;
-        `,
-        loader: 'js',
-      };
-    });
-  },
-};
-
 // Transpile the TypeScript
 logger.info(`Running 'esbuild' ...`);
 await esbuild.build({
