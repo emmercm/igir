@@ -115,9 +115,9 @@ jobs:
             set -x
             uname -a
 
-            # Package the executable and test it before compressing it
+            # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
-            npm run package -- . igir
+            npm run compile -- . igir
             ./igir --help
             ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
             ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
@@ -142,7 +142,7 @@ jobs:
 
           # Package the executable and test it before compressing it
           npm ci --foreground-scripts
-          npm run package -- . igir
+          npm run compile -- . igir
           ./igir --help
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
           ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
@@ -179,7 +179,7 @@ jobs:
           }
 
           # Package the executable and test it before compressing it
-          npm run package -- . igir.exe
+          npm run compile -- . igir.exe
           .\igir.exe --help
           .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
           .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
