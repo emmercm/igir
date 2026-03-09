@@ -20,7 +20,6 @@ concurrency:
 
 env:
   ref: ${{ inputs.ref || github.sha || github.ref }}
-  LZMA_NATIVE_DISABLE: 1  # https://github.com/kmalakoff/xz-compat
 
 jobs:
   path-filter:
@@ -110,7 +109,6 @@ jobs:
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
-            --env LZMA_NATIVE_DISABLE
             --volume ${{ github.workspace }}:/build
             --workdir /build
           run: |

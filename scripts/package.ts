@@ -82,9 +82,9 @@ await esbuild.build({
   outfile: path.join(input, 'dist', 'bundle.js'),
   platform: 'node',
   bundle: true,
+  sourcemap: false,
   packages: 'external',
   format: 'esm',
-  // TODO(cemmer): enable source maps here and in caxa runtime?
 });
 
 // Generate the prebuilds directory
@@ -162,6 +162,8 @@ await caxa({
   output,
   exclude: excludeGlobs,
   command: [
+    'env',
+    'LZMA_NATIVE_DISABLE=1',
     `{{caxa}}/node_modules/.bin/node${process.platform === 'win32' ? '.exe' : ''}`,
     '{{caxa}}/dist/bundle.js',
   ],

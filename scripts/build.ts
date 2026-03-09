@@ -1,6 +1,7 @@
 import child_process from 'node:child_process';
 import path from 'node:path';
 
+import esbuild from 'esbuild';
 import fg from 'fast-glob';
 
 import Timer from '../src/async/timer.js';
@@ -21,18 +22,15 @@ if (await FsPoly.exists(output)) {
 }
 
 // Transpile the TypeScript
-await new Promise((resolve, reject) => {
-  logger.info(`Running 'tsc' ...`);
-  const tsc = child_process.spawn(
-    'npm',
-    ['exec', 'tsc', '--', '--declaration', 'false', '--sourceMap', 'false'],
-    {
-      windowsHide: true,
-    },
-  );
-  tsc.stderr.on('data', (data: Buffer) => process.stderr.write(data));
-  tsc.on('close', resolve);
-  tsc.on('error', reject);
+logger.info(`Running 'esbuild' ...`);
+await esbuild.build({
+  entryPoints: await fg('!(node_modules|scripts|test|*.config){,/**/}!(*.test).ts'),
+  outdir: path.join(output),
+  platform: 'node',
+  bundle: false,
+  sourcemap: true,
+  packages: 'external',
+  format: 'esm',
 });
 
 logger.info(`Copying additional files ...`);
