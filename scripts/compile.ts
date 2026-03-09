@@ -31,13 +31,13 @@ const result = await Bun.build({
   entrypoints: [
     'index.ts',
     ...(await fg(
-      `node_modules/@emmercm/dolphin-tool-${process.platform}-${process.platform}/dist/{DolphinTool.exe,dolphin-tool,*.dylib}`,
+      `node_modules/@emmercm/dolphin-tool-${process.platform}-${process.arch}/dist/{DolphinTool.exe,dolphin-tool,*.dylib}`,
     )),
     ...(await fg(
-      `node_modules/@emmercm/chdman-${process.platform}-${process.platform}/dist/{chdman*,*.dylib}`,
+      `node_modules/@emmercm/chdman-${process.platform}-${process.arch}/dist/{chdman*,*.dylib}`,
     )),
     ...(await fg(
-      `node_modules/@emmercm/maxcso-${process.platform}-${process.platform}/dist/{maxcso*,*.dylib}`,
+      `node_modules/@emmercm/maxcso-${process.platform}-${process.arch}/dist/{maxcso*,*.dylib}`,
     )),
   ],
   compile: { outfile: output },
@@ -45,11 +45,12 @@ const result = await Bun.build({
     {
       name: 'native-addon-loader',
       setup(build: Bun.PluginBuilder): void {
-        build.onLoad({ filter: /packages[/\\][^/\\]+[/\\]index\.ts$/ }, async (args) => {
+        build.onLoad({ filter: /\.ts$/ }, async (args) => {
           const source = await Bun.file(args.path).text();
 
-          // Find a require() call to a .node file, resolve template vars for current platform
-          const requireMatch = /require\(\s*[`'"].+\.node[`'"],?\s*\)/s.exec(source);
+          // Find a require() call to a prebuilt .node file (excluding build/Release fallbacks)
+          const requireMatch =
+            /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/s.exec(source);
           if (!requireMatch) {
             return { contents: source, loader: 'ts' };
           }
@@ -60,11 +61,11 @@ const result = await Bun.build({
             .replace('${os.platform()}', process.platform)
             .replace('${os.arch()}', process.arch);
 
-          // Replace all require() calls to .node files with the static native import
-          const transformed = source
-            .replace(/^import module from 'node:module';\n/m, '')
-            .replace(/^const require = module\.createRequire\(import\.meta\.url\);\n\n?/m, '')
-            .replaceAll(/require\(\s*[`'"].+\.node[`'"],?\s*\)/gs, '__nativeAddon');
+          // Replace prebuilt require() calls with the static native import
+          const transformed = source.replaceAll(
+            /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/gs,
+            '__nativeAddon',
+          );
 
           return {
             contents: `import __nativeAddon from ${JSON.stringify(nativePath)} with { type: "native" };\n${transformed}`,
