@@ -1,5 +1,4 @@
 import child_process from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import esbuild from 'esbuild';
@@ -22,6 +21,41 @@ if (await FsPoly.exists(output)) {
   await FsPoly.rm(output, { recursive: true });
 }
 
+interface BunPluginBuilder {
+  onResolve: (
+    options: { filter: RegExp },
+    callback: (args: { path: string }) => { path: string; namespace: string },
+  ) => void;
+  onLoad: (
+    options: { filter: RegExp; namespace: string },
+    callback: (args: { path: string }) => { contents: string; loader: string },
+  ) => void;
+}
+
+export const nativeAttributePlugin = {
+  name: 'native-attribute-loader',
+  setup(build: BunPluginBuilder): void {
+    // 1. Intercept any .node file resolution
+    build.onResolve({ filter: /\.node$/ }, (args) => {
+      return {
+        path: args.path,
+        namespace: 'native-node-shim',
+      };
+    });
+
+    // 2. Return a shim that uses the native import attribute
+    build.onLoad({ filter: /\.node$/, namespace: 'native-node-shim' }, (args) => {
+      return {
+        contents: `
+          import addon from ${JSON.stringify(args.path)} with { type: "native" };
+          export default addon;
+        `,
+        loader: 'js',
+      };
+    });
+  },
+};
+
 // Transpile the TypeScript
 logger.info(`Running 'esbuild' ...`);
 await esbuild.build({
@@ -32,23 +66,6 @@ await esbuild.build({
   sourcemap: true,
   packages: 'external',
   format: 'esm',
-  plugins: [
-    {
-      name: 'transform-native-addon-imports',
-      setup(build): void {
-        build.onLoad({ filter: /packages[\\/].+[\\/]index\.ts$/ }, async (args) => {
-          const source = await fs.promises.readFile(args.path, 'utf8');
-          return {
-            contents: source.replaceAll(
-              /import\s+(\w+)\s+from\s+(['"].*?\.node['"])\s+with\s*\{[\s\S]*?type:\s*['"]file['"][\s\S]*?\};?/g,
-              'const $1 = $2;',
-            ),
-            loader: args.path.endsWith('.ts') ? 'ts' : 'js',
-          };
-        });
-      },
-    },
-  ],
 });
 
 logger.info(`Copying additional files ...`);
