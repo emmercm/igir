@@ -140,8 +140,13 @@ export default class Logger {
       `${logoSplit[midLine - 2].padEnd(maxLineLen, ' ')}   ROM collection manager`;
     logoSplit[midLine - 1] =
       `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Package.HOMEPAGE}`;
+
+    let runtime = `Node.js v${process.versions.node}`;
+    if (process.versions.bun) {
+      runtime = `Bun v${process.versions.bun}`;
+    }
     logoSplit[midLine + 1] =
-      `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION}`;
+      `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.grey(`(${runtime})`)}`;
 
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
   }
