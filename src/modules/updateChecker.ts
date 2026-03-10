@@ -41,35 +41,35 @@ export default class UpdateChecker {
 
   private static async getVersion(packageName: string): Promise<string> {
     return await new Promise((resolve, reject) => {
-      https
-        .get(
-          `https://registry.npmjs.org/${packageName}/latest`,
-          {
-            timeout: 5000,
-          },
-          async (res) => {
-            const data = await BufferPoly.fromReadable(res);
-            let json;
-            try {
-              json = JSON.parse(data.toString()) as {
-                version: string;
-              };
-            } catch (error) {
-              if (error instanceof Error) {
-                reject(error);
-              } else if (typeof error === 'string') {
-                reject(new Error(error));
-              } else {
-                reject(new Error('failed to get latest version from npmjs.org'));
-              }
-              return;
+      const req = https.get(
+        `https://registry.npmjs.org/${packageName}/latest`,
+        {
+          timeout: 5000,
+        },
+        async (res) => {
+          const data = await BufferPoly.fromReadable(res);
+          let json;
+          try {
+            json = JSON.parse(data.toString()) as {
+              version: string;
+            };
+          } catch (error) {
+            if (error instanceof Error) {
+              reject(error);
+            } else if (typeof error === 'string') {
+              reject(new Error(error));
+            } else {
+              reject(new Error('failed to get latest version from npmjs.org'));
             }
+            return;
+          }
 
-            resolve(json.version);
-          },
-        )
-        .on('error', reject)
-        .on('timeout', reject);
+          resolve(json.version);
+        },
+      );
+      req.on('error', reject).on('timeout', () => {
+        req.destroy(new Error('request timed out'));
+      });
     });
   }
 }
