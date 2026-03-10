@@ -57,7 +57,7 @@
   internalChecksFilter: 'strict',
 
   packageRules: [
-    // Update Node.js versions immediately
+    // Update engine versions at any time
     {
       matchPackageNames: ['node'],
       groupName: 'Node.js',
@@ -66,6 +66,12 @@
       // The Docker images (used to build executables) frequently don't get published until days
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
       minimumReleaseAge: '5 days',
+      // Renovate's defaults for these options (overrides our global defaults)
+      schedule: 'at any time',
+    },
+    {
+      matchPackageNames: ['bun'],
+      groupName: 'Bun',
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
     },
