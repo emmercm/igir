@@ -6,11 +6,11 @@ import { clearTimeout } from 'node:timers';
 export default class Timer {
   private static readonly TIMERS = new Set<Timer>();
 
-  private readonly timeoutId: NodeJS.Timeout;
+  private readonly timeout: NodeJS.Timeout;
 
-  private constructor(timeoutId: NodeJS.Timeout) {
-    this.timeoutId = timeoutId;
-    // TODO(cemmer): call timeoutId.unref() ?
+  private constructor(timeout: NodeJS.Timeout) {
+    this.timeout = timeout;
+    this.timeout.unref();
     Timer.TIMERS.add(this);
   }
 
@@ -47,7 +47,7 @@ export default class Timer {
    * Cancel this timer.
    */
   cancel(): void {
-    clearTimeout(this.timeoutId);
+    clearTimeout(this.timeout);
     Timer.TIMERS.delete(this);
   }
 }
