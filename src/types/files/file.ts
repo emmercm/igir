@@ -429,38 +429,39 @@ export default class File implements FileProps {
     }
 
     return await new Promise((resolve, reject) => {
-      https
-        .get(
-          this.getFilePath(),
-          {
-            timeout: 30_000,
-          },
-          (res) => {
-            if (
-              res.statusCode !== undefined &&
-              res.statusCode >= 300 &&
-              res.statusCode < 400 &&
-              res.headers.location
-            ) {
-              // Handle redirects
-              File.fileOf({ filePath: res.headers.location })
-                .then(async (file) => await file.downloadToPath(filePath))
-                .then(resolve)
-                .catch(reject);
-              res.destroy();
-              return;
-            }
+      const req = https.get(
+        this.getFilePath(),
+        {
+          timeout: 30_000,
+        },
+        (res) => {
+          if (
+            res.statusCode !== undefined &&
+            res.statusCode >= 300 &&
+            res.statusCode < 400 &&
+            res.headers.location
+          ) {
+            // Handle redirects
+            File.fileOf({ filePath: res.headers.location })
+              .then(async (file) => await file.downloadToPath(filePath))
+              .then(resolve)
+              .catch(reject);
+            res.destroy();
+            return;
+          }
 
-            const writeStream = fs.createWriteStream(filePath);
-            res.pipe(writeStream);
-            writeStream.on('finish', async () => {
-              writeStream.close();
-              resolve(await File.fileOf({ filePath }, this.getChecksumBitmask()));
-            });
-          },
-        )
-        .on('error', reject)
-        .on('timeout', reject);
+          const writeStream = fs.createWriteStream(filePath);
+          res.pipe(writeStream);
+          writeStream.on('error', reject);
+          writeStream.on('finish', async () => {
+            writeStream.close();
+            resolve(await File.fileOf({ filePath }, this.getChecksumBitmask()));
+          });
+        },
+      );
+      req.on('error', reject).on('timeout', () => {
+        req.destroy(new Error('request timed out'));
+      });
     });
   }
 
