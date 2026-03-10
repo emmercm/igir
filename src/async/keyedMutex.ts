@@ -42,36 +42,54 @@ export default class KeyedMutex {
       return;
     }
 
-    const mutexes = await this.runExclusiveGlobally(() => {
-      const mutexes = keys.reduce(ArrayPoly.reduceUnique(), []).map((key) => {
-        let mutex = this.keyMutexes.get(key);
-        if (mutex === undefined) {
-          mutex = new Mutex();
-          this.keyMutexes.set(key, mutex);
+    const uniqueKeys = keys.reduce(ArrayPoly.reduceUnique(), []);
 
-          // Expire least recently used keys
-          if (this.maxSize !== undefined && this.keyMutexes.size > this.maxSize) {
-            [...this.keyMutexesLru]
-              .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
-              .slice(this.maxSize)
-              .forEach((lruKey) => {
-                this.keyMutexes.get(lruKey)?.release();
-                this.keyMutexes.delete(lruKey);
-                this.keyMutexesLru.delete(lruKey);
-              });
-          }
-        }
-        return mutex;
-      });
+    let mutexes: Mutex[];
 
-      // Mark this key as recently used
-      for (const key of keys) {
+    if (uniqueKeys.every((key) => this.keyMutexes.has(key))) {
+      // If every key mutex already exists, then we can avoid a global lock
+      for (const key of uniqueKeys) {
         this.keyMutexesLru.delete(key);
       }
-      this.keyMutexesLru = new Set([...keys, ...this.keyMutexesLru]);
 
-      return mutexes;
-    });
+      // Note: no new key mutexes were created, so no LRU eviction is necessary
+      // Mark all keys as recently used
+      this.keyMutexesLru = new Set([...uniqueKeys, ...this.keyMutexesLru]);
+
+      mutexes = uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+    } else {
+      // If at least one key mutex does not exist, then we have to take a global lock to create them
+      const uniqueKeySet = new Set(uniqueKeys);
+      mutexes = await this.keyMutexesMutex.runExclusive(() => {
+        for (const key of uniqueKeys) {
+          if (!this.keyMutexes.has(key)) {
+            this.keyMutexes.set(key, new Mutex());
+          }
+        }
+
+        // Expire least recently used keys
+        if (this.maxSize !== undefined && this.keyMutexes.size > this.maxSize) {
+          [...this.keyMutexesLru]
+            .filter(
+              (lruKey) => !uniqueKeySet.has(lruKey) && !this.keyMutexes.get(lruKey)?.isLocked(),
+            )
+            .slice(this.maxSize)
+            .forEach((lruKey) => {
+              this.keyMutexes.get(lruKey)?.release();
+              this.keyMutexes.delete(lruKey);
+              this.keyMutexesLru.delete(lruKey);
+            });
+        }
+
+        // Mark all keys as recently used
+        for (const key of uniqueKeys) {
+          this.keyMutexesLru.delete(key);
+        }
+        this.keyMutexesLru = new Set([...uniqueKeys, ...this.keyMutexesLru]);
+
+        return uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+      });
+    }
 
     await KeyedMutex.acquireMultipleWithDeadlockProtection(mutexes);
   }
@@ -130,22 +148,16 @@ export default class KeyedMutex {
   /**
    * Release any held lock for the given key.
    */
-  async release(key: string): Promise<void> {
-    await this.releaseMultiple([key]);
+  release(key: string): void {
+    this.releaseMultiple([key]);
   }
 
   /**
    * Release any held lock for the given keys.
    */
-  async releaseMultiple(keys: string[]): Promise<void> {
-    if (keys.length === 0) {
-      return;
-    }
-
-    await this.runExclusiveGlobally(() => {
-      keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
-        this.keyMutexes.get(key)?.release();
-      });
+  releaseMultiple(keys: string[]): void {
+    keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
+      this.keyMutexes.get(key)?.release();
     });
   }
 
@@ -157,7 +169,7 @@ export default class KeyedMutex {
     try {
       return await runnable();
     } finally {
-      await this.release(key);
+      this.release(key);
     }
   }
 
@@ -169,7 +181,7 @@ export default class KeyedMutex {
     try {
       return await runnable();
     } finally {
-      await this.releaseMultiple(keys);
+      this.releaseMultiple(keys);
     }
   }
 }
