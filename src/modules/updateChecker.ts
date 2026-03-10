@@ -1,6 +1,13 @@
+import child_process from 'node:child_process';
+import fs from 'node:fs';
 import https from 'node:https';
+import path from 'node:path';
+import util from 'node:util';
 
+import chalk from 'chalk';
 import semver from 'semver';
+import terminalLink from 'terminal-link';
+import which from 'which';
 
 import type Logger from '../console/logger.js';
 import { LogLevel } from '../console/logLevel.js';
@@ -30,12 +37,19 @@ export default class UpdateChecker {
     }
 
     if (npmVersion && semver.lt(Package.VERSION, npmVersion)) {
-      MultiBar.log(
-        this.logger.formatMessage(
-          LogLevel.NOTICE,
-          `An update is available for ${Package.NAME}: v${npmVersion}`,
-        ),
-      );
+      let message = `An update is available, get v${npmVersion}`;
+      const color = chalk.white;
+      if (await UpdateChecker.isHomebrew()) {
+        message += ` via Homebrew: ${color(`brew upgrade ${Package.NAME}`)}`;
+      } else if (process.versions.bun) {
+        const gitHubUrl = `https://github.com/emmercm/${Package.NAME}/releases/latest`;
+        message += ` on GitHub: ${color(terminalLink(gitHubUrl, gitHubUrl))}`;
+      } else if (process.env.npm_command === 'exec') {
+        message += ` via npx: ${color(`npx ${Package.NAME}@latest`)}`;
+      } else {
+        message += ` via npm: ${color(`npm update ${Package.NAME}`)}`;
+      }
+      MultiBar.log(this.logger.formatMessage(LogLevel.NOTICE, message));
     }
   }
 
@@ -71,5 +85,21 @@ export default class UpdateChecker {
         req.destroy(new Error('request timed out'));
       });
     });
+  }
+
+  private static async isHomebrew(): Promise<boolean> {
+    const brew = await which('brew', { nothrow: true });
+    if (brew === null) {
+      return false;
+    }
+
+    try {
+      const brewPrefixOutput = await util.promisify(child_process.execFile)(brew, ['--prefix']);
+      const brewPrefix = brewPrefixOutput.stdout.trim();
+      const execPath = await fs.promises.realpath(process.execPath);
+      return execPath.startsWith(path.join(brewPrefix, 'bin'));
+    } catch {
+      return false;
+    }
   }
 }
