@@ -180,14 +180,16 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
 
 describe('with explicit DATs', () => {
   it('should throw on all invalid dats', async () => {
-    await expect(async () => {
-      await new Igir(
-        new Options({
-          dat: ['src/*'],
-        }),
-        LOGGER,
-      ).main();
-    }).rejects.toThrow(/no valid dat files/i);
+    await expect(
+      (async (): Promise<void> => {
+        await new Igir(
+          new Options({
+            dat: ['src/*'],
+          }),
+          LOGGER,
+        ).main();
+      })(),
+    ).rejects.toThrow(/no valid dat files/i);
   });
 
   it('should copy, playlist, and test without caching', async () => {

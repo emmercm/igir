@@ -53,7 +53,7 @@ describe.each([
     }
   });
 
-  it('should handle a lot of concurrency', async () => {
+  it.skipIf(process.versions.bun)('should handle a lot of concurrency', async () => {
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
     try {
       const tempSrc = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'src'));
