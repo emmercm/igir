@@ -61,7 +61,7 @@
     "lint:fix": "eslint . --fix",
     "test": "npm run test:unit && npm run lint",
     "test:unit": "node ./node_modules/vitest/vitest.mjs",
-    "test:unit:bun": "bun test --randomize --timeout=60000 --pass-with-no-tests",
+    "test:unit:bun": "bun test --randomize --timeout=45000 --pass-with-no-tests",
     "test:coverage": "node --experimental-vm-modules ./node_modules/vitest/vitest.mjs --coverage.enabled",
     "bump:major": "npm version major --no-git-tag-version && npm run update:readme",
     "bump:minor": "npm version minor --no-git-tag-version && npm run update:readme",
