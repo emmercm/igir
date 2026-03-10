@@ -1181,10 +1181,10 @@ describe('options', () => {
 
   it('should parse "patch-exclude"', async () => {
     await expect(
-      async () =>
+      (async (): Promise<unknown> =>
         await argumentsParser
           .parse(['copy', '--input', os.devNull, '--patch-exclude', './src'])
-          .scanPatchFilesWithoutExclusions(),
+          .scanPatchFilesWithoutExclusions())(),
     ).rejects.toThrow(/dependent|implication/i);
     expect(
       (
