@@ -2,7 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
@@ -28,7 +28,7 @@ function createRomScanner(input: string[], inputExclude: string[] = []): ROMScan
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   );
 }
 
@@ -103,7 +103,7 @@ describe('multiple files', () => {
         new Options(optionsProps),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.availableParallelism()),
+        new MappableSemaphore(os.availableParallelism()),
       ).scan(checksumBitmask, true);
       expect(scannedFiles).toHaveLength(expectedRomFiles);
     },
@@ -119,7 +119,7 @@ describe('multiple files', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan(ChecksumBitmask.CRC32, false);
 
     const extensionsWithoutCrc32 = scannedFiles

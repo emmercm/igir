@@ -1,7 +1,7 @@
 import type { CHDInfo } from 'chdman';
 import { CHDType } from 'chdman';
 
-import type DriveSemaphore from '../async/driveSemaphore.js';
+import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
@@ -21,7 +21,7 @@ import Module from './module.js';
  */
 export default abstract class Scanner extends Module {
   protected readonly options: Options;
-  protected readonly driveSemaphore: DriveSemaphore;
+  protected readonly mappableSemaphore: MappableSemaphore;
 
   private readonly fileFactory: FileFactory;
 
@@ -29,12 +29,12 @@ export default abstract class Scanner extends Module {
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
     loggerPrefix: string,
   ) {
     super(progressBar, loggerPrefix);
     this.options = options;
-    this.driveSemaphore = driveSemaphore;
+    this.mappableSemaphore = mappableSemaphore;
     this.fileFactory = fileFactory;
   }
 
@@ -44,7 +44,7 @@ export default abstract class Scanner extends Module {
     checksumArchives = false,
   ): Promise<File[]> {
     return (
-      await this.driveSemaphore.map(filePaths, async (inputFile) => {
+      await this.mappableSemaphore.map(filePaths, async (inputFile) => {
         this.progressBar.incrementInProgress();
         // TODO: why does this never show?
         const childBar = this.progressBar.addChildBar({

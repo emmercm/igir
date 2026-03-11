@@ -1,7 +1,7 @@
 import os from 'node:os';
 import { PassThrough } from 'node:stream';
 
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
@@ -46,7 +46,7 @@ test.each([
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   // When

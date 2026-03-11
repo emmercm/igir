@@ -6,7 +6,6 @@ import chalk from 'chalk';
 import isAdmin from 'is-admin';
 
 import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
-import DriveSemaphore from './async/driveSemaphore.js';
 import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
@@ -127,21 +126,20 @@ export default class Igir {
     const fileFactory = new FileFactory(fileCache, this.logger);
 
     // Semaphores
-    const driveSemaphore = new DriveSemaphore(this.options.getReaderThreads());
     const readerSemaphore = new MappableSemaphore(this.options.getReaderThreads());
     const writerSemaphore = new CandidateWriterSemaphore(this.options.getWriterThreads());
     const moveMutex = new FileMoveMutex(this.options.getReaderThreads() * 100);
 
     // Scan and process input files
-    let dats = await this.processDATScanner(fileFactory, driveSemaphore);
+    let dats = await this.processDATScanner(fileFactory, readerSemaphore);
     const indexedRoms = await this.processROMScanner(
       fileFactory,
-      driveSemaphore,
+      readerSemaphore,
       this.determineScanningBitmask(dats),
       this.determineScanningChecksumArchives(dats),
     );
     const roms = indexedRoms.getFiles();
-    const patches = await this.processPatchScanner(fileFactory, driveSemaphore);
+    const patches = await this.processPatchScanner(fileFactory, readerSemaphore);
 
     // Set up progress bar and input for DAT processing
     const datProcessProgressBar = this.logger.addProgressBar({
@@ -182,7 +180,6 @@ export default class Igir {
       const candidates = await this.generateCandidates(
         progressBar,
         fileFactory,
-        driveSemaphore,
         readerSemaphore,
         processedDat,
         indexedRoms,
@@ -331,7 +328,7 @@ export default class Igir {
 
   private async processDATScanner(
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    readableSemaphore: MappableSemaphore,
   ): Promise<DAT[]> {
     if (this.options.shouldDir2Dat()) {
       return [];
@@ -344,7 +341,12 @@ export default class Igir {
     const progressBar = this.logger.addProgressBar({
       name: 'Scanning for DATs',
     });
-    let dats = await new DATScanner(this.options, progressBar, fileFactory, driveSemaphore).scan();
+    let dats = await new DATScanner(
+      this.options,
+      progressBar,
+      fileFactory,
+      readableSemaphore,
+    ).scan();
     if (dats.length === 0) {
       throw new IgirException('No valid DAT files found!');
     }
@@ -484,7 +486,7 @@ export default class Igir {
 
   private async processROMScanner(
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    readerSemaphore: MappableSemaphore,
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
@@ -496,7 +498,7 @@ export default class Igir {
       this.options,
       romProgressBar,
       fileFactory,
-      driveSemaphore,
+      readerSemaphore,
     ).scan(checksumBitmask, checksumArchives);
     const romScannerProgressBarName = romProgressBar.getName();
 
@@ -505,7 +507,7 @@ export default class Igir {
       this.options,
       romProgressBar,
       fileFactory,
-      driveSemaphore,
+      readerSemaphore,
     ).process(rawRomFiles);
 
     romProgressBar.setName('Detecting ROM trimming');
@@ -513,7 +515,7 @@ export default class Igir {
       this.options,
       romProgressBar,
       fileFactory,
-      driveSemaphore,
+      readerSemaphore,
     ).process(romFilesWithHeaders);
 
     romProgressBar.setName('Indexing ROMs');
@@ -530,7 +532,7 @@ export default class Igir {
 
   private async processPatchScanner(
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    readerSemaphore: MappableSemaphore,
   ): Promise<Patch[]> {
     if (!this.options.getPatchFileCount()) {
       return [];
@@ -543,7 +545,7 @@ export default class Igir {
       this.options,
       progressBar,
       fileFactory,
-      driveSemaphore,
+      readerSemaphore,
     ).scan();
     progressBar.finishWithItems(patches.length, 'patch', 'found');
     progressBar.freeze();
@@ -567,7 +569,6 @@ export default class Igir {
   private async generateCandidates(
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
     readerSemaphore: MappableSemaphore,
     dat: DAT,
     indexedRoms: IndexedFiles,
@@ -601,7 +602,7 @@ export default class Igir {
             this.options,
             progressBar,
             fileFactory,
-            driveSemaphore,
+            readerSemaphore,
           ).hash(dat, candidates),
         // Finalize output file paths
         (candidates): WriteCandidate[] =>
