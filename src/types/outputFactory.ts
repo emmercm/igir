@@ -450,9 +450,13 @@ export default class OutputFactory {
             );
           }
           const letterRange = `${firstTuple[0]}-${lastTuple[0]}`;
-          const newFilenames = new Set(tuples.flatMap(([, filenames]) => [...filenames]));
-          const existingFilenames = map.get(letterRange) ?? new Set();
-          map.set(letterRange, new Set([...existingFilenames, ...newFilenames]));
+          const existingFilenames = map.get(letterRange) ?? new Set<string>();
+          for (const [, filenames] of tuples) {
+            for (const filename of filenames) {
+              existingFilenames.add(filename);
+            }
+          }
+          map.set(letterRange, existingFilenames);
           return map;
         }, new Map<string, Set<string>>());
     }
