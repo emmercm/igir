@@ -1,6 +1,6 @@
 import async from 'async';
 
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
@@ -19,18 +19,18 @@ import Module from '../module.js';
 export default class ROMTrimProcessor extends Module {
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
-  private readonly driveSemaphore: DriveSemaphore;
+  private readonly mappableSemaphore: MappableSemaphore;
 
   constructor(
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
     super(progressBar, ROMTrimProcessor.name);
     this.options = options;
     this.fileFactory = fileFactory;
-    this.driveSemaphore = driveSemaphore;
+    this.mappableSemaphore = mappableSemaphore;
   }
 
   /**
@@ -68,7 +68,7 @@ export default class ROMTrimProcessor extends Module {
           return inputFile;
         }
 
-        return await this.driveSemaphore.runExclusive(inputFile, async () => {
+        return await this.mappableSemaphore.runExclusive(async () => {
           this.progressBar.incrementInProgress();
           const childBar = this.progressBar.addChildBar({
             name: inputFile.toString(),

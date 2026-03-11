@@ -5,7 +5,8 @@ import { PassThrough } from 'node:stream';
 
 import async from 'async';
 
-import DriveSemaphore from '../src/async/driveSemaphore.js';
+import MappableSemaphore from '../src/async/mappableSemaphore.js';
+import MappableSemaphore from '../src/async/mappableSemaphore.js';
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
@@ -1965,7 +1966,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.availableParallelism()),
+        new MappableSemaphore(os.availableParallelism()),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]

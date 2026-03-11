@@ -2,7 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import DriveSemaphore from '../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -32,7 +32,7 @@ it('should do nothing if dir2dat command not provided', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   // And a DAT
@@ -67,7 +67,7 @@ it('should write a valid DAT', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   // And a DAT
@@ -104,7 +104,7 @@ it('should write a valid DAT', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
@@ -153,7 +153,7 @@ it('should use the candidates for games and ROMs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   // And a DAT
@@ -205,7 +205,7 @@ it('should use the candidates for games and ROMs', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
