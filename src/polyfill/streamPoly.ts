@@ -1,7 +1,5 @@
 import stream from 'node:stream';
 
-import type { ErrnoException } from 'fast-glob/out/types/index.js';
-
 import Defaults from '../globals/defaults.js';
 
 export default {
@@ -74,7 +72,10 @@ export default {
 
     readable.on('data', (chunk: Buffer) => {
       readableBytesRead += chunk.length;
-      output.write(chunk);
+      if (!output.write(chunk)) {
+        readable.pause();
+        output.once('drain', () => readable.resume());
+      }
     });
 
     readable.on('end', () => {
@@ -108,9 +109,18 @@ export default {
 
     for (let i = 0; i < count; i++) {
       const output = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
-      readable.on('data', output.write.bind(output));
-      readable.on('end', output.end.bind(output));
-      readable.on('error', output.destroy.bind(output));
+      const onData = output.write.bind(output);
+      const onEnd = output.end.bind(output);
+      const onError = output.destroy.bind(output);
+      readable.on('data', onData);
+      readable.on('end', onEnd);
+      readable.on('error', onError);
+      output._destroy = (err, callback): void => {
+        readable.off('data', onData);
+        readable.off('end', onEnd);
+        readable.off('error', onError);
+        callback(err);
+      };
       outputs.push(output);
     }
 
@@ -157,7 +167,7 @@ export default {
       readable,
       ...transforms,
       output,
-      (err?: ErrnoException): void => {
+      (err?: NodeJS.ErrnoException | null): void => {
         if (err) {
           output.destroy(err);
         }
