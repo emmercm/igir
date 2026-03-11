@@ -226,8 +226,9 @@ describe('token replacement', () => {
       const options = new Options({ commands: ['copy'], output: 'games/{adam}' });
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -261,8 +262,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -287,8 +289,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -345,8 +348,9 @@ describe('token replacement', () => {
 
     const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-    await expect(async () =>
-      OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+    await expect(
+      (async (): Promise<unknown> =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
     ).rejects.toThrow(/failed to replace/);
   });
 
@@ -370,8 +374,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -415,8 +420,9 @@ describe('token replacement', () => {
       const options = new Options({ commands: ['copy'], output: 'roms/{minui}' });
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -440,8 +446,9 @@ describe('token replacement', () => {
       const options = new Options({ commands: ['copy'], output: 'games/{mister}' });
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -494,8 +501,9 @@ describe('token replacement', () => {
     const options = new Options({ commands: ['copy'], output: 'roms/{miyoocfw}' });
     const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-    await expect(async () =>
-      OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+    await expect(
+      (async (): Promise<unknown> =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
     ).rejects.toThrow(/failed to replace/);
   });
 
@@ -518,8 +526,9 @@ describe('token replacement', () => {
       const options = new Options({ commands: ['copy'], output: 'Roms/{onion}' });
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -544,8 +553,9 @@ describe('token replacement', () => {
       const options = new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' });
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -618,8 +628,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -645,8 +656,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -671,8 +683,9 @@ describe('token replacement', () => {
 
       const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-      await expect(async () =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
     },
   );
@@ -720,8 +733,9 @@ describe('token replacement', () => {
     const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
     const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
 
-    await expect(async () =>
-      OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()),
+    await expect(
+      (async (): Promise<unknown> =>
+        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
     ).rejects.toThrow(/failed to replace/);
   });
 });

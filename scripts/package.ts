@@ -85,23 +85,6 @@ await esbuild.build({
   sourcemap: false,
   packages: 'external',
   format: 'esm',
-  plugins: [
-    {
-      name: 'transform-native-addon-imports',
-      setup(build): void {
-        build.onLoad({ filter: /packages[\\/].+[\\/]index\.ts$/ }, async (args) => {
-          const source = await fs.promises.readFile(args.path, 'utf8');
-          return {
-            contents: source.replaceAll(
-              /import\s+(\w+)\s+from\s+(['"].*?\.node['"])\s+with\s*\{[\s\S]*?type:\s*['"]file['"][\s\S]*?\};?/g,
-              'const $1 = $2;',
-            ),
-            loader: args.path.endsWith('.ts') ? 'ts' : 'js',
-          };
-        });
-      },
-    },
-  ],
 });
 
 // Generate the prebuilds directory

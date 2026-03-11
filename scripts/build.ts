@@ -1,5 +1,4 @@
 import child_process from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import esbuild from 'esbuild';
@@ -32,23 +31,6 @@ await esbuild.build({
   sourcemap: true,
   packages: 'external',
   format: 'esm',
-  plugins: [
-    {
-      name: 'transform-native-addon-imports',
-      setup(build): void {
-        build.onLoad({ filter: /packages[\\/].+[\\/]index\.ts$/ }, async (args) => {
-          const source = await fs.promises.readFile(args.path, 'utf8');
-          return {
-            contents: source.replaceAll(
-              /import\s+(\w+)\s+from\s+(['"].*?\.node['"])\s+with\s*\{[\s\S]*?type:\s*['"]file['"][\s\S]*?\};?/g,
-              'const $1 = $2;',
-            ),
-            loader: args.path.endsWith('.ts') ? 'ts' : 'js',
-          };
-        });
-      },
-    },
-  ],
 });
 
 logger.info(`Copying additional files ...`);
