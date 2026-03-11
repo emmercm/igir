@@ -12,7 +12,8 @@ export default class KeyedMutex {
 
   private readonly keyMutexesMutex = new Mutex();
 
-  private keyMutexesLru = new Set<string>();
+  // ES2015/ES6 maps are required to maintain insertion order, making them inexpensive for LRU
+  private readonly keyMutexesLru = new Map<string, undefined>();
 
   private readonly maxSize?: number;
 
@@ -48,13 +49,13 @@ export default class KeyedMutex {
 
     if (uniqueKeys.every((key) => this.keyMutexes.has(key))) {
       // If every key mutex already exists, then we can avoid a global lock
-      for (const key of uniqueKeys) {
-        this.keyMutexesLru.delete(key);
-      }
 
       // Note: no new key mutexes were created, so no LRU eviction is necessary
       // Mark all keys as recently used
-      this.keyMutexesLru = new Set([...uniqueKeys, ...this.keyMutexesLru]);
+      for (const key of uniqueKeys) {
+        this.keyMutexesLru.delete(key);
+        this.keyMutexesLru.set(key, undefined);
+      }
 
       mutexes = uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
     } else {
@@ -69,23 +70,25 @@ export default class KeyedMutex {
 
         // Expire least recently used keys
         if (this.maxSize !== undefined && this.keyMutexes.size > this.maxSize) {
-          [...this.keyMutexesLru]
-            .filter(
-              (lruKey) => !uniqueKeySet.has(lruKey) && !this.keyMutexes.get(lruKey)?.isLocked(),
-            )
-            .slice(this.maxSize)
-            .forEach((lruKey) => {
+          let keysToEvict = this.keyMutexes.size - this.maxSize;
+          for (const lruKey of this.keyMutexesLru.keys()) {
+            if (keysToEvict <= 0) {
+              break;
+            }
+            if (!uniqueKeySet.has(lruKey) && !this.keyMutexes.get(lruKey)?.isLocked()) {
               this.keyMutexes.get(lruKey)?.release();
               this.keyMutexes.delete(lruKey);
               this.keyMutexesLru.delete(lruKey);
-            });
+              keysToEvict--;
+            }
+          }
         }
 
         // Mark all keys as recently used
         for (const key of uniqueKeys) {
           this.keyMutexesLru.delete(key);
+          this.keyMutexesLru.set(key, undefined);
         }
-        this.keyMutexesLru = new Set([...uniqueKeys, ...this.keyMutexesLru]);
 
         return uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
       });
