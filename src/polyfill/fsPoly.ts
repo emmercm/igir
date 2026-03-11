@@ -43,6 +43,7 @@ export default class FsPoly {
   private static readonly DRIVES = (() => {
     if (process.platform === 'win32') {
       // https://support.microsoft.com/en-us/topic/windows-management-instrumentation-command-line-wmic-removal-from-windows-e9e83c7f-4992-477f-ba1d-96f694b8665d
+      // https://github.com/cristiammercado/node-disk-info/issues/29
       return [];
     }
     try {
@@ -237,7 +238,7 @@ export default class FsPoly {
       await fs.promises.link(targetResolved, link);
       return;
     } catch (error) {
-      if (this.onDifferentDrives(targetResolved, link)) {
+      if ((error as NodeJS.ErrnoException).code === 'EXDEV') {
         throw new IgirException(`can't hard link files on different drives: ${error}`);
       }
       throw error;
@@ -457,15 +458,6 @@ export default class FsPoly {
     newPath: string,
     callback?: FsReadCallback,
   ): Promise<MoveResultValue> {
-    // Can't rename across drives
-    if (this.onDifferentDrives(oldPath, newPath)) {
-      const newPathTemp = await this.mktemp(newPath);
-      await this.copyFile(oldPath, newPathTemp);
-      await this.mv(newPathTemp, newPath);
-      await this.rm(oldPath, { force: true });
-      return MoveResult.COPIED;
-    }
-
     try {
       await fs.promises.rename(oldPath, newPath);
       return MoveResult.RENAMED;
@@ -485,13 +477,6 @@ export default class FsPoly {
         throw error;
       }
     }
-  }
-
-  private static onDifferentDrives(one: string, two: string): boolean {
-    if (path.dirname(one) === path.dirname(two)) {
-      return false;
-    }
-    return this.diskResolved(one) !== this.diskResolved(two);
   }
 
   /**

@@ -302,8 +302,8 @@ describe('options', () => {
     expect(options.getFixdatOutput()).toEqual(options.getOutput());
 
     expect(options.getDatThreads()).toEqual(Defaults.DAT_DEFAULT_THREADS);
-    expect(options.getReaderThreads()).toEqual(8);
-    expect(options.getWriterThreads()).toEqual(4);
+    expect(options.getReaderThreads()).toEqual(Defaults.FILE_READER_DEFAULT_THREADS);
+    expect(options.getWriterThreads()).toEqual(Defaults.ROM_WRITER_DEFAULT_THREADS);
     expect(options.getDisableCache()).toEqual(false);
     expect(options.getCachePath()).toBeUndefined();
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
@@ -4896,7 +4896,9 @@ describe('options', () => {
   });
 
   it('should parse "reader-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getReaderThreads()).toEqual(8);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getReaderThreads()).toEqual(
+      Defaults.FILE_READER_DEFAULT_THREADS,
+    );
     expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--reader-threads', '-1'])
@@ -4925,7 +4927,9 @@ describe('options', () => {
   });
 
   it('should parse "writer-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(4);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(
+      Defaults.ROM_WRITER_DEFAULT_THREADS,
+    );
     expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--writer-threads', '-1'])

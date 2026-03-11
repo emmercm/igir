@@ -4,7 +4,7 @@ import { PassThrough } from 'node:stream';
 
 import which from 'which';
 
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';
@@ -28,7 +28,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
     }),
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   );
 }
 
@@ -208,7 +208,7 @@ describe('single files', () => {
         new Options({ dat: [datPath] }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.availableParallelism()),
+        new MappableSemaphore(os.availableParallelism()),
       ).scan();
       expect(dats).toHaveLength(1);
       const dat = dats[0];

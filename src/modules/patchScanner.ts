@@ -1,4 +1,4 @@
-import type DriveSemaphore from '../async/driveSemaphore.js';
+import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import type File from '../types/files/file.js';
@@ -17,9 +17,9 @@ export default class PatchScanner extends Scanner {
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
-    super(options, progressBar, fileFactory, driveSemaphore, PatchScanner.name);
+    super(options, progressBar, fileFactory, mappableSemaphore, PatchScanner.name);
   }
 
   /**
@@ -58,7 +58,7 @@ export default class PatchScanner extends Scanner {
     this.progressBar.setSymbol(ProgressBarSymbol.PATCH_PARSING);
 
     return (
-      await this.driveSemaphore.map(patchFiles, async (patchFile) => {
+      await this.mappableSemaphore.map(patchFiles, async (patchFile) => {
         this.progressBar.incrementInProgress();
 
         const childBar = this.progressBar.addChildBar({
