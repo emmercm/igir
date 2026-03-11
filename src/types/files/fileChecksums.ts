@@ -64,7 +64,7 @@ export default {
   ): Promise<ChecksumPropsWithSize> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
-      // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
+      readable.destroy();
       return {};
     }
 
