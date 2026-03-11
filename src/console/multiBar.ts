@@ -22,7 +22,7 @@ process.once('SIGTERM', exitHandler);
  * A wrapper for multiple {@link SingleBar}s. Should be treated as a singleton.
  */
 export default class MultiBar {
-  private static readonly RENDER_MIN_FPS = 5;
+  private static readonly RENDER_MIN_FPS = 4;
   private static readonly OUTPUT_PADDING = ' ';
 
   private static readonly multiBars: MultiBar[] = [];
@@ -33,6 +33,7 @@ export default class MultiBar {
   private renderTimer?: Timer;
   private lastOutput = '';
   private stopped = false;
+  private readonly sigwinchHandler?: () => void;
 
   private readonly terminal: tty.WriteStream | NodeJS.WritableStream;
   private terminalColumns = 65_536;
@@ -48,7 +49,7 @@ export default class MultiBar {
 
     // Set a maximum size for the MultiBar based on terminal size
     if (this.terminal instanceof tty.WriteStream) {
-      const onResize = (): void => {
+      this.sigwinchHandler = (): void => {
         if (!(this.terminal instanceof tty.WriteStream)) {
           return;
         }
@@ -56,8 +57,8 @@ export default class MultiBar {
         this.terminalRows = this.terminal.rows;
         this.clearAndRender();
       };
-      process.on('SIGWINCH', onResize);
-      onResize();
+      process.on('SIGWINCH', this.sigwinchHandler);
+      this.sigwinchHandler();
     }
   }
 
@@ -262,6 +263,11 @@ export default class MultiBar {
     singleBarsCopy.forEach((progressBar) => {
       progressBar.freeze();
     });
+
+    // Remove the SIGWINCH listener
+    if (this.sigwinchHandler !== undefined) {
+      process.off('SIGWINCH', this.sigwinchHandler);
+    }
 
     // Restore the cursor
     if (this.terminal instanceof tty.WriteStream) {
