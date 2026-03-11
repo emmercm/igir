@@ -101,7 +101,7 @@ export default class Igir {
       const outputDirRoot = this.options.getOutputDirRoot();
       if (!(await FsPoly.canHardlink(outputDirRoot))) {
         const outputDisk = FsPoly.diskResolved(outputDirRoot);
-        throw new IgirException(`${outputDisk} does not support hard-linking`);
+        throw new IgirException(`${outputDisk ?? 'filesystem'} does not support hard-linking`);
       }
     }
 

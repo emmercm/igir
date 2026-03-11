@@ -18,6 +18,13 @@ export default class CandidateWriterSemaphore {
   }
 
   /**
+   * Return the number of currently active candidate write operations.
+   */
+  openLocks(): number {
+    return this.mappableSemaphore.openLocks();
+  }
+
+  /**
    * Run some {@link callback}. for every {@link candidates}.
    */
   async map<T>(
