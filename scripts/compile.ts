@@ -101,8 +101,12 @@ const procOutput = await new Promise<string>((resolve, reject) => {
   proc.stderr.on('data', (chunk: Buffer) => {
     procOutput += chunk.toString();
   });
-  proc.on('close', () => {
-    resolve(procOutput);
+  proc.on('close', (code) => {
+    if (code === 0) {
+      resolve(procOutput);
+    } else {
+      reject(new Error(`${output} exited with code ${code}`));
+    }
   });
   proc.on('error', reject);
 });
