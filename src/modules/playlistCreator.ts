@@ -145,7 +145,7 @@ export default class PlaylistCreator extends Module {
     let depth = 0;
     while (depth <= maxDepth) {
       const fileSubPaths = fileDirsSplit.map((split) => split.slice(0, depth).join(path.sep));
-      if (new Set(fileSubPaths).size > 1) {
+      if (fileSubPaths.some((p) => p !== fileSubPaths[0])) {
         break;
       }
       lastCommonDir = fileSubPaths[0];
