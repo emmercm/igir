@@ -51,8 +51,9 @@ const result = await Bun.build({
           const source = await Bun.file(args.path).text();
 
           // Find a require() call to a prebuilt .node file (excluding build/Release fallbacks)
-          const requireMatch =
-            /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/.exec(source);
+          const requireMatch = /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/.exec(
+            source,
+          );
           if (!requireMatch) {
             return { contents: source, loader: 'ts' };
           }
