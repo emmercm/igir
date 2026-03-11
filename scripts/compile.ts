@@ -52,7 +52,7 @@ const result = await Bun.build({
 
           // Find a require() call to a prebuilt .node file (excluding build/Release fallbacks)
           const requireMatch =
-            /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/s.exec(source);
+            /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/.exec(source);
           if (!requireMatch) {
             return { contents: source, loader: 'ts' };
           }
@@ -65,7 +65,7 @@ const result = await Bun.build({
 
           // Replace prebuilt require() calls with the static native import
           const transformed = source.replaceAll(
-            /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/gs,
+            /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/g,
             '__nativeAddon',
           );
 
