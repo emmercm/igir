@@ -64,7 +64,10 @@ export default {
   ): Promise<ChecksumPropsWithSize> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
-      readable.destroy();
+      if (typeof readable.destroy === 'function') {
+        // Not every readable created by every library has a destroy function
+        readable.destroy();
+      }
       return {};
     }
 
