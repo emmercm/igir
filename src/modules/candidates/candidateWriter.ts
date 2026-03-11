@@ -11,8 +11,10 @@ import FsPoly, { MoveResult } from '../../polyfill/fsPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
-import File from '../../types/files/file.js';
+import type File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
+import type FileFactory from '../../types/files/fileFactory.js';
+import { CacheMode } from '../../types/files/fileFactory.js';
 import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
 import type { ZipFormatValue } from '../../types/options.js';
 import type Options from '../../types/options.js';
@@ -33,6 +35,7 @@ export default class CandidateWriter extends Module {
   private static readonly OUTPUT_PATHS_WRITTEN = new Map<string, DAT>();
 
   private readonly options: Options;
+  private readonly fileFactory: FileFactory;
   private readonly candidateSemaphore: CandidateWriterSemaphore;
   private readonly moveMutex: FileMoveMutex;
 
@@ -41,11 +44,13 @@ export default class CandidateWriter extends Module {
   constructor(
     options: Options,
     progressBar: ProgressBar,
+    fileFactory: FileFactory,
     candidateSemaphore: CandidateWriterSemaphore,
     moveMutex: FileMoveMutex,
   ) {
     super(progressBar, CandidateWriter.name);
     this.options = options;
+    this.fileFactory = fileFactory;
     this.candidateSemaphore = candidateSemaphore;
     this.moveMutex = moveMutex;
   }
@@ -291,7 +296,12 @@ export default class CandidateWriter extends Module {
 
     let archiveEntries: ArchiveEntry<Zip>[];
     try {
-      archiveEntries = await zipFile.getArchiveEntries(checksumBitmask);
+      archiveEntries =
+        (await this.fileFactory.entriesFromArchive(
+          zipFile,
+          checksumBitmask,
+          CacheMode.IGNORE_CACHED_VALUE,
+        )) ?? [];
     } catch (error) {
       return `failed to get archive contents: ${error}`;
     }
@@ -722,9 +732,11 @@ export default class CandidateWriter extends Module {
     // Check checksum
     let actualFile: File;
     try {
-      actualFile = await File.fileOf(
-        { filePath: outputFilePath },
+      actualFile = await this.fileFactory.fileFrom(
+        outputFilePath,
         expectedFile.getChecksumBitmask(),
+        undefined,
+        CacheMode.IGNORE_CACHED_VALUE,
       );
     } catch (error) {
       return `failed to parse: ${error}`;
