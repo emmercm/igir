@@ -12,7 +12,8 @@ export default class KeyedMutex {
 
   private readonly keyMutexesMutex = new Mutex();
 
-  private keyMutexesLru = new Set<string>();
+  // ES2015/ES6 maps are required to maintain insertion order, making them inexpensive for LRU
+  private readonly keyMutexesLru = new Map<string, undefined>();
 
   private readonly maxSize?: number;
 
@@ -42,36 +43,56 @@ export default class KeyedMutex {
       return;
     }
 
-    const mutexes = await this.runExclusiveGlobally(() => {
-      const mutexes = keys.reduce(ArrayPoly.reduceUnique(), []).map((key) => {
-        let mutex = this.keyMutexes.get(key);
-        if (mutex === undefined) {
-          mutex = new Mutex();
-          this.keyMutexes.set(key, mutex);
+    const uniqueKeys = keys.reduce(ArrayPoly.reduceUnique(), []);
 
-          // Expire least recently used keys
-          if (this.maxSize !== undefined && this.keyMutexes.size > this.maxSize) {
-            [...this.keyMutexesLru]
-              .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
-              .slice(this.maxSize)
-              .forEach((lruKey) => {
-                this.keyMutexes.get(lruKey)?.release();
-                this.keyMutexes.delete(lruKey);
-                this.keyMutexesLru.delete(lruKey);
-              });
+    let mutexes: Mutex[];
+
+    if (uniqueKeys.every((key) => this.keyMutexes.has(key))) {
+      // If every key mutex already exists, then we can avoid a global lock
+
+      // Note: no new key mutexes were created, so no LRU eviction is necessary
+      // Mark all keys as recently used
+      for (const key of uniqueKeys) {
+        this.keyMutexesLru.delete(key);
+        this.keyMutexesLru.set(key, undefined);
+      }
+
+      mutexes = uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+    } else {
+      // If at least one key mutex does not exist, then we have to take a global lock to create them
+      const uniqueKeySet = new Set(uniqueKeys);
+      mutexes = await this.keyMutexesMutex.runExclusive(() => {
+        for (const key of uniqueKeys) {
+          if (!this.keyMutexes.has(key)) {
+            this.keyMutexes.set(key, new Mutex());
           }
         }
-        return mutex;
+
+        // Expire least recently used keys
+        if (this.maxSize !== undefined && this.keyMutexes.size > this.maxSize) {
+          let keysToEvict = this.keyMutexes.size - this.maxSize;
+          for (const lruKey of this.keyMutexesLru.keys()) {
+            if (keysToEvict <= 0) {
+              break;
+            }
+            if (!uniqueKeySet.has(lruKey) && !this.keyMutexes.get(lruKey)?.isLocked()) {
+              this.keyMutexes.get(lruKey)?.release();
+              this.keyMutexes.delete(lruKey);
+              this.keyMutexesLru.delete(lruKey);
+              keysToEvict--;
+            }
+          }
+        }
+
+        // Mark all keys as recently used
+        for (const key of uniqueKeys) {
+          this.keyMutexesLru.delete(key);
+          this.keyMutexesLru.set(key, undefined);
+        }
+
+        return uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
       });
-
-      // Mark this key as recently used
-      for (const key of keys) {
-        this.keyMutexesLru.delete(key);
-      }
-      this.keyMutexesLru = new Set([...keys, ...this.keyMutexesLru]);
-
-      return mutexes;
-    });
+    }
 
     await KeyedMutex.acquireMultipleWithDeadlockProtection(mutexes);
   }
@@ -130,22 +151,16 @@ export default class KeyedMutex {
   /**
    * Release any held lock for the given key.
    */
-  async release(key: string): Promise<void> {
-    await this.releaseMultiple([key]);
+  release(key: string): void {
+    this.releaseMultiple([key]);
   }
 
   /**
    * Release any held lock for the given keys.
    */
-  async releaseMultiple(keys: string[]): Promise<void> {
-    if (keys.length === 0) {
-      return;
-    }
-
-    await this.runExclusiveGlobally(() => {
-      keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
-        this.keyMutexes.get(key)?.release();
-      });
+  releaseMultiple(keys: string[]): void {
+    keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
+      this.keyMutexes.get(key)?.release();
     });
   }
 
@@ -157,7 +172,7 @@ export default class KeyedMutex {
     try {
       return await runnable();
     } finally {
-      await this.release(key);
+      this.release(key);
     }
   }
 
@@ -169,7 +184,7 @@ export default class KeyedMutex {
     try {
       return await runnable();
     } finally {
-      await this.releaseMultiple(keys);
+      this.releaseMultiple(keys);
     }
   }
 }
