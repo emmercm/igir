@@ -64,10 +64,8 @@ export default {
   ): Promise<ChecksumPropsWithSize> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
-      if (typeof readable.destroy === 'function') {
-        // Not every readable created by every library has a destroy function
-        readable.destroy();
-      }
+      // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
+      // We can't call readable.destroy() here because 'unrar' will throw an error
       return {};
     }
 
