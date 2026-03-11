@@ -1,4 +1,4 @@
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type File from '../../types/files/file.js';
@@ -16,9 +16,9 @@ export default class ROMScanner extends Scanner {
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
-    super(options, progressBar, fileFactory, driveSemaphore, ROMScanner.name);
+    super(options, progressBar, fileFactory, mappableSemaphore, ROMScanner.name);
   }
 
   /**

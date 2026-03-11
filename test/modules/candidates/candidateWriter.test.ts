@@ -7,8 +7,8 @@ import { PassThrough } from 'node:stream';
 import async from 'async';
 
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -113,7 +113,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
   } catch {
     /* ignored */
@@ -122,7 +122,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
 
@@ -139,7 +139,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     candidates = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
       dat,
