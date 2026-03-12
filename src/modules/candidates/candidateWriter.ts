@@ -78,10 +78,25 @@ export default class CandidateWriter extends Module {
       };
     }
 
-    // Filter to only the candidates that actually have matched files (and therefore output)
-    const writableCandidates = candidates.filter(
-      (candidate) => candidate.getRomsWithFiles().length > 0,
-    );
+    const inputToOutputFiles = new Set<string>();
+    const writableCandidates = candidates
+      // Deduplicate input->output files
+      .map((candidate) => {
+        const nonDuplicateRomsWithFiles = candidate.getRomsWithFiles().filter((romWithFiles) => {
+          const inputToOutputFile = `${romWithFiles.getInputFile().toString()} -> ${romWithFiles.getOutputFile().toString()}`;
+          if (inputToOutputFiles.has(inputToOutputFile)) {
+            return false;
+          }
+          inputToOutputFiles.add(inputToOutputFile);
+          return true;
+        });
+        if (nonDuplicateRomsWithFiles.length === candidate.getRomsWithFiles().length) {
+          return candidate;
+        }
+        return candidate.withRomsWithFiles(nonDuplicateRomsWithFiles);
+      })
+      // Filter to only the candidates that actually have matched files (and therefore output)
+      .filter((candidate) => candidate.getRomsWithFiles().length > 0);
 
     this.progressBar.logTrace(
       `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
@@ -394,10 +409,6 @@ export default class CandidateWriter extends Module {
       ].join('\n'),
     );
 
-    this.progressBar.logInfo(
-      `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:\n${inputToOutputZipEntries.map(([input, output]) => `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getEntryPath()}'`).join('\n')}`,
-    );
-
     // The same input file may have contention with being raw-moved and used as an input file
     // for a zip (here), so we need to lock all input paths if we're moving
     const lockedFilePaths = this.options.shouldMove()
@@ -455,22 +466,16 @@ export default class CandidateWriter extends Module {
       return;
     }
 
-    // De-duplicate based on the output file. Raw copying archives will produce the same
-    //  input->output for every ROM.
-    const uniqueInputToOutputEntries = inputToOutputEntries.filter(
-      ArrayPoly.filterUniqueMapped(([, outputRomFile]) => outputRomFile.toString()),
-    );
-
-    const totalBytes = uniqueInputToOutputEntries
+    const totalBytes = inputToOutputEntries
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${uniqueInputToOutputEntries.length.toLocaleString()} raw file${uniqueInputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${inputToOutputEntries.length.toLocaleString()} raw file${inputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
     // the same input archive at the same time, to benefit from batch extraction.
-    const uniqueInputToOutputEntriesMap = uniqueInputToOutputEntries.reduce(
+    const uniqueInputToOutputEntriesMap = inputToOutputEntries.reduce(
       (map, [inputRomFile, outputRomFile]) => {
         const key = inputRomFile.getFilePath();
         if (map.has(key)) {
