@@ -13,7 +13,7 @@ export default {
       return undefined;
     }
 
-    const times = [...Array.from({ length: (buffer.length - 1) / 4 }).keys()].map((idx) =>
+    const times = Array.from({ length: Math.floor((buffer.length - 1) / 4) }, (_, idx) =>
       buffer.readInt32LE(1 + idx * 4),
     );
     if (times.length === 0) {

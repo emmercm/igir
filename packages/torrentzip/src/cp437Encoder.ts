@@ -261,12 +261,12 @@ export default class CP437Encoder {
     '\u25A0',
     '\u00A0',
   ] as const;
-  private static readonly ENCODER_TABLE = this.DECODER_TABLE.reduce<Record<string, number>>(
+  private static readonly ENCODER_TABLE = this.DECODER_TABLE.reduce<Map<string, number>>(
     (map, char, idx) => {
-      map[char] = idx;
+      map.set(char, idx);
       return map;
     },
-    {},
+    new Map(),
   );
 
   /**
@@ -274,7 +274,7 @@ export default class CP437Encoder {
    */
   static canEncode(input: string): boolean {
     for (const char of input) {
-      if (!(char in this.ENCODER_TABLE)) {
+      if (!this.ENCODER_TABLE.has(char)) {
         return false;
       }
     }
@@ -287,7 +287,7 @@ export default class CP437Encoder {
   static encode(input: string): Buffer<ArrayBuffer> {
     const buffer = Buffer.allocUnsafe(input.length);
     for (let i = 0; i < buffer.length; i++) {
-      buffer[i] = this.ENCODER_TABLE[input[i]];
+      buffer[i] = this.ENCODER_TABLE.get(input[i]) ?? 0;
     }
     return buffer;
   }
