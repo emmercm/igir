@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
+import IgirException from '../../../exceptions/igirException.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
@@ -78,6 +79,10 @@ export default class ChdRaw extends Chd {
         outputFilename,
         binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
+    } else if (info.type === CHDType.CD_ROM) {
+      throw new IgirException("CD-ROM CHDs can't be extracted as raw");
+    } else if (info.type === CHDType.GD_ROM) {
+      throw new IgirException("GD-ROM CHDs can't be extracted as raw");
     } else {
       return [];
     }

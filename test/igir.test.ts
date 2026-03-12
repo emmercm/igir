@@ -6,7 +6,6 @@ import { PassThrough } from 'node:stream';
 import async from 'async';
 
 import MappableSemaphore from '../src/async/mappableSemaphore.js';
-import MappableSemaphore from '../src/async/mappableSemaphore.js';
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
