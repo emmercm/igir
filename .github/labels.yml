@@ -59,7 +59,7 @@
 - name: ongoing
   description: Discussions to be kept open
   color: 'ffffff'
-- name: request-for-comment
+- name: comments-requested
   description: Issues seeking input from more users.
   color: 'f4f275'
 
