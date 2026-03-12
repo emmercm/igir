@@ -266,6 +266,6 @@ export default class CP437Decoder {
    * Decode a buffer.
    */
   static decode(input: Buffer<ArrayBuffer>): string {
-    return Array.from(input, (byte) => this.DECODER_TABLE[byte] || '').join('');
+    return Array.from(input, (byte) => this.DECODER_TABLE[byte]).join('');
   }
 }
