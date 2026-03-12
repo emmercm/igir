@@ -78,15 +78,15 @@ it('should not throw on bad archives', async () => {
 
 describe('multiple files', () => {
   test.each([
-    [['test/fixtures/roms'], 104],
-    [['test/fixtures/roms/**/*'], 104],
-    [['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}'], 104],
+    [['test/fixtures/roms'], 106],
+    [['test/fixtures/roms/**/*'], 106],
+    [['test/fixtures/roms/**/*', 'test/fixtures/roms/**/*.{rom,zip}'], 106],
   ])('should scan multiple files with no exclusions: %s', async (input, expectedRomFiles) => {
     await expect(createRomScanner(input).scan()).resolves.toHaveLength(expectedRomFiles);
   });
 
   test.each([
-    [{ input: [path.join('test', 'fixtures', 'roms')] }, 150],
+    [{ input: [path.join('test', 'fixtures', 'roms')] }, 152],
     [{ input: [path.join('test', 'fixtures', 'roms', '7z')] }, 13],
     [{ input: [path.join('test', 'fixtures', 'roms', 'gz')] }, 14],
     [{ input: [path.join('test', 'fixtures', 'roms', 'rar')] }, 13],
@@ -152,19 +152,19 @@ describe('multiple files', () => {
   it('should scan multiple files with some file exclusions', async () => {
     await expect(
       createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan(),
-    ).resolves.toHaveLength(87);
+    ).resolves.toHaveLength(89);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom'],
       ).scan(),
-    ).resolves.toHaveLength(87);
+    ).resolves.toHaveLength(89);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip'],
       ).scan(),
-    ).resolves.toHaveLength(74);
+    ).resolves.toHaveLength(76);
   });
 
   it('should scan multiple files with every file excluded', async () => {
