@@ -62,6 +62,7 @@
 - name: comments-requested
   description: Issues seeking input from more users.
   color: 'f4f275'
+  alias: ['request-for-comment']
 
 # Labels to control CI actions
 - name: renovate/rebase
