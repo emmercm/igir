@@ -35,6 +35,13 @@ import type FileSignature from './fileSignature.js';
 import type ROMHeader from './romHeader.js';
 import type ROMPadding from './romPadding.js';
 
+export const CacheMode = {
+  RESPECT_CACHED_VALUE: 1,
+  IGNORE_CACHED_VALUE: 2,
+};
+export type CacheModeKey = keyof typeof CacheMode;
+export type CacheModeValue = (typeof CacheMode)[CacheModeKey];
+
 export default class FileFactory {
   private readonly fileCache: FileCache;
   private readonly logger: Logger;
@@ -94,8 +101,14 @@ export default class FileFactory {
     filePath: string,
     checksumBitmask: number,
     callback?: FsReadCallback,
+    cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
   ): Promise<File> {
-    return await this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask, callback);
+    return await this.fileCache.getOrComputeFileChecksums(
+      filePath,
+      checksumBitmask,
+      callback,
+      cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
+    );
   }
 
   async archiveFileFrom(
@@ -115,12 +128,17 @@ export default class FileFactory {
    *
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  private async entriesFromArchive(
-    archive: Archive,
+  async entriesFromArchive<A extends Archive>(
+    archive: A,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Archive>[] | undefined> {
+    cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
+  ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
-      return await this.fileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
+      return await this.fileCache.getOrComputeArchiveChecksums(
+        archive,
+        checksumBitmask,
+        cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
+      );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
       // may be an incomplete/corrupted file
