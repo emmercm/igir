@@ -65,6 +65,7 @@ export default {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
       // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
+      // We can't call readable.destroy() here because 'unrar' will throw an error
       return {};
     }
 
