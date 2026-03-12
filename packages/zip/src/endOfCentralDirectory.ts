@@ -125,7 +125,7 @@ export default class EndOfCentralDirectory {
     if (commentLength === 0) {
       // No need to read the comment
       commentBuffer = Buffer.allocUnsafe(0);
-    } else if (commentLength < buffer.length) {
+    } else if (commentLength <= buffer.length) {
       // The comment is small, keep re-using the same buffer
       const readResult = await fileHandle.read({
         buffer,

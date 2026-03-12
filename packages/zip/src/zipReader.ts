@@ -50,14 +50,12 @@ export default class ZipReader {
   private async assertValidMagicNumber(fileHandle: fs.promises.FileHandle): Promise<void> {
     const magicNumber = await this.readMagicNumber(fileHandle);
     if (
-      !new Set([
-        // At least one file in the zip
-        LocalFileHeader.LOCAL_FILE_HEADER_SIGNATURE.toString('hex'),
-        // No files in the zip
-        EndOfCentralDirectory.END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE.toString('hex'),
-        // The zip is spanned, and this ISN'T the first file
-        LocalFileHeader.DATA_DESCRIPTOR_SIGNATURE.toString('hex'),
-      ]).has(magicNumber.toString('hex'))
+      // At least one file in the zip
+      !magicNumber.equals(LocalFileHeader.LOCAL_FILE_HEADER_SIGNATURE) &&
+      // No files in the zip
+      !magicNumber.equals(EndOfCentralDirectory.END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE) &&
+      // The zip is spanned, and this ISN'T the first file
+      !magicNumber.equals(LocalFileHeader.DATA_DESCRIPTOR_SIGNATURE)
     ) {
       throw new Error(`unknown zip file magic number: ${magicNumber.toString('hex')}`);
     }
