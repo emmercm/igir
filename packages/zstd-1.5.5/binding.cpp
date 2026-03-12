@@ -53,7 +53,29 @@ public:
 
         // Process based on the end directive
         if (endOp_ == ZSTD_e_end) {
-            // ZSTD_e_end includes flushing, so a single end loop suffices
+            // First flush any pending data
+            bool flushFinished = false;
+            while (!flushFinished) {
+                ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
+
+                size_t const flushRemaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_flush);
+
+                if (ZSTD_isError(flushRemaining)) {
+                    SetError(std::string("Flush error: ") + ZSTD_getErrorName(flushRemaining));
+                    return;
+                }
+
+                if (outBuff.pos > 0) {
+                    size_t currentSize = result_.size();
+                    result_.resize(currentSize + outBuff.pos);
+                    std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
+                }
+
+                // Flush is complete when remaining is 0
+                flushFinished = (flushRemaining == 0);
+            }
+
+            // Now do the end operation
             bool endFinished = false;
             while (!endFinished) {
                 ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
@@ -96,12 +118,7 @@ public:
 
     void OnOK() override {
         Napi::HandleScope scope(Env());
-        auto* heapData = new std::vector<uint8_t>(std::move(result_));
-        deferred_->Resolve(Napi::Buffer<uint8_t>::New(
-            Env(), heapData->data(), heapData->size(),
-            [](Napi::Env, uint8_t*, std::vector<uint8_t>* hint) { delete hint; },
-            heapData
-        ));
+        deferred_->Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
     }
 
     void OnError(const Napi::Error& e) override {
@@ -338,11 +355,11 @@ Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
     }
 
     size_t bound = ZSTD_compressBound(inputBuffer.Length());
-    auto compressed = std::make_unique<std::vector<uint8_t>>(bound);
+    std::vector<uint8_t> compressed(bound);
 
     size_t compressedSize = ZSTD_compress(
-        compressed->data(),
-        compressed->size(),
+        compressed.data(),
+        compressed.size(),
         inputBuffer.Data(),
         inputBuffer.Length(),
         compressionLevel
@@ -353,13 +370,7 @@ Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
         return env.Undefined();
     }
 
-    compressed->resize(compressedSize);
-    auto* rawPtr = compressed.release();
-    return Napi::Buffer<uint8_t>::New(
-        env, rawPtr->data(), rawPtr->size(),
-        [](Napi::Env, uint8_t*, std::vector<uint8_t>* hint) { delete hint; },
-        rawPtr
-    );
+    return Napi::Buffer<uint8_t>::Copy(env, compressed.data(), compressedSize);
 }
 
 /*
@@ -428,12 +439,7 @@ public:
 
     void OnOK() override {
         Napi::HandleScope scope(Env());
-        auto* heapData = new std::vector<uint8_t>(std::move(result_));
-        deferred_->Resolve(Napi::Buffer<uint8_t>::New(
-            Env(), heapData->data(), heapData->size(),
-            [](Napi::Env, uint8_t*, std::vector<uint8_t>* hint) { delete hint; },
-            heapData
-        ));
+        deferred_->Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
     }
 
     void OnError(const Napi::Error& e) override {
