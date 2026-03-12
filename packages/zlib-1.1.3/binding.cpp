@@ -44,6 +44,9 @@ private:
   // Added chunk size as a member for consistency
   size_t chunkSize_ = 16384; // 16KB default chunk size (better than 1KB)
 
+  std::vector<uint8_t> chunk_;   // intermediate output buffer; sized once in constructor
+  std::vector<uint8_t> output_;  // accumulation buffer; cleared at start of each call
+
   Napi::Value CompressChunk(const Napi::CallbackInfo& info);
   Napi::Value End(const Napi::CallbackInfo& info);
   Napi::Value Dispose(const Napi::CallbackInfo& info);
@@ -140,6 +143,7 @@ Deflater::Deflater(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Deflater>(
   }
 
   initialized_ = true;
+  chunk_.resize(chunkSize_);
 }
 
 Deflater::~Deflater() {
@@ -190,17 +194,14 @@ Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
 
   // Pre-allocate output vector with estimated capacity
   // For most data, deflate will reduce size, but for worst case we use input length
-  std::vector<uint8_t> output;
-  output.reserve(flush == Z_FINISH ? input.Length() * 2 : input.Length());
-
-  // Create temporary buffer for chunk processing
-  std::vector<uint8_t> chunk(chunkSize_);
+  output_.clear();
+  output_.reserve(flush == Z_FINISH ? input.Length() * 2 : input.Length());
 
   // Process until all input is consumed and output is generated
   do {
     // Set up output buffer
-    stream_.next_out = chunk.data();
-    stream_.avail_out = chunk.size();
+    stream_.next_out = chunk_.data();
+    stream_.avail_out = chunk_.size();
 
     // Perform the compression
     int ret = deflate(&stream_, flush);
@@ -220,13 +221,13 @@ Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
     }
 
     // Calculate how many bytes were written to the output buffer
-    size_t have = chunk.size() - stream_.avail_out;
+    size_t have = chunk_.size() - stream_.avail_out;
 
     if (have > 0) {
       // More efficient append using resize + memcpy
-      size_t currentSize = output.size();
-      output.resize(currentSize + have);
-      memcpy(output.data() + currentSize, chunk.data(), have);
+      size_t currentSize = output_.size();
+      output_.resize(currentSize + have);
+      memcpy(output_.data() + currentSize, chunk_.data(), have);
     }
 
     // Break if we're done (Z_STREAM_END) or there's no more progress on input (Z_BUF_ERROR)
@@ -237,7 +238,7 @@ Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
   } while (stream_.avail_in > 0 || stream_.avail_out == 0);
 
   // Return the compressed data
-  return Napi::Buffer<uint8_t>::Copy(env, output.data(), output.size());
+  return Napi::Buffer<uint8_t>::Copy(env, output_.data(), output_.size());
 }
 
 Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
@@ -253,18 +254,15 @@ Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
   stream_.avail_in = 0;
 
   // Pre-allocate output buffer
-  std::vector<uint8_t> output;
-  output.reserve(chunkSize_);
-
-  // Create temporary buffer for chunk processing
-  std::vector<uint8_t> chunk(chunkSize_);
+  output_.clear();
+  output_.reserve(chunkSize_);
 
   // Continue until Z_STREAM_END is returned
   int ret;
   do {
     // Set up output buffer
-    stream_.next_out = chunk.data();
-    stream_.avail_out = chunk.size();
+    stream_.next_out = chunk_.data();
+    stream_.avail_out = chunk_.size();
 
     // Force a final flush
     ret = deflate(&stream_, Z_FINISH);
@@ -289,13 +287,13 @@ Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
     }
 
     // Calculate how many bytes were written
-    size_t have = chunk.size() - stream_.avail_out;
+    size_t have = chunk_.size() - stream_.avail_out;
 
     if (have > 0) {
       // More efficient append
-      size_t currentSize = output.size();
-      output.resize(currentSize + have);
-      memcpy(output.data() + currentSize, chunk.data(), have);
+      size_t currentSize = output_.size();
+      output_.resize(currentSize + have);
+      memcpy(output_.data() + currentSize, chunk_.data(), have);
     }
 
   } while (ret != Z_STREAM_END);
@@ -305,7 +303,7 @@ Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
   initialized_ = false;
 
   // Return the final compressed data
-  return Napi::Buffer<uint8_t>::Copy(env, output.data(), output.size());
+  return Napi::Buffer<uint8_t>::Copy(env, output_.data(), output_.size());
 }
 
 Napi::Value Deflater::Dispose(const Napi::CallbackInfo& info) {

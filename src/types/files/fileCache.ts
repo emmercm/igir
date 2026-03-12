@@ -1,5 +1,3 @@
-import Timer from '../../async/timer.js';
-import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import Cache from '../cache.js';
@@ -68,26 +66,6 @@ export default class FileCache {
     );
     // Delete keys from old value types
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
-
-    // Delete keys for deleted files
-    Timer.setTimeout(async () => {
-      const cacheKeyFilePaths = [...this.cache.keys()]
-        .map((cacheKey): [string, string] => [cacheKey, cacheKey.split('|')[1]])
-        // Don't delete the key if it's for a disk that isn't mounted right now
-        .filter(([, filePath]) => FsPoly.diskResolved(filePath) !== undefined)
-        // Only process a reasonably sized subset of the keys
-        .toSorted(() => Math.random() - 0.5)
-        .slice(0, Defaults.MAX_FS_THREADS);
-
-      await Promise.all(
-        cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
-          if (!(await FsPoly.exists(filePath))) {
-            // Delete the file path key from the cache
-            await this.cache.delete(cacheKey);
-          }
-        }),
-      );
-    }, 5000);
   }
 
   async save(): Promise<void> {
