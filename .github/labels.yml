@@ -37,7 +37,7 @@
 # https://api.github.com/repos/temporalio/temporal/labels?per_page=100
 #- name: feature-request
 #  color: '4c2e9c'
-#  alias: ['enhancement']
+#  aliases: ['enhancement']
 - name: potential-bug
   description: A potential issue that needs confirmation and/or triage
   color: '9f06e2'
@@ -62,7 +62,7 @@
 - name: comments-requested
   description: Issues seeking input from more users.
   color: 'f4f275'
-  alias: ['request-for-comment']
+  aliases: ['request-for-comment']
 
 # Labels to control CI actions
 - name: renovate/rebase
