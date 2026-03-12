@@ -191,6 +191,7 @@ export default class Igir {
       const writerResults = await new CandidateWriter(
         this.options,
         progressBar,
+        fileFactory,
         writerSemaphore,
         moveMutex,
       ).write(processedDat, candidates);

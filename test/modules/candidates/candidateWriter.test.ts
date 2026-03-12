@@ -9,7 +9,6 @@ import async from 'async';
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
 import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
-import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
@@ -159,6 +158,7 @@ async function candidateWriter(
   await new CandidateWriter(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new CandidateWriterSemaphore(os.availableParallelism()),
     new FileMoveMutex(),
   ).write(dat, candidates);

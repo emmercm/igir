@@ -80,6 +80,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
     callback?: FsReadCallback,
+    forceRecompute = false,
   ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
@@ -106,6 +107,10 @@ export default class FileCache {
         };
       },
       (cached) => {
+        if (forceRecompute) {
+          return true;
+        }
+
         if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
           // File has changed since being cached
           return true;
@@ -137,6 +142,7 @@ export default class FileCache {
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
+    forceRecompute = false,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
@@ -164,6 +170,10 @@ export default class FileCache {
         };
       },
       (cached) => {
+        if (forceRecompute) {
+          return true;
+        }
+
         if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
           // File has changed since being cached
           return true;
