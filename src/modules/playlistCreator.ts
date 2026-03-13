@@ -10,6 +10,7 @@ import FsPoly from '../polyfill/fsPoly.js';
 import type DAT from '../types/dats/dat.js';
 import type File from '../types/files/file.js';
 import type Options from '../types/options.js';
+import { PlaylistMode } from '../types/options.js';
 import type WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
@@ -45,7 +46,7 @@ export default class PlaylistCreator extends Module {
 
     let remainingCandidates: WriteCandidate[] = candidates;
 
-    // Write playlists for games that have multiple playlist-able files, i.e. from disc merging
+    // Write playlists for games that have playlist-able files, i.e. from disc merging
     remainingCandidates = (
       await async.mapLimit(
         remainingCandidates,
@@ -109,7 +110,10 @@ export default class PlaylistCreator extends Module {
           .some((ext) => outputFile.getFilePath().toLowerCase().endsWith(ext.toLowerCase())),
       )
       .filter(ArrayPoly.filterUniqueMapped((file) => file.getFilePath()));
-    if (playlistFiles.length < 2) {
+    if (playlistFiles.length === 0) {
+      return undefined;
+    }
+    if (this.options.getPlaylistMode() === PlaylistMode.MULTIPLE && playlistFiles.length < 2) {
       // We shouldn't make a playlist for this game, keep it for more processing
       return undefined;
     }
@@ -138,6 +142,10 @@ export default class PlaylistCreator extends Module {
   }
 
   private static getCommonDirectory(files: File[]): string {
+    if (files.length === 1) {
+      return path.dirname(files[0].getFilePath());
+    }
+
     const fileDirsSplit = files.map((file) => path.dirname(file.getFilePath()).split(/[\\/]/));
 
     const maxDepth = fileDirsSplit.reduce((max, file) => Math.max(max, file.length), 0);

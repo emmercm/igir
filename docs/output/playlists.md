@@ -14,7 +14,7 @@ Many emulators and frontends support `.m3u` playlist files that group multiple d
 
     Different frontends have different instructions on how to show or hide individual discs when using playlists. See your frontend's documentation for any settings you may need to change.
 
-Grouping multiple discs of the same game together is beneficial for a few reasons:
+Creating playlists of games is beneficial for a few reasons:
 
 - Emulators and frontends typically provide an easy way to swap between discs in a playlist
 - Save files typically mirror the input ROM's filename, so when using playlists, the save filename is typically named after the playlist and therefore shared among all discs
@@ -82,11 +82,21 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
 
     The `igir playlist` command uses the same logic to group discs together as the [`--merge-discs` option](../roms/sets.md#merging-multi-disc-games), which means it shares the same suggestions and limitations.
 
-    The `--merge-discs` option isn't required for the `igir playlist` command, but it may be helpful for file grouping.
+    The `--merge-discs` option isn't required for the `igir playlist` command, but it may be desirable to put files from all discs in the same subdirectory.
 
 !!! note
 
     Most frontends require discs to be extracted before they can be included in `.m3u` playlists. See the [`igir extract` command](../commands.md#extract) for information on how to do this.
+
+## Multi-disc vs. single-disc
+
+For most emulators and frontends, it only makes sense to generate playlist files for multi-disc games. The overhead of creating playlists for single-disc games is not usually necessary. By default, Igir will only create playlists for multi-disc games.
+
+But for some frontends it may be required or desirable to create a playlist for every game, regardless of how many discs it has. To enable that behavior, use the option:
+
+```text
+--playlist-mode always
+```
 
 ## Example scenarios
 
@@ -210,7 +220,9 @@ The two created playlists will have the contents:
 
 !!! note
 
-    A `.m3u` playlist file was not created for `Vagrant Story (USA)` because it is not a multi-disc game.
+    A `.m3u` playlist file will not be created for `Vagrant Story (USA)` by default because it is a single-disc game.
+
+    You can use the `--playlist-mode always` option to change this behavior.
 
 ### When writing & sorting ROMs
 
@@ -340,7 +352,9 @@ The two created playlists will have the contents:
 
 !!! note
 
-    A `.m3u` playlist file was not created for `Typing of the Dead, The v1.004 (2000)(Sega)(US)[!][req. keyboard]` because it is not a multi-disc game.
+    A `.m3u` playlist file will not be created for `Typing of the Dead, The v1.004 (2000)(Sega)(US)[!][req. keyboard]` by default because it is a single-disc game.
+
+    You can use the `--playlist-mode always` option to change this behavior.
 
 <!-- markdownlint-enable no-reversed-links -->
 
@@ -351,5 +365,5 @@ By default, Igir will include only certain file extensions in playlist files. Se
 You can override the default extension list with the `--playlist-extensions <exts>` like so:
 
 ```text
-igir playlist --input ROMs --playlist-extensions ".cue,.gdi"
+igir playlist --input ROMs --playlist-extensions ".iso,.cdi"
 ```

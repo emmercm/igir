@@ -17,6 +17,7 @@ import {
   LinkMode,
   MergeMode,
   MoveDeleteDirs,
+  PlaylistMode,
   PreferRevision,
   TrimScanFiles,
   ZipFormat,
@@ -290,11 +291,16 @@ describe('options', () => {
     expect(options.getPreferRetail()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
 
+    expect(argumentsParser.parse(['playlist']).getPlaylistMode()).toEqual(PlaylistMode.MULTIPLE);
     expect(argumentsParser.parse(['playlist']).getPlaylistExtensions()).toEqual([
+      '.ccd',
+      '.cdi',
+      '.chd',
       '.cue',
       '.gdi',
+      '.iso',
       '.mdf',
-      '.chd',
+      '.toc',
     ]);
 
     expect(options.getDir2DatOutput()).toEqual(options.getOutput());
@@ -3128,15 +3134,64 @@ describe('options', () => {
     ).toEqual(false);
   });
 
+  it('should parse "playlist-mode"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--playlist-mode', 'always']),
+    ).toThrow(/missing required command/i);
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, 'playlist', '--playlist-mode', 'foobar'])
+        .getMergeRoms(),
+    ).toThrow(/invalid values/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, 'playlist', '--playlist-mode', 'multiple'])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.MULTIPLE);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          'playlist',
+          '--playlist-mode',
+          'multiple',
+          '--playlist-mode',
+          'always',
+        ])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, 'playlist', '--playlist-mode', 'always'])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          'playlist',
+          '--playlist-mode',
+          'always',
+          '--playlist-mode',
+          'multiple',
+        ])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.MULTIPLE);
+  });
+
   it('should parse "playlist-extensions"', () => {
     expect(() => argumentsParser.parse(['playlist', '--playlist-extensions', ''])).toThrow(
       /missing required argument/i,
     );
     expect(argumentsParser.parse(['playlist']).getPlaylistExtensions()).toEqual([
+      '.ccd',
+      '.cdi',
+      '.chd',
       '.cue',
       '.gdi',
+      '.iso',
       '.mdf',
-      '.chd',
+      '.toc',
     ]);
     expect(
       argumentsParser.parse(['playlist', '--playlist-extensions', '.cue']).getPlaylistExtensions(),
