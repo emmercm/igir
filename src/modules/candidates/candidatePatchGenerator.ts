@@ -126,7 +126,12 @@ export default class CandidatePatchGenerator extends Module {
           const extractedFileName = patchedRomName + (extMatch === null ? '' : extMatch[1]);
           if (outputFile instanceof ArchiveEntry) {
             outputFile = outputFile.withProps({
-              archive: outputFile.getArchive().withFilePath(patchedRomName),
+              archive: outputFile
+                .getArchive()
+                .withFilePath(
+                  path.join(path.dirname(outputFile.getFilePath()), patchedRomName) +
+                    outputFile.getArchive().getExtension(),
+                ),
               // Output is an archive of a single file, the entry path should also change
               entryPath:
                 unpatchedCandidate.getRomsWithFiles().length === 1

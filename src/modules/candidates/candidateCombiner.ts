@@ -82,7 +82,10 @@ export default class CandidateCombiner extends Module {
         }
 
         // Combine all output ArchiveEntry to a single archive of the DAT name
-        let outputEntry = outputFile.withFilePath(dat.getName());
+        let outputEntry = outputFile.withFilePath(
+          path.join(path.dirname(outputFile.getFilePath()), dat.getName()) +
+            outputFile.getArchive().getExtension(),
+        );
 
         // If the game has multiple ROMs, then group them in a folder in the archive
         if (candidate.getGame().getRoms().length > 1) {
