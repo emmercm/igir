@@ -3,7 +3,6 @@ import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
-import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';

@@ -12,6 +12,7 @@ import Chd from '../../types/files/archives/chd/chd.js';
 import type File from '../../types/files/file.js';
 import FileFactory from '../../types/files/fileFactory.js';
 import type FileSignature from '../../types/files/fileSignature.js';
+import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
 import type Options from '../../types/options.js';
 import { FixExtension } from '../../types/options.js';
 import OutputFactory from '../../types/outputFactory.js';
@@ -71,6 +72,10 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
+    if (romWithFiles.getInputFile() instanceof ZeroSizeFile) {
+      return false;
+    }
+
     if (romWithFiles.getRom().getName().trim() === '') {
       return true;
     }
