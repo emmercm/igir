@@ -7,12 +7,15 @@ import type ProgressBar from '../../console/progressBar.js';
 import Package from '../../globals/package.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import type DAT from '../../types/dats/dat.js';
+import Disk from '../../types/dats/disk.js';
 import Game from '../../types/dats/game.js';
 import Header from '../../types/dats/logiqx/header.js';
 import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
+import type { ROMProps } from '../../types/dats/rom.js';
 import ROM from '../../types/dats/rom.js';
 import type Archive from '../../types/files/archives/archive.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
+import ChdRaw from '../../types/files/archives/chd/chdRaw.js';
 import type File from '../../types/files/file.js';
 import type { ChecksumProps } from '../../types/files/fileChecksums.js';
 import type Options from '../../types/options.js';
@@ -106,23 +109,31 @@ export default class DATGameInferrer extends Module {
     const games = gameNamesToRomFiles
       .map(([gameName, gameRomFiles]) => {
         const roms = gameRomFiles
-          .map(
-            (romFile) =>
-              new ROM({
-                name: romFile.getExtractedFilePath(),
-                size: romFile.getSize(),
-                crc32: romFile.getCrc32(),
-                md5: romFile.getMd5(),
-                sha1: romFile.getSha1(),
-                sha256: romFile.getSha256(),
-              }),
-          )
+          .map((romFile) => {
+            const romProps: ROMProps = {
+              name: romFile.getExtractedFilePath(),
+              size: romFile.getSize(),
+              crc32: romFile.getCrc32(),
+              md5: romFile.getMd5(),
+              sha1: romFile.getSha1(),
+              sha256: romFile.getSha256(),
+            };
+            if (
+              romFile instanceof ArchiveEntry &&
+              romFile.getArchive() instanceof ChdRaw &&
+              romFile.getSize() === 0
+            ) {
+              return new Disk(romProps);
+            }
+            return new ROM(romProps);
+          })
           .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName()))
           .toSorted((a, b) => a.getName().localeCompare(b.getName()));
         return new Game({
           name: gameName,
           description: gameName,
-          roms: roms,
+          disks: roms.filter((rom) => rom instanceof Disk),
+          roms: roms.filter((rom) => !(rom instanceof Disk)),
           dir2datSource: gameRomFiles
             .map((romFile) => romFile.getFilePath())
             .reduce(ArrayPoly.reduceUnique(), [])

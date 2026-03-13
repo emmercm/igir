@@ -528,11 +528,11 @@ export default class OutputFactory {
     if (
       (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE &&
         game.getRoms().length > 1 &&
-        // Output file is an archive
+        // Output file is not an archive
         !FileFactory.isExtensionArchive(ext) &&
         !(inputFile instanceof ArchiveFile)) ||
       options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
-      rom instanceof Disk
+      (rom instanceof Disk && game.getRoms().length > 1) // MAME behavior
     ) {
       output = path.join(game.getName(), output);
     }
