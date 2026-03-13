@@ -793,6 +793,9 @@ export default class CandidateWriter extends Module {
     if (!this.options.shouldMove()) {
       return;
     }
+    if (inputRomFile instanceof ZeroSizeFile) {
+      return;
+    }
     this.filesQueuedForDeletion.push(inputRomFile);
   }
 
