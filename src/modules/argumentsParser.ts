@@ -25,6 +25,8 @@ import Options, {
   MergeModeInverted,
   MoveDeleteDirs,
   MoveDeleteDirsInverted,
+  PlaylistMode,
+  PlaylistModeInverted,
   PreferRevision,
   TrimScanFiles,
   TrimScanFilesInverted,
@@ -483,7 +485,8 @@ export default class ArgumentsParser {
       })
       .option('dir-game-subdir', {
         group: groupRomOutputPath,
-        description: 'Append the name of the game as an output subdirectory depending on its ROMs',
+        description:
+          'Append the name of the game as an output subdirectory depending on how many ROMs a game has',
         choices: Object.keys(GameSubdirMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
@@ -931,6 +934,14 @@ export default class ArgumentsParser {
         implies: 'single',
       })
 
+      .option('playlist-mode', {
+        group: groupPlaylist,
+        description: 'Generate playlists depending on how many ROMs a game has',
+        choices: Object.keys(PlaylistMode).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase(),
+      })
       .option('playlist-extensions', {
         group: groupPlaylist,
         description: 'List of comma-separated file extensions to generate multi-disc playlists for',
@@ -943,9 +954,16 @@ export default class ArgumentsParser {
             return val.split(',').map((v) => `.${v.trim().replace(/^\.+/, '')}`);
           }),
         requiresArg: true,
-        default: '.cue,.gdi,.mdf,.chd',
+        default: '.ccd,.cdi,.chd,.cue,.gdi,.iso,.mdf,.toc',
       })
       .check((checkArgv) => {
+        if (
+          !checkArgv._.includes('playlist') &&
+          checkArgv['playlist-mode'] &&
+          checkArgv['playlist-mode'] !== PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase()
+        ) {
+          throw new IgirException(`Missing required command for option playlist-mode: playlist`);
+        }
         if (checkArgv._.includes('playlist') && checkArgv['playlist-extensions'].length === 0) {
           // TODO(cememr): print help message
           throw new IgirException(
@@ -997,7 +1015,7 @@ export default class ArgumentsParser {
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: `./${Package.NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
+        default: `${Package.NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
 
       .option('dat-threads', {

@@ -128,6 +128,16 @@ export const PreferRevisionInverted = Object.fromEntries(
   Object.entries(PreferRevision).map(([key, value]) => [value, key]),
 ) as Record<PreferRevisionValue, PreferRevisionKey>;
 
+export const PlaylistMode = {
+  MULTIPLE: 1,
+  ALWAYS: 2,
+} as const;
+export type PlaylistModeKey = keyof typeof PlaylistMode;
+export type PlaylistModeValue = (typeof PlaylistMode)[PlaylistModeKey];
+export const PlaylistModeInverted = Object.fromEntries(
+  Object.entries(PlaylistMode).map(([key, value]) => [value, key]),
+) as Record<PlaylistModeValue, PlaylistModeKey>;
+
 export const ZipFormat = {
   TORRENTZIP: 'TORRENTZIP',
   RVZSTD: 'RVZSTD',
@@ -245,6 +255,7 @@ export interface OptionsProps {
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
 
+  readonly playlistMode?: string;
   readonly playlistExtensions?: string[];
 
   readonly dir2datOutput?: string;
@@ -453,6 +464,8 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly playlistMode?: string;
+
   readonly playlistExtensions: string[];
 
   readonly dir2datOutput?: string;
@@ -595,6 +608,7 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
+    this.playlistMode = options?.playlistMode;
     this.playlistExtensions = options?.playlistExtensions ?? [];
 
     this.dir2datOutput = options?.dir2datOutput?.replaceAll(/[\\/]/g, path.sep);
@@ -1447,6 +1461,16 @@ export default class Options implements OptionsProps {
 
   getPreferParent(): boolean {
     return this.preferParent;
+  }
+
+  getPlaylistMode(): PlaylistModeValue | undefined {
+    const playlistMode = Object.keys(PlaylistMode).find(
+      (mode) => mode.toLowerCase() === this.playlistMode?.toLowerCase(),
+    );
+    if (!playlistMode) {
+      return undefined;
+    }
+    return PlaylistMode[playlistMode as PlaylistModeKey];
   }
 
   getPlaylistExtensions(): string[] {
