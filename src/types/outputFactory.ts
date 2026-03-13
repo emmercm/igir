@@ -568,7 +568,8 @@ export default class OutputFactory {
       return romBasename;
     }
 
-    // Should leave archived, generate the archive name from the game name
+    // Should leave archived (are raw-copying/moving)
+
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());
     const oldExt =
@@ -577,6 +578,15 @@ export default class OutputFactory {
           inputFile.getArchive().getExtension()
         : // Respect the input file's extension
           oldExtMatch[1];
+
+    // The Game has multiple ROMs, and this file cannot contain all of them. The only reason this
+    // would happen is if every ROM is in a separate archive, and that is desirable.
+    // For example, when merging discs, allow different ISOs to be in different archives.
+    if (game.getRoms().length > 1 && !inputFile.getArchive().canContainMultipleEntries()) {
+      return path.join(game.getName(), rom.getName().replace(/(\.[a-zA-Z0-9]+)+$/, oldExt));
+    }
+
+    // Generate the archive name from the game name
 
     // If we got a filename with 2+ extensions, but the additional extensions
     // are actually part of the game's name, then just use the last extension

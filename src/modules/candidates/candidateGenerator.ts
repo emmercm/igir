@@ -16,7 +16,6 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import Chd from '../../types/files/archives/chd/chd.js';
 import ChdBinCue from '../../types/files/archives/chd/chdBinCue.js';
-import NkitIso from '../../types/files/archives/nkitIso.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
@@ -72,6 +71,7 @@ export default class CandidateGenerator extends Module {
               `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
                 .getRomsWithFiles()
                 .map((rwf) => rwf.getInputFile().toString())
+                .reduce(ArrayPoly.reduceUnique(), [])
                 .join(', ')}`,
             );
           }
@@ -204,30 +204,31 @@ export default class CandidateGenerator extends Module {
         return [rom, inputFiles];
       }
 
-      const rawCopying =
+      const rawWriting =
         this.options.shouldWrite() &&
         !this.options.shouldExtractRom(rom) &&
         !this.options.shouldZipRom(rom);
 
       const filteredInputFiles = inputFiles.filter((inputFile) => {
         if (
-          !rawCopying &&
+          !rawWriting &&
           inputFile instanceof ArchiveEntry &&
-          inputFile.getArchive() instanceof NkitIso
+          !(rom instanceof Disk) &&
+          !inputFile.canExtract()
         ) {
-          // .nkit.iso can't be extracted
+          // We need to read the extracted file, but can't, so we can't use this file
           return false;
         }
 
-        if (rawCopying && inputFile instanceof ArchiveEntry) {
+        if (rawWriting && inputFile instanceof ArchiveEntry) {
           if (this.options.getPatchFileCount() > 0 && !(rom instanceof Disk)) {
             // We MIGHT want to patch this ROM, but we can't if we're raw-copying it
             return false;
           }
 
           if (
-            !(inputFile.getArchive() instanceof Chd) &&
             rom.getName().trim() !== '' &&
+            inputFile.getArchive().hasMeaningfulEntryPaths() &&
             OutputFactory.getPath(this.options, dat, singleValueGame, rom, inputFile).entryPath !==
               inputFile.getExtractedFilePath()
           ) {
@@ -389,11 +390,11 @@ export default class CandidateGenerator extends Module {
 
     // An Archive was found, use that as the only possible input file
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
+    this.progressBar.logTrace(
+      `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
+    );
     return new Map(
       romsAndInputFiles.map(([rom, inputFiles]) => {
-        this.progressBar.logTrace(
-          `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
-        );
         let archiveEntry = inputFiles.find(
           (inputFile) =>
             inputFile.getFilePath() === archiveWithEveryRom.getFilePath() &&
@@ -631,14 +632,25 @@ export default class CandidateGenerator extends Module {
       }
 
       if (
-        !(inputFile.getArchive() instanceof Chd) &&
         rom.getName().trim() !== '' &&
+        inputFile.getArchive().hasMeaningfulEntryPaths() &&
         OutputFactory.getPath(this.options, dat, singleValueGame, rom, inputFile).entryPath !==
           inputFile.getExtractedFilePath()
       ) {
         // This file doesn't have the correct entry path, we need to rewrite it
         return false;
       }
+    }
+
+    if (
+      romsWithFiles.length > 1 &&
+      romsWithFiles
+        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
+        .reduce(ArrayPoly.reduceUnique(), []).length === romsWithFiles.length
+    ) {
+      // There are multiple ArchiveEntries for this Game, and all of them are writing to separate
+      // output paths. We can skip all the single archive checks below.
+      return true;
     }
 
     if (

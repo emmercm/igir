@@ -22,6 +22,16 @@ export default abstract class Archive {
     return this.filePath;
   }
 
+  abstract canExtract(archiveEntry: ArchiveEntry<this>): boolean;
+
+  /**
+   * @returns true if entry paths are dictated by the contents of the archive, false if Igir
+   * generates the entry paths
+   */
+  abstract hasMeaningfulEntryPaths(): boolean;
+
+  abstract canContainMultipleEntries(): boolean;
+
   abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(

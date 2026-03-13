@@ -1,9 +1,9 @@
 import path from 'node:path';
 
-import SevenZip from './sevenZip.js';
+import SevenZipLib from './sevenZipLib.js';
 
-export default class ZipX extends SevenZip {
-  protected new(filePath: string): SevenZip {
+export default class ZipX extends SevenZipLib {
+  protected new(filePath: string): SevenZipLib {
     return new ZipX(filePath);
   }
 
@@ -18,5 +18,13 @@ export default class ZipX extends SevenZip {
       }
     }
     return path.parse(this.getFilePath()).ext;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
+  canContainMultipleEntries(): boolean {
+    return true;
   }
 }

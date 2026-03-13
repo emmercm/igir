@@ -1,7 +1,7 @@
-import SevenZip from './sevenZip.js';
+import SevenZipLib from './sevenZipLib.js';
 
-export default class ZipSpanned extends SevenZip {
-  protected new(filePath: string): SevenZip {
+export default class ZipSpanned extends SevenZipLib {
+  protected new(filePath: string): SevenZipLib {
     return new ZipSpanned(filePath);
   }
 
@@ -11,5 +11,13 @@ export default class ZipSpanned extends SevenZip {
 
   getExtension(): string {
     return ZipSpanned.getExtensions()[0];
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
+  canContainMultipleEntries(): boolean {
+    return true;
   }
 }

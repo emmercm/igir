@@ -14,6 +14,8 @@ import MameDAT from '../../../src/types/dats/mame/mameDat.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import Rvz from '../../../src/types/files/archives/dolphin/rvz.js';
+import NkitIso from '../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/types/files/archives/tar.js';
@@ -842,6 +844,55 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         }
       });
     });
+  });
+
+  it('should deconflict output paths when every file is in a separate single-file archive', async () => {
+    const files = await Promise.all(
+      gameWithTwoRomsParent.getRoms().map(async (rom) => {
+        const rvz = new Rvz(`${rom.getName()}.rvz`);
+        return await ArchiveEntry.entryOf({
+          archive: rvz,
+          entryPath: rom.getName(),
+          size: rom.getSize(),
+          crc32: rom.getCrc32(),
+        });
+      }),
+    );
+
+    const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+    expect(candidates).toHaveLength(2);
+    expect(candidates[0].getName()).toEqual(gameWithNoRoms.getName());
+    expect(candidates[1].getName()).toEqual(gameWithTwoRomsParent.getName());
+    expect(
+      candidates[1]
+        .getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
+    ).toEqual(files.map((file) => path.join(gameWithTwoRomsParent.getName(), file.getFilePath())));
+  });
+});
+
+describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
+  const options = new Options({ commands: ['copy', command] });
+
+  it("should not return a candidate for archives that can't be extracted", async () => {
+    const nkitIso = new NkitIso('disc.nkit.iso');
+    const files = await Promise.all(
+      gameWithOneRom.getRoms().map(
+        async (rom) =>
+          await ArchiveEntry.entryOf({
+            archive: nkitIso,
+            entryPath: rom.getName(),
+            size: rom.getSize(),
+            crc32: rom.getCrc32(),
+          }),
+      ),
+    );
+
+    const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getName()).toEqual(gameWithNoRoms.getName());
   });
 });
 
