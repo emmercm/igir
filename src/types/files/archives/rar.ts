@@ -33,10 +33,6 @@ export default class Rar extends Archive {
     return true;
   }
 
-  canContainMultipleEntries(): boolean {
-    return true;
-  }
-
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const rar = await createExtractorFromFile({
       filepath: this.getFilePath(),

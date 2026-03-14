@@ -646,10 +646,11 @@ export default class CandidateGenerator extends Module {
       romsWithFiles.length > 1 &&
       romsWithFiles
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
-        .reduce(ArrayPoly.reduceUnique(), []).length === romsWithFiles.length
+        .reduce(ArrayPoly.reduceUnique(), []).length > 1 &&
+      game.getDiscMerged()
     ) {
-      // There are multiple ArchiveEntries for this Game, and all of them are writing to separate
-      // output paths. We can skip all the single archive checks below.
+      // This Game is the result of 2+ discs merged together, and we're writing at least 2 files.
+      // Skip all the single input archive checks below.
       return true;
     }
 

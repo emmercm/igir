@@ -16,10 +16,6 @@ export default abstract class Maxcso extends Archive {
     return false;
   }
 
-  canContainMultipleEntries(): boolean {
-    return false;
-  }
-
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<Archive>[]> {
     const entryPath = `${path.parse(this.getFilePath()).name}.iso`;
     const size = (await maxcso.header(this.getFilePath())).uncompressedSize;

@@ -19,10 +19,6 @@ export default abstract class Dolphin extends Archive {
     return false;
   }
 
-  canContainMultipleEntries(): boolean {
-    return false;
-  }
-
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
     const entryPath = `${path.parse(this.getFilePath()).name}.iso`;
 

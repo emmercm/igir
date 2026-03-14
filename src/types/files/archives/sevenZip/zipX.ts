@@ -23,8 +23,4 @@ export default class ZipX extends SevenZipLib {
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }
-
-  canContainMultipleEntries(): boolean {
-    return true;
-  }
 }

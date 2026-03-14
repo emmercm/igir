@@ -19,10 +19,6 @@ export default class ChdBinCue extends Chd {
     return true;
   }
 
-  canContainMultipleEntries(): boolean {
-    return true;
-  }
-
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       // Doing a quick scan

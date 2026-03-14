@@ -61,10 +61,6 @@ export default class Zip extends Archive {
     return true;
   }
 
-  canContainMultipleEntries(): boolean {
-    return true;
-  }
-
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
 

@@ -16,8 +16,4 @@ export default class ZipSpanned extends SevenZipLib {
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }
-
-  canContainMultipleEntries(): boolean {
-    return true;
-  }
 }

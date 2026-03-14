@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
+import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
 import type DAT from '../../../src/types/dats/dat.js';
@@ -14,7 +15,7 @@ import MameDAT from '../../../src/types/dats/mame/mameDat.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
-import Rvz from '../../../src/types/files/archives/dolphin/rvz.js';
+import ChdBinCue from '../../../src/types/files/archives/chd/chdBinCue.js';
 import NkitIso from '../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../src/types/files/archives/sevenZip/sevenZip.js';
@@ -846,29 +847,63 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     });
   });
 
-  it('should deconflict output paths when every file is in a separate single-file archive', async () => {
-    const files = await Promise.all(
-      gameWithTwoRomsParent.getRoms().map(async (rom) => {
-        const rvz = new Rvz(`${rom.getName()}.rvz`);
-        return await ArchiveEntry.entryOf({
-          archive: rvz,
-          entryPath: rom.getName(),
-          size: rom.getSize(),
-          crc32: rom.getCrc32(),
-        });
-      }),
-    );
+  it('should group disc-merged games by their original game name', async () => {
+    const discOne = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 1)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 1).bin',
+          size: 705_614_112,
+          crc32: 'e32f4a7e',
+        }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 2)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 2).bin',
+          size: 731_911_824,
+          crc32: '21b5d15d',
+        }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
 
-    const candidates = await candidateGenerator(options, datWithFourGames, files);
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
 
-    expect(candidates).toHaveLength(2);
-    expect(candidates[0].getName()).toEqual(gameWithNoRoms.getName());
-    expect(candidates[1].getName()).toEqual(gameWithTwoRomsParent.getName());
+    const candidates = await candidateGenerator(options, discMergedDat, files);
+
+    const mergedGameName = discMergedDat.getGames().at(0)?.getName() ?? '';
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getName()).toEqual(mergedGameName);
     expect(
-      candidates[1]
+      candidates[0]
         .getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
-    ).toEqual(files.map((file) => path.join(gameWithTwoRomsParent.getName(), file.getFilePath())));
+    ).toEqual(files.map((file) => path.join(mergedGameName, file.getFilePath())));
   });
 });
 

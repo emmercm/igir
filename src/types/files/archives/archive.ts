@@ -30,8 +30,6 @@ export default abstract class Archive {
    */
   abstract hasMeaningfulEntryPaths(): boolean;
 
-  abstract canContainMultipleEntries(): boolean;
-
   abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(

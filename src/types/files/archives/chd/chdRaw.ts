@@ -19,10 +19,6 @@ export default class ChdRaw extends Chd {
     return archiveEntry.getSize() > 0;
   }
 
-  canContainMultipleEntries(): boolean {
-    return false;
-  }
-
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
 

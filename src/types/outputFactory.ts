@@ -1,6 +1,7 @@
 import type { ParsedPath } from 'node:path';
 import path from 'node:path';
 
+import GameGrouper from '../gameGrouper.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import type DAT from './dats/dat.js';
@@ -579,11 +580,16 @@ export default class OutputFactory {
         : // Respect the input file's extension
           oldExtMatch[1];
 
-    // The Game has multiple ROMs, and this file cannot contain all of them. The only reason this
-    // would happen is if every ROM is in a separate archive, and that is desirable.
-    // For example, when merging discs, allow different ISOs to be in different archives.
-    if (game.getRoms().length > 1 && !inputFile.getArchive().canContainMultipleEntries()) {
-      return path.join(game.getName(), rom.getName().replace(/(\.[a-zA-Z0-9]+)+$/, oldExt));
+    // The Game is the result of 2+ discs merged together, and we're not extracting this file, so
+    // we want to group discs together and generate a basename based on the original game name.
+    if (game.getDiscMerged()) {
+      return path.join(
+        game.getName(),
+        GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
+          /(\.[a-zA-Z0-9]+)+$/,
+          oldExt,
+        ),
+      );
     }
 
     // Generate the archive name from the game name

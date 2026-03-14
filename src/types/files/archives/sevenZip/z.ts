@@ -16,8 +16,4 @@ export default class Z extends SevenZipLib {
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }
-
-  canContainMultipleEntries(): boolean {
-    return false;
-  }
 }

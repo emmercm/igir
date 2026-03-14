@@ -27,10 +27,6 @@ export default class NkitIso extends Archive {
     return false;
   }
 
-  canContainMultipleEntries(): boolean {
-    return false;
-  }
-
   // eslint-disable-next-line @typescript-eslint/require-await
   async extractEntryToFile(): Promise<void> {
     throw new IgirException("extraction isn't supported for NKit ISO files");
