@@ -27,6 +27,14 @@ export default class Gzip extends Archive {
     return Gzip.getExtensions()[0];
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
     // See if this file is actually a .tar.gz
     try {

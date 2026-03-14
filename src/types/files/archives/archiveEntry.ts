@@ -30,6 +30,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       filePath: archiveEntryProps.archive.getFilePath(),
     });
     this.archive = archiveEntryProps.archive;
+    // TODO(cemmer): this shouldn't be normalized, we should trust what getArchiveEntries() returns,
+    //  and any change to this will require a cache invalidation
     this.entryPath = archiveEntryProps.entryPath.replaceAll(/[\\/]/g, path.sep);
   }
 
@@ -150,6 +152,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
    */
   getArchive(): Archive {
     return this.archive;
+  }
+
+  canExtract(): boolean {
+    return this.archive.canExtract(this);
   }
 
   getExtractedFilePath(): string {

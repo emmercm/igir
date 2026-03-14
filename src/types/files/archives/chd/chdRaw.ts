@@ -14,6 +14,11 @@ export default class ChdRaw extends Chd {
     return new ChdRaw(filePath);
   }
 
+  canExtract(archiveEntry: ArchiveEntry<this>): boolean {
+    // The data+metadata version of this file can't be extracted
+    return archiveEntry.getSize() > 0;
+  }
+
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
 

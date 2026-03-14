@@ -1,6 +1,7 @@
 import type { ParsedPath } from 'node:path';
 import path from 'node:path';
 
+import GameGrouper from '../gameGrouper.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import type DAT from './dats/dat.js';
@@ -568,7 +569,8 @@ export default class OutputFactory {
       return romBasename;
     }
 
-    // Should leave archived, generate the archive name from the game name
+    // Should leave archived (are raw-copying/moving)
+
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());
     const oldExt =
@@ -577,6 +579,20 @@ export default class OutputFactory {
           inputFile.getArchive().getExtension()
         : // Respect the input file's extension
           oldExtMatch[1];
+
+    // The Game is the result of 2+ discs merged together, and we're not extracting this file, so
+    // we want to group discs together and generate a basename based on the original game name.
+    if (game.getDiscMerged()) {
+      return path.join(
+        game.getName(),
+        GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
+          /(\.[a-zA-Z0-9]+)+$/,
+          oldExt,
+        ),
+      );
+    }
+
+    // Generate the archive name from the game name
 
     // If we got a filename with 2+ extensions, but the additional extensions
     // are actually part of the game's name, then just use the last extension

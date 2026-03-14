@@ -2,7 +2,7 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import type DAT from '../../types/dats/dat.js';
-import Game from '../../types/dats/game.js';
+import type Game from '../../types/dats/game.js';
 import type Parent from '../../types/dats/parent.js';
 import ROM from '../../types/dats/rom.js';
 import type Options from '../../types/options.js';
@@ -199,8 +199,7 @@ export default class DATMergerSplitter extends Module {
       ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()),
     );
     return [
-      new Game({
-        ...parentGames[0],
+      parentGames[0].withProps({
         roms: allRomsDeduplicated,
       }),
     ];
