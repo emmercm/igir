@@ -2,6 +2,7 @@ import type tty from 'node:tty';
 
 import chalk from 'chalk';
 import moment from 'moment';
+import terminalLink from 'terminal-link';
 
 import Package from '../globals/package.js';
 import type { LogLevelValue } from './logLevel.js';
@@ -139,14 +140,14 @@ export default class Logger {
     logoSplit[midLine - 2] =
       `${logoSplit[midLine - 2].padEnd(maxLineLen, ' ')}   ROM collection manager`;
     logoSplit[midLine - 1] =
-      `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${Package.HOMEPAGE}`;
+      `${logoSplit[midLine - 1].padEnd(maxLineLen, ' ')}   ${terminalLink(Package.HOMEPAGE, Package.HOMEPAGE, { fallback: false })}`;
 
     let runtime = `Node.js v${process.versions.node}`;
     if (process.versions.bun) {
       runtime = `Bun v${process.versions.bun}`;
     }
     logoSplit[midLine + 1] =
-      `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.grey(`(${runtime})`)}`;
+      `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
 
     this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
   }

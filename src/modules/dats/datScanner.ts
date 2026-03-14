@@ -135,6 +135,8 @@ export default class DATScanner extends Scanner {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: datFile.toString(),
+          total: datFile.getSize(),
+          progressFormatter: FsPoly.sizeReadable,
         });
 
         let dat: DAT | undefined;

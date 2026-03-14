@@ -646,11 +646,20 @@ export default class FsPoly {
   /**
    * @see https://gist.github.com/zentala/1e6f72438796d74531803cc3833c039c
    */
-  static sizeReadable(bytes: number, decimals = 1): string {
+  static sizeReadable(bytes: number): string {
     const k = 1024;
     const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / k ** i).toFixed(decimals)}${sizes[i]}`;
+    const bytesFormatted = bytes / k ** i;
+    let fractionDigits = 1;
+    if (bytesFormatted === 0) {
+      fractionDigits = 0;
+    } else if (bytesFormatted < 10) {
+      fractionDigits = 2;
+    } else if (bytesFormatted >= 100) {
+      fractionDigits = 0;
+    }
+    return `${bytesFormatted.toFixed(fractionDigits)}${sizes[i]}`;
   }
 
   /**

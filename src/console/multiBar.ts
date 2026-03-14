@@ -165,7 +165,7 @@ export default class MultiBar {
   /**
    * Clear the last output and render the progress bars.
    */
-  private clearAndRender(): void {
+  clearAndRender(): void {
     if (this.stopped) {
       return;
     }
@@ -175,7 +175,7 @@ export default class MultiBar {
       () => {
         this.clearAndRender();
       },
-      Math.max(1000 / MultiBar.RENDER_MIN_FPS),
+      Math.max(1000 / MultiBar.RENDER_MIN_FPS, 1),
     );
 
     const outputLines = this.singleBars

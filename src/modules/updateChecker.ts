@@ -43,7 +43,7 @@ export default class UpdateChecker {
         message += ` via Homebrew: ${color(`brew upgrade ${Package.NAME}`)}`;
       } else if (process.versions.bun) {
         const gitHubUrl = `https://github.com/emmercm/${Package.NAME}/releases/latest`;
-        message += ` on GitHub: ${color(terminalLink(gitHubUrl, gitHubUrl))}`;
+        message += ` on GitHub: ${color(terminalLink(gitHubUrl, gitHubUrl, { fallback: false }))}`;
       } else if (process.env.npm_command === 'exec') {
         message += ` via npx: ${color(`npx ${Package.NAME}@latest`)}`;
       } else {
