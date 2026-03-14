@@ -16,6 +16,10 @@ export default class ChdGdi extends Chd {
     return new ChdGdi(filePath);
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       // Doing a quick scan

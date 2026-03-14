@@ -29,6 +29,10 @@ export default abstract class Chd extends Archive {
     return Chd.getExtensions()[0];
   }
 
+  hasMeaningfulEntryPaths(): boolean {
+    return false;
+  }
+
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     await this.extractEntryToStreamCached(entryPath, async (readable) => {
       await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));

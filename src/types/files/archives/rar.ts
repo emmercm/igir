@@ -25,6 +25,14 @@ export default class Rar extends Archive {
     return Rar.getExtensions()[0];
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const rar = await createExtractorFromFile({
       filepath: this.getFilePath(),

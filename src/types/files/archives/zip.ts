@@ -53,6 +53,14 @@ export default class Zip extends Archive {
     return Zip.getExtensions()[0];
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
 

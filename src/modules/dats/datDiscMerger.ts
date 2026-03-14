@@ -76,12 +76,14 @@ export default class DATDiscMerger extends Module {
         return new Game({
           name: gameName,
           roms: deconflictedRoms,
+          discMerged: true,
         });
       }
 
       return new Game({
         name: gameName,
         roms: roms,
+        discMerged: true,
       });
     });
   }
