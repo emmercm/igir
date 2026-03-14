@@ -12,7 +12,7 @@ import Tar from '../types/files/archives/tar.js';
 import type File from '../types/files/file.js';
 import type { ChecksumBitmaskValue } from '../types/files/fileChecksums.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import type FileFactory from '../types/files/fileFactory.js';
+import FileFactory from '../types/files/fileFactory.js';
 import type Options from '../types/options.js';
 import Module from './module.js';
 
@@ -46,9 +46,10 @@ export default abstract class Scanner extends Module {
     return (
       await this.mappableSemaphore.map(filePaths, async (inputFile) => {
         this.progressBar.incrementInProgress();
-        // TODO: why does this never show?
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
+          total: await FsPoly.size(inputFile),
+          progressFormatter: FsPoly.sizeReadable,
         });
 
         let files: File[];
@@ -95,6 +96,17 @@ export default abstract class Scanner extends Module {
         checksumBitmask,
         this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
       );
+
+      for (const fileFromPath of filesFromPath) {
+        if (
+          fileFromPath instanceof ArchiveEntry &&
+          FileFactory.isExtensionArchive(fileFromPath.getExtractedFilePath())
+        ) {
+          this.progressBar.logWarn(
+            `${filePath}: can't scan archives within archives: ${fileFromPath.getExtractedFilePath()}`,
+          );
+        }
+      }
 
       const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
       if (checksumArchives && fileIsArchive) {

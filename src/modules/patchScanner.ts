@@ -1,6 +1,7 @@
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
+import FsPoly from '../polyfill/fsPoly.js';
 import type File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import type FileFactory from '../types/files/fileFactory.js';
@@ -63,6 +64,8 @@ export default class PatchScanner extends Scanner {
 
         const childBar = this.progressBar.addChildBar({
           name: patchFile.toString(),
+          total: patchFile.getSize(),
+          progressFormatter: FsPoly.sizeReadable,
         });
         try {
           return await this.patchFromFile(patchFile);
