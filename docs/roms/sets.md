@@ -12,12 +12,16 @@ Most DAT groups that catalog optical media-based consoles (e.g. PS1, Dreamcast, 
 
 The `--merge-discs` option will merge these separate discs into a single game. The option relies on well-named files in formats like these:
 
+<!-- markdownlint-disable no-reversed-links -->
+
 | Style  | Separate game names                                                                                                                                                                                                                                                                           | Merged game name                                                  |
 |--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
 | Redump | <ul><li>Final Fantasy IX (USA) (Disc 1)</li><li>Final Fantasy IX (USA) (Disc 2)</li><li>Final Fantasy IX (USA) (Disc 3)</li><li>Final Fantasy IX (USA) (Disc 4)</li></ul>                                                                                                                     | <ul><li>Final Fantasy IX (USA)</li></ul>                          |
 | Redump | <ul><li>Metal Gear Solid - The Twin Snakes (USA) (Disc 1)</li><li>Metal Gear Solid - The Twin Snakes (USA) (Disc 2)</li></ul>                                                                                                                                                                 | <ul><li>Metal Gear Solid - The Twin Snakes (USA)</li></ul>        |
 | TOSEC  | <ul><li>Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]</li><li>Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]</li></ul>                                                                                                                                                   | <ul><li>Skies of Arcadia v1.002 (2000)(Sega)(US)[!]</li></ul>     |
 | TOSEC  | <ul><li>Panzer Dragoon Saga v1.000 (1998)(Sega)(PAL)(Disc 1 of 4)[!]</li><li>Panzer Dragoon Saga v1.000 (1998)(Sega)(PAL)(Disc 2 of 4)[!]</li><li>Panzer Dragoon Saga v1.000 (1998)(Sega)(PAL)(Disc 3 of 4)[!]</li><li>Panzer Dragoon Saga v1.000 (1998)(Sega)(PAL)(Disc 4 of 4)[!]</li></ul> | <ul><li>Panzer Dragoon Saga v1.000 (1998)(Sega)(PAL)[!]</li></ul> |
+
+<!-- markdownlint-enable no-reversed-links -->
 
 !!! note
 
