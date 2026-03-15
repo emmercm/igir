@@ -167,7 +167,7 @@ export default class Logger {
     logoSplit[midLine + 1] =
       `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
 
-    this.printRawLine(`${logoSplit.join('\n')}\n`);
+    this.printRawLine(logoSplit.join('\n'));
   }
 
   /**

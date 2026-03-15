@@ -26,9 +26,20 @@ if (!semver.satisfies(process.version, Package.ENGINES_NODE)) {
   process.exit(1);
 }
 
-process.once('SIGINT', () => {
+/**
+ * Stop the global MultiBar if it is active, and print a newline after (such that more logs can be
+ * neatly printed after this)
+ */
+function multiBarStopAndNewline(): void {
+  const needNewline = MultiBar.isActive();
   MultiBar.stop();
-  logger.newLine();
+  if (needNewline) {
+    logger.newLine();
+  }
+}
+
+process.once('SIGINT', () => {
+  multiBarStopAndNewline();
   logger.notice(`Exiting ${Package.NAME} early`);
   process.exit(0);
 });
@@ -78,11 +89,7 @@ try {
   await new Igir(options, logger).main();
   MultiBar.stop();
 } catch (error) {
-  const needNewline = MultiBar.isActive();
-  MultiBar.stop();
-  if (needNewline) {
-    logger.newLine();
-  }
+  multiBarStopAndNewline();
 
   if (error instanceof IgirException) {
     logger.error(error);
