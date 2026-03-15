@@ -54,7 +54,7 @@ try {
   const debugLog = options.getDebugLog();
   if (debugLog !== undefined) {
     logger.newLine();
-    logger.printRawLine(`Writing debug log to: ${debugLog}`);
+    logger.printFormattedLine(LogLevel.NOTICE, `Writing debug log to: ${debugLog}`);
     logger.setLogFile(debugLog);
   }
 

@@ -148,7 +148,7 @@ export default class MultiBar {
         message = message.replace(/^\n+/, '');
       } else {
         // Otherwise, add a newline after the previous frozen progress bar
-        MultiBar.logQueue.push([undefined, '']);
+        // MultiBar.logQueue.push([undefined, '']);
       }
     }
 
@@ -224,8 +224,9 @@ export default class MultiBar {
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
       if (log[0] === undefined) {
-        this.logger.printRawLine(log[1]);
-        MultiBar.lastPrintedLog = log;
+        if (this.logger.printRawLine(log[1])) {
+          MultiBar.lastPrintedLog = log;
+        }
       } else {
         if (this.logger.printFormattedLine(log[0], log[1])) {
           MultiBar.lastPrintedLog = log;

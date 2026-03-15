@@ -76,16 +76,17 @@ export default class Logger {
   /**
    * Print a log message without formatting.
    */
-  printRawLine(message: string): void {
+  printRawLine(message: string): boolean {
     if (this.logFileHandle !== undefined && message) {
       fs.writeSync(this.logFileHandle, `${message}\n`);
     }
 
     if (this.logLevel === LogLevel.NEVER) {
-      return;
+      return false;
     }
 
     this.stream.write(`${message}\n`);
+    return true;
   }
 
   /**
