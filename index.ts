@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import os from 'node:os';
+
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
@@ -14,7 +16,7 @@ import IgirException from './src/types/exceptions/igirException.js';
 import type Options from './src/types/options.js';
 
 // Double the number of frames tracked in a stack trace
-Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 20);
+Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);
 
 const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();
@@ -59,6 +61,15 @@ try {
   process.exit(1);
 }
 
+if (options.getDebugLog()) {
+  logger.trace(`process: ${process.platform} ${process.arch}`);
+  logger.trace(`process.execPath: ${process.execPath}`);
+  logger.trace(`process.versions: ${JSON.stringify(process.versions)}`);
+  logger.trace(`os.release: ${os.release()}`);
+  logger.trace(`os.userInfo: ${JSON.stringify(os.userInfo())}`);
+  logger.trace(`package.json: ${JSON.stringify(Package.JSON)}`);
+}
+
 // Start the main process
 try {
   new EndOfLifeChecker(logger).check(process.version);
@@ -67,7 +78,12 @@ try {
   await new Igir(options, logger).main();
   MultiBar.stop();
 } catch (error) {
+  const needNewline = MultiBar.isActive();
   MultiBar.stop();
+  if (needNewline) {
+    logger.newLine();
+  }
+
   if (error instanceof IgirException) {
     logger.error(error);
   } else if (error instanceof Error && error.stack) {
@@ -76,6 +92,5 @@ try {
   } else {
     logger.error(error);
   }
-  logger.newLine();
   process.exit(1);
 }

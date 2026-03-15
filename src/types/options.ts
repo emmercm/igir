@@ -181,9 +181,11 @@ export interface OptionsProps {
   readonly dirLetterLimit?: number;
   readonly dirLetterGroup?: boolean;
   readonly dirGameSubdir?: string;
+
   readonly fixExtension?: string;
   readonly overwrite?: boolean;
   readonly overwriteInvalid?: boolean;
+  readonly writeRetry?: number;
 
   readonly moveDeleteDirs?: string;
 
@@ -267,11 +269,13 @@ export interface OptionsProps {
   readonly datThreads?: number;
   readonly readerThreads?: number;
   readonly writerThreads?: number;
-  readonly writeRetry?: number;
+
   readonly tempDir?: string;
   readonly disableCache?: boolean;
   readonly cachePath?: string;
+
   readonly verbose?: number;
+  readonly debugLog?: boolean;
   readonly help?: boolean;
 }
 
@@ -341,6 +345,8 @@ export default class Options implements OptionsProps {
   readonly overwrite: boolean;
 
   readonly overwriteInvalid: boolean;
+
+  readonly writeRetry: number;
 
   readonly moveDeleteDirs?: string;
 
@@ -480,8 +486,6 @@ export default class Options implements OptionsProps {
 
   readonly writerThreads: number;
 
-  readonly writeRetry: number;
-
   readonly tempDir: string;
 
   readonly disableCache: boolean;
@@ -489,6 +493,8 @@ export default class Options implements OptionsProps {
   readonly cachePath?: string;
 
   readonly verbose: number;
+
+  readonly debugLog: boolean;
 
   readonly help: boolean;
 
@@ -535,6 +541,7 @@ export default class Options implements OptionsProps {
     this.fixExtension = options?.fixExtension;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
+    this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
 
     this.moveDeleteDirs = options?.moveDeleteDirs;
 
@@ -620,11 +627,13 @@ export default class Options implements OptionsProps {
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
-    this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
+
     this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replaceAll(/[\\/]/g, path.sep);
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
+
     this.verbose = options?.verbose ?? 0;
+    this.debugLog = options?.debugLog ?? false;
     this.help = options?.help ?? false;
   }
 
@@ -1123,6 +1132,10 @@ export default class Options implements OptionsProps {
     return this.overwriteInvalid;
   }
 
+  getWriteRetry(): number {
+    return this.writeRetry;
+  }
+
   getMoveDeleteDirs(): MoveDeleteDirsValue | undefined {
     const moveDeleteDirsMode = Object.keys(MoveDeleteDirs).find(
       (mode) => mode.toLowerCase() === this.moveDeleteDirs?.toLowerCase(),
@@ -1516,10 +1529,6 @@ export default class Options implements OptionsProps {
     return this.writerThreads;
   }
 
-  getWriteRetry(): number {
-    return this.writeRetry;
-  }
-
   getTempDir(): string {
     return this.tempDir;
   }
@@ -1543,6 +1552,10 @@ export default class Options implements OptionsProps {
       return LogLevel.TRACE;
     }
     return LogLevel.WARN;
+  }
+
+  getDebugLog(): boolean {
+    return this.debugLog;
   }
 
   getHelp(): boolean {

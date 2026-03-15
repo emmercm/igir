@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import type tty from 'node:tty';
 
 import chalk from 'chalk';
@@ -7,30 +8,29 @@ import terminalLink from 'terminal-link';
 import Package from '../globals/package.js';
 import type { LogLevelValue } from './logLevel.js';
 import { LogLevel, LogLevelInverted } from './logLevel.js';
-import MultiBar from './multiBar.js';
-import type ProgressBar from './progressBar.js';
-import type { SingleBarOptions } from './singleBar.js';
 
 /**
  * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.
  */
 export default class Logger {
   private logLevel: LogLevelValue;
-
   private readonly stream: tty.WriteStream | NodeJS.WritableStream;
-  private readonly multiBar: MultiBar;
   private readonly loggerPrefix?: string;
+
+  private logFileHandle: fs.promises.FileHandle | undefined;
 
   constructor(
     logLevel: LogLevelValue,
     stream: tty.WriteStream | NodeJS.WritableStream,
-    multiBar?: MultiBar,
     loggerPrefix?: string,
   ) {
     this.logLevel = logLevel;
     this.stream = stream;
-    this.multiBar = multiBar ?? MultiBar.create({ writable: stream });
     this.loggerPrefix = loggerPrefix;
+
+    process.once('beforeExit', async () => {
+      await this.logFileHandle?.close();
+    });
   }
 
   getLogLevel(): LogLevelValue {
@@ -45,18 +45,36 @@ export default class Logger {
     return this.stream;
   }
 
-  private readonly print = (logLevel: LogLevelValue, message: unknown = ''): void => {
-    if (this.logLevel > logLevel) {
-      return;
+  async setLogFile(logFile: string): Promise<void> {
+    if (this.logFileHandle) {
+      await this.logFileHandle.close();
     }
-    this.stream.write(`${this.formatMessage(logLevel, String(message))}\n`);
-  };
+    this.logFileHandle = await fs.promises.open(logFile, 'a');
+  }
+
+  /**
+   * Possibly print a log message at a given log level.
+   */
+  printFormattedLine(logLevel: LogLevelValue, message: unknown = ''): boolean {
+    if (this.logLevel > logLevel) {
+      return false;
+    }
+    this.printRawLine(this.formatMessage(logLevel, String(message)));
+    return true;
+  }
+
+  /**
+   *
+   */
+  printRawLine(message: string): void {
+    this.stream.write(`${message}\n`);
+  }
 
   /**
    * Print a newline.
    */
   newLine(): void {
-    this.print(LogLevel.ALWAYS);
+    this.printRawLine('');
   }
 
   /**
@@ -97,27 +115,27 @@ export default class Logger {
   }
 
   trace = (message: unknown = ''): void => {
-    this.print(LogLevel.TRACE, message);
+    this.printFormattedLine(LogLevel.TRACE, message);
   };
 
   debug = (message: unknown = ''): void => {
-    this.print(LogLevel.DEBUG, message);
+    this.printFormattedLine(LogLevel.DEBUG, message);
   };
 
   info = (message: unknown = ''): void => {
-    this.print(LogLevel.INFO, message);
+    this.printFormattedLine(LogLevel.INFO, message);
   };
 
   warn = (message: unknown = ''): void => {
-    this.print(LogLevel.WARN, message);
+    this.printFormattedLine(LogLevel.WARN, message);
   };
 
   error = (message: unknown = ''): void => {
-    this.print(LogLevel.ERROR, message);
+    this.printFormattedLine(LogLevel.ERROR, message);
   };
 
   notice = (message: unknown = ''): void => {
-    this.print(LogLevel.NOTICE, message);
+    this.printFormattedLine(LogLevel.NOTICE, message);
   };
 
   /**
@@ -149,14 +167,14 @@ export default class Logger {
     logoSplit[midLine + 1] =
       `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
 
-    this.print(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
+    this.printRawLine(`${logoSplit.join('\n')}\n`);
   }
 
   /**
    * Print a colorized yargs help string.
    */
   colorizeYargs(help: string): void {
-    this.print(
+    this.printFormattedLine(
       LogLevel.ALWAYS,
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
@@ -190,16 +208,9 @@ export default class Logger {
   }
 
   /**
-   * Create a {@link ProgressBar} with a reference to this {@link Logger}.
-   */
-  addProgressBar(options?: SingleBarOptions): ProgressBar {
-    return this.multiBar.addSingleBar(this, options);
-  }
-
-  /**
    * Return a copy of this Logger with a new string prefix.
    */
   withLoggerPrefix(prefix: string): Logger {
-    return new Logger(this.logLevel, this.stream, this.multiBar, prefix);
+    return new Logger(this.logLevel, this.stream, prefix);
   }
 }

@@ -9,10 +9,8 @@ import { ProgressBarSymbol } from '../../src/console/progressBar.js';
 import SingleBar from '../../src/console/singleBar.js';
 
 const WRITABLE = new PassThrough();
-const MULTIBAR = MultiBar.create({
-  writable: WRITABLE,
-});
 const LOGGER = new Logger(LogLevel.ALWAYS, WRITABLE);
+const MULTIBAR = MultiBar.create(LOGGER);
 
 test('addChildBar', () => {
   const singleBar = new SingleBar(MULTIBAR, LOGGER);
