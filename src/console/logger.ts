@@ -57,12 +57,12 @@ export default class Logger {
   /**
    * Possibly format & print a log message at a given log level.
    */
-  printFormattedLine(logLevel: LogLevelValue, message: unknown = ''): boolean {
+  print(logLevel: LogLevelValue, message: unknown = ''): boolean {
     let formattedMessage: string | undefined;
-    if (this.logFileHandle !== undefined) {
-      formattedMessage = this.formatMessage(logLevel, String(message));
-      fs.writeSync(this.logFileHandle, `${formattedMessage}\n`);
-    }
+    //if (this.logFileHandle !== undefined) {
+    //  formattedMessage = this.formatMessage(logLevel, String(message));
+    //  fs.writeSync(this.logFileHandle, `${formattedMessage}\n`);
+    //}
 
     if (this.logLevel > logLevel && this.logLevel !== LogLevel.ALWAYS) {
       return false;
@@ -134,27 +134,27 @@ export default class Logger {
   }
 
   trace = (message: unknown = ''): void => {
-    this.printFormattedLine(LogLevel.TRACE, message);
+    this.print(LogLevel.TRACE, message);
   };
 
   debug = (message: unknown = ''): void => {
-    this.printFormattedLine(LogLevel.DEBUG, message);
+    this.print(LogLevel.DEBUG, message);
   };
 
   info = (message: unknown = ''): void => {
-    this.printFormattedLine(LogLevel.INFO, message);
+    this.print(LogLevel.INFO, message);
   };
 
   warn = (message: unknown = ''): void => {
-    this.printFormattedLine(LogLevel.WARN, message);
+    this.print(LogLevel.WARN, message);
   };
 
   error = (message: unknown = ''): void => {
-    this.printFormattedLine(LogLevel.ERROR, message);
+    this.print(LogLevel.ERROR, message);
   };
 
   notice = (message: unknown = ''): void => {
-    this.printFormattedLine(LogLevel.NOTICE, message);
+    this.print(LogLevel.NOTICE, message);
   };
 
   /**
@@ -193,7 +193,7 @@ export default class Logger {
    * Print a colorized yargs help string.
    */
   colorizeYargs(help: string): void {
-    this.printFormattedLine(
+    this.print(
       LogLevel.ALWAYS,
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))

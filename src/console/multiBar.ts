@@ -140,9 +140,9 @@ export default class MultiBar {
 
     const isFrozenPattern = new RegExp(`^\n*${MultiBar.OUTPUT_PADDING}`);
     const lastPrintedLogIsFrozen =
-      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog[1]);
+      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog);
+    const thisMessageIsFrozen = isFrozenPattern.test(message);
     if (lastPrintedLogIsFrozen) {
-      const thisMessageIsFrozen = isFrozenPattern.test(message);
       if (thisMessageIsFrozen) {
         // Print frozen progress bars next to each other
         message = message.replace(/^\n+/, '');
@@ -227,7 +227,7 @@ export default class MultiBar {
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
       MultiBar.lastPrintedLog = log;
-      this.terminal.write(log[1]);
+      this.terminal.write(log);
       // if (log[0] === undefined) {
       //   if (this.logger.printRawLine(log[1])) {
       //     MultiBar.lastPrintedLog = log;
