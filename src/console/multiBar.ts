@@ -148,11 +148,11 @@ export default class MultiBar {
         message = message.replace(/^\n+/, '');
       } else {
         // Otherwise, add a newline after the previous frozen progress bar
-        // MultiBar.logQueue.push([undefined, '']);
+        MultiBar.logQueue.push([undefined, '\n']);
       }
     }
 
-    MultiBar.logQueue.push([logLevel, message]);
+    MultiBar.logQueue.push([logLevel, `${message}\n`]);
   }
 
   /**
@@ -185,12 +185,15 @@ export default class MultiBar {
           .split('\n')
           .filter((line) => line !== '');
         if (singleBar.getIndentSize() === 0) {
+          // Put empty lines before top-level progress bars
           return ['', ...lines];
         }
         return lines;
       })
+      // Don't attempt to draw beyond the screen size
       .slice(0, this.terminalRows - 1)
       .map((line) => {
+        // Crop the line length
         const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
         if (stripChars <= 0) {
           return `${MultiBar.OUTPUT_PADDING}${line}`;
@@ -223,21 +226,24 @@ export default class MultiBar {
     // Write out all queued logs
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
-      if (log[0] === undefined) {
-        if (this.logger.printRawLine(log[1])) {
-          MultiBar.lastPrintedLog = log;
-        }
-      } else {
-        if (this.logger.printFormattedLine(log[0], log[1])) {
-          MultiBar.lastPrintedLog = log;
-        }
-      }
+      this.terminal.write(log[1]);
+      MultiBar.lastPrintedLog = log;
+      // if (log[0] === undefined) {
+      //   if (this.logger.printRawLine(log[1])) {
+      //     MultiBar.lastPrintedLog = log;
+      //   }
+      // } else {
+      //   if (this.logger.printFormattedLine(log[0], log[1])) {
+      //     MultiBar.lastPrintedLog = log;
+      //   }
+      // }
       log = MultiBar.logQueue.shift();
     }
 
     // Write the progress bars
     if (this.terminal instanceof tty.WriteStream) {
-      this.terminal.write(output);
+      this.logger.printRaw(output);
+      //this.terminal.write(output);
     }
     this.lastOutput = output;
   }

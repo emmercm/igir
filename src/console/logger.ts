@@ -76,7 +76,7 @@ export default class Logger {
   /**
    * Print a log message without formatting.
    */
-  printRawLine(message: string): boolean {
+  printRaw(message: string): boolean {
     if (this.logFileHandle !== undefined && message) {
       fs.writeSync(this.logFileHandle, `${message}\n`);
     }
@@ -85,7 +85,7 @@ export default class Logger {
       return false;
     }
 
-    this.stream.write(`${message}\n`);
+    this.stream.write(message);
     return true;
   }
 
@@ -93,7 +93,7 @@ export default class Logger {
    * Print a newline.
    */
   newLine(): void {
-    this.printRawLine('');
+    this.printRaw('\n');
   }
 
   /**
@@ -186,7 +186,7 @@ export default class Logger {
     logoSplit[midLine + 1] =
       `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
 
-    this.printRawLine(logoSplit.join('\n'));
+    this.printRaw(`${logoSplit.join('\n')}\n`);
   }
 
   /**
