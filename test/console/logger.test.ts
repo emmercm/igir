@@ -1,8 +1,16 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import type { LogLevelValue } from '../../src/console/logLevel.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import Temp from '../../src/globals/temp.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
+
+if (!(await FsPoly.exists(Temp.getTempDir()))) {
+  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+}
 
 class LoggerSpy {
   private readonly stream: NodeJS.WritableStream;
@@ -51,6 +59,10 @@ describe('setLogLevel_getLogLevel', () => {
     logger.setLogLevel(logLevel);
     expect(logger.getLogLevel()).toEqual(logLevel);
   });
+});
+
+describe('setLogFile', () => {
+  // TODO(cemmer)
 });
 
 describe('newLine', () => {
