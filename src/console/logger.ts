@@ -17,7 +17,7 @@ export default class Logger {
   private readonly stream: tty.WriteStream | NodeJS.WritableStream;
   private readonly loggerPrefix?: string;
 
-  private logFileHandle: fs.promises.FileHandle | undefined;
+  private logFileHandle: number | undefined;
 
   constructor(
     logLevel: LogLevelValue,
@@ -28,8 +28,10 @@ export default class Logger {
     this.stream = stream;
     this.loggerPrefix = loggerPrefix;
 
-    process.once('beforeExit', async () => {
-      await this.logFileHandle?.close();
+    process.once('exit', () => {
+      if (this.logFileHandle !== undefined) {
+        fs.closeSync(this.logFileHandle);
+      }
     });
   }
 
@@ -45,28 +47,44 @@ export default class Logger {
     return this.stream;
   }
 
-  async setLogFile(logFile: string): Promise<void> {
-    if (this.logFileHandle) {
-      await this.logFileHandle.close();
+  setLogFile(logFile: string): void {
+    if (this.logFileHandle !== undefined) {
+      fs.closeSync(this.logFileHandle);
     }
-    this.logFileHandle = await fs.promises.open(logFile, 'a');
+    this.logFileHandle = fs.openSync(logFile, 'a');
   }
 
   /**
-   * Possibly print a log message at a given log level.
+   * Possibly format & print a log message at a given log level.
    */
   printFormattedLine(logLevel: LogLevelValue, message: unknown = ''): boolean {
+    let formattedMessage: string | undefined;
+    if (this.logFileHandle !== undefined) {
+      formattedMessage = this.formatMessage(logLevel, String(message));
+      fs.writeSync(this.logFileHandle, `${formattedMessage}\n`);
+    }
+
     if (this.logLevel > logLevel) {
       return false;
     }
-    this.printRawLine(this.formatMessage(logLevel, String(message)));
+
+    formattedMessage ??= this.formatMessage(logLevel, String(message));
+    this.stream.write(`${formattedMessage}\n`);
     return true;
   }
 
   /**
-   *
+   * Print a log message without formatting.
    */
   printRawLine(message: string): void {
+    if (this.logFileHandle !== undefined && message) {
+      fs.writeSync(this.logFileHandle, `${message}\n`);
+    }
+
+    if (this.logLevel === LogLevel.NEVER) {
+      return;
+    }
+
     this.stream.write(`${message}\n`);
   }
 

@@ -275,7 +275,7 @@ export interface OptionsProps {
   readonly cachePath?: string;
 
   readonly verbose?: number;
-  readonly debugLog?: boolean;
+  readonly debugLog?: string;
   readonly help?: boolean;
 }
 
@@ -494,7 +494,7 @@ export default class Options implements OptionsProps {
 
   readonly verbose: number;
 
-  readonly debugLog: boolean;
+  readonly debugLog?: string;
 
   readonly help: boolean;
 
@@ -633,7 +633,7 @@ export default class Options implements OptionsProps {
     this.cachePath = options?.cachePath;
 
     this.verbose = options?.verbose ?? 0;
-    this.debugLog = options?.debugLog ?? false;
+    this.debugLog = options?.debugLog;
     this.help = options?.help ?? false;
   }
 
@@ -1554,8 +1554,26 @@ export default class Options implements OptionsProps {
     return LogLevel.WARN;
   }
 
-  getDebugLog(): boolean {
-    return this.debugLog;
+  getDebugLog(): string | undefined {
+    if (this.debugLog === undefined) {
+      return undefined;
+    }
+
+    let { debugLog } = this;
+    if (debugLog === '') {
+      debugLog = 'igir_%YYYY-%MM-%DDT%HH:%mm:%ss.log';
+    }
+
+    // Replace date & time tokens
+    const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
+    if (symbolMatches) {
+      symbolMatches.reduce(ArrayPoly.reduceUnique(), []).forEach((match) => {
+        const val = moment().format(match.replace(/^%/, ''));
+        debugLog = debugLog.replace(match, val);
+      });
+    }
+
+    return debugLog;
   }
 
   getHelp(): boolean {

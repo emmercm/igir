@@ -1089,7 +1089,9 @@ export default class ArgumentsParser {
       .option('debug-log', {
         group: groupHelpDebug,
         description: 'Generate a debug log file to attach to bug reports',
-        type: 'boolean',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: false, // explicitly false! we can default this
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv['clean-dry-run'] === true && middlewareArgv.verbose < 1) {
