@@ -228,7 +228,6 @@ export default abstract class DAT {
           this.getGames()
             .flatMap((game) => game.getRoms())
             .reduce((sum, rom) => sum + rom.getSize(), 0),
-          2,
         ),
       },
       undefined,
