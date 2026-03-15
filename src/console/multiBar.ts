@@ -226,8 +226,10 @@ export default class MultiBar {
     // Write out all queued logs
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
-      this.terminal.write(log[1]);
-      MultiBar.lastPrintedLog = log;
+      if (log[0] === undefined) {
+        MultiBar.lastPrintedLog = log;
+        this.terminal.write(log[1]);
+      }
       // if (log[0] === undefined) {
       //   if (this.logger.printRawLine(log[1])) {
       //     MultiBar.lastPrintedLog = log;
@@ -242,8 +244,8 @@ export default class MultiBar {
 
     // Write the progress bars
     if (this.terminal instanceof tty.WriteStream) {
-      this.logger.printRaw(output);
-      //this.terminal.write(output);
+      this.terminal.write(output);
+      //this.logger.printRaw(output);
     }
     this.lastOutput = output;
   }

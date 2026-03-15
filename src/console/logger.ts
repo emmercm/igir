@@ -78,7 +78,7 @@ export default class Logger {
    */
   printRaw(message: string): boolean {
     if (this.logFileHandle !== undefined && message) {
-      fs.writeSync(this.logFileHandle, `${message}\n`);
+      fs.writeSync(this.logFileHandle, message);
     }
 
     if (this.logLevel === LogLevel.NEVER) {
