@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import type tty from 'node:tty';
 
 import chalk from 'chalk';
@@ -14,29 +13,23 @@ import { LogLevel, LogLevelInverted } from './logLevel.js';
  */
 export default class Logger {
   private logLevel: LogLevelValue;
+
   private readonly stream: tty.WriteStream | NodeJS.WritableStream;
-  private readonly loggerPrefix?: string;
 
-  private logFileHandle: number | undefined;
-
-  constructor(
-    logLevel: LogLevelValue,
-    stream: tty.WriteStream | NodeJS.WritableStream,
-    loggerPrefix?: string,
-  ) {
+  constructor(logLevel: LogLevelValue, stream: tty.WriteStream | NodeJS.WritableStream) {
     this.logLevel = logLevel;
     this.stream = stream;
-    this.loggerPrefix = loggerPrefix;
-
-    process.once('exit', () => {
-      if (this.logFileHandle !== undefined) {
-        fs.closeSync(this.logFileHandle);
-      }
-    });
   }
 
   getLogLevel(): LogLevelValue {
     return this.logLevel;
+  }
+
+  /**
+   * Can the logger print a message at the specified LogLevel?
+   */
+  canPrint(logLevel: LogLevelValue): boolean {
+    return this.logLevel <= logLevel;
   }
 
   setLogLevel(logLevel: LogLevelValue): void {
@@ -47,45 +40,17 @@ export default class Logger {
     return this.stream;
   }
 
-  setLogFile(logFile: string): void {
-    if (this.logFileHandle !== undefined) {
-      fs.closeSync(this.logFileHandle);
-    }
-    this.logFileHandle = fs.openSync(logFile, 'a');
-  }
-
   /**
-   * Possibly format & print a log message at a given log level.
+   * Print a message (with an ending newline) at the specified LogLevel.
    */
-  print(logLevel: LogLevelValue, message: unknown = ''): boolean {
-    let formattedMessage: string | undefined;
-    //if (this.logFileHandle !== undefined) {
-    //  formattedMessage = this.formatMessage(logLevel, String(message));
-    //  fs.writeSync(this.logFileHandle, `${formattedMessage}\n`);
-    //}
+  printLine(logLevel: LogLevelValue, message: unknown = '', prefix?: string): boolean {
+    // TODO(cemmer): file writing; make sure to strip ANSI
 
-    if (this.logLevel > logLevel && this.logLevel !== LogLevel.ALWAYS) {
+    if (this.logLevel > logLevel) {
       return false;
     }
 
-    formattedMessage ??= this.formatMessage(logLevel, String(message));
-    this.stream.write(`${formattedMessage}\n`);
-    return true;
-  }
-
-  /**
-   * Print a log message without formatting.
-   */
-  printRaw(message: string): boolean {
-    if (this.logFileHandle !== undefined && message) {
-      fs.writeSync(this.logFileHandle, message);
-    }
-
-    if (this.logLevel === LogLevel.NEVER) {
-      return false;
-    }
-
-    this.stream.write(message);
+    this.stream.write(`${this.formatMessage(logLevel, String(message), prefix)}\n`);
     return true;
   }
 
@@ -93,13 +58,13 @@ export default class Logger {
    * Print a newline.
    */
   newLine(): void {
-    this.printRaw('\n');
+    this.printLine(LogLevel.ALWAYS);
   }
 
   /**
    * Format a log message for a given {@link LogLevelValue}.
    */
-  formatMessage(logLevel: LogLevelValue, message: string): string {
+  formatMessage(logLevel: LogLevelValue, message: string, prefix?: string): string {
     // Don't format "ALWAYS" or "NEVER"
     if (logLevel >= LogLevel.ALWAYS) {
       return message;
@@ -120,10 +85,7 @@ export default class Logger {
     const loggerTime =
       this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
     const levelPrefix = `${chalkFunc(LogLevelInverted[logLevel])}: `;
-    const loggerPrefix =
-      this.logLevel <= LogLevel.TRACE && this.loggerPrefix
-        ? chalk.dim(`${this.loggerPrefix}: `)
-        : '';
+    const loggerPrefix = this.logLevel <= LogLevel.TRACE && prefix ? chalk.dim(`${prefix}: `) : '';
 
     return message
       .replace(/Error: /, '') // strip `new Error()` prefix
@@ -134,27 +96,27 @@ export default class Logger {
   }
 
   trace = (message: unknown = ''): void => {
-    this.print(LogLevel.TRACE, message);
+    this.printLine(LogLevel.TRACE, message);
   };
 
   debug = (message: unknown = ''): void => {
-    this.print(LogLevel.DEBUG, message);
+    this.printLine(LogLevel.DEBUG, message);
   };
 
   info = (message: unknown = ''): void => {
-    this.print(LogLevel.INFO, message);
+    this.printLine(LogLevel.INFO, message);
   };
 
   warn = (message: unknown = ''): void => {
-    this.print(LogLevel.WARN, message);
+    this.printLine(LogLevel.WARN, message);
   };
 
   error = (message: unknown = ''): void => {
-    this.print(LogLevel.ERROR, message);
+    this.printLine(LogLevel.ERROR, message);
   };
 
   notice = (message: unknown = ''): void => {
-    this.print(LogLevel.NOTICE, message);
+    this.printLine(LogLevel.NOTICE, message);
   };
 
   /**
@@ -186,14 +148,14 @@ export default class Logger {
     logoSplit[midLine + 1] =
       `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
 
-    this.printRaw(`${logoSplit.join('\n')}\n`);
+    this.printLine(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
   }
 
   /**
    * Print a colorized yargs help string.
    */
   colorizeYargs(help: string): void {
-    this.print(
+    this.printLine(
       LogLevel.ALWAYS,
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
@@ -224,12 +186,5 @@ export default class Logger {
 
         .replaceAll(new RegExp(` (${Package.NAME}) `, 'g'), ` ${chalk.blueBright('$1')} `),
     );
-  }
-
-  /**
-   * Return a copy of this Logger with a new string prefix.
-   */
-  withLoggerPrefix(prefix: string): Logger {
-    return new Logger(this.logLevel, this.stream, prefix);
   }
 }

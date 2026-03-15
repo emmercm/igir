@@ -5,6 +5,7 @@ import stripAnsi from 'strip-ansi';
 import Timer from '../async/timer.js';
 import type Logger from './logger.js';
 import type { LogLevelValue } from './logLevel.js';
+import { LogLevel } from './logLevel.js';
 import type { SingleBarOptions } from './singleBar.js';
 import SingleBar from './singleBar.js';
 
@@ -23,8 +24,8 @@ export default class MultiBar {
   private static readonly OUTPUT_PADDING = ' ';
 
   private static readonly multiBars: MultiBar[] = [];
-  private static readonly logQueue: string[] = [];
-  private static lastPrintedLog?: string;
+  private static readonly logQueue: [LogLevelValue, string, string | undefined][] = [];
+  private static lastPrintedLog?: [LogLevelValue, string, string | undefined];
 
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
@@ -74,7 +75,7 @@ export default class MultiBar {
    * Add a new {@link SingleBar} to the {@link MultiBar}.
    */
   addSingleBar(options?: SingleBarOptions, parentSingleBar?: SingleBar): SingleBar {
-    const singleBar = new SingleBar(this, this.logger, options);
+    const singleBar = new SingleBar(this, options);
 
     const parentSingleBarIndex = parentSingleBar
       ? this.singleBars.indexOf(parentSingleBar)
@@ -104,13 +105,12 @@ export default class MultiBar {
       return;
     }
 
-    // Render the single bar one last time (which will draw it), then log the output (which will end
-    // in a newline, preventing the log from being overwritten on the next progress bar draw)
+    // Render one last time, then log the output
     this.clearAndRender();
     const lastOutput = singleBar.getLastOutput();
     if (lastOutput !== undefined) {
-      MultiBar.log(
-        undefined,
+      this.log(
+        LogLevel.ALWAYS,
         `${singleBar.getIndentSize() === 0 ? '\n' : ''}${MultiBar.OUTPUT_PADDING}${lastOutput}`,
       );
     }
@@ -134,32 +134,35 @@ export default class MultiBar {
   /**
    * Queue a log message to be printed to the terminal.
    */
-  static log(logLevel: LogLevelValue | undefined, message: string): void {
+  static log(logLevel: LogLevelValue, message: string): void {
+    this.multiBars.at(0)?.log(logLevel, message);
+  }
+
+  /**
+   * Queue a log message to be printed to the terminal.
+   */
+  log(logLevel: LogLevelValue, message: string, prefix?: string): void {
+    // Find the last log line that would have been printed immediately before this message
     const lastPrintedLog =
-      MultiBar.logQueue.length > 0 ? MultiBar.logQueue.at(-1) : MultiBar.lastPrintedLog;
+      MultiBar.logQueue.findLast(([logLevel]) => this.logger.canPrint(logLevel)) ??
+      MultiBar.lastPrintedLog;
 
     const isFrozenPattern = new RegExp(`^\n*${MultiBar.OUTPUT_PADDING}`);
     const lastPrintedLogIsFrozen =
-      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog);
+      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog[1]);
     const thisMessageIsFrozen = isFrozenPattern.test(message);
+
     if (lastPrintedLogIsFrozen) {
       if (thisMessageIsFrozen) {
         // Print frozen progress bars next to each other
         message = message.replace(/^\n+/, '');
       } else {
         // Otherwise, add a newline after the previous frozen progress bar
-        MultiBar.logQueue.push('\n');
+        message = `\n${message}`;
       }
     }
 
-    MultiBar.logQueue.push(`${message}\n`);
-  }
-
-  /**
-   * Queue a log message to be printed to the terminal.
-   */
-  log(logLevel: LogLevelValue, message: string): void {
-    MultiBar.log(logLevel, message);
+    MultiBar.logQueue.push([logLevel, message, prefix]);
   }
 
   /**
@@ -185,22 +188,19 @@ export default class MultiBar {
           .split('\n')
           .filter((line) => line !== '');
         if (singleBar.getIndentSize() === 0) {
-          // Put empty lines before top-level progress bars
           return ['', ...lines];
         }
         return lines;
       })
-      // Don't attempt to draw beyond the screen size
       .slice(0, this.terminalRows - 1)
       .map((line) => {
-        // Crop the line length
         const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
         if (stripChars <= 0) {
           return `${MultiBar.OUTPUT_PADDING}${line}`;
         }
         return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
       });
-    const output = `${outputLines.join('\n')}\n`;
+    const output = outputLines.join('\n');
 
     if (output === this.lastOutput && MultiBar.logQueue.length === 0) {
       // Nothing new to render
@@ -217,6 +217,7 @@ export default class MultiBar {
         }
       }
       if (rows > 0) {
+        rows++; // Logger#printLine() will cause an extra \n
         this.terminal.moveCursor(0, -rows);
         this.terminal.cursorTo(0, undefined);
         this.terminal.clearScreenDown();
@@ -226,33 +227,17 @@ export default class MultiBar {
     // Write out all queued logs
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
-      MultiBar.lastPrintedLog = log;
-      this.terminal.write(log);
-      // if (log[0] === undefined) {
-      //   if (this.logger.printRawLine(log[1])) {
-      //     MultiBar.lastPrintedLog = log;
-      //   }
-      // } else {
-      //   if (this.logger.printFormattedLine(log[0], log[1])) {
-      //     MultiBar.lastPrintedLog = log;
-      //   }
-      // }
+      if (this.logger.printLine(log[0], log[1], log[2])) {
+        MultiBar.lastPrintedLog = log;
+      }
       log = MultiBar.logQueue.shift();
     }
 
     // Write the progress bars
     if (this.terminal instanceof tty.WriteStream) {
-      this.terminal.write(output);
-      //this.logger.printRaw(output);
+      this.logger.printLine(LogLevel.ALWAYS, output);
     }
     this.lastOutput = output;
-  }
-
-  /**
-   * Is there at least one MultiBar being rendered right now?
-   */
-  static isActive(): boolean {
-    return this.multiBars.length > 0;
   }
 
   /**

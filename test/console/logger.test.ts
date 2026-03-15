@@ -100,7 +100,7 @@ describe('setLogFile', () => {
       const logger = new Logger(LogLevel.INFO, new PassThrough());
       logger.setLogFile(logFile);
 
-      logger.printRawLine('raw line content');
+      logger.printRaw('raw line content');
 
       expect(await fs.promises.readFile(logFile, 'utf8')).toContain('raw line content');
     } finally {
@@ -115,7 +115,7 @@ describe('setLogFile', () => {
       const logger = new Logger(LogLevel.INFO, new PassThrough());
       logger.setLogFile(logFile);
 
-      logger.printRawLine('');
+      logger.printRaw('');
 
       expect(await fs.promises.readFile(logFile, 'utf8')).toEqual('');
     } finally {
