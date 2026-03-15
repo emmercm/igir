@@ -60,18 +60,20 @@ export default class Logger {
    * Print a message (with an ending newline) at the specified LogLevel.
    */
   printLine(logLevel: LogLevelValue, message: unknown = '', prefix?: string): boolean {
-    const formattedMessage = this.formatMessage(logLevel, String(message), prefix);
-
-    if (this.logFileHandle !== undefined && formattedMessage.trim()) {
-      // TODO(cemmer): this needs to format at TRACE level always
-      fs.writeSync(this.logFileHandle, `${stripAnsi(formattedMessage)}\n`);
+    if (this.logFileHandle !== undefined) {
+      const formattedMessage = stripAnsi(
+        Logger.formatMessage(LogLevel.TRACE, logLevel, String(message), prefix),
+      );
+      if (formattedMessage.trim()) {
+        fs.writeSync(this.logFileHandle, `${stripAnsi(formattedMessage)}\n`);
+      }
     }
 
     if (this.logLevel > logLevel) {
       return false;
     }
 
-    this.stream.write(`${formattedMessage}\n`);
+    this.stream.write(`${this.formatMessage(logLevel, String(message), prefix)}\n`);
     return true;
   }
 
@@ -82,12 +84,18 @@ export default class Logger {
     this.printLine(LogLevel.ALWAYS);
   }
 
-  /**
-   * Format a log message for a given {@link LogLevelValue}.
-   */
-  formatMessage(logLevel: LogLevelValue, message: string, prefix?: string): string {
+  private formatMessage(messageLogLevel: LogLevelValue, message: string, prefix?: string): string {
+    return Logger.formatMessage(this.logLevel, messageLogLevel, message, prefix);
+  }
+
+  private static formatMessage(
+    currentLogLevel: LogLevelValue,
+    messageLogLevel: LogLevelValue,
+    message: string,
+    prefix?: string,
+  ): string {
     // Don't format "ALWAYS" or "NEVER"
-    if (logLevel >= LogLevel.ALWAYS) {
+    if (messageLogLevel >= LogLevel.ALWAYS) {
       return message;
     }
 
@@ -101,12 +109,13 @@ export default class Logger {
       [LogLevel.NOTICE]: chalk.underline,
       [LogLevel.NEVER]: (msg): string => msg,
     } satisfies Record<LogLevelValue, (message: string) => string>;
-    const chalkFunc = chalkFuncs[logLevel];
+    const chalkFunc = chalkFuncs[messageLogLevel];
 
     const loggerTime =
-      this.logLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
-    const levelPrefix = `${chalkFunc(LogLevelInverted[logLevel])}: `;
-    const loggerPrefix = this.logLevel <= LogLevel.TRACE && prefix ? chalk.dim(`${prefix}: `) : '';
+      currentLogLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
+    const levelPrefix = `${chalkFunc(LogLevelInverted[messageLogLevel])}: `;
+    const loggerPrefix =
+      currentLogLevel <= LogLevel.TRACE && prefix ? chalk.dim(`${prefix}: `) : '';
 
     return message
       .replace(/Error: /, '') // strip `new Error()` prefix
