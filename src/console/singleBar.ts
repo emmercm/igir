@@ -5,6 +5,7 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 import TimePoly from '../polyfill/timePoly.js';
 import type Logger from './logger.js';
 import type { LogLevelValue } from './logLevel.js';
+import { LogLevel } from './logLevel.js';
 import type MultiBar from './multiBar.js';
 import type { ColoredSymbol } from './progressBar.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
@@ -118,7 +119,7 @@ export default class SingleBar extends ProgressBar {
       return;
     }
     this.symbol = symbol;
-    this.multiBar.clearAndRender();
+    //this.multiBar.clearAndRender();
   }
 
   getName(): string | undefined {
@@ -130,7 +131,7 @@ export default class SingleBar extends ProgressBar {
       return;
     }
     this.name = name;
-    this.multiBar.clearAndRender();
+    //this.multiBar.clearAndRender();
   }
 
   /**
@@ -206,6 +207,9 @@ export default class SingleBar extends ProgressBar {
    * Queue a log message to be printed to the terminal.
    */
   log(logLevel: LogLevelValue, message: string): void {
+    if (this.logger.getLogLevel() > logLevel && this.logger.getLogLevel() !== LogLevel.ALWAYS) {
+      return;
+    }
     this.multiBar.log(logLevel, message);
   }
 

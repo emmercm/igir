@@ -64,7 +64,7 @@ export default class Logger {
       fs.writeSync(this.logFileHandle, `${formattedMessage}\n`);
     }
 
-    if (this.logLevel > logLevel) {
+    if (this.logLevel > logLevel && this.logLevel !== LogLevel.ALWAYS) {
       return false;
     }
 

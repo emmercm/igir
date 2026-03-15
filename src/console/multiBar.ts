@@ -23,8 +23,8 @@ export default class MultiBar {
   private static readonly OUTPUT_PADDING = ' ';
 
   private static readonly multiBars: MultiBar[] = [];
-  private static readonly logQueue: [LogLevelValue | undefined, string][] = [];
-  private static lastPrintedLog?: [LogLevelValue | undefined, string];
+  private static readonly logQueue: string[] = [];
+  private static lastPrintedLog?: string;
 
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
@@ -148,11 +148,11 @@ export default class MultiBar {
         message = message.replace(/^\n+/, '');
       } else {
         // Otherwise, add a newline after the previous frozen progress bar
-        MultiBar.logQueue.push([undefined, '\n']);
+        MultiBar.logQueue.push('\n');
       }
     }
 
-    MultiBar.logQueue.push([logLevel, `${message}\n`]);
+    MultiBar.logQueue.push(`${message}\n`);
   }
 
   /**
@@ -226,10 +226,8 @@ export default class MultiBar {
     // Write out all queued logs
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
-      if (log[0] === undefined) {
-        MultiBar.lastPrintedLog = log;
-        this.terminal.write(log[1]);
-      }
+      MultiBar.lastPrintedLog = log;
+      this.terminal.write(log[1]);
       // if (log[0] === undefined) {
       //   if (this.logger.printRawLine(log[1])) {
       //     MultiBar.lastPrintedLog = log;
