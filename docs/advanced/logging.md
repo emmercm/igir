@@ -1,5 +1,25 @@
 # Logging
 
+## Debug logs
+
+It is required to submit a debug log with any bug reports. Igir has many options, and every person's scenario is different, so a debug log is critical to reproduce the issue.
+
+To generate this debug log, provide the option:
+
+```text
+--debug-log
+```
+
+This will write the log file to the current working directory. You can provide a file path to the option if you want to write it somewhere else:
+
+```
+--debug-log <path>
+```
+
+Debug logs will always be written with the most verbose log level.
+
+## Log levels
+
 By default, Igir will print the following log levels:
 
 - `ERROR`: an unexpected error has prevented an intended [command](../commands.md)
@@ -53,3 +73,27 @@ There are additional levels of verbosity that can be enabled with the `-v` flag:
   !!! note
 
       Trace logs are required when submitting [bug reports](https://github.com/emmercm/igir/issues/new/choose) as they include information that can help diagnose your unique situation!
+
+## Output redirection
+
+Igir is smart enough to detect if the standard output is a TTY terminal or not, and if it is not, will not render progress bars and may format log lines differently. This lets you safely pipe the output of Igir:
+
+=== ":fontawesome-brands-apple: macOS"
+
+    ```shell
+    igir [commands..] [options] > out.log
+    ```
+
+    ```shell
+    igir [commands..] [options] | tee out.log
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir [commands..] [options] > out.log
+    ```
+
+    ```shell
+    igir [commands..] [options] | tee out.log
+    ```
