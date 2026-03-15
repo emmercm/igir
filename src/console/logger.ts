@@ -1,7 +1,9 @@
+import fs from 'node:fs';
 import type tty from 'node:tty';
 
 import chalk from 'chalk';
 import moment from 'moment';
+import stripAnsi from 'strip-ansi';
 import terminalLink from 'terminal-link';
 
 import Package from '../globals/package.js';
@@ -13,12 +15,19 @@ import { LogLevel, LogLevelInverted } from './logLevel.js';
  */
 export default class Logger {
   private logLevel: LogLevelValue;
-
   private readonly stream: tty.WriteStream | NodeJS.WritableStream;
+
+  private logFileHandle: number | undefined;
 
   constructor(logLevel: LogLevelValue, stream: tty.WriteStream | NodeJS.WritableStream) {
     this.logLevel = logLevel;
     this.stream = stream;
+
+    process.once('exit', () => {
+      if (this.logFileHandle !== undefined) {
+        fs.closeSync(this.logFileHandle);
+      }
+    });
   }
 
   getLogLevel(): LogLevelValue {
@@ -40,17 +49,29 @@ export default class Logger {
     return this.stream;
   }
 
+  setLogFile(logFile: string): void {
+    if (this.logFileHandle !== undefined) {
+      fs.closeSync(this.logFileHandle);
+    }
+    this.logFileHandle = fs.openSync(logFile, 'a');
+  }
+
   /**
    * Print a message (with an ending newline) at the specified LogLevel.
    */
   printLine(logLevel: LogLevelValue, message: unknown = '', prefix?: string): boolean {
-    // TODO(cemmer): file writing; make sure to strip ANSI
+    const formattedMessage = this.formatMessage(logLevel, String(message), prefix);
+
+    if (this.logFileHandle !== undefined && formattedMessage.trim()) {
+      // TODO(cemmer): this needs to format at TRACE level always
+      fs.writeSync(this.logFileHandle, `${stripAnsi(formattedMessage)}\n`);
+    }
 
     if (this.logLevel > logLevel) {
       return false;
     }
 
-    this.stream.write(`${this.formatMessage(logLevel, String(message), prefix)}\n`);
+    this.stream.write(`${formattedMessage}\n`);
     return true;
   }
 
