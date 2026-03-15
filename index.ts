@@ -53,6 +53,8 @@ try {
   logger.setLogLevel(options.getLogLevel());
   const debugLog = options.getDebugLog();
   if (debugLog !== undefined) {
+    logger.newLine();
+    logger.printRawLine(`Writing debug log to: ${debugLog}`);
     logger.setLogFile(debugLog);
   }
 

@@ -1,8 +1,16 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import type { LogLevelValue } from '../../src/console/logLevel.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import Temp from '../../src/globals/temp.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
+
+if (!(await FsPoly.exists(Temp.getTempDir()))) {
+  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+}
 
 class LoggerSpy {
   private readonly stream: NodeJS.WritableStream;
@@ -50,6 +58,111 @@ describe('setLogLevel_getLogLevel', () => {
     const logger = new Logger(LogLevel.TRACE, new PassThrough());
     logger.setLogLevel(logLevel);
     expect(logger.getLogLevel()).toEqual(logLevel);
+  });
+});
+
+describe('setLogFile', () => {
+  it('should write formatted messages to the file', async () => {
+    const logFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger.log'));
+
+    try {
+      const logger = new Logger(LogLevel.INFO, new PassThrough());
+      logger.setLogFile(logFile);
+
+      logger.info('hello from logger');
+
+      expect(await fs.promises.readFile(logFile, 'utf8')).toContain('hello from logger');
+    } finally {
+      await FsPoly.rm(logFile, { force: true });
+    }
+  });
+
+  it('should write to the file even when the stream log level suppresses the message', async () => {
+    const logFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger.log'));
+
+    try {
+      const spy = new LoggerSpy(LogLevel.NEVER);
+      spy.getLogger().setLogFile(logFile);
+
+      spy.getLogger().info('suppressed from stream');
+
+      await expect(spy.getOutput()).resolves.toEqual('');
+      expect(await fs.promises.readFile(logFile, 'utf8')).toContain('suppressed from stream');
+    } finally {
+      await FsPoly.rm(logFile, { force: true });
+    }
+  });
+
+  it('should write raw lines to the file', async () => {
+    const logFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger.log'));
+
+    try {
+      const logger = new Logger(LogLevel.INFO, new PassThrough());
+      logger.setLogFile(logFile);
+
+      logger.printRawLine('raw line content');
+
+      expect(await fs.promises.readFile(logFile, 'utf8')).toContain('raw line content');
+    } finally {
+      await FsPoly.rm(logFile, { force: true });
+    }
+  });
+
+  it('should not write empty raw lines to the file', async () => {
+    const logFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger.log'));
+
+    try {
+      const logger = new Logger(LogLevel.INFO, new PassThrough());
+      logger.setLogFile(logFile);
+
+      logger.printRawLine('');
+
+      expect(await fs.promises.readFile(logFile, 'utf8')).toEqual('');
+    } finally {
+      await FsPoly.rm(logFile, { force: true });
+    }
+  });
+
+  it('should append to existing file contents', async () => {
+    const logFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger.log'));
+
+    try {
+      await FsPoly.writeFile(logFile, 'existing content\n');
+
+      const logger = new Logger(LogLevel.INFO, new PassThrough());
+      logger.setLogFile(logFile);
+      logger.info('new content');
+
+      const contents = await fs.promises.readFile(logFile, 'utf8');
+      expect(contents).toContain('existing content');
+      expect(contents).toContain('new content');
+    } finally {
+      await FsPoly.rm(logFile, { force: true });
+    }
+  });
+
+  it('should close the previous file and write only to the new file when called again', async () => {
+    const logFile1 = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger1.log'));
+    const logFile2 = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger2.log'));
+
+    try {
+      const logger = new Logger(LogLevel.INFO, new PassThrough());
+      logger.setLogFile(logFile1);
+      logger.info('first file');
+
+      logger.setLogFile(logFile2);
+      logger.info('second file');
+
+      const contents1 = await fs.promises.readFile(logFile1, 'utf8');
+      expect(contents1).toContain('first file');
+      expect(contents1).not.toContain('second file');
+      const contents2 = await fs.promises.readFile(logFile2, 'utf8');
+      expect(contents2).toContain('second file');
+      expect(contents2).not.toContain('first file');
+    } finally {
+      await FsPoly.rm(logFile1, { force: true });
+      await FsPoly.rm(logFile2, { force: true });
+    }
   });
 });
 
