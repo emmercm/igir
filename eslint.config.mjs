@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import url from 'node:url';
 
 import { FlatCompat } from '@eslint/eslintrc';
 import eslint from '@eslint/js';
@@ -12,7 +12,14 @@ import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-const __filename = fileURLToPath(import.meta.url);
+import noArrayPushSpread from './.eslint/rules/performance/noArrayPushSpread.mjs';
+import noArrayRebuildInLoop from './.eslint/rules/performance/noArrayRebuildInLoop.mjs';
+import noArrayShiftMutationInLoop from './.eslint/rules/performance/noArrayShiftMutationInLoop.mjs';
+import noFsPromisify from './.eslint/rules/style/noFsPromisify.mjs';
+import noNodeSubpathImports from './.eslint/rules/style/noNodeSubpathImports.mjs';
+import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImport.mjs';
+
+const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -76,39 +83,22 @@ export default [
     plugins: {
       local: {
         rules: {
-          'no-fs-promisify': {
-            meta: {
-              type: 'suggestion',
-              docs: {
-                description: 'Use native fs.promises instead of util.promisify(fs.*)',
-              },
-              fixable: 'code', // This enables the --fix flag
-            },
-            create(context) {
-              return {
-                // Target: util.promisify(fs.someMethod)
-                'CallExpression[callee.object.name="util"][callee.property.name="promisify"][arguments.0.object.name="fs"]'(
-                  node,
-                ) {
-                  const fsMethodIdentifier = node.arguments[0].property;
-                  const methodName = fsMethodIdentifier.name;
-                  context.report({
-                    node,
-                    message: `Replace util.promisify(fs.${methodName}) with fs.promises.${methodName}.`,
-                    fix(fixer) {
-                      // Replaces the entire 'util.promisify(fs.method)' with 'fs.promises.method'
-                      return fixer.replaceText(node, `fs.promises.${methodName}`);
-                    },
-                  });
-                },
-              };
-            },
-          },
+          'no-fs-promisify': noFsPromisify,
+          'no-node-subpath-imports': noNodeSubpathImports,
+          'prefer-node-default-import': preferNodeDefaultImport,
+          'no-array-push-spread': noArrayPushSpread,
+          'no-array-rebuild-in-loop': noArrayRebuildInLoop,
+          'no-array-shift-mutation-in-loop': noArrayShiftMutationInLoop,
         },
       },
     },
     rules: {
       'local/no-fs-promisify': 'error',
+      'local/no-node-subpath-imports': 'error',
+      'local/prefer-node-default-import': 'error',
+      'local/no-array-push-spread': 'error',
+      'local/no-array-rebuild-in-loop': 'error',
+      'local/no-array-shift-mutation-in-loop': 'error',
     },
   },
 
@@ -213,20 +203,6 @@ export default [
       // ***** Objects *****
 
       // ***** Arrays *****
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: "CallExpression[callee.property.name='push'] > SpreadElement",
-          message:
-            "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'",
-        },
-        {
-          selector:
-            "CallExpression[callee.object.name='util'][callee.property.name='promisify'][arguments.0.object.name='fs']",
-          message:
-            "Directly use 'fs/promises' or 'fs.promises' instead of wrapping 'fs' methods in 'util.promisify'.",
-        },
-      ],
 
       // ***** Numbers *****
 
