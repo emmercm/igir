@@ -1,3 +1,4 @@
+import type { Matcher } from 'fast-xml-parser';
 import { XMLParser } from 'fast-xml-parser';
 
 /**
@@ -64,11 +65,15 @@ export default {
       ignoreAttributes: false,
       ignoreDeclaration: true,
       ignorePiTags: true,
-      updateTag: (_tagName, jPath, attrs): boolean => {
-        if (XML_IGNORE_PATHS.has(jPath)) {
+      // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+      updateTag: (_tagName, jPathOrMatcher: string | Matcher, attrs): boolean => {
+        if (typeof jPathOrMatcher !== 'string') {
+          return true;
+        }
+        if (XML_IGNORE_PATHS.has(jPathOrMatcher)) {
           return false;
         }
-        (XML_IGNORE_ATTRS[jPath] ?? []).forEach((attr) => {
+        (XML_IGNORE_ATTRS[jPathOrMatcher] ?? []).forEach((attr) => {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete attrs[attr];
         });
