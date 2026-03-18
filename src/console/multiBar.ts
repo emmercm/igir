@@ -204,19 +204,15 @@ export default class MultiBar {
       return;
     }
 
-    // Clear the terminal
-    if (this.terminal instanceof tty.WriteStream) {
-      // TODO(cemmer): some kind of line diffing algorithm so not every line has to be repainted
-      let rows = 0;
-      for (const char of this.lastOutput) {
-        if (char === '\n') {
-          rows += 1;
-        }
-      }
-      if (rows > 0) {
-        this.terminal.moveCursor(0, -rows);
-        this.terminal.cursorTo(0, undefined);
+    // Clear the entire progress bar area before printing logs
+    let screenCleared = false;
+    if (this.terminal instanceof tty.WriteStream && MultiBar.logQueue.length > 0) {
+      const rowsToMoveUp = this.lastOutput.split('\n').length - 1;
+      if (rowsToMoveUp > 0) {
+        this.terminal.moveCursor(0, -rowsToMoveUp);
+        this.terminal.cursorTo(0);
         this.terminal.clearScreenDown();
+        screenCleared = true;
       }
     }
 
@@ -228,9 +224,55 @@ export default class MultiBar {
       log = MultiBar.logQueue.shift();
     }
 
-    // Write the progress bars
     if (this.terminal instanceof tty.WriteStream) {
-      this.terminal.write(output);
+      if (screenCleared) {
+        // Screen was cleared for logs; write the full output
+        this.terminal.write(output);
+      } else {
+        // Partial repaint: find the first changed line, move up to it, then overwrite in-place
+        const lastLines = this.lastOutput.split('\n');
+        const newLines = output.split('\n');
+
+        let firstChangedRow = 0;
+        while (
+          firstChangedRow < lastLines.length - 1 &&
+          firstChangedRow < newLines.length - 1 &&
+          lastLines[firstChangedRow] === newLines[firstChangedRow]
+        ) {
+          firstChangedRow++;
+        }
+
+        const rowsToMoveUp = lastLines.length - 1 - firstChangedRow;
+        if (rowsToMoveUp > 0) {
+          this.terminal.moveCursor(0, -rowsToMoveUp);
+          this.terminal.cursorTo(0);
+        }
+
+        const newLineCount = newLines.length - 1;
+        const lastLineCount = lastLines.length - 1;
+
+        for (let i = firstChangedRow; i < newLineCount; i++) {
+          this.terminal.cursorTo(0);
+          this.terminal.write(newLines[i]);
+          this.terminal.clearLine(1); // erase leftover chars if the new line is shorter
+          this.terminal.write('\n');
+        }
+
+        // Cursor is now at row newLineCount; ensure column 0
+        this.terminal.cursorTo(0);
+
+        // Erase any extra lines from the old output by clearing them in-place, then stepping back up
+        const extraOldLines = Math.max(0, lastLineCount - newLineCount);
+        for (let i = 0; i < extraOldLines; i++) {
+          this.terminal.clearLine(0);
+          if (i < extraOldLines - 1) {
+            this.terminal.moveCursor(0, 1);
+          }
+        }
+        if (extraOldLines > 1) {
+          this.terminal.moveCursor(0, -(extraOldLines - 1));
+        }
+      }
     }
     this.lastOutput = output;
   }
