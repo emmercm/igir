@@ -72,6 +72,13 @@ export default class MultiBar {
   }
 
   /**
+   * Returns true if there are any active MultiBars.
+   */
+  static isActive(): boolean {
+    return this.multiBars.length > 0;
+  }
+
+  /**
    * Add a new {@link SingleBar} to the {@link MultiBar}.
    */
   addSingleBar(options?: SingleBarOptions, parentSingleBar?: SingleBar): SingleBar {
