@@ -60,14 +60,17 @@ export default abstract class Scanner extends Module {
         }
 
         // Constrain the checksums returned based on the requested bitmask
-        files = files.map((file) =>
-          file.withProps({
+        files = files.map((file) => {
+          if (file instanceof ArchiveEntry && this.options.getInputChecksumQuick()) {
+            return file;
+          }
+          return file.withProps({
             crc32: checksumBitmask & ChecksumBitmask.CRC32 ? file.getCrc32() : undefined,
             md5: checksumBitmask & ChecksumBitmask.MD5 ? file.getMd5() : undefined,
             sha1: checksumBitmask & ChecksumBitmask.SHA1 ? file.getSha1() : undefined,
             sha256: checksumBitmask & ChecksumBitmask.SHA256 ? file.getSha256() : undefined,
-          }),
-        );
+          });
+        });
 
         await this.logWarnings(files);
         this.progressBar.incrementCompleted();

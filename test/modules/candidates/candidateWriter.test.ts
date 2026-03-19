@@ -28,7 +28,10 @@ import type Archive from '../../../src/types/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
-import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
+import {
+  ChecksumBitmask,
+  ChecksumBitmaskInverted,
+} from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import type { OptionsProps } from '../../../src/types/options.js';
 import Options, {
@@ -113,7 +116,7 @@ async function candidateWriter(
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
-    ).scan();
+    ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
   } catch {
     /* ignored */
   }

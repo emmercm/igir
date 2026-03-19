@@ -120,7 +120,10 @@ describe('multiple files', () => {
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
-    ).scan(ChecksumBitmask.CRC32, false);
+    ).scan(
+      Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0),
+      false,
+    );
 
     const extensionsWithoutCrc32 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
