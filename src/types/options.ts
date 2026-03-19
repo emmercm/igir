@@ -128,16 +128,6 @@ export const PreferRevisionInverted = Object.fromEntries(
   Object.entries(PreferRevision).map(([key, value]) => [value, key]),
 ) as Record<PreferRevisionValue, PreferRevisionKey>;
 
-export const PreferFiletype = {
-  PLAIN: 1,
-  ARCHIVE: 2,
-} as const;
-export type PreferFiletypeKey = keyof typeof PreferFiletype;
-export type PreferFiletypeValue = (typeof PreferFiletype)[PreferFiletypeKey];
-export const PreferFiletypeInverted = Object.fromEntries(
-  Object.entries(PreferFiletype).map(([key, value]) => [value, key]),
-) as Record<PreferFiletypeValue, PreferFiletypeKey>;
-
 export const PlaylistMode = {
   MULTIPLE: 1,
   ALWAYS: 2,
