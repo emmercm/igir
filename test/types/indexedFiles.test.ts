@@ -58,9 +58,9 @@ describe('findFiles', () => {
     expect(
       indexedFiles.findFiles(new ROM({ name: '', size: 999_999, crc32: '22222222' })),
     ).toHaveLength(0);
-    expect(
-      indexedFiles.findFiles(new ROM({ name: '', size: 0, crc32: 'FFFFFFFF' })),
-    ).toHaveLength(0);
+    expect(indexedFiles.findFiles(new ROM({ name: '', size: 0, crc32: 'FFFFFFFF' }))).toHaveLength(
+      0,
+    );
   });
 
   it('should find files based on MD5', async () => {
