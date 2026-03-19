@@ -28,10 +28,7 @@ import type Archive from '../../../src/types/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
-import {
-  ChecksumBitmask,
-  ChecksumBitmaskInverted,
-} from '../../../src/types/files/fileChecksums.js';
+import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import type { OptionsProps } from '../../../src/types/options.js';
 import Options, {
