@@ -144,10 +144,8 @@ export default class FileFactory {
       // The file at the given path may not be of the type asserted by the given extension, or it
       // may be an incomplete/corrupted file
       MultiBar.log(
-        this.logger.formatMessage(
-          LogLevel.WARN,
-          `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
-        ),
+        LogLevel.WARN,
+        `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
       );
       return undefined;
     }
