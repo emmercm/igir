@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import os from 'node:os';
+
 import semver from 'semver';
 
 import Logger from './src/console/logger.js';
@@ -14,19 +16,30 @@ import IgirException from './src/types/exceptions/igirException.js';
 import type Options from './src/types/options.js';
 
 // Double the number of frames tracked in a stack trace
-Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 20);
+Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);
 
 const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();
 
-if (!semver.satisfies(process.version, Package.ENGINES_NODE)) {
+if (process.versions.node && !semver.satisfies(process.versions.node, Package.ENGINES_NODE)) {
   logger.error(`${Package.NAME} requires a Node.js version of ${Package.ENGINES_NODE}`);
   process.exit(1);
 }
 
-process.once('SIGINT', () => {
+/**
+ * Stop the global MultiBar if it is active, and print a newline after (such that more logs can be
+ * neatly printed after this)
+ */
+function multiBarStopAndNewline(): void {
+  const needNewline = MultiBar.isActive();
   MultiBar.stop();
-  logger.newLine();
+  if (needNewline) {
+    logger.newLine();
+  }
+}
+
+process.once('SIGINT', () => {
+  multiBarStopAndNewline();
   logger.notice(`Exiting ${Package.NAME} early`);
   process.exit(0);
 });
@@ -36,7 +49,14 @@ let options: Options;
 try {
   const argv = process.argv.slice(2);
   options = new ArgumentsParser(logger).parse(argv);
+
   logger.setLogLevel(options.getLogLevel());
+  const debugLog = options.getDebugLog();
+  if (debugLog !== undefined) {
+    logger.newLine();
+    logger.printLine(LogLevel.NOTICE, `Writing debug log to: ${debugLog}`);
+    logger.setLogFile(debugLog);
+  }
 
   const argvString = argv
     .map((arg) => {
@@ -59,6 +79,15 @@ try {
   process.exit(1);
 }
 
+if (options.getDebugLog()) {
+  logger.trace(`process: ${process.platform} ${process.arch}`);
+  logger.trace(`process.execPath: ${process.execPath}`);
+  logger.trace(`process.versions: ${JSON.stringify(process.versions)}`);
+  logger.trace(`os.release: ${os.release()}`);
+  logger.trace(`os.userInfo: ${JSON.stringify(os.userInfo())}`);
+  logger.trace(`package.json: ${JSON.stringify(Package.JSON)}`);
+}
+
 // Start the main process
 try {
   new EndOfLifeChecker(logger).check(process.version);
@@ -67,7 +96,8 @@ try {
   await new Igir(options, logger).main();
   MultiBar.stop();
 } catch (error) {
-  MultiBar.stop();
+  multiBarStopAndNewline();
+
   if (error instanceof IgirException) {
     logger.error(error);
   } else if (error instanceof Error && error.stack) {
@@ -76,6 +106,5 @@ try {
   } else {
     logger.error(error);
   }
-  logger.newLine();
   process.exit(1);
 }

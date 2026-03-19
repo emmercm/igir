@@ -49,7 +49,7 @@ export default class UpdateChecker {
       } else {
         message += ` via npm: ${color(`npm update ${Package.NAME}`)}`;
       }
-      MultiBar.log(this.logger.formatMessage(LogLevel.NOTICE, message));
+      MultiBar.log(LogLevel.NOTICE, message);
     }
   }
 
