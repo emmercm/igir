@@ -104,6 +104,8 @@ export default class ArgumentsParser {
     const groupDir2Dat = 'dir2dat command options:';
     const groupFixdat = 'fixdat command options:';
     const groupReport = 'report command options:';
+    const groupConcurrency = 'Concurrency options:';
+    const groupDirectory = 'Cache & directory options:';
     const groupHelpDebug = 'Help & debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -521,6 +523,15 @@ export default class ArgumentsParser {
           'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
         type: 'boolean',
         conflicts: ['overwrite'],
+      })
+      .option('write-retry', {
+        group: groupRomOutput,
+        description:
+          'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
+        type: 'number',
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 0),
+        requiresArg: true,
+        default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
       })
       .check((checkArgv) => {
         const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) =>
@@ -1025,7 +1036,7 @@ export default class ArgumentsParser {
       })
 
       .option('dat-threads', {
-        group: groupHelpDebug,
+        group: groupConcurrency,
         description: 'Number of DATs to process in parallel',
         type: 'number',
         coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -1033,7 +1044,7 @@ export default class ArgumentsParser {
         default: Defaults.DAT_DEFAULT_THREADS,
       })
       .option('reader-threads', {
-        group: groupHelpDebug,
+        group: groupConcurrency,
         description: 'Maximum number of ROMs to read in parallel per disk',
         type: 'number',
         coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -1041,7 +1052,7 @@ export default class ArgumentsParser {
         default: Defaults.FILE_READER_DEFAULT_THREADS,
       })
       .option('writer-threads', {
-        group: groupHelpDebug,
+        group: groupConcurrency,
         description: 'Maximum number of ROMs to write in parallel',
         type: 'number',
         coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -1053,40 +1064,40 @@ export default class ArgumentsParser {
           middlewareArgv.datThreads = 1;
         }
       }, true)
-      .option('write-retry', {
-        group: groupHelpDebug,
-        description:
-          'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
-        type: 'number',
-        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 0),
-        requiresArg: true,
-        default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
-      })
+
       .options('temp-dir', {
-        group: groupHelpDebug,
+        group: groupDirectory,
         description: 'Path to a directory for temporary files',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .option('disable-cache', {
-        group: groupHelpDebug,
+        group: groupDirectory,
         description: 'Disable loading or saving the cache file',
         type: 'boolean',
       })
       .option('cache-path', {
-        group: groupHelpDebug,
+        group: groupDirectory,
         description: 'Location for the cache file',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         conflicts: ['disable-cache'],
       })
+
       .option('verbose', {
         group: groupHelpDebug,
         alias: 'v',
         description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
+      })
+      .option('debug-log', {
+        group: groupHelpDebug,
+        description: 'Generate a debug log file to attach to bug reports',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: false, // explicitly false! we can default this
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv['clean-dry-run'] === true && middlewareArgv.verbose < 1) {

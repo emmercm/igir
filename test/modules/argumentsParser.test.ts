@@ -226,6 +226,7 @@ describe('options', () => {
     expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
+    expect(options.getWriteRetry()).toEqual(Defaults.ROM_WRITER_ADDITIONAL_RETRIES);
 
     expect(options.getMoveDeleteDirs()).toEqual(MoveDeleteDirs.AUTO);
 
@@ -312,6 +313,8 @@ describe('options', () => {
     expect(options.getWriterThreads()).toEqual(Defaults.ROM_WRITER_DEFAULT_THREADS);
     expect(options.getDisableCache()).toEqual(false);
     expect(options.getCachePath()).toBeUndefined();
+
+    expect(options.getDebugLog()).toBeUndefined();
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
@@ -1957,6 +1960,29 @@ describe('options', () => {
         ])
         .getOverwriteInvalid(),
     ).toEqual(false);
+  });
+
+  it('should parse "write-retry"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriteRetry()).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '-1'])
+        .getWriteRetry(),
+    ).toEqual(0);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '0']).getWriteRetry(),
+    ).toEqual(0);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '1']).getWriteRetry(),
+    ).toEqual(1);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry(),
+    ).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '2', '--write-retry', '3'])
+        .getWriteRetry(),
+    ).toEqual(3);
   });
 
   it('should parse "clean-exclude"', async () => {
@@ -5007,29 +5033,6 @@ describe('options', () => {
     ).toEqual(3);
   });
 
-  it('should parse "write-retry"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriteRetry()).toEqual(2);
-    expect(
-      argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '-1'])
-        .getWriteRetry(),
-    ).toEqual(0);
-    expect(
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '0']).getWriteRetry(),
-    ).toEqual(0);
-    expect(
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '1']).getWriteRetry(),
-    ).toEqual(1);
-    expect(
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry(),
-    ).toEqual(2);
-    expect(
-      argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '2', '--write-retry', '3'])
-        .getWriteRetry(),
-    ).toEqual(3);
-  });
-
   it('should parse "disable-cache"', () => {
     expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getDisableCache()).toEqual(
       false,
@@ -5102,6 +5105,23 @@ describe('options', () => {
         os.devNull,
       ]),
     ).toThrow(/mutually exclusive/i);
+  });
+
+  it('should parse "debug-log"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getDebugLog()).toBeUndefined();
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--debug-log']).getDebugLog(),
+    ).toMatch(/igir_[0-9]{4}-[0-9]{2}-[0-9]{2}/);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--debug-log', 'one.log'])
+        .getDebugLog(),
+    ).toEqual('one.log');
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--debug-log', 'one.log', '--debug-log', 'two.log'])
+        .getDebugLog(),
+    ).toEqual('two.log');
   });
 
   it('should parse "verbose"', () => {

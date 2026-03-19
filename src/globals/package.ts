@@ -14,6 +14,8 @@ try {
  * A static class of globals that are parsed from `package.json` at startup, to be used widely.
  */
 export default class Package {
+  static readonly JSON = packageJson;
+
   static readonly NAME = packageJson.name;
 
   static readonly HOMEPAGE = packageJson.homepage;

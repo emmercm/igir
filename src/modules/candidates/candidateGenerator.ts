@@ -217,6 +217,9 @@ export default class CandidateGenerator extends Module {
           !inputFile.canExtract()
         ) {
           // We need to read the extracted file, but can't, so we can't use this file
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because it can't be extracted: ${inputFile.toString()}`,
+          );
           return false;
         }
 
@@ -234,6 +237,9 @@ export default class CandidateGenerator extends Module {
           ) {
             // The input file is an ArchiveEntry that we won't rewrite and its name doesn't match
             // what we want it to be
+            this.progressBar.logTrace(
+              `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because the entry has the wrong name: ${inputFile.toString()}`,
+            );
             return false;
           }
         }

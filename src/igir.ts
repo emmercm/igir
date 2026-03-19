@@ -10,6 +10,7 @@ import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
 import type Logger from './console/logger.js';
+import MultiBar from './console/multiBar.js';
 import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import Package from './globals/package.js';
@@ -64,12 +65,13 @@ import type WriteCandidate from './types/writeCandidate.js';
  */
 export default class Igir {
   private readonly options: Options;
-
   private readonly logger: Logger;
+  private readonly multiBar: MultiBar;
 
   constructor(options: Options, logger: Logger) {
     this.options = options;
     this.logger = logger;
+    this.multiBar = MultiBar.create(logger);
   }
 
   /**
@@ -142,7 +144,7 @@ export default class Igir {
     const patches = await this.processPatchScanner(fileFactory, readerSemaphore);
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = this.logger.addProgressBar({
+    const datProcessProgressBar = this.multiBar.addSingleBar({
       name: chalk.underline('Processing DATs'),
       symbol: ProgressBarSymbol.NONE,
       total: dats.length,
@@ -169,7 +171,7 @@ export default class Igir {
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
       datProcessProgressBar.incrementInProgress();
 
-      const progressBar = this.logger.addProgressBar({
+      const progressBar = this.multiBar.addSingleBar({
         name: dat.getDisplayName(),
         symbol: ProgressBarSymbol.WAITING,
         total: dat.getParents().length,
@@ -339,7 +341,7 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar({
+    const progressBar = this.multiBar.addSingleBar({
       name: 'Scanning for DATs',
     });
     let dats = await new DATScanner(
@@ -508,7 +510,7 @@ export default class Igir {
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
-    const romProgressBar = this.logger.addProgressBar({
+    const romProgressBar = this.multiBar.addSingleBar({
       name: 'Scanning for ROMs',
     });
 
@@ -556,7 +558,7 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar({
+    const progressBar = this.multiBar.addSingleBar({
       name: 'Scanning for patches',
     });
     const patches = await new PatchScanner(
@@ -690,7 +692,7 @@ export default class Igir {
     }
 
     const progressBarName = 'Deleting moved files';
-    const progressBar = this.logger.addProgressBar({ name: progressBarName });
+    const progressBar = this.multiBar.addSingleBar({ name: progressBarName });
     const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
       rawRomFiles,
       movedRomsToDelete,
@@ -717,7 +719,7 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar({ name: 'Cleaning output directory' });
+    const progressBar = this.multiBar.addSingleBar({ name: 'Cleaning output directory' });
     const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
     const writtenFilesToExclude = [...datsToWrittenFiles.values()].flat();
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar).clean(
@@ -738,7 +740,7 @@ export default class Igir {
       return;
     }
 
-    const reportProgressBar = this.logger.addProgressBar({
+    const reportProgressBar = this.multiBar.addSingleBar({
       name: 'Generating report',
       symbol: ProgressBarSymbol.WRITING,
     });
