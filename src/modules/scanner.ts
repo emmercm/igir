@@ -55,11 +55,21 @@ export default abstract class Scanner extends Module {
         let files: File[];
         try {
           files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
-          await this.logWarnings(files);
         } finally {
           childBar.delete();
         }
 
+        // Constrain the checksums returned based on the requested bitmask
+        files = files.map((file) =>
+          file.withProps({
+            crc32: checksumBitmask & ChecksumBitmask.CRC32 ? file.getCrc32() : undefined,
+            md5: checksumBitmask & ChecksumBitmask.MD5 ? file.getMd5() : undefined,
+            sha1: checksumBitmask & ChecksumBitmask.SHA1 ? file.getSha1() : undefined,
+            sha256: checksumBitmask & ChecksumBitmask.SHA256 ? file.getSha256() : undefined,
+          }),
+        );
+
+        await this.logWarnings(files);
         this.progressBar.incrementCompleted();
         return files;
       })
