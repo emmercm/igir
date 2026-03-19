@@ -6,7 +6,7 @@ By default, Igir will use CRC32 + filesize to match input files to ROMs found in
 
 !!! note
 
-    The main drawback of CRC32 checksums are their small keyspace of 4.29 billion unique values (see below). This might seem like a lot, but it's sufficiently small enough that it is very possible for two different files to have the same CRC32. Chances of these "collisions" can be reduced by also comparing the filesize of the two different files, which Igir does.
+    The main drawback of CRC32 checksums are their small keyspace of 4.29 billion unique values (below). This might seem like a lot, but it's sufficiently small enough that it is very possible for two different files to have the same CRC32. Chances of these "collisions" can be reduced by also comparing the filesize of the two different files, which Igir does.
 
 ## Automatically using other checksum algorithms
 
@@ -30,7 +30,7 @@ For example, if you provide all of these DATs at once with the [`--dat <path>` o
 
 !!! note
 
-    When generating a [dir2dat](../dats/dir2dat.md) with the `igir dir2dat` command, Igir will calculate CRC32, MD5, and SHA1 information for every file. This helps ensure that the generated DAT has the most complete information it can. You can additionally add SHA256 information with the option `igir [commands..] [options] --input-checksum-min SHA256` (below).
+    Most DATs do not include SHA256 checksums, so Igir does not calculate them by default. This means that DATs written by [dir2dat](../dats/dir2dat.md) will not include it. If you would like to include it, increase the checksum maximum with the `--input-checksum-max SHA256` option (below).
 
 ## Quick scanning files
 
@@ -66,11 +66,12 @@ The reason you might want to do this is to have a higher confidence that found f
 
 You can also set the _maximum_ checksum that will be used with `--input-checksum-max <algorithm>`. It works in combination with `--input-checksum-min <algorithm>` like this:
 
-| Minimum checksum                       | Maximum checksum              | Effect                                                                       |
-|----------------------------------------|-------------------------------|------------------------------------------------------------------------------|
-| `--input-checksum-min CRC32` (default) | Highest (default)             | Every checksum type can be used for matching                                 |
-| `--input-checksum-min MD5`             | `--input-checksum-max SHA256` | MD5, SHA1, and SHA256 (every type other than CRC32) can be used for matching |
-| `--input-checksum-min SHA1`            | `--input-checksum-max SHA1`   | Only SHA1 will be used for matching                                          |
+| Minimum checksum                       | Maximum checksum                      | Effect                                                         |
+|----------------------------------------|---------------------------------------|----------------------------------------------------------------|
+| `--input-checksum-min CRC32` (default) | `--input-checksum-max SHA1` (default) | The most common checksum types will be used for matching       |
+| `--input-checksum-min CRC32` (default) | `--input-checksum-max SHA256`         | Every checksum type will be used for matching                  |
+| `--input-checksum-min MD5`             | `--input-checksum-max SHA256`         | Every checksum type other than CRC32 will be used for matching |
+| `--input-checksum-min SHA1`            | `--input-checksum-max SHA1`           | Only SHA1 will be used for matching                            |
 
 Here is a table that shows the keyspace for each checksum algorithm, where the higher number of bits reduces the chances of collisions:
 
