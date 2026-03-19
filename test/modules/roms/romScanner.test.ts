@@ -319,6 +319,122 @@ describe('multiple files', () => {
   });
 });
 
+describe('checksum constraining', () => {
+  it('should return only CRC32 when only CRC32 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.CRC32);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeDefined();
+      expect(file.getMd5()).toBeUndefined();
+      expect(file.getSha1()).toBeUndefined();
+      expect(file.getSha256()).toBeUndefined();
+    }
+  });
+
+  it('should return only MD5 when only MD5 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.MD5);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeUndefined();
+      expect(file.getMd5()).toBeDefined();
+      expect(file.getSha1()).toBeUndefined();
+      expect(file.getSha256()).toBeUndefined();
+    }
+  });
+
+  it('should return only SHA1 when only SHA1 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.SHA1);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeUndefined();
+      expect(file.getMd5()).toBeUndefined();
+      expect(file.getSha1()).toBeDefined();
+      expect(file.getSha256()).toBeUndefined();
+    }
+  });
+
+  it('should return only SHA256 when only SHA256 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.SHA256);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeUndefined();
+      expect(file.getMd5()).toBeUndefined();
+      expect(file.getSha1()).toBeUndefined();
+      expect(file.getSha256()).toBeDefined();
+    }
+  });
+
+  it('should return all checksums when all are requested', async () => {
+    const allBitmasks = Object.values(ChecksumBitmask).reduce<number>(
+      (accum, bitmask) => accum | bitmask,
+      0,
+    );
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(allBitmasks);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeDefined();
+      expect(file.getMd5()).toBeDefined();
+      expect(file.getSha1()).toBeDefined();
+      expect(file.getSha256()).toBeDefined();
+    }
+  });
+
+  it('should not constrain archive entries when using quick checksums', async () => {
+    // Quick checksums read CRC32 from archive central directories rather than hashing content.
+    // Those archive entries must NOT be constrained so that the free CRC32 is preserved.
+    const scannedFiles = await new ROMScanner(
+      new Options({
+        input: [path.join('test', 'fixtures', 'roms', 'zip')],
+        inputChecksumQuick: true,
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.MD5);
+
+    const archiveEntries = scannedFiles.filter((file) => file instanceof ArchiveEntry);
+    expect(archiveEntries.length).toBeGreaterThan(0);
+
+    // CRC32 should be preserved from the ZIP central directory even though MD5 was requested
+    const entriesWithCrc32 = archiveEntries.filter((file) => file.getCrc32() !== undefined);
+    expect(entriesWithCrc32.length).toBeGreaterThan(0);
+
+    // MD5 should be absent since quick mode skips hashing archive entry contents
+    const entriesWithMd5 = archiveEntries.filter((file) => file.getMd5() !== undefined);
+    expect(entriesWithMd5).toHaveLength(0);
+  });
+});
+
 describe('single files', () => {
   it('should scan single files with no exclusions', async () => {
     await expect(createRomScanner(['test/fixtures/roms/empty.*']).scan()).resolves.toHaveLength(1);
