@@ -1048,7 +1048,8 @@ export default class GameConsole {
     new GameConsole(
       /Wii/i,
       [
-        /* '.iso' */
+        '.iso',
+        '.wbfs'
       ],
       {
         batocera: 'wii',
