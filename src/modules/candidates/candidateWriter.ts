@@ -550,6 +550,7 @@ export default class CandidateWriter extends Module {
             candidate,
             outputFilePath,
             outputRomFile,
+            childBar,
           );
           if (this.options.shouldWrite() && !existingTest) {
             this.progressBar.logDebug(
@@ -601,6 +602,7 @@ export default class CandidateWriter extends Module {
             candidate,
             outputFilePath,
             outputRomFile,
+            childBar,
           );
           if (!writtenTest) {
             // Successfully validated
@@ -729,6 +731,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     outputFilePath: string,
     expectedFile: File,
+    progressBar?: ProgressBar,
   ): Promise<string | undefined> {
     this.progressBar.logTrace(
       `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: testing raw file`,
@@ -740,7 +743,9 @@ export default class CandidateWriter extends Module {
       actualFile = await this.fileFactory.fileFrom(
         outputFilePath,
         expectedFile.getChecksumBitmask(),
-        undefined,
+        (progress) => {
+          progressBar?.setCompleted(progress);
+        },
         CacheMode.IGNORE_CACHED_VALUE,
       );
     } catch (error) {

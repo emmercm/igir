@@ -54,7 +54,12 @@ export default abstract class Scanner extends Module {
 
         let files: File[];
         try {
-          files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
+          files = await this.getFilesFromPath(
+            inputFile,
+            checksumBitmask,
+            checksumArchives,
+            childBar,
+          );
           await this.logWarnings(files);
         } finally {
           childBar.delete();
@@ -80,7 +85,8 @@ export default abstract class Scanner extends Module {
   private async getFilesFromPath(
     filePath: string,
     checksumBitmask: number,
-    checksumArchives = false,
+    checksumArchives: boolean,
+    progressBar: ProgressBar,
   ): Promise<File[]> {
     try {
       if (await FsPoly.isSymlink(filePath)) {
@@ -95,6 +101,9 @@ export default abstract class Scanner extends Module {
         filePath,
         checksumBitmask,
         this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
+        (progress) => {
+          progressBar.setCompleted(progress);
+        },
       );
 
       for (const fileFromPath of filesFromPath) {
@@ -110,7 +119,11 @@ export default abstract class Scanner extends Module {
 
       const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
       if (checksumArchives && fileIsArchive) {
-        filesFromPath.push(await this.fileFactory.fileFrom(filePath, checksumBitmask));
+        filesFromPath.push(
+          await this.fileFactory.fileFrom(filePath, checksumBitmask, (progress) => {
+            progressBar.setCompleted(progress);
+          }),
+        );
       }
 
       if (filesFromPath.length === 0) {
