@@ -126,7 +126,7 @@ export default class CandidateGenerator extends Module {
         return [rom, [ZeroSizeFile.getInstance()]];
       }
 
-      return [rom, indexedFiles.findFiles(rom) ?? []];
+      return [rom, indexedFiles.findFiles(rom)];
     });
     const romsAndLegalInputFiles = this.filterLegalInputFilesForGame(dat, game, romsAndInputFiles);
     const romsToOptimalInputFile = this.findOptimalInputFileForGame(
@@ -873,7 +873,7 @@ export default class CandidateGenerator extends Module {
         const inputFile = romWithFiles.getInputFile();
         return indexedFiles
           .findFiles(romWithFiles.getRom())
-          ?.find(
+          .find(
             (foundFile) =>
               foundFile.getFilePath() === inputFile.getFilePath() &&
               inputFile instanceof ArchiveEntry &&

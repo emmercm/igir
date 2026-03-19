@@ -57,10 +57,10 @@ describe('findFiles', () => {
     );
     expect(
       indexedFiles.findFiles(new ROM({ name: '', size: 999_999, crc32: '22222222' })),
-    ).toBeUndefined();
+    ).toHaveLength(0);
     expect(
       indexedFiles.findFiles(new ROM({ name: '', size: 0, crc32: 'FFFFFFFF' })),
-    ).toBeUndefined();
+    ).toHaveLength(0);
   });
 
   it('should find files based on MD5', async () => {
@@ -79,7 +79,7 @@ describe('findFiles', () => {
       indexedFiles.findFiles(
         new ROM({ name: '', size: 0, md5: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }),
       ),
-    ).toBeUndefined();
+    ).toHaveLength(0);
   });
 
   it('should find files based on SHA1', async () => {
@@ -98,7 +98,48 @@ describe('findFiles', () => {
       indexedFiles.findFiles(
         new ROM({ name: '', size: 0, sha1: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }),
       ),
-    ).toBeUndefined();
+    ).toHaveLength(0);
+  });
+
+  it('should deduplicate a file matched by multiple checksums', async () => {
+    const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
+    // 'four' is indexed by both md5 and sha1; supplying both should return it exactly once
+    expect(
+      indexedFiles.findFiles(
+        new ROM({
+          name: '',
+          size: 0,
+          md5: '44444444444444444444444444444444',
+          sha1: '4444444444444444444444444444444444444444',
+        }),
+      ),
+    ).toHaveLength(1);
+    // 'six' is indexed by both sha1 and sha256; supplying both should return it exactly once
+    expect(
+      indexedFiles.findFiles(
+        new ROM({
+          name: '',
+          size: 0,
+          sha1: '6666666666666666666666666666666666666666',
+          sha256: '6666666666666666666666666666666666666666666666666666666666666666',
+        }),
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('should return all files when checksums match different files', async () => {
+    const indexedFiles = IndexedFiles.fromFiles(await Promise.all(filePromises));
+    // sha256 matches 'seven', sha1 matches 'five' — both distinct files should be returned
+    expect(
+      indexedFiles.findFiles(
+        new ROM({
+          name: '',
+          size: 0,
+          sha256: '7777777777777777777777777777777777777777777777777777777777777777',
+          sha1: '5555555555555555555555555555555555555555',
+        }),
+      ),
+    ).toHaveLength(2);
   });
 
   it('should find files based on SHA256', async () => {
@@ -129,6 +170,6 @@ describe('findFiles', () => {
           sha256: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
         }),
       ),
-    ).toBeUndefined();
+    ).toHaveLength(0);
   });
 });
