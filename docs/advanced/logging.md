@@ -12,7 +12,7 @@ To generate this debug log, provide the option:
 
 This will write the log file to the current working directory. You can provide a file path to the option if you want to write it somewhere else:
 
-```
+```text
 --debug-log <path>
 ```
 
