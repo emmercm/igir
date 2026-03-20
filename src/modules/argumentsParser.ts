@@ -27,6 +27,8 @@ import Options, {
   MoveDeleteDirsInverted,
   PlaylistMode,
   PlaylistModeInverted,
+  PreferFiletype,
+  PreferFiletypeInverted,
   PreferRevision,
   TrimScanFiles,
   TrimScanFilesInverted,
@@ -99,7 +101,8 @@ export default class ArgumentsParser {
     const groupRomTrimmed = 'Trimmed ROM options:';
     const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
-    const groupRomPriority = 'One game, one ROM (1G1R) options:';
+    const groupRomPriority = 'One game, one ROM (1G1R) options (applied in order):';
+    const groupFilePriority = 'Input file preferences (applied in order):';
     const groupPlaylist = 'playlist command options:';
     const groupDir2Dat = 'dir2dat command options:';
     const groupFixdat = 'fixdat command options:';
@@ -862,7 +865,7 @@ export default class ArgumentsParser {
       })
       .option('prefer-game-regex', {
         group: groupRomPriority,
-        description: 'Regular expression of game names to prefer',
+        description: 'Regular expression of DAT game names to prefer',
         type: 'string',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
@@ -870,7 +873,7 @@ export default class ArgumentsParser {
       })
       .option('prefer-rom-regex', {
         group: groupRomPriority,
-        description: 'Regular expression of ROM filenames to prefer',
+        description: 'Regular expression of DAT ROM filenames to prefer',
         type: 'string',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
@@ -949,6 +952,21 @@ export default class ArgumentsParser {
         description: 'Prefer parent ROMs over clones',
         type: 'boolean',
         implies: 'single',
+      })
+
+      .option('prefer-filetype', {
+        group: groupFilePriority,
+        description: 'Prefer input files of a type',
+        choices: Object.keys(PreferFiletype).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: PreferFiletypeInverted[PreferFiletype.PLAIN].toLowerCase(),
+      })
+      .option('prefer-filename-regex', {
+        group: groupFilePriority,
+        description: 'Regular expression of filenames to prefer',
+        coerce: ArgumentsParser.readRegexFile,
+        requiresArg: true,
       })
 
       .option('playlist-mode', {

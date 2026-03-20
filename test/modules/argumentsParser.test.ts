@@ -18,6 +18,7 @@ import {
   MergeMode,
   MoveDeleteDirs,
   PlaylistMode,
+  PreferFiletype,
   PreferRevision,
   TrimScanFiles,
   ZipFormat,
@@ -291,6 +292,9 @@ describe('options', () => {
     expect(options.getPreferRevision()).toBeUndefined();
     expect(options.getPreferRetail()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
+
+    expect(options.getPreferFiletype()).toEqual(PreferFiletype.PLAIN);
+    expect(options.getPreferFilenameRegex()).toBeUndefined();
 
     expect(argumentsParser.parse(['playlist']).getPlaylistMode()).toEqual(PlaylistMode.MULTIPLE);
     expect(argumentsParser.parse(['playlist']).getPlaylistExtensions()).toEqual([
@@ -3153,6 +3157,117 @@ describe('options', () => {
         ])
         .getPreferParent(),
     ).toEqual(false);
+  });
+
+  it('should parse "prefer-filetype"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filetype', 'foobar'])
+        .getPreferFiletype(),
+    ).toThrow(/invalid values/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filetype', 'plain'])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.PLAIN);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--prefer-filetype',
+          'plain',
+          '--prefer-filetype',
+          'archive',
+        ])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.ARCHIVE);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filetype', 'archive'])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.ARCHIVE);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--prefer-filetype',
+          'archive',
+          '--prefer-filetype',
+          'plain',
+        ])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.PLAIN);
+  });
+
+  it('should parse "prefer-filename-regex"', async () => {
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', '[a-z]'])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('lower')),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', '[a-z]'])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', '/[a-z]/i'])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--prefer-filename-regex',
+          '/[a-z]/i',
+          '--prefer-filename-regex',
+          '[0-9]',
+        ])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(false);
+
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    try {
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('')),
+      ).toEqual(false);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('lower')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('UPPER')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('007')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('@!#?@!')),
+      ).toEqual(false);
+    } finally {
+      await FsPoly.rm(tempFile);
+    }
   });
 
   it('should parse "playlist-mode"', () => {
