@@ -219,7 +219,7 @@ it('should not do anything if the input and output files are the same', async ()
 });
 
 describe('zip', () => {
-  it('should not write if the output is the input', async () => {
+  it('should not copy & zip if the output is the input', async () => {
     await copyFixturesToTemp(async (inputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip', 'test'] });
@@ -235,7 +235,7 @@ describe('zip', () => {
     });
   });
 
-  it('should not write anything if the output exists and not overwriting', async () => {
+  it('should not copy & zip anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -261,7 +261,7 @@ describe('zip', () => {
     });
   });
 
-  it('should write if the output is expected and overwriting', async () => {
+  it('should copy & zip if the output is expected and overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -300,7 +300,7 @@ describe('zip', () => {
     });
   });
 
-  it('should not write anything if the output is expected and overwriting invalid', async () => {
+  it('should not copy & zip anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Note: need to exclude some ROMs to prevent duplicate output paths
       const inputGlob = '**/!(chd|headerless)/*';
@@ -338,7 +338,7 @@ describe('zip', () => {
     });
   });
 
-  it('should write if the output is not expected and overwriting invalid', async () => {
+  it('should copy & zip if the output is not expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'zip'] });
@@ -891,7 +891,7 @@ describe('zip', () => {
 });
 
 describe('extract', () => {
-  it('should not write if the output is the input', async () => {
+  it('should not copy & extract if the output is the input', async () => {
     await copyFixturesToTemp(async (inputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'extract', 'test'] });
@@ -907,7 +907,7 @@ describe('extract', () => {
     });
   });
 
-  it('should not write anything if the output exists and not overwriting', async () => {
+  it('should not copy & extract anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
@@ -933,7 +933,7 @@ describe('extract', () => {
     });
   });
 
-  it('should write if the output is expected and overwriting', async () => {
+  it('should copy & extract if the output is expected and overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'extract'] });
@@ -972,7 +972,7 @@ describe('extract', () => {
     });
   });
 
-  it('should not write anything if the output is expected and overwriting invalid', async () => {
+  it('should not copy & extract anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Note: need to exclude some ROMs to prevent duplicate output paths
       const inputGlob = '**/!(chd)/*';
@@ -1010,7 +1010,7 @@ describe('extract', () => {
     });
   });
 
-  it('should write if the output is not expected and overwriting invalid', async () => {
+  it('should copy & extract if the output is not expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'extract'], writerThreads: 1 });
@@ -1526,7 +1526,7 @@ describe('extract', () => {
 });
 
 describe('raw', () => {
-  it('should not write if the output is the input', async () => {
+  it('should not copy if the output is the input', async () => {
     await copyFixturesToTemp(async (inputTemp) => {
       // Given
       const options = new Options({ commands: ['copy', 'test'] });
@@ -1542,7 +1542,7 @@ describe('raw', () => {
     });
   });
 
-  it('should not write anything if the output exists and not overwriting', async () => {
+  it('should not copy anything if the output exists and not overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy'] });
@@ -1568,7 +1568,7 @@ describe('raw', () => {
     });
   });
 
-  it('should write if the output is expected and overwriting', async () => {
+  it('should copy if the output is expected and overwriting', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy'] });
@@ -1607,7 +1607,7 @@ describe('raw', () => {
     });
   });
 
-  it('should not write anything if the output is expected and overwriting invalid', async () => {
+  it('should not copy anything if the output is expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy'] });
@@ -1642,7 +1642,7 @@ describe('raw', () => {
     });
   });
 
-  it('should write if the output is not expected and overwriting invalid', async () => {
+  it('should copy if the output is not expected and overwriting invalid', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
       const options = new Options({ commands: ['copy'] });

@@ -275,10 +275,10 @@ export default class CandidateWriter extends Module {
           }
         }
       }
-      if (!written) {
-        return;
-      }
 
+      // If an input file was used in a WriteCandidate, then it was recognized by some DAT, and it
+      // should be queued for deletion. Only unrecognized/unmatched files should remain in input
+      // directories when moving files.
       inputToOutputZipEntries.forEach(([inputRomFile]) => {
         this.enqueueFileDeletion(inputRomFile);
       });
@@ -617,10 +617,10 @@ export default class CandidateWriter extends Module {
           }
         }
       }
-      if (!written) {
-        return;
-      }
 
+      // If an input file was used in a WriteCandidate, then it was recognized by some DAT, and it
+      // should be queued for deletion. Only unrecognized/unmatched files should remain in input
+      // directories when moving files.
       this.enqueueFileDeletion(inputRomFile);
     } finally {
       childBar.delete();
