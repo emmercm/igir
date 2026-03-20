@@ -16,6 +16,7 @@ import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import CandidatePatchGenerator from '../../../src/modules/candidates/candidatePatchGenerator.js';
+import type { CandidateWriterResults } from '../../../src/modules/candidates/candidateWriter.js';
 import CandidateWriter from '../../../src/modules/candidates/candidateWriter.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
@@ -95,7 +96,7 @@ async function candidateWriter(
   inputGlob: string,
   patchGlob: string | undefined,
   outputTemp: string,
-): Promise<[string, Stats][]> {
+): Promise<CandidateWriterResults> {
   // Given
   const options = new Options({
     ...optionsProps,
@@ -155,16 +156,13 @@ async function candidateWriter(
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
   // When
-  await new CandidateWriter(
+  return await new CandidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
     new CandidateWriterSemaphore(os.availableParallelism()),
     new FileMoveMutex(),
   ).write(dat, candidates);
-
-  // Then
-  return await walkAndStat(outputTemp);
 }
 
 it('should not do anything if there are no candidates', async () => {
@@ -425,13 +423,8 @@ describe('zip', () => {
     async (inputGlob, expectedFileName, expectedCrc) => {
       await copyFixturesToTemp(async (inputTemp, outputTemp) => {
         const options = new Options({ commands: ['copy', 'zip', 'test'] });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
           path.join(outputTemp, outputFiles[0][0]),
@@ -463,13 +456,8 @@ describe('zip', () => {
         commands: ['copy', 'zip', 'test'],
         removeHeaders: [''], // all
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        undefined,
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
       const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         path.join(outputTemp, outputFiles[0][0]),
@@ -507,13 +495,8 @@ describe('zip', () => {
       const options = new Options({
         commands: ['copy', 'zip', 'test'],
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        'patches',
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
 
       const writtenRomsAndCrcs = (
         await Promise.all(
@@ -630,11 +613,8 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (
-        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-      )
-        .map((pair) => pair[0])
-        .toSorted();
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -758,11 +738,8 @@ describe('zip', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = (
-          await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-        )
-          .map((pair) => pair[0])
-          .toSorted();
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -874,13 +851,8 @@ describe('zip', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
 
         // Then
         expect(outputFiles).toHaveLength(1);
@@ -1085,13 +1057,8 @@ describe('extract', () => {
     async (inputGlob, expectedFileName, expectedCrc) => {
       await copyFixturesToTemp(async (inputTemp, outputTemp) => {
         const options = new Options({ commands: ['copy', 'extract', 'test'] });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0][0]).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1122,13 +1089,8 @@ describe('extract', () => {
         commands: ['copy', 'extract', 'test'],
         removeHeaders: [''], // all
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        undefined,
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(
@@ -1165,13 +1127,8 @@ describe('extract', () => {
       const options = new Options({
         commands: ['copy', 'extract', 'test'],
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        'patches',
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
 
       const writtenRomsAndCrcs = (
         await Promise.all(
@@ -1319,11 +1276,8 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (
-        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-      )
-        .map((pair) => pair[0])
-        .toSorted();
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1503,11 +1457,8 @@ describe('extract', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = (
-          await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-        )
-          .map((pair) => pair[0])
-          .toSorted();
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1722,13 +1673,8 @@ describe('raw', () => {
     async (inputGlob, expectedFileName, expectedCrc) => {
       await copyFixturesToTemp(async (inputTemp, outputTemp) => {
         const options = new Options({ commands: ['copy', 'test'] });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0][0]).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1757,13 +1703,8 @@ describe('raw', () => {
           commands: ['copy', 'test'],
           removeHeaders: [''], // all
         });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0][0]).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1795,13 +1736,8 @@ describe('raw', () => {
       const options = new Options({
         commands: ['copy', 'test'],
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        'patches',
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
 
       const writtenRomsAndCrcs = (
         await Promise.all(
@@ -1930,11 +1866,8 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (
-        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-      )
-        .map((pair) => pair[0])
-        .toSorted();
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -2135,11 +2068,8 @@ describe('raw', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = (
-          await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-        )
-          .map((pair) => pair[0])
-          .toSorted();
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
