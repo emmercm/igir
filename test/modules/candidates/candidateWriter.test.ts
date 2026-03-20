@@ -384,14 +384,50 @@ describe('zip', () => {
     });
   });
 
-  it('should delete matched input files but not write to the output when zipping if the output is expected', async () => {
-    // TODO:
-    //  - first, copy everything from input -> output
-    //  - then, create a new file in the input that does not match the DAT
-    //  - then, use the 'copy' and 'zip' commands
-    //  - assert that the output directory was not touched during the second 'copy'
-    //  - assert that all files are deleted from the input directory except the non-matching file that was created
-  });
+  test.each([{ overwriteInvalid: true }, { overwrite: true }] satisfies OptionsProps[])(
+    'should delete matched input files but not write to the output when moving if the output is expected: %s',
+    async (optionsProps) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Note: need to exclude some ROMs to prevent duplicate output paths
+        const inputGlob = '**/!(chd|headerless)/*';
+
+        // Given: first, copy everything from input -> output
+        await candidateWriter(
+          { commands: ['copy', 'zip'] },
+          inputTemp,
+          inputGlob,
+          undefined,
+          outputTemp,
+        );
+
+        // And an extra file that won't be matched
+        await FsPoly.writeFile(
+          path.join(inputTemp, 'nonmatch.rom'),
+          'CA52A3B3466BF3EB71465AADC7E6D07A',
+        );
+
+        // And files were written
+        const outputFilesBefore = await walkAndStat(outputTemp);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
+
+        // When: use the 'move' and 'zip' commands with overwriteInvalid
+        const results = await candidateWriter(
+          { commands: ['move', 'zip'], ...optionsProps },
+          inputTemp,
+          inputGlob,
+          undefined,
+          outputTemp,
+        );
+
+        // Then all matched input files were queued for deletion...
+        expect(results.moved.length).toBeGreaterThan(0);
+        // ...and nonmatch.rom was not one of them
+        expect(results.moved.map((f) => path.basename(f.getFilePath()))).not.toContain(
+          'nonmatch.rom',
+        );
+      });
+    },
+  );
 
   it('should not move if tested zip has wrong number of entries', () => {
     // TODO(cemmer)
@@ -1650,14 +1686,44 @@ describe('raw', () => {
     });
   });
 
-  it('should delete matched input files but not write to the output when moving if the output is expected', async () => {
-    // TODO:
-    //  - first, copy everything from input -> output
-    //  - then, create a new file in the input that does not match the DAT
-    //  - then, use the 'move' command WITHOUT 'zip' or 'extract'
-    //  - assert that the output directory was not touched during the 'move'
-    //  - assert that all files are deleted from the input directory except the non-matching file that was created
-  });
+  test.each([{ overwriteInvalid: true }, { overwrite: true }] satisfies OptionsProps[])(
+    'should delete matched input files but not write to the output when moving if the output is expected: %s',
+    async (optionsProps) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Note: need to exclude some ROMs to prevent duplicate output paths
+        const inputGlob = '**/!(chd|headerless)/*';
+
+        // Given: first, copy everything from input -> output
+        await candidateWriter({ commands: ['copy'] }, inputTemp, inputGlob, undefined, outputTemp);
+
+        // And an extra file that won't be matched
+        await FsPoly.writeFile(
+          path.join(inputTemp, 'nonmatch.rom'),
+          '51BAFB1B121825634E731DF56037C9F5',
+        );
+
+        // And files were written
+        const outputFilesBefore = await walkAndStat(outputTemp);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
+
+        // When: use the 'move' command with overwriteInvalid
+        const results = await candidateWriter(
+          { commands: ['move'], ...optionsProps },
+          inputTemp,
+          inputGlob,
+          undefined,
+          outputTemp,
+        );
+
+        // Then all matched input files were queued for deletion...
+        expect(results.moved.length).toBeGreaterThan(0);
+        // ...and nonmatch.rom was not one of them
+        expect(results.moved.map((f) => path.basename(f.getFilePath()))).not.toContain(
+          'nonmatch.rom',
+        );
+      });
+    },
+  );
 
   test.each([
     // Control group of headered files that can be removed
