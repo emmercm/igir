@@ -16,7 +16,7 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
 import Zip from '../../src/types/files/archives/zip.js';
-import type File from '../../src/types/files/file.js';
+import File from '../../src/types/files/file.js';
 import FileCache from '../../src/types/files/fileCache.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
@@ -45,8 +45,33 @@ it('should do nothing if no ROMs moved', async () => {
   expect(exists).not.toContain(false);
 });
 
-it('should delete raw files', () => {
-  // TODO(cemmer)
+it('should delete raw files', async () => {
+  const inputPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+  try {
+    const options = new Options({
+      commands: ['move'],
+      input: [inputPath],
+      output: 'output',
+    });
+
+    // Given a plain file
+    const rawFile = path.join(inputPath, 'game.rom');
+    await FsPoly.touch(rawFile);
+    const inputFile = await File.fileOf({ filePath: rawFile });
+
+    // When - the file is considered "moved" (inputRom = movedRom)
+    const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
+      [inputFile],
+      [inputFile],
+      new Map(),
+    );
+
+    // Then - the file should have been deleted
+    expect(deletedPaths).toHaveLength(1);
+    await expect(FsPoly.exists(rawFile)).resolves.toEqual(false);
+  } finally {
+    await FsPoly.rm(inputPath, { recursive: true, force: true });
+  }
 });
 
 describe('should delete archives', () => {
@@ -466,6 +491,34 @@ describe('should delete archives', () => {
   });
 });
 
-it("should not delete files that weren't moved", () => {
-  // TODO(cemmer)
+it("should not delete files that weren't moved", async () => {
+  const inputPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+  try {
+    const options = new Options({
+      commands: ['move'],
+      input: [inputPath],
+      output: inputPath, // input dir is also the output dir
+    });
+
+    // Given a plain file
+    const rawFile = path.join(inputPath, 'game.rom');
+    await FsPoly.touch(rawFile);
+    const inputFile = await File.fileOf({ filePath: rawFile });
+
+    // The file is a "moved" ROM, but it's also a written output (same path)
+    const dat = new LogiqxDAT({ header: new Header() });
+    const datsToWrittenRoms = new Map([[dat, [inputFile]]]);
+
+    const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
+      [inputFile],
+      [inputFile],
+      datsToWrittenRoms,
+    );
+
+    // Then - the file should NOT have been deleted because it's a written output
+    expect(deletedPaths).toHaveLength(0);
+    await expect(FsPoly.exists(rawFile)).resolves.toEqual(true);
+  } finally {
+    await FsPoly.rm(inputPath, { recursive: true, force: true });
+  }
 });

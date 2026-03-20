@@ -9391,14 +9391,53 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
 
 test.each([[MergeMode.NONMERGED], [MergeMode.SPLIT], [MergeMode.MERGED]])(
   'should handle invalid romOf attributes: %s',
-  () => {
-    // TODO(cemmer)
+  (mergeMode) => {
+    // Given a DAT where a game has a romOf pointing to a non-existent BIOS parent,
+    // and also has a clone (so hasParentCloneInfo() returns true and merge runs)
+    const options = new Options({ mergeRoms: MergeModeInverted[mergeMode].toLowerCase() });
+    const dat = new LogiqxDAT({
+      header: new Header(),
+      games: [
+        new Game({
+          name: 'parent-with-bad-romof',
+          romOf: 'nonexistent-bios',
+          roms: new ROM({ name: 'parent.rom', size: 1, crc32: '11111111' }),
+        }),
+        new Game({
+          name: 'child-of-parent',
+          cloneOf: 'parent-with-bad-romof',
+          roms: new ROM({ name: 'child.rom', size: 2, crc32: '22222222' }),
+        }),
+      ],
+    });
+
+    // When / Then - should not throw despite invalid romOf reference
+    expect(() => new DATMergerSplitter(options, new ProgressBarFake()).merge(dat)).not.toThrow();
   },
 );
 
 test.each([[MergeMode.SPLIT], [MergeMode.MERGED]])(
   'should handle invalid cloneOf attributes: %s',
-  () => {
-    // TODO(cemmer)
+  (mergeMode) => {
+    // Given a DAT where a game has a cloneOf pointing to a non-existent parent
+    // This creates an "orphan" parent via the DAT grouping logic
+    const options = new Options({ mergeRoms: MergeModeInverted[mergeMode].toLowerCase() });
+    const dat = new LogiqxDAT({
+      header: new Header(),
+      games: [
+        new Game({
+          name: 'real-parent',
+          roms: new ROM({ name: 'parent.rom', size: 1, crc32: '11111111' }),
+        }),
+        new Game({
+          name: 'orphan-clone',
+          cloneOf: 'nonexistent-parent',
+          roms: new ROM({ name: 'orphan.rom', size: 2, crc32: 'aaaaaaaa' }),
+        }),
+      ],
+    });
+
+    // When / Then - should not throw despite invalid cloneOf reference
+    expect(() => new DATMergerSplitter(options, new ProgressBarFake()).merge(dat)).not.toThrow();
   },
 );
