@@ -180,3 +180,5 @@ The option requires a file path to a JSON file in this format:
 ```
 
 You can name the tokens anything you want. The above example supports replacing the tokens `{lorem}` and `{ipsum}`.
+
+The _last_ match in the `consoles` array will be used. That makes the above example safe - "Game Boy Color" is a more specific name than "Game Boy".
