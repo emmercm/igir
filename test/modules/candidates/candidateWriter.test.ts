@@ -386,6 +386,15 @@ describe('zip', () => {
     });
   });
 
+  it('should delete matched input files but not write to the output when zipping if the output is expected', async () => {
+    // TODO:
+    //  - first, copy everything from input -> output
+    //  - then, create a new file in the input that does not match the DAT
+    //  - then, use the 'copy' and 'zip' commands
+    //  - assert that the output directory was not touched during the second 'copy'
+    //  - assert that all files are deleted from the input directory except the non-matching file that was created
+  });
+
   it('should not move if tested zip has wrong number of entries', () => {
     // TODO(cemmer)
   });
@@ -1688,6 +1697,15 @@ describe('raw', () => {
       // And the input files weren't touched
       await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
     });
+  });
+
+  it('should delete matched input files but not write to the output when moving if the output is expected', async () => {
+    // TODO:
+    //  - first, copy everything from input -> output
+    //  - then, create a new file in the input that does not match the DAT
+    //  - then, use the 'move' command WITHOUT 'zip' or 'extract'
+    //  - assert that the output directory was not touched during the 'move'
+    //  - assert that all files are deleted from the input directory except the non-matching file that was created
   });
 
   test.each([
