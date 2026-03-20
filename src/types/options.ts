@@ -510,7 +510,9 @@ export default class Options implements OptionsProps {
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = (options?.dat ?? []).map((filePath) => filePath.replaceAll(/[\\/]/g, path.sep));
+    this.dat = (options?.dat ?? []).map((filePath) =>
+      URLPoly.canParse(filePath) ? filePath : filePath.replaceAll(/[\\/]/g, path.sep),
+    );
     this.datExclude = (options?.datExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
