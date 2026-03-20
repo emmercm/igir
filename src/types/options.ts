@@ -128,6 +128,16 @@ export const PreferRevisionInverted = Object.fromEntries(
   Object.entries(PreferRevision).map(([key, value]) => [value, key]),
 ) as Record<PreferRevisionValue, PreferRevisionKey>;
 
+export const PreferFiletype = {
+  PLAIN: 1,
+  ARCHIVE: 2,
+} as const;
+export type PreferFiletypeKey = keyof typeof PreferFiletype;
+export type PreferFiletypeValue = (typeof PreferFiletype)[PreferFiletypeKey];
+export const PreferFiletypeInverted = Object.fromEntries(
+  Object.entries(PreferFiletype).map(([key, value]) => [value, key]),
+) as Record<PreferFiletypeValue, PreferFiletypeKey>;
+
 export const PlaylistMode = {
   MULTIPLE: 1,
   ALWAYS: 2,
@@ -256,6 +266,9 @@ export interface OptionsProps {
   readonly preferRevision?: string;
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
+
+  readonly preferFiletype?: string;
+  readonly preferFilenameRegex?: string;
 
   readonly playlistMode?: string;
   readonly playlistExtensions?: string[];
@@ -470,6 +483,10 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly preferFiletype?: string;
+
+  readonly preferFilenameRegex?: string;
+
   readonly playlistMode?: string;
 
   readonly playlistExtensions: string[];
@@ -614,6 +631,9 @@ export default class Options implements OptionsProps {
     this.preferRevision = options?.preferRevision;
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
+
+    this.preferFiletype = options?.preferFiletype;
+    this.preferFilenameRegex = options?.preferFilenameRegex;
 
     this.playlistMode = options?.playlistMode;
     this.playlistExtensions = options?.playlistExtensions ?? [];
@@ -1474,6 +1494,20 @@ export default class Options implements OptionsProps {
 
   getPreferParent(): boolean {
     return this.preferParent;
+  }
+
+  getPreferFiletype(): PreferFiletypeValue | undefined {
+    const preferFiletype = Object.keys(PreferFiletype).find(
+      (mode) => mode.toLowerCase() === this.preferFiletype?.toLowerCase(),
+    );
+    if (!preferFiletype) {
+      return undefined;
+    }
+    return PreferFiletype[preferFiletype as PreferFiletypeKey];
+  }
+
+  getPreferFilenameRegex(): RegExp[] | undefined {
+    return Options.getRegex(this.preferFilenameRegex);
   }
 
   getPlaylistMode(): PlaylistModeValue | undefined {
