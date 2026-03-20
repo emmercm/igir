@@ -245,7 +245,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -271,7 +271,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -313,7 +313,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -348,7 +348,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // And the files are made invalid
@@ -900,7 +900,7 @@ describe('extract', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -926,7 +926,7 @@ describe('extract', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -968,7 +968,7 @@ describe('extract', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -1003,7 +1003,7 @@ describe('extract', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // And the files are made invalid
@@ -1514,7 +1514,7 @@ describe('raw', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -1540,7 +1540,7 @@ describe('raw', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -1579,7 +1579,7 @@ describe('raw', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -1614,7 +1614,7 @@ describe('raw', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // And the files are made invalid
@@ -2130,7 +2130,7 @@ describe('link', () => {
 
         // And files were written
         const outputFilesBefore = await walkAndStat(outputTemp);
-        expect(outputFilesBefore).not.toHaveLength(0);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
         for (const [, stats] of outputFilesBefore) {
           expect(stats.isSymbolicLink()).toEqual(LinkMode[linkMode] === LinkMode.SYMLINK);
         }
@@ -2164,7 +2164,7 @@ describe('link', () => {
 
         // And files were written
         const outputFilesBefore = await walkAndStat(outputTemp);
-        expect(outputFilesBefore).not.toHaveLength(0);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
         for (const [, stats] of outputFilesBefore) {
           expect(stats.isSymbolicLink()).toEqual(linkMode === LinkModeInverted[LinkMode.SYMLINK]);
         }
@@ -2221,7 +2221,7 @@ describe('link', () => {
 
         // And files were written
         const outputFilesBefore = await walkAndStat(outputTemp);
-        expect(outputFilesBefore).not.toHaveLength(0);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
         for (const [, stats] of outputFilesBefore) {
           expect(stats.isSymbolicLink()).toEqual(linkMode === LinkModeInverted[LinkMode.SYMLINK]);
         }
@@ -2285,7 +2285,7 @@ describe('link', () => {
 
       // Then files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       for (const [outputPath, stats] of outputFilesBefore) {
         expect(stats.isSymbolicLink()).toEqual(true);
         const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
