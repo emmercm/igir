@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "outputTokens.schema.json",
+  "$id": "consoleTokens.schema.json",
   "title": "OutputTokens",
   "description": "Schema for the game console definitions used to map DAT names to output tokens and file extensions",
   "type": "object",

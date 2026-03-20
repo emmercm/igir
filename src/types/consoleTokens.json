@@ -1,5 +1,5 @@
 {
-  "$schema": "./outputTokens.schema.json",
+  "$schema": "./consoleTokens.schema.json",
   "version": 1,
   "consoles": [
     {

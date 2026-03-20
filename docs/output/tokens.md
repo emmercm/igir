@@ -50,9 +50,9 @@ ROMs-Sorted/
     └── Pokemon Pinball (USA, Australia) (Rumble Version) (SGB Enhanced) (GB Compatible).gbc
 ```
 
-!!! note
+!!! tip
 
-    Tokens can resolve to multiple values for each ROM. For example, a ROM may have multiple regions or languages. This will result in the same ROM being written to multiple locations.
+    See the `igir --help` message for the list of all replaceable tokens.
 
 ## DAT information
 
@@ -65,6 +65,10 @@ When using [DATs](../dats/introduction.md), you can make use of console & game i
 - `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
 - `{category}` the game's "category" (only some DATs provide this)
 - `{genre}` the game's "genre" (most DATs don't provide this)
+
+!!! note
+
+    Some DAT tokens can resolve to multiple values for each ROM. For example, a ROM may have multiple regions or languages. This will result in the same ROM being written to multiple locations.
 
 ## File information
 
@@ -94,6 +98,10 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{spruce}` the [SpruceOS](../usage/handheld/spruceos.md) emulator's directory for the ROM
 - `{twmenu}` the [TWiLightMenu++](../usage/handheld/twmenu.md) emulator's directory for the ROM
 
-!!! tip
+TODO: example file structure
 
-    See the `igir --help` message for the list of all replaceable tokens.
+!!! note
+
+    It is difficult to keep up with new popular frontends as they are created, and it is difficult to keep up with frontends that change their file structure. If you notice that a value is wrong, please submit a [pull request](https://github.com/emmercm/igir/pulls)!
+
+TODO: --output-console-tokens

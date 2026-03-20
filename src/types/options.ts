@@ -181,7 +181,7 @@ export interface OptionsProps {
   readonly dirLetterLimit?: number;
   readonly dirLetterGroup?: boolean;
   readonly dirGameSubdir?: string;
-  readonly outputTokens?: string;
+  readonly outputConsoleTokens?: string;
 
   readonly fixExtension?: string;
   readonly overwrite?: boolean;
@@ -341,7 +341,7 @@ export default class Options implements OptionsProps {
 
   readonly dirGameSubdir?: string;
 
-  readonly outputTokens?: string;
+  readonly outputConsoleTokens?: string;
 
   readonly fixExtension?: string;
 
@@ -540,7 +540,7 @@ export default class Options implements OptionsProps {
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
-    this.outputTokens = options?.outputTokens;
+    this.outputConsoleTokens = options?.outputConsoleTokens;
 
     this.fixExtension = options?.fixExtension;
     this.overwrite = options?.overwrite ?? false;
@@ -1118,8 +1118,8 @@ export default class Options implements OptionsProps {
     return GameSubdirMode[subdirMode as GameSubdirModeKey];
   }
 
-  getOutputTokens(): string | undefined {
-    return this.outputTokens;
+  getOutputConsoleTokens(): string | undefined {
+    return this.outputConsoleTokens;
   }
 
   getFixExtension(): FixExtensionValue | undefined {

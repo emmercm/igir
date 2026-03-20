@@ -1,17 +1,17 @@
-export type OutputTokenValues = Map<string, string>;
+export type ConsoleTokenValues = Map<string, string>;
 
 /**
  * A class of information about specific game consoles and their names, standard file extensions,
  * and how to replace output tokens such as `{pocket}`.
  */
-export default class OutputTokens {
+export default class ConsoleTokens {
   private readonly datRegex: RegExp;
 
   private readonly extensions: string[];
 
-  private readonly tokens: OutputTokenValues;
+  private readonly tokens: ConsoleTokenValues;
 
-  constructor(datRegex: RegExp, extensions: string[], tokens: OutputTokenValues) {
+  constructor(datRegex: RegExp, extensions: string[], tokens: ConsoleTokenValues) {
     this.datRegex = datRegex;
     this.extensions = extensions;
     this.tokens = tokens;
@@ -25,7 +25,7 @@ export default class OutputTokens {
     return this.extensions;
   }
 
-  getTokens(): OutputTokenValues {
+  getTokens(): ConsoleTokenValues {
     return this.tokens;
   }
 }

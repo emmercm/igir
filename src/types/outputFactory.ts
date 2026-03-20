@@ -7,6 +7,8 @@ import { Memoize } from 'typescript-memoize';
 import GameGrouper from '../gameGrouper.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import ConsoleTokens from './consoleTokens.js';
+import outputTokensData from './consoleTokens.json' with { type: 'json' };
 import type DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
 import type Game from './dats/game.js';
@@ -20,10 +22,8 @@ import FileFactory from './files/fileFactory.js';
 import ZeroSizeFile from './files/zeroSizeFile.js';
 import type Options from './options.js';
 import { FixExtension, GameSubdirMode } from './options.js';
-import OutputTokens from './outputTokens.js';
-import outputTokensData from './outputTokens.json' with { type: 'json' };
 
-interface OutputTokensJson {
+interface ConsoleTokensJson {
   consoles: {
     datNameRegex: string;
     extensions: string[];
@@ -228,7 +228,7 @@ export default class OutputFactory {
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
     result = this.replaceOutputTokens(result, options, outputRomFilename);
-    result = this.replaceTokensFile(result, options, dat, outputRomFilename);
+    result = this.replaceConsoleTokens(result, options, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
@@ -310,10 +310,10 @@ export default class OutputFactory {
   }
 
   @Memoize()
-  private static loadTokensFile(filePath: string | undefined): OutputTokens[] {
+  private static loadTokensFile(filePath: string | undefined): ConsoleTokens[] {
     const data = filePath
-      ? (JSON.parse(fs.readFileSync(filePath, 'utf8')) as OutputTokensJson)
-      : (outputTokensData satisfies OutputTokensJson);
+      ? (JSON.parse(fs.readFileSync(filePath, 'utf8')) as ConsoleTokensJson)
+      : (outputTokensData satisfies ConsoleTokensJson);
     return data.consoles.map(({ datNameRegex, extensions, tokens }) => {
       const lastSlash = datNameRegex.lastIndexOf('/');
       const pattern = datNameRegex.slice(1, lastSlash);
@@ -321,29 +321,29 @@ export default class OutputFactory {
       const tokensMap = new Map(
         Object.entries(tokens).filter((entry): entry is [string, string] => entry[1] !== undefined),
       );
-      return new OutputTokens(new RegExp(pattern, flags || undefined), extensions, tokensMap);
+      return new ConsoleTokens(new RegExp(pattern, flags || undefined), extensions, tokensMap);
     });
   }
 
-  private static getOutputTokensForFilename(
-    outputTokensFile: OutputTokens[],
+  private static getConsoleTokensForFilename(
+    outputTokensFile: ConsoleTokens[],
     filePath: string,
-  ): OutputTokens | undefined {
+  ): ConsoleTokens | undefined {
     const fileExtension = path.extname(filePath).toLowerCase();
     return outputTokensFile.findLast((outputTokens) =>
       outputTokens.getExtensions().includes(fileExtension),
     );
   }
 
-  private static getOutputTokensForDatName(
-    outputTokensFile: OutputTokens[],
+  private static getConsoleTokensForDatName(
+    outputTokensFile: ConsoleTokens[],
     datName: string,
-  ): OutputTokens | undefined {
+  ): ConsoleTokens | undefined {
     // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
     return outputTokensFile.findLast((outputTokens) => outputTokens.getDatRegex().test(datName));
   }
 
-  private static replaceTokensFile(
+  private static replaceConsoleTokens(
     input: string,
     options: Options,
     dat?: DAT,
@@ -353,10 +353,10 @@ export default class OutputFactory {
       return input;
     }
 
-    const outputTokensFile = OutputFactory.loadTokensFile(options.getOutputTokens());
+    const outputTokensFile = OutputFactory.loadTokensFile(options.getOutputConsoleTokens());
     const outputTokens =
-      OutputFactory.getOutputTokensForDatName(outputTokensFile, dat?.getName() ?? '') ??
-      OutputFactory.getOutputTokensForFilename(outputTokensFile, outputRomFilename);
+      OutputFactory.getConsoleTokensForDatName(outputTokensFile, dat?.getName() ?? '') ??
+      OutputFactory.getConsoleTokensForFilename(outputTokensFile, outputRomFilename);
     if (!outputTokens) {
       return input;
     }

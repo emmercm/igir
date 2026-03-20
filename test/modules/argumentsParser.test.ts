@@ -222,7 +222,7 @@ describe('options', () => {
     expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getDirLetterGroup()).toEqual(false);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
-    expect(options.getOutputTokens()).toBeUndefined();
+    expect(options.getOutputConsoleTokens()).toBeUndefined();
 
     expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
     expect(options.getOverwrite()).toEqual(false);
@@ -1844,26 +1844,26 @@ describe('options', () => {
     ).toEqual(GameSubdirMode.NEVER);
   });
 
-  it('should parse "output-tokens"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getOutputTokens()).toBeUndefined();
+  it('should parse "output-console-tokens"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getOutputConsoleTokens()).toBeUndefined();
     expect(() =>
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--output-tokens']),
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--output-console-tokens']),
     ).toThrow(/not enough arguments/i);
     expect(
       argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--output-tokens', 'custom.json'])
-        .getOutputTokens(),
+        .parse([...dummyCommandAndRequiredArgs, '--output-console-tokens', 'custom.json'])
+        .getOutputConsoleTokens(),
     ).toEqual('custom.json');
     expect(
       argumentsParser
         .parse([
           ...dummyCommandAndRequiredArgs,
-          '--output-tokens',
+          '--output-console-tokens',
           'first.json',
-          '--output-tokens',
+          '--output-console-tokens',
           'second.json',
         ])
-        .getOutputTokens(),
+        .getOutputConsoleTokens(),
     ).toEqual('second.json');
   });
 

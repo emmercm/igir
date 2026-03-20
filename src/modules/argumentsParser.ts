@@ -494,10 +494,10 @@ export default class ArgumentsParser {
         requiresArg: true,
         default: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       })
-      .option('output-tokens', {
+      .option('output-console-tokens', {
         group: groupRomOutputPath,
         description:
-          'Path to a JSON file of custom token definitions to use instead of the built-in definitions',
+          'Path to a JSON file of custom console token definitions to use instead of the built-in definitions',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,

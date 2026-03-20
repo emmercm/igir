@@ -10,8 +10,8 @@ import ROM from '../../src/types/dats/rom.js';
 import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../src/types/options.js';
 import OutputFactory from '../../src/types/outputFactory.js';
-import outputTokensData from '../../src/types/outputTokens.json' with { type: 'json' };
-import outputTokensSchema from '../../src/types/outputTokens.schema.json' with { type: 'json' };
+import outputTokensData from '../../src/types/consoleTokens.json' with { type: 'json' };
+import outputTokensSchema from '../../src/types/consoleTokens.schema.json' with { type: 'json' };
 
 const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new SingleValueGame({ name: 'Dummy Game' });
