@@ -428,10 +428,13 @@ describe('isExecutable', () => {
     }
   });
 
-  it('should return false for a non-existent file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await expect(FsPoly.isExecutable(tempFile)).resolves.toEqual(false);
-  });
+  it.skipIf(process.platform === 'win32')(
+    'should return false for a non-existent file',
+    async () => {
+      const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+      await expect(FsPoly.isExecutable(tempFile)).resolves.toEqual(false);
+    },
+  );
 });
 
 describe('isFile', () => {
