@@ -403,7 +403,7 @@ describe('isDirectorySync', () => {
   });
 });
 
-describe('isExecutable', () => {
+describe.skipIf(process.platform === 'win32')('isExecutable', () => {
   it('should return false for a non-executable file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsPoly.touch(tempFile);
@@ -418,7 +418,7 @@ describe('isExecutable', () => {
     }
   });
 
-  it.skipIf(process.platform === 'win32')('should return true for an executable file', async () => {
+  it('should return true for an executable file', async () => {
     const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsPoly.touch(tempFile);
     try {
@@ -432,13 +432,10 @@ describe('isExecutable', () => {
     }
   });
 
-  it.skipIf(process.platform === 'win32')(
-    'should return false for a non-existent file',
-    async () => {
-      const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-      await expect(FsPoly.isExecutable(tempFile)).resolves.toEqual(false);
-    },
-  );
+  it('should return false for a non-existent file', async () => {
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await expect(FsPoly.isExecutable(tempFile)).resolves.toEqual(false);
+  });
 });
 
 describe('isFile', () => {
