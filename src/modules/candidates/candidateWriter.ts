@@ -215,6 +215,10 @@ export default class CandidateWriter extends Module {
             this.progressBar.logDebug(
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
             );
+            // If the output file didn't already exist, we'd write it; so consider the input file as used
+            inputToOutputZipEntries.forEach(([inputRomFile]) => {
+              this.enqueueFileDeletion(inputRomFile);
+            });
             return;
           }
           if (!this.options.shouldWrite() && existingTest) {
@@ -276,12 +280,11 @@ export default class CandidateWriter extends Module {
         }
       }
 
-      // If an input file was used in a WriteCandidate, then it was recognized by some DAT, and it
-      // should be queued for deletion. Only unrecognized/unmatched files should remain in input
-      // directories when moving files.
-      inputToOutputZipEntries.forEach(([inputRomFile]) => {
-        this.enqueueFileDeletion(inputRomFile);
-      });
+      if (written) {
+        inputToOutputZipEntries.forEach(([inputRomFile]) => {
+          this.enqueueFileDeletion(inputRomFile);
+        });
+      }
     } finally {
       childBar.delete();
     }
@@ -556,6 +559,8 @@ export default class CandidateWriter extends Module {
             this.progressBar.logDebug(
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
             );
+            // If the output file didn't already exist, we'd write it; so consider the input file as used
+            this.enqueueFileDeletion(inputRomFile);
             return;
           }
           if (!this.options.shouldWrite() && existingTest) {
@@ -618,10 +623,9 @@ export default class CandidateWriter extends Module {
         }
       }
 
-      // If an input file was used in a WriteCandidate, then it was recognized by some DAT, and it
-      // should be queued for deletion. Only unrecognized/unmatched files should remain in input
-      // directories when moving files.
-      this.enqueueFileDeletion(inputRomFile);
+      if (written) {
+        this.enqueueFileDeletion(inputRomFile);
+      }
     } finally {
       childBar.delete();
     }
