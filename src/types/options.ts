@@ -527,7 +527,9 @@ export default class Options implements OptionsProps {
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = (options?.dat ?? []).map((filePath) => filePath.replaceAll(/[\\/]/g, path.sep));
+    this.dat = (options?.dat ?? []).map((filePath) =>
+      URLPoly.canParse(filePath) ? filePath : filePath.replaceAll(/[\\/]/g, path.sep),
+    );
     this.datExclude = (options?.datExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
@@ -929,19 +931,22 @@ export default class Options implements OptionsProps {
       return [];
     }
 
+    // Check for URLs before globbing, as fast-glob may throw on Windows with URL-like paths
+    // (e.g. `http:` looks like a drive letter)
+    if (URLPoly.canParse(inputPath)) {
+      // Allow URLs, let the scanner modules deal with them
+      if (walkCallback !== undefined) {
+        walkCallback(1);
+      }
+      return [inputPath];
+    }
+
     // Otherwise, process it as a glob pattern
     const globbedPaths = await fg(inputPathEscaped, {
       onlyFiles: walkMode === WalkMode.FILES,
       onlyDirectories: walkMode === WalkMode.DIRECTORIES,
     });
     if (globbedPaths.length === 0) {
-      if (URLPoly.canParse(inputPath)) {
-        // Allow URLs, let the scanner modules deal with them
-        if (walkCallback !== undefined) {
-          walkCallback(1);
-        }
-        return [inputPath];
-      }
       return [];
     }
     if (walkCallback !== undefined) {

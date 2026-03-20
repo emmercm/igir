@@ -41,7 +41,45 @@ describe('constructor', () => {
   );
 });
 
-describe('apply', () => {
+describe('createPatchedFile', () => {
+  test('should throw on invalid patch header', async () => {
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('patch.ups', Buffer.from('not a valid ups patch'));
+
+    try {
+      await expect(
+        UPSPatch.patchFrom(patchFile).then(async (patch) => {
+          await patch.createPatchedFile(inputRom, outputRom);
+        }),
+      ).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
+  test('should throw on invalid ROM size', async () => {
+    // Valid UPS patch for 5-byte source ROM 'AAAAA' -> 'ABCDAAAAAA'
+    const validPatch = Buffer.from(
+      '55505331858a8103020500804141414141000951f819d0c41e6e6a87f622',
+      'hex',
+    );
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA'); // 10 bytes, but patch expects 5
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('patch.ups', validPatch);
+
+    try {
+      const patch = await UPSPatch.patchFrom(patchFile);
+      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
   test.each([
     [
       'AAAAA',

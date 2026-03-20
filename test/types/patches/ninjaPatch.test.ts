@@ -44,7 +44,22 @@ describe('constructor', () => {
   });
 });
 
-describe('apply', () => {
+describe('createPatchedFile', () => {
+  test('should throw on invalid patch header', async () => {
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('00000000 patch.rup', Buffer.alloc(100));
+
+    try {
+      const patch = NinjaPatch.patchFrom(patchFile);
+      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
   test.each([
     [
       'AAAAA',
