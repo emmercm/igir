@@ -219,10 +219,9 @@ export default class Igir {
         candidates,
       );
       if (dir2DatPath) {
-        datsToWrittenFiles.set(processedDat, [
-          ...(datsToWrittenFiles.get(processedDat) ?? []),
-          await File.fileOf({ filePath: dir2DatPath }),
-        ]);
+        const writtenFiles = datsToWrittenFiles.get(processedDat) ?? [];
+        writtenFiles.push(await File.fileOf({ filePath: dir2DatPath }));
+        datsToWrittenFiles.set(processedDat, writtenFiles);
       }
 
       // Write a fixdat
@@ -231,10 +230,9 @@ export default class Igir {
         candidates,
       );
       if (fixdatPath) {
-        datsToWrittenFiles.set(processedDat, [
-          ...(datsToWrittenFiles.get(processedDat) ?? []),
-          await File.fileOf({ filePath: fixdatPath }),
-        ]);
+        const writtenFiles = datsToWrittenFiles.get(processedDat) ?? [];
+        writtenFiles.push(await File.fileOf({ filePath: fixdatPath }));
+        datsToWrittenFiles.set(processedDat, writtenFiles);
       }
 
       // Write the output report
