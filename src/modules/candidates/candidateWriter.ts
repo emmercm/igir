@@ -133,7 +133,7 @@ export default class CandidateWriter extends Module {
 
     const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
     const movedFiles = this.filesQueuedForDeletion
-      // Files that were written should not be eligible for move deletion. This protects against
+      // Files that were not written should not be eligible for move deletion. This protects against
       // the same directory being used for both an input and output directory.
       .filter((fileQueued) => !writtenFilePaths.has(fileQueued.getFilePath()));
     return {
