@@ -15,9 +15,9 @@ import ArchiveFile from './files/archives/archiveFile.js';
 import type File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import ZeroSizeFile from './files/zeroSizeFile.js';
-import GameConsole from './gameConsole.js';
 import type Options from './options.js';
 import { FixExtension, GameSubdirMode } from './options.js';
+import OutputTokens from './outputTokens.js';
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -216,7 +216,7 @@ export default class OutputFactory {
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
     result = this.replaceOutputTokens(result, options, outputRomFilename);
-    result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
+    result = this.replacePlatformTokens(result, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
@@ -297,7 +297,7 @@ export default class OutputFactory {
       .replace('{outputExt}', outputRom.ext.replace(/^\./, '') || '-');
   }
 
-  private static replaceOutputGameConsoleTokens(
+  private static replacePlatformTokens(
     input: string,
     dat?: DAT,
     outputRomFilename?: string,
@@ -306,81 +306,81 @@ export default class OutputFactory {
       return input;
     }
 
-    const gameConsole =
-      GameConsole.getForDatName(dat?.getName() ?? '') ??
-      GameConsole.getForFilename(outputRomFilename);
-    if (!gameConsole) {
+    const outputTokens =
+      OutputTokens.getForDatName(dat?.getName() ?? '') ??
+      OutputTokens.getForFilename(outputRomFilename);
+    if (!outputTokens) {
       return input;
     }
 
     let output = input;
 
-    const adam = gameConsole.getAdam();
+    const adam = outputTokens.getAdam();
     if (adam) {
       output = output.replace('{adam}', adam);
     }
 
-    const es = gameConsole.getEmulationStation();
+    const es = outputTokens.getEmulationStation();
     if (es) {
       output = output.replace('{es}', es);
     }
 
-    const pocket = gameConsole.getPocket();
+    const pocket = outputTokens.getPocket();
     if (pocket) {
       output = output.replace('{pocket}', pocket);
     }
 
-    const mister = gameConsole.getMister();
+    const mister = outputTokens.getMister();
     if (mister) {
       output = output.replace('{mister}', mister);
     }
 
-    const onion = gameConsole.getOnion();
+    const onion = outputTokens.getOnion();
     if (onion) {
       output = output.replace('{onion}', onion);
     }
 
-    const batocera = gameConsole.getBatocera();
+    const batocera = outputTokens.getBatocera();
     if (batocera) {
       output = output.replace('{batocera}', batocera);
     }
 
-    const jelos = gameConsole.getJelos();
+    const jelos = outputTokens.getJelos();
     if (jelos) {
       output = output.replace('{jelos}', jelos);
     }
 
-    const funkeyos = gameConsole.getFunkeyOS();
+    const funkeyos = outputTokens.getFunkeyOS();
     if (funkeyos) {
       output = output.replace('{funkeyos}', funkeyos);
     }
 
-    const miyoocfw = gameConsole.getMiyooCFW();
+    const miyoocfw = outputTokens.getMiyooCFW();
     if (miyoocfw) {
       output = output.replace('{miyoocfw}', miyoocfw);
     }
 
-    const retrodeck = gameConsole.getRetroDECK();
+    const retrodeck = outputTokens.getRetroDECK();
     if (retrodeck) {
       output = output.replace('{retrodeck}', retrodeck);
     }
 
-    const romm = gameConsole.getRomM();
+    const romm = outputTokens.getRomM();
     if (romm) {
       output = output.replace('{romm}', romm);
     }
 
-    const twmenu = gameConsole.getTWMenu();
+    const twmenu = outputTokens.getTWMenu();
     if (twmenu) {
       output = output.replace('{twmenu}', twmenu);
     }
 
-    const minui = gameConsole.getMinUI();
+    const minui = outputTokens.getMinUI();
     if (minui) {
       output = output.replace('{minui}', minui);
     }
 
-    const spruce = gameConsole.getSpruce();
+    const spruce = outputTokens.getSpruce();
     if (spruce) {
       output = output.replace('{spruce}', spruce);
     }
