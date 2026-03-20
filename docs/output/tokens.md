@@ -4,7 +4,7 @@ When specifying a ROM [writing command](../commands.md) you have to specify an `
 
 See [output path options](./path-options.md) for other options that will further sort your ROMs into subdirectories.
 
-For example, if you want to group all ROMs based on their region, you would specify:
+As an example, if you want to group all ROMs based on their region, you would specify:
 
 === ":fontawesome-brands-windows: Windows"
 
@@ -79,7 +79,7 @@ You can use some information about the input and output file's name & location:
 - `{outputName}` the output file's filename without its extension
 - `{outputExt}` the output file's extension
 
-## Specific hardware
+## Frontends & consoles
 
 To help sort ROMs into unique file structures for popular frontends & hardware, Igir offers a few specific tokens:
 
@@ -98,10 +98,85 @@ To help sort ROMs into unique file structures for popular frontends & hardware, 
 - `{spruce}` the [SpruceOS](../usage/handheld/spruceos.md) emulator's directory for the ROM
 - `{twmenu}` the [TWiLightMenu++](../usage/handheld/twmenu.md) emulator's directory for the ROM
 
-TODO: example file structure
+These different frontends expect specific folder names for different consoles. Igir will determine the appropriate console for each ROM by matching the DAT name with regular expressions. If DATs aren't supplied, Igir will do its best to determine the appropriate console using the ROM's file extension.
+
+As an example, when using No-Intro DATs, ROMs can be sorted into the [MiSTer FPGA](../usage/hardware/mister.md) folder structure like this:
+
+=== ":fontawesome-brands-windows: Windows"
+
+    ```batch
+    igir copy extract ^
+      --dat "No-Intro*.zip" ^
+      --input ROMs\ ^
+      --output "ROMs-Sorted\{mister}\"
+    ```
+
+=== ":fontawesome-brands-apple: macOS"
+
+    ```shell
+    igir copy extract \
+      --dat "No-Intro*.zip" \
+      --input ROMs/ \
+      --output "ROMs-Sorted/{mister}/"
+    ```
+
+=== ":simple-linux: Linux"
+
+    ```shell
+    igir copy extract \
+      --dat "No-Intro*.zip" \
+      --input ROMs/ \
+      --output "ROMs-Sorted/{mister}/"
+    ```
+
+```text
+ROMs-Sorted/
+├── Gameboy
+│   ├── Hyper Lode Runner (World) (Rev 1).gb
+│   ├── Wave Race (USA, Europe).gb
+├── MegaDrive
+│   ├── Shinobi III - Return of the Ninja Master (USA).md
+│   ├── X-Men 2 - Clone Wars (USA, Europe).md
+└── SNES
+    ├── F-Zero (USA).sfc
+    └── Mario Paint (Japan, USA) (En).sfc
+```
 
 !!! note
 
-    It is difficult to keep up with new popular frontends as they are created, and it is difficult to keep up with frontends that change their file structure. If you notice that a value is wrong, please submit a [pull request](https://github.com/emmercm/igir/pulls)!
+    It is difficult to keep up with new popular frontends as they are created, and it is difficult to keep up with frontends that change their file structure often. If you notice that a value is wrong, please submit a [pull request](https://github.com/emmercm/igir/pulls)!
 
-TODO: --output-console-tokens
+### Custom console tokens
+
+Because it is infeasible for Igir to handle every possible frontend, and because different users have different needs, it is possible to replace the built-in frontend & console tokens with your own. The option is:
+
+```text
+--output-console-tokens <path>
+```
+
+The option requires a file path to a JSON file in this format:
+
+```json
+{
+  "consoles": [
+    {
+      "datNameRegex": "/GB|Game ?Boy/i",
+      "extensions": [".gb", ".sgb"],
+      "tokens": {
+        "lorem": "Gameboy",
+        "ipsum": "gb"
+      }
+    },
+    {
+      "datNameRegex": "/GBC|Game ?Boy Color/i",
+      "extensions": [".gbc"],
+      "tokens": {
+        "lorem": "Gameboy",
+        "ipsum": "gbc"
+      }
+    }
+  ]
+}
+```
+
+You can name the tokens anything you want. The above example supports replacing the tokens `{lorem}` and `{ipsum}`.
