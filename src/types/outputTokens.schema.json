@@ -56,7 +56,7 @@
           "type": "string",
           "description": "Batocera ROM directory: roms/{batocera}"
         },
-        "emulationstation": {
+        "es": {
           "type": "string",
           "description": "EmulationStation ROM directory: roms/{emulationstation}"
         },

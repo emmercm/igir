@@ -1,5 +1,8 @@
+import fs from 'node:fs';
 import type { ParsedPath } from 'node:path';
 import path from 'node:path';
+
+import { Memoize } from 'typescript-memoize';
 
 import GameGrouper from '../gameGrouper.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
@@ -18,6 +21,15 @@ import ZeroSizeFile from './files/zeroSizeFile.js';
 import type Options from './options.js';
 import { FixExtension, GameSubdirMode } from './options.js';
 import OutputTokens from './outputTokens.js';
+import outputTokensData from './outputTokens.json' with { type: 'json' };
+
+interface OutputTokensJson {
+  consoles: {
+    datNameRegex: string;
+    extensions: string[];
+    tokens: Record<string, string | undefined>;
+  }[];
+}
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -216,7 +228,7 @@ export default class OutputFactory {
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
     result = this.replaceOutputTokens(result, options, outputRomFilename);
-    result = this.replacePlatformTokens(result, dat, outputRomFilename);
+    result = this.replaceTokensFile(result, options, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
@@ -297,8 +309,43 @@ export default class OutputFactory {
       .replace('{outputExt}', outputRom.ext.replace(/^\./, '') || '-');
   }
 
-  private static replacePlatformTokens(
+  @Memoize()
+  private static loadTokensFile(filePath: string | undefined): OutputTokens[] {
+    const data = filePath
+      ? (JSON.parse(fs.readFileSync(filePath, 'utf8')) as OutputTokensJson)
+      : (outputTokensData satisfies OutputTokensJson);
+    return data.consoles.map(({ datNameRegex, extensions, tokens }) => {
+      const lastSlash = datNameRegex.lastIndexOf('/');
+      const pattern = datNameRegex.slice(1, lastSlash);
+      const flags = datNameRegex.slice(lastSlash + 1);
+      const tokensMap = new Map(
+        Object.entries(tokens).filter((entry): entry is [string, string] => entry[1] !== undefined),
+      );
+      return new OutputTokens(new RegExp(pattern, flags || undefined), extensions, tokensMap);
+    });
+  }
+
+  private static getOutputTokensForFilename(
+    outputTokensFile: OutputTokens[],
+    filePath: string,
+  ): OutputTokens | undefined {
+    const fileExtension = path.extname(filePath).toLowerCase();
+    return outputTokensFile.findLast((outputTokens) =>
+      outputTokens.getExtensions().includes(fileExtension),
+    );
+  }
+
+  private static getOutputTokensForDatName(
+    outputTokensFile: OutputTokens[],
+    datName: string,
+  ): OutputTokens | undefined {
+    // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
+    return outputTokensFile.findLast((outputTokens) => outputTokens.getDatRegex().test(datName));
+  }
+
+  private static replaceTokensFile(
     input: string,
+    options: Options,
     dat?: DAT,
     outputRomFilename?: string,
   ): string {
@@ -306,83 +353,17 @@ export default class OutputFactory {
       return input;
     }
 
+    const outputTokensFile = OutputFactory.loadTokensFile(options.getOutputTokens());
     const outputTokens =
-      OutputTokens.getForDatName(dat?.getName() ?? '') ??
-      OutputTokens.getForFilename(outputRomFilename);
+      OutputFactory.getOutputTokensForDatName(outputTokensFile, dat?.getName() ?? '') ??
+      OutputFactory.getOutputTokensForFilename(outputTokensFile, outputRomFilename);
     if (!outputTokens) {
       return input;
     }
 
     let output = input;
-
-    const adam = outputTokens.getAdam();
-    if (adam) {
-      output = output.replace('{adam}', adam);
-    }
-
-    const es = outputTokens.getEmulationStation();
-    if (es) {
-      output = output.replace('{es}', es);
-    }
-
-    const pocket = outputTokens.getPocket();
-    if (pocket) {
-      output = output.replace('{pocket}', pocket);
-    }
-
-    const mister = outputTokens.getMister();
-    if (mister) {
-      output = output.replace('{mister}', mister);
-    }
-
-    const onion = outputTokens.getOnion();
-    if (onion) {
-      output = output.replace('{onion}', onion);
-    }
-
-    const batocera = outputTokens.getBatocera();
-    if (batocera) {
-      output = output.replace('{batocera}', batocera);
-    }
-
-    const jelos = outputTokens.getJelos();
-    if (jelos) {
-      output = output.replace('{jelos}', jelos);
-    }
-
-    const funkeyos = outputTokens.getFunkeyOS();
-    if (funkeyos) {
-      output = output.replace('{funkeyos}', funkeyos);
-    }
-
-    const miyoocfw = outputTokens.getMiyooCFW();
-    if (miyoocfw) {
-      output = output.replace('{miyoocfw}', miyoocfw);
-    }
-
-    const retrodeck = outputTokens.getRetroDECK();
-    if (retrodeck) {
-      output = output.replace('{retrodeck}', retrodeck);
-    }
-
-    const romm = outputTokens.getRomM();
-    if (romm) {
-      output = output.replace('{romm}', romm);
-    }
-
-    const twmenu = outputTokens.getTWMenu();
-    if (twmenu) {
-      output = output.replace('{twmenu}', twmenu);
-    }
-
-    const minui = outputTokens.getMinUI();
-    if (minui) {
-      output = output.replace('{minui}', minui);
-    }
-
-    const spruce = outputTokens.getSpruce();
-    if (spruce) {
-      output = output.replace('{spruce}', spruce);
+    for (const [key, value] of outputTokens.getTokens()) {
+      output = output.replace(`{${key}}`, value);
     }
     return output;
   }

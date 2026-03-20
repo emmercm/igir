@@ -2,7 +2,7 @@
 
 When specifying a ROM [writing command](../commands.md) you have to specify an `--output <path>` directory. Igir has a few replaceable "tokens" that can be referenced in the `--output <path>` directory value. This can aid in sorting ROMs into a more complicated directory structure.
 
-See [output path tokens](./path-options.md) for other options that will further sort your ROMs into subdirectories.
+See [output path options](./path-options.md) for other options that will further sort your ROMs into subdirectories.
 
 For example, if you want to group all ROMs based on their region, you would specify:
 

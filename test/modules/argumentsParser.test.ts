@@ -222,6 +222,7 @@ describe('options', () => {
     expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getDirLetterGroup()).toEqual(false);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
+    expect(options.getOutputTokens()).toBeUndefined();
 
     expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
     expect(options.getOverwrite()).toEqual(false);
@@ -1841,6 +1842,29 @@ describe('options', () => {
         ])
         .getDirGameSubdir(),
     ).toEqual(GameSubdirMode.NEVER);
+  });
+
+  it('should parse "output-tokens"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getOutputTokens()).toBeUndefined();
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--output-tokens']),
+    ).toThrow(/not enough arguments/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--output-tokens', 'custom.json'])
+        .getOutputTokens(),
+    ).toEqual('custom.json');
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--output-tokens',
+          'first.json',
+          '--output-tokens',
+          'second.json',
+        ])
+        .getOutputTokens(),
+    ).toEqual('second.json');
   });
 
   it('should parse "fix-extension"', () => {

@@ -25,7 +25,7 @@
       "tokens": {
         "adam": "AMSTRAD",
         "batocera": "amstradcpc",
-        "emulationstation": "amstradcpc",
+        "es": "amstradcpc",
         "jelos": "amstradcpc",
         "mister": "Amstrad",
         "onion": "CPC",
@@ -56,7 +56,7 @@
       "extensions": [".do", ".nib", ".po"],
       "tokens": {
         "batocera": "apple2",
-        "emulationstation": "apple2",
+        "es": "apple2",
         "mister": "Apple-II",
         "retrodeck": "apple2",
         "romm": "appleii"
@@ -66,7 +66,7 @@
       "datNameRegex": "/Apple.*IIGS/i",
       "extensions": [".2mg"],
       "tokens": {
-        "emulationstation": "apple2gs",
+        "es": "apple2gs",
         "retrodeck": "apple2gs",
         "romm": "apple-iigs"
       }
@@ -76,7 +76,7 @@
       "extensions": [".arduboy", ".hex"],
       "tokens": {
         "batocera": "arduboy",
-        "emulationstation": "arduboy",
+        "es": "arduboy",
         "jelos": "arduboy",
         "mister": "Arduboy",
         "pocket": "arduboy",
@@ -90,7 +90,7 @@
       "extensions": [".atr", ".atx"],
       "tokens": {
         "batocera": "atari800",
-        "emulationstation": "atari800",
+        "es": "atari800",
         "jelos": "atari800",
         "mister": "Atari800",
         "onion": "EIGHTHUNDRED",
@@ -119,7 +119,7 @@
       "tokens": {
         "adam": "A2600",
         "batocera": "atari2600",
-        "emulationstation": "atari2600",
+        "es": "atari2600",
         "jelos": "atari2600",
         "mister": "Atari2600",
         "miyoocfw": "2600",
@@ -137,7 +137,7 @@
       "tokens": {
         "adam": "A5200",
         "batocera": "atari5200",
-        "emulationstation": "atari5200",
+        "es": "atari5200",
         "jelos": "atari5200",
         "mister": "Atari5200",
         "onion": "FIFTYTWOHUNDRED",
@@ -153,7 +153,7 @@
       "tokens": {
         "adam": "A7800",
         "batocera": "atari7800",
-        "emulationstation": "atari7800",
+        "es": "atari7800",
         "jelos": "atari7800",
         "mister": "Atari7800",
         "onion": "SEVENTYEIGHTHUNDRED",
@@ -169,7 +169,7 @@
       "extensions": [".j64"],
       "tokens": {
         "batocera": "jaguar",
-        "emulationstation": "atarijaguar",
+        "es": "atarijaguar",
         "jelos": "atarijaguar",
         "onion": "JAGUAR",
         "retrodeck": "atarijaguar",
@@ -182,7 +182,7 @@
       "tokens": {
         "adam": "LYNX",
         "batocera": "lynx",
-        "emulationstation": "atarilynx",
+        "es": "atarilynx",
         "funkeyos": "Atari lynx",
         "jelos": "atarilynx",
         "mister": "AtariLynx",
@@ -199,7 +199,7 @@
       "extensions": [".msa", ".st", ".stx"],
       "tokens": {
         "batocera": "atarist",
-        "emulationstation": "atarist",
+        "es": "atarist",
         "jelos": "atarist",
         "mister": "AtariST",
         "onion": "ATARIST",
@@ -213,7 +213,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "astrocde",
-        "emulationstation": "astrocde",
+        "es": "astrocde",
         "mister": "Astrocade",
         "retrodeck": "astrocde",
         "romm": "astrocade"
@@ -240,7 +240,7 @@
       "tokens": {
         "adam": "WSC",
         "batocera": "wswan",
-        "emulationstation": "wonderswan",
+        "es": "wonderswan",
         "funkeyos": "WonderSwan",
         "jelos": "wonderswan",
         "mister": "WonderSwan",
@@ -259,7 +259,7 @@
       "tokens": {
         "adam": "WSC",
         "batocera": "wswanc",
-        "emulationstation": "wswanc",
+        "es": "wswanc",
         "funkeyos": "WonderSwan",
         "jelos": "wonderswancolor",
         "mister": "WonderSwan",
@@ -277,7 +277,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "gamate",
-        "emulationstation": "gamate",
+        "es": "gamate",
         "mister": "Gamate",
         "pocket": "gamate",
         "romm": "gamate"
@@ -288,7 +288,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "pv1000",
-        "emulationstation": "pv1000",
+        "es": "pv1000",
         "mister": "Casio_PV-1000",
         "retrodeck": "pv1000",
         "romm": "casio-pv-1000"
@@ -307,7 +307,7 @@
       "extensions": [],
       "tokens": {
         "adam": "AMIGA",
-        "emulationstation": "amiga",
+        "es": "amiga",
         "jelos": "amiga",
         "mister": "Amiga",
         "onion": "AMIGA",
@@ -323,7 +323,7 @@
       "tokens": {
         "adam": "AMIGA",
         "batocera": "amigacd32",
-        "emulationstation": "amigacd32",
+        "es": "amigacd32",
         "jelos": "amigacd32",
         "mister": "Amiga",
         "onion": "AMIGACD",
@@ -337,7 +337,7 @@
       "tokens": {
         "adam": "AMIGA",
         "batocera": "amigacdtv",
-        "emulationstation": "cdtv",
+        "es": "cdtv",
         "retrodeck": "cdtv",
         "romm": "commodore-cdtv"
       }
@@ -357,7 +357,7 @@
       "tokens": {
         "adam": "C64",
         "batocera": "c64",
-        "emulationstation": "c64",
+        "es": "c64",
         "jelos": "c64",
         "mister": "C64",
         "onion": "COMMODORE",
@@ -381,7 +381,7 @@
       "datNameRegex": "/Plus.*4/i",
       "extensions": [],
       "tokens": {
-        "emulationstation": "plus4",
+        "es": "plus4",
         "retrodeck": "plus4",
         "romm": "c-plus-4"
       }
@@ -390,7 +390,7 @@
       "datNameRegex": "/VIC[ -]?20/i",
       "extensions": [],
       "tokens": {
-        "emulationstation": "vic20",
+        "es": "vic20",
         "onion": "VIC20",
         "retrodeck": "vic20",
         "romm": "vic-20",
@@ -403,7 +403,7 @@
       "tokens": {
         "adam": "COLECO",
         "batocera": "colecovision",
-        "emulationstation": "colecovision",
+        "es": "colecovision",
         "jelos": "coleco",
         "mister": "Coleco",
         "onion": "COLECO",
@@ -419,7 +419,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "arcadia",
-        "emulationstation": "arcadia",
+        "es": "arcadia",
         "mister": "Arcadia",
         "pocket": "arcadia",
         "retrodeck": "arcadia",
@@ -431,7 +431,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "advision",
-        "emulationstation": "avision",
+        "es": "avision",
         "mister": "AVision",
         "pocket": "avision",
         "romm": "adventure-vision"
@@ -442,7 +442,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "scv",
-        "emulationstation": "scv",
+        "es": "scv",
         "retrodeck": "scv",
         "romm": "epoch-super-cassette-vision"
       }
@@ -452,7 +452,7 @@
       "extensions": [".chf"],
       "tokens": {
         "batocera": "channelf",
-        "emulationstation": "channelf",
+        "es": "channelf",
         "jelos": "channelf",
         "mister": "ChannelF",
         "onion": "FAIRCHILD",
@@ -467,7 +467,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "supracan",
-        "emulationstation": "supracan",
+        "es": "supracan",
         "romm": "super-acan"
       }
     },
@@ -491,7 +491,7 @@
       "extensions": [".gam", ".vc", ".vec"],
       "tokens": {
         "batocera": "vectrex",
-        "emulationstation": "vectrex",
+        "es": "vectrex",
         "jelos": "vectrex",
         "mister": "Vectrex",
         "miyoocfw": "VECTREX",
@@ -506,7 +506,7 @@
       "datNameRegex": "/Game Master/i",
       "extensions": [],
       "tokens": {
-        "emulationstation": "gmaster",
+        "es": "gmaster",
         "retrodeck": "gmaster",
         "romm": "hartung"
       }
@@ -525,7 +525,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "o2em",
-        "emulationstation": "odyssey2",
+        "es": "odyssey2",
         "jelos": "odyssey",
         "mister": "Odyssey2",
         "onion": "ODYSSEY",
@@ -541,7 +541,7 @@
       "tokens": {
         "adam": "INTELLI",
         "batocera": "intellivision",
-        "emulationstation": "intellivision",
+        "es": "intellivision",
         "jelos": "intellivision",
         "mister": "Intellivision",
         "onion": "INTELLIVISION",
@@ -557,7 +557,7 @@
       "tokens": {
         "adam": "MSX",
         "batocera": "msx1",
-        "emulationstation": "msx",
+        "es": "msx",
         "jelos": "msx",
         "mister": "MSX1",
         "onion": "MSX",
@@ -573,7 +573,7 @@
       "tokens": {
         "adam": "MSX",
         "batocera": "msx2",
-        "emulationstation": "msx2",
+        "es": "msx2",
         "jelos": "msx2",
         "mister": "MSX",
         "onion": "MSX",
@@ -588,7 +588,7 @@
       "tokens": {
         "adam": "MSX",
         "batocera": "msx2+",
-        "emulationstation": "msx2",
+        "es": "msx2",
         "mister": "MSX",
         "onion": "MSX",
         "retrodeck": "msx2",
@@ -602,7 +602,7 @@
       "tokens": {
         "adam": "MSX",
         "batocera": "msxturbor",
-        "emulationstation": "msx",
+        "es": "msx",
         "mister": "MSX",
         "onion": "MSX",
         "retrodeck": "msxturbor",
@@ -615,7 +615,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "xbox",
-        "emulationstation": "xbox",
+        "es": "xbox",
         "jelos": "xbox",
         "retrodeck": "xbox",
         "romm": "xbox"
@@ -626,7 +626,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "xbox360",
-        "emulationstation": "xbox360",
+        "es": "xbox360",
         "romm": "xbox360"
       }
     },
@@ -634,7 +634,7 @@
       "datNameRegex": "/J2ME/i",
       "extensions": [".jar"],
       "tokens": {
-        "emulationstation": "j2me",
+        "es": "j2me",
         "retrodeck": "j2me",
         "romm": "j2me"
       }
@@ -643,7 +643,7 @@
       "datNameRegex": "/Palm OS/i",
       "extensions": [".pqa", ".prc"],
       "tokens": {
-        "emulationstation": "palm",
+        "es": "palm",
         "retrodeck": "palm",
         "romm": "palm-os"
       }
@@ -652,7 +652,7 @@
       "datNameRegex": "/Symbian/i",
       "extensions": [".sis", ".sisx", ".symbian"],
       "tokens": {
-        "emulationstation": "symbian",
+        "es": "symbian",
         "retrodeck": "symbian",
         "romm": "symbian"
       }
@@ -670,7 +670,7 @@
       "tokens": {
         "adam": "PCE",
         "batocera": "pcengine",
-        "emulationstation": "pcengine",
+        "es": "pcengine",
         "funkeyos": "PCE-TurboGrafx",
         "jelos": "tg16",
         "minui": "TurboGrafx-16 (PCE)",
@@ -690,7 +690,7 @@
       "tokens": {
         "adam": "PCE",
         "batocera": "pcengine",
-        "emulationstation": "tg16",
+        "es": "tg16",
         "funkeyos": "PCE-TurboGrafx",
         "jelos": "tg16",
         "minui": "TurboGrafx-16 (PCE)",
@@ -710,7 +710,7 @@
       "tokens": {
         "adam": "PCECD",
         "batocera": "pcenginecd",
-        "emulationstation": "pcenginecd",
+        "es": "pcenginecd",
         "jelos": "tg16cd",
         "minui": "TurboGrafx-16 CD (PCE)",
         "mister": "TGFX16-CD",
@@ -728,7 +728,7 @@
       "tokens": {
         "adam": "PCECD",
         "batocera": "pcenginecd",
-        "emulationstation": "tg-cd",
+        "es": "tg-cd",
         "jelos": "tg16cd",
         "minui": "TurboGrafx-16 CD (PCE)",
         "mister": "TGFX16-CD",
@@ -745,7 +745,7 @@
       "extensions": [".sgx"],
       "tokens": {
         "batocera": "supergrafx",
-        "emulationstation": "supergrafx",
+        "es": "supergrafx",
         "jelos": "sgfx",
         "mister": "TGFX16",
         "onion": "SGFX",
@@ -760,7 +760,7 @@
       "extensions": [".d88"],
       "tokens": {
         "batocera": "pc88",
-        "emulationstation": "pc88",
+        "es": "pc88",
         "jelos": "pc88",
         "mister": "PC8801",
         "onion": "PCEIGHTYEIGHT",
@@ -773,7 +773,7 @@
       "extensions": [".d98"],
       "tokens": {
         "batocera": "pc98",
-        "emulationstation": "pc98",
+        "es": "pc98",
         "jelos": "pc98",
         "onion": "PCNINETYEIGHT",
         "retrodeck": "pc98",
@@ -785,7 +785,7 @@
       "datNameRegex": "/PC-FX/i",
       "extensions": [],
       "tokens": {
-        "emulationstation": "pcfx",
+        "es": "pcfx",
         "onion": "PCFX",
         "retrodeck": "pcfx",
         "romm": "pc-fx"
@@ -796,7 +796,7 @@
       "extensions": [".tic"],
       "tokens": {
         "adam": "TIC80",
-        "emulationstation": "tic80",
+        "es": "tic80",
         "retrodeck": "tic80",
         "spruce": "TIC80"
       }
@@ -807,7 +807,7 @@
       "tokens": {
         "adam": "FDS",
         "batocera": "fds",
-        "emulationstation": "fds",
+        "es": "fds",
         "funkeyos": "NES",
         "jelos": "fds",
         "minui": "Famicom Disk System (FC)",
@@ -826,7 +826,7 @@
       "tokens": {
         "adam": "GW",
         "batocera": "gameandwatch",
-        "emulationstation": "gameandwatch",
+        "es": "gameandwatch",
         "jelos": "gameandwatch",
         "mister": "GameNWatch",
         "onion": "GW",
@@ -841,7 +841,7 @@
       "extensions": [".gcm", ".gcz"],
       "tokens": {
         "batocera": "gc",
-        "emulationstation": "gc",
+        "es": "gc",
         "jelos": "gamecube",
         "retrodeck": "gc",
         "romm": "ngc"
@@ -853,7 +853,7 @@
       "tokens": {
         "adam": "GB",
         "batocera": "gb",
-        "emulationstation": "gb",
+        "es": "gb",
         "funkeyos": "Game Boy",
         "jelos": "gb",
         "minui": "Game Boy (GB)",
@@ -873,7 +873,7 @@
       "tokens": {
         "adam": "GBA",
         "batocera": "gba",
-        "emulationstation": "gba",
+        "es": "gba",
         "funkeyos": "Game Boy Advance",
         "jelos": "gba",
         "minui": "Game Boy Advance (GBA)",
@@ -893,7 +893,7 @@
       "tokens": {
         "adam": "GBC",
         "batocera": "gbc",
-        "emulationstation": "gbc",
+        "es": "gbc",
         "funkeyos": "Game Boy Color",
         "jelos": "gbc",
         "minui": "Game Boy Color (GBC)",
@@ -912,7 +912,7 @@
       "extensions": [".d64", ".n64", ".v64", ".z64"],
       "tokens": {
         "batocera": "n64",
-        "emulationstation": "n64",
+        "es": "n64",
         "jelos": "n64",
         "mister": "N64",
         "retrodeck": "n64",
@@ -925,7 +925,7 @@
       "extensions": [".ndd"],
       "tokens": {
         "batocera": "n64dd",
-        "emulationstation": "n64dd",
+        "es": "n64dd",
         "retrodeck": "n64dd",
         "romm": "64dd"
       }
@@ -935,7 +935,7 @@
       "extensions": [".3ds", ".3dsx", ".cci", ".cia", ".cfa", ".cxi"],
       "tokens": {
         "batocera": "3ds",
-        "emulationstation": "n3ds",
+        "es": "n3ds",
         "jelos": "3ds",
         "retrodeck": "n3ds",
         "romm": "3ds"
@@ -946,7 +946,7 @@
       "extensions": [".nds"],
       "tokens": {
         "batocera": "nds",
-        "emulationstation": "nds",
+        "es": "nds",
         "jelos": "nds",
         "onion": "NDS",
         "retrodeck": "nds",
@@ -959,7 +959,7 @@
       "datNameRegex": "/(\\W|^)NDSi(\\W|$)|Nintendo DSi([Ww]are)?/i",
       "extensions": [".dsi"],
       "tokens": {
-        "emulationstation": "nds",
+        "es": "nds",
         "retrodeck": "nds",
         "romm": "nintendo-dsi",
         "twmenu": "dsiware"
@@ -971,7 +971,7 @@
       "tokens": {
         "adam": "FC",
         "batocera": "nes",
-        "emulationstation": "famicom",
+        "es": "famicom",
         "funkeyos": "NES",
         "jelos": "nes",
         "minui": "Nintendo Entertainment System (FC)",
@@ -991,7 +991,7 @@
       "tokens": {
         "adam": "FC",
         "batocera": "nes",
-        "emulationstation": "nes",
+        "es": "nes",
         "funkeyos": "NES",
         "jelos": "nes",
         "minui": "Nintendo Entertainment System (FC)",
@@ -1011,7 +1011,7 @@
       "tokens": {
         "adam": "POKEMINI",
         "batocera": "pokemini",
-        "emulationstation": "pokemini",
+        "es": "pokemini",
         "funkeyos": "Pokemini",
         "jelos": "pokemini",
         "minui": "Pokemon mini (PKM)",
@@ -1029,7 +1029,7 @@
       "extensions": [".bs"],
       "tokens": {
         "batocera": "satellaview",
-        "emulationstation": "satellaview",
+        "es": "satellaview",
         "jelos": "satellaview",
         "mister": "SNES",
         "onion": "SATELLAVIEW",
@@ -1044,7 +1044,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "sufami",
-        "emulationstation": "sufami",
+        "es": "sufami",
         "jelos": "sufami",
         "onion": "SUFAMI",
         "retrodeck": "sufami",
@@ -1058,7 +1058,7 @@
       "tokens": {
         "adam": "SFC",
         "batocera": "snes",
-        "emulationstation": "sfc",
+        "es": "sfc",
         "funkeyos": "SNES",
         "jelos": "snes",
         "minui": "Super Nintendo Entertainment System (SFC)",
@@ -1078,7 +1078,7 @@
       "tokens": {
         "adam": "SFC",
         "batocera": "snes",
-        "emulationstation": "snes",
+        "es": "snes",
         "funkeyos": "SNES",
         "jelos": "snes",
         "minui": "Super Nintendo Entertainment System (SFC)",
@@ -1096,7 +1096,7 @@
       "datNameRegex": "/Switch/i",
       "extensions": [".nca", ".nro", ".nso", ".nsp", ".nsz", ".xci", ".xcz", ".zca"],
       "tokens": {
-        "emulationstation": "switch",
+        "es": "switch",
         "retrodeck": "switch",
         "romm": "switch"
       }
@@ -1107,7 +1107,7 @@
       "tokens": {
         "adam": "VB",
         "batocera": "virtualboy",
-        "emulationstation": "virtualboy",
+        "es": "virtualboy",
         "funkeyos": "Virtualboy",
         "jelos": "virtualboy",
         "minui": "Virtual Boy (VB)",
@@ -1122,7 +1122,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "wii",
-        "emulationstation": "wii",
+        "es": "wii",
         "jelos": "wii",
         "retrodeck": "wii",
         "romm": "wii"
@@ -1133,7 +1133,7 @@
       "extensions": [".rpx", ".wua", ".wud", ".wup", ".wux"],
       "tokens": {
         "batocera": "wiiu",
-        "emulationstation": "wiiu",
+        "es": "wiiu",
         "jelos": "wiiu",
         "retrodeck": "wiiu",
         "romm": "wiiu"
@@ -1144,7 +1144,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "3do",
-        "emulationstation": "3do",
+        "es": "3do",
         "jelos": "3do",
         "onion": "PANASONIC",
         "retrodeck": "3do",
@@ -1156,7 +1156,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "cdi",
-        "emulationstation": "cdimono1",
+        "es": "cdimono1",
         "retrodeck": "cdimono1",
         "romm": "philips-cd-i"
       }
@@ -1166,7 +1166,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "videopacplus",
-        "emulationstation": "videopac",
+        "es": "videopac",
         "jelos": "videopac",
         "mister": "Odyssey2",
         "onion": "VIDEOPAC",
@@ -1189,7 +1189,7 @@
       "tokens": {
         "adam": "32X",
         "batocera": "sega32x",
-        "emulationstation": "sega32x",
+        "es": "sega32x",
         "jelos": "sega32x",
         "minui": "Sega 32X (MD)",
         "mister": "S32X",
@@ -1205,7 +1205,7 @@
       "tokens": {
         "adam": "32X",
         "batocera": "sega32x",
-        "emulationstation": "sega32xjp",
+        "es": "sega32xjp",
         "jelos": "sega32x",
         "minui": "Sega 32X (MD)",
         "mister": "S32X",
@@ -1220,7 +1220,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "dreamcast",
-        "emulationstation": "dreamcast",
+        "es": "dreamcast",
         "jelos": "dreamcast",
         "retrodeck": "dreamcast",
         "romm": "dc",
@@ -1233,7 +1233,7 @@
       "tokens": {
         "adam": "GG",
         "batocera": "gamegear",
-        "emulationstation": "gamegear",
+        "es": "gamegear",
         "funkeyos": "Game Gear",
         "jelos": "gamegear",
         "minui": "Sega Game Gear (GG)",
@@ -1253,7 +1253,7 @@
       "tokens": {
         "adam": "SMS",
         "batocera": "mastersystem",
-        "emulationstation": "mastersystem",
+        "es": "mastersystem",
         "funkeyos": "Sega Master System",
         "jelos": "mastersystem",
         "minui": "Sega Master System (SMS)",
@@ -1273,7 +1273,7 @@
       "tokens": {
         "adam": "SEGACD",
         "batocera": "segacd",
-        "emulationstation": "segacd",
+        "es": "segacd",
         "jelos": "segacd",
         "minui": "Sega CD (MD)",
         "mister": "MegaCD",
@@ -1290,7 +1290,7 @@
       "tokens": {
         "adam": "SEGACD",
         "batocera": "segacd",
-        "emulationstation": "megacdjp",
+        "es": "megacdjp",
         "jelos": "segacd",
         "minui": "Sega CD (MD)",
         "mister": "MegaCD",
@@ -1307,7 +1307,7 @@
       "tokens": {
         "adam": "MD",
         "batocera": "megadrive",
-        "emulationstation": "megadrivejp",
+        "es": "megadrivejp",
         "funkeyos": "Sega Genesis",
         "jelos": "genesis",
         "minui": "Sega Genesis (MD)",
@@ -1327,7 +1327,7 @@
       "tokens": {
         "adam": "MD",
         "batocera": "megadrive",
-        "emulationstation": "genesis",
+        "es": "genesis",
         "funkeyos": "Sega Genesis",
         "jelos": "genesis",
         "minui": "Sega Genesis (MD)",
@@ -1346,7 +1346,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "saturn",
-        "emulationstation": "saturn",
+        "es": "saturn",
         "jelos": "saturn",
         "mister": "Saturn",
         "retrodeck": "saturn",
@@ -1360,7 +1360,7 @@
       "tokens": {
         "adam": "SG1000",
         "batocera": "sg1000",
-        "emulationstation": "sg-1000",
+        "es": "sg-1000",
         "jelos": "sg-1000",
         "mister": "SG1000",
         "onion": "SEGASGONE",
@@ -1384,7 +1384,7 @@
       "extensions": [".2d", ".2hd", ".dx1", ".tfd"],
       "tokens": {
         "batocera": "x1",
-        "emulationstation": "x1",
+        "es": "x1",
         "jelos": "x1",
         "onion": "XONE",
         "retrodeck": "x1",
@@ -1396,7 +1396,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "x68000",
-        "emulationstation": "x68000",
+        "es": "x68000",
         "jelos": "x68000",
         "mister": "X68000",
         "onion": "X68000",
@@ -1409,7 +1409,7 @@
       "datNameRegex": "/ZX[ -]?80/i",
       "extensions": [],
       "tokens": {
-        "emulationstation": "zx81",
+        "es": "zx81",
         "mister": "ZX81",
         "onion": "ZXEIGHTYONE",
         "retrodeck": "zx81",
@@ -1421,7 +1421,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "zx81",
-        "emulationstation": "zx81",
+        "es": "zx81",
         "jelos": "zx81",
         "mister": "ZX81",
         "retrodeck": "zx81",
@@ -1434,7 +1434,7 @@
       "tokens": {
         "adam": "ZX",
         "batocera": "zxspectrum",
-        "emulationstation": "zxspectrum",
+        "es": "zxspectrum",
         "jelos": "zxspectrum",
         "mister": "Spectrum",
         "onion": "ZXS",
@@ -1449,7 +1449,7 @@
       "tokens": {
         "adam": "NEOGEO",
         "batocera": "neogeo",
-        "emulationstation": "neogeo",
+        "es": "neogeo",
         "jelos": "neogeo",
         "mister": "NeoGeo",
         "miyoocfw": "NEOGEO",
@@ -1465,7 +1465,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "neogeocd",
-        "emulationstation": "neogeocd",
+        "es": "neogeocd",
         "jelos": "neocd",
         "mister": "NeoGeo-CD",
         "onion": "NEOCD",
@@ -1480,7 +1480,7 @@
       "tokens": {
         "adam": "NGP",
         "batocera": "ngp",
-        "emulationstation": "ngp",
+        "es": "ngp",
         "funkeyos": "Neo Geo Pocket",
         "jelos": "ngp",
         "minui": "Neo Geo Pocket (NGPC)",
@@ -1497,7 +1497,7 @@
       "tokens": {
         "adam": "NGP",
         "batocera": "ngpc",
-        "emulationstation": "ngpc",
+        "es": "ngpc",
         "funkeyos": "Neo Geo Pocket",
         "jelos": "ngpc",
         "minui": "Neo Geo Pocket Color (NGPC)",
@@ -1514,7 +1514,7 @@
       "tokens": {
         "adam": "PS",
         "batocera": "psx",
-        "emulationstation": "psx",
+        "es": "psx",
         "funkeyos": "PS1",
         "jelos": "psx",
         "minui": "Sony PlayStation (PS)",
@@ -1531,7 +1531,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "ps2",
-        "emulationstation": "ps2",
+        "es": "ps2",
         "jelos": "ps2",
         "retrodeck": "ps2",
         "romm": "ps2"
@@ -1542,7 +1542,7 @@
       "extensions": [".ps3", ".ps3dir"],
       "tokens": {
         "batocera": "ps3",
-        "emulationstation": "ps3",
+        "es": "ps3",
         "jelos": "ps3",
         "retrodeck": "ps3",
         "romm": "ps3"
@@ -1553,7 +1553,7 @@
       "extensions": [".cso"],
       "tokens": {
         "batocera": "psp",
-        "emulationstation": "psp",
+        "es": "psp",
         "jelos": "psp",
         "retrodeck": "psp",
         "romm": "psp",
@@ -1565,7 +1565,7 @@
       "extensions": [".psvita"],
       "tokens": {
         "batocera": "psvita",
-        "emulationstation": "psvita",
+        "es": "psvita",
         "retrodeck": "psvita",
         "romm": "psvita"
       }
@@ -1587,7 +1587,7 @@
       "datNameRegex": "/TI[ -]?99[ -]?4A/i",
       "extensions": [".rpk"],
       "tokens": {
-        "emulationstation": "ti99",
+        "es": "ti99",
         "mister": "TI-99_4A",
         "retrodeck": "ti99",
         "romm": "ti-99"
@@ -1597,7 +1597,7 @@
       "datNameRegex": "/Game.?com/i",
       "extensions": [".tgc"],
       "tokens": {
-        "emulationstation": "gamecom",
+        "es": "gamecom",
         "retrodeck": "gamecom",
         "romm": "game-dot-com"
       }
@@ -1614,7 +1614,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "crvision",
-        "emulationstation": "crvision",
+        "es": "crvision",
         "mister": "CreatiVision",
         "pocket": "creativision",
         "retrodeck": "crvision",
@@ -1626,7 +1626,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "vsmile",
-        "emulationstation": "vsmile",
+        "es": "vsmile",
         "retrodeck": "vsmile",
         "romm": "vsmile"
       }
@@ -1637,7 +1637,7 @@
       "tokens": {
         "adam": "SUPERVISION",
         "batocera": "supervision",
-        "emulationstation": "supervision",
+        "es": "supervision",
         "jelos": "supervision",
         "mister": "SuperVision",
         "onion": "SUPERVISION",
@@ -1652,7 +1652,7 @@
       "extensions": [".md1", ".md2"],
       "tokens": {
         "batocera": "megaduck",
-        "emulationstation": "megaduck",
+        "es": "megaduck",
         "jelos": "megaduck",
         "onion": "MEGADUCK",
         "pocket": "mega_duck",
