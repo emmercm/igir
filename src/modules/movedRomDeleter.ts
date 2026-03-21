@@ -64,7 +64,8 @@ export default class MovedROMDeleter extends Module {
     movedWriteCandidates.forEach((writeCandidate) => {
       for (const romsWithFiles of writeCandidate.getRomsWithFiles()) {
         const inputFile = romsWithFiles.getInputFile();
-        let possibleDuplicates = indexedRoms.findFiles(inputFile) ?? [inputFile];
+        let possibleDuplicates =
+          inputFile instanceof ArchiveFile ? [inputFile] : indexedRoms.findFiles(inputFile);
 
         if (
           this.options.shouldExtractRom(romsWithFiles.getRom()) ||

@@ -39,7 +39,7 @@ export default class CandidateWriter extends Module {
   private readonly candidateSemaphore: CandidateWriterSemaphore;
   private readonly moveMutex: FileMoveMutex;
 
-  private readonly filesQueuedForDeletion: { candidate: WriteCandidate; file: File }[] = [];
+  private readonly filesQueuedForDeletion: WriteCandidate[] = [];
 
   constructor(
     options: Options,
@@ -133,10 +133,14 @@ export default class CandidateWriter extends Module {
       ),
     );
     const movedCandidates = this.filesQueuedForDeletion
-      // Files that were not written should not be eligible for move deletion. This protects
-      // against the same directory being used for both an input and output directory.
-      .filter(({ file }) => !writtenFilePaths.has(file.getFilePath()))
-      .map(({ candidate }) => candidate);
+      // Of the WriteCandidates that were queued for deletion, exclude all that have at least one
+      // input file that was an output file. This can happen if the output directory was also
+      // provided as an input directory.
+      .filter((writeCandidate) =>
+        writeCandidate
+          .getRomsWithFiles()
+          .some((romWithFiles) => !writtenFilePaths.has(romWithFiles.getInputFile().getFilePath())),
+      );
     return {
       wrote: writableCandidates,
       moved: movedCandidates,
@@ -806,7 +810,7 @@ export default class CandidateWriter extends Module {
     if (inputRomFile instanceof ZeroSizeFile) {
       return;
     }
-    this.filesQueuedForDeletion.push({ candidate, file: inputRomFile });
+    this.filesQueuedForDeletion.push(candidate);
   }
 
   /**
