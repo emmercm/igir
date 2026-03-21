@@ -132,15 +132,11 @@ export default class CandidateWriter extends Module {
         c.getRomsWithFiles().map((r) => r.getOutputFile().getFilePath()),
       ),
     );
-    const movedCandidates = [
-      ...new Set(
-        this.filesQueuedForDeletion
-          // Files that were not written should not be eligible for move deletion. This protects
-          // against the same directory being used for both an input and output directory.
-          .filter(({ file }) => !writtenFilePaths.has(file.getFilePath()))
-          .map(({ candidate }) => candidate),
-      ),
-    ];
+    const movedCandidates = this.filesQueuedForDeletion
+      // Files that were not written should not be eligible for move deletion. This protects
+      // against the same directory being used for both an input and output directory.
+      .filter(({ file }) => !writtenFilePaths.has(file.getFilePath()))
+      .map(({ candidate }) => candidate);
     return {
       wrote: writableCandidates,
       moved: movedCandidates,

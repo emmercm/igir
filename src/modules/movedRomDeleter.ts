@@ -75,7 +75,7 @@ export default class MovedROMDeleter extends Module {
         } else if (inputFile instanceof ArchiveFile) {
           // This moved input archive was raw-moved, we can only safely delete duplicate input files
           // of the same exact archive type
-          // Note that a moved ArchiveFile would have only found duplicate ArchiveFilesof the exact
+          // Note that a moved ArchiveFile would have only found duplicate ArchiveFile of the exact
           // same checksum above
           possibleDuplicates = possibleDuplicates.filter(
             (matchedFile) =>
