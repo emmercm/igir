@@ -20,7 +20,13 @@ Files in the input directories will be left alone, they will _not_ be modified o
 
 Move files from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/introduction.md).
 
-Files that match to multiple ROMs in [DATs](dats/introduction.md) will be copied as needed.
+!!! note
+
+    If an input file already exists where it should in the output directory, then Igir will only delete the input file if [`--overwrite` or `--overwrite-invalid`](output/options.md#overwriting-files) is provided. These options ensure the output file is correct, allowing the input file to be safely deleted.
+
+!!! note
+
+    Input files that need to be moved to multiple locations in the output directory will be duplicated as needed.
 
 ### `link`
 

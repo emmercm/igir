@@ -23,6 +23,7 @@ import CandidateMergeSplitValidator from './modules/candidates/candidateMergeSpl
 import CandidatePatchGenerator from './modules/candidates/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidates/candidatePostProcessor.js';
 import CandidateValidator from './modules/candidates/candidateValidator.js';
+import type { CandidateWriterResults } from './modules/candidates/candidateWriter.js';
 import CandidateWriter from './modules/candidates/candidateWriter.js';
 import DATCombiner from './modules/dats/datCombiner.js';
 import DATDiscMerger from './modules/dats/datDiscMerger.js';
@@ -159,9 +160,12 @@ export default class Igir {
       datProcessProgressBar.delete();
     }
 
-    const datsToWrittenFiles = new Map<DAT, File[]>();
+    const candidateWriterResults: CandidateWriterResults = {
+      wrote: [],
+      moved: [],
+    };
+    const additionalWrittenFiles: File[] = [];
     let romOutputDirs: string[] = [];
-    let movedRomsToDelete: File[] = [];
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
@@ -197,21 +201,19 @@ export default class Igir {
         writerSemaphore,
         moveMutex,
       ).write(processedDat, candidates);
-      movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
-      datsToWrittenFiles.set(processedDat, writerResults.wrote);
+      writerResults.moved.forEach((moved) => candidateWriterResults.moved.push(moved));
+      writerResults.wrote.forEach((wrote) => candidateWriterResults.wrote.push(wrote));
 
       // Write playlists
       const playlistPaths = await new PlaylistCreator(this.options, progressBar).create(
         processedDat,
         candidates,
       );
-      datsToWrittenFiles.set(processedDat, [
-        ...(datsToWrittenFiles.get(processedDat) ?? []),
-        ...(await readerSemaphore.map(
-          playlistPaths,
-          async (filePath) => await File.fileOf({ filePath }),
-        )),
-      ]);
+      await Promise.all(
+        playlistPaths.map(async (filePath) => {
+          additionalWrittenFiles.push(await File.fileOf({ filePath }));
+        }),
+      );
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar).create(
@@ -219,10 +221,7 @@ export default class Igir {
         candidates,
       );
       if (dir2DatPath) {
-        datsToWrittenFiles.set(processedDat, [
-          ...(datsToWrittenFiles.get(processedDat) ?? []),
-          await File.fileOf({ filePath: dir2DatPath }),
-        ]);
+        additionalWrittenFiles.push(await File.fileOf({ filePath: dir2DatPath }));
       }
 
       // Write a fixdat
@@ -231,10 +230,7 @@ export default class Igir {
         candidates,
       );
       if (fixdatPath) {
-        datsToWrittenFiles.set(processedDat, [
-          ...(datsToWrittenFiles.get(processedDat) ?? []),
-          await File.fileOf({ filePath: fixdatPath }),
-        ]);
+        additionalWrittenFiles.push(await File.fileOf({ filePath: fixdatPath }));
       }
 
       // Write the output report
@@ -268,10 +264,15 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Delete moved ROMs
-    await this.deleteMovedRoms(roms, movedRomsToDelete, datsToWrittenFiles);
+    await this.deleteMovedRoms(indexedRoms, candidateWriterResults.moved);
 
     // Clean the output directories
-    const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenFiles);
+    const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, [
+      ...candidateWriterResults.wrote.flatMap((wc) =>
+        wc.getRomsWithFiles().map((rwf) => rwf.getOutputFile()),
+      ),
+      ...additionalWrittenFiles,
+    ]);
 
     // Generate the report
     await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
@@ -684,24 +685,24 @@ export default class Igir {
   }
 
   private async deleteMovedRoms(
-    rawRomFiles: File[],
-    movedRomsToDelete: File[],
-    datsToWrittenFiles: Map<DAT, File[]>,
+    indexedRoms: IndexedFiles,
+    movedWriteCandidates: WriteCandidate[],
   ): Promise<void> {
-    if (movedRomsToDelete.length === 0) {
+    if (movedWriteCandidates.length === 0) {
       return;
     }
 
     const progressBarName = 'Deleting moved files';
     const progressBar = this.multiBar.addSingleBar({ name: progressBarName });
     const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
-      rawRomFiles,
-      movedRomsToDelete,
-      datsToWrittenFiles,
+      indexedRoms,
+      movedWriteCandidates,
     );
 
     progressBar.setName('Deleting empty input subdirectories');
-    await new InputSubdirectoriesDeleter(this.options, progressBar).delete(movedRomsToDelete);
+    await new InputSubdirectoriesDeleter(this.options, progressBar).delete(
+      movedWriteCandidates.flatMap((wc) => wc.getRomsWithFiles().map((rwf) => rwf.getInputFile())),
+    );
 
     progressBar.setName(progressBarName);
     progressBar.finishWithItems(deletedFilePaths.length, 'moved file', 'deleted');
@@ -714,7 +715,7 @@ export default class Igir {
 
   private async processOutputCleaner(
     dirsToClean: string[],
-    datsToWrittenFiles: Map<DAT, File[]>,
+    writtenFilesToExclude: File[],
   ): Promise<string[]> {
     if (!this.options.shouldWrite() || !this.options.shouldClean() || dirsToClean.length === 0) {
       return [];
@@ -722,7 +723,6 @@ export default class Igir {
 
     const progressBar = this.multiBar.addSingleBar({ name: 'Cleaning output directory' });
     const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
-    const writtenFilesToExclude = [...datsToWrittenFiles.values()].flat();
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar).clean(
       uniqueDirsToClean,
       writtenFilesToExclude,
