@@ -253,7 +253,12 @@ export default class ArgumentsParser {
             'Arguments input-checksum-quick and input-checksum-min are mutually exclusive',
           );
         }
-        if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-max']) {
+        if (
+          checkArgv['input-checksum-quick'] &&
+          checkArgv['input-checksum-max'] &&
+          checkArgv['input-checksum-max'] !==
+            ChecksumBitmaskInverted[ChecksumBitmask.SHA1].toUpperCase()
+        ) {
           throw new IgirException(
             'Arguments input-checksum-quick and input-checksum-max are mutually exclusive',
           );
@@ -278,6 +283,7 @@ export default class ArgumentsParser {
           .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
+        default: ChecksumBitmaskInverted[ChecksumBitmask.SHA1].toUpperCase(),
       })
       .check((checkArgv) => {
         const options = Options.fromObject(checkArgv);

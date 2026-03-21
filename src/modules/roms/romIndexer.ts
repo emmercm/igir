@@ -45,6 +45,7 @@ export default class ROMIndexer extends Module {
     // Then apply some sorting preferences
     Object.keys(result).forEach((checksum) => {
       this.sortMap(result[checksum as keyof AllChecksums]);
+      this.progressBar.incrementCompleted();
     });
 
     this.progressBar.logTrace(
@@ -120,8 +121,7 @@ export default class ROMIndexer extends Module {
         /**
          * Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
          */
-        if (outputDirDisk) {
-          // TODO(cemmer): only do this when not copying files?
+        if (outputDirDisk && this.options.shouldMove()) {
           const fileOneInOutputDisk = path.resolve(fileOne.getFilePath()).startsWith(outputDirDisk)
             ? 0
             : 1;

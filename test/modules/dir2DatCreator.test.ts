@@ -14,6 +14,7 @@ import ROMScanner from '../../src/modules/roms/romScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import type DAT from '../../src/types/dats/dat.js';
 import FileCache from '../../src/types/files/fileCache.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import WriteCandidate from '../../src/types/writeCandidate.js';
@@ -67,7 +68,7 @@ it('should write a valid DAT', async () => {
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
-  ).scan();
+  ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
   // And a DAT
   const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
@@ -153,7 +154,7 @@ it('should use the candidates for games and ROMs', async () => {
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
-  ).scan();
+  ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
   // And a DAT
   const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);

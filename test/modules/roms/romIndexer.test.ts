@@ -22,7 +22,7 @@ function createRomIndexer(props?: OptionsProps): ROMIndexer {
 }
 
 function indexAndFind(files: File[], props?: OptionsProps): File[] {
-  return createRomIndexer(props).index(files).findFiles(files[0]) ?? [];
+  return createRomIndexer(props).index(files).findFiles(files[0]);
 }
 
 describe('archiveEntryPriority (default sort)', () => {
