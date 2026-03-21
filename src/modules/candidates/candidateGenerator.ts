@@ -566,6 +566,7 @@ export default class CandidateGenerator extends Module {
     game: Game,
     romsWithFiles: ROMWithFiles[],
   ): Promise<boolean> {
+    // TODO(cemmer): this is an issue when raw-writing at the same time, it causes extraction
     if (this.options.shouldDir2Dat()) {
       // We want to keep the scanned archive entries for dir2dat
       return false;

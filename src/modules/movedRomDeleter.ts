@@ -43,19 +43,61 @@ export default class MovedROMDeleter extends Module {
       return [];
     }
 
-    const movedRoms = movedWriteCandidates.flatMap((candidate) =>
-      candidate.getRomsWithFiles().map((romWithFiles) => romWithFiles.getInputFile()),
-    );
-
+    let inputFiles = 0;
+    movedWriteCandidates.forEach((candidate) => {
+      candidate.getRomsWithFiles().forEach(() => inputFiles++);
+    });
     this.progressBar.logTrace('deleting moved ROMs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
-    this.progressBar.resetProgress(movedRoms.length);
+    this.progressBar.resetProgress(inputFiles);
 
-    const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(movedRoms, indexedRoms);
+    this.progressBar.logTrace(
+      `considering ${movedWriteCandidates.length.toLocaleString()} moved games for deletion`,
+    );
+
+    const movedRoms = new Set<File>();
+    movedWriteCandidates.forEach((writeCandidate) => {
+      for (const romsWithFiles of writeCandidate.getRomsWithFiles()) {
+        const inputFile = romsWithFiles.getInputFile();
+        let possibleDuplicates = indexedRoms.findFiles(inputFile);
+
+        if (
+          this.options.shouldExtractRom(romsWithFiles.getRom()) ||
+          this.options.shouldZipRom(romsWithFiles.getRom())
+        ) {
+          // This file was used to create a different file, it's ok to delete all duplicates
+        } else if (inputFile instanceof ArchiveFile) {
+          // This archive was raw-moved, we can only safely delete duplicates of the same archive type
+          possibleDuplicates = possibleDuplicates?.filter(
+            (matchedFile) =>
+              matchedFile instanceof ArchiveEntry &&
+              matchedFile.getArchive().constructor.name === inputFile.getArchive().constructor.name,
+          );
+        } else {
+          // This plain file was raw-moved, we can only safely delete plain duplicates
+          possibleDuplicates = possibleDuplicates?.filter(
+            (matchedFile) => !(matchedFile instanceof ArchiveEntry),
+          );
+        }
+
+        possibleDuplicates?.forEach((duplicate) => movedRoms.add(duplicate));
+      }
+    });
+    this.progressBar.logTrace(
+      `expanded to ${movedRoms.size.toLocaleString()} possible input files`,
+    );
+
+    const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives([...movedRoms], indexedRoms);
+    this.progressBar.logTrace(
+      `filtered to ${fullyConsumedFiles.length.toLocaleString()} fully used input files`,
+    );
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
       movedWriteCandidates,
+    );
+    this.progressBar.logTrace(
+      `filtered to ${filePathsToDelete.length.toLocaleString()} non-output files`,
     );
 
     const existingFilePathsCheck = await async.mapLimit(
@@ -107,6 +149,7 @@ export default class MovedROMDeleter extends Module {
     const groupedInputRoms = indexedRoms.getFilesByFilePath();
     const groupedMovedRoms = MovedROMDeleter.groupFilesByFilePath(movedRoms);
 
+    // For each moved input path
     return [...groupedMovedRoms.entries()]
       .map(([filePath, movedEntries]) => {
         /**
@@ -117,8 +160,9 @@ export default class MovedROMDeleter extends Module {
          * the unique set of ArchiveEntry hash codes to know if every ArchiveEntry was "consumed"
          * during writing.
          */
-        const movedEntryHashCodes = new Set(movedEntries.flatMap((file) => file.hashCode()));
+        const movedEntryHashCodes = new Set(movedEntries.map((file) => file.hashCode()));
 
+        // Find all ArchiveEntries at the moved file path
         const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];
         const inputFileIsArchive = inputFilesForPath.some(
           (inputFile) => inputFile instanceof ArchiveEntry,
