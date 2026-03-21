@@ -43,18 +43,23 @@ export default class MovedROMDeleter extends Module {
       return [];
     }
 
-    let inputFiles = 0;
-    movedWriteCandidates.forEach((candidate) => {
-      candidate.getRomsWithFiles().forEach(() => inputFiles++);
-    });
     this.progressBar.logTrace('deleting moved ROMs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
-    this.progressBar.resetProgress(inputFiles);
 
+    // Get a count of all unique input file paths
+    const inputFiles = new Set<string>();
+    movedWriteCandidates.forEach((candidate) => {
+      candidate
+        .getRomsWithFiles()
+        .forEach((romWithFiles) => inputFiles.add(romWithFiles.getInputFile().getFilePath()));
+    });
+    this.progressBar.resetProgress(inputFiles.size);
     this.progressBar.logTrace(
-      `considering ${movedWriteCandidates.length.toLocaleString()} moved games for deletion`,
+      `considering ${inputFiles.size.toLocaleString()} moved games for deletion`,
     );
 
+    // Take the input files from the WriteCandidates that were moved, and look for duplicate input
+    // files that could also be deleted (even if they weren't chosen to be used in a WriteCandidate)
     const movedRoms = new Set<File>();
     movedWriteCandidates.forEach((writeCandidate) => {
       for (const romsWithFiles of writeCandidate.getRomsWithFiles()) {
@@ -65,16 +70,18 @@ export default class MovedROMDeleter extends Module {
           this.options.shouldExtractRom(romsWithFiles.getRom()) ||
           this.options.shouldZipRom(romsWithFiles.getRom())
         ) {
-          // This file was used to create a different file, it's ok to delete all duplicates
+          // This moved input file was used to create a different file, it's ok to delete all
+          // duplicate input files of any type
         } else if (inputFile instanceof ArchiveFile) {
-          // This archive was raw-moved, we can only safely delete duplicates of the same archive type
+          // This moved input archive was raw-moved, we can only safely delete duplicate input files
+          // of the same exact archive type
           possibleDuplicates = possibleDuplicates?.filter(
             (matchedFile) =>
               matchedFile instanceof ArchiveEntry &&
               matchedFile.getArchive().constructor.name === inputFile.getArchive().constructor.name,
           );
         } else {
-          // This plain file was raw-moved, we can only safely delete plain duplicates
+          // This moved plain input file was raw-moved, we can only safely delete plain duplicates
           possibleDuplicates = possibleDuplicates?.filter(
             (matchedFile) => !(matchedFile instanceof ArchiveEntry),
           );
@@ -100,6 +107,7 @@ export default class MovedROMDeleter extends Module {
       `filtered to ${filePathsToDelete.length.toLocaleString()} non-output files`,
     );
 
+    this.progressBar.resetProgress(filePathsToDelete.length);
     const existingFilePathsCheck = await async.mapLimit(
       filePathsToDelete,
       Defaults.MAX_FS_THREADS,
@@ -139,8 +147,10 @@ export default class MovedROMDeleter extends Module {
   }
 
   /**
-   * Archives that don't have all of their file entries matched shouldn't be deleted during
-   *  moving.
+   * Archives can contain a mixture of ROMs from many different games, so it is possible that not
+   * every entry from the archive (or a duplicate of it) was used as an input file for a
+   * WriteCandidate. These partially used archives are not safe to delete and need to be filtered
+   * out.
    */
   private filterOutPartiallyConsumedArchives(
     movedRoms: File[],
@@ -162,7 +172,6 @@ export default class MovedROMDeleter extends Module {
          */
         const movedEntryHashCodes = new Set(movedEntries.map((file) => file.hashCode()));
 
-        // Find all ArchiveEntries at the moved file path
         const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];
         const inputFileIsArchive = inputFilesForPath.some(
           (inputFile) => inputFile instanceof ArchiveEntry,
