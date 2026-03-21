@@ -642,7 +642,12 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     const archive = new Zip('input.zip');
     const filePromises = [
       // Matches a game with two ROMs
-      File.fileOf({ filePath: 'two.a', size: 2, crc32: 'abcdef90' }),
+      ArchiveEntry.entryOf({
+        archive,
+        entryPath: 'two.a',
+        size: 2,
+        crc32: 'abcdef90',
+      }),
       ArchiveEntry.entryOf({
         archive,
         entryPath: 'two.b',
@@ -690,7 +695,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         await Promise.all(filePromises),
       );
 
-      // Then
+      // Then "game with no ROMs" and "game with two ROMs (parent)"
       expect(candidates).toHaveLength(2);
     });
   });
