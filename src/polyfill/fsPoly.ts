@@ -639,6 +639,7 @@ export default class FsPoly {
     try {
       return (await this.stat(pathLike)).size;
     } catch {
+      // TODO(cemmer): maybe have this return 'undefined'
       return 0;
     }
   }

@@ -421,9 +421,9 @@ Micro Machines Military - It's a Blast! (E) [x]
 
     This is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[b]` in their names!
 
-## Preferences (for 1G1R)
+## Preferences for 1G1R
 
-The `--single` option is required for all `--prefer-*` options, otherwise there would be no effect.
+The `--single` option is required for all the following `--prefer-*` options.
 
 Multiple `--prefer-*` options can be specified at once, and they will be applied in the following order of importance (most important to least important).
 
@@ -462,6 +462,10 @@ Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for exa
 Mario.*\\.gb$
 /mario.*\\.gb$/i
 ```
+
+!!! note
+
+    This option is for preferring ROM filenames as they appear within DATs. See [`--prefer-filename-regex <pattern|filename>`](#prefer-filename) below for preferring input filenames.
 
 ### Prefer verified
 
@@ -571,3 +575,34 @@ See the [only retail](#only-retail) section for more information on what games a
 Prefer games that DATs consider the "parent" of other game clones, over the clones themselves.
 
 It is unlikely you will often use this option, it is more likely other preference options will accomplish what you want.
+
+## Preferences for input files
+
+These options let you choose what input file will be used when multiple input files [match a ROM](matching.md).
+
+Unlike the 1G1R preference options above, these options do _not_ require the `--single` option.
+
+### Prefer file type
+
+```text
+--prefer-filetype {plain,archive}
+```
+
+Prefer an input file if it's plain/un-archived, or archived.
+
+This is most useful when _not_ supplying the `extract` or `zip` commands, where input files are use exactly as-is, byte-for-byte.
+
+### Prefer filename
+
+```text
+--prefer-filename-regex <pattern|filename>
+```
+
+Prefer an input file matches a regular expression.
+
+Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
+
+```text
+\\.(gcz|rvz)$
+/\\.(gcz|rvz)$/i
+```

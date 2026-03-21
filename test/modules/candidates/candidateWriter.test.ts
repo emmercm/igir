@@ -113,7 +113,7 @@ async function candidateWriter(
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
-    ).scan();
+    ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
   } catch {
     /* ignored */
   }
