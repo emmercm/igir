@@ -1845,7 +1845,9 @@ describe('options', () => {
   });
 
   it('should parse "output-console-tokens"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getOutputConsoleTokens()).toBeUndefined();
+    expect(
+      argumentsParser.parse(dummyCommandAndRequiredArgs).getOutputConsoleTokens(),
+    ).toBeUndefined();
     expect(() =>
       argumentsParser.parse([...dummyCommandAndRequiredArgs, '--output-console-tokens']),
     ).toThrow(/not enough arguments/i);
