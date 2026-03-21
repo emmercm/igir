@@ -1,6 +1,6 @@
 # Output Path Tokens
 
-When specifying a ROM [writing command](../commands.md) you have to specify an `--output <path>` directory. Igir has a few replaceable "tokens" that can be referenced in the `--output <path>` directory value. This can aid in sorting ROMs into a more complicated directory structure.
+When specifying a ROM [writing command](../commands.md), you have to specify an `--output <path>` directory. Igir has a few replaceable "tokens" that can be referenced in the `--output <path>` directory path. This can aid in sorting ROMs into a more complicated directory structure.
 
 See [output path options](./path-options.md) for other options that will further sort your ROMs into subdirectories.
 
@@ -33,7 +33,7 @@ As an example, if you want to group all ROMs based on their region, you would sp
       --output "ROMs-Sorted/{region}/"
     ```
 
-This might result in an output structure such as:
+This might result in an output structure similar to:
 
 ```text
 ROMs-Sorted/
@@ -81,7 +81,7 @@ You can use some information about the input and output file's name & location:
 
 ## Frontends & consoles
 
-To help sort ROMs into unique file structures for popular frontends & hardware, Igir offers a few specific tokens:
+To help sort ROMs into unique folder structures for popular frontends & hardware, Igir offers some specific tokens:
 
 - `{adam}` the ['Adam' image](../usage/handheld/adam.md) emulator's directory for the ROM
 - `{batocera}` the [Batocera](../usage/desktop/batocera.md) emulator's directory for the ROM
@@ -181,4 +181,4 @@ The option requires a file path to a JSON file in this format:
 
 You can name the tokens anything you want. The above example supports replacing the tokens `{lorem}` and `{ipsum}`.
 
-The _last_ match in the `consoles` array will be used. That makes the above example safe - "Game Boy Color" is a more specific name than "Game Boy".
+The _last_ match in the `consoles` array will be used. That makes the above example safe — "Game Boy Color" is a more specific name than "Game Boy".
