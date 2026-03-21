@@ -73,6 +73,7 @@ await copyfiles(
     'packages/*/addon*/**',
     'packages/*/binding.cpp',
     'packages/*/binding.gyp',
+    'src/**/*.json',
   ],
   [
     'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
