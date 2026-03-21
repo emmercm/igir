@@ -165,6 +165,11 @@ export default class MovedROMDeleter extends Module {
     // For each moved input path
     return [...groupedMovedRoms.entries()]
       .map(([filePath, movedEntries]) => {
+        if (movedEntries.length === 1 && !(movedEntries[0] instanceof ArchiveEntry)) {
+          // The input file is either a plain File or an ArchiveFile; either way, it was fully moved
+          return filePath;
+        }
+
         /**
          * NOTE(cemmer): games can have ROMs with duplicate checksums, which means an Archive of
          * that game's ROMs will contain some duplicate files. When extracting or zipping, we would
@@ -176,39 +181,14 @@ export default class MovedROMDeleter extends Module {
         const movedEntryHashCodes = new Set(movedEntries.map((file) => file.hashCode()));
 
         const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];
-        const inputFileIsArchive = inputFilesForPath.some(
-          (inputFile) => inputFile instanceof ArchiveEntry,
-        );
-
-        const unmovedFiles = inputFilesForPath.filter((inputFile) => {
-          if (inputFile instanceof ArchiveEntry) {
-            // We're only considering input non-archives
-            return false;
-          }
-          if (movedEntryHashCodes.has(inputFile.hashCode())) {
-            // The input file was moved
-            return false;
-          }
-          return true;
-        });
-
-        if (inputFileIsArchive && unmovedFiles.length === 0) {
-          // The input file is an archive, and it was fully extracted OR the archive file itself was
-          // an exact match and was moved as-is
-          return filePath;
-        }
 
         const unmovedArchiveEntries = inputFilesForPath.filter((inputFile) => {
           if (!(inputFile instanceof ArchiveEntry)) {
-            // We're only considering input archives
+            // We're only considering input archive entries
             return false;
           }
           if (movedEntryHashCodes.has(inputFile.hashCode())) {
             // The input archive entry was moved
-            return false;
-          }
-          if (movedEntries.length === 1 && movedEntries[0] instanceof ArchiveFile) {
-            // If the input archive was written as a raw archive, then consider it moved
             return false;
           }
           if (
@@ -221,23 +201,18 @@ export default class MovedROMDeleter extends Module {
           return true;
         });
 
-        if (inputFileIsArchive && unmovedArchiveEntries.length === 0) {
-          // The input file is an archive and it was fully zipped
+        if (unmovedArchiveEntries.length === 0) {
+          // All archive entries were consumed
           return filePath;
         }
 
-        const unmovedEntries = [...unmovedFiles, ...unmovedArchiveEntries];
-        if (unmovedEntries.length > 0) {
-          this.progressBar.logWarn(
-            `${filePath}: not deleting moved file, ${unmovedEntries.length.toLocaleString()} archive entr${unmovedEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedEntries
-              .toSorted()
-              .map((entry) => `  ${entry.toString()}`)
-              .join('\n')}`,
-          );
-          return undefined;
-        }
-
-        return filePath;
+        this.progressBar.logWarn(
+          `${filePath}: not deleting moved file, ${unmovedArchiveEntries.length.toLocaleString()} archive entr${unmovedArchiveEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedArchiveEntries
+            .toSorted()
+            .map((entry) => `  ${entry.toString()}`)
+            .join('\n')}`,
+        );
+        return undefined;
       })
       .filter((filePath) => filePath !== undefined);
   }
