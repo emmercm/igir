@@ -459,9 +459,11 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
         // Then all matched input files were queued for deletion...
         expect(results.moved.length).toBeGreaterThan(0);
         // ...and nonmatch.rom was not one of them
-        expect(results.moved.map((f) => path.basename(f.getFilePath()))).not.toContain(
-          'nonmatch.rom',
-        );
+        expect(
+          results.moved.flatMap((c) =>
+            c.getRomsWithFiles().map((r) => path.basename(r.getInputFile().getFilePath())),
+          ),
+        ).not.toContain('nonmatch.rom');
       });
     },
   );

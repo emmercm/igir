@@ -23,8 +23,8 @@ import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 export interface CandidateWriterResults {
-  wrote: File[];
-  moved: File[];
+  wrote: WriteCandidate[];
+  moved: WriteCandidate[];
 }
 
 /**
@@ -39,7 +39,7 @@ export default class CandidateWriter extends Module {
   private readonly candidateSemaphore: CandidateWriterSemaphore;
   private readonly moveMutex: FileMoveMutex;
 
-  private readonly filesQueuedForDeletion: File[] = [];
+  private readonly filesQueuedForDeletion: { candidate: WriteCandidate; file: File }[] = [];
 
   constructor(
     options: Options,
@@ -59,13 +59,9 @@ export default class CandidateWriter extends Module {
    * Write & test candidates.
    */
   async write(dat: DAT, candidates: WriteCandidate[]): Promise<CandidateWriterResults> {
-    const writtenFiles = candidates.flatMap((candidate) =>
-      candidate.getRomsWithFiles().map((romWithFiles) => romWithFiles.getOutputFile()),
-    );
-
     if (candidates.length === 0) {
       return {
-        wrote: writtenFiles,
+        wrote: [],
         moved: [],
       };
     }
@@ -73,7 +69,7 @@ export default class CandidateWriter extends Module {
     // Return early if we shouldn't write (are only reporting)
     if (!this.options.shouldWrite() && !this.options.shouldTest()) {
       return {
-        wrote: writtenFiles,
+        wrote: candidates,
         moved: [],
       };
     }
@@ -131,14 +127,23 @@ export default class CandidateWriter extends Module {
       `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
-    const writtenFilePaths = new Set(writtenFiles.map((writtenFile) => writtenFile.getFilePath()));
-    const movedFiles = this.filesQueuedForDeletion
-      // Files that were not written should not be eligible for move deletion. This protects against
-      // the same directory being used for both an input and output directory.
-      .filter((fileQueued) => !writtenFilePaths.has(fileQueued.getFilePath()));
+    const writtenFilePaths = new Set(
+      writableCandidates.flatMap((c) =>
+        c.getRomsWithFiles().map((r) => r.getOutputFile().getFilePath()),
+      ),
+    );
+    const movedCandidates = [
+      ...new Set(
+        this.filesQueuedForDeletion
+          // Files that were not written should not be eligible for move deletion. This protects
+          // against the same directory being used for both an input and output directory.
+          .filter(({ file }) => !writtenFilePaths.has(file.getFilePath()))
+          .map(({ candidate }) => candidate),
+      ),
+    ];
     return {
-      wrote: writtenFiles,
-      moved: movedFiles,
+      wrote: writableCandidates,
+      moved: movedCandidates,
     };
   }
 
@@ -217,7 +222,7 @@ export default class CandidateWriter extends Module {
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
             inputToOutputZipEntries.forEach(([inputRomFile]) => {
-              this.enqueueFileDeletion(inputRomFile);
+              this.enqueueFileDeletion(candidate, inputRomFile);
             });
             return;
           }
@@ -282,7 +287,7 @@ export default class CandidateWriter extends Module {
 
       if (written) {
         inputToOutputZipEntries.forEach(([inputRomFile]) => {
-          this.enqueueFileDeletion(inputRomFile);
+          this.enqueueFileDeletion(candidate, inputRomFile);
         });
       }
     } finally {
@@ -560,7 +565,7 @@ export default class CandidateWriter extends Module {
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
-            this.enqueueFileDeletion(inputRomFile);
+            this.enqueueFileDeletion(candidate, inputRomFile);
             return;
           }
           if (!this.options.shouldWrite() && existingTest) {
@@ -624,7 +629,7 @@ export default class CandidateWriter extends Module {
       }
 
       if (written) {
-        this.enqueueFileDeletion(inputRomFile);
+        this.enqueueFileDeletion(candidate, inputRomFile);
       }
     } finally {
       childBar.delete();
@@ -798,14 +803,14 @@ export default class CandidateWriter extends Module {
   // Input files may be needed for multiple output files, such as an archive with hundreds of ROMs
   //  in it. That means we need to "move" (delete) files at the very end after all DATs have
   //  finished writing.
-  private enqueueFileDeletion(inputRomFile: File): void {
+  private enqueueFileDeletion(candidate: WriteCandidate, inputRomFile: File): void {
     if (!this.options.shouldMove()) {
       return;
     }
     if (inputRomFile instanceof ZeroSizeFile) {
       return;
     }
-    this.filesQueuedForDeletion.push(inputRomFile);
+    this.filesQueuedForDeletion.push({ candidate, file: inputRomFile });
   }
 
   /**

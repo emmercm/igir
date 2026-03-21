@@ -5,12 +5,13 @@ import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import type DAT from '../types/dats/dat.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import ChdBinCue from '../types/files/archives/chd/chdBinCue.js';
 import type File from '../types/files/file.js';
+import type IndexedFiles from '../types/indexedFiles.js';
 import type Options from '../types/options.js';
+import type WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**
@@ -30,28 +31,31 @@ export default class MovedROMDeleter extends Module {
    * Delete input files that were moved.
    */
   async delete(
-    inputRoms: File[],
-    movedRoms: File[],
-    datsToWrittenFiles: Map<DAT, File[]>,
+    indexedRoms: IndexedFiles,
+    movedWriteCandidates: WriteCandidate[],
   ): Promise<string[]> {
     if (!this.options.shouldMove()) {
       // We shouldn't cause any change to the output directory
       return [];
     }
 
-    if (movedRoms.length === 0) {
+    if (movedWriteCandidates.length === 0) {
       return [];
     }
+
+    const movedRoms = movedWriteCandidates.flatMap((candidate) =>
+      candidate.getRomsWithFiles().map((romWithFiles) => romWithFiles.getInputFile()),
+    );
 
     this.progressBar.logTrace('deleting moved ROMs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
     this.progressBar.resetProgress(movedRoms.length);
 
-    const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(movedRoms, inputRoms);
+    const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives(movedRoms, indexedRoms);
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
-      datsToWrittenFiles,
+      movedWriteCandidates,
     );
 
     const existingFilePathsCheck = await async.mapLimit(
@@ -96,8 +100,11 @@ export default class MovedROMDeleter extends Module {
    * Archives that don't have all of their file entries matched shouldn't be deleted during
    *  moving.
    */
-  private filterOutPartiallyConsumedArchives(movedRoms: File[], inputRoms: File[]): string[] {
-    const groupedInputRoms = MovedROMDeleter.groupFilesByFilePath(inputRoms);
+  private filterOutPartiallyConsumedArchives(
+    movedRoms: File[],
+    indexedRoms: IndexedFiles,
+  ): string[] {
+    const groupedInputRoms = indexedRoms.getFilesByFilePath();
     const groupedMovedRoms = MovedROMDeleter.groupFilesByFilePath(movedRoms);
 
     return [...groupedMovedRoms.entries()]
@@ -200,10 +207,14 @@ export default class MovedROMDeleter extends Module {
    */
   private static filterOutWrittenFiles(
     movedRoms: string[],
-    datsToWrittenFiles: Map<DAT, File[]>,
+    movedWriteCandidates: WriteCandidate[],
   ): string[] {
     const writtenFilePaths = new Set(
-      [...datsToWrittenFiles.values()].flat().map((file) => file.getFilePath()),
+      movedWriteCandidates.flatMap((candidate) =>
+        candidate
+          .getRomsWithFiles()
+          .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
+      ),
     );
 
     return movedRoms.filter((filePath) => !writtenFilePaths.has(filePath));

@@ -15,11 +15,15 @@ import Game from '../../src/types/dats/game.js';
 import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
+import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
 import FileCache from '../../src/types/files/fileCache.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
+import IndexedFiles from '../../src/types/indexedFiles.js';
 import Options from '../../src/types/options.js';
+import ROMWithFiles from '../../src/types/romWithFiles.js';
+import WriteCandidate from '../../src/types/writeCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 it('should do nothing if no ROMs moved', async () => {
@@ -34,9 +38,8 @@ it('should do nothing if no ROMs moved', async () => {
   expect(romFiles.length).toBeGreaterThan(0);
 
   await new MovedROMDeleter(new Options({ commands: ['copy'] }), new ProgressBarFake()).delete(
-    romFiles,
+    IndexedFiles.fromFiles(romFiles),
     [],
-    new Map(),
   );
 
   const exists = await Promise.all(
@@ -59,11 +62,18 @@ it('should delete raw files', async () => {
     await FsPoly.touch(rawFile);
     const inputFile = await File.fileOf({ filePath: rawFile });
 
-    // When - the file is considered "moved" (inputRom = movedRom)
+    // When - the file is considered "moved" (written to a different output path)
+    const outputFile = inputFile.withFilePath(path.join('output', 'game.rom'));
+    const movedWriteCandidate = new WriteCandidate(new SingleValueGame({ name: 'game' }), [
+      new ROMWithFiles(
+        new ROM({ name: 'game.rom', size: 0, crc32: '00000000' }),
+        inputFile,
+        outputFile,
+      ),
+    ]);
     const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
-      [inputFile],
-      [inputFile],
-      new Map(),
+      IndexedFiles.fromFiles([inputFile]),
+      [movedWriteCandidate],
     );
 
     // Then - the file should have been deleted
@@ -463,21 +473,10 @@ describe('should delete archives', () => {
           new MappableSemaphore(os.availableParallelism()),
         ).generate(dat, indexedRomFiles);
 
-        const inputRoms = rawRomFiles;
-        const movedRoms = candidates
-          .flatMap((candidate) => candidate.getRomsWithFiles())
-          .map((romWithFiles) => romWithFiles.getInputFile());
-
-        const writtenRoms = candidates
-          .flatMap((releaseCanddiate) => releaseCanddiate.getRomsWithFiles())
-          .map((romWithFiles) => romWithFiles.getOutputFile());
-        const datsToWrittenRoms = new Map([[dat, writtenRoms]]);
-
         const deletedFilePaths = (
           await new MovedROMDeleter(options, new ProgressBarFake()).delete(
-            inputRoms,
-            movedRoms,
-            datsToWrittenRoms,
+            indexedRomFiles,
+            candidates,
           )
         )
           .map((filePath) => filePath.replace(inputPath + path.sep, ''))
@@ -506,13 +505,17 @@ it("should not delete files that weren't moved", async () => {
     const inputFile = await File.fileOf({ filePath: rawFile });
 
     // The file is a "moved" ROM, but it's also a written output (same path)
-    const dat = new LogiqxDAT({ header: new Header() });
-    const datsToWrittenRoms = new Map([[dat, [inputFile]]]);
+    const movedWriteCandidate = new WriteCandidate(new SingleValueGame({ name: 'game' }), [
+      new ROMWithFiles(
+        new ROM({ name: 'game.rom', size: 0, crc32: '00000000' }),
+        inputFile,
+        inputFile,
+      ),
+    ]);
 
     const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
-      [inputFile],
-      [inputFile],
-      datsToWrittenRoms,
+      IndexedFiles.fromFiles([inputFile]),
+      [movedWriteCandidate],
     );
 
     // Then - the file should NOT have been deleted because it's a written output
