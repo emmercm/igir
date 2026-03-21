@@ -1382,6 +1382,92 @@ describe('with explicit DATs', () => {
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
+
+  it('should copy and extract using custom console tokens', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const tokensFilePath = path.join(inputTemp, 'custom-console-tokens.json');
+      fs.writeFileSync(
+        tokensFilePath,
+        JSON.stringify({
+          version: 1,
+          consoles: [
+            {
+              datNameRegex: '/^One$/',
+              extensions: [],
+              tokens: { mister: 'OnePlatform' },
+            },
+            {
+              datNameRegex: '/^Patchable$/',
+              extensions: [],
+              tokens: { mister: 'PatchPlatform' },
+            },
+          ],
+        }),
+      );
+
+      const result = await runIgir({
+        commands: ['copy', 'extract'],
+        dat: [
+          path.join(inputTemp, 'dats', 'one.dat'),
+          path.join(inputTemp, 'dats', 'patchable.dat'),
+        ],
+        input: [path.join(inputTemp, 'roms')],
+        output: path.join(outputTemp, '{mister}'),
+        outputConsoleTokens: tokensFilePath,
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [path.join('OnePlatform', 'Empty.rom'), '00000000'],
+        [path.join('OnePlatform', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('OnePlatform', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('OnePlatform', 'GameCube-240pSuite-1.19.iso'), '5eb3d183'],
+        [`${path.join('OnePlatform', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+        [path.join('OnePlatform', 'One Three', 'One.rom'), 'f817a89f'],
+        [path.join('OnePlatform', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1) (Track 1).bin'),
+          '49ca35fb',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1) (Track 2).bin'),
+          '0316f720',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1) (Track 3).bin'),
+          'a320af40',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1).cue'),
+          '4ce39e73',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 2)', 'Optical Game (Disc 2).gdi'),
+          'f16f621c',
+        ],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track01.bin'), '9796ed9a'],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track02.raw'), 'abc178d5'],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
+        [`${path.join('OnePlatform', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('OnePlatform', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [path.join('OnePlatform', 'Three Four Five', 'Five.rom'), '3e5daf67'],
+        [path.join('OnePlatform', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
+        [path.join('OnePlatform', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [path.join('OnePlatform', 'UMD.iso'), 'e90f7cf5'],
+        [path.join('PatchPlatform', '0F09A40.rom'), '2f943e86'],
+        [path.join('PatchPlatform', '3708F2C.rom'), '20891c9f'],
+        [path.join('PatchPlatform', '612644F.rom'), 'f7591b29'],
+        [path.join('PatchPlatform', '65D1206.rom'), '20323455'],
+        [path.join('PatchPlatform', '92C85C9.rom'), '06692159'],
+        [path.join('PatchPlatform', 'Before.rom'), '0361b321'],
+        [path.join('PatchPlatform', 'Best.rom'), '1e3d78cf'],
+        [path.join('PatchPlatform', 'C01173E.rom'), 'dfaebe28'],
+        [path.join('PatchPlatform', 'KDULVQN.rom'), 'b1c303e4'],
+      ]);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
 });
 
 describe('with inferred DATs', () => {

@@ -654,6 +654,7 @@ export default class Igir {
               new Options({
                 commands: [...this.options.getCommands()],
                 output: this.options.getOutput(),
+                outputConsoleTokens: this.options.getOutputConsoleTokens(),
               }),
               dat,
               candidate.getGame(),
