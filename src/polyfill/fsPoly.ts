@@ -786,7 +786,7 @@ export default class FsPoly {
       output = [...output, ...files];
     }
 
-    return output.toSorted();
+    return output;
   }
 
   /**
