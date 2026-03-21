@@ -55,7 +55,7 @@ export default class MovedROMDeleter extends Module {
     });
     this.progressBar.resetProgress(inputFiles.size);
     this.progressBar.logTrace(
-      `considering ${inputFiles.size.toLocaleString()} moved games for deletion`,
+      `considering ${inputFiles.size.toLocaleString()} unique input paths for deletion`,
     );
 
     // Take the input files from the WriteCandidates that were moved, and look for duplicate input
@@ -64,7 +64,7 @@ export default class MovedROMDeleter extends Module {
     movedWriteCandidates.forEach((writeCandidate) => {
       for (const romsWithFiles of writeCandidate.getRomsWithFiles()) {
         const inputFile = romsWithFiles.getInputFile();
-        let possibleDuplicates = indexedRoms.findFiles(inputFile);
+        let possibleDuplicates = indexedRoms.findFiles(inputFile) ?? [inputFile];
 
         if (
           this.options.shouldExtractRom(romsWithFiles.getRom()) ||
@@ -75,19 +75,22 @@ export default class MovedROMDeleter extends Module {
         } else if (inputFile instanceof ArchiveFile) {
           // This moved input archive was raw-moved, we can only safely delete duplicate input files
           // of the same exact archive type
-          possibleDuplicates = possibleDuplicates?.filter(
+          // Note that a moved ArchiveFile would have only found duplicate ArchiveFilesof the exact
+          // same checksum above
+          possibleDuplicates = possibleDuplicates.filter(
             (matchedFile) =>
-              matchedFile instanceof ArchiveEntry &&
+              (matchedFile instanceof ArchiveEntry || matchedFile instanceof ArchiveFile) &&
               matchedFile.getArchive().constructor.name === inputFile.getArchive().constructor.name,
           );
         } else {
           // This moved plain input file was raw-moved, we can only safely delete plain duplicates
-          possibleDuplicates = possibleDuplicates?.filter(
-            (matchedFile) => !(matchedFile instanceof ArchiveEntry),
+          possibleDuplicates = possibleDuplicates.filter(
+            (matchedFile) =>
+              !(matchedFile instanceof ArchiveEntry || matchedFile instanceof ArchiveFile),
           );
         }
 
-        possibleDuplicates?.forEach((duplicate) => movedRoms.add(duplicate));
+        possibleDuplicates.forEach((duplicate) => movedRoms.add(duplicate));
       }
     });
     this.progressBar.logTrace(

@@ -19,6 +19,7 @@ import SingleValueGame from '../../src/types/dats/singleValueGame.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
 import FileCache from '../../src/types/files/fileCache.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import IndexedFiles from '../../src/types/indexedFiles.js';
 import Options from '../../src/types/options.js';
@@ -60,7 +61,7 @@ it('should delete raw files', async () => {
     // Given a plain file
     const rawFile = path.join(inputPath, 'game.rom');
     await FsPoly.touch(rawFile);
-    const inputFile = await File.fileOf({ filePath: rawFile });
+    const inputFile = await File.fileOf({ filePath: rawFile }, ChecksumBitmask.CRC32);
 
     // When - the file is considered "moved" (written to a different output path)
     const outputFile = inputFile.withFilePath(path.join('output', 'game.rom'));
