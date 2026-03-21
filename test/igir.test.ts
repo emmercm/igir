@@ -1355,6 +1355,7 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
+      // "Headerless", "One"
       expect(writtenFixdats).toHaveLength(2);
 
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:

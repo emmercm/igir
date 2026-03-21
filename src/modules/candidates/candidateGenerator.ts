@@ -126,7 +126,7 @@ export default class CandidateGenerator extends Module {
         return [rom, [ZeroSizeFile.getInstance()]];
       }
 
-      return [rom, indexedFiles.findFiles(rom) ?? []];
+      return [rom, indexedFiles.findFiles(rom)];
     });
     const romsAndLegalInputFiles = this.filterLegalInputFilesForGame(dat, game, romsAndInputFiles);
     const romsToOptimalInputFile = this.findOptimalInputFileForGame(
@@ -156,6 +156,10 @@ export default class CandidateGenerator extends Module {
       game,
       foundRomsWithFiles,
     );
+    if (foundRomsWithArchiveFiles.length < foundRomsWithFiles.length) {
+      // Some input files were filtered out
+      return [];
+    }
 
     // Ignore the Game if not every File is present
     const missingRoms = romsAndRomsWithFiles
@@ -401,12 +405,22 @@ export default class CandidateGenerator extends Module {
     );
     return new Map(
       romsAndInputFiles.map(([rom, inputFiles]) => {
-        let archiveEntry = inputFiles.find(
+        const archiveEntries = inputFiles.filter(
           (inputFile) =>
             inputFile.getFilePath() === archiveWithEveryRom.getFilePath() &&
             inputFile instanceof ArchiveEntry &&
             inputFile.getArchive() === archiveWithEveryRom,
         );
+        let archiveEntry =
+          // If there are multiple entries in the archive that could be used for this ROM, try to
+          // pick the best one based on its name. Picking the right entry may let us raw-write this
+          // archive if it's a zip.
+          archiveEntries.find(
+            (archiveEntry) =>
+              archiveEntry instanceof ArchiveEntry && archiveEntry.getEntryPath() === rom.getName(),
+          ) ??
+          // Otherwise, just grab the first one.
+          archiveEntries.at(0);
 
         if (
           !archiveEntry &&
@@ -714,6 +728,20 @@ export default class CandidateGenerator extends Module {
       await Promise.all(
         foundRomsWithFiles.map(async (romWithFiles) => {
           if (!shouldGenerateArchiveFile && !(romWithFiles.getRom() instanceof Disk)) {
+            if (
+              romWithFiles.getInputFile() instanceof ArchiveEntry &&
+              this.options.shouldWrite() &&
+              !this.options.shouldExtractRom(romWithFiles.getRom()) &&
+              !this.options.shouldZipRom(romWithFiles.getRom())
+            ) {
+              // We must be able to use the entire archive as-is if we're not extracting or zipping
+              this.progressBar.logTrace(
+                `${dat.getName()}: ${game.getName()}: ${romWithFiles.getRom().getName()}: can't use archive because it isn't perfect`,
+              );
+              return undefined;
+            }
+
+            // Otherwise, we can use the input file however it is, File or ArchiveEntry
             return romWithFiles;
           }
 
@@ -880,10 +908,10 @@ export default class CandidateGenerator extends Module {
         const inputFile = romWithFiles.getInputFile();
         return indexedFiles
           .findFiles(romWithFiles.getRom())
-          ?.find(
+          .find(
             (foundFile) =>
               foundFile.getFilePath() === inputFile.getFilePath() &&
-              inputFile instanceof ArchiveEntry &&
+              (inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile) &&
               foundFile instanceof ArchiveEntry &&
               inputFile.getArchive() === foundFile.getArchive(),
           );

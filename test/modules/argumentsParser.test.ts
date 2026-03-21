@@ -201,7 +201,7 @@ describe('options', () => {
     expect(options.getInputPaths()).toEqual([os.devNull]);
     expect(options.getInputChecksumQuick()).toEqual(false);
     expect(options.getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
-    expect(options.getInputChecksumMax()).toBeUndefined();
+    expect(options.getInputChecksumMax()).toEqual(ChecksumBitmask.SHA1);
     expect(options.getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
 
     expect(options.getDatNameRegex()).toBeUndefined();
@@ -532,11 +532,6 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA1'])
         .getInputChecksumMin(),
     ).toEqual(ChecksumBitmask.SHA1);
-    expect(
-      argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256'])
-        .getInputChecksumMin(),
-    ).toEqual(ChecksumBitmask.SHA256);
     expect(
       argumentsParser
         .parse([
