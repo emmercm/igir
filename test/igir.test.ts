@@ -667,6 +667,7 @@ describe('with explicit DATs', () => {
       expect(result.movedFiles).toEqual([
         path.join('7z', 'fizzbuzz.7z'),
         path.join('7z', 'foobar.7z'),
+        path.join('7z', 'loremipsum.7z'),
         path.join('chd', '2048.chd'),
         path.join('chd', '4096.chd'),
         path.join('cso', 'UMD.cso'),
@@ -676,6 +677,7 @@ describe('with explicit DATs', () => {
         path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
         path.join('gz', 'fizzbuzz.gz'),
         path.join('gz', 'foobar.gz'),
+        path.join('gz', 'loremipsum.gz'),
         path.join('gz', 'one.gz'),
         path.join('gz', 'three.gz'),
         path.join('headered', 'LCDTestROM.lnx.rar'),
@@ -684,6 +686,7 @@ describe('with explicit DATs', () => {
         path.join('headered', 'diagnostic_test_cartridge.a78.7z'),
         path.join('headered', 'fds_joypad_test.fds.zip'),
         path.join('headered', 'speed_test_v51.smc'),
+        'loremipsum.7z',
         path.join('nkit', 'GameCube-240pSuite-1.19.nkit.iso'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),
@@ -696,6 +699,7 @@ describe('with explicit DATs', () => {
         path.join('patchable', 'best.gz'),
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
+        path.join('rar', 'loremipsum.rar'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -706,9 +710,11 @@ describe('with explicit DATs', () => {
         path.join('rvz', 'GameCube-240pSuite-1.19.rvz'),
         path.join('tar', 'fizzbuzz.tar.gz'),
         path.join('tar', 'foobar.tar.gz'),
+        path.join('tar', 'loremipsum.tar.gz'),
         path.join('wia', 'GameCube-240pSuite-1.19.wia'),
         path.join('zip', 'fizzbuzz.zip'),
         path.join('zip', 'foobar.zip'),
+        path.join('zip', 'fourfive.zip'),
         path.join('zip', 'loremipsum.zip'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);

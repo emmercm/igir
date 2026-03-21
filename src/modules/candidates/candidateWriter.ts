@@ -626,6 +626,10 @@ export default class CandidateWriter extends Module {
             return; // final error, do not continue
           }
         }
+        if (written === MoveResult.RENAMED && this.options.shouldTest()) {
+          // No need to test, the file was only renamed, not newly written
+          break;
+        }
       }
 
       if (written) {
