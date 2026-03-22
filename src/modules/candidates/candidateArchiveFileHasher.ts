@@ -1,4 +1,4 @@
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
@@ -17,18 +17,18 @@ import Module from '../module.js';
 export default class CandidateArchiveFileHasher extends Module {
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
-  private readonly driveSemaphore: DriveSemaphore;
+  private readonly mappableSemaphore: MappableSemaphore;
 
   constructor(
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
     super(progressBar, CandidateArchiveFileHasher.name);
     this.options = options;
     this.fileFactory = fileFactory;
-    this.driveSemaphore = driveSemaphore;
+    this.mappableSemaphore = mappableSemaphore;
   }
 
   /**
@@ -89,7 +89,7 @@ export default class CandidateArchiveFileHasher extends Module {
               return romWithFiles;
             }
 
-            return await this.driveSemaphore.runExclusive(inputFile, async () => {
+            return await this.mappableSemaphore.runExclusive(async () => {
               this.progressBar.incrementInProgress();
               this.progressBar.logTrace(
                 `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${inputFile.toString()}`,

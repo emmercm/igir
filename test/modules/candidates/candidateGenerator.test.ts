@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
+import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
 import type DAT from '../../../src/types/dats/dat.js';
@@ -14,6 +15,8 @@ import MameDAT from '../../../src/types/dats/mame/mameDat.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import ChdBinCue from '../../../src/types/files/archives/chd/chdBinCue.js';
+import NkitIso from '../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/types/files/archives/tar.js';
@@ -639,7 +642,12 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     const archive = new Zip('input.zip');
     const filePromises = [
       // Matches a game with two ROMs
-      File.fileOf({ filePath: 'two.a', size: 2, crc32: 'abcdef90' }),
+      ArchiveEntry.entryOf({
+        archive,
+        entryPath: 'two.a',
+        size: 2,
+        crc32: 'abcdef90',
+      }),
       ArchiveEntry.entryOf({
         archive,
         entryPath: 'two.b',
@@ -687,7 +695,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         await Promise.all(filePromises),
       );
 
-      // Then
+      // Then "game with no ROMs" and "game with two ROMs (parent)"
       expect(candidates).toHaveLength(2);
     });
   });
@@ -842,6 +850,89 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         }
       });
     });
+  });
+
+  it('should group disc-merged games by their original game name', async () => {
+    const discOne = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 1)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 1).bin',
+          size: 705_614_112,
+          crc32: 'e32f4a7e',
+        }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 2)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 2).bin',
+          size: 731_911_824,
+          crc32: '21b5d15d',
+        }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(options, discMergedDat, files);
+
+    const mergedGameName = discMergedDat.getGames().at(0)?.getName() ?? '';
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getName()).toEqual(mergedGameName);
+    expect(
+      candidates[0]
+        .getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
+    ).toEqual(files.map((file) => path.join(mergedGameName, file.getFilePath())));
+  });
+});
+
+describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
+  const options = new Options({ commands: ['copy', command] });
+
+  it("should not return a candidate for archives that can't be extracted", async () => {
+    const nkitIso = new NkitIso('disc.nkit.iso');
+    const files = await Promise.all(
+      gameWithOneRom.getRoms().map(
+        async (rom) =>
+          await ArchiveEntry.entryOf({
+            archive: nkitIso,
+            entryPath: rom.getName(),
+            size: rom.getSize(),
+            crc32: rom.getCrc32(),
+          }),
+      ),
+    );
+
+    const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getName()).toEqual(gameWithNoRoms.getName());
   });
 });
 

@@ -159,6 +159,10 @@ export default class KeyedMutex {
    * Release any held lock for the given keys.
    */
   releaseMultiple(keys: string[]): void {
+    if (keys.length === 0) {
+      return;
+    }
+
     keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
       this.keyMutexes.get(key)?.release();
     });

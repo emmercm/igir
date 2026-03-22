@@ -1,7 +1,7 @@
 import os from 'node:os';
 import { PassThrough } from 'node:stream';
 
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
@@ -13,9 +13,9 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 
 test.each([
   // One input path
-  [['test/fixtures/roms/**/*'], { roms: 26 }],
+  [['test/fixtures/roms/**/*'], { roms: 28 }],
   [['test/fixtures/roms/7z/*'], { '7z': 6 }],
-  [['test/fixtures/roms/chd/*'], { chd: 4 }],
+  [['test/fixtures/roms/chd/*'], { chd: 6 }],
   [['test/fixtures/roms/cso/*'], { cso: 1 }],
   [['test/fixtures/roms/discs/*'], { discs: 3 }],
   [['test/fixtures/roms/gz/*'], { gz: 7 }],
@@ -46,7 +46,7 @@ test.each([
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   // When

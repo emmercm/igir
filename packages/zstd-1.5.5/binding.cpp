@@ -79,25 +79,18 @@ public:
             bool endFinished = false;
             while (!endFinished) {
                 ZSTD_outBuffer outBuff = { outBuffer.data(), outBuffer.size(), 0 };
-
                 size_t const endRemaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_end);
-
                 if (ZSTD_isError(endRemaining)) {
                     SetError(std::string("End error: ") + ZSTD_getErrorName(endRemaining));
                     return;
                 }
-
                 if (outBuff.pos > 0) {
                     size_t currentSize = result_.size();
                     result_.resize(currentSize + outBuff.pos);
                     std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
                 }
-
-                // End is complete when remaining is 0
                 endFinished = (endRemaining == 0);
             }
-
-            // Free the context after successful end operation
             if (cctx_) {
                 ZSTD_freeCCtx(cctx_);
                 cctx_ = nullptr;

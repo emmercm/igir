@@ -20,6 +20,14 @@ export default class Tar extends Archive {
     return ['.tar', '.tar.gz', '.tgz'];
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
   getExtension(): string {
     for (const ext of Tar.getExtensions()) {
       if (this.getFilePath().toLowerCase().endsWith(ext)) {
@@ -50,7 +58,7 @@ export default class Tar extends Archive {
       const checksums = await FileChecksums.hashStream(
         // NOTE(cemmer): minipass is 99% stream.Stream-compatible, and I don't want to introduce it
         // and its types into the project just for this single line of code
-        entry as unknown as stream.Stream,
+        entry as unknown as stream.Readable,
         checksumBitmask,
       );
       archiveEntryPromises.push(

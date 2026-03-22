@@ -10,12 +10,6 @@ export default class Defaults {
   static readonly MAX_FS_THREADS = 100;
 
   /**
-   * Default max semaphore filesize of files to read (and checksum) and write (and test) at once.
-   * This will be the limiting factor for consoles with large ROMs. 734MiB CDs.
-   */
-  static readonly MAX_READ_WRITE_CONCURRENT_KILOBYTES = Math.ceil(734_003_200 / 1024);
-
-  /**
    * Default number of DATs to process at once.
    */
   static readonly DAT_DEFAULT_THREADS = 2;
@@ -23,7 +17,7 @@ export default class Defaults {
   /**
    * A reasonable max number of files to write at once.
    */
-  static readonly FILE_READER_DEFAULT_THREADS = 8;
+  static readonly FILE_READER_DEFAULT_THREADS = 6;
 
   /**
    * Max number of archive entries to process (possibly extract & MD5/SHA1/SHA256 checksum) at once.

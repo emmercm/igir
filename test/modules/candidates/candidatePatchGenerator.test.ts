@@ -2,7 +2,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -55,7 +54,7 @@ async function runPatchCandidateGenerator(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   return new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
@@ -86,7 +85,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -106,7 +105,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -141,7 +140,7 @@ describe('with inferred DATs', () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new MappableSemaphore(os.cpus().length),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
 
@@ -172,14 +171,14 @@ describe('with explicit DATs', () => {
         options,
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new DriveSemaphore(os.availableParallelism()),
+        new MappableSemaphore(os.availableParallelism()),
       ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
 
     // And pre-assert all Game names and ROM names have path separators in them

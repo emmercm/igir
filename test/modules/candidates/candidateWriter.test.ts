@@ -7,7 +7,6 @@ import { PassThrough } from 'node:stream';
 import async from 'async';
 
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
 import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
@@ -17,6 +16,7 @@ import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import CandidatePatchGenerator from '../../../src/modules/candidates/candidatePatchGenerator.js';
+import type { CandidateWriterResults } from '../../../src/modules/candidates/candidateWriter.js';
 import CandidateWriter from '../../../src/modules/candidates/candidateWriter.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
@@ -96,7 +96,7 @@ async function candidateWriter(
   inputGlob: string,
   patchGlob: string | undefined,
   outputTemp: string,
-): Promise<[string, Stats][]> {
+): Promise<CandidateWriterResults> {
   // Given
   const options = new Options({
     ...optionsProps,
@@ -113,8 +113,8 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
-    ).scan();
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
   } catch {
     /* ignored */
   }
@@ -122,7 +122,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
 
@@ -139,7 +139,7 @@ async function candidateWriter(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     candidates = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
       dat,
@@ -156,15 +156,13 @@ async function candidateWriter(
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
   // When
-  await new CandidateWriter(
+  return await new CandidateWriter(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new CandidateWriterSemaphore(os.availableParallelism()),
     new FileMoveMutex(),
   ).write(dat, candidates);
-
-  // Then
-  return await walkAndStat(outputTemp);
 }
 
 it('should not do anything if there are no candidates', async () => {
@@ -218,27 +216,29 @@ it('should not do anything if the input and output files are the same', async ()
   });
 });
 
-describe('zip', () => {
-  it('should not write if the output is the input', async () => {
+describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
+  it(`should not copy ${command === 'raw' ? '' : `& ${command}`} if the output is the input`, async () => {
     await copyFixturesToTemp(async (inputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'zip', 'test'] });
-      const inputZip = path.join(inputTemp, 'roms', 'zip');
-      const inputFilesBefore = await walkAndStat(inputZip);
+      const options = new Options({
+        commands: ['copy', command, 'test'],
+      });
+      const inputFiles = path.join(inputTemp, 'roms', command === 'zip' ? 'zip' : 'raw');
+      const inputFilesBefore = await walkAndStat(inputFiles);
       expect(inputFilesBefore.length).toBeGreaterThan(0);
 
       // When
-      await candidateWriter(options, inputTemp, 'zip/*', undefined, inputZip);
+      await candidateWriter(options, inputFiles, '**/*', undefined, inputFiles);
 
       // Then the input files weren't touched
-      await expect(walkAndStat(inputZip)).resolves.toEqual(inputFilesBefore);
+      await expect(walkAndStat(inputFiles)).resolves.toEqual(inputFilesBefore);
     });
   });
 
-  it('should not write anything if the output exists and not overwriting', async () => {
+  it(`should not copy ${command === 'raw' ? '' : `& ${command}`} anything if the output exists and not overwriting`, async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'zip'] });
+      const options = new Options({ commands: ['copy', command] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -247,7 +247,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -261,10 +261,10 @@ describe('zip', () => {
     });
   });
 
-  it('should write if the output is expected and overwriting', async () => {
+  it(`should copy ${command === 'raw' ? '' : `& ${command}`} if the output is expected and overwriting`, async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'zip'] });
+      const options = new Options({ commands: ['copy', command] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -273,7 +273,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -300,13 +300,13 @@ describe('zip', () => {
     });
   });
 
-  it('should not write anything if the output is expected and overwriting invalid', async () => {
+  it(`should not copy ${command === 'raw' ? '' : `& ${command}`} anything if the output is expected and overwriting invalid`, async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Note: need to exclude some ROMs to prevent duplicate output paths
       const inputGlob = '**/!(chd|headerless)/*';
 
       // Given
-      const options = new Options({ commands: ['copy', 'zip'] });
+      const options = new Options({ commands: ['copy', command] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -315,7 +315,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // When we write again
@@ -338,10 +338,10 @@ describe('zip', () => {
     });
   });
 
-  it('should write if the output is not expected and overwriting invalid', async () => {
+  it(`should copy ${command === 'raw' ? '' : `& ${command}`} if the output is not expected and overwriting invalid`, async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given
-      const options = new Options({ commands: ['copy', 'zip'] });
+      const options = new Options({ commands: ['copy', command] });
       const inputFilesBefore = await walkAndStat(inputTemp);
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
@@ -350,7 +350,7 @@ describe('zip', () => {
 
       // And files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
 
       // And the files are made invalid
@@ -386,6 +386,90 @@ describe('zip', () => {
     });
   });
 
+  test(`should not delete matched input files or write to the output when moving ${command === 'raw' ? '' : `& ${command}ing`} if the output exists and not overwriting`, async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Note: need to exclude some ROMs to prevent duplicate output paths
+      const inputGlob = '**/!(chd|headerless)/*';
+
+      // Given: first, copy everything from input -> output
+      await candidateWriter(
+        { commands: ['copy', command] },
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
+
+      // And files were written
+      const outputFilesBefore = await walkAndStat(outputTemp);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
+
+      // When: use the 'move' and 'zip' commands with overwriteInvalid
+      const results = await candidateWriter(
+        { commands: ['move', command] },
+        inputTemp,
+        inputGlob,
+        undefined,
+        outputTemp,
+      );
+
+      // Then the output wasn't touched
+      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
+
+      // And no input files were queued for deletion because we don't know it's safe to do so
+      expect(results.moved.length).toEqual(0);
+    });
+  });
+
+  test.each([{ overwriteInvalid: true }, { overwrite: true }] satisfies OptionsProps[])(
+    `should delete matched input files but not write to the output when moving ${command ? `& ${command}ing` : ''} if the output is expected: %s`,
+    async (optionsProps) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Note: need to exclude some ROMs to prevent duplicate output paths
+        const inputGlob = '**/!(chd|headerless)/*';
+
+        // Given: first, copy everything from input -> output
+        await candidateWriter(
+          { commands: ['copy', command] },
+          inputTemp,
+          inputGlob,
+          undefined,
+          outputTemp,
+        );
+
+        // And an extra file that won't be matched
+        await FsPoly.writeFile(
+          path.join(inputTemp, 'nonmatch.rom'),
+          'CA52A3B3466BF3EB71465AADC7E6D07A',
+        );
+
+        // And files were written
+        const outputFilesBefore = await walkAndStat(outputTemp);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
+
+        // When: use the 'move' and 'zip' commands with overwriteInvalid
+        const results = await candidateWriter(
+          { commands: ['move', command], ...optionsProps },
+          inputTemp,
+          inputGlob,
+          undefined,
+          outputTemp,
+        );
+
+        // Then all matched input files were queued for deletion...
+        expect(results.moved.length).toBeGreaterThan(0);
+        // ...and nonmatch.rom was not one of them
+        expect(
+          results.moved.flatMap((c) =>
+            c.getRomsWithFiles().map((r) => path.basename(r.getInputFile().getFilePath())),
+          ),
+        ).not.toContain('nonmatch.rom');
+      });
+    },
+  );
+});
+
+describe('zip', () => {
   it('should not move if tested zip has wrong number of entries', () => {
     // TODO(cemmer)
   });
@@ -416,13 +500,8 @@ describe('zip', () => {
     async (inputGlob, expectedFileName, expectedCrc) => {
       await copyFixturesToTemp(async (inputTemp, outputTemp) => {
         const options = new Options({ commands: ['copy', 'zip', 'test'] });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
           path.join(outputTemp, outputFiles[0][0]),
@@ -454,13 +533,8 @@ describe('zip', () => {
         commands: ['copy', 'zip', 'test'],
         removeHeaders: [''], // all
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        undefined,
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
       const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
         path.join(outputTemp, outputFiles[0][0]),
@@ -498,13 +572,8 @@ describe('zip', () => {
       const options = new Options({
         commands: ['copy', 'zip', 'test'],
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        'patches',
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
 
       const writtenRomsAndCrcs = (
         await Promise.all(
@@ -530,9 +599,11 @@ describe('zip', () => {
     [
       '**/!(header*)/*',
       [
-        '2048.zip',
-        '4096.zip',
+        '2048', // <disk>
+        '4096', // <disk>
+        'CD-ROM', // <disk>
         'CD-ROM.zip',
+        'GD-ROM', // <disk>
         'GD-ROM.zip',
         'GameCube-240pSuite-1.19.zip',
         'UMD.zip',
@@ -619,11 +690,8 @@ describe('zip', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (
-        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-      )
-        .map((pair) => pair[0])
-        .toSorted();
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -637,9 +705,11 @@ describe('zip', () => {
     [
       '**/!(header*)/*',
       [
-        '2048.zip',
-        '4096.zip',
+        '2048', // <disk>
+        '4096', // <disk>
+        'CD-ROM', // <disk>
         'CD-ROM.zip',
+        'GD-ROM', // <disk>
         'GD-ROM.zip',
         'GameCube-240pSuite-1.19.zip',
         'UMD.zip',
@@ -658,7 +728,11 @@ describe('zip', () => {
         'unknown.zip',
       ],
       [
-        // no input files are TorrentZip
+        // Note: no zip files are TorrentZip
+        path.join('chd', '2048.chd'),
+        path.join('chd', '4096.chd'),
+        path.join('chd', 'CD-ROM.chd'),
+        path.join('chd', 'GD-ROM.chd'),
       ],
     ],
     [
@@ -741,11 +815,8 @@ describe('zip', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = (
-          await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-        )
-          .map((pair) => pair[0])
-          .toSorted();
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -857,13 +928,8 @@ describe('zip', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
 
         // Then
         expect(outputFiles).toHaveLength(1);
@@ -883,173 +949,6 @@ describe('zip', () => {
 });
 
 describe('extract', () => {
-  it('should not write if the output is the input', async () => {
-    await copyFixturesToTemp(async (inputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy', 'extract', 'test'] });
-      const inputRaw = path.join(inputTemp, 'roms', 'raw');
-      const inputFilesBefore = await walkAndStat(inputRaw);
-      expect(inputFilesBefore.length).toBeGreaterThan(0);
-
-      // When
-      await candidateWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
-
-      // Then the input files weren't touched
-      await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should not write anything if the output exists and not overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy', 'extract'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // When we write again
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // Then the output wasn't touched
-      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should write if the output is expected and overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy', 'extract'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // When we write again
-      await candidateWriter(
-        {
-          ...options,
-          overwrite: true,
-        },
-        inputTemp,
-        '**/*',
-        undefined,
-        outputTemp,
-      );
-
-      // Then the output was touched
-      const outputFilesAfter = await walkAndStat(outputTemp);
-      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-        outputFilesBefore.map((pair) => pair[0]),
-      );
-      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should not write anything if the output is expected and overwriting invalid', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Note: need to exclude some ROMs to prevent duplicate output paths
-      const inputGlob = '**/!(chd)/*';
-
-      // Given
-      const options = new Options({ commands: ['copy', 'extract'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // When we write again
-      await candidateWriter(
-        {
-          ...options,
-          overwriteInvalid: true,
-        },
-        inputTemp,
-        inputGlob,
-        undefined,
-        outputTemp,
-      );
-
-      // Then the output wasn't touched
-      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should write if the output is not expected and overwriting invalid', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy', 'extract'], writerThreads: 1 });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // And the files are made invalid
-      await Promise.all(
-        outputFilesBefore.map(async ([filePath]) => {
-          const resolvedPath = path.join(outputTemp, filePath);
-          await FsPoly.rm(resolvedPath);
-          await FsPoly.touch(resolvedPath);
-        }),
-      );
-
-      // When we write again
-      await candidateWriter(
-        {
-          ...options,
-          overwriteInvalid: true,
-        },
-        inputTemp,
-        '**/*',
-        undefined,
-        outputTemp,
-      );
-
-      // Then the output was touched
-      const outputFilesAfter = await walkAndStat(outputTemp);
-      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-        outputFilesBefore.map((pair) => pair[0]),
-      );
-      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
   test.each([
     // Control group of headerless files
     ['raw/empty.rom', 'empty.rom', '00000000'],
@@ -1068,13 +967,8 @@ describe('extract', () => {
     async (inputGlob, expectedFileName, expectedCrc) => {
       await copyFixturesToTemp(async (inputTemp, outputTemp) => {
         const options = new Options({ commands: ['copy', 'extract', 'test'] });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0][0]).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1105,13 +999,8 @@ describe('extract', () => {
         commands: ['copy', 'extract', 'test'],
         removeHeaders: [''], // all
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        undefined,
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
       expect(outputFiles[0][0]).toEqual(expectedFileName);
       const outputFile = await File.fileOf(
@@ -1148,13 +1037,8 @@ describe('extract', () => {
       const options = new Options({
         commands: ['copy', 'extract', 'test'],
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        'patches',
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
 
       const writtenRomsAndCrcs = (
         await Promise.all(
@@ -1182,15 +1066,8 @@ describe('extract', () => {
       [
         '2048',
         '4096',
-        path.join('CD-ROM', 'CD-ROM (Track 1).bin'),
-        path.join('CD-ROM', 'CD-ROM (Track 2).bin'),
-        path.join('CD-ROM', 'CD-ROM (Track 3).bin'),
-        path.join('CD-ROM', 'CD-ROM.cue'),
-        path.join('GD-ROM', 'GD-ROM.gdi'),
-        path.join('GD-ROM', 'track01.bin'),
-        path.join('GD-ROM', 'track02.raw'),
-        path.join('GD-ROM', 'track03.bin'),
-        path.join('GD-ROM', 'track04.bin'),
+        'CD-ROM', // <disk>
+        'GD-ROM', // <disk>
         'GameCube-240pSuite-1.19.iso',
         'UMD.iso',
         'best.rom',
@@ -1309,11 +1186,8 @@ describe('extract', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (
-        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-      )
-        .map((pair) => pair[0])
-        .toSorted();
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1329,15 +1203,8 @@ describe('extract', () => {
       [
         '2048',
         '4096',
-        path.join('CD-ROM', 'CD-ROM (Track 1).bin'),
-        path.join('CD-ROM', 'CD-ROM (Track 2).bin'),
-        path.join('CD-ROM', 'CD-ROM (Track 3).bin'),
-        path.join('CD-ROM', 'CD-ROM.cue'),
-        path.join('GD-ROM', 'GD-ROM.gdi'),
-        path.join('GD-ROM', 'track01.bin'),
-        path.join('GD-ROM', 'track02.raw'),
-        path.join('GD-ROM', 'track03.bin'),
-        path.join('GD-ROM', 'track04.bin'),
+        'CD-ROM', // <disk>
+        'GD-ROM', // <disk>
         'GameCube-240pSuite-1.19.iso',
         'UMD.iso',
         'best.rom',
@@ -1378,16 +1245,11 @@ describe('extract', () => {
       ],
       [
         path.join('7z', 'invalid.7z'),
-        path.join('discs', 'CD-ROM (Track 1).bin'),
-        path.join('discs', 'CD-ROM (Track 2).bin'),
-        path.join('discs', 'CD-ROM (Track 3).bin'),
-        path.join('discs', 'CD-ROM.cue'),
-        path.join('discs', 'GD-ROM.gdi'),
+        path.join('chd', '2048.chd'),
+        path.join('chd', '4096.chd'),
+        path.join('chd', 'CD-ROM.chd'),
+        path.join('chd', 'GD-ROM.chd'),
         path.join('discs', 'UMD.iso'),
-        path.join('discs', 'track01.bin'),
-        path.join('discs', 'track02.raw'),
-        path.join('discs', 'track03.bin'),
-        path.join('discs', 'track04.bin'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),
         path.join('patchable', '612644F.rom'),
@@ -1505,11 +1367,8 @@ describe('extract', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = (
-          await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-        )
-          .map((pair) => pair[0])
-          .toSorted();
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1537,170 +1396,6 @@ describe('extract', () => {
 });
 
 describe('raw', () => {
-  it('should not write if the output is the input', async () => {
-    await copyFixturesToTemp(async (inputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy', 'test'] });
-      const inputRaw = path.join(inputTemp, 'roms', 'raw');
-      const inputFilesBefore = await walkAndStat(inputRaw);
-      expect(inputFilesBefore.length).toBeGreaterThan(0);
-
-      // When
-      await candidateWriter(options, inputTemp, 'raw/*', undefined, inputRaw);
-
-      // Then the input files weren't touched
-      await expect(walkAndStat(inputRaw)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should not write anything if the output exists and not overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // When we write again
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // Then the output wasn't touched
-      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should write if the output is expected and overwriting', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // When we write again
-      await candidateWriter(
-        {
-          ...options,
-          overwrite: true,
-        },
-        inputTemp,
-        '**/*',
-        undefined,
-        outputTemp,
-      );
-
-      // Then the output was touched
-      const outputFilesAfter = await walkAndStat(outputTemp);
-      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-        outputFilesBefore.map((pair) => pair[0]),
-      );
-      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should not write anything if the output is expected and overwriting invalid', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // When we write again
-      await candidateWriter(
-        {
-          ...options,
-          overwriteInvalid: true,
-        },
-        inputTemp,
-        '**/*',
-        undefined,
-        outputTemp,
-      );
-
-      // Then the output wasn't touched
-      await expect(walkAndStat(outputTemp)).resolves.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
-  it('should write if the output is not expected and overwriting invalid', async () => {
-    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
-      // Given
-      const options = new Options({ commands: ['copy'] });
-      const inputFilesBefore = await walkAndStat(inputTemp);
-      await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
-
-      // And we've written once
-      await candidateWriter(options, inputTemp, '**/*', undefined, outputTemp);
-
-      // And files were written
-      const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
-      expect(outputFilesBefore.some(([, stats]) => stats.isSymbolicLink())).toEqual(false);
-
-      // And the files are made invalid
-      await Promise.all(
-        outputFilesBefore.map(async ([filePath]) => {
-          const resolvedPath = path.join(outputTemp, filePath);
-          await FsPoly.rm(resolvedPath);
-          await FsPoly.touch(resolvedPath);
-        }),
-      );
-
-      // When we write again
-      await candidateWriter(
-        {
-          ...options,
-          overwriteInvalid: true,
-        },
-        inputTemp,
-        '**/*',
-        undefined,
-        outputTemp,
-      );
-
-      // Then the output was touched
-      const outputFilesAfter = await walkAndStat(outputTemp);
-      expect(outputFilesAfter.map((pair) => pair[0])).toEqual(
-        outputFilesBefore.map((pair) => pair[0]),
-      );
-      expect(outputFilesAfter).not.toEqual(outputFilesBefore);
-
-      // And the input files weren't touched
-      await expect(walkAndStat(inputTemp)).resolves.toEqual(inputFilesBefore);
-    });
-  });
-
   test.each([
     // Control group of headered files that can be removed
     ['headered/allpads.nes', 'allpads.nes', '9180a163'],
@@ -1715,13 +1410,8 @@ describe('raw', () => {
     async (inputGlob, expectedFileName, expectedCrc) => {
       await copyFixturesToTemp(async (inputTemp, outputTemp) => {
         const options = new Options({ commands: ['copy', 'test'] });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0][0]).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1750,13 +1440,8 @@ describe('raw', () => {
           commands: ['copy', 'test'],
           removeHeaders: [''], // all
         });
-        const outputFiles = await candidateWriter(
-          options,
-          inputTemp,
-          inputGlob,
-          undefined,
-          outputTemp,
-        );
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0][0]).toEqual(expectedFileName);
         const outputFile = await File.fileOf(
@@ -1788,13 +1473,8 @@ describe('raw', () => {
       const options = new Options({
         commands: ['copy', 'test'],
       });
-      const outputFiles = await candidateWriter(
-        options,
-        inputTemp,
-        inputGlob,
-        'patches',
-        outputTemp,
-      );
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
 
       const writtenRomsAndCrcs = (
         await Promise.all(
@@ -1820,9 +1500,11 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       [
-        '2048.chd',
-        '4096.chd',
+        '2048',
+        '4096',
+        'CD-ROM', // <disk> raw
         'CD-ROM.chd',
+        'GD-ROM', // <disk> raw
         'GD-ROM.chd',
         'GameCube-240pSuite-1.19.gcz',
         'UMD.cso',
@@ -1921,11 +1603,8 @@ describe('raw', () => {
       await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
       // When
-      const outputFiles = (
-        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-      )
-        .map((pair) => pair[0])
-        .toSorted();
+      await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1939,9 +1618,11 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       [
-        '2048.chd',
-        '4096.chd',
+        '2048',
+        '4096',
+        'CD-ROM', // <disk> raw
         'CD-ROM.chd',
+        'GD-ROM', // <disk> raw
         'GD-ROM.chd',
         'GameCube-240pSuite-1.19.gcz',
         'UMD.cso',
@@ -2124,11 +1805,8 @@ describe('raw', () => {
         await expect(walkAndStat(outputTemp)).resolves.toHaveLength(0);
 
         // When
-        const outputFiles = (
-          await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp)
-        )
-          .map((pair) => pair[0])
-          .toSorted();
+        await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
+        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
@@ -2189,7 +1867,7 @@ describe('link', () => {
 
         // And files were written
         const outputFilesBefore = await walkAndStat(outputTemp);
-        expect(outputFilesBefore).not.toHaveLength(0);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
         for (const [, stats] of outputFilesBefore) {
           expect(stats.isSymbolicLink()).toEqual(LinkMode[linkMode] === LinkMode.SYMLINK);
         }
@@ -2223,7 +1901,7 @@ describe('link', () => {
 
         // And files were written
         const outputFilesBefore = await walkAndStat(outputTemp);
-        expect(outputFilesBefore).not.toHaveLength(0);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
         for (const [, stats] of outputFilesBefore) {
           expect(stats.isSymbolicLink()).toEqual(linkMode === LinkModeInverted[LinkMode.SYMLINK]);
         }
@@ -2280,7 +1958,7 @@ describe('link', () => {
 
         // And files were written
         const outputFilesBefore = await walkAndStat(outputTemp);
-        expect(outputFilesBefore).not.toHaveLength(0);
+        expect(outputFilesBefore.length).toBeGreaterThan(0);
         for (const [, stats] of outputFilesBefore) {
           expect(stats.isSymbolicLink()).toEqual(linkMode === LinkModeInverted[LinkMode.SYMLINK]);
         }
@@ -2344,7 +2022,7 @@ describe('link', () => {
 
       // Then files were written
       const outputFilesBefore = await walkAndStat(outputTemp);
-      expect(outputFilesBefore).not.toHaveLength(0);
+      expect(outputFilesBefore.length).toBeGreaterThan(0);
       for (const [outputPath, stats] of outputFilesBefore) {
         expect(stats.isSymbolicLink()).toEqual(true);
         const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));

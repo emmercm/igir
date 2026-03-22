@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import v8 from 'node:v8';
+import stream from 'node:stream';
 import zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
@@ -19,8 +19,6 @@ export interface CacheProps {
  * A cache of a fixed size that ejects the oldest inserted key.
  */
 export default class Cache<V> {
-  private static readonly BUFFER_ENCODING: BufferEncoding = 'binary';
-
   private keyValues = new Map<string, V>();
 
   private readonly keyedMutex = new KeyedMutex(1000);
@@ -148,13 +146,24 @@ export default class Cache<V> {
     }
 
     try {
-      const compressed = await fs.promises.readFile(this.filePath);
-      if (compressed.length === 0) {
+      const chunks: Buffer[] = [];
+      await stream.promises.pipeline(
+        fs.createReadStream(this.filePath),
+        zlib.createGunzip(),
+        new stream.Writable({
+          write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
+            chunks.push(chunk);
+            cb();
+          },
+        }),
+      );
+      if (chunks.length === 0) {
         return this;
       }
-      // NOTE(cemmer): util.promisify(zlib.inflate) seems to have issues not throwing correctly
-      const decompressed = zlib.inflateSync(compressed);
-      const keyValuesObject = v8.deserialize(decompressed) as Record<string, V>;
+      const keyValuesObject = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<
+        string,
+        V
+      >;
       const keyValuesEntries = Object.entries(keyValuesObject);
       this.keyValues = new Map(keyValuesEntries);
     } catch {
@@ -196,9 +205,7 @@ export default class Cache<V> {
         }
 
         const keyValuesObject = Object.fromEntries(this.keyValues);
-        const decompressed = v8.serialize(keyValuesObject);
-        // NOTE(cemmer): util.promisify(zlib.deflate) seems to have issues not throwing correctly
-        const compressed = zlib.deflateSync(decompressed);
+        const json = JSON.stringify(keyValuesObject);
 
         // Ensure the directory exists
         const dirPath = path.dirname(this.filePath);
@@ -208,7 +215,11 @@ export default class Cache<V> {
 
         // Write to a temp file first
         const tempFile = await FsPoly.mktemp(this.filePath);
-        await FsPoly.writeFile(tempFile, compressed, { encoding: Cache.BUFFER_ENCODING });
+        await stream.promises.pipeline(
+          stream.Readable.from([Buffer.from(json, 'utf8')]),
+          zlib.createGzip(),
+          fs.createWriteStream(tempFile),
+        );
 
         // Validate the file was written correctly
         const tempFileCache = await new Cache({ filePath: tempFile }).load();

@@ -16,7 +16,6 @@ import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import Chd from '../../types/files/archives/chd/chd.js';
 import ChdBinCue from '../../types/files/archives/chd/chdBinCue.js';
-import NkitIso from '../../types/files/archives/nkitIso.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
 import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
@@ -72,6 +71,7 @@ export default class CandidateGenerator extends Module {
               `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
                 .getRomsWithFiles()
                 .map((rwf) => rwf.getInputFile().toString())
+                .reduce(ArrayPoly.reduceUnique(), [])
                 .join(', ')}`,
             );
           }
@@ -126,7 +126,7 @@ export default class CandidateGenerator extends Module {
         return [rom, [ZeroSizeFile.getInstance()]];
       }
 
-      return [rom, indexedFiles.findFiles(rom) ?? []];
+      return [rom, indexedFiles.findFiles(rom)];
     });
     const romsAndLegalInputFiles = this.filterLegalInputFilesForGame(dat, game, romsAndInputFiles);
     const romsToOptimalInputFile = this.findOptimalInputFileForGame(
@@ -156,6 +156,10 @@ export default class CandidateGenerator extends Module {
       game,
       foundRomsWithFiles,
     );
+    if (foundRomsWithArchiveFiles.length < foundRomsWithFiles.length) {
+      // Some input files were filtered out
+      return [];
+    }
 
     // Ignore the Game if not every File is present
     const missingRoms = romsAndRomsWithFiles
@@ -204,35 +208,42 @@ export default class CandidateGenerator extends Module {
         return [rom, inputFiles];
       }
 
-      const rawCopying =
+      const rawWriting =
         this.options.shouldWrite() &&
         !this.options.shouldExtractRom(rom) &&
         !this.options.shouldZipRom(rom);
 
       const filteredInputFiles = inputFiles.filter((inputFile) => {
         if (
-          !rawCopying &&
+          !rawWriting &&
           inputFile instanceof ArchiveEntry &&
-          inputFile.getArchive() instanceof NkitIso
+          !(rom instanceof Disk) &&
+          !inputFile.canExtract()
         ) {
-          // .nkit.iso can't be extracted
+          // We need to read the extracted file, but can't, so we can't use this file
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because it can't be extracted: ${inputFile.toString()}`,
+          );
           return false;
         }
 
-        if (rawCopying && inputFile instanceof ArchiveEntry) {
+        if (rawWriting && inputFile instanceof ArchiveEntry) {
           if (this.options.getPatchFileCount() > 0 && !(rom instanceof Disk)) {
             // We MIGHT want to patch this ROM, but we can't if we're raw-copying it
             return false;
           }
 
           if (
-            !(inputFile.getArchive() instanceof Chd) &&
             rom.getName().trim() !== '' &&
+            inputFile.getArchive().hasMeaningfulEntryPaths() &&
             OutputFactory.getPath(this.options, dat, singleValueGame, rom, inputFile).entryPath !==
               inputFile.getExtractedFilePath()
           ) {
             // The input file is an ArchiveEntry that we won't rewrite and its name doesn't match
             // what we want it to be
+            this.progressBar.logTrace(
+              `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because the entry has the wrong name: ${inputFile.toString()}`,
+            );
             return false;
           }
         }
@@ -389,17 +400,27 @@ export default class CandidateGenerator extends Module {
 
     // An Archive was found, use that as the only possible input file
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
+    this.progressBar.logTrace(
+      `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
+    );
     return new Map(
       romsAndInputFiles.map(([rom, inputFiles]) => {
-        this.progressBar.logTrace(
-          `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
-        );
-        let archiveEntry = inputFiles.find(
+        const archiveEntries = inputFiles.filter(
           (inputFile) =>
             inputFile.getFilePath() === archiveWithEveryRom.getFilePath() &&
             inputFile instanceof ArchiveEntry &&
             inputFile.getArchive() === archiveWithEveryRom,
         );
+        let archiveEntry =
+          // If there are multiple entries in the archive that could be used for this ROM, try to
+          // pick the best one based on its name. Picking the right entry may let us raw-write this
+          // archive if it's a zip.
+          archiveEntries.find(
+            (archiveEntry) =>
+              archiveEntry instanceof ArchiveEntry && archiveEntry.getEntryPath() === rom.getName(),
+          ) ??
+          // Otherwise, just grab the first one.
+          archiveEntries.at(0);
 
         if (
           !archiveEntry &&
@@ -559,6 +580,7 @@ export default class CandidateGenerator extends Module {
     game: Game,
     romsWithFiles: ROMWithFiles[],
   ): Promise<boolean> {
+    // TODO(cemmer): this is an issue when raw-writing at the same time, it causes extraction
     if (this.options.shouldDir2Dat()) {
       // We want to keep the scanned archive entries for dir2dat
       return false;
@@ -631,14 +653,26 @@ export default class CandidateGenerator extends Module {
       }
 
       if (
-        !(inputFile.getArchive() instanceof Chd) &&
         rom.getName().trim() !== '' &&
+        inputFile.getArchive().hasMeaningfulEntryPaths() &&
         OutputFactory.getPath(this.options, dat, singleValueGame, rom, inputFile).entryPath !==
           inputFile.getExtractedFilePath()
       ) {
         // This file doesn't have the correct entry path, we need to rewrite it
         return false;
       }
+    }
+
+    if (
+      romsWithFiles.length > 1 &&
+      romsWithFiles
+        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
+        .reduce(ArrayPoly.reduceUnique(), []).length > 1 &&
+      game.getDiscMerged()
+    ) {
+      // This Game is the result of 2+ discs merged together, and we're writing at least 2 files.
+      // Skip all the single input archive checks below.
+      return true;
     }
 
     if (
@@ -694,6 +728,20 @@ export default class CandidateGenerator extends Module {
       await Promise.all(
         foundRomsWithFiles.map(async (romWithFiles) => {
           if (!shouldGenerateArchiveFile && !(romWithFiles.getRom() instanceof Disk)) {
+            if (
+              romWithFiles.getInputFile() instanceof ArchiveEntry &&
+              this.options.shouldWrite() &&
+              !this.options.shouldExtractRom(romWithFiles.getRom()) &&
+              !this.options.shouldZipRom(romWithFiles.getRom())
+            ) {
+              // We must be able to use the entire archive as-is if we're not extracting or zipping
+              this.progressBar.logTrace(
+                `${dat.getName()}: ${game.getName()}: ${romWithFiles.getRom().getName()}: can't use archive because it isn't perfect`,
+              );
+              return undefined;
+            }
+
+            // Otherwise, we can use the input file however it is, File or ArchiveEntry
             return romWithFiles;
           }
 
@@ -860,10 +908,10 @@ export default class CandidateGenerator extends Module {
         const inputFile = romWithFiles.getInputFile();
         return indexedFiles
           .findFiles(romWithFiles.getRom())
-          ?.find(
+          .find(
             (foundFile) =>
               foundFile.getFilePath() === inputFile.getFilePath() &&
-              inputFile instanceof ArchiveEntry &&
+              (inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile) &&
               foundFile instanceof ArchiveEntry &&
               inputFile.getArchive() === foundFile.getArchive(),
           );

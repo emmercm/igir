@@ -1,8 +1,14 @@
+import fs from 'node:fs';
 import type { ParsedPath } from 'node:path';
 import path from 'node:path';
 
+import { Memoize } from 'typescript-memoize';
+
+import GameGrouper from '../gameGrouper.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import ConsoleTokens from './consoleTokens.js';
+import outputTokensData from './consoleTokens.json' with { type: 'json' };
 import type DAT from './dats/dat.js';
 import Disk from './dats/disk.js';
 import type Game from './dats/game.js';
@@ -14,9 +20,16 @@ import ArchiveFile from './files/archives/archiveFile.js';
 import type File from './files/file.js';
 import FileFactory from './files/fileFactory.js';
 import ZeroSizeFile from './files/zeroSizeFile.js';
-import GameConsole from './gameConsole.js';
 import type Options from './options.js';
 import { FixExtension, GameSubdirMode } from './options.js';
+
+interface ConsoleTokensJson {
+  consoles: {
+    datNameRegex: string;
+    extensions: string[];
+    tokens: Record<string, string | undefined>;
+  }[];
+}
 
 /**
  * A {@link ParsedPath} that carries {@link ArchiveEntry} path information.
@@ -215,7 +228,7 @@ export default class OutputFactory {
     result = this.replaceDatTokens(result, dat);
     result = this.replaceInputTokens(result, inputRomPath);
     result = this.replaceOutputTokens(result, options, outputRomFilename);
-    result = this.replaceOutputGameConsoleTokens(result, dat, outputRomFilename);
+    result = this.replaceConsoleTokens(result, options, dat, outputRomFilename);
 
     const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
@@ -296,8 +309,43 @@ export default class OutputFactory {
       .replace('{outputExt}', outputRom.ext.replace(/^\./, '') || '-');
   }
 
-  private static replaceOutputGameConsoleTokens(
+  @Memoize()
+  private static loadTokensFile(filePath: string | undefined): ConsoleTokens[] {
+    const data = filePath
+      ? (JSON.parse(fs.readFileSync(filePath, 'utf8')) as ConsoleTokensJson)
+      : (outputTokensData satisfies ConsoleTokensJson);
+    return data.consoles.map(({ datNameRegex, extensions, tokens }) => {
+      const lastSlash = datNameRegex.lastIndexOf('/');
+      const pattern = datNameRegex.slice(1, lastSlash);
+      const flags = datNameRegex.slice(lastSlash + 1);
+      const tokensMap = new Map(
+        Object.entries(tokens).filter((entry): entry is [string, string] => entry[1] !== undefined),
+      );
+      return new ConsoleTokens(new RegExp(pattern, flags || undefined), extensions, tokensMap);
+    });
+  }
+
+  private static getConsoleTokensForFilename(
+    outputTokensFile: ConsoleTokens[],
+    filePath: string,
+  ): ConsoleTokens | undefined {
+    const fileExtension = path.extname(filePath).toLowerCase();
+    return outputTokensFile.findLast((outputTokens) =>
+      outputTokens.getExtensions().includes(fileExtension),
+    );
+  }
+
+  private static getConsoleTokensForDatName(
+    outputTokensFile: ConsoleTokens[],
+    datName: string,
+  ): ConsoleTokens | undefined {
+    // more specific names come second (e.g. "Game Boy" and "Game Boy Color")
+    return outputTokensFile.findLast((outputTokens) => outputTokens.getDatRegex().test(datName));
+  }
+
+  private static replaceConsoleTokens(
     input: string,
+    options: Options,
     dat?: DAT,
     outputRomFilename?: string,
   ): string {
@@ -305,83 +353,17 @@ export default class OutputFactory {
       return input;
     }
 
-    const gameConsole =
-      GameConsole.getForDatName(dat?.getName() ?? '') ??
-      GameConsole.getForFilename(outputRomFilename);
-    if (!gameConsole) {
+    const outputTokensFile = OutputFactory.loadTokensFile(options.getOutputConsoleTokens());
+    const outputTokens =
+      OutputFactory.getConsoleTokensForDatName(outputTokensFile, dat?.getName() ?? '') ??
+      OutputFactory.getConsoleTokensForFilename(outputTokensFile, outputRomFilename);
+    if (!outputTokens) {
       return input;
     }
 
     let output = input;
-
-    const adam = gameConsole.getAdam();
-    if (adam) {
-      output = output.replace('{adam}', adam);
-    }
-
-    const es = gameConsole.getEmulationStation();
-    if (es) {
-      output = output.replace('{es}', es);
-    }
-
-    const pocket = gameConsole.getPocket();
-    if (pocket) {
-      output = output.replace('{pocket}', pocket);
-    }
-
-    const mister = gameConsole.getMister();
-    if (mister) {
-      output = output.replace('{mister}', mister);
-    }
-
-    const onion = gameConsole.getOnion();
-    if (onion) {
-      output = output.replace('{onion}', onion);
-    }
-
-    const batocera = gameConsole.getBatocera();
-    if (batocera) {
-      output = output.replace('{batocera}', batocera);
-    }
-
-    const jelos = gameConsole.getJelos();
-    if (jelos) {
-      output = output.replace('{jelos}', jelos);
-    }
-
-    const funkeyos = gameConsole.getFunkeyOS();
-    if (funkeyos) {
-      output = output.replace('{funkeyos}', funkeyos);
-    }
-
-    const miyoocfw = gameConsole.getMiyooCFW();
-    if (miyoocfw) {
-      output = output.replace('{miyoocfw}', miyoocfw);
-    }
-
-    const retrodeck = gameConsole.getRetroDECK();
-    if (retrodeck) {
-      output = output.replace('{retrodeck}', retrodeck);
-    }
-
-    const romm = gameConsole.getRomM();
-    if (romm) {
-      output = output.replace('{romm}', romm);
-    }
-
-    const twmenu = gameConsole.getTWMenu();
-    if (twmenu) {
-      output = output.replace('{twmenu}', twmenu);
-    }
-
-    const minui = gameConsole.getMinUI();
-    if (minui) {
-      output = output.replace('{minui}', minui);
-    }
-
-    const spruce = gameConsole.getSpruce();
-    if (spruce) {
-      output = output.replace('{spruce}', spruce);
+    for (const [key, value] of outputTokens.getTokens()) {
+      output = output.replace(`{${key}}`, value);
     }
     return output;
   }
@@ -528,11 +510,11 @@ export default class OutputFactory {
     if (
       (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE &&
         game.getRoms().length > 1 &&
-        // Output file is an archive
+        // Output file is not an archive
         !FileFactory.isExtensionArchive(ext) &&
         !(inputFile instanceof ArchiveFile)) ||
       options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
-      rom instanceof Disk
+      (rom instanceof Disk && game.getRoms().length > 1) // MAME behavior
     ) {
       output = path.join(game.getName(), output);
     }
@@ -568,7 +550,8 @@ export default class OutputFactory {
       return romBasename;
     }
 
-    // Should leave archived, generate the archive name from the game name
+    // Should leave archived (are raw-copying/moving)
+
     // The regex is to preserve filenames that use 2+ extensions, e.g. "rom.nes.zip"
     const oldExtMatch = /[^.]+((\.[a-zA-Z0-9]+)+)$/.exec(inputFile.getFilePath());
     const oldExt =
@@ -577,6 +560,20 @@ export default class OutputFactory {
           inputFile.getArchive().getExtension()
         : // Respect the input file's extension
           oldExtMatch[1];
+
+    // The Game is the result of 2+ discs merged together, and we're not extracting this file, so
+    // we want to group discs together and generate a basename based on the original game name.
+    if (game.getDiscMerged()) {
+      return path.join(
+        game.getName(),
+        GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
+          /(\.[a-zA-Z0-9]+)+$/,
+          oldExt,
+        ),
+      );
+    }
+
+    // Generate the archive name from the game name
 
     // If we got a filename with 2+ extensions, but the additional extensions
     // are actually part of the game's name, then just use the last extension

@@ -103,27 +103,27 @@ export default {
     }
 
     // Validate filename sorting
-    const fileNamesLowerCaseSorted = centralDirectoryFileHeaders
-      .map((fileHeader) => fileHeader.fileNameResolved().toLowerCase())
-      .toSorted((a, b) => {
-        if (a < b) {
-          return -1;
-        } else if (a > b) {
-          return 1;
-        }
-        return 0;
-      });
-    if (fileNamesLowerCaseSorted !== fileNamesLowerCaseSorted) {
+    const fileNamesLowerCase = centralDirectoryFileHeaders.map((fileHeader) =>
+      fileHeader.fileNameResolved().toLowerCase(),
+    );
+    const fileNamesLowerCaseSorted = fileNamesLowerCase.toSorted((a, b) => {
+      if (a < b) {
+        return -1;
+      } else if (a > b) {
+        return 1;
+      }
+      return 0;
+    });
+    if (fileNamesLowerCase.some((name, i) => name !== fileNamesLowerCaseSorted[i])) {
       return ValidationResult.INVALID;
     }
 
     // Validate the zip comment
-    const cdfhCrc32 = new Crc32()
-      .update(Buffer.concat(centralDirectoryFileHeaders.map((fileHeader) => fileHeader.raw)))
-      .digest()
-      .toString(16)
-      .padStart(8, '0')
-      .toUpperCase();
+    const crc32 = new Crc32();
+    for (const fileHeader of centralDirectoryFileHeaders) {
+      crc32.update(fileHeader.raw);
+    }
+    const cdfhCrc32 = crc32.digest().toString(16).padStart(8, '0').toUpperCase();
     const isRvZstd = centralDirectoryFileHeaders.some(
       (cdfh) => cdfh.compressionMethod === CompressionMethod.ZSTD,
     );

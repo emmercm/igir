@@ -4,6 +4,7 @@ import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import type DAT from '../types/dats/dat.js';
+import Disk from '../types/dats/disk.js';
 import type Game from '../types/dats/game.js';
 import IgirHeader from '../types/dats/igirHeader.js';
 import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
@@ -58,7 +59,10 @@ export default class Dir2DatCreator extends Module {
         .at(0)
         ?.getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getRom());
-      return game.withProps({ roms: roms });
+      return game.withProps({
+        roms: roms?.filter((rom) => !(rom instanceof Disk)),
+        disks: roms?.filter((rom) => rom instanceof Disk),
+      });
     });
 
     const dir2datDir = this.options.getDir2DatOutput();

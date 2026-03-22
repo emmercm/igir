@@ -1,13 +1,17 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Header from '../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../src/types/dats/logiqx/logiqxDat.js';
-import Release from '../src/types/dats/release.js';
-import ROM from '../src/types/dats/rom.js';
-import SingleValueGame from '../src/types/dats/singleValueGame.js';
-import Options, { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
-import OutputFactory from '../src/types/outputFactory.js';
+import { Ajv } from 'ajv';
+
+import outputTokensData from '../../src/types/consoleTokens.json' with { type: 'json' };
+import outputTokensSchema from '../../src/types/consoleTokens.schema.json' with { type: 'json' };
+import Header from '../../src/types/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
+import Release from '../../src/types/dats/release.js';
+import ROM from '../../src/types/dats/rom.js';
+import SingleValueGame from '../../src/types/dats/singleValueGame.js';
+import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../src/types/options.js';
+import OutputFactory from '../../src/types/outputFactory.js';
 
 const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new SingleValueGame({ name: 'Dummy Game' });
@@ -1087,5 +1091,15 @@ describe('should respect "--dir-game-subdir"', () => {
       await dummyRom.toFile(),
     );
     expect(outputPath.format()).toEqual(path.join(os.devNull, 'game', 'Dummy.rom'));
+  });
+});
+
+describe('outputTokens.json', () => {
+  it('should adhere to its schema', () => {
+    const ajv = new Ajv();
+    const validate = ajv.compile(outputTokensSchema);
+    const valid = validate(outputTokensData);
+    expect(validate.errors).toBeNull();
+    expect(valid).toBe(true);
   });
 });

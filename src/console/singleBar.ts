@@ -3,9 +3,7 @@ import isUnicodeSupported from 'is-unicode-supported';
 import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
 import TimePoly from '../polyfill/timePoly.js';
-import type Logger from './logger.js';
 import type { LogLevelValue } from './logLevel.js';
-import { LogLevel } from './logLevel.js';
 import type MultiBar from './multiBar.js';
 import type { ColoredSymbol } from './progressBar.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
@@ -45,7 +43,7 @@ export default class SingleBar extends ProgressBar {
   private static readonly BAR_SIZE = 30;
 
   private readonly multiBar: MultiBar;
-  private logger: Logger;
+  private loggerPrefix?: string;
 
   private displayDelay?: number;
   private displayCreated?: number;
@@ -68,10 +66,9 @@ export default class SingleBar extends ProgressBar {
   private lastEtaFormatTime = 0;
   private lastEtaFormatted = DEFAULT_ETA;
 
-  constructor(multiBar: MultiBar, logger: Logger, options?: SingleBarOptions) {
+  constructor(multiBar: MultiBar, options?: SingleBarOptions) {
     super();
     this.multiBar = multiBar;
-    this.logger = logger;
 
     if (options?.displayDelay !== undefined) {
       this.displayDelay = options.displayDelay;
@@ -95,7 +92,6 @@ export default class SingleBar extends ProgressBar {
    */
   addChildBar(options?: SingleBarOptions): ProgressBar {
     return this.multiBar.addSingleBar(
-      this.logger,
       {
         displayDelay: 2000,
         indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0),
@@ -120,6 +116,7 @@ export default class SingleBar extends ProgressBar {
       return;
     }
     this.symbol = symbol;
+    this.multiBar.clearAndRender();
   }
 
   getName(): string | undefined {
@@ -131,6 +128,7 @@ export default class SingleBar extends ProgressBar {
       return;
     }
     this.name = name;
+    this.multiBar.clearAndRender();
   }
 
   /**
@@ -185,32 +183,28 @@ export default class SingleBar extends ProgressBar {
    */
   finish(finishedMessage?: string): void {
     if (this.symbol?.symbol) {
-      this.setSymbol(ProgressBarSymbol.DONE);
+      this.symbol = ProgressBarSymbol.DONE;
     }
 
     if (this.total > 0) {
-      this.setCompleted(this.total);
+      this.completed = this.total;
     } else {
-      this.setCompleted(1);
+      this.completed = 1;
     }
-    this.setInProgress(0);
+    this.inProgress = 0;
 
     this.finishedMessage = finishedMessage;
   }
 
   setLoggerPrefix(prefix: string): void {
-    this.logger = this.logger.withLoggerPrefix(prefix);
+    this.loggerPrefix = prefix;
   }
 
   /**
    * Queue a log message to be printed to the terminal.
    */
   log(logLevel: LogLevelValue, message: string): void {
-    if (this.logger.getLogLevel() > logLevel && this.logger.getLogLevel() !== LogLevel.ALWAYS) {
-      return;
-    }
-
-    this.multiBar.log(this.logger.formatMessage(logLevel, message));
+    this.multiBar.log(logLevel, message, this.loggerPrefix);
   }
 
   /**
@@ -294,10 +288,10 @@ export default class SingleBar extends ProgressBar {
     const formattedCompleted = this.progressFormatter(this.completed);
     const formattedTotal = this.progressFormatter(this.total);
     const paddedCompleted = formattedCompleted.padStart(
-      Math.max(formattedTotal.length, this.indentSize > 0 ? 8 : 0),
+      Math.max(formattedTotal.length, this.indentSize > 0 ? 7 : 0),
       ' ',
     );
-    const paddedTotal = formattedTotal.padEnd(this.indentSize > 0 ? 8 : 0, ' ');
+    const paddedTotal = formattedTotal.padEnd(this.indentSize > 0 ? 7 : 0, ' ');
     bar += `${symbolColor(paddedCompleted)}/${CHALK_PROGRESS_IN_PROGRESS(paddedTotal)} `;
 
     if (this.completed > 0 || this.indentSize > 0) {
@@ -315,11 +309,12 @@ export default class SingleBar extends ProgressBar {
     const etaSeconds = this.calculateEta();
 
     // Throttle how often the ETA can visually change
-    const elapsedMs = TimePoly.hrtimeMillis(this.lastEtaFormatTime);
+    const timeNow = TimePoly.hrtimeMillis();
+    const elapsedMs = timeNow - this.lastEtaFormatTime;
     if (etaSeconds > 60 && elapsedMs < 5000) {
       return this.lastEtaFormatted;
     }
-    this.lastEtaFormatTime = TimePoly.hrtimeMillis();
+    this.lastEtaFormatTime = timeNow;
 
     if (Math.floor(etaSeconds) < 0) {
       this.lastEtaFormatted = DEFAULT_ETA;
@@ -335,11 +330,12 @@ export default class SingleBar extends ProgressBar {
 
   private calculateEta(): number {
     // Throttle how often the ETA is calculated
-    const elapsedMs = TimePoly.hrtimeMillis(this.lastEtaCalculatedTime);
+    const timeNow = TimePoly.hrtimeMillis();
+    const elapsedMs = timeNow - this.lastEtaCalculatedTime;
     if (elapsedMs < 50) {
       return this.lastEtaCalculated;
     }
-    this.lastEtaCalculatedTime = TimePoly.hrtimeMillis();
+    this.lastEtaCalculatedTime = timeNow;
 
     const MAX_BUFFER_SIZE = clamp(Math.floor(this.total / 10), 25, 50);
 

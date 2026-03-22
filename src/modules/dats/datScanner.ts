@@ -4,7 +4,7 @@ import path from 'node:path';
 import { parse } from '@fast-csv/parse';
 import async from 'async';
 
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import GameGrouper from '../../gameGrouper.js';
@@ -51,9 +51,9 @@ export default class DATScanner extends Scanner {
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
-    super(options, progressBar, fileFactory, driveSemaphore, DATScanner.name);
+    super(options, progressBar, fileFactory, mappableSemaphore, DATScanner.name);
   }
 
   /**
@@ -131,10 +131,12 @@ export default class DATScanner extends Scanner {
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
     return (
-      await this.driveSemaphore.map(datFiles, async (datFile) => {
+      await this.mappableSemaphore.map(datFiles, async (datFile) => {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: datFile.toString(),
+          total: datFile.getSize(),
+          progressFormatter: FsPoly.sizeReadable,
         });
 
         let dat: DAT | undefined;

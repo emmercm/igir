@@ -2,7 +2,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 
-import DriveSemaphore from '../../src/async/driveSemaphore.js';
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -15,6 +14,7 @@ import ROMScanner from '../../src/modules/roms/romScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 import type DAT from '../../src/types/dats/dat.js';
 import FileCache from '../../src/types/files/fileCache.js';
+import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
 import FileFactory from '../../src/types/files/fileFactory.js';
 import Options from '../../src/types/options.js';
 import WriteCandidate from '../../src/types/writeCandidate.js';
@@ -32,7 +32,7 @@ it('should do nothing if dir2dat command not provided', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   // And a DAT
@@ -67,8 +67,8 @@ it('should write a valid DAT', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
-  ).scan();
+    new MappableSemaphore(os.availableParallelism()),
+  ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
   // And a DAT
   const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
@@ -104,7 +104,7 @@ it('should write a valid DAT', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
@@ -153,8 +153,8 @@ it('should use the candidates for games and ROMs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.availableParallelism()),
-  ).scan();
+    new MappableSemaphore(os.availableParallelism()),
+  ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
   // And a DAT
   const inferredDats = await new DATGameInferrer(options, new ProgressBarFake()).infer(files);
@@ -205,7 +205,7 @@ it('should use the candidates for games and ROMs', async () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.availableParallelism()),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;

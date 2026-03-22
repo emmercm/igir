@@ -113,6 +113,7 @@ export interface GameProps {
   // ********** IGIR FIELDS **********
 
   readonly dir2datSource?: string;
+  readonly discMerged?: boolean;
 }
 
 /**
@@ -176,6 +177,8 @@ export default class Game implements GameProps {
 
   readonly dir2datSource?: string;
 
+  readonly discMerged: boolean;
+
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
     this.isBios = props?.isBios ?? this.isBios;
@@ -197,6 +200,7 @@ export default class Game implements GameProps {
     this.genre = props?.genre;
 
     this.dir2datSource = props?.dir2datSource;
+    this.discMerged = props?.discMerged ?? false;
   }
 
   /**
@@ -313,6 +317,10 @@ export default class Game implements GameProps {
 
   getCloneOfId(): string | undefined {
     return this.cloneOfId;
+  }
+
+  getDiscMerged(): boolean {
+    return this.discMerged;
   }
 
   // Computed getters

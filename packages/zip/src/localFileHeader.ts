@@ -182,7 +182,7 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return this file's uncompressed/decompressed stream.
    */
-  uncompressedStream(highWaterMark?: number): stream.Stream {
+  uncompressedStream(highWaterMark?: number): stream.Readable {
     switch (this.compressionMethod) {
       case CompressionMethod.STORE: {
         return this.compressedStream(highWaterMark);
