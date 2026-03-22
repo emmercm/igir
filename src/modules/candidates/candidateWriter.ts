@@ -76,6 +76,7 @@ export default class CandidateWriter extends Module {
 
     const inputToOutputFiles = new Set<string>();
     const writableCandidates = candidates
+      .filter((candidate) => candidate.canWrite())
       // Deduplicate input->output files
       .map((candidate) => {
         const nonDuplicateRomsWithFiles = candidate.getRomsWithFiles().filter((romWithFiles) => {

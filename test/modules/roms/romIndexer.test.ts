@@ -25,6 +25,76 @@ function indexAndFind(files: File[], props?: OptionsProps): File[] {
   return createRomIndexer(props).index(files).findFiles(files[0]);
 }
 
+describe('isOutputFile priority', () => {
+  it('should prefer non-output files over output files', async () => {
+    const plain = await File.fileOf({ filePath: 'input/rom.rom', size: SIZE, crc32: CRC });
+    const outputFile = await File.fileOf({
+      filePath: 'output/rom.rom',
+      size: SIZE,
+      crc32: CRC,
+      isOutputFile: true,
+    });
+
+    const sorted = indexAndFind([outputFile, plain]);
+
+    expect(sorted[0]).toBe(plain);
+    expect(sorted[1]).toBe(outputFile);
+  });
+
+  it('should apply isOutputFile preference before archive type preference', async () => {
+    // Even a plain (preferred) file that is an output file should sort after a non-output zip
+    const zip = await ArchiveEntry.entryOf({
+      archive: new Zip('rom.zip'),
+      entryPath: 'rom.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
+    const outputPlain = await File.fileOf({
+      filePath: 'output/rom.rom',
+      size: SIZE,
+      crc32: CRC,
+      isOutputFile: true,
+    });
+
+    const sorted = indexAndFind([outputPlain, zip]);
+
+    expect(sorted[0]).toBe(zip);
+    expect(sorted[1]).toBe(outputPlain);
+  });
+
+  it('should not affect ordering when all files are non-output', async () => {
+    const a = await File.fileOf({ filePath: 'a.rom', size: SIZE, crc32: CRC });
+    const b = await File.fileOf({ filePath: 'b.rom', size: SIZE, crc32: CRC });
+
+    const sorted = indexAndFind([b, a]);
+
+    // Falls back to deterministic toString sort
+    expect(sorted[0]).toBe(a);
+    expect(sorted[1]).toBe(b);
+  });
+
+  it('should not affect ordering when all files are output files', async () => {
+    const a = await File.fileOf({
+      filePath: 'output/a.rom',
+      size: SIZE,
+      crc32: CRC,
+      isOutputFile: true,
+    });
+    const b = await File.fileOf({
+      filePath: 'output/b.rom',
+      size: SIZE,
+      crc32: CRC,
+      isOutputFile: true,
+    });
+
+    const sorted = indexAndFind([b, a]);
+
+    // Falls back to deterministic toString sort
+    expect(sorted[0]).toBe(a);
+    expect(sorted[1]).toBe(b);
+  });
+});
+
 describe('archiveEntryPriority (default sort)', () => {
   it('should sort a plain file before all archive types', async () => {
     const plain = await File.fileOf({ filePath: 'rom.rom', size: SIZE, crc32: CRC });

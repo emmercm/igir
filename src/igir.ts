@@ -191,6 +191,14 @@ export default class Igir {
         indexedRoms,
         patches,
       );
+
+      candidates.forEach((candidate) => {
+        candidate.getRomsWithFiles().forEach((romWithFiles) => {
+          if (romWithFiles.getInputFile().getIsOutputFile()) {
+            additionalWrittenFiles.push(romWithFiles.getOutputFile());
+          }
+        });
+      });
       romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
@@ -268,9 +276,11 @@ export default class Igir {
 
     // Clean the output directories
     const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, [
+      // Do not clean output ROMs
       ...candidateWriterResults.wrote.flatMap((wc) =>
         wc.getRomsWithFiles().map((rwf) => rwf.getOutputFile()),
       ),
+      // Do not clean any other files written (dir2dats, fixdats, playlists, etc.)
       ...additionalWrittenFiles,
     ]);
 
