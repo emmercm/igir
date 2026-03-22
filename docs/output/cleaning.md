@@ -1,6 +1,31 @@
 # Output Directory Cleaning
 
-The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the `--output <path>` directory that were _not_ considered for writing.
+The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the [`--output <path>` directory](path-options.md) that are not valid according to the provided Igir options.
+
+When using [DATs](../dats/processing.md), these files will be deleted from the output directory:
+
+- Files that do not match any ROM in any DAT.
+- Files that match a ROM in a DAT, but do not have the correct directory & filename.
+- Files that match a ROM in a DAT, but were excluded due to [filtering](../roms/filtering-preferences.md#filters) or [1G1R](../roms/filtering-preferences.md#preferences-for-1g1r) options.
+
+!!! note
+
+    When cleaning, Igir will need to scan all files in the output directory, in addition to the input directories. This is necessary to match these files to DATs.
+
+!!! warning
+
+    These scanned output files will _not_ be used as a source file for any writing command. If you use a new DAT with an existing collection, and that DAT changed some of the ROM names, then files with the old name may be deleted during cleaning.
+
+    To prevent this, you can provide the output directory as an `--input <path>` as well. Then files in the output directory can be used as a source file during writing. This is particularly useful with the `igir move` command, which will rename files in the output directory to the correct names, which will preclude them from cleaning.
+
+    When in doubt, you can provide the [`--clean-dry-run` option](#dry-run) to see what files would be deleted without actually deleting them.
+
+---
+
+
+
+
+that were _not_ considered for writing.
 
 !!! note
 
@@ -11,12 +36,6 @@ Only files from [`--input <path>` directories](../input/file-scanning.md) can be
 - (When using [DATs](../dats/introduction.md)) Don't [match](../roms/matching.md) any ROM in any DAT
 - Were filtered out by [filter options](../roms/filtering-preferences.md#filters)
 - Were filtered out by [1G1R preferences](../roms/filtering-preferences.md#preferences-for-1g1r)
-
-!!! warning
-
-    Because only input files will be considered for writing to the output directory, you will want your input files to be a superset of your output files. In other words, if a file isn't in your input files, it will be cleaned from your output directory.
-
-    It is a [best practice](../usage/best-practices.md#file-inputs) to include your output directory as an input directory when cleaning files. This will ensure any previously written valid files won't be cleaned.
 
 ## The golden rule
 

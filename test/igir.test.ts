@@ -1548,6 +1548,8 @@ describe('with explicit DATs', () => {
       });
     },
   );
+
+  // TODO(cemmer): what happens during cleaning if known files are in the wrong location, are they still deleted?
 });
 
 describe('with inferred DATs', () => {
