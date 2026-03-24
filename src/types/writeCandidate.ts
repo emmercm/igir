@@ -44,6 +44,17 @@ export default class WriteCandidate {
     );
   }
 
+  /**
+   * This WriteCandidate can only be written if its input file wasn't the result of scanning the
+   * output directory.
+   */
+  @Memoize()
+  canWrite(): boolean {
+    return this.romsWithFiles.every((romWithFiles) =>
+      romWithFiles.getInputFile().getCanBeCandidateInput(),
+    );
+  }
+
   // Immutable setters
 
   withGame(game: SingleValueGame): WriteCandidate {

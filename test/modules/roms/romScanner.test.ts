@@ -435,6 +435,105 @@ describe('checksum constraining', () => {
   });
 });
 
+describe('output directory scanning', () => {
+  it('should not scan the output directory when no relevant commands are used', async () => {
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      const inputDir = path.join(tempDir, 'input');
+      const outputDir = path.join(tempDir, 'output');
+      await FsPoly.mkdir(inputDir);
+      await FsPoly.mkdir(outputDir);
+
+      await FsPoly.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+        path.join(inputDir, 'fizzbuzz.nes'),
+      );
+      await FsPoly.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
+        path.join(outputDir, 'loremipsum.rom'),
+      );
+
+      const files = await new ROMScanner(
+        new Options({ input: [inputDir], commands: ['copy'], output: outputDir }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache(), LOGGER),
+        new MappableSemaphore(os.availableParallelism()),
+      ).scan();
+
+      // Only input files should be returned; output dir is not scanned
+      expect(files).toHaveLength(1);
+      expect(files.every((f) => f.getCanBeCandidateInput())).toBe(true);
+    } finally {
+      await FsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
+  it.each(['playlist', 'report', 'clean'])(
+    'should mark output-only files as isOutputFile: %s',
+    async (command) => {
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      try {
+        const inputDir = path.join(tempDir, 'input');
+        const outputDir = path.join(tempDir, 'output');
+        await FsPoly.mkdir(inputDir);
+        await FsPoly.mkdir(outputDir);
+
+        await FsPoly.copyFile(
+          path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+          path.join(inputDir, 'fizzbuzz.nes'),
+        );
+        await FsPoly.copyFile(
+          path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
+          path.join(outputDir, 'loremipsum.rom'),
+        );
+
+        const files = await new ROMScanner(
+          new Options({ input: [inputDir], commands: ['copy', command], output: outputDir }),
+          new ProgressBarFake(),
+          new FileFactory(new FileCache(), LOGGER),
+          new MappableSemaphore(os.availableParallelism()),
+        ).scan();
+
+        const inputFiles = files.filter((f) => f.getCanBeCandidateInput());
+        const outputFiles = files.filter((f) => !f.getCanBeCandidateInput());
+        expect(inputFiles).toHaveLength(1);
+        expect(outputFiles).toHaveLength(1);
+        expect(outputFiles[0].getFilePath()).toContain('loremipsum.rom');
+      } finally {
+        await FsPoly.rm(tempDir, { recursive: true });
+      }
+    },
+  );
+
+  it('should not add output files that are already in the input paths', async () => {
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      // Output dir is nested inside the input scan area
+      const outputDir = path.join(tempDir, 'output');
+      await FsPoly.mkdir(outputDir);
+
+      await FsPoly.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+        path.join(outputDir, 'fizzbuzz.nes'),
+      );
+
+      const files = await new ROMScanner(
+        // Input covers the whole tempDir (including the output subdir)
+        new Options({ input: [tempDir], commands: ['copy', 'clean'], output: outputDir }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache(), LOGGER),
+        new MappableSemaphore(os.availableParallelism()),
+      ).scan();
+
+      // File appears only once (path already in input set, not re-added from output)
+      expect(files).toHaveLength(1);
+      expect(files[0].getCanBeCandidateInput()).toBe(true);
+    } finally {
+      await FsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+});
+
 describe('single files', () => {
   it('should scan single files with no exclusions', async () => {
     await expect(createRomScanner(['test/fixtures/roms/empty.*']).scan()).resolves.toHaveLength(1);

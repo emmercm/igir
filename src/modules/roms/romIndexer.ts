@@ -62,6 +62,13 @@ export default class ROMIndexer extends Module {
 
     [...checksumsToFiles.entries()].forEach(([checksum, files]) => {
       const sortedFiles = files.toSorted((fileOne, fileTwo) => {
+        // First, prefer files that aren't from the output directory
+        const fileOneIsOutputFile = fileOne.getCanBeCandidateInput() ? 0 : 1;
+        const fileTwoIsOutputFile = fileTwo.getCanBeCandidateInput() ? 0 : 1;
+        if (fileOneIsOutputFile !== fileTwoIsOutputFile) {
+          return fileOneIsOutputFile - fileTwoIsOutputFile;
+        }
+
         // ********** Preferences that are user-controlled **********
 
         // Prefer either archives or un-archived/plain files

@@ -370,6 +370,21 @@ export default class CandidateGenerator extends Module {
         return true;
       })
       .toSorted((a, b) => {
+        // First, prefer the archive that isn't from the output directory
+        const aIsOutputFile = filesByPath
+          .get(a.getFilePath())
+          ?.some((file) => file.getCanBeCandidateInput())
+          ? 0
+          : 1;
+        const bIsOutputFile = filesByPath
+          .get(b.getFilePath())
+          ?.some((file) => file.getCanBeCandidateInput())
+          ? 0
+          : 1;
+        if (aIsOutputFile !== bIsOutputFile) {
+          return aIsOutputFile - bIsOutputFile;
+        }
+
         // First, prefer the archive with the least number of entries
         const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
         const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;

@@ -1493,6 +1493,100 @@ describe('with explicit DATs', () => {
       expect(result.cleanedFiles).toHaveLength(0);
     });
   });
+
+  it.each(['extract', 'zip'])(
+    'should %s, report, and clean only unmatched output files',
+    async (command) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Given an output directory that already has some correct files (but not all)
+        const copyResult = await runIgir({
+          commands: ['copy', command],
+          dat: [path.join(inputTemp, 'dats', '*')],
+          input: [path.join(inputTemp, 'roms', 'raw')],
+          output: path.join(outputTemp, '{datName}'),
+        });
+
+        // and some unmatched/stray files are in the output
+        await FsPoly.touch(path.join(outputTemp, 'dummy.rom'));
+        await FsPoly.touch(path.join(outputTemp, 'One', 'dummy.rom'));
+
+        // When all ROMs are copied to the output
+        const reportOutput = path.join(outputTemp, 'report.csv');
+        const cleanResult = await runIgir({
+          commands: ['copy', command, 'report', 'clean'],
+          dat: [path.join(inputTemp, 'dats', '*')],
+          input: [path.join(inputTemp, 'roms')],
+          inputExclude: [path.join(inputTemp, 'roms', 'raw')],
+          output: path.join(outputTemp, '{datName}'),
+          reportOutput,
+        });
+
+        // Then none of the good/correct files from the first copy weren't cleaned
+        const finalFiles = new Set(cleanResult.outputFilesAndCrcs.map(([filePath]) => filePath));
+        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+          expect(finalFiles).toContain(filePath);
+        });
+
+        // and the dummy file that was in an output directory was deleted, and the other wasn't
+        expect(cleanResult.cleanedFiles).toEqual([path.join('One', 'dummy.rom')]);
+
+        // and the report has all the files from the first copy as FOUND
+        const reportOutputContents = await FsPoly.readFile(reportOutput);
+        const reportFoundFiles = new Set(
+          reportOutputContents
+            .toString()
+            .split('\n')
+            .slice(1)
+            .filter((line) => line.includes(',FOUND,'))
+            .map((line) => line.replace(/^[^,]*,[^,]*,[^,]*,"?/, '').replace(/"?,.+/, ''))
+            .filter(Boolean)
+            .flatMap((filePath) => filePath.split('|')),
+        );
+        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+          expect(reportFoundFiles).toContain(path.join(outputTemp, filePath.replace(/\|.+/, '')));
+        });
+      });
+    },
+  );
+
+  it('should clean matched but incorrect path output files', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given an output directory that already has some correct files, but in the wrong place
+      const copyResult = await runIgir({
+        commands: ['copy', 'extract'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms', 'raw')],
+        output: path.join(outputTemp),
+        dirDatName: true,
+      });
+      await Promise.all(
+        copyResult.outputFilesAndCrcs.map(async ([filePath]) => {
+          const dest = path.join(outputTemp, 'wrongfolder', filePath);
+          if (!(await FsPoly.exists(path.dirname(dest)))) {
+            await FsPoly.mkdir(path.dirname(dest), { recursive: true });
+          }
+          await FsPoly.mv(path.join(outputTemp, filePath), dest);
+        }),
+      );
+
+      // When all ROMs are copied to the output
+      const reportOutput = path.join(outputTemp, 'report.csv');
+      const cleanResult = await runIgir({
+        commands: ['copy', 'extract', 'clean'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms', 'discs')],
+        output: path.join(outputTemp),
+        dirDatName: true,
+        reportOutput,
+      });
+
+      // Then every file from the first copy was cleaned, because they were moved to the wrong directory
+      const cleanedFiles = new Set(cleanResult.cleanedFiles.map((filePath) => filePath));
+      copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+        expect(cleanedFiles).toContain(path.join('wrongfolder', filePath));
+      });
+    });
+  });
 });
 
 describe('with inferred DATs', () => {

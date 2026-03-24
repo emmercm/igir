@@ -164,7 +164,7 @@ export default class Igir {
       wrote: [],
       moved: [],
     };
-    const additionalWrittenFiles: File[] = [];
+    const filesToExcludeFromCleaning: File[] = [];
     let romOutputDirs: string[] = [];
     const datsStatuses: DATStatus[] = [];
 
@@ -191,6 +191,17 @@ export default class Igir {
         indexedRoms,
         patches,
       );
+
+      candidates.forEach((candidate) => {
+        candidate.getRomsWithFiles().forEach((romWithFiles) => {
+          // Files in the output directory that matched to a DAT should be excluded from cleaning.
+          // Note that only the correct/output path is excluded, not the current/input path. Files
+          // that aren't in the correct location will be deleted.
+          if (!romWithFiles.getInputFile().getCanBeCandidateInput()) {
+            filesToExcludeFromCleaning.push(romWithFiles.getOutputFile());
+          }
+        });
+      });
       romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
@@ -211,7 +222,7 @@ export default class Igir {
       );
       await Promise.all(
         playlistPaths.map(async (filePath) => {
-          additionalWrittenFiles.push(await File.fileOf({ filePath }));
+          filesToExcludeFromCleaning.push(await File.fileOf({ filePath }));
         }),
       );
 
@@ -221,7 +232,7 @@ export default class Igir {
         candidates,
       );
       if (dir2DatPath) {
-        additionalWrittenFiles.push(await File.fileOf({ filePath: dir2DatPath }));
+        filesToExcludeFromCleaning.push(await File.fileOf({ filePath: dir2DatPath }));
       }
 
       // Write a fixdat
@@ -230,7 +241,7 @@ export default class Igir {
         candidates,
       );
       if (fixdatPath) {
-        additionalWrittenFiles.push(await File.fileOf({ filePath: fixdatPath }));
+        filesToExcludeFromCleaning.push(await File.fileOf({ filePath: fixdatPath }));
       }
 
       // Write the output report
@@ -268,10 +279,12 @@ export default class Igir {
 
     // Clean the output directories
     const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, [
+      // Do not clean output ROMs
       ...candidateWriterResults.wrote.flatMap((wc) =>
         wc.getRomsWithFiles().map((rwf) => rwf.getOutputFile()),
       ),
-      ...additionalWrittenFiles,
+      // Do not clean any other files written (dir2dats, fixdats, playlists, etc.)
+      ...filesToExcludeFromCleaning,
     ]);
 
     // Generate the report

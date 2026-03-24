@@ -103,4 +103,4 @@ Igir has two options that allow for inexact sets of ROM files:
 
 - `--allow-incomplete-sets`
 
-  This option will allow writing games where not every one of its ROMs was found in an [`--input <path>` directory](../input/file-scanning.md). This could be useful for [arcade](../usage/arcade.md) DATs that change ROM sets between versions.
+  This option will allow writing games where not every one of its ROMs was found in an [`--input <path>` directory](scanning.md). This could be useful for [arcade](../usage/arcade.md) DATs that change ROM sets between versions.

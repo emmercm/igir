@@ -29,6 +29,7 @@ export interface FileProps extends ChecksumProps {
   readonly fileHeader?: ROMHeader;
   readonly paddings?: ROMPadding[];
   readonly patch?: Patch;
+  readonly canBeCandidateInput?: boolean;
 }
 
 @Exclude()
@@ -70,6 +71,8 @@ export default class File implements FileProps {
 
   readonly patch?: Patch;
 
+  readonly canBeCandidateInput?: boolean;
+
   protected constructor(fileProps: FileProps) {
     const isUrl = URLPoly.canParse(fileProps.filePath);
 
@@ -101,6 +104,7 @@ export default class File implements FileProps {
     this.fileHeader = fileProps.fileHeader;
     this.paddings = fileProps.paddings ?? [];
     this.patch = fileProps.patch;
+    this.canBeCandidateInput = fileProps.canBeCandidateInput;
   }
 
   static async fileOf(
@@ -182,6 +186,7 @@ export default class File implements FileProps {
       fileHeader: fileProps.fileHeader,
       paddings: fileProps.paddings,
       patch: fileProps.patch,
+      canBeCandidateInput: fileProps.canBeCandidateInput,
     });
   }
 
@@ -267,6 +272,10 @@ export default class File implements FileProps {
 
   isURL(): boolean {
     return this.isUrl;
+  }
+
+  getCanBeCandidateInput(): boolean {
+    return this.canBeCandidateInput ?? true;
   }
 
   getChecksumBitmask(): number {
