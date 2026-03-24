@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
@@ -217,7 +217,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   async createReadStream<T>(
-    callback: (readable: Readable) => T | Promise<T>,
+    callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
   ): Promise<T> {
     // Don't extract to memory if we need to manipulate the stream start point

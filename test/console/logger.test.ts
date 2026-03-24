@@ -1,6 +1,6 @@
-import { readFile } from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import type { LogLevelValue } from '../../src/console/logLevel.js';
@@ -20,7 +20,7 @@ class LoggerSpy {
   private readonly logger: Logger;
 
   constructor(logLevel: LogLevelValue) {
-    this.stream = new PassThrough();
+    this.stream = new stream.PassThrough();
     this.spy = new Promise((resolve) => {
       const buffers: Uint8Array[] = [];
       this.stream.on('data', (chunk: Buffer) => {
@@ -55,7 +55,7 @@ function getLogLevelsAtOrBelow(logLevel: LogLevelValue): LogLevelValue[] {
 describe('setLogLevel_getLogLevel', () => {
   const logLevels = Object.values(LogLevel);
   test.each(logLevels)('should reflect: %s', (logLevel) => {
-    const logger = new Logger(LogLevel.TRACE, new PassThrough());
+    const logger = new Logger(LogLevel.TRACE, new stream.PassThrough());
     logger.setLogLevel(logLevel);
     expect(logger.getLogLevel()).toEqual(logLevel);
   });
@@ -63,14 +63,14 @@ describe('setLogLevel_getLogLevel', () => {
 
 describe('canPrint', () => {
   it('should return false for levels strictly below logger level', () => {
-    const logger = new Logger(LogLevel.WARN, new PassThrough());
+    const logger = new Logger(LogLevel.WARN, new stream.PassThrough());
     expect(logger.canPrint(LogLevel.TRACE)).toEqual(false);
     expect(logger.canPrint(LogLevel.DEBUG)).toEqual(false);
     expect(logger.canPrint(LogLevel.INFO)).toEqual(false);
   });
 
   it('should return true for the logger level and levels above', () => {
-    const logger = new Logger(LogLevel.WARN, new PassThrough());
+    const logger = new Logger(LogLevel.WARN, new stream.PassThrough());
     expect(logger.canPrint(LogLevel.WARN)).toEqual(true);
     expect(logger.canPrint(LogLevel.ERROR)).toEqual(true);
     expect(logger.canPrint(LogLevel.ALWAYS)).toEqual(true);
@@ -84,7 +84,7 @@ describe('setLogFile', () => {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
       spy.getLogger().info('test message');
-      const contents = (await readFile(tempFile)).toString();
+      const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('test message');
     } finally {
       await FsPoly.rm(tempFile, { force: true });
@@ -98,7 +98,7 @@ describe('setLogFile', () => {
       spy.getLogger().setLogFile(tempFile);
       spy.getLogger().info('below level message');
       await expect(spy.getOutput()).resolves.toEqual('');
-      const contents = (await readFile(tempFile)).toString();
+      const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('below level message');
     } finally {
       await FsPoly.rm(tempFile, { force: true });
@@ -111,7 +111,7 @@ describe('setLogFile', () => {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
       spy.getLogger().info('ansi test message');
-      const contents = (await readFile(tempFile)).toString();
+      const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).not.toMatch(/\x1B\[/); // no ANSI escape sequences
       expect(contents).toContain('ansi test message');
     } finally {
@@ -125,7 +125,7 @@ describe('setLogFile', () => {
       const spy = new LoggerSpy(LogLevel.ALWAYS);
       spy.getLogger().setLogFile(tempFile);
       spy.getLogger().newLine();
-      const contents = (await readFile(tempFile)).toString();
+      const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toEqual('');
     } finally {
       await FsPoly.rm(tempFile, { force: true });
@@ -138,7 +138,7 @@ describe('setLogFile', () => {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
       spy.getLogger().info('timestamped message');
-      const contents = (await readFile(tempFile)).toString();
+      const contents = (await fs.promises.readFile(tempFile)).toString();
       // File output uses TRACE-level formatting (always includes timestamp)
       expect(contents).toMatch(/\[\d{2}:\d{2}:\d{2}\.\d{3}\]/);
       expect(contents).toContain('INFO:');
@@ -156,8 +156,8 @@ describe('setLogFile', () => {
       spy.getLogger().info('first file message');
       spy.getLogger().setLogFile(tempFile2);
       spy.getLogger().info('second file message');
-      const contents1 = (await readFile(tempFile1)).toString();
-      const contents2 = (await readFile(tempFile2)).toString();
+      const contents1 = (await fs.promises.readFile(tempFile1)).toString();
+      const contents2 = (await fs.promises.readFile(tempFile2)).toString();
       expect(contents1).toContain('first file message');
       expect(contents1).not.toContain('second file message');
       expect(contents2).toContain('second file message');
@@ -179,7 +179,7 @@ describe('setLogFile', () => {
       spy2.getLogger().setLogFile(tempFile);
       spy2.getLogger().info('second message');
 
-      const contents = (await readFile(tempFile)).toString();
+      const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('first message');
       expect(contents).toContain('second message');
     } finally {
@@ -302,7 +302,7 @@ describe('printLine', () => {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
       spy.getLogger().printLine(LogLevel.INFO, 'prefixed message', 'FilePrefix');
-      const contents = (await readFile(tempFile)).toString();
+      const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('FilePrefix');
     } finally {
       await FsPoly.rm(tempFile, { force: true });

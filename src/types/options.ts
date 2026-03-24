@@ -864,12 +864,12 @@ export default class Options implements OptionsProps {
   ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
-    let globbedPaths: string[] = [];
+    const globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
       const paths = await this.globPath(uniqueGlobPattern, walkMode, walkCallback);
-      // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
-      // size limit
-      globbedPaths = [...globbedPaths, ...paths];
+      for (const globbedPath of paths) {
+        globbedPaths.push(globbedPath);
+      }
     }
 
     if (requireFiles && globbedPaths.length === 0) {

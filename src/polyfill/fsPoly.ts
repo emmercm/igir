@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import fs, { MakeDirectoryOptions, ObjectEncodingOptions, PathLike, RmOptions } from 'node:fs';
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import stream from 'node:stream';
@@ -196,7 +196,7 @@ export default class FsPoly {
   /**
    * @returns if {@link pathLike} exists, not following symbolic links
    */
-  static async exists(pathLike: PathLike): Promise<boolean> {
+  static async exists(pathLike: fs.PathLike): Promise<boolean> {
     try {
       await fs.promises.lstat(pathLike);
       return true;
@@ -208,7 +208,7 @@ export default class FsPoly {
   /**
    * @returns if {@link pathLike} exists, not following symbolic links
    */
-  static existsSync(pathLike: PathLike): boolean {
+  static existsSync(pathLike: fs.PathLike): boolean {
     try {
       fs.lstatSync(pathLike);
       return true;
@@ -248,7 +248,7 @@ export default class FsPoly {
   /**
    * @returns the index node of {@link pathLike}
    */
-  static async inode(pathLike: PathLike): Promise<number> {
+  static async inode(pathLike: fs.PathLike): Promise<number> {
     return (await this.stat(pathLike)).ino;
   }
 
@@ -287,7 +287,7 @@ export default class FsPoly {
   /**
    * @returns if {@link pathLike} can be executed
    */
-  static async isExecutable(pathLike: PathLike): Promise<boolean> {
+  static async isExecutable(pathLike: fs.PathLike): Promise<boolean> {
     try {
       await fs.promises.access(pathLike, fs.constants.X_OK);
       return true;
@@ -315,7 +315,7 @@ export default class FsPoly {
   /**
    * @returns if {@link pathLike} has at least one related hardlink
    */
-  static async isHardlink(pathLike: PathLike): Promise<boolean> {
+  static async isHardlink(pathLike: fs.PathLike): Promise<boolean> {
     try {
       return (await this.stat(pathLike)).nlink > 1;
     } catch {
@@ -359,7 +359,7 @@ export default class FsPoly {
   /**
    * @returns if {@link pathLike} is a symlink
    */
-  static async isSymlink(pathLike: PathLike): Promise<boolean> {
+  static async isSymlink(pathLike: fs.PathLike): Promise<boolean> {
     try {
       return (await fs.promises.lstat(pathLike)).isSymbolicLink();
     } catch {
@@ -370,7 +370,7 @@ export default class FsPoly {
   /**
    * @returns if {@link pathLike} is a symlink
    */
-  static isSymlinkSync(pathLike: PathLike): boolean {
+  static isSymlinkSync(pathLike: fs.PathLike): boolean {
     try {
       return fs.lstatSync(pathLike).isSymbolicLink();
     } catch {
@@ -415,7 +415,7 @@ export default class FsPoly {
   /**
    * Makes the directory {@link pathLike} with the options {@link options}.
    */
-  static async mkdir(pathLike: PathLike, options?: MakeDirectoryOptions): Promise<void> {
+  static async mkdir(pathLike: fs.PathLike, options?: fs.MakeDirectoryOptions): Promise<void> {
     await fs.promises.mkdir(pathLike, options);
   }
 
@@ -482,14 +482,14 @@ export default class FsPoly {
   /**
    * @returns the contents of the file.
    */
-  static async readFile(pathLike: PathLike): Promise<Buffer<ArrayBuffer>> {
+  static async readFile(pathLike: fs.PathLike): Promise<Buffer<ArrayBuffer>> {
     return await fs.promises.readFile(pathLike);
   }
 
   /**
    * @returns the target path for the symlink {@link pathLike}
    */
-  static async readlink(pathLike: PathLike): Promise<string> {
+  static async readlink(pathLike: fs.PathLike): Promise<string> {
     if (!(await this.isSymlink(pathLike))) {
       throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
@@ -499,7 +499,7 @@ export default class FsPoly {
   /**
    * @returns the target path for the symlink {@link pathLike}
    */
-  static readlinkSync(pathLike: PathLike): string {
+  static readlinkSync(pathLike: fs.PathLike): string {
     if (!this.isSymlinkSync(pathLike)) {
       throw new IgirException(`can't readlink of non-symlink: ${pathLike.toString()}`);
     }
@@ -531,7 +531,7 @@ export default class FsPoly {
   /**
    * @returns the fully resolved path to {@link pathLike}
    */
-  static async realpath(pathLike: PathLike): Promise<string> {
+  static async realpath(pathLike: fs.PathLike): Promise<string> {
     if (!(await this.exists(pathLike))) {
       throw new IgirException(`can't get realpath of non-existent path: ${pathLike.toString()}`);
     }
@@ -582,7 +582,7 @@ export default class FsPoly {
    * Deletes the file or directory {@link pathLike} with the options {@link options}, retrying
    * failures.
    */
-  static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
+  static async rm(pathLike: string, options: fs.RmOptions = {}): Promise<void> {
     if (pathLike === os.devNull) {
       return;
     }
@@ -613,7 +613,7 @@ export default class FsPoly {
    * Deletes the file or directory {@link pathLike} with the options {@link options}, retrying
    * failures.
    */
-  static rmSync(pathLike: string, options: RmOptions = {}): void {
+  static rmSync(pathLike: string, options: fs.RmOptions = {}): void {
     if (pathLike === os.devNull) {
       return;
     }
@@ -643,7 +643,7 @@ export default class FsPoly {
   /**
    * Note: this will follow symlinks and get the size of the target.
    */
-  static async size(pathLike: PathLike): Promise<number> {
+  static async size(pathLike: fs.PathLike): Promise<number> {
     try {
       return (await this.stat(pathLike)).size;
     } catch {
@@ -709,7 +709,7 @@ export default class FsPoly {
   /**
    * @returns the stats of {@link pathLike}
    */
-  static async stat(pathLike: PathLike): Promise<fs.Stats> {
+  static async stat(pathLike: fs.PathLike): Promise<fs.Stats> {
     return await fs.promises.stat(pathLike);
   }
 
@@ -740,7 +740,7 @@ export default class FsPoly {
    * Return every file in {@link pathLike}, recursively.
    */
   static async walk(
-    pathLike: PathLike,
+    pathLike: fs.PathLike,
     walkMode: WalkModeValue,
     callback?: FsWalkCallback,
   ): Promise<string[]> {
@@ -773,7 +773,12 @@ export default class FsPoly {
       if (callback) {
         callback(subPaths.length);
       }
-      output = [...output, ...(walkMode === WalkMode.DIRECTORIES ? [directory] : []), ...subPaths];
+      if (walkMode === WalkMode.DIRECTORIES) {
+        output.push(directory);
+      }
+      for (const subPath of subPaths) {
+        output.push(subPath);
+      }
     }
 
     if (walkMode === WalkMode.FILES) {
@@ -793,9 +798,9 @@ export default class FsPoly {
    * Write {@link data} to {@link filePath}.
    */
   static async writeFile(
-    filePath: PathLike,
+    filePath: fs.PathLike,
     data: string | Uint8Array,
-    options?: ObjectEncodingOptions,
+    options?: fs.ObjectEncodingOptions,
   ): Promise<void> {
     const file = await fs.promises.open(filePath, 'w');
     try {

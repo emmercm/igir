@@ -1,4 +1,4 @@
-import { clearTimeout } from 'node:timers';
+import timers from 'node:timers';
 
 /**
  * A wrapper to centrally manage Node.js timers.
@@ -47,7 +47,7 @@ export default class Timer {
    * Cancel this timer.
    */
   cancel(): void {
-    clearTimeout(this.timeout);
+    timers.clearTimeout(this.timeout);
     Timer.TIMERS.delete(this);
   }
 }

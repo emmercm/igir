@@ -55,7 +55,7 @@ export default class CandidateMergeSplitValidator extends Module {
       .map((candidate) => candidate.getGame())
       .reduce(ArrayPoly.reduceUnique(), [])
       .flatMap((game) => {
-        let missingDependencies: string[] = [];
+        const missingDependencies: string[] = [];
 
         // Validate dependent parent was found
         const cloneOf = game.getCloneOf();
@@ -64,7 +64,7 @@ export default class CandidateMergeSplitValidator extends Module {
           cloneOf !== undefined &&
           !candidatesIndexed.has(cloneOf)
         ) {
-          missingDependencies = [cloneOf, ...missingDependencies];
+          missingDependencies.push(cloneOf);
         }
 
         // Validate dependent devices were found
@@ -88,7 +88,9 @@ export default class CandidateMergeSplitValidator extends Module {
             })
             .filter((deviceGameName) => deviceGameName !== undefined)
             .toSorted();
-          missingDependencies = [...missingDependencies, ...missingDeviceGames];
+          for (const missingDeviceGame of missingDeviceGames) {
+            missingDependencies.push(missingDeviceGame);
+          }
         }
 
         if (missingDependencies.length > 0) {

@@ -1,8 +1,8 @@
-import fs, { OpenMode, PathLike } from 'node:fs';
+import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import stream, { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
@@ -312,7 +312,7 @@ export default class File implements FileProps {
   }
 
   async extractToTempIOFile<T>(
-    flags: OpenMode,
+    flags: fs.OpenMode,
     callback: (ioFile: IOFile) => T | Promise<T>,
   ): Promise<T> {
     return await this.extractToTempFile(async (tempFile) => {
@@ -381,13 +381,15 @@ export default class File implements FileProps {
   }
 
   async createReadStream<T>(
-    callback: (readable: Readable) => T | Promise<T>,
+    callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
   ): Promise<T> {
     return await File.createStreamFromFile(this.getFilePath(), callback, start);
   }
 
-  async createPatchedReadStream<T>(callback: (readable: Readable) => T | Promise<T>): Promise<T> {
+  async createPatchedReadStream<T>(
+    callback: (readable: stream.Readable) => T | Promise<T>,
+  ): Promise<T> {
     // TODO(cemmer): option to re-pad a trimmed ROM
 
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
@@ -411,8 +413,8 @@ export default class File implements FileProps {
   }
 
   static async createStreamFromFile<T>(
-    filePath: PathLike,
-    callback: (readable: Readable) => Promise<T> | T,
+    filePath: fs.PathLike,
+    callback: (readable: stream.Readable) => Promise<T> | T,
     start?: number,
     end?: number,
   ): Promise<T> {

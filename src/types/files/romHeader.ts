@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
@@ -87,7 +87,7 @@ export default class ROMHeader {
   }
 
   private static async readHeaderHex(
-    readable: Readable,
+    readable: stream.Readable,
     start: number,
     end: number,
   ): Promise<string> {
@@ -109,7 +109,7 @@ export default class ROMHeader {
     return Buffer.concat(chunks).subarray(start, end).toString('hex').toUpperCase();
   }
 
-  static async headerFromFileStream(readable: Readable): Promise<ROMHeader | undefined> {
+  static async headerFromFileStream(readable: stream.Readable): Promise<ROMHeader | undefined> {
     const fileHeader = await ROMHeader.readHeaderHex(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
