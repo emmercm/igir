@@ -40,6 +40,11 @@ const heldBackDependencies = Object.entries(packageJson)
   .filter(([dependencyType]) => dependencyTypes.has(dependencyType))
   .map(([dependencyType, dependencies]) => {
     const heldBackDependencies = Object.entries(dependencies as Record<string, string>)
+      // Normalize the dependency version so 'semver' knows how to parse it
+      .map(([depPackageName, depPackageVersion]) => [
+        depPackageName,
+        depPackageVersion.replace(/^[\^~]/, ''),
+      ])
       .map(([depPackageName, depPackageVersion]): [string, Record<string, unknown>] | undefined => {
         const depPackageNameVersion = `${depPackageName}@${depPackageVersion}`;
 

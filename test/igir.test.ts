@@ -665,17 +665,29 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'U', 'UMD.iso'), 'e90f7cf5'],
       ]);
       expect(result.movedFiles).toEqual([
+        path.join('7z', 'fizzbuzz.7z'),
+        path.join('7z', 'foobar.7z'),
+        path.join('7z', 'loremipsum.7z'),
         path.join('chd', '2048.chd'),
         path.join('chd', '4096.chd'),
         path.join('cso', 'UMD.cso'),
+        path.join('cso', 'UMD.zso'),
+        'fizzbuzz.zip',
         'foobar.lnx',
         path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
+        path.join('gz', 'fizzbuzz.gz'),
+        path.join('gz', 'foobar.gz'),
+        path.join('gz', 'loremipsum.gz'),
+        path.join('gz', 'one.gz'),
+        path.join('gz', 'three.gz'),
         path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
         path.join('headered', 'diagnostic_test_cartridge.a78.7z'),
         path.join('headered', 'fds_joypad_test.fds.zip'),
         path.join('headered', 'speed_test_v51.smc'),
+        'loremipsum.7z',
+        path.join('nkit', 'GameCube-240pSuite-1.19.nkit.iso'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),
         path.join('patchable', '612644F.rom'),
@@ -685,12 +697,24 @@ describe('with explicit DATs', () => {
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
         path.join('patchable', 'best.gz'),
+        path.join('rar', 'fizzbuzz.rar'),
+        path.join('rar', 'foobar.rar'),
+        path.join('rar', 'loremipsum.rar'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
+        path.join('raw', 'foobar.lnx'),
         path.join('raw', 'four.rom'),
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('rvz', 'GameCube-240pSuite-1.19.rvz'),
+        path.join('tar', 'fizzbuzz.tar.gz'),
+        path.join('tar', 'foobar.tar.gz'),
+        path.join('tar', 'loremipsum.tar.gz'),
+        path.join('wia', 'GameCube-240pSuite-1.19.wia'),
+        path.join('zip', 'fizzbuzz.zip'),
+        path.join('zip', 'foobar.zip'),
+        path.join('zip', 'fourfive.zip'),
         path.join('zip', 'loremipsum.zip'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1355,6 +1379,7 @@ describe('with explicit DATs', () => {
         .map(([filePath]) => filePath)
         .filter((filePath) => filePath.endsWith('.dat'));
 
+      // "Headerless", "One"
       expect(writtenFixdats).toHaveLength(2);
 
       // The "Headerless" DAT should have missing ROMs, because only headered versions exist them:
@@ -1380,6 +1405,186 @@ describe('with explicit DATs', () => {
       expect(result.movedFiles).toHaveLength(0);
       // Note: explicitly not testing `result.movedFiles`
       expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  it('should copy and extract using custom console tokens', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const tokensFilePath = path.join(inputTemp, 'custom-console-tokens.json');
+      fs.writeFileSync(
+        tokensFilePath,
+        JSON.stringify({
+          version: 1,
+          consoles: [
+            {
+              datNameRegex: '/^One$/',
+              extensions: [],
+              tokens: { mister: 'OnePlatform' },
+            },
+            {
+              datNameRegex: '/^Patchable$/',
+              extensions: [],
+              tokens: { mister: 'PatchPlatform' },
+            },
+          ],
+        }),
+      );
+
+      const result = await runIgir({
+        commands: ['copy', 'extract'],
+        dat: [
+          path.join(inputTemp, 'dats', 'one.dat'),
+          path.join(inputTemp, 'dats', 'patchable.dat'),
+        ],
+        input: [path.join(inputTemp, 'roms')],
+        output: path.join(outputTemp, '{mister}'),
+        outputConsoleTokens: tokensFilePath,
+      });
+
+      expect(result.outputFilesAndCrcs).toEqual([
+        [path.join('OnePlatform', 'Empty.rom'), '00000000'],
+        [path.join('OnePlatform', 'Fizzbuzz.nes'), '370517b5'],
+        [path.join('OnePlatform', 'Foobar.lnx'), 'b22c9747'],
+        [path.join('OnePlatform', 'GameCube-240pSuite-1.19.iso'), '5eb3d183'],
+        [`${path.join('OnePlatform', 'Lorem Ipsum.zip')}|loremipsum.rom`, '70856527'],
+        [path.join('OnePlatform', 'One Three', 'One.rom'), 'f817a89f'],
+        [path.join('OnePlatform', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1) (Track 1).bin'),
+          '49ca35fb',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1) (Track 2).bin'),
+          '0316f720',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1) (Track 3).bin'),
+          'a320af40',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 1)', 'Optical Game (Disc 1).cue'),
+          '4ce39e73',
+        ],
+        [
+          path.join('OnePlatform', 'Optical Game (Disc 2)', 'Optical Game (Disc 2).gdi'),
+          'f16f621c',
+        ],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track01.bin'), '9796ed9a'],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track02.raw'), 'abc178d5'],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
+        [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
+        [`${path.join('OnePlatform', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
+        [`${path.join('OnePlatform', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [path.join('OnePlatform', 'Three Four Five', 'Five.rom'), '3e5daf67'],
+        [path.join('OnePlatform', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
+        [path.join('OnePlatform', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
+        [path.join('OnePlatform', 'UMD.iso'), 'e90f7cf5'],
+        [path.join('PatchPlatform', '0F09A40.rom'), '2f943e86'],
+        [path.join('PatchPlatform', '3708F2C.rom'), '20891c9f'],
+        [path.join('PatchPlatform', '612644F.rom'), 'f7591b29'],
+        [path.join('PatchPlatform', '65D1206.rom'), '20323455'],
+        [path.join('PatchPlatform', '92C85C9.rom'), '06692159'],
+        [path.join('PatchPlatform', 'Before.rom'), '0361b321'],
+        [path.join('PatchPlatform', 'Best.rom'), '1e3d78cf'],
+        [path.join('PatchPlatform', 'C01173E.rom'), 'dfaebe28'],
+        [path.join('PatchPlatform', 'KDULVQN.rom'), 'b1c303e4'],
+      ]);
+      expect(result.movedFiles).toHaveLength(0);
+      expect(result.cleanedFiles).toHaveLength(0);
+    });
+  });
+
+  it.each(['extract', 'zip'])(
+    'should %s, report, and clean only unmatched output files',
+    async (command) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Given an output directory that already has some correct files (but not all)
+        const copyResult = await runIgir({
+          commands: ['copy', command],
+          dat: [path.join(inputTemp, 'dats', '*')],
+          input: [path.join(inputTemp, 'roms', 'raw')],
+          output: path.join(outputTemp, '{datName}'),
+        });
+
+        // and some unmatched/stray files are in the output
+        await FsPoly.touch(path.join(outputTemp, 'dummy.rom'));
+        await FsPoly.touch(path.join(outputTemp, 'One', 'dummy.rom'));
+
+        // When all ROMs are copied to the output
+        const reportOutput = path.join(outputTemp, 'report.csv');
+        const cleanResult = await runIgir({
+          commands: ['copy', command, 'report', 'clean'],
+          dat: [path.join(inputTemp, 'dats', '*')],
+          input: [path.join(inputTemp, 'roms')],
+          inputExclude: [path.join(inputTemp, 'roms', 'raw')],
+          output: path.join(outputTemp, '{datName}'),
+          reportOutput,
+        });
+
+        // Then none of the good/correct files from the first copy weren't cleaned
+        const finalFiles = new Set(cleanResult.outputFilesAndCrcs.map(([filePath]) => filePath));
+        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+          expect(finalFiles).toContain(filePath);
+        });
+
+        // and the dummy file that was in an output directory was deleted, and the other wasn't
+        expect(cleanResult.cleanedFiles).toEqual([path.join('One', 'dummy.rom')]);
+
+        // and the report has all the files from the first copy as FOUND
+        const reportOutputContents = await FsPoly.readFile(reportOutput);
+        const reportFoundFiles = new Set(
+          reportOutputContents
+            .toString()
+            .split('\n')
+            .slice(1)
+            .filter((line) => line.includes(',FOUND,'))
+            .map((line) => line.replace(/^[^,]*,[^,]*,[^,]*,"?/, '').replace(/"?,.+/, ''))
+            .filter(Boolean)
+            .flatMap((filePath) => filePath.split('|')),
+        );
+        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+          expect(reportFoundFiles).toContain(path.join(outputTemp, filePath.replace(/\|.+/, '')));
+        });
+      });
+    },
+  );
+
+  it('should clean matched but incorrect path output files', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given an output directory that already has some correct files, but in the wrong place
+      const copyResult = await runIgir({
+        commands: ['copy', 'extract'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms', 'raw')],
+        output: path.join(outputTemp),
+        dirDatName: true,
+      });
+      await Promise.all(
+        copyResult.outputFilesAndCrcs.map(async ([filePath]) => {
+          const dest = path.join(outputTemp, 'wrongfolder', filePath);
+          if (!(await FsPoly.exists(path.dirname(dest)))) {
+            await FsPoly.mkdir(path.dirname(dest), { recursive: true });
+          }
+          await FsPoly.mv(path.join(outputTemp, filePath), dest);
+        }),
+      );
+
+      // When all ROMs are copied to the output
+      const reportOutput = path.join(outputTemp, 'report.csv');
+      const cleanResult = await runIgir({
+        commands: ['copy', 'extract', 'clean'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms', 'discs')],
+        output: path.join(outputTemp),
+        dirDatName: true,
+        reportOutput,
+      });
+
+      // Then every file from the first copy was cleaned, because they were moved to the wrong directory
+      const cleanedFiles = new Set(cleanResult.cleanedFiles.map((filePath) => filePath));
+      copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+        expect(cleanedFiles).toContain(path.join('wrongfolder', filePath));
+      });
     });
   });
 });
@@ -1564,15 +1769,30 @@ describe('with inferred DATs', () => {
         ['unknown.rom', '377a7727'],
       ]);
       expect(result.movedFiles).toEqual([
+        path.join('7z', 'fizzbuzz.7z'),
+        path.join('7z', 'foobar.7z'),
         path.join('7z', 'invalid.7z'),
+        path.join('7z', 'loremipsum.7z'),
+        path.join('7z', 'onetwothree.7z'),
+        path.join('7z', 'unknown.7z'),
         path.join('chd', '2048.chd'),
         path.join('chd', '4096.chd'),
         path.join('chd', 'CD-ROM.chd'),
         path.join('chd', 'GD-ROM.chd'),
         path.join('cso', 'UMD.cso'),
+        path.join('cso', 'UMD.zso'),
         // Note: empty.rom is missing because we don't use input files to write empty files
+        'empty.rom',
+        'fizzbuzz.zip',
         'foobar.lnx',
         path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
+        path.join('gz', 'fizzbuzz.gz'),
+        path.join('gz', 'foobar.gz'),
+        path.join('gz', 'loremipsum.gz'),
+        path.join('gz', 'one.gz'),
+        path.join('gz', 'three.gz'),
+        path.join('gz', 'two.gz'),
+        path.join('gz', 'unknown.gz'),
         path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
@@ -1580,6 +1800,11 @@ describe('with inferred DATs', () => {
         path.join('headered', 'fds_joypad_test.fds.zip'),
         path.join('headered', 'speed_test_v51.smc'),
         path.join('headerless', 'speed_test_v51.sfc.gz'),
+        'invalid.7z',
+        'invalid.rar',
+        'invalid.zip',
+        'loremipsum.7z',
+        path.join('nkit', 'GameCube-240pSuite-1.19.nkit.iso'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),
         path.join('patchable', '612644F.rom'),
@@ -1589,14 +1814,38 @@ describe('with inferred DATs', () => {
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
         path.join('patchable', 'best.gz'),
+        path.join('rar', 'fizzbuzz.rar'),
+        path.join('rar', 'foobar.rar'),
+        path.join('rar', 'invalid.rar'),
+        path.join('rar', 'loremipsum.rar'),
+        path.join('rar', 'onetwothree.rar'),
+        path.join('rar', 'unknown.rar'),
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
+        path.join('raw', 'foobar.lnx'),
         path.join('raw', 'four.rom'),
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
+        path.join('rvz', 'GameCube-240pSuite-1.19.rvz'),
+        path.join('tar', 'fizzbuzz.tar.gz'),
+        path.join('tar', 'foobar.tar.gz'),
+        path.join('tar', 'invalid.tar.gz'),
+        path.join('tar', 'loremipsum.tar.gz'),
+        path.join('tar', 'onetwothree.tar.gz'),
+        path.join('tar', 'unknown.tar.gz'),
+        'unknown.rar',
+        path.join('wia', 'GameCube-240pSuite-1.19.wia'),
+        path.join('zip', 'fizzbuzz.zip'),
+        path.join('zip', 'foobar.zip'),
+        path.join('zip', 'fourfive.zip'),
+        path.join('zip', 'invalid.zip'),
+        path.join('zip', 'loremipsum.zip'),
+        path.join('zip', 'onetwothree.zip'),
+        path.join('zip', 'unknown.zip'),
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
     });

@@ -583,6 +583,10 @@ export default class FsPoly {
    * failures.
    */
   static async rm(pathLike: string, options: RmOptions = {}): Promise<void> {
+    if (pathLike === os.devNull) {
+      return;
+    }
+
     const optionsWithRetry = {
       maxRetries: 2,
       ...options,
@@ -610,6 +614,10 @@ export default class FsPoly {
    * failures.
    */
   static rmSync(pathLike: string, options: RmOptions = {}): void {
+    if (pathLike === os.devNull) {
+      return;
+    }
+
     const optionsWithRetry = {
       maxRetries: 2,
       ...options,
@@ -639,6 +647,7 @@ export default class FsPoly {
     try {
       return (await this.stat(pathLike)).size;
     } catch {
+      // TODO(cemmer): maybe have this return 'undefined'
       return 0;
     }
   }

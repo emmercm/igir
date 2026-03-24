@@ -4,12 +4,10 @@ import stripAnsi from 'strip-ansi';
 
 import Timer from '../async/timer.js';
 import type Logger from './logger.js';
+import type { LogLevelValue } from './logLevel.js';
+import { LogLevel } from './logLevel.js';
 import type { SingleBarOptions } from './singleBar.js';
 import SingleBar from './singleBar.js';
-
-export interface MultiBarOptions {
-  writable: tty.WriteStream | NodeJS.WritableStream;
-}
 
 const exitHandler = (): void => {
   MultiBar.stop();
@@ -26,8 +24,8 @@ export default class MultiBar {
   private static readonly OUTPUT_PADDING = ' ';
 
   private static readonly multiBars: MultiBar[] = [];
-  private static readonly logQueue: string[] = [];
-  private static lastPrintedLog?: string;
+  private static readonly logQueue: [LogLevelValue, string, string | undefined][] = [];
+  private static lastPrintedLog?: [LogLevelValue, string, string | undefined];
 
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
@@ -35,12 +33,14 @@ export default class MultiBar {
   private stopped = false;
   private readonly sigwinchHandler?: () => void;
 
+  private readonly logger: Logger;
   private readonly terminal: tty.WriteStream | NodeJS.WritableStream;
   private terminalColumns = 65_536;
   private terminalRows = 65_536;
 
-  private constructor(options?: MultiBarOptions) {
-    this.terminal = options?.writable ?? process.stdout;
+  private constructor(logger: Logger) {
+    this.logger = logger;
+    this.terminal = logger.getStream() ?? process.stdout;
 
     // Disable the cursor
     if (this.terminal instanceof tty.WriteStream) {
@@ -65,17 +65,24 @@ export default class MultiBar {
   /**
    * Create a new {@link MultiBar} instance.
    */
-  static create(options?: MultiBarOptions): MultiBar {
-    const multiBar = new MultiBar(options);
+  static create(logger: Logger): MultiBar {
+    const multiBar = new MultiBar(logger);
     this.multiBars.push(multiBar);
     return multiBar;
   }
 
   /**
+   * Returns true if there are any active MultiBars.
+   */
+  static isActive(): boolean {
+    return this.multiBars.length > 0;
+  }
+
+  /**
    * Add a new {@link SingleBar} to the {@link MultiBar}.
    */
-  addSingleBar(logger: Logger, options?: SingleBarOptions, parentSingleBar?: SingleBar): SingleBar {
-    const singleBar = new SingleBar(this, logger, options);
+  addSingleBar(options?: SingleBarOptions, parentSingleBar?: SingleBar): SingleBar {
+    const singleBar = new SingleBar(this, options);
 
     const parentSingleBarIndex = parentSingleBar
       ? this.singleBars.indexOf(parentSingleBar)
@@ -110,6 +117,7 @@ export default class MultiBar {
     const lastOutput = singleBar.getLastOutput();
     if (lastOutput !== undefined) {
       this.log(
+        LogLevel.ALWAYS,
         `${singleBar.getIndentSize() === 0 ? '\n' : ''}${MultiBar.OUTPUT_PADDING}${lastOutput}`,
       );
     }
@@ -133,13 +141,22 @@ export default class MultiBar {
   /**
    * Queue a log message to be printed to the terminal.
    */
-  static log(message: string): void {
+  static log(logLevel: LogLevelValue, message: string): void {
+    this.multiBars.at(0)?.log(logLevel, message);
+  }
+
+  /**
+   * Queue a log message to be printed to the terminal.
+   */
+  log(logLevel: LogLevelValue, message: string, prefix?: string): void {
+    // Find the last log line that would have been printed immediately before this message
     const lastPrintedLog =
-      MultiBar.logQueue.length > 0 ? MultiBar.logQueue.at(-1) : MultiBar.lastPrintedLog;
+      MultiBar.logQueue.findLast(([logLevel]) => this.logger.canPrint(logLevel)) ??
+      MultiBar.lastPrintedLog;
 
     const isFrozenPattern = new RegExp(`^\n*${MultiBar.OUTPUT_PADDING}`);
     const lastPrintedLogIsFrozen =
-      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog);
+      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog[1]);
     const thisMessageIsFrozen = isFrozenPattern.test(message);
 
     if (lastPrintedLogIsFrozen) {
@@ -148,18 +165,11 @@ export default class MultiBar {
         message = message.replace(/^\n+/, '');
       } else {
         // Otherwise, add a newline after the previous frozen progress bar
-        MultiBar.logQueue.push('\n');
+        message = `\n${message}`;
       }
     }
 
-    MultiBar.logQueue.push(`${message}\n`);
-  }
-
-  /**
-   * Queue a log message to be printed to the terminal.
-   */
-  log(message: string): void {
-    MultiBar.log(message);
+    MultiBar.logQueue.push([logLevel, message, prefix]);
   }
 
   /**
@@ -197,40 +207,83 @@ export default class MultiBar {
         }
         return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
       });
-    const output = `${outputLines.join('\n')}\n`;
+    const output = outputLines.join('\n');
 
     if (output === this.lastOutput && MultiBar.logQueue.length === 0) {
       // Nothing new to render
       return;
     }
 
-    // Clear the terminal
-    if (this.terminal instanceof tty.WriteStream) {
-      // TODO(cemmer): some kind of line diffing algorithm so not every line has to be repainted
-      let rows = 0;
-      for (const char of this.lastOutput) {
-        if (char === '\n') {
-          rows += 1;
-        }
-      }
-      if (rows > 0) {
-        this.terminal.moveCursor(0, -rows);
-        this.terminal.cursorTo(0, undefined);
+    // Clear the entire progress bar area before printing logs
+    let screenCleared = false;
+    if (this.terminal instanceof tty.WriteStream && MultiBar.logQueue.length > 0) {
+      const rowsToMoveUp = this.lastOutput.split('\n').length - 1;
+      if (rowsToMoveUp > 0) {
+        this.terminal.moveCursor(0, -rowsToMoveUp);
+        this.terminal.cursorTo(0);
         this.terminal.clearScreenDown();
+        screenCleared = true;
       }
     }
 
     // Write out all queued logs
     let log = MultiBar.logQueue.shift();
     while (log !== undefined) {
-      MultiBar.lastPrintedLog = log;
-      this.terminal.write(log);
+      if (this.logger.printLine(log[0], log[1], log[2])) {
+        MultiBar.lastPrintedLog = log;
+      }
       log = MultiBar.logQueue.shift();
     }
 
-    // Write the progress bars
     if (this.terminal instanceof tty.WriteStream) {
-      this.terminal.write(output);
+      if (screenCleared) {
+        // Screen was cleared for logs; write the full output
+        this.terminal.write(output);
+      } else {
+        // Partial repaint: find the first changed line, move up to it, then overwrite in-place
+        const lastLines = this.lastOutput.split('\n');
+        const newLines = output.split('\n');
+
+        let firstChangedRow = 0;
+        while (
+          firstChangedRow < lastLines.length - 1 &&
+          firstChangedRow < newLines.length - 1 &&
+          lastLines[firstChangedRow] === newLines[firstChangedRow]
+        ) {
+          firstChangedRow++;
+        }
+
+        const rowsToMoveUp = lastLines.length - 1 - firstChangedRow;
+        if (rowsToMoveUp > 0) {
+          this.terminal.moveCursor(0, -rowsToMoveUp);
+          this.terminal.cursorTo(0);
+        }
+
+        const newLineCount = newLines.length - 1;
+        const lastLineCount = lastLines.length - 1;
+
+        for (let i = firstChangedRow; i < newLineCount; i++) {
+          this.terminal.cursorTo(0);
+          this.terminal.write(newLines[i]);
+          this.terminal.clearLine(1); // erase leftover chars if the new line is shorter
+          this.terminal.write('\n');
+        }
+
+        // Cursor is now at row newLineCount; ensure column 0
+        this.terminal.cursorTo(0);
+
+        // Erase any extra lines from the old output by clearing them in-place, then stepping back up
+        const extraOldLines = Math.max(0, lastLineCount - newLineCount);
+        for (let i = 0; i < extraOldLines; i++) {
+          this.terminal.clearLine(0);
+          if (i < extraOldLines - 1) {
+            this.terminal.moveCursor(0, 1);
+          }
+        }
+        if (extraOldLines > 1) {
+          this.terminal.moveCursor(0, -(extraOldLines - 1));
+        }
+      }
     }
     this.lastOutput = output;
   }

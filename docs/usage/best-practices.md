@@ -32,7 +32,11 @@ Provide your output directory as one of the input directories, and then any othe
 
 Then, create sub-collections by copying files from your main collection to other devices, optionally applying [filtering and preference rules](../roms/filtering-preferences.md).
 
-**Provide the output directory as an input directory when moving or cleaning.**
+**Provide the output directory as an input directory when cleaning.**
+
+If you use new DATs with an existing collection that may have changed ROM names, then `igir clean` may delete files from your output directory that have the wrong filename.
+
+TODO(cemmer)...
 
 This is because the [`igir clean` command](../output/cleaning.md) won't delete file paths considered for writing (no matter if a file was actually written, or it was ignored because of [overwriting](../output/options.md#overwriting-files) rules). Providing the output directory as an input directory will ensure no DAT-matched files are deleted.
 

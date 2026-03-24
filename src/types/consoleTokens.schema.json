@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "consoleTokens.schema.json",
+  "title": "OutputTokens",
+  "description": "Schema for the game console definitions used to map DAT names to output tokens and file extensions",
+  "type": "object",
+  "required": ["version", "consoles"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "consoles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/console"
+      }
+    }
+  },
+  "$defs": {
+    "console": {
+      "type": "object",
+      "required": ["datNameRegex", "extensions", "tokens"],
+      "additionalProperties": false,
+      "properties": {
+        "datNameRegex": {
+          "type": "string",
+          "description": "A JavaScript regex literal string (e.g. \"/pattern/i\") matched against DAT names to identify the console",
+          "pattern": "^/.+/[gimsuy]*$"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\.[a-zA-Z0-9]+$"
+          }
+        },
+        "tokens": {
+          "$ref": "#/$defs/tokens"
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "adam": {
+          "type": "string",
+          "description": "Adam image ROM subdirectory: /ROMS/{adam}"
+        },
+        "batocera": {
+          "type": "string",
+          "description": "Batocera ROM directory: roms/{batocera}"
+        },
+        "es": {
+          "type": "string",
+          "description": "EmulationStation ROM directory: roms/{emulationstation}"
+        },
+        "funkeyos": {
+          "type": "string",
+          "description": "FunKey S ROM subfolder of /"
+        },
+        "jelos": {
+          "type": "string",
+          "description": "JELOS ROM directory"
+        },
+        "minui": {
+          "type": "string",
+          "description": "MinUI ROM folder under /Roms"
+        },
+        "mister": {
+          "type": "string",
+          "description": "MiSTer ROM directory: /games/{mister}/"
+        },
+        "miyoocfw": {
+          "type": "string",
+          "description": "MiyooCFW ROM subfolder of SD card /roms"
+        },
+        "onion": {
+          "type": "string",
+          "description": "OnionOS/GarlicOS ROM directory: /Roms/{onion}"
+        },
+        "pocket": {
+          "type": "string",
+          "description": "Analogue Pocket ROM directory: /Assets/{pocket}/common/"
+        },
+        "retrodeck": {
+          "type": "string",
+          "description": "RetroDECK ROM directory: /roms/{retrodeck}"
+        },
+        "romm": {
+          "type": "string",
+          "description": "RomM ROM directory: /romm/library/{romm}"
+        },
+        "spruce": {
+          "type": "string",
+          "description": "SpruceOS ROM directory: /Roms/{spruce}"
+        },
+        "twmenu": {
+          "type": "string",
+          "description": "TWiLightMenu++ ROM subfolder on SD card: /roms/{twmenu}"
+        }
+      }
+    }
+  }
+}

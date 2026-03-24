@@ -44,7 +44,22 @@ describe('constructor', () => {
   });
 });
 
-describe('apply', () => {
+describe('createPatchedFile', () => {
+  test('should throw on invalid patch header', async () => {
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('00000000 patch.xdelta', Buffer.alloc(10));
+
+    try {
+      const patch = VcdiffPatch.patchFrom(patchFile);
+      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
   test.each([
     // Standard vcdiff with no secondary compression (xdelta3 -S -n -A ...)
     ['AAAAA', Buffer.from('d6c3c40000000d0a000502014142434441061504', 'hex'), 'ABCDAAAAAA'],

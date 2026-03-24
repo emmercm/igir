@@ -120,7 +120,10 @@ describe('multiple files', () => {
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
-    ).scan(ChecksumBitmask.CRC32, false);
+    ).scan(
+      Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0),
+      false,
+    );
 
     const extensionsWithoutCrc32 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
@@ -310,6 +313,221 @@ describe('multiple files', () => {
 
       // Then the dirs scan successfully
       expect(scannedSymlinks).toEqual(scannedRealFiles);
+    } finally {
+      await FsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+});
+
+describe('checksum constraining', () => {
+  it('should return only CRC32 when only CRC32 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.CRC32);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeDefined();
+      expect(file.getMd5()).toBeUndefined();
+      expect(file.getSha1()).toBeUndefined();
+      expect(file.getSha256()).toBeUndefined();
+    }
+  });
+
+  it('should return only MD5 when only MD5 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.MD5);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeUndefined();
+      expect(file.getMd5()).toBeDefined();
+      expect(file.getSha1()).toBeUndefined();
+      expect(file.getSha256()).toBeUndefined();
+    }
+  });
+
+  it('should return only SHA1 when only SHA1 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.SHA1);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeUndefined();
+      expect(file.getMd5()).toBeUndefined();
+      expect(file.getSha1()).toBeDefined();
+      expect(file.getSha256()).toBeUndefined();
+    }
+  });
+
+  it('should return only SHA256 when only SHA256 is requested', async () => {
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.SHA256);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeUndefined();
+      expect(file.getMd5()).toBeUndefined();
+      expect(file.getSha1()).toBeUndefined();
+      expect(file.getSha256()).toBeDefined();
+    }
+  });
+
+  it('should return all checksums when all are requested', async () => {
+    const allBitmasks = Object.values(ChecksumBitmask).reduce<number>(
+      (accum, bitmask) => accum | bitmask,
+      0,
+    );
+    const scannedFiles = await new ROMScanner(
+      new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(allBitmasks);
+
+    expect(scannedFiles.length).toBeGreaterThan(0);
+    for (const file of scannedFiles) {
+      expect(file.getCrc32()).toBeDefined();
+      expect(file.getMd5()).toBeDefined();
+      expect(file.getSha1()).toBeDefined();
+      expect(file.getSha256()).toBeDefined();
+    }
+  });
+
+  it('should not constrain archive entries when using quick checksums', async () => {
+    // Quick checksums read CRC32 from archive central directories rather than hashing content.
+    // Those archive entries must NOT be constrained so that the free CRC32 is preserved.
+    const scannedFiles = await new ROMScanner(
+      new Options({
+        input: [path.join('test', 'fixtures', 'roms', 'zip')],
+        inputChecksumQuick: true,
+      }),
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan(ChecksumBitmask.MD5);
+
+    const archiveEntries = scannedFiles.filter((file) => file instanceof ArchiveEntry);
+    expect(archiveEntries.length).toBeGreaterThan(0);
+
+    // CRC32 should be preserved from the ZIP central directory even though MD5 was requested
+    const entriesWithCrc32 = archiveEntries.filter((file) => file.getCrc32() !== undefined);
+    expect(entriesWithCrc32.length).toBeGreaterThan(0);
+
+    // MD5 should be absent since quick mode skips hashing archive entry contents
+    const entriesWithMd5 = archiveEntries.filter((file) => file.getMd5() !== undefined);
+    expect(entriesWithMd5).toHaveLength(0);
+  });
+});
+
+describe('output directory scanning', () => {
+  it('should not scan the output directory when no relevant commands are used', async () => {
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      const inputDir = path.join(tempDir, 'input');
+      const outputDir = path.join(tempDir, 'output');
+      await FsPoly.mkdir(inputDir);
+      await FsPoly.mkdir(outputDir);
+
+      await FsPoly.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+        path.join(inputDir, 'fizzbuzz.nes'),
+      );
+      await FsPoly.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
+        path.join(outputDir, 'loremipsum.rom'),
+      );
+
+      const files = await new ROMScanner(
+        new Options({ input: [inputDir], commands: ['copy'], output: outputDir }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache(), LOGGER),
+        new MappableSemaphore(os.availableParallelism()),
+      ).scan();
+
+      // Only input files should be returned; output dir is not scanned
+      expect(files).toHaveLength(1);
+      expect(files.every((f) => f.getCanBeCandidateInput())).toBe(true);
+    } finally {
+      await FsPoly.rm(tempDir, { recursive: true });
+    }
+  });
+
+  it.each(['playlist', 'report', 'clean'])(
+    'should mark output-only files as isOutputFile: %s',
+    async (command) => {
+      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      try {
+        const inputDir = path.join(tempDir, 'input');
+        const outputDir = path.join(tempDir, 'output');
+        await FsPoly.mkdir(inputDir);
+        await FsPoly.mkdir(outputDir);
+
+        await FsPoly.copyFile(
+          path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+          path.join(inputDir, 'fizzbuzz.nes'),
+        );
+        await FsPoly.copyFile(
+          path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
+          path.join(outputDir, 'loremipsum.rom'),
+        );
+
+        const files = await new ROMScanner(
+          new Options({ input: [inputDir], commands: ['copy', command], output: outputDir }),
+          new ProgressBarFake(),
+          new FileFactory(new FileCache(), LOGGER),
+          new MappableSemaphore(os.availableParallelism()),
+        ).scan();
+
+        const inputFiles = files.filter((f) => f.getCanBeCandidateInput());
+        const outputFiles = files.filter((f) => !f.getCanBeCandidateInput());
+        expect(inputFiles).toHaveLength(1);
+        expect(outputFiles).toHaveLength(1);
+        expect(outputFiles[0].getFilePath()).toContain('loremipsum.rom');
+      } finally {
+        await FsPoly.rm(tempDir, { recursive: true });
+      }
+    },
+  );
+
+  it('should not add output files that are already in the input paths', async () => {
+    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    try {
+      // Output dir is nested inside the input scan area
+      const outputDir = path.join(tempDir, 'output');
+      await FsPoly.mkdir(outputDir);
+
+      await FsPoly.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+        path.join(outputDir, 'fizzbuzz.nes'),
+      );
+
+      const files = await new ROMScanner(
+        // Input covers the whole tempDir (including the output subdir)
+        new Options({ input: [tempDir], commands: ['copy', 'clean'], output: outputDir }),
+        new ProgressBarFake(),
+        new FileFactory(new FileCache(), LOGGER),
+        new MappableSemaphore(os.availableParallelism()),
+      ).scan();
+
+      // File appears only once (path already in input set, not re-added from output)
+      expect(files).toHaveLength(1);
+      expect(files[0].getCanBeCandidateInput()).toBe(true);
     } finally {
       await FsPoly.rm(tempDir, { recursive: true });
     }

@@ -35,6 +35,11 @@ export interface ChecksumPropsWithSize extends ChecksumProps {
 
 export default {
   async hashData(data: Buffer | string, checksumBitmask: number): Promise<ChecksumPropsWithSize> {
+    if (!checksumBitmask) {
+      // Not calculating any checksums, do nothing
+      return {};
+    }
+
     const readable = new Readable();
     readable.push(data);
     // eslint-disable-next-line unicorn/no-null
@@ -49,6 +54,11 @@ export default {
     end?: number,
     callback?: FsReadCallback,
   ): Promise<ChecksumPropsWithSize> {
+    if (!checksumBitmask) {
+      // Not calculating any checksums, do nothing
+      return {};
+    }
+
     return await File.createStreamFromFile(
       filePath,
       async (readable) => await this.hashStream(readable, checksumBitmask, callback),

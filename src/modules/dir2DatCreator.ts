@@ -46,6 +46,10 @@ export default class Dir2DatCreator extends Module {
      * {@link ROM}s from the {@link WriteCandidate}s instead of the original {@link DAT}.
      */
     const gamesToCandidates = candidates.reduce((map, candidate) => {
+      if (!candidate.canWrite()) {
+        return map;
+      }
+
       const key = candidate.getGame();
       if (map.has(key)) {
         map.get(key)?.push(candidate);

@@ -54,31 +54,32 @@ export default class FileFactory {
   async filesFrom(
     filePath: string,
     fileChecksumBitmask: number = ChecksumBitmask.CRC32,
-    checksumBitmask = fileChecksumBitmask,
+    entryChecksumBitmask = fileChecksumBitmask,
+    callback?: FsReadCallback,
   ): Promise<File[]> {
     if (URLPoly.canParse(filePath)) {
       return [await File.fileOf({ filePath })];
     }
 
     if (!FileFactory.isExtensionArchive(filePath)) {
-      const entries = await this.entriesFromArchiveSignature(filePath, checksumBitmask);
+      const entries = await this.entriesFromArchiveSignature(filePath, entryChecksumBitmask);
       if (entries !== undefined) {
         return entries;
       }
-      return [await this.fileFrom(filePath, fileChecksumBitmask)];
+      return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
     }
 
     try {
       const archives = this.archiveFromArchiveExtension(filePath);
       if (archives.length === 0) {
         // The file isn't actually an archive
-        return [await this.fileFrom(filePath, fileChecksumBitmask)];
+        return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
       }
       const entries = (
         await async.mapLimit(
           archives,
           1,
-          async (archive: Archive) => await this.entriesFromArchive(archive, checksumBitmask),
+          async (archive: Archive) => await this.entriesFromArchive(archive, entryChecksumBitmask),
         )
       ).flat();
       if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
@@ -143,10 +144,8 @@ export default class FileFactory {
       // The file at the given path may not be of the type asserted by the given extension, or it
       // may be an incomplete/corrupted file
       MultiBar.log(
-        this.logger.formatMessage(
-          LogLevel.WARN,
-          `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
-        ),
+        LogLevel.WARN,
+        `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
       );
       return undefined;
     }

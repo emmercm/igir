@@ -54,12 +54,66 @@ export default abstract class Scanner extends Module {
 
         let files: File[];
         try {
-          files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
-          await this.logWarnings(files);
+          files = await this.getFilesFromPath(
+            inputFile,
+            checksumBitmask,
+            checksumArchives,
+            childBar,
+          );
         } finally {
           childBar.delete();
         }
 
+        if (checksumBitmask) {
+          // Do not return junk checksums
+          // TODO(cemmer): this is inefficient, we shouldn't have junk checksums anywhere
+          files = files.map((file) => {
+            return file.withProps({
+              crc32: /^[0-9a-f]{8}$/.test(file.getCrc32() ?? '') ? file.getCrc32() : undefined,
+              crc32WithoutHeader: /^[0-9a-f]{8}$/.test(file.getCrc32WithoutHeader() ?? '')
+                ? file.getCrc32WithoutHeader()
+                : undefined,
+              md5: /^[0-9a-f]{32}$/.test(file.getMd5() ?? '') ? file.getMd5() : undefined,
+              md5WithoutHeader: /^[0-9a-f]{32}$/.test(file.getMd5WithoutHeader() ?? '')
+                ? file.getMd5WithoutHeader()
+                : undefined,
+              sha1: /^[0-9a-f]{40}$/.test(file.getSha1() ?? '') ? file.getSha1() : undefined,
+              sha1WithoutHeader: /^[0-9a-f]{40}$/.test(file.getSha1WithoutHeader() ?? '')
+                ? file.getSha1WithoutHeader()
+                : undefined,
+              sha256: /^[0-9a-f]{64}$/.test(file.getSha256() ?? '') ? file.getSha256() : undefined,
+              sha256WithoutHeader: /^[0-9a-f]{64}$/.test(file.getSha256WithoutHeader() ?? '')
+                ? file.getSha256WithoutHeader()
+                : undefined,
+            });
+          });
+
+          // Constrain the checksums returned based on the requested bitmask
+          files = files.map((file) => {
+            if (file instanceof ArchiveEntry && this.options.getInputChecksumQuick()) {
+              return file;
+            }
+            return file.withProps({
+              crc32: checksumBitmask & ChecksumBitmask.CRC32 ? file.getCrc32() : undefined,
+              crc32WithoutHeader:
+                checksumBitmask & ChecksumBitmask.CRC32 ? file.getCrc32WithoutHeader() : undefined,
+              md5: checksumBitmask & ChecksumBitmask.MD5 ? file.getMd5() : undefined,
+              md5WithoutHeader:
+                checksumBitmask & ChecksumBitmask.MD5 ? file.getMd5WithoutHeader() : undefined,
+              sha1: checksumBitmask & ChecksumBitmask.SHA1 ? file.getSha1() : undefined,
+              sha1WithoutHeader:
+                checksumBitmask & ChecksumBitmask.SHA1 ? file.getSha1WithoutHeader() : undefined,
+              sha256: checksumBitmask & ChecksumBitmask.SHA256 ? file.getSha256() : undefined,
+              sha256WithoutHeader:
+                checksumBitmask & ChecksumBitmask.SHA256
+                  ? file.getSha256WithoutHeader()
+                  : undefined,
+              checksumBitmask,
+            });
+          });
+        }
+
+        await this.logWarnings(files);
         this.progressBar.incrementCompleted();
         return files;
       })
@@ -80,7 +134,8 @@ export default abstract class Scanner extends Module {
   private async getFilesFromPath(
     filePath: string,
     checksumBitmask: number,
-    checksumArchives = false,
+    checksumArchives: boolean,
+    progressBar: ProgressBar,
   ): Promise<File[]> {
     try {
       if (await FsPoly.isSymlink(filePath)) {
@@ -95,6 +150,9 @@ export default abstract class Scanner extends Module {
         filePath,
         checksumBitmask,
         this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
+        (progress) => {
+          progressBar.setCompleted(progress);
+        },
       );
 
       for (const fileFromPath of filesFromPath) {
@@ -110,7 +168,11 @@ export default abstract class Scanner extends Module {
 
       const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
       if (checksumArchives && fileIsArchive) {
-        filesFromPath.push(await this.fileFactory.fileFrom(filePath, checksumBitmask));
+        filesFromPath.push(
+          await this.fileFactory.fileFrom(filePath, checksumBitmask, (progress) => {
+            progressBar.setCompleted(progress);
+          }),
+        );
       }
 
       if (filesFromPath.length === 0) {

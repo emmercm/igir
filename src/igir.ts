@@ -10,6 +10,7 @@ import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
 import type Logger from './console/logger.js';
+import MultiBar from './console/multiBar.js';
 import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import Package from './globals/package.js';
@@ -22,6 +23,7 @@ import CandidateMergeSplitValidator from './modules/candidates/candidateMergeSpl
 import CandidatePatchGenerator from './modules/candidates/candidatePatchGenerator.js';
 import CandidatePostProcessor from './modules/candidates/candidatePostProcessor.js';
 import CandidateValidator from './modules/candidates/candidateValidator.js';
+import type { CandidateWriterResults } from './modules/candidates/candidateWriter.js';
 import CandidateWriter from './modules/candidates/candidateWriter.js';
 import DATCombiner from './modules/dats/datCombiner.js';
 import DATDiscMerger from './modules/dats/datDiscMerger.js';
@@ -64,12 +66,13 @@ import type WriteCandidate from './types/writeCandidate.js';
  */
 export default class Igir {
   private readonly options: Options;
-
   private readonly logger: Logger;
+  private readonly multiBar: MultiBar;
 
   constructor(options: Options, logger: Logger) {
     this.options = options;
     this.logger = logger;
+    this.multiBar = MultiBar.create(logger);
   }
 
   /**
@@ -142,7 +145,7 @@ export default class Igir {
     const patches = await this.processPatchScanner(fileFactory, readerSemaphore);
 
     // Set up progress bar and input for DAT processing
-    const datProcessProgressBar = this.logger.addProgressBar({
+    const datProcessProgressBar = this.multiBar.addSingleBar({
       name: chalk.underline('Processing DATs'),
       symbol: ProgressBarSymbol.NONE,
       total: dats.length,
@@ -157,9 +160,12 @@ export default class Igir {
       datProcessProgressBar.delete();
     }
 
-    const datsToWrittenFiles = new Map<DAT, File[]>();
+    const candidateWriterResults: CandidateWriterResults = {
+      wrote: [],
+      moved: [],
+    };
+    const filesToExcludeFromCleaning: File[] = [];
     let romOutputDirs: string[] = [];
-    let movedRomsToDelete: File[] = [];
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
@@ -169,7 +175,7 @@ export default class Igir {
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
       datProcessProgressBar.incrementInProgress();
 
-      const progressBar = this.logger.addProgressBar({
+      const progressBar = this.multiBar.addSingleBar({
         name: dat.getDisplayName(),
         symbol: ProgressBarSymbol.WAITING,
         total: dat.getParents().length,
@@ -185,6 +191,17 @@ export default class Igir {
         indexedRoms,
         patches,
       );
+
+      candidates.forEach((candidate) => {
+        candidate.getRomsWithFiles().forEach((romWithFiles) => {
+          // Files in the output directory that matched to a DAT should be excluded from cleaning.
+          // Note that only the correct/output path is excluded, not the current/input path. Files
+          // that aren't in the correct location will be deleted.
+          if (!romWithFiles.getInputFile().getCanBeCandidateInput()) {
+            filesToExcludeFromCleaning.push(romWithFiles.getOutputFile());
+          }
+        });
+      });
       romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
@@ -195,21 +212,19 @@ export default class Igir {
         writerSemaphore,
         moveMutex,
       ).write(processedDat, candidates);
-      movedRomsToDelete = [...movedRomsToDelete, ...writerResults.moved];
-      datsToWrittenFiles.set(processedDat, writerResults.wrote);
+      writerResults.moved.forEach((moved) => candidateWriterResults.moved.push(moved));
+      writerResults.wrote.forEach((wrote) => candidateWriterResults.wrote.push(wrote));
 
       // Write playlists
       const playlistPaths = await new PlaylistCreator(this.options, progressBar).create(
         processedDat,
         candidates,
       );
-      datsToWrittenFiles.set(processedDat, [
-        ...(datsToWrittenFiles.get(processedDat) ?? []),
-        ...(await readerSemaphore.map(
-          playlistPaths,
-          async (filePath) => await File.fileOf({ filePath }),
-        )),
-      ]);
+      await Promise.all(
+        playlistPaths.map(async (filePath) => {
+          filesToExcludeFromCleaning.push(await File.fileOf({ filePath }));
+        }),
+      );
 
       // Write a dir2dat
       const dir2DatPath = await new Dir2DatCreator(this.options, progressBar).create(
@@ -217,10 +232,7 @@ export default class Igir {
         candidates,
       );
       if (dir2DatPath) {
-        datsToWrittenFiles.set(processedDat, [
-          ...(datsToWrittenFiles.get(processedDat) ?? []),
-          await File.fileOf({ filePath: dir2DatPath }),
-        ]);
+        filesToExcludeFromCleaning.push(await File.fileOf({ filePath: dir2DatPath }));
       }
 
       // Write a fixdat
@@ -229,10 +241,7 @@ export default class Igir {
         candidates,
       );
       if (fixdatPath) {
-        datsToWrittenFiles.set(processedDat, [
-          ...(datsToWrittenFiles.get(processedDat) ?? []),
-          await File.fileOf({ filePath: fixdatPath }),
-        ]);
+        filesToExcludeFromCleaning.push(await File.fileOf({ filePath: fixdatPath }));
       }
 
       // Write the output report
@@ -266,10 +275,17 @@ export default class Igir {
     datProcessProgressBar.delete();
 
     // Delete moved ROMs
-    await this.deleteMovedRoms(roms, movedRomsToDelete, datsToWrittenFiles);
+    await this.deleteMovedRoms(indexedRoms, candidateWriterResults.moved);
 
     // Clean the output directories
-    const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, datsToWrittenFiles);
+    const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, [
+      // Do not clean output ROMs
+      ...candidateWriterResults.wrote.flatMap((wc) =>
+        wc.getRomsWithFiles().map((rwf) => rwf.getOutputFile()),
+      ),
+      // Do not clean any other files written (dir2dats, fixdats, playlists, etc.)
+      ...filesToExcludeFromCleaning,
+    ]);
 
     // Generate the report
     await this.processReportGenerator(roms, cleanedOutputFiles, datsStatuses);
@@ -339,7 +355,7 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar({
+    const progressBar = this.multiBar.addSingleBar({
       name: 'Scanning for DATs',
     });
     let dats = await new DATScanner(
@@ -399,9 +415,9 @@ export default class Igir {
       Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
+            bitmask >= minimumChecksum &&
+            bitmask <= maximumChecksum &&
             // Has not been enabled yet
-            bitmask >= ChecksumBitmask.CRC32 &&
-            bitmask <= ChecksumBitmask.SHA1 &&
             !(matchChecksum & bitmask),
         )
         .forEach((bitmask) => {
@@ -412,14 +428,31 @@ export default class Igir {
         });
     }
 
+    if (dats.length === 0) {
+      Object.values(ChecksumBitmask)
+        .filter(
+          (bitmask) =>
+            bitmask >= minimumChecksum &&
+            bitmask <= maximumChecksum &&
+            // Has not been enabled yet
+            !(matchChecksum & bitmask),
+        )
+        .forEach((bitmask) => {
+          matchChecksum |= bitmask;
+          this.logger.trace(
+            `no DATs provided, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
+          );
+        });
+    }
+
     dats.forEach((dat) => {
       const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
       Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
-            // Has not been enabled yet
-            bitmask > minimumChecksum &&
+            bitmask >= minimumChecksum &&
             bitmask <= maximumChecksum &&
+            // Has not been enabled yet
             !(matchChecksum & bitmask) &&
             // Should be enabled for this DAT
             (datMinimumRomBitmask & bitmask) > 0,
@@ -438,9 +471,9 @@ export default class Igir {
       Object.values(ChecksumBitmask)
         .filter(
           (bitmask) =>
-            // Has not been enabled yet
-            bitmask > minimumChecksum &&
+            bitmask >= minimumChecksum &&
             bitmask <= maximumChecksum &&
+            // Has not been enabled yet
             !(matchChecksum & bitmask) &&
             // Should be enabled for this DAT
             (datMinimumDiskBitmask & bitmask) > 0,
@@ -491,7 +524,7 @@ export default class Igir {
     checksumBitmask: number,
     checksumArchives: boolean,
   ): Promise<IndexedFiles> {
-    const romProgressBar = this.logger.addProgressBar({
+    const romProgressBar = this.multiBar.addSingleBar({
       name: 'Scanning for ROMs',
     });
 
@@ -539,7 +572,7 @@ export default class Igir {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar({
+    const progressBar = this.multiBar.addSingleBar({
       name: 'Scanning for patches',
     });
     const patches = await new PatchScanner(
@@ -652,6 +685,7 @@ export default class Igir {
               new Options({
                 commands: [...this.options.getCommands()],
                 output: this.options.getOutput(),
+                outputConsoleTokens: this.options.getOutputConsoleTokens(),
               }),
               dat,
               candidate.getGame(),
@@ -664,24 +698,24 @@ export default class Igir {
   }
 
   private async deleteMovedRoms(
-    rawRomFiles: File[],
-    movedRomsToDelete: File[],
-    datsToWrittenFiles: Map<DAT, File[]>,
+    indexedRoms: IndexedFiles,
+    movedWriteCandidates: WriteCandidate[],
   ): Promise<void> {
-    if (movedRomsToDelete.length === 0) {
+    if (movedWriteCandidates.length === 0) {
       return;
     }
 
     const progressBarName = 'Deleting moved files';
-    const progressBar = this.logger.addProgressBar({ name: progressBarName });
+    const progressBar = this.multiBar.addSingleBar({ name: progressBarName });
     const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
-      rawRomFiles,
-      movedRomsToDelete,
-      datsToWrittenFiles,
+      indexedRoms,
+      movedWriteCandidates,
     );
 
     progressBar.setName('Deleting empty input subdirectories');
-    await new InputSubdirectoriesDeleter(this.options, progressBar).delete(movedRomsToDelete);
+    await new InputSubdirectoriesDeleter(this.options, progressBar).delete(
+      movedWriteCandidates.flatMap((wc) => wc.getRomsWithFiles().map((rwf) => rwf.getInputFile())),
+    );
 
     progressBar.setName(progressBarName);
     progressBar.finishWithItems(deletedFilePaths.length, 'moved file', 'deleted');
@@ -694,15 +728,14 @@ export default class Igir {
 
   private async processOutputCleaner(
     dirsToClean: string[],
-    datsToWrittenFiles: Map<DAT, File[]>,
+    writtenFilesToExclude: File[],
   ): Promise<string[]> {
     if (!this.options.shouldWrite() || !this.options.shouldClean() || dirsToClean.length === 0) {
       return [];
     }
 
-    const progressBar = this.logger.addProgressBar({ name: 'Cleaning output directory' });
+    const progressBar = this.multiBar.addSingleBar({ name: 'Cleaning output directory' });
     const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
-    const writtenFilesToExclude = [...datsToWrittenFiles.values()].flat();
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar).clean(
       uniqueDirsToClean,
       writtenFilesToExclude,
@@ -721,7 +754,7 @@ export default class Igir {
       return;
     }
 
-    const reportProgressBar = this.logger.addProgressBar({
+    const reportProgressBar = this.multiBar.addSingleBar({
       name: 'Generating report',
       symbol: ProgressBarSymbol.WRITING,
     });

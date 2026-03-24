@@ -1,10 +1,18 @@
 # Output Path Options
 
-Igir offer many options to control how ROMs are sorted in the specified output directory.
-
-All `--dir-*` options append subdirectories to whatever is specified in the `--output <path>` option. Many `--dir-*` options have an [output path token](./tokens.md) equivalent, which also controls how ROMs are sorted.
+Igir offers many options to control how ROMs are sorted in the specified output directory.
 
 Multiple options can be combined, and they will be appended to the output directory in the following order:
+
+## Base output directory
+
+```text
+--output <path>
+```
+
+This option establishes the "base" path of where ROMs will be written when [writing](../commands.md#rom-writing). All other options below append additional subdirectories to the directory specified here.
+
+The output path can make use of [tokens](./tokens.md), replaceable symbols that will be resolved at runtime.
 
 ## Mirror the input subdirectory
 

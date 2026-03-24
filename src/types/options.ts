@@ -128,6 +128,16 @@ export const PreferRevisionInverted = Object.fromEntries(
   Object.entries(PreferRevision).map(([key, value]) => [value, key]),
 ) as Record<PreferRevisionValue, PreferRevisionKey>;
 
+export const PreferFiletype = {
+  PLAIN: 1,
+  ARCHIVE: 2,
+} as const;
+export type PreferFiletypeKey = keyof typeof PreferFiletype;
+export type PreferFiletypeValue = (typeof PreferFiletype)[PreferFiletypeKey];
+export const PreferFiletypeInverted = Object.fromEntries(
+  Object.entries(PreferFiletype).map(([key, value]) => [value, key]),
+) as Record<PreferFiletypeValue, PreferFiletypeKey>;
+
 export const PlaylistMode = {
   MULTIPLE: 1,
   ALWAYS: 2,
@@ -181,9 +191,12 @@ export interface OptionsProps {
   readonly dirLetterLimit?: number;
   readonly dirLetterGroup?: boolean;
   readonly dirGameSubdir?: string;
+  readonly outputConsoleTokens?: string;
+
   readonly fixExtension?: string;
   readonly overwrite?: boolean;
   readonly overwriteInvalid?: boolean;
+  readonly writeRetry?: number;
 
   readonly moveDeleteDirs?: string;
 
@@ -255,6 +268,9 @@ export interface OptionsProps {
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
 
+  readonly preferFiletype?: string;
+  readonly preferFilenameRegex?: string;
+
   readonly playlistMode?: string;
   readonly playlistExtensions?: string[];
 
@@ -267,11 +283,13 @@ export interface OptionsProps {
   readonly datThreads?: number;
   readonly readerThreads?: number;
   readonly writerThreads?: number;
-  readonly writeRetry?: number;
+
   readonly tempDir?: string;
   readonly disableCache?: boolean;
   readonly cachePath?: string;
+
   readonly verbose?: number;
+  readonly debugLog?: string;
   readonly help?: boolean;
 }
 
@@ -336,11 +354,15 @@ export default class Options implements OptionsProps {
 
   readonly dirGameSubdir?: string;
 
+  readonly outputConsoleTokens?: string;
+
   readonly fixExtension?: string;
 
   readonly overwrite: boolean;
 
   readonly overwriteInvalid: boolean;
+
+  readonly writeRetry: number;
 
   readonly moveDeleteDirs?: string;
 
@@ -464,6 +486,10 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly preferFiletype?: string;
+
+  readonly preferFilenameRegex?: string;
+
   readonly playlistMode?: string;
 
   readonly playlistExtensions: string[];
@@ -480,8 +506,6 @@ export default class Options implements OptionsProps {
 
   readonly writerThreads: number;
 
-  readonly writeRetry: number;
-
   readonly tempDir: string;
 
   readonly disableCache: boolean;
@@ -489,6 +513,8 @@ export default class Options implements OptionsProps {
   readonly cachePath?: string;
 
   readonly verbose: number;
+
+  readonly debugLog?: string;
 
   readonly help: boolean;
 
@@ -504,7 +530,9 @@ export default class Options implements OptionsProps {
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = (options?.dat ?? []).map((filePath) => filePath.replaceAll(/[\\/]/g, path.sep));
+    this.dat = (options?.dat ?? []).map((filePath) =>
+      URLPoly.canParse(filePath) ? filePath : filePath.replaceAll(/[\\/]/g, path.sep),
+    );
     this.datExclude = (options?.datExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
@@ -531,10 +559,12 @@ export default class Options implements OptionsProps {
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
+    this.outputConsoleTokens = options?.outputConsoleTokens;
 
     this.fixExtension = options?.fixExtension;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
+    this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
 
     this.moveDeleteDirs = options?.moveDeleteDirs;
 
@@ -608,6 +638,9 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
+    this.preferFiletype = options?.preferFiletype;
+    this.preferFilenameRegex = options?.preferFilenameRegex;
+
     this.playlistMode = options?.playlistMode;
     this.playlistExtensions = options?.playlistExtensions ?? [];
 
@@ -620,11 +653,13 @@ export default class Options implements OptionsProps {
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
-    this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
+
     this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replaceAll(/[\\/]/g, path.sep);
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
+
     this.verbose = options?.verbose ?? 0;
+    this.debugLog = options?.debugLog;
     this.help = options?.help ?? false;
   }
 
@@ -900,19 +935,22 @@ export default class Options implements OptionsProps {
       return [];
     }
 
+    // Check for URLs before globbing, as fast-glob may throw on Windows with URL-like paths
+    // (e.g. `http:` looks like a drive letter)
+    if (URLPoly.canParse(inputPath)) {
+      // Allow URLs, let the scanner modules deal with them
+      if (walkCallback !== undefined) {
+        walkCallback(1);
+      }
+      return [inputPath];
+    }
+
     // Otherwise, process it as a glob pattern
     const globbedPaths = await fg(inputPathEscaped, {
       onlyFiles: walkMode === WalkMode.FILES,
       onlyDirectories: walkMode === WalkMode.DIRECTORIES,
     });
     if (globbedPaths.length === 0) {
-      if (URLPoly.canParse(inputPath)) {
-        // Allow URLs, let the scanner modules deal with them
-        if (walkCallback !== undefined) {
-          walkCallback(1);
-        }
-        return [inputPath];
-      }
       return [];
     }
     if (walkCallback !== undefined) {
@@ -1105,6 +1143,10 @@ export default class Options implements OptionsProps {
     return GameSubdirMode[subdirMode as GameSubdirModeKey];
   }
 
+  getOutputConsoleTokens(): string | undefined {
+    return this.outputConsoleTokens;
+  }
+
   getFixExtension(): FixExtensionValue | undefined {
     const fixExtensionMode = Object.keys(FixExtension).find(
       (mode) => mode.toLowerCase() === this.fixExtension?.toLowerCase(),
@@ -1121,6 +1163,10 @@ export default class Options implements OptionsProps {
 
   getOverwriteInvalid(): boolean {
     return this.overwriteInvalid;
+  }
+
+  getWriteRetry(): number {
+    return this.writeRetry;
   }
 
   getMoveDeleteDirs(): MoveDeleteDirsValue | undefined {
@@ -1463,6 +1509,20 @@ export default class Options implements OptionsProps {
     return this.preferParent;
   }
 
+  getPreferFiletype(): PreferFiletypeValue | undefined {
+    const preferFiletype = Object.keys(PreferFiletype).find(
+      (mode) => mode.toLowerCase() === this.preferFiletype?.toLowerCase(),
+    );
+    if (!preferFiletype) {
+      return undefined;
+    }
+    return PreferFiletype[preferFiletype as PreferFiletypeKey];
+  }
+
+  getPreferFilenameRegex(): RegExp[] | undefined {
+    return Options.getRegex(this.preferFilenameRegex);
+  }
+
   getPlaylistMode(): PlaylistModeValue | undefined {
     const playlistMode = Object.keys(PlaylistMode).find(
       (mode) => mode.toLowerCase() === this.playlistMode?.toLowerCase(),
@@ -1516,10 +1576,6 @@ export default class Options implements OptionsProps {
     return this.writerThreads;
   }
 
-  getWriteRetry(): number {
-    return this.writeRetry;
-  }
-
   getTempDir(): string {
     return this.tempDir;
   }
@@ -1543,6 +1599,28 @@ export default class Options implements OptionsProps {
       return LogLevel.TRACE;
     }
     return LogLevel.WARN;
+  }
+
+  getDebugLog(): string | undefined {
+    if (this.debugLog === undefined) {
+      return undefined;
+    }
+
+    let { debugLog } = this;
+    if (debugLog === '') {
+      debugLog = 'igir_%YYYY-%MM-%DDT%HH:%mm:%ss.log';
+    }
+
+    // Replace date & time tokens
+    const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
+    if (symbolMatches) {
+      symbolMatches.reduce(ArrayPoly.reduceUnique(), []).forEach((match) => {
+        const val = moment().format(match.replace(/^%/, ''));
+        debugLog = debugLog.replace(match, val);
+      });
+    }
+
+    return debugLog;
   }
 
   getHelp(): boolean {
