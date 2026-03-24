@@ -3,7 +3,7 @@
  * newer version of Node.js.
  */
 
-import { spawnSync } from 'node:child_process';
+import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -50,9 +50,11 @@ const heldBackDependencies = Object.entries(packageJson)
 
         process.stderr.write(`${dependencyType}: ${depPackageNameVersion} ... `);
         const depPackageJsonLatest = JSON.parse(
-          spawnSync('npm', ['view', '--json', `${depPackageName}@latest`], {
-            windowsHide: true,
-          }).stdout.toString(),
+          child_process
+            .spawnSync('npm', ['view', '--json', `${depPackageName}@latest`], {
+              windowsHide: true,
+            })
+            .stdout.toString(),
         ) as PackageJson;
 
         const depPackageNewerVersions = semver
@@ -73,9 +75,11 @@ const heldBackDependencies = Object.entries(packageJson)
           .map((remoteVersion): [string, string] | undefined => {
             process.stderr.write(`  ${depPackageName}@${remoteVersion} ... `);
             const depPackageJson = JSON.parse(
-              spawnSync('npm', ['view', '--json', `${depPackageName}@${remoteVersion}`], {
-                windowsHide: true,
-              }).stdout.toString(),
+              child_process
+                .spawnSync('npm', ['view', '--json', `${depPackageName}@${remoteVersion}`], {
+                  windowsHide: true,
+                })
+                .stdout.toString(),
             ) as PackageJson;
 
             if (!depPackageJson.engines?.node) {

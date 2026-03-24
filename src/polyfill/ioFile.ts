@@ -1,6 +1,5 @@
 import type { OpenMode, PathLike } from 'node:fs';
 import fs from 'node:fs';
-import type { FileHandle } from 'node:fs/promises';
 
 import Defaults from '../globals/defaults.js';
 import FsPoly from './fsPoly.js';
@@ -11,7 +10,7 @@ import FsPoly from './fsPoly.js';
 export default class IOFile {
   private readonly pathLike: PathLike;
 
-  private readonly fileHandle: FileHandle;
+  private readonly fileHandle: fs.promises.FileHandle;
 
   private readonly fileMode: fs.Mode;
 
@@ -25,7 +24,12 @@ export default class IOFile {
 
   private wroteToMemory = false;
 
-  private constructor(pathLike: PathLike, fileHandle: FileHandle, fileMode: fs.Mode, size: number) {
+  private constructor(
+    pathLike: PathLike,
+    fileHandle: fs.promises.FileHandle,
+    fileMode: fs.Mode,
+    size: number,
+  ) {
     this.pathLike = pathLike;
     this.fileHandle = fileHandle;
     this.fileMode = fileMode;

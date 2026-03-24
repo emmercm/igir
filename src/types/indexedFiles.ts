@@ -61,7 +61,7 @@ export default class IndexedFiles {
     files.forEach((file) => {
       const crc32WithSize = `${file.getCrc32()}|${file.getSize()}`;
       if (crc32RawMap.has(crc32WithSize)) {
-        crc32RawMap.get(crc32WithSize)?.unshift(file);
+        crc32RawMap.get(crc32WithSize)?.push(file);
       } else {
         crc32RawMap.set(crc32WithSize, [file]);
       }
@@ -69,7 +69,7 @@ export default class IndexedFiles {
       const md5 = file.getMd5();
       if (md5) {
         if (md5RawMap.has(md5)) {
-          md5RawMap.get(md5)?.unshift(file);
+          md5RawMap.get(md5)?.push(file);
         } else {
           md5RawMap.set(md5, [file]);
         }
@@ -78,7 +78,7 @@ export default class IndexedFiles {
       const sha1 = file.getSha1();
       if (sha1) {
         if (sha1RawMap.has(sha1)) {
-          sha1RawMap.get(sha1)?.unshift(file);
+          sha1RawMap.get(sha1)?.push(file);
         } else {
           sha1RawMap.set(sha1, [file]);
         }
@@ -87,7 +87,7 @@ export default class IndexedFiles {
       const sha256 = file.getSha256();
       if (sha256) {
         if (sha256RawMap.has(sha256)) {
-          sha256RawMap.get(sha256)?.unshift(file);
+          sha256RawMap.get(sha256)?.push(file);
         } else {
           sha256RawMap.set(sha256, [file]);
         }

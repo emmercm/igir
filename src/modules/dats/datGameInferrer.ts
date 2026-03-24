@@ -83,7 +83,7 @@ export default class DATGameInferrer extends Module {
 
   private async createDAT(inputPath: string, romFiles: File[]): Promise<DAT> {
     let remainingRomFiles = DATGameInferrer.enrichLikeFiles(romFiles);
-    let gameNamesToRomFiles: [string, File[]][] = [];
+    const gameNamesToRomFiles: [string, File[]][] = [];
 
     // For each inference strategy
     const inferFunctions = [
@@ -97,7 +97,9 @@ export default class DATGameInferrer extends Module {
       const result = await inferFunction.bind(this)(remainingRomFiles);
 
       // Update the list of results
-      gameNamesToRomFiles = [...gameNamesToRomFiles, ...result];
+      for (const entry of result) {
+        gameNamesToRomFiles.push(entry);
+      }
 
       // Remove the consumed files from further inference
       const consumedFiles = new Set(

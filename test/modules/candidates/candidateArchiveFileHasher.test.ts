@@ -1,6 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
@@ -23,7 +23,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 const FIXTURE_ROMS_DIR = path.join('test', 'fixtures', 'roms');
 
 function buildFileFactory(): FileFactory {
-  return new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough()));
+  return new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough()));
 }
 
 function buildHasher(options: Options): CandidateArchiveFileHasher {

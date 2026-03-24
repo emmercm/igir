@@ -1,6 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import Logger from '../../../../src/console/logger.js';
@@ -16,7 +16,7 @@ import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options, { ZipFormat } from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 async function findRoms(input: string): Promise<File[]> {
   return await new ROMScanner(

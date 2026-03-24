@@ -1,4 +1,4 @@
-import { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
@@ -544,7 +544,7 @@ export default class FileSignature {
   }
 
   private static async readHeaderBuffer(
-    readable: Readable,
+    readable: stream.Readable,
     start: number,
     end: number,
   ): Promise<Buffer> {
@@ -570,7 +570,9 @@ export default class FileSignature {
     return this.SIGNATURES_UNSORTED[name];
   }
 
-  static async signatureFromFileStream(readable: Readable): Promise<FileSignature | undefined> {
+  static async signatureFromFileStream(
+    readable: stream.Readable,
+  ): Promise<FileSignature | undefined> {
     const fileHeader = await FileSignature.readHeaderBuffer(
       readable,
       0,

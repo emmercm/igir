@@ -1,4 +1,4 @@
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import stripAnsi from 'strip-ansi';
 
@@ -8,7 +8,7 @@ import MultiBar from '../../src/console/multiBar.js';
 import { ProgressBarSymbol } from '../../src/console/progressBar.js';
 import SingleBar from '../../src/console/singleBar.js';
 
-const WRITABLE = new PassThrough();
+const WRITABLE = new stream.PassThrough();
 const LOGGER = new Logger(LogLevel.ALWAYS, WRITABLE);
 const MULTIBAR = MultiBar.create(LOGGER);
 

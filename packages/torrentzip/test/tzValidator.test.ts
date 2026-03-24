@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -46,7 +46,7 @@ describe.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])('zip format: %s', (zipFo
           dirDatName: true,
           disableCache: true,
         }),
-        new Logger(LogLevel.NEVER, new PassThrough()),
+        new Logger(LogLevel.NEVER, new stream.PassThrough()),
       ).main();
 
       const writtenFiles = await FsPoly.walk(tempDir, WalkMode.FILES);

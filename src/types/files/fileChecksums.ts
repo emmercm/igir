@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
-import type stream from 'node:stream';
-import { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Crc32 } from '@aws-crypto/crc32';
 
@@ -40,7 +39,7 @@ export default {
       return {};
     }
 
-    const readable = new Readable();
+    const readable = new stream.Readable();
     readable.push(data);
     // eslint-disable-next-line unicorn/no-null
     readable.push(null);

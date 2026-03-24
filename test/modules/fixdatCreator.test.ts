@@ -1,5 +1,5 @@
 import os from 'node:os';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
@@ -79,7 +79,7 @@ async function runFixdatCreator(
           dat: [fixdatPath],
         }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new PassThrough())),
+        new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
         new MappableSemaphore(os.availableParallelism()),
       ).scan()
     )[0];
