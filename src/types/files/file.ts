@@ -1,4 +1,5 @@
 import fs, { OpenMode, PathLike } from 'node:fs';
+import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
 import stream, { Readable } from 'node:stream';
@@ -437,9 +438,12 @@ export default class File implements FileProps {
       await FsPoly.mkdir(fileDir, { recursive: true });
     }
 
+    const sourceUrl = new URL(this.getFilePath());
+    const client = sourceUrl.protocol === 'http:' ? http : https;
+
     return await new Promise((resolve, reject) => {
-      const req = https.get(
-        this.getFilePath(),
+      const req = client.get(
+        sourceUrl,
         {
           timeout: 30_000,
         },
@@ -450,8 +454,8 @@ export default class File implements FileProps {
             res.statusCode < 400 &&
             res.headers.location
           ) {
-            // Handle redirects
-            File.fileOf({ filePath: res.headers.location })
+            const redirectedUrl = new URL(res.headers.location, sourceUrl).toString();
+            File.fileOf({ filePath: redirectedUrl })
               .then(async (file) => await file.downloadToPath(filePath))
               .then(resolve)
               .catch(reject);

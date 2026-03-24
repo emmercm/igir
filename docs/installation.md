@@ -4,7 +4,7 @@ Igir is supported on :fontawesome-brands-windows: Windows, :fontawesome-brands-a
 
 There are a few different installation options offered for Igir with varying levels of technical complexity. Every option will require some baseline understanding of command-line interfaces (CLIs).
 
-## Via Node.js
+## Via npm
 
 [![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
 [![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white)](https://nodejs.org/en/download/)
@@ -75,6 +75,6 @@ brew upgrade igir
 ## Via downloaded executable
 
 [![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)
-[![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fregistry.npmjs.org%2Figir%2Flatest&query=volta.node&logo=node.js&logoColor=white&label=Node.js&color=66cc33)]((https://nodejs.org/en/download/))
+[![Node.js](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fregistry.npmjs.org%2Figir%2Flatest&query=%24.engines.bun&logo=bun&logoColor=white&label=Bun&color=FBF0DF)]((https://nodejs.org/en/download/))
 
 If you don't want to download Node.js, you can download executables for various OSes from the [GitHub releases](https://github.com/emmercm/igir/releases) page.
