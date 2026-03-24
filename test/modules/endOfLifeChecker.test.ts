@@ -1,4 +1,4 @@
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -11,7 +11,7 @@ const versions = range(4, Number.parseInt(process.versions.node.split('.')[0]) +
   (major) => `v${major}.${major}.0`,
 );
 
-const logger = new Logger(LogLevel.ALWAYS, new PassThrough());
+const logger = new Logger(LogLevel.ALWAYS, new stream.PassThrough());
 
 describe('should not throw', () => {
   test.each(versions)('with an old date: %s', (version) => {
