@@ -77,7 +77,7 @@ export default class ROMScanner extends Scanner {
         if (!outputFilePathsSet.has(file.getFilePath())) {
           return file;
         }
-        return file.withProps({ isOutputFile: true });
+        return file.withProps({ canBeCandidateInput: false });
       });
     }
 

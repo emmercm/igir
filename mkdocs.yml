@@ -108,6 +108,7 @@ nav:
       - input/file-scanning.md
       - input/reading-archives.md
     - ROM Processing:
+      - roms/scanning.md
       - roms/matching.md
       - roms/sets.md
       - roms/filtering-preferences.md

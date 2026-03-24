@@ -373,12 +373,12 @@ export default class CandidateGenerator extends Module {
         // First, prefer the archive that isn't from the output directory
         const aIsOutputFile = filesByPath
           .get(a.getFilePath())
-          ?.some((file) => file.getIsOutputFile())
+          ?.some((file) => file.getCanBeCandidateInput())
           ? 0
           : 1;
         const bIsOutputFile = filesByPath
           .get(b.getFilePath())
-          ?.some((file) => file.getIsOutputFile())
+          ?.some((file) => file.getCanBeCandidateInput())
           ? 0
           : 1;
         if (aIsOutputFile !== bIsOutputFile) {

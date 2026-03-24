@@ -50,8 +50,8 @@ export default class WriteCandidate {
    */
   @Memoize()
   canWrite(): boolean {
-    return this.romsWithFiles.every(
-      (romWithFiles) => !romWithFiles.getInputFile().getIsOutputFile(),
+    return this.romsWithFiles.every((romWithFiles) =>
+      romWithFiles.getInputFile().getCanBeCandidateInput(),
     );
   }
 

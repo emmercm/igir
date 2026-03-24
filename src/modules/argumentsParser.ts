@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 import type { Argv } from 'yargs';
 import yargs from 'yargs';
@@ -431,6 +432,20 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .middleware((middlewareArgv) => {
+        if (middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input) {
+          const outputResolved = path.resolve(middlewareArgv.output as string);
+          if (
+            !middlewareArgv.input.some(
+              (inputPath) => path.resolve(inputPath as string) === outputResolved,
+            )
+          ) {
+            this.logger.warn(
+              `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
+            );
+          }
+        }
+      }, false)
       .option('dir-mirror', {
         group: groupRomOutputPath,
         description: 'Use the input subdirectory structure for the output directory',

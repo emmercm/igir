@@ -462,7 +462,7 @@ describe('output directory scanning', () => {
 
       // Only input files should be returned; output dir is not scanned
       expect(files).toHaveLength(1);
-      expect(files.every((f) => !f.getIsOutputFile())).toBe(true);
+      expect(files.every((f) => f.getCanBeCandidateInput())).toBe(true);
     } finally {
       await FsPoly.rm(tempDir, { recursive: true });
     }
@@ -494,8 +494,8 @@ describe('output directory scanning', () => {
           new MappableSemaphore(os.availableParallelism()),
         ).scan();
 
-        const inputFiles = files.filter((f) => !f.getIsOutputFile());
-        const outputFiles = files.filter((f) => f.getIsOutputFile());
+        const inputFiles = files.filter((f) => f.getCanBeCandidateInput());
+        const outputFiles = files.filter((f) => !f.getCanBeCandidateInput());
         expect(inputFiles).toHaveLength(1);
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0].getFilePath()).toContain('loremipsum.rom');
@@ -527,7 +527,7 @@ describe('output directory scanning', () => {
 
       // File appears only once (path already in input set, not re-added from output)
       expect(files).toHaveLength(1);
-      expect(files[0].getIsOutputFile()).toBe(false);
+      expect(files[0].getCanBeCandidateInput()).toBe(true);
     } finally {
       await FsPoly.rm(tempDir, { recursive: true });
     }

@@ -32,7 +32,7 @@ describe('isOutputFile priority', () => {
       filePath: 'output/rom.rom',
       size: SIZE,
       crc32: CRC,
-      isOutputFile: true,
+      canBeCandidateInput: false,
     });
 
     const sorted = indexAndFind([outputFile, plain]);
@@ -53,7 +53,7 @@ describe('isOutputFile priority', () => {
       filePath: 'output/rom.rom',
       size: SIZE,
       crc32: CRC,
-      isOutputFile: true,
+      canBeCandidateInput: false,
     });
 
     const sorted = indexAndFind([outputPlain, zip]);
@@ -78,13 +78,13 @@ describe('isOutputFile priority', () => {
       filePath: 'output/a.rom',
       size: SIZE,
       crc32: CRC,
-      isOutputFile: true,
+      canBeCandidateInput: false,
     });
     const b = await File.fileOf({
       filePath: 'output/b.rom',
       size: SIZE,
       crc32: CRC,
-      isOutputFile: true,
+      canBeCandidateInput: false,
     });
 
     const sorted = indexAndFind([b, a]);

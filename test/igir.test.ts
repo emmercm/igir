@@ -1549,7 +1549,44 @@ describe('with explicit DATs', () => {
     },
   );
 
-  // TODO(cemmer): what happens during cleaning if known files are in the wrong location, are they still deleted?
+  it('should clean matched but incorrect path output files', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given an output directory that already has some correct files, but in the wrong place
+      const copyResult = await runIgir({
+        commands: ['copy', 'extract'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms', 'raw')],
+        output: path.join(outputTemp),
+        dirDatName: true,
+      });
+      await Promise.all(
+        copyResult.outputFilesAndCrcs.map(async ([filePath]) => {
+          const dest = path.join(outputTemp, 'wrongfolder', filePath);
+          if (!(await FsPoly.exists(path.dirname(dest)))) {
+            await FsPoly.mkdir(path.dirname(dest), { recursive: true });
+          }
+          await FsPoly.mv(path.join(outputTemp, filePath), dest);
+        }),
+      );
+
+      // When all ROMs are copied to the output
+      const reportOutput = path.join(outputTemp, 'report.csv');
+      const cleanResult = await runIgir({
+        commands: ['copy', 'extract', 'clean'],
+        dat: [path.join(inputTemp, 'dats', '*')],
+        input: [path.join(inputTemp, 'roms', 'discs')],
+        output: path.join(outputTemp),
+        dirDatName: true,
+        reportOutput,
+      });
+
+      // Then every file from the first copy was cleaned, because they were moved to the wrong directory
+      const cleanedFiles = new Set(cleanResult.cleanedFiles.map((filePath) => filePath));
+      copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+        expect(cleanedFiles).toContain(path.join('wrongfolder', filePath));
+      });
+    });
+  });
 });
 
 describe('with inferred DATs', () => {
