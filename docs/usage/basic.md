@@ -1,4 +1,4 @@
-# Basic Usage Examples
+# Basic Collection Sorting
 
 A walkthrough of an example way to sort your ROM collection.
 
@@ -12,7 +12,7 @@ Even though Igir can work without [DATs](../dats/introduction.md), using DATs to
 
 ### First time collection sort
 
-First, you need to download a set of [DATs](../dats/introduction.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
+First, you need to download a set of [DATs](../dats/introduction.md). For these examples I'll assume you downloaded a [No-Intro daily P/C XML `.zip`](https://datomatic.no-intro.org/index.php?page=download&op=daily&s=64).
 
 Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have Igir copy these files to a different directory rather than move them. We'll also [zip](../output/writing-archives.md) them to reduce disk space & speed up future scans.
 
@@ -73,7 +73,7 @@ ROMs-Sorted/
 
 Let's say that we've done the above first time sort and were happy with the results. We can now consider the `ROMs-Sorted/` directory to be our "golden" or "primary" collection, as every file in there has been matched to a DAT.
 
-We now have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" or delete any unknown files that may have made their way into our collection.
+We now have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" (recycle/delete) any unknown files that may have made their way into our collection.
 
 === ":fontawesome-brands-windows: Windows"
 
@@ -112,7 +112,7 @@ Any new ROMs in `ROMs-New/` that we didn't already have in `ROMs-Sorted/` will b
 
 !!! note
 
-    Note that we're using `ROMs-Sorted/` as both an input directory _and_ as the output directory. This is required to ensure the [`clean` command](../output/cleaning.md) doesn't delete "good" files already in the output directory!
+    Note that we're using `ROMs-Sorted/` as both an input directory _and_ as the output directory. See the [`igir clean` command](../output/cleaning.md) page for more information about why you should do this.
 
     You can always use the [`--clean-dry-run` option](../output/cleaning.md#dry-run) to see what files would be deleted without actually deleting them.
 
@@ -209,7 +209,7 @@ Your flash cart might then look something like this:
 
 ## Without DATs
 
-ROM organization is very opinion-based, and your opinion may not match that of DAT groups. To preserve your custom ROM sorting, you can skip providing any DATs by omitting the `--dat <path>` option.
+ROM organization is very opinion-based, and your opinion may not match that of DAT groups. To preserve your custom ROM sorting, you can skip providing any DATs by omitting the `--dat <path|glob>` option.
 
 !!! note
 
@@ -250,7 +250,7 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
 
 ### Fixing file extensions
 
-Igir is able to detect more than 60 ROM and archive file types and automatically correct file extensions when needed during writing. See the [writing options](../output/options.md#fixing-rom-extensions) page for more information.
+Igir is able to detect more than 100 ROM and archive file types and automatically correct file extensions when needed during writing. See the [writing options](../output/options.md#fixing-rom-extensions) page for more information.
 
 === ":fontawesome-brands-windows: Windows"
 

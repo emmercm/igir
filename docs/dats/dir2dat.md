@@ -2,7 +2,7 @@
 
 "dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](./introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
-The `dir2dat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every [`--input <path>`](../roms/scanning.md) provided. dir2dats will be written to the first matching directory in this list:
+The `dir2dat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every [`--input <path|glob>`](../roms/scanning.md) provided. dir2dats will be written to the first matching directory in this list:
 
 1. If provided: the `--dir2dat-output <path>` directory
 2. When writing ROMs (one of the `copy`, `move`, or `link` [commands](../commands.md)): the `--output <path>` directory
@@ -11,14 +11,14 @@ The `dir2dat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT
 Example usage:
 
 ```shell
-igir dir2dat --input <path> [--input <path>..]
+igir dir2dat --input <path|glob> [--input <path|glob>..]
 ```
 
 ## dir2dat rules
 
 Igir uses the following rules when creating dir2dat DAT files:
 
-- **A DAT file will be created for every [`--input <path>`](../roms/scanning.md).**
+- **A DAT file will be created for every [`--input <path|glob>`](../roms/scanning.md).**
 
     If multiple input paths overlap, such as:
 
@@ -67,11 +67,10 @@ Igir uses the following rules when creating dir2dat DAT files:
 
     This is consistent with how the [`igir zip` command](../output/writing-archives.md) works, and with what [MAME expects](../usage/arcade.md).
 
-- **The input file's [basename](https://linux.die.net/man/1/basename) (without extension) will be used for the game name.**
-
-  !!! warning
-
-      This will cause input files with the same basename to be grouped together!
+- **For non-archive files:**
+  - `.cue` + `.bin`s will be treated as a single game.
+  - `.gdi` + `.bin`/`.raw`s will be treated as a single game.
+  - Subdirectories of the `--input <path|glob>` will be treated as a single game.
 
 ## Checksums calculated
 

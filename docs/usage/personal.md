@@ -1,6 +1,6 @@
-# Maintainer's Usage Example
+# Real World Example
 
-Igir has many options available to fit almost any use case, but the number of options can be overwhelming. So that begs a question: _how do I, the maintainer of Igir, use Igir in the real world?_
+Igir has many options available to fit almost any use case, but the number of options can be overwhelming. So how does a real person use Igir? I'll tell you!
 
 ## Primary ROM library
 
@@ -21,7 +21,7 @@ The file tree in that hard drive looks like this:
 │   ├── Nintendo - Game Boy Advance (e-Reader)
 │   ├── Nintendo - Game Boy Color
 │   └── etc...
-├── No-Intro Love Pack (PC XML) (2023-01-29).zip
+├── No-Intro Love Pack (PC XML) (2026-03-24).zip
 ├── Patches
 │   ├── gb
 │   ├── gba
@@ -33,8 +33,8 @@ The file tree in that hard drive looks like this:
 │   ├── Nintendo - GameCube
 │   ├── Sony - PlayStation - BIOS Images
 │   └── Sony - PlayStation 2 - BIOS Images
-├── Redump (2023-01-29).zip
-├── TOSEC - DAT Pack - Complete (3530) (TOSEC-v2022-07-10).zip
+├── Redump (2026-03-13).zip
+├── TOSEC - DAT Pack - Complete (4743) (TOSEC-v2025-03-13).zip
 └── igir_library_sync.sh
 ```
 
@@ -68,6 +68,7 @@ npx --yes igir@latest move zip test clean report \
   --input-checksum-max CRC32 \
   --input-checksum-archives never \
   --patch "./Patches/" \
+  --patch-exclude "./Patches/**/*.{ups,xdelta}*" \
   --output "./No-Intro/" \
   --dir-dat-name \
   --overwrite-invalid \
@@ -84,6 +85,7 @@ npx --yes igir@latest move test clean report \
   --input-checksum-max CRC32 \
   --input-checksum-archives never \
   --patch "./Patches/" \
+  --patch-exclude "./Patches/**/*.{ups,xdelta}*" \
   --output "./Redump/" \
   --dir-dat-name \
   --overwrite-invalid \
@@ -141,6 +143,7 @@ npx igir@latest copy extract test clean \
   --input-exclude "${SOURCE}/No-Intro/Nintendo - Game Boy Advance (e-Reader)/" \
   --input-checksum-quick \
   --patch "${SOURCE}/Patches/" \
+  --patch-exclude "${SOURCE}/Patches/**/*.{ups,xdelta}*" \
   --output "./Assets/{pocket}/common/" \
   --dir-letter \
   --dir-letter-limit 1000 \
@@ -160,13 +163,60 @@ npx igir@latest copy extract test clean \
 
 That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core.
 
-## GameCube
+## Nintendo 64
+
+I have this script `igir_summercart64_sync.sh` at the root of my [SummerCart64](https://summercart64.dev/) SD card:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck disable=SC2064
+trap "cd \"${PWD}\"" EXIT
+cd "$(dirname "$0")"
+
+
+SOURCE=/Volumes/WDPassport4
+
+npx --yes igir@latest copy extract test clean \
+  --dat "${SOURCE}/No-Intro*.zip" \
+  --dat-name-regex "/Nintendo 64/i" \
+  --input "${SOURCE}/No-Intro/Nintendo - Nintendo 64 (BigEndian)*/**" \
+  --input "${SOURCE}/No-Intro/Nintendo - Nintendo 64DD*/**" \
+  --input-checksum-quick \
+  --patch "${SOURCE}/Patches/" \
+  --patch-exclude "${SOURCE}/Patches/**/*.{ups,xdelta}*" \
+  --output "./Games/" \
+  --dir-letter \
+  --overwrite-invalid \
+  --no-bios \
+  --no-bad \
+  --single \
+  --prefer-language EN \
+  --prefer-region USA,WORLD,EUR,JPN \
+  --prefer-revision newer \
+  --prefer-retail \
+  --writer-threads 1 \
+  -v
+```
+
+## Nintendo DS
+
+!!! note
+
+    See the full [EZ-FLASH](hardware/ezflash.md) page for more detailed information.
+
+I have this script `igir_ezfparallel_sync.sh` at the root of my [EZ-FLASH Parallel](https://www.ezflash.cn/product/ez-flash-parallel/) SD card:
+
+(TODO)
+
+## Nintendo GameCube
 
 !!! note
 
     See the full [GameCube](console/gamecube.md) page for more detailed information.
 
-I have this script `sd2sp2_pocket_sync.sh` at the root of my GameCube [SD2SP2](https://github.com/citrus3000psi/SD2SP2) SD card:
+I have this script `igir_sd2sp2_sync.sh` at the root of my GameCube [SD2SP2](https://github.com/citrus3000psi/SD2SP2) SD card:
 
 ```bash
 #!/usr/bin/env bash
@@ -186,6 +236,7 @@ npx --yes igir@latest copy test clean report \
   --input-checksum-quick \
   --input-checksum-archives never \
   --patch "${SOURCE}/Patches" \
+  --patch-exclude "${SOURCE}/Patches/**/*.{ups,xdelta}*" \
   --output "./Games/" \
   --dir-letter \
   --overwrite-invalid \

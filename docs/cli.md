@@ -10,13 +10,14 @@ See the [internal operations](advanced/internals.md#order-of-operations) page fo
 
 ASCII symbols are used to indicate what processing is happening. Here is a table of those symbols, in order:
 
-| Symbol (magenta)                                           | Scanning operation                                                                        |
-|------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| <span style="color:#AA00AA"><b>↻</b></span> (circle arrow) | Files (DATs, ROMs, patches, etc.) are being found/enumerated                              |
-| <span style="color:#AA00AA"><b>↓</b></span> (down arrow)   | [DATs](dats/introduction.md) are being [downloaded](dats/processing.md#scanning-for-dats) |
-| <span style="color:#AA00AA"><b>Σ</b></span> (sigma)        | [DATs](dats/introduction.md) are being parsed                                             |
-| <span style="color:#AA00AA"><b>#</b></span> (hash)         | ROMs are having checksums calculated for [matching](roms/matching.md)                     |
-| <span style="color:#AA00AA"><b>^</b></span> (hat)          | ROMs are being checked for [headers](roms/headers.md)                                     |
+| Symbol (magenta)                                               | Scanning operation                                                    |
+|----------------------------------------------------------------|-----------------------------------------------------------------------|
+| <span style="color:#AA00AA"><b>↻</b></span> (circle arrow)     | Files (DATs, ROMs, patches, etc.) are being found/enumerated          |
+| <span style="color:#AA00AA"><b>↓</b></span> (down arrow)       | [DATs](dats/introduction.md) are being [downloaded](dats/scanning.md) |
+| <span style="color:#AA00AA"><b>Σ</b></span> (sigma)            | [DATs](dats/introduction.md) are being parsed                         |
+| <span style="color:#AA00AA"><b>#</b></span> (hash)             | ROMs are having checksums calculated for [matching](roms/matching.md) |
+| <span style="color:#AA00AA"><b>^</b></span> (hat)              | ROMs are being checked for [headers](roms/headers.md)                 |
+| <span style="color:#AA00AA"><b>⌵</b></span> (downward chevron) | ROMs are being checked for [trimming](roms/trimming.md)               |
 
 | Symbol (cyan)                                                   | Per-DAT processing operation                                                                  |
 |-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------|

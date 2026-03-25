@@ -1,4 +1,4 @@
-# Writing Multi-Disc Playlists
+# Writing Playlists
 
 Most DAT groups that catalog optical media-based consoles (e.g. PS1, Dreamcast, GameCube) consider different discs of a multi-disc game to be separate "games," with no relation between them other than having a similar name. This is because ROM managers may not process games unless all of its ROM files are present, but there may be bonus discs that you don't care about for storage reasons.
 

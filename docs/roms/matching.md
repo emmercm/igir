@@ -20,7 +20,7 @@ Some DAT release groups do not include filesize information for every file, prev
 
     To constrain what checksums are calculated, you can use the `--input-checksum-quick` option (below), or `--input-checksum-max <algorithm>` which accepts the same algorithm options as `--input-checksum-min <algorithm>` (also below).
 
-For example, if you provide all of these DATs at once with the [`--dat <path>` option](../dats/processing.md):
+For example, if you provide all of these DATs at once with the [`--dat <path|glob>` option](../dats/scanning.md):
 
 - No-Intro's Nintendo Game Boy DAT (which includes filesize, CRC32, MD5, and SHA1 information)
 - Hardware Target Game Database's Atari Lynx SMBD (which includes CRC32, MD5, SHA1, and SHA256 information but _not_ filesize)

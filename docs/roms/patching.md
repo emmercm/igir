@@ -6,7 +6,7 @@ Games and their ROMs are protected under copyrights, so patches are used to not 
 
 ## Specifying patch files
 
-Patch files can be specified with the `--patch <path>` option. See the [file scanning docs](../input/file-scanning.md) for more information.
+Patch files can be specified with the `--patch <path|glob>` option. See the [file scanning docs](../input/file-scanning.md) for more information.
 
 ## Patch types
 
@@ -62,7 +62,7 @@ Most patch formats _do not_ include the source ROM's CRC32 checksum. `.ips` patc
 
 ## Only writing patched ROMs
 
-By default, Igir will write patched ROMs in _addition_ to un-patched ROMs. This includes any ROMs that do not have any matching patches in a `--patch <path>`.
+By default, Igir will write patched ROMs in _addition_ to un-patched ROMs. This includes any ROMs that do not have any matching patches in a `--patch <path|glob>`.
 
 If you want to _only_ write patched ROMs to the output directory, you can use the option:
 

@@ -25,7 +25,7 @@ The `--merge-discs` option will merge these separate discs into a single game. T
 
 !!! note
 
-    This option doesn't require you to supply DATs with the [`--dat <path>` option](../dats/processing.md#scanning-for-dats), but doing so will greatly increase the chance of the option working as intended.
+    This option doesn't require you to supply DATs with the [`--dat <path|glob>` option](../dats/scanning.md), but doing so will greatly increase the chance of the option working as intended.
 
 !!! info
 
@@ -103,4 +103,4 @@ Igir has two options that allow for inexact sets of ROM files:
 
 - `--allow-incomplete-sets`
 
-  This option will allow writing games where not every one of its ROMs was found in an [`--input <path>` directory](scanning.md). This could be useful for [arcade](../usage/arcade.md) DATs that change ROM sets between versions.
+  This option will allow writing games where not every one of its ROMs was found in an [`--input <path|glob>` directory](scanning.md). This could be useful for [arcade](../usage/arcade.md) DATs that change ROM sets between versions.

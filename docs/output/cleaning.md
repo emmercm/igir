@@ -16,7 +16,7 @@ When using [DATs](../dats/processing.md), these files will be deleted from the o
 
     Scanned output files will _not_ be used as a source file for any writing command. If you use a new DAT with an existing collection, and that DAT changed some of the ROM names, then files with the old name may be deleted during cleaning.
 
-    To prevent this, you can provide the output directory as an `--input <path>` as well. Then files in the output directory can be used as a source file during writing. This is particularly useful with the `igir move` command, which will rename files in the output directory to the correct names, which will preclude them from cleaning.
+    To prevent this, you can provide the output directory as an `--input <path|glob>` as well. Then files in the output directory can be used as a source file during writing. This is particularly useful with the `igir move` command, which will rename files in the output directory to the correct names, which will preclude them from cleaning.
 
     When in doubt, you can provide the [`--clean-dry-run` option](#dry-run) to see what files would be deleted without actually deleting them.
 
@@ -72,7 +72,7 @@ In practical terms, this means:
 
 ## Exclusions
 
-The `--clean-exclude <path>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md)) can be excluded from deletion.
+The `--clean-exclude <path|glob>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md)) can be excluded from deletion.
 
 See the [Analogue Pocket](../usage/hardware/analogue-pocket.md) page for a practical example.
 

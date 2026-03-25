@@ -2,21 +2,9 @@
 
 Igir has a number of ways it can process [DATs](./introduction.md), and it processes them in the following order.
 
-## Just tell me what to do
-
-[DATs](./introduction.md) can get fairly complicated, and there are many release groups, each with their own focus areas and naming patterns. If all you want to do is organize your ROMs with Igir in some consistent way, follow these instructions:
-
-1. Go to the No-Intro DAT-o-MATIC [daily download page](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily)
-2. Select the "P/C XML" radio option (as opposed to "standard DAT") and download the `.zip` to wherever you store your ROMs
-3. Every time you run Igir, specify the `.zip` file you downloaded with the `--dat <path>` option:
-
-  ```shell
-  igir [commands..] --dat "No-Intro*.zip" --input <input>
-  ```
-
 ## Scanning for DATs
 
-The `--dat <path>` option supports files, archives, directories, and globs like any of the other file options. See the [file scanning page](../input/file-scanning.md) for more information.
+The `--dat <path|glob>` option supports files, archives, directories, and globs like any of the other file options. See the [file scanning page](../input/file-scanning.md) for more information.
 
 Igir also supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
 
@@ -130,6 +118,10 @@ These options limit which DATs are processed. The regex is applied to the DAT's 
 The `--dat-combine` option lets you combine every game from every parsed DAT into one file.
 
 This may be desirable when creating a [dir2dat](./dir2dat.md), a [fixdat](fixdats.md), or other complicated situations.
+
+!!! note
+
+    You may want to use [`--allow-incomplete-sets`](../roms/sets.md#allowing-inexact-sets) when combining DATs.
 
 !!! note
 

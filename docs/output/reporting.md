@@ -2,7 +2,7 @@
 
 ## Overview
 
-When using DATs (the [`--dat <path>` option](../dats/processing.md#scanning-for-dats)), the `igir report` [command](../commands.md) can report on:
+When using DATs (the [`--dat <path|glob>` option](../dats/scanning.md)), the `igir report` [command](../commands.md) can report on:
 
 - `FOUND`: what ROMs were found, and where their files are on disk
 - `MISSING`: what ROMs were wanted, but weren't found

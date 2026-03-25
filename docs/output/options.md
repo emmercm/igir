@@ -22,11 +22,11 @@ Here are some examples of common mistakes:
 
 This correction behavior can be controlled with the following option:
 
-| Mode                             | Description                                                                                                                                                                             |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--fix-extension always`         | Always try to correct filename extensions, ignoring the information provided by DATs. You likely don't want this option.                                                                |
-| `--fix-extension auto` (default) | When not using DATs (no [`--dat <path>` option](../dats/processing.md) was provided), or when a DAT doesn't specify the filename for a ROM, then try to correct the filename extension. |
-| `--fix-extension never`          | Don't correct any ROM filename extensions. If a DAT doesn't provide a ROM filename, a default name of `<game name>.rom` will be used.                                                   |
+| Mode                             | Description                                                                                                                                                                                 |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--fix-extension always`         | Always try to correct filename extensions, ignoring the information provided by DATs. You likely don't want this option.                                                                    |
+| `--fix-extension auto` (default) | When not using DATs (no [`--dat <path\|glob>` option](../dats/scanning.md) was provided), or when a DAT doesn't specify the filename for a ROM, then try to correct the filename extension. |
+| `--fix-extension never`          | Don't correct any ROM filename extensions. If a DAT doesn't provide a ROM filename, a default name of `<game name>.rom` will be used.                                                       |
 
 See the `igir --help` message for the list of all known file types.
 
