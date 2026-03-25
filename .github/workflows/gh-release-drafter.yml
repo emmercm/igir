@@ -44,7 +44,7 @@ jobs:
 
       # Check to see if the package.json version has changed
       - id: check
-        uses: EndBug/version-check@5102328418c0130d66ca712d755c303e93368ce2 # v2.1.7
+        uses: EndBug/version-check@095362f3cd50f690c8fa0e6afeea81834bd8d320 # v3.0.0
         with:
           # NOTE: `diff-search:true` is preferred so that only the exact commit that bumps the
           #   version triggers this workflow, but `workflow_dispatch` doesn't carry commit or
