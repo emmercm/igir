@@ -1,98 +1,22 @@
 # DAT Processing
 
-Igir has a number of ways it can process [DATs](./introduction.md), and it processes them in the following order.
-
-## Scanning for DATs
-
-The `--dat <path|glob>` option supports files, archives, directories, and globs like any of the other file options. See the [file scanning page](../input/file-scanning.md) for more information.
-
-Igir also supports URLs to DAT files and archives. This is helpful to make sure you're always using the most up-to-date version of a DAT hosted on sites such as GitHub. For example:
-
-=== ":fontawesome-brands-windows: Windows"
-
-    ```batch
-    igir copy ^
-      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" ^
-      --input ROMs\ ^
-      --output ROMs-Sorted\
-    ```
-
-=== ":fontawesome-brands-apple: macOS"
-
-    ```shell
-    igir copy \
-      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
-      --input ROMs/ \
-      --output ROMs-Sorted/
-    ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
-      --input ROMs/ \
-      --output ROMs-Sorted/
-    ```
-
-!!! note
-
-    Because of the way [DAT-o-MATIC](https://datomatic.no-intro.org/index.php) prepares & serves downloads, you can't use this method for official No-Intro DATs.
-
-### Supported DAT formats
-
-There have been a few DAT-like formats developed over the years. Igir supports the following:
-
-- [Logiqx XML](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats#logiqx-xml-format) (most common) (No-Intro, Redump, TOSEC, and more)
-- [MAME ListXML](https://easyemu.mameworld.info/mameguide/command_line/frontend_commands/listxml.html) (XML exported by the `mame -listxml` command)
-
-  !!! tip
-
-      Instead of exporting the ListXML to a file yourself, you can also specify a MAME executable for the DAT path and then Igir is smart enough to parse it:
-
-      === ":fontawesome-brands-windows: Windows"
-
-          Windows is fairly easy, MAME is officially compiled for Windows and downloads can be found on many mirror sites.
-
-          ```batch
-          igir [commands..] --dat "mame0258b_64bit.exe" --input <input>
-          ```
-
-      === ":fontawesome-brands-apple: macOS"
-
-          MAME isn't officially compiled for macOS, you will have to use a third-party release such as [SDL MAME](https://sdlmame.lngn.net/).
-
-          ```shell
-          igir [commands..] --dat "mame0258-x86/mame" --input <input>
-          ```
-
-      === ":simple-linux: Linux"
-
-          Most distros (Ubuntu, Debian, Fedora, etc.) have MAME in their package repositories, but some will require you to compile MAME yourself. If the `mame` executable is in your `$PATH`, you can specify its path like this:
-
-          ```shell
-          igir [commands..] --dat "$(which "mame")" --input <input>
-          ```
-
-- [MAME software lists](https://docs.mamedev.org/contributing/softlist.html) (XML exported by the `mame -getsoftlist` command)
-- [ClrMamePro](http://www.logiqx.com/DatFAQs/CMPro.php) (libretro, DOSCenter, and more)
-- [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) SMDBs
-
-!!! tip
-
-    In case you come across a DAT in a format that Igir doesn't support, SabreTools supports reading [a number of obscure formats](https://github.com/SabreTools/SabreTools/wiki/DatFile-Formats) and converting them to more standard formats such as Logiqx XML.
+Igir has a number of ways it can process [DATs](introduction.md), and it processes them in the following order.
 
 ## DAT filtering
 
-To be able to process only the DATs you want in downloaded archives, Igir has a few filtering options.
+The [`--dat-exclude <path|glob>`](scanning.md#scanning-exclusions) option can help you exclude entire files from being processed, but additional options are provided to help filter DATs within archives.
 
 ### DAT name regex filtering
 
 ```text
---dat-name-regex <pattern|filename>, --dat-name-regex-exclude <pattern|filename>
+--dat-name-regex <pattern|filename>
 ```
 
-These options limit which DATs are processed. The regex is applied to the DAT's name found within its file contents, not its filename.
+```text
+--dat-name-regex-exclude <pattern|filename>
+```
+
+These options limit which DATs are processed. The regex is applied to the DAT's name found within its file contents, _not_ its filename.
 
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 
@@ -108,7 +32,11 @@ Headerless|Encrypted
 ### DAT description regex filtering
 
 ```text
---dat-description-regex <pattern|filename>, --dat-description-regex-exclude <pattern|filename>
+--dat-description-regex <pattern|filename>
+```
+
+```text
+--dat-description-regex-exclude <pattern|filename>
 ```
 
 These options limit which DATs are processed. The regex is applied to the DAT's description found within its file contents.
@@ -117,7 +45,7 @@ These options limit which DATs are processed. The regex is applied to the DAT's 
 
 The `--dat-combine` option lets you combine every game from every parsed DAT into one file.
 
-This may be desirable when creating a [dir2dat](./dir2dat.md), a [fixdat](fixdats.md), or other complicated situations.
+This may be desirable when creating a [dir2dat](dir2dat.md), a [fixdat](fixdats.md), or other complicated situations.
 
 !!! note
 
@@ -145,7 +73,7 @@ Super Smash Bros. Melee (USA) (En,Ja) (Rev 2)
 
 !!! note
 
-    If a DAT has any parent/clone information then Igir will use that and skip inference. If you want to ignore this information, you can provide the `--dat-ignore-parent-clone` option.
+    If a DAT has any parent/clone information then Igir will use that and skip inference. If you want to ignore this information use Igir's inference, you can provide the `--dat-ignore-parent-clone` option.
 
 !!! note
 

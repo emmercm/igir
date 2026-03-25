@@ -6,7 +6,7 @@ By default, Igir will _not_ overwrite or delete any files already in the output 
 
 To change this behavior, the `--overwrite` option will force overwriting files in the output directory as necessary. Be careful with this option as it can cause unnecessary wear and tear on your hard drives.
 
-The `--overwrite-invalid` option can also overwrite files in the output directory, but _only_ if those files don't match the expected size and checksum. This uses the same logic as the `igir test` command. Combining this option with the [`igir clean` command](./cleaning.md) will result in your output directory being a perfect subset of files contained in your [DATs](../dats/introduction.md).
+The `--overwrite-invalid` option can also overwrite files in the output directory, but _only_ if those files don't match the expected size and checksum. This uses the same logic as the `igir test` command. Combining this option with the [`igir clean` command](cleaning.md) will result in your output directory being a perfect subset of files contained in your [DATs](../dats/introduction.md).
 
 ## Fixing ROM extensions
 

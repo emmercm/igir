@@ -2,7 +2,7 @@
 
 The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the [`--output <path>` directory](path-options.md#base-output-directory) that are not valid according to the provided Igir options.
 
-When using [DATs](../dats/processing.md), these files will be deleted from the output directory:
+When using [DATs](../dats/scanning.md), these files will be deleted from the output directory:
 
 - Files that do not match any ROM in any DAT.
 - Files that match a ROM in a DAT, but do not have the correct directory & filename.

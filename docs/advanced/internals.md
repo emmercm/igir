@@ -6,7 +6,7 @@ Information about the inner workings of Igir.
 
 Igir runs these steps in the following order:
 
-1. Scan each DAT input path for every file and parse them, if provided (`--dat <path|glob>`)
+1. Scan each DAT input path for every file and parse them, if provided (`--dat <path|glob|url>`)
 2. Scan each ROM input path for every file (`--input <path|glob>`)
    - Detect headers in those files, if applicable (see [header docs](../roms/headers.md))
    - Detect trimming of those files, if applicable (see [trimming docs](../roms/trimming.md))

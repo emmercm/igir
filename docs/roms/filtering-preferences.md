@@ -14,7 +14,7 @@ Multiple filter options can be specified at once.
 
 !!! note
 
-    Filters are applied against all [DATs](../dats/processing.md) _before_ [ROM matching](./matching.md) happens.
+    Filters are applied against all [DATs](../dats/scanning.md) _before_ [ROM matching](matching.md) happens.
 
     If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files.
 
@@ -429,7 +429,7 @@ Multiple `--prefer-*` options can be specified at once, and they will be applied
 
 !!! note
 
-    Filters are applied against all [DATs](../dats/processing.md) _before_ [ROM matching](./matching.md) happens.
+    Filters are applied against all [DATs](../dats/scanning.md) _before_ [ROM matching](matching.md) happens.
 
     If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files, and then [infer parents](../dats/processing.md#parentclone-inference) among those games.
 

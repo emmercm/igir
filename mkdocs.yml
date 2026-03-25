@@ -115,7 +115,7 @@ nav:
       - roms/headers.md
       - roms/trimming.md
       - roms/patching.md
-    - File Outputs:
+    - ROM Outputs:
       - output/path-options.md
       - output/tokens.md
       - output/options.md
@@ -123,12 +123,12 @@ nav:
       - output/playlists.md
       - output/reporting.md
       - output/cleaning.md
-    - Advanced:
+    - Advanced Topics:
+      - advanced/internals.md
       - advanced/logging.md
       - advanced/temp-dir.md
       - advanced/troubleshooting.md
-      - advanced/internals.md
-    - Misc:
+    - Other Topics:
       - misc/torrentzip.md
       - misc/rom-dumping.md
     - Source Code:

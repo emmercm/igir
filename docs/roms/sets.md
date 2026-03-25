@@ -25,7 +25,7 @@ The `--merge-discs` option will merge these separate discs into a single game. T
 
 !!! note
 
-    This option doesn't require you to supply DATs with the [`--dat <path|glob>` option](../dats/scanning.md), but doing so will greatly increase the chance of the option working as intended.
+    This option doesn't require you to supply DATs with the [`--dat <path|glob|url>` option](../dats/scanning.md), but doing so will greatly increase the chance of the option working as intended.
 
 !!! info
 

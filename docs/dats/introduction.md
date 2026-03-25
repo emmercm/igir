@@ -10,7 +10,7 @@ DATs are catalog files of every known ROM that exists per game system, complete 
 
 These DAT files ("DATs") help Igir distinguish known ROM files in input directories from other files (see the [ROM matching](../roms/matching.md) docs). Because DATs typically contain the complete catalog for a console, Igir also uses them to generate reports for you on what ROMs were found and which are missing.
 
-See the [DAT scanning page](scanning.md) for details about how to supply DATs to Igir, and the [DAT processing page](./processing.md) for information on how processes those DATs.
+See the [DAT scanning page](scanning.md) for details about how to supply DATs to Igir, and the [DAT processing page](processing.md) for information on how processes those DATs.
 
 ## DAT release groups
 
@@ -66,7 +66,7 @@ DATs can get fairly complicated, and there are many release groups, each with th
 
 1. Go to the No-Intro DAT-o-MATIC [daily download page](https://datomatic.no-intro.org/index.php?page=download&op=daily&s=64).
 2. Select the "P/C XML" radio option (as opposed to "standard DAT"), and download the `.zip` to wherever you store your ROMs.
-3. Every time you run Igir, specify the `.zip` file you downloaded with the [`--dat <path|glob>` option](scanning.md):
+3. Every time you run Igir, specify the `.zip` file you downloaded with the [`--dat <path|glob|url>` option](scanning.md):
 
   ```shell
   igir [commands..] --dat "No-Intro*.zip" --input <input>

@@ -9,7 +9,7 @@ There are a few different popular ROM managers that have similar features:
 | App: GUI or CLI                            | CLI only by design                                                                                 | Primarily GUI, with a separate CLI                                         | GUI only                                                      | GUI only                                   |
 | App: required setup steps                  | ✅ no setup required                                                                                | ⚠️ if specifying DAT & ROM dirs                                            | ❌ requires "profile" setup per DAT                            | ❌ requires per-DAT DB setup                |
 | App: open source                           | ✅ GPL v3                                                                                           | ⚠️ [partly](https://github.com/RomVault/RVWorld)                           | ❌                                                             | ❌                                          |
-| DATs: supported formats                    | Logiqx XML, MAME ListXML, MAME Software List, CMPro, HTGD SMDB ([DATs docs](dats/processing.md))   | Logiqx XML, MAME ListXML, CMPro, RomCenter, HTGD SMDB, Total DOS, Superdat | Logiqx XML, MAME ListXML, MAME Software List, CMPro           | Logiqx XML, CMPro, RomCenter               |
+| DATs: supported formats                    | Logiqx XML, MAME ListXML, MAME Software List, CMPro, HTGD SMDB ([DATs docs](dats/scanning.md))     | Logiqx XML, MAME ListXML, CMPro, RomCenter, HTGD SMDB, Total DOS, Superdat | Logiqx XML, MAME ListXML, MAME Software List, CMPro           | Logiqx XML, CMPro, RomCenter               |
 | DATs: process multiple at once             | ✅                                                                                                  | ✅                                                                          | ⚠️ via the batcher                                            | ❌                                          |
 | DATs: infer parent/clone info              | ✅                                                                                                  | ❌                                                                          | ❌                                                             | ❌                                          |
 | DATs: built-in download manager            | ❌                                                                                                  | ⚠️ via [DatVault](https://www.datvault.com/)                               | ❌                                                             | ❌                                          |
@@ -112,7 +112,7 @@ here is how you can perform each RomVault action in Igir:
 
 1. **Update DATs**
 
-    The equivalent action in Igir is to scan for DATs using the [`--dat <path|glob>` option](dats/scanning.md) when performing some [command](commands.md).
+    The equivalent action in Igir is to scan for DATs using the [`--dat <path|glob|url>` option](dats/scanning.md) when performing some [command](commands.md).
 
     Igir does not cache parsed DATs like RomVault does, which requires fewer setup actions, but at the expense of needing to parse DAT files during every run.
 

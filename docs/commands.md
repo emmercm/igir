@@ -31,7 +31,7 @@ Move files from an input directory to the output directory. The same directory c
 
 !!! note
 
-    Input files that need to be moved to multiple locations in the output directory (because of multiple [DATs](dats/processing.md), [output tokens](output/tokens.md), or any other reason) will be duplicated as needed.
+    Input files that need to be moved to multiple locations in the output directory (because of multiple [DATs](dats/scanning.md), [output tokens](output/tokens.md), or any other reason) will be duplicated as needed.
 
 ### `link`
 

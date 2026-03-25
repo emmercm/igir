@@ -209,7 +209,7 @@ Your flash cart might then look something like this:
 
 ## Without DATs
 
-ROM organization is very opinion-based, and your opinion may not match that of DAT groups. To preserve your custom ROM sorting, you can skip providing any DATs by omitting the `--dat <path|glob>` option.
+ROM organization is very opinion-based, and your opinion may not match that of DAT groups. To preserve your custom ROM sorting, you can skip providing any DATs by omitting the `--dat <path|glob|url>` option.
 
 !!! note
 

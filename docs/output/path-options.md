@@ -12,7 +12,7 @@ Multiple options can be combined, and they will be appended to the output direct
 
 This option establishes the "base" path of where ROMs will be written when [writing](../commands.md#rom-writing). All other options below append additional subdirectories to the directory specified here.
 
-The output path can make use of [tokens](./tokens.md), replaceable symbols that will be resolved at runtime.
+The output path can make use of [tokens](tokens.md), replaceable symbols that will be resolved at runtime.
 
 ## Mirror the input subdirectory
 

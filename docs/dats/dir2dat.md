@@ -1,6 +1,6 @@
 # Writing dir2dats
 
-"dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](./introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
+"dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
 The `dir2dat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every [`--input <path|glob>`](../roms/scanning.md) provided. dir2dats will be written to the first matching directory in this list:
 
@@ -50,7 +50,7 @@ Igir uses the following rules when creating dir2dat DAT files:
 
   !!! note
 
-      You can use the [`--dat-combine` option](./processing.md#dat-combining) to create only one DAT even when multiple input paths are provided.
+      You can use the [`--dat-combine` option](processing.md#dat-combining) to create only one DAT even when multiple input paths are provided.
 
 - **Each input path's [basename](https://linux.die.net/man/1/basename) will be used for the DAT's name.**
 
