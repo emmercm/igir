@@ -571,7 +571,8 @@ export default class Options implements OptionsProps {
     this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
-    this.cleanBackup = options?.cleanBackup?.replaceAll(/[\\/]/g, path.sep);
+    this.cleanBackup =
+      options?.cleanBackup === undefined ? undefined : path.resolve(options.cleanBackup);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipFormat = options?.zipFormat;
@@ -654,7 +655,7 @@ export default class Options implements OptionsProps {
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
 
-    this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replaceAll(/[\\/]/g, path.sep);
+    this.tempDir = path.resolve(options?.tempDir ?? Temp.getTempDir());
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
 
@@ -1192,9 +1193,7 @@ export default class Options implements OptionsProps {
     walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = new Set(
-      writtenFiles.map((file) => path.normalize(file.getFilePath())),
-    );
+    const writtenFilesNormalized = new Set(writtenFiles.map((file) => file.getFilePath()));
 
     // Files excluded from cleaning
     const cleanExcludedFilesNormalized = new Set(

@@ -47,14 +47,14 @@ export default class DATGameInferrer extends Module {
     const normalizedInputPaths = this.options
       .getInputPaths()
       // Try to strip out glob patterns
-      .map((inputPath) => inputPath.replace(/([\\/][?*]+)+$/, ''));
+      .map((inputPath) => path.resolve(inputPath.replace(/([\\/][?*]+)+$/, '')));
 
     const inputPathsToRomFiles = romFiles.reduce((map, file) => {
-      const normalizedPath = path.normalize(file.getFilePath());
+      const filePath = file.getFilePath();
       const matchedInputPaths = normalizedInputPaths
         // `.filter()` rather than `.find()` because a file can be found in overlapping input paths,
         // therefore it should be counted in both
-        .filter((inputPath) => normalizedPath.startsWith(inputPath));
+        .filter((inputPath) => filePath.startsWith(inputPath));
       (matchedInputPaths.length > 0
         ? matchedInputPaths
         : [DATGameInferrer.DEFAULT_DAT_NAME]

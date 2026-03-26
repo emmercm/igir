@@ -44,9 +44,9 @@ describe('fileOf', () => {
 });
 
 describe('getFilePath', () => {
-  it('should return the constructor value', async () => {
+  it('should return an absolute path', async () => {
     const file = await File.fileOf({ filePath: path.join('some', 'path') });
-    expect(file.getFilePath()).toEqual(path.join('some', 'path'));
+    expect(file.getFilePath()).toEqual(path.resolve('some', 'path'));
   });
 });
 

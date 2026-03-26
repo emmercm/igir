@@ -174,7 +174,7 @@ export default class OutputFactory {
             `^${inputPath.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
           );
           return inputFilePath.replace(inputPathRegex, '');
-        }, path.resolve(inputFile.getFilePath()));
+        }, inputFile.getFilePath());
       const mirroredDirPath = path.dirname(mirroredFilePath);
       output = path.join(output, mirroredDirPath);
     }
@@ -288,7 +288,17 @@ export default class OutputFactory {
       return input;
     }
 
-    return input.replace('{inputDirname}', path.parse(inputRomPath).dir);
+    // Make the path relative if it's absolute and within cwd
+    let filePath = inputRomPath;
+    if (path.isAbsolute(inputRomPath)) {
+      try {
+        filePath = path.relative(process.cwd(), inputRomPath);
+      } catch {
+        // If we can't make it relative, use absolute
+      }
+    }
+
+    return input.replace('{inputDirname}', path.parse(filePath).dir);
   }
 
   private static replaceOutputTokens(
