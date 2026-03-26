@@ -713,12 +713,15 @@ export default class FsPoly {
     pathLike: fs.PathLike,
   ): Promise<fs.Stats & { atimeS: number; mtimeS: number; ctimeS: number }> {
     const fsStats = await fs.promises.stat(pathLike);
-    return {
-      ...fsStats,
-      atimeS: Math.floor(fsStats.atimeMs / 1000),
-      mtimeS: Math.floor(fsStats.mtimeMs / 1000),
-      ctimeS: Math.floor(fsStats.ctimeMs / 1000),
-    };
+    return Object.assign(
+      Object.create(Object.getPrototypeOf(fsStats) as object) as fs.Stats,
+      fsStats,
+      {
+        atimeS: Math.floor(fsStats.atimeMs / 1000),
+        mtimeS: Math.floor(fsStats.mtimeMs / 1000),
+        ctimeS: Math.floor(fsStats.ctimeMs / 1000),
+      },
+    );
   }
 
   /**
