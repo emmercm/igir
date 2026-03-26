@@ -59,7 +59,7 @@ jobs:
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
       - if: steps.check.outputs.changed == 'true'
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -85,7 +85,7 @@ jobs:
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
         id: release-drafter
-        uses: release-drafter/release-drafter@3a7fb5c85b80b1dda66e1ccb94009adbbd32fce3 # v7.0.0
+        uses: release-drafter/release-drafter@139054aeaa9adc52ab36ddf67437541f039b88e2 # v7.1.1
         with:
           name: v${{ steps.check.outputs.version }}
           tag: v${{ steps.check.outputs.version }}
