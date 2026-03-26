@@ -102,7 +102,7 @@ export default class FileCache {
         computedFile = await File.fileOf({ filePath, ...checksums }, checksumBitmask);
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: computedFile.toFileProps(),
         };
       },
@@ -111,7 +111,7 @@ export default class FileCache {
           return true;
         }
 
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -165,7 +165,7 @@ export default class FileCache {
         computedEntries = (await archive.getArchiveEntries(checksumBitmask)) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: computedEntries.map((entry) => entry.toEntryProps()),
         };
       },
@@ -174,7 +174,7 @@ export default class FileCache {
           return true;
         }
 
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -231,12 +231,12 @@ export default class FileCache {
         );
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: header?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // Recompute if the file has changed since being cached
           return true;
         }
@@ -273,12 +273,12 @@ export default class FileCache {
         );
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: signature?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -313,12 +313,12 @@ export default class FileCache {
         const paddings = await ROMPadding.paddingsFromFile(file, callback);
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: paddings.map((padding) => padding.toROMPaddingProps()),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // Recompute if the file has changed since being cached
           return true;
         }
