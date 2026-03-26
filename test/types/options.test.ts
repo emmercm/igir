@@ -132,16 +132,16 @@ describe('scanPaths', () => {
 
 describe('getOutputDirRoot', () => {
   test.each([
-    ['', ''],
-    ['.', '.'],
-    ['root', 'root'],
-    ['foo/bar', path.join('foo', 'bar')],
-    ['Assets/{pocket}/common/', 'Assets'],
-    ['games/{mister}/', 'games'],
-    ['Roms/{onion}/', 'Roms'],
-    ['roms/{batocera}/', 'roms'],
-    ['{datName}', ''],
-    ['{datDescription}', ''],
+    ['', path.resolve('')],
+    ['.', path.resolve('.')],
+    ['root', path.resolve('root')],
+    ['foo/bar', path.resolve('foo', 'bar')],
+    ['Assets/{pocket}/common/', path.resolve('Assets')],
+    ['games/{mister}/', path.resolve('games')],
+    ['Roms/{onion}/', path.resolve('Roms')],
+    ['roms/{batocera}/', path.resolve('roms')],
+    ['{datName}', path.resolve('')],
+    ['{datDescription}', path.resolve('')],
   ])('should find the root dir: %s', (output, expectedPath) => {
     expect(new Options({ commands: ['copy'], output }).getOutputDirRoot()).toEqual(expectedPath);
   });

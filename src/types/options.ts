@@ -549,7 +549,7 @@ export default class Options implements OptionsProps {
     );
     this.patchOnly = options?.patchOnly ?? false;
 
-    this.output = options?.output?.replaceAll(/[\\/]/g, path.sep);
+    this.output = options?.output === undefined ? undefined : path.resolve(options.output);
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatMirror = options?.dirDatMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
@@ -645,11 +645,13 @@ export default class Options implements OptionsProps {
     this.playlistMode = options?.playlistMode;
     this.playlistExtensions = options?.playlistExtensions ?? [];
 
-    this.dir2datOutput = options?.dir2datOutput?.replaceAll(/[\\/]/g, path.sep);
+    this.dir2datOutput =
+      options?.dir2datOutput === undefined ? undefined : path.resolve(options.dir2datOutput);
 
-    this.fixdatOutput = options?.fixdatOutput?.replaceAll(/[\\/]/g, path.sep);
+    this.fixdatOutput =
+      options?.fixdatOutput === undefined ? undefined : path.resolve(options.fixdatOutput);
 
-    this.reportOutput = (options?.reportOutput ?? process.cwd()).replaceAll(/[\\/]/g, path.sep);
+    this.reportOutput = path.resolve(options?.reportOutput ?? process.cwd());
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
@@ -897,9 +899,9 @@ export default class Options implements OptionsProps {
       requireIncludeFiles,
     );
     const excludePaths = await this.scanPaths(excludeGlobPatterns, walkMode, undefined, false);
-    const excludePathsSet = new Set(excludePaths.map((filePath) => path.resolve(filePath)));
+    const excludePathsSet = new Set(excludePaths);
     return includePaths.filter(
-      (filePath) => excludePathsSet.size === 0 || !excludePathsSet.has(path.resolve(filePath)),
+      (filePath) => excludePathsSet.size === 0 || !excludePathsSet.has(filePath),
     );
   }
 
@@ -915,7 +917,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await FsPoly.isDirectory(inputPath)) {
-      return await FsPoly.walk(inputPath, walkMode, walkCallback);
+      return (await FsPoly.walk(inputPath, walkMode, walkCallback)).map((p) => path.resolve(p));
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -923,7 +925,7 @@ export default class Options implements OptionsProps {
       if (walkCallback !== undefined) {
         walkCallback(1);
       }
-      return [inputPath];
+      return [path.resolve(inputPath)];
     }
 
     // fg only uses forward-slash path separators
@@ -957,10 +959,7 @@ export default class Options implements OptionsProps {
     if (walkCallback !== undefined) {
       walkCallback(globbedPaths.length);
     }
-    if (path.sep !== '/') {
-      return globbedPaths.map((globbedPath) => globbedPath.replaceAll(/[\\/]/g, path.sep));
-    }
-    return globbedPaths;
+    return globbedPaths.map((globbedPath) => path.resolve(globbedPath));
   }
 
   /**
@@ -1093,15 +1092,15 @@ export default class Options implements OptionsProps {
    * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
    */
   getOutputDirRoot(): string {
-    const outputSplit = this.getOutput().split(/[\\/]/);
+    const resolvedOutput = path.resolve(this.getOutput());
+    const outputSplit = resolvedOutput.split(path.sep);
     for (let i = 0; i < outputSplit.length; i += 1) {
-      if (/\{[a-zA-Z]+\}/.test(outputSplit[i])) {
-        return outputSplit.slice(0, i).join(path.sep);
+      if (/{[a-zA-Z]+}/.test(outputSplit[i])) {
+        return outputSplit.slice(0, i).join(path.sep) || path.sep;
       }
     }
-    return outputSplit.join(path.sep);
+    return resolvedOutput;
   }
-
   getDirMirror(): boolean {
     return this.dirMirror;
   }
@@ -1196,9 +1195,7 @@ export default class Options implements OptionsProps {
     const writtenFilesNormalized = new Set(writtenFiles.map((file) => file.getFilePath()));
 
     // Files excluded from cleaning
-    const cleanExcludedFilesNormalized = new Set(
-      (await this.scanCleanExcludeFiles()).map((filePath) => path.normalize(filePath)),
-    );
+    const cleanExcludedFilesNormalized = new Set(await this.scanCleanExcludeFiles());
 
     return (await Options.scanPaths(outputDirs, WalkMode.FILES, walkCallback, false))
       .filter(

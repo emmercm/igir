@@ -122,7 +122,7 @@ export default class OutputFactory {
 
     return new OutputPath({
       root: '',
-      dir: this.getDir(options, dat, game, inputFile, basename, romBasenames),
+      dir: path.resolve(this.getDir(options, dat, game, inputFile, basename, romBasenames)),
       base: '',
       name,
       ext,
@@ -288,7 +288,10 @@ export default class OutputFactory {
       return input;
     }
 
-    return input.replace('{inputDirname}', path.parse(inputRomPath).dir);
+    return input.replace(
+      '{inputDirname}',
+      path.relative(process.cwd(), path.parse(inputRomPath).dir),
+    );
   }
 
   private static replaceOutputTokens(

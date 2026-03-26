@@ -125,7 +125,7 @@ it('should return one row for every game in a single game DAT', async () => {
   await wrapReportGenerator(new Options(), [], [], [await buildDatStatusSingle()], (contents) => {
     expect(contents)
       .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
-Single,One,FOUND,One.rom,false,false,true,false,false,false,false,false,false,false,false,false,false`);
+Single,One,FOUND,${path.resolve('One.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false`);
   });
 });
 
@@ -134,9 +134,9 @@ it('should return one row for every game in a multiple game DAT', async () => {
     expect(contents)
       .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false`);
+Multiple,Four,FOUND,${path.resolve('Four.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Three,FOUND,${path.resolve('Three.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Two,FOUND,${path.resolve('Two.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false`);
   });
 });
 
@@ -159,14 +159,14 @@ it('should return one row for every duplicate and unused file in a multiple game
       expect(contents)
         .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,DUPLICATE,Four (Duplicate).rom,false,false,false,false,false,false,false,false,false,false,false,false,false
-,,DUPLICATE,Two (Duplicate).rom,false,false,false,false,false,false,false,false,false,false,false,false,false
-,,UNUSED,Five.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
-,,UNUSED,One (Duplicate).rom,false,false,false,false,false,false,false,false,false,false,false,false,false
-,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
+Multiple,Four,FOUND,${path.resolve('Four.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Three,FOUND,${path.resolve('Three.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Two,FOUND,${path.resolve('Two.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+,,DUPLICATE,${path.resolve('Four (Duplicate).rom')},false,false,false,false,false,false,false,false,false,false,false,false,false
+,,DUPLICATE,${path.resolve('Two (Duplicate).rom')},false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,${path.resolve('Five.rom')},false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,${path.resolve('One (Duplicate).rom')},false,false,false,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,${path.resolve('One.rom')},false,false,false,false,false,false,false,false,false,false,false,false,false`);
     },
   );
 });
@@ -184,10 +184,10 @@ it('should return one row for every cleaned file in a multiple game DAT', async 
       expect(contents)
         .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-,,UNUSED,One.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
+Multiple,Four,FOUND,${path.resolve('Four.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Three,FOUND,${path.resolve('Three.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Two,FOUND,${path.resolve('Two.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+,,UNUSED,${path.resolve('One.rom')},false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Three.rom,false,false,false,false,false,false,false,false,false,false,false,false,false
 ,,DELETED,Four.rom,false,false,false,false,false,false,false,false,false,false,false,false,false`);
     },
@@ -204,10 +204,10 @@ it('should return one row for every game in multiple DATs', async () => {
       expect(contents)
         .toEqual(`DAT Name,Game Name,Status,ROM Files,Patched,BIOS,Retail Release,Unlicensed,Debug,Demo,Beta,Sample,Prototype,Program,Aftermarket,Homebrew,Bad
 Multiple,Five,FOUND,,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Four,FOUND,Four.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Three,FOUND,Three.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Multiple,Two,FOUND,Two.rom,false,false,true,false,false,false,false,false,false,false,false,false,false
-Single,One,FOUND,One.rom,false,false,true,false,false,false,false,false,false,false,false,false,false`);
+Multiple,Four,FOUND,${path.resolve('Four.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Three,FOUND,${path.resolve('Three.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Multiple,Two,FOUND,${path.resolve('Two.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false
+Single,One,FOUND,${path.resolve('One.rom')},false,false,true,false,false,false,false,false,false,false,false,false,false`);
     },
   );
 });
