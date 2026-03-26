@@ -3,6 +3,7 @@ import path from 'node:path';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import GameGrouper from '../../gameGrouper.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import type Options from '../../types/options.js';
@@ -34,7 +35,7 @@ export default class DATDiscMerger extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: merging ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
+      `${dat.getName()}: merging ${IntlPoly.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
     this.progressBar.resetProgress(dat.getGames().length);
@@ -42,7 +43,7 @@ export default class DATDiscMerger extends Module {
     const groupedGames = this.groupGames(dat.getGames());
     const newDat = dat.withGames(groupedGames);
     this.progressBar.logTrace(
-      `${newDat.getName()}: merged to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length === 1 ? '' : 's'}`,
+      `${newDat.getName()}: merged to ${IntlPoly.toLocaleString(newDat.getGames().length)} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${newDat.getName()}: done merging`);

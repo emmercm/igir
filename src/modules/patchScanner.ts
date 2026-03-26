@@ -2,6 +2,7 @@ import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import IntlPoly from '../polyfill/intlPoly.js';
 import type File from '../types/files/file.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
 import type FileFactory from '../types/files/fileFactory.js';
@@ -35,7 +36,7 @@ export default class PatchScanner extends Scanner {
       this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(
-      `found ${patchFilePaths.length.toLocaleString()} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlPoly.toLocaleString(patchFilePaths.length)} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(patchFilePaths.length);
 
@@ -50,7 +51,7 @@ export default class PatchScanner extends Scanner {
 
   private async parsePatchFiles(patchFiles: File[]): Promise<Patch[]> {
     this.progressBar.logTrace(
-      `parsing ${patchFiles.length.toLocaleString()} patch file${patchFiles.length === 1 ? '' : 's'}`,
+      `parsing ${IntlPoly.toLocaleString(patchFiles.length)} patch file${patchFiles.length === 1 ? '' : 's'}`,
     );
     if (patchFiles.length === 0) {
       return [];

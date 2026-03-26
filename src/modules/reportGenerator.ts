@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import type ProgressBar from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import IntlPoly from '../polyfill/intlPoly.js';
 import DATStatus, { GameStatus } from '../types/datStatus.js';
 import type File from '../types/files/file.js';
 import type Options from '../types/options.js';
@@ -91,7 +92,7 @@ export default class ReportGenerator extends Module {
     );
     await FsPoly.writeFile(reportPath, rows.join('\n'));
     this.progressBar.logTrace(
-      `wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
+      `wrote ${IntlPoly.toLocaleString(datStatuses.length)} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
     );
 
     this.progressBar.logTrace('done generating report');

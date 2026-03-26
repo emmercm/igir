@@ -12,6 +12,7 @@ import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import IntlPoly from '../polyfill/intlPoly.js';
 import type File from '../types/files/file.js';
 import type Options from '../types/options.js';
 import Module from './module.js';
@@ -63,7 +64,7 @@ export default class DirectoryCleaner extends Module {
 
     try {
       this.progressBar.logTrace(
-        `cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length === 1 ? '' : 's'}`,
+        `cleaning ${IntlPoly.toLocaleString(filesToClean.length)} file${filesToClean.length === 1 ? '' : 's'}`,
       );
       this.progressBar.resetProgress(filesToClean.length);
       if (this.options.getCleanDryRun()) {
@@ -88,7 +89,7 @@ export default class DirectoryCleaner extends Module {
       while (emptyDirs.length > 0) {
         this.progressBar.resetProgress(emptyDirs.length);
         this.progressBar.logTrace(
-          `cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
+          `cleaning ${IntlPoly.toLocaleString(emptyDirs.length)} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
         );
         if (this.options.getCleanDryRun()) {
           this.progressBar.logInfo(

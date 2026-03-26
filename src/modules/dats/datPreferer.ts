@@ -1,6 +1,7 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import type Game from '../../types/dats/game.js';
 import type Options from '../../types/options.js';
@@ -54,7 +55,7 @@ export default class DATPreferer extends Module {
           return undefined;
         }
         this.progressBar.logTrace(
-          `${dat.getName()}: ${parent.getName()} (parent): ${parent.getGames().length.toLocaleString()} game${parent.getGames().length === 1 ? '' : 's'} before preferring`,
+          `${dat.getName()}: ${parent.getName()} (parent): ${IntlPoly.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'} before preferring`,
         );
 
         const preferredGame = parent
@@ -75,7 +76,7 @@ export default class DATPreferer extends Module {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${preferredDat.getName()}: preferred to ${preferredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${preferredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
+      `${preferredDat.getName()}: preferred to ${IntlPoly.toLocaleString(preferredGames.length)}/${IntlPoly.toLocaleString(dat.getGames().length)} game${preferredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
     );
 
     this.progressBar.logTrace(`${preferredDat.getName()}: done preferring DAT games`);

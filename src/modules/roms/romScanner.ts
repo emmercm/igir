@@ -1,6 +1,7 @@
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type File from '../../types/files/file.js';
 import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
 import type FileFactory from '../../types/files/fileFactory.js';
@@ -36,7 +37,7 @@ export default class ROMScanner extends Scanner {
       this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(
-      `found ${inputFilePaths.length.toLocaleString()} input file${inputFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlPoly.toLocaleString(inputFilePaths.length)} input file${inputFilePaths.length === 1 ? '' : 's'}`,
     );
     const filePathsToProcess = inputFilePaths;
 
@@ -56,7 +57,7 @@ export default class ROMScanner extends Scanner {
         },
       );
       this.progressBar.logTrace(
-        `found ${outputFilePaths.length.toLocaleString()} output file${outputFilePaths.length === 1 ? '' : 's'}`,
+        `found ${IntlPoly.toLocaleString(outputFilePaths.length)} output file${outputFilePaths.length === 1 ? '' : 's'}`,
       );
       outputFilePaths.forEach((filePath) => {
         if (!inputFilePathsSet.has(filePath)) {

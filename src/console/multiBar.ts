@@ -207,7 +207,7 @@ export default class MultiBar {
         }
         return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
       });
-    const output = outputLines.join('\n');
+    const output = outputLines.length > 0 ? `${outputLines.join('\n')}\n` : '';
 
     if (output === this.lastOutput && MultiBar.logQueue.length === 0) {
       // Nothing new to render
