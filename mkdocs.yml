@@ -48,6 +48,7 @@ theme:
     - navigation.path
     - navigation.instant
     - navigation.instant.prefetch
+    - navigation.instant.progress
     - navigation.footer
     - toc.follow
     - toc.integrate
@@ -68,6 +69,7 @@ nav:
       - usage/basic.md
       - usage/personal.md
       - usage/best-practices.md
+    - Specific Usage:
       - Emulator Frontends:
         - usage/handheld/adam.md
         - usage/desktop/batocera.md

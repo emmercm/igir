@@ -21,7 +21,8 @@ The file tree in that hard drive looks like this:
 │   ├── Nintendo - Game Boy Advance (e-Reader)
 │   ├── Nintendo - Game Boy Color
 │   └── etc...
-├── No-Intro Love Pack (PC XML) (2026-03-24).zip
+├── No-Intro Love Pack (PC) (2026-03-25).zip
+├── No-Intro Love Pack (Standard) (Private) (2026-03-23).zip
 ├── Patches
 │   ├── gb
 │   ├── gba
