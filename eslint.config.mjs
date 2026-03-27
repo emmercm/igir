@@ -15,6 +15,7 @@ import tseslint from 'typescript-eslint';
 import noArrayPushSpread from './.eslint/rules/performance/noArrayPushSpread.mjs';
 import noArrayRebuildInLoop from './.eslint/rules/performance/noArrayRebuildInLoop.mjs';
 import noArrayShiftMutationInLoop from './.eslint/rules/performance/noArrayShiftMutationInLoop.mjs';
+import noNumberToLocaleString from './.eslint/rules/performance/noNumberToLocaleString.mjs';
 import noFsPromisify from './.eslint/rules/style/noFsPromisify.mjs';
 import noNodeSubpathImports from './.eslint/rules/style/noNodeSubpathImports.mjs';
 import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImport.mjs';
@@ -89,6 +90,7 @@ export default [
           'no-array-push-spread': noArrayPushSpread,
           'no-array-rebuild-in-loop': noArrayRebuildInLoop,
           'no-array-shift-mutation-in-loop': noArrayShiftMutationInLoop,
+          'no-number-to-locale-string': noNumberToLocaleString,
         },
       },
     },
@@ -99,6 +101,7 @@ export default [
       'local/no-array-push-spread': 'error',
       'local/no-array-rebuild-in-loop': 'error',
       'local/no-array-shift-mutation-in-loop': 'error',
+      'local/no-number-to-locale-string': 'error',
     },
   },
 
