@@ -1,5 +1,6 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import Game from '../../types/dats/game.js';
 import Internationalization from '../../types/internationalization.js';
@@ -32,7 +33,7 @@ export default class DATParentInferrer extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: inferring parents for ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
+      `${dat.getName()}: inferring parents for ${IntlPoly.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
     this.progressBar.resetProgress(dat.getGames().length);
@@ -56,7 +57,7 @@ export default class DATParentInferrer extends Module {
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
     const inferredDat = dat.withGames(newGames);
     this.progressBar.logTrace(
-      `${inferredDat.getName()}: grouped to ${inferredDat.getParents().length.toLocaleString()} parent${inferredDat.getParents().length === 1 ? '' : 's'}`,
+      `${inferredDat.getName()}: grouped to ${IntlPoly.toLocaleString(inferredDat.getParents().length)} parent${inferredDat.getParents().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done inferring parents');

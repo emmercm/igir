@@ -5,6 +5,7 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import Disk from '../../types/dats/disk.js';
 import type Game from '../../types/dats/game.js';
@@ -96,7 +97,7 @@ export default class CandidateGenerator extends Module {
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${candidates.length.toLocaleString()} candidate${candidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${IntlPoly.toLocaleString(candidates.length)} candidate${candidates.length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${dat.getName()}: done generating candidates`);
@@ -802,7 +803,7 @@ export default class CandidateGenerator extends Module {
       return;
     }
 
-    let message = `${dat.getName()}: ${game.getName()}: found ${foundRomsWithFiles.length.toLocaleString()} file${foundRomsWithFiles.length === 1 ? '' : 's'}, missing ${missingRoms.length.toLocaleString()} file${missingRoms.length === 1 ? '' : 's'}`;
+    let message = `${dat.getName()}: ${game.getName()}: found ${IntlPoly.toLocaleString(foundRomsWithFiles.length)} file${foundRomsWithFiles.length === 1 ? '' : 's'}, missing ${IntlPoly.toLocaleString(missingRoms.length)} file${missingRoms.length === 1 ? '' : 's'}`;
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
