@@ -27,7 +27,7 @@ Most ROM managers rely on [DATs](dats/introduction.md), files that catalog every
 
 Igir is a ROM manager for the modern age.
 
-Most ROM managers are only built for Windows, though some offer workarounds for running on macOS and Linux. Most of these managers have confusing GUIs that make batch-able, repeatable actions difficult. Igir is a command line tool that works on any OS.
+Most ROM managers are only built for Windows (though some offer workarounds for running on macOS and Linux). Most of these managers have confusing GUIs that make batch-able, repeatable actions difficult. Igir is a command line tool that works on any OS.
 
 Igir has features that aren't found in any other ROM managers, such as [ROM patching](roms/patching.md), [ROM trim detection](roms/trimming.md), [ROM extension correction](output/options.md#fixing-rom-extensions), multi-disc [playlist creation](output/playlists.md), and more.
 
@@ -35,14 +35,14 @@ Igir has features that aren't found in any other ROM managers, such as [ROM patc
 
     See the [alternative managers](alternatives.md) page for a feature comparison between Igir and other ROM managers.
 
-## Why would I want Igir?
+## Why should I use Igir?
 
 If you aren't using a ROM manager already, Igir can help you:
 
-- Sort ROM files into meaningful folders.
-- Name ROM files consistently.
+- Sort your ROM files into meaningful folders.
+- Name your ROM files consistently.
 - Filter out undesired ROM files.
-- Convert ROM files into consistent format (archived or unarchived).
+- Convert your ROM files into consistent format (archived or unarchived).
 
 If you are already using a ROM manager, Igir can help you:
 

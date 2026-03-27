@@ -16,7 +16,7 @@ It is intended that Igir lives by these tenets:
 
 - **Igir should be scriptable.**
 
-  It should be easy to use Igir in a longer, scripted workflow. Igir should not require any prompts during execution.
+  It should be easy to use Igir in a larger, scripted workflow. Igir should not require any prompts during execution.
 
 - **Igir should be portable.**
 

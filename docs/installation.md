@@ -11,7 +11,7 @@ There are a few different installation options offered for Igir with varying lev
 
 The most straightforward way to run Igir is by downloading the latest version from the [GitHub releases](https://github.com/emmercm/igir/releases) page.
 
-Igir does not currently provide an auto-update functionality, so you may prefer other methods below for that reason.
+Igir does not currently provide an auto-update functionality, but many of the following installation options do.
 
 ## Via npm
 
@@ -63,16 +63,15 @@ npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --d
     If you want to help beta test Igir, you can run the most bleeding-edge version (sometimes called a "nightly") with the command:
 
     ```shell
-    npm exec --yes -- "github:emmercm/igir#main" [commands..] [options]
+    npx --yes "https://pkg.pr.new/igir@main" [commands..] [options]
     ```
 
 ## Via Homebrew (macOS)
 
-[Homebrew](https://brew.sh/) is a third-party package manager for macOS. You can install Igir with these simple commands:
+[Homebrew](https://brew.sh/) is a third-party package manager for macOS. You can install Igir with this command:
 
 ```shell
-brew tap emmercm/igir
-brew install igir
+brew install emmercm/igir/igir
 ```
 
 and then run Igir as if it were any other executable:

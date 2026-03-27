@@ -1,6 +1,6 @@
 # Commands
 
-Igir takes actions based on commands you specify. Each command has a clear input and output, and Igir will never take surprise actions you did not specify. Multiple commands can (and will likely) be specified at once.
+Igir takes actions based on commands you specify. Each command has a clear input and output, and Igir will never take surprise actions you did not specify (see the [guiding principles](guiding-principles.md)). Multiple commands can (and will likely) be specified at once.
 
 !!! tip
 
@@ -8,17 +8,17 @@ Igir takes actions based on commands you specify. Each command has a clear input
 
 ## ROM writing
 
-Igir has three writing commands. Only one writing command can be specified at a time, and all require at least one [`--input <path|glob>`](roms/scanning.md) and a [`--output <path>`](output/path-options.md).
+Igir has three ROM writing commands. Only one ROM writing command can be specified at a time, and all require at least one [`--input <path|glob>`](roms/scanning.md) and a [`--output <path>`](output/path-options.md).
 
 ### `copy`
 
-Copy files from an input directory to the output directory.
+Copy ROMs from an input directory to the output directory.
 
 Files in the input directories will be left alone, they will _not_ be modified or deleted.
 
 ### `move`
 
-Move files from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their filenames change in [DATs](dats/introduction.md).
+Move ROMs from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their filenames change in [DATs](dats/introduction.md).
 
 !!! note
 
@@ -35,7 +35,7 @@ Move files from an input directory to the output directory. The same directory c
 
 ### `link`
 
-Create a link in the output directory to a file in the input directory.
+Create a link in the output directory to a ROM in the input directory.
 
 Three different types of links can be created:
 
@@ -47,13 +47,11 @@ Three different types of links can be created:
 
 ## ROM extracting & zipping
 
-Igir has two ROM archive commands. Archive commands require either the `copy` or `move` write command. Only one archive command can be specified at a time.
+Igir has two ROM archive commands. Archive commands require either the `copy` or `move` write command (above). Only one archive command can be specified at a time.
 
-If no archive command is specified, then files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-`.zip` archives), then they will stay archived in their original format.
+If no archive command is specified, then files will be left as-is. If they are already extracted, then they will stay extracted; if they are already archived (including non-`.zip` archives), then they will stay archived in their original format.
 
-!!! note
-
-    See the [archives page](input/reading-archives.md) for more information on supported archive types.
+See the [archives page](input/reading-archives.md) for more information on supported archive types.
 
 ### `extract`
 
@@ -79,12 +77,12 @@ ROMs will be archived into a `.zip` file as they are being copied or moved. ROMs
 
 ### `test`
 
-If a writing command (above) is also provided, verify that each file was written correctly:
+When provided with a ROM writing command (above), verify that each file was written correctly:
 
 - `igir extract test` tests that each ROM file written has the correct size and checksum.
 - `igir zip test` tests that the `.zip` file is a valid [TorrentZip/RVZSTD](output/writing-archives.md#torrentzip) archive, has all the correct archive entry sizes & checksums, and contains no excess entries.
 
-If a writing command is not provided, then verify that each input file is valid.
+When a ROM writing command is not provided, verify that each input file is valid.
 
 ## DAT writing
 
