@@ -2,6 +2,7 @@ import type { ChalkInstance } from 'chalk';
 import chalk from 'chalk';
 import isUnicodeSupported from 'is-unicode-supported';
 
+import IntlPoly from '../polyfill/intlPoly.js';
 import type { LogLevelValue } from './logLevel.js';
 import { LogLevel } from './logLevel.js';
 import type { SingleBarOptions } from './singleBar.js';
@@ -88,7 +89,7 @@ export default abstract class ProgressBar {
     }
 
     this.finish(
-      `${count.toLocaleString()} ${noun.trim()}${count === 1 ? '' : pluralSuffix} ${verb}`,
+      `${IntlPoly.toLocaleString(count)} ${noun.trim()}${count === 1 ? '' : pluralSuffix} ${verb}`,
     );
   }
 

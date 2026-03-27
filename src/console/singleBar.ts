@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import isUnicodeSupported from 'is-unicode-supported';
 import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
+import IntlPoly from '../polyfill/intlPoly.js';
 import TimePoly from '../polyfill/timePoly.js';
 import type { LogLevelValue } from './logLevel.js';
 import type MultiBar from './multiBar.js';
@@ -80,7 +81,8 @@ export default class SingleBar extends ProgressBar {
     this.showProgressNewline = options?.showProgressNewline ?? true;
     this.progressBarSizeMultiplier = options?.progressBarSizeMultiplier ?? 1;
     this.progressFormatter =
-      options?.progressFormatter ?? ((progress: number): string => progress.toLocaleString());
+      options?.progressFormatter ??
+      ((progress: number): string => IntlPoly.toLocaleString(progress));
     this.completed = options?.completed ?? 0;
     this.inProgress = options?.inProgress ?? 0;
     this.total = options?.total ?? 0;

@@ -2,6 +2,7 @@ import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import type FileFactory from '../../types/files/fileFactory.js';
@@ -56,7 +57,7 @@ export default class CandidateArchiveFileHasher extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
+      `${dat.getName()}: generating ${IntlPoly.toLocaleString(archiveFileCount)} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
     this.progressBar.resetProgress(archiveFileCount);

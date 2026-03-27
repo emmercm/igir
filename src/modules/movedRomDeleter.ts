@@ -5,6 +5,7 @@ import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import IntlPoly from '../polyfill/intlPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../types/files/archives/archiveFile.js';
 import ChdBinCue from '../types/files/archives/chd/chdBinCue.js';
@@ -55,7 +56,7 @@ export default class MovedROMDeleter extends Module {
     });
     this.progressBar.resetProgress(inputFiles.size);
     this.progressBar.logTrace(
-      `considering ${inputFiles.size.toLocaleString()} unique input paths for deletion`,
+      `considering ${IntlPoly.toLocaleString(inputFiles.size)} unique input paths for deletion`,
     );
 
     // Take the input files from the WriteCandidates that were moved, and look for duplicate input
@@ -95,12 +96,12 @@ export default class MovedROMDeleter extends Module {
       }
     });
     this.progressBar.logTrace(
-      `expanded to ${movedRoms.size.toLocaleString()} possible input files`,
+      `expanded to ${IntlPoly.toLocaleString(movedRoms.size)} possible input files`,
     );
 
     const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives([...movedRoms], indexedRoms);
     this.progressBar.logTrace(
-      `filtered to ${fullyConsumedFiles.length.toLocaleString()} fully used input files`,
+      `filtered to ${IntlPoly.toLocaleString(fullyConsumedFiles.length)} fully used input files`,
     );
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
@@ -108,7 +109,7 @@ export default class MovedROMDeleter extends Module {
       movedWriteCandidates,
     );
     this.progressBar.logTrace(
-      `filtered to ${filePathsToDelete.length.toLocaleString()} non-output files`,
+      `filtered to ${IntlPoly.toLocaleString(filePathsToDelete.length)} non-output files`,
     );
 
     this.progressBar.resetProgress(filePathsToDelete.length);
@@ -124,7 +125,7 @@ export default class MovedROMDeleter extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     this.progressBar.resetProgress(existingFilePaths.length);
     this.progressBar.logTrace(
-      `deleting ${existingFilePaths.length.toLocaleString()} moved file${existingFilePaths.length === 1 ? '' : 's'}`,
+      `deleting ${IntlPoly.toLocaleString(existingFilePaths.length)} moved file${existingFilePaths.length === 1 ? '' : 's'}`,
     );
 
     const filePathChunks = existingFilePaths.reduce(
@@ -208,7 +209,7 @@ export default class MovedROMDeleter extends Module {
         }
 
         this.progressBar.logWarn(
-          `${filePath}: not deleting moved file, ${unmovedArchiveEntries.length.toLocaleString()} archive entr${unmovedArchiveEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedArchiveEntries
+          `${filePath}: not deleting moved file, ${IntlPoly.toLocaleString(unmovedArchiveEntries.length)} archive entr${unmovedArchiveEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedArchiveEntries
             .toSorted()
             .map((entry) => `  ${entry.toString()}`)
             .join('\n')}`,

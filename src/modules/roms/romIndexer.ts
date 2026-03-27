@@ -1,6 +1,7 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
 import Dolphin from '../../types/files/archives/dolphin/dolphin.js';
@@ -33,7 +34,7 @@ export default class ROMIndexer extends Module {
    */
   index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(
-      `indexing ${files.length.toLocaleString()} file${files.length === 1 ? '' : 's'}`,
+      `indexing ${IntlPoly.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
     this.progressBar.resetProgress(files.length);
