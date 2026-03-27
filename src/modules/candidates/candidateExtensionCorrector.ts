@@ -5,6 +5,7 @@ import type { Semaphore } from 'async-mutex';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import type ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
@@ -60,7 +61,7 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: correcting ${romsThatNeedCorrecting.toLocaleString()} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
+      `${dat.getName()}: correcting ${IntlPoly.toLocaleString(romsThatNeedCorrecting)} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.resetProgress(romsThatNeedCorrecting);
