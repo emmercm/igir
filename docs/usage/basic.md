@@ -14,7 +14,7 @@ Even though Igir can work without [DATs](../dats/introduction.md), using DATs to
 
 First, you need to download a set of [DATs](../dats/introduction.md). For these examples I'll assume you downloaded a [No-Intro daily P/C XML `.zip`](https://datomatic.no-intro.org/index.php?page=download&op=daily&s=64).
 
-Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have Igir copy these files to a different directory rather than move them. We'll also [zip](../output/writing-archives.md) them to reduce disk space & speed up future scans.
+Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have Igir copy these files to a different directory rather than move them. We'll also [zip](../output/writing-archives.md) them to reduce disk space and speed up future scans.
 
 === ":fontawesome-brands-windows: Windows"
 
