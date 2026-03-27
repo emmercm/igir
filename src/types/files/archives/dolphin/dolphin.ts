@@ -1,3 +1,4 @@
+import type fs from 'node:fs';
 import path from 'node:path';
 
 import dolphinTool, {
@@ -63,12 +64,18 @@ export default abstract class Dolphin extends Archive {
       containerFormat: ContainerFormat.ISO,
       binaryPreference: DolphinToolBinaryPreference.PREFER_PATH_BINARY,
     });
+    let stats: fs.Stats | undefined = undefined;
+    try {
+      stats = await FsPoly.stat(extractedFilePath);
+    } catch {
+      /* ignored */
+    }
     console.log(
       'extractEntryToFile',
       this.getFilePath(),
       extractedFilePath,
       await FsPoly.size(extractedFilePath),
-      await FsPoly.stat(extractedFilePath),
+      stats,
     );
   }
 }
