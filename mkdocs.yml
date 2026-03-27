@@ -64,7 +64,7 @@ nav:
       - installation.md
       - commands.md
       - cli.md
-      - alternatives.md
+      - guiding-principles.md
     - General Usage:
       - usage/basic.md
       - usage/personal.md
@@ -129,8 +129,10 @@ nav:
       - advanced/internals.md
       - advanced/logging.md
       - advanced/temp-dir.md
+      - advanced/file-cache.md
       - advanced/troubleshooting.md
     - Other Topics:
+      - misc/alternatives.md
       - misc/torrentzip.md
       - misc/rom-dumping.md
     - Source Code:
@@ -164,6 +166,7 @@ plugins:
         - web-flow
   - redirects:
       redirect_maps:
+        'alternatives.md': 'misc/alternatives.md'
         'archives.md': 'input/reading-archives.md'
         'dats.md': 'dats/introduction.md'
         'dats/overview.md': 'dats/introduction.md'
