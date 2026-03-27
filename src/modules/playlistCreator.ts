@@ -127,7 +127,7 @@ export default class PlaylistCreator extends Module {
           .getFilePath()
           .slice(commonDirectory.length)
           .replace(/^[\\/]/, '')
-          .replaceAll(/[\\/]/g, '/'),
+          .replaceAll('\\', '/'),
       )
       .toSorted()
       .join('\n')}\n`;
