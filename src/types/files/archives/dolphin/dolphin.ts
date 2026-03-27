@@ -6,6 +6,7 @@ import dolphinTool, {
   DolphinToolBinaryPreference,
 } from 'dolphin-tool';
 
+import FsPoly from '../../../../polyfill/fsPoly.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -28,7 +29,7 @@ export default abstract class Dolphin extends Archive {
       inputFilename: this.getFilePath(),
       binaryPreference: DolphinToolBinaryPreference.PREFER_PATH_BINARY,
     });
-    console.log(this.getFilePath(), size, digests);
+    console.log('getArchiveEntries', this.getFilePath(), size, digests);
     if (checksumBitmask & ChecksumBitmask.MD5) {
       // dolphin-tool only returns CRC32 and SHA1 digests
       digests.md5 = (
@@ -62,5 +63,12 @@ export default abstract class Dolphin extends Archive {
       containerFormat: ContainerFormat.ISO,
       binaryPreference: DolphinToolBinaryPreference.PREFER_PATH_BINARY,
     });
+    console.log(
+      'extractEntryToFile',
+      this.getFilePath(),
+      extractedFilePath,
+      await FsPoly.size(extractedFilePath),
+      await FsPoly.stat(extractedFilePath),
+    );
   }
 }
