@@ -28,12 +28,14 @@ The file tree in that hard drive looks like this:
 │   ├── gba
 │   ├── gbc
 │   ├── genesis
-│   └── snes
+│   ├── snes
+│   └── etc...
 ├── Redump
 │   ├── Microsoft - Xbox - BIOS Images
 │   ├── Nintendo - GameCube
 │   ├── Sony - PlayStation - BIOS Images
-│   └── Sony - PlayStation 2 - BIOS Images
+│   ├── Sony - PlayStation 2 - BIOS Images
+│   └── etc...
 ├── Redump (2026-03-13).zip
 ├── TOSEC - DAT Pack - Complete (4743) (TOSEC-v2025-03-13).zip
 └── igir_library_sync.sh
@@ -120,6 +122,8 @@ I then copy ROMs to other devices from this source of truth.
 !!! note
 
     See the full [Analogue Pocket](hardware/analogue-pocket.md) page for more detailed information.
+
+I started writing Igir while I was home-bound with COVID-19, waiting for my Analogue Pocket preorder to ship. I had tried using several other ROM managers, but found all of them unintuitive (and mostly incompatible with my MacBook).
 
 I have this script `igir_pocket_sync.sh` at the root of my Analogue Pocket's SD card:
 
