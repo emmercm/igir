@@ -355,8 +355,8 @@ export default class CandidateGenerator extends Module {
 
     const filesByPath = indexedFiles.getFilesByFilePath();
     const filteredArchivesWithEveryRom = archivesWithEveryRom
-      // Filter out Archives with excess entries
       .filter((archive) => {
+        // Filter out Archives with excess entries
         const unusedEntries = this.findArchiveUnusedEntryPaths(
           archive,
           romsAndInputFiles.flatMap(([, inputFiles]) => inputFiles),
@@ -368,6 +368,12 @@ export default class CandidateGenerator extends Module {
           );
           return false;
         }
+
+        // If we're zipping, only consider zip archives that we might be able to raw-write
+        if (this.options.shouldZip() && !(archive instanceof Zip)) {
+          return false;
+        }
+
         return true;
       })
       .toSorted((a, b) => {
@@ -386,7 +392,7 @@ export default class CandidateGenerator extends Module {
           return aIsOutputFile - bIsOutputFile;
         }
 
-        // First, prefer the archive with the least number of entries
+        // Then, prefer the archive with the least number of entries
         const aEntries = filesByPath.get(a.getFilePath())?.length ?? 0;
         const bEntries = filesByPath.get(b.getFilePath())?.length ?? 0;
         if (aEntries !== bEntries) {
@@ -407,18 +413,25 @@ export default class CandidateGenerator extends Module {
         return bGameName - aGameName;
       });
 
-    const archiveWithEveryRom = filteredArchivesWithEveryRom
-      // If we're zipping, only consider zip archives
-      .find((archive) => !this.options.shouldZip() || archive instanceof Zip);
+    const archiveWithEveryRom = filteredArchivesWithEveryRom.at(0);
     if (archiveWithEveryRom === undefined) {
       return undefined;
+    }
+    if (filteredArchivesWithEveryRom.length > 1) {
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: '${archiveWithEveryRom.getFilePath()}'; ignoring:\n${filteredArchivesWithEveryRom
+          .slice(1)
+          .map((archive) => `  ${archive.getFilePath()}`)
+          .join('\n')}`,
+      );
+    } else {
+      this.progressBar.logTrace(
+        `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: '${archiveWithEveryRom.getFilePath()}'`,
+      );
     }
 
     // An Archive was found, use that as the only possible input file
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
-    this.progressBar.logTrace(
-      `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: ${archiveWithEveryRom.getFilePath()}`,
-    );
     return new Map(
       romsAndInputFiles.map(([rom, inputFiles]) => {
         const archiveEntries = inputFiles.filter(
