@@ -193,7 +193,10 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ).toEqual([
       ['game with no ROMs', []],
       // preferred the non-archive when extracting, otherwise are raw-copying
-      ['game with one ROM and multiple releases', [command === 'extract' ? '1.rom' : 'one.zip']],
+      [
+        'game with one ROM and multiple releases',
+        [command === 'extract' ? path.resolve('1.rom') : path.resolve('one.zip')],
+      ],
     ]);
   });
 
@@ -303,13 +306,13 @@ describe('with ROMs with headers', () => {
       ['game with no ROMs', []],
       [
         'game with one ROM and multiple releases',
-        ['game with one ROM and multiple releases.zip|one.nes'], // respected headerless extension
+        [`${path.resolve('game with one ROM and multiple releases.zip')}|one.nes`], // respected headerless extension
       ],
       [
         'game with two ROMs (parent)',
         [
-          'game with two ROMs (parent).zip|two.sfc', // respected headerless extension
-          'game with two ROMs (parent).zip|two.b', // respected DAT
+          `${path.resolve('game with two ROMs (parent).zip')}|two.sfc`, // respected headerless extension
+          `${path.resolve('game with two ROMs (parent).zip')}|two.b`, // respected DAT
         ],
       ],
     ]);
@@ -339,12 +342,12 @@ describe('with ROMs with headers', () => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', ['one.nes']], // respected headerless extension
+      ['game with one ROM and multiple releases', [path.resolve('one.nes')]], // respected headerless extension
       [
         'game with two ROMs (parent)',
         [
-          path.join('game with two ROMs (parent)', 'two.sfc'), // respected headerless extension
-          path.join('game with two ROMs (parent)', 'two.b'), // respected DAT
+          path.resolve('game with two ROMs (parent)', 'two.sfc'), // respected headerless extension
+          path.resolve('game with two ROMs (parent)', 'two.b'), // respected DAT
         ],
       ],
     ]);
@@ -373,7 +376,7 @@ describe('with ROMs with headers', () => {
     ).toEqual([
       ['game with no ROMs', []],
       // respected headerless extension
-      ['game with one ROM and multiple releases', ['one.nes']],
+      ['game with one ROM and multiple releases', [path.resolve('one.nes')]],
     ]);
   });
 });
@@ -426,8 +429,11 @@ describe('with different input files for every game ROM', () => {
         ]),
       ).toEqual([
         ['game with no ROMs', []],
-        ['game with one ROM and multiple releases', ['one.rom']],
-        ['game with two ROMs (parent)', ['a.rar|a.rom', 'b.rar|b.rom']],
+        ['game with one ROM and multiple releases', [path.resolve('one.rom')]],
+        [
+          'game with two ROMs (parent)',
+          [`${path.resolve('a.rar')}|a.rom`, `${path.resolve('b.rar')}|b.rom`],
+        ],
       ]);
     },
   );
@@ -456,7 +462,7 @@ describe('with different input files for every game ROM', () => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', ['one.rom']],
+      ['game with one ROM and multiple releases', [path.resolve('one.rom')]],
     ]);
   });
 });
@@ -520,16 +526,16 @@ describe('token replacement', () => {
       )
       .toSorted();
     expect(outputFiles).toEqual([
-      path.join('output', 'AUS', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join(
+      path.resolve('output', 'AUS', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve(
         'output',
         'EUR',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'EUR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join('output', 'USA', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join('output', 'USA', 'Kirby - Canvas Curse (USA).nds'),
-      path.join('output', 'USA', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'EUR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'USA', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve('output', 'USA', 'Kirby - Canvas Curse (USA).nds'),
+      path.resolve('output', 'USA', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
     ]);
   });
 
@@ -545,38 +551,38 @@ describe('token replacement', () => {
       )
       .toSorted();
     expect(outputFiles).toEqual([
-      path.join(
+      path.resolve(
         'output',
         'DE',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'DE', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join('output', 'EN', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join(
+      path.resolve('output', 'DE', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'EN', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve(
         'output',
         'EN',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'EN', 'Kirby - Canvas Curse (USA).nds'),
-      path.join('output', 'EN', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve('output', 'EN', 'Kirby - Canvas Curse (USA).nds'),
+      path.resolve('output', 'EN', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve(
         'output',
         'ES',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'ES', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve('output', 'ES', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve(
         'output',
         'FR',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'FR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve('output', 'FR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve(
         'output',
         'IT',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'IT', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'IT', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
     ]);
   });
 
@@ -592,14 +598,14 @@ describe('token replacement', () => {
       )
       .toSorted();
     expect(outputFiles).toEqual([
-      path.join(
+      path.resolve(
         'output',
         'Demo',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'Program', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join('output', 'Retail', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join('output', 'Retail', 'Kirby - Canvas Curse (USA).nds'),
+      path.resolve('output', 'Program', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'Retail', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve('output', 'Retail', 'Kirby - Canvas Curse (USA).nds'),
     ]);
   });
 
@@ -615,13 +621,17 @@ describe('token replacement', () => {
       )
       .toSorted();
     expect(outputFiles).toEqual([
-      path.join('output', 'Applications', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve(
+        'output',
+        'Applications',
+        'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds',
+      ),
+      path.resolve(
         'output',
         'Demos',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'Games', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve('output', 'Games', 'Advance Wars - Dual Strike (USA, Australia).nds'),
     ]);
   });
 
@@ -768,7 +778,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
         for (const [idx, romsWithFile] of romsWithFiles.entries()) {
           const inputFile = romsWithFile.getInputFile();
-          expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
+          expect(inputFile.getFilePath()).toEqual(path.resolve(datGame.getRoms()[idx].getName()));
         }
       });
 
@@ -908,7 +918,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       candidates[0]
         .getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
-    ).toEqual(files.map((file) => path.join(mergedGameName, file.getFilePath())));
+    ).toEqual(files.map((file) => path.resolve(mergedGameName, path.basename(file.getFilePath()))));
   });
 });
 
@@ -1014,25 +1024,25 @@ describe('MAME v0.260', () => {
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
       .toSorted();
     expect(outputFiles).toEqual([
-      '2spicy.zip|6.0.0009.bin',
-      '2spicy.zip|6.0.0010.bin',
-      '2spicy.zip|6.0.0010a.bin',
-      '2spicy.zip|fpr-24370b.ic6',
-      '2spicy.zip|vid_bios.u504',
-      path.join('2spicy', 'dvp-0027a'),
-      path.join('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01'),
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_hh.hh',
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_hl.hl',
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_lh.lh',
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_ll.ll',
-      'a51mxr3k.zip|jagwave.rom',
-      path.join('a51mxr3k', 'area51mx'),
-      'area51mx.zip|2.0_68020_max-a51_kit_3h.3h',
-      'area51mx.zip|2.0_68020_max-a51_kit_3k.3k',
-      'area51mx.zip|2.0_68020_max-a51_kit_3m.3m',
-      'area51mx.zip|2.0_68020_max-a51_kit_3p.3p',
-      'area51mx.zip|jagwave.rom',
-      path.join('area51mx', 'area51mx'),
+      `${path.resolve('2spicy.zip')}|6.0.0009.bin`,
+      `${path.resolve('2spicy.zip')}|6.0.0010.bin`,
+      `${path.resolve('2spicy.zip')}|6.0.0010a.bin`,
+      `${path.resolve('2spicy.zip')}|fpr-24370b.ic6`,
+      `${path.resolve('2spicy.zip')}|vid_bios.u504`,
+      path.resolve('2spicy', 'dvp-0027a'),
+      path.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01'),
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hh.hh`,
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hl.hl`,
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_lh.lh`,
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_ll.ll`,
+      `${path.resolve('a51mxr3k.zip')}|jagwave.rom`,
+      path.resolve('a51mxr3k', 'area51mx'),
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3h.3h`,
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3k.3k`,
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3m.3m`,
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3p.3p`,
+      `${path.resolve('area51mx.zip')}|jagwave.rom`,
+      path.resolve('area51mx', 'area51mx'),
     ]);
   });
 
@@ -1054,21 +1064,21 @@ describe('MAME v0.260', () => {
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
       .toSorted();
     expect(outputFiles).toEqual([
-      path.join('2spicy', '6.0.0009.bin'),
-      path.join('2spicy', '6.0.0010.bin'),
-      path.join('2spicy', '6.0.0010a.bin'),
-      path.join('2spicy', 'fpr-24370b.ic6'),
-      path.join('2spicy', 'vid_bios.u504'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
-      path.join('a51mxr3k', 'jagwave.rom'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
-      path.join('area51mx', 'jagwave.rom'),
+      path.resolve('2spicy', '6.0.0009.bin'),
+      path.resolve('2spicy', '6.0.0010.bin'),
+      path.resolve('2spicy', '6.0.0010a.bin'),
+      path.resolve('2spicy', 'fpr-24370b.ic6'),
+      path.resolve('2spicy', 'vid_bios.u504'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
+      path.resolve('a51mxr3k', 'jagwave.rom'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
+      path.resolve('area51mx', 'jagwave.rom'),
     ]);
   });
 });

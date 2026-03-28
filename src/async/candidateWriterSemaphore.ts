@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import type WriteCandidate from '../types/writeCandidate.js';
 import KeyedMutex from './keyedMutex.js';
 import MappableSemaphore from './mappableSemaphore.js';
@@ -45,7 +43,7 @@ export default class CandidateWriterSemaphore {
       // Then, restrict concurrent writes to the same output paths
       const outputFilePaths = candidate
         .getRomsWithFiles()
-        .map((romWithFiles) => path.normalize(romWithFiles.getOutputFile().getFilePath()));
+        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath());
       return await this.outputPathsMutex.runExclusiveForKeys(outputFilePaths, async () => {
         return await callback(candidate);
       });

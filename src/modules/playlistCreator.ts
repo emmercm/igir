@@ -127,7 +127,7 @@ export default class PlaylistCreator extends Module {
           .getFilePath()
           .slice(commonDirectory.length)
           .replace(/^[\\/]/, '')
-          .replaceAll(/[\\/]/g, '/'),
+          .replaceAll('\\', '/'),
       )
       .toSorted()
       .join('\n')}\n`;
@@ -146,7 +146,7 @@ export default class PlaylistCreator extends Module {
       return path.dirname(files[0].getFilePath());
     }
 
-    const fileDirsSplit = files.map((file) => path.dirname(file.getFilePath()).split(/[\\/]/));
+    const fileDirsSplit = files.map((file) => path.dirname(file.getFilePath()).split(path.sep));
 
     const maxDepth = fileDirsSplit.reduce((max, file) => Math.max(max, file.length), 0);
     let lastCommonDir = '';

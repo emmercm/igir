@@ -25,7 +25,7 @@ import ProgressBarFake from '../../../console/progressBarFake.js';
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 describe('getEntryPath', () => {
-  test.each(['something.rom', path.join('foo', 'bar.rom')])(
+  test.each(['something.rom', 'foo/bar.rom'])(
     'should return the constructor value: %s',
     async (archiveEntryPath) => {
       const archive = new Zip('/some/archive.zip');

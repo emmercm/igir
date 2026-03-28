@@ -127,8 +127,7 @@ export default class Zip extends Archive {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
     const entry = entries.find(
       (entryFile) =>
-        entryFile.fileNameResolved().replaceAll(/[\\/]/g, '/') ===
-        entryPath.replaceAll(/[\\/]/g, '/'),
+        entryFile.fileNameResolved().replaceAll('\\', '/') === entryPath.replaceAll('\\', '/'),
     );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
@@ -204,7 +203,7 @@ export default class Zip extends Archive {
               readable.on('error', reject);
               await torrentZip.addStream(
                 readable,
-                outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
+                outputArchiveEntry.getEntryPath().replaceAll('\\', '/'),
                 inputFile.getSize(),
                 compressorThreads,
                 (progress) => {

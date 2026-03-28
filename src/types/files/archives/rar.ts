@@ -71,7 +71,7 @@ export default class Rar extends Archive {
       // iterated, so we have to execute this expression, but can throw away the results
       const extracted = [
         ...rar.extract({
-          files: [entryPath.replaceAll(/[\\/]/g, '/')],
+          files: [entryPath.replaceAll('\\', '/')],
         }).files,
       ];
       if (extracted.length === 0) {
