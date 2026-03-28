@@ -121,6 +121,56 @@ export interface GameProps {
  * {@link Release}s.
  */
 export default class Game implements GameProps {
+  static readonly BIOS_REGEX = /\[BIOS\]/i;
+  static readonly REVISION_NUMBER_REGEX = /\((Rev|Version)\s*([0-9.]+)\)/i;
+  static readonly REVISION_LETTER_REGEX = /\(Rev\s*([A-Z])\)/i;
+  static readonly TOSEC_VERSION_REGEX = /\Wv([0-9]+\.[0-9]+)\W/i;
+  static readonly RING_CODE_REGEX = /\(RE?-?([0-9]*)\)/i;
+  static readonly AFTERMARKET_REGEX = /\(Aftermarket[a-z0-9. ]*\)/i;
+  static readonly ALPHA_REGEX = /\(Alpha[a-z0-9. ]*\)/i;
+  static readonly ALTERNATE_REGEX = /\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i;
+  static readonly BAD_REGEX = /\[b[0-9]*\]/;
+  static readonly BETA_REGEX = /\(Beta[a-z0-9. ]*\)/i;
+  static readonly CRACKED_REGEX = /\[cr([0-9]+| [^\]]+)?\]/;
+  static readonly DEBUG_REGEX = /\(Debug[a-z0-9. ]*\)/i;
+  static readonly DEMO_REGEX = new RegExp(
+    [
+      '\\(Demo[a-z0-9. -]*\\)',
+      '@barai',
+      '\\(Kiosk[a-z0-9. -]*\\)',
+      '\\(Preview\\)',
+      'GameCube Preview',
+      'Kiosk Demo Disc',
+      'PS2 Kiosk',
+      'PSP System Kiosk',
+      'Taikenban', // "trial"
+      'Trial Edition',
+    ].join('|'),
+    'i',
+  );
+  static readonly ENHANCEMENT_CHIP_REGEX = /\(Enhancement Chip\)/i;
+  static readonly FIXED_REGEX = /\[f[0-9]*\]/;
+  static readonly HOMEBREW_REGEX = /\(Homebrew[a-z0-9. ]*\)/i;
+  static readonly MIA_REGEX = /\[MIA\]/i;
+  static readonly OVERDUMP_REGEX = /\[o[0-9]*\]/;
+  static readonly PIRATED_PAREN_REGEX = /\(Pirate[a-z0-9. ]*\)/i;
+  static readonly PIRATED_BRACKET_REGEX = /\[p[0-9]*\]/;
+  static readonly PROGRAM_REGEX = /\([a-z0-9. ]*Program\)|(Check|Sample) Program/i;
+  static readonly PROTOTYPE_REGEX = /\([^)]*Proto[a-z0-9. ]*\)/i;
+  static readonly SAMPLE_REGEX = /\([^)]*Sample[a-z0-9. ]*\)/i;
+  static readonly TRANSLATED_REGEX = /\[T[+-][^\]]+\]/;
+  static readonly UNLICENSED_REGEX = /\(Unl[a-z0-9. ]*\)/i;
+  static readonly BUNG_FIX_REGEX = /\(Bung\)|\[bf\]/i;
+  static readonly HACK_PAREN_REGEX = /\(Hack\)/i;
+  static readonly HACK_BRACKET_REGEX = /\[h[a-zA-Z90-9+]*\]/;
+  static readonly TRAINER_REGEX = /\[t[0-9]*\]/;
+  static readonly TWO_LETTER_LANGUAGE_REGEX = /\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/;
+  static readonly THREE_LETTER_LANGUAGE_REGEX = /\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/;
+  static readonly LONG_REGIONS_REGEX = new RegExp(
+    `\\(((${Internationalization.REGION_OPTIONS.map((regionOption) => regionOption.long).join('|')})(, (${Internationalization.REGION_OPTIONS.map((regionOption) => regionOption.long).join('|')}))*)\\)`,
+    'i',
+  );
+
   @Expose()
   readonly name: string;
 
@@ -261,7 +311,7 @@ export default class Game implements GameProps {
    * Is this game a collection of BIOS file(s).
    */
   getIsBios(): boolean {
-    return this.isBios === 'yes' || /\[BIOS\]/i.test(this.name);
+    return this.isBios === 'yes' || Game.BIOS_REGEX.test(this.name);
   }
 
   /**
@@ -327,13 +377,13 @@ export default class Game implements GameProps {
 
   getRevision(): number {
     // Numeric revision
-    const revNumberMatches = /\((Rev|Version)\s*([0-9.]+)\)/i.exec(this.getName());
+    const revNumberMatches = Game.REVISION_NUMBER_REGEX.exec(this.getName());
     if (revNumberMatches && revNumberMatches.length >= 3 && !Number.isNaN(revNumberMatches[1])) {
       return Number(revNumberMatches[2]);
     }
 
     // Letter revision
-    const revLetterMatches = /\(Rev\s*([A-Z])\)/i.exec(this.getName());
+    const revLetterMatches = Game.REVISION_LETTER_REGEX.exec(this.getName());
     if (revLetterMatches && revLetterMatches.length >= 2) {
       return (
         (revLetterMatches[1].toUpperCase().codePointAt(0) as number) -
@@ -343,13 +393,13 @@ export default class Game implements GameProps {
     }
 
     // TOSEC versions
-    const versionMatches = /\Wv([0-9]+\.[0-9]+)\W/i.exec(this.getName());
+    const versionMatches = Game.TOSEC_VERSION_REGEX.exec(this.getName());
     if (versionMatches && versionMatches.length >= 2 && !Number.isNaN(versionMatches[1])) {
       return Number(versionMatches[1]);
     }
 
     // Ring code revision
-    const ringCodeMatches = /\(RE?-?([0-9]*)\)/i.exec(this.getName());
+    const ringCodeMatches = Game.RING_CODE_REGEX.exec(this.getName());
     if (ringCodeMatches && ringCodeMatches.length >= 2) {
       if (ringCodeMatches[1] === '') {
         // Redump doesn't always include a number
@@ -366,28 +416,28 @@ export default class Game implements GameProps {
    * Is this game aftermarket (released after the last known console release)?
    */
   isAftermarket(): boolean {
-    return /\(Aftermarket[a-z0-9. ]*\)/i.test(this.name);
+    return Game.AFTERMARKET_REGEX.test(this.name);
   }
 
   /**
    * Is this game an alpha pre-release?
    */
   isAlpha(): boolean {
-    return /\(Alpha[a-z0-9. ]*\)/i.test(this.name);
+    return Game.ALPHA_REGEX.test(this.name);
   }
 
   /**
    * Is this game an alternate release?
    */
   isAlternate(): boolean {
-    return /\(Alt( [a-z0-9. ]*)?\)|\[a[0-9]*\]/i.test(this.name);
+    return Game.ALTERNATE_REGEX.test(this.name);
   }
 
   /**
    * Is this game a "bad" dump?
    */
   isBad(): boolean {
-    if (/\[b[0-9]*\]/.test(this.name)) {
+    if (Game.BAD_REGEX.test(this.name)) {
       return true;
     }
     if (this.isVerified()) {
@@ -404,7 +454,7 @@ export default class Game implements GameProps {
    * Is this game a beta pre-release?
    */
   isBeta(): boolean {
-    return /\(Beta[a-z0-9. ]*\)/i.test(this.name);
+    return Game.BETA_REGEX.test(this.name);
   }
 
   /**
@@ -418,31 +468,15 @@ export default class Game implements GameProps {
    * Is this game a "cracked" release (has copy protection removed)?
    */
   isCracked(): boolean {
-    return /\[cr([0-9]+| [^\]]+)?\]/.test(this.name);
+    return Game.CRACKED_REGEX.test(this.name);
   }
 
   /**
    * Does this game contain debug symbols?
    */
   isDebug(): boolean {
-    return /\(Debug[a-z0-9. ]*\)/i.test(this.name);
+    return Game.DEBUG_REGEX.test(this.name);
   }
-
-  static readonly DEMO_REGEX = new RegExp(
-    [
-      '\\(Demo[a-z0-9. -]*\\)',
-      '@barai',
-      '\\(Kiosk[a-z0-9. -]*\\)',
-      '\\(Preview\\)',
-      'GameCube Preview',
-      'Kiosk Demo Disc',
-      'PS2 Kiosk',
-      'PSP System Kiosk',
-      'Taikenban', // "trial"
-      'Trial Edition',
-    ].join('|'),
-    'i',
-  );
 
   /**
    * Is this game a demo?
@@ -458,21 +492,21 @@ export default class Game implements GameProps {
    * Is this game an enhancement chip? Primarily for SNES
    */
   isEnhancementChip(): boolean {
-    return /\(Enhancement Chip\)/i.test(this.name);
+    return Game.ENHANCEMENT_CHIP_REGEX.test(this.name);
   }
 
   /**
    * Is this game "fixed" (altered to run better in emulation)?
    */
   isFixed(): boolean {
-    return /\[f[0-9]*\]/.test(this.name);
+    return Game.FIXED_REGEX.test(this.name);
   }
 
   /**
    * Is this game community homebrew?
    */
   isHomebrew(): boolean {
-    return /\(Homebrew[a-z0-9. ]*\)/i.test(this.name);
+    return Game.HOMEBREW_REGEX.test(this.name);
   }
 
   /**
@@ -483,14 +517,14 @@ export default class Game implements GameProps {
    * https://wiki.romvault.com/doku.php?id=mia_rom_tracking#can_i_manually_flag_roms_as_mia
    */
   isMIA(): boolean {
-    return /\[MIA\]/i.test(this.name);
+    return Game.MIA_REGEX.test(this.name);
   }
 
   /**
    * Is this game an overdump (contains excess data)?
    */
   isOverdump(): boolean {
-    return /\[o[0-9]*\]/.test(this.name);
+    return Game.OVERDUMP_REGEX.test(this.name);
   }
 
   /**
@@ -504,7 +538,7 @@ export default class Game implements GameProps {
    * Is this game pirated (probably has copyright information removed)?
    */
   isPirated(): boolean {
-    return /\(Pirate[a-z0-9. ]*\)/i.test(this.name) || /\[p[0-9]*\]/.test(this.name);
+    return Game.PIRATED_PAREN_REGEX.test(this.name) || Game.PIRATED_BRACKET_REGEX.test(this.name);
   }
 
   /**
@@ -512,7 +546,7 @@ export default class Game implements GameProps {
    */
   isProgram(): boolean {
     return (
-      /\([a-z0-9. ]*Program\)|(Check|Sample) Program/i.test(this.name) ||
+      Game.PROGRAM_REGEX.test(this.name) ||
       this.getCategories().some((category) => category.toLowerCase() === 'applications')
     );
   }
@@ -522,7 +556,7 @@ export default class Game implements GameProps {
    */
   isPrototype(): boolean {
     return (
-      /\([^)]*Proto[a-z0-9. ]*\)/i.test(this.name) ||
+      Game.PROTOTYPE_REGEX.test(this.name) ||
       this.getCategories().some((category) => category.toLowerCase() === 'preproduction')
     );
   }
@@ -531,21 +565,21 @@ export default class Game implements GameProps {
    * Is this game a sample?
    */
   isSample(): boolean {
-    return /\([^)]*Sample[a-z0-9. ]*\)/i.test(this.name);
+    return Game.SAMPLE_REGEX.test(this.name);
   }
 
   /**
    * Is this game translated by the community?
    */
   isTranslated(): boolean {
-    return /\[T[+-][^\]]+\]/.test(this.name);
+    return Game.TRANSLATED_REGEX.test(this.name);
   }
 
   /**
    * Is this game unlicensed (but was still physically produced and sold)?
    */
   isUnlicensed(): boolean {
-    return /\(Unl[a-z0-9. ]*\)/i.test(this.name);
+    return Game.UNLICENSED_REGEX.test(this.name);
   }
 
   /**
@@ -560,7 +594,7 @@ export default class Game implements GameProps {
    * @see https://en.wikipedia.org/wiki/Bung_Enterprises
    */
   hasBungFix(): boolean {
-    return /\(Bung\)|\[bf\]/i.test(this.name);
+    return Game.BUNG_FIX_REGEX.test(this.name);
   }
 
   /**
@@ -568,8 +602,8 @@ export default class Game implements GameProps {
    */
   hasHack(): boolean {
     return (
-      /\(Hack\)/i.test(this.name) ||
-      /\[h[a-zA-Z90-9+]*\]/.test(this.name) ||
+      Game.HACK_PAREN_REGEX.test(this.name) ||
+      Game.HACK_BRACKET_REGEX.test(this.name) ||
       (this.manufacturer?.toLowerCase().includes('hack') ?? false)
     );
   }
@@ -578,7 +612,7 @@ export default class Game implements GameProps {
    * Does this game have a trainer?
    */
   hasTrainer(): boolean {
-    return /\[t[0-9]*\]/.test(this.name);
+    return Game.TRAINER_REGEX.test(this.name);
   }
 
   /**
@@ -703,11 +737,7 @@ export default class Game implements GameProps {
   // Internationalization
 
   getRegions(): string[] {
-    const longRegions = Internationalization.REGION_OPTIONS.map(
-      (regionOption) => regionOption.long,
-    ).join('|');
-    const longRegionsRegex = new RegExp(`\\(((${longRegions})(, (${longRegions}))*)\\)`, 'i');
-    const longRegionsMatch = this.getName().match(longRegionsRegex);
+    const longRegionsMatch = this.getName().match(Game.LONG_REGIONS_REGEX);
     if (longRegionsMatch !== null) {
       return longRegionsMatch[1]
         .toLowerCase()
@@ -764,7 +794,7 @@ export default class Game implements GameProps {
   }
 
   private getTwoLetterLanguagesFromName(): string[] {
-    const twoMatches = /\(([a-zA-Z]{2}([,+-][a-zA-Z]{2})*)\)/.exec(this.getName());
+    const twoMatches = Game.TWO_LETTER_LANGUAGE_REGEX.exec(this.getName());
     if (twoMatches && twoMatches.length >= 2) {
       const twoMatchesParsed = twoMatches[1]
         .replace(/-[a-zA-Z]+$/, '') // chop off country
@@ -781,7 +811,7 @@ export default class Game implements GameProps {
 
   private getThreeLetterLanguagesFromName(): string[] {
     // Get language from long languages in the game name
-    const threeMatches = /\(([a-zA-Z]{3}(-[a-zA-Z]{3})*)\)/.exec(this.getName());
+    const threeMatches = Game.THREE_LETTER_LANGUAGE_REGEX.exec(this.getName());
     if (threeMatches && threeMatches.length >= 2) {
       const threeMatchesParsed = threeMatches[1]
         .split('-')

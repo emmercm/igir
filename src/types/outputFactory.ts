@@ -89,6 +89,8 @@ export class OutputPath implements ParsedPathWithEntryPath {
  * {@link Game}.
  */
 export default class OutputFactory {
+  private static readonly LEFTOVER_TOKEN_REGEX = /\{[a-zA-Z]+\}/g;
+
   /**
    * Get the full output path for a ROM file.
    * @param options the {@link Options} instance for this run of igir.
@@ -230,7 +232,7 @@ export default class OutputFactory {
     result = this.replaceOutputTokens(result, options, outputRomFilename);
     result = this.replaceConsoleTokens(result, options, dat, outputRomFilename);
 
-    const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
+    const leftoverTokens = result.match(OutputFactory.LEFTOVER_TOKEN_REGEX);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new TokenReplacementException(
         `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')}`,
