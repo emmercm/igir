@@ -67,7 +67,7 @@ jobs:
 
           # Restrict types
           if [[ ! "${NEW_TITLE}" =~ ^${ALLOWED_TYPES}: ]]; then
-            echo "ERROR=The conventional commit type isn't in the allowed list: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
+            echo "ERROR=This repository uses squash-merging, so it requires pull request titles to look like conventional commit messages. The pull request title must be prefixed with one of: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
 
