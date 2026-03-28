@@ -2,9 +2,8 @@ import fs from 'node:fs';
 import stream from 'node:stream';
 import zlib from 'node:zlib';
 
-import zstd from 'zstd-napi';
-
 import StreamPoly from '../../../src/polyfill/streamPoly.js';
+import zstd from '../../zstd-1.5.5/index.js';
 import type CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
 import type { CompressionMethodValue, IFileRecord } from './fileRecord.js';
 import FileRecord, { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
@@ -21,7 +20,9 @@ export interface ILocalFileHeader extends IFileRecord {
  * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#Local_file_header
  */
 export default class LocalFileHeader extends FileRecord {
+  // eslint-disable-next-line unicorn/no-array-reverse
   static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
+  // eslint-disable-next-line unicorn/no-array-reverse
   static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
 
   // Size with the signature, and without variable length fields at the end
@@ -82,7 +83,7 @@ export default class LocalFileHeader extends FileRecord {
           fixedLengthBuffer.length,
       });
     } else {
-      variableLengthBuffer = Buffer.alloc(0);
+      variableLengthBuffer = Buffer.allocUnsafe(0);
     }
 
     const fileName = Buffer.from(variableLengthBuffer.subarray(0, fileNameLength));
@@ -181,7 +182,7 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return this file's uncompressed/decompressed stream.
    */
-  uncompressedStream(highWaterMark?: number): stream.Stream {
+  uncompressedStream(highWaterMark?: number): stream.Readable {
     switch (this.compressionMethod) {
       case CompressionMethod.STORE: {
         return this.compressedStream(highWaterMark);

@@ -2,6 +2,7 @@ import type { ChalkInstance } from 'chalk';
 import chalk from 'chalk';
 import isUnicodeSupported from 'is-unicode-supported';
 
+import IntlPoly from '../polyfill/intlPoly.js';
 import type { LogLevelValue } from './logLevel.js';
 import { LogLevel } from './logLevel.js';
 import type { SingleBarOptions } from './singleBar.js';
@@ -28,6 +29,7 @@ export const ProgressBarSymbol: Record<string, ColoredSymbol> = {
   ROM_HEADER_DETECTION: { symbol: '^', color: chalk.magenta },
   ROM_TRIMMING_DETECTION: { symbol: UNICODE_SUPPORTED ? '⌵' : 'v', color: chalk.magenta },
   ROM_INDEXING: { symbol: '♦', color: chalk.magenta },
+  PATCH_PARSING: { symbol: 'Σ', color: chalk.magenta },
   // Processing a single DAT
   DAT_GROUPING_SIMILAR: { symbol: '∩', color: chalk.cyan },
   DAT_MERGE_SPLIT: { symbol: '↔', color: chalk.cyan },
@@ -55,6 +57,8 @@ export default abstract class ProgressBar {
   abstract addChildBar(options: SingleBarOptions): ProgressBar;
 
   abstract setSymbol(symbol: ColoredSymbol): void;
+
+  abstract getName(): string | undefined;
 
   abstract setName(name: string): void;
 
@@ -85,7 +89,7 @@ export default abstract class ProgressBar {
     }
 
     this.finish(
-      `${count.toLocaleString()} ${noun.trim()}${count === 1 ? '' : pluralSuffix} ${verb}`,
+      `${IntlPoly.toLocaleString(count)} ${noun.trim()}${count === 1 ? '' : pluralSuffix} ${verb}`,
     );
   }
 

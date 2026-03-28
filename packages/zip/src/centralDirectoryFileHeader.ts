@@ -26,7 +26,7 @@ export default class CentralDirectoryFileHeader extends FileRecord {
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE = Buffer.from(
     '02014b50',
     'hex',
-  ).reverse();
+  ).toReversed();
 
   // Size with the signature, and without variable length fields at the end
   private static readonly CENTRAL_DIRECTORY_FILE_HEADER_SIZE = 46;
@@ -129,7 +129,7 @@ export default class CentralDirectoryFileHeader extends FileRecord {
           position: position + fixedLengthBuffer.length,
         });
       } else {
-        variableLengthBuffer = Buffer.alloc(0);
+        variableLengthBuffer = Buffer.allocUnsafe(0);
       }
 
       const fileName = Buffer.from(variableLengthBuffer.subarray(0, fileNameLength));

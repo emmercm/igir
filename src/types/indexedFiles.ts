@@ -61,7 +61,7 @@ export default class IndexedFiles {
     files.forEach((file) => {
       const crc32WithSize = `${file.getCrc32()}|${file.getSize()}`;
       if (crc32RawMap.has(crc32WithSize)) {
-        crc32RawMap.get(crc32WithSize)?.unshift(file);
+        crc32RawMap.get(crc32WithSize)?.push(file);
       } else {
         crc32RawMap.set(crc32WithSize, [file]);
       }
@@ -69,7 +69,7 @@ export default class IndexedFiles {
       const md5 = file.getMd5();
       if (md5) {
         if (md5RawMap.has(md5)) {
-          md5RawMap.get(md5)?.unshift(file);
+          md5RawMap.get(md5)?.push(file);
         } else {
           md5RawMap.set(md5, [file]);
         }
@@ -78,7 +78,7 @@ export default class IndexedFiles {
       const sha1 = file.getSha1();
       if (sha1) {
         if (sha1RawMap.has(sha1)) {
-          sha1RawMap.get(sha1)?.unshift(file);
+          sha1RawMap.get(sha1)?.push(file);
         } else {
           sha1RawMap.set(sha1, [file]);
         }
@@ -87,7 +87,7 @@ export default class IndexedFiles {
       const sha256 = file.getSha256();
       if (sha256) {
         if (sha256RawMap.has(sha256)) {
-          sha256RawMap.get(sha256)?.unshift(file);
+          sha256RawMap.get(sha256)?.push(file);
         } else {
           sha256RawMap.set(sha256, [file]);
         }
@@ -130,7 +130,7 @@ export default class IndexedFiles {
       }
 
       for (const romPadding of file.getPaddings()) {
-        const paddedCrc32 = romPadding.getCrc32();
+        const paddedCrc32 = `${romPadding.getCrc32()}|${romPadding.getPaddedSize()}`;
         if (paddedCrc32) {
           if (crc32PaddedMap.has(paddedCrc32)) {
             crc32PaddedMap.get(paddedCrc32)?.push(file);
@@ -228,30 +228,30 @@ export default class IndexedFiles {
   /**
    * Find file(s) in the index based some search criteria.
    */
-  findFiles(file: File | ROM): File[] | undefined {
-    const sha256 = file.sha256?.replace(/[^0-9a-f]/gi, '');
-    if (sha256 && this.sha256.has(sha256)) {
-      return this.sha256.get(sha256);
+  findFiles(file: File | ROM): File[] {
+    let results: File[] = [];
+
+    const sha256 = file.sha256?.replaceAll(/[^0-9a-f]/gi, '');
+    if (sha256) {
+      results = [...results, ...(this.sha256.get(sha256) ?? [])];
     }
 
-    const sha1 = file.sha1?.replace(/[^0-9a-f]/gi, '');
-    if (sha1 && this.sha1.has(sha1)) {
-      return this.sha1.get(sha1);
+    const sha1 = file.sha1?.replaceAll(/[^0-9a-f]/gi, '');
+    if (sha1) {
+      results = [...results, ...(this.sha1.get(sha1) ?? [])];
     }
 
-    const md5 = file.md5?.replace(/[^0-9a-f]/gi, '');
-    if (md5 && this.md5.has(md5)) {
-      return this.md5.get(md5);
+    const md5 = file.md5?.replaceAll(/[^0-9a-f]/gi, '');
+    if (md5) {
+      results = [...results, ...(this.md5.get(md5) ?? [])];
     }
 
-    const crc32 = file.crc32?.replace(/[^0-9a-f]/gi, '');
+    const crc32 = file.crc32?.replaceAll(/[^0-9a-f]/gi, '');
     if (crc32) {
       const crc32WithSize = `${crc32}|${file.getSize()}`;
-      if (this.crc32.has(crc32WithSize)) {
-        return this.crc32.get(crc32WithSize);
-      }
+      results = [...results, ...(this.crc32.get(crc32WithSize) ?? [])];
     }
 
-    return undefined;
+    return results.filter(ArrayPoly.filterUniqueMapped((f) => f.toString()));
   }
 }

@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import type IOFile from '../../polyfill/ioFile.js';
 import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
@@ -21,9 +22,9 @@ export default abstract class Patch {
   }
 
   protected static getCrcFromPath(fileBasename: string): string {
-    const matches = /(^|[^a-z0-9])([a-f0-9]{8})([^a-z0-9]|$)/i.exec(fileBasename);
+    const matches = /(^|[^a-z0-9])(0x)?([a-f0-9]{8})([^a-z0-9]|$)/i.exec(fileBasename);
     if (matches && matches.length >= 3) {
-      return matches[2].toLowerCase();
+      return matches[3].toLowerCase();
     }
 
     throw new IgirException(`couldn't parse base file CRC for patch: ${fileBasename}`);
@@ -53,7 +54,11 @@ export default abstract class Patch {
       .trim();
   }
 
-  abstract createPatchedFile(inputRomFile: File, outputRomPath: string): Promise<void>;
+  abstract createPatchedFile(
+    inputRomFile: File,
+    outputRomPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void>;
 
   protected static async readUpsUint(fp: IOFile): Promise<number> {
     let data = 0;

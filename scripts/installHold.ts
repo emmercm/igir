@@ -3,11 +3,10 @@
  * newer version of Node.js.
  */
 
-import { spawnSync } from 'node:child_process';
+import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import util from 'node:util';
 
 import semver from 'semver';
 
@@ -23,7 +22,7 @@ interface PackageJson {
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(
-  (await util.promisify(fs.readFile)(path.join(__dirname, '..', 'package.json'))).toString(),
+  (await fs.promises.readFile(path.join(__dirname, '..', 'package.json'))).toString(),
 ) as PackageJson;
 const enginesNode = packageJson.engines?.node;
 if (!enginesNode) {
@@ -41,17 +40,25 @@ const heldBackDependencies = Object.entries(packageJson)
   .filter(([dependencyType]) => dependencyTypes.has(dependencyType))
   .map(([dependencyType, dependencies]) => {
     const heldBackDependencies = Object.entries(dependencies as Record<string, string>)
+      // Normalize the dependency version so 'semver' knows how to parse it
+      .map(([depPackageName, depPackageVersion]) => [
+        depPackageName,
+        depPackageVersion.replace(/^[\^~]/, ''),
+      ])
       .map(([depPackageName, depPackageVersion]): [string, Record<string, unknown>] | undefined => {
         const depPackageNameVersion = `${depPackageName}@${depPackageVersion}`;
 
         process.stderr.write(`${dependencyType}: ${depPackageNameVersion} ... `);
         const depPackageJsonLatest = JSON.parse(
-          spawnSync('npm', ['view', '--json', `${depPackageName}@latest`], {
-            windowsHide: true,
-          }).stdout.toString(),
+          child_process
+            .spawnSync('npm', ['view', '--json', `${depPackageName}@latest`], {
+              windowsHide: true,
+            })
+            .stdout.toString(),
         ) as PackageJson;
 
         const depPackageNewerVersions = semver
+          // eslint-disable-next-line unicorn/no-array-sort
           .sort(depPackageJsonLatest.versions ?? [])
           .filter(
             (remoteVersion) =>
@@ -68,9 +75,11 @@ const heldBackDependencies = Object.entries(packageJson)
           .map((remoteVersion): [string, string] | undefined => {
             process.stderr.write(`  ${depPackageName}@${remoteVersion} ... `);
             const depPackageJson = JSON.parse(
-              spawnSync('npm', ['view', '--json', `${depPackageName}@${remoteVersion}`], {
-                windowsHide: true,
-              }).stdout.toString(),
+              child_process
+                .spawnSync('npm', ['view', '--json', `${depPackageName}@${remoteVersion}`], {
+                  windowsHide: true,
+                })
+                .stdout.toString(),
             ) as PackageJson;
 
             if (!depPackageJson.engines?.node) {
@@ -102,4 +111,8 @@ const heldBackDependencies = Object.entries(packageJson)
     ];
   });
 
-process.stdout.write(`${JSON.stringify(Object.fromEntries(heldBackDependencies), undefined, 2)}\n`);
+if (heldBackDependencies.reduce((sum, [_type, deps]) => sum + Object.keys(deps).length, 0) > 0) {
+  process.stdout.write(
+    `${JSON.stringify(Object.fromEntries(heldBackDependencies), undefined, 2)}\n`,
+  );
+}

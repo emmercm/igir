@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import type { File as CueFile, Track } from '@gplane/cue';
 import { parse, TrackDataType } from '@gplane/cue';
@@ -42,15 +41,16 @@ export default class ChdBinCueParser {
     cueFilePath: string,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const cueData = await util.promisify(fs.readFile)(cueFilePath);
+    const cueData = await fs.promises.readFile(cueFilePath);
     const cueSheet = parse(cueData.toString(), {
       fatal: true,
     }).sheet;
 
     const binFiles = (
       await Promise.all(
-        cueSheet.files.flatMap(async (file) =>
-          this.parseCueFile(archive, file, path.dirname(cueFilePath), checksumBitmask),
+        cueSheet.files.flatMap(
+          async (file) =>
+            await this.parseCueFile(archive, file, path.dirname(cueFilePath), checksumBitmask),
         ),
       )
     ).flat();
@@ -87,7 +87,7 @@ export default class ChdBinCueParser {
     let nextItemTimeOffset = Math.floor(fileSize / globalBlockSize);
 
     const archiveEntries: ArchiveEntry<T>[] = [];
-    for (const track of [...file.tracks].reverse()) {
+    for (const track of file.tracks.toReversed()) {
       const firstIndex = track.indexes.at(0);
       if (!firstIndex) {
         // The track has no indexes, so we can't extract anything
@@ -131,7 +131,7 @@ export default class ChdBinCueParser {
         ),
       );
     }
-    return archiveEntries.reverse();
+    return archiveEntries.toReversed();
   }
 
   private static parseCueTrackBlockSize(firstTrack: Track): number {

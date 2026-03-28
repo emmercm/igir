@@ -38,6 +38,14 @@ export default class ROM implements ROMProps {
   readonly name: string;
 
   @Expose()
+  @Transform(({ value }: { value: undefined | string | number }) => {
+    if (typeof value === 'number') {
+      return value;
+    } else if (typeof value === 'string') {
+      return Number.parseInt(value);
+    }
+    return 0;
+  })
   readonly size: number;
 
   @Expose({ name: 'crc' })
@@ -105,7 +113,7 @@ export default class ROM implements ROMProps {
   // Property getters
 
   getName(): string {
-    return this.name.replaceAll(/[\\/]/g, '/');
+    return this.name.replaceAll('\\', '/');
   }
 
   getSize(): number {
@@ -154,7 +162,7 @@ export default class ROM implements ROMProps {
    * Turn this {@link ROM} into a non-existent {@link File}.
    */
   async toFile(): Promise<File> {
-    return File.fileOf({
+    return await File.fileOf({
       ...this,
       filePath: this.getName(),
       size: this.getSize(),
@@ -165,7 +173,7 @@ export default class ROM implements ROMProps {
    * Turn this {@link ROM} into a non-existent {@link ArchiveEntry}, given a {@link Archive}.
    */
   async toArchiveEntry<A extends Archive>(archive: A): Promise<ArchiveEntry<A>> {
-    return ArchiveEntry.entryOf({
+    return await ArchiveEntry.entryOf({
       ...this,
       archive,
       entryPath: this.getName(),

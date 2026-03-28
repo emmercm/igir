@@ -112,26 +112,30 @@ describe('isBeta', () => {
 });
 
 describe('isBootleg', () => {
-  test.each([
-    // mame0260
-    [new Game({ name: '1942abl', cloneOf: '1942', manufacturer: 'bootleg' })],
-    [new Game({ name: 'abattle', cloneOf: 'astrof', manufacturer: 'bootleg? (Sidam)' })],
-    [new Game({ name: 'acombat3', cloneOf: 'astrof', manufacturer: 'bootleg (Proel)' })],
-    [new Game({ name: 'aladmdb', manufacturer: 'bootleg / Sega' })],
-    [new Game({ name: 'goldnpke', cloneOf: 'goldnpkr', manufacturer: 'Intercoast (bootleg)' })],
-    [new Game({ name: 'm4hslo', manufacturer: '(bootleg)' })],
-    [new Game({ name: 'mtwinsb', cloneOf: 'mtwins', manufacturer: 'David Inc. (bootleg)' })],
-  ])('should evaluate true: %s', (game) => {
+  test.each(
+    [
+      // mame0260
+      new Game({ name: '1942abl', cloneOf: '1942', manufacturer: 'bootleg' }),
+      new Game({ name: 'abattle', cloneOf: 'astrof', manufacturer: 'bootleg? (Sidam)' }),
+      new Game({ name: 'acombat3', cloneOf: 'astrof', manufacturer: 'bootleg (Proel)' }),
+      new Game({ name: 'aladmdb', manufacturer: 'bootleg / Sega' }),
+      new Game({ name: 'goldnpke', cloneOf: 'goldnpkr', manufacturer: 'Intercoast (bootleg)' }),
+      new Game({ name: 'm4hslo', manufacturer: '(bootleg)' }),
+      new Game({ name: 'mtwinsb', cloneOf: 'mtwins', manufacturer: 'David Inc. (bootleg)' }),
+    ].map((game) => [game.getName(), game]),
+  )('should evaluate true: %s', (_, game) => {
     expect(game.isBootleg()).toEqual(true);
     expect(game.isRetail()).toEqual(false);
   });
 
-  test.each([
-    // mame0260
-    [new Game({ name: 'puckman', manufacturer: 'Namco' })],
-    [new Game({ name: 'galaga', manufacturer: 'Namco' })],
-    [new Game({ name: 'ghouls', manufacturer: 'Capcom' })],
-  ])('should evaluate false: %s', (game) => {
+  test.each(
+    [
+      // mame0260
+      new Game({ name: 'puckman', manufacturer: 'Namco' }),
+      new Game({ name: 'galaga', manufacturer: 'Namco' }),
+      new Game({ name: 'ghouls', manufacturer: 'Capcom' }),
+    ].map((game) => [game.getName(), game]),
+  )('should evaluate false: %s', (_, game) => {
     expect(game.isBootleg()).toEqual(false);
     expect(game.isRetail()).toEqual(true);
   });
@@ -334,30 +338,34 @@ describe('hasBungFix', () => {
 });
 
 describe('hasHack', () => {
-  test.each([
-    // GoodTools
-    [new Game({ name: 'Smurfs, The (UE) (V1.0) (M4) [h1]' })],
-    [new Game({ name: 'Space Invasion (Unl) [C][hIR]' })],
-    [new Game({ name: 'Super Mario 4 (Unl) [p1][h1C]' })],
-    // mame0260
-    [new Game({ name: '1942h', cloneOf: '1942', manufacturer: 'hack (Two Bit Score)' })],
-    [new Game({ name: 'arbv2', cloneOf: 'arb', manufacturer: 'hack (Steve Braid)' })],
-    [new Game({ name: 'hangly', cloneOf: 'puckman', manufacturer: 'hack (Igleck)' })],
-    [new Game({ name: 'komemokos', cloneOf: 'puckman', manufacturer: 'hack' })],
-    [new Game({ name: 'm4andycp10_a', cloneOf: 'm4andycp', manufacturer: 'hack?' })],
-  ])('should evaluate true: %s', (game) => {
+  test.each(
+    [
+      // GoodTools
+      new Game({ name: 'Smurfs, The (UE) (V1.0) (M4) [h1]' }),
+      new Game({ name: 'Space Invasion (Unl) [C][hIR]' }),
+      new Game({ name: 'Super Mario 4 (Unl) [p1][h1C]' }),
+      // mame0260
+      new Game({ name: '1942h', cloneOf: '1942', manufacturer: 'hack (Two Bit Score)' }),
+      new Game({ name: 'arbv2', cloneOf: 'arb', manufacturer: 'hack (Steve Braid)' }),
+      new Game({ name: 'hangly', cloneOf: 'puckman', manufacturer: 'hack (Igleck)' }),
+      new Game({ name: 'komemokos', cloneOf: 'puckman', manufacturer: 'hack' }),
+      new Game({ name: 'm4andycp10_a', cloneOf: 'm4andycp', manufacturer: 'hack?' }),
+    ].map((game) => [game.getName(), game]),
+  )('should evaluate true: %s', (_, game) => {
     expect(game.hasHack()).toEqual(true);
     expect(game.isRetail()).toEqual(false);
   });
 
-  test.each([
-    // GoodTools
-    [new Game({ name: 'Survival Kids (U) [C][!]' })],
-    // mame0260
-    [new Game({ name: '1942', manufacturer: 'Capcom' })],
-    [new Game({ name: 'arb', manufacturer: 'AVE Micro Systems' })],
-    [new Game({ name: 'puckman', manufacturer: 'Namco' })],
-  ])('should evaluate false: %s', (game) => {
+  test.each(
+    [
+      // GoodTools
+      new Game({ name: 'Survival Kids (U) [C][!]' }),
+      // mame0260
+      new Game({ name: '1942', manufacturer: 'Capcom' }),
+      new Game({ name: 'arb', manufacturer: 'AVE Micro Systems' }),
+      new Game({ name: 'puckman', manufacturer: 'Namco' }),
+    ].map((game) => [game.getName(), game]),
+  )('should evaluate false: %s', (_, game) => {
     expect(game.hasHack()).toEqual(false);
     expect(game.isRetail()).toEqual(true);
   });
@@ -375,102 +383,114 @@ describe('hasTrainer', () => {
 });
 
 describe('getRegions', () => {
-  test.each([
-    // No-Intro
-    [
-      new Game({
-        name: "Big Bird's Egg Catch (Japan, USA) (En)",
-        release: [
-          new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'JPN'),
-          new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'USA'),
+  test.each(
+    (
+      [
+        // No-Intro
+        [
+          new Game({
+            name: "Big Bird's Egg Catch (Japan, USA) (En)",
+            release: [
+              new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'JPN'),
+              new Release("Big Bird's Egg Catch (Japan, USA) (En)", 'USA'),
+            ],
+          }),
+          ['JPN', 'USA'],
         ],
-      }),
-      ['JPN', 'USA'],
-    ],
-    [
-      new Game({
-        name: 'Tetris (World) (Rev 1)',
-        release: [
-          new Release('Tetris (World) (Rev 1)', 'EUR'),
-          new Release('Tetris (World) (Rev 1)', 'JPN'),
-          new Release('Tetris (World) (Rev 1)', 'USA'),
+        [
+          new Game({
+            name: 'Tetris (World) (Rev 1)',
+            release: [
+              new Release('Tetris (World) (Rev 1)', 'EUR'),
+              new Release('Tetris (World) (Rev 1)', 'JPN'),
+              new Release('Tetris (World) (Rev 1)', 'USA'),
+            ],
+          }),
+          ['WORLD'],
         ],
-      }),
-      ['WORLD'],
-    ],
-    [
-      new Game({
-        name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
-        release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
-      }),
-      ['USA', 'EUR'],
-    ],
-    [
-      new Game({
-        name: 'Tetris Flash (Japan) (SGB Enhanced)',
-        release: new Release('Tetris Flash (Japan) (SGB Enhanced)', 'JPN'),
-      }),
-      ['JPN'],
-    ],
-  ])('should prefer game name regions over release regions: %s', (game, expectedRegions) => {
+        [
+          new Game({
+            name: 'Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)',
+            release: new Release('Tetris 2 (USA, Europe) (Rev 1) (SGB Enhanced)', 'EUR'),
+          }),
+          ['USA', 'EUR'],
+        ],
+        [
+          new Game({
+            name: 'Tetris Flash (Japan) (SGB Enhanced)',
+            release: new Release('Tetris Flash (Japan) (SGB Enhanced)', 'JPN'),
+          }),
+          ['JPN'],
+        ],
+      ] satisfies [Game, string[]][]
+    ).map(([game, expectedRegions]) => [game.getName(), game, expectedRegions]),
+  )('should prefer game name regions over release regions: %s', (_, game, expectedRegions) => {
     expect(game.getRegions()).toEqual(expectedRegions);
   });
 });
 
 describe('getLanguages', () => {
-  test.each([
-    [
-      new Game({
-        name: 'Choplifter (Japan) (En) (Rev 1)',
-        release: new Release('Choplifter (Japan) (En) (Rev 1)', 'JPN'),
-      }),
-      ['EN'],
-    ],
-    [
-      new Game({
-        name: 'Flipull - An Exciting Cube Game (Japan) (En) (Rev 1)',
-        release: new Release('Flipull - An Exciting Cube Game (Japan) (En) (Rev 1)', 'JPN'),
-      }),
-      ['EN'],
-    ],
-    [
-      new Game({
-        name: 'Legend of Zelda, The - A Link to the Past (Canada) (Fr)',
-        release: new Release('Legend of Zelda, The - A Link to the Past (Canada) (Fr)', 'CAN'),
-      }),
-      ['FR'],
-    ],
-    [
-      new Game({
-        name: '1080 Snowboarding (Europe) (En,Ja,Fr,De)',
-        release: new Release('1080 Snowboarding (Europe) (En,Ja,Fr,De)', 'EUR'),
-      }),
-      ['EN', 'JA', 'FR', 'DE'],
-    ],
-  ])(
+  test.each(
+    (
+      [
+        [
+          new Game({
+            name: 'Choplifter (Japan) (En) (Rev 1)',
+            release: new Release('Choplifter (Japan) (En) (Rev 1)', 'JPN'),
+          }),
+          ['EN'],
+        ],
+        [
+          new Game({
+            name: 'Flipull - An Exciting Cube Game (Japan) (En) (Rev 1)',
+            release: new Release('Flipull - An Exciting Cube Game (Japan) (En) (Rev 1)', 'JPN'),
+          }),
+          ['EN'],
+        ],
+        [
+          new Game({
+            name: 'Legend of Zelda, The - A Link to the Past (Canada) (Fr)',
+            release: new Release('Legend of Zelda, The - A Link to the Past (Canada) (Fr)', 'CAN'),
+          }),
+          ['FR'],
+        ],
+        [
+          new Game({
+            name: '1080 Snowboarding (Europe) (En,Ja,Fr,De)',
+            release: new Release('1080 Snowboarding (Europe) (En,Ja,Fr,De)', 'EUR'),
+          }),
+          ['EN', 'JA', 'FR', 'DE'],
+        ],
+      ] satisfies [Game, string[]][]
+    ).map(([game, expectedLanguages]) => [game.getName(), game, expectedLanguages]),
+  )(
     'should prefer game name languages over release region language: %s',
-    (game, expectedLanguages) => {
+    (_, game, expectedLanguages) => {
       expect(game.getLanguages()).toEqual(expectedLanguages);
     },
   );
 
-  test.each([
-    [
-      new Game({
-        name: 'Punch-Out!! (Europe)',
-        release: new Release('Punch-Out!! (Europe)', 'EUR'),
-      }),
-      ['EN'],
-    ],
-    [new Game({ name: "Mike Tyson's Punch-Out!! (Japan, USA) (En) (Rev 1)" }), ['EN']],
-    [
-      new Game({
-        name: 'Legend of Zelda, The - A Link to the Past (Germany)',
-        release: new Release('Legend of Zelda, The - A Link to the Past (Germany)', 'GER'),
-      }),
-      ['DE'],
-    ],
-  ])('should get language from region: %s', (game, expectedLanguages) => {
+  test.each(
+    (
+      [
+        [
+          new Game({
+            name: 'Punch-Out!! (Europe)',
+            release: new Release('Punch-Out!! (Europe)', 'EUR'),
+          }),
+          ['EN'],
+        ],
+        [new Game({ name: "Mike Tyson's Punch-Out!! (Japan, USA) (En) (Rev 1)" }), ['EN']],
+        [
+          new Game({
+            name: 'Legend of Zelda, The - A Link to the Past (Germany)',
+            release: new Release('Legend of Zelda, The - A Link to the Past (Germany)', 'GER'),
+          }),
+          ['DE'],
+        ],
+      ] satisfies [Game, string[]][]
+    ).map(([game, expectedLanguages]) => [game.getName(), game, expectedLanguages]),
+  )('should get language from region: %s', (_, game, expectedLanguages) => {
     expect(game.getLanguages()).toEqual(expectedLanguages);
   });
 });

@@ -1,8 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
-import DriveSemaphore from '../../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import Logger from '../../../../src/console/logger.js';
 import { LogLevel } from '../../../../src/console/logLevel.js';
 import Temp from '../../../../src/globals/temp.js';
@@ -15,12 +15,12 @@ import Chd from '../../../../src/types/files/archives/chd/chd.js';
 import Gcz from '../../../../src/types/files/archives/dolphin/gcz.js';
 import Rvz from '../../../../src/types/files/archives/dolphin/rvz.js';
 import Wia from '../../../../src/types/files/archives/dolphin/wia.js';
+import Gzip from '../../../../src/types/files/archives/gzip.js';
 import Cso from '../../../../src/types/files/archives/maxcso/cso.js';
 import Dax from '../../../../src/types/files/archives/maxcso/dax.js';
 import Zso from '../../../../src/types/files/archives/maxcso/zso.js';
 import NkitIso from '../../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../../src/types/files/archives/rar.js';
-import Gzip from '../../../../src/types/files/archives/sevenZip/gzip.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Z from '../../../../src/types/files/archives/sevenZip/z.js';
 import ZipSpanned from '../../../../src/types/files/archives/sevenZip/zipSpanned.js';
@@ -32,7 +32,7 @@ import FileFactory from '../../../../src/types/files/fileFactory.js';
 import Options from '../../../../src/types/options.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 describe('getArchiveEntries', () => {
   test.each([
@@ -108,33 +108,33 @@ describe('getArchiveEntries', () => {
     [
       './test/fixtures/roms/7z/onetwothree.7z',
       [
-        [path.join('1', 'one.rom'), 'f817a89f'],
-        [path.join('2', 'two.rom'), '96170874'],
-        [path.join('3', 'three.rom'), 'ff46c5d8'],
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/rar/onetwothree.rar',
       [
-        [path.join('1', 'one.rom'), 'f817a89f'],
-        [path.join('2', 'two.rom'), '96170874'],
-        [path.join('3', 'three.rom'), 'ff46c5d8'],
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/tar/onetwothree.tar.gz',
       [
-        [path.join('1', 'one.rom'), 'f817a89f'],
-        [path.join('2', 'two.rom'), '96170874'],
-        [path.join('3', 'three.rom'), 'ff46c5d8'],
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
       ],
     ],
     [
       './test/fixtures/roms/zip/onetwothree.zip',
       [
-        [path.join('1', 'one.rom'), 'f817a89f'],
-        [path.join('2', 'two.rom'), '96170874'],
-        [path.join('3', 'three.rom'), 'ff46c5d8'],
+        ['1/one.rom', 'f817a89f'],
+        ['2/two.rom', '96170874'],
+        ['3/three.rom', 'ff46c5d8'],
       ],
     ],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
@@ -154,23 +154,17 @@ describe('extractEntryToFile', () => {
     // Note: this will only return valid archives with at least one file
     const archiveEntries = await new ROMScanner(
       new Options({
-        input: [
-          './test/fixtures/roms/7z',
-          './test/fixtures/roms/gz',
-          './test/fixtures/roms/rar',
-          './test/fixtures/roms/tar',
-          './test/fixtures/roms/zip',
-        ],
+        input: ['./test/fixtures/roms/7z', './test/fixtures/roms/rar', './test/fixtures/roms/zip'],
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const archives = archiveEntries
       .filter((entry) => entry instanceof ArchiveEntry)
       .map((entry) => entry.getArchive())
       .reduce(ArrayPoly.reduceUnique(), []);
-    expect(archives).toHaveLength(28);
+    expect(archives).toHaveLength(16);
 
     for (const archive of archives) {
       await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();

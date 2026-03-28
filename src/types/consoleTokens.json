@@ -1,0 +1,1665 @@
+{
+  "$schema": "./consoleTokens.schema.json",
+  "version": 1,
+  "consoles": [
+    {
+      "datNameRegex": "/Archimedes/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "ARCHIE",
+        "romm": "acorn-archimedes"
+      }
+    },
+    {
+      "datNameRegex": "/Atom/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "atom",
+        "mister": "AcornAtom",
+        "romm": "atom"
+      }
+    },
+    {
+      "datNameRegex": "/CPC/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "AMSTRAD",
+        "batocera": "amstradcpc",
+        "es": "amstradcpc",
+        "jelos": "amstradcpc",
+        "mister": "Amstrad",
+        "onion": "CPC",
+        "retrodeck": "amstradcpc",
+        "romm": "acpc",
+        "spruce": "CPC",
+        "twmenu": "cpc"
+      }
+    },
+    {
+      "datNameRegex": "/PCW/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "AmstradPCW",
+        "romm": "amstrad-pcw"
+      }
+    },
+    {
+      "datNameRegex": "/Apple.*I/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "Apple-I",
+        "romm": "apple"
+      }
+    },
+    {
+      "datNameRegex": "/Apple.*IIe?/i",
+      "extensions": [".do", ".nib", ".po"],
+      "tokens": {
+        "batocera": "apple2",
+        "es": "apple2",
+        "mister": "Apple-II",
+        "retrodeck": "apple2",
+        "romm": "appleii"
+      }
+    },
+    {
+      "datNameRegex": "/Apple.*IIGS/i",
+      "extensions": [".2mg"],
+      "tokens": {
+        "es": "apple2gs",
+        "retrodeck": "apple2gs",
+        "romm": "apple-iigs"
+      }
+    },
+    {
+      "datNameRegex": "/Arduboy/i",
+      "extensions": [".arduboy", ".hex"],
+      "tokens": {
+        "batocera": "arduboy",
+        "es": "arduboy",
+        "jelos": "arduboy",
+        "mister": "Arduboy",
+        "pocket": "arduboy",
+        "retrodeck": "arduboy",
+        "romm": "arduboy",
+        "spruce": "ARDUBOY"
+      }
+    },
+    {
+      "datNameRegex": "/800|8-bit Family/",
+      "extensions": [".atr", ".atx"],
+      "tokens": {
+        "batocera": "atari800",
+        "es": "atari800",
+        "jelos": "atari800",
+        "mister": "Atari800",
+        "onion": "EIGHTHUNDRED",
+        "retrodeck": "atari800",
+        "romm": "atari8bit",
+        "spruce": "EIGHTHUNDRED"
+      }
+    },
+    {
+      "datNameRegex": "/2600/",
+      "extensions": [
+        ".a26",
+        ".act",
+        ".pb",
+        ".tv",
+        ".tvr",
+        ".mn",
+        ".cv",
+        ".eb",
+        ".ef",
+        ".efr",
+        ".ua",
+        ".x07",
+        ".sb"
+      ],
+      "tokens": {
+        "adam": "A2600",
+        "batocera": "atari2600",
+        "es": "atari2600",
+        "jelos": "atari2600",
+        "mister": "Atari2600",
+        "miyoocfw": "2600",
+        "onion": "ATARI",
+        "pocket": "2600",
+        "retrodeck": "atari2600",
+        "romm": "atari2600",
+        "spruce": "ATARI",
+        "twmenu": "a26"
+      }
+    },
+    {
+      "datNameRegex": "/5200/",
+      "extensions": [".a52"],
+      "tokens": {
+        "adam": "A5200",
+        "batocera": "atari5200",
+        "es": "atari5200",
+        "jelos": "atari5200",
+        "mister": "Atari5200",
+        "onion": "FIFTYTWOHUNDRED",
+        "retrodeck": "atari5200",
+        "romm": "atari5200",
+        "spruce": "FIFTYTWOHUNDRED",
+        "twmenu": "a52"
+      }
+    },
+    {
+      "datNameRegex": "/7800/",
+      "extensions": [".a78"],
+      "tokens": {
+        "adam": "A7800",
+        "batocera": "atari7800",
+        "es": "atari7800",
+        "jelos": "atari7800",
+        "mister": "Atari7800",
+        "onion": "SEVENTYEIGHTHUNDRED",
+        "pocket": "7800",
+        "retrodeck": "atari7800",
+        "romm": "atari7800",
+        "spruce": "SEVENTYEIGHTHUNDRED",
+        "twmenu": "a78"
+      }
+    },
+    {
+      "datNameRegex": "/Jaguar/i",
+      "extensions": [".j64"],
+      "tokens": {
+        "batocera": "jaguar",
+        "es": "atarijaguar",
+        "jelos": "atarijaguar",
+        "onion": "JAGUAR",
+        "retrodeck": "atarijaguar",
+        "romm": "jaguar"
+      }
+    },
+    {
+      "datNameRegex": "/Lynx/i",
+      "extensions": [".lnx", ".lyx"],
+      "tokens": {
+        "adam": "LYNX",
+        "batocera": "lynx",
+        "es": "atarilynx",
+        "funkeyos": "Atari lynx",
+        "jelos": "atarilynx",
+        "mister": "AtariLynx",
+        "miyoocfw": "LYNX",
+        "onion": "LYNX",
+        "pocket": "lynx",
+        "retrodeck": "atarilynx",
+        "romm": "lynx",
+        "spruce": "LYNX"
+      }
+    },
+    {
+      "datNameRegex": "/Atari.*ST/i",
+      "extensions": [".msa", ".st", ".stx"],
+      "tokens": {
+        "batocera": "atarist",
+        "es": "atarist",
+        "jelos": "atarist",
+        "mister": "AtariST",
+        "onion": "ATARIST",
+        "retrodeck": "atarist",
+        "romm": "atari-st",
+        "spruce": "ATARIST"
+      }
+    },
+    {
+      "datNameRegex": "/Astrocade/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "astrocde",
+        "es": "astrocde",
+        "mister": "Astrocade",
+        "retrodeck": "astrocde",
+        "romm": "astrocade"
+      }
+    },
+    {
+      "datNameRegex": "/Super ?Vision 8000/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "Supervision8000",
+        "romm": "super-vision-8000"
+      }
+    },
+    {
+      "datNameRegex": "/RX[ -]?78/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "RX78"
+      }
+    },
+    {
+      "datNameRegex": "/WonderSwan/i",
+      "extensions": [".ws"],
+      "tokens": {
+        "adam": "WSC",
+        "batocera": "wswan",
+        "es": "wonderswan",
+        "funkeyos": "WonderSwan",
+        "jelos": "wonderswan",
+        "mister": "WonderSwan",
+        "miyoocfw": "WSWAN",
+        "onion": "WS",
+        "pocket": "wonderswan",
+        "retrodeck": "wonderswan",
+        "romm": "wonderswan",
+        "spruce": "WS",
+        "twmenu": "ws"
+      }
+    },
+    {
+      "datNameRegex": "/WonderSwan Color/i",
+      "extensions": [".wsc"],
+      "tokens": {
+        "adam": "WSC",
+        "batocera": "wswanc",
+        "es": "wswanc",
+        "funkeyos": "WonderSwan",
+        "jelos": "wonderswancolor",
+        "mister": "WonderSwan",
+        "miyoocfw": "WSWAN",
+        "onion": "WS",
+        "pocket": "wonderswan",
+        "retrodeck": "wonderswancolor",
+        "romm": "wonderswan-color",
+        "spruce": "WSC",
+        "twmenu": "ws"
+      }
+    },
+    {
+      "datNameRegex": "/Gamate/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "gamate",
+        "es": "gamate",
+        "mister": "Gamate",
+        "pocket": "gamate",
+        "romm": "gamate"
+      }
+    },
+    {
+      "datNameRegex": "/PV[ -]?1000/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "pv1000",
+        "es": "pv1000",
+        "mister": "Casio_PV-1000",
+        "retrodeck": "pv1000",
+        "romm": "casio-pv-1000"
+      }
+    },
+    {
+      "datNameRegex": "/PV[ -]?2000/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "Casio_PV-2000",
+        "romm": "casio-pv-2000"
+      }
+    },
+    {
+      "datNameRegex": "/Amiga/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "AMIGA",
+        "es": "amiga",
+        "jelos": "amiga",
+        "mister": "Amiga",
+        "onion": "AMIGA",
+        "pocket": "amiga",
+        "retrodeck": "amiga",
+        "romm": "amiga",
+        "spruce": "AMIGA"
+      }
+    },
+    {
+      "datNameRegex": "/Amiga CD32/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "AMIGA",
+        "batocera": "amigacd32",
+        "es": "amigacd32",
+        "jelos": "amigacd32",
+        "mister": "Amiga",
+        "onion": "AMIGACD",
+        "retrodeck": "amigacd32",
+        "romm": "amiga-cd32"
+      }
+    },
+    {
+      "datNameRegex": "/Amiga CDTV/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "AMIGA",
+        "batocera": "amigacdtv",
+        "es": "cdtv",
+        "retrodeck": "cdtv",
+        "romm": "commodore-cdtv"
+      }
+    },
+    {
+      "datNameRegex": "/Commodore C?16/i",
+      "extensions": [],
+      "tokens": {
+        "jelos": "c16",
+        "mister": "C16",
+        "romm": "c16"
+      }
+    },
+    {
+      "datNameRegex": "/Commodore C?64/i",
+      "extensions": [".crt", ".d64", ".t64"],
+      "tokens": {
+        "adam": "C64",
+        "batocera": "c64",
+        "es": "c64",
+        "jelos": "c64",
+        "mister": "C64",
+        "onion": "COMMODORE",
+        "pocket": "c64",
+        "retrodeck": "c64",
+        "romm": "c64",
+        "spruce": "COMMODORE"
+      }
+    },
+    {
+      "datNameRegex": "/Commodore C?128/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "c128",
+        "jelos": "c128",
+        "mister": "C128",
+        "romm": "c128"
+      }
+    },
+    {
+      "datNameRegex": "/Plus.*4/i",
+      "extensions": [],
+      "tokens": {
+        "es": "plus4",
+        "retrodeck": "plus4",
+        "romm": "c-plus-4"
+      }
+    },
+    {
+      "datNameRegex": "/VIC[ -]?20/i",
+      "extensions": [],
+      "tokens": {
+        "es": "vic20",
+        "onion": "VIC20",
+        "retrodeck": "vic20",
+        "romm": "vic-20",
+        "spruce": "VIC20"
+      }
+    },
+    {
+      "datNameRegex": "/ColecoVision/i",
+      "extensions": [".col"],
+      "tokens": {
+        "adam": "COLECO",
+        "batocera": "colecovision",
+        "es": "colecovision",
+        "jelos": "coleco",
+        "mister": "Coleco",
+        "onion": "COLECO",
+        "pocket": "coleco",
+        "retrodeck": "colecovision",
+        "romm": "colecovision",
+        "spruce": "COLECO",
+        "twmenu": "col"
+      }
+    },
+    {
+      "datNameRegex": "/Arcadia/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "arcadia",
+        "es": "arcadia",
+        "mister": "Arcadia",
+        "pocket": "arcadia",
+        "retrodeck": "arcadia",
+        "romm": "arcadia-2001"
+      }
+    },
+    {
+      "datNameRegex": "/Adventure Vision/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "advision",
+        "es": "avision",
+        "mister": "AVision",
+        "pocket": "avision",
+        "romm": "adventure-vision"
+      }
+    },
+    {
+      "datNameRegex": "/Super Cassette Vision/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "scv",
+        "es": "scv",
+        "retrodeck": "scv",
+        "romm": "epoch-super-cassette-vision"
+      }
+    },
+    {
+      "datNameRegex": "/Channel F/i",
+      "extensions": [".chf"],
+      "tokens": {
+        "batocera": "channelf",
+        "es": "channelf",
+        "jelos": "channelf",
+        "mister": "ChannelF",
+        "onion": "FAIRCHILD",
+        "pocket": "channel_f",
+        "retrodeck": "channelf",
+        "romm": "fairchild-channel-f",
+        "spruce": "FAIRCHILD"
+      }
+    },
+    {
+      "datNameRegex": "/Super A'?Can/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "supracan",
+        "es": "supracan",
+        "romm": "super-acan"
+      }
+    },
+    {
+      "datNameRegex": "/GP2X/i",
+      "extensions": [],
+      "tokens": {
+        "romm": "gp2x"
+      }
+    },
+    {
+      "datNameRegex": "/GP32/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "gp32",
+        "romm": "gp32"
+      }
+    },
+    {
+      "datNameRegex": "/Vectrex/i",
+      "extensions": [".gam", ".vc", ".vec"],
+      "tokens": {
+        "batocera": "vectrex",
+        "es": "vectrex",
+        "jelos": "vectrex",
+        "mister": "Vectrex",
+        "miyoocfw": "VECTREX",
+        "onion": "VECTREX",
+        "pocket": "vectrex",
+        "retrodeck": "vectrex",
+        "romm": "vectrex",
+        "spruce": "VECTREX"
+      }
+    },
+    {
+      "datNameRegex": "/Game Master/i",
+      "extensions": [],
+      "tokens": {
+        "es": "gmaster",
+        "retrodeck": "gmaster",
+        "romm": "hartung"
+      }
+    },
+    {
+      "datNameRegex": "/VC ?4000/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "vc4000",
+        "mister": "VC4000",
+        "romm": "vc-4000"
+      }
+    },
+    {
+      "datNameRegex": "/Odyssey 2/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "o2em",
+        "es": "odyssey2",
+        "jelos": "odyssey",
+        "mister": "Odyssey2",
+        "onion": "ODYSSEY",
+        "pocket": "odyssey2",
+        "retrodeck": "odyssey2",
+        "romm": "odyssey-2",
+        "spruce": "ODYSSEY"
+      }
+    },
+    {
+      "datNameRegex": "/Intellivision/i",
+      "extensions": [".int"],
+      "tokens": {
+        "adam": "INTELLI",
+        "batocera": "intellivision",
+        "es": "intellivision",
+        "jelos": "intellivision",
+        "mister": "Intellivision",
+        "onion": "INTELLIVISION",
+        "pocket": "intv",
+        "retrodeck": "intellivision",
+        "romm": "intellivision",
+        "spruce": "INTELLIVISION"
+      }
+    },
+    {
+      "datNameRegex": "/MSX/i",
+      "extensions": [".mx1"],
+      "tokens": {
+        "adam": "MSX",
+        "batocera": "msx1",
+        "es": "msx",
+        "jelos": "msx",
+        "mister": "MSX1",
+        "onion": "MSX",
+        "pocket": "msx",
+        "retrodeck": "msx",
+        "romm": "msx",
+        "spruce": "MSX"
+      }
+    },
+    {
+      "datNameRegex": "/MSX2/i",
+      "extensions": [".mx2"],
+      "tokens": {
+        "adam": "MSX",
+        "batocera": "msx2",
+        "es": "msx2",
+        "jelos": "msx2",
+        "mister": "MSX",
+        "onion": "MSX",
+        "retrodeck": "msx2",
+        "romm": "msx2",
+        "spruce": "MSX"
+      }
+    },
+    {
+      "datNameRegex": "/MSX2+/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "MSX",
+        "batocera": "msx2+",
+        "es": "msx2",
+        "mister": "MSX",
+        "onion": "MSX",
+        "retrodeck": "msx2",
+        "romm": "msx2plus",
+        "spruce": "MSX"
+      }
+    },
+    {
+      "datNameRegex": "/MSX TurboR/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "MSX",
+        "batocera": "msxturbor",
+        "es": "msx",
+        "mister": "MSX",
+        "onion": "MSX",
+        "retrodeck": "msxturbor",
+        "romm": "msx-turbo",
+        "spruce": "MSX"
+      }
+    },
+    {
+      "datNameRegex": "/Xbox/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "xbox",
+        "es": "xbox",
+        "jelos": "xbox",
+        "retrodeck": "xbox",
+        "romm": "xbox"
+      }
+    },
+    {
+      "datNameRegex": "/Xbox 360/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "xbox360",
+        "es": "xbox360",
+        "romm": "xbox360"
+      }
+    },
+    {
+      "datNameRegex": "/J2ME/i",
+      "extensions": [".jar"],
+      "tokens": {
+        "es": "j2me",
+        "retrodeck": "j2me",
+        "romm": "j2me"
+      }
+    },
+    {
+      "datNameRegex": "/Palm OS/i",
+      "extensions": [".pqa", ".prc"],
+      "tokens": {
+        "es": "palm",
+        "retrodeck": "palm",
+        "romm": "palm-os"
+      }
+    },
+    {
+      "datNameRegex": "/Symbian/i",
+      "extensions": [".sis", ".sisx", ".symbian"],
+      "tokens": {
+        "es": "symbian",
+        "retrodeck": "symbian",
+        "romm": "symbian"
+      }
+    },
+    {
+      "datNameRegex": "/My Vision/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "MyVision"
+      }
+    },
+    {
+      "datNameRegex": "/PC Engine/i",
+      "extensions": [".pce"],
+      "tokens": {
+        "adam": "PCE",
+        "batocera": "pcengine",
+        "es": "pcengine",
+        "funkeyos": "PCE-TurboGrafx",
+        "jelos": "tg16",
+        "minui": "TurboGrafx-16 (PCE)",
+        "mister": "TGFX16",
+        "miyoocfw": "PCE",
+        "onion": "PCE",
+        "pocket": "pce",
+        "retrodeck": "pcengine",
+        "romm": "tg16",
+        "spruce": "PCE",
+        "twmenu": "tg16"
+      }
+    },
+    {
+      "datNameRegex": "/TurboGrafx/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "PCE",
+        "batocera": "pcengine",
+        "es": "tg16",
+        "funkeyos": "PCE-TurboGrafx",
+        "jelos": "tg16",
+        "minui": "TurboGrafx-16 (PCE)",
+        "mister": "TGFX16",
+        "miyoocfw": "PCE",
+        "onion": "PCE",
+        "pocket": "pce",
+        "retrodeck": "pcengine",
+        "romm": "tg16",
+        "spruce": "PCE",
+        "twmenu": "tg16"
+      }
+    },
+    {
+      "datNameRegex": "/PC Engine CD/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "PCECD",
+        "batocera": "pcenginecd",
+        "es": "pcenginecd",
+        "jelos": "tg16cd",
+        "minui": "TurboGrafx-16 CD (PCE)",
+        "mister": "TGFX16-CD",
+        "miyoocfw": "PCE",
+        "onion": "PCECD",
+        "pocket": "pcecd",
+        "retrodeck": "pcenginecd",
+        "romm": "turbografx-cd",
+        "spruce": "PCECD"
+      }
+    },
+    {
+      "datNameRegex": "/TurboGrafx CD/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "PCECD",
+        "batocera": "pcenginecd",
+        "es": "tg-cd",
+        "jelos": "tg16cd",
+        "minui": "TurboGrafx-16 CD (PCE)",
+        "mister": "TGFX16-CD",
+        "miyoocfw": "PCE",
+        "onion": "PCECD",
+        "pocket": "pcecd",
+        "retrodeck": "pcenginecd",
+        "romm": "turbografx-cd",
+        "spruce": "PCECD"
+      }
+    },
+    {
+      "datNameRegex": "/SuperGrafx/i",
+      "extensions": [".sgx"],
+      "tokens": {
+        "batocera": "supergrafx",
+        "es": "supergrafx",
+        "jelos": "sgfx",
+        "mister": "TGFX16",
+        "onion": "SGFX",
+        "pocket": "pce",
+        "retrodeck": "supergrafx",
+        "romm": "supergrafx",
+        "spruce": "SGFX"
+      }
+    },
+    {
+      "datNameRegex": "/PC[ -]?88(01)?/i",
+      "extensions": [".d88"],
+      "tokens": {
+        "batocera": "pc88",
+        "es": "pc88",
+        "jelos": "pc88",
+        "mister": "PC8801",
+        "onion": "PCEIGHTYEIGHT",
+        "retrodeck": "pc88",
+        "romm": "pc-8800-series"
+      }
+    },
+    {
+      "datNameRegex": "/PC-98/i",
+      "extensions": [".d98"],
+      "tokens": {
+        "batocera": "pc98",
+        "es": "pc98",
+        "jelos": "pc98",
+        "onion": "PCNINETYEIGHT",
+        "retrodeck": "pc98",
+        "romm": "pc-9800-series",
+        "spruce": "PC98"
+      }
+    },
+    {
+      "datNameRegex": "/PC-FX/i",
+      "extensions": [],
+      "tokens": {
+        "es": "pcfx",
+        "onion": "PCFX",
+        "retrodeck": "pcfx",
+        "romm": "pc-fx"
+      }
+    },
+    {
+      "datNameRegex": "/TIC-80/i",
+      "extensions": [".tic"],
+      "tokens": {
+        "adam": "TIC80",
+        "es": "tic80",
+        "retrodeck": "tic80",
+        "spruce": "TIC80"
+      }
+    },
+    {
+      "datNameRegex": "/FDS|(Famicom|Family) Computer Disk System/i",
+      "extensions": [".fds"],
+      "tokens": {
+        "adam": "FDS",
+        "batocera": "fds",
+        "es": "fds",
+        "funkeyos": "NES",
+        "jelos": "fds",
+        "minui": "Famicom Disk System (FC)",
+        "mister": "NES",
+        "miyoocfw": "NES",
+        "onion": "FDS",
+        "pocket": "nes",
+        "retrodeck": "fds",
+        "romm": "fds",
+        "spruce": "FDS"
+      }
+    },
+    {
+      "datNameRegex": "/Game (and|&) Watch/i",
+      "extensions": [".mgw"],
+      "tokens": {
+        "adam": "GW",
+        "batocera": "gameandwatch",
+        "es": "gameandwatch",
+        "jelos": "gameandwatch",
+        "mister": "GameNWatch",
+        "onion": "GW",
+        "pocket": "gameandwatch",
+        "retrodeck": "gameandwatch",
+        "romm": "g-and-w",
+        "spruce": "GW"
+      }
+    },
+    {
+      "datNameRegex": "/GameCube/i",
+      "extensions": [".gcm", ".gcz"],
+      "tokens": {
+        "batocera": "gc",
+        "es": "gc",
+        "jelos": "gamecube",
+        "retrodeck": "gc",
+        "romm": "ngc"
+      }
+    },
+    {
+      "datNameRegex": "/GB|Game ?Boy/i",
+      "extensions": [".gb", ".sgb"],
+      "tokens": {
+        "adam": "GB",
+        "batocera": "gb",
+        "es": "gb",
+        "funkeyos": "Game Boy",
+        "jelos": "gb",
+        "minui": "Game Boy (GB)",
+        "mister": "Gameboy",
+        "miyoocfw": "GB",
+        "onion": "GB",
+        "pocket": "gb",
+        "retrodeck": "gb",
+        "romm": "gb",
+        "spruce": "GB",
+        "twmenu": "gb"
+      }
+    },
+    {
+      "datNameRegex": "/GBA|Game ?Boy Advance/i",
+      "extensions": [".gba"],
+      "tokens": {
+        "adam": "GBA",
+        "batocera": "gba",
+        "es": "gba",
+        "funkeyos": "Game Boy Advance",
+        "jelos": "gba",
+        "minui": "Game Boy Advance (GBA)",
+        "mister": "GBA",
+        "miyoocfw": "GBA",
+        "onion": "GBA",
+        "pocket": "gba",
+        "retrodeck": "gba",
+        "romm": "gba",
+        "spruce": "GBA",
+        "twmenu": "gba"
+      }
+    },
+    {
+      "datNameRegex": "/GBC|Game ?Boy Color/i",
+      "extensions": [".gbc"],
+      "tokens": {
+        "adam": "GBC",
+        "batocera": "gbc",
+        "es": "gbc",
+        "funkeyos": "Game Boy Color",
+        "jelos": "gbc",
+        "minui": "Game Boy Color (GBC)",
+        "mister": "Gameboy",
+        "miyoocfw": "GB",
+        "onion": "GBC",
+        "pocket": "gbc",
+        "retrodeck": "gbc",
+        "romm": "gbc",
+        "spruce": "GBC",
+        "twmenu": "gb"
+      }
+    },
+    {
+      "datNameRegex": "/Nintendo 64|N64/i",
+      "extensions": [".d64", ".n64", ".v64", ".z64"],
+      "tokens": {
+        "batocera": "n64",
+        "es": "n64",
+        "jelos": "n64",
+        "mister": "N64",
+        "retrodeck": "n64",
+        "romm": "n64",
+        "spruce": "N64"
+      }
+    },
+    {
+      "datNameRegex": "/Nintendo 64DD|N64DD/i",
+      "extensions": [".ndd"],
+      "tokens": {
+        "batocera": "n64dd",
+        "es": "n64dd",
+        "retrodeck": "n64dd",
+        "romm": "64dd"
+      }
+    },
+    {
+      "datNameRegex": "/(\\W|^)3DS(\\W|$)|Nintendo 3DS/i",
+      "extensions": [".3ds", ".3dsx", ".cci", ".cia", ".cfa", ".cxi"],
+      "tokens": {
+        "batocera": "3ds",
+        "es": "n3ds",
+        "jelos": "3ds",
+        "retrodeck": "n3ds",
+        "romm": "3ds"
+      }
+    },
+    {
+      "datNameRegex": "/(\\W|^)NDS(\\W|$)|Nintendo DS/i",
+      "extensions": [".nds"],
+      "tokens": {
+        "batocera": "nds",
+        "es": "nds",
+        "jelos": "nds",
+        "onion": "NDS",
+        "retrodeck": "nds",
+        "romm": "nds",
+        "spruce": "NDS",
+        "twmenu": "nds"
+      }
+    },
+    {
+      "datNameRegex": "/(\\W|^)NDSi(\\W|$)|Nintendo DSi([Ww]are)?/i",
+      "extensions": [".dsi"],
+      "tokens": {
+        "es": "nds",
+        "retrodeck": "nds",
+        "romm": "nintendo-dsi",
+        "twmenu": "dsiware"
+      }
+    },
+    {
+      "datNameRegex": "/Famicom/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "FC",
+        "batocera": "nes",
+        "es": "famicom",
+        "funkeyos": "NES",
+        "jelos": "nes",
+        "minui": "Nintendo Entertainment System (FC)",
+        "mister": "NES",
+        "miyoocfw": "NES",
+        "onion": "FC",
+        "pocket": "nes",
+        "retrodeck": "nes",
+        "romm": "famicom",
+        "spruce": "FC",
+        "twmenu": "nes"
+      }
+    },
+    {
+      "datNameRegex": "/(\\W|^)NES(\\W|$)|Nintendo Entertainment System/i",
+      "extensions": [".fc", ".nes", ".nez"],
+      "tokens": {
+        "adam": "FC",
+        "batocera": "nes",
+        "es": "nes",
+        "funkeyos": "NES",
+        "jelos": "nes",
+        "minui": "Nintendo Entertainment System (FC)",
+        "mister": "NES",
+        "miyoocfw": "NES",
+        "onion": "FC",
+        "pocket": "nes",
+        "retrodeck": "nes",
+        "romm": "nes",
+        "spruce": "FC",
+        "twmenu": "nes"
+      }
+    },
+    {
+      "datNameRegex": "/Pokemon Mini/i",
+      "extensions": [".min"],
+      "tokens": {
+        "adam": "POKEMINI",
+        "batocera": "pokemini",
+        "es": "pokemini",
+        "funkeyos": "Pokemini",
+        "jelos": "pokemini",
+        "minui": "Pokemon mini (PKM)",
+        "mister": "PokemonMini",
+        "miyoocfw": "POKEMINI",
+        "onion": "POKE",
+        "pocket": "poke_mini",
+        "retrodeck": "pokemini",
+        "romm": "pokemon-mini",
+        "spruce": "POKE"
+      }
+    },
+    {
+      "datNameRegex": "/Satellaview/i",
+      "extensions": [".bs"],
+      "tokens": {
+        "batocera": "satellaview",
+        "es": "satellaview",
+        "jelos": "satellaview",
+        "mister": "SNES",
+        "onion": "SATELLAVIEW",
+        "pocket": "snes",
+        "retrodeck": "satellaview",
+        "romm": "satellaview",
+        "spruce": "SATELLAVIEW"
+      }
+    },
+    {
+      "datNameRegex": "/SuFami/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "sufami",
+        "es": "sufami",
+        "jelos": "sufami",
+        "onion": "SUFAMI",
+        "retrodeck": "sufami",
+        "romm": "sufami-turbo",
+        "spruce": "SUFAMI"
+      }
+    },
+    {
+      "datNameRegex": "/Super Famicom/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "SFC",
+        "batocera": "snes",
+        "es": "sfc",
+        "funkeyos": "SNES",
+        "jelos": "snes",
+        "minui": "Super Nintendo Entertainment System (SFC)",
+        "mister": "SNES",
+        "miyoocfw": "SNES",
+        "onion": "SFC",
+        "pocket": "snes",
+        "retrodeck": "snes",
+        "romm": "sfam",
+        "spruce": "SFC",
+        "twmenu": "snes"
+      }
+    },
+    {
+      "datNameRegex": "/(\\W|^)SNES(\\W|$)|Super Nintendo Entertainment System/i",
+      "extensions": [".fig", ".sfc", ".smc", ".snes"],
+      "tokens": {
+        "adam": "SFC",
+        "batocera": "snes",
+        "es": "snes",
+        "funkeyos": "SNES",
+        "jelos": "snes",
+        "minui": "Super Nintendo Entertainment System (SFC)",
+        "mister": "SNES",
+        "miyoocfw": "SNES",
+        "onion": "SFC",
+        "pocket": "snes",
+        "retrodeck": "snes",
+        "romm": "snes",
+        "spruce": "SFC",
+        "twmenu": "snes"
+      }
+    },
+    {
+      "datNameRegex": "/Switch/i",
+      "extensions": [".nca", ".nro", ".nso", ".nsp", ".nsz", ".xci", ".xcz", ".zca"],
+      "tokens": {
+        "es": "switch",
+        "retrodeck": "switch",
+        "romm": "switch"
+      }
+    },
+    {
+      "datNameRegex": "/Virtual Boy/i",
+      "extensions": [".vb", ".vboy"],
+      "tokens": {
+        "adam": "VB",
+        "batocera": "virtualboy",
+        "es": "virtualboy",
+        "funkeyos": "Virtualboy",
+        "jelos": "virtualboy",
+        "minui": "Virtual Boy (VB)",
+        "onion": "VB",
+        "retrodeck": "virtualboy",
+        "romm": "virtualboy",
+        "spruce": "VB"
+      }
+    },
+    {
+      "datNameRegex": "/Wii/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "wii",
+        "es": "wii",
+        "jelos": "wii",
+        "retrodeck": "wii",
+        "romm": "wii"
+      }
+    },
+    {
+      "datNameRegex": "/Wii ?U/i",
+      "extensions": [".rpx", ".wua", ".wud", ".wup", ".wux"],
+      "tokens": {
+        "batocera": "wiiu",
+        "es": "wiiu",
+        "jelos": "wiiu",
+        "retrodeck": "wiiu",
+        "romm": "wiiu"
+      }
+    },
+    {
+      "datNameRegex": "/3DO/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "3do",
+        "es": "3do",
+        "jelos": "3do",
+        "onion": "PANASONIC",
+        "retrodeck": "3do",
+        "romm": "3do"
+      }
+    },
+    {
+      "datNameRegex": "/CD[ -]?i/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "cdi",
+        "es": "cdimono1",
+        "retrodeck": "cdimono1",
+        "romm": "philips-cd-i"
+      }
+    },
+    {
+      "datNameRegex": "/Videopac/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "videopacplus",
+        "es": "videopac",
+        "jelos": "videopac",
+        "mister": "Odyssey2",
+        "onion": "VIDEOPAC",
+        "retrodeck": "videopac",
+        "romm": "videopac-g7400",
+        "spruce": "VIDEOPAC"
+      }
+    },
+    {
+      "datNameRegex": "/Studio (2|II)/i",
+      "extensions": [],
+      "tokens": {
+        "pocket": "studio2",
+        "romm": "rca-studio-ii"
+      }
+    },
+    {
+      "datNameRegex": "/32X/i",
+      "extensions": [".32x"],
+      "tokens": {
+        "adam": "32X",
+        "batocera": "sega32x",
+        "es": "sega32x",
+        "jelos": "sega32x",
+        "minui": "Sega 32X (MD)",
+        "mister": "S32X",
+        "onion": "THIRTYTWOX",
+        "retrodeck": "sega32x",
+        "romm": "sega32",
+        "spruce": "THIRTYTWOX"
+      }
+    },
+    {
+      "datNameRegex": "/(Super|Mega Drive) 32X/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "32X",
+        "batocera": "sega32x",
+        "es": "sega32xjp",
+        "jelos": "sega32x",
+        "minui": "Sega 32X (MD)",
+        "mister": "S32X",
+        "onion": "THIRTYTWOX",
+        "retrodeck": "sega32x",
+        "romm": "sega32",
+        "spruce": "THIRTYTWOX"
+      }
+    },
+    {
+      "datNameRegex": "/Dreamcast/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "dreamcast",
+        "es": "dreamcast",
+        "jelos": "dreamcast",
+        "retrodeck": "dreamcast",
+        "romm": "dc",
+        "spruce": "DC"
+      }
+    },
+    {
+      "datNameRegex": "/Game Gear/i",
+      "extensions": [".gg"],
+      "tokens": {
+        "adam": "GG",
+        "batocera": "gamegear",
+        "es": "gamegear",
+        "funkeyos": "Game Gear",
+        "jelos": "gamegear",
+        "minui": "Sega Game Gear (GG)",
+        "mister": "SMS",
+        "miyoocfw": "SMS",
+        "onion": "GG",
+        "pocket": "gg",
+        "retrodeck": "gamegear",
+        "romm": "gamegear",
+        "spruce": "GG",
+        "twmenu": "gg"
+      }
+    },
+    {
+      "datNameRegex": "/Master System/i",
+      "extensions": [".sms"],
+      "tokens": {
+        "adam": "SMS",
+        "batocera": "mastersystem",
+        "es": "mastersystem",
+        "funkeyos": "Sega Master System",
+        "jelos": "mastersystem",
+        "minui": "Sega Master System (SMS)",
+        "mister": "SMS",
+        "miyoocfw": "SMS",
+        "onion": "MS",
+        "pocket": "sms",
+        "retrodeck": "mastersystem",
+        "romm": "sms",
+        "spruce": "MS",
+        "twmenu": "sms"
+      }
+    },
+    {
+      "datNameRegex": "/Sega CD/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "SEGACD",
+        "batocera": "segacd",
+        "es": "segacd",
+        "jelos": "segacd",
+        "minui": "Sega CD (MD)",
+        "mister": "MegaCD",
+        "miyoocfw": "SMD",
+        "onion": "SEGACD",
+        "retrodeck": "segacd",
+        "romm": "segacd",
+        "spruce": "SEGACD"
+      }
+    },
+    {
+      "datNameRegex": "/Mega[ -]CD/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "SEGACD",
+        "batocera": "segacd",
+        "es": "megacdjp",
+        "jelos": "segacd",
+        "minui": "Sega CD (MD)",
+        "mister": "MegaCD",
+        "miyoocfw": "SMD",
+        "onion": "SEGACD",
+        "retrodeck": "segacd",
+        "romm": "segacd",
+        "spruce": "SEGACD"
+      }
+    },
+    {
+      "datNameRegex": "/Mega Drive/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "MD",
+        "batocera": "megadrive",
+        "es": "megadrivejp",
+        "funkeyos": "Sega Genesis",
+        "jelos": "genesis",
+        "minui": "Sega Genesis (MD)",
+        "mister": "MegaDrive",
+        "miyoocfw": "SMD",
+        "onion": "MD",
+        "pocket": "genesis",
+        "retrodeck": "megadrive",
+        "romm": "genesis",
+        "spruce": "MD",
+        "twmenu": "gen"
+      }
+    },
+    {
+      "datNameRegex": "/Genesis/i",
+      "extensions": [".gen", ".md", ".mdx", ".sgd", ".smd"],
+      "tokens": {
+        "adam": "MD",
+        "batocera": "megadrive",
+        "es": "genesis",
+        "funkeyos": "Sega Genesis",
+        "jelos": "genesis",
+        "minui": "Sega Genesis (MD)",
+        "mister": "MegaDrive",
+        "miyoocfw": "SMD",
+        "onion": "MD",
+        "pocket": "genesis",
+        "retrodeck": "megadrive",
+        "romm": "genesis",
+        "spruce": "MD",
+        "twmenu": "gen"
+      }
+    },
+    {
+      "datNameRegex": "/Saturn/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "saturn",
+        "es": "saturn",
+        "jelos": "saturn",
+        "mister": "Saturn",
+        "retrodeck": "saturn",
+        "romm": "saturn",
+        "spruce": "SATURN"
+      }
+    },
+    {
+      "datNameRegex": "/SG[ -]?1000/i",
+      "extensions": [".sc", ".sg"],
+      "tokens": {
+        "adam": "SG1000",
+        "batocera": "sg1000",
+        "es": "sg-1000",
+        "jelos": "sg-1000",
+        "mister": "SG1000",
+        "onion": "SEGASGONE",
+        "pocket": "sg1000",
+        "retrodeck": "sg-1000",
+        "romm": "sg1000",
+        "spruce": "SEGASGONE",
+        "twmenu": "sg"
+      }
+    },
+    {
+      "datNameRegex": "/MZ/i",
+      "extensions": [],
+      "tokens": {
+        "mister": "SharpMZ",
+        "romm": "sharp-mz-2200"
+      }
+    },
+    {
+      "datNameRegex": "/X1/i",
+      "extensions": [".2d", ".2hd", ".dx1", ".tfd"],
+      "tokens": {
+        "batocera": "x1",
+        "es": "x1",
+        "jelos": "x1",
+        "onion": "XONE",
+        "retrodeck": "x1",
+        "romm": "x1"
+      }
+    },
+    {
+      "datNameRegex": "/X68000/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "x68000",
+        "es": "x68000",
+        "jelos": "x68000",
+        "mister": "X68000",
+        "onion": "X68000",
+        "retrodeck": "x68000",
+        "romm": "sharp-x68000",
+        "spruce": "X68000"
+      }
+    },
+    {
+      "datNameRegex": "/ZX[ -]?80/i",
+      "extensions": [],
+      "tokens": {
+        "es": "zx81",
+        "mister": "ZX81",
+        "onion": "ZXEIGHTYONE",
+        "retrodeck": "zx81",
+        "romm": "zx80"
+      }
+    },
+    {
+      "datNameRegex": "/ZX[ -]?81/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "zx81",
+        "es": "zx81",
+        "jelos": "zx81",
+        "mister": "ZX81",
+        "retrodeck": "zx81",
+        "romm": "zx81"
+      }
+    },
+    {
+      "datNameRegex": "/ZX[ -]?Spectrum/i",
+      "extensions": [".scl", ".szx", ".z80"],
+      "tokens": {
+        "adam": "ZX",
+        "batocera": "zxspectrum",
+        "es": "zxspectrum",
+        "jelos": "zxspectrum",
+        "mister": "Spectrum",
+        "onion": "ZXS",
+        "retrodeck": "zxspectrum",
+        "romm": "zxs",
+        "spruce": "ZXS"
+      }
+    },
+    {
+      "datNameRegex": "/Neo ?Geo/i",
+      "extensions": [],
+      "tokens": {
+        "adam": "NEOGEO",
+        "batocera": "neogeo",
+        "es": "neogeo",
+        "jelos": "neogeo",
+        "mister": "NeoGeo",
+        "miyoocfw": "NEOGEO",
+        "onion": "NEOGEO",
+        "pocket": "ng",
+        "retrodeck": "neogeo",
+        "romm": "neogeomvs",
+        "spruce": "NEOGEO"
+      }
+    },
+    {
+      "datNameRegex": "/Neo ?Geo CD/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "neogeocd",
+        "es": "neogeocd",
+        "jelos": "neocd",
+        "mister": "NeoGeo-CD",
+        "onion": "NEOCD",
+        "retrodeck": "neogeocd",
+        "romm": "neo-geo-cd",
+        "spruce": "NEOCD"
+      }
+    },
+    {
+      "datNameRegex": "/Neo ?Geo Pocket/i",
+      "extensions": [".ngp"],
+      "tokens": {
+        "adam": "NGP",
+        "batocera": "ngp",
+        "es": "ngp",
+        "funkeyos": "Neo Geo Pocket",
+        "jelos": "ngp",
+        "minui": "Neo Geo Pocket (NGPC)",
+        "onion": "NGP",
+        "retrodeck": "ngp",
+        "romm": "neo-geo-pocket",
+        "spruce": "NGP",
+        "twmenu": "ngp"
+      }
+    },
+    {
+      "datNameRegex": "/Neo ?Geo Pocket Color/i",
+      "extensions": [".ngc", ".ngpc", ".npc"],
+      "tokens": {
+        "adam": "NGP",
+        "batocera": "ngpc",
+        "es": "ngpc",
+        "funkeyos": "Neo Geo Pocket",
+        "jelos": "ngpc",
+        "minui": "Neo Geo Pocket Color (NGPC)",
+        "onion": "NGP",
+        "retrodeck": "ngpc",
+        "romm": "neo-geo-pocket-color",
+        "spruce": "NGPC",
+        "twmenu": "ngp"
+      }
+    },
+    {
+      "datNameRegex": "/PlayStation|psx/i",
+      "extensions": [".minipsf", ".pbp", ".psexe", ".psf"],
+      "tokens": {
+        "adam": "PS",
+        "batocera": "psx",
+        "es": "psx",
+        "funkeyos": "PS1",
+        "jelos": "psx",
+        "minui": "Sony PlayStation (PS)",
+        "mister": "PSX",
+        "miyoocfw": "PS1",
+        "onion": "PS",
+        "retrodeck": "psx",
+        "romm": "psx",
+        "spruce": "PS"
+      }
+    },
+    {
+      "datNameRegex": "/PlayStation 2|ps2/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "ps2",
+        "es": "ps2",
+        "jelos": "ps2",
+        "retrodeck": "ps2",
+        "romm": "ps2"
+      }
+    },
+    {
+      "datNameRegex": "/PlayStation 3|ps3/i",
+      "extensions": [".ps3", ".ps3dir"],
+      "tokens": {
+        "batocera": "ps3",
+        "es": "ps3",
+        "jelos": "ps3",
+        "retrodeck": "ps3",
+        "romm": "ps3"
+      }
+    },
+    {
+      "datNameRegex": "/PlayStation ?Portable|psp/i",
+      "extensions": [".cso"],
+      "tokens": {
+        "batocera": "psp",
+        "es": "psp",
+        "jelos": "psp",
+        "retrodeck": "psp",
+        "romm": "psp",
+        "spruce": "PSP"
+      }
+    },
+    {
+      "datNameRegex": "/PlayStation ?Vita|psvita/i",
+      "extensions": [".psvita"],
+      "tokens": {
+        "batocera": "psvita",
+        "es": "psvita",
+        "retrodeck": "psvita",
+        "romm": "psvita"
+      }
+    },
+    {
+      "datNameRegex": "/PlayStation [4-9]|ps[4-9]/i",
+      "extensions": [],
+      "tokens": {}
+    },
+    {
+      "datNameRegex": "/Sord[ -]M(5|five)/i",
+      "extensions": [],
+      "tokens": {
+        "romm": "sord-m5",
+        "twmenu": "m5"
+      }
+    },
+    {
+      "datNameRegex": "/TI[ -]?99[ -]?4A/i",
+      "extensions": [".rpk"],
+      "tokens": {
+        "es": "ti99",
+        "mister": "TI-99_4A",
+        "retrodeck": "ti99",
+        "romm": "ti-99"
+      }
+    },
+    {
+      "datNameRegex": "/Game.?com/i",
+      "extensions": [".tgc"],
+      "tokens": {
+        "es": "gamecom",
+        "retrodeck": "gamecom",
+        "romm": "game-dot-com"
+      }
+    },
+    {
+      "datNameRegex": "/GameKing/i",
+      "extensions": [],
+      "tokens": {
+        "pocket": "game_king"
+      }
+    },
+    {
+      "datNameRegex": "/CreatiVision/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "crvision",
+        "es": "crvision",
+        "mister": "CreatiVision",
+        "pocket": "creativision",
+        "retrodeck": "crvision",
+        "romm": "creativision"
+      }
+    },
+    {
+      "datNameRegex": "/V\\.Smile/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "vsmile",
+        "es": "vsmile",
+        "retrodeck": "vsmile",
+        "romm": "vsmile"
+      }
+    },
+    {
+      "datNameRegex": "/Supervision/i",
+      "extensions": [".sv"],
+      "tokens": {
+        "adam": "SUPERVISION",
+        "batocera": "supervision",
+        "es": "supervision",
+        "jelos": "supervision",
+        "mister": "SuperVision",
+        "onion": "SUPERVISION",
+        "pocket": "supervision",
+        "retrodeck": "supervision",
+        "romm": "supervision",
+        "spruce": "SUPERVISION"
+      }
+    },
+    {
+      "datNameRegex": "/Mega Duck/i",
+      "extensions": [".md1", ".md2"],
+      "tokens": {
+        "batocera": "megaduck",
+        "es": "megaduck",
+        "jelos": "megaduck",
+        "onion": "MEGADUCK",
+        "pocket": "mega_duck",
+        "retrodeck": "megaduck",
+        "romm": "mega-duck-slash-cougar-boy",
+        "spruce": "MEGADUCK"
+      }
+    }
+  ]
+}

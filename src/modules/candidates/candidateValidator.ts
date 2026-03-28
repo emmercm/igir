@@ -61,8 +61,22 @@ export default class CandidateValidator extends Module {
       .filter(([outputPath, candidates]) => {
         const uniqueCandidates = candidates
           .filter(ArrayPoly.filterUniqueMapped((candidate) => candidate.getGame()))
-          .sort();
-        if (uniqueCandidates.length < 2) {
+          .toSorted();
+        if (uniqueCandidates.length <= 1) {
+          return false;
+        }
+
+        const uniqueInputFiles = uniqueCandidates
+          .flatMap((candidate) => candidate.getRomsWithFiles())
+          .map((romWithFiles) => romWithFiles.getInputFile())
+          .filter(ArrayPoly.filterUniqueMapped((inputFile) => inputFile.toString()));
+        if (uniqueInputFiles.length <= 1) {
+          // There are multiple WriteCandidates, but all of them have either no ROMs and therefore
+          // no ROMWithFiles, or all ROMWithFiles all have the same input file.
+          // This can happen with CHDs in particular, where a CHD may be parsed as a few different
+          // CHD subtypes (e.g. "raw" + CD-ROM, or GD-ROM .bin/.cue and GD-ROM .gdi/.bin/.raw).
+          // This will cause candidates with duplicate input->output files, which CandidateWriter
+          // will need to de-duplicate.
           return false;
         }
 

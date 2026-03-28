@@ -53,10 +53,18 @@ export default class Zip extends Archive {
     return Zip.getExtensions()[0];
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
 
-    return async.mapLimit(
+    return await async.mapLimit(
       entries.filter((entry) => !entry.isDirectory()),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile: CentralDirectoryFileHeader): Promise<ArchiveEntry<this>> => {
@@ -71,7 +79,7 @@ export default class Zip extends Archive {
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
-        return ArchiveEntry.entryOf(
+        return await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: entryFile.fileNameResolved(),
@@ -95,7 +103,7 @@ export default class Zip extends Archive {
       await FsPoly.mkdir(extractedDir, { recursive: true });
     }
 
-    return this.extractEntryToStream(entryPath, async (readable) => {
+    await this.extractEntryToStream(entryPath, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -107,20 +115,19 @@ export default class Zip extends Archive {
 
   async extractEntryToStream<T>(
     entryPath: string,
-    callback: (stream: Readable) => Promise<T> | T,
+    callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
     if (start > 0) {
       // Can't start the stream at an uncompressed offset
-      return super.extractEntryToStream(entryPath, callback, start);
+      return await super.extractEntryToStream(entryPath, callback, start);
     }
 
     // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
     const entries = await this.zipReader.centralDirectoryFileHeaders();
     const entry = entries.find(
       (entryFile) =>
-        entryFile.fileNameResolved().replaceAll(/[\\/]/g, '/') ===
-        entryPath.replaceAll(/[\\/]/g, '/'),
+        entryFile.fileNameResolved().replaceAll('\\', '/') === entryPath.replaceAll('\\', '/'),
     );
     if (!entry) {
       // This should never happen, this likely means the zip file was modified after scanning
@@ -172,7 +179,7 @@ export default class Zip extends Archive {
     callback?: ProgressCallback,
   ): Promise<void> {
     // TZWriter needs files to be sorted by lowercase
-    const inputToOutputSorted = inputToOutput.sort(([, outputA], [, outputB]) => {
+    const inputToOutputSorted = inputToOutput.toSorted(([, outputA], [, outputB]) => {
       const pathLowerA = outputA.getEntryPath().toLowerCase();
       const pathLowerB = outputB.getEntryPath().toLowerCase();
       if (pathLowerA < pathLowerB) {
@@ -196,7 +203,7 @@ export default class Zip extends Archive {
               readable.on('error', reject);
               await torrentZip.addStream(
                 readable,
-                outputArchiveEntry.getEntryPath().replaceAll(/[\\/]/g, '/'),
+                outputArchiveEntry.getEntryPath().replaceAll('\\', '/'),
                 inputFile.getSize(),
                 compressorThreads,
                 (progress) => {
@@ -242,7 +249,7 @@ export default class Zip extends Archive {
    * Cache TZValidator results as long as this file hasn't been modified.
    */
   private async tzValidate(): Promise<ValidationResultValue> {
-    return this.tzValidateMutex.runExclusive(async () => {
+    return await this.tzValidateMutex.runExclusive(async () => {
       const modifiedTimeMillis = (await FsPoly.stat(this.getFilePath())).mtimeMs;
       if (
         this.tzValidateResult !== undefined &&

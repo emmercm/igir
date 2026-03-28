@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import async from 'async';
 import { Semaphore } from 'async-mutex';
@@ -13,6 +12,7 @@ import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import IntlPoly from '../polyfill/intlPoly.js';
 import type File from '../types/files/file.js';
 import type Options from '../types/options.js';
 import Module from './module.js';
@@ -64,7 +64,7 @@ export default class DirectoryCleaner extends Module {
 
     try {
       this.progressBar.logTrace(
-        `cleaning ${filesToClean.length.toLocaleString()} file${filesToClean.length === 1 ? '' : 's'}`,
+        `cleaning ${IntlPoly.toLocaleString(filesToClean.length)} file${filesToClean.length === 1 ? '' : 's'}`,
       );
       this.progressBar.resetProgress(filesToClean.length);
       if (this.options.getCleanDryRun()) {
@@ -89,7 +89,7 @@ export default class DirectoryCleaner extends Module {
       while (emptyDirs.length > 0) {
         this.progressBar.resetProgress(emptyDirs.length);
         this.progressBar.logTrace(
-          `cleaning ${emptyDirs.length.toLocaleString()} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
+          `cleaning ${IntlPoly.toLocaleString(emptyDirs.length)} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
         );
         if (this.options.getCleanDryRun()) {
           this.progressBar.logInfo(
@@ -106,7 +106,7 @@ export default class DirectoryCleaner extends Module {
     }
 
     this.progressBar.logTrace('done cleaning files in output');
-    return filesToClean.sort();
+    return filesToClean.toSorted();
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {
@@ -131,7 +131,8 @@ export default class DirectoryCleaner extends Module {
     const existingFilePathsCheck = await async.mapLimit(
       filePaths,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => existSemaphore.runExclusive(async () => FsPoly.exists(filePath)),
+      async (filePath: string) =>
+        await existSemaphore.runExclusive(async () => await FsPoly.exists(filePath)),
     );
     const existingFilePaths = filePaths.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -184,8 +185,10 @@ export default class DirectoryCleaner extends Module {
   private static async getEmptyDirs(dirsToClean: string | string[]): Promise<string[]> {
     if (Array.isArray(dirsToClean)) {
       return (
-        await async.mapLimit(dirsToClean, Defaults.MAX_FS_THREADS, async (dirToClean: string) =>
-          DirectoryCleaner.getEmptyDirs(dirToClean),
+        await async.mapLimit(
+          dirsToClean,
+          Defaults.MAX_FS_THREADS,
+          async (dirToClean: string) => await DirectoryCleaner.getEmptyDirs(dirToClean),
         )
       )
         .flat()
@@ -196,7 +199,7 @@ export default class DirectoryCleaner extends Module {
     if (!(await FsPoly.exists(dirsToClean))) {
       return [];
     }
-    const subPaths = (await util.promisify(fs.readdir)(dirsToClean))
+    const subPaths = (await fs.promises.readdir(dirsToClean))
       .filter((basename) => isNotJunk(basename))
       .map((basename) => path.join(dirsToClean, basename));
 
@@ -218,8 +221,10 @@ export default class DirectoryCleaner extends Module {
 
     // Otherwise, recurse and look for empty subdirectories
     return (
-      await async.mapLimit(subDirs, Defaults.MAX_FS_THREADS, async (subDir: string) =>
-        this.getEmptyDirs(subDir),
+      await async.mapLimit(
+        subDirs,
+        Defaults.MAX_FS_THREADS,
+        async (subDir: string) => await this.getEmptyDirs(subDir),
       )
     ).flat();
   }

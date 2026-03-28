@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
-import type stream from 'node:stream';
-import { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Crc32 } from '@aws-crypto/crc32';
 
@@ -29,13 +28,22 @@ export interface ChecksumProps {
   sha256?: string;
 }
 
+export interface ChecksumPropsWithSize extends ChecksumProps {
+  size?: number;
+}
+
 export default {
-  async hashData(data: Buffer | string, checksumBitmask: number): Promise<ChecksumProps> {
-    const readable = new Readable();
+  async hashData(data: Buffer | string, checksumBitmask: number): Promise<ChecksumPropsWithSize> {
+    if (!checksumBitmask) {
+      // Not calculating any checksums, do nothing
+      return {};
+    }
+
+    const readable = new stream.Readable();
     readable.push(data);
     // eslint-disable-next-line unicorn/no-null
     readable.push(null);
-    return this.hashStream(readable, checksumBitmask);
+    return await this.hashStream(readable, checksumBitmask);
   },
 
   async hashFile(
@@ -44,10 +52,15 @@ export default {
     start?: number,
     end?: number,
     callback?: FsReadCallback,
-  ): Promise<ChecksumProps> {
-    return File.createStreamFromFile(
+  ): Promise<ChecksumPropsWithSize> {
+    if (!checksumBitmask) {
+      // Not calculating any checksums, do nothing
+      return {};
+    }
+
+    return await File.createStreamFromFile(
       filePath,
-      async (readable) => this.hashStream(readable, checksumBitmask, callback),
+      async (readable) => await this.hashStream(readable, checksumBitmask, callback),
       start,
       end,
     );
@@ -57,10 +70,11 @@ export default {
     readable: stream.Readable,
     checksumBitmask: number,
     callback?: FsReadCallback,
-  ): Promise<ChecksumProps> {
+  ): Promise<ChecksumPropsWithSize> {
     // Not calculating any checksums, do nothing
     if (!checksumBitmask) {
       // WARN(cemmer): this may leave the readable un-drained and therefore some file handles open!
+      // We can't call readable.destroy() here because 'unrar' will throw an error
       return {};
     }
 
@@ -69,32 +83,30 @@ export default {
         ? readable
         : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
 
+    let size = 0;
     const crc = checksumBitmask & ChecksumBitmask.CRC32 ? new Crc32() : undefined;
-    return new Promise((resolve, reject) => {
-      const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
-      const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
-      const sha256 =
-        checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
+    const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
+    const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
+    const sha256 =
+      checksumBitmask & ChecksumBitmask.SHA256 ? crypto.createHash('sha256') : undefined;
 
-      streamWithCallback.on('data', (chunk: Buffer) => {
-        crc?.update(chunk);
-        md5?.update(chunk);
-        sha1?.update(chunk);
-        sha256?.update(chunk);
-      });
-      streamWithCallback.on('end', () => {
-        resolve({
-          crc32:
-            crc?.digest().toString(16).padStart(8, '0') ??
-            // Empty files won't emit any data, default to the empty file CRC32
-            (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
-          md5: md5?.digest('hex').padStart(32, '0'),
-          sha1: sha1?.digest('hex').padStart(40, '0'),
-          sha256: sha256?.digest('hex').padStart(64, '0'),
-        });
-      });
+    for await (const chunk of streamWithCallback as AsyncIterable<Buffer>) {
+      size += chunk.length;
+      crc?.update(chunk);
+      md5?.update(chunk);
+      sha1?.update(chunk);
+      sha256?.update(chunk);
+    }
 
-      streamWithCallback.on('error', reject);
-    });
+    return {
+      size,
+      crc32:
+        crc?.digest().toString(16).padStart(8, '0') ??
+        // Empty files won't emit any data, default to the empty file CRC32
+        (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
+      md5: md5?.digest('hex').padStart(32, '0'),
+      sha1: sha1?.digest('hex').padStart(40, '0'),
+      sha256: sha256?.digest('hex').padStart(64, '0'),
+    };
   },
 };

@@ -116,6 +116,7 @@ site/
 *.sh
 igir
 igir.exe
+!.github/**/*.sh
 !test/*.sh
 !packages/*
 

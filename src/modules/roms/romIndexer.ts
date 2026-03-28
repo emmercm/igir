@@ -1,8 +1,7 @@
-import path from 'node:path';
-
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
 import Dolphin from '../../types/files/archives/dolphin/dolphin.js';
@@ -15,6 +14,7 @@ import type File from '../../types/files/file.js';
 import type { AllChecksums, ChecksumsToFiles } from '../../types/indexedFiles.js';
 import IndexedFiles from '../../types/indexedFiles.js';
 import type Options from '../../types/options.js';
+import { PreferFiletype } from '../../types/options.js';
 import Module from '../module.js';
 
 /**
@@ -34,7 +34,7 @@ export default class ROMIndexer extends Module {
    */
   index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(
-      `indexing ${files.length.toLocaleString()} file${files.length === 1 ? '' : 's'}`,
+      `indexing ${IntlPoly.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
     this.progressBar.resetProgress(files.length);
@@ -44,6 +44,7 @@ export default class ROMIndexer extends Module {
     // Then apply some sorting preferences
     Object.keys(result).forEach((checksum) => {
       this.sortMap(result[checksum as keyof AllChecksums]);
+      this.progressBar.incrementCompleted();
     });
 
     this.progressBar.logTrace(
@@ -58,9 +59,53 @@ export default class ROMIndexer extends Module {
     const outputDir = this.options.getOutputDirRoot();
     const outputDirDisk = FsPoly.diskResolved(outputDir);
 
-    [...checksumsToFiles.values()].forEach((files) =>
-      files.sort((fileOne, fileTwo) => {
-        // Prefer un-archived files because they're less expensive to process
+    [...checksumsToFiles.entries()].forEach(([checksum, files]) => {
+      const sortedFiles = files.toSorted((fileOne, fileTwo) => {
+        // First, prefer files that aren't from the output directory
+        const fileOneIsOutputFile = fileOne.getCanBeCandidateInput() ? 0 : 1;
+        const fileTwoIsOutputFile = fileTwo.getCanBeCandidateInput() ? 0 : 1;
+        if (fileOneIsOutputFile !== fileTwoIsOutputFile) {
+          return fileOneIsOutputFile - fileTwoIsOutputFile;
+        }
+
+        // ********** Preferences that are user-controlled **********
+
+        // Prefer either archives or un-archived/plain files
+        if (this.options.getPreferFiletype() === PreferFiletype.ARCHIVE) {
+          const fileOneArchive = fileOne instanceof ArchiveEntry ? 0 : 1;
+          const fileTwoArchive = fileTwo instanceof ArchiveEntry ? 0 : 1;
+          if (fileOneArchive !== fileTwoArchive) {
+            return fileOneArchive - fileTwoArchive;
+          }
+        } else {
+          const fileOneArchive = fileOne instanceof ArchiveEntry ? 1 : 0;
+          const fileTwoArchive = fileTwo instanceof ArchiveEntry ? 1 : 0;
+          if (fileOneArchive !== fileTwoArchive) {
+            return fileOneArchive - fileTwoArchive;
+          }
+        }
+
+        // Then, prefer files whose filename matches the preferred regex
+        const preferFilenameRegex = this.options.getPreferFilenameRegex();
+        if (preferFilenameRegex) {
+          const fileOneMatches = preferFilenameRegex.some((regex) =>
+            regex.test(fileOne.getFilePath()),
+          )
+            ? 0
+            : 1;
+          const fileTwoMatches = preferFilenameRegex.some((regex) =>
+            regex.test(fileTwo.getFilePath()),
+          )
+            ? 0
+            : 1;
+          if (fileOneMatches !== fileTwoMatches) {
+            return fileOneMatches - fileTwoMatches;
+          }
+        }
+
+        // ********** Default sorting that is not user-controlled **********
+
+        // Prefer files of the preferred type
         const fileOneArchived = ROMIndexer.archiveEntryPriority(fileOne);
         const fileTwoArchived = ROMIndexer.archiveEntryPriority(fileTwo);
         if (fileOneArchived !== fileTwoArchived) {
@@ -71,24 +116,20 @@ export default class ROMIndexer extends Module {
         // This is in case the output file is invalid and we're trying to overwrite it with
         // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
         // itself, still resulting in an invalid output file.
-        // TODO(cemmer): only do this when overwriting files in some way?
-        const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 1 : 0;
-        const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 1 : 0;
-        if (fileOneInOutput !== fileTwoInOutput) {
-          return fileOneInOutput - fileTwoInOutput;
+        if (this.options.getOverwrite() || this.options.getOverwriteInvalid()) {
+          const fileOneInOutput = fileOne.getFilePath().startsWith(outputDir) ? 1 : 0;
+          const fileTwoInOutput = fileTwo.getFilePath().startsWith(outputDir) ? 1 : 0;
+          if (fileOneInOutput !== fileTwoInOutput) {
+            return fileOneInOutput - fileTwoInOutput;
+          }
         }
 
         /**
          * Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
          */
-        if (outputDirDisk) {
-          // TODO(cemmer): only do this when not copying files?
-          const fileOneInOutputDisk = path.resolve(fileOne.getFilePath()).startsWith(outputDirDisk)
-            ? 0
-            : 1;
-          const fileTwoInOutputDisk = path.resolve(fileTwo.getFilePath()).startsWith(outputDirDisk)
-            ? 0
-            : 1;
+        if (outputDirDisk && this.options.shouldMove()) {
+          const fileOneInOutputDisk = fileOne.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
+          const fileTwoInOutputDisk = fileTwo.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
           if (fileOneInOutputDisk !== fileTwoInOutputDisk) {
             return fileOneInOutputDisk - fileTwoInOutputDisk;
           }
@@ -96,8 +137,9 @@ export default class ROMIndexer extends Module {
 
         // Otherwise, be deterministic
         return fileOne.toString().localeCompare(fileTwo.toString());
-      }),
-    );
+      });
+      checksumsToFiles.set(checksum, sortedFiles);
+    });
   }
 
   /**

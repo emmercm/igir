@@ -23,7 +23,6 @@ parent_find() {
 cd "$(parent_find . "package.json")"
 npm run build
 cd dist
-# Note: this will require `npm run build` to copy prebuilds
 
 test_igir() {
   echo "--------------------------------------------------"

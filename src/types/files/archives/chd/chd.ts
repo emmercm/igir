@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import stream, { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Mutex } from 'async-mutex';
 import chdman, { CHDInfo, ChdmanBinaryPreference } from 'chdman';
@@ -29,8 +29,12 @@ export default abstract class Chd extends Archive {
     return Chd.getExtensions()[0];
   }
 
+  hasMeaningfulEntryPaths(): boolean {
+    return false;
+  }
+
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
-    return this.extractEntryToStreamCached(entryPath, async (readable) => {
+    await this.extractEntryToStreamCached(entryPath, async (readable) => {
       await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
     });
   }
@@ -39,7 +43,7 @@ export default abstract class Chd extends Archive {
 
   private async extractEntryToStreamCached<T>(
     entryPath: string,
-    callback: (stream: Readable) => Promise<T> | T,
+    callback: (readable: stream.Readable) => Promise<T> | T,
   ): Promise<T> {
     await this.tempSingletonMutex.runExclusive(async () => {
       this.tempSingletonHandles += 1;
@@ -79,7 +83,7 @@ export default abstract class Chd extends Archive {
         filePath,
         async (readable) => {
           if (pregapSize + postgapSize > 0) {
-            return callback(
+            return await callback(
               StreamPoly.concat(
                 StreamPoly.staticReadable(pregapSize, 0x00),
                 readable,
@@ -87,7 +91,7 @@ export default abstract class Chd extends Archive {
               ),
             );
           }
-          return callback(readable);
+          return await callback(readable);
         },
         streamStart,
         streamEnd,
@@ -116,7 +120,7 @@ export default abstract class Chd extends Archive {
 
   @Memoize()
   async getInfo(): Promise<CHDInfo> {
-    return chdman.info({
+    return await chdman.info({
       inputFilename: this.getFilePath(),
       binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
     });

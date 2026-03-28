@@ -20,6 +20,7 @@ export default class MameDAT extends DAT implements MameDATProps {
   // private readonly debug: 'yes' | 'no' = 'no';
 
   // @Expose()
+  // TODO: when uncommenting this, it will need a @Transform
   // private readonly mameconfig: number = 0;
 
   @Expose()

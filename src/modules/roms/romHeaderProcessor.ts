@@ -1,9 +1,10 @@
 import async from 'async';
 
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import type File from '../../types/files/file.js';
 import type FileFactory from '../../types/files/fileFactory.js';
@@ -18,18 +19,18 @@ import Module from '../module.js';
 export default class ROMHeaderProcessor extends Module {
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
-  private readonly driveSemaphore: DriveSemaphore;
+  private readonly mappableSemaphore: MappableSemaphore;
 
   constructor(
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
     super(progressBar, ROMHeaderProcessor.name);
     this.options = options;
     this.fileFactory = fileFactory;
-    this.driveSemaphore = driveSemaphore;
+    this.mappableSemaphore = mappableSemaphore;
   }
 
   /**
@@ -49,7 +50,7 @@ export default class ROMHeaderProcessor extends Module {
     }
 
     this.progressBar.logTrace(
-      `processing headers in ${filesThatNeedProcessing.toLocaleString()} ROM${filesThatNeedProcessing === 1 ? '' : 's'}`,
+      `processing headers in ${IntlPoly.toLocaleString(filesThatNeedProcessing)} ROM${filesThatNeedProcessing === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
     this.progressBar.resetProgress(filesThatNeedProcessing);
@@ -62,7 +63,7 @@ export default class ROMHeaderProcessor extends Module {
           return inputFile;
         }
 
-        return this.driveSemaphore.runExclusive(inputFile, async () => {
+        return await this.mappableSemaphore.runExclusive(async () => {
           this.progressBar.incrementInProgress();
           const childBar = this.progressBar.addChildBar({
             name: inputFile.toString(),
@@ -90,7 +91,7 @@ export default class ROMHeaderProcessor extends Module {
       (romFile) => romFile.getFileHeader() !== undefined,
     ).length;
     this.progressBar.logTrace(
-      `found headers in ${headeredRomsCount.toLocaleString()} ROM${headeredRomsCount === 1 ? '' : 's'}`,
+      `found headers in ${IntlPoly.toLocaleString(headeredRomsCount)} ROM${headeredRomsCount === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done processing file headers');
@@ -131,7 +132,7 @@ export default class ROMHeaderProcessor extends Module {
       this.progressBar.logTrace(
         `${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`,
       );
-      return inputFile.withFileHeader(headerForFileStream);
+      return await inputFile.withFileHeader(headerForFileStream);
     }
     this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);
     return inputFile;

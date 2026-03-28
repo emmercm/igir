@@ -2,7 +2,7 @@
 
 "dir2dat" refers to DATs that have been automatically created based on files in an input directory. [DATs](./introduction.md) generated this way are not typically useful as-is, they usually require some hand editing after creation.
 
-The `dir2dat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every [`--input <path>`](../input/file-scanning.md) provided. dir2dats will be written to the first matching directory in this list:
+The `dir2dat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every [`--input <path>`](../roms/scanning.md) provided. dir2dats will be written to the first matching directory in this list:
 
 1. If provided: the `--dir2dat-output <path>` directory
 2. When writing ROMs (one of the `copy`, `move`, or `link` [commands](../commands.md)): the `--output <path>` directory
@@ -18,7 +18,7 @@ igir dir2dat --input <path> [--input <path>..]
 
 Igir uses the following rules when creating dir2dat DAT files:
 
-- **A DAT file will be created for every [`--input <path>`](../input/file-scanning.md).**
+- **A DAT file will be created for every [`--input <path>`](../roms/scanning.md).**
 
     If multiple input paths overlap, such as:
 
@@ -73,7 +73,11 @@ Igir uses the following rules when creating dir2dat DAT files:
 
       This will cause input files with the same basename to be grouped together!
 
-## Combining with other options
+## Checksums calculated
+
+The `dir2dat` command obeys the `--input-checksum-min <algorithm>` and `--input-checksum-max <algorithm>` options that are typically used for [ROM matching](../roms/matching.md). This means you can use those options to include or exclude checksum types as you need for your situation.
+
+## Combination with other behavior
 
 Once DATs have been generated from input files, they are processed the same as any other DAT file. That means:
 

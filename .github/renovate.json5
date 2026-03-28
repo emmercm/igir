@@ -57,7 +57,7 @@
   internalChecksFilter: 'strict',
 
   packageRules: [
-    // Update Node.js versions immediately
+    // Update engine versions at any time
     {
       matchPackageNames: ['node'],
       groupName: 'Node.js',
@@ -66,6 +66,12 @@
       // The Docker images (used to build executables) frequently don't get published until days
       //  after the Node.js version was updated, so try to prevent immediately failing PRs
       minimumReleaseAge: '5 days',
+      // Renovate's defaults for these options (overrides our global defaults)
+      schedule: 'at any time',
+    },
+    {
+      matchPackageNames: ['bun'],
+      groupName: 'Bun',
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
     },
@@ -174,7 +180,7 @@
           'maxcso'
         ],
         schedule: 'at any time',
-        minimumReleaseAge: '0 hours'
+        minimumReleaseAge: '0 hours',
       },
 
       // Dev dependencies
@@ -186,14 +192,13 @@
         excludePackageNames: [
           '@types/async',
           '@types/cli-progress',
-          '@types/graceful-fs',
           '@types/micromatch',
           '@types/semver',
           '@types/xml2js',
           '@types/yargs',
         ],
         // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
+        matchUpdateTypes: ['patch', 'minor'],
       },
       {
         // Group ESLint together so files can be fixed automatically
@@ -201,10 +206,18 @@
           'typescript-eslint',
           '^@typescript-eslint',
           '^eslint',
+          '/eslint'
         ],
         groupName: 'ESLint',
         // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
+        matchUpdateTypes: ['patch', 'minor'],
+      },
+      {
+        // Hold back ESLint major updates, plugins such as eslint-plugin-unicorn usually need to
+        // be updated first
+        matchPackagePatterns: ['eslint'],
+        matchUpdateTypes: ['major'],
+        minimumReleaseAge: '14 days',
       },
       {
         // Update TypeScript-related ESLint more frequently so that TypeScript can update
@@ -214,18 +227,6 @@
         ],
         matchUpdateTypes: ['major', 'minor'],
         schedule: 'at any time',
-      },
-      {
-        // Group Jest together because of peerDependencies
-        matchPackageNames: [
-          '@jest/globals',
-          '@types/jest',
-          'jest',
-          'ts-jest',
-        ],
-        groupName: 'Jest',
-        // Only group non-major updates
-        matchUpdateTypes: ['patch', 'minor']
       },
       {
         // Separate TypeScript because upgrades are dependent on support by other dependencies (e.g. ESLint)

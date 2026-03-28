@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
@@ -62,7 +62,7 @@ export default class ROMHeader {
     return Object.values(this.HEADERS)
       .map((header) => header.headeredFileExtension)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
   }
 
   static getKnownHeaderCount(): number {
@@ -87,38 +87,30 @@ export default class ROMHeader {
   }
 
   private static async readHeaderHex(
-    stream: Readable,
+    readable: stream.Readable,
     start: number,
     end: number,
   ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      stream.resume();
+    const chunks: Buffer[] = [];
+    let bytesRead = 0;
 
-      const chunks: Buffer[] = [];
-      const resolveHeader: () => void = () => {
-        const header = Buffer.concat(chunks).subarray(start, end).toString('hex').toUpperCase();
-        resolve(header);
-      };
+    for await (const chunk of readable as AsyncIterable<Buffer>) {
+      if (chunk.length > 0) {
+        chunks.push(chunk);
+        bytesRead += chunk.length;
+      }
 
-      stream.on('data', (chunk: Buffer) => {
-        if (chunk.length > 0) {
-          chunks.push(chunk);
-        }
+      // Stop reading when we get enough data, trigger a 'close' event
+      if (bytesRead >= end) {
+        break;
+      }
+    }
 
-        // Stop reading when we get enough data, trigger a 'close' event
-        if (chunks.reduce((sum, buff) => sum + buff.length, 0) >= end) {
-          resolveHeader();
-          stream.destroy();
-        }
-      });
-
-      stream.on('end', resolveHeader);
-      stream.on('error', reject);
-    });
+    return Buffer.concat(chunks).subarray(start, end).toString('hex').toUpperCase();
   }
 
-  static async headerFromFileStream(stream: Readable): Promise<ROMHeader | undefined> {
-    const fileHeader = await ROMHeader.readHeaderHex(stream, 0, this.MAX_HEADER_LENGTH_BYTES);
+  static async headerFromFileStream(readable: stream.Readable): Promise<ROMHeader | undefined> {
+    const fileHeader = await ROMHeader.readHeaderHex(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
     for (const header of headers) {

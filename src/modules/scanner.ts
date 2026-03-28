@@ -1,18 +1,18 @@
 import type { CHDInfo } from 'chdman';
 import { CHDType } from 'chdman';
 
-import type DriveSemaphore from '../async/driveSemaphore.js';
+import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import ArchiveEntry from '../types/files/archives/archiveEntry.js';
 import Chd from '../types/files/archives/chd/chd.js';
-import Gzip from '../types/files/archives/sevenZip/gzip.js';
+import Gzip from '../types/files/archives/gzip.js';
 import Tar from '../types/files/archives/tar.js';
 import type File from '../types/files/file.js';
 import type { ChecksumBitmaskValue } from '../types/files/fileChecksums.js';
 import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import type FileFactory from '../types/files/fileFactory.js';
+import FileFactory from '../types/files/fileFactory.js';
 import type Options from '../types/options.js';
 import Module from './module.js';
 
@@ -21,7 +21,7 @@ import Module from './module.js';
  */
 export default abstract class Scanner extends Module {
   protected readonly options: Options;
-  protected readonly driveSemaphore: DriveSemaphore;
+  protected readonly mappableSemaphore: MappableSemaphore;
 
   private readonly fileFactory: FileFactory;
 
@@ -29,12 +29,12 @@ export default abstract class Scanner extends Module {
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
     loggerPrefix: string,
   ) {
     super(progressBar, loggerPrefix);
     this.options = options;
-    this.driveSemaphore = driveSemaphore;
+    this.mappableSemaphore = mappableSemaphore;
     this.fileFactory = fileFactory;
   }
 
@@ -44,20 +44,76 @@ export default abstract class Scanner extends Module {
     checksumArchives = false,
   ): Promise<File[]> {
     return (
-      await this.driveSemaphore.map(filePaths, async (inputFile) => {
+      await this.mappableSemaphore.map(filePaths, async (inputFile) => {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
+          total: await FsPoly.size(inputFile),
+          progressFormatter: FsPoly.sizeReadable,
         });
 
         let files: File[];
         try {
-          files = await this.getFilesFromPath(inputFile, checksumBitmask, checksumArchives);
-          await this.logWarnings(files);
+          files = await this.getFilesFromPath(
+            inputFile,
+            checksumBitmask,
+            checksumArchives,
+            childBar,
+          );
         } finally {
           childBar.delete();
         }
 
+        if (checksumBitmask) {
+          // Do not return junk checksums
+          // TODO(cemmer): this is inefficient, we shouldn't have junk checksums anywhere
+          files = files.map((file) => {
+            return file.withProps({
+              crc32: /^[0-9a-f]{8}$/.test(file.getCrc32() ?? '') ? file.getCrc32() : undefined,
+              crc32WithoutHeader: /^[0-9a-f]{8}$/.test(file.getCrc32WithoutHeader() ?? '')
+                ? file.getCrc32WithoutHeader()
+                : undefined,
+              md5: /^[0-9a-f]{32}$/.test(file.getMd5() ?? '') ? file.getMd5() : undefined,
+              md5WithoutHeader: /^[0-9a-f]{32}$/.test(file.getMd5WithoutHeader() ?? '')
+                ? file.getMd5WithoutHeader()
+                : undefined,
+              sha1: /^[0-9a-f]{40}$/.test(file.getSha1() ?? '') ? file.getSha1() : undefined,
+              sha1WithoutHeader: /^[0-9a-f]{40}$/.test(file.getSha1WithoutHeader() ?? '')
+                ? file.getSha1WithoutHeader()
+                : undefined,
+              sha256: /^[0-9a-f]{64}$/.test(file.getSha256() ?? '') ? file.getSha256() : undefined,
+              sha256WithoutHeader: /^[0-9a-f]{64}$/.test(file.getSha256WithoutHeader() ?? '')
+                ? file.getSha256WithoutHeader()
+                : undefined,
+            });
+          });
+
+          // Constrain the checksums returned based on the requested bitmask
+          files = files.map((file) => {
+            if (file instanceof ArchiveEntry && this.options.getInputChecksumQuick()) {
+              return file;
+            }
+            return file.withProps({
+              crc32: checksumBitmask & ChecksumBitmask.CRC32 ? file.getCrc32() : undefined,
+              crc32WithoutHeader:
+                checksumBitmask & ChecksumBitmask.CRC32 ? file.getCrc32WithoutHeader() : undefined,
+              md5: checksumBitmask & ChecksumBitmask.MD5 ? file.getMd5() : undefined,
+              md5WithoutHeader:
+                checksumBitmask & ChecksumBitmask.MD5 ? file.getMd5WithoutHeader() : undefined,
+              sha1: checksumBitmask & ChecksumBitmask.SHA1 ? file.getSha1() : undefined,
+              sha1WithoutHeader:
+                checksumBitmask & ChecksumBitmask.SHA1 ? file.getSha1WithoutHeader() : undefined,
+              sha256: checksumBitmask & ChecksumBitmask.SHA256 ? file.getSha256() : undefined,
+              sha256WithoutHeader:
+                checksumBitmask & ChecksumBitmask.SHA256
+                  ? file.getSha256WithoutHeader()
+                  : undefined,
+              checksumBitmask,
+            });
+          });
+        }
+
+        await this.logWarnings(files);
         this.progressBar.incrementCompleted();
         return files;
       })
@@ -78,7 +134,8 @@ export default abstract class Scanner extends Module {
   private async getFilesFromPath(
     filePath: string,
     checksumBitmask: number,
-    checksumArchives = false,
+    checksumArchives: boolean,
+    progressBar: ProgressBar,
   ): Promise<File[]> {
     try {
       if (await FsPoly.isSymlink(filePath)) {
@@ -93,15 +150,39 @@ export default abstract class Scanner extends Module {
         filePath,
         checksumBitmask,
         this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
+        (progress) => {
+          progressBar.setCompleted(progress);
+        },
       );
+
+      for (const fileFromPath of filesFromPath) {
+        if (
+          fileFromPath instanceof ArchiveEntry &&
+          FileFactory.isExtensionArchive(fileFromPath.getExtractedFilePath())
+        ) {
+          this.progressBar.logWarn(
+            `${filePath}: can't scan archives within archives: ${fileFromPath.getExtractedFilePath()}`,
+          );
+        }
+      }
 
       const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
       if (checksumArchives && fileIsArchive) {
-        filesFromPath.push(await this.fileFactory.fileFrom(filePath, checksumBitmask));
+        filesFromPath.push(
+          await this.fileFactory.fileFrom(filePath, checksumBitmask, (progress) => {
+            progressBar.setCompleted(progress);
+          }),
+        );
       }
 
       if (filesFromPath.length === 0) {
-        this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
+        if (this.options.getInputChecksumQuick()) {
+          this.progressBar.logWarn(
+            `${filePath}: didn't find any files in the archive, try disabling --input-checksum-quick`,
+          );
+        } else {
+          this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
+        }
       }
       return filesFromPath;
     } catch (error) {

@@ -59,7 +59,7 @@ export default class InputSubdirectoriesDeleter extends Module {
     }
 
     const inputPathsNormalized = new Set(
-      this.options.getInputPaths().map((inputPath) => path.normalize(inputPath)),
+      this.options.getInputPaths().map((inputPath) => path.resolve(inputPath)),
     );
     const deletedDirs = await this.walkAndDelete([...dirsToMaybeDelete], [...inputPathsNormalized]);
 
@@ -92,13 +92,11 @@ export default class InputSubdirectoriesDeleter extends Module {
     const parentDirs = new Set(
       deletedDirs
         .map((emptyDir) => path.dirname(emptyDir))
-        .filter((parentDir) => {
-          const parentDirNormalized = path.normalize(parentDir);
-          return inputPathsNormalized.some(
-            (inputPath) =>
-              parentDirNormalized.startsWith(inputPath) && parentDirNormalized !== inputPath,
-          );
-        }),
+        .filter((parentDir) =>
+          inputPathsNormalized.some(
+            (inputPath) => parentDir.startsWith(inputPath) && parentDir !== inputPath,
+          ),
+        ),
     );
     if (parentDirs.size === 0) {
       return deletedDirs;

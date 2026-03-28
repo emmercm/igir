@@ -2,22 +2,24 @@ name: Node.js Compile
 
 on:
   pull_request:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag (e.g. "v1.0.0")'
+      ref:
+        description: 'Git ref (refs/heads/<branch>, refs/tags/<tag>, etc.) or SHA'
         required: true
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.tag || github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.ref || github.ref }}
   cancel-in-progress: true
 
 env:
-  ref: ${{ inputs.tag && format('refs/tags/{0}',inputs.tag) || github.sha || github.ref }}
+  ref: ${{ inputs.ref || github.sha || github.ref }}
 
 jobs:
   path-filter:
@@ -27,11 +29,11 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
       - id: filter
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         with:
           filters: |
             changes:
@@ -45,6 +47,7 @@ jobs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
     strategy:
       fail-fast: false
@@ -56,26 +59,28 @@ jobs:
           - os: ubuntu-latest
             docker_arch: linux/arm64/v8
 
-          - os: macos-13
+          - os: macos-15-intel
           - os: macos-latest
 
           - os: windows-latest
             go_arch: amd64
-          #- os: windows-11-arm
-          #  go_arch: arm64
+          - os: windows-11-arm
+            go_arch: arm64
 
     steps:
       # Setup and install
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
-      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
+      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
-          path: |
-            ~/.npm
-            ~\AppData\Roaming\npm-cache
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
@@ -83,7 +88,7 @@ jobs:
 
       # Compile and upload
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
@@ -99,7 +104,7 @@ jobs:
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        uses: addnab/docker-run-action@v3
+        uses: ./.github/actions/docker-run-action
         with:
           image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
           shell: bash
@@ -108,13 +113,12 @@ jobs:
             --volume ${{ github.workspace }}:/build
             --workdir /build
           run: |
-            # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#exit-codes-and-error-action-preference
-            set -eo pipefail
             set -x
+            uname -a
 
-            # Package the executable and test it before compressing it
-            npm ci
-            npm run package -- . igir
+            # Compile the executable and test it before compressing it
+            npm ci --foreground-scripts
+            npm run compile -- . igir
             ./igir --help
             ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
             ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
@@ -138,8 +142,8 @@ jobs:
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
           # Package the executable and test it before compressing it
-          npm ci
-          npm run package -- . igir
+          npm ci --foreground-scripts
+          npm run compile -- . igir
           ./igir --help
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
           ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
@@ -161,11 +165,7 @@ jobs:
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
           # Install dependencies...
-          npm ci
-          if ($NODE_ARCH -notin @("ia32", "x64")) {
-            # ...and use a version of 7zip-bin that includes this arch
-            npm install 7zip-bin@">=5.2.0"
-          }
+          npm ci --foreground-scripts
           if ($NODE_ARCH -notin @("x64")) {
             # ...and build the missing caxa stub
             Push-Location
@@ -180,7 +180,7 @@ jobs:
           }
 
           # Package the executable and test it before compressing it
-          npm run package -- . igir.exe
+          npm run compile -- . igir.exe
           .\igir.exe --help
           .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
           .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
@@ -191,7 +191,7 @@ jobs:
           Get-ChildItem "${BIN_OUTPUT}" >> "${env:GITHUB_STEP_SUMMARY}"
           echo "``````" >> "${env:GITHUB_STEP_SUMMARY}"
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ env.BIN_OUTPUT }}
           path: ${{ env.BIN_OUTPUT }}
@@ -202,19 +202,23 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     needs:
       - node-compile
+    permissions:
+      # actions/checkout@v6, `gh` CLI
+      contents: write
     runs-on: ubuntu-latest
     steps:
       # Get the package version
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4.2.1
-      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
+      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
-          path: |
-            ~/.npm
-            ~\AppData\Roaming\npm-cache
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
@@ -222,11 +226,10 @@ jobs:
       - run: npm ci
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
-      - uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
-        with:
-          tag_name: v${{ env.NPM_PKG_VERSION }}
-          files: igir-*/*
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - run: gh release upload "v${{ env.NPM_PKG_VERSION }}" igir-*/*
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   # !!! This check should be required by GitHub !!!
   compile-status-check:
@@ -236,7 +239,7 @@ jobs:
       - node-compile
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@release/v1
+      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
           allowed-skips: node-compile

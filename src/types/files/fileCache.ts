@@ -1,5 +1,3 @@
-import Timer from '../../async/timer.js';
-import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import Cache from '../cache.js';
@@ -68,26 +66,6 @@ export default class FileCache {
     );
     // Delete keys from old value types
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
-
-    // Delete keys for deleted files
-    Timer.setTimeout(async () => {
-      const cacheKeyFilePaths = [...this.cache.keys()]
-        .map((cacheKey): [string, string] => [cacheKey, cacheKey.split('|')[1]])
-        // Don't delete the key if it's for a disk that isn't mounted right now
-        .filter(([, filePath]) => FsPoly.diskResolved(filePath) !== undefined)
-        // Only process a reasonably sized subset of the keys
-        .sort(() => Math.random() - 0.5)
-        .slice(0, Defaults.MAX_FS_THREADS);
-
-      await Promise.all(
-        cacheKeyFilePaths.map(async ([cacheKey, filePath]) => {
-          if (!(await FsPoly.exists(filePath))) {
-            // Delete the file path key from the cache
-            await this.cache.delete(cacheKey);
-          }
-        }),
-      );
-    }, 5000);
   }
 
   async save(): Promise<void> {
@@ -102,6 +80,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
     callback?: FsReadCallback,
+    forceRecompute = false,
   ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(filePath);
@@ -123,12 +102,16 @@ export default class FileCache {
         computedFile = await File.fileOf({ filePath, ...checksums }, checksumBitmask);
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: computedFile.toFileProps(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (forceRecompute) {
+          return true;
+        }
+
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -153,12 +136,13 @@ export default class FileCache {
 
     // We didn't compute the file (cache hit), deserialize the properties into a full object
     const cachedFile = cachedValue.value as FileProps;
-    return File.fileOfObject(filePath, cachedFile);
+    return await File.fileOfObject(filePath, cachedFile);
   }
 
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
+    forceRecompute = false,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
@@ -181,17 +165,26 @@ export default class FileCache {
         computedEntries = (await archive.getArchiveEntries(checksumBitmask)) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: computedEntries.map((entry) => entry.toEntryProps()),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (forceRecompute) {
+          return true;
+        }
+
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
 
         const cachedEntries = cached.value as ArchiveEntryProps<T>[];
+        if (cachedEntries.length === 0) {
+          // A quick checksum scan may have prevented us from getting any entries from an archive
+          // (such as bin/cue CHDs), assume we want to re-scan the archive
+          return true;
+        }
         const existingBitmask =
           (cachedEntries.every((props) => props.crc32 !== undefined) ? ChecksumBitmask.CRC32 : 0) |
           (cachedEntries.every((props) => props.md5 !== undefined) ? ChecksumBitmask.MD5 : 0) |
@@ -212,8 +205,8 @@ export default class FileCache {
     // We didn't compute the archive entries (cache hit), deserialize the properties into
     //  full objects
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
-    return Promise.all(
-      cachedEntries.map(async (props) => ArchiveEntry.entryOfObject(archive, props)),
+    return await Promise.all(
+      cachedEntries.map(async (props) => await ArchiveEntry.entryOfObject(archive, props)),
     );
   }
 
@@ -233,17 +226,17 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const header = await file.createReadStream(async (readable) =>
-          ROMHeader.headerFromFileStream(readable),
+        const header = await file.createReadStream(
+          async (readable) => await ROMHeader.headerFromFileStream(readable),
         );
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: header?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // Recompute if the file has changed since being cached
           return true;
         }
@@ -275,17 +268,17 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        const signature = await file.createReadStream(async (readable) =>
-          FileSignature.signatureFromFileStream(readable),
+        const signature = await file.createReadStream(
+          async (readable) => await FileSignature.signatureFromFileStream(readable),
         );
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: signature?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -320,12 +313,12 @@ export default class FileCache {
         const paddings = await ROMPadding.paddingsFromFile(file, callback);
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeMs,
+          modifiedTimeMillis: stats.mtimeS,
           value: paddings.map((padding) => padding.toROMPaddingProps()),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeMs) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
           // Recompute if the file has changed since being cached
           return true;
         }

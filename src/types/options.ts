@@ -104,6 +104,20 @@ export const MoveDeleteDirsInverted = Object.fromEntries(
   Object.entries(MoveDeleteDirs).map(([key, value]) => [value, key]),
 ) as Record<MoveDeleteDirsValue, MoveDeleteDirsKey>;
 
+export const TrimScanFiles = {
+  // Never scan any files for trimming detection
+  NEVER: 1,
+  // Scan files with a known trimmable signature (default)
+  AUTO: 2,
+  // Scan all non-archive files regardless of signature
+  ALWAYS: 3,
+} as const;
+export type TrimScanFilesKey = keyof typeof TrimScanFiles;
+export type TrimScanFilesValue = (typeof TrimScanFiles)[TrimScanFilesKey];
+export const TrimScanFilesInverted = Object.fromEntries(
+  Object.entries(TrimScanFiles).map(([key, value]) => [value, key]),
+) as Record<TrimScanFilesValue, TrimScanFilesKey>;
+
 export const PreferRevision = {
   OLDER: 1,
   NEWER: 2,
@@ -113,6 +127,26 @@ export type PreferRevisionValue = (typeof PreferRevision)[PreferRevisionKey];
 export const PreferRevisionInverted = Object.fromEntries(
   Object.entries(PreferRevision).map(([key, value]) => [value, key]),
 ) as Record<PreferRevisionValue, PreferRevisionKey>;
+
+export const PreferFiletype = {
+  PLAIN: 1,
+  ARCHIVE: 2,
+} as const;
+export type PreferFiletypeKey = keyof typeof PreferFiletype;
+export type PreferFiletypeValue = (typeof PreferFiletype)[PreferFiletypeKey];
+export const PreferFiletypeInverted = Object.fromEntries(
+  Object.entries(PreferFiletype).map(([key, value]) => [value, key]),
+) as Record<PreferFiletypeValue, PreferFiletypeKey>;
+
+export const PlaylistMode = {
+  MULTIPLE: 1,
+  ALWAYS: 2,
+} as const;
+export type PlaylistModeKey = keyof typeof PlaylistMode;
+export type PlaylistModeValue = (typeof PlaylistMode)[PlaylistModeKey];
+export const PlaylistModeInverted = Object.fromEntries(
+  Object.entries(PlaylistMode).map(([key, value]) => [value, key]),
+) as Record<PlaylistModeValue, PlaylistModeKey>;
 
 export const ZipFormat = {
   TORRENTZIP: 'TORRENTZIP',
@@ -145,6 +179,7 @@ export interface OptionsProps {
 
   readonly patch?: string[];
   readonly patchExclude?: string[];
+  readonly patchOnly?: boolean;
 
   readonly output?: string;
   readonly dirMirror?: boolean;
@@ -156,9 +191,12 @@ export interface OptionsProps {
   readonly dirLetterLimit?: number;
   readonly dirLetterGroup?: boolean;
   readonly dirGameSubdir?: string;
+  readonly outputConsoleTokens?: string;
+
   readonly fixExtension?: string;
   readonly overwrite?: boolean;
   readonly overwriteInvalid?: boolean;
+  readonly writeRetry?: number;
 
   readonly moveDeleteDirs?: string;
 
@@ -177,6 +215,7 @@ export interface OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
+  readonly trimScanFiles?: string;
   readonly trimScanArchives?: boolean;
 
   readonly mergeRoms?: string;
@@ -229,6 +268,10 @@ export interface OptionsProps {
   readonly preferRetail?: boolean;
   readonly preferParent?: boolean;
 
+  readonly preferFiletype?: string;
+  readonly preferFilenameRegex?: string;
+
+  readonly playlistMode?: string;
   readonly playlistExtensions?: string[];
 
   readonly dir2datOutput?: string;
@@ -240,11 +283,13 @@ export interface OptionsProps {
   readonly datThreads?: number;
   readonly readerThreads?: number;
   readonly writerThreads?: number;
-  readonly writeRetry?: number;
+
   readonly tempDir?: string;
   readonly disableCache?: boolean;
   readonly cachePath?: string;
+
   readonly verbose?: number;
+  readonly debugLog?: string;
   readonly help?: boolean;
 }
 
@@ -287,6 +332,8 @@ export default class Options implements OptionsProps {
 
   readonly patchExclude: string[];
 
+  readonly patchOnly: boolean;
+
   readonly output?: string;
 
   readonly dirMirror: boolean;
@@ -307,11 +354,15 @@ export default class Options implements OptionsProps {
 
   readonly dirGameSubdir?: string;
 
+  readonly outputConsoleTokens?: string;
+
   readonly fixExtension?: string;
 
   readonly overwrite: boolean;
 
   readonly overwriteInvalid: boolean;
+
+  readonly writeRetry: number;
 
   readonly moveDeleteDirs?: string;
 
@@ -336,6 +387,8 @@ export default class Options implements OptionsProps {
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
+
+  readonly trimScanFiles?: string;
 
   readonly trimScanArchives: boolean;
 
@@ -433,6 +486,12 @@ export default class Options implements OptionsProps {
 
   readonly preferParent: boolean;
 
+  readonly preferFiletype?: string;
+
+  readonly preferFilenameRegex?: string;
+
+  readonly playlistMode?: string;
+
   readonly playlistExtensions: string[];
 
   readonly dir2datOutput?: string;
@@ -447,8 +506,6 @@ export default class Options implements OptionsProps {
 
   readonly writerThreads: number;
 
-  readonly writeRetry: number;
-
   readonly tempDir: string;
 
   readonly disableCache: boolean;
@@ -456,6 +513,8 @@ export default class Options implements OptionsProps {
   readonly cachePath?: string;
 
   readonly verbose: number;
+
+  readonly debugLog?: string;
 
   readonly help: boolean;
 
@@ -471,7 +530,9 @@ export default class Options implements OptionsProps {
     this.inputChecksumMax = options?.inputChecksumMax;
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
-    this.dat = (options?.dat ?? []).map((filePath) => filePath.replaceAll(/[\\/]/g, path.sep));
+    this.dat = (options?.dat ?? []).map((filePath) =>
+      URLPoly.canParse(filePath) ? filePath : filePath.replaceAll(/[\\/]/g, path.sep),
+    );
     this.datExclude = (options?.datExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
@@ -486,8 +547,9 @@ export default class Options implements OptionsProps {
     this.patchExclude = (options?.patchExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
+    this.patchOnly = options?.patchOnly ?? false;
 
-    this.output = options?.output?.replace(/[\\/]/g, path.sep);
+    this.output = options?.output === undefined ? undefined : path.resolve(options.output);
     this.dirMirror = options?.dirMirror ?? false;
     this.dirDatMirror = options?.dirDatMirror ?? false;
     this.dirDatName = options?.dirDatName ?? false;
@@ -497,17 +559,20 @@ export default class Options implements OptionsProps {
     this.dirLetterLimit = options?.dirLetterLimit ?? 0;
     this.dirLetterGroup = options?.dirLetterGroup ?? false;
     this.dirGameSubdir = options?.dirGameSubdir;
+    this.outputConsoleTokens = options?.outputConsoleTokens;
 
     this.fixExtension = options?.fixExtension;
     this.overwrite = options?.overwrite ?? false;
     this.overwriteInvalid = options?.overwriteInvalid ?? false;
+    this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
 
     this.moveDeleteDirs = options?.moveDeleteDirs;
 
     this.cleanExclude = (options?.cleanExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
     );
-    this.cleanBackup = options?.cleanBackup?.replace(/[\\/]/g, path.sep);
+    this.cleanBackup =
+      options?.cleanBackup === undefined ? undefined : path.resolve(options.cleanBackup);
     this.cleanDryRun = options?.cleanDryRun ?? false;
 
     this.zipFormat = options?.zipFormat;
@@ -521,6 +586,7 @@ export default class Options implements OptionsProps {
     this.removeHeaders = options?.removeHeaders;
 
     this.trimmedGlob = options?.trimmedGlob;
+    this.trimScanFiles = options?.trimScanFiles;
     this.trimScanArchives = options?.trimScanArchives ?? false;
 
     this.mergeRoms = options?.mergeRoms;
@@ -573,22 +639,30 @@ export default class Options implements OptionsProps {
     this.preferRetail = options?.preferRetail ?? false;
     this.preferParent = options?.preferParent ?? false;
 
+    this.preferFiletype = options?.preferFiletype;
+    this.preferFilenameRegex = options?.preferFilenameRegex;
+
+    this.playlistMode = options?.playlistMode;
     this.playlistExtensions = options?.playlistExtensions ?? [];
 
-    this.dir2datOutput = options?.dir2datOutput?.replace(/[\\/]/g, path.sep);
+    this.dir2datOutput =
+      options?.dir2datOutput === undefined ? undefined : path.resolve(options.dir2datOutput);
 
-    this.fixdatOutput = options?.fixdatOutput?.replace(/[\\/]/g, path.sep);
+    this.fixdatOutput =
+      options?.fixdatOutput === undefined ? undefined : path.resolve(options.fixdatOutput);
 
-    this.reportOutput = (options?.reportOutput ?? process.cwd()).replaceAll(/[\\/]/g, path.sep);
+    this.reportOutput = path.resolve(options?.reportOutput ?? process.cwd());
 
     this.datThreads = Math.max(options?.datThreads ?? 0, 1);
     this.readerThreads = Math.max(options?.readerThreads ?? 0, 1);
     this.writerThreads = Math.max(options?.writerThreads ?? 0, 1);
-    this.writeRetry = Math.max(options?.writeRetry ?? 0, 0);
-    this.tempDir = (options?.tempDir ?? Temp.getTempDir()).replaceAll(/[\\/]/g, path.sep);
+
+    this.tempDir = path.resolve(options?.tempDir ?? Temp.getTempDir());
     this.disableCache = options?.disableCache ?? false;
     this.cachePath = options?.cachePath;
+
     this.verbose = options?.verbose ?? 0;
+    this.debugLog = options?.debugLog;
     this.help = options?.help ?? false;
   }
 
@@ -766,7 +840,7 @@ export default class Options implements OptionsProps {
    * Scan for input files, and input files to exclude, and return the difference.
    */
   async scanInputFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.input,
       this.inputExclude,
       WalkMode.FILES,
@@ -779,10 +853,13 @@ export default class Options implements OptionsProps {
    * Scan for subdirectories in the input paths.
    */
   async scanInputSubdirectories(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
+    return await Options.scanPaths(this.input, WalkMode.DIRECTORIES, walkCallback, false);
   }
 
-  private static async scanPaths(
+  /**
+   * Scan for files or directories given some glob patterns.
+   */
+  static async scanPaths(
     globPatterns: string[],
     walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
@@ -790,12 +867,12 @@ export default class Options implements OptionsProps {
   ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
-    let globbedPaths: string[] = [];
+    const globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
       const paths = await this.globPath(uniqueGlobPattern, walkMode, walkCallback);
-      // NOTE(cemmer): if `paths` is really large, `globbedPaths.push(...paths)` can hit a stack
-      // size limit
-      globbedPaths = [...globbedPaths, ...paths];
+      for (const globbedPath of paths) {
+        globbedPaths.push(globbedPath);
+      }
     }
 
     if (requireFiles && globbedPaths.length === 0) {
@@ -822,9 +899,9 @@ export default class Options implements OptionsProps {
       requireIncludeFiles,
     );
     const excludePaths = await this.scanPaths(excludeGlobPatterns, walkMode, undefined, false);
-    const excludePathsSet = new Set(excludePaths.map((filePath) => path.resolve(filePath)));
+    const excludePathsSet = new Set(excludePaths);
     return includePaths.filter(
-      (filePath) => excludePathsSet.size === 0 || !excludePathsSet.has(path.resolve(filePath)),
+      (filePath) => excludePathsSet.size === 0 || !excludePathsSet.has(filePath),
     );
   }
 
@@ -840,7 +917,7 @@ export default class Options implements OptionsProps {
 
     // Glob the contents of directories
     if (await FsPoly.isDirectory(inputPath)) {
-      return FsPoly.walk(inputPath, walkMode, walkCallback);
+      return (await FsPoly.walk(inputPath, walkMode, walkCallback)).map((p) => path.resolve(p));
     }
 
     // If the file exists, don't process it as a glob pattern
@@ -848,17 +925,27 @@ export default class Options implements OptionsProps {
       if (walkCallback !== undefined) {
         walkCallback(1);
       }
-      return [inputPath];
+      return [path.resolve(inputPath)];
     }
 
     // fg only uses forward-slash path separators
     const inputPathNormalized = inputPath.replaceAll('\\', '/');
     // Try to handle globs a little more intelligently (see the JSDoc below)
-    const inputPathEscaped = await this.sanitizeGlobPattern(inputPathNormalized);
+    const inputPathEscaped = this.sanitizeGlobPattern(inputPathNormalized);
 
     if (!inputPathEscaped) {
       // fast-glob will throw with empty-ish inputs
       return [];
+    }
+
+    // Check for URLs before globbing, as fast-glob may throw on Windows with URL-like paths
+    // (e.g. `http:` looks like a drive letter)
+    if (URLPoly.canParse(inputPath)) {
+      // Allow URLs, let the scanner modules deal with them
+      if (walkCallback !== undefined) {
+        walkCallback(1);
+      }
+      return [inputPath];
     }
 
     // Otherwise, process it as a glob pattern
@@ -867,22 +954,12 @@ export default class Options implements OptionsProps {
       onlyDirectories: walkMode === WalkMode.DIRECTORIES,
     });
     if (globbedPaths.length === 0) {
-      if (URLPoly.canParse(inputPath)) {
-        // Allow URLs, let the scanner modules deal with them
-        if (walkCallback !== undefined) {
-          walkCallback(1);
-        }
-        return [inputPath];
-      }
       return [];
     }
     if (walkCallback !== undefined) {
       walkCallback(globbedPaths.length);
     }
-    if (path.sep !== '/') {
-      return globbedPaths.map((globbedPath) => globbedPath.replaceAll(/[\\/]/g, path.sep));
-    }
-    return globbedPaths;
+    return globbedPaths.map((globbedPath) => path.resolve(globbedPath));
   }
 
   /**
@@ -892,21 +969,18 @@ export default class Options implements OptionsProps {
    * and then tack on the glob at the end.
    * Example problematic paths:
    * ./TOSEC - DAT Pack - Complete (3983) (TOSEC-v2023-07-10)/TOSEC-ISO/Sega*
+   * ./No-Intro/Nintendo - Nintendo 64 (BigEndian)*\/**
    */
-  private static async sanitizeGlobPattern(globPattern: string): Promise<string> {
-    const pathsSplit = globPattern.split(/[\\/]/);
-    for (let i = 0; i < pathsSplit.length; i += 1) {
-      const subPath = pathsSplit.slice(0, i + 1).join('/');
-      if (subPath !== '' && !(await FsPoly.exists(subPath))) {
-        const dirname = pathsSplit.slice(0, i).join('/');
-        if (dirname === '') {
-          // fg won't let you escape empty strings
-          return pathsSplit.slice(i).join('/');
-        }
-        return `${fg.escapePath(dirname)}/${pathsSplit.slice(i).join('/')}`;
-      }
-    }
-    return globPattern;
+  private static sanitizeGlobPattern(globPattern: string): string {
+    return (
+      globPattern
+        // Escape parentheticals that aren't an extglob and probably aren't a "logical OR"
+        .replaceAll(/(^|[^?*+@!])\(([^|)]+)\)/g, '$1{\\(,}$2{\\),}')
+        // Escape curly braces that probably aren't a brace expression
+        .replaceAll(/\{([^.,}]+)\}/g, '{\\{,}$1{\\},}')
+        // Escape square brackets that might not be a regular expression character class
+        .replaceAll(/\[([^\]]+)\]/g, '{[$1],\\[$1\\]}')
+    );
   }
 
   getInputChecksumQuick(): boolean {
@@ -958,7 +1032,7 @@ export default class Options implements OptionsProps {
    * Scan for DAT files, and DAT files to exclude, and return the difference.
    */
   async scanDatFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.dat,
       this.datExclude,
       WalkMode.FILES,
@@ -998,12 +1072,16 @@ export default class Options implements OptionsProps {
    * Scan for patch files, and patch files to exclude, and return the difference.
    */
   async scanPatchFilesWithoutExclusions(walkCallback?: FsWalkCallback): Promise<string[]> {
-    return Options.scanPathsWithoutExclusions(
+    return await Options.scanPathsWithoutExclusions(
       this.patch,
       this.patchExclude,
       WalkMode.FILES,
       walkCallback,
     );
+  }
+
+  getPatchOnly(): boolean {
+    return this.patchOnly;
   }
 
   getOutput(): string {
@@ -1014,15 +1092,15 @@ export default class Options implements OptionsProps {
    * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
    */
   getOutputDirRoot(): string {
-    const outputSplit = this.getOutput().split(/[\\/]/);
+    const resolvedOutput = path.resolve(this.getOutput());
+    const outputSplit = resolvedOutput.split(path.sep);
     for (let i = 0; i < outputSplit.length; i += 1) {
-      if (/\{[a-zA-Z]+\}/.test(outputSplit[i])) {
-        return outputSplit.slice(0, i).join(path.sep);
+      if (/{[a-zA-Z]+}/.test(outputSplit[i])) {
+        return outputSplit.slice(0, i).join(path.sep) || path.sep;
       }
     }
-    return outputSplit.join(path.sep);
+    return resolvedOutput;
   }
-
   getDirMirror(): boolean {
     return this.dirMirror;
   }
@@ -1065,6 +1143,10 @@ export default class Options implements OptionsProps {
     return GameSubdirMode[subdirMode as GameSubdirModeKey];
   }
 
+  getOutputConsoleTokens(): string | undefined {
+    return this.outputConsoleTokens;
+  }
+
   getFixExtension(): FixExtensionValue | undefined {
     const fixExtensionMode = Object.keys(FixExtension).find(
       (mode) => mode.toLowerCase() === this.fixExtension?.toLowerCase(),
@@ -1083,6 +1165,10 @@ export default class Options implements OptionsProps {
     return this.overwriteInvalid;
   }
 
+  getWriteRetry(): number {
+    return this.writeRetry;
+  }
+
   getMoveDeleteDirs(): MoveDeleteDirsValue | undefined {
     const moveDeleteDirsMode = Object.keys(MoveDeleteDirs).find(
       (mode) => mode.toLowerCase() === this.moveDeleteDirs?.toLowerCase(),
@@ -1094,7 +1180,7 @@ export default class Options implements OptionsProps {
   }
 
   private async scanCleanExcludeFiles(): Promise<string[]> {
-    return Options.scanPaths(this.cleanExclude, WalkMode.FILES, undefined, false);
+    return await Options.scanPaths(this.cleanExclude, WalkMode.FILES, undefined, false);
   }
 
   /**
@@ -1106,21 +1192,17 @@ export default class Options implements OptionsProps {
     walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = new Set(
-      writtenFiles.map((file) => path.normalize(file.getFilePath())),
-    );
+    const writtenFilesNormalized = new Set(writtenFiles.map((file) => file.getFilePath()));
 
     // Files excluded from cleaning
-    const cleanExcludedFilesNormalized = new Set(
-      (await this.scanCleanExcludeFiles()).map((filePath) => path.normalize(filePath)),
-    );
+    const cleanExcludedFilesNormalized = new Set(await this.scanCleanExcludeFiles());
 
     return (await Options.scanPaths(outputDirs, WalkMode.FILES, walkCallback, false))
       .filter(
         (filePath) =>
           !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),
       )
-      .sort();
+      .toSorted();
   }
 
   getCleanBackup(): string | undefined {
@@ -1183,6 +1265,16 @@ export default class Options implements OptionsProps {
       this.trimmedGlob.length > 0 &&
       micromatch.isMatch(filePath.replace(/^.[\\/]/, ''), this.trimmedGlob)
     );
+  }
+
+  getTrimScanFiles(): TrimScanFilesValue | undefined {
+    const trimScanFilesMode = Object.keys(TrimScanFiles).find(
+      (mode) => mode.toLowerCase() === this.trimScanFiles?.toLowerCase(),
+    );
+    if (!trimScanFilesMode) {
+      return undefined;
+    }
+    return TrimScanFiles[trimScanFilesMode as TrimScanFilesKey];
   }
 
   getTrimScanArchives(): boolean {
@@ -1413,6 +1505,30 @@ export default class Options implements OptionsProps {
     return this.preferParent;
   }
 
+  getPreferFiletype(): PreferFiletypeValue | undefined {
+    const preferFiletype = Object.keys(PreferFiletype).find(
+      (mode) => mode.toLowerCase() === this.preferFiletype?.toLowerCase(),
+    );
+    if (!preferFiletype) {
+      return undefined;
+    }
+    return PreferFiletype[preferFiletype as PreferFiletypeKey];
+  }
+
+  getPreferFilenameRegex(): RegExp[] | undefined {
+    return Options.getRegex(this.preferFilenameRegex);
+  }
+
+  getPlaylistMode(): PlaylistModeValue | undefined {
+    const playlistMode = Object.keys(PlaylistMode).find(
+      (mode) => mode.toLowerCase() === this.playlistMode?.toLowerCase(),
+    );
+    if (!playlistMode) {
+      return undefined;
+    }
+    return PlaylistMode[playlistMode as PlaylistModeKey];
+  }
+
   getPlaylistExtensions(): string[] {
     return this.playlistExtensions;
   }
@@ -1456,10 +1572,6 @@ export default class Options implements OptionsProps {
     return this.writerThreads;
   }
 
-  getWriteRetry(): number {
-    return this.writeRetry;
-  }
-
   getTempDir(): string {
     return this.tempDir;
   }
@@ -1483,6 +1595,28 @@ export default class Options implements OptionsProps {
       return LogLevel.TRACE;
     }
     return LogLevel.WARN;
+  }
+
+  getDebugLog(): string | undefined {
+    if (this.debugLog === undefined) {
+      return undefined;
+    }
+
+    let { debugLog } = this;
+    if (debugLog === '') {
+      debugLog = 'igir_%YYYY-%MM-%DDT%HH:%mm:%ss.log';
+    }
+
+    // Replace date & time tokens
+    const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
+    if (symbolMatches) {
+      symbolMatches.reduce(ArrayPoly.reduceUnique(), []).forEach((match) => {
+        const val = moment().format(match.replace(/^%/, ''));
+        debugLog = debugLog.replace(match, val);
+      });
+    }
+
+    return debugLog;
   }
 
   getHelp(): boolean {

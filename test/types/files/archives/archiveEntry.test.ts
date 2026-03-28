@@ -1,8 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
-import DriveSemaphore from '../../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import Logger from '../../../../src/console/logger.js';
 import { LogLevel } from '../../../../src/console/logLevel.js';
 import Temp from '../../../../src/globals/temp.js';
@@ -10,6 +10,7 @@ import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import bufferPoly from '../../../../src/polyfill/bufferPoly.js';
 import FsPoly from '../../../../src/polyfill/fsPoly.js';
 import ArchiveEntry from '../../../../src/types/files/archives/archiveEntry.js';
+import Chd from '../../../../src/types/files/archives/chd/chd.js';
 import SevenZip from '../../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Zip from '../../../../src/types/files/archives/zip.js';
 import File from '../../../../src/types/files/file.js';
@@ -21,10 +22,10 @@ import Options from '../../../../src/types/options.js';
 import IPSPatch from '../../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 describe('getEntryPath', () => {
-  test.each(['something.rom', path.join('foo', 'bar.rom')])(
+  test.each(['something.rom', 'foo/bar.rom'])(
     'should return the constructor value: %s',
     async (archiveEntryPath) => {
       const archive = new Zip('/some/archive.zip');
@@ -760,7 +761,7 @@ describe('extractEntryToFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
@@ -803,7 +804,7 @@ describe('copyToTempFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
@@ -828,34 +829,32 @@ describe('copyToTempFile', () => {
   });
 });
 
-describe('createReadStream', () => {
-  it('should extract archived files', async () => {
-    // Note: this will only return valid archives with at least one file
-    const scannedFiles = await new ROMScanner(
-      new Options({
-        input: [path.join('test', 'fixtures', 'roms')],
-        inputExclude: [
-          // Can't extract NKit files
-          path.join('test', 'fixtures', 'roms', 'nkit'),
-        ],
-      }),
-      new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
-    ).scan();
-    const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
+// Note: this will only return valid archives with at least one file
+const scannedFiles = await new ROMScanner(
+  new Options({
+    input: [path.join('test', 'fixtures', 'roms')],
+    inputExclude: [
+      // Can't extract NKit files
+      path.join('test', 'fixtures', 'roms', 'nkit'),
+    ],
+  }),
+  new ProgressBarFake(),
+  new FileFactory(new FileCache(), LOGGER),
+  new MappableSemaphore(os.availableParallelism()),
+).scan();
+const archiveEntries = scannedFiles.filter((entry) => entry instanceof ArchiveEntry);
 
-    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
-    try {
-      for (const archiveEntry of archiveEntries) {
-        await archiveEntry.createReadStream(async (readable) => {
-          const contents = (await bufferPoly.fromReadable(readable)).toString();
-          expect(contents).toBeTruthy();
-        });
-      }
-    } finally {
-      await FsPoly.rm(temp, { recursive: true });
-    }
+describe('createReadStream', () => {
+  test.each(
+    archiveEntries
+      // Some CHDs can't/shouldn't be extracted, ignore those
+      .filter((file) => !(file.getArchive() instanceof Chd) || file.getSize() > 0)
+      .map((file) => [file.toString(), file]),
+  )('should extract archived files: %s', async (_, archiveEntry) => {
+    await archiveEntry.createReadStream(async (readable) => {
+      const contents = (await bufferPoly.fromReadable(readable)).toString();
+      expect(contents).toBeTruthy();
+    });
   });
 });
 

@@ -1,7 +1,5 @@
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
-
-import { jest } from '@jest/globals';
+import stream from 'node:stream';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
@@ -13,8 +11,6 @@ import { ZipReader } from '../../zip/index.js';
 import type { ValidationResultValue } from '../src/tzValidator.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 import type { CompressionMethodValue } from '../src/tzWriter.js';
-
-jest.setTimeout(5 * 60 * 1000); // 5min for QEMU cross-build testing
 
 const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms'), WalkMode.FILES))
   .filter((filePath) => filePath.endsWith('.zip'))
@@ -30,9 +26,12 @@ const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [ZipFormat.RVZSTD]: ValidationResult.VALID_RVZSTD,
 } as const;
 
-test.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])(
-  'should write valid zip files: %s',
-  async (zipFormat) => {
+const romDirs = (await FsPoly.dirs(path.join('test', 'fixtures', 'roms'))).filter(
+  (dirPath) => !['chd', 'cso', 'gcz', 'nkit', 'rvz', 'wia'].includes(path.basename(dirPath)),
+);
+
+describe.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])('zip format: %s', (zipFormat) => {
+  test.each(romDirs)('should write valid zip files: %s', async (input) => {
     const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
 
     try {
@@ -40,18 +39,18 @@ test.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])(
         new Options({
           commands: ['copy', 'zip'],
           dat: [path.join('test', 'fixtures', 'dats')],
-          input: [path.join('test', 'fixtures', 'roms')],
-          inputExclude: [path.join('test', 'fixtures', 'roms', '{gcz,rvz,wia}', '**')],
+          input: [input],
           output: tempDir,
           zipFormat: ZipFormatInverted[zipFormat].toLowerCase(),
           excludeDisks: true,
           dirDatName: true,
           disableCache: true,
         }),
-        new Logger(LogLevel.NEVER, new PassThrough()),
+        new Logger(LogLevel.NEVER, new stream.PassThrough()),
       ).main();
 
       const writtenFiles = await FsPoly.walk(tempDir, WalkMode.FILES);
+      expect(writtenFiles.length).toBeGreaterThan(0);
       for (const writtenFile of writtenFiles) {
         await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
           VALIDATION_MAP[zipFormat],
@@ -63,5 +62,5 @@ test.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])(
         force: true,
       });
     }
-  },
-);
+  });
+});

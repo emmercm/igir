@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -15,7 +16,10 @@ export default class Temp {
   private static globalTempDir = path.join(
     os.tmpdir(),
     Package.NAME,
-    moment().format('YYYYMMDD-HHmmss'),
+    moment().format('YYYYMMDD-HHmmss') +
+      (process.env.NODE_ENV === 'test'
+        ? `.${crypto.randomBytes(4).readUInt32LE().toString(36)}`
+        : ''),
   );
 
   static getTempDir(): string {

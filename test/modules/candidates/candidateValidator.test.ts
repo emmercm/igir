@@ -11,7 +11,7 @@ import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
-  return Promise.all(
+  return await Promise.all(
     dat.getGames().map(
       async (game) =>
         new WriteCandidate(
@@ -98,6 +98,8 @@ it('should return something if some candidates have conflicting paths', async ()
     new ProgressBarFake(),
   ).validate(dat, candidates);
 
-  const invalidCandidateNames = invalidCandidates.map((candidate) => candidate.getName()).sort();
+  const invalidCandidateNames = invalidCandidates
+    .map((candidate) => candidate.getName())
+    .toSorted();
   expect(invalidCandidateNames).toEqual(['game four', 'game three', 'game two']);
 });

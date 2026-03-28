@@ -11,7 +11,7 @@ async function writeTemp(fileName: string, contents: string | Buffer): Promise<F
   const temp = await FsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
   await FsPoly.mkdir(path.dirname(temp), { recursive: true });
   await FsPoly.writeFile(temp, contents);
-  return File.fileOf({ filePath: temp });
+  return await File.fileOf({ filePath: temp });
 }
 
 describe('constructor', () => {
@@ -44,7 +44,42 @@ describe('constructor', () => {
   });
 });
 
-describe('apply', () => {
+describe('createPatchedFile', () => {
+  test('should throw on invalid patch header', async () => {
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('00000000 patch.ppf', Buffer.alloc(100));
+
+    try {
+      const patch = PPFPatch.patchFrom(patchFile);
+      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
+  test('should throw on invalid ROM size', async () => {
+    const patchBuffer = Buffer.alloc(5 + 1 + 50 + 4 + 1024);
+    patchBuffer.write('PPF20', 0, 'ascii');
+    patchBuffer.writeUInt8(0x01, 5);
+    patchBuffer.writeUInt32LE(5, 56); // sourceSize = 5, but ROM is 10 bytes
+
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA'); // 10 bytes
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('00000000 patch.ppf', patchBuffer);
+
+    try {
+      const patch = PPFPatch.patchFrom(patchFile);
+      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
   test.each([
     [
       'AAAAAAAAAA',

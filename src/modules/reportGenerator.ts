@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import type ProgressBar from '../console/progressBar.js';
 import FsPoly from '../polyfill/fsPoly.js';
+import IntlPoly from '../polyfill/intlPoly.js';
 import DATStatus, { GameStatus } from '../types/datStatus.js';
 import type File from '../types/files/file.js';
 import type Options from '../types/options.js';
@@ -37,8 +38,8 @@ export default class ReportGenerator extends Module {
       await Promise.all(
         datStatuses
           .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
-          .sort((a, b) => a.getDATName().localeCompare(b.getDATName()))
-          .map(async (datsStatus) => datsStatus.toCsv(this.options)),
+          .toSorted((a, b) => a.getDATName().localeCompare(b.getDATName()))
+          .map(async (datsStatus) => await datsStatus.toCsv(this.options)),
       )
     )
       .filter((csv) => csv.length > 0)
@@ -66,7 +67,7 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .filter((inputFile) => !usedFilePaths.has(inputFile))
-      .sort();
+      .toSorted();
     const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
 
     const unusedFilePaths = scannedRomFiles
@@ -76,7 +77,7 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .filter((inputFile) => !usedFilePaths.has(inputFile))
-      .sort();
+      .toSorted();
     const unusedCsv = await DATStatus.filesToCsv(unusedFilePaths, GameStatus.UNUSED);
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
@@ -91,7 +92,7 @@ export default class ReportGenerator extends Module {
     );
     await FsPoly.writeFile(reportPath, rows.join('\n'));
     this.progressBar.logTrace(
-      `wrote ${datStatuses.length.toLocaleString()} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
+      `wrote ${IntlPoly.toLocaleString(datStatuses.length)} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
     );
 
     this.progressBar.logTrace('done generating report');

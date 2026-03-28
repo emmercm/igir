@@ -1,7 +1,8 @@
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import type FileFactory from '../../types/files/fileFactory.js';
@@ -17,18 +18,18 @@ import Module from '../module.js';
 export default class CandidateArchiveFileHasher extends Module {
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
-  private readonly driveSemaphore: DriveSemaphore;
+  private readonly mappableSemaphore: MappableSemaphore;
 
   constructor(
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
     super(progressBar, CandidateArchiveFileHasher.name);
     this.options = options;
     this.fileFactory = fileFactory;
-    this.driveSemaphore = driveSemaphore;
+    this.mappableSemaphore = mappableSemaphore;
   }
 
   /**
@@ -56,7 +57,7 @@ export default class CandidateArchiveFileHasher extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: generating ${archiveFileCount.toLocaleString()} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
+      `${dat.getName()}: generating ${IntlPoly.toLocaleString(archiveFileCount)} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
     this.progressBar.resetProgress(archiveFileCount);
@@ -64,14 +65,14 @@ export default class CandidateArchiveFileHasher extends Module {
     const hashedCandidates = this.hashArchiveFiles(dat, candidates);
 
     this.progressBar.logTrace(`${dat.getName()}: done generating hashed ArchiveFile candidates`);
-    return hashedCandidates;
+    return await hashedCandidates;
   }
 
   private async hashArchiveFiles(
     dat: DAT,
     candidates: WriteCandidate[],
   ): Promise<WriteCandidate[]> {
-    return Promise.all(
+    return await Promise.all(
       candidates.map(async (candidate) => {
         const hashedRomsWithFiles = await Promise.all(
           candidate.getRomsWithFiles().map(async (romWithFiles) => {
@@ -89,7 +90,7 @@ export default class CandidateArchiveFileHasher extends Module {
               return romWithFiles;
             }
 
-            return this.driveSemaphore.runExclusive(inputFile, async () => {
+            return await this.mappableSemaphore.runExclusive(async () => {
               this.progressBar.incrementInProgress();
               this.progressBar.logTrace(
                 `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${inputFile.toString()}`,

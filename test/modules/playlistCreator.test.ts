@@ -10,7 +10,7 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
 import SingleValueGame from '../../src/types/dats/singleValueGame.js';
-import Options from '../../src/types/options.js';
+import Options, { PlaylistMode, PlaylistModeInverted } from '../../src/types/options.js';
 import ROMWithFiles from '../../src/types/romWithFiles.js';
 import WriteCandidate from '../../src/types/writeCandidate.js';
 import ProgressBarFake from '../console/progressBarFake.js';
@@ -229,7 +229,7 @@ const games: Game[] = [
 const dat = new LogiqxDAT({ header: new Header(), games });
 
 async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
-  return Promise.all(
+  return await Promise.all(
     dat.getGames().map(async (game) => {
       return new WriteCandidate(
         new SingleValueGame({ ...game }),
@@ -273,8 +273,8 @@ async function playlistCreator(
     candidates,
   );
 
-  return Promise.all(
-    writtenFiles.sort().map(async (filePath) => {
+  return await Promise.all(
+    writtenFiles.toSorted().map(async (filePath) => {
       const contents = (await FsPoly.readFile(filePath)).toString().trim().split('\n');
       await FsPoly.rm(filePath, { force: true });
       return [filePath.replace(Temp.getTempDir() + path.sep, ''), contents] satisfies [
@@ -313,11 +313,12 @@ it('should do nothing if no playlist extensions specified', async () => {
 
 describe('when not writing', () => {
   test.each([[true], [false]])(
-    'should create playlists for multi-disc games when merged: %s',
+    'should create playlists for multi-disc games when mode=MULTIPLE and merged: %s',
     async (mergeDiscs) => {
       const options = new Options({
         commands: ['playlist'],
         mergeDiscs,
+        playlistMode: PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase(),
         playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
       });
       const candidates = await datToCandidates(dat);
@@ -328,7 +329,7 @@ describe('when not writing', () => {
       const results = await playlistCreator(options, maybeMergedDat, candidates);
       expect(results).toEqual([
         [
-          path.join('input', 'F', 'Final Fantasy VII (USA).m3u'),
+          path.resolve('input', 'F', 'Final Fantasy VII (USA).m3u'),
           [
             'Final Fantasy VII (USA) (Disc 1)/Final Fantasy VII (USA) (Disc 1).cue',
             'Final Fantasy VII (USA) (Disc 2)/Final Fantasy VII (USA) (Disc 2).cue',
@@ -336,7 +337,7 @@ describe('when not writing', () => {
           ],
         ],
         [
-          path.join('input', 'P', 'Panzer Dragoon Saga (USA).m3u'),
+          path.resolve('input', 'P', 'Panzer Dragoon Saga (USA).m3u'),
           [
             'Panzer Dragoon Saga (USA) (Disc 1)/Panzer Dragoon Saga (USA) (Disc 1).cue',
             'Panzer Dragoon Saga (USA) (Disc 2)/Panzer Dragoon Saga (USA) (Disc 2).cue',
@@ -345,14 +346,18 @@ describe('when not writing', () => {
           ],
         ],
         [
-          path.join('input', 'R', 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u'),
+          path.resolve(
+            'input',
+            'R',
+            'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u',
+          ),
           [
             'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!]/Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].gdi',
             'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!]/Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].gdi',
           ],
         ],
         [
-          path.join('input', 'S', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
+          path.resolve('input', 'S', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
           [
             'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].gdi',
             'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].gdi',
@@ -364,11 +369,12 @@ describe('when not writing', () => {
 });
 
 describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
-  it('should create playlists for multi-disc games when discs merged', async () => {
+  it('should create playlists for multi-disc games when discs merged and mode=MULTIPLE', async () => {
     const options = new Options({
       commands: [command, 'playlist'],
       output: Temp.getTempDir(),
       mergeDiscs: true,
+      playlistMode: PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase(),
       playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
     });
 
@@ -378,7 +384,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
     const results = await playlistCreator(options, maybeMergedDat, candidates);
     expect(results).toEqual([
       [
-        path.join('output', 'Final Fantasy VII (USA)', 'Final Fantasy VII (USA).m3u'),
+        path.resolve('output', 'Final Fantasy VII (USA)', 'Final Fantasy VII (USA).m3u'),
         [
           'Final Fantasy VII (USA) (Disc 1).cue',
           'Final Fantasy VII (USA) (Disc 2).cue',
@@ -386,7 +392,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.join('output', 'Panzer Dragoon Saga (USA)', 'Panzer Dragoon Saga (USA).m3u'),
+        path.resolve('output', 'Panzer Dragoon Saga (USA)', 'Panzer Dragoon Saga (USA).m3u'),
         [
           'Panzer Dragoon Saga (USA) (Disc 1).cue',
           'Panzer Dragoon Saga (USA) (Disc 2).cue',
@@ -395,7 +401,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.join(
+        path.resolve(
           'output',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!]',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u',
@@ -406,7 +412,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.join(
+        path.resolve(
           'output',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)[!]',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u',
@@ -419,11 +425,12 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
     ]);
   });
 
-  it('should create playlists for multi-disc games when discs not merged', async () => {
+  it('should create playlists for multi-disc games when discs not merged and mode=MULTIPLE', async () => {
     const options = new Options({
       commands: [command, 'playlist'],
       output: Temp.getTempDir(),
       mergeDiscs: false,
+      playlistMode: PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase(),
       playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
     });
 
@@ -433,7 +440,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
     const results = await playlistCreator(options, maybeMergedDat, candidates);
     expect(results).toEqual([
       [
-        path.join('output', 'Final Fantasy VII (USA).m3u'),
+        path.resolve('output', 'Final Fantasy VII (USA).m3u'),
         [
           'Final Fantasy VII (USA) (Disc 1)/Final Fantasy VII (USA) (Disc 1).cue',
           'Final Fantasy VII (USA) (Disc 2)/Final Fantasy VII (USA) (Disc 2).cue',
@@ -441,7 +448,7 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.join('output', 'Panzer Dragoon Saga (USA).m3u'),
+        path.resolve('output', 'Panzer Dragoon Saga (USA).m3u'),
         [
           'Panzer Dragoon Saga (USA) (Disc 1)/Panzer Dragoon Saga (USA) (Disc 1).cue',
           'Panzer Dragoon Saga (USA) (Disc 2)/Panzer Dragoon Saga (USA) (Disc 2).cue',
@@ -450,18 +457,135 @@ describe.each([['copy'], ['move'], ['link']])('when writing: %s', (command) => {
         ],
       ],
       [
-        path.join('output', 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u'),
+        path.resolve('output', 'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)[!].m3u'),
         [
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!]/Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].gdi',
           'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!]/Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].gdi',
         ],
       ],
       [
-        path.join('output', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
+        path.resolve('output', 'Skies of Arcadia v1.002 (2000)(Sega)(US)[!].m3u'),
         [
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].gdi',
           'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]/Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].gdi',
         ],
+      ],
+    ]);
+  });
+
+  it('should create playlists for all games when discs not merged and mode=ALWAYS', async () => {
+    const options = new Options({
+      commands: [command, 'playlist'],
+      output: Temp.getTempDir(),
+      mergeDiscs: false,
+      playlistMode: PlaylistModeInverted[PlaylistMode.ALWAYS].toLowerCase(),
+      playlistExtensions: ['.cue', '.gdi', '.mdf', '.chd'],
+    });
+
+    const maybeMergedDat = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
+    const candidates = await datToCandidates(maybeMergedDat);
+
+    const results = await playlistCreator(options, maybeMergedDat, candidates);
+    expect(results).toEqual([
+      [
+        path.resolve(
+          'output',
+          'Final Fantasy VII (USA) (Disc 1)',
+          'Final Fantasy VII (USA) (Disc 1).m3u',
+        ),
+        ['Final Fantasy VII (USA) (Disc 1).cue'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Final Fantasy VII (USA) (Disc 2)',
+          'Final Fantasy VII (USA) (Disc 2).m3u',
+        ),
+        ['Final Fantasy VII (USA) (Disc 2).cue'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Final Fantasy VII (USA) (Disc 3)',
+          'Final Fantasy VII (USA) (Disc 3).m3u',
+        ),
+        ['Final Fantasy VII (USA) (Disc 3).cue'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Panzer Dragoon Saga (USA) (Disc 1)',
+          'Panzer Dragoon Saga (USA) (Disc 1).m3u',
+        ),
+        ['Panzer Dragoon Saga (USA) (Disc 1).cue'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Panzer Dragoon Saga (USA) (Disc 2)',
+          'Panzer Dragoon Saga (USA) (Disc 2).m3u',
+        ),
+        ['Panzer Dragoon Saga (USA) (Disc 2).cue'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Panzer Dragoon Saga (USA) (Disc 3)',
+          'Panzer Dragoon Saga (USA) (Disc 3).m3u',
+        ),
+        ['Panzer Dragoon Saga (USA) (Disc 3).cue'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Panzer Dragoon Saga (USA) (Disc 4)',
+          'Panzer Dragoon Saga (USA) (Disc 4).m3u',
+        ),
+        ['Panzer Dragoon Saga (USA) (Disc 4).cue'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial]',
+          'Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial].m3u',
+        ),
+        ['Phantasy Star Online v2.011 (2001)(Sega)(US)(M5)[!][3S][req. serial].gdi'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!]',
+          'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].m3u',
+        ),
+        ['Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 1 of 2)[!].gdi'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!]',
+          'Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].m3u',
+        ),
+        ['Resident Evil - Code Veronica v1.000 (2000)(Capcom)(US)(Disc 2 of 2)[!].gdi'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!]',
+          'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].m3u',
+        ),
+        ['Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 1 of 2)[!].gdi'],
+      ],
+      [
+        path.resolve(
+          'output',
+          'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!]',
+          'Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].m3u',
+        ),
+        ['Skies of Arcadia v1.002 (2000)(Sega)(US)(Disc 2 of 2)[!].gdi'],
+      ],
+      [
+        path.resolve('output', 'Steel Reign (USA)', 'Steel Reign (USA).m3u'),
+        ['Steel Reign (USA).cue'],
       ],
     ]);
   });

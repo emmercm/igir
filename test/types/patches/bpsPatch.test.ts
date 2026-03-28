@@ -11,7 +11,7 @@ async function writeTemp(fileName: string, contents: string | Buffer): Promise<F
   const temp = await FsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
   await FsPoly.mkdir(path.dirname(temp), { recursive: true });
   await FsPoly.writeFile(temp, contents);
-  return File.fileOf({ filePath: temp });
+  return await File.fileOf({ filePath: temp });
 }
 
 describe('constructor', () => {
@@ -45,7 +45,60 @@ describe('constructor', () => {
   );
 });
 
-describe('apply', () => {
+describe('createPatchedFile', () => {
+  test('should throw on invalid patch contents CRC32', async () => {
+    // Valid BPS patch with the last byte (stored CRC) corrupted so the CRC check in patchFrom fails
+    const validPatch = Buffer.from('425053318484808962617280a865327ee9b3a2042222711f', 'hex');
+    const corruptedPatch = Buffer.from(validPatch);
+    corruptedPatch[corruptedPatch.length - 1] ^= 0xff;
+
+    const patchFile = await writeTemp('patch.bps', corruptedPatch);
+
+    try {
+      await expect(BPSPatch.patchFrom(patchFile)).rejects.toThrow(/CRC/i);
+    } finally {
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
+  test('should throw on invalid patch header', async () => {
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('patch.bps', Buffer.from('not a valid bps patch'));
+
+    try {
+      await expect(
+        BPSPatch.patchFrom(patchFile).then(async (patch) => {
+          await patch.createPatchedFile(inputRom, outputRom);
+        }),
+      ).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
+  test('should throw on invalid ROM size', async () => {
+    // Valid BPS patch for 5-byte source ROM 'AAAAA' -> 'ABCDAAAAAA'
+    const validPatch = Buffer.from(
+      '42505331858a808d41424344928081410951f819d0c41e6e3b7546b5',
+      'hex',
+    );
+    const inputRom = await writeTemp('ROM', 'AAAAAAAAAA'); // 10 bytes, but patch expects 5
+    const outputRom = await FsPoly.mktemp('ROM');
+    const patchFile = await writeTemp('patch.bps', validPatch);
+
+    try {
+      const patch = await BPSPatch.patchFrom(patchFile);
+      await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
+    } finally {
+      await FsPoly.rm(inputRom.getFilePath());
+      await FsPoly.rm(outputRom, { force: true });
+      await FsPoly.rm(patchFile.getFilePath());
+    }
+  });
+
   test.each([
     [
       'AAAAA',

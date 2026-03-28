@@ -1,6 +1,7 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import type Game from '../../types/dats/game.js';
 import type Options from '../../types/options.js';
@@ -54,13 +55,17 @@ export default class DATFilter extends Module {
 
     // TODO(cemmer): warning if every game was filtered out?
 
-    const size = filteredDat
-      .getGames()
-      .flatMap((game) => game.getRoms())
-      .reduce((sum, rom) => sum + rom.getSize(), 0);
-    this.progressBar.logTrace(
-      `${filteredDat.getName()}: filtered to ${filteredGames.length.toLocaleString()}/${dat.getGames().length.toLocaleString()} game${filteredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
-    );
+    if (filteredDat.getGames() === dat.getGames()) {
+      this.progressBar.logTrace(`${filteredDat.getName()}: didn't filter out any games`);
+    } else {
+      const size = filteredDat
+        .getGames()
+        .flatMap((game) => game.getRoms())
+        .reduce((sum, rom) => sum + rom.getSize(), 0);
+      this.progressBar.logTrace(
+        `${filteredDat.getName()}: filtered to ${IntlPoly.toLocaleString(filteredGames.length)}/${IntlPoly.toLocaleString(dat.getGames().length)} game${filteredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
+      );
+    }
 
     this.progressBar.logTrace(`${filteredDat.getName()}: done filtering DAT`);
     return filteredDat;

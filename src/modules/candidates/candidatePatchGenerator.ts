@@ -5,6 +5,7 @@ import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type DAT from '../../types/dats/dat.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
+import type Options from '../../types/options.js';
 import type Patch from '../../types/patches/patch.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
 import WriteCandidate from '../../types/writeCandidate.js';
@@ -15,8 +16,11 @@ import Module from '../module.js';
  * {@link WriteCandidate} of that {@link Game}.
  */
 export default class CandidatePatchGenerator extends Module {
-  constructor(progressBar: ProgressBar) {
+  private readonly options: Options;
+
+  constructor(options: Options, progressBar: ProgressBar) {
     super(progressBar, CandidatePatchGenerator.name);
+    this.options = options;
   }
 
   /**
@@ -65,9 +69,16 @@ export default class CandidatePatchGenerator extends Module {
     candidates: WriteCandidate[],
     crcToPatches: Map<string, Patch[]>,
   ): WriteCandidate[] {
+    if (this.options.getPatchOnly()) {
+      this.progressBar.logTrace(`${dat.getName()}: only returning patched candidates`);
+    }
+
     return candidates.flatMap((unpatchedCandidate) => {
       // Possibly generate multiple new patched candidates for the ReleaseCandidates
       const patchedCandidates = this.buildPatchedCandidates(dat, unpatchedCandidate, crcToPatches);
+      if (this.options.getPatchOnly()) {
+        return patchedCandidates;
+      }
       return [unpatchedCandidate, ...patchedCandidates];
     });
   }
@@ -115,7 +126,12 @@ export default class CandidatePatchGenerator extends Module {
           const extractedFileName = patchedRomName + (extMatch === null ? '' : extMatch[1]);
           if (outputFile instanceof ArchiveEntry) {
             outputFile = outputFile.withProps({
-              archive: outputFile.getArchive().withFilePath(patchedRomName),
+              archive: outputFile
+                .getArchive()
+                .withFilePath(
+                  path.join(path.dirname(outputFile.getFilePath()), patchedRomName) +
+                    outputFile.getArchive().getExtension(),
+                ),
               // Output is an archive of a single file, the entry path should also change
               entryPath:
                 unpatchedCandidate.getRomsWithFiles().length === 1
@@ -140,7 +156,7 @@ export default class CandidatePatchGenerator extends Module {
 
           // Build a new ROM from the output file's info
           const romName = path.join(
-            path.dirname(rom.getName().replaceAll(/[\\/]/g, path.sep)),
+            path.dirname(rom.getName().replaceAll('/', path.sep)),
             path.basename(outputFile.getExtractedFilePath()),
           );
           rom = new ROM({

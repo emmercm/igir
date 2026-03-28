@@ -1,12 +1,10 @@
-import 'jest-extended';
-
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
@@ -26,7 +24,7 @@ import ROMWithFiles from '../../../src/types/romWithFiles.js';
 import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 it('should do nothing with no candidates', async () => {
   const options = new Options();
@@ -37,7 +35,7 @@ it('should do nothing with no candidates', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.cpus().length),
+    new Semaphore(os.availableParallelism()),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
@@ -69,13 +67,13 @@ it('should do nothing when no ROMs need correcting', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.cpus().length),
+    new Semaphore(os.availableParallelism()),
   ).correct(dat, candidates);
 
   expect(correctedCandidates).toBe(candidates);
 });
 
-function expectcorrectedCandidates(
+function expectCorrectedCandidates(
   candidates: WriteCandidate[],
   correctedCandidates: WriteCandidate[],
 ): void {
@@ -120,7 +118,7 @@ it('should correct ROMs without DATs', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -129,7 +127,7 @@ it('should correct ROMs without DATs', async () => {
       inputFiles.map(async (inputFile) => {
         const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
         await inputFile.extractToFile(tempFile);
-        return File.fileOf({ filePath: tempFile });
+        return await File.fileOf({ filePath: tempFile });
       }),
     );
 
@@ -157,10 +155,10 @@ it('should correct ROMs without DATs', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new Semaphore(os.cpus().length),
+      new Semaphore(os.availableParallelism()),
     ).correct(dat, candidates);
 
-    expectcorrectedCandidates(candidates, correctedCandidates);
+    expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
     await FsPoly.rm(tempDir, { recursive: true, force: true });
   }
@@ -177,7 +175,7 @@ it('should correct ROMs with missing filenames', async () => {
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new DriveSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
   const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
@@ -186,7 +184,7 @@ it('should correct ROMs with missing filenames', async () => {
       inputFiles.map(async (inputFile) => {
         const tempFile = path.join(tempDir, path.basename(inputFile.getExtractedFilePath()));
         await inputFile.extractToFile(tempFile);
-        return File.fileOf({ filePath: tempFile });
+        return await File.fileOf({ filePath: tempFile });
       }),
     );
 
@@ -210,10 +208,10 @@ it('should correct ROMs with missing filenames', async () => {
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new Semaphore(os.cpus().length),
+      new Semaphore(os.availableParallelism()),
     ).correct(dat, candidates);
 
-    expectcorrectedCandidates(candidates, correctedCandidates);
+    expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
     await FsPoly.rm(tempDir, { recursive: true, force: true });
   }

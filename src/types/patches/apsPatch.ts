@@ -12,16 +12,16 @@ export default abstract class APSPatch extends Patch {
   static readonly FILE_SIGNATURE = Buffer.from('APS1');
 
   static async patchFrom(file: File): Promise<Patch> {
-    return file.extractToTempIOFile('r', async (patchFile) => {
+    return await file.extractToTempIOFile('r', async (patchFile) => {
       patchFile.seek(APSPatch.FILE_SIGNATURE.length);
 
       const byteFive = (await patchFile.readNext(1)).toString();
       const byteSix = (await patchFile.readNext(1)).readUInt8();
 
       if (byteFive === '0' && (byteSix === 0 || byteSix === 1)) {
-        return APSN64Patch.patchFrom(file);
+        return await APSN64Patch.patchFrom(file);
       }
-      return APSGBAPatch.patchFrom(file);
+      return await APSGBAPatch.patchFrom(file);
     });
   }
 }

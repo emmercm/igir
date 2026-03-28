@@ -16,13 +16,13 @@ Not all patch types are created equal. Here are some tables of some existing for
 
 **Common patch types:**
 
-| Type                 | Supported                        | CRC32 in patch contents | Notes                                                                                                                                                                                                 |
-|----------------------|----------------------------------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `.bps`               | ✅                                | ✅                       |                                                                                                                                                                                                       |
-| `.ips`               | ✅ IPS, IPS32                     | ❌                       |                                                                                                                                                                                                       |
-| `.ppf`               | ✅ 2.0, 3.0                       | ❌                       |                                                                                                                                                                                                       |
-| `.ups`               | ✅                                | ✅                       | ⚠️ UPS patches read and write files byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`. |
-| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                       | ⚠️ [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, so many patches are likely to be unsupported.                                                       |
+| Type                 | Supported                        | CRC32 in patch contents | Notes                                                                                                                                                                                                                                                                        |
+|----------------------|----------------------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `.bps`               | ✅                                | ✅                       |                                                                                                                                                                                                                                                                              |
+| `.ips`               | ✅ IPS, IPS32                     | ❌                       |                                                                                                                                                                                                                                                                              |
+| `.ppf`               | ✅ 2.0, 3.0                       | ❌                       |                                                                                                                                                                                                                                                                              |
+| `.ups`               | ✅                                | ✅                       | ⚠️ UPS patches read and write files byte-by-byte, making them horribly slow and inefficient. The author, byuu, created `.ups` to replace `.ips`, but then created `.bps` as a replacement for `.ups`.                                                                        |
+| `.vcdiff`, `.xdelta` | ⚠️ without secondary compression | ❌                       | ⚠️ VCDIFF patches read and write files byte-by-byte during `COPY` instructions, usually making them slow and inefficient.<br>⚠️ [xdelta3](https://github.com/jmacd/xdelta) makes use of LZMA secondary compression by default, so many patches are likely to be unsupported. |
 
 **Uncommon patch types:**
 
@@ -50,22 +50,24 @@ Igir needs to be able to know what source ROM each patch file applies to, and it
 
 A few patch formats include the source ROM's CRC32 checksum in the patch's file contents. This is the most accurate and therefore the best way to get source ROM information. `.bps` is a great example of an efficient and simple patch format that includes this information.
 
-Most patch formats _do not_ include the source ROM's CRC32 checksum. `.ips` patches are some of the most likely you will come across. For those patches, you need to put the source ROM's CRC32 checksum in the patch's filename, either at the beginning or end, like this:
+Most patch formats _do not_ include the source ROM's CRC32 checksum. `.ips` patches are some of the most likely you will come across. For those patches, you need to put the source ROM's CRC32 checksum in the patch's filename. Here are some examples:
+
+| Source ROM filename                                | Patch filename                                                                                      |
+|----------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `Super Mario Land (World).gb`                      | At the end: `Super Mario Land DX v2.0 (World) 90776841.ips`                                         |
+| `NBA Jam - Tournament Edition (USA) (Track 1).bin` | At the beginning: `A8F1ADF5 NBA Jam 22 v1.4.ppf`                                                    |
+| `Mega Man - Dr. Wily's Revenge (USA).gb`           | In square brackets: `Mega Man - Dr. Wily's Revenge DX v1.02 (USA) [47e70e08].ips`                   |
+| `Metroid II - Return of Samus (World).gb`          | In parentheses: `Metroid II - Return of Samus DX v2.0 (World) (DEE05370).ips`                       |
+| `Pokemon Card GB 2 - GR Dan Sanjou! (Japan).gbc`   | With an 0x prefix: `Pokemon Card GB 2 - GR Dan Sanjou! (Japan) 0x6c933a14 [T+En1.0_Artemis251].gbc` |
+
+## Only writing patched ROMs
+
+By default, Igir will write patched ROMs in _addition_ to un-patched ROMs. This includes any ROMs that do not have any matching patches in a `--patch <path>`.
+
+If you want to _only_ write patched ROMs to the output directory, you can use the option:
 
 ```text
-Source ROM filename:
-Super Mario Land (World).gb
-
-Patch filename:
-Super Mario Land DX v2.0 (World) 90776841.ips
-```
-
-```text
-Source ROM filename:
-NBA Jam - Tournament Edition (USA) (Track 1).bin
-
-Patch filename:
-a8f1adf5 NBA Jam 22 v1.4.ppf
+--patch-only
 ```
 
 ## Creating ROM patches

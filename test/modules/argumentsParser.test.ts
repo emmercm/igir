@@ -1,6 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -17,14 +17,17 @@ import {
   LinkMode,
   MergeMode,
   MoveDeleteDirs,
+  PlaylistMode,
+  PreferFiletype,
   PreferRevision,
+  TrimScanFiles,
   ZipFormat,
 } from '../../src/types/options.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
 
-const argumentsParser = new ArgumentsParser(new Logger(LogLevel.NEVER, new PassThrough()));
+const argumentsParser = new ArgumentsParser(new Logger(LogLevel.NEVER, new stream.PassThrough()));
 
 describe('commands', () => {
   it('should throw on no commands', () => {
@@ -198,7 +201,7 @@ describe('options', () => {
     expect(options.getInputPaths()).toEqual([os.devNull]);
     expect(options.getInputChecksumQuick()).toEqual(false);
     expect(options.getInputChecksumMin()).toEqual(ChecksumBitmask.CRC32);
-    expect(options.getInputChecksumMax()).toBeUndefined();
+    expect(options.getInputChecksumMax()).toEqual(ChecksumBitmask.SHA1);
     expect(options.getInputChecksumArchives()).toEqual(InputChecksumArchivesMode.AUTO);
 
     expect(options.getDatNameRegex()).toBeUndefined();
@@ -209,6 +212,7 @@ describe('options', () => {
     expect(options.getDatIgnoreParentClone()).toEqual(false);
 
     expect(options.getPatchFileCount()).toEqual(0);
+    expect(options.getPatchOnly()).toEqual(false);
 
     expect(options.getDirMirror()).toEqual(false);
     expect(options.getDirDatMirror()).toEqual(false);
@@ -219,10 +223,12 @@ describe('options', () => {
     expect(options.getDirLetterLimit()).toEqual(0);
     expect(options.getDirLetterGroup()).toEqual(false);
     expect(options.getDirGameSubdir()).toEqual(GameSubdirMode.MULTIPLE);
+    expect(options.getOutputConsoleTokens()).toBeUndefined();
 
     expect(options.getFixExtension()).toEqual(FixExtension.AUTO);
     expect(options.getOverwrite()).toEqual(false);
     expect(options.getOverwriteInvalid()).toEqual(false);
+    expect(options.getWriteRetry()).toEqual(Defaults.ROM_WRITER_ADDITIONAL_RETRIES);
 
     expect(options.getMoveDeleteDirs()).toEqual(MoveDeleteDirs.AUTO);
 
@@ -236,6 +242,7 @@ describe('options', () => {
     expect(options.getSymlinkRelative()).toEqual(false);
 
     expect(options.getTrimScanArchives()).toEqual(false);
+    expect(options.getTrimScanFiles()).toEqual(TrimScanFiles.AUTO);
 
     expect(options.getMergeRoms()).toEqual(MergeMode.FULLNONMERGED);
     expect(options.getMergeDiscs()).toEqual(false);
@@ -287,11 +294,19 @@ describe('options', () => {
     expect(options.getPreferRetail()).toEqual(false);
     expect(options.getPreferParent()).toEqual(false);
 
+    expect(options.getPreferFiletype()).toEqual(PreferFiletype.PLAIN);
+    expect(options.getPreferFilenameRegex()).toBeUndefined();
+
+    expect(argumentsParser.parse(['playlist']).getPlaylistMode()).toEqual(PlaylistMode.MULTIPLE);
     expect(argumentsParser.parse(['playlist']).getPlaylistExtensions()).toEqual([
+      '.ccd',
+      '.cdi',
+      '.chd',
       '.cue',
       '.gdi',
+      '.iso',
       '.mdf',
-      '.chd',
+      '.toc',
     ]);
 
     expect(options.getDir2DatOutput()).toEqual(options.getOutput());
@@ -299,10 +314,12 @@ describe('options', () => {
     expect(options.getFixdatOutput()).toEqual(options.getOutput());
 
     expect(options.getDatThreads()).toEqual(Defaults.DAT_DEFAULT_THREADS);
-    expect(options.getReaderThreads()).toEqual(8);
-    expect(options.getWriterThreads()).toEqual(4);
+    expect(options.getReaderThreads()).toEqual(Defaults.FILE_READER_DEFAULT_THREADS);
+    expect(options.getWriterThreads()).toEqual(Defaults.ROM_WRITER_DEFAULT_THREADS);
     expect(options.getDisableCache()).toEqual(false);
     expect(options.getCachePath()).toBeUndefined();
+
+    expect(options.getDebugLog()).toBeUndefined();
     expect(options.getLogLevel()).toEqual(LogLevel.WARN);
     expect(options.getHelp()).toEqual(false);
   });
@@ -516,11 +533,6 @@ describe('options', () => {
         .parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA1'])
         .getInputChecksumMin(),
     ).toEqual(ChecksumBitmask.SHA1);
-    expect(
-      argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--input-checksum-min', 'SHA256'])
-        .getInputChecksumMin(),
-    ).toEqual(ChecksumBitmask.SHA256);
     expect(
       argumentsParser
         .parse([
@@ -1177,6 +1189,12 @@ describe('options', () => {
   });
 
   it('should parse "patch-exclude"', async () => {
+    await expect(
+      (async (): Promise<unknown> =>
+        await argumentsParser
+          .parse(['copy', '--input', os.devNull, '--patch-exclude', './src'])
+          .scanPatchFilesWithoutExclusions())(),
+    ).rejects.toThrow(/dependent|implication/i);
     expect(
       (
         await argumentsParser
@@ -1252,6 +1270,64 @@ describe('options', () => {
           .scanPatchFilesWithoutExclusions()
       ).length,
     ).toEqual(0);
+  });
+
+  it('should parse "patch-only"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--patch-only']).getPatchOnly(),
+    ).toThrow(/dependent|implication/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only'])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only', 'true'])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--patch', os.devNull, '--patch-only', 'false'])
+        .getPatchOnly(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          '--patch-only',
+        ])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          'false',
+          '--patch-only',
+          'true',
+        ])
+        .getPatchOnly(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--patch',
+          os.devNull,
+          '--patch-only',
+          'true',
+          '--patch-only',
+          'false',
+        ])
+        .getPatchOnly(),
+    ).toEqual(false);
   });
 
   it('should parse "output"', () => {
@@ -1767,6 +1843,31 @@ describe('options', () => {
     ).toEqual(GameSubdirMode.NEVER);
   });
 
+  it('should parse "output-console-tokens"', () => {
+    expect(
+      argumentsParser.parse(dummyCommandAndRequiredArgs).getOutputConsoleTokens(),
+    ).toBeUndefined();
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--output-console-tokens']),
+    ).toThrow(/not enough arguments/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--output-console-tokens', 'custom.json'])
+        .getOutputConsoleTokens(),
+    ).toEqual('custom.json');
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--output-console-tokens',
+          'first.json',
+          '--output-console-tokens',
+          'second.json',
+        ])
+        .getOutputConsoleTokens(),
+    ).toEqual('second.json');
+  });
+
   it('should parse "fix-extension"', () => {
     expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getDirGameSubdir()).toEqual(
       GameSubdirMode.MULTIPLE,
@@ -1889,6 +1990,29 @@ describe('options', () => {
         ])
         .getOverwriteInvalid(),
     ).toEqual(false);
+  });
+
+  it('should parse "write-retry"', () => {
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriteRetry()).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '-1'])
+        .getWriteRetry(),
+    ).toEqual(0);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '0']).getWriteRetry(),
+    ).toEqual(0);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '1']).getWriteRetry(),
+    ).toEqual(1);
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry(),
+    ).toEqual(2);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '2', '--write-retry', '3'])
+        .getWriteRetry(),
+    ).toEqual(3);
   });
 
   it('should parse "clean-exclude"', async () => {
@@ -2384,6 +2508,38 @@ describe('options', () => {
         ])
         .shouldReadFileForTrimming('file.rom'),
     ).toEqual(false);
+  });
+
+  it('should parse "trim-scan-files"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'foobar']),
+    ).toThrow(/choices/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'never'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.NEVER);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'auto'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.AUTO);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--trim-scan-files', 'always'])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--trim-scan-files',
+          'never',
+          '--trim-scan-files',
+          'always',
+        ])
+        .getTrimScanFiles(),
+    ).toEqual(TrimScanFiles.ALWAYS);
   });
 
   it('should parse "trim-scan-archives"', () => {
@@ -3029,15 +3185,175 @@ describe('options', () => {
     ).toEqual(false);
   });
 
+  it('should parse "prefer-filetype"', () => {
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filetype', 'foobar'])
+        .getPreferFiletype(),
+    ).toThrow(/invalid values/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filetype', 'plain'])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.PLAIN);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--prefer-filetype',
+          'plain',
+          '--prefer-filetype',
+          'archive',
+        ])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.ARCHIVE);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filetype', 'archive'])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.ARCHIVE);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--prefer-filetype',
+          'archive',
+          '--prefer-filetype',
+          'plain',
+        ])
+        .getPreferFiletype(),
+    ).toEqual(PreferFiletype.PLAIN);
+  });
+
+  it('should parse "prefer-filename-regex"', async () => {
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', '[a-z]'])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('lower')),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', '[a-z]'])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', '/[a-z]/i'])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          '--prefer-filename-regex',
+          '/[a-z]/i',
+          '--prefer-filename-regex',
+          '[0-9]',
+        ])
+        .getPreferFilenameRegex()
+        ?.some((regex) => regex.test('UPPER')),
+    ).toEqual(false);
+
+    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    try {
+      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('')),
+      ).toEqual(false);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('lower')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('UPPER')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('007')),
+      ).toEqual(true);
+      expect(
+        argumentsParser
+          .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
+          .getPreferFilenameRegex()
+          ?.some((regex) => regex.test('@!#?@!')),
+      ).toEqual(false);
+    } finally {
+      await FsPoly.rm(tempFile);
+    }
+  });
+
+  it('should parse "playlist-mode"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--playlist-mode', 'always']),
+    ).toThrow(/missing required command/i);
+    expect(() =>
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, 'playlist', '--playlist-mode', 'foobar'])
+        .getMergeRoms(),
+    ).toThrow(/invalid values/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, 'playlist', '--playlist-mode', 'multiple'])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.MULTIPLE);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          'playlist',
+          '--playlist-mode',
+          'multiple',
+          '--playlist-mode',
+          'always',
+        ])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, 'playlist', '--playlist-mode', 'always'])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.ALWAYS);
+    expect(
+      argumentsParser
+        .parse([
+          ...dummyCommandAndRequiredArgs,
+          'playlist',
+          '--playlist-mode',
+          'always',
+          '--playlist-mode',
+          'multiple',
+        ])
+        .getPlaylistMode(),
+    ).toEqual(PlaylistMode.MULTIPLE);
+  });
+
   it('should parse "playlist-extensions"', () => {
     expect(() => argumentsParser.parse(['playlist', '--playlist-extensions', ''])).toThrow(
       /missing required argument/i,
     );
     expect(argumentsParser.parse(['playlist']).getPlaylistExtensions()).toEqual([
+      '.ccd',
+      '.cdi',
+      '.chd',
       '.cue',
       '.gdi',
+      '.iso',
       '.mdf',
-      '.chd',
+      '.toc',
     ]);
     expect(
       argumentsParser.parse(['playlist', '--playlist-extensions', '.cue']).getPlaylistExtensions(),
@@ -4797,7 +5113,9 @@ describe('options', () => {
   });
 
   it('should parse "reader-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getReaderThreads()).toEqual(8);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getReaderThreads()).toEqual(
+      Defaults.FILE_READER_DEFAULT_THREADS,
+    );
     expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--reader-threads', '-1'])
@@ -4826,7 +5144,9 @@ describe('options', () => {
   });
 
   it('should parse "writer-threads"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(4);
+    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriterThreads()).toEqual(
+      Defaults.ROM_WRITER_DEFAULT_THREADS,
+    );
     expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--writer-threads', '-1'])
@@ -4851,29 +5171,6 @@ describe('options', () => {
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--writer-threads', '2', '--writer-threads', '3'])
         .getWriterThreads(),
-    ).toEqual(3);
-  });
-
-  it('should parse "write-retry"', () => {
-    expect(argumentsParser.parse(dummyCommandAndRequiredArgs).getWriteRetry()).toEqual(2);
-    expect(
-      argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '-1'])
-        .getWriteRetry(),
-    ).toEqual(0);
-    expect(
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '0']).getWriteRetry(),
-    ).toEqual(0);
-    expect(
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '1']).getWriteRetry(),
-    ).toEqual(1);
-    expect(
-      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--write-retry', '2']).getWriteRetry(),
-    ).toEqual(2);
-    expect(
-      argumentsParser
-        .parse([...dummyCommandAndRequiredArgs, '--write-retry', '2', '--write-retry', '3'])
-        .getWriteRetry(),
     ).toEqual(3);
   });
 
@@ -4949,6 +5246,23 @@ describe('options', () => {
         os.devNull,
       ]),
     ).toThrow(/mutually exclusive/i);
+  });
+
+  it('should parse "debug-log"', () => {
+    expect(argumentsParser.parse([...dummyCommandAndRequiredArgs]).getDebugLog()).toBeUndefined();
+    expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--debug-log']).getDebugLog(),
+    ).toMatch(/igir_[0-9]{4}-[0-9]{2}-[0-9]{2}/);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--debug-log', 'one.log'])
+        .getDebugLog(),
+    ).toEqual('one.log');
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--debug-log', 'one.log', '--debug-log', 'two.log'])
+        .getDebugLog(),
+    ).toEqual('two.log');
   });
 
   it('should parse "verbose"', () => {

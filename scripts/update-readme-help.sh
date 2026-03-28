@@ -7,7 +7,6 @@ here="${PWD}"
 trap "cd \"${here}\"" EXIT
 cd "$(dirname "$0")/.."
 
-
 README="README.md"
 HELP="\$ igir --help
 

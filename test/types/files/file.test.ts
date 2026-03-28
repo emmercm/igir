@@ -1,8 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
-import DriveSemaphore from '../../../src/async/driveSemaphore.js';
+import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
@@ -22,7 +22,7 @@ import Options from '../../../src/types/options.js';
 import IPSPatch from '../../../src/types/patches/ipsPatch.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new PassThrough());
+const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 describe('fileOf', () => {
   it("should not throw when the file doesn't exist", async () => {
@@ -44,9 +44,9 @@ describe('fileOf', () => {
 });
 
 describe('getFilePath', () => {
-  it('should return the constructor value', async () => {
+  it('should return an absolute path', async () => {
     const file = await File.fileOf({ filePath: path.join('some', 'path') });
-    expect(file.getFilePath()).toEqual(path.join('some', 'path'));
+    expect(file.getFilePath()).toEqual(path.resolve('some', 'path'));
   });
 });
 
@@ -412,7 +412,7 @@ describe('copyToTempFile', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(10);
 
@@ -435,7 +435,7 @@ describe('createReadStream', () => {
       }),
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new DriveSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(9);
 
@@ -451,9 +451,15 @@ describe('createReadStream', () => {
 });
 
 describe('withPatch', () => {
-  it('should attach a matching patch', async () => {
-    const file = await File.fileOf({ filePath: 'file.rom', size: 0, crc32: '00000000' });
-    const patch = IPSPatch.patchFrom(await File.fileOf({ filePath: 'patch 00000000.ips' }));
+  test.each([
+    'patch deadbeef.ips',
+    'DEADBEEF patch.ips',
+    'patch [DEADbeef].ips',
+    'patch (deadBEEF).ips',
+    'patch 0xdeadbeef.ips',
+  ])('should attach a matching patch: %s', async (filePath) => {
+    const file = await File.fileOf({ filePath: 'file.rom', size: 0, crc32: 'DEADBEEF' });
+    const patch = IPSPatch.patchFrom(await File.fileOf({ filePath }));
     const patchedFile = file.withPatch(patch);
     expect(patchedFile.getPatch()).toEqual(patch);
   });

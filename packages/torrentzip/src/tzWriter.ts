@@ -222,7 +222,7 @@ export default class TZWriter {
 
     const extraFieldLength = 20 + (localFileHeaderRelativeOffset >= 0xff_ff_ff_ff ? 8 : 0);
 
-    const buffer = Buffer.alloc(localFileHeader.length + extraFieldLength);
+    const buffer = Buffer.allocUnsafe(localFileHeader.length + extraFieldLength);
     localFileHeader.copy(buffer, 0);
     if (buffer.readUInt16LE(4) < 45) {
       buffer.writeUInt16LE(45, 4); // version needed (for zip64)
@@ -267,7 +267,8 @@ export default class TZWriter {
       if (zip64) {
         const zip64EndOfCentralDirectoryOffset = this.filePosition;
         const zip64EndOfCentralDirectoryRecord = TZWriter.zip64EndOfCentralDirectoryRecord(
-          centralDirectoryFileHeaders,
+          centralDirectoryFileHeadersConcat,
+          this.localFileHeaders.length,
           startOfCentralDirectoryOffset,
         );
         const zip64EndOfCentralDirectoryLocator = TZWriter.zip64EndOfCentralDirectoryLocator(
@@ -284,7 +285,7 @@ export default class TZWriter {
       }
 
       const eocd = this.endOfCentralDirectoryHeader(
-        centralDirectoryFileHeaders,
+        centralDirectoryFileHeadersConcat,
         startOfCentralDirectoryOffset,
       );
       await this.fileHandle.write(eocd, undefined, undefined, this.filePosition);
@@ -357,7 +358,8 @@ export default class TZWriter {
   }
 
   private static zip64EndOfCentralDirectoryRecord(
-    centralDirectoryFileHeaders: Buffer<ArrayBuffer>[],
+    centralDirectoryConcat: Buffer<ArrayBuffer>,
+    centralDirectoryCount: number,
     startOfCentralDirectoryOffset: number,
   ): Buffer<ArrayBuffer> {
     const buffer = Buffer.allocUnsafe(this.ZIP64_END_OF_CENTRAL_DIRECTORY_RECORD_LENGTH);
@@ -367,12 +369,9 @@ export default class TZWriter {
     buffer.writeUInt16LE(45, 14); // version needed to extract
     buffer.writeUInt32LE(0, 16); // number of this disk
     buffer.writeUInt32LE(0, 20); // number of the disk with the SOCD
-    buffer.writeBigUInt64LE(BigInt(centralDirectoryFileHeaders.length), 24); // number of central directory records on this disk
-    buffer.writeBigUInt64LE(BigInt(centralDirectoryFileHeaders.length), 32); // number of central directory records total
-    buffer.writeBigUInt64LE(
-      BigInt(centralDirectoryFileHeaders.reduce((sum, cdfh) => sum + cdfh.length, 0)),
-      40,
-    ); // size of the central directory
+    buffer.writeBigUInt64LE(BigInt(centralDirectoryCount), 24); // number of central directory records on this disk
+    buffer.writeBigUInt64LE(BigInt(centralDirectoryCount), 32); // number of central directory records total
+    buffer.writeBigUInt64LE(BigInt(centralDirectoryConcat.length), 40); // size of the central directory
     buffer.writeBigUInt64LE(BigInt(startOfCentralDirectoryOffset), 48);
     // Note: no comment
     return buffer;
@@ -390,7 +389,7 @@ export default class TZWriter {
   }
 
   private endOfCentralDirectoryHeader(
-    centralDirectoryFileHeaders: Buffer<ArrayBuffer>[],
+    centralDirectoryConcat: Buffer<ArrayBuffer>,
     startOfCentralDirectoryOffset: number,
   ): Buffer<ArrayBuffer> {
     const commentLength = this.compressionMethod === CompressionMethod.DEFLATE ? 22 : 15;
@@ -400,19 +399,13 @@ export default class TZWriter {
     TZWriter.END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE.copy(buffer);
     buffer.writeUInt16LE(0, 4); // number of this disk
     buffer.writeUInt16LE(0, 6); // number of the disk with the SOCD
-    buffer.writeUInt16LE(Math.min(centralDirectoryFileHeaders.length, 0xff_ff), 8); // total number of entries in this disk's CD
-    buffer.writeUInt16LE(Math.min(centralDirectoryFileHeaders.length, 0xff_ff), 10); // total number of entries in the CD
-    buffer.writeUInt32LE(
-      Math.min(
-        centralDirectoryFileHeaders.reduce((sum, cdfh) => sum + cdfh.length, 0),
-        0xff_ff_ff_ff,
-      ),
-      12,
-    ); // length of the CD
+    buffer.writeUInt16LE(Math.min(this.localFileHeaders.length, 0xff_ff), 8); // total number of entries in this disk's CD
+    buffer.writeUInt16LE(Math.min(this.localFileHeaders.length, 0xff_ff), 10); // total number of entries in the CD
+    buffer.writeUInt32LE(Math.min(centralDirectoryConcat.length, 0xff_ff_ff_ff), 12); // length of the CD
     buffer.writeUInt32LE(Math.min(startOfCentralDirectoryOffset, 0xff_ff_ff_ff), 16);
 
     const cdfhCrc32 = new Crc32()
-      .update(Buffer.concat(centralDirectoryFileHeaders))
+      .update(centralDirectoryConcat)
       .digest()
       .toString(16)
       .padStart(8, '0')

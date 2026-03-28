@@ -1,4 +1,4 @@
-import { PassThrough } from 'node:stream';
+import stream from 'node:stream';
 
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
@@ -7,9 +7,11 @@ import EndOfLifeChecker from '../../src/modules/endOfLifeChecker.js';
 function range(start: number, end: number): number[] {
   return [...Array.from({ length: end - start + 1 }).keys()].map((val) => val + start);
 }
-const versions = range(4, 20 + 5).map((major) => `v${major}.${major}.0`);
+const versions = range(4, Number.parseInt(process.versions.node.split('.')[0]) + 2).map(
+  (major) => `v${major}.${major}.0`,
+);
 
-const logger = new Logger(LogLevel.ALWAYS, new PassThrough());
+const logger = new Logger(LogLevel.ALWAYS, new stream.PassThrough());
 
 describe('should not throw', () => {
   test.each(versions)('with an old date: %s', (version) => {

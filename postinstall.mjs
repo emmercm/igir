@@ -2,7 +2,6 @@ import child_process from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import util from 'node:util';
 
 import nodeGypBuild from 'node-gyp-build';
 
@@ -34,7 +33,7 @@ for (let napiPackage of [
   path.join('packages', 'zstd-1.5.5'),
 ]) {
   try {
-    await util.promisify(fs.stat)('dist');
+    await fs.promises.stat('dist');
     napiPackage = path.join('dist', napiPackage);
   } catch {
     /* ignored */
@@ -48,6 +47,8 @@ for (let napiPackage of [
   } catch {
     /* ignored */
   }
+
+  process.stdout.write(`\n${napiPackage}: building from source ...\n\n`);
 
   // Run a build if no prebuild was found
   await new Promise((resolve, reject) => {
@@ -84,12 +85,9 @@ for (let napiPackage of [
 
   // Relocate the build output to the addon directory
   try {
-    await util.promisify(fs.stat)(addonDirectory);
+    await fs.promises.stat(addonDirectory);
   } catch {
-    await util.promisify(fs.mkdir)(addonDirectory);
+    await fs.promises.mkdir(addonDirectory);
   }
-  await util.promisify(fs.rename)(
-    path.join(napiPackage, 'build'),
-    path.join(addonDirectory, 'build'),
-  );
+  await fs.promises.rename(path.join(napiPackage, 'build'), path.join(addonDirectory, 'build'));
 }

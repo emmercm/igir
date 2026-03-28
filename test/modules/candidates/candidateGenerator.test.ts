@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
+import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
 import type DAT from '../../../src/types/dats/dat.js';
@@ -14,6 +15,8 @@ import MameDAT from '../../../src/types/dats/mame/mameDat.js';
 import Release from '../../../src/types/dats/release.js';
 import ROM from '../../../src/types/dats/rom.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import ChdBinCue from '../../../src/types/files/archives/chd/chdBinCue.js';
+import NkitIso from '../../../src/types/files/archives/nkitIso.js';
 import Rar from '../../../src/types/files/archives/rar.js';
 import SevenZip from '../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/types/files/archives/tar.js';
@@ -72,14 +75,13 @@ const datWithFourGames = new LogiqxDAT({
 async function candidateGenerator(
   options: Options,
   dat: DAT,
-  files: (File | Promise<File>)[],
+  files: File[],
 ): Promise<WriteCandidate[]> {
-  const resolvedFiles = await Promise.all(files);
-  const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(resolvedFiles);
-  return new CandidateGenerator(
+  const indexedFiles = new ROMIndexer(options, new ProgressBarFake()).index(files);
+  return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.cpus().length),
+    new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedFiles);
 }
 
@@ -191,7 +193,10 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
     ).toEqual([
       ['game with no ROMs', []],
       // preferred the non-archive when extracting, otherwise are raw-copying
-      ['game with one ROM and multiple releases', [command === 'extract' ? '1.rom' : 'one.zip']],
+      [
+        'game with one ROM and multiple releases',
+        [command === 'extract' ? path.resolve('1.rom') : path.resolve('one.zip')],
+      ],
     ]);
   });
 
@@ -284,7 +289,11 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then
     expect(candidates).toHaveLength(3);
@@ -297,13 +306,13 @@ describe('with ROMs with headers', () => {
       ['game with no ROMs', []],
       [
         'game with one ROM and multiple releases',
-        ['game with one ROM and multiple releases.zip|one.nes'], // respected headerless extension
+        [`${path.resolve('game with one ROM and multiple releases.zip')}|one.nes`], // respected headerless extension
       ],
       [
         'game with two ROMs (parent)',
         [
-          'game with two ROMs (parent).zip|two.sfc', // respected headerless extension
-          'game with two ROMs (parent).zip|two.b', // respected DAT
+          `${path.resolve('game with two ROMs (parent).zip')}|two.sfc`, // respected headerless extension
+          `${path.resolve('game with two ROMs (parent).zip')}|two.b`, // respected DAT
         ],
       ],
     ]);
@@ -318,7 +327,11 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then
     expect(candidates).toHaveLength(3);
@@ -329,12 +342,12 @@ describe('with ROMs with headers', () => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', ['one.nes']], // respected headerless extension
+      ['game with one ROM and multiple releases', [path.resolve('one.nes')]], // respected headerless extension
       [
         'game with two ROMs (parent)',
         [
-          path.join('game with two ROMs (parent)', 'two.sfc'), // respected headerless extension
-          path.join('game with two ROMs (parent)', 'two.b'), // respected DAT
+          path.resolve('game with two ROMs (parent)', 'two.sfc'), // respected headerless extension
+          path.resolve('game with two ROMs (parent)', 'two.b'), // respected DAT
         ],
       ],
     ]);
@@ -348,7 +361,11 @@ describe('with ROMs with headers', () => {
     });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then
     expect(
@@ -359,7 +376,7 @@ describe('with ROMs with headers', () => {
     ).toEqual([
       ['game with no ROMs', []],
       // respected headerless extension
-      ['game with one ROM and multiple releases', ['one.nes']],
+      ['game with one ROM and multiple releases', [path.resolve('one.nes')]],
     ]);
   });
 });
@@ -395,7 +412,11 @@ describe('with different input files for every game ROM', () => {
       const options = new Options({ commands: ['copy', command] });
 
       // When
-      const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+      const candidates = await candidateGenerator(
+        options,
+        datWithFourGames,
+        await Promise.all(filePromises),
+      );
 
       // Then there should still be 3 candidates, with the input -> output:
       //  (nothing) -> game with no ROMs
@@ -408,8 +429,11 @@ describe('with different input files for every game ROM', () => {
         ]),
       ).toEqual([
         ['game with no ROMs', []],
-        ['game with one ROM and multiple releases', ['one.rom']],
-        ['game with two ROMs (parent)', ['a.rar|a.rom', 'b.rar|b.rom']],
+        ['game with one ROM and multiple releases', [path.resolve('one.rom')]],
+        [
+          'game with two ROMs (parent)',
+          [`${path.resolve('a.rar')}|a.rom`, `${path.resolve('b.rar')}|b.rom`],
+        ],
       ]);
     },
   );
@@ -419,7 +443,11 @@ describe('with different input files for every game ROM', () => {
     const options = new Options({ commands: ['copy'] });
 
     // When
-    const candidates = await candidateGenerator(options, datWithFourGames, filePromises);
+    const candidates = await candidateGenerator(
+      options,
+      datWithFourGames,
+      await Promise.all(filePromises),
+    );
 
     // Then there should be 2 candidates, with the input -> output:
     //  (nothing) -> game with no ROMs
@@ -434,7 +462,7 @@ describe('with different input files for every game ROM', () => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      ['game with one ROM and multiple releases', ['one.rom']],
+      ['game with one ROM and multiple releases', [path.resolve('one.rom')]],
     ]);
   });
 });
@@ -483,7 +511,7 @@ describe('token replacement', () => {
   });
 
   const files = Promise.all(
-    dat.getGames().flatMap((game) => game.getRoms().map(async (rom) => rom.toFile())),
+    dat.getGames().flatMap((game) => game.getRoms().map(async (rom) => await rom.toFile())),
   );
 
   it('should replace {region}', async () => {
@@ -496,18 +524,18 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .sort();
+      .toSorted();
     expect(outputFiles).toEqual([
-      path.join('output', 'AUS', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join(
+      path.resolve('output', 'AUS', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve(
         'output',
         'EUR',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'EUR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join('output', 'USA', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join('output', 'USA', 'Kirby - Canvas Curse (USA).nds'),
-      path.join('output', 'USA', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'EUR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'USA', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve('output', 'USA', 'Kirby - Canvas Curse (USA).nds'),
+      path.resolve('output', 'USA', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
     ]);
   });
 
@@ -521,40 +549,40 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .sort();
+      .toSorted();
     expect(outputFiles).toEqual([
-      path.join(
+      path.resolve(
         'output',
         'DE',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'DE', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join('output', 'EN', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join(
+      path.resolve('output', 'DE', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'EN', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve(
         'output',
         'EN',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'EN', 'Kirby - Canvas Curse (USA).nds'),
-      path.join('output', 'EN', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve('output', 'EN', 'Kirby - Canvas Curse (USA).nds'),
+      path.resolve('output', 'EN', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve(
         'output',
         'ES',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'ES', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve('output', 'ES', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve(
         'output',
         'FR',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'FR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve('output', 'FR', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve(
         'output',
         'IT',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'IT', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'IT', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
     ]);
   });
 
@@ -568,16 +596,16 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .sort();
+      .toSorted();
     expect(outputFiles).toEqual([
-      path.join(
+      path.resolve(
         'output',
         'Demo',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'Program', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join('output', 'Retail', 'Advance Wars - Dual Strike (USA, Australia).nds'),
-      path.join('output', 'Retail', 'Kirby - Canvas Curse (USA).nds'),
+      path.resolve('output', 'Program', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
+      path.resolve('output', 'Retail', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve('output', 'Retail', 'Kirby - Canvas Curse (USA).nds'),
     ]);
   });
 
@@ -591,15 +619,19 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .sort();
+      .toSorted();
     expect(outputFiles).toEqual([
-      path.join('output', 'Applications', 'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds'),
-      path.join(
+      path.resolve(
+        'output',
+        'Applications',
+        'Nintendo DS Browser (USA, Europe) (En,Fr,De,Es,It).nds',
+      ),
+      path.resolve(
         'output',
         'Demos',
         'Animal Crossing - Wild World (Europe) (En,Fr,De,Es,It) (Demo) (Kiosk).nds',
       ),
-      path.join('output', 'Games', 'Advance Wars - Dual Strike (USA, Australia).nds'),
+      path.resolve('output', 'Games', 'Advance Wars - Dual Strike (USA, Australia).nds'),
     ]);
   });
 
@@ -618,9 +650,14 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
   describe('allow excess sets', () => {
     const archive = new Zip('input.zip');
-    const files = [
+    const filePromises = [
       // Matches a game with two ROMs
-      File.fileOf({ filePath: 'two.a', size: 2, crc32: 'abcdef90' }),
+      ArchiveEntry.entryOf({
+        archive,
+        entryPath: 'two.a',
+        size: 2,
+        crc32: 'abcdef90',
+      }),
       ArchiveEntry.entryOf({
         archive,
         entryPath: 'two.b',
@@ -644,7 +681,11 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       });
 
       // When
-      const candidates = await candidateGenerator(allowExcessOptions, datWithFourGames, files);
+      const candidates = await candidateGenerator(
+        allowExcessOptions,
+        datWithFourGames,
+        await Promise.all(filePromises),
+      );
 
       // Then
       expect(candidates).toHaveLength(1);
@@ -658,9 +699,13 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       });
 
       // When
-      const candidates = await candidateGenerator(allowExcessOptions, datWithFourGames, files);
+      const candidates = await candidateGenerator(
+        allowExcessOptions,
+        datWithFourGames,
+        await Promise.all(filePromises),
+      );
 
-      // Then
+      // Then "game with no ROMs" and "game with two ROMs (parent)"
       expect(candidates).toHaveLength(2);
     });
   });
@@ -677,14 +722,14 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         dat
           .getGames()
           .flatMap((game) => game.getRoms())
-          .map(async (rom) => rom.toFile()),
+          .map(async (rom) => await rom.toFile()),
       );
       const archive = new Zip('archive.zip');
       const archiveEntries = await Promise.all(
         dat
           .getGames()
           .flatMap((game) => game.getRoms())
-          .map(async (rom) => rom.toArchiveEntry(archive)),
+          .map(async (rom) => await rom.toArchiveEntry(archive)),
       );
       const files = [...rawFiles, ...archiveEntries];
 
@@ -704,115 +749,200 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       }
     });
 
-    describe.each([gameWithTwoRomsParent, gameWithTwoRomsClone, gameWithDuplicateRoms])(
-      'game: %s',
-      (datGame) => {
-        const dat = new LogiqxDAT({ header: new Header(), games: [datGame] });
+    describe.each(
+      [gameWithTwoRomsParent, gameWithTwoRomsClone, gameWithDuplicateRoms].map((game) => [
+        game.getName(),
+        game,
+      ]),
+    )('game: %s', (_, datGame) => {
+      const dat = new LogiqxDAT({ header: new Header(), games: [datGame] });
 
-        it('should behave like normal with no archives', async () => {
-          // Given every file is present, raw
-          const rawFiles = await Promise.all(
-            dat
-              .getGames()
-              .flatMap((game) => game.getRoms())
-              .map(async (rom) => rom.toFile()),
-          );
+      it('should behave like normal with no archives', async () => {
+        // Given every file is present, raw
+        const rawFiles = await Promise.all(
+          dat
+            .getGames()
+            .flatMap((game) => game.getRoms())
+            .map(async (rom) => await rom.toFile()),
+        );
 
-          // When
-          const candidates = await candidateGenerator(options, dat, rawFiles);
+        // When
+        const candidates = await candidateGenerator(options, dat, rawFiles);
 
-          // Then the Archive isn't used for any input file
-          expect(candidates).toHaveLength(1);
+        // Then the Archive isn't used for any input file
+        expect(candidates).toHaveLength(1);
 
-          const firstCandidate = candidates[0];
-          const romsWithFiles = firstCandidate.getRomsWithFiles();
-          expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+        const firstCandidate = candidates[0];
+        const romsWithFiles = firstCandidate.getRomsWithFiles();
+        expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-          for (const [idx, romsWithFile] of romsWithFiles.entries()) {
-            const inputFile = romsWithFile.getInputFile();
-            expect(inputFile.getFilePath()).toEqual(datGame.getRoms()[idx].getName());
-          }
+        for (const [idx, romsWithFile] of romsWithFiles.entries()) {
+          const inputFile = romsWithFile.getInputFile();
+          expect(inputFile.getFilePath()).toEqual(path.resolve(datGame.getRoms()[idx].getName()));
+        }
+      });
+
+      it('should prefer input files from the same archive if it contains exactly every ROM', async () => {
+        // Given every file is present, both raw and archived
+        const rawFiles = await Promise.all(
+          dat
+            .getGames()
+            .flatMap((game) => game.getRoms())
+            .map(async (rom) => await rom.toFile()),
+        );
+        const archive = new Zip('archive.zip');
+        const archiveEntries = await Promise.all(
+          dat
+            .getGames()
+            .flatMap((game) => game.getRoms())
+            .map(async (rom) => await rom.toArchiveEntry(archive)),
+        );
+        const files = [...rawFiles, ...archiveEntries];
+
+        // When
+        const candidates = await candidateGenerator(options, dat, files);
+
+        // Then the Archive is used for every input file
+        expect(candidates).toHaveLength(1);
+        const firstCandidate = candidates[0];
+        const romsWithFiles = firstCandidate.getRomsWithFiles();
+        expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
+
+        for (const romsWithFile of romsWithFiles) {
+          const inputFile = romsWithFile.getInputFile();
+          expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
+        }
+      });
+
+      it('should prefer input archives that contain extra junk files when allowExcessSets:true', async () => {
+        const allowExcessOptions = new Options({
+          ...options,
+          allowExcessSets: true,
         });
 
-        it('should prefer input files from the same archive if it contains exactly every ROM', async () => {
-          // Given every file is present, both raw and archived
-          const rawFiles = await Promise.all(
-            dat
-              .getGames()
-              .flatMap((game) => game.getRoms())
-              .map(async (rom) => rom.toFile()),
-          );
-          const archive = new Zip('archive.zip');
-          const archiveEntries = await Promise.all(
-            dat
-              .getGames()
-              .flatMap((game) => game.getRoms())
-              .map(async (rom) => rom.toArchiveEntry(archive)),
-          );
-          const files = [...rawFiles, ...archiveEntries];
+        // Given every file is present, both raw and archived, plus extra ArchiveEntries
+        const rawFiles = await Promise.all(
+          dat
+            .getGames()
+            .flatMap((game) => game.getRoms())
+            .map(async (rom) => await rom.toFile()),
+        );
+        const archive = new Zip('archive.zip');
+        const archiveEntries = await Promise.all(
+          dat
+            .getGames()
+            .flatMap((game) => game.getRoms())
+            .map(async (rom) => await rom.toArchiveEntry(archive)),
+        );
+        const files = [
+          ...rawFiles,
+          ...archiveEntries,
+          await ArchiveEntry.entryOf({
+            archive,
+            entryPath: 'junk.rom',
+            size: 999,
+            crc32: '55555555',
+          }),
+        ];
 
-          // When
-          const candidates = await candidateGenerator(options, dat, files);
+        // When
+        const candidates = await candidateGenerator(allowExcessOptions, dat, files);
 
-          // Then the Archive is used for every input file
-          expect(candidates).toHaveLength(1);
-          const firstCandidate = candidates[0];
-          const romsWithFiles = firstCandidate.getRomsWithFiles();
-          expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
+        // Then the Archive is used for every input file
+        expect(candidates).toHaveLength(1);
+        const firstCandidate = candidates[0];
+        const romsWithFiles = firstCandidate.getRomsWithFiles();
+        expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
 
-          for (const romsWithFile of romsWithFiles) {
-            const inputFile = romsWithFile.getInputFile();
-            expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
-          }
-        });
+        for (const romsWithFile of romsWithFiles) {
+          const inputFile = romsWithFile.getInputFile();
+          expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
+        }
+      });
+    });
+  });
 
-        it('should prefer input archives that contain extra junk files when allowExcessSets:true', async () => {
-          const allowExcessOptions = new Options({
-            ...options,
-            allowExcessSets: true,
-          });
+  it('should group disc-merged games by their original game name', async () => {
+    const discOne = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 1)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 1).bin',
+          size: 705_614_112,
+          crc32: 'e32f4a7e',
+        }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 2)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 2).bin',
+          size: 731_911_824,
+          crc32: '21b5d15d',
+        }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
 
-          // Given every file is present, both raw and archived, plus extra ArchiveEntries
-          const rawFiles = await Promise.all(
-            dat
-              .getGames()
-              .flatMap((game) => game.getRoms())
-              .map(async (rom) => rom.toFile()),
-          );
-          const archive = new Zip('archive.zip');
-          const archiveEntries = await Promise.all(
-            dat
-              .getGames()
-              .flatMap((game) => game.getRoms())
-              .map(async (rom) => rom.toArchiveEntry(archive)),
-          );
-          const files = [
-            ...rawFiles,
-            ...archiveEntries,
-            await ArchiveEntry.entryOf({
-              archive,
-              entryPath: 'junk.rom',
-              size: 999,
-              crc32: '55555555',
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
             }),
-          ];
+          );
+        }),
+      )
+    ).flat();
 
-          // When
-          const candidates = await candidateGenerator(allowExcessOptions, dat, files);
+    const candidates = await candidateGenerator(options, discMergedDat, files);
 
-          // Then the Archive is used for every input file
-          expect(candidates).toHaveLength(1);
-          const firstCandidate = candidates[0];
-          const romsWithFiles = firstCandidate.getRomsWithFiles();
-          expect(romsWithFiles).toHaveLength(firstCandidate.getGame().getRoms().length);
+    const mergedGameName = discMergedDat.getGames().at(0)?.getName() ?? '';
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getName()).toEqual(mergedGameName);
+    expect(
+      candidates[0]
+        .getRomsWithFiles()
+        .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
+    ).toEqual(files.map((file) => path.resolve(mergedGameName, path.basename(file.getFilePath()))));
+  });
+});
 
-          for (const romsWithFile of romsWithFiles) {
-            const inputFile = romsWithFile.getInputFile();
-            expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
-          }
-        });
-      },
+describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
+  const options = new Options({ commands: ['copy', command] });
+
+  it("should not return a candidate for archives that can't be extracted", async () => {
+    const nkitIso = new NkitIso('disc.nkit.iso');
+    const files = await Promise.all(
+      gameWithOneRom.getRoms().map(
+        async (rom) =>
+          await ArchiveEntry.entryOf({
+            archive: nkitIso,
+            entryPath: rom.getName(),
+            size: rom.getSize(),
+            crc32: rom.getCrc32(),
+          }),
+      ),
     );
+
+    const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getName()).toEqual(gameWithNoRoms.getName());
   });
 });
 
@@ -872,7 +1002,7 @@ describe('MAME v0.260', () => {
     mameDat
       .getGames()
       .flatMap((game) => [...game.getRoms(), ...game.getDisks()])
-      .map(async (rom) => rom.toFile()),
+      .map(async (rom) => await rom.toFile()),
   )
     .then((files) => files.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode())))
     .then((files) => IndexedFiles.fromFiles(files));
@@ -886,33 +1016,33 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new MappableSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
-      .sort();
+      .toSorted();
     expect(outputFiles).toEqual([
-      '2spicy.zip|6.0.0009.bin',
-      '2spicy.zip|6.0.0010.bin',
-      '2spicy.zip|6.0.0010a.bin',
-      '2spicy.zip|fpr-24370b.ic6',
-      '2spicy.zip|vid_bios.u504',
-      path.join('2spicy', 'dvp-0027a'),
-      path.join('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01'),
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_hh.hh',
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_hl.hl',
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_lh.lh',
-      'a51mxr3k.zip|1.0_r3k_max-a51_kit_ll.ll',
-      'a51mxr3k.zip|jagwave.rom',
-      path.join('a51mxr3k', 'area51mx'),
-      'area51mx.zip|2.0_68020_max-a51_kit_3h.3h',
-      'area51mx.zip|2.0_68020_max-a51_kit_3k.3k',
-      'area51mx.zip|2.0_68020_max-a51_kit_3m.3m',
-      'area51mx.zip|2.0_68020_max-a51_kit_3p.3p',
-      'area51mx.zip|jagwave.rom',
-      path.join('area51mx', 'area51mx'),
+      `${path.resolve('2spicy.zip')}|6.0.0009.bin`,
+      `${path.resolve('2spicy.zip')}|6.0.0010.bin`,
+      `${path.resolve('2spicy.zip')}|6.0.0010a.bin`,
+      `${path.resolve('2spicy.zip')}|fpr-24370b.ic6`,
+      `${path.resolve('2spicy.zip')}|vid_bios.u504`,
+      path.resolve('2spicy', 'dvp-0027a'),
+      path.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01'),
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hh.hh`,
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hl.hl`,
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_lh.lh`,
+      `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_ll.ll`,
+      `${path.resolve('a51mxr3k.zip')}|jagwave.rom`,
+      path.resolve('a51mxr3k', 'area51mx'),
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3h.3h`,
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3k.3k`,
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3m.3m`,
+      `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3p.3p`,
+      `${path.resolve('area51mx.zip')}|jagwave.rom`,
+      path.resolve('area51mx', 'area51mx'),
     ]);
   });
 
@@ -926,29 +1056,29 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new MappableSemaphore(os.cpus().length),
+      new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
     const outputFiles = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
-      .sort();
+      .toSorted();
     expect(outputFiles).toEqual([
-      path.join('2spicy', '6.0.0009.bin'),
-      path.join('2spicy', '6.0.0010.bin'),
-      path.join('2spicy', '6.0.0010a.bin'),
-      path.join('2spicy', 'fpr-24370b.ic6'),
-      path.join('2spicy', 'vid_bios.u504'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
-      path.join('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
-      path.join('a51mxr3k', 'jagwave.rom'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
-      path.join('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
-      path.join('area51mx', 'jagwave.rom'),
+      path.resolve('2spicy', '6.0.0009.bin'),
+      path.resolve('2spicy', '6.0.0010.bin'),
+      path.resolve('2spicy', '6.0.0010a.bin'),
+      path.resolve('2spicy', 'fpr-24370b.ic6'),
+      path.resolve('2spicy', 'vid_bios.u504'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
+      path.resolve('a51mxr3k', 'jagwave.rom'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
+      path.resolve('area51mx', 'jagwave.rom'),
     ]);
   });
 });

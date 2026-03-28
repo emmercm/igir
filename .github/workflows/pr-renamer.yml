@@ -67,13 +67,13 @@ jobs:
 
           # Restrict types
           if [[ ! "${NEW_TITLE}" =~ ^${ALLOWED_TYPES}: ]]; then
-            echo "ERROR=The conventional commit type isn't in the allowed list: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
+            echo "ERROR=This repository uses squash-merging, so it requires pull request titles to look like conventional commit messages. The pull request title must be prefixed with one of: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
 
           echo "NEW_TITLE=${NEW_TITLE}" >> "${GITHUB_OUTPUT}"
       # Required for `gh` CLI
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: gh-pr-edit
         env:
           GH_TOKEN: ${{ github.token }}
@@ -101,6 +101,6 @@ jobs:
       - rename
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@release/v1
+      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}

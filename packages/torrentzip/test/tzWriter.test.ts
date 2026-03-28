@@ -1,13 +1,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import stream, { PassThrough } from 'node:stream';
-
-import { jest } from '@jest/globals';
+import stream from 'node:stream';
 
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import Defaults from '../../../src/globals/defaults.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
@@ -19,8 +16,6 @@ import type { ValidationResultValue } from '../src/tzValidator.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 import type { CompressionMethodValue } from '../src/tzWriter.js';
 import TZWriter, { CompressionMethod } from '../src/tzWriter.js';
-
-jest.setTimeout(5 * 60 * 1000); // 5min for large files
 
 const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [CompressionMethod.DEFLATE]: ValidationResult.VALID_TORRENTZIP,
@@ -77,10 +72,10 @@ test.each([
         dirDatName: true,
         disableCache: true,
       }),
-      new Logger(LogLevel.NEVER, new PassThrough()),
+      new Logger(LogLevel.NEVER, new stream.PassThrough()),
     ).main();
 
-    const writtenFiles = (await FsPoly.walk(tempDir, WalkMode.FILES)).sort();
+    const writtenFiles = (await FsPoly.walk(tempDir, WalkMode.FILES)).toSorted();
     const writtenFilesHashed = await Promise.all(
       writtenFiles.map(async (filePath) => {
         const checksums = await FileChecksums.hashFile(filePath, ChecksumBitmask.CRC32);
@@ -112,16 +107,7 @@ const assertSingleFileZip = async (
     if (!(await FsPoly.exists(tempFileDir))) {
       await FsPoly.mkdir(tempFileDir, { recursive: true });
     }
-    const tempFile = await IOFile.fileOfSize(tempFilePath, 'w', fileSize);
-    const emptyBuffer = Buffer.alloc(Defaults.FILE_READING_CHUNK_SIZE);
-    let position = 0;
-    while (position < fileSize) {
-      await tempFile.writeAt(
-        emptyBuffer.subarray(0, Math.min(emptyBuffer.length, fileSize - position)),
-        position,
-      );
-      position += emptyBuffer.length;
-    }
+    const tempFile = await IOFile.fileOfSize(tempFilePath, 'r', fileSize);
     await tempFile.close();
 
     // Sanity check the temp file
@@ -135,7 +121,7 @@ const assertSingleFileZip = async (
       fs.createReadStream(tempFilePath, { highWaterMark: 33_554_432 * 2 }),
       fileName,
       fileSize,
-      os.cpus().length,
+      os.availableParallelism(),
     );
     await tempZip.finalize();
 
@@ -247,12 +233,12 @@ test.each([
       for (const inputDirectory of inputDirectories) {
         const readable = new stream.Readable({
           read(): void {
-            this.push(Buffer.alloc(0));
+            this.push(Buffer.allocUnsafe(0));
             // eslint-disable-next-line unicorn/no-null
             this.push(null);
           },
         });
-        await tempZip.addStream(readable, inputDirectory, 0, os.cpus().length);
+        await tempZip.addStream(readable, inputDirectory, 0, os.availableParallelism());
       }
       await tempZip.finalize();
 

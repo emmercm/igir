@@ -1,4 +1,6 @@
-import { Mutex } from 'async-mutex';
+import type { MutexInterface } from 'async-mutex';
+import { E_TIMEOUT } from 'async-mutex';
+import { Mutex, withTimeout } from 'async-mutex';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 
@@ -10,7 +12,8 @@ export default class KeyedMutex {
 
   private readonly keyMutexesMutex = new Mutex();
 
-  private keyMutexesLru = new Set<string>();
+  // ES2015/ES6 maps are required to maintain insertion order, making them inexpensive for LRU
+  private readonly keyMutexesLru = new Map<string, undefined>();
 
   private readonly maxSize?: number;
 
@@ -22,7 +25,7 @@ export default class KeyedMutex {
    * Run a {@link runnable} exclusively across all keys.
    */
   async runExclusiveGlobally<V>(runnable: () => V | Promise<V>): Promise<V> {
-    return this.keyMutexesMutex.runExclusive(runnable);
+    return await this.keyMutexesMutex.runExclusive(runnable);
   }
 
   /**
@@ -40,60 +43,128 @@ export default class KeyedMutex {
       return;
     }
 
-    const mutexes = await this.runExclusiveGlobally(() => {
-      const mutexes = keys.reduce(ArrayPoly.reduceUnique(), []).map((key) => {
-        let mutex = this.keyMutexes.get(key);
-        if (mutex === undefined) {
-          mutex = new Mutex();
-          this.keyMutexes.set(key, mutex);
+    const uniqueKeys = keys.reduce(ArrayPoly.reduceUnique(), []);
 
-          // Expire least recently used keys
-          [...this.keyMutexesLru]
-            .filter((lruKey) => !this.keyMutexes.get(lruKey)?.isLocked())
-            .slice(this.maxSize ?? Number.MAX_SAFE_INTEGER)
-            .forEach((lruKey) => {
+    let mutexes: Mutex[];
+
+    if (uniqueKeys.every((key) => this.keyMutexes.has(key))) {
+      // If every key mutex already exists, then we can avoid a global lock
+
+      // Note: no new key mutexes were created, so no LRU eviction is necessary
+      // Mark all keys as recently used
+      for (const key of uniqueKeys) {
+        this.keyMutexesLru.delete(key);
+        this.keyMutexesLru.set(key, undefined);
+      }
+
+      mutexes = uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+    } else {
+      // If at least one key mutex does not exist, then we have to take a global lock to create them
+      const uniqueKeySet = new Set(uniqueKeys);
+      mutexes = await this.keyMutexesMutex.runExclusive(() => {
+        for (const key of uniqueKeys) {
+          if (!this.keyMutexes.has(key)) {
+            this.keyMutexes.set(key, new Mutex());
+          }
+        }
+
+        // Expire least recently used keys
+        if (this.maxSize !== undefined && this.keyMutexes.size > this.maxSize) {
+          let keysToEvict = this.keyMutexes.size - this.maxSize;
+          for (const lruKey of this.keyMutexesLru.keys()) {
+            if (keysToEvict <= 0) {
+              break;
+            }
+            if (!uniqueKeySet.has(lruKey) && !this.keyMutexes.get(lruKey)?.isLocked()) {
+              this.keyMutexes.get(lruKey)?.release();
               this.keyMutexes.delete(lruKey);
               this.keyMutexesLru.delete(lruKey);
-            });
+              keysToEvict--;
+            }
+          }
         }
-        return mutex;
+
+        // Mark all keys as recently used
+        for (const key of uniqueKeys) {
+          this.keyMutexesLru.delete(key);
+          this.keyMutexesLru.set(key, undefined);
+        }
+
+        return uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+      });
+    }
+
+    await KeyedMutex.acquireMultipleWithDeadlockProtection(mutexes);
+  }
+
+  /**
+   * Trying to take multiple locks at once can lead to deadlocking. This is a naive deadlock
+   * resolution algorithm that requires all locks to be taken within {@link timeoutMillis}. If any
+   * lock can't be taken in the timeout, then any acquired locks will be released and all of them
+   * will be tried again. This semi-frequent releasing should help pending lockers make progress.
+   *
+   * This function will retry forever, which may still cause problems.
+   */
+  private static async acquireMultipleWithDeadlockProtection(
+    mutexes: Mutex[],
+    timeoutMillis = 15_000,
+  ): Promise<void> {
+    // Add +/-10% jitter to try to prevent the exact same deadlock from happening
+    const timeoutWithJitter =
+      timeoutMillis - timeoutMillis * 0.1 + Math.random() * (timeoutMillis * 0.2);
+    const mutexesWithTimeout = mutexes.map((mutex) => withTimeout(mutex, timeoutWithJitter));
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    while (true) {
+      const mutexesAcquired: MutexInterface[] = [];
+      let anyMutexRejected = false;
+
+      const acquirePromises = mutexesWithTimeout.map(async (mutex) => {
+        await mutex.acquire();
+        if (anyMutexRejected) {
+          // One of the mutexes couldn't lock, so we shouldn't keep any others
+          mutex.release();
+          return;
+        }
+        mutexesAcquired.push(mutex);
       });
 
-      // Mark this key as recently used
-      for (const key of keys) {
-        this.keyMutexesLru.delete(key);
+      try {
+        await Promise.all(acquirePromises);
+        return;
+      } catch (error) {
+        // Release any mutexes locked, and wait on all pending mutex locks to be resolved
+        anyMutexRejected = true;
+        mutexesAcquired.forEach((mutex) => {
+          mutex.release();
+        });
+        await Promise.allSettled(acquirePromises);
+
+        if (error !== E_TIMEOUT) {
+          // The error was something other than a timeout, throw it
+          throw error;
+        }
       }
-      this.keyMutexesLru = new Set([...keys, ...this.keyMutexesLru]);
-
-      return mutexes;
-    });
-
-    await Promise.all(mutexes.map(async (mutex) => mutex.acquire()));
+    }
   }
 
   /**
    * Release any held lock for the given key.
    */
-  async release(key: string): Promise<void> {
-    await this.releaseMultiple([key]);
+  release(key: string): void {
+    this.releaseMultiple([key]);
   }
 
   /**
    * Release any held lock for the given keys.
    */
-  async releaseMultiple(keys: string[]): Promise<void> {
+  releaseMultiple(keys: string[]): void {
     if (keys.length === 0) {
       return;
     }
 
-    await this.runExclusiveGlobally(() => {
-      keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
-        const mutex = this.keyMutexes.get(key);
-        if (mutex === undefined) {
-          return;
-        }
-        mutex.release();
-      });
+    keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
+      this.keyMutexes.get(key)?.release();
     });
   }
 
@@ -105,7 +176,7 @@ export default class KeyedMutex {
     try {
       return await runnable();
     } finally {
-      await this.release(key);
+      this.release(key);
     }
   }
 
@@ -117,7 +188,7 @@ export default class KeyedMutex {
     try {
       return await runnable();
     } finally {
-      await this.releaseMultiple(keys);
+      this.releaseMultiple(keys);
     }
   }
 }

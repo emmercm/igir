@@ -8,6 +8,14 @@ import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
 export default abstract class Maxcso extends Archive {
+  canExtract(): boolean {
+    return true;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return false;
+  }
+
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<Archive>[]> {
     const entryPath = `${path.parse(this.getFilePath()).name}.iso`;
     const size = (await maxcso.header(this.getFilePath())).uncompressedSize;
@@ -33,7 +41,7 @@ export default abstract class Maxcso extends Archive {
   }
 
   async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
-    return maxcso.decompress({
+    await maxcso.decompress({
       inputFilename: this.getFilePath(),
       outputFilename: extractedFilePath,
       binaryPreference: MaxcsoBinaryPreference.PREFER_PATH_BINARY,

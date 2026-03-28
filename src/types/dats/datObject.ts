@@ -1,3 +1,4 @@
+import type { ReadonlyMatcher } from 'fast-xml-parser';
 import { XMLParser } from 'fast-xml-parser';
 
 /**
@@ -59,21 +60,26 @@ export default {
   /**
    * Parse the contents of an XML file to a {@link DATObjectProps} object.
    */
-  fromXmlString(xmlContents: string): DATObjectProps {
+  fromXmlString(xmlContents: Buffer | string): DATObjectProps {
     return new XMLParser({
       ignoreAttributes: false,
       ignoreDeclaration: true,
       ignorePiTags: true,
-      updateTag: (_tagName, jPath, attrs): boolean => {
-        if (XML_IGNORE_PATHS.has(jPath)) {
+      updateTag: (_tagName, jPathOrMatcher: string | ReadonlyMatcher, attrs): boolean => {
+        if (typeof jPathOrMatcher !== 'string') {
+          return true;
+        }
+        if (XML_IGNORE_PATHS.has(jPathOrMatcher)) {
           return false;
         }
-        (XML_IGNORE_ATTRS[jPath] ?? []).forEach((attr) => {
+        (XML_IGNORE_ATTRS[jPathOrMatcher] ?? []).forEach((attr) => {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete attrs[attr];
         });
         return true;
       },
+      parseTagValue: false, // don't try to parse any number-like values
+      parseAttributeValue: false, // don't try to parse any number-like values
       attributeNamePrefix: '',
     }).parse(xmlContents) as DATObjectProps;
   },

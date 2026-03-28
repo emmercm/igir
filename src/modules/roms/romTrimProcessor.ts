@@ -1,14 +1,16 @@
 import async from 'async';
 
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import type File from '../../types/files/file.js';
 import type FileFactory from '../../types/files/fileFactory.js';
 import type Options from '../../types/options.js';
+import { TrimScanFiles } from '../../types/options.js';
 import Module from '../module.js';
 
 /**
@@ -18,18 +20,18 @@ import Module from '../module.js';
 export default class ROMTrimProcessor extends Module {
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
-  private readonly driveSemaphore: DriveSemaphore;
+  private readonly mappableSemaphore: MappableSemaphore;
 
   constructor(
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
     super(progressBar, ROMTrimProcessor.name);
     this.options = options;
     this.fileFactory = fileFactory;
-    this.driveSemaphore = driveSemaphore;
+    this.mappableSemaphore = mappableSemaphore;
   }
 
   /**
@@ -54,7 +56,7 @@ export default class ROMTrimProcessor extends Module {
     }
 
     this.progressBar.logTrace(
-      `processing trimming in ${inputRomFiles.length.toLocaleString()} ROM${inputRomFiles.length === 1 ? '' : 's'}`,
+      `processing trimming in ${IntlPoly.toLocaleString(inputRomFiles.length)} ROM${inputRomFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_TRIMMING_DETECTION);
     this.progressBar.resetProgress(filesThatNeedProcessing);
@@ -67,7 +69,7 @@ export default class ROMTrimProcessor extends Module {
           return inputFile;
         }
 
-        return this.driveSemaphore.runExclusive(inputFile, async () => {
+        return await this.mappableSemaphore.runExclusive(async () => {
           this.progressBar.incrementInProgress();
           const childBar = this.progressBar.addChildBar({
             name: inputFile.toString(),
@@ -97,7 +99,7 @@ export default class ROMTrimProcessor extends Module {
       (romFile) => romFile.getPaddings().length > 0,
     ).length;
     this.progressBar.logTrace(
-      `found ${trimmedRomsCount.toLocaleString()} trimmed ROM${trimmedRomsCount === 1 ? '' : 's'}`,
+      `found ${IntlPoly.toLocaleString(trimmedRomsCount)} trimmed ROM${trimmedRomsCount === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done processing file trimming');
@@ -106,6 +108,17 @@ export default class ROMTrimProcessor extends Module {
 
   private fileNeedsProcessing(inputFile: File): boolean {
     if (this.options.shouldReadFileForTrimming(inputFile.getFilePath())) {
+      return true;
+    }
+
+    if (this.options.getTrimScanFiles() === TrimScanFiles.NEVER) {
+      return false;
+    }
+
+    if (
+      !(inputFile instanceof ArchiveEntry) &&
+      this.options.getTrimScanFiles() === TrimScanFiles.ALWAYS
+    ) {
       return true;
     }
 
@@ -122,7 +135,10 @@ export default class ROMTrimProcessor extends Module {
   }
 
   private async getFile(inputFile: File, progressBar: ProgressBar): Promise<File> {
-    if (!this.options.shouldReadFileForTrimming(inputFile.getFilePath())) {
+    if (
+      this.options.getTrimScanFiles() === TrimScanFiles.AUTO &&
+      !this.options.shouldReadFileForTrimming(inputFile.getFilePath())
+    ) {
       const fileSignature = await this.fileFactory.signatureFrom(inputFile);
       if (!fileSignature?.canBeTrimmed()) {
         // This file isn't known to be trimmable

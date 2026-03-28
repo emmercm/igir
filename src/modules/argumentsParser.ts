@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 import type { Argv } from 'yargs';
 import yargs from 'yargs';
@@ -25,7 +26,13 @@ import Options, {
   MergeModeInverted,
   MoveDeleteDirs,
   MoveDeleteDirsInverted,
+  PlaylistMode,
+  PlaylistModeInverted,
+  PreferFiletype,
+  PreferFiletypeInverted,
   PreferRevision,
+  TrimScanFiles,
+  TrimScanFilesInverted,
   ZipFormat,
   ZipFormatInverted,
 } from '../types/options.js';
@@ -95,11 +102,14 @@ export default class ArgumentsParser {
     const groupRomTrimmed = 'Trimmed ROM options:';
     const groupRomSet = 'ROM set options (requires DATs):';
     const groupRomFiltering = 'ROM filtering options:';
-    const groupRomPriority = 'One game, one ROM (1G1R) options:';
+    const groupRomPriority = 'One game, one ROM (1G1R) options (applied in order):';
+    const groupFilePriority = 'Input file preferences (applied in order):';
     const groupPlaylist = 'playlist command options:';
     const groupDir2Dat = 'dir2dat command options:';
     const groupFixdat = 'fixdat command options:';
     const groupReport = 'report command options:';
+    const groupConcurrency = 'Concurrency options:';
+    const groupDirectory = 'Cache & directory options:';
     const groupHelpDebug = 'Help & debug options:';
 
     // Add every command to a yargs object, recursively, resulting in the ability to specify
@@ -226,6 +236,7 @@ export default class ArgumentsParser {
           'Path(s) to ROM files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'input',
       })
       .option('input-checksum-quick', {
         group: groupRomInput,
@@ -243,7 +254,12 @@ export default class ArgumentsParser {
             'Arguments input-checksum-quick and input-checksum-min are mutually exclusive',
           );
         }
-        if (checkArgv['input-checksum-quick'] && checkArgv['input-checksum-max']) {
+        if (
+          checkArgv['input-checksum-quick'] &&
+          checkArgv['input-checksum-max'] &&
+          checkArgv['input-checksum-max'] !==
+            ChecksumBitmaskInverted[ChecksumBitmask.SHA1].toUpperCase()
+        ) {
           throw new IgirException(
             'Arguments input-checksum-quick and input-checksum-max are mutually exclusive',
           );
@@ -268,6 +284,7 @@ export default class ArgumentsParser {
           .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
+        default: ChecksumBitmaskInverted[ChecksumBitmask.SHA1].toUpperCase(),
       })
       .check((checkArgv) => {
         const options = Options.fromObject(checkArgv);
@@ -316,6 +333,7 @@ export default class ArgumentsParser {
           'Path(s) to DAT files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'dat',
       })
       .option('dat-name-regex', {
         group: groupDatInput,
@@ -383,11 +401,20 @@ export default class ArgumentsParser {
           'Path(s) to ROM patch files or archives to exclude from processing (supports globbing)',
         type: 'array',
         requiresArg: true,
+        implies: 'patch',
+      })
+      .option('patch-only', {
+        group: groupPatchInput,
+        description: 'Only write patched ROMs to the output directory',
+        type: 'boolean',
+        implies: 'patch',
       })
       .check((checkArgv) => {
         const illegalPatchCommands = ['link'].filter((command) => checkArgv._.includes(command));
         if (illegalPatchCommands.length > 0) {
-          const patchOptions = ['patch', 'patch-exclude'].filter((option) => checkArgv[option]);
+          const patchOptions = ['patch', 'patch-exclude', 'patch-only'].filter(
+            (option) => checkArgv[option],
+          );
           if (patchOptions.length > 0) {
             throw new IgirException(
               `Argument${patchOptions.length === 1 ? '' : 's'} ${patchOptions.map((opt) => `"${opt}"`).join(', ')} cannot be used with the command${illegalPatchCommands.length === 1 ? '' : 's'} ${illegalPatchCommands.map((cmd) => `"${cmd}"`).join(', ')}`,
@@ -405,6 +432,20 @@ export default class ArgumentsParser {
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
+      .middleware((middlewareArgv) => {
+        if (middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input) {
+          const outputResolved = path.resolve(middlewareArgv.output as string);
+          if (
+            !middlewareArgv.input.some(
+              (inputPath) => path.resolve(inputPath as string) === outputResolved,
+            )
+          ) {
+            this.logger.warn(
+              `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
+            );
+          }
+        }
+      }, false)
       .option('dir-mirror', {
         group: groupRomOutputPath,
         description: 'Use the input subdirectory structure for the output directory',
@@ -470,11 +511,20 @@ export default class ArgumentsParser {
       })
       .option('dir-game-subdir', {
         group: groupRomOutputPath,
-        description: 'Append the name of the game as an output subdirectory depending on its ROMs',
+        description:
+          'Append the name of the game as an output subdirectory depending on how many ROMs a game has',
         choices: Object.keys(GameSubdirMode).map((mode) => mode.toLowerCase()),
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         default: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+      })
+      .option('output-console-tokens', {
+        group: groupRomOutputPath,
+        description:
+          'Path to a JSON file of custom console token definitions to use instead of the built-in definitions',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
       })
 
       .option('fix-extension', {
@@ -499,6 +549,15 @@ export default class ArgumentsParser {
           'Overwrite files in the output directory that are the wrong filesize, checksum, or zip contents',
         type: 'boolean',
         conflicts: ['overwrite'],
+      })
+      .option('write-retry', {
+        group: groupRomOutput,
+        description:
+          'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
+        type: 'number',
+        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 0),
+        requiresArg: true,
+        default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
       })
       .check((checkArgv) => {
         const needOutput = ['copy', 'move', 'link', 'extract', 'zip', 'clean'].filter((command) =>
@@ -642,11 +701,20 @@ export default class ArgumentsParser {
 
       .option('trimmed-glob', {
         group: groupRomTrimmed,
-        description: 'Glob pattern of input filenames to force trimming detection for',
+        description:
+          'Glob pattern of input filenames to force trimming detection for (overriding all options below)',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         implies: 'dat',
+      })
+      .option('trim-scan-files', {
+        group: groupRomTrimmed,
+        description: 'Detect trimming for uncompressed files',
+        choices: Object.keys(TrimScanFiles).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: TrimScanFilesInverted[TrimScanFiles.AUTO].toLowerCase(),
       })
       .option('trim-scan-archives', {
         group: groupRomTrimmed,
@@ -820,7 +888,7 @@ export default class ArgumentsParser {
       })
       .option('prefer-game-regex', {
         group: groupRomPriority,
-        description: 'Regular expression of game names to prefer',
+        description: 'Regular expression of DAT game names to prefer',
         type: 'string',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
@@ -828,7 +896,7 @@ export default class ArgumentsParser {
       })
       .option('prefer-rom-regex', {
         group: groupRomPriority,
-        description: 'Regular expression of ROM filenames to prefer',
+        description: 'Regular expression of DAT ROM filenames to prefer',
         type: 'string',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
@@ -909,6 +977,29 @@ export default class ArgumentsParser {
         implies: 'single',
       })
 
+      .option('prefer-filetype', {
+        group: groupFilePriority,
+        description: 'Prefer input files of a type',
+        choices: Object.keys(PreferFiletype).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: PreferFiletypeInverted[PreferFiletype.PLAIN].toLowerCase(),
+      })
+      .option('prefer-filename-regex', {
+        group: groupFilePriority,
+        description: 'Regular expression of filenames to prefer',
+        coerce: ArgumentsParser.readRegexFile,
+        requiresArg: true,
+      })
+
+      .option('playlist-mode', {
+        group: groupPlaylist,
+        description: 'Generate playlists depending on how many ROMs a game has',
+        choices: Object.keys(PlaylistMode).map((mode) => mode.toLowerCase()),
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: true,
+        default: PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase(),
+      })
       .option('playlist-extensions', {
         group: groupPlaylist,
         description: 'List of comma-separated file extensions to generate multi-disc playlists for',
@@ -921,9 +1012,16 @@ export default class ArgumentsParser {
             return val.split(',').map((v) => `.${v.trim().replace(/^\.+/, '')}`);
           }),
         requiresArg: true,
-        default: '.cue,.gdi,.mdf,.chd',
+        default: '.ccd,.cdi,.chd,.cue,.gdi,.iso,.mdf,.toc',
       })
       .check((checkArgv) => {
+        if (
+          !checkArgv._.includes('playlist') &&
+          checkArgv['playlist-mode'] &&
+          checkArgv['playlist-mode'] !== PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase()
+        ) {
+          throw new IgirException(`Missing required command for option playlist-mode: playlist`);
+        }
         if (checkArgv._.includes('playlist') && checkArgv['playlist-extensions'].length === 0) {
           // TODO(cememr): print help message
           throw new IgirException(
@@ -975,11 +1073,11 @@ export default class ArgumentsParser {
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
-        default: `./${Package.NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
+        default: `${Package.NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
 
       .option('dat-threads', {
-        group: groupHelpDebug,
+        group: groupConcurrency,
         description: 'Number of DATs to process in parallel',
         type: 'number',
         coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -987,7 +1085,7 @@ export default class ArgumentsParser {
         default: Defaults.DAT_DEFAULT_THREADS,
       })
       .option('reader-threads', {
-        group: groupHelpDebug,
+        group: groupConcurrency,
         description: 'Maximum number of ROMs to read in parallel per disk',
         type: 'number',
         coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -995,7 +1093,7 @@ export default class ArgumentsParser {
         default: Defaults.FILE_READER_DEFAULT_THREADS,
       })
       .option('writer-threads', {
-        group: groupHelpDebug,
+        group: groupConcurrency,
         description: 'Maximum number of ROMs to write in parallel',
         type: 'number',
         coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 1),
@@ -1007,40 +1105,40 @@ export default class ArgumentsParser {
           middlewareArgv.datThreads = 1;
         }
       }, true)
-      .option('write-retry', {
-        group: groupHelpDebug,
-        description:
-          'Number of additional retries to attempt when writing a file has failed (0 disables retries)',
-        type: 'number',
-        coerce: (val: number | number[]) => Math.max(ArgumentsParser.getLastValue(val), 0),
-        requiresArg: true,
-        default: Defaults.ROM_WRITER_ADDITIONAL_RETRIES,
-      })
+
       .options('temp-dir', {
-        group: groupHelpDebug,
+        group: groupDirectory,
         description: 'Path to a directory for temporary files',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
       })
       .option('disable-cache', {
-        group: groupHelpDebug,
+        group: groupDirectory,
         description: 'Disable loading or saving the cache file',
         type: 'boolean',
       })
       .option('cache-path', {
-        group: groupHelpDebug,
+        group: groupDirectory,
         description: 'Location for the cache file',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,
         conflicts: ['disable-cache'],
       })
+
       .option('verbose', {
         group: groupHelpDebug,
         alias: 'v',
         description: 'Enable verbose logging, can specify up to three times (-vvv)',
         type: 'count',
+      })
+      .option('debug-log', {
+        group: groupHelpDebug,
+        description: 'Generate a debug log file to attach to bug reports',
+        type: 'string',
+        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        requiresArg: false, // explicitly false! we can default this
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv['clean-dry-run'] === true && middlewareArgv.verbose < 1) {
@@ -1120,6 +1218,7 @@ Advanced usage:
     {pocket}    The ROM's core-specific /Assets/* directory for the Analogue Pocket (e.g. "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g. "gb")
     {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
+    {spruce}    The ROM's emulator-specific /Roms/* directory for SpruceOS (e.g. "GB")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the DSi/3DS (e.g. "gb")
 
 Example use cases:

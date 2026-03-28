@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
+import IgirException from '../../../exceptions/igirException.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
@@ -13,11 +14,13 @@ export default class ChdRaw extends Chd {
     return new ChdRaw(filePath);
   }
 
+  canExtract(archiveEntry: ArchiveEntry<this>): boolean {
+    // The data+metadata version of this file can't be extracted
+    return archiveEntry.getSize() > 0;
+  }
+
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
-    if (info.type === CHDType.CD_ROM || info.type === CHDType.GD_ROM) {
-      return [];
-    }
 
     // MAME DAT <disk>s use the data+metadata SHA1 (vs. just the data SHA1)
     const rawEntry = await ArchiveEntry.entryOf(
@@ -33,6 +36,14 @@ export default class ChdRaw extends Chd {
       },
       checksumBitmask,
     );
+
+    if (info.type === CHDType.CD_ROM || info.type === CHDType.GD_ROM) {
+      // Some DAT groups such as https://github.com/UltraGodAzgorath/Unofficial-RA-DATs catalog
+      // CD-ROMs by their "raw" SHA1, so we return that as candidate here. The "extracted" SHA1
+      // immediately after this is the concatenation of all CD-ROM .bin files (which ChdBinCue knows
+      // how to break apart with the cue sheet), it is not useful to return as a candidate here.
+      return [rawEntry];
+    }
 
     const extractedEntry = await ArchiveEntry.entryOf(
       {
@@ -73,6 +84,10 @@ export default class ChdRaw extends Chd {
         outputFilename,
         binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
+    } else if (info.type === CHDType.CD_ROM) {
+      throw new IgirException("CD-ROM CHDs can't be extracted as raw");
+    } else if (info.type === CHDType.GD_ROM) {
+      throw new IgirException("GD-ROM CHDs can't be extracted as raw");
     } else {
       return [];
     }

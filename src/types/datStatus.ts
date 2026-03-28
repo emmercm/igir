@@ -3,6 +3,7 @@ import type { ChalkInstance } from 'chalk';
 import chalk from 'chalk';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
+import IntlPoly from '../polyfill/intlPoly.js';
 import type DAT from './dats/dat.js';
 import type Game from './dats/game.js';
 import type File from './files/file.js';
@@ -155,7 +156,7 @@ export default class DATStatus {
         const all = this.allRomTypesToGames.get(type) ?? [];
 
         if (!options.usingDats()) {
-          return `${found.length.toLocaleString()} ${type}`;
+          return `${IntlPoly.toLocaleString(found.length)} ${type}`;
         }
 
         const percentage = (found.length / all.length) * 100;
@@ -176,10 +177,10 @@ export default class DATStatus {
 
         // Patched ROMs are always found===all
         if (type === ROMType.PATCHED) {
-          return `${color(all.length.toLocaleString())} ${type}`;
+          return `${color(IntlPoly.toLocaleString(all.length))} ${type}`;
         }
 
-        return `${color(found.length.toLocaleString())}/${all.length.toLocaleString()} ${type}`;
+        return `${color(IntlPoly.toLocaleString(found.length))}/${IntlPoly.toLocaleString(all.length)} ${type}`;
       })
       .filter((string_) => string_.length > 0)
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
@@ -201,7 +202,7 @@ export default class DATStatus {
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort((a, b) => a.getName().localeCompare(b.getName()))
+      .toSorted((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         let status: GameStatusValue = GameStatus.MISSING;
 
@@ -249,7 +250,7 @@ export default class DATStatus {
           game.isBad(),
         );
       });
-    return writeToString(rows, {
+    return await writeToString(rows, {
       headers: [
         'DAT Name',
         'Game Name',
@@ -276,7 +277,9 @@ export default class DATStatus {
    * Return a string of CSV rows without headers for a certain {@link GameStatusValue}.
    */
   static async filesToCsv(filePaths: string[], status: GameStatusValue): Promise<string> {
-    return writeToString(filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])));
+    return await writeToString(
+      filePaths.map((filePath) => this.buildCsvRow('', '', status, [filePath])),
+    );
   }
 
   private static buildCsvRow(
@@ -327,7 +330,7 @@ export default class DATStatus {
       .flatMap((type) => romTypesToValues.get(type))
       .filter((value) => value !== undefined)
       .reduce(ArrayPoly.reduceUnique(), [])
-      .sort();
+      .toSorted();
   }
 
   private static getAllowedTypes(options: Options): ROMTypeValue[] {

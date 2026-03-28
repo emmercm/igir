@@ -117,7 +117,7 @@ here is how you can perform each RomVault action in Igir:
 
 2. **Scan ROMs**
 
-    The equivalent action in Igir is to scan for ROMs using the [`--input <path>` option](input/file-scanning.md) when performing some [command](commands.md). You will need to provide both the unsorted ("ToSort") and sorted ("RomRoot") directories as inputs.
+    The equivalent action in Igir is to scan for ROMs using the [`--input <path>` option](roms/scanning.md) when performing some [command](commands.md). You will need to provide both the unsorted ("ToSort") and sorted ("RomRoot") directories as inputs.
 
     RomVault's default "level 2" scan level can be achieved with the [`--input-checksum-min SHA1` option](roms/matching.md#manually-using-other-checksum-algorithms) (not recommended).
 
@@ -127,7 +127,7 @@ here is how you can perform each RomVault action in Igir:
 
 4. **Fix ROMs**
 
-    The equivalent Igir action is to move missing ROMs from an input directory ([`--input <path>` option](input/file-scanning.md)) to the output directory ([`--output <path>` option](output/path-options.md)) using the [`igir move` command](commands.md#move).
+    The equivalent Igir action is to move missing ROMs from an input directory ([`--input <path>` option](roms/scanning.md)) to the output directory ([`--output <path>` option](output/path-options.md#base-output-directory)) using the [`igir move` command](commands.md#move).
 
     RomVault writes TorrentZip archives by default, and it will overwrite files that are not in the TorrentZip structure. This can be achieved with a combination of the [`igir zip` command](output/writing-archives.md), the [`--zip-format torrentzip`](output/writing-archives.md#torrentzip) option (default), and the [`--overwrite-invalid` option](output/options.md#overwriting-files). Igir does not offer a way to create 7zip archives like RomVault does.
 

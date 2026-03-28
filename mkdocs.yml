@@ -87,6 +87,7 @@ nav:
         - usage/desktop/retrodeck.md
         - usage/desktop/retropie.md
         - usage/desktop/romm.md
+        - usage/handheld/spruceos.md
         - usage/handheld/twmenu.md
       - FPGA:
         - usage/hardware/mister.md
@@ -107,6 +108,7 @@ nav:
       - input/file-scanning.md
       - input/reading-archives.md
     - ROM Processing:
+      - roms/scanning.md
       - roms/matching.md
       - roms/sets.md
       - roms/filtering-preferences.md

@@ -4,14 +4,15 @@ import path from 'node:path';
 import { parse } from '@fast-csv/parse';
 import async from 'async';
 
-import type DriveSemaphore from '../../async/driveSemaphore.js';
+import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import GameGrouper from '../../gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import bufferPoly from '../../polyfill/bufferPoly.js';
+import BufferPoly from '../../polyfill/bufferPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
 import CMProParser from '../../types/dats/cmpro/cmProParser.js';
 import type DAT from '../../types/dats/dat.js';
@@ -51,9 +52,9 @@ export default class DATScanner extends Scanner {
     options: Options,
     progressBar: ProgressBar,
     fileFactory: FileFactory,
-    driveSemaphore: DriveSemaphore,
+    mappableSemaphore: MappableSemaphore,
   ) {
-    super(options, progressBar, fileFactory, driveSemaphore, DATScanner.name);
+    super(options, progressBar, fileFactory, mappableSemaphore, DATScanner.name);
   }
 
   /**
@@ -71,7 +72,7 @@ export default class DATScanner extends Scanner {
       return [];
     }
     this.progressBar.logTrace(
-      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlPoly.toLocaleString(datFilePaths.length)} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(datFilePaths.length);
 
@@ -94,8 +95,9 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace(
-      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
+      `downloading ${IntlPoly.toLocaleString(datUrlFiles.length)} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
+    this.progressBar.setName('Downloading DATs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
 
     return (
@@ -121,15 +123,21 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(
-      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length === 1 ? '' : 's'}`,
+      `parsing ${IntlPoly.toLocaleString(datFiles.length)} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
+    if (datFiles.length === 0) {
+      return [];
+    }
+    this.progressBar.setName('Parsing DATs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PARSING);
 
     return (
-      await this.driveSemaphore.map(datFiles, async (datFile) => {
+      await this.mappableSemaphore.map(datFiles, async (datFile) => {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: datFile.toString(),
+          total: datFile.getSize(),
+          progressFormatter: FsPoly.sizeReadable,
         });
 
         let dat: DAT | undefined;
@@ -137,6 +145,7 @@ export default class DATScanner extends Scanner {
           dat = await this.parseDatFile(datFile);
         } catch (error) {
           this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
+        } finally {
           childBar.delete();
         }
 
@@ -149,7 +158,7 @@ export default class DATScanner extends Scanner {
       })
     )
       .filter((dat) => dat !== undefined)
-      .sort((a, b) => a.getName().localeCompare(b.getName()));
+      .toSorted((a, b) => a.getName().localeCompare(b.getName()));
   }
 
   private async parseDatFile(datFile: File): Promise<DAT | undefined> {
@@ -164,8 +173,8 @@ export default class DATScanner extends Scanner {
     }
 
     dat ??= await datFile.createReadStream(async (readable) => {
-      const fileContents = (await bufferPoly.fromReadable(readable)).toString();
-      return this.parseDatContents(datFile, fileContents);
+      const fileContents = await BufferPoly.fromReadable(readable);
+      return await this.parseDatContents(datFile, fileContents);
     });
 
     if (!dat) {
@@ -206,7 +215,7 @@ export default class DATScanner extends Scanner {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
+      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${IntlPoly.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}, ${IntlPoly.toLocaleString(dat.getParents().length)} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
     );
 
     return dat;
@@ -249,11 +258,14 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    return this.parseDatContents(mameExecutable, fileContents);
+    return await this.parseDatContents(mameExecutable, fileContents);
   }
 
-  private async parseDatContents(datFile: File, fileContents: string): Promise<DAT | undefined> {
-    if (!fileContents) {
+  private async parseDatContents(
+    datFile: File,
+    fileContents: Buffer | string,
+  ): Promise<DAT | undefined> {
+    if (fileContents.length === 0) {
       this.progressBar.logTrace(`${datFile.toString()}: file is empty`);
       return undefined;
     }
@@ -277,7 +289,7 @@ export default class DATScanner extends Scanner {
     return undefined;
   }
 
-  private parseXmlDat(datFile: File, fileContents: string): DAT | undefined {
+  private parseXmlDat(datFile: File, fileContents: Buffer | string): DAT | undefined {
     this.progressBar.logTrace(
       `${datFile.toString()}: attempting to parse ${FsPoly.sizeReadable(fileContents.length)} of XML`,
     );
@@ -343,11 +355,14 @@ export default class DATScanner extends Scanner {
     return undefined;
   }
 
-  private parseCmproDat(datFile: File, fileContents: string): DAT | undefined {
+  private parseCmproDat(datFile: File, fileContents: Buffer | string): DAT | undefined {
+    const fileContentsString =
+      typeof fileContents === 'string' ? fileContents : fileContents.toString();
+
     /**
      * Validation that this might be a CMPro file.
      */
-    if (!/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.test(fileContents)) {
+    if (!/^(clrmamepro|game|resource) \(\r?\n(\s.+\r?\n)+\)$/m.test(fileContentsString)) {
       return undefined;
     }
 
@@ -355,7 +370,7 @@ export default class DATScanner extends Scanner {
 
     let cmproDat: DATProps;
     try {
-      cmproDat = new CMProParser(fileContents).parse();
+      cmproDat = new CMProParser(fileContentsString).parse();
     } catch (error) {
       this.progressBar.logTrace(`${datFile.toString()}: failed to parse CMPro DAT: ${error}`);
       return undefined;
@@ -450,7 +465,7 @@ export default class DATScanner extends Scanner {
    */
   private async parseSourceMaterialDatabase(
     datFile: File,
-    fileContents: string,
+    fileContents: Buffer | string,
   ): Promise<DAT | undefined> {
     this.progressBar.logTrace(`${datFile.toString()}: attempting to parse SMDB`);
 
@@ -505,8 +520,8 @@ export default class DATScanner extends Scanner {
     });
   }
 
-  private static async parseSourceMaterialTsv(fileContents: string): Promise<SmdbRow[]> {
-    return new Promise((resolve, reject) => {
+  private static async parseSourceMaterialTsv(fileContents: Buffer | string): Promise<SmdbRow[]> {
+    return await new Promise((resolve, reject) => {
       const rows: SmdbRow[] = [];
 
       const stream = parse<SmdbRow, SmdbRow>({

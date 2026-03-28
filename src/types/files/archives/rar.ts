@@ -25,15 +25,23 @@ export default class Rar extends Archive {
     return Rar.getExtensions()[0];
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
+  hasMeaningfulEntryPaths(): boolean {
+    return true;
+  }
+
   async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
     const rar = await createExtractorFromFile({
       filepath: this.getFilePath(),
     });
-    return async.mapLimit(
+    return await async.mapLimit(
       [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader: FileHeader): Promise<ArchiveEntry<this>> => {
-        return ArchiveEntry.entryOf(
+        return await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: fileHeader.name,
@@ -63,7 +71,7 @@ export default class Rar extends Archive {
       // iterated, so we have to execute this expression, but can throw away the results
       const extracted = [
         ...rar.extract({
-          files: [entryPath.replaceAll(/[\\/]/g, '/')],
+          files: [entryPath.replaceAll('\\', '/')],
         }).files,
       ];
       if (extracted.length === 0) {

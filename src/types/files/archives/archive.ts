@@ -11,7 +11,7 @@ export default abstract class Archive {
   private readonly filePath: string;
 
   constructor(filePath: string) {
-    this.filePath = filePath.replaceAll(/[\\/]/g, path.sep);
+    this.filePath = path.resolve(filePath);
   }
 
   protected abstract new(filePath: string): Archive;
@@ -21,6 +21,14 @@ export default abstract class Archive {
   getFilePath(): string {
     return this.filePath;
   }
+
+  abstract canExtract(archiveEntry: ArchiveEntry<this>): boolean;
+
+  /**
+   * @returns true if entry paths are dictated by the contents of the archive, false if Igir
+   * generates the entry paths
+   */
+  abstract hasMeaningfulEntryPaths(): boolean;
 
   abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
 
@@ -60,11 +68,12 @@ export default abstract class Archive {
    */
   async extractEntryToStream<T>(
     entryPath: string,
-    callback: (stream: Readable) => Promise<T> | T,
+    callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    return this.extractEntryToTempFile(entryPath, async (tempFile) =>
-      File.createStreamFromFile(tempFile, callback, start),
+    return await this.extractEntryToTempFile(
+      entryPath,
+      async (tempFile) => await File.createStreamFromFile(tempFile, callback, start),
     );
   }
 
@@ -72,15 +81,6 @@ export default abstract class Archive {
     if (filePath === this.filePath) {
       return this;
     }
-
-    const { base, ...parsedFilePath } = path.parse(this.getFilePath());
-
-    const newNameMatch = /^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/.exec(filePath);
-    parsedFilePath.name = newNameMatch === null ? '' : newNameMatch[2];
-
-    const oldExtMatch = /^(.+[\\/])?(.+?[^.])((\.[a-zA-Z][a-zA-Z0-9]*)*)$/.exec(this.getFilePath());
-    parsedFilePath.ext = oldExtMatch === null ? '' : oldExtMatch[3];
-
-    return this.new(path.format(parsedFilePath));
+    return this.new(filePath);
   }
 }

@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import util from 'node:util';
 
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
@@ -17,6 +16,10 @@ export default class ChdGdi extends Chd {
     return new ChdGdi(filePath);
   }
 
+  canExtract(): boolean {
+    return true;
+  }
+
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       // Doing a quick scan
@@ -28,7 +31,7 @@ export default class ChdGdi extends Chd {
       return [];
     }
 
-    return ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
+    return await ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
   }
 
   async extractArchiveEntries(outputDirectory: string): Promise<string[]> {
@@ -42,7 +45,7 @@ export default class ChdGdi extends Chd {
     // Apply TOSEC-style CRLF line separators to the .gdi file
     await FsPoly.writeFile(
       gdiFile,
-      (await util.promisify(fs.readFile)(gdiFile)).toString().replaceAll(/\r?\n/g, '\r\n'),
+      (await fs.promises.readFile(gdiFile)).toString().replaceAll(/\r?\n/g, '\r\n'),
     );
 
     await FsPoly.mv(

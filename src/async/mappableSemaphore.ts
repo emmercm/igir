@@ -13,6 +13,13 @@ export default class MappableSemaphore extends Semaphore {
   }
 
   /**
+   * Return the number of currently held semaphore slots.
+   */
+  openLocks(): number {
+    return this.threads - Math.max(this.getValue(), 0);
+  }
+
+  /**
    * Run some {@link callback}. for every {@link values}.
    */
   async map<IN, OUT>(values: IN[], callback: (value: IN) => OUT | Promise<OUT>): Promise<OUT[]> {
@@ -21,8 +28,10 @@ export default class MappableSemaphore extends Semaphore {
       return [];
     }
 
-    return async.mapLimit(values, Math.floor(this.threads * 1.5), async (value: IN) =>
-      this.runExclusive(async () => callback(value)),
+    return await async.mapLimit(
+      values,
+      Math.floor(this.threads * 1.5),
+      async (value: IN) => await this.runExclusive(async () => await callback(value)),
     );
   }
 }

@@ -16,12 +16,12 @@ import ChdRaw from './archives/chd/chdRaw.js';
 import Gcz from './archives/dolphin/gcz.js';
 import Rvz from './archives/dolphin/rvz.js';
 import Wia from './archives/dolphin/wia.js';
+import Gzip from './archives/gzip.js';
 import Cso from './archives/maxcso/cso.js';
 import Dax from './archives/maxcso/dax.js';
 import Zso from './archives/maxcso/zso.js';
 import NkitIso from './archives/nkitIso.js';
 import Rar from './archives/rar.js';
-import Gzip from './archives/sevenZip/gzip.js';
 import SevenZip from './archives/sevenZip/sevenZip.js';
 import Z from './archives/sevenZip/z.js';
 import ZipSpanned from './archives/sevenZip/zipSpanned.js';
@@ -35,6 +35,13 @@ import type FileSignature from './fileSignature.js';
 import type ROMHeader from './romHeader.js';
 import type ROMPadding from './romPadding.js';
 
+export const CacheMode = {
+  RESPECT_CACHED_VALUE: 1,
+  IGNORE_CACHED_VALUE: 2,
+};
+export type CacheModeKey = keyof typeof CacheMode;
+export type CacheModeValue = (typeof CacheMode)[CacheModeKey];
+
 export default class FileFactory {
   private readonly fileCache: FileCache;
   private readonly logger: Logger;
@@ -47,29 +54,32 @@ export default class FileFactory {
   async filesFrom(
     filePath: string,
     fileChecksumBitmask: number = ChecksumBitmask.CRC32,
-    checksumBitmask = fileChecksumBitmask,
+    entryChecksumBitmask = fileChecksumBitmask,
+    callback?: FsReadCallback,
   ): Promise<File[]> {
     if (URLPoly.canParse(filePath)) {
       return [await File.fileOf({ filePath })];
     }
 
     if (!FileFactory.isExtensionArchive(filePath)) {
-      const entries = await this.entriesFromArchiveSignature(filePath, checksumBitmask);
+      const entries = await this.entriesFromArchiveSignature(filePath, entryChecksumBitmask);
       if (entries !== undefined) {
         return entries;
       }
-      return [await this.fileFrom(filePath, fileChecksumBitmask)];
+      return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
     }
 
     try {
       const archives = this.archiveFromArchiveExtension(filePath);
       if (archives.length === 0) {
         // The file isn't actually an archive
-        return [await this.fileFrom(filePath, fileChecksumBitmask)];
+        return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
       }
       const entries = (
-        await async.mapLimit(archives, 1, async (archive: Archive) =>
-          this.entriesFromArchive(archive, checksumBitmask),
+        await async.mapLimit(
+          archives,
+          1,
+          async (archive: Archive) => await this.entriesFromArchive(archive, entryChecksumBitmask),
         )
       ).flat();
       if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
@@ -92,8 +102,14 @@ export default class FileFactory {
     filePath: string,
     checksumBitmask: number,
     callback?: FsReadCallback,
+    cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
   ): Promise<File> {
-    return this.fileCache.getOrComputeFileChecksums(filePath, checksumBitmask, callback);
+    return await this.fileCache.getOrComputeFileChecksums(
+      filePath,
+      checksumBitmask,
+      callback,
+      cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
+    );
   }
 
   async archiveFileFrom(
@@ -113,20 +129,23 @@ export default class FileFactory {
    *
    * This ordering should match {@link ROMScanner#archiveEntryPriority}
    */
-  private async entriesFromArchive(
-    archive: Archive,
+  async entriesFromArchive<A extends Archive>(
+    archive: A,
     checksumBitmask: number,
-  ): Promise<ArchiveEntry<Archive>[] | undefined> {
+    cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
+  ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
-      return await this.fileCache.getOrComputeArchiveChecksums(archive, checksumBitmask);
+      return await this.fileCache.getOrComputeArchiveChecksums(
+        archive,
+        checksumBitmask,
+        cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
+      );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
       // may be an incomplete/corrupted file
       MultiBar.log(
-        this.logger.formatMessage(
-          LogLevel.WARN,
-          `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
-        ),
+        LogLevel.WARN,
+        `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
       );
       return undefined;
     }
@@ -206,8 +225,10 @@ export default class FileFactory {
       return undefined;
     }
     const entries = (
-      await async.mapLimit(archives, 1, async (archive: Archive) =>
-        this.entriesFromArchive(archive, checksumBitmask),
+      await async.mapLimit(
+        archives,
+        1,
+        async (archive: Archive) => await this.entriesFromArchive(archive, checksumBitmask),
       )
     ).flat();
     if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
@@ -241,14 +262,14 @@ export default class FileFactory {
   }
 
   async headerFrom(file: File): Promise<ROMHeader | undefined> {
-    return this.fileCache.getOrComputeFileHeader(file);
+    return await this.fileCache.getOrComputeFileHeader(file);
   }
 
   async signatureFrom(file: File): Promise<FileSignature | undefined> {
-    return this.fileCache.getOrComputeFileSignature(file);
+    return await this.fileCache.getOrComputeFileSignature(file);
   }
 
   async paddingsFrom(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
-    return this.fileCache.getOrComputeFilePaddings(file, callback);
+    return await this.fileCache.getOrComputeFilePaddings(file, callback);
   }
 }

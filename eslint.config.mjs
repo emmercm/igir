@@ -1,10 +1,10 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import url from 'node:url';
 
 import { FlatCompat } from '@eslint/eslintrc';
 import eslint from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
-import eslintPluginJest from 'eslint-plugin-jest';
+import eslintPluginVitest from '@vitest/eslint-plugin';
 import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
@@ -12,7 +12,15 @@ import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-const __filename = fileURLToPath(import.meta.url);
+import noArrayPushSpread from './.eslint/rules/performance/noArrayPushSpread.mjs';
+import noArrayRebuildInLoop from './.eslint/rules/performance/noArrayRebuildInLoop.mjs';
+import noArrayShiftMutationInLoop from './.eslint/rules/performance/noArrayShiftMutationInLoop.mjs';
+import noNumberToLocaleString from './.eslint/rules/performance/noNumberToLocaleString.mjs';
+import noFsPromisify from './.eslint/rules/style/noFsPromisify.mjs';
+import noNodeSubpathImports from './.eslint/rules/style/noNodeSubpathImports.mjs';
+import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImport.mjs';
+
+const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -71,11 +79,47 @@ export default [
     ...tseslint.configs.disableTypeChecked,
   },
 
+  // Custom plugins
+  {
+    plugins: {
+      local: {
+        rules: {
+          'no-fs-promisify': noFsPromisify,
+          'no-node-subpath-imports': noNodeSubpathImports,
+          'prefer-node-default-import': preferNodeDefaultImport,
+          'no-array-push-spread': noArrayPushSpread,
+          'no-array-rebuild-in-loop': noArrayRebuildInLoop,
+          'no-array-shift-mutation-in-loop': noArrayShiftMutationInLoop,
+          'no-number-to-locale-string': noNumberToLocaleString,
+        },
+      },
+    },
+    rules: {
+      'local/no-fs-promisify': 'error',
+      'local/no-node-subpath-imports': 'error',
+      'local/prefer-node-default-import': 'error',
+      'local/no-array-push-spread': 'error',
+      'local/no-array-rebuild-in-loop': 'error',
+      'local/no-array-shift-mutation-in-loop': 'error',
+      'local/no-number-to-locale-string': 'error',
+    },
+  },
+
   // Third party configs
   eslintPluginUnicorn.configs.recommended,
   eslintPluginJsdoc.configs['flat/recommended-typescript-error'],
   {
-    ...eslintPluginJest.configs['flat/recommended'],
+    plugins: { vitest: eslintPluginVitest },
+    rules: {
+      ...eslintPluginVitest.configs.recommended.rules,
+      'vitest/expect-expect': 'off',
+      'vitest/no-unneeded-async-expect-function': 'off', // for Jest compatability for now
+    },
+    settings: {
+      vitest: {
+        typecheck: true,
+      },
+    },
   },
   {
     plugins: {
@@ -99,7 +143,7 @@ export default [
       },
       sourceType: 'module',
       globals: {
-        ...eslintPluginJest.environments.globals.globals,
+        ...eslintPluginVitest.environments.env.globals,
       },
     },
   },
@@ -162,14 +206,6 @@ export default [
       // ***** Objects *****
 
       // ***** Arrays *****
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: "CallExpression[callee.property.name='push'] > SpreadElement",
-          message:
-            "Array#push(...Array) can cause 'call stack size exceeded' runtime errors when pushing many values, prefer 'Array = [...Array, ...Array]'",
-        },
-      ],
 
       // ***** Numbers *****
 
@@ -207,10 +243,6 @@ export default [
       // ***** eslint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
-
-      // ***** plugin:jest/recommended *****
-      // A lot of test files define their own expect functions
-      'jest/expect-expect': 'off',
     },
   },
   {
@@ -227,6 +259,8 @@ export default [
       // ***** Promises *****
       // Require any function or method that returns a Promise to be marked async.
       '@typescript-eslint/promise-function-async': ['error'],
+      // Be even more strict than @typescript-eslint/strict-type-checked
+      '@typescript-eslint/return-await': ['error', 'always'],
 
       // ***** Interfaces *****
       '@typescript-eslint/method-signature-style': 'error',
@@ -278,11 +312,13 @@ export default [
 
       // ********** Recommended Overrides **********
 
-      // ***** plugin:@typescript-eslint/recommended *****
+      // ***** plugin:@typescript-eslint/strict-type-checked *****
       // There are a few places where this needs to be allowed, but only a few, so warn on them
       '@typescript-eslint/no-floating-promises': 'warn',
       // There are a few places where this needs to be allowed, but only a few, so warn on them
       '@typescript-eslint/no-unused-expressions': 'warn',
+      // TODO(cemmer): seems to conflict with Prettier with Array#reduce() calls
+      '@typescript-eslint/no-unnecessary-type-arguments': 'off',
     },
   },
 
@@ -292,22 +328,6 @@ export default [
     files: ['src/types/files/archives/**/*.ts', 'src/types/patches/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
-    },
-  },
-
-  // Restrict fs.promises for most files
-  {
-    files: ['**/*.ts'],
-    ignores: ['packages/**', 'src/polyfill/ioFile.ts'],
-    rules: {
-      'no-restricted-properties': [
-        'error',
-        {
-          object: 'fs',
-          property: 'promises',
-          message: 'Use util.promisify() instead to take advantage of graceful-fs',
-        },
-      ],
     },
   },
 
