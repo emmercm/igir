@@ -113,7 +113,7 @@ export default class ROM implements ROMProps {
   // Property getters
 
   getName(): string {
-    return this.name.replaceAll(/[\\/]/g, '/');
+    return this.name.replaceAll('\\', '/');
   }
 
   getSize(): number {

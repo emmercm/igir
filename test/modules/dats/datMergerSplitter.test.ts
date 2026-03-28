@@ -6917,7 +6917,7 @@ describe('MAME v0.258', () => {
     const gameNamesToRomNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getRoms().map((rom) => rom.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getRoms().map((rom) => rom.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -6925,7 +6925,7 @@ describe('MAME v0.258', () => {
     const gameNamesToDiskNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getDisks().map((disk) => disk.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getDisks().map((disk) => disk.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -7785,7 +7785,7 @@ describe('MAME v0.258', () => {
     const gameNamesToRomNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getRoms().map((rom) => rom.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getRoms().map((rom) => rom.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -7793,7 +7793,7 @@ describe('MAME v0.258', () => {
     const gameNamesToDiskNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getDisks().map((disk) => disk.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getDisks().map((disk) => disk.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -8352,7 +8352,7 @@ describe('MAME v0.258', () => {
     const gameNamesToRomNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getRoms().map((rom) => rom.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getRoms().map((rom) => rom.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -8360,7 +8360,7 @@ describe('MAME v0.258', () => {
     const gameNamesToDiskNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getDisks().map((disk) => disk.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getDisks().map((disk) => disk.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -8671,7 +8671,7 @@ describe('MAME v0.258', () => {
     const gameNamesToRomNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getRoms().map((rom) => rom.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getRoms().map((rom) => rom.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -8679,7 +8679,7 @@ describe('MAME v0.258', () => {
     const gameNamesToDiskNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getDisks().map((disk) => disk.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getDisks().map((disk) => disk.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());
@@ -9321,7 +9321,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
     const gameNamesToRomNames = result.getGames().reduce((map, game) => {
       map.set(
         game.getName(),
-        game.getRoms().map((rom) => rom.getName().replaceAll(/[\\/]/g, '\\')),
+        game.getRoms().map((rom) => rom.getName().replaceAll('/', '\\')),
       );
       return map;
     }, new Map<string, string[]>());

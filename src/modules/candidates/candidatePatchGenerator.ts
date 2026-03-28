@@ -156,7 +156,7 @@ export default class CandidatePatchGenerator extends Module {
 
           // Build a new ROM from the output file's info
           const romName = path.join(
-            path.dirname(rom.getName().replaceAll(/[\\/]/g, path.sep)),
+            path.dirname(rom.getName().replaceAll('/', path.sep)),
             path.basename(outputFile.getExtractedFilePath()),
           );
           rom = new ROM({

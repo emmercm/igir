@@ -60,7 +60,7 @@ export default abstract class SevenZipLib extends Archive {
     try {
       let foundEntry: Entry | undefined = undefined;
       for await (const entry of iterator) {
-        if (entry.path === entryPath.replaceAll(/[\\/]/g, '/')) {
+        if (entry.path.replaceAll('\\', '/') === entryPath.replaceAll('\\', '/')) {
           foundEntry = entry;
         } else {
           entry.destroy();

@@ -197,7 +197,7 @@ describe('multiple files', () => {
   it('should scan hard links', async () => {
     const romDir = path.join('test', 'fixtures', 'roms');
     const scannedRealFiles = (await createRomScanner([romDir]).scan())
-      .map((file) => [file.toString(), file.getCrc32() ?? ''])
+      .map((file) => [file.toString().replace(process.cwd() + path.sep, ''), file.getCrc32() ?? ''])
       .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some hard linked files
@@ -242,7 +242,7 @@ describe('multiple files', () => {
   it('should scan symlinks', async () => {
     const romDir = path.join('test', 'fixtures', 'roms');
     const scannedRealFiles = (await createRomScanner([romDir]).scan())
-      .map((file) => [file.toString(), file.getCrc32() ?? ''])
+      .map((file) => [file.toString().replace(process.cwd() + path.sep, ''), file.getCrc32() ?? ''])
       .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked files
@@ -286,7 +286,7 @@ describe('multiple files', () => {
     const romDirs = await FsPoly.dirs(realRomDir);
 
     const scannedRealFiles = (await createRomScanner(romDirs).scan())
-      .map((file) => [file.toString(), file.getCrc32() ?? ''])
+      .map((file) => [file.toString().replace(process.cwd() + path.sep, ''), file.getCrc32() ?? ''])
       .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked dirs

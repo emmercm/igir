@@ -90,7 +90,7 @@ export default class CandidateCombiner extends Module {
         // If the game has multiple ROMs, then group them in a folder in the archive
         if (candidate.getGame().getRoms().length > 1) {
           outputEntry = outputEntry.withEntryPath(
-            path.join(candidate.getGame().getName(), outputEntry.getEntryPath()),
+            path.posix.join(candidate.getGame().getName(), outputEntry.getEntryPath()),
           );
         }
 
