@@ -25,7 +25,7 @@ The Adam image does not come with BIOS files. Where you have to put which of you
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS\ ^
+      --input BIOS ^
       --output E:\BIOS
     ```
 
@@ -36,7 +36,7 @@ The Adam image does not come with BIOS files. Where you have to put which of you
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /Volumes/ADAM/BIOS
     ```
 
@@ -47,7 +47,7 @@ The Adam image does not come with BIOS files. Where you have to put which of you
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /media/ADAM/BIOS/
     ```
 
@@ -66,7 +66,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\ROMS\{adam}" ^
       --dir-letter ^
       --no-bios
@@ -79,7 +79,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/ADAM/ROMS/{adam}" \
       --dir-letter \
       --no-bios
@@ -92,7 +92,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/ADAM/ROMS/{adam}" \
       --dir-letter \
       --no-bios

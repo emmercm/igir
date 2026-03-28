@@ -26,4 +26,8 @@ It is intended that Igir lives by these tenets:
 
   All of Igir's behavior should be documented in as clear English as possible. No command or option should behave in a manner that isn't explained in the documentation.
 
+- **Igir should be semantically versioned.**
+
+  Igir should adhere to the [semantic versioning](https://semver.org/) standards of major, minor, and patch versions. Igir will only introduce potentially breaking functionality during major version updates.
+
 If you find that Igir is violating any of these tenets, please open an [issue on GitHub](https://github.com/emmercm/igir/issues/new/choose)!

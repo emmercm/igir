@@ -26,7 +26,7 @@ Because flash carts are specific to a specific console, you can provide specific
     igir copy extract test clean \
       --dat "Nintendo - Game Boy.dat" \
       --input "ROMs-Sorted/Nintendo - Game Boy" \
-      --output /Volumes/EZFLASH/ \
+      --output /Volumes/EZFLASH \
       --no-bios
     ```
 
@@ -38,7 +38,7 @@ Because flash carts are specific to a specific console, you can provide specific
     igir copy extract test clean \
       --dat "Nintendo - Game Boy.dat" \
       --input "ROMs-Sorted/Nintendo - Game Boy" \
-      --output /media/EZFLASH/ \
+      --output /media/EZFLASH \
       --no-bios
     ```
 

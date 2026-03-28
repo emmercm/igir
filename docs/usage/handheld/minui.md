@@ -40,7 +40,7 @@ More details about these features can be found [in GitHub](https://github.com/sh
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\roms\{minui}" ^
       --dir-letter ^
       --no-bios
@@ -53,7 +53,7 @@ More details about these features can be found [in GitHub](https://github.com/sh
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/MinUI/roms/{minui}" \
       --dir-letter \
       --no-bios
@@ -66,7 +66,7 @@ More details about these features can be found [in GitHub](https://github.com/sh
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/MinUI/roms/{minui}" \
       --dir-letter \
       --no-bios

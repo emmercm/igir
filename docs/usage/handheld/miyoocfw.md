@@ -34,7 +34,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\roms\{miyoocfw}" ^
       --dir-letter ^
       --no-bios
@@ -47,7 +47,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/MiyooCFW/roms/{miyoocfw}" \
       --dir-letter \
       --no-bios
@@ -60,7 +60,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/MiyooCFW/roms/{miyoocfw}" \
       --dir-letter \
       --no-bios

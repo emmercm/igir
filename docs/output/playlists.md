@@ -56,7 +56,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```batch
       igir copy extract playlist ^
         --dat "Redump*.zip" ^
-        --input ROMs\ ^
+        --input ROMs ^
         --output ROMs-Sorted\
       ```
 
@@ -65,7 +65,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir copy extract playlist \
         --dat "Redump*.zip" \
-        --input ROMs/ \
+        --input ROMs \
         --output ROMs-Sorted/
       ```
 
@@ -74,7 +74,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir copy extract playlist \
         --dat "Redump*.zip" \
-        --input ROMs/ \
+        --input ROMs \
         --output ROMs-Sorted/
       ```
 
@@ -268,8 +268,8 @@ Let's say you also want to use the [`--merge-discs` option](../roms/sets.md#merg
     ```batch
     igir move extract playlist ^
       --dat "TOSEC*.zip" ^
-      --input ROMs\ ^
-      --output ROMs-Sorted\ ^
+      --input ROMs ^
+      --output ROMs-Sorted ^
       --dir-dat-name ^
       --merge-discs
     ```
@@ -279,8 +279,8 @@ Let's say you also want to use the [`--merge-discs` option](../roms/sets.md#merg
     ```shell
     igir move extract playlist \
       --dat "TOSEC*.zip" \
-      --input ROMs/ \
-      --output ROMs-Sorted/ \
+      --input ROMs \
+      --output ROMs-Sorted \
       --dir-dat-name \
       --merge-discs
     ```
@@ -290,8 +290,8 @@ Let's say you also want to use the [`--merge-discs` option](../roms/sets.md#merg
     ```shell
     igir move extract playlist \
       --dat "TOSEC*.zip" \
-      --input ROMs/ \
-      --output ROMs-Sorted/ \
+      --input ROMs \
+      --output ROMs-Sorted \
       --dir-dat-name \
       --merge-discs
     ```

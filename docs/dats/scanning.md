@@ -62,7 +62,7 @@ The `--dat <path|glob|url>` option is unique in that it can download files from 
     ```batch
     igir copy ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output ROMs-Sorted\
     ```
 
@@ -71,7 +71,7 @@ The `--dat <path|glob|url>` option is unique in that it can download files from 
     ```shell
     igir copy \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
-      --input ROMs/ \
+      --input ROMs \
       --output ROMs-Sorted/
     ```
 
@@ -80,7 +80,7 @@ The `--dat <path|glob|url>` option is unique in that it can download files from 
     ```shell
     igir copy \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
-      --input ROMs/ \
+      --input ROMs \
       --output ROMs-Sorted/
     ```
 

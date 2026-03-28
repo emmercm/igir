@@ -34,9 +34,9 @@ The [`--overwrite-invalid` option](options.md#overwriting-files) can help you co
 
     ```batch
     igir move zip test ^
-      --dat "DATs\" ^
-      --input "ROMs\" ^
-      --output "ROMs\" ^
+      --dat "DATs" ^
+      --input "ROMs" ^
+      --output "ROMs" ^
       --dir-mirror ^
       --zip-format <format> ^
       --overwrite-invalid
@@ -46,9 +46,9 @@ The [`--overwrite-invalid` option](options.md#overwriting-files) can help you co
 
     ```shell
     igir move zip test \
-      --dat "DATs/" \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --dat "DATs" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror \
       --zip-format <format> \
       --overwrite-invalid
@@ -58,9 +58,9 @@ The [`--overwrite-invalid` option](options.md#overwriting-files) can help you co
 
     ```shell
     igir move zip test \
-      --dat "DATs/" \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --dat "DATs" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror \
       --zip-format <format> \
       --overwrite-invalid
@@ -77,19 +77,19 @@ One aspect of organizing a ROM collection is to ensure a consistent archive form
 === ":fontawesome-brands-windows: Windows"
 
     ```batch
-    igir move zip --dat "*.dat" --input "ROMs\" --output "ROMs\"
+    igir move zip --dat "*.dat" --input "ROMs" --output "ROMs"
     ```
 
 === ":fontawesome-brands-apple: macOS"
 
     ```shell
-    igir move zip --dat "*.dat" --input "ROMs/" --output "ROMs/"
+    igir move zip --dat "*.dat" --input "ROMs" --output "ROMs"
     ```
 
 === ":simple-linux: Linux"
 
     ```shell
-    igir move zip --dat "*.dat" --input "ROMs/" --output "ROMs/"
+    igir move zip --dat "*.dat" --input "ROMs" --output "ROMs"
     ```
 
 ## Excluding files from zipping
@@ -109,8 +109,8 @@ You can exclude some disc images like this:
     ```batch
     igir copy zip ^
       --dat "*.dat" ^
-      --input "ROMs\" ^
-      --output "ROMs-Sorted\" ^
+      --input "ROMs" ^
+      --output "ROMs-Sorted" ^
       --zip-exclude "**/*.{iso,bin,cue,chd}"
     ```
 
@@ -119,8 +119,8 @@ You can exclude some disc images like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*.{iso,bin,cue,chd}"
     ```
 
@@ -129,8 +129,8 @@ You can exclude some disc images like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*.{iso,bin,cue,chd}"
     ```
 
@@ -141,8 +141,8 @@ You can exclude some BIOS files like this:
     ```batch
     igir copy zip ^
       --dat "*.dat" ^
-      --input "ROMs\" ^
-      --output "ROMs-Sorted\" ^
+      --input "ROMs" ^
+      --output "ROMs-Sorted" ^
       --zip-exclude "**/*[BIOS]*"
     ```
 
@@ -151,8 +151,8 @@ You can exclude some BIOS files like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*[BIOS]*"
     ```
 
@@ -161,8 +161,8 @@ You can exclude some BIOS files like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*[BIOS]*"
     ```
 

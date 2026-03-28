@@ -41,7 +41,7 @@ JELOS has its BIOS folder at `roms/bios/`, and it uses the RetroArch filenames. 
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS\ ^
+      --input BIOS ^
       --output E:\roms\bios
     ```
 
@@ -52,7 +52,7 @@ JELOS has its BIOS folder at `roms/bios/`, and it uses the RetroArch filenames. 
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /Volumes/JELOS/roms/bios
     ```
 
@@ -63,7 +63,7 @@ JELOS has its BIOS folder at `roms/bios/`, and it uses the RetroArch filenames. 
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /media/JELOS/roms/bios
     ```
 
@@ -78,7 +78,7 @@ JELOS supports many many systems and ROM formats. Check sections under the `Syst
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\roms\{jelos}" ^
       --dir-letter ^
       --no-bios
@@ -91,7 +91,7 @@ JELOS supports many many systems and ROM formats. Check sections under the `Syst
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/JELOS/roms/{jelos}" \
       --dir-letter \
       --no-bios
@@ -104,7 +104,7 @@ JELOS supports many many systems and ROM formats. Check sections under the `Syst
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/JELOS/roms/{jelos}" \
       --dir-letter \
       --no-bios

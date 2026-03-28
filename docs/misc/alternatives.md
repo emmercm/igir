@@ -148,15 +148,15 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
 
     ```batch
     igir move zip clean ^
-      --input "ToSort\" ^
-      --input "RomRoot\" ^
+      --input "ToSort" ^
+      --input "RomRoot" ^
       --input-checksum-min SHA1 ^
-      --dat "DatRoot\" ^
-      --output "RomRoot\" ^
+      --dat "DatRoot" ^
+      --output "RomRoot" ^
       --dir-dat-mirror ^
       --dir-dat-name ^
       --overwrite-invalid ^
-      --clean-backup "ToSort\" ^
+      --clean-backup "ToSort" ^
       --zip-format torrentzip ^
       --merge-roms fullnonmerged ^
       --allow-incomplete-sets ^
@@ -167,15 +167,15 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
 
     ```shell
     igir move zip clean \
-      --input "ToSort/" \
-      --input "RomRoot/" \
+      --input "ToSort" \
+      --input "RomRoot" \
       --input-checksum-min SHA1 \
-      --dat "DatRoot/" \
-      --output "RomRoot/" \
+      --dat "DatRoot" \
+      --output "RomRoot" \
       --dir-dat-mirror \
       --dir-dat-name \
       --overwrite-invalid \
-      --clean-backup "ToSort/" \
+      --clean-backup "ToSort" \
       --zip-format torrentzip \
       --merge-roms fullnonmerged \
       --allow-incomplete-sets \
@@ -186,15 +186,15 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
 
     ```shell
     igir move zip clean \
-      --input "ToSort/" \
-      --input "RomRoot/" \
+      --input "ToSort" \
+      --input "RomRoot" \
       --input-checksum-min SHA1 \
-      --dat "DatRoot/" \
-      --output "RomRoot/" \
+      --dat "DatRoot" \
+      --output "RomRoot" \
       --dir-dat-mirror \
       --dir-dat-name \
       --overwrite-invalid \
-      --clean-backup "ToSort/" \
+      --clean-backup "ToSort" \
       --zip-format torrentzip \
       --merge-roms fullnonmerged \
       --allow-incomplete-sets \

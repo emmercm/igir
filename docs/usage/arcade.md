@@ -121,7 +121,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```batch
       igir copy zip ^
         --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-        --input "MAME-ROMs\" ^
+        --input "MAME-ROMs" ^
         --output C:\RetroArch-Win64\roms\MAME-0.258 ^
         --merge-roms split
       ```
@@ -131,7 +131,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```batch
       igir copy zip ^
         --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-        --input "MAME-ROMs\" ^
+        --input "MAME-ROMs" ^
         --output C:\RetroArch-Win32\roms\MAME-0.258 ^
         --merge-roms split
       ```
@@ -141,7 +141,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```shell
       igir copy zip \
         --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-        --input "MAME-ROMs/" \
+        --input "MAME-ROMs" \
         --output ~/Documents/RetroArch/roms/MAME-0.258 \
         --merge-roms split
       ```
@@ -151,7 +151,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```shell
       igir copy zip \
         --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-        --input "MAME-ROMs/" \
+        --input "MAME-ROMs" \
         --output ~/Documents/RetroArch/roms/MAME-0.258 \
         --merge-roms split
       ```
@@ -186,7 +186,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip ^
         --dat "MAME Dats 0.78\MAME 078.dat" ^
         --input C:\RetroArch-Win64\roms\MAME-0.258 ^
-        --input "MAME-0.78-Rollback\" ^
+        --input "MAME-0.78-Rollback" ^
         --output C:\RetroArch-Win64\roms\MAME-0.78 ^
         --merge-roms split
       ```
@@ -197,7 +197,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip ^
         --dat "MAME Dats 0.78\MAME 078.dat" ^
         --input C:\RetroArch-Win32\roms\MAME-0.258 ^
-        --input "MAME-0.78-Rollback\" ^
+        --input "MAME-0.78-Rollback" ^
         --output C:\RetroArch-Win32\roms\MAME-0.78 ^
         --merge-roms split
       ```
@@ -208,7 +208,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip \
         --dat "MAME Dats 0.78/MAME 078.dat" \
         --input ~/Documents/RetroArch/roms/MAME-0.258 \
-        --input "MAME-0.78-Rollback/" \
+        --input "MAME-0.78-Rollback" \
         --output ~/Documents/RetroArch/roms/MAME-0.78 \
         --merge-roms split
       ```
@@ -219,7 +219,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip \
         --dat "MAME Dats 0.78/MAME 078.dat" \
         --input ~/Documents/RetroArch/roms/MAME-0.258 \
-        --input "MAME-0.78-Rollback/" \
+        --input "MAME-0.78-Rollback" \
         --output ~/Documents/RetroArch/roms/MAME-0.78 \
         --merge-roms split
       ```
@@ -237,8 +237,8 @@ Build a set of only BIOS files, with each in its own `.zip` file:
     ```batch
     igir copy zip ^
       --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-      --input "MAME-ROMs\" ^
-      --output "MAME-BIOS\" ^
+      --input "MAME-ROMs" ^
+      --output "MAME-BIOS" ^
       --only-bios
     ```
 
@@ -247,8 +247,8 @@ Build a set of only BIOS files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-BIOS/" \
+      --input "MAME-ROMs" \
+      --output "MAME-BIOS" \
       --only-bios
     ```
 
@@ -257,8 +257,8 @@ Build a set of only BIOS files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-BIOS/" \
+      --input "MAME-ROMs" \
+      --output "MAME-BIOS" \
       --only-bios
     ```
 
@@ -271,8 +271,8 @@ Build a set of only device files, with each in its own `.zip` file:
     ```batch
     igir copy zip ^
       --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-      --input "MAME-ROMs\" ^
-      --output "MAME-Devices\" ^
+      --input "MAME-ROMs" ^
+      --output "MAME-Devices" ^
       --only-device
     ```
 
@@ -281,8 +281,8 @@ Build a set of only device files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-Devices/" \
+      --input "MAME-ROMs" \
+      --output "MAME-Devices" \
       --only-device
     ```
 
@@ -291,7 +291,7 @@ Build a set of only device files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-Devices/" \
+      --input "MAME-ROMs" \
+      --output "MAME-Devices" \
       --only-device
     ```

@@ -39,7 +39,7 @@ With Igir's support for [DAT URLs](../../dats/scanning.md) we don't even have to
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output ~/Documents/RetroArch/system/
     ```
 
@@ -48,7 +48,7 @@ With Igir's support for [DAT URLs](../../dats/scanning.md) we don't even have to
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output ~/Documents/RetroArch/system/
     ```
 
@@ -65,7 +65,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```batch
     igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output C:\RetroArch-Win64\roms ^
       --dir-dat-name ^
       --no-bios
@@ -78,7 +78,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```batch
     igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output C:\RetroArch-Win32\roms ^
       --dir-dat-name ^
       --no-bios
@@ -89,7 +89,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```shell
     igir copy zip test \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output ~/Documents/RetroArch/roms \
       --dir-dat-name \
       --no-bios
@@ -100,7 +100,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```shell
     igir copy zip test \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output ~/Documents/RetroArch/roms \
       --dir-dat-name \
       --no-bios

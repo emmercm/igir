@@ -11,8 +11,8 @@ As an example, if you want to group all ROMs based on their region, you would sp
     ```batch
     igir copy extract ^
       --dat *.dat ^
-      --input ROMs\ ^
-      --output "ROMs-Sorted\{region}\"
+      --input ROMs ^
+      --output "ROMs-Sorted\{region}"
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -20,8 +20,8 @@ As an example, if you want to group all ROMs based on their region, you would sp
     ```shell
     igir copy extract \
       --dat *.dat \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{region}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{region}"
     ```
 
 === ":simple-linux: Linux"
@@ -29,8 +29,8 @@ As an example, if you want to group all ROMs based on their region, you would sp
     ```shell
     igir copy extract \
       --dat *.dat \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{region}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{region}"
     ```
 
 This might result in an output structure similar to:
@@ -107,8 +107,8 @@ As an example, when using No-Intro DATs, ROMs can be sorted into the [MiSTer FPG
     ```batch
     igir copy extract ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
-      --output "ROMs-Sorted\{mister}\"
+      --input ROMs ^
+      --output "ROMs-Sorted\{mister}"
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -116,8 +116,8 @@ As an example, when using No-Intro DATs, ROMs can be sorted into the [MiSTer FPG
     ```shell
     igir copy extract \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{mister}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{mister}"
     ```
 
 === ":simple-linux: Linux"
@@ -125,8 +125,8 @@ As an example, when using No-Intro DATs, ROMs can be sorted into the [MiSTer FPG
     ```shell
     igir copy extract \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{mister}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{mister}"
     ```
 
 ```text

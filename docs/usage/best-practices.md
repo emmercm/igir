@@ -46,8 +46,8 @@ Example:
 
     ```batch
     igir move clean ^
-      --input ROMs\ ^
-      --input "%UserProfile%\Downloads\" ^
+      --input ROMs ^
+      --input "%UserProfile%\Downloads" ^
       --output ROMs\
     ```
 
@@ -55,8 +55,8 @@ Example:
 
     ```shell
     igir move clean \
-      --input ROMs/ \
-      --input ~/Downloads/ \
+      --input ROMs \
+      --input ~/Downloads \
       --output ROMs/
     ```
 
@@ -64,8 +64,8 @@ Example:
 
     ```shell
     igir move clean \
-      --input ROMs/ \
-      --input ~/Downloads/ \
+      --input ROMs \
+      --input ~/Downloads \
       --output ROMs/
     ```
 

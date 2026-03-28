@@ -19,8 +19,8 @@ Example usage:
       --dat "Nintendo - Game Boy.dat" ^
       --dat "Nintendo - Game Boy Advance.dat" ^
       --dat "Nintendo - Game Boy Color.dat" ^
-      --input ROMs\ ^
-      --output ROMs-Sorted\ ^
+      --input ROMs ^
+      --output ROMs-Sorted ^
       --fixdat
     ```
 
@@ -31,7 +31,7 @@ Example usage:
       --dat "Nintendo - Game Boy.dat" \
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
-      --input ROMs/ \
+      --input ROMs \
       --output ROMs-Sorted/
     ```
 
@@ -42,7 +42,7 @@ Example usage:
       --dat "Nintendo - Game Boy.dat" \
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
-      --input ROMs/ \
+      --input ROMs \
       --output ROMs-Sorted/
     ```
 

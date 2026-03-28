@@ -34,7 +34,7 @@ Igir uses the following rules when creating dir2dat DAT files:
 
       ```shell
       igir dir2dat \
-        --input ~/ROMs/ \
+        --input ~/ROMs \
         --input ~/ROMs/NES
       ```
 
@@ -42,7 +42,7 @@ Igir uses the following rules when creating dir2dat DAT files:
 
       ```shell
       igir dir2dat \
-        --input ~/ROMs/ \
+        --input ~/ROMs \
         --input ~/ROMs/NES
       ```
 

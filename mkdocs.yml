@@ -135,7 +135,8 @@ nav:
       - misc/alternatives.md
       - misc/torrentzip.md
       - misc/rom-dumping.md
-    - Source Code:
+    - Project:
+      - acknowledgements.md
       - contributing.md
       - license.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
