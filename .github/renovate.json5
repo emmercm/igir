@@ -206,6 +206,7 @@
           'typescript-eslint',
           '^@typescript-eslint',
           '^eslint',
+          '/eslint'
         ],
         groupName: 'ESLint',
         // Only group non-major updates

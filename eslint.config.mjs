@@ -312,11 +312,13 @@ export default [
 
       // ********** Recommended Overrides **********
 
-      // ***** plugin:@typescript-eslint/recommended *****
+      // ***** plugin:@typescript-eslint/strict-type-checked *****
       // There are a few places where this needs to be allowed, but only a few, so warn on them
       '@typescript-eslint/no-floating-promises': 'warn',
       // There are a few places where this needs to be allowed, but only a few, so warn on them
       '@typescript-eslint/no-unused-expressions': 'warn',
+      // TODO(cemmer): seems to conflict with Prettier with Array#reduce() calls
+      '@typescript-eslint/no-unnecessary-type-arguments': 'off',
     },
   },
 
