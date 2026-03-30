@@ -61,8 +61,19 @@ export default class Zip extends Archive {
     return true;
   }
 
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
+  async getArchiveEntries(
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
+
+    if (callback) {
+      callback(
+        0,
+        entries.reduce((total, entry) => total + entry.uncompressedSizeResolved(), 0),
+      );
+    }
+    let overallProgress = 0;
 
     return await async.mapLimit(
       entries.filter((entry) => !entry.isDirectory()),
@@ -71,8 +82,16 @@ export default class Zip extends Archive {
         let checksums: ChecksumProps = {};
         if (checksumBitmask & ~ChecksumBitmask.CRC32) {
           const entryStream = await entryFile.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
+
+          let lastProgress = 0;
           try {
-            checksums = await FileChecksums.hashStream(entryStream, checksumBitmask);
+            checksums = await FileChecksums.hashStream(entryStream, checksumBitmask, (progress) => {
+              overallProgress = overallProgress - lastProgress + progress;
+              if (callback) {
+                callback(overallProgress);
+              }
+              lastProgress = progress;
+            });
           } finally {
             entryStream.destroy();
           }

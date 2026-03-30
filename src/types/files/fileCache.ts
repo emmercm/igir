@@ -143,6 +143,7 @@ export default class FileCache {
     archive: T,
     checksumBitmask: number,
     forceRecompute = false,
+    callback?: FsReadCallback,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(archive.getFilePath());
@@ -162,7 +163,10 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
-        computedEntries = (await archive.getArchiveEntries(checksumBitmask)) as ArchiveEntry<T>[];
+        computedEntries = (await archive.getArchiveEntries(
+          checksumBitmask,
+          callback,
+        )) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
           modifiedTimeMillis: stats.mtimeS,
