@@ -43,7 +43,7 @@ export default class Gzip extends Archive {
   ): Promise<ArchiveEntry<Archive>[]> {
     // See if this file is actually a .tar.gz
     try {
-      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask);
+      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
     } catch {
       /* ignored */
     }
@@ -53,6 +53,7 @@ export default class Gzip extends Archive {
       callback(0, gzipHeaderFooter.size);
     }
 
+    // Calculate non-CRC32 checksums if needed
     let checksums: ChecksumProps = {};
     if (checksumBitmask & ~ChecksumBitmask.CRC32) {
       checksums = await this.extractEntryToStream('', async (readable) => {
@@ -67,7 +68,7 @@ export default class Gzip extends Archive {
           archive: this,
           entryPath: gzipHeaderFooter.fname ?? '', // let CandidateExtensionCorrector sort it out
           size: gzipHeaderFooter.size,
-          crc32: gzipHeaderFooter.crc32,
+          crc32: crc32 ?? gzipHeaderFooter.crc32,
           ...checksumsWithoutCrc,
         },
         checksumBitmask,
