@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import stream from 'node:stream';
 import zlib from 'node:zlib';
 
+import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import IOFile from '../../../polyfill/ioFile.js';
 import IgirException from '../../exceptions/igirException.js';
+import FileChecksums, { ChecksumBitmask, type ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 import Tar from './tar.js';
@@ -35,22 +37,39 @@ export default class Gzip extends Archive {
     return true;
   }
 
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
+  async getArchiveEntries(
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<Archive>[]> {
     // See if this file is actually a .tar.gz
     try {
-      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask);
+      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
     } catch {
       /* ignored */
     }
 
     const gzipHeaderFooter = await this.getHeaderFooterInfo();
+    if (callback) {
+      callback(0, gzipHeaderFooter.size);
+    }
+
+    // Calculate non-CRC32 checksums if needed
+    let checksums: ChecksumProps = {};
+    if (checksumBitmask & ~ChecksumBitmask.CRC32) {
+      checksums = await this.extractEntryToStream('', async (readable) => {
+        return await FileChecksums.hashStream(readable, checksumBitmask, callback);
+      });
+    }
+    const { crc32, ...checksumsWithoutCrc } = checksums;
+
     return [
       await ArchiveEntry.entryOf(
         {
           archive: this,
           entryPath: gzipHeaderFooter.fname ?? '', // let CandidateExtensionCorrector sort it out
           size: gzipHeaderFooter.size,
-          crc32: gzipHeaderFooter.crc32,
+          crc32: crc32 ?? gzipHeaderFooter.crc32,
+          ...checksumsWithoutCrc,
         },
         checksumBitmask,
       ),
