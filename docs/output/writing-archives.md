@@ -169,3 +169,15 @@ You can exclude some BIOS files like this:
 !!! tip
 
     [globster.xyz](https://globster.xyz/?q=**%2F*.%7Biso%2Cbin%2Ccue%2Cchd%7D&f=dc%2FJet%20Set%20Radio%20(Europe)%20(En%20Fr%20De%20Es).chd%2Cdc%2FSamba%20de%20Amigo%20(USA).chd%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA).m3u%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%201).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%201).bin%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%202).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%202).bin%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%203).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%203).bin%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%204).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%204).bin) is a great website to test various glob patterns.
+
+## Grouping ROMs by DAT name
+
+By default, all ROMs for a game are written to individual `.zip` archives. The `--zip-dat-name` option changes this behavior by grouping all ROMs from the same DAT into a single `.zip` archive, named after the DAT. This can work great for archiving older, cartridge-based consoles with smaller ROM sizes, but will likely not work well with larger ROMs.
+
+!!! note
+
+    This option enforces `--dat-threads 1` due to a likely large amount of processing required per `.zip` archive being written.
+
+!!! note
+
+    To keep files organized in a human-readable way, it is _not_ recommended to use the [`--dir-game-subdir never`](../output/path-options.md#append-the-game-name) option combined with `--zip-dat-name`.

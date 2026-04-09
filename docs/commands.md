@@ -69,10 +69,6 @@ ROMs will be archived into a `.zip` file as they are being copied or moved. ROMs
 
     Any invalid `.zip` files (ones that would fail [`igir test`](#test)), and any non-`.zip` files, will be re-zipped into a valid `.zip` file.
 
-!!! note
-
-    You can use the [`--dat-combine` option](dats/processing.md#dat-combining) to cause every ROM in a DAT to be zipped together.
-
 ## ROM verification
 
 ### `test`

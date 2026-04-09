@@ -53,9 +53,7 @@ This may be desirable when creating a [dir2dat](dir2dat.md), a [fixdat](fixdats.
 
 !!! note
 
-    Using this option with the [`igir zip` command](../output/writing-archives.md) will result in all ROMs in a DAT being archived into one file. This can work great for archiving older, cartridge-based consoles with smaller ROM sizes, but will likely not work well with larger ROMs.
-
-    To keep files organized in a human-readable way, it is _not_ recommended to use the [`--dir-game-subdir never`](../output/path-options.md#append-the-game-name) option combined with `--dat-combine`.
+    Combining this option with the [`--zip-dat-name` option](../output/writing-archives.md#grouping-roms-by-dat-name) will create one, potentially extremely large, output archive. This may be desirable in some cases, but likely undesirable for most users.
 
 ## Parent/clone inference
 

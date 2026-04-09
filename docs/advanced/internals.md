@@ -21,7 +21,7 @@ Igir runs these steps in the following order:
    - Patch files are matched to ROMs found (see [patching docs](../roms/patching.md))
    - ROMs without a potentially bad extension have their extension corrected using its file signature
    - ROM archives that aren't being extracted have their checksums calculated
-   - ROMs are combined (`--zip-dat-name`)
+   - ROMs are combined ([`--zip-dat-name`](../output/writing-archives.md#grouping-roms-by-dat-name))
    - ROMs are written to the output directory, if specified (`copy`, `move`, `link`)
      - Written ROMs are tested for accuracy, if specified (`test`)
    - A "dir2dat" DAT is created, if specified (`dir2dat`) (see [dir2dat docs](../dats/dir2dat.md))
