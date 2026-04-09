@@ -35,7 +35,7 @@ jobs:
         with:
           ref: ${{ env.ref }}
       - id: filter
-        uses: dorny/paths-filter@9d7afb8d214ad99e78fbd4247752c4caed2b6e4c # v4.0.0
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         with:
           filters: |
             changes:
@@ -73,7 +73,7 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           restore-keys: |
@@ -90,7 +90,7 @@ jobs:
       - run: npm run docs:build
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
@@ -104,7 +104,7 @@ jobs:
       - build
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@release/v1
+      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
           allowed-skips: lint, build
@@ -127,7 +127,7 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
@@ -142,7 +142,7 @@ jobs:
       - run: mkdocs gh-deploy --strict --verbose --force
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache

@@ -48,6 +48,7 @@ import ROMTrimProcessor from './modules/roms/romTrimProcessor.js';
 import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
+import IntlPoly from './polyfill/intlPoly.js';
 import type DAT from './types/dats/dat.js';
 import type DATStatus from './types/datStatus.js';
 import IgirException from './types/exceptions/igirException.js';
@@ -170,7 +171,7 @@ export default class Igir {
 
     // Process every DAT
     datProcessProgressBar.logTrace(
-      `processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
+      `processing ${IntlPoly.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
     );
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
       datProcessProgressBar.incrementInProgress();
@@ -268,7 +269,7 @@ export default class Igir {
       datProcessProgressBar.incrementCompleted();
     });
     datProcessProgressBar.logTrace(
-      `done processing ${dats.length.toLocaleString()} DAT${dats.length === 1 ? '' : 's'}`,
+      `done processing ${IntlPoly.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
     );
 
     datProcessProgressBar.finishWithItems(dats.length, 'DAT', 'processed');
@@ -294,11 +295,7 @@ export default class Igir {
   }
 
   private async getCachePath(): Promise<string | undefined> {
-    const defaultFileName = process.versions.bun
-      ? // As of v1.1.26, Bun uses a different serializer than V8, making cache files incompatible
-        // @see https://bun.sh/docs/runtime/nodejs-apis
-        `${Package.NAME}.bun.cache`
-      : `${Package.NAME}.cache`;
+    const defaultFileName = `${Package.NAME}.cache`;
 
     // First, try to use the provided path
     let cachePath = this.options.getCachePath();

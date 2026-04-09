@@ -6,6 +6,7 @@ import * as tar from 'tar';
 
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import IgirException from '../../exceptions/igirException.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
@@ -37,7 +38,10 @@ export default class Tar extends Archive {
     return path.parse(this.getFilePath()).ext;
   }
 
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
+  async getArchiveEntries(
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<this>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<this>>[] = [];
 
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
@@ -53,14 +57,26 @@ export default class Tar extends Archive {
     });
     readStream.pipe(writeStream);
 
+    // TODO(cemmer): callback() with the sum of uncompressed file sizes
+    let overallProgress = 0;
+
     // Note: entries are read sequentially, so entry streams need to be fully read or resumed
     writeStream.on('entry', async (entry: tar.ReadEntry) => {
+      let lastProgress = 0;
       const checksums = await FileChecksums.hashStream(
         // NOTE(cemmer): minipass is 99% stream.Stream-compatible, and I don't want to introduce it
         // and its types into the project just for this single line of code
         entry as unknown as stream.Readable,
         checksumBitmask,
+        (progress) => {
+          overallProgress = overallProgress - lastProgress + progress;
+          if (callback) {
+            callback(overallProgress);
+          }
+          lastProgress = progress;
+        },
       );
+
       archiveEntryPromises.push(
         ArchiveEntry.entryOf(
           {
@@ -103,7 +119,7 @@ export default class Tar extends Archive {
           return true;
         },
       },
-      [entryPath.replaceAll(/[\\/]/g, '/')],
+      [entryPath.replaceAll('\\', '/')],
     );
     if (!(await FsPoly.exists(extractedFilePath))) {
       throw new IgirException(`didn't find extracted file '${entryPath}'`);

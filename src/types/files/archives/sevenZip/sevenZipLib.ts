@@ -9,6 +9,7 @@ import async from 'async';
 
 import Defaults from '../../../../globals/defaults.js';
 import FsPoly, { WalkMode } from '../../../../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../../../../polyfill/fsReadTransform.js';
 import IgirException from '../../../exceptions/igirException.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -18,7 +19,10 @@ export default abstract class SevenZipLib extends Archive {
     return true;
   }
 
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]> {
+  async getArchiveEntries(
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<Archive>[]> {
     const iterator = new _7zIterator(this.getFilePath());
     try {
       try {
@@ -33,12 +37,21 @@ export default abstract class SevenZipLib extends Archive {
         throw error;
       }
       const entriesIn7z = iterator.getStreamingOrder();
+      const fileEntries = entriesIn7z.filter((entry) => entry.type === 'file');
+
+      if (callback) {
+        callback(
+          0,
+          fileEntries.reduce((total, entry) => total + entry.size, 0),
+        );
+      }
+      let overallProgress = 0;
 
       return await async.mapLimit(
-        entriesIn7z.filter((entry) => entry.type === 'file'),
+        fileEntries,
         Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
         async (entry: SevenZipEntry): Promise<ArchiveEntry<this>> => {
-          return await ArchiveEntry.entryOf(
+          const archiveEntry = await ArchiveEntry.entryOf(
             {
               archive: this,
               entryPath: entry.path,
@@ -48,6 +61,11 @@ export default abstract class SevenZipLib extends Archive {
             },
             checksumBitmask,
           );
+          overallProgress += entry.size;
+          if (callback) {
+            callback(overallProgress);
+          }
+          return archiveEntry;
         },
       );
     } finally {
@@ -60,7 +78,7 @@ export default abstract class SevenZipLib extends Archive {
     try {
       let foundEntry: Entry | undefined = undefined;
       for await (const entry of iterator) {
-        if (entry.path === entryPath.replaceAll(/[\\/]/g, '/')) {
+        if (entry.path.replaceAll('\\', '/') === entryPath.replaceAll('\\', '/')) {
           foundEntry = entry;
         } else {
           entry.destroy();

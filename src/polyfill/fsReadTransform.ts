@@ -1,6 +1,6 @@
 import stream from 'node:stream';
 
-export type FsReadCallback = (progress: number) => void;
+export type FsReadCallback = (progress: number, total?: number) => void;
 
 /**
  * A stream transformer that tracks how many bytes have been read and calls a callback.

@@ -12,6 +12,7 @@ import Defaults from '../../globals/defaults.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import BufferPoly from '../../polyfill/bufferPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
 import CMProParser from '../../types/dats/cmpro/cmProParser.js';
 import type DAT from '../../types/dats/dat.js';
@@ -71,7 +72,7 @@ export default class DATScanner extends Scanner {
       return [];
     }
     this.progressBar.logTrace(
-      `found ${datFilePaths.length.toLocaleString()} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlPoly.toLocaleString(datFilePaths.length)} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(datFilePaths.length);
 
@@ -94,7 +95,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace(
-      `downloading ${datUrlFiles.length.toLocaleString()} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
+      `downloading ${IntlPoly.toLocaleString(datUrlFiles.length)} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setName('Downloading DATs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
@@ -122,7 +123,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(
-      `parsing ${datFiles.length.toLocaleString()} DAT file${datFiles.length === 1 ? '' : 's'}`,
+      `parsing ${IntlPoly.toLocaleString(datFiles.length)} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
     if (datFiles.length === 0) {
       return [];
@@ -214,7 +215,7 @@ export default class DATScanner extends Scanner {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}, ${dat.getParents().length.toLocaleString()} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
+      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${IntlPoly.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}, ${IntlPoly.toLocaleString(dat.getParents().length)} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
     );
 
     return dat;

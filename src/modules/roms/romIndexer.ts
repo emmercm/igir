@@ -1,8 +1,7 @@
-import path from 'node:path';
-
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FsPoly from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Chd from '../../types/files/archives/chd/chd.js';
 import Dolphin from '../../types/files/archives/dolphin/dolphin.js';
@@ -35,7 +34,7 @@ export default class ROMIndexer extends Module {
    */
   index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(
-      `indexing ${files.length.toLocaleString()} file${files.length === 1 ? '' : 's'}`,
+      `indexing ${IntlPoly.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
     this.progressBar.resetProgress(files.length);
@@ -118,8 +117,8 @@ export default class ROMIndexer extends Module {
         // something else. Otherwise, we'll just attempt to overwrite the invalid output file with
         // itself, still resulting in an invalid output file.
         if (this.options.getOverwrite() || this.options.getOverwriteInvalid()) {
-          const fileOneInOutput = path.resolve(fileOne.getFilePath()).startsWith(outputDir) ? 1 : 0;
-          const fileTwoInOutput = path.resolve(fileTwo.getFilePath()).startsWith(outputDir) ? 1 : 0;
+          const fileOneInOutput = fileOne.getFilePath().startsWith(outputDir) ? 1 : 0;
+          const fileTwoInOutput = fileTwo.getFilePath().startsWith(outputDir) ? 1 : 0;
           if (fileOneInOutput !== fileTwoInOutput) {
             return fileOneInOutput - fileTwoInOutput;
           }
@@ -129,12 +128,8 @@ export default class ROMIndexer extends Module {
          * Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
          */
         if (outputDirDisk && this.options.shouldMove()) {
-          const fileOneInOutputDisk = path.resolve(fileOne.getFilePath()).startsWith(outputDirDisk)
-            ? 0
-            : 1;
-          const fileTwoInOutputDisk = path.resolve(fileTwo.getFilePath()).startsWith(outputDirDisk)
-            ? 0
-            : 1;
+          const fileOneInOutputDisk = fileOne.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
+          const fileTwoInOutputDisk = fileTwo.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
           if (fileOneInOutputDisk !== fileTwoInOutputDisk) {
             return fileOneInOutputDisk - fileTwoInOutputDisk;
           }

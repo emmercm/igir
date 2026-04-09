@@ -8,6 +8,7 @@ import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import type { MoveResultValue } from '../../polyfill/fsPoly.js';
 import FsPoly, { MoveResult } from '../../polyfill/fsPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import Zip from '../../types/files/archives/zip.js';
@@ -96,7 +97,7 @@ export default class CandidateWriter extends Module {
       .filter((candidate) => candidate.getRomsWithFiles().length > 0);
 
     this.progressBar.logTrace(
-      `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlPoly.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
       this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
@@ -125,7 +126,7 @@ export default class CandidateWriter extends Module {
     });
 
     this.progressBar.logTrace(
-      `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${writableCandidates.length.toLocaleString()} candidate${writableCandidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlPoly.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
     const writtenFilePaths = new Set(
@@ -335,7 +336,7 @@ export default class CandidateWriter extends Module {
       return map;
     }, new Map<string, ArchiveEntry<Zip>>());
     if (actualEntriesByPath.size !== expectedEntriesByPath.size) {
-      return `has ${actualEntriesByPath.size.toLocaleString()} files, expected ${expectedEntriesByPath.size.toLocaleString()}`;
+      return `has ${IntlPoly.toLocaleString(actualEntriesByPath.size)} files, expected ${IntlPoly.toLocaleString(expectedEntriesByPath.size)}`;
     }
 
     for (const [entryPath, expectedFile] of expectedEntriesByPath.entries()) {
@@ -381,7 +382,7 @@ export default class CandidateWriter extends Module {
         expectedFile.getCrc32() &&
         actualFile.getSize() !== expectedFile.getSize()
       ) {
-        return `entry '${entryPath}' has the file ${entryPath} of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+        return `entry '${entryPath}' has the file ${entryPath} of size ${IntlPoly.toLocaleString(actualFile.getSize())}B, expected ${IntlPoly.toLocaleString(expectedFile.getSize())}B`;
       }
     }
 
@@ -448,7 +449,7 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.logTrace(
-        `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${inputToOutputZipEntries.length.toLocaleString()} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
+        `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${IntlPoly.toLocaleString(inputToOutputZipEntries.length)} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
       );
       return true;
     });
@@ -479,7 +480,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${inputToOutputEntries.length.toLocaleString()} raw file${inputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${IntlPoly.toLocaleString(inputToOutputEntries.length)} raw file${inputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -796,7 +797,7 @@ export default class CandidateWriter extends Module {
 
     // Check size
     if (actualFile.getCrc32() && actualFile.getSize() !== expectedFile.getSize()) {
-      return `is of size ${actualFile.getSize().toLocaleString()}B, expected ${expectedFile.getSize().toLocaleString()}B`;
+      return `is of size ${IntlPoly.toLocaleString(actualFile.getSize())}B, expected ${IntlPoly.toLocaleString(expectedFile.getSize())}B`;
     }
 
     this.progressBar.logTrace(
@@ -851,7 +852,7 @@ export default class CandidateWriter extends Module {
     }
 
     const linkPath = outputRomFile.getFilePath();
-    let targetPath = path.resolve(inputRomFile.getFilePath());
+    let targetPath = inputRomFile.getFilePath();
     if (this.options.getLinkMode() === LinkMode.SYMLINK && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       targetPath = await FsPoly.symlinkRelativePath(targetPath, linkPath);

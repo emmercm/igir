@@ -62,7 +62,11 @@ export default class FileFactory {
     }
 
     if (!FileFactory.isExtensionArchive(filePath)) {
-      const entries = await this.entriesFromArchiveSignature(filePath, entryChecksumBitmask);
+      const entries = await this.entriesFromArchiveSignature(
+        filePath,
+        entryChecksumBitmask,
+        callback,
+      );
       if (entries !== undefined) {
         return entries;
       }
@@ -79,7 +83,13 @@ export default class FileFactory {
         await async.mapLimit(
           archives,
           1,
-          async (archive: Archive) => await this.entriesFromArchive(archive, entryChecksumBitmask),
+          async (archive: Archive) =>
+            await this.entriesFromArchive(
+              archive,
+              entryChecksumBitmask,
+              CacheMode.RESPECT_CACHED_VALUE,
+              callback,
+            ),
         )
       ).flat();
       if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
@@ -133,12 +143,14 @@ export default class FileFactory {
     archive: A,
     checksumBitmask: number,
     cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
+    callback?: FsReadCallback,
   ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(
         archive,
         checksumBitmask,
         cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
+        callback,
       );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
@@ -204,6 +216,7 @@ export default class FileFactory {
   private async entriesFromArchiveSignature(
     filePath: string,
     checksumBitmask: number,
+    callback?: FsReadCallback,
   ): Promise<ArchiveEntry<Archive>[] | undefined> {
     let signature: FileSignature | undefined;
     try {
@@ -228,7 +241,13 @@ export default class FileFactory {
       await async.mapLimit(
         archives,
         1,
-        async (archive: Archive) => await this.entriesFromArchive(archive, checksumBitmask),
+        async (archive: Archive) =>
+          await this.entriesFromArchive(
+            archive,
+            checksumBitmask,
+            CacheMode.RESPECT_CACHED_VALUE,
+            callback,
+          ),
       )
     ).flat();
     if (entries.length > 0 && entries.every((entry) => entry === undefined)) {

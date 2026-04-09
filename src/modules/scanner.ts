@@ -150,8 +150,11 @@ export default abstract class Scanner extends Module {
         filePath,
         checksumBitmask,
         this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
-        (progress) => {
+        (progress, total) => {
           progressBar.setCompleted(progress);
+          if (total !== undefined) {
+            progressBar.setTotal(total);
+          }
         },
       );
 

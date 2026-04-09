@@ -6,7 +6,10 @@ import type { FileHeader } from 'node-unrar-js/dist/index.js';
 import { createExtractorFromFile } from 'node-unrar-js/dist/index.js';
 
 import Defaults from '../../../globals/defaults.js';
+import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import IgirException from '../../exceptions/igirException.js';
+import type { ChecksumProps } from '../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -33,24 +36,60 @@ export default class Rar extends Archive {
     return true;
   }
 
-  async getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<this>[]> {
+  async getArchiveEntries(
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<this>[]> {
     const rar = await createExtractorFromFile({
       filepath: this.getFilePath(),
     });
+    const fileHeaders = [...rar.getFileList().fileHeaders].filter(
+      (fileHeader) => !fileHeader.flags.directory,
+    );
+
+    if (callback) {
+      callback(
+        0,
+        fileHeaders.reduce((total, fileHeader) => total + fileHeader.unpSize, 0),
+      );
+    }
+    let overallProgress = 0;
+
     return await async.mapLimit(
-      [...rar.getFileList().fileHeaders].filter((fileHeader) => !fileHeader.flags.directory),
+      fileHeaders,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader: FileHeader): Promise<ArchiveEntry<this>> => {
-        return await ArchiveEntry.entryOf(
+        // Calculate non-CRC32 checksums if needed
+        let checksums: ChecksumProps = {};
+        if (checksumBitmask & ~ChecksumBitmask.CRC32) {
+          let lastProgress = 0;
+          checksums = await this.extractEntryToStream(fileHeader.name, async (readable) => {
+            return await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
+              overallProgress = overallProgress - lastProgress + progress;
+              if (callback) {
+                callback(overallProgress);
+                lastProgress = progress;
+              }
+            });
+          });
+        }
+        const { crc32, ...checksumsWithoutCrc } = checksums;
+
+        const entry = await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: fileHeader.name,
             size: fileHeader.unpSize,
-            crc32: fileHeader.crc.toString(16),
-            // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
+            crc32: crc32 ?? fileHeader.crc.toString(16),
+            ...checksumsWithoutCrc,
           },
           checksumBitmask,
         );
+        overallProgress += fileHeader.unpSize;
+        if (callback) {
+          callback(overallProgress);
+        }
+        return entry;
       },
     );
   }
@@ -71,7 +110,7 @@ export default class Rar extends Archive {
       // iterated, so we have to execute this expression, but can throw away the results
       const extracted = [
         ...rar.extract({
-          files: [entryPath.replaceAll(/[\\/]/g, '/')],
+          files: [entryPath.replaceAll('\\', '/')],
         }).files,
       ];
       if (extracted.length === 0) {

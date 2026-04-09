@@ -76,7 +76,7 @@ export default class File implements FileProps {
   protected constructor(fileProps: FileProps) {
     const isUrl = URLPoly.canParse(fileProps.filePath);
 
-    this.filePath = isUrl ? fileProps.filePath : fileProps.filePath.replaceAll(/[\\/]/g, path.sep);
+    this.filePath = isUrl ? fileProps.filePath : path.resolve(fileProps.filePath);
     this.size = fileProps.size ?? 0;
     this.checksumBitmask = fileProps.checksumBitmask;
     this.crc32 = fileProps.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');

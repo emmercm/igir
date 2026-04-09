@@ -1,6 +1,7 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import type Game from '../../types/dats/game.js';
 import type Parent from '../../types/dats/parent.js';
@@ -44,7 +45,7 @@ export default class DATMergerSplitter extends Module {
     }, new Map<string, Game>());
 
     this.progressBar.logTrace(
-      `${dat.getName()}: merging & splitting ${dat.getGames().length.toLocaleString()} game${dat.getGames().length === 1 ? '' : 's'}`,
+      `${dat.getName()}: merging & splitting ${IntlPoly.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
     this.progressBar.resetProgress(dat.getGames().length);
@@ -54,7 +55,7 @@ export default class DATMergerSplitter extends Module {
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
     const newDat = dat.withGames(newGames);
     this.progressBar.logTrace(
-      `${newDat.getName()}: merged/split to ${newDat.getGames().length.toLocaleString()} game${newDat.getGames().length === 1 ? '' : 's'}`,
+      `${newDat.getName()}: merged/split to ${IntlPoly.toLocaleString(newDat.getGames().length)} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${newDat.getName()}: done merging & splitting`);

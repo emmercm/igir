@@ -1,4 +1,4 @@
-mkdocs-material==9.7.3
+mkdocs-material==9.7.6
 
 # https://github.com/mkdocs/mkdocs/issues/4032
 click<8.3.0

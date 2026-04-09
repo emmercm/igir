@@ -65,7 +65,7 @@ export class OutputPath implements ParsedPathWithEntryPath {
     this.ext = parsedPath.ext.replaceAll(/[\\/]/g, path.sep);
     this.name = parsedPath.name.replaceAll(/[\\/]/g, path.sep);
     this.root = parsedPath.root.replaceAll(/[\\/]/g, path.sep);
-    this.entryPath = parsedPath.entryPath.replaceAll(/[\\/]/g, path.sep);
+    this.entryPath = parsedPath.entryPath;
   }
 
   /**
@@ -89,6 +89,8 @@ export class OutputPath implements ParsedPathWithEntryPath {
  * {@link Game}.
  */
 export default class OutputFactory {
+  private static readonly LEFTOVER_TOKEN_REGEX = /\{[a-zA-Z]+\}/g;
+
   /**
    * Get the full output path for a ROM file.
    * @param options the {@link Options} instance for this run of igir.
@@ -122,7 +124,7 @@ export default class OutputFactory {
 
     return new OutputPath({
       root: '',
-      dir: this.getDir(options, dat, game, inputFile, basename, romBasenames),
+      dir: path.resolve(this.getDir(options, dat, game, inputFile, basename, romBasenames)),
       base: '',
       name,
       ext,
@@ -174,7 +176,7 @@ export default class OutputFactory {
             `^${inputPath.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\/]?`,
           );
           return inputFilePath.replace(inputPathRegex, '');
-        }, path.resolve(inputFile.getFilePath()));
+        }, inputFile.getFilePath());
       const mirroredDirPath = path.dirname(mirroredFilePath);
       output = path.join(output, mirroredDirPath);
     }
@@ -230,7 +232,7 @@ export default class OutputFactory {
     result = this.replaceOutputTokens(result, options, outputRomFilename);
     result = this.replaceConsoleTokens(result, options, dat, outputRomFilename);
 
-    const leftoverTokens = result.match(/\{[a-zA-Z]+\}/g);
+    const leftoverTokens = result.match(OutputFactory.LEFTOVER_TOKEN_REGEX);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new TokenReplacementException(
         `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')}`,
@@ -288,7 +290,10 @@ export default class OutputFactory {
       return input;
     }
 
-    return input.replace('{inputDirname}', path.parse(inputRomPath).dir);
+    return input.replace(
+      '{inputDirname}',
+      path.relative(process.cwd(), path.parse(inputRomPath).dir),
+    );
   }
 
   private static replaceOutputTokens(
@@ -594,15 +599,13 @@ export default class OutputFactory {
     // The file structure from HTGD SMDBs ends up in both the Game and ROM names. If we're
     // zipping, then the Game name will end up in the filename, we don't need it duplicated in
     // the entry path.
-    const gameNameSanitized = game.getName().replaceAll(/[\\/]/g, path.sep);
-    return romBasename
-      .replaceAll(/[\\/]/g, path.sep)
-      .replace(`${path.dirname(gameNameSanitized)}${path.sep}`, '');
+    const gameNameSanitized = game.getName().replaceAll('\\', '/');
+    return romBasename.replace(`${path.posix.dirname(gameNameSanitized)}/`, '');
   }
 
   private static getRomBasename(rom: ROM, inputFile: File): string {
-    const romNameSanitized = rom.getName().replaceAll(/[\\/]/g, path.sep);
-    const { base, ...parsedRomPath } = path.parse(romNameSanitized);
+    const romNameSanitized = rom.getName();
+    const { base, ...parsedRomPath } = path.posix.parse(romNameSanitized);
 
     // Alter the output extension of the file
     const fileHeader = inputFile.getFileHeader();
@@ -611,6 +614,6 @@ export default class OutputFactory {
       parsedRomPath.ext = fileHeader.getHeaderlessFileExtension();
     }
 
-    return path.format(parsedRomPath);
+    return path.posix.format(parsedRomPath);
   }
 }

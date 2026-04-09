@@ -11,7 +11,7 @@ export default abstract class Archive {
   private readonly filePath: string;
 
   constructor(filePath: string) {
-    this.filePath = filePath.replaceAll(/[\\/]/g, path.sep);
+    this.filePath = path.resolve(filePath);
   }
 
   protected abstract new(filePath: string): Archive;
@@ -30,7 +30,10 @@ export default abstract class Archive {
    */
   abstract hasMeaningfulEntryPaths(): boolean;
 
-  abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
+  abstract getArchiveEntries(
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(
     entryPath: string,
