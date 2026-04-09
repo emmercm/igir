@@ -117,7 +117,7 @@ These DATs provide the most flexibility (i.e. can use any merge type) and the mo
 
 **Pick a ROM merge type intentionally.**
 
-Igir will produce full non-merged sets by default for the highest level of compatability. However, you should understand the difference between the supported [merge types](../usage/arcade.md#rom-set-merge-types) and choose one that best suits your needs.
+Igir will produce full non-merged sets by default for the highest level of compatibility. However, you should understand the difference between the supported [merge types](../usage/arcade.md#rom-set-merge-types) and choose one that best suits your needs.
 
 ## Advanced
 

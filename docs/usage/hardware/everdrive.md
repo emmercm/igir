@@ -1,6 +1,6 @@
 # EverDrive
 
-The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the highest quality, highest rate of compatability, and most often recommended flash carts available on the market today.
+The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the highest quality, highest rate of compatibility, and most often recommended flash carts available on the market today.
 
 ## ROMs
 

@@ -91,8 +91,8 @@ Here are some example usages:
     $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     # ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "igir\%X.csv"
-    # /igir/1681515048.csv
+    $ igir report --dat *.dat --input ROMs/ --report-output "igir/%X.csv"
+    # igir/1681515048.csv
     ```
 
 === ":simple-linux: Linux"

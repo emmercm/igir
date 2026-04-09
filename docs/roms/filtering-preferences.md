@@ -354,6 +354,19 @@ AGB Aging Cartridge (World) (v1.0) (Test Program)
 AGB-Parallel Interface Cartridge (Japan) (En) (Program)
 ```
 
+### Aftermarket ROMs
+
+```text
+--no-aftermarket, --only-aftermarket
+```
+
+Filter out, or only include games that contain `(Aftermarket)` in their name, e.g.:
+
+```text
+Bub-O Escape (World) (v2.5) (Aftermarket) (Unl)
+D-Fuzed (World) (v1.1.0) (GB Compatible) (Aftermarket) (Unl)
+```
+
 ### Homebrew
 
 ```text

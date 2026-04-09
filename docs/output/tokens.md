@@ -62,7 +62,7 @@ When using [DATs](../dats/introduction.md), you can make use of console & game i
 - `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](path-options.md) works
 - `{region}` each of the game's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 - `{language}` each of the game's language(s) (e.g. `EN`, `ES`, `JA`)
-- `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
+- `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Cracked`, `Debug`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Program`, `Prototype`, `Retail` (most games will be this), `Sample`, `Trained`, `Translated`, `Unlicensed`
 - `{category}` the game's "category" (only some DATs provide this)
 - `{genre}` the game's "genre" (most DATs don't provide this)
 

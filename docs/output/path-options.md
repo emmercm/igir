@@ -120,7 +120,7 @@ For example, given a command such as:
       --dat "DATs" ^
       --input "ROMs-Input" ^
       --output "ROMs-Output" ^
-      --dir-mirror
+      --dir-dat-mirror
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -130,7 +130,7 @@ For example, given a command such as:
       --dat "DATs" \
       --input "ROMs-Input" \
       --output "ROMs-Output" \
-      --dir-mirror
+      --dir-dat-mirror
     ```
 
 === ":simple-linux: Linux"
@@ -140,7 +140,7 @@ For example, given a command such as:
       --dat "DATs" \
       --input "ROMs-Input" \
       --output "ROMs-Output" \
-      --dir-mirror
+      --dir-dat-mirror
     ```
 
 you would get a result similar to:
@@ -673,8 +673,8 @@ ROMS-Output/
 
 You can change this behavior with the `--dir-game-subdir <mode>` option:
 
-| Mode                               | Outcome                                                                                                          |
-|------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `--dir-game-subdir never`          | Games with multiple ROMs are never grouped into their own subdirectory, which may cause conflicting output files |
-| `--dir-game-subdir auto` (default) | Games with multiple ROMs are grouped into their own subdirectory, games with a single ROM are not                |
-| `--dir-game-subdir always`         | Every game is grouped into its on subdirectory, no matter the number of ROMs it has                              |
+| Mode                                   | Outcome                                                                                                          |
+|----------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `--dir-game-subdir never`              | Games with multiple ROMs are never grouped into their own subdirectory, which may cause conflicting output files |
+| `--dir-game-subdir multiple` (default) | Games with multiple ROMs are grouped into their own subdirectory, games with a single ROM are not                |
+| `--dir-game-subdir always`             | Every game is grouped into its own subdirectory, no matter the number of ROMs it has                             |
