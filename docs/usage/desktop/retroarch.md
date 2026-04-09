@@ -19,7 +19,7 @@ With Igir's support for [DAT URLs](../../dats/scanning.md) we don't even have to
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS/ ^
+      --input BIOS ^
       --output C:\RetroArch-Win64\system
     ```
 
@@ -30,7 +30,7 @@ With Igir's support for [DAT URLs](../../dats/scanning.md) we don't even have to
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS/ ^
+      --input BIOS ^
       --output C:\RetroArch-Win32\system
     ```
 

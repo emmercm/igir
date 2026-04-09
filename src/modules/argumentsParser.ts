@@ -1224,34 +1224,34 @@ Advanced usage:
 Example use cases:
 
   Merge new ROMs into an existing ROM collection and delete any unrecognized files:
-    $0 copy clean --dat "*.dat" --input New-ROMs/ --input ROMs/ --output ROMs/
+    $0 copy clean --dat "*.dat" --input New-ROMs --input ROMs --output ROMs
 
   Organize and zip an existing ROM collection:
-    $0 move zip --dat "*.dat" --input ROMs/ --output ROMs/
+    $0 move zip --dat "*.dat" --input ROMs --output ROMs
 
   Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
-    $0 report --dat "*.dat" --input ROMs/
+    $0 report --dat "*.dat" --input ROMs
 
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
-    $0 copy --dat "*.dat" --input "**/*.zip" --output 1G1R/ --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
+    $0 copy --dat "*.dat" --input "**${path.sep}*.zip" --output 1G1R --dir-dat-name --single --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
 
   Copy all Mario, Metroid, and Zelda games to one directory:
-    $0 copy --input ROMs/ --output Nintendo/ --filter-regex "/(Mario|Metroid|Zelda)/i"
+    $0 copy --input ROMs --output Nintendo --filter-regex "/(Mario|Metroid|Zelda)/i"
 
   Copy all BIOS files into one directory, extracting if necessary:
-    $0 copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
+    $0 copy extract --dat "*.dat" --input "**${path.sep}*.zip" --output BIOS --only-bios
 
   Create playlist files for all multi-disc games in an existing collection:
-    $0 playlist --input ROMs/
+    $0 playlist --input ROMs
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
-    $0 copy extract --input ROMs/ --patch Patches/ --output ROMs/
+    $0 copy extract --input ROMs --patch Patches --output ROMs
 
   Re-build a MAME ROM set for a specific version of MAME:
-    $0 copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
+    $0 copy zip --dat "MAME 0.258.dat" --input MAME --output MAME-0.258 --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
-    $0 copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/ --dir-letter`,
+    $0 copy extract test --dat "*.dat" --input ROMs --output ${path.sep}Assets${path.sep}{pocket}${path.sep}common --dir-letter`,
       )
 
       // Colorize help output

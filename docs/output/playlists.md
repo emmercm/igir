@@ -30,7 +30,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```batch
       igir playlist ^
         --dat "Redump*.zip" ^
-        --input ROMs\
+        --input ROMs
       ```
 
   === ":fontawesome-brands-apple: macOS"
@@ -38,7 +38,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir playlist \
         --dat "Redump*.zip" \
-        --input ROMs/
+        --input ROMs
       ```
 
   === ":simple-linux: Linux"
@@ -46,7 +46,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir playlist \
         --dat "Redump*.zip" \
-        --input ROMs/
+        --input ROMs
       ```
 
 - When writing ROMs to an output directory:
@@ -57,7 +57,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       igir copy extract playlist ^
         --dat "Redump*.zip" ^
         --input ROMs ^
-        --output ROMs-Sorted\
+        --output ROMs-Sorted
       ```
 
   === ":fontawesome-brands-apple: macOS"
@@ -66,7 +66,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       igir copy extract playlist \
         --dat "Redump*.zip" \
         --input ROMs \
-        --output ROMs-Sorted/
+        --output ROMs-Sorted
       ```
 
   === ":simple-linux: Linux"
@@ -75,7 +75,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       igir copy extract playlist \
         --dat "Redump*.zip" \
         --input ROMs \
-        --output ROMs-Sorted/
+        --output ROMs-Sorted
       ```
 
 !!! note
@@ -143,7 +143,7 @@ Igir can automatically generate `.m3u` playlist files for these games without mo
     ```batch
     igir playlist ^
       --dat "Redump*.zip" ^
-      --input ROMs\
+      --input ROMs
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -151,7 +151,7 @@ Igir can automatically generate `.m3u` playlist files for these games without mo
     ```shell
     igir playlist \
       --dat "Redump*.zip" \
-      --input ROMs/
+      --input ROMs
     ```
 
 === ":simple-linux: Linux"
@@ -159,7 +159,7 @@ Igir can automatically generate `.m3u` playlist files for these games without mo
     ```shell
     igir playlist \
       --dat "Redump*.zip" \
-      --input ROMs/
+      --input ROMs
     ```
 
 The resulting files would look like this:

@@ -32,7 +32,7 @@ Example usage:
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
       --input ROMs \
-      --output ROMs-Sorted/
+      --output ROMs-Sorted
     ```
 
 === ":simple-linux: Linux"
@@ -43,7 +43,7 @@ Example usage:
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
       --input ROMs \
-      --output ROMs-Sorted/
+      --output ROMs-Sorted
     ```
 
 This command will produce a fixdat file in the `ROMs-Sorted/` directory for each of the three input DATs that have at least one ROM that wasn't found in the `ROMs/` input directory:

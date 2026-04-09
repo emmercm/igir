@@ -27,7 +27,7 @@ npx igir@latest [commands..] [options]
 for example:
 
 ```shell
-npx igir@latest copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+npx igir@latest copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir-dat-name
 ```
 
 <script src="https://asciinema.org/a/ocqHh6Rb5ZUOhswX8PQ4sw57d.js" id="asciicast-ocqHh6Rb5ZUOhswX8PQ4sw57d" async="true"></script>
@@ -77,7 +77,7 @@ brew install emmercm/igir/igir
 and then run Igir as if it were any other executable:
 
 ```shell
-igir copy extract --dat *.dat --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+igir copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir-dat-name
 ```
 
 Igir can then be updated with _either_ of these commands
@@ -101,7 +101,7 @@ brew upgrade igir
       --volume "%cd%:\pwd" ^
       --workdir "/pwd" ^
       node:lts-alpine ^
-      npx --yes igir@latest copy zip --dat "*.dat" --input ROMs\ --output ROMs-Sorted\ --dir-dat-name
+      npx --yes igir@latest copy zip --dat "*.dat" --input ROMs --output ROMs-Sorted --dir-dat-name
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -111,7 +111,7 @@ brew upgrade igir
       --volume "$PWD:/pwd" \
       --workdir "/pwd" \
       node:lts-alpine \
-      npx --yes igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+      npx --yes igir@latest copy zip --dat "*.dat" --input ROMs --output ROMs-Sorted --dir-dat-name
     ```
 
 === ":simple-linux: Linux"
@@ -121,7 +121,7 @@ brew upgrade igir
       --volume "$PWD:/pwd" \
       --workdir "/pwd" \
       node:lts-alpine \
-      npx --yes igir@latest copy zip --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name
+      npx --yes igir@latest copy zip --dat "*.dat" --input ROMs --output ROMs-Sorted --dir-dat-name
     ```
 
 !!! warning

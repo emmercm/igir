@@ -48,7 +48,7 @@ Example:
     igir move clean ^
       --input ROMs ^
       --input "%UserProfile%\Downloads" ^
-      --output ROMs\
+      --output ROMs
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -57,7 +57,7 @@ Example:
     igir move clean \
       --input ROMs \
       --input ~/Downloads \
-      --output ROMs/
+      --output ROMs
     ```
 
 === ":simple-linux: Linux"
@@ -66,7 +66,7 @@ Example:
     igir move clean \
       --input ROMs \
       --input ~/Downloads \
-      --output ROMs/
+      --output ROMs
     ```
 
 **Prefer ROMs with headers.**

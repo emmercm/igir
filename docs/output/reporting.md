@@ -17,7 +17,7 @@ The `igir report` command can be specified on its own without any [writing comma
 === ":fontawesome-brands-windows: Windows"
 
     ```batch
-    > igir.exe report --dat *.dat --input ROMs\
+    > igir.exe report --dat *.dat --input ROMs
 
     > dir /b *.csv
     igir_2023-03-29T18;26;00-04;00.csv
@@ -26,7 +26,7 @@ The `igir report` command can be specified on its own without any [writing comma
 === ":fontawesome-brands-apple: macOS"
 
     ```shell
-    $ igir report --dat *.dat --input ROMs/
+    $ igir report --dat *.dat --input ROMs
 
     $ ls *.csv
     igir_2023-03-29T18;26;00-04;00.csv
@@ -35,7 +35,7 @@ The `igir report` command can be specified on its own without any [writing comma
 === ":simple-linux: Linux"
 
     ```shell
-    $ igir report --dat *.dat --input ROMs/
+    $ igir report --dat *.dat --input ROMs
 
     $ ls *.csv
     igir_2023-03-29T18;26;00-04;00.csv
@@ -74,35 +74,35 @@ Here are some example usages:
 === ":fontawesome-brands-windows: Windows"
 
     ```batch
-    > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report.csv"
+    > igir.exe report --dat *.dat --input ROMs --report-output ".\report.csv"
 
-    > igir.exe report --dat *.dat --input ROMs\ --report-output ".\report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    > igir.exe report --dat *.dat --input ROMs --report-output ".\report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     REM ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    > igir.exe report --dat *.dat --input ROMs\ --report-output "igir\%X.csv"
+    > igir.exe report --dat *.dat --input ROMs --report-output "igir\%X.csv"
     REM /igir/1681515048.csv
     ```
 
 === ":fontawesome-brands-apple: macOS"
 
     ```shell
-    $ igir report --dat *.dat --input ROMs/ --report-output "./report.csv"
+    $ igir report --dat *.dat --input ROMs --report-output "./report.csv"
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    $ igir report --dat *.dat --input ROMs --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     # ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "igir/%X.csv"
+    $ igir report --dat *.dat --input ROMs --report-output "igir/%X.csv"
     # igir/1681515048.csv
     ```
 
 === ":simple-linux: Linux"
 
     ```shell
-    $ igir report --dat *.dat --input ROMs/ --report-output "./report.csv"
+    $ igir report --dat *.dat --input ROMs --report-output "./report.csv"
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
+    $ igir report --dat *.dat --input ROMs --report-output "./report %dddd, %MMMM %Do %YYYY, %h:%mm:%ss %a.csv"
     # ./report Friday, April 14th 2023, 4:28:26 pm.csv
 
-    $ igir report --dat *.dat --input ROMs/ --report-output "igir/%X.csv"
+    $ igir report --dat *.dat --input ROMs --report-output "igir/%X.csv"
     # /igir/1681515048.csv
     ```

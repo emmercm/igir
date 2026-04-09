@@ -63,7 +63,7 @@ The `--dat <path|glob|url>` option is unique in that it can download files from 
     igir copy ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" ^
       --input ROMs ^
-      --output ROMs-Sorted\
+      --output ROMs-Sorted
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -72,7 +72,7 @@ The `--dat <path|glob|url>` option is unique in that it can download files from 
     igir copy \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
       --input ROMs \
-      --output ROMs-Sorted/
+      --output ROMs-Sorted
     ```
 
 === ":simple-linux: Linux"
@@ -81,7 +81,7 @@ The `--dat <path|glob|url>` option is unique in that it can download files from 
     igir copy \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
       --input ROMs \
-      --output ROMs-Sorted/
+      --output ROMs-Sorted
     ```
 
 !!! note
