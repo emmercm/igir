@@ -611,7 +611,7 @@ This is most useful when _not_ supplying the `extract` or `zip` commands, where 
 --prefer-filename-regex <pattern|filename>
 ```
 
-Prefer an input file matches a regular expression.
+Prefer an input file if it matches a regular expression.
 
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 

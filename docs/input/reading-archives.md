@@ -58,4 +58,4 @@ If for some reason Igir isn't identifying an input file correctly as an archive,
 
 ## Checksum cache
 
-It can be expensive to calculate checksums of files within archives. If Igir needs to calculate a checksum not easily read from the archive (see above), it will cache the result in the [file cache](../advanced/file-cache.md)`.
+It can be expensive to calculate checksums of files within archives. If Igir needs to calculate a checksum not easily read from the archive (see above), it will cache the result in the [file cache](../advanced/file-cache.md).

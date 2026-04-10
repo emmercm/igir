@@ -42,7 +42,7 @@ If you aren't using a ROM manager already, Igir can help you:
 - Sort your ROM files into meaningful folders.
 - Name your ROM files consistently.
 - Filter out undesired ROM files.
-- Convert your ROM files into consistent format (archived or unarchived).
+- Convert your ROM files into a consistent format (archived or unarchived).
 
 If you are already using a ROM manager, Igir can help you:
 

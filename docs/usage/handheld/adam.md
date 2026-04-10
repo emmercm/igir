@@ -1,6 +1,6 @@
 # The 'Adam' Image
 
-[Adam](https://github.com/eduardofilo/RG350_adam_image/wiki/) ([Code](https://github.com/eduardofilo/RG350_adam_image)) is a custom firmware Ingenic JZ4770 chip-based portable emulation consoles. Specifically GCW-Zero, PocketGo2 v1/v2, Anbernic RG350, RG280 and RG300X. It is based on OpenDingux and the SimpleMenu frontend. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. The distribution defines it's own set of ROM folders ([via SimpleMenu](https://github.com/eduardofilo/RG350_adam_image/tree/master/data/local/home/.simplemenu/section_groups)), so it makes use of it's own output token in igir.
+[Adam](https://github.com/eduardofilo/RG350_adam_image/wiki/) ([Code](https://github.com/eduardofilo/RG350_adam_image)) is a custom firmware for Ingenic JZ4770 chip-based portable emulation consoles. Specifically GCW-Zero, PocketGo2 v1/v2, Anbernic RG350, RG280 and RG300X. It is based on OpenDingux and the SimpleMenu frontend. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. The distribution defines its own set of ROM folders ([via SimpleMenu](https://github.com/eduardofilo/RG350_adam_image/tree/master/data/local/home/.simplemenu/section_groups)), so it makes use of its own output token in Igir.
 
 ## Preparing TF2
 

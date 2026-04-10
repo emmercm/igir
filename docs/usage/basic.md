@@ -75,8 +75,6 @@ Let's say that we've done the above first time sort and were happy with the resu
 
 We now have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" (recycle/delete) any unknown files that may have made their way into our collection.
 
-We can move these new ROMs into our collection with the command:
-
 We can move any new ROMs in `ROMs-New/` that we didn't already have in `ROMs-Sorted/` into `ROMs-Sorted/` with the command:
 
 === ":fontawesome-brands-windows: Windows"

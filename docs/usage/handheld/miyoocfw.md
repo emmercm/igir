@@ -1,6 +1,6 @@
 # MiyooCFW
 
-[MiyooCFW](https://github.com/TriForceX/MiyooCFW/wiki) ([Code](https://github.com/TriForceX/MiyooCFW)) is a custom firmware  for BittBoy, PocketGo, PowKiddy V90-Q90-Q20 and third party handheld consoles. It is based on the buildroot build environment and loosely based on OpenDingux. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. Some tinkering with the BIOS files is required though, but no worries, most of that is covered below or in their [Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info)
+[MiyooCFW](https://github.com/TriForceX/MiyooCFW/wiki) ([Code](https://github.com/TriForceX/MiyooCFW)) is a custom firmware for BittBoy, PocketGo, PowKiddy V90-Q90-Q20 and third party handheld consoles. It is based on the buildroot build environment and loosely based on OpenDingux. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. Some tinkering with the BIOS files is required though, but no worries, most of that is covered below or in their [Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info)
 
 ## BIOS Files
 

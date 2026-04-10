@@ -8,7 +8,7 @@ See the [file scanning docs](../input/file-scanning.md) for more information abo
 
 Igir will only ever write a file to the [`--output <path>`](../output/path-options.md#base-output-directory) using a file from an input path. In other words, Igir will _not_ automatically scan the output directory and copy, move, or link any files within it.
 
-This is different from other ROM managers
+This is different from other ROM managers.
 
 This behavior is to give you very granular control over what files are written where, but it has these important consequences:
 

@@ -26,7 +26,7 @@ Although the zip format officially added support for Zstd compression in [June 2
 
 ### Implications for testing
 
-When Igir [tests](../commands.md#test) written zip files, it will test to make sure they're valid a TorrentZip or RVSTD file, whichever was specified. This means that zip files that aren't of the expected structured format will be considered invalid, even if they contain all expected files. This isn't a problem for the `igir zip` command which will rewrite the zip as necessary, but it could be a problem if you have invalid zips in your input paths and omit the command.
+When Igir [tests](../commands.md#test) written zip files, it will test to make sure they're a valid TorrentZip or RVZSTD file, whichever was specified. This means that zip files that aren't of the expected structured format will be considered invalid, even if they contain all expected files. This isn't a problem for the `igir zip` command which will rewrite the zip as necessary, but it could be a problem if you have invalid zips in your input paths and omit the command.
 
 The [`--overwrite-invalid` option](options.md#overwriting-files) can help you convert your collection between different zip formats like this:
 

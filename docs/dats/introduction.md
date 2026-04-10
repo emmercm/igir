@@ -10,7 +10,7 @@ DATs are catalog files of every known ROM that exists per game system, complete 
 
 These DAT files ("DATs") help Igir distinguish known ROM files in input directories from other files (see the [ROM matching](../roms/matching.md) docs). Because DATs typically contain the complete catalog for a console, Igir also uses them to generate reports for you on what ROMs were found and which are missing.
 
-See the [DAT scanning page](scanning.md) for details about how to supply DATs to Igir, and the [DAT processing page](processing.md) for information on how processes those DATs.
+See the [DAT scanning page](scanning.md) for details about how to supply DATs to Igir, and the [DAT processing page](processing.md) for information on how Igir processes those DATs.
 
 ## DAT release groups
 
@@ -56,7 +56,7 @@ The rule-of-thumb with DATs and arcade emulation is: your emulator probably has 
 - ROMs organized with a FinalBurn Neo v1.0.0.2 DAT will likely _not_ work with FinalBurn Alpha v0.2.97.29
 - ROMs organized with a FinalBurn Alpha v0.2.97.29 DAT will likely _not_ work with FinalBurn Alpha v0.2.96.71
 
-If you are using a desktop frontend such as [RetroArch](../usage/desktop/retroarch.md), it may come with multiple versions of the same emulator, and it is unlikely that any of them is the most recent version. Follow the frontend's documentation to location or download the correct DAT to use with each emulator.
+If you are using a desktop frontend such as [RetroArch](../usage/desktop/retroarch.md), it may come with multiple versions of the same emulator, and it is unlikely that any of them is the most recent version. Follow the frontend's documentation to locate or download the correct DAT to use with each emulator.
 
 See the [arcade usage page](../usage/arcade.md) for more information on building & re-building arcade ROM sets.
 

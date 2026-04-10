@@ -4,7 +4,7 @@ Igir uses a series of live-updating progress bars to indicate what it is current
 
 <script src="https://asciinema.org/a/xE6kMquCPFYtpvhsiQfS0eS7c.js" id="asciicast-xE6kMquCPFYtpvhsiQfS0eS7c" async="true"></script>
 
-See the [internal operations](advanced/internals.md#order-of-operations) page for more information on every processing that Igir might do.
+See the [internal operations](advanced/internals.md#order-of-operations) page for more information on all the processing that Igir might do.
 
 ## Progress bar icons
 
