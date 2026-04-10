@@ -1,14 +1,10 @@
 # Best Practices
 
-**Use an installation method that auto-updates.**
-
-Downloading bundled binaries from GitHub is the most difficult way to receive updates to Igir. See the [installation page](../installation.md) for options available to you.
-
 ## DATs
 
 **Use DATs.**
 
-While [DATs](../dats/introduction.md) are optional, they allow you to organize your ROMs in a human-understandable manner while trimming out unknown files. Additional metadata provided by some DAT groups allows you [filter your ROM set](../roms/filtering-preferences.md) to only what you care about.
+While [DATs](../dats/introduction.md) are optional, they allow you to organize your ROMs in a human-understandable manner and [remove](../output/cleaning.md) unknown files. Additional metadata provided by some DAT groups allows you [filter your ROM set](../roms/filtering-preferences.md) to only what you care about.
 
 **Choose DAT groups with parent/clone information.**
 
@@ -22,23 +18,21 @@ DATs work best if you store them alongside your primary ROM collection and when 
 
 DAT groups have some overlap between them, so using DATs from multiple groups at the same time may cause duplicate files or filename collisions. Different groups also have different conventions that may require different settings, such as [filters](../roms/filtering-preferences.md#filters) and [1G1R preferences](../roms/filtering-preferences.md#preferences-for-1g1r).
 
-Also, keep ROM sets organized by DATs from different groups in separate directories. For example, create different directories for No-Intro, Redump, and TOSEC-organized ROM sets.
+Keep ROM sets organized by DATs from different groups in separate directories. For example, create different directories for No-Intro, Redump, and TOSEC-organized ROM sets.
 
 ## File Inputs
 
 **Keep one primary collection and then copy to other sub-collections.**
 
-Provide your output directory as one of the input directories, and then any other input directories you wish to copy or move into your primary collection. Doing so will let you [clean the output directory](../output/cleaning.md) safely.
+Having a consolidated collection that only consists of ROMs matched to DATs allows for easy copying to other places, such as flash carts. This will allow you to recreate sub-collections in case of any file loss.
 
-Then, create sub-collections by copying files from your main collection to other devices, optionally applying [filtering and preference rules](../roms/filtering-preferences.md).
+Additionally, sub-collections are likely to have [filtering and preference rules](../roms/filtering-preferences.md) applied based on the use case, but you may not want to filter out ROMs from your primary collection in the same way.
 
 **Provide the output directory as an input directory when cleaning.**
 
-If you use new DATs with an existing collection that may have changed ROM names, then `igir clean` may delete files from your output directory that have the wrong filename.
+If you use new DATs with an existing collection that may have changed ROM names, then [`igir clean`](../output/cleaning.md) may delete files from your output directory that have the wrong filename.
 
-TODO(cemmer)...
-
-This is because the [`igir clean` command](../output/cleaning.md) won't delete file paths considered for writing (no matter if a file was actually written, or it was ignored because of [overwriting](../output/options.md#overwriting-files) rules). Providing the output directory as an input directory will ensure no DAT-matched files are deleted.
+The solution is to provide the output directory as an additional [input](../roms/scanning.md) directory, allowing Igir to move/rename files to the updated name. Igir will only ever [copy](../commands.md#copy) or [move](../commands.md#move) files from an input directory to the output directory, allowing users to be very intentional with Igir's behavior.
 
 Example:
 
@@ -85,7 +79,7 @@ The default settings for Igir will cause accurate file matching for the gross ma
 
 **Zip ROMs whenever it makes sense.**
 
-Zip files generally save file space and are faster to scan, at the expense of more time to create them. For collections that will be read from more often than written to, such as a primary collection, prefer to eat the cost of [archiving files](../output/writing-archives.md) once with the `igir zip` command.
+Zip files generally save file space and are faster to scan, at the expense of requiring more processing time to create them. For collections that will be read from more often than written to (such as a primary collection), prefer to spend the time to [archive files](../output/writing-archives.md) once with the `igir zip` command.
 
 **Organize ROM sets by DAT name or description.**
 

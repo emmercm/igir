@@ -26,6 +26,10 @@ It is intended that Igir lives by these tenets:
 
   All of Igir's behavior should be documented in as clear English as possible. No command or option should behave in a manner that isn't explained in the documentation.
 
+- **Igir should not spy on you.**
+
+  Igir should not make any network requests other than what is required, including emitting any kind of usage or telemetry data.
+
 - **Igir should be semantically versioned.**
 
   Igir should adhere to the [semantic versioning](https://semver.org/) standards of major, minor, and patch versions. Igir will only introduce potentially breaking functionality during major version updates.
