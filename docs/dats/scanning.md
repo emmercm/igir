@@ -10,7 +10,7 @@
 
     Igir will work the best with every [available command](../commands.md) if you provide it DATs. Without DATs, Igir has to make educated guesses about folder structures and naming patterns.
 
-### Supported DAT formats
+## Supported DAT formats
 
 There have been many DAT-like formats developed over the years. Igir supports the following:
 
