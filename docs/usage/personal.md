@@ -13,6 +13,8 @@ The file tree in that hard drive looks like this:
 ├── FBNeo
 │   ├── Arcade
 │   └── Neogeo
+├── MAME
+│   └── 0.264 (Mar 27 2024)
 ├── No-Intro
 │   ├── Nintendo - Game Boy
 │   ├── Nintendo - Game Boy Advance
@@ -21,8 +23,6 @@ The file tree in that hard drive looks like this:
 │   ├── Nintendo - Game Boy Advance (e-Reader)
 │   ├── Nintendo - Game Boy Color
 │   └── etc...
-├── No-Intro Love Pack (PC) (2026-03-25).zip
-├── No-Intro Love Pack (Standard) (Private) (2026-03-23).zip
 ├── Patches
 │   ├── gb
 │   ├── gba
@@ -36,8 +36,9 @@ The file tree in that hard drive looks like this:
 │   ├── Sony - PlayStation - BIOS Images
 │   ├── Sony - PlayStation 2 - BIOS Images
 │   └── etc...
-├── Redump (2026-03-13).zip
-├── TOSEC - DAT Pack - Complete (4743) (TOSEC-v2025-03-13).zip
+├── No-Intro Love Pack (PC) (2026-03-25).zip
+├── No-Intro Love Pack (Standard) (Private) (2026-03-23).zip
+├── Redump (2025-03-13).zip
 └── igir_library_sync.sh
 ```
 
