@@ -49,14 +49,11 @@ export default class DATPreferer extends Module {
     const preferredGames = dat
       .getParents()
       .map((parent) => {
-        this.progressBar.incrementInProgress();
+        this.progressBar.incrementCompleted();
 
-        if (parent.getGames().length === 0) {
-          return undefined;
+        if (parent.getGames().length < 2) {
+          return parent.getGames().at(0);
         }
-        this.progressBar.logTrace(
-          `${dat.getName()}: ${parent.getName()} (parent): ${IntlPoly.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'} before preferring`,
-        );
 
         const preferredGame = parent
           .getGames()
@@ -66,6 +63,9 @@ export default class DATPreferer extends Module {
         if (preferredGame === undefined) {
           return undefined;
         }
+        this.progressBar.logTrace(
+          `${dat.getName()}: ${parent.getName()} (parent): out of ${IntlPoly.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'}, preferred: ${preferredGame[0].getName()}`,
+        );
         return preferredGame[0].withProps({ cloneOf: undefined });
       })
       .filter((game) => game !== undefined);
@@ -156,10 +156,15 @@ export default class DATPreferer extends Module {
     const aLangs = new Set(a.getLanguages());
     const bLangs = new Set(b.getLanguages());
     for (const preferredLang of preferLanguages) {
-      if (aLangs.has(preferredLang) && !bLangs.has(preferredLang)) {
+      if (aLangs.has(preferredLang) && bLangs.has(preferredLang)) {
+        // Both games have this preferred language; they should tie so that lower-priority languages
+        // don't tie-break
+        return 0;
+      }
+      if (aLangs.has(preferredLang)) {
         return -1;
       }
-      if (!aLangs.has(preferredLang) && bLangs.has(preferredLang)) {
+      if (bLangs.has(preferredLang)) {
         return 1;
       }
     }
@@ -175,10 +180,15 @@ export default class DATPreferer extends Module {
     const aRegions = new Set(a.getRegions());
     const bRegions = new Set(b.getRegions());
     for (const preferredRegion of preferRegions) {
-      if (aRegions.has(preferredRegion) && !bRegions.has(preferredRegion)) {
+      if (aRegions.has(preferredRegion) && bRegions.has(preferredRegion)) {
+        // Both games have this preferred region; they should tie so that lower-priority regions
+        // don't tie-break
+        return 0;
+      }
+      if (aRegions.has(preferredRegion)) {
         return -1;
       }
-      if (!aRegions.has(preferredRegion) && bRegions.has(preferredRegion)) {
+      if (bRegions.has(preferredRegion)) {
         return 1;
       }
     }
