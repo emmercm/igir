@@ -24,8 +24,8 @@ export interface SingleBarOptions {
 }
 
 const CHALK_PROGRESS_COMPLETE_DEFAULT = chalk.reset;
-const CHALK_PROGRESS_IN_PROGRESS = chalk.dim;
-const CHALK_PROGRESS_INCOMPLETE = chalk.grey;
+const CHALK_PROGRESS_IN_PROGRESS = chalk.blackBright; // 50% gray (typically)
+const CHALK_PROGRESS_INCOMPLETE = chalk.ansi256(240); // 33% gray
 
 const UNICODE_SUPPORTED = isUnicodeSupported();
 const BAR_COMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
@@ -62,6 +62,8 @@ export default class SingleBar extends ProgressBar {
 
   private lastOutput?: string;
   private valueTimeBuffer: number[][] = [];
+  private valueTimeBufferIndex = 0;
+  private valueTimeBufferSize = 0;
   private lastEtaCalculatedTime = 0;
   private lastEtaCalculated = 0;
   private lastEtaFormatTime = 0;
@@ -144,6 +146,8 @@ export default class SingleBar extends ProgressBar {
     this.inProgress = 0;
     this.total = total;
     this.valueTimeBuffer = [];
+    this.valueTimeBufferIndex = 0;
+    this.valueTimeBufferSize = 0;
   }
 
   /**
@@ -293,7 +297,7 @@ export default class SingleBar extends ProgressBar {
       Math.max(formattedTotal.length, this.indentSize > 0 ? 7 : 0),
       ' ',
     );
-    const paddedTotal = formattedTotal.padEnd(this.indentSize > 0 ? 7 : 0, ' ');
+    const paddedTotal = formattedTotal.padStart(this.indentSize > 0 ? 7 : 0, ' ');
     bar += `${symbolColor(paddedCompleted)}/${CHALK_PROGRESS_IN_PROGRESS(paddedTotal)} `;
 
     if (this.completed > 0 || this.indentSize > 0) {
@@ -341,12 +345,23 @@ export default class SingleBar extends ProgressBar {
 
     const MAX_BUFFER_SIZE = clamp(Math.floor(this.total / 10), 25, 50);
 
-    this.valueTimeBuffer = [
-      ...this.valueTimeBuffer.slice(1 - MAX_BUFFER_SIZE),
-      [this.completed, Date.now()],
-    ];
+    if (this.valueTimeBuffer.length !== MAX_BUFFER_SIZE) {
+      this.valueTimeBuffer = Array.from<number[]>({ length: MAX_BUFFER_SIZE });
+      this.valueTimeBufferIndex = 0;
+      this.valueTimeBufferSize = 0;
+    }
 
-    const doneTime = linearRegressionLine(linearRegression(this.valueTimeBuffer))(this.total);
+    this.valueTimeBuffer[this.valueTimeBufferIndex] = [this.completed, Date.now()];
+    this.valueTimeBufferIndex = (this.valueTimeBufferIndex + 1) % MAX_BUFFER_SIZE;
+    this.valueTimeBufferSize = Math.min(this.valueTimeBufferSize + 1, MAX_BUFFER_SIZE);
+
+    const doneTime = linearRegressionLine(
+      linearRegression(
+        this.valueTimeBufferSize < MAX_BUFFER_SIZE
+          ? this.valueTimeBuffer.slice(0, this.valueTimeBufferSize)
+          : this.valueTimeBuffer,
+      ),
+    )(this.total);
     if (Number.isNaN(doneTime)) {
       // Vertical line
       return -1;
