@@ -290,6 +290,37 @@ describe('prefer languages', () => {
       'Hexen (Europe)',
     ]);
   });
+
+  it('should not tie-break with lower-priority languages', () => {
+    const dat = new LogiqxDAT({
+      header: new Header(),
+      games: [
+        new Game({
+          name: 'Speed Racer - The Videogame (Europe) (En,Fr,De,Es,It,Nl)',
+        }),
+        new Game({
+          name: 'Speed Racer (Japan) (En,Ja)',
+          cloneOf: 'Speed Racer - The Videogame (Europe) (En,Fr,De,Es,It,Nl)',
+        }),
+        new Game({
+          name: 'Speed Racer - The Videogame (USA) (En,Fr,Es,Pt)',
+          cloneOf: 'Speed Racer - The Videogame (Europe) (En,Fr,De,Es,It,Nl)',
+        }),
+      ],
+    });
+    const options = new Options({
+      single: true,
+      preferLanguage: ['EN', 'ES'],
+    });
+    const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
+    // The first game in English should win, and ties should remain in their original order.
+    // If DATPreferer#preferLanguagesSort() didn't return early with a tie and instead continued to
+    // tie-break with lower priority languages, then "Speed Racer - The Videogame (USA) (En,Fr,Es,Pt)"
+    // would win because it has Spanish and "Speed Racer - The Videogame (Europe) (En,Fr,De,Es,It,Nl)" doesn't
+    expect(preferredDat.getGames()[0].getName()).toEqual(
+      'Speed Racer - The Videogame (Europe) (En,Fr,De,Es,It,Nl)',
+    );
+  });
 });
 
 describe('prefer regions', () => {
@@ -332,6 +363,39 @@ describe('prefer regions', () => {
       'Star Wars Episode I - Racer (Japan)',
       'StarCraft 64 (Australia)',
     ]);
+  });
+
+  it('should not tie-break with lower-priority regions', () => {
+    const dat = new LogiqxDAT({
+      header: new Header(),
+      games: [
+        new Game({
+          name: 'Sonic Rush (Europe) (En,Ja,Fr,De,Es,It)',
+        }),
+        new Game({
+          name: 'Sonic Rush (USA) (En,Ja,Fr,De,Es,It)',
+          cloneOf: 'Sonic Rush (Europe) (En,Ja,Fr,De,Es,It)',
+        }),
+        new Game({
+          name: 'Sonic Rush (Japan) (En,Ja,Fr,De,Es,It)',
+          cloneOf: 'Sonic Rush (Europe) (En,Ja,Fr,De,Es,It)',
+        }),
+        new Game({
+          name: 'Sonic Rush (Japan, USA) (En,Ja) (Demo) (Kiosk, E3 2005)',
+          cloneOf: 'Sonic Rush (Europe) (En,Ja,Fr,De,Es,It)',
+        }),
+      ],
+    });
+    const options = new Options({
+      single: true,
+      preferRegion: ['USA', 'WORLD', 'EUR', 'JPN'],
+    });
+    const preferredDat = new DATPreferer(options, new ProgressBarFake()).prefer(dat);
+    // The first game from the USA should win, and ties should remain in their original order.
+    // If DATPreferer#preferRegionsSort() didn't return early with a tie and instead continued to
+    // tie-break with lower priority regions, then "Sonic Rush (Japan, USA) (En,Ja) (Demo) (Kiosk, E3 2005)"
+    // would win, because it is from Japan and "Sonic Rush (USA) (En,Ja,Fr,De,Es,It)" isn't
+    expect(preferredDat.getGames()[0].getName()).toEqual('Sonic Rush (USA) (En,Ja,Fr,De,Es,It)');
   });
 });
 
