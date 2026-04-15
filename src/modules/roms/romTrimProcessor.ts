@@ -1,9 +1,6 @@
-import async from 'async';
-
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import Defaults from '../../globals/defaults.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
@@ -61,39 +58,33 @@ export default class ROMTrimProcessor extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_TRIMMING_DETECTION);
     this.progressBar.resetProgress(filesThatNeedProcessing);
 
-    const parsedFiles = await async.mapLimit(
-      inputRomFiles,
-      Defaults.MAX_FS_THREADS,
-      async (inputFile: File) => {
-        if (!this.fileNeedsProcessing(inputFile)) {
-          return inputFile;
-        }
+    const parsedFiles = await this.mappableSemaphore.map(inputRomFiles, async (inputFile: File) => {
+      if (!this.fileNeedsProcessing(inputFile)) {
+        return inputFile;
+      }
 
-        return await this.mappableSemaphore.runExclusive(async () => {
-          this.progressBar.incrementInProgress();
-          const childBar = this.progressBar.addChildBar({
-            name: inputFile.toString(),
-            total: inputFile.getSize(),
-            progressFormatter: FsPoly.sizeReadable,
-          });
+      this.progressBar.incrementInProgress();
+      const childBar = this.progressBar.addChildBar({
+        name: inputFile.toString(),
+        total: inputFile.getSize(),
+        progressFormatter: FsPoly.sizeReadable,
+      });
 
-          let fileWithTrimming: File;
-          try {
-            fileWithTrimming = await this.getFile(inputFile, childBar);
-          } catch (error) {
-            this.progressBar.logError(
-              `${inputFile.toString()}: failed to process ROM trimming: ${error}`,
-            );
-            fileWithTrimming = inputFile;
-          } finally {
-            childBar.delete();
-          }
-          this.progressBar.incrementCompleted();
+      let fileWithTrimming: File;
+      try {
+        fileWithTrimming = await this.getFile(inputFile, childBar);
+      } catch (error) {
+        this.progressBar.logError(
+          `${inputFile.toString()}: failed to process ROM trimming: ${error}`,
+        );
+        fileWithTrimming = inputFile;
+      } finally {
+        childBar.delete();
+      }
+      this.progressBar.incrementCompleted();
 
-          return fileWithTrimming;
-        });
-      },
-    );
+      return fileWithTrimming;
+    });
 
     const trimmedRomsCount = parsedFiles.filter(
       (romFile) => romFile.getPaddings().length > 0,
