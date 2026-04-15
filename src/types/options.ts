@@ -974,7 +974,10 @@ export default class Options implements OptionsProps {
       globPattern
         // fg only uses forward-slash path separators; convert back-slash characters that probably aren't escaping a character
         .replace(/[\\/]+$/, '')
-        .replaceAll(/\\([^*?!()[\]{}+@\\])/g, '/$1')
+        .replaceAll(
+          process.platform === 'win32' ? /\\(?![(){}[\]]|[@!]\()/g : /\\(?![*?|(){}[\]]|[@!]\()/g,
+          '/$1',
+        )
         // Escape parentheticals that aren't an extglob and probably aren't a "logical OR"
         .replaceAll(/(^|[^?*+@!\\])\(([^|)]+)\)/g, '$1{\\(,}$2{\\),}')
         // Escape curly braces that probably aren't a brace expression
