@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import async from 'async';
-import { Semaphore } from 'async-mutex';
 import { isNotJunk } from 'junk';
 import trash from 'trash';
 
@@ -127,12 +126,10 @@ export default class DirectoryCleaner extends Module {
     }
 
     // ...but if that doesn't work, delete the leftovers
-    const existSemaphore = new Semaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
-    const existingFilePathsCheck = await async.mapLimit(
+    const existSemaphore = new MappableSemaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
+    const existingFilePathsCheck = await existSemaphore.map(
       filePaths,
-      Defaults.MAX_FS_THREADS,
-      async (filePath: string) =>
-        await existSemaphore.runExclusive(async () => await FsPoly.exists(filePath)),
+      async (filePath) => await FsPoly.exists(filePath),
     );
     const existingFilePaths = filePaths.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
