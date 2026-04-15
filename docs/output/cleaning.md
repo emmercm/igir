@@ -72,9 +72,43 @@ In practical terms, this means:
 
 ## Exclusions
 
-The `--clean-exclude <path|glob>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md)) can be excluded from deletion.
+The `--clean-exclude <path|glob>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md#glob-patterns)) can be excluded from deletion.
 
 See the [Analogue Pocket](../usage/hardware/analogue-pocket.md) page for a practical example.
+
+!!! tip
+
+    If your emulator stores save files alongside its matching ROM in the same directory, you will want to exclude those from cleaning. You can make use of a [glob](../input/file-scanning.md#glob-patterns) to preserve all files of a certain extension like this:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir move clean ^
+          --input "ROMs-Sorted" ^
+          --input "ROMs-New" ^
+          --output "ROMs-Sorted" ^
+          --clean-exclude "ROMs-Sorted\**\*.sav"
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir move clean \
+          --input "ROMs-Sorted" \
+          --input "ROMs-New" \
+          --output "ROMs-Sorted" \
+          --clean-exclude "ROMs-Sorted/**/*.sav"
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir move clean \
+          --input "ROMs-Sorted" \
+          --input "ROMs-New" \
+          --output "ROMs-Sorted" \
+          --clean-exclude "ROMs-Sorted/**/*.sav"
+        ```
 
 ## Backing up cleaned files
 

@@ -33,7 +33,7 @@ Igir has features that aren't found in any other ROM managers, such as [ROM patc
 
 !!! info
 
-    See the [alternative managers](alternatives.md) page for a feature comparison between Igir and other ROM managers.
+    See the [alternative managers](misc/alternatives.md) page for a feature comparison between Igir and other ROM managers.
 
 ## Why should I use Igir?
 

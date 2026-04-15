@@ -26,24 +26,24 @@ Igir uses the following rules when creating dir2dat DAT files:
 
       ```batch
       igir dir2dat ^
-        --input "C:\ROMs" ^
-        --input "C:\ROMs\NES"
+        --input "ROMs" ^
+        --input "ROMs\NES"
       ```
 
   === ":fontawesome-brands-apple: macOS"
 
       ```shell
       igir dir2dat \
-        --input ~/ROMs \
-        --input ~/ROMs/NES
+        --input ROMs \
+        --input ROMs/NES
       ```
 
   === ":simple-linux: Linux"
 
       ```shell
       igir dir2dat \
-        --input ~/ROMs \
-        --input ~/ROMs/NES
+        --input ROMs \
+        --input ROMs/NES
       ```
 
   then ROMs can appear in multiple resulting dir2dat files.
