@@ -928,10 +928,8 @@ export default class Options implements OptionsProps {
       return [path.resolve(inputPath)];
     }
 
-    // fg only uses forward-slash path separators
-    const inputPathNormalized = inputPath.replaceAll('\\', '/');
     // Try to handle globs a little more intelligently (see the JSDoc below)
-    const inputPathEscaped = this.sanitizeGlobPattern(inputPathNormalized);
+    const inputPathEscaped = this.sanitizeGlobPattern(inputPath);
 
     if (!inputPathEscaped) {
       // fast-glob will throw with empty-ish inputs
@@ -974,8 +972,11 @@ export default class Options implements OptionsProps {
   private static sanitizeGlobPattern(globPattern: string): string {
     return (
       globPattern
+        // fg only uses forward-slash path separators; convert back-slash characters that probably aren't escaping a character
+        .replace(/[\\/]+$/, '')
+        .replaceAll(/\\([^*?!()[\]{}+@\\])/g, '/$1')
         // Escape parentheticals that aren't an extglob and probably aren't a "logical OR"
-        .replaceAll(/(^|[^?*+@!])\(([^|)]+)\)/g, '$1{\\(,}$2{\\),}')
+        .replaceAll(/(^|[^?*+@!\\])\(([^|)]+)\)/g, '$1{\\(,}$2{\\),}')
         // Escape curly braces that probably aren't a brace expression
         .replaceAll(/\{([^.,}]+)\}/g, '{\\{,}$1{\\},}')
         // Escape square brackets that might not be a regular expression character class
