@@ -105,8 +105,8 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const options = new Options({
     ...defaultOptions,
     ...optionsProps,
-    readerThreads: os.availableParallelism(),
-    writerThreads: os.availableParallelism(),
+    readerThreads: 2,
+    writerThreads: 2,
   });
 
   const inputFilesBefore = (
@@ -2259,7 +2259,7 @@ describe('with inferred DATs', () => {
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
         new FileFactory(new FileCache(), LOGGER),
-        new MappableSemaphore(os.availableParallelism()),
+        new MappableSemaphore(2),
       ).scan();
       expect(dats).toHaveLength(1);
       const roms = dats[0]

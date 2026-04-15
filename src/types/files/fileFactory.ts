@@ -1,5 +1,3 @@
-import async from 'async';
-
 import type Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
 import MultiBar from '../../console/multiBar.js';
@@ -79,24 +77,27 @@ export default class FileFactory {
         // The file isn't actually an archive
         return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
       }
-      const entries = (
-        await async.mapLimit(
-          archives,
-          1,
-          async (archive: Archive) =>
-            await this.entriesFromArchive(
-              archive,
-              entryChecksumBitmask,
-              CacheMode.RESPECT_CACHED_VALUE,
-              callback,
-            ),
-        )
-      ).flat();
-      if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
+      const entries: ArchiveEntry<Archive>[] = [];
+      let anyParsed = false;
+      for (const archive of archives) {
+        const result = await this.entriesFromArchive(
+          archive,
+          entryChecksumBitmask,
+          CacheMode.RESPECT_CACHED_VALUE,
+          callback,
+        );
+        if (result !== undefined) {
+          anyParsed = true;
+          for (const entry of result) {
+            entries.push(entry);
+          }
+        }
+      }
+      if (!anyParsed) {
         // The file isn't actually an archive
         return [await this.fileFrom(filePath, fileChecksumBitmask)];
       }
-      return entries.filter((entry) => entry !== undefined);
+      return entries;
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         throw new IgirException(`file doesn't exist: ${filePath}`);
@@ -237,24 +238,27 @@ export default class FileFactory {
       // The file isn't actually an archive
       return undefined;
     }
-    const entries = (
-      await async.mapLimit(
-        archives,
-        1,
-        async (archive: Archive) =>
-          await this.entriesFromArchive(
-            archive,
-            checksumBitmask,
-            CacheMode.RESPECT_CACHED_VALUE,
-            callback,
-          ),
-      )
-    ).flat();
-    if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
+    const entries: ArchiveEntry<Archive>[] = [];
+    let anyParsed = false;
+    for (const archive of archives) {
+      const result = await this.entriesFromArchive(
+        archive,
+        checksumBitmask,
+        CacheMode.RESPECT_CACHED_VALUE,
+        callback,
+      );
+      if (result !== undefined) {
+        anyParsed = true;
+        for (const entry of result) {
+          entries.push(entry);
+        }
+      }
+    }
+    if (!anyParsed) {
       // The file isn't actually an archive
       return undefined;
     }
-    return entries.filter((entry) => entry !== undefined);
+    return entries;
   }
 
   static isExtensionArchive(filePath: string): boolean {
