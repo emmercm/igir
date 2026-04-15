@@ -971,10 +971,10 @@ export default class Options implements OptionsProps {
    */
   private static sanitizeGlobPattern(globPattern: string): string {
     return (
-      // fg only uses forward-slash path separators; convert back-slash characters that probably aren't escaping a character
+      // fg only uses forward-slash path separators; convert back-slash characters if the user provided a purely Windows path
       (
-        process.platform === 'win32'
-          ? globPattern.replaceAll(/\\(?![(){}[\]]|[@+!]\()/g, '/')
+        process.platform === 'win32' && !globPattern.includes('/')
+          ? globPattern.replaceAll('\\', '/')
           : globPattern
       )
         // Escape parentheticals that aren't an extglob and probably aren't a "logical OR"
