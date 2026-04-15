@@ -8,7 +8,7 @@ import FsPoly from '../../polyfill/fsPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import type File from '../../types/files/file.js';
-import type FileFactory from '../../types/files/fileFactory.js';
+import FileFactory from '../../types/files/fileFactory.js';
 import type Options from '../../types/options.js';
 import { TrimScanFiles } from '../../types/options.js';
 import Module from '../module.js';
@@ -122,7 +122,11 @@ export default class ROMTrimProcessor extends Module {
       return true;
     }
 
-    if (inputFile instanceof ArchiveEntry && !this.options.getTrimScanArchives()) {
+    if (
+      (inputFile instanceof ArchiveEntry ||
+        FileFactory.isExtensionArchive(inputFile.getFilePath())) &&
+      !this.options.getTrimScanArchives()
+    ) {
       return false;
     }
 
@@ -139,7 +143,12 @@ export default class ROMTrimProcessor extends Module {
       this.options.getTrimScanFiles() === TrimScanFiles.AUTO &&
       !this.options.shouldReadFileForTrimming(inputFile.getFilePath())
     ) {
-      const fileSignature = await this.fileFactory.signatureFrom(inputFile);
+      const fileSignature = await this.fileFactory.signatureFrom(inputFile, (progress, total) => {
+        progressBar.setCompleted(progress);
+        if (total !== undefined) {
+          progressBar.setTotal(total);
+        }
+      });
       if (!fileSignature?.canBeTrimmed()) {
         // This file isn't known to be trimmable
         return inputFile;
