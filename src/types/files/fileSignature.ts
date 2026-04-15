@@ -2,6 +2,8 @@ import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
+import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
+
 type SignaturePiece = {
   offset?: number;
 } & (
@@ -572,12 +574,19 @@ export default class FileSignature {
 
   static async signatureFromFileStream(
     readable: stream.Readable,
+    callback?: FsReadCallback,
   ): Promise<FileSignature | undefined> {
+    if (callback) {
+      callback(0, this.MAX_HEADER_LENGTH_BYTES);
+    }
     const fileHeader = await FileSignature.readHeaderBuffer(
       readable,
       0,
       this.MAX_HEADER_LENGTH_BYTES,
     );
+    if (callback) {
+      callback(fileHeader.length, fileHeader.length);
+    }
 
     for (const romSignature of this.SIGNATURES) {
       const signatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
