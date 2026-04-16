@@ -257,7 +257,11 @@ export default class FileCache {
     return ROMHeader.headerFromName(cachedHeaderName);
   }
 
-  async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
+  async getOrComputeFileSignature(
+    file: File,
+    callback?: FsReadCallback,
+  ): Promise<FileSignature | undefined> {
+    // TODO(cemmer): cache based on checksum(s), not file path
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     if (stats.size === 0) {
@@ -274,7 +278,7 @@ export default class FileCache {
       cacheKey,
       async () => {
         const signature = await file.createReadStream(
-          async (readable) => await FileSignature.signatureFromFileStream(readable),
+          async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
         );
         return {
           fileSize: stats.size,

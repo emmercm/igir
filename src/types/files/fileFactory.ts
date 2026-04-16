@@ -288,8 +288,8 @@ export default class FileFactory {
     return await this.fileCache.getOrComputeFileHeader(file);
   }
 
-  async signatureFrom(file: File): Promise<FileSignature | undefined> {
-    return await this.fileCache.getOrComputeFileSignature(file);
+  async signatureFrom(file: File, callback?: FsReadCallback): Promise<FileSignature | undefined> {
+    return await this.fileCache.getOrComputeFileSignature(file, callback);
   }
 
   async paddingsFrom(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
