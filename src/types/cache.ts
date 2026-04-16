@@ -184,7 +184,11 @@ export default class Cache<V> {
     }
 
     this.saveToFileTimeout = Timer.setTimeout(async () => {
-      await this.save();
+      try {
+        await this.save();
+      } finally {
+        this.saveToFileTimeout = undefined;
+      }
     }, this.fileFlushMillis);
   }
 
@@ -206,6 +210,8 @@ export default class Cache<V> {
 
         const keyValuesObject = Object.fromEntries(this.keyValues);
         const json = JSON.stringify(keyValuesObject);
+        // Reset before I/O so mid-save changes re-set the flag
+        this.hasChanged = false;
 
         // Ensure the directory exists
         const dirPath = path.dirname(this.filePath);
@@ -215,27 +221,29 @@ export default class Cache<V> {
 
         // Write to a temp file first
         const tempFile = await FsPoly.mktemp(this.filePath);
-        await stream.promises.pipeline(
-          stream.Readable.from([Buffer.from(json, 'utf8')]),
-          zlib.createGzip(),
-          fs.createWriteStream(tempFile),
-        );
-
-        // Validate the file was written correctly
-        const tempFileCache = await new Cache({ filePath: tempFile }).load();
-        if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
-          // The written file is bad, don't use it
-          await FsPoly.rm(tempFile, { force: true });
-          return;
-        }
-
-        // Overwrite the real file with the temp file
         try {
+          await stream.promises.pipeline(
+            stream.Readable.from([Buffer.from(json, 'utf8')]),
+            zlib.createGzip(),
+            fs.createWriteStream(tempFile),
+          );
+
+          // Validate the file was written correctly
+          const tempFileCache = await new Cache({ filePath: tempFile }).load();
+          if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
+            // The written file is bad, don't use it
+            await FsPoly.rm(tempFile, { force: true });
+            this.hasChanged = true;
+            return;
+          }
+
+          // Overwrite the real file with the temp file
           await FsPoly.mv(tempFile, this.filePath);
         } catch {
+          await FsPoly.rm(tempFile, { force: true });
+          this.hasChanged = true;
           return;
         }
-        this.hasChanged = false;
         this.saveMutex.cancel(); // cancel all waiting locks, we just saved
       });
     } catch (error) {

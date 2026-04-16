@@ -5,6 +5,7 @@ import Game from '../game.js';
 import Header from '../logiqx/header.js';
 
 export interface MameDATProps extends DATProps {
+  build?: string;
   machine?: Game | Game[];
   game?: Game | Game[];
 }
@@ -14,7 +15,7 @@ export interface MameDATProps extends DATProps {
  */
 export default class MameDAT extends DAT implements MameDATProps {
   @Expose()
-  private readonly build?: string;
+  readonly build?: string;
 
   // @Expose()
   // private readonly debug: 'yes' | 'no' = 'no';
@@ -36,6 +37,7 @@ export default class MameDAT extends DAT implements MameDATProps {
 
   constructor(props?: MameDATProps) {
     super(props);
+    this.build = props?.build;
     this.machine = props?.machine;
     this.game = props?.game;
     this.generateGameNamesToParents();
