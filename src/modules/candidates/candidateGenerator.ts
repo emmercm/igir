@@ -239,31 +239,26 @@ export default class CandidateGenerator extends Module {
           return false;
         }
 
-        if (rawWriting && inputFile instanceof ArchiveEntry) {
-          if (this.options.getPatchFileCount() > 0 && !(rom instanceof Disk)) {
-            // We MIGHT want to patch this ROM, but we can't if we're raw-copying it
+        if (
+          rawWriting &&
+          inputFile instanceof ArchiveEntry &&
+          rom.getName().trim() !== '' &&
+          inputFile.getArchive().hasMeaningfulEntryPaths()
+        ) {
+          const outputPath = OutputFactory.getPath(
+            this.options,
+            dat,
+            singleValueGame,
+            rom,
+            inputFile,
+          );
+          if (outputPath.entryPath !== inputFile.getExtractedFilePath()) {
+            // The input file is an ArchiveEntry that we won't rewrite and its name doesn't match
+            // what we want it to be
             this.progressBar.logTrace(
-              `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because it might be patched: ${inputFile.toString()}`,
+              `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because the entry '${inputFile.getExtractedFilePath()}' doesn't have the correct path '${outputPath.entryPath}'`,
             );
             return false;
-          }
-
-          if (rom.getName().trim() !== '' && inputFile.getArchive().hasMeaningfulEntryPaths()) {
-            const outputPath = OutputFactory.getPath(
-              this.options,
-              dat,
-              singleValueGame,
-              rom,
-              inputFile,
-            );
-            if (outputPath.entryPath !== inputFile.getExtractedFilePath()) {
-              // The input file is an ArchiveEntry that we won't rewrite and its name doesn't match
-              // what we want it to be
-              this.progressBar.logTrace(
-                `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because the entry '${inputFile.getExtractedFilePath()}' doesn't have the correct path '${outputPath.entryPath}'`,
-              );
-              return false;
-            }
           }
         }
 
@@ -694,11 +689,6 @@ export default class CandidateGenerator extends Module {
         return "input archive is being zipped and it isn't already a zip";
       }
 
-      if (this.options.getPatchFileCount() > 0 && !(rom instanceof Disk)) {
-        // We might want to patch this file, but won't be able to, so we can't use this archive
-        return 'input file might need to be patched';
-      }
-
       if (rom.getName().trim() !== '' && inputFile.getArchive().hasMeaningfulEntryPaths()) {
         const outputPath = OutputFactory.getPath(
           this.options,
@@ -807,7 +797,7 @@ export default class CandidateGenerator extends Module {
            * {@link CandidateArchiveFileHasher} will handle it later
            */
           try {
-            const newInputFile = new ArchiveFile(oldInputFile.getArchive(), {
+            const newInputFile = new ArchiveFile(oldInputFile as ArchiveEntry<Archive>, {
               size: await FsPoly.size(oldInputFile.getFilePath()),
               checksumBitmask: oldInputFile.getChecksumBitmask(),
             });

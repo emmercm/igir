@@ -419,7 +419,7 @@ export default class CandidateWriter extends Module {
     this.progressBar.logInfo(
       [
         `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:`,
-        inputToOutputZipEntries.map(([input, output]) => {
+        ...inputToOutputZipEntries.map(([input, output]) => {
           if (input.getFilePath() === output.getFilePath()) {
             return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
           }

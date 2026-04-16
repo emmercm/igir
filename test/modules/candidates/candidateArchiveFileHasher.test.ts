@@ -10,6 +10,7 @@ import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/types/dats/rom.js';
 import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
+import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/types/files/archives/archiveFile.js';
 import Zip from '../../../src/types/files/archives/zip.js';
 import File from '../../../src/types/files/file.js';
@@ -64,7 +65,8 @@ describe('hash', () => {
 
     const zipPath = path.join(FIXTURE_ROMS_DIR, 'zip', 'foobar.zip');
     const zip = new Zip(zipPath);
-    const archiveFile = new ArchiveFile(zip);
+    const archiveEntry = await ArchiveEntry.entryOf({ archive: zip, entryPath: 'foobar.lnx' });
+    const archiveFile = new ArchiveFile(archiveEntry);
 
     const game = new SingleValueGame({ name: 'Zip Game' });
     const rom = new ROM({ name: 'foobar.lnx', size: 0 });
@@ -82,7 +84,8 @@ describe('hash', () => {
 
     const zipPath = path.join(FIXTURE_ROMS_DIR, 'zip', 'foobar.zip');
     const zip = new Zip(zipPath);
-    const archiveFile = new ArchiveFile(zip);
+    const archiveEntry = await ArchiveEntry.entryOf({ archive: zip, entryPath: 'foobar.lnx' });
+    const archiveFile = new ArchiveFile(archiveEntry);
     const outputFile = await File.fileOf({ filePath: 'output.rom', size: 0, crc32: '00000000' });
 
     const game = new SingleValueGame({ name: 'Zip Game' });

@@ -13,6 +13,7 @@ import Header from '../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/types/dats/rom.js';
 import SingleValueGame from '../../src/types/dats/singleValueGame.js';
+import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../src/types/files/archives/archiveFile.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
@@ -339,7 +340,8 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
       await Promise.all(
         dummyDat.getGames().map(async (game) => {
           const zip = new Zip(`${game.getName()}.zip`);
-          const inputFile = new ArchiveFile(zip);
+          const archiveEntry = await ArchiveEntry.entryOf({ archive: zip, entryPath: 'entry.rom' });
+          const inputFile = new ArchiveFile(archiveEntry);
 
           const outputFile = await File.fileOf({ filePath: zip.getFilePath() });
           return new WriteCandidate(

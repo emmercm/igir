@@ -124,13 +124,13 @@ export default class FileFactory {
   }
 
   async archiveFileFrom(
-    archive: Archive,
+    archiveEntry: ArchiveEntry<Archive>,
     checksumBitmask: number,
     callback?: FsReadCallback,
   ): Promise<ArchiveFile> {
     return new ArchiveFile(
-      archive,
-      await this.fileFrom(archive.getFilePath(), checksumBitmask, callback),
+      archiveEntry,
+      await this.fileFrom(archiveEntry.getFilePath(), checksumBitmask, callback),
     );
   }
 

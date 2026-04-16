@@ -16,6 +16,8 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import type DAT from '../../../src/types/dats/dat.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
+import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
+import ArchiveFile from '../../../src/types/files/archives/archiveFile.js';
 import type File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
@@ -39,7 +41,6 @@ async function runPatchCandidateGenerator(
 ): Promise<WriteCandidate[]> {
   const options = new Options({
     ...optionsProps,
-    commands: ['extract'],
     patch: [path.join('test', 'fixtures', 'patches')],
   });
 
@@ -79,6 +80,7 @@ describe('with inferred DATs', () => {
   it('should do nothing with no relevant patches', async () => {
     // Given
     const options = new Options({
+      commands: ['extract'],
       input: [path.join('test', 'fixtures', 'roms', 'headered')],
     });
     const romFiles = await new ROMScanner(
@@ -96,9 +98,10 @@ describe('with inferred DATs', () => {
     expect(candidates).toHaveLength(6);
   });
 
-  it('should create patch candidates with relevant patches', async () => {
+  it('should create patch candidates with relevant patches when extracting', async () => {
     // Given
     const options = new Options({
+      commands: ['extract'],
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
     });
     const romFiles = await new ROMScanner(
@@ -130,9 +133,52 @@ describe('with inferred DATs', () => {
     ).toEqual(true);
   });
 
+  it('should create patch candidates with relevant patches when zipping', async () => {
+    // Given
+    const options = new Options({
+      commands: ['zip'],
+      input: [path.join('test', 'fixtures', 'roms', 'patchable')],
+    });
+    const romFiles = await new ROMScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).scan();
+    const dat = await buildInferredDat(options, romFiles);
+
+    // When
+    const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
+
+    // Then - patched candidates should exist (patches matched against raw file inputs)
+    expect(candidates).toHaveLength(romFiles.length * 2);
+    const patchedCandidates = candidates.filter((candidate) =>
+      candidate
+        .getRomsWithFiles()
+        .some((romWithFiles) => romWithFiles.getInputFile().getPatch() !== undefined),
+    );
+    expect(patchedCandidates.length).toBeGreaterThan(0);
+
+    // Then - patched candidates' output files should be ArchiveEntry (zip mode)
+    patchedCandidates.forEach((candidate) => {
+      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+        expect(romWithFiles.getOutputFile()).toBeInstanceOf(ArchiveEntry);
+      });
+    });
+
+    // Then - no input file should be an ArchiveFile (they should remain as-is or be
+    // converted to ArchiveEntry)
+    candidates.forEach((candidate) => {
+      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+        expect(romWithFiles.getInputFile()).not.toBeInstanceOf(ArchiveFile);
+      });
+    });
+  });
+
   it('should only create patch candidates with relevant patches', async () => {
     // Given
     const options = new Options({
+      commands: ['extract'],
       input: [path.join('test', 'fixtures', 'roms', 'patchable')],
       patchOnly: true,
     });
