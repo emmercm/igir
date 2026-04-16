@@ -1,9 +1,6 @@
-import async from 'async';
-
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import Defaults from '../../globals/defaults.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import type File from '../../types/files/file.js';
@@ -55,37 +52,31 @@ export default class ROMHeaderProcessor extends Module {
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
     this.progressBar.resetProgress(filesThatNeedProcessing);
 
-    const parsedFiles = await async.mapLimit(
-      inputRomFiles,
-      Defaults.MAX_FS_THREADS,
-      async (inputFile: File) => {
-        if (!this.fileNeedsProcessing(inputFile)) {
-          return inputFile;
-        }
+    const parsedFiles = await this.mappableSemaphore.map(inputRomFiles, async (inputFile: File) => {
+      if (!this.fileNeedsProcessing(inputFile)) {
+        return inputFile;
+      }
 
-        return await this.mappableSemaphore.runExclusive(async () => {
-          this.progressBar.incrementInProgress();
-          const childBar = this.progressBar.addChildBar({
-            name: inputFile.toString(),
-          });
+      this.progressBar.incrementInProgress();
+      const childBar = this.progressBar.addChildBar({
+        name: inputFile.toString(),
+      });
 
-          let fileWithHeader: File | undefined;
-          try {
-            fileWithHeader = await this.getFileWithHeader(inputFile);
-          } catch (error) {
-            this.progressBar.logError(
-              `${inputFile.toString()}: failed to process ROM header: ${error}`,
-            );
-            fileWithHeader = inputFile;
-          } finally {
-            childBar.delete();
-          }
-          this.progressBar.incrementCompleted();
+      let fileWithHeader: File | undefined;
+      try {
+        fileWithHeader = await this.getFileWithHeader(inputFile);
+      } catch (error) {
+        this.progressBar.logError(
+          `${inputFile.toString()}: failed to process ROM header: ${error}`,
+        );
+        fileWithHeader = inputFile;
+      } finally {
+        childBar.delete();
+      }
+      this.progressBar.incrementCompleted();
 
-          return fileWithHeader;
-        });
-      },
-    );
+      return fileWithHeader;
+    });
 
     const headeredRomsCount = parsedFiles.filter(
       (romFile) => romFile.getFileHeader() !== undefined,

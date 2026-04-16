@@ -657,16 +657,24 @@ export default class FsPoly {
     const k = 1024;
     const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
-    const bytesFormatted = bytes / k ** i;
+    const bytesDivided = bytes / k ** i;
+    if (Number.isInteger(bytesDivided)) {
+      return `${bytesDivided}${sizes[i]}`;
+    }
     let fractionDigits = 1;
-    if (bytesFormatted === 0) {
+    if (bytesDivided === 0) {
       fractionDigits = 0;
-    } else if (bytesFormatted < 10) {
+    } else if (bytesDivided < 10) {
       fractionDigits = 2;
-    } else if (bytesFormatted >= 100) {
+    } else if (
+      bytesDivided >= 100 ||
+      // Will get rounded up to "100.0" or similar
+      bytesDivided.toFixed(fractionDigits).length ===
+        3 + (fractionDigits > 0 ? 1 + fractionDigits : 0)
+    ) {
       fractionDigits = 0;
     }
-    return `${bytesFormatted.toFixed(fractionDigits)}${sizes[i]}`;
+    return `${bytesDivided.toFixed(fractionDigits)}${sizes[i]}`;
   }
 
   /**
@@ -709,7 +717,7 @@ export default class FsPoly {
    */
   static async stat(
     pathLike: fs.PathLike,
-  ): Promise<fs.Stats & { atimeS: number; mtimeS: number; ctimeS: number }> {
+  ): Promise<fs.Stats & { atimeS: number; mtimeS: number; ctimeS: number; birthtimeS: number }> {
     const fsStats = await fs.promises.stat(pathLike);
     return Object.assign(
       Object.create(Object.getPrototypeOf(fsStats) as object) as fs.Stats,
@@ -718,6 +726,7 @@ export default class FsPoly {
         atimeS: Math.floor(fsStats.atimeMs / 1000),
         mtimeS: Math.floor(fsStats.mtimeMs / 1000),
         ctimeS: Math.floor(fsStats.ctimeMs / 1000),
+        birthtimeS: Math.floor(fsStats.birthtimeMs / 1000),
       },
     );
   }

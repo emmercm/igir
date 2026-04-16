@@ -217,6 +217,7 @@ export default class CandidateWriter extends Module {
             candidate,
             outputZip.getFilePath(),
             inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
+            childBar,
           );
           if (this.options.shouldWrite() && !existingTest) {
             this.progressBar.logDebug(
@@ -272,6 +273,7 @@ export default class CandidateWriter extends Module {
             candidate,
             outputZip.getFilePath(),
             inputToOutputZipEntries.map((entry) => entry[1]),
+            childBar,
           );
           if (!writtenTest) {
             // Successfully validated
@@ -302,6 +304,7 @@ export default class CandidateWriter extends Module {
     candidate: WriteCandidate,
     zipFilePath: string,
     expectedArchiveEntries: ArchiveEntry<Zip>[],
+    progressBar: ProgressBar,
   ): Promise<string | undefined> {
     this.progressBar.logTrace(
       `${dat.getName()}: ${candidate.getName()}: ${zipFilePath}: testing zip`,
@@ -326,6 +329,12 @@ export default class CandidateWriter extends Module {
           zipFile,
           checksumBitmask,
           CacheMode.IGNORE_CACHED_VALUE,
+          (progress, total) => {
+            progressBar.setCompleted(progress);
+            if (total !== undefined) {
+              progressBar.setTotal(total);
+            }
+          },
         )) ?? [];
     } catch (error) {
       return `failed to get archive contents: ${error}`;
@@ -410,7 +419,7 @@ export default class CandidateWriter extends Module {
     this.progressBar.logInfo(
       [
         `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:`,
-        inputToOutputZipEntries.map(([input, output]) => {
+        ...inputToOutputZipEntries.map(([input, output]) => {
           if (input.getFilePath() === output.getFilePath()) {
             return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
           }
@@ -708,6 +717,10 @@ export default class CandidateWriter extends Module {
         this.progressBar.logError(
           `${dat.getName()}: ${candidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
         );
+        if ((error as NodeJS.ErrnoException).code === 'ENOSPC') {
+          // No space left on device, throw to prevent subsequent operations
+          throw error;
+        }
         return [undefined, undefined];
       }
     });
@@ -737,6 +750,10 @@ export default class CandidateWriter extends Module {
       this.progressBar.logError(
         `${dat.getName()}: ${candidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
       );
+      if ((error as NodeJS.ErrnoException).code === 'ENOSPC') {
+        // No space left on device, throw to prevent subsequent operations
+        throw error;
+      }
       return undefined;
     }
   }

@@ -107,13 +107,16 @@ async function candidateWriter(
     dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
 
+  const readerSemaphore = new MappableSemaphore(2);
+  const writerSemaphore = new CandidateWriterSemaphore(2);
+
   let romFiles: File[] = [];
   try {
     romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new MappableSemaphore(os.availableParallelism()),
+      readerSemaphore,
     ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
   } catch {
     /* ignored */
@@ -122,7 +125,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new MappableSemaphore(os.availableParallelism()),
+    readerSemaphore,
   ).process(romFiles);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
 
@@ -132,14 +135,14 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new MappableSemaphore(os.availableParallelism()),
+    readerSemaphore,
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
       new FileFactory(new FileCache(), LOGGER),
-      new MappableSemaphore(os.availableParallelism()),
+      readerSemaphore,
     ).scan();
     candidates = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
       dat,
@@ -151,7 +154,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new MappableSemaphore(os.availableParallelism()),
+    readerSemaphore,
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
 
@@ -160,7 +163,7 @@ async function candidateWriter(
     options,
     new ProgressBarFake(),
     new FileFactory(new FileCache(), LOGGER),
-    new CandidateWriterSemaphore(os.availableParallelism()),
+    writerSemaphore,
     new FileMoveMutex(),
   ).write(dat, candidates);
 }

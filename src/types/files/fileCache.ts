@@ -14,7 +14,7 @@ import ROMPadding from './romPadding.js';
 
 interface CacheValue {
   fileSize: number;
-  modifiedTimeMillis: number;
+  modifiedTimeSec: number;
   value:
     | number
     // getOrComputeFileChecksums()
@@ -53,7 +53,7 @@ export default class FileCache {
   async loadFile(cacheFilePath: string): Promise<void> {
     this.cache = await new Cache<CacheValue>({
       filePath: cacheFilePath,
-      fileFlushMillis: 60_000,
+      fileFlushMillis: 120_000,
       saveOnExit: true,
     }).load();
 
@@ -102,7 +102,7 @@ export default class FileCache {
         computedFile = await File.fileOf({ filePath, ...checksums }, checksumBitmask);
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeS,
+          modifiedTimeSec: stats.mtimeS,
           value: computedFile.toFileProps(),
         };
       },
@@ -111,7 +111,7 @@ export default class FileCache {
           return true;
         }
 
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -169,7 +169,7 @@ export default class FileCache {
         )) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeS,
+          modifiedTimeSec: stats.mtimeS,
           value: computedEntries.map((entry) => entry.toEntryProps()),
         };
       },
@@ -178,7 +178,7 @@ export default class FileCache {
           return true;
         }
 
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -215,6 +215,7 @@ export default class FileCache {
   }
 
   async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
+    // TODO(cemmer): cache based on checksum(s), not file path
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     if (stats.size === 0) {
@@ -235,12 +236,12 @@ export default class FileCache {
         );
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeS,
+          modifiedTimeSec: stats.mtimeS,
           value: header?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
           // Recompute if the file has changed since being cached
           return true;
         }
@@ -256,7 +257,11 @@ export default class FileCache {
     return ROMHeader.headerFromName(cachedHeaderName);
   }
 
-  async getOrComputeFileSignature(file: File): Promise<FileSignature | undefined> {
+  async getOrComputeFileSignature(
+    file: File,
+    callback?: FsReadCallback,
+  ): Promise<FileSignature | undefined> {
+    // TODO(cemmer): cache based on checksum(s), not file path
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsPoly.stat(file.getFilePath());
     if (stats.size === 0) {
@@ -273,16 +278,16 @@ export default class FileCache {
       cacheKey,
       async () => {
         const signature = await file.createReadStream(
-          async (readable) => await FileSignature.signatureFromFileStream(readable),
+          async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
         );
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeS,
+          modifiedTimeSec: stats.mtimeS,
           value: signature?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
           // File has changed since being cached
           return true;
         }
@@ -317,12 +322,12 @@ export default class FileCache {
         const paddings = await ROMPadding.paddingsFromFile(file, callback);
         return {
           fileSize: stats.size,
-          modifiedTimeMillis: stats.mtimeS,
+          modifiedTimeSec: stats.mtimeS,
           value: paddings.map((padding) => padding.toROMPaddingProps()),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeMillis !== stats.mtimeS) {
+        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
           // Recompute if the file has changed since being cached
           return true;
         }
