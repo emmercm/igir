@@ -6,7 +6,7 @@ import type { ArchiveEntryProps } from './archives/archiveEntry.js';
 import ArchiveEntry from './archives/archiveEntry.js';
 import type { FileProps } from './file.js';
 import File from './file.js';
-import FileChecksums, { ChecksumBitmask, ChecksumBitmaskInverted } from './fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from './fileChecksums.js';
 import FileSignature from './fileSignature.js';
 import ROMHeader from './romHeader.js';
 import type { ROMPaddingProps } from './romPadding.js';
