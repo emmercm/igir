@@ -96,6 +96,51 @@ export default class Cache<V> {
   }
 
   /**
+   * Get the values of all keys in the cache if they exist, or compute all values and set them
+   * in the cache if any key is missing.
+   */
+  async getOrComputeAllKeys(
+    keys: string[],
+    runnable: () => Map<string, V> | Promise<Map<string, V>>,
+  ): Promise<Map<string, V>> {
+    // Fast path: check all keys without holding multi-key locks.
+    // get() acquires per-key mutexes, so it waits on any in-progress computation.
+    const values = await Promise.all(
+      keys.map(async (key) => {
+        return await this.get(key);
+      }),
+    );
+    if (values.every((value) => value !== undefined)) {
+      return keys.reduce((map, key, idx) => {
+        map.set(key, values[idx]);
+        return map;
+      }, new Map<string, V>());
+    }
+
+    // Slow path: acquire all key locks, double-check, then compute if still needed.
+    await this.keyedMutex.acquireMultiple(keys);
+    try {
+      // Re-check under lock using direct map access (not get(), which would deadlock)
+      const values = keys.map((key) => this.keyValues.get(key));
+      if (values.every((value) => value !== undefined)) {
+        return keys.reduce((map, key, idx) => {
+          map.set(key, values[idx]);
+          return map;
+        }, new Map<string, V>());
+      }
+
+      // Compute and store all values
+      const computed = await runnable();
+      for (const [key, value] of computed) {
+        this.setUnsafe(key, value);
+      }
+      return computed;
+    } finally {
+      this.keyedMutex.releaseMultiple(keys);
+    }
+  }
+
+  /**
    * Set the value of a key in the cache.
    */
   async set(key: string, val: V): Promise<void> {
