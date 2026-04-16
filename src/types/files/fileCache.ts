@@ -311,25 +311,31 @@ export default class FileCache {
       return [];
     }
 
-    const fileChecksumBitmask = file.getChecksumBitmask();
-    const activeChecksums = Object.values(ChecksumBitmask).filter(
-      (bitmask) => fileChecksumBitmask & bitmask,
+    // Build a cache key per checksum type using the file's trimmed checksum
+    const checksumEntries: [number, string | undefined][] = [
+      [ChecksumBitmask.CRC32, file.getCrc32()],
+      [ChecksumBitmask.MD5, file.getMd5()],
+      [ChecksumBitmask.SHA1, file.getSha1()],
+      [ChecksumBitmask.SHA256, file.getSha256()],
+    ];
+    const activeChecksums = checksumEntries.filter(
+      (entry): entry is [number, string] =>
+        (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
     );
     if (activeChecksums.length === 0) {
-      // We don't need to compute any paddings
-      return [];
+      // No checksums available to use as cache keys, compute without caching
+      return await ROMPadding.paddingsFromFile(file, callback);
     }
 
-    // Compute the paddings if any are missing
-    const cacheKeys = activeChecksums.map((checksum) =>
-      this.getCacheKey(ChecksumBitmaskInverted[checksum], undefined, ValueType.ROM_PADDING),
+    const cacheKeys = activeChecksums.map(([, checksum]) =>
+      this.getCacheKey(checksum, undefined, ValueType.ROM_PADDING),
     );
     const cachedResults = await this.cache.getOrComputeAllKeys(cacheKeys, async () => {
       const paddings = await ROMPadding.paddingsFromFile(file, callback);
       const paddingProps = paddings.map((padding) => padding.toROMPaddingProps());
 
       const resultMap = new Map<string, CacheValue>();
-      for (const [i, bitmask] of activeChecksums.entries()) {
+      for (const [i, [bitmask]] of activeChecksums.entries()) {
         const perTypePaddings: ROMPaddingProps[] = paddingProps.map((props) => ({
           paddedSize: props.paddedSize,
           fillByte: props.fillByte,
