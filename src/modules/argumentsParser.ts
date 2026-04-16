@@ -427,7 +427,7 @@ export default class ArgumentsParser {
         }
         if (checkArgv.patch && !checkArgv._.includes('extract') && !checkArgv._.includes('zip')) {
           this.logger.warn(
-            `archived files can't be patched unless the 'extract' or 'zip' command is used${checkArgv._.includes('clean') ? ', and this may cause more files to be cleaned than you intended!' : ''}`,
+            "archived files can't be patched unless the 'extract' or 'zip' command is used",
           );
         }
         return true;
