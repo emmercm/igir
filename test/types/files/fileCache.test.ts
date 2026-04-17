@@ -26,3 +26,7 @@ describe('loadFile', () => {
     await fileCache.loadFile(tempCache);
   });
 });
+
+describe('getOrComputeFilePaddings', () => {
+  // Tested by romTrimProcessor.ts
+});

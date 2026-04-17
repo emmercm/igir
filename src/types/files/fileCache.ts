@@ -13,8 +13,8 @@ import type { ROMPaddingProps } from './romPadding.js';
 import ROMPadding from './romPadding.js';
 
 interface CacheValue {
-  fileSize: number;
-  modifiedTimeSec: number;
+  fileSize?: number;
+  modifiedTimeSec?: number;
   value:
     | number
     // getOrComputeFileChecksums()
@@ -37,10 +37,12 @@ const ValueType = {
   ROM_HEADER: `H${ROMHeader.getKnownHeaderCount()}`,
   FILE_SIGNATURE: `S${FileSignature.SIGNATURES.length}`,
   ROM_PADDING: `P${ROMPadding.getKnownFillBytesCount()}`,
-};
+} as const;
+type ValueTypeKey = keyof typeof ValueType;
+type ValueTypeValue = (typeof ValueType)[ValueTypeKey];
 
 export default class FileCache {
-  private static readonly VERSION = 5;
+  private static readonly VERSION = 6;
 
   private cache: Cache<CacheValue> = new Cache<CacheValue>();
 
@@ -304,52 +306,81 @@ export default class FileCache {
   }
 
   async getOrComputeFilePaddings(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
-    // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
-    const stats = await FsPoly.stat(file.getFilePath());
-    if (stats.size === 0) {
+    if (file.getSize() === 0) {
       // An empty file can't have any padding
       return [];
     }
-    const cacheKey = this.getCacheKey(
-      file.getFilePath(),
-      file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
-      ValueType.ROM_PADDING,
-    );
 
-    const cachedValue = await this.cache.getOrCompute(
-      cacheKey,
-      async () => {
-        const paddings = await ROMPadding.paddingsFromFile(file, callback);
-        return {
-          fileSize: stats.size,
-          modifiedTimeSec: stats.mtimeS,
-          value: paddings.map((padding) => padding.toROMPaddingProps()),
+    // Build a cache key per checksum type using the file's trimmed checksum
+    const checksumEntries: [number, string | undefined][] = [
+      [ChecksumBitmask.CRC32, file.getCrc32()],
+      [ChecksumBitmask.MD5, file.getMd5()],
+      [ChecksumBitmask.SHA1, file.getSha1()],
+      [ChecksumBitmask.SHA256, file.getSha256()],
+    ];
+    const activeChecksums = checksumEntries.filter(
+      (entry): entry is [number, string] =>
+        (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
+    );
+    if (activeChecksums.length === 0) {
+      // No checksums available to use as cache keys, compute without caching
+      return await ROMPadding.paddingsFromFile(file, callback);
+    }
+
+    const cacheKeys = activeChecksums.map(([, checksum]) =>
+      this.getCacheKey(checksum, undefined, ValueType.ROM_PADDING),
+    );
+    const cachedResults = await this.cache.getOrComputeAllKeys(cacheKeys, async () => {
+      const paddings = await ROMPadding.paddingsFromFile(file, callback);
+      const paddingProps = paddings.map((padding) => padding.toROMPaddingProps());
+
+      const resultMap = new Map<string, CacheValue>();
+      for (const [i, [bitmask]] of activeChecksums.entries()) {
+        const perTypePaddings: ROMPaddingProps[] = paddingProps.map((props) => ({
+          paddedSize: props.paddedSize,
+          fillByte: props.fillByte,
+          ...(bitmask === ChecksumBitmask.CRC32 && props.crc32 !== undefined
+            ? { crc32: props.crc32 }
+            : {}),
+          ...(bitmask === ChecksumBitmask.MD5 && props.md5 !== undefined ? { md5: props.md5 } : {}),
+          ...(bitmask === ChecksumBitmask.SHA1 && props.sha1 !== undefined
+            ? { sha1: props.sha1 }
+            : {}),
+          ...(bitmask === ChecksumBitmask.SHA256 && props.sha256 !== undefined
+            ? { sha256: props.sha256 }
+            : {}),
+        }));
+        resultMap.set(cacheKeys[i], { value: perTypePaddings });
+      }
+      return resultMap;
+    });
+
+    // Merge per-type cached results into complete ROMPadding objects
+    const fillByteToRomPaddingProps = new Map<number, ROMPaddingProps>();
+    for (const cacheValue of cachedResults.values()) {
+      const paddingPropsList = cacheValue.value as ROMPaddingProps[];
+      for (const element of paddingPropsList.values()) {
+        const existing = fillByteToRomPaddingProps.get(element.fillByte) ?? {
+          paddedSize: element.paddedSize,
+          fillByte: element.fillByte,
         };
-      },
-      (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
-          // Recompute if the file has changed since being cached
-          return true;
-        }
-
-        const cachedPadding = cached.value as ROMPaddingProps[];
-        const checksumBitmask = file.getChecksumBitmask();
-        const existingBitmask =
-          (cachedPadding.every((props) => props.crc32 !== undefined) ? ChecksumBitmask.CRC32 : 0) |
-          (cachedPadding.every((props) => props.md5 !== undefined) ? ChecksumBitmask.MD5 : 0) |
-          (cachedPadding.every((props) => props.sha1 !== undefined) ? ChecksumBitmask.SHA1 : 0) |
-          (cachedPadding.every((props) => props.sha256 !== undefined) ? ChecksumBitmask.SHA256 : 0);
-        const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
-        // We need checksums that haven't been cached yet
-        return remainingBitmask > 0;
-      },
-    );
-
-    const cachedPaddingsJson = cachedValue.value as ROMPaddingProps[];
-    return cachedPaddingsJson.map((props) => ROMPadding.fileOfObject(props));
+        fillByteToRomPaddingProps.set(element.fillByte, {
+          ...existing,
+          ...(element.crc32 === undefined ? {} : { crc32: element.crc32 }),
+          ...(element.md5 === undefined ? {} : { md5: element.md5 }),
+          ...(element.sha1 === undefined ? {} : { sha1: element.sha1 }),
+          ...(element.sha256 === undefined ? {} : { sha256: element.sha256 }),
+        });
+      }
+    }
+    return [...fillByteToRomPaddingProps.values()].map((props) => new ROMPadding(props));
   }
 
-  private getCacheKey(filePath: string, entryPath: string | undefined, valueType: string): string {
-    return `V${FileCache.VERSION}|${filePath}|${entryPath ?? ''}|${valueType}`;
+  private getCacheKey(
+    fileIdentifier: string,
+    fileSubIdentifier: string | undefined,
+    valueType: ValueTypeValue,
+  ): string {
+    return `V${FileCache.VERSION}|${fileIdentifier}|${fileSubIdentifier ?? ''}|${valueType}`;
   }
 }
