@@ -228,22 +228,35 @@ export default class FileCache {
       );
     };
 
-    let cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_HEADER);
-    if (cacheKeys.length === 0) {
+    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_HEADER);
+    const usingFilePathKey = cacheKeys.length === 0;
+    if (usingFilePathKey) {
       // No checksums available to use as cache keys, fall back to file path
-      cacheKeys = [this.getCacheKey(file.getFilePath(), undefined, ValueType.FILE_SIGNATURE)];
+      cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, ValueType.ROM_HEADER));
     }
+
+    // When using file-path-based keys, we need file stats to detect stale cache entries
+    const stats = usingFilePathKey ? await FsPoly.stat(file.getFilePath()) : undefined;
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
       async () => {
         const header = await computeHeader();
         return {
+          fileSize: stats?.size,
+          modifiedTimeSec: stats?.mtimeS,
           value: header?.getName(),
         };
       },
       (cached) => {
-        // Recompute if the cached value isn't known
+        if (
+          stats !== undefined &&
+          (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS)
+        ) {
+          // File has changed since being cached
+          return true;
+        }
+        // Recompute if the cached value isn't valid or isn't known
         return typeof cached.value !== 'string' || !ROMHeader.headerFromName(cached.value);
       },
     );
@@ -270,23 +283,36 @@ export default class FileCache {
       );
     };
 
-    let cacheKeys = this.getChecksumCacheKeys(file, ValueType.FILE_SIGNATURE);
-    if (cacheKeys.length === 0) {
+    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.FILE_SIGNATURE);
+    const usingFilePathKey = cacheKeys.length === 0;
+    if (usingFilePathKey) {
       // No checksums available to use as cache keys, fall back to file path
       // This can happen when correcting an ArchiveFile's extension
-      cacheKeys = [this.getCacheKey(file.getFilePath(), undefined, ValueType.FILE_SIGNATURE)];
+      cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, ValueType.FILE_SIGNATURE));
     }
+
+    // When using file-path-based keys, we need file stats to detect stale cache entries
+    const stats = usingFilePathKey ? await FsPoly.stat(file.getFilePath()) : undefined;
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
       async () => {
         const signature = await computeSignature();
         return {
+          fileSize: stats?.size,
+          modifiedTimeSec: stats?.mtimeS,
           value: signature?.getName(),
         };
       },
       (cached) => {
-        // Recompute if the cached value isn't known
+        if (
+          stats !== undefined &&
+          (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS)
+        ) {
+          // File has changed since being cached
+          return true;
+        }
+        // Recompute if the cached value isn't valid or isn't known
         return typeof cached.value !== 'string' || !FileSignature.signatureFromName(cached.value);
       },
     );
