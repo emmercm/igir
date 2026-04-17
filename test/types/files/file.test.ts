@@ -502,7 +502,7 @@ describe('equals', () => {
       archive: new Zip(filePath),
       entryPath: 'entry.rom',
     });
-    const archiveFile = new ArchiveFile(entry.getArchive(), {});
+    const archiveFile = new ArchiveFile(entry, {});
 
     expect(file.equals(archiveFile)).toEqual(true);
   });

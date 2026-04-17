@@ -62,6 +62,7 @@ export default {
    */
   fromXmlString(xmlContents: Buffer | string): DATObjectProps {
     return new XMLParser({
+      processEntities: false, // don't process doctype <!ENTITY> tags
       ignoreAttributes: false,
       ignoreDeclaration: true,
       ignorePiTags: true,

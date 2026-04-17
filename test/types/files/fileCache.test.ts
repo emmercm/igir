@@ -26,3 +26,15 @@ describe('loadFile', () => {
     await fileCache.loadFile(tempCache);
   });
 });
+
+describe('getOrComputeFileSignature', () => {
+  // Tested by candidateExtensionCorrector.test.ts, romTrimProcessor.test.ts
+});
+
+describe('getOrComputeFileHeader', () => {
+  // Tested by romHeaderProcessor.test.ts
+});
+
+describe('getOrComputeFilePaddings', () => {
+  // Tested by romTrimProcessor.test.ts
+});

@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import fg from 'fast-glob';
+
 import Temp from '../../src/globals/temp.js';
 import FsPoly, { WalkMode } from '../../src/polyfill/fsPoly.js';
 import Options from '../../src/types/options.js';
@@ -87,6 +89,19 @@ describe('scanPaths', () => {
       ],
     ],
     [
+      // Nested parentheticals
+      'Atari - Atari Lynx \\(!(LNX)\\)*/**',
+      [
+        path.join('Atari - Atari Lynx (BLL) (Parent-Clone)', 'A.P.B. (USA, Europe).bll'),
+        path.join('Atari - Atari Lynx (LNX) (Parent-Clone)', 'A.P.B. (USA, Europe).lnx'),
+        path.join('Atari - Atari Lynx (LYX) (Parent-Clone)', 'A.P.B. (USA, Europe).lyx'),
+      ],
+      [
+        path.join('Atari - Atari Lynx (BLL) (Parent-Clone)', 'A.P.B. (USA, Europe).bll'),
+        path.join('Atari - Atari Lynx (LYX) (Parent-Clone)', 'A.P.B. (USA, Europe).lyx'),
+      ],
+    ],
+    [
       // Regex character classes still work
       'Atari - Atari [7JL]*/*.[bjl]*',
       [
@@ -113,7 +128,7 @@ describe('scanPaths', () => {
         );
 
         const scannedFilePaths = await Options.scanPaths(
-          [path.join(tempDir, pattern)],
+          [`${fg.escapePath(tempDir.replaceAll('\\', '/'))}/${pattern}`],
           WalkMode.FILES,
           undefined,
           false,

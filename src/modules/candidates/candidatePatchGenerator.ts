@@ -5,6 +5,7 @@ import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type DAT from '../../types/dats/dat.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
+import ArchiveFile from '../../types/files/archives/archiveFile.js';
 import type Options from '../../types/options.js';
 import type Patch from '../../types/patches/patch.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
@@ -89,17 +90,29 @@ export default class CandidatePatchGenerator extends Module {
     crcToPatches: Map<string, Patch[]>,
   ): WriteCandidate[] {
     // Get all patch files relevant to any ROM in the ReleaseCandidate
-    const candidatePatches = unpatchedCandidate
-      .getRomsWithFiles()
-      .flatMap((romWithFiles) => romWithFiles.getInputFile())
-      .flatMap((inputFile) => {
-        const inputFileCrc32 = inputFile.getCrc32();
-        if (inputFileCrc32 === undefined) {
+    const candidatePatches = unpatchedCandidate.getRomsWithFiles().flatMap((romWithFiles) => {
+      const inputFile = romWithFiles.getInputFile();
+
+      // For ArchiveFile inputs, use the underlying ArchiveEntry's CRC for matching,
+      // but only if we're in zip mode (otherwise the archive is raw-copied and patching
+      // doesn't apply)
+      if (inputFile instanceof ArchiveFile) {
+        if (!this.options.shouldZipRom(romWithFiles.getRom())) {
           return [];
         }
-        return crcToPatches.get(inputFileCrc32);
-      })
-      .filter((patch) => patch !== undefined);
+        const entryCrc32 = inputFile.getArchiveEntry().getCrc32();
+        if (entryCrc32 === undefined) {
+          return [];
+        }
+        return crcToPatches.get(entryCrc32) ?? [];
+      }
+
+      const inputFileCrc32 = inputFile.getCrc32();
+      if (inputFileCrc32 === undefined) {
+        return [];
+      }
+      return crcToPatches.get(inputFileCrc32) ?? [];
+    });
 
     // No relevant patches found, no new candidates generated
     if (candidatePatches.length === 0) {
@@ -115,6 +128,11 @@ export default class CandidatePatchGenerator extends Module {
         let rom = romWithFiles.getRom();
         let inputFile = romWithFiles.getInputFile();
         let outputFile = romWithFiles.getOutputFile();
+
+        // Convert ArchiveFile inputs to their underlying ArchiveEntry
+        if (inputFile instanceof ArchiveFile) {
+          inputFile = inputFile.getArchiveEntry();
+        }
 
         // Apply the patch to the appropriate file
         if (patch.getCrcBefore() === romWithFiles.getRom().getCrc32()) {
