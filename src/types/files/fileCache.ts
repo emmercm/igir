@@ -228,10 +228,10 @@ export default class FileCache {
       );
     };
 
-    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_HEADER);
+    let cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_HEADER);
     if (cacheKeys.length === 0) {
-      // No checksums available to use as cache keys, compute without caching
-      return await computeHeader();
+      // No checksums available to use as cache keys, fall back to file path
+      cacheKeys = [this.getCacheKey(file.getFilePath(), undefined, ValueType.FILE_SIGNATURE)];
     }
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
@@ -270,10 +270,11 @@ export default class FileCache {
       );
     };
 
-    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.FILE_SIGNATURE);
+    let cacheKeys = this.getChecksumCacheKeys(file, ValueType.FILE_SIGNATURE);
     if (cacheKeys.length === 0) {
-      // No checksums available to use as cache keys, compute without caching
-      return await computeSignature();
+      // No checksums available to use as cache keys, fall back to file path
+      // This can happen when correcting an ArchiveFile's extension
+      cacheKeys = [this.getCacheKey(file.getFilePath(), undefined, ValueType.FILE_SIGNATURE)];
     }
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
@@ -373,7 +374,7 @@ export default class FileCache {
         (entry): entry is [number, string] =>
           (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
       )
-      .map(([, checksum]) => this.getCacheKey(checksum, undefined, valueType));
+      .map(([, checksum]) => this.getCacheKey('', checksum, valueType));
   }
 
   private getCacheKey(
