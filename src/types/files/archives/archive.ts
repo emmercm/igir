@@ -30,7 +30,10 @@ export default abstract class Archive {
    */
   abstract hasMeaningfulEntryPaths(): boolean;
 
-  abstract getArchiveEntries(checksumBitmask: number): Promise<ArchiveEntry<Archive>[]>;
+  abstract getArchiveEntries(
+    checksumBitmask: number,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(
     entryPath: string,

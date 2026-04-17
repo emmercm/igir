@@ -1,5 +1,6 @@
 import type { CHDInfo } from 'chdman';
 import { CHDType } from 'chdman';
+import { isNotJunk } from 'junk';
 
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
@@ -150,8 +151,11 @@ export default abstract class Scanner extends Module {
         filePath,
         checksumBitmask,
         this.options.getInputChecksumQuick() ? ChecksumBitmask.NONE : checksumBitmask,
-        (progress) => {
+        (progress, total) => {
           progressBar.setCompleted(progress);
+          if (total !== undefined) {
+            progressBar.setTotal(total);
+          }
         },
       );
 
@@ -184,7 +188,12 @@ export default abstract class Scanner extends Module {
           this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
         }
       }
-      return filesFromPath;
+      return filesFromPath.filter(
+        (fileFromPath) =>
+          isNotJunk(fileFromPath.getFilePath()) &&
+          (!(fileFromPath instanceof ArchiveEntry) ||
+            isNotJunk(fileFromPath.getExtractedFilePath())),
+      );
     } catch (error) {
       this.progressBar.logError(`${filePath}: failed to parse file: ${error}`);
       return [];

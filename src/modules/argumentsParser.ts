@@ -339,6 +339,7 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'string',
+        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -346,6 +347,7 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
+        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -353,6 +355,7 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to process',
         type: 'string',
+        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -360,6 +363,7 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to exclude from processing',
         type: 'string',
+        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -421,6 +425,11 @@ export default class ArgumentsParser {
             );
           }
         }
+        if (checkArgv.patch && !checkArgv._.includes('extract') && !checkArgv._.includes('zip')) {
+          this.logger.warn(
+            "archived files can't be patched unless the 'extract' or 'zip' command is used",
+          );
+        }
         return true;
       })
 
@@ -436,8 +445,8 @@ export default class ArgumentsParser {
         if (middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input) {
           const outputResolved = path.resolve(middlewareArgv.output as string);
           if (
-            !middlewareArgv.input.some(
-              (inputPath) => path.resolve(inputPath as string) === outputResolved,
+            !middlewareArgv.input.some((inputPath) =>
+              outputResolved.startsWith(path.resolve(inputPath as string)),
             )
           ) {
             this.logger.warn(
@@ -1177,6 +1186,16 @@ export default class ArgumentsParser {
         ) {
           this.logger.warn(
             `--single may leave '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
+          );
+        }
+
+        if (
+          checkArgv.single &&
+          (checkArgv.mergeRoms as string).toLowerCase() ===
+            MergeModeInverted[MergeMode.MERGED].toLowerCase()
+        ) {
+          this.logger.warn(
+            `--single doesn't make sense for '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets, nothing will be filtered out`,
           );
         }
 

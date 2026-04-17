@@ -1,5 +1,3 @@
-import async from 'async';
-
 import type Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
 import MultiBar from '../../console/multiBar.js';
@@ -62,7 +60,11 @@ export default class FileFactory {
     }
 
     if (!FileFactory.isExtensionArchive(filePath)) {
-      const entries = await this.entriesFromArchiveSignature(filePath, entryChecksumBitmask);
+      const entries = await this.entriesFromArchiveSignature(
+        filePath,
+        entryChecksumBitmask,
+        callback,
+      );
       if (entries !== undefined) {
         return entries;
       }
@@ -75,18 +77,27 @@ export default class FileFactory {
         // The file isn't actually an archive
         return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
       }
-      const entries = (
-        await async.mapLimit(
-          archives,
-          1,
-          async (archive: Archive) => await this.entriesFromArchive(archive, entryChecksumBitmask),
-        )
-      ).flat();
-      if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
+      const entries: ArchiveEntry<Archive>[] = [];
+      let anyParsed = false;
+      for (const archive of archives) {
+        const result = await this.entriesFromArchive(
+          archive,
+          entryChecksumBitmask,
+          CacheMode.RESPECT_CACHED_VALUE,
+          callback,
+        );
+        if (result !== undefined) {
+          anyParsed = true;
+          for (const entry of result) {
+            entries.push(entry);
+          }
+        }
+      }
+      if (!anyParsed) {
         // The file isn't actually an archive
         return [await this.fileFrom(filePath, fileChecksumBitmask)];
       }
-      return entries.filter((entry) => entry !== undefined);
+      return entries;
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         throw new IgirException(`file doesn't exist: ${filePath}`);
@@ -113,13 +124,13 @@ export default class FileFactory {
   }
 
   async archiveFileFrom(
-    archive: Archive,
+    archiveEntry: ArchiveEntry<Archive>,
     checksumBitmask: number,
     callback?: FsReadCallback,
   ): Promise<ArchiveFile> {
     return new ArchiveFile(
-      archive,
-      await this.fileFrom(archive.getFilePath(), checksumBitmask, callback),
+      archiveEntry,
+      await this.fileFrom(archiveEntry.getFilePath(), checksumBitmask, callback),
     );
   }
 
@@ -133,12 +144,14 @@ export default class FileFactory {
     archive: A,
     checksumBitmask: number,
     cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
+    callback?: FsReadCallback,
   ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(
         archive,
         checksumBitmask,
         cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
+        callback,
       );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
@@ -204,10 +217,11 @@ export default class FileFactory {
   private async entriesFromArchiveSignature(
     filePath: string,
     checksumBitmask: number,
+    callback?: FsReadCallback,
   ): Promise<ArchiveEntry<Archive>[] | undefined> {
     let signature: FileSignature | undefined;
     try {
-      const file = await File.fileOf({ filePath });
+      const file = await this.fileFrom(filePath, checksumBitmask, callback);
       signature = await this.fileCache.getOrComputeFileSignature(file);
     } catch {
       // Fail silently on assumed I/O errors
@@ -224,18 +238,27 @@ export default class FileFactory {
       // The file isn't actually an archive
       return undefined;
     }
-    const entries = (
-      await async.mapLimit(
-        archives,
-        1,
-        async (archive: Archive) => await this.entriesFromArchive(archive, checksumBitmask),
-      )
-    ).flat();
-    if (entries.length > 0 && entries.every((entry) => entry === undefined)) {
+    const entries: ArchiveEntry<Archive>[] = [];
+    let anyParsed = false;
+    for (const archive of archives) {
+      const result = await this.entriesFromArchive(
+        archive,
+        checksumBitmask,
+        CacheMode.RESPECT_CACHED_VALUE,
+        callback,
+      );
+      if (result !== undefined) {
+        anyParsed = true;
+        for (const entry of result) {
+          entries.push(entry);
+        }
+      }
+    }
+    if (!anyParsed) {
       // The file isn't actually an archive
       return undefined;
     }
-    return entries.filter((entry) => entry !== undefined);
+    return entries;
   }
 
   static isExtensionArchive(filePath: string): boolean {
@@ -265,8 +288,8 @@ export default class FileFactory {
     return await this.fileCache.getOrComputeFileHeader(file);
   }
 
-  async signatureFrom(file: File): Promise<FileSignature | undefined> {
-    return await this.fileCache.getOrComputeFileSignature(file);
+  async signatureFrom(file: File, callback?: FsReadCallback): Promise<FileSignature | undefined> {
+    return await this.fileCache.getOrComputeFileSignature(file, callback);
   }
 
   async paddingsFrom(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {

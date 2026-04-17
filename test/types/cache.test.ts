@@ -242,3 +242,176 @@ describe('save', () => {
     }
   });
 });
+
+describe('getOrComputeAllKeys', () => {
+  it('should compute all values when all keys are missing', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map([
+        ['a', 1],
+        ['b', 2],
+        ['c', 3],
+      ]);
+    };
+
+    const result = await cache.getOrComputeAllKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(
+      new Map([
+        ['a', 1],
+        ['b', 2],
+        ['c', 3],
+      ]),
+    );
+    expect(computed).toEqual(1);
+  });
+
+  it('should return cached values without computing when all keys exist', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 1);
+    await cache.set('b', 2);
+    await cache.set('c', 3);
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map();
+    };
+
+    const result = await cache.getOrComputeAllKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(
+      new Map([
+        ['a', 1],
+        ['b', 2],
+        ['c', 3],
+      ]),
+    );
+    expect(computed).toEqual(0);
+  });
+
+  it('should compute all values when some keys are missing', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 1);
+    // 'b' is missing
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map([
+        ['a', 10],
+        ['b', 20],
+      ]);
+    };
+
+    const result = await cache.getOrComputeAllKeys(['a', 'b'], runnable);
+    expect(result).toEqual(
+      new Map([
+        ['a', 10],
+        ['b', 20],
+      ]),
+    );
+    expect(computed).toEqual(1);
+    // Verify the cache was updated
+    await expect(cache.get('a')).resolves.toEqual(10);
+    await expect(cache.get('b')).resolves.toEqual(20);
+  });
+
+  it('should handle empty keys array', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map();
+    };
+
+    const result = await cache.getOrComputeAllKeys([], runnable);
+    expect(result).toEqual(new Map());
+    expect(computed).toEqual(0);
+  });
+});
+
+describe('getOrComputeAnyKeys', () => {
+  it('should return undefined for empty keys', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys([], runnable);
+    expect(result).toBeUndefined();
+    expect(computed).toEqual(0);
+  });
+
+  it('should compute and store under all keys when all are missing', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(42);
+    expect(computed).toEqual(1);
+    // Verify all keys were populated
+    await expect(cache.get('a')).resolves.toEqual(42);
+    await expect(cache.get('b')).resolves.toEqual(42);
+    await expect(cache.get('c')).resolves.toEqual(42);
+  });
+
+  it('should return cached value without computing when any key exists', async () => {
+    const cache = new Cache<number>();
+    await cache.set('b', 99);
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(99);
+    expect(computed).toEqual(0);
+  });
+
+  it('should recompute when shouldRecompute returns true', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 1);
+    await cache.set('b', 1);
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b'], runnable, (value) => value < 10);
+    expect(result).toEqual(42);
+    expect(computed).toEqual(1);
+    // Verify all keys were updated
+    await expect(cache.get('a')).resolves.toEqual(42);
+    await expect(cache.get('b')).resolves.toEqual(42);
+  });
+
+  it('should not recompute when shouldRecompute returns false', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 100);
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b'], runnable, (value) => value < 10);
+    expect(result).toEqual(100);
+    expect(computed).toEqual(0);
+  });
+});

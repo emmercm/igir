@@ -96,6 +96,108 @@ export default class Cache<V> {
   }
 
   /**
+   * Get the values of all keys in the cache if they exist, or compute all values and set them
+   * in the cache if any key is missing.
+   */
+  async getOrComputeAllKeys(
+    keys: string[],
+    runnable: () => Map<string, V> | Promise<Map<string, V>>,
+  ): Promise<Map<string, V>> {
+    if (keys.length === 0) {
+      return new Map();
+    }
+
+    // Fast path: check all keys without holding multi-key locks.
+    // get() acquires per-key mutexes, so it waits on any in-progress computation.
+    const values = await Promise.all(
+      keys.map(async (key) => {
+        return await this.get(key);
+      }),
+    );
+    if (values.every((value) => value !== undefined)) {
+      return keys.reduce((map, key, idx) => {
+        map.set(key, values[idx]);
+        return map;
+      }, new Map<string, V>());
+    }
+
+    // Slow path: acquire all key locks, double-check, then compute if still needed.
+    await this.keyedMutex.acquireMultiple(keys);
+    try {
+      // Re-check under lock using direct map access (not get(), which would deadlock)
+      const values = keys.map((key) => this.keyValues.get(key));
+      if (values.every((value) => value !== undefined)) {
+        return keys.reduce((map, key, idx) => {
+          map.set(key, values[idx]);
+          return map;
+        }, new Map<string, V>());
+      }
+
+      // Compute and store all values
+      const computed = await runnable();
+      for (const [key, value] of computed) {
+        this.setUnsafe(key, value);
+      }
+      return computed;
+    } finally {
+      this.keyedMutex.releaseMultiple(keys);
+    }
+  }
+
+  /**
+   * Get the value of any key in the cache if one exists, or compute a value and set it under all
+   * keys otherwise. Assumes all keys map to the same value.
+   */
+  async getOrComputeAnyKeys(
+    keys: string[],
+    runnable: () => V | Promise<V>,
+    shouldRecompute?: (value: V) => boolean | Promise<boolean>,
+  ): Promise<V | undefined> {
+    if (keys.length === 0) {
+      return undefined;
+    }
+
+    // Fast path: check all keys without holding multi-key locks.
+    // get() acquires per-key mutexes, so it waits on any in-progress computation.
+    const values = await Promise.all(
+      keys.map(async (key) => {
+        return await this.get(key);
+      }),
+    );
+    const firstDefinedValue = values.find((value) => value !== undefined);
+    if (
+      firstDefinedValue !== undefined &&
+      (shouldRecompute === undefined || !(await shouldRecompute(firstDefinedValue)))
+    ) {
+      return firstDefinedValue;
+    }
+
+    // Slow path: acquire all key locks, double-check, then compute if still needed.
+    await this.keyedMutex.acquireMultiple(keys);
+    try {
+      // Re-check under lock using direct map access (not get(), which would deadlock)
+      const firstDefinedValue = keys
+        .map((key) => this.keyValues.get(key))
+        .find((value) => value !== undefined);
+      if (
+        firstDefinedValue !== undefined &&
+        (shouldRecompute === undefined || !(await shouldRecompute(firstDefinedValue)))
+      ) {
+        return firstDefinedValue;
+      }
+
+      // Compute and store under all keys
+      const computed = await runnable();
+      for (const key of keys) {
+        this.setUnsafe(key, computed);
+      }
+      return computed;
+    } finally {
+      this.keyedMutex.releaseMultiple(keys);
+    }
+  }
+
+  /**
    * Set the value of a key in the cache.
    */
   async set(key: string, val: V): Promise<void> {
@@ -184,7 +286,11 @@ export default class Cache<V> {
     }
 
     this.saveToFileTimeout = Timer.setTimeout(async () => {
-      await this.save();
+      try {
+        await this.save();
+      } finally {
+        this.saveToFileTimeout = undefined;
+      }
     }, this.fileFlushMillis);
   }
 
@@ -206,6 +312,8 @@ export default class Cache<V> {
 
         const keyValuesObject = Object.fromEntries(this.keyValues);
         const json = JSON.stringify(keyValuesObject);
+        // Reset before I/O so mid-save changes re-set the flag
+        this.hasChanged = false;
 
         // Ensure the directory exists
         const dirPath = path.dirname(this.filePath);
@@ -215,27 +323,29 @@ export default class Cache<V> {
 
         // Write to a temp file first
         const tempFile = await FsPoly.mktemp(this.filePath);
-        await stream.promises.pipeline(
-          stream.Readable.from([Buffer.from(json, 'utf8')]),
-          zlib.createGzip(),
-          fs.createWriteStream(tempFile),
-        );
-
-        // Validate the file was written correctly
-        const tempFileCache = await new Cache({ filePath: tempFile }).load();
-        if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
-          // The written file is bad, don't use it
-          await FsPoly.rm(tempFile, { force: true });
-          return;
-        }
-
-        // Overwrite the real file with the temp file
         try {
+          await stream.promises.pipeline(
+            stream.Readable.from([Buffer.from(json, 'utf8')]),
+            zlib.createGzip(),
+            fs.createWriteStream(tempFile),
+          );
+
+          // Validate the file was written correctly
+          const tempFileCache = await new Cache({ filePath: tempFile }).load();
+          if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
+            // The written file is bad, don't use it
+            await FsPoly.rm(tempFile, { force: true });
+            this.hasChanged = true;
+            return;
+          }
+
+          // Overwrite the real file with the temp file
           await FsPoly.mv(tempFile, this.filePath);
         } catch {
+          await FsPoly.rm(tempFile, { force: true });
+          this.hasChanged = true;
           return;
         }
-        this.hasChanged = false;
         this.saveMutex.cancel(); // cancel all waiting locks, we just saved
       });
     } catch (error) {
