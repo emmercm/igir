@@ -217,78 +217,55 @@ export default class FileCache {
   }
 
   async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
-    if (file.getSize() === 0) {
-      // An empty file can't have a header
-      return undefined;
-    }
-
-    const computeHeader = async (): Promise<ROMHeader | undefined> => {
-      return await file.createReadStream(
-        async (readable) => await ROMHeader.headerFromFileStream(readable),
-      );
-    };
-
-    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_HEADER);
-    const usingFilePathKey = cacheKeys.length === 0;
-    if (usingFilePathKey) {
-      // No checksums available to use as cache keys, fall back to file path
-      cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, ValueType.ROM_HEADER));
-    }
-
-    // When using file-path-based keys, we need file stats to detect stale cache entries
-    const stats = usingFilePathKey ? await FsPoly.stat(file.getFilePath()) : undefined;
-
-    const cachedValue = await this.cache.getOrComputeAnyKeys(
-      cacheKeys,
+    return await this.getOrComputeAny(
+      file,
+      ValueType.ROM_HEADER,
       async () => {
-        const header = await computeHeader();
-        return {
-          fileSize: stats?.size,
-          modifiedTimeSec: stats?.mtimeS,
-          value: header?.getName(),
-        };
+        const header = await file.createReadStream(
+          async (readable) => await ROMHeader.headerFromFileStream(readable),
+        );
+        return header?.getName();
       },
-      (cached) => {
-        if (
-          stats !== undefined &&
-          (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS)
-        ) {
-          // File has changed since being cached
-          return true;
-        }
-        // Recompute if the cached value isn't valid or isn't known
-        return typeof cached.value !== 'string' || !ROMHeader.headerFromName(cached.value);
-      },
+      (name) => ROMHeader.headerFromName(name),
     );
-
-    const cachedHeaderName = cachedValue?.value as string | undefined;
-    if (!cachedHeaderName) {
-      return undefined;
-    }
-    return ROMHeader.headerFromName(cachedHeaderName);
   }
 
   async getOrComputeFileSignature(
     file: File,
     callback?: FsReadCallback,
   ): Promise<FileSignature | undefined> {
+    return await this.getOrComputeAny(
+      file,
+      ValueType.FILE_SIGNATURE,
+      async () => {
+        const signature = await file.createReadStream(
+          async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
+        );
+        return signature?.getName();
+      },
+      (name) => FileSignature.signatureFromName(name),
+    );
+  }
+
+  /**
+   * Shared logic for caching file header and file signature lookups. Both cache a name string
+   * and reconstruct the object from that name on cache hit.
+   */
+  private async getOrComputeAny<T>(
+    file: File,
+    valueType: ValueTypeValue,
+    compute: () => Promise<string | undefined>,
+    fromName: (name: string) => T | undefined,
+  ): Promise<T | undefined> {
     if (file.getSize() === 0) {
-      // An empty file can't have a signature
       return undefined;
     }
 
-    const computeSignature = async (): Promise<FileSignature | undefined> => {
-      return await file.createReadStream(
-        async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
-      );
-    };
-
-    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.FILE_SIGNATURE);
+    const cacheKeys = this.getChecksumCacheKeys(file, valueType);
     const usingFilePathKey = cacheKeys.length === 0;
     if (usingFilePathKey) {
       // No checksums available to use as cache keys, fall back to file path
-      // This can happen when correcting an ArchiveFile's extension
-      cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, ValueType.FILE_SIGNATURE));
+      cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, valueType));
     }
 
     // When using file-path-based keys, we need file stats to detect stale cache entries
@@ -297,11 +274,11 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
       async () => {
-        const signature = await computeSignature();
+        const name = await compute();
         return {
           fileSize: stats?.size,
           modifiedTimeSec: stats?.mtimeS,
-          value: signature?.getName(),
+          value: name,
         };
       },
       (cached) => {
@@ -313,15 +290,15 @@ export default class FileCache {
           return true;
         }
         // Recompute if the cached value isn't valid or isn't known
-        return typeof cached.value !== 'string' || !FileSignature.signatureFromName(cached.value);
+        return typeof cached.value !== 'string' || fromName(cached.value) === undefined;
       },
     );
 
-    const cachedSignatureName = cachedValue?.value as string | undefined;
-    if (!cachedSignatureName) {
+    const cachedName = cachedValue?.value as string | undefined;
+    if (cachedName === undefined) {
       return undefined;
     }
-    return FileSignature.signatureFromName(cachedSignatureName);
+    return fromName(cachedName);
   }
 
   async getOrComputeFilePaddings(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
