@@ -222,17 +222,22 @@ export default class FileCache {
       return undefined;
     }
 
+    const computeHeader = async (): Promise<ROMHeader | undefined> => {
+      return await file.createReadStream(
+        async (readable) => await ROMHeader.headerFromFileStream(readable),
+      );
+    };
+
     const cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_HEADER);
     if (cacheKeys.length === 0) {
-      return undefined;
+      // No checksums available to use as cache keys, compute without caching
+      return await computeHeader();
     }
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
       async () => {
-        const header = await file.createReadStream(
-          async (readable) => await ROMHeader.headerFromFileStream(readable),
-        );
+        const header = await computeHeader();
         return {
           value: header?.getName(),
         };
@@ -259,17 +264,22 @@ export default class FileCache {
       return undefined;
     }
 
+    const computeSignature = async (): Promise<FileSignature | undefined> => {
+      return await file.createReadStream(
+        async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
+      );
+    };
+
     const cacheKeys = this.getChecksumCacheKeys(file, ValueType.FILE_SIGNATURE);
     if (cacheKeys.length === 0) {
-      return undefined;
+      // No checksums available to use as cache keys, compute without caching
+      return await computeSignature();
     }
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
       async () => {
-        const signature = await file.createReadStream(
-          async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
-        );
+        const signature = await computeSignature();
         return {
           value: signature?.getName(),
         };
