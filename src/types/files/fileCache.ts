@@ -217,42 +217,33 @@ export default class FileCache {
   }
 
   async getOrComputeFileHeader(file: File): Promise<ROMHeader | undefined> {
-    // TODO(cemmer): cache based on checksum(s), not file path
-    // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
-    const stats = await FsPoly.stat(file.getFilePath());
-    if (stats.size === 0) {
+    if (file.getSize() === 0) {
       // An empty file can't have a header
       return undefined;
     }
-    const cacheKey = this.getCacheKey(
-      file.getFilePath(),
-      file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
-      ValueType.ROM_HEADER,
-    );
 
-    const cachedValue = await this.cache.getOrCompute(
-      cacheKey,
+    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_HEADER);
+    if (cacheKeys.length === 0) {
+      return undefined;
+    }
+
+    const cachedValue = await this.cache.getOrComputeAnyKeys(
+      cacheKeys,
       async () => {
         const header = await file.createReadStream(
           async (readable) => await ROMHeader.headerFromFileStream(readable),
         );
         return {
-          fileSize: stats.size,
-          modifiedTimeSec: stats.mtimeS,
           value: header?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
-          // Recompute if the file has changed since being cached
-          return true;
-        }
         // Recompute if the cached value isn't known
-        return typeof cached.value === 'string' && !ROMHeader.headerFromName(cached.value);
+        return typeof cached.value !== 'string' || !ROMHeader.headerFromName(cached.value);
       },
     );
 
-    const cachedHeaderName = cachedValue.value as string | undefined;
+    const cachedHeaderName = cachedValue?.value as string | undefined;
     if (!cachedHeaderName) {
       return undefined;
     }
@@ -263,42 +254,33 @@ export default class FileCache {
     file: File,
     callback?: FsReadCallback,
   ): Promise<FileSignature | undefined> {
-    // TODO(cemmer): cache based on checksum(s), not file path
-    // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
-    const stats = await FsPoly.stat(file.getFilePath());
-    if (stats.size === 0) {
+    if (file.getSize() === 0) {
       // An empty file can't have a signature
       return undefined;
     }
-    const cacheKey = this.getCacheKey(
-      file.getFilePath(),
-      file instanceof ArchiveEntry ? file.getEntryPath() : undefined,
-      ValueType.FILE_SIGNATURE,
-    );
 
-    const cachedValue = await this.cache.getOrCompute(
-      cacheKey,
+    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.FILE_SIGNATURE);
+    if (cacheKeys.length === 0) {
+      return undefined;
+    }
+
+    const cachedValue = await this.cache.getOrComputeAnyKeys(
+      cacheKeys,
       async () => {
         const signature = await file.createReadStream(
           async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
         );
         return {
-          fileSize: stats.size,
-          modifiedTimeSec: stats.mtimeS,
           value: signature?.getName(),
         };
       },
       (cached) => {
-        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
-          // File has changed since being cached
-          return true;
-        }
         // Recompute if the cached value isn't known
-        return typeof cached.value === 'string' && !FileSignature.signatureFromName(cached.value);
+        return typeof cached.value !== 'string' || !FileSignature.signatureFromName(cached.value);
       },
     );
 
-    const cachedSignatureName = cachedValue.value as string | undefined;
+    const cachedSignatureName = cachedValue?.value as string | undefined;
     if (!cachedSignatureName) {
       return undefined;
     }
@@ -311,31 +293,21 @@ export default class FileCache {
       return [];
     }
 
-    // Build a cache key per checksum type using the file's trimmed checksum
-    const checksumEntries: [number, string | undefined][] = [
-      [ChecksumBitmask.CRC32, file.getCrc32()],
-      [ChecksumBitmask.MD5, file.getMd5()],
-      [ChecksumBitmask.SHA1, file.getSha1()],
-      [ChecksumBitmask.SHA256, file.getSha256()],
-    ];
-    const activeChecksums = checksumEntries.filter(
-      (entry): entry is [number, string] =>
-        (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
-    );
-    if (activeChecksums.length === 0) {
+    const cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_PADDING);
+    if (cacheKeys.length === 0) {
       // No checksums available to use as cache keys, compute without caching
       return await ROMPadding.paddingsFromFile(file, callback);
     }
 
-    const cacheKeys = activeChecksums.map(([, checksum]) =>
-      this.getCacheKey(checksum, undefined, ValueType.ROM_PADDING),
+    const activeChecksums = Object.values(ChecksumBitmask).filter(
+      (bitmask) => file.getChecksumBitmask() & bitmask,
     );
     const cachedResults = await this.cache.getOrComputeAllKeys(cacheKeys, async () => {
       const paddings = await ROMPadding.paddingsFromFile(file, callback);
       const paddingProps = paddings.map((padding) => padding.toROMPaddingProps());
 
       const resultMap = new Map<string, CacheValue>();
-      for (const [i, [bitmask]] of activeChecksums.entries()) {
+      for (const [i, bitmask] of activeChecksums.entries()) {
         const perTypePaddings: ROMPaddingProps[] = paddingProps.map((props) => ({
           paddedSize: props.paddedSize,
           fillByte: props.fillByte,
@@ -374,6 +346,24 @@ export default class FileCache {
       }
     }
     return [...fillByteToRomPaddingProps.values()].map((props) => new ROMPadding(props));
+  }
+
+  private getChecksumCacheKeys(file: File, valueType: ValueTypeValue): string[] {
+    const checksumEntries: [number, string | undefined][] = [
+      [
+        ChecksumBitmask.CRC32,
+        file.getCrc32() === undefined ? undefined : `${file.getCrc32()}:${file.getSize()}`,
+      ],
+      [ChecksumBitmask.MD5, file.getMd5()],
+      [ChecksumBitmask.SHA1, file.getSha1()],
+      [ChecksumBitmask.SHA256, file.getSha256()],
+    ];
+    return checksumEntries
+      .filter(
+        (entry): entry is [number, string] =>
+          (file.getChecksumBitmask() & entry[0]) > 0 && entry[1] !== undefined,
+      )
+      .map(([, checksum]) => this.getCacheKey(checksum, undefined, valueType));
   }
 
   private getCacheKey(
