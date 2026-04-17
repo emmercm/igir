@@ -103,6 +103,10 @@ export default class Cache<V> {
     keys: string[],
     runnable: () => Map<string, V> | Promise<Map<string, V>>,
   ): Promise<Map<string, V>> {
+    if (keys.length === 0) {
+      return new Map();
+    }
+
     // Fast path: check all keys without holding multi-key locks.
     // get() acquires per-key mutexes, so it waits on any in-progress computation.
     const values = await Promise.all(
@@ -133,6 +137,59 @@ export default class Cache<V> {
       const computed = await runnable();
       for (const [key, value] of computed) {
         this.setUnsafe(key, value);
+      }
+      return computed;
+    } finally {
+      this.keyedMutex.releaseMultiple(keys);
+    }
+  }
+
+  /**
+   * Get the value of any key in the cache if one exists, or compute a value and set it under all
+   * keys otherwise. Assumes all keys map to the same value.
+   */
+  async getOrComputeAnyKeys(
+    keys: string[],
+    runnable: () => V | Promise<V>,
+    shouldRecompute?: (value: V) => boolean | Promise<boolean>,
+  ): Promise<V | undefined> {
+    if (keys.length === 0) {
+      return undefined;
+    }
+
+    // Fast path: check all keys without holding multi-key locks.
+    // get() acquires per-key mutexes, so it waits on any in-progress computation.
+    const values = await Promise.all(
+      keys.map(async (key) => {
+        return await this.get(key);
+      }),
+    );
+    const firstDefinedValue = values.find((value) => value !== undefined);
+    if (
+      firstDefinedValue !== undefined &&
+      (shouldRecompute === undefined || !(await shouldRecompute(firstDefinedValue)))
+    ) {
+      return firstDefinedValue;
+    }
+
+    // Slow path: acquire all key locks, double-check, then compute if still needed.
+    await this.keyedMutex.acquireMultiple(keys);
+    try {
+      // Re-check under lock using direct map access (not get(), which would deadlock)
+      const firstDefinedValue = keys
+        .map((key) => this.keyValues.get(key))
+        .find((value) => value !== undefined);
+      if (
+        firstDefinedValue !== undefined &&
+        (shouldRecompute === undefined || !(await shouldRecompute(firstDefinedValue)))
+      ) {
+        return firstDefinedValue;
+      }
+
+      // Compute and store under all keys
+      const computed = await runnable();
+      for (const key of keys) {
+        this.setUnsafe(key, computed);
       }
       return computed;
     } finally {

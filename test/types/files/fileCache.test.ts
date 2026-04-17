@@ -27,6 +27,14 @@ describe('loadFile', () => {
   });
 });
 
+describe('getOrComputeFileSignature', () => {
+  // Tested by candidateExtensionCorrector.test.ts, romTrimProcessor.test.ts
+});
+
+describe('getOrComputeFileHeader', () => {
+  // Tested by romHeaderProcessor.test.ts
+});
+
 describe('getOrComputeFilePaddings', () => {
-  // Tested by romTrimProcessor.ts
+  // Tested by romTrimProcessor.test.ts
 });

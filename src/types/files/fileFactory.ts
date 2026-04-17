@@ -221,7 +221,7 @@ export default class FileFactory {
   ): Promise<ArchiveEntry<Archive>[] | undefined> {
     let signature: FileSignature | undefined;
     try {
-      const file = await File.fileOf({ filePath });
+      const file = await this.fileFrom(filePath, checksumBitmask, callback);
       signature = await this.fileCache.getOrComputeFileSignature(file);
     } catch {
       // Fail silently on assumed I/O errors
