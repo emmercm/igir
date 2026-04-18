@@ -2,11 +2,19 @@ import { Mutex } from 'async-mutex';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
 
+interface KeyMutexEntry {
+  mutex: Mutex;
+  // Functions that need to lock a key increment this number first before waiting to acquire a lock.
+  // If this number is >0, then this mutex should not be evicted. If it was evicted, a new caller
+  // would create a new mutex for the same key, resulting in not waiting for the existing lock.
+  pendingLocks: number;
+}
+
 /**
  * Wrapper for `async-mutex` {@link Mutex}es to run code exclusively for a key.
  */
 export default class KeyedMutex {
-  private readonly keyMutexes = new Map<string, Mutex>();
+  private readonly keyMutexes = new Map<string, KeyMutexEntry>();
 
   private readonly keyMutexesMutex = new Mutex();
 
@@ -46,7 +54,7 @@ export default class KeyedMutex {
     // a key greater than one it is still waiting on, so no circular wait can form.
     const uniqueKeys = keys.reduce(ArrayPoly.reduceUnique(), []).toSorted();
 
-    let mutexes: Mutex[];
+    let entries: KeyMutexEntry[];
 
     if (uniqueKeys.every((key) => this.keyMutexes.has(key))) {
       // If every key mutex already exists, then we can avoid a global lock
@@ -58,14 +66,18 @@ export default class KeyedMutex {
         this.keyMutexesLru.set(key, undefined);
       }
 
-      mutexes = uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+      entries = uniqueKeys.map((key) => {
+        const entry = this.keyMutexes.get(key) as KeyMutexEntry;
+        entry.pendingLocks += 1;
+        return entry;
+      });
     } else {
       // If at least one key mutex does not exist, then we have to take a global lock to create them
       const uniqueKeySet = new Set(uniqueKeys);
-      mutexes = await this.keyMutexesMutex.runExclusive(() => {
+      entries = await this.keyMutexesMutex.runExclusive(() => {
         for (const key of uniqueKeys) {
           if (!this.keyMutexes.has(key)) {
-            this.keyMutexes.set(key, new Mutex());
+            this.keyMutexes.set(key, { mutex: new Mutex(), pendingLocks: 0 });
           }
         }
 
@@ -76,8 +88,14 @@ export default class KeyedMutex {
             if (keysToEvict <= 0) {
               break;
             }
-            if (!uniqueKeySet.has(lruKey) && !this.keyMutexes.get(lruKey)?.isLocked()) {
-              this.keyMutexes.get(lruKey)?.release();
+            const lruEntry = this.keyMutexes.get(lruKey);
+            if (
+              !uniqueKeySet.has(lruKey) &&
+              lruEntry !== undefined &&
+              !lruEntry.mutex.isLocked() &&
+              lruEntry.pendingLocks === 0
+            ) {
+              lruEntry.mutex.release();
               this.keyMutexes.delete(lruKey);
               this.keyMutexesLru.delete(lruKey);
               keysToEvict--;
@@ -91,12 +109,27 @@ export default class KeyedMutex {
           this.keyMutexesLru.set(key, undefined);
         }
 
-        return uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+        return uniqueKeys.map((key) => {
+          const entry = this.keyMutexes.get(key) as KeyMutexEntry;
+          entry.pendingLocks += 1;
+          return entry;
+        });
       });
     }
 
-    for (const mutex of mutexes) {
-      await mutex.acquire();
+    let nextToAcquire = 0;
+    try {
+      for (; nextToAcquire < entries.length; nextToAcquire += 1) {
+        await entries[nextToAcquire].mutex.acquire();
+        // Once acquired, isLocked() protects this entry from eviction; decrement the pending count
+        entries[nextToAcquire].pendingLocks -= 1;
+      }
+    } catch (error) {
+      // Decrement pending counts we still owe for entries past the failure point.
+      for (let i = nextToAcquire; i < entries.length; i += 1) {
+        entries[i].pendingLocks -= 1;
+      }
+      throw error;
     }
   }
 
@@ -116,7 +149,7 @@ export default class KeyedMutex {
     }
 
     keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
-      this.keyMutexes.get(key)?.release();
+      this.keyMutexes.get(key)?.mutex.release();
     });
   }
 

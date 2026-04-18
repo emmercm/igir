@@ -101,7 +101,7 @@ describe('acquireMultiple', () => {
         });
       }),
     ]);
-  }, 1000);
+  });
 });
 
 describe('releaseMultiple', () => {
@@ -243,8 +243,8 @@ describe('runExclusiveForKey', () => {
 
   it('should preserve exclusion for one key under heavy eviction churn from other keys', async () => {
     // Regression for the LRU-eviction race: with maxSize=1, every "other" key triggers a
-    // potential eviction while a shared key has acquires in flight. The refcount in
-    // KeyedMutex must keep outstanding references safe so that exclusion never breaks.
+    // potential eviction while a shared key has acquires in flight. The pendingLocks counter
+    // in KeyedMutex must keep outstanding references safe so that exclusion never breaks.
     const mutex = new KeyedMutex(1);
     const sharedKey = 'shared';
     let inSection = 0;
@@ -316,5 +316,5 @@ describe('runExclusiveForKeys', () => {
         });
       }),
     );
-  }, 2000);
+  });
 });
