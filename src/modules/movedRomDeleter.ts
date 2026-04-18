@@ -34,6 +34,7 @@ export default class MovedROMDeleter extends Module {
   async delete(
     indexedRoms: IndexedFiles,
     movedWriteCandidates: WriteCandidate[],
+    writtenFilesToExclude: File[],
   ): Promise<string[]> {
     if (!this.options.shouldMove()) {
       // We shouldn't cause any change to the output directory
@@ -106,7 +107,7 @@ export default class MovedROMDeleter extends Module {
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
-      movedWriteCandidates,
+      writtenFilesToExclude,
     );
     this.progressBar.logTrace(
       `filtered to ${IntlPoly.toLocaleString(filePathsToDelete.length)} non-output files`,
@@ -121,18 +122,20 @@ export default class MovedROMDeleter extends Module {
     const existingFilePaths = filePathsToDelete.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
     );
-
-    this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
-    this.progressBar.resetProgress(existingFilePaths.length);
-    this.progressBar.logTrace(
-      `deleting ${IntlPoly.toLocaleString(existingFilePaths.length)} moved file${existingFilePaths.length === 1 ? '' : 's'}`,
-    );
+    if (existingFilePaths.length > 0) {
+      this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
+      this.progressBar.resetProgress(existingFilePaths.length);
+      this.progressBar.logTrace(
+        `deleting ${IntlPoly.toLocaleString(existingFilePaths.length)} moved file${existingFilePaths.length === 1 ? '' : 's'}`,
+      );
+    }
 
     const filePathChunks = existingFilePaths.reduce(
       ArrayPoly.reduceChunk(Defaults.OUTPUT_CLEANER_BATCH_SIZE),
       [],
     );
     for (const filePathChunk of filePathChunks) {
+      this.progressBar.setInProgress(filePathChunk.length);
       this.progressBar.logInfo(
         `deleting moved file${filePathChunk.length === 1 ? '' : 's'}:\n${filePathChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
       );
@@ -145,6 +148,8 @@ export default class MovedROMDeleter extends Module {
           }
         }),
       );
+      this.progressBar.incrementCompleted(filePathChunk.length);
+      this.progressBar.setInProgress(0);
     }
 
     this.progressBar.logTrace('done deleting moved ROMs');
@@ -240,15 +245,9 @@ export default class MovedROMDeleter extends Module {
    */
   private static filterOutWrittenFiles(
     movedRoms: string[],
-    movedWriteCandidates: WriteCandidate[],
+    writtenFilesToExclude: File[],
   ): string[] {
-    const writtenFilePaths = new Set(
-      movedWriteCandidates.flatMap((candidate) =>
-        candidate
-          .getRomsWithFiles()
-          .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
-      ),
-    );
+    const writtenFilePaths = new Set(writtenFilesToExclude.map((file) => file.getFilePath()));
 
     return movedRoms.filter((filePath) => !writtenFilePaths.has(filePath));
   }
