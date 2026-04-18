@@ -19,7 +19,10 @@ export default class FileMoveMutex extends KeyedMutex {
     return await this.runExclusiveForKey(inputFilePath, async () => {
       const movedFile = this.movedFiles.get(inputFilePath);
       const [result, outputFilePath] = await runnable(movedFile);
-      if (outputFilePath !== undefined && outputFilePath !== inputFilePath) {
+      if (outputFilePath !== undefined) {
+        // We are explicitly NOT checking `outputFilePath !== inputFilePath`, as input files that
+        // are already in the correct location should be considered "moved" so that if they're used
+        // as an input for another Game/ROM they get copied
         this.movedFiles.set(inputFilePath, outputFilePath);
       }
       return result;
@@ -27,17 +30,10 @@ export default class FileMoveMutex extends KeyedMutex {
   }
 
   /**
-   * Return if an input file was previously moved.
+   * Return the new location if an input file was previously moved, without waiting on any
+   * in-progress moves.
    */
-  async wasMoved(filePath: string): Promise<boolean> {
-    // It was definitely moved
-    if (this.movedFiles.has(filePath)) {
-      return true;
-    }
-
-    // It's maybe in the process of moving, so we need to wait
-    return await this.runExclusiveForKey(filePath, () => {
-      return this.movedFiles.has(filePath);
-    });
+  getMovedLocationUnsafe(filePath: string): string | undefined {
+    return this.movedFiles.get(filePath);
   }
 }
