@@ -1,4 +1,4 @@
-import type { ReadonlyMatcher } from 'fast-xml-parser';
+import type { JPathOrMatcher } from 'fast-xml-parser';
 import { XMLParser } from 'fast-xml-parser';
 
 /**
@@ -69,7 +69,7 @@ export default {
       ignoreAttributes: false,
       ignoreDeclaration: true,
       ignorePiTags: true,
-      updateTag: (_tagName, jPathOrMatcher: string | ReadonlyMatcher, attrs): boolean => {
+      updateTag: (_tagName, jPathOrMatcher: JPathOrMatcher, attrs): boolean => {
         if (typeof jPathOrMatcher !== 'string') {
           return true;
         }
