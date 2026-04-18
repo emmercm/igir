@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import { ValidationResult } from '../../../packages/torrentzip/index.js';
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
@@ -19,6 +20,7 @@ import Chd from '../../types/files/archives/chd/chd.js';
 import ChdBinCue from '../../types/files/archives/chd/chdBinCue.js';
 import Zip from '../../types/files/archives/zip.js';
 import File from '../../types/files/file.js';
+import type FileFactory from '../../types/files/fileFactory.js';
 import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
 import type IndexedFiles from '../../types/indexedFiles.js';
 import type Options from '../../types/options.js';
@@ -35,11 +37,18 @@ import Module from '../module.js';
  */
 export default class CandidateGenerator extends Module {
   private readonly options: Options;
+  private readonly fileFactory: FileFactory;
   private readonly readerSemaphore: MappableSemaphore;
 
-  constructor(options: Options, progressBar: ProgressBar, readerSemaphore: MappableSemaphore) {
+  constructor(
+    options: Options,
+    progressBar: ProgressBar,
+    fileFactory: FileFactory,
+    readerSemaphore: MappableSemaphore,
+  ) {
     super(progressBar, CandidateGenerator.name);
     this.options = options;
+    this.fileFactory = fileFactory;
     this.readerSemaphore = readerSemaphore;
   }
 
@@ -731,17 +740,25 @@ export default class CandidateGenerator extends Module {
       inputArchive instanceof Zip &&
       romsWithFiles.every((romWithFiles) => this.options.shouldZipRom(romWithFiles.getRom()))
     ) {
-      if (
-        this.options.getZipFormat() === ZipFormat.TORRENTZIP &&
-        !(await inputArchive.isTorrentZip())
-      ) {
-        // The input file isn't a TorrentZip, it needs to be rewritten
-        return "input zip isn't a valid TorrentZip archive";
+      const tzValidationResult = await this.fileFactory.tzValidationFrom(inputArchive);
+      if (tzValidationResult === ValidationResult.INVALID) {
+        return "input zip isn't a valid TorrentZip or RVZSTD archive";
       }
 
-      if (this.options.getZipFormat() === ZipFormat.RVZSTD && !(await inputArchive.isRVZSTD())) {
+      if (
+        this.options.getZipFormat() === ZipFormat.TORRENTZIP &&
+        tzValidationResult !== ValidationResult.VALID_TORRENTZIP
+      ) {
+        // The input file isn't a TorrentZip, it needs to be rewritten
+        return "input zip isn't a valid TorrentZip archive (it's RVZSTD)";
+      }
+
+      if (
+        this.options.getZipFormat() === ZipFormat.RVZSTD &&
+        tzValidationResult !== ValidationResult.VALID_RVZSTD
+      ) {
         // The input file isn't RVZSTD, it needs to be rewritten
-        return "input zip isn't a valid RVZSTD archive";
+        return "input zip isn't a valid RVZSTD archive (it's TorrentZip)";
       }
     }
 

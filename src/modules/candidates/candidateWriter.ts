@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import { ValidationResult } from '../../../packages/torrentzip/index.js';
 import type CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.js';
 import type FileMoveMutex from '../../async/fileMoveMutex.js';
 import type ProgressBar from '../../console/progressBar.js';
@@ -395,11 +396,20 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    if (this.options.getZipFormat() === ZipFormat.TORRENTZIP && !(await zipFile.isTorrentZip())) {
+    const tzValidationResult = await this.fileFactory.tzValidationFrom(
+      zipFile,
+      CacheMode.IGNORE_CACHED_VALUE,
+    );
+    if (
+      this.options.getZipFormat() === ZipFormat.TORRENTZIP &&
+      tzValidationResult !== ValidationResult.VALID_TORRENTZIP
+    ) {
       return 'is not a valid TorrentZip file';
     }
-
-    if (this.options.getZipFormat() === ZipFormat.RVZSTD && !(await zipFile.isRVZSTD())) {
+    if (
+      this.options.getZipFormat() === ZipFormat.RVZSTD &&
+      tzValidationResult !== ValidationResult.VALID_RVZSTD
+    ) {
       return 'is not a valid RVZSTD file';
     }
 

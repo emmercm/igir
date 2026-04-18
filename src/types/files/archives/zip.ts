@@ -4,15 +4,8 @@ import type { Readable } from 'node:stream';
 import stream from 'node:stream';
 
 import async from 'async';
-import { Mutex } from 'async-mutex';
 
-import type { ValidationResultValue } from '../../../../packages/torrentzip/index.js';
-import {
-  CompressionMethod,
-  TZValidator,
-  TZWriter,
-  ValidationResult,
-} from '../../../../packages/torrentzip/index.js';
+import { CompressionMethod, TZWriter } from '../../../../packages/torrentzip/index.js';
 import type { CentralDirectoryFileHeader } from '../../../../packages/zip/index.js';
 import { ZipReader } from '../../../../packages/zip/index.js';
 import type { ProgressCallback } from '../../../console/progressBar.js';
@@ -31,10 +24,6 @@ import ArchiveEntry from './archiveEntry.js';
 
 export default class Zip extends Archive {
   private readonly zipReader: ZipReader;
-
-  private readonly tzValidateMutex = new Mutex();
-  private tzValidateModifiedTimeMillis?: number;
-  private tzValidateResult?: ValidationResultValue;
 
   constructor(filePath: string) {
     super(filePath);
@@ -244,42 +233,5 @@ export default class Zip extends Archive {
         );
       }
     }
-  }
-
-  async isTorrentZip(): Promise<boolean> {
-    try {
-      return (await this.tzValidate()) === ValidationResult.VALID_TORRENTZIP;
-    } catch {
-      // Likely a zip reading failure
-      return false;
-    }
-  }
-
-  async isRVZSTD(): Promise<boolean> {
-    try {
-      return (await this.tzValidate()) === ValidationResult.VALID_RVZSTD;
-    } catch {
-      // Likely a zip reading failure
-      return false;
-    }
-  }
-
-  /**
-   * Cache TZValidator results as long as this file hasn't been modified.
-   */
-  private async tzValidate(): Promise<ValidationResultValue> {
-    return await this.tzValidateMutex.runExclusive(async () => {
-      const modifiedTimeMillis = (await FsPoly.stat(this.getFilePath())).mtimeMs;
-      if (
-        this.tzValidateResult !== undefined &&
-        modifiedTimeMillis === this.tzValidateModifiedTimeMillis
-      ) {
-        return this.tzValidateResult;
-      }
-
-      this.tzValidateResult = await TZValidator.validate(this.zipReader);
-      this.tzValidateModifiedTimeMillis = modifiedTimeMillis;
-      return this.tzValidateResult;
-    });
   }
 }

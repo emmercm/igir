@@ -1,9 +1,18 @@
+import type {
+  ValidationResultKey,
+  ValidationResultValue,
+} from '../../../packages/torrentzip/index.js';
+import { ValidationResultInverted } from '../../../packages/torrentzip/index.js';
+import { TZValidator } from '../../../packages/torrentzip/index.js';
+import { ValidationResult } from '../../../packages/torrentzip/index.js';
+import { ZipReader } from '../../../packages/zip/index.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import Cache from '../cache.js';
 import type Archive from './archives/archive.js';
 import type { ArchiveEntryProps } from './archives/archiveEntry.js';
 import ArchiveEntry from './archives/archiveEntry.js';
+import type Zip from './archives/zip.js';
 import type { FileProps } from './file.js';
 import File from './file.js';
 import FileChecksums, { ChecksumBitmask } from './fileChecksums.js';
@@ -34,9 +43,11 @@ const ValueType = {
   // ROM headers and file signatures may not be found for files, and that is a valid result that
   // gets cached. But when the list of known headers or signatures changes, we may be able to find
   // a non-undefined result. So these dynamic values help with cache busting.
+  // TODO(cemmer): is this necessary anymore? or can we just check the validity of the cached result?
   ROM_HEADER: `H${ROMHeader.getKnownHeaderCount()}`,
   FILE_SIGNATURE: `S${FileSignature.SIGNATURES.length}`,
   ROM_PADDING: `P${ROMPadding.getKnownFillBytesCount()}`,
+  TZ_VALIDATION: `Z${Object.keys(ValidationResult).length}`,
 } as const;
 type ValueTypeKey = keyof typeof ValueType;
 type ValueTypeValue = (typeof ValueType)[ValueTypeKey];
@@ -254,7 +265,7 @@ export default class FileCache {
   private async getOrComputeAny<T>(
     file: File,
     valueType: ValueTypeValue,
-    compute: () => Promise<string | undefined>,
+    runnable: () => Promise<string | undefined>,
     fromName: (name: string) => T | undefined,
   ): Promise<T | undefined> {
     if (file.getSize() === 0) {
@@ -274,7 +285,7 @@ export default class FileCache {
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
       async () => {
-        const name = await compute();
+        const name = await runnable();
         return {
           fileSize: stats?.size,
           modifiedTimeSec: stats?.mtimeS,
@@ -362,6 +373,51 @@ export default class FileCache {
     return [...fillByteToRomPaddingProps.values()].map((props) => new ROMPadding(props));
   }
 
+  async getOrComputeTzValidation(zip: Zip, forceRecompute = false): Promise<ValidationResultValue> {
+    if (!(await FsPoly.exists(zip.getFilePath()))) {
+      return ValidationResult.INVALID;
+    }
+
+    const stats = await FsPoly.stat(zip.getFilePath());
+    const cacheKey = this.getCacheKey(zip.getFilePath(), undefined, ValueType.TZ_VALIDATION);
+
+    // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
+    //  multiple times concurrently, entries will only be fetched once.
+    const cachedValue = await this.cache.getOrCompute(
+      cacheKey,
+      async () => {
+        let result: ValidationResultValue;
+        try {
+          result = await TZValidator.validate(new ZipReader(zip.getFilePath()));
+        } catch {
+          result = ValidationResult.INVALID;
+        }
+        return {
+          fileSize: stats.size,
+          modifiedTimeSec: stats.mtimeS,
+          value: ValidationResultInverted[result],
+        };
+      },
+      (cached) => {
+        if (forceRecompute) {
+          return true;
+        }
+
+        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
+          // File has changed since being cached
+          return true;
+        }
+
+        const cachedResult = cached.value as ValidationResultKey;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        return ValidationResult[cachedResult] === undefined;
+      },
+    );
+
+    const cachedResult = cachedValue.value as ValidationResultKey;
+    return ValidationResult[cachedResult];
+  }
+
   private getChecksumCacheKeys(file: File, valueType: ValueTypeValue): string[] {
     const checksumEntries: [number, string | undefined][] = [
       [
@@ -381,10 +437,10 @@ export default class FileCache {
   }
 
   private getCacheKey(
-    fileIdentifier: string,
+    filePath: string,
     fileSubIdentifier: string | undefined,
     valueType: ValueTypeValue,
   ): string {
-    return `V${FileCache.VERSION}|${fileIdentifier}|${fileSubIdentifier ?? ''}|${valueType}`;
+    return `V${FileCache.VERSION}|${filePath}|${fileSubIdentifier ?? ''}|${valueType}`;
   }
 }
