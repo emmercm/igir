@@ -416,18 +416,6 @@ export default class CandidateWriter extends Module {
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
     progressBar: ProgressBar,
   ): Promise<boolean> {
-    this.progressBar.logInfo(
-      [
-        `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}:`,
-        ...inputToOutputZipEntries.map(([input, output]) => {
-          if (input.getFilePath() === output.getFilePath()) {
-            return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
-          }
-          return `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}'`;
-        }),
-      ].join('\n'),
-    );
-
     // We have to lock all input files from being moved due to possible raw-moving
     const lockedFilePaths = this.options.shouldMove()
       ? inputToOutputZipEntries
@@ -445,6 +433,18 @@ export default class CandidateWriter extends Module {
             return [input.withFilePath(movedFilePath), output];
           })
         : inputToOutputZipEntries;
+
+      this.progressBar.logInfo(
+        [
+          `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entr${movedInputToOutputZipEntries.length === 1 ? 'y' : 'ies'}:`,
+          ...movedInputToOutputZipEntries.map(([input, output]) => {
+            if (input.getFilePath() === output.getFilePath()) {
+              return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
+            }
+            return `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}'`;
+          }),
+        ].join('\n'),
+      );
 
       try {
         await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
