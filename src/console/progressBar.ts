@@ -29,18 +29,20 @@ export const ProgressBarSymbol: Record<string, ColoredSymbol> = {
   ROM_HEADER_DETECTION: { symbol: '^', color: chalk.magenta },
   ROM_TRIMMING_DETECTION: { symbol: UNICODE_SUPPORTED ? '⌵' : 'v', color: chalk.magenta },
   ROM_INDEXING: { symbol: '♦', color: chalk.magenta },
-  PATCH_PARSING: { symbol: 'Σ', color: chalk.magenta },
+  PATCH_PARSING: { symbol: UNICODE_SUPPORTED ? 'ℙ' : 'P', color: chalk.magenta },
   // Processing a single DAT
   DAT_GROUPING_SIMILAR: { symbol: '∩', color: chalk.cyan },
   DAT_MERGE_SPLIT: { symbol: '↔', color: chalk.cyan },
   DAT_FILTERING: { symbol: '∆', color: chalk.cyan },
   DAT_PREFERRING: { symbol: UNICODE_SUPPORTED ? '⇅' : '↨', color: chalk.cyan },
-  // Candidates
+  // Candidates generation
   CANDIDATE_GENERATING: { symbol: 'Σ', color: chalk.cyan },
+  CANDIDATE_PATCHING: { symbol: UNICODE_SUPPORTED ? 'ℙ' : 'P', color: chalk.cyan },
   CANDIDATE_EXTENSION_CORRECTION: { symbol: '.', color: chalk.cyan },
-  CANDIDATE_HASHING: { symbol: '#', color: chalk.yellow },
+  CANDIDATE_HASHING: { symbol: '#', color: chalk.cyan },
   CANDIDATE_VALIDATING: { symbol: UNICODE_SUPPORTED ? '≟' : '?', color: chalk.cyan },
   CANDIDATE_COMBINING: { symbol: UNICODE_SUPPORTED ? '∪' : 'U', color: chalk.cyan },
+  // Candidate writing
   TESTING: { symbol: UNICODE_SUPPORTED ? '≟' : '?', color: chalk.yellow },
   WRITING: { symbol: UNICODE_SUPPORTED ? '✎' : '»', color: chalk.yellow },
   RECYCLING: { symbol: UNICODE_SUPPORTED ? '♻' : '»', color: chalk.blue },
