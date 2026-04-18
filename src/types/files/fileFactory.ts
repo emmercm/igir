@@ -1,3 +1,4 @@
+import type { ValidationResultValue } from '../../../packages/torrentzip/index.js';
 import type Logger from '../../console/logger.js';
 import { LogLevel } from '../../console/logLevel.js';
 import MultiBar from '../../console/multiBar.js';
@@ -294,5 +295,15 @@ export default class FileFactory {
 
   async paddingsFrom(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
     return await this.fileCache.getOrComputeFilePaddings(file, callback);
+  }
+
+  async tzValidationFrom(
+    zip: Zip,
+    cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
+  ): Promise<ValidationResultValue> {
+    return await this.fileCache.getOrComputeTzValidation(
+      zip,
+      cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
+    );
   }
 }

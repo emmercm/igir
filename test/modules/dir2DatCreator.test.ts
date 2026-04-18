@@ -44,6 +44,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
@@ -79,6 +80,7 @@ it('should write a valid DAT', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
@@ -165,6 +167,7 @@ it('should use the candidates for games and ROMs', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
