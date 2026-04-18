@@ -69,7 +69,11 @@ export default class Cache<V> {
    * Get the value of a key in the cache, waiting for any existing operations to complete first.
    */
   async get(key: string): Promise<V | undefined> {
-    return await this.keyedMutex.runExclusiveForKey(key, () => this.keyValues.get(key));
+    return await this.keyedMutex.runExclusiveForKey(key, () => this.getUnsafe(key));
+  }
+
+  private getUnsafe(key: string): V | undefined {
+    return this.keyValues.get(key);
   }
 
   /**
@@ -107,13 +111,8 @@ export default class Cache<V> {
       return new Map();
     }
 
-    // Fast path: check all keys without holding multi-key locks.
-    // get() acquires per-key mutexes, so it waits on any in-progress computation.
-    const values = await Promise.all(
-      keys.map(async (key) => {
-        return await this.get(key);
-      }),
-    );
+    // Fast path: check all keys without obtaining any locks
+    const values = keys.map((key) => this.getUnsafe(key));
     if (values.every((value) => value !== undefined)) {
       return keys.reduce((map, key, idx) => {
         map.set(key, values[idx]);
@@ -157,13 +156,8 @@ export default class Cache<V> {
       return undefined;
     }
 
-    // Fast path: check all keys without holding multi-key locks.
-    // get() acquires per-key mutexes, so it waits on any in-progress computation.
-    const values = await Promise.all(
-      keys.map(async (key) => {
-        return await this.get(key);
-      }),
-    );
+    // Fast path: check all keys without obtaining any locks
+    const values = keys.map((key) => this.getUnsafe(key));
     const firstDefinedValue = values.find((value) => value !== undefined);
     if (
       firstDefinedValue !== undefined &&

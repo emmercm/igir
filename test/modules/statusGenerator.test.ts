@@ -1,8 +1,11 @@
 import path from 'node:path';
+import stream from 'node:stream';
 
 import stripAnsi from 'strip-ansi';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
+import Logger from '../../src/console/logger.js';
+import { LogLevel } from '../../src/console/logLevel.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import DATPreferer from '../../src/modules/dats/datPreferer.js';
 import ROMIndexer from '../../src/modules/roms/romIndexer.js';
@@ -17,6 +20,8 @@ import ArchiveEntry from '../../src/types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../src/types/files/archives/archiveFile.js';
 import Zip from '../../src/types/files/archives/zip.js';
 import File from '../../src/types/files/file.js';
+import FileCache from '../../src/types/files/fileCache.js';
+import FileFactory from '../../src/types/files/fileFactory.js';
 import type { OptionsProps } from '../../src/types/options.js';
 import Options from '../../src/types/options.js';
 import IPSPatch from '../../src/types/patches/ipsPatch.js';
@@ -94,6 +99,7 @@ async function candidateGenerator(
   return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
     new MappableSemaphore(2),
   ).generate(dat, romsIndexed);
 }
