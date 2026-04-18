@@ -32,6 +32,7 @@ async function runCombinedCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 

@@ -609,10 +609,12 @@ export default class Igir {
       [
         // Generate the initial set of candidates
         async (): Promise<WriteCandidate[]> =>
-          await new CandidateGenerator(this.options, progressBar, readerSemaphore).generate(
-            dat,
-            indexedRoms,
-          ),
+          await new CandidateGenerator(
+            this.options,
+            progressBar,
+            fileFactory,
+            readerSemaphore,
+          ).generate(dat, indexedRoms),
         // Add patched candidates
         (candidates): WriteCandidate[] =>
           new CandidatePatchGenerator(this.options, progressBar).generate(dat, candidates, patches),

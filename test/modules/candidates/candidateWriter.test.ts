@@ -135,6 +135,7 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     readerSemaphore,
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {

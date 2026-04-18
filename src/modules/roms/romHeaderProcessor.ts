@@ -123,6 +123,7 @@ export default class ROMHeaderProcessor extends Module {
       this.progressBar.logTrace(
         `${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`,
       );
+      // TODO(cemmer): figure out a way to cache this
       return await inputFile.withFileHeader(headerForFileStream);
     }
     this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);

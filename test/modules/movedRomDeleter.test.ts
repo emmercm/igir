@@ -471,6 +471,7 @@ describe('should delete archives', () => {
         const candidates = await new CandidateGenerator(
           options,
           new ProgressBarFake(),
+          new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
           new MappableSemaphore(os.availableParallelism()),
         ).generate(dat, indexedRomFiles);
 

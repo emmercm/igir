@@ -1,7 +1,10 @@
 import os from 'node:os';
 import path from 'node:path';
+import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import Logger from '../../../src/console/logger.js';
+import { LogLevel } from '../../../src/console/logLevel.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
@@ -22,11 +25,15 @@ import SevenZip from '../../../src/types/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/types/files/archives/tar.js';
 import Zip from '../../../src/types/files/archives/zip.js';
 import File from '../../../src/types/files/file.js';
+import FileCache from '../../../src/types/files/fileCache.js';
+import FileFactory from '../../../src/types/files/fileFactory.js';
 import ROMHeader from '../../../src/types/files/romHeader.js';
 import IndexedFiles from '../../../src/types/indexedFiles.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/types/options.js';
 import type WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
+
+const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 const gameWithNoRoms = new Game({
   name: 'game with no ROMs',
@@ -81,6 +88,7 @@ async function candidateGenerator(
   return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedFiles);
 }
@@ -1016,6 +1024,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
@@ -1056,6 +1065,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
