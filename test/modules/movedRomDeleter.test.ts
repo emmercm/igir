@@ -41,6 +41,7 @@ it('should do nothing if no ROMs moved', async () => {
   await new MovedROMDeleter(new Options({ commands: ['copy'] }), new ProgressBarFake()).delete(
     IndexedFiles.fromFiles(romFiles),
     [],
+    [],
   );
 
   const exists = await Promise.all(
@@ -75,6 +76,7 @@ it('should delete raw files', async () => {
     const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
       IndexedFiles.fromFiles([inputFile]),
       [movedWriteCandidate],
+      [],
     );
 
     // Then - the file should have been deleted
@@ -479,6 +481,7 @@ describe('should delete archives', () => {
           await new MovedROMDeleter(options, new ProgressBarFake()).delete(
             indexedRomFiles,
             candidates,
+            [],
           )
         )
           .map((filePath) => filePath.replace(inputPath + path.sep, ''))
@@ -518,6 +521,7 @@ it("should not delete files that weren't moved", async () => {
     const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
       IndexedFiles.fromFiles([inputFile]),
       [movedWriteCandidate],
+      [inputFile],
     );
 
     // Then - the file should NOT have been deleted because it's a written output

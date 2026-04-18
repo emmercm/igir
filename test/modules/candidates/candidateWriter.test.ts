@@ -97,7 +97,6 @@ async function candidateWriter(
   patchGlob: string | undefined,
   outputTemp: string,
 ): Promise<CandidateWriterResults> {
-  // Given
   const options = new Options({
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
