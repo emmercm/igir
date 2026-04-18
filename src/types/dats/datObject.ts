@@ -62,7 +62,10 @@ export default {
    */
   fromXmlString(xmlContents: Buffer | string): DATObjectProps {
     return new XMLParser({
-      processEntities: false, // don't process doctype <!ENTITY> tags
+      processEntities: {
+        // MAME DATs need higher limits
+        maxTotalExpansions: Number.MAX_SAFE_INTEGER,
+      },
       ignoreAttributes: false,
       ignoreDeclaration: true,
       ignorePiTags: true,
