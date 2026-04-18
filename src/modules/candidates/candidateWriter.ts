@@ -423,7 +423,7 @@ export default class CandidateWriter extends Module {
           .reduce(ArrayPoly.reduceUnique(), [])
       : [];
     return await this.moveMutex.runExclusiveForKeys(lockedFilePaths, async () => {
-      // Input files may have been previously moved due to raw-moving
+      // Input files may have been previously moved due to raw-moving, find them
       const movedInputToOutputZipEntries = this.options.shouldMove()
         ? inputToOutputZipEntries.map(([input, output]): [File, ArchiveEntry<Zip>] => {
             const movedFilePath = this.moveMutex.getMovedLocationUnsafe(input.getFilePath());
