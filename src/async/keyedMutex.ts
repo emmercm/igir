@@ -1,14 +1,20 @@
-import type { MutexInterface } from 'async-mutex';
-import { E_TIMEOUT } from 'async-mutex';
-import { Mutex, withTimeout } from 'async-mutex';
+import { Mutex } from 'async-mutex';
 
 import ArrayPoly from '../polyfill/arrayPoly.js';
+
+interface KeyMutexEntry {
+  mutex: Mutex;
+  // Functions that need to lock a key increment this number first before waiting to acquire a lock.
+  // If this number is >0, then this mutex should not be evicted. If it was evicted, a new caller
+  // would create a new mutex for the same key, resulting in not waiting for the existing lock.
+  pendingLocks: number;
+}
 
 /**
  * Wrapper for `async-mutex` {@link Mutex}es to run code exclusively for a key.
  */
 export default class KeyedMutex {
-  private readonly keyMutexes = new Map<string, Mutex>();
+  private readonly keyMutexes = new Map<string, KeyMutexEntry>();
 
   private readonly keyMutexesMutex = new Mutex();
 
@@ -43,9 +49,12 @@ export default class KeyedMutex {
       return;
     }
 
-    const uniqueKeys = keys.reduce(ArrayPoly.reduceUnique(), []);
+    // Sort keys to impose a canonical acquisition order across all callers. Combined with the
+    // sequential acquire loop below, this makes multi-key deadlock impossible: no caller can hold
+    // a key greater than one it is still waiting on, so no circular wait can form.
+    const uniqueKeys = keys.reduce(ArrayPoly.reduceUnique(), []).toSorted();
 
-    let mutexes: Mutex[];
+    let entries: KeyMutexEntry[];
 
     if (uniqueKeys.every((key) => this.keyMutexes.has(key))) {
       // If every key mutex already exists, then we can avoid a global lock
@@ -57,14 +66,18 @@ export default class KeyedMutex {
         this.keyMutexesLru.set(key, undefined);
       }
 
-      mutexes = uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+      entries = uniqueKeys.map((key) => {
+        const entry = this.keyMutexes.get(key) as KeyMutexEntry;
+        entry.pendingLocks += 1;
+        return entry;
+      });
     } else {
       // If at least one key mutex does not exist, then we have to take a global lock to create them
       const uniqueKeySet = new Set(uniqueKeys);
-      mutexes = await this.keyMutexesMutex.runExclusive(() => {
+      entries = await this.keyMutexesMutex.runExclusive(() => {
         for (const key of uniqueKeys) {
           if (!this.keyMutexes.has(key)) {
-            this.keyMutexes.set(key, new Mutex());
+            this.keyMutexes.set(key, { mutex: new Mutex(), pendingLocks: 0 });
           }
         }
 
@@ -75,8 +88,14 @@ export default class KeyedMutex {
             if (keysToEvict <= 0) {
               break;
             }
-            if (!uniqueKeySet.has(lruKey) && !this.keyMutexes.get(lruKey)?.isLocked()) {
-              this.keyMutexes.get(lruKey)?.release();
+            const lruEntry = this.keyMutexes.get(lruKey);
+            if (
+              !uniqueKeySet.has(lruKey) &&
+              lruEntry !== undefined &&
+              !lruEntry.mutex.isLocked() &&
+              lruEntry.pendingLocks === 0
+            ) {
+              lruEntry.mutex.release();
               this.keyMutexes.delete(lruKey);
               this.keyMutexesLru.delete(lruKey);
               keysToEvict--;
@@ -90,61 +109,27 @@ export default class KeyedMutex {
           this.keyMutexesLru.set(key, undefined);
         }
 
-        return uniqueKeys.map((key) => this.keyMutexes.get(key) as Mutex);
+        return uniqueKeys.map((key) => {
+          const entry = this.keyMutexes.get(key) as KeyMutexEntry;
+          entry.pendingLocks += 1;
+          return entry;
+        });
       });
     }
 
-    await KeyedMutex.acquireMultipleWithDeadlockProtection(mutexes);
-  }
-
-  /**
-   * Trying to take multiple locks at once can lead to deadlocking. This is a naive deadlock
-   * resolution algorithm that requires all locks to be taken within {@link timeoutMillis}. If any
-   * lock can't be taken in the timeout, then any acquired locks will be released and all of them
-   * will be tried again. This semi-frequent releasing should help pending lockers make progress.
-   *
-   * This function will retry forever, which may still cause problems.
-   */
-  private static async acquireMultipleWithDeadlockProtection(
-    mutexes: Mutex[],
-    timeoutMillis = 15_000,
-  ): Promise<void> {
-    // Add +/-10% jitter to try to prevent the exact same deadlock from happening
-    const timeoutWithJitter =
-      timeoutMillis - timeoutMillis * 0.1 + Math.random() * (timeoutMillis * 0.2);
-    const mutexesWithTimeout = mutexes.map((mutex) => withTimeout(mutex, timeoutWithJitter));
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    while (true) {
-      const mutexesAcquired: MutexInterface[] = [];
-      let anyMutexRejected = false;
-
-      const acquirePromises = mutexesWithTimeout.map(async (mutex) => {
-        await mutex.acquire();
-        if (anyMutexRejected) {
-          // One of the mutexes couldn't lock, so we shouldn't keep any others
-          mutex.release();
-          return;
-        }
-        mutexesAcquired.push(mutex);
-      });
-
-      try {
-        await Promise.all(acquirePromises);
-        return;
-      } catch (error) {
-        // Release any mutexes locked, and wait on all pending mutex locks to be resolved
-        anyMutexRejected = true;
-        mutexesAcquired.forEach((mutex) => {
-          mutex.release();
-        });
-        await Promise.allSettled(acquirePromises);
-
-        if (error !== E_TIMEOUT) {
-          // The error was something other than a timeout, throw it
-          throw error;
-        }
+    let nextToAcquire = 0;
+    try {
+      for (; nextToAcquire < entries.length; nextToAcquire += 1) {
+        await entries[nextToAcquire].mutex.acquire();
+        // Once acquired, isLocked() protects this entry from eviction; decrement the pending count
+        entries[nextToAcquire].pendingLocks -= 1;
       }
+    } catch (error) {
+      // Decrement pending counts we still owe for entries past the failure point.
+      for (let i = nextToAcquire; i < entries.length; i += 1) {
+        entries[i].pendingLocks -= 1;
+      }
+      throw error;
     }
   }
 
@@ -164,7 +149,7 @@ export default class KeyedMutex {
     }
 
     keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
-      this.keyMutexes.get(key)?.release();
+      this.keyMutexes.get(key)?.mutex.release();
     });
   }
 
@@ -181,7 +166,9 @@ export default class KeyedMutex {
   }
 
   /**
-   * Run a {@link runnable} exclusively for the given {@link keys}. Be wary of deadlocks!
+   * Run a {@link runnable} exclusively for the given {@link keys}. Keys are acquired in canonical
+   * sorted order and released after {@link runnable} completes, so concurrent callers cannot
+   * deadlock regardless of the order in which they pass their keys.
    */
   async runExclusiveForKeys<V>(keys: string[], runnable: () => V | Promise<V>): Promise<V> {
     await this.acquireMultiple(keys);
