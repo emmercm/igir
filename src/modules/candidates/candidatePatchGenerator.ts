@@ -6,6 +6,7 @@ import type DAT from '../../types/dats/dat.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../types/files/archives/archiveFile.js';
+import Zip from '../../types/files/archives/zip.js';
 import type Options from '../../types/options.js';
 import type Patch from '../../types/patches/patch.js';
 import ROMWithFiles from '../../types/romWithFiles.js';
@@ -39,7 +40,7 @@ export default class CandidatePatchGenerator extends Module {
     }
 
     this.progressBar.logTrace(`${dat.getName()}: generating patched candidates`);
-    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
+    this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_PATCHING);
     this.progressBar.resetProgress(candidates.length);
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
@@ -75,7 +76,7 @@ export default class CandidatePatchGenerator extends Module {
     }
 
     return candidates.flatMap((unpatchedCandidate) => {
-      // Possibly generate multiple new patched candidates for the ReleaseCandidates
+      // Possibly generate multiple new patched candidates for the WriteCandidates
       const patchedCandidates = this.buildPatchedCandidates(dat, unpatchedCandidate, crcToPatches);
       if (this.options.getPatchOnly()) {
         return patchedCandidates;
@@ -89,17 +90,26 @@ export default class CandidatePatchGenerator extends Module {
     unpatchedCandidate: WriteCandidate,
     crcToPatches: Map<string, Patch[]>,
   ): WriteCandidate[] {
-    // Get all patch files relevant to any ROM in the ReleaseCandidate
+    // If the WriteCandidate has any ArchiveFile input files, then we must not be extracting; and
+    // therefore we can only patch it if we can zip every ROM
+    if (
+      unpatchedCandidate
+        .getRomsWithFiles()
+        .some(
+          (romWithFiles) =>
+            romWithFiles.getInputFile() instanceof ArchiveFile &&
+            !this.options.shouldZipRom(romWithFiles.getRom()),
+        )
+    ) {
+      return [];
+    }
+
+    // Get all patch files relevant to any ROM in the WriteCandidate
     const candidatePatches = unpatchedCandidate.getRomsWithFiles().flatMap((romWithFiles) => {
       const inputFile = romWithFiles.getInputFile();
 
-      // For ArchiveFile inputs, use the underlying ArchiveEntry's CRC for matching,
-      // but only if we're in zip mode (otherwise the archive is raw-copied and patching
-      // doesn't apply)
+      // Match against ArchiveFile's underlying ArchiveEntry
       if (inputFile instanceof ArchiveFile) {
-        if (!this.options.shouldZipRom(romWithFiles.getRom())) {
-          return [];
-        }
         const entryCrc32 = inputFile.getArchiveEntry().getCrc32();
         if (entryCrc32 === undefined) {
           return [];
@@ -129,9 +139,16 @@ export default class CandidatePatchGenerator extends Module {
         let inputFile = romWithFiles.getInputFile();
         let outputFile = romWithFiles.getOutputFile();
 
-        // Convert ArchiveFile inputs to their underlying ArchiveEntry
         if (inputFile instanceof ArchiveFile) {
-          inputFile = inputFile.getArchiveEntry();
+          // Convert ArchiveFile inputs to their underlying ArchiveEntry
+          const archiveEntry = inputFile.getArchiveEntry();
+          inputFile = archiveEntry;
+
+          // The only reason we can patch a ArchiveFile is if we're zipping
+          outputFile = archiveEntry.withProps({
+            archive: new Zip(outputFile.getFilePath()),
+            entryPath: archiveEntry.getEntryPath(),
+          });
         }
 
         // Apply the patch to the appropriate file
