@@ -320,8 +320,8 @@ export default class FileCache {
 
     const cacheKeys = this.getChecksumCacheKeys(file, ValueType.ROM_PADDING);
     if (cacheKeys.length === 0) {
-      // No checksums available to use as cache keys, compute without caching
-      return await ROMPadding.paddingsFromFile(file, callback);
+      // No checksums available to use as cache keys, fall back to file path
+      cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, ValueType.ROM_PADDING));
     }
 
     const activeChecksums = Object.values(ChecksumBitmask).filter(
