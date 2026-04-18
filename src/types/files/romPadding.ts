@@ -83,6 +83,10 @@ export default class ROMPadding implements ROMPaddingProps {
       return [];
     }
 
+    if (callback !== undefined) {
+      callback(0, paddedSize);
+    }
+
     return await file.createReadStream(async (readable) => {
       const readableWithCallback =
         callback === undefined
