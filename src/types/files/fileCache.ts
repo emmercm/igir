@@ -374,6 +374,10 @@ export default class FileCache {
   }
 
   async getOrComputeTzValidation(zip: Zip, forceRecompute = false): Promise<ValidationResultValue> {
+    if (!(await FsPoly.exists(zip.getFilePath()))) {
+      return ValidationResult.INVALID;
+    }
+
     const stats = await FsPoly.stat(zip.getFilePath());
     const cacheKey = this.getCacheKey(zip.getFilePath(), undefined, ValueType.TZ_VALIDATION);
 
