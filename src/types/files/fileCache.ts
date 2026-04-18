@@ -24,6 +24,11 @@ import ROMPadding from './romPadding.js';
 interface CacheValue {
   fileSize?: number;
   modifiedTimeSec?: number;
+  // We cache empty/undefined/falsey values in the cache, but whenever the list of possible results change, then we want
+  // to retry this processing as it may become possible to get a truthy value. For example, if we add more known file
+  // signatures, we want to retry processing "undefined"s as we may be able to find a signature now. "version" stores a
+  // number that is meaningful to each function, usually how many headers/signatures/etc. that we know.
+  version?: number;
   value:
     | number
     // getOrComputeFileChecksums()
@@ -40,14 +45,10 @@ interface CacheValue {
 const ValueType = {
   FILE_CHECKSUMS: 'F',
   ARCHIVE_CHECKSUMS: 'A',
-  // ROM headers and file signatures may not be found for files, and that is a valid result that
-  // gets cached. But when the list of known headers or signatures changes, we may be able to find
-  // a non-undefined result. So these dynamic values help with cache busting.
-  // TODO(cemmer): is this necessary anymore? or can we just check the validity of the cached result?
-  ROM_HEADER: `H${ROMHeader.getKnownHeaderCount()}`,
-  FILE_SIGNATURE: `S${FileSignature.SIGNATURES.length}`,
+  ROM_HEADER: 'H',
+  FILE_SIGNATURE: 'S',
   ROM_PADDING: `P${ROMPadding.getKnownFillBytesCount()}`,
-  TZ_VALIDATION: `Z${Object.keys(ValidationResult).length}`,
+  TZ_VALIDATION: 'Z',
 } as const;
 type ValueTypeKey = keyof typeof ValueType;
 type ValueTypeValue = (typeof ValueType)[ValueTypeKey];
@@ -79,6 +80,8 @@ export default class FileCache {
     );
     // Delete keys from old value types
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
+    // Delete old versioned header/signature/validation keys (pre-version-in-value migration)
+    await this.cache.delete(/\|[HSZ]\d+$/);
   }
 
   async save(): Promise<void> {
@@ -231,6 +234,7 @@ export default class FileCache {
     return await this.getOrComputeAny(
       file,
       ValueType.ROM_HEADER,
+      ROMHeader.getKnownHeaderCount(),
       async () => {
         const header = await file.createReadStream(
           async (readable) => await ROMHeader.headerFromFileStream(readable),
@@ -248,6 +252,7 @@ export default class FileCache {
     return await this.getOrComputeAny(
       file,
       ValueType.FILE_SIGNATURE,
+      FileSignature.SIGNATURES.length,
       async () => {
         const signature = await file.createReadStream(
           async (readable) => await FileSignature.signatureFromFileStream(readable, callback),
@@ -265,6 +270,7 @@ export default class FileCache {
   private async getOrComputeAny<T>(
     file: File,
     valueType: ValueTypeValue,
+    currentVersion: number,
     runnable: () => Promise<string | undefined>,
     fromName: (name: string) => T | undefined,
   ): Promise<T | undefined> {
@@ -289,6 +295,7 @@ export default class FileCache {
         return {
           fileSize: stats?.size,
           modifiedTimeSec: stats?.mtimeS,
+          version: currentVersion,
           value: name,
         };
       },
@@ -300,7 +307,11 @@ export default class FileCache {
           // File has changed since being cached
           return true;
         }
-        // Recompute if the cached value isn't valid or isn't known
+        if (cached.value === undefined) {
+          // "Not found" is valid — only recompute if the known item list has changed
+          return cached.version !== currentVersion;
+        }
+        // Recompute if the cached name no longer maps to a known item
         return typeof cached.value !== 'string' || fromName(cached.value) === undefined;
       },
     );
@@ -379,6 +390,7 @@ export default class FileCache {
     }
 
     const stats = await FsPoly.stat(zip.getFilePath());
+    const currentVersion = Object.keys(ValidationResult).length;
     const cacheKey = this.getCacheKey(zip.getFilePath(), undefined, ValueType.TZ_VALIDATION);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
@@ -395,6 +407,7 @@ export default class FileCache {
         return {
           fileSize: stats.size,
           modifiedTimeSec: stats.mtimeS,
+          version: currentVersion,
           value: ValidationResultInverted[result],
         };
       },
@@ -410,7 +423,15 @@ export default class FileCache {
 
         const cachedResult = cached.value as ValidationResultKey;
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        return ValidationResult[cachedResult] === undefined;
+        if (ValidationResult[cachedResult] === undefined) {
+          // ValidationResult options have been internally renamed, we have to recalculate
+          return true;
+        }
+        if (ValidationResult[cachedResult] === ValidationResult.INVALID) {
+          // INVALID results should be recalculated if the known validation types have changed
+          return cached.version !== currentVersion;
+        }
+        return false;
       },
     );
 
