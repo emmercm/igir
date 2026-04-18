@@ -203,7 +203,11 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
       // preferred the non-archive when extracting, otherwise are raw-copying
       [
         'game with one ROM and multiple releases',
-        [command === 'extract' ? path.resolve('1.rom') : path.resolve('one.zip')],
+        [
+          ...(command === 'zip' ? [`${path.resolve('one.zip')}|one.rom`] : []),
+          ...(command === 'extract' ? [path.resolve('1.rom')] : []),
+          ...(command === 'raw' ? [path.resolve('one.zip')] : []),
+        ],
       ],
     ]);
   });
