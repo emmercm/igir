@@ -1,7 +1,7 @@
 mkdocs-material==9.7.6
 
 # https://github.com/mkdocs/mkdocs/issues/4032
-click<8.3.0
+click==8.2.1
 
 mkdocs-exclude-search==0.6.6
 mkdocs-git-committers-plugin-2==2.5.0
