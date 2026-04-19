@@ -39,6 +39,7 @@ jobs:
             changes:
               - '.github/workflows/node-compile.yml'
               - 'packages/**'
+              - 'scripts/compile.ts'
               - 'src/**'
               - '*'
 
