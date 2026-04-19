@@ -96,7 +96,7 @@ jobs:
         run: |
           set -x
           echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
-          echo "BUN_VERSION=$(cat .bun-version)"
+          echo "BUN_VERSION=$(cat .bun-version)" >> "${GITHUB_OUTPUT}"
 
           DOCKER_ARCH=${{ matrix.docker_arch }}
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
