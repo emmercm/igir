@@ -32,7 +32,7 @@ if (await FsPoly.exists(output)) {
 }
 
 logger.info("Bundling with 'bun build --compile' ...");
-const result = await Bun.build({
+const bunBuildConfig = {
   entrypoints: [
     'index.ts',
     ...(await fg(
@@ -94,7 +94,9 @@ const result = await Bun.build({
       },
     },
   ],
-});
+} satisfies Bun.BuildConfig;
+logger.info(JSON.stringify(bunBuildConfig, undefined, 2));
+const result = await Bun.build(bunBuildConfig);
 
 if (!result.success) {
   for (const log of result.logs) {
