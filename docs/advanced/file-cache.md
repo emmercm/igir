@@ -10,7 +10,7 @@ Igir caches the following file operations:
 - Calculating checksums for files in [archives](../input/reading-archives.md)
 - Calculating [file headers](../roms/headers.md)
 - Calculating [file signatures](../output/options.md#fixing-rom-extensions)
-- Calculating [file paddings](../roms/trimming.md)
+- Calculating [file paddings](../roms/trim-detection.md)
 
 The results are stored using the file's absolute path. Igir stores and checks if the file's size or modified timestamp has changed since the cached result was calculated, and if there's a mismatch, will recalculate the file operation.
 
