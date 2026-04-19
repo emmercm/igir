@@ -22,5 +22,7 @@ export default class Package {
 
   static readonly VERSION = packageJson.version;
 
+  static readonly AUTHOR = packageJson.author;
+
   static readonly ENGINES_NODE = packageJson.engines.node;
 }

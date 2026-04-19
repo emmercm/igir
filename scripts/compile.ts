@@ -27,6 +27,9 @@ const argv = await yargs(process.argv.slice(2))
 
 const output = path.resolve(argv.output);
 logger.info(`Output: '${output}'`);
+if (await FsPoly.exists(output)) {
+  await FsPoly.rm(output);
+}
 
 logger.info("Bundling with 'bun build --compile' ...");
 const result = await Bun.build({
@@ -42,7 +45,20 @@ const result = await Bun.build({
       `node_modules/@emmercm/maxcso-${process.platform}-${process.arch}/dist/{maxcso*,*.dylib}`,
     )),
   ],
-  compile: { outfile: output },
+  compile: {
+    outfile: output,
+    target: `bun-${process.platform}-${process.arch}` as Bun.Build.CompileTarget,
+    autoloadDotenv: false,
+    autoloadBunfig: false,
+    windows: {
+      title: Package.NAME,
+      publisher: Package.AUTHOR,
+      version: Package.VERSION,
+      description: Package.HOMEPAGE,
+    },
+  },
+  minify: true,
+  sourcemap: 'inline',
   plugins: [
     {
       name: 'native-addon-loader',
@@ -90,6 +106,39 @@ if (!result.success) {
 if (!(await FsPoly.exists(output))) {
   throw new IgirException(`output file '${output}' doesn't exist`);
 }
+
+if (process.platform === 'darwin') {
+  // Remove the signature
+  logger.info('Removing macOS signature ...');
+  await new Promise<void>((resolve, reject) => {
+    child_process
+      .spawn('codesign', ['--remove-signature', output])
+      .on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`exited with code ${code}`));
+        }
+      })
+      .on('error', reject);
+  });
+
+  // Add an ad-hoc signature
+  logger.info('Adding ad-hoc macOS signature ...');
+  await new Promise<void>((resolve, reject) => {
+    child_process
+      .spawn('codesign', ['--force', '--sign', '-', output])
+      .on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`exited with code ${code}`));
+        }
+      })
+      .on('error', reject);
+  });
+}
+
 logger.info(`Output: ${FsPoly.sizeReadable(await FsPoly.size(output))}`);
 
 logger.info(`Testing: '${output}' ...`);
