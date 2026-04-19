@@ -154,21 +154,9 @@ jobs:
           # Package the executable and test it before compressing it
           npm ci --foreground-scripts
           npm run compile -- . igir
-          rm -rf node_modules/.bin
           ./igir --help
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
           ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
-
-          npx --yes which@latest chdman || true
-          mkdir "$TMPDIR/.ci-test"
-          touch "$TMPDIR/.ci-exe" || true
-          chmod +x "$TMPDIR/.ci-exe" || true
-          ls -al "$TMPDIR"
-          mkdir .ci-test
-          touch ".ci-exe" || true
-          chmod +x ".ci-exe" || true
-          ls -al
-
           tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
           {
