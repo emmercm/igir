@@ -39,6 +39,7 @@ jobs:
             changes:
               - '.github/workflows/node-compile.yml'
               - 'packages/**'
+              - 'scripts/compile.ts'
               - 'src/**'
               - '*'
 
@@ -74,7 +75,8 @@ jobs:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: ".bun-version"
       - id: npm-cache-dir
@@ -123,6 +125,9 @@ jobs:
 
             curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
             export PATH="${HOME}/.bun/bin:$PATH"
+
+            apt-get update
+            apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
 
             # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
