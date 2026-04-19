@@ -42,11 +42,11 @@ In June 2020, v6.3.7 of the [`APPNOTE.TXT` zip file format specification](https:
 
 In January 2024, [MAME v0.262](https://www.mamedev.org/releases/whatsnew_0262.txt) added support for Zstandard compression in zip archives and CHD files.
 
-In April 2024, [RomVault v3.7.0](https://wiki.romvault.com/doku.php?id=whats_new#romvault_370) defined a derivative of the TorrentZip specification called "RVZSTD" that uses Zstandard compression instead of DEFLATE. Igir can create RVZSTD archives if specified with the [`--zip-format <format>` option](../output/writing-archives.md).
+In April 2024, [RomVault v3.7.0](https://wiki.romvault.com/doku.php?id=whats_new#romvault_370) defined a derivative of the TorrentZip specification called "RVZSTD" that uses Zstandard compression instead of DEFLATE. Igir can read RVZSTD archives, and it can create them if specified with the [`--zip-format rvzstd`](../output/writing-archives.md#rvzstd).
 
 ## Achieving deterministic archives
 
-For TorrentZip archives to be deterministic (compress the same every time), they must follow these rules:
+For TorrentZip archives to be deterministic, meaning that they compress the same every time, they must follow these rules:
 
 **File order:**
 
@@ -72,7 +72,7 @@ For TorrentZip archives to be deterministic (compress the same every time), they
   b/
   ```
 
-  but `a/` is not a legal directory here as its existence can be inferred from the file `a/a1.rom`:
+  but `a/` is _not_ a legal directory here as its existence can be inferred from the file `a/a1.rom`:
 
   ```text
   a/
@@ -112,14 +112,18 @@ RVZSTD:
 
 TorrentZip archives make use of a checksum in the archive comment to quickly verify the validity of the file. It is fast to read this checksum because the archive comment is always the last data in a zip archive.
 
-The checksum is calculated by taking the CRC-32 of the full bytes of every central directory file header, concatenated together in the order they appear in the archive (in other words, all the bytes between the "start of central directory" and "end of central directory"). This means that any change to a file's name, size, checksum, or other properties will change the archive checksum.
+The checksum is calculated by taking the CRC-32 of the full bytes of every central directory file header, concatenated together in the order they appear in the archive. In other words, a CRC-32 checksum of all the bytes between the "start of central directory" and "end of central directory." This means that any change to a file's name, size, checksum, or other properties will change the archive checksum.
+
+!!! note
+
+    This archive comment checksum does _not_ make use of the compressed contents of files. That means that if you use the wrong library settings (described above) you can still get a correct archive comment but incorrect archive data!
 
 This checksum is then converted to hexadecimal uppercase, with the start padded to a length of 8 with the character `0`. The comment is then prefixed with a string depending on the format:
 
 - TorrentZip: `TORRENTZIPPED-ABCD1234` (always a length of 22 characters/bytes)
 - RVZSTD: `RVZSTD-0987FEDC` (always a length of 15 characters/bytes)
 
-The comment is written as-is (does not have its byte order reversed) even though numeric values are all written in little-endian byte order.
+The comment is written as-is (does _not_ have its byte order reversed) even though numeric values are all written in little-endian byte order.
 
 ## Zip features used
 
@@ -130,7 +134,7 @@ TorrentZip makes use of these zip features:
 - UTF-8 filename encoding via the general purpose bit flag 11 when necessary
 - Zip64 extended information extra fields, an end of central directory record, and an end of central directory record locator when necessary
 
-TorrentZip does not use these less common features:
+TorrentZip does _not_ use these less common features:
 
 - Encryption of any kind, including:
   - Local file encryption headers

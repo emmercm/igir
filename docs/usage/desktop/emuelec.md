@@ -13,7 +13,7 @@ Because EmuELEC is mostly Libretro under the hood, the instructions are generall
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input /media/USB-Drive/BIOS/ \
+      --input /media/USB-Drive/BIOS \
       --output /storage/roms/bios/
     ```
 

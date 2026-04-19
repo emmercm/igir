@@ -24,6 +24,10 @@ Igir supports most common archive formats:
 <sup>1</sup> may require you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
 </small>
 
+!!! note
+
+    Igir will not read the contents of archives within archives. A warning will be [logged](../advanced/logging.md) for any archive found within an archive.
+
 **You should prefer archive formats that have CRC32 checksum information for each file.**
 
 By default, Igir uses CRC32 information to [match ROMs](../roms/matching.md) to DAT entries. If an archive already contains CRC32 information for each file, then Igir doesn't need to extract any file to compute its CRC32. This can save a lot of time on large archives.
@@ -38,7 +42,7 @@ This is why Igir uses `.zip` as its output archive of choice, `.zip` files are e
 
 ## Exact archive matching
 
-Some DAT files such as the [libretro BIOS System.dat](https://github.com/libretro/libretro-database/blob/master/dat/System.dat) catalog archives such as zip files, rather than the contents of those archives. By default, Igir will try to detect DATs like these and calculate checksums for all archive files, in addition to the files they contain.
+Some DAT files such as the [libretro BIOS System.dat](https://github.com/libretro/libretro-database/blob/master/dat/System.dat) catalog archives such as zip files, rather than the contents of those archives. This type of matching only makes sense with [TorrentZipped archives](../output/writing-archives.md#torrentzip). By default, Igir will try to detect DATs like these and calculate checksums for all archive files, in addition to the files they contain.
 
 This adds a potentially non-trivial amount of processing time during ROM scanning, so this behavior can be turned off with the option:
 
@@ -54,6 +58,4 @@ If for some reason Igir isn't identifying an input file correctly as an archive,
 
 ## Checksum cache
 
-It can be expensive to calculate checksums of files within archives, especially MD5, SHA1, and SHA256. If Igir needs to calculate a checksum not easily read from the archive (see above), it will cache the result in a file named `igir.cache`. This cached result will then be used as long as the input file's size and modified timestamp remain the same.
-
-The location of this cache file can be controlled with the `--cache-path <path>` option, or caching can be disabled entirely with the `--disable-cache` option. You can safely delete `igir.cache` when Igir isn't running if the file becomes too large for you.
+It can be expensive to calculate checksums of files within archives. If Igir needs to calculate a checksum not easily read from the archive (see above), it will cache the result in the [file cache](../advanced/file-cache.md).

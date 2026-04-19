@@ -17,7 +17,7 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses 
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS\ ^
+      --input BIOS ^
       --output E:\BIOS
     ```
 
@@ -28,7 +28,7 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses 
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /Volumes/OnionOS/BIOS
     ```
 
@@ -39,7 +39,7 @@ OnionOS has its BIOS folder at the root of the SD card at `/BIOS/`, and it uses 
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /media/OnionOS/BIOS
     ```
 
@@ -54,7 +54,7 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\Roms\{onion}" ^
       --dir-letter ^
       --no-bios
@@ -67,7 +67,7 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/OnionOS/Roms/{onion}" \
       --dir-letter \
       --no-bios
@@ -80,7 +80,7 @@ OnionOS uses its own proprietary [ROM folder structure](https://github.com/Onion
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/OnionOS/Roms/{onion}" \
       --dir-letter \
       --no-bios

@@ -1,4 +1,4 @@
-# Writing Multi-Disc Playlists
+# Writing Playlists
 
 Most DAT groups that catalog optical media-based consoles (e.g. PS1, Dreamcast, GameCube) consider different discs of a multi-disc game to be separate "games," with no relation between them other than having a similar name. This is because ROM managers may not process games unless all of its ROM files are present, but there may be bonus discs that you don't care about for storage reasons.
 
@@ -30,7 +30,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```batch
       igir playlist ^
         --dat "Redump*.zip" ^
-        --input ROMs\
+        --input ROMs
       ```
 
   === ":fontawesome-brands-apple: macOS"
@@ -38,7 +38,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir playlist \
         --dat "Redump*.zip" \
-        --input ROMs/
+        --input ROMs
       ```
 
   === ":simple-linux: Linux"
@@ -46,7 +46,7 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir playlist \
         --dat "Redump*.zip" \
-        --input ROMs/
+        --input ROMs
       ```
 
 - When writing ROMs to an output directory:
@@ -56,8 +56,8 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```batch
       igir copy extract playlist ^
         --dat "Redump*.zip" ^
-        --input ROMs\ ^
-        --output ROMs-Sorted\
+        --input ROMs ^
+        --output ROMs-Sorted
       ```
 
   === ":fontawesome-brands-apple: macOS"
@@ -65,8 +65,8 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir copy extract playlist \
         --dat "Redump*.zip" \
-        --input ROMs/ \
-        --output ROMs-Sorted/
+        --input ROMs \
+        --output ROMs-Sorted
       ```
 
   === ":simple-linux: Linux"
@@ -74,8 +74,8 @@ Igir can create `.m3u` playlists for your multi-disc games with the `playlist` c
       ```shell
       igir copy extract playlist \
         --dat "Redump*.zip" \
-        --input ROMs/ \
-        --output ROMs-Sorted/
+        --input ROMs \
+        --output ROMs-Sorted
       ```
 
 !!! note
@@ -143,7 +143,7 @@ Igir can automatically generate `.m3u` playlist files for these games without mo
     ```batch
     igir playlist ^
       --dat "Redump*.zip" ^
-      --input ROMs\
+      --input ROMs
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -151,7 +151,7 @@ Igir can automatically generate `.m3u` playlist files for these games without mo
     ```shell
     igir playlist \
       --dat "Redump*.zip" \
-      --input ROMs/
+      --input ROMs
     ```
 
 === ":simple-linux: Linux"
@@ -159,7 +159,7 @@ Igir can automatically generate `.m3u` playlist files for these games without mo
     ```shell
     igir playlist \
       --dat "Redump*.zip" \
-      --input ROMs/
+      --input ROMs
     ```
 
 The resulting files would look like this:
@@ -268,8 +268,8 @@ Let's say you also want to use the [`--merge-discs` option](../roms/sets.md#merg
     ```batch
     igir move extract playlist ^
       --dat "TOSEC*.zip" ^
-      --input ROMs\ ^
-      --output ROMs-Sorted\ ^
+      --input ROMs ^
+      --output ROMs-Sorted ^
       --dir-dat-name ^
       --merge-discs
     ```
@@ -279,8 +279,8 @@ Let's say you also want to use the [`--merge-discs` option](../roms/sets.md#merg
     ```shell
     igir move extract playlist \
       --dat "TOSEC*.zip" \
-      --input ROMs/ \
-      --output ROMs-Sorted/ \
+      --input ROMs \
+      --output ROMs-Sorted \
       --dir-dat-name \
       --merge-discs
     ```
@@ -290,8 +290,8 @@ Let's say you also want to use the [`--merge-discs` option](../roms/sets.md#merg
     ```shell
     igir move extract playlist \
       --dat "TOSEC*.zip" \
-      --input ROMs/ \
-      --output ROMs-Sorted/ \
+      --input ROMs \
+      --output ROMs-Sorted \
       --dir-dat-name \
       --merge-discs
     ```

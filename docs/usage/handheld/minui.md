@@ -25,9 +25,9 @@ Place these files under `/Bios/<PAK-name>/<Filename>`:
 
 ## ROMs
 
-MinUI supports many systems and ROM formats. Check the folders [here (base)](https://github.com/shauninman/MinUI/tree/main/skeleton/BASE/Roms) and [here (extras)](https://github.com/shauninman/MinUI/tree/main/skeleton/EXTRAS/Roms) for a comprehensive list about the indivudual systems. Most supported systems and their ROMS can be automatically sorted by Igir using the `{minui}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
+MinUI supports many systems and ROM formats. Check the folders [here (base)](https://github.com/shauninman/MinUI/tree/main/skeleton/BASE/Roms) and [here (extras)](https://github.com/shauninman/MinUI/tree/main/skeleton/EXTRAS/Roms) for a comprehensive list about the individual systems. Most supported systems and their ROMS can be automatically sorted by Igir using the `{minui}` output token. See the [replaceable tokens page](../../output/tokens.md) for more information.
 
-MinUI uses the names unter /Roms on the SD card in a more creative way than most other frontends. The folder names consist of a *UI name* and a *PAK name*. The *UI name* is used as the name shown in the User interface as a list item name, while the *PAK name* controls which software pack is used to open the files within. Files with the same *UI name* but different *PAK name* are listed in the same list in the UI but are opened with different PAKs. Igir uses the vendor recommendations for the folder names with some exceptions.
+MinUI uses the names under /Roms on the SD card in a more creative way than most other frontends. The folder names consist of a *UI name* and a *PAK name*. The *UI name* is used as the name shown in the user interface as a list item name, while the *PAK name* controls which software pack is used to open the files within. Files with the same *UI name* but different *PAK name* are listed in the same list in the UI but are opened with different PAKs. Igir uses the vendor recommendations for the folder names with some exceptions.
 
 MinUI requires multi-file releases to be grouped into subdirectories (bin/cue releases of the PS1 for example). It is recommended to use the [`--dir-game-subdir multiple` option](../../output/path-options.md), which is the default at this time.
 
@@ -40,7 +40,7 @@ More details about these features can be found [in GitHub](https://github.com/sh
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\roms\{minui}" ^
       --dir-letter ^
       --no-bios
@@ -53,7 +53,7 @@ More details about these features can be found [in GitHub](https://github.com/sh
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/MinUI/roms/{minui}" \
       --dir-letter \
       --no-bios
@@ -66,7 +66,7 @@ More details about these features can be found [in GitHub](https://github.com/sh
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/MinUI/roms/{minui}" \
       --dir-letter \
       --no-bios

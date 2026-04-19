@@ -14,7 +14,7 @@ Multiple filter options can be specified at once.
 
 !!! note
 
-    Filters are applied against all [DATs](../dats/processing.md) _before_ [ROM matching](./matching.md) happens.
+    Filters are applied against all [DATs](../dats/scanning.md) _before_ [ROM matching](matching.md) happens.
 
     If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files.
 
@@ -354,6 +354,19 @@ AGB Aging Cartridge (World) (v1.0) (Test Program)
 AGB-Parallel Interface Cartridge (Japan) (En) (Program)
 ```
 
+### Aftermarket ROMs
+
+```text
+--no-aftermarket, --only-aftermarket
+```
+
+Filter out, or only include games that contain `(Aftermarket)` in their name, e.g.:
+
+```text
+Bub-O Escape (World) (v2.5) (Aftermarket) (Unl)
+D-Fuzed (World) (v1.1.0) (GB Compatible) (Aftermarket) (Unl)
+```
+
 ### Homebrew
 
 ```text
@@ -429,7 +442,7 @@ Multiple `--prefer-*` options can be specified at once, and they will be applied
 
 !!! note
 
-    Filters are applied against all [DATs](../dats/processing.md) _before_ [ROM matching](./matching.md) happens.
+    Filters are applied against all [DATs](../dats/scanning.md) _before_ [ROM matching](matching.md) happens.
 
     If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files, and then [infer parents](../dats/processing.md#parentclone-inference) among those games.
 
@@ -598,7 +611,7 @@ This is most useful when _not_ supplying the `extract` or `zip` commands, where 
 --prefer-filename-regex <pattern|filename>
 ```
 
-Prefer an input file matches a regular expression.
+Prefer an input file if it matches a regular expression.
 
 Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
 
