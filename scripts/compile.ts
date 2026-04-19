@@ -57,8 +57,10 @@ const bunBuildConfig = {
       description: Package.HOMEPAGE,
     },
   },
-  minify: true,
-  sourcemap: 'inline',
+  // TODO(cemmer): minification seems to break at least Windows, causing chdman to fail `await import` with:
+  //  "ReferenceError: awaitPromise is not defined"
+  // minify: true,
+  // sourcemap: 'inline',
   plugins: [
     {
       name: 'native-addon-loader',
