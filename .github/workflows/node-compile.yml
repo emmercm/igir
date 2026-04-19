@@ -158,7 +158,7 @@ jobs:
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
           ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
 
-          which chdman || true
+          npx --yes which@latest chdman || true
           mkdir $TMPDIR/.ci-test
           ls -al "$TMPDIR"
           mkdir .ci-test
