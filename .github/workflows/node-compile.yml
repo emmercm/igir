@@ -122,6 +122,7 @@ jobs:
             uname -a
 
             curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
+            export PATH="${HOME}/.bun/bin:$PATH"
 
             # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
