@@ -153,11 +153,12 @@ jobs:
           # Package the executable and test it before compressing it
           npm ci --foreground-scripts
           npm run compile -- . igir
+          rm -rf node_modules/.bin
           ./igir --help
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
           ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
 
-          which chdman
+          which chdman || true
           mkdir $TMPDIR/.ci-test
           ls -al "$TMPDIR"
           mkdir .ci-test
