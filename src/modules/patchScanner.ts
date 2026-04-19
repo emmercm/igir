@@ -43,10 +43,15 @@ export default class PatchScanner extends Scanner {
     const patchFiles = await this.getUniqueFilesFromPaths(patchFilePaths, ChecksumBitmask.CRC32);
     this.progressBar.resetProgress(patchFiles.length);
 
-    const patches = this.parsePatchFiles(patchFiles);
+    const patches = await this.parsePatchFiles(patchFiles);
+    patches.forEach((patch) => {
+      if (patch.getCrcBefore() === '00000000') {
+        this.progressBar.logWarn(`failed to parse CRC32 for patch: ${patch.getFile().toString()}`);
+      }
+    });
 
     this.progressBar.logTrace('done scanning patch files');
-    return await patches;
+    return patches;
   }
 
   private async parsePatchFiles(patchFiles: File[]): Promise<Patch[]> {

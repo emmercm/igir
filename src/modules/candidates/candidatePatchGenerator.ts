@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import IntlPoly from '../../polyfill/intlPoly.js';
 import type DAT from '../../types/dats/dat.js';
 import ROM from '../../types/dats/rom.js';
 import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
@@ -45,11 +46,16 @@ export default class CandidatePatchGenerator extends Module {
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${crcToPatches.size} unique patch${crcToPatches.size === 1 ? '' : 'es'} found`,
+      `${dat.getName()}: found patches for ${IntlPoly.toLocaleString(crcToPatches.size)} unique CRC32s`,
     );
 
     const patchedCandidates = this.build(dat, candidates, crcToPatches);
-    this.progressBar.logTrace(`${dat.getName()}: done generating patched candidates`);
+    const patchedCandidateCount = this.options.getPatchOnly()
+      ? patchedCandidates.length
+      : patchedCandidates.length - candidates.length;
+    this.progressBar.logTrace(
+      `${dat.getName()}: done generating ${IntlPoly.toLocaleString(patchedCandidateCount)} patched candidate${patchedCandidateCount === 1 ? '' : 's'}`,
+    );
 
     return patchedCandidates;
   }

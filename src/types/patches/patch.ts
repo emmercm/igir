@@ -16,8 +16,8 @@ export default abstract class Patch {
 
   protected constructor(file: File, crcBefore: string, crcAfter?: string, sizeAfter?: number) {
     this.file = file;
-    this.crcBefore = crcBefore;
-    this.crcAfter = crcAfter;
+    this.crcBefore = crcBefore.toLowerCase().padStart(8, '0');
+    this.crcAfter = crcAfter?.toLowerCase().padStart(8, '0');
     this.sizeAfter = sizeAfter;
   }
 
