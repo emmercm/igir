@@ -10,7 +10,7 @@
 
 First, RetroArch needs a number of [BIOS files](https://docs.libretro.com/library/bios/). Thankfully, the libretro team maintains a DAT of these "system" files, so we don't have to guess at the correct filenames.
 
-With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) we don't even have to download the DAT! Locate your "System/BIOS" directory as configured in the RetroArch UI and use it as your output directory:
+With Igir's support for [DAT URLs](../../dats/scanning.md) we don't even have to download the DAT! Locate your "System/BIOS" directory as configured in the RetroArch UI and use it as your output directory:
 
 === ":fontawesome-brands-windows: Windows (64-bit)"
 
@@ -19,7 +19,7 @@ With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) w
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS/ ^
+      --input BIOS ^
       --output C:\RetroArch-Win64\system
     ```
 
@@ -30,7 +30,7 @@ With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) w
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS/ ^
+      --input BIOS ^
       --output C:\RetroArch-Win32\system
     ```
 
@@ -39,7 +39,7 @@ With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) w
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output ~/Documents/RetroArch/system/
     ```
 
@@ -48,7 +48,7 @@ With Igir's support for [DAT URLs](../../dats/processing.md#scanning-for-dats) w
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output ~/Documents/RetroArch/system/
     ```
 
@@ -65,7 +65,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```batch
     igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output C:\RetroArch-Win64\roms ^
       --dir-dat-name ^
       --no-bios
@@ -78,7 +78,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```batch
     igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output C:\RetroArch-Win32\roms ^
       --dir-dat-name ^
       --no-bios
@@ -89,7 +89,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```shell
     igir copy zip test \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output ~/Documents/RetroArch/roms \
       --dir-dat-name \
       --no-bios
@@ -100,7 +100,7 @@ If you want to store your ROMs in the RetroArch folder, you could co-locate them
     ```shell
     igir copy zip test \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output ~/Documents/RetroArch/roms \
       --dir-dat-name \
       --no-bios

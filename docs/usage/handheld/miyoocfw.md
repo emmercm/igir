@@ -1,6 +1,6 @@
 # MiyooCFW
 
-[MiyooCFW](https://github.com/TriForceX/MiyooCFW/wiki) ([Code](https://github.com/TriForceX/MiyooCFW)) is a custom firmware  for BittBoy, PocketGo, PowKiddy V90-Q90-Q20 and third party handheld consoles. It is based on the buildroot build environment and loosely based on OpenDingux. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. Some tinkering with the BIOS files is required though, but no worries, most of that is covered below or in their [Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info)
+[MiyooCFW](https://github.com/TriForceX/MiyooCFW/wiki) ([Code](https://github.com/TriForceX/MiyooCFW)) is a custom firmware for BittBoy, PocketGo, PowKiddy V90-Q90-Q20 and third party handheld consoles. It is based on the buildroot build environment and loosely based on OpenDingux. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. Some tinkering with the BIOS files is required though, but no worries, most of that is covered below or in their [Wiki](https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info)
 
 ## BIOS Files
 
@@ -34,7 +34,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\roms\{miyoocfw}" ^
       --dir-letter ^
       --no-bios
@@ -47,7 +47,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/MiyooCFW/roms/{miyoocfw}" \
       --dir-letter \
       --no-bios
@@ -60,7 +60,7 @@ MiyooCFW supports many many systems and ROM formats. Check the table on the [Miy
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/MiyooCFW/roms/{miyoocfw}" \
       --dir-letter \
       --no-bios

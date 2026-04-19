@@ -12,7 +12,7 @@ Multiple options can be combined, and they will be appended to the output direct
 
 This option establishes the "base" path of where ROMs will be written when [writing](../commands.md#rom-writing). All other options below append additional subdirectories to the directory specified here.
 
-The output path can make use of [tokens](./tokens.md), replaceable symbols that will be resolved at runtime.
+The output path can make use of [tokens](tokens.md), replaceable symbols that will be resolved at runtime.
 
 ## Mirror the input subdirectory
 
@@ -53,8 +53,8 @@ when combined with a [DAT](../dats/introduction.md), the ROMs will be written wi
     ```shell
     igir copy \
       --dat "No-Intro*.zip" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-mirror
     ```
 
@@ -63,8 +63,8 @@ when combined with a [DAT](../dats/introduction.md), the ROMs will be written wi
     ```shell
     igir copy \
       --dat "No-Intro*.zip" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-mirror
     ```
 
@@ -117,30 +117,30 @@ For example, given a command such as:
 
     ```batch
     igir copy ^
-      --dat "DATs\" ^
+      --dat "DATs" ^
       --input "ROMs-Input" ^
       --output "ROMs-Output" ^
-      --dir-mirror
+      --dir-dat-mirror
     ```
 
 === ":fontawesome-brands-apple: macOS"
 
     ```shell
     igir copy \
-      --dat "DATs/" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
-      --dir-mirror
+      --dat "DATs" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
+      --dir-dat-mirror
     ```
 
 === ":simple-linux: Linux"
 
     ```shell
     igir copy \
-      --dat "DATs/" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
-      --dir-mirror
+      --dat "DATs" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
+      --dir-dat-mirror
     ```
 
 you would get a result similar to:
@@ -210,8 +210,8 @@ The ROMs will be grouped by their DAT name in the output directory:
     ```shell
     igir copy \
       --dat "No-Intro*.zip" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-dat-name
     ```
 
@@ -220,8 +220,8 @@ The ROMs will be grouped by their DAT name in the output directory:
     ```shell
     igir copy \
       --dat "No-Intro*.zip" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-dat-name
     ```
 
@@ -268,8 +268,8 @@ Similar to `--dir-dat-name`, this option will append the matching [DAT](../dats/
     ```shell
     igir copy \
       --dat "No-Intro*.zip" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-dat-description
     ```
 
@@ -278,8 +278,8 @@ Similar to `--dir-dat-name`, this option will append the matching [DAT](../dats/
     ```shell
     igir copy \
       --dat "No-Intro*.zip" \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-dat-description
     ```
 
@@ -325,8 +325,8 @@ The ROMs will be grouped together by their first letter in the output directory:
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter
     ```
 
@@ -334,8 +334,8 @@ The ROMs will be grouped together by their first letter in the output directory:
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter
     ```
 
@@ -381,8 +381,8 @@ For example, if we increase the number of letters used for subdirectory names fr
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter \
       --dir-letter-count 3
     ```
@@ -391,8 +391,8 @@ For example, if we increase the number of letters used for subdirectory names fr
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter \
       --dir-letter-count 3
     ```
@@ -454,8 +454,8 @@ If we limit the number of files per letter folder, then the output would be:
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter \
       --dir-letter-limit 5
     ```
@@ -464,8 +464,8 @@ If we limit the number of files per letter folder, then the output would be:
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter \
       --dir-letter-limit 5
     ```
@@ -527,8 +527,8 @@ We can group the games into letter ranges, with a max of 10 games in each subdir
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter \
       --dir-letter-limit 10 \
       --dir-letter-group
@@ -538,8 +538,8 @@ We can group the games into letter ranges, with a max of 10 games in each subdir
 
     ```shell
     igir copy \
-      --input "ROMs-Input/" \
-      --output "ROMs-Output/" \
+      --input "ROMs-Input" \
+      --output "ROMs-Output" \
       --dir-letter \
       --dir-letter-limit 10 \
       --dir-letter-group
@@ -673,8 +673,8 @@ ROMS-Output/
 
 You can change this behavior with the `--dir-game-subdir <mode>` option:
 
-| Mode                               | Outcome                                                                                                          |
-|------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `--dir-game-subdir never`          | Games with multiple ROMs are never grouped into their own subdirectory, which may cause conflicting output files |
-| `--dir-game-subdir auto` (default) | Games with multiple ROMs are grouped into their own subdirectory, games with a single ROM are not                |
-| `--dir-game-subdir always`         | Every game is grouped into its on subdirectory, no matter the number of ROMs it has                              |
+| Mode                                   | Outcome                                                                                                          |
+|----------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `--dir-game-subdir never`              | Games with multiple ROMs are never grouped into their own subdirectory, which may cause conflicting output files |
+| `--dir-game-subdir multiple` (default) | Games with multiple ROMs are grouped into their own subdirectory, games with a single ROM are not                |
+| `--dir-game-subdir always`             | Every game is grouped into its own subdirectory, no matter the number of ROMs it has                             |

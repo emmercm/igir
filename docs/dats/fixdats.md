@@ -4,7 +4,7 @@
 
 Fixdats help you find files missing from your collection, and they can be used to generate a collection of those files once you've found them. This sub-collection of files can then be merged back into your main collection.
 
-The `fixdat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (the [`--dat <path>` option](./processing.md#scanning-for-dats)) that is missing ROMs. Fixdats will be written to the first matching directory in this list:
+The `fixdat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT for every input DAT (the [`--dat <path|glob|url>` option](scanning.md)) that is missing ROMs. Fixdats will be written to the first matching directory in this list:
 
 1. If provided: the `--fixdat-output <path>` directory
 2. When writing ROMs (one of the `copy`, `move`, or `link` [commands](../commands.md)): the `--output <path>` directory
@@ -19,8 +19,8 @@ Example usage:
       --dat "Nintendo - Game Boy.dat" ^
       --dat "Nintendo - Game Boy Advance.dat" ^
       --dat "Nintendo - Game Boy Color.dat" ^
-      --input ROMs\ ^
-      --output ROMs-Sorted\ ^
+      --input ROMs ^
+      --output ROMs-Sorted ^
       --fixdat
     ```
 
@@ -31,8 +31,8 @@ Example usage:
       --dat "Nintendo - Game Boy.dat" \
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
-      --input ROMs/ \
-      --output ROMs-Sorted/
+      --input ROMs \
+      --output ROMs-Sorted
     ```
 
 === ":simple-linux: Linux"
@@ -42,8 +42,8 @@ Example usage:
       --dat "Nintendo - Game Boy.dat" \
       --dat "Nintendo - Game Boy Advance.dat" \
       --dat "Nintendo - Game Boy Color.dat" \
-      --input ROMs/ \
-      --output ROMs-Sorted/
+      --input ROMs \
+      --output ROMs-Sorted
     ```
 
 This command will produce a fixdat file in the `ROMs-Sorted/` directory for each of the three input DATs that have at least one ROM that wasn't found in the `ROMs/` input directory:

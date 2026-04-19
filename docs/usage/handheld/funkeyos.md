@@ -26,7 +26,7 @@ Funkey OS uses its own proprietary [ROM folder structure](https://github.com/Fun
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\{funkeyos}" ^
       --dir-letter ^
       --no-bios
@@ -39,7 +39,7 @@ Funkey OS uses its own proprietary [ROM folder structure](https://github.com/Fun
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/FunKeyS/{funkeyos}" \
       --dir-letter \
       --no-bios
@@ -52,7 +52,7 @@ Funkey OS uses its own proprietary [ROM folder structure](https://github.com/Fun
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/FunKeyS/{funkeyos}" \
       --dir-letter \
       --no-bios

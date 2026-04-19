@@ -82,7 +82,7 @@ npm start -- [commands..] [options]
 for example:
 
 ```shell
-npm start -- report --dat *.dat --input ROMs/
+npm start -- report --dat *.dat --input ROMs
 ```
 
 ### Automated tests

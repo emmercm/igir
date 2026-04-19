@@ -27,7 +27,7 @@ Here is a chart of instructions for various setups:
 | Emulator                                                                                                                                                                                                                           | How to get DATs                                                                                                                                                                                                                                                                                                                                                                               | Alternatives                                                                                                                                                                                                        |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Frontends ([Batocera](desktop/batocera.md), [EmulationStation](desktop/emulationstation.md), [Lakka](desktop/lakka.md), [Recalbox](desktop/recalbox.md), [RetroArch](desktop/retroarch.md), [RetroPie](desktop/retropie.md), etc.) | Each frontend's documentation should have instructions or links to download the appropriate DAT(s). For example, [RetroArch's arcade docs](https://docs.libretro.com/guides/arcade-getting-started/#step-3-use-the-correct-version-romsets-for-that-emulator) links to the exact DAT needed for each arcade core.                                                                             | N/A                                                                                                                                                                                                                 |
-| [MAME](https://www.mamedev.org/)                                                                                                                                                                                                   | The easiest way to ensure you're using _exactly_ the right DAT for your MAME version is to provide the executable as `--dat ./mame`. See the [DATs page](../dats/processing.md) for more information.                                                                                                                                                                                         | A standalone download of the latest MAME ListXML can be found on the [official site](https://www.mamedev.org/release.html). See the [DATs page](../dats/introduction.md#dat-release-groups) for other alternatives. |
+| [MAME](https://www.mamedev.org/)                                                                                                                                                                                                   | The easiest way to ensure you're using _exactly_ the right DAT for your MAME version is to provide the executable as `--dat ./mame`. See the [DAT scanning page](../dats/scanning.md) for more information.                                                                                                                                                                                   | A standalone download of the latest MAME ListXML can be found on the [official site](https://www.mamedev.org/release.html). See the [DATs page](../dats/introduction.md#dat-release-groups) for other alternatives. |
 | [FinalBurn Neo](https://github.com/finalburnneo/FBNeo)                                                                                                                                                                             | FinalBurn Neo doesn't provide an obvious way to find the correct DAT for each version. But it is likely that you are using FinalBurn Neo through a frontend, so use the above instructions.<br><br>If you are using RetroArch's [FinalBurn Neo core](https://docs.libretro.com/library/fbneo/) then you can use [their DATs](https://github.com/libretro/FBNeo/tree/master/dats) from GitHub. | N/A                                                                                                                                                                                                                 |
 | [FinalBurn Alpha](https://www.fbalpha.com/)                                                                                                                                                                                        | FinalBurn Alpha was forked into FinalBurn Neo, so you should use that if possible. Otherwise, hopefully your frontend's documentation has links to download the correct DAT.                                                                                                                                                                                                                  | N/A                                                                                                                                                                                                                 |
 
@@ -42,9 +42,9 @@ Here is a comparison chart:
 | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Parent games                                                           | Clone games                                                                                                                    | BIOS & hardware device ROMs    | Pros & cons                                                                                                                                                                                          |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|--------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Full non-merged**<br>The ROM set for each game contains every file necessary, including all ROM files from its parent, and BIOS & hardware device ROMs. This is the most space-inefficient way to store games because parent, BIOS, and hardware device ROMs will be duplicated potentially multiple times, but this type offers the greatest portability.<br>_Note: other tools such as [ClrMamePro](https://mamedev.emulab.it/clrmamepro/) don't offer this as a standalone type, but instead offer an option to not separate BIOS sets_.<br><br>`--merge-roms fullnonmerged` (default) | ✅ Contains all of its own ROMs, as well as BIOS & hardware device ROMs | ✅ Contains all of its own ROMs and its parent's ROMs, as well as BIOS & hardware device ROMs                                   | ✅ Included                     | Most disk space, but game files can be played entirely in isolation.<br><br>Makes for a safe default choice because of the portability of output files.                                              |
-| **Non-merged**<br>The ROM set for each game contains all game files, including all ROM files from its parent, _without_ BIOS & hardware device ROMs. This means that games will depend on BIOS and hardware device ROMs existing in other archives.<br>_Note: [Pleasuredome](https://pleasuredome.miraheze.org/wiki/MAME_Split_Merged_and_Non-Merged_Sets) includes BIOS files in their non-merged sets in a non-standard way._                                                                                                              <br><br>`--merge-roms nonmerged`               | Contains all of its own ROMs, _without_ BIOS & hardware device ROMs    | 👪 Contains all of its own ROMs and its parent's ROMs, _without_ BIOS & hardware device ROMs                                   | ➡️ Expected to exist elsewhere | Game files can be played mostly in isolation while eliminating frequently duplicated BIOS & device hardware ROMs.                                                                                    |
-| **Split**<br>The ROM set for each game contains only its own files, _excluding_ any ROMs that are already present in its parent.                                                                                                                                                                                                                                                                                                                                                                                                             <br><br>`--merge-roms split`                   | Contains all of its own ROMs, _without_ BIOS & hardware device ROMs    | 👶 Contains _only_ its own ROMs, _excluding_ any ROMs already present in its parent, and _without_ BIOS & hardware device ROMs | ➡️ Expected to exist elsewhere | Smallest amount of disk usage that still keeps clone games as separate files.<br><br>Makes for a good choice because of its high compatability with emulator frontends while also saving disk space. |
-| **Merged**<br>The ROM set for each game and all of its clones are merged together, eliminating duplicate ROMs and preserving disk space.<br>_Note: most downloads found online will be in this format because it is the most space-efficient._                                                                                                                                                                                                                                                                                               <br><br>`--merge-roms merged`                  | Contains all of its own ROMs, _without_ BIOS & hardware device ROMs    | ➡️ Merged into its parent                                                                                                      | ➡️ Expected to exist elsewhere | Least disk space, but emulators such as RetroArch may not be able to automatically detect clones.                                                                                                    |
+| **Non-merged**<br>The ROM set for each game contains all game files, including all ROM files from its parent, _without_ BIOS & hardware device ROMs. This means that games will depend on BIOS and hardware device ROMs existing in other archives.<br>_Note: [Pleasuredome](https://pleasuredome.miraheze.org/wiki/MAME_Split_Merged_and_Non-Merged_Sets) includes BIOS files in their non-merged sets in a non-standard way._ <br><br>`--merge-roms nonmerged`                                                                                                                            | Contains all of its own ROMs, _without_ BIOS & hardware device ROMs    | 👪 Contains all of its own ROMs and its parent's ROMs, _without_ BIOS & hardware device ROMs                                   | ⬅️ Expected to exist elsewhere | Game files can be played mostly in isolation while eliminating frequently duplicated BIOS & device hardware ROMs.                                                                                    |
+| **Split**<br>The ROM set for each game contains only its own files, _excluding_ any ROMs that are already present in its parent. <br><br>`--merge-roms split`                                                                                                                                                                                                                                                                                                                                                                                                                               | Contains all of its own ROMs, _without_ BIOS & hardware device ROMs    | 👶 Contains _only_ its own ROMs, _excluding_ any ROMs already present in its parent, and _without_ BIOS & hardware device ROMs | ⬅️ Expected to exist elsewhere | Smallest amount of disk usage that still keeps clone games as separate files.<br><br>Makes for a good choice because of its high compatibility with emulator frontends while also saving disk space. |
+| **Merged**<br>The ROM set for each game and all of its clones are merged together, eliminating duplicate ROMs and preserving disk space.<br>_Note: most downloads found online will be in this format because it is the most space-efficient._ <br><br>`--merge-roms merged`                                                                                                                                                                                                                                                                                                                | Contains all of its own ROMs, _without_ BIOS & hardware device ROMs    | ➡️ Merged into its parent                                                                                                      | ⬅️ Expected to exist elsewhere | Least disk space, but emulators such as RetroArch may not be able to automatically detect clones.                                                                                                    |
 
 The ROM merge type can be specified with the `--merge-roms <type>` option, with the types described above:
 
@@ -121,7 +121,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```batch
       igir copy zip ^
         --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-        --input "MAME-ROMs\" ^
+        --input "MAME-ROMs" ^
         --output C:\RetroArch-Win64\roms\MAME-0.258 ^
         --merge-roms split
       ```
@@ -131,7 +131,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```batch
       igir copy zip ^
         --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-        --input "MAME-ROMs\" ^
+        --input "MAME-ROMs" ^
         --output C:\RetroArch-Win32\roms\MAME-0.258 ^
         --merge-roms split
       ```
@@ -141,7 +141,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```shell
       igir copy zip \
         --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-        --input "MAME-ROMs/" \
+        --input "MAME-ROMs" \
         --output ~/Documents/RetroArch/roms/MAME-0.258 \
         --merge-roms split
       ```
@@ -151,7 +151,7 @@ Let's say we want to build an arcade ROM set that's compatible with the most rec
       ```shell
       igir copy zip \
         --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-        --input "MAME-ROMs/" \
+        --input "MAME-ROMs" \
         --output ~/Documents/RetroArch/roms/MAME-0.258 \
         --merge-roms split
       ```
@@ -186,7 +186,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip ^
         --dat "MAME Dats 0.78\MAME 078.dat" ^
         --input C:\RetroArch-Win64\roms\MAME-0.258 ^
-        --input "MAME-0.78-Rollback\" ^
+        --input "MAME-0.78-Rollback" ^
         --output C:\RetroArch-Win64\roms\MAME-0.78 ^
         --merge-roms split
       ```
@@ -197,7 +197,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip ^
         --dat "MAME Dats 0.78\MAME 078.dat" ^
         --input C:\RetroArch-Win32\roms\MAME-0.258 ^
-        --input "MAME-0.78-Rollback\" ^
+        --input "MAME-0.78-Rollback" ^
         --output C:\RetroArch-Win32\roms\MAME-0.78 ^
         --merge-roms split
       ```
@@ -208,7 +208,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip \
         --dat "MAME Dats 0.78/MAME 078.dat" \
         --input ~/Documents/RetroArch/roms/MAME-0.258 \
-        --input "MAME-0.78-Rollback/" \
+        --input "MAME-0.78-Rollback" \
         --output ~/Documents/RetroArch/roms/MAME-0.78 \
         --merge-roms split
       ```
@@ -219,7 +219,7 @@ Taking the MAME v0.258 set we created above, let's say we want to "downgrade" it
       igir copy zip \
         --dat "MAME Dats 0.78/MAME 078.dat" \
         --input ~/Documents/RetroArch/roms/MAME-0.258 \
-        --input "MAME-0.78-Rollback/" \
+        --input "MAME-0.78-Rollback" \
         --output ~/Documents/RetroArch/roms/MAME-0.78 \
         --merge-roms split
       ```
@@ -237,8 +237,8 @@ Build a set of only BIOS files, with each in its own `.zip` file:
     ```batch
     igir copy zip ^
       --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-      --input "MAME-ROMs\" ^
-      --output "MAME-BIOS\" ^
+      --input "MAME-ROMs" ^
+      --output "MAME-BIOS" ^
       --only-bios
     ```
 
@@ -247,8 +247,8 @@ Build a set of only BIOS files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-BIOS/" \
+      --input "MAME-ROMs" \
+      --output "MAME-BIOS" \
       --only-bios
     ```
 
@@ -257,8 +257,8 @@ Build a set of only BIOS files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-BIOS/" \
+      --input "MAME-ROMs" \
+      --output "MAME-BIOS" \
       --only-bios
     ```
 
@@ -271,8 +271,8 @@ Build a set of only device files, with each in its own `.zip` file:
     ```batch
     igir copy zip ^
       --dat "MAME_Dats_258\DATs\MAME 0.258.dat" ^
-      --input "MAME-ROMs\" ^
-      --output "MAME-Devices\" ^
+      --input "MAME-ROMs" ^
+      --output "MAME-Devices" ^
       --only-device
     ```
 
@@ -281,8 +281,8 @@ Build a set of only device files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-Devices/" \
+      --input "MAME-ROMs" \
+      --output "MAME-Devices" \
       --only-device
     ```
 
@@ -291,7 +291,7 @@ Build a set of only device files, with each in its own `.zip` file:
     ```shell
     igir copy zip \
       --dat "MAME_Dats_258/DATs/MAME 0.258.dat" \
-      --input "MAME-ROMs/" \
-      --output "MAME-Devices/" \
+      --input "MAME-ROMs" \
+      --output "MAME-Devices" \
       --only-device
     ```

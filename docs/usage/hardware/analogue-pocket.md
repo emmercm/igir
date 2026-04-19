@@ -42,8 +42,8 @@ This token can be used to reference each core's specific directory in the SD car
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
       --dat-name-regex-exclude "/headerless/i" \
-      --input "ROMs/" \
-      --output "/Volumes/POCKET/Assets/{pocket}/common/" \
+      --input "ROMs" \
+      --output "/Volumes/POCKET/Assets/{pocket}/common" \
       --dir-letter \
       --dir-letter-limit 1000 \
       --clean-exclude "/Volumes/POCKET/Assets/*/common/*.*" \
@@ -58,8 +58,8 @@ This token can be used to reference each core's specific directory in the SD car
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
       --dat-name-regex-exclude "/headerless/i" \
-      --input "ROMs/" \
-      --output "/media/POCKET/Assets/{pocket}/common/" \
+      --input "ROMs" \
+      --output "/media/POCKET/Assets/{pocket}/common" \
       --dir-letter \
       --dir-letter-limit 1000 \
       --clean-exclude "/media/POCKET/Assets/*/common/*.*" \
@@ -76,7 +76,7 @@ This token can be used to reference each core's specific directory in the SD car
 
 !!! note
 
-    The [`--clean-exclude <path>`](../../output/cleaning.md#exclusions) option in the above examples is so we don't accidentally "clean" (delete) the BIOS files for each core.
+    The [`--clean-exclude <path|glob>`](../../output/cleaning.md#exclusions) option in the above examples is so we don't accidentally "clean" (delete) the BIOS files for each core.
 
 Your SD card should look like this, likely with more cores:
 

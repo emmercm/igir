@@ -21,7 +21,7 @@ TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\{twmenu}" ^
       --dir-letter ^
       --no-bios
@@ -34,7 +34,7 @@ TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/DSCard/roms/{twmenu}" \
       --dir-letter \
       --no-bios
@@ -47,7 +47,7 @@ TWiLightMenu uses its own proprietary [ROM folder structure](https://github.com/
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/DSCard/roms/{twmenu}" \
       --dir-letter \
       --no-bios

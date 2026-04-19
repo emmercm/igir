@@ -26,7 +26,7 @@ Although the zip format officially added support for Zstd compression in [June 2
 
 ### Implications for testing
 
-When Igir [tests](../commands.md#test) written zip files, it will test to make sure they're valid a TorrentZip or RVSTD file, whichever was specified. This means that zip files that aren't of the expected structured format will be considered invalid, even if they contain all expected files. This isn't a problem for the `igir zip` command which will rewrite the zip as necessary, but it could be a problem if you have invalid zips in your input paths and omit the command.
+When Igir [tests](../commands.md#test) written zip files, it will test to make sure they're a valid TorrentZip or RVZSTD file, whichever was specified. This means that zip files that aren't of the expected structured format will be considered invalid, even if they contain all expected files. This isn't a problem for the `igir zip` command which will rewrite the zip as necessary, but it could be a problem if you have invalid zips in your input paths and omit the command.
 
 The [`--overwrite-invalid` option](options.md#overwriting-files) can help you convert your collection between different zip formats like this:
 
@@ -34,9 +34,9 @@ The [`--overwrite-invalid` option](options.md#overwriting-files) can help you co
 
     ```batch
     igir move zip test ^
-      --dat "DATs\" ^
-      --input "ROMs\" ^
-      --output "ROMs\" ^
+      --dat "DATs" ^
+      --input "ROMs" ^
+      --output "ROMs" ^
       --dir-mirror ^
       --zip-format <format> ^
       --overwrite-invalid
@@ -46,9 +46,9 @@ The [`--overwrite-invalid` option](options.md#overwriting-files) can help you co
 
     ```shell
     igir move zip test \
-      --dat "DATs/" \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --dat "DATs" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror \
       --zip-format <format> \
       --overwrite-invalid
@@ -58,9 +58,9 @@ The [`--overwrite-invalid` option](options.md#overwriting-files) can help you co
 
     ```shell
     igir move zip test \
-      --dat "DATs/" \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --dat "DATs" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror \
       --zip-format <format> \
       --overwrite-invalid
@@ -77,19 +77,19 @@ One aspect of organizing a ROM collection is to ensure a consistent archive form
 === ":fontawesome-brands-windows: Windows"
 
     ```batch
-    igir move zip --dat "*.dat" --input "ROMs\" --output "ROMs\"
+    igir move zip --dat "*.dat" --input "ROMs" --output "ROMs"
     ```
 
 === ":fontawesome-brands-apple: macOS"
 
     ```shell
-    igir move zip --dat "*.dat" --input "ROMs/" --output "ROMs/"
+    igir move zip --dat "*.dat" --input "ROMs" --output "ROMs"
     ```
 
 === ":simple-linux: Linux"
 
     ```shell
-    igir move zip --dat "*.dat" --input "ROMs/" --output "ROMs/"
+    igir move zip --dat "*.dat" --input "ROMs" --output "ROMs"
     ```
 
 ## Excluding files from zipping
@@ -109,8 +109,8 @@ You can exclude some disc images like this:
     ```batch
     igir copy zip ^
       --dat "*.dat" ^
-      --input "ROMs\" ^
-      --output "ROMs-Sorted\" ^
+      --input "ROMs" ^
+      --output "ROMs-Sorted" ^
       --zip-exclude "**/*.{iso,bin,cue,chd}"
     ```
 
@@ -119,8 +119,8 @@ You can exclude some disc images like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*.{iso,bin,cue,chd}"
     ```
 
@@ -129,8 +129,8 @@ You can exclude some disc images like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*.{iso,bin,cue,chd}"
     ```
 
@@ -141,8 +141,8 @@ You can exclude some BIOS files like this:
     ```batch
     igir copy zip ^
       --dat "*.dat" ^
-      --input "ROMs\" ^
-      --output "ROMs-Sorted\" ^
+      --input "ROMs" ^
+      --output "ROMs-Sorted" ^
       --zip-exclude "**/*[BIOS]*"
     ```
 
@@ -151,8 +151,8 @@ You can exclude some BIOS files like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*[BIOS]*"
     ```
 
@@ -161,11 +161,23 @@ You can exclude some BIOS files like this:
     ```shell
     igir copy zip \
       --dat "*.dat" \
-      --input "ROMs/" \
-      --output "ROMs-Sorted/" \
+      --input "ROMs" \
+      --output "ROMs-Sorted" \
       --zip-exclude "**/*[BIOS]*"
     ```
 
 !!! tip
 
     [globster.xyz](https://globster.xyz/?q=**%2F*.%7Biso%2Cbin%2Ccue%2Cchd%7D&f=dc%2FJet%20Set%20Radio%20(Europe)%20(En%20Fr%20De%20Es).chd%2Cdc%2FSamba%20de%20Amigo%20(USA).chd%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA).m3u%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%201).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%201).bin%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%202).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%202).bin%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%203).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%203).bin%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%204).cue%2Cpsx%2FFinal%20Fantasy%20IX%20(USA)%2FFinal%20Fantasy%20IX%20(USA)%20(Disc%204).bin) is a great website to test various glob patterns.
+
+## Grouping ROMs by DAT name
+
+By default, all ROMs for a game are written to individual `.zip` archives. The `--zip-dat-name` option changes this behavior by grouping all ROMs from the same DAT into a single `.zip` archive, named after the DAT. This can work great for archiving older, cartridge-based consoles with smaller ROM sizes, but will likely not work well with larger ROMs.
+
+!!! note
+
+    This option enforces `--dat-threads 1` due to a likely large amount of processing required per `.zip` archive being written.
+
+!!! note
+
+    To keep files organized in a human-readable way, it is _not_ recommended to use the [`--dir-game-subdir never`](../output/path-options.md#append-the-game-name) option combined with `--zip-dat-name`.

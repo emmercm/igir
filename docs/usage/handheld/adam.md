@@ -1,6 +1,6 @@
-# The 'Adam' image
+# The 'Adam' Image
 
-[Adam](https://github.com/eduardofilo/RG350_adam_image/wiki/) ([Code](https://github.com/eduardofilo/RG350_adam_image)) is a custom firmware Ingenic JZ4770 chip-based portable emulation consoles. Specifically GCW-Zero, PocketGo2 v1/v2, Anbernic RG350, RG280 and RG300X. It is based on OpenDingux and the SimpleMenu frontend. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. The distribution defines it's own set of ROM folders ([via SimpleMenu](https://github.com/eduardofilo/RG350_adam_image/tree/master/data/local/home/.simplemenu/section_groups)), so it makes use of it's own output token in igir.
+[Adam](https://github.com/eduardofilo/RG350_adam_image/wiki/) ([Code](https://github.com/eduardofilo/RG350_adam_image)) is a custom firmware for Ingenic JZ4770 chip-based portable emulation consoles. Specifically GCW-Zero, PocketGo2 v1/v2, Anbernic RG350, RG280 and RG300X. It is based on OpenDingux and the SimpleMenu frontend. While it is intended for the named less powerful handhelds, it packs a good and wide selection of emulators. The distribution defines its own set of ROM folders ([via SimpleMenu](https://github.com/eduardofilo/RG350_adam_image/tree/master/data/local/home/.simplemenu/section_groups)), so it makes use of its own output token in Igir.
 
 ## Preparing TF2
 
@@ -25,7 +25,7 @@ The Adam image does not come with BIOS files. Where you have to put which of you
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS\ ^
+      --input BIOS ^
       --output E:\BIOS
     ```
 
@@ -36,7 +36,7 @@ The Adam image does not come with BIOS files. Where you have to put which of you
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /Volumes/ADAM/BIOS
     ```
 
@@ -47,7 +47,7 @@ The Adam image does not come with BIOS files. Where you have to put which of you
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /media/ADAM/BIOS/
     ```
 
@@ -66,7 +66,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\ROMS\{adam}" ^
       --dir-letter ^
       --no-bios
@@ -79,7 +79,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/ADAM/ROMS/{adam}" \
       --dir-letter \
       --no-bios
@@ -92,7 +92,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/ADAM/ROMS/{adam}" \
       --dir-letter \
       --no-bios

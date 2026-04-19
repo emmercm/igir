@@ -13,7 +13,7 @@ Because Recalbox uses RetroArch under the hood, the instructions are generally t
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input /media/USB-Drive/BIOS/ \
+      --input /media/USB-Drive/BIOS \
       --output /recalbox/share/bios
     ```
 
@@ -28,8 +28,8 @@ Recalbox has a `roms` folder at `/recalbox/share/roms/` that is used by default:
     ```shell
     igir copy zip test clean \
       --dat "/media/USB-Drive/No-Intro*.zip" \
-      --input "/media/USB-Drive/ROMs/" \
-      --output "/recalbox/share/roms/" \
+      --input "/media/USB-Drive/ROMs" \
+      --output "/recalbox/share/roms" \
       --dir-dat-name \
       --dir-letter \
       --no-bios

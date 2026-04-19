@@ -2,7 +2,7 @@
 
 The `igir clean` [command](../commands.md) can be used when writing (`igir copy`, `igir move`, and `igir link`) to delete files from the [`--output <path>` directory](path-options.md#base-output-directory) that are not valid according to the provided Igir options.
 
-When using [DATs](../dats/processing.md), these files will be deleted from the output directory:
+When using [DATs](../dats/scanning.md), these files will be deleted from the output directory:
 
 - Files that do not match any ROM in any DAT.
 - Files that match a ROM in a DAT, but do not have the correct directory & filename.
@@ -16,7 +16,7 @@ When using [DATs](../dats/processing.md), these files will be deleted from the o
 
     Scanned output files will _not_ be used as a source file for any writing command. If you use a new DAT with an existing collection, and that DAT changed some of the ROM names, then files with the old name may be deleted during cleaning.
 
-    To prevent this, you can provide the output directory as an `--input <path>` as well. Then files in the output directory can be used as a source file during writing. This is particularly useful with the `igir move` command, which will rename files in the output directory to the correct names, which will preclude them from cleaning.
+    To prevent this, you can provide the output directory as an `--input <path|glob>` as well. Then files in the output directory can be used as a source file during writing. This is particularly useful with the `igir move` command, which will rename files in the output directory to the correct names, which will preclude them from cleaning.
 
     When in doubt, you can provide the [`--clean-dry-run` option](#dry-run) to see what files would be deleted without actually deleting them.
 
@@ -72,9 +72,43 @@ In practical terms, this means:
 
 ## Exclusions
 
-The `--clean-exclude <path>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md)) can be excluded from deletion.
+The `--clean-exclude <path|glob>` option exists so that one or more paths (with support for [globbing](../input/file-scanning.md#glob-patterns)) can be excluded from deletion.
 
 See the [Analogue Pocket](../usage/hardware/analogue-pocket.md) page for a practical example.
+
+!!! tip
+
+    If your emulator stores save files alongside its matching ROM in the same directory, you will want to exclude those from cleaning. You can make use of a [glob](../input/file-scanning.md#glob-patterns) to preserve all files of a certain extension like this:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir move clean ^
+          --input "ROMs-Sorted" ^
+          --input "ROMs-New" ^
+          --output "ROMs-Sorted" ^
+          --clean-exclude "ROMs-Sorted\**\*.sav"
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir move clean \
+          --input "ROMs-Sorted" \
+          --input "ROMs-New" \
+          --output "ROMs-Sorted" \
+          --clean-exclude "ROMs-Sorted/**/*.sav"
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir move clean \
+          --input "ROMs-Sorted" \
+          --input "ROMs-New" \
+          --output "ROMs-Sorted" \
+          --clean-exclude "ROMs-Sorted/**/*.sav"
+        ```
 
 ## Backing up cleaned files
 

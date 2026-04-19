@@ -2,51 +2,52 @@
 
 There are a few different popular ROM managers that have similar features:
 
-| Feature                                    | [igir](index.md)                                                                                              | [RomVault](https://www.romvault.com/)                               | [clrmamepro](https://mamedev.emulab.it/clrmamepro/)           | [RomCenter](http://www.romcenter.com/)     |
-|--------------------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|---------------------------------------------------------------|--------------------------------------------|
-| App: in active development                 | ✅                                                                                                             | ✅                                                                   | ✅                                                             | ❓                                          |
-| App: OS compatibility                      | ✅ anything [Node.js supports](https://nodejs.org/en/download)                                                 | ⚠️ Windows, macOS & Linux via [Mono](https://www.mono-project.com/) | ⚠️ Windows, macOS & Linux via [Wine](https://www.winehq.org/) | ❌ Windows only                             |
-| App: GUI or CLI                            | CLI only by design                                                                                            | Primarily GUI, with a separate CLI                                  | GUI only                                                      | GUI only                                   |
-| App: required setup steps                  | ✅ no setup required                                                                                           | ⚠️ if specifying DAT & ROM dirs                                     | ❌ requires "profile" setup per DAT                            | ❌ requires per-DAT DB setup                |
-| App: open source                           | ✅ GPL v3                                                                                                      | ❌                                                                   | ❌                                                             | ❌                                          |
-| DATs: supported formats                    | Logiqx XML, MAME ListXML, MAME Software List, CMPro, HTGD SMDB ([DATs docs](dats/processing.md))              | Logiqx XML, MAME ListXML, CMPro, RomCenter, HTGD SMDB, Total DOS    | Logiqx XML, MAME ListXML, MAME Software List, CMPro           | Logiqx XML, CMPro, RomCenter               |
-| DATs: process multiple at once             | ✅                                                                                                             | ✅                                                                   | ⚠️ via the batcher                                            | ❌                                          |
-| DATs: infer parent/clone info              | ✅                                                                                                             | ❌                                                                   | ❌                                                             | ❌                                          |
-| DATs: built-in download manager            | ❌                                                                                                             | ⚠️ via [DatVault](https://www.datvault.com/)                        | ❌                                                             | ❌                                          |
-| DATs: supports URLs to DATs                | ✅                                                                                                             | ❌                                                                   | ❌                                                             | ❌                                          |
-| DATs: create from files (dir2dat)          | ✅ [dir2dat docs](dats/dir2dat.md)                                                                             | ❓                                                                   | ✅                                                             | ❌                                          |
-| DATs: fixdat creation                      | ✅ [fixdat docs](dats/fixdats.md)                                                                              | ✅                                                                   | ✅                                                             | ❌                                          |
-| DATs: combine multiple                     | ✅                                                                                                             | ✅                                                                   | ❌                                                             | ❌                                          |
-| ROM Scanning: parallel scanning            | ✅                                                                                                             | ❌                                                                   | ❓                                                             | ❓                                          |
-| ROM Scanning: scanning exclusions          | ✅                                                                                                             | ❌                                                                   | ❓                                                             | ❓                                          |
-| ROM Scanning: quick scanning               | ✅ [matching docs](roms/matching.md)                                                                           | ✅ (scanning level 1)                                                | ⚠️ by default                                                 | ❓                                          |
-| ROM Scanning: scan/checksum caching        | ✅                                                                                                             | ✅                                                                   | ❌                                                             | ✅                                          |
-| ROMs: checksum matching strategies         | ✅ CRC32+size, MD5, SHA1, SHA256                                                                               | ⚠️ CRC32+size, MD5, SHA1                                            | ⚠️ CRC32+size, MD5, SHA1                                      | ❓                                          |
-| ROMs: header detection                     | ✅                                                                                                             | ✅                                                                   | ⚠️ via supplemental XMLs                                      | ⚠️ via plugins                             |
-| ROMs: header removal                       | ✅ [automatic and forced](roms/headers.md)                                                                     | ⚠️ if configured                                                    | ❌                                                             | ❌                                          |
-| ROMs: trimming detection & matching        | ✅ [trimming docs](roms/trimming.md)                                                                           | ❌                                                                   | ❌                                                             | ❌                                          |
-| ROMs: automatic extension correction       | ✅ [output writing docs](output/options.md#fixing-rom-extensions)                                              | ❌                                                                   | ❌                                                             | ❌                                          |
-| ROMs: patching support                     | ✅ many formats ([patching docs](roms/patching.md))                                                            | ❌                                                                   | ❌                                                             | ❌                                          |
-| Arcade: supported merge types              | ✅ full non-merged, non-merged, split, merged ([arcade docs](usage/arcade.md))                                 | ⚠️ full non-merged, split, merged                                   | ✅ full non-merged, non-merged, split, merged                  | ⚠️ full non-merged, split, merged          |
-| Arcade: CHD disk inclusion                 | ✅ by default, can be turned off ([arcade docs](usage/arcade.md))                                              | ✅ by default, can be turned off                                     | ❓                                                             | ❓                                          |
-| Arcade: sample inclusion                   | ❌                                                                                                             | ❌                                                                   | ✅                                                             | ❓                                          |
-| Archives: common formats support           | ✅ `.zip` (incl. zstd), `.7z` (via `7za`), `.gz`, `.rar`, `.tar`, and more ([docs](input/reading-archives.md)) | ⚠️ `.zip` (incl. zstd), `.7z` (natively)                            | ⚠️ `.zip`, `.7z` (via `7z`), `.rar` (via `rar`)               | ⚠️ `.zip`, `.7z`                           |
-| Archives: `.chd` support                   | ⚠️ via `chdman`<sup>1</sup> (bundled)                                                                         | ✅ v1-5 natively                                                     | ⚠️ via `chdman`<sup>1</sup>                                   | ⚠️ v1-4 natively                           |
-| Archives: `.cso` & `.zso` support          | ⚠️ via `maxcso` (bundled)                                                                                     | ❌                                                                   | ❌                                                             | ❌                                          |
-| Archives: `.gcz`, `.rvz`, & `.wia` support | ⚠️ via `dolphin-tool` (bundled)                                                                               | ❌                                                                   | ❌                                                             | ❌                                          |
-| Archives: `.nkit.iso` support              | ⚠️ matching but no extraction/inflation ([GameCube docs](usage/console/gamecube.md#nkit))                     | ❌                                                                   | ❌                                                             | ❌                                          |
-| Archives: creation formats                 | ❌ `.zip` (TorrentZip, RVZSTD) only by design ([writing archives docs](output/writing-archives.md))            | ✅ `.zip` (TorrentZip, RVZSTD, Total DOS), `.7z` (LZMA, zstd)        | ⚠️ `.zip` (TorrentZip), `.7z`, `.rar`                         | ⚠️ `.zip`, `.7z`                           |
-| Archives: contents checksums               | ✅ when needed ([reading archives docs](input/reading-archives.md))                                            | ⚠️ requires "files only" mode or directory                          | ⚠️ if DAT has forcepacking=unzip                              | ❓                                          |
-| Archives: automatic extension correction   | ✅                                                                                                             | ❌                                                                   | ❌                                                             | ❌                                          |
-| Filtering: region, language, type, etc.    | ✅ [many options](roms/filtering-preferences.md#filters)                                                       | ❌                                                                   | ❌ only 1G1R options                                           | ⚠️ only at DB setup                        |
-| Filtering: 1G1R support                    | ✅ [many options](roms/filtering-preferences.md#preferences-for-1g1r)                                          | ❌                                                                   | ⚠️ region & language only                                     | ⚠️ only at DB setup                        |
-| Playlists: creation support                | ✅ [playlists docs](output/playlists.md)                                                                       | ❌                                                                   | ❌                                                             | ❌                                          |
-| Reports: report-only mode                  | ✅                                                                                                             | ✅                                                                   | ✅                                                             | ✅                                          |
-| Reports: machine parseable                 | ✅ CSV                                                                                                         | ⚠️ newline-separated "full" & "fix" reports                         | ⚠️ newline-separated "have" & "miss" lists                    | ⚠️ newline-separated "have" & "miss" lists |
-| Output: file link support                  | ✅ hard links, symlinks, and reflinks                                                                          | ❌                                                                   | ❌                                                             | ❌                                          |
-| Output: separate input & output dirs       | ✅                                                                                                             | ⚠️ yes but files are always moved                                   | ❌                                                             | ❌                                          |
-| Output: subdirectory customization         | ✅ [many options](output/path-options.md)                                                                      | ⚠️ depends on DAT organization                                      | ❌                                                             | ❌                                          |
-| Output: create single archive for DAT      | ✅                                                                                                             | ✅                                                                   | ❌                                                             | ❌                                          |
+| Feature                                    | [igir](../index.md)                                                                                   | [RomVault](https://www.romvault.com/)                                      | [clrmamepro](https://mamedev.emulab.it/clrmamepro/)           | [RomCenter](http://www.romcenter.com/)     |
+|--------------------------------------------|-------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|---------------------------------------------------------------|--------------------------------------------|
+| App: in active development                 | ✅                                                                                                     | ✅                                                                          | ✅                                                             | ❓                                          |
+| App: OS compatibility                      | ✅ anything [Node.js supports](https://nodejs.org/en/download)                                         | ⚠️ Windows, macOS & Linux via [Mono](https://www.mono-project.com/)        | ⚠️ Windows, macOS & Linux via [Wine](https://www.winehq.org/) | ❌ Windows only                             |
+| App: GUI or CLI                            | CLI only by design                                                                                    | Primarily GUI, with a separate CLI                                         | GUI only                                                      | GUI only                                   |
+| App: required setup steps                  | ✅ no setup required                                                                                   | ⚠️ if specifying DAT & ROM dirs                                            | ❌ requires "profile" setup per DAT                            | ❌ requires per-DAT DB setup                |
+| App: open source                           | ✅ GPL v3                                                                                              | ⚠️ [partly](https://github.com/RomVault/RVWorld)                           | ❌                                                             | ❌                                          |
+| DATs: supported formats                    | Logiqx XML, MAME ListXML, MAME Software List, CMPro, HTGD SMDB ([DATs docs](../dats/scanning.md))     | Logiqx XML, MAME ListXML, CMPro, RomCenter, HTGD SMDB, Total DOS, Superdat | Logiqx XML, MAME ListXML, MAME Software List, CMPro           | Logiqx XML, CMPro, RomCenter               |
+| DATs: process multiple at once             | ✅                                                                                                     | ✅                                                                          | ⚠️ via the batcher                                            | ❌                                          |
+| DATs: infer parent/clone info              | ✅                                                                                                     | ❌                                                                          | ❌                                                             | ❌                                          |
+| DATs: built-in download manager            | ❌                                                                                                     | ⚠️ via [DatVault](https://www.datvault.com/)                               | ❌                                                             | ❌                                          |
+| DATs: supports URLs to DATs                | ✅                                                                                                     | ❌                                                                          | ❌                                                             | ❌                                          |
+| DATs: create from files (dir2dat)          | ✅ [dir2dat docs](../dats/dir2dat.md)                                                                  | ❓                                                                          | ✅                                                             | ❌                                          |
+| DATs: fixdat creation                      | ✅ [fixdat docs](../dats/fixdats.md)                                                                   | ✅                                                                          | ✅                                                             | ❌                                          |
+| DATs: combine multiple                     | ✅                                                                                                     | ✅                                                                          | ❌                                                             | ❌                                          |
+| ROM Scanning: parallel scanning            | ✅                                                                                                     | ❌                                                                          | ❓                                                             | ❓                                          |
+| ROM Scanning: scanning exclusions          | ✅                                                                                                     | ❌                                                                          | ❓                                                             | ❓                                          |
+| ROM Scanning: quick scanning               | ✅ [matching docs](../roms/matching.md)                                                                | ✅ (scanning level 1)                                                       | ⚠️ by default                                                 | ❓                                          |
+| ROM Scanning: scan/checksum caching        | ✅                                                                                                     | ✅                                                                          | ❌                                                             | ✅                                          |
+| ROMs: checksum matching strategies         | ✅ CRC32+size, MD5, SHA1, SHA256                                                                       | ⚠️ CRC32+size, MD5, SHA1                                                   | ⚠️ CRC32+size, MD5, SHA1                                      | ❓                                          |
+| ROMs: header detection                     | ✅                                                                                                     | ✅                                                                          | ⚠️ via supplemental XMLs                                      | ⚠️ via plugins                             |
+| ROMs: header removal                       | ✅ [automatic and forced](../roms/headers.md)                                                          | ⚠️ if configured                                                           | ❌                                                             | ❌                                          |
+| ROMs: trimming detection & matching        | ✅ [trimming docs](../roms/trimming.md)                                                                | ❌                                                                          | ❌                                                             | ❌                                          |
+| ROMs: automatic extension correction       | ✅ [output writing docs](../output/options.md#fixing-rom-extensions)                                   | ❌                                                                          | ❌                                                             | ❌                                          |
+| ROMs: patching support                     | ✅ many formats ([patching docs](../roms/patching.md))                                                 | ❌                                                                          | ❌                                                             | ❌                                          |
+| Arcade: supported merge types              | ✅ full non-merged, non-merged, split, merged ([arcade docs](../usage/arcade.md))                      | ⚠️ full non-merged, split, merged                                          | ✅ full non-merged, non-merged, split, merged                  | ⚠️ full non-merged, split, merged          |
+| Arcade: CHD disk inclusion                 | ✅ by default, can be turned off ([arcade docs](../usage/arcade.md))                                   | ✅ by default, can be turned off                                            | ❓                                                             | ❓                                          |
+| Arcade: sample inclusion                   | ❌                                                                                                     | ❌                                                                          | ✅                                                             | ❓                                          |
+| Archives: common formats support           | ✅ `.zip` (incl. zstd), `.7z`, `.gz`, `.rar`, `.tar`, and more ([docs](../input/reading-archives.md))  | ⚠️ `.zip` (incl. zstd), `.7z` (natively)                                   | ⚠️ `.zip` (incl. zstd), `.7z` (via `7z`), `.rar` (via `rar`)  | ⚠️ `.zip`, `.7z`                           |
+| Archives: `.chd` support                   | ⚠️ via `chdman`<sup>1</sup> (bundled)                                                                 | ✅ v1-5 natively                                                            | ⚠️ via `chdman`<sup>1</sup>                                   | ⚠️ v1-4 natively                           |
+| Archives: `.cso` & `.zso` support          | ⚠️ via `maxcso` (bundled)                                                                             | ❌                                                                          | ❌                                                             | ❌                                          |
+| Archives: `.gcz`, `.rvz`, & `.wia` support | ⚠️ via `dolphin-tool` (bundled)                                                                       | ❌                                                                          | ❌                                                             | ❌                                          |
+| Archives: `.nkit.iso` support              | ⚠️ matching but no extraction/inflation ([GameCube docs](../usage/console/gamecube.md#nkit))          | ❌                                                                          | ❌                                                             | ❌                                          |
+| Archives: creation formats                 | ❌ `.zip` (TorrentZip, RVZSTD) only by design ([writing archives docs](../output/writing-archives.md)) | ✅ `.zip` (TorrentZip, RVZSTD, Total DOS), `.7z` (LZMA, zstd)               | ⚠️ `.zip` (TorrentZip), `.7z`, `.rar`                         | ⚠️ `.zip`, `.7z`                           |
+| Archives: contents checksums               | ✅ when needed ([reading archives docs](../input/reading-archives.md))                                 | ⚠️ requires "files only" mode or directory                                 | ⚠️ if DAT has forcepacking=unzip                              | ❓                                          |
+| Archives: automatic extension correction   | ✅                                                                                                     | ❌                                                                          | ❌                                                             | ❌                                          |
+| Filtering: region, language, type, etc.    | ✅ [many options](../roms/filtering-preferences.md#filters)                                            | ❌                                                                          | ❌ only 1G1R options                                           | ⚠️ only at DB setup                        |
+| Filtering: 1G1R support                    | ✅ [many options](../roms/filtering-preferences.md#preferences-for-1g1r)                               | ❌                                                                          | ⚠️ region & language only                                     | ⚠️ only at DB setup                        |
+| Playlists: creation support                | ✅ [playlists docs](../output/playlists.md)                                                            | ❌                                                                          | ❌                                                             | ❌                                          |
+| Reports: report-only mode                  | ✅                                                                                                     | ✅                                                                          | ✅                                                             | ✅                                          |
+| Reports: machine parseable                 | ✅ CSV                                                                                                 | ⚠️ newline-separated "full" & "fix" reports                                | ⚠️ newline-separated "have" & "miss" lists                    | ⚠️ newline-separated "have" & "miss" lists |
+| Output: "clean" functionality              | ✅ [clean docs](../output/cleaning.md)                                                                 | ⚠️ unrecognized files moved back to "ToSort"                               | ✅ "fix unneeded" scanner option                               | ❓                                          |
+| Output: file link support                  | ✅ hard links, symlinks, and reflinks                                                                  | ❌                                                                          | ❌                                                             | ❌                                          |
+| Output: separate input & output dirs       | ✅                                                                                                     | ⚠️ yes but files are always moved                                          | ❌                                                             | ❌                                          |
+| Output: subdirectory customization         | ✅ [many options](../output/path-options.md)                                                           | ⚠️ depends on DAT organization                                             | ❌                                                             | ❌                                          |
+| Output: create single archive for DAT      | ✅                                                                                                     | ✅                                                                          | ❌                                                             | ❌                                          |
 
 <small>
 <sup>1</sup> may require you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
@@ -111,15 +112,15 @@ here is how you can perform each RomVault action in Igir:
 
 1. **Update DATs**
 
-    The equivalent action in Igir is to scan for DATs using the [`--dat <path>` option](dats/processing.md#scanning-for-dats) when performing some [command](commands.md).
+    The equivalent action in Igir is to scan for DATs using the [`--dat <path|glob|url>` option](../dats/scanning.md) when performing some [command](../commands.md).
 
     Igir does not cache parsed DATs like RomVault does, which requires fewer setup actions, but at the expense of needing to parse DAT files during every run.
 
 2. **Scan ROMs**
 
-    The equivalent action in Igir is to scan for ROMs using the [`--input <path>` option](roms/scanning.md) when performing some [command](commands.md). You will need to provide both the unsorted ("ToSort") and sorted ("RomRoot") directories as inputs.
+    The equivalent action in Igir is to scan for ROMs using the [`--input <path|glob>` option](../roms/scanning.md) when performing some [command](../commands.md). You will need to provide both the unsorted ("ToSort") and sorted ("RomRoot") directories as inputs.
 
-    RomVault's default "level 2" scan level can be achieved with the [`--input-checksum-min SHA1` option](roms/matching.md#manually-using-other-checksum-algorithms) (not recommended).
+    RomVault's default "level 2" scan level can be achieved with the [`--input-checksum-min SHA1` option](../roms/matching.md#manually-using-other-checksum-algorithms) (not recommended).
 
 3. **Find fixes**
 
@@ -127,19 +128,19 @@ here is how you can perform each RomVault action in Igir:
 
 4. **Fix ROMs**
 
-    The equivalent Igir action is to move missing ROMs from an input directory ([`--input <path>` option](roms/scanning.md)) to the output directory ([`--output <path>` option](output/path-options.md#base-output-directory)) using the [`igir move` command](commands.md#move).
+    The equivalent Igir action is to move missing ROMs from an input directory ([`--input <path|glob>` option](../roms/scanning.md)) to the output directory ([`--output <path>` option](../output/path-options.md#base-output-directory)) using the [`igir move` command](../commands.md#move).
 
-    RomVault writes TorrentZip archives by default, and it will overwrite files that are not in the TorrentZip structure. This can be achieved with a combination of the [`igir zip` command](output/writing-archives.md), the [`--zip-format torrentzip`](output/writing-archives.md#torrentzip) option (default), and the [`--overwrite-invalid` option](output/options.md#overwriting-files). Igir does not offer a way to create 7zip archives like RomVault does.
+    RomVault writes TorrentZip archives by default, and it will overwrite files that are not in the TorrentZip structure. This can be achieved with a combination of the [`igir zip` command](../output/writing-archives.md), the [`--zip-format torrentzip`](../output/writing-archives.md#torrentzip) option (default), and the [`--overwrite-invalid` option](../output/options.md#overwriting-files). Igir does not offer a way to create 7zip archives like RomVault does.
 
-    By default, RomVault writes "incomplete" sets of ROMs. It will write archives when at least one ROM for a game is present, even if not every ROM is found. Igir does not do this by default as incomplete sets are unlikely to be playable. However, you can enable this behavior with the [`--allow-incomplete-sets` option](roms/sets.md#allowing-inexact-sets).
+    By default, RomVault writes "incomplete" sets of ROMs. It will write archives when at least one ROM for a game is present, even if not every ROM is found. Igir does not do this by default as incomplete sets are unlikely to be playable. However, you can enable this behavior with the [`--allow-incomplete-sets` option](../roms/sets.md#allowing-inexact-sets).
 
-    RomVault respects the directory structure of DATs and "mirrors" it in the sorted directory ("RomRoot"). This can be achieved with a combination of the [`--dir-dat-mirror`](output/path-options.md#mirror-the-dat-subdirectory) and [`--dir-dat-name`](output/path-options.md#append-dat-name) options.
+    RomVault respects the directory structure of DATs and "mirrors" it in the sorted directory ("RomRoot"). This can be achieved with a combination of the [`--dir-dat-mirror`](../output/path-options.md#mirror-the-dat-subdirectory) and [`--dir-dat-name`](../output/path-options.md#append-dat-name) options.
 
-    During writing, RomVault will move unmatched files in the sorted directory ("RomRoot") to the unsorted directory ("ToSort"). This can be achieved with a combination of the [`igir clean` command](output/cleaning.md) and the [`--clean-backup <path>` option](output/cleaning.md#backing-up-cleaned-files).
+    During writing, RomVault will move unmatched files in the sorted directory ("RomRoot") to the unsorted directory ("ToSort"). This can be achieved with a combination of the [`igir clean` command](../output/cleaning.md) and the [`--clean-backup <path>` option](../output/cleaning.md#backing-up-cleaned-files).
 
 5. **Generate reports**
 
-    The equivalent Igir action is the [`igir report` command](output/reporting.md).
+    The equivalent Igir action is the [`igir report` command](../output/reporting.md).
 
 Tying it all together, the Igir command to achieve the same behavior as RomVault's defaults is:
 
@@ -147,15 +148,15 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
 
     ```batch
     igir move zip clean ^
-      --input "ToSort\" ^
-      --input "RomRoot\" ^
+      --input "ToSort" ^
+      --input "RomRoot" ^
       --input-checksum-min SHA1 ^
-      --dat "DatRoot\" ^
-      --output "RomRoot\" ^
+      --dat "DatRoot" ^
+      --output "RomRoot" ^
       --dir-dat-mirror ^
       --dir-dat-name ^
       --overwrite-invalid ^
-      --clean-backup "ToSort\" ^
+      --clean-backup "ToSort" ^
       --zip-format torrentzip ^
       --merge-roms fullnonmerged ^
       --allow-incomplete-sets ^
@@ -166,15 +167,15 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
 
     ```shell
     igir move zip clean \
-      --input "ToSort/" \
-      --input "RomRoot/" \
+      --input "ToSort" \
+      --input "RomRoot" \
       --input-checksum-min SHA1 \
-      --dat "DatRoot/" \
-      --output "RomRoot/" \
+      --dat "DatRoot" \
+      --output "RomRoot" \
       --dir-dat-mirror \
       --dir-dat-name \
       --overwrite-invalid \
-      --clean-backup "ToSort/" \
+      --clean-backup "ToSort" \
       --zip-format torrentzip \
       --merge-roms fullnonmerged \
       --allow-incomplete-sets \
@@ -185,15 +186,15 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
 
     ```shell
     igir move zip clean \
-      --input "ToSort/" \
-      --input "RomRoot/" \
+      --input "ToSort" \
+      --input "RomRoot" \
       --input-checksum-min SHA1 \
-      --dat "DatRoot/" \
-      --output "RomRoot/" \
+      --dat "DatRoot" \
+      --output "RomRoot" \
       --dir-dat-mirror \
       --dir-dat-name \
       --overwrite-invalid \
-      --clean-backup "ToSort/" \
+      --clean-backup "ToSort" \
       --zip-format torrentzip \
       --merge-roms fullnonmerged \
       --allow-incomplete-sets \

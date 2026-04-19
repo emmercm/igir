@@ -33,28 +33,28 @@ if [[ "${1:-}" == "play" ]]; then
   # README.md, docs/cli.md
 #  pei 'tree -L 2 .'
 #  echo "" && sleep 2
-#  pei 'npx igir@latest copy zip report --dat "No-Intro*.zip" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name --only-retail'
+#  pei 'npx igir@latest copy zip report --dat "No-Intro*.zip" --input ROMs --output ROMs-Sorted --dir-dat-name --only-retail'
 #  echo "" && sleep 2
 #  pei 'tree -L 1 ROMs-Sorted/'
 
   # docs/installation.md - copy extract ROMs-Sorted/
 #  pei 'tree -L 2 .'
 #  echo "" && sleep 2
-#  pei 'npx igir@latest copy extract --dat "*.dat" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name'
+#  pei 'npx igir@latest copy extract --dat "*.dat" --input ROMs --output ROMs-Sorted --dir-dat-name'
 #  echo "" && sleep 2
 #  pei 'tree -L 2 .'
 
   # docs/usage/basic.md - copy zip test ROMs-Sorted/
 #  pei 'tree .'
 #  echo "" && sleep 2
-#  pei 'npx igir@latest copy zip test --dat "No-Intro*.zip" --input ROMs/ --output ROMs-Sorted/ --dir-dat-name'
+#  pei 'npx igir@latest copy zip test --dat "No-Intro*.zip" --input ROMs --output ROMs-Sorted --dir-dat-name'
 #  echo "" && sleep 2
 #  pei "tree ROMs-Sorted/"
 
   # docs/usage/basic.md - move zip test clean report ROMs-New/
 #  pei 'tree .'
 #  echo "" && sleep 2
-#  pei 'npx igir@latest move zip test clean report --dat "No-Intro*.zip" --input ROMs-New/ --input ROMs-Sorted/ --output ROMs-Sorted/ --dir-dat-name'
+#  pei 'npx igir@latest move zip test clean report --dat "No-Intro*.zip" --input ROMs-New --input ROMs-Sorted --output ROMs-Sorted --dir-dat-name'
 #  echo "" && sleep 2
 #  pei "tree ROMs-Sorted/"
 
@@ -68,14 +68,14 @@ if [[ "${1:-}" == "play" ]]; then
   # docs/usage/basic.md - move extract test --dir-mirror
 #  pei 'tree ROMs/'
 #  echo "" && sleep 2
-#  pei 'npx igir@latest move extract test --input ROMs/ --output ROMs/ --dir-mirror'
+#  pei 'npx igir@latest move extract test --input ROMs --output ROMs --dir-mirror'
 #  echo "" && sleep 2
 #  pei 'tree ROMs/'
 
   # docs/usage/basic.md - move extract test --fix-extension
 #  pei 'tree ROMs/'
 #  echo "" && sleep 2
-#  pei 'npx igir@latest move extract test --input ROMs/ --output ROMs/ --dir-mirror --fix-extension always'
+#  pei 'npx igir@latest move extract test --input ROMs --output ROMs --dir-mirror --fix-extension always'
 #  echo "" && sleep 2
 #  pei 'tree ROMs/'
 

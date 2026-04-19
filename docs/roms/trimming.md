@@ -1,4 +1,4 @@
-# ROM Trimming
+# ROM Trim Detection
 
 !!! warning
 
@@ -42,7 +42,7 @@ Even though each console has a padding byte that is most common (above), this is
 
 Like other calculated checksums, checksums of the padded files are cached to speed up subsequent runs.
 
-## Controlling detection strategy
+## Controlling the detection strategy
 
 With the default `--trim-scan-files auto` mode, Igir will only calculate padded ROM size & checksums for known file types mentioned above. To save processing time (and because it generally doesn't make sense to archive trimmed ROMs), Igir will not calculate the padding for files in archives by default.
 

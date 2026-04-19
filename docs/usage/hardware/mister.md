@@ -32,8 +32,8 @@ This token can be used to reference each core's specific directory in the MiSTer
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input "ROMs/" \
-      --output "/Volumes/MISTER/games/{mister}/" \
+      --input "ROMs" \
+      --output "/Volumes/MISTER/games/{mister}" \
       --dir-letter \
       --no-bios
     ```
@@ -45,8 +45,8 @@ This token can be used to reference each core's specific directory in the MiSTer
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input "ROMs/" \
-      --output "/media/MISTER/games/{mister}/" \
+      --input "ROMs" \
+      --output "/media/MISTER/games/{mister}" \
       --dir-letter \
       --no-bios
     ```

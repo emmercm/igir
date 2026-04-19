@@ -26,7 +26,7 @@ Because flash carts are specific to a specific console, you can provide specific
     igir copy extract test clean \
       --dat "Nintendo - Game Boy.dat" \
       --input "ROMs-Sorted/Nintendo - Game Boy" \
-      --output /Volumes/EZFLASH/ \
+      --output /Volumes/EZFLASH \
       --no-bios
     ```
 
@@ -38,7 +38,7 @@ Because flash carts are specific to a specific console, you can provide specific
     igir copy extract test clean \
       --dat "Nintendo - Game Boy.dat" \
       --input "ROMs-Sorted/Nintendo - Game Boy" \
-      --output /media/EZFLASH/ \
+      --output /media/EZFLASH \
       --no-bios
     ```
 
@@ -46,7 +46,7 @@ you can then add some other output options such as the [`--dir-letter` option](.
 
 !!! warning
 
-    The EZ-FLASH appears to have issues with fragmented files, in the same way that [GameCube's Swiss](../console/gamecube.md) and [PS2's OPL](../console/ps2.md) does ([igir#802](https://github.com/emmercm/igir/discussions/802#discussioncomment-7606831)).
+    The EZ-FLASH Omega (and possibly others) appear to have issues with fragmented files, in the same way that [GameCube's Swiss](../console/gamecube.md) and [PS2's OPL](../console/ps2.md) does ([igir#802](https://github.com/emmercm/igir/discussions/802#discussioncomment-7606831)).
 
     You may need to set the option `--writer-threads 1` to fix any issues with your specific model.
 

@@ -11,7 +11,7 @@ Because RetroPie uses RetroArch under the hood, the instructions are generally t
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /home/pi/RetroPie/BIOS
     ```
 
@@ -40,8 +40,8 @@ The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend c
     ```shell
     igir copy zip test clean \
       --dat "No-Intro*.zip" \
-      --input "ROMs/" \
-      --output "/Volumes/RETROPIE/retropie/roms/" \
+      --input "ROMs" \
+      --output "/Volumes/RETROPIE/retropie/roms" \
       --dir-dat-name \
       --dir-letter \
       --no-bios
@@ -54,8 +54,8 @@ The [RetroPie docs](https://retropie.org.uk/docs/Transferring-Roms/) recommend c
     ```shell
     igir copy zip test clean \
       --dat "No-Intro*.zip" \
-      --input "ROMs/" \
-      --output "/media/RETROPIE/retropie/roms/" \
+      --input "ROMs" \
+      --output "/media/RETROPIE/retropie/roms" \
       --dir-dat-name \
       --dir-letter \
       --no-bios

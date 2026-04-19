@@ -1,6 +1,6 @@
 # EverDrive
 
-The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the highest quality, highest rate of compatability, and most often recommended flash carts available on the market today.
+The [EverDrive](https://krikzz.com/) flash carts by Krikzz are some of the highest quality, highest rate of compatibility, and most often recommended flash carts available on the market today.
 
 ## ROMs
 
@@ -26,7 +26,7 @@ Because flash carts are specific to a specific console, you can provide specific
     igir copy extract test clean \
       --dat "Nintendo - Nintendo Entertainment System (Headered).dat" \
       --input "ROMs-Sorted/Nintendo - Nintendo Entertainment System" \
-      --output /Volumes/EverDrive/ \
+      --output /Volumes/EverDrive \
       --no-bios
     ```
 
@@ -38,7 +38,7 @@ Because flash carts are specific to a specific console, you can provide specific
     igir copy extract test clean \
       --dat "Nintendo - Nintendo Entertainment System (Headered).dat" \
       --input "ROMs-Sorted/Nintendo - Nintendo Entertainment System" \
-      --output /media/EverDrive/ \
+      --output /media/EverDrive \
       --no-bios
     ```
 

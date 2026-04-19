@@ -13,7 +13,7 @@ Because Lakka uses RetroArch under the hood, the instructions are generally the 
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input /media/USB-Drive/BIOS/ \
+      --input /media/USB-Drive/BIOS \
       --output /storage/system
     ```
 
@@ -28,8 +28,8 @@ Lakka has a `roms` folder at `/storage/roms/` that is used by default:
     ```shell
     igir copy zip test clean \
       --dat "/media/USB-Drive/No-Intro*.zip" \
-      --input "/media/USB-Drive/ROMs/" \
-      --output "/storage/roms/" \
+      --input "/media/USB-Drive/ROMs" \
+      --output "/storage/roms" \
       --dir-dat-name \
       --dir-letter \
       --no-bios

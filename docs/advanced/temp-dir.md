@@ -2,7 +2,7 @@
 
 Igir needs to write some temporary files to disk for a few reasons:
 
-- Downloading [DAT URLs](../dats/processing.md#scanning-for-dats) to disk before parsing
+- Downloading [DAT URLs](../dats/scanning.md) to disk before parsing
 - Extracting [some archives](../input/reading-archives.md) to disk during scanning, and when reading when extracting or [zipping](../output/writing-archives.md)
 
 Temporary files are ones that are deleted as soon as Igir no longer needs them for processing. Igir will also delete any leftover temporary files on exit.

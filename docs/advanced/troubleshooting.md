@@ -1,6 +1,6 @@
 # Troubleshooting
 
-See the sibling page about [logging](./logging.md) for more information to help troubleshoot issues.
+See the sibling page about [logging](logging.md) for more information to help troubleshoot issues.
 
 ## Fatal crashes
 
