@@ -69,6 +69,11 @@ export default class Cache<V> {
    * Get the value of a key in the cache, waiting for any existing operations to complete first.
    */
   async get(key: string): Promise<V | undefined> {
+    const cached = this.getUnsafe(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     return await this.keyedMutex.runExclusiveForKey(key, () => this.getUnsafe(key));
   }
 
@@ -85,6 +90,14 @@ export default class Cache<V> {
     runnable: (key: string) => V | Promise<V>,
     shouldRecompute?: (value: V) => boolean | Promise<boolean>,
   ): Promise<V> {
+    const cached = this.getUnsafe(key);
+    if (
+      cached !== undefined &&
+      (shouldRecompute === undefined || !(await shouldRecompute(cached)))
+    ) {
+      return cached;
+    }
+
     return await this.keyedMutex.runExclusiveForKey(key, async () => {
       if (this.keyValues.has(key)) {
         const existingValue = this.keyValues.get(key) as V;
