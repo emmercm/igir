@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import { ValidationResult } from '../../../packages/torrentzip/index.js';
 import type CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.js';
 import type FileMoveMutex from '../../async/fileMoveMutex.js';
 import type ProgressBar from '../../console/progressBar.js';
@@ -395,11 +396,20 @@ export default class CandidateWriter extends Module {
       }
     }
 
-    if (this.options.getZipFormat() === ZipFormat.TORRENTZIP && !(await zipFile.isTorrentZip())) {
+    const tzValidationResult = await this.fileFactory.tzValidationFrom(
+      zipFile,
+      CacheMode.IGNORE_CACHED_VALUE,
+    );
+    if (
+      this.options.getZipFormat() === ZipFormat.TORRENTZIP &&
+      tzValidationResult !== ValidationResult.VALID_TORRENTZIP
+    ) {
       return 'is not a valid TorrentZip file';
     }
-
-    if (this.options.getZipFormat() === ZipFormat.RVZSTD && !(await zipFile.isRVZSTD())) {
+    if (
+      this.options.getZipFormat() === ZipFormat.RVZSTD &&
+      tzValidationResult !== ValidationResult.VALID_RVZSTD
+    ) {
       return 'is not a valid RVZSTD file';
     }
 
@@ -416,33 +426,43 @@ export default class CandidateWriter extends Module {
     inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
     progressBar: ProgressBar,
   ): Promise<boolean> {
-    this.progressBar.logInfo(
-      [
-        `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entries:`,
-        ...inputToOutputZipEntries.map(([input, output]) => {
-          if (input.getFilePath() === output.getFilePath()) {
-            return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
-          }
-          return `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}'`;
-        }),
-      ].join('\n'),
-    );
-
-    // The same input file may have contention with being raw-moved and used as an input file
-    // for a zip (here), so we need to lock all input paths if we're moving
+    // We have to lock all input files from being moved due to possible raw-moving
     const lockedFilePaths = this.options.shouldMove()
       ? inputToOutputZipEntries
           .map(([input]) => input.getFilePath())
           .reduce(ArrayPoly.reduceUnique(), [])
       : [];
     return await this.moveMutex.runExclusiveForKeys(lockedFilePaths, async () => {
+      // Input files may have been previously moved due to raw-moving, find them
+      const movedInputToOutputZipEntries = this.options.shouldMove()
+        ? inputToOutputZipEntries.map(([input, output]): [File, ArchiveEntry<Zip>] => {
+            const movedFilePath = this.moveMutex.getMovedLocationUnsafe(input.getFilePath());
+            if (movedFilePath === undefined) {
+              return [input, output];
+            }
+            return [input.withFilePath(movedFilePath), output];
+          })
+        : inputToOutputZipEntries;
+
+      this.progressBar.logInfo(
+        [
+          `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entr${movedInputToOutputZipEntries.length === 1 ? 'y' : 'ies'}:`,
+          ...movedInputToOutputZipEntries.map(([input, output]) => {
+            if (input.getFilePath() === output.getFilePath()) {
+              return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
+            }
+            return `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}'`;
+          }),
+        ].join('\n'),
+      );
+
       try {
         await CandidateWriter.ensureOutputDirExists(outputZip.getFilePath());
         const compressorThreads = Math.ceil(
           os.availableParallelism() / Math.max(this.candidateSemaphore.openLocks(), 1),
         );
         await outputZip.createArchive(
-          inputToOutputZipEntries,
+          movedInputToOutputZipEntries,
           this.options.getZipFormat() as ZipFormatValue,
           compressorThreads,
           (progress, total) => {
@@ -526,7 +546,13 @@ export default class CandidateWriter extends Module {
       const wasMoved =
         this.options.shouldMove() &&
         !(inputRomFile instanceof ZeroSizeFile) &&
-        (await this.moveMutex.wasMoved(inputRomFile.getFilePath()));
+        (await this.moveMutex.moveFile(inputRomFile.getFilePath(), (movedInputPath) => [
+          // Return if this file was previously moved
+          movedInputPath !== undefined,
+          // If this file was previously moved then remember that location, otherwise, mark it as
+          // moved so that if it's used in another input file it will be copied instead
+          movedInputPath ?? inputRomFile.getFilePath(),
+        ]));
       if (!wasMoved) {
         this.progressBar.logDebug(
           `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
@@ -667,8 +693,8 @@ export default class CandidateWriter extends Module {
     return await this.moveMutex.moveFile(inputRomFile.getFilePath(), async (movedInputPath) => {
       if (movedInputPath) {
         if (movedInputPath === outputFilePath) {
-          // Do nothing
-          return [undefined, undefined];
+          // Do nothing, but return a success value
+          return [MoveResult.RENAMED, undefined];
         }
 
         // The file was already moved, we shouldn't move it again

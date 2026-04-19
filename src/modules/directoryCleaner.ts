@@ -112,6 +112,7 @@ export default class DirectoryCleaner extends Module {
     // Prefer recycling...
     for (let i = 0; i < filePaths.length; i += Defaults.OUTPUT_CLEANER_BATCH_SIZE) {
       const filePathsChunk = filePaths.slice(i, i + Defaults.OUTPUT_CLEANER_BATCH_SIZE);
+      this.progressBar.setInProgress(filePathsChunk.length);
       this.progressBar.logInfo(
         `recycling cleaned path${filePathsChunk.length === 1 ? '' : 's'}:\n${filePathsChunk.map((filePath) => `  ${filePath}`).join('\n')}`,
       );
@@ -122,7 +123,7 @@ export default class DirectoryCleaner extends Module {
           `failed to recycle ${filePathsChunk.length} path${filePathsChunk.length === 1 ? '' : 's'}: ${error}`,
         );
       }
-      this.progressBar.setCompleted(i);
+      this.progressBar.incrementCompleted(filePathsChunk.length);
     }
 
     // ...but if that doesn't work, delete the leftovers
@@ -157,6 +158,8 @@ export default class DirectoryCleaner extends Module {
   private async backupFiles(backupDir: string, filePaths: string[]): Promise<void> {
     const semaphore = new MappableSemaphore(this.options.getWriterThreads());
     await semaphore.map(filePaths, async (filePath) => {
+      this.progressBar.incrementInProgress();
+
       let backupPath = path.join(backupDir, path.basename(filePath));
       let increment = 0;
       while (await FsPoly.exists(backupPath)) {
@@ -175,7 +178,7 @@ export default class DirectoryCleaner extends Module {
       } catch (error) {
         this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
       }
-      this.progressBar.incrementInProgress();
+      this.progressBar.incrementCompleted();
     });
   }
 

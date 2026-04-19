@@ -515,6 +515,9 @@ export default class OutputFactory {
     if (
       (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE &&
         game.getRoms().length > 1 &&
+        // Ignore Games/ROMs coming from SMDB-like DATs that already have a complete directory
+        // structure in the ROM name
+        !(/[\\/]/.test(game.getName()) && /[\\/]/.test(rom.getName())) &&
         // Output file is not an archive
         !FileFactory.isExtensionArchive(ext) &&
         !(inputFile instanceof ArchiveFile)) ||

@@ -97,7 +97,6 @@ async function candidateWriter(
   patchGlob: string | undefined,
   outputTemp: string,
 ): Promise<CandidateWriterResults> {
-  // Given
   const options = new Options({
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
@@ -135,6 +134,7 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     readerSemaphore,
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {

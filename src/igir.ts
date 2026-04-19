@@ -275,15 +275,17 @@ export default class Igir {
     datProcessProgressBar.finishWithItems(dats.length, 'DAT', 'processed');
     datProcessProgressBar.delete();
 
+    const writtenOutputFiles = candidateWriterResults.wrote.flatMap((wc) =>
+      wc.getRomsWithFiles().map((rwf) => rwf.getOutputFile()),
+    );
+
     // Delete moved ROMs
-    await this.deleteMovedRoms(indexedRoms, candidateWriterResults.moved);
+    await this.deleteMovedRoms(indexedRoms, candidateWriterResults.moved, writtenOutputFiles);
 
     // Clean the output directories
     const cleanedOutputFiles = await this.processOutputCleaner(romOutputDirs, [
       // Do not clean output ROMs
-      ...candidateWriterResults.wrote.flatMap((wc) =>
-        wc.getRomsWithFiles().map((rwf) => rwf.getOutputFile()),
-      ),
+      ...writtenOutputFiles,
       // Do not clean any other files written (dir2dats, fixdats, playlists, etc.)
       ...filesToExcludeFromCleaning,
     ]);
@@ -609,10 +611,12 @@ export default class Igir {
       [
         // Generate the initial set of candidates
         async (): Promise<WriteCandidate[]> =>
-          await new CandidateGenerator(this.options, progressBar, readerSemaphore).generate(
-            dat,
-            indexedRoms,
-          ),
+          await new CandidateGenerator(
+            this.options,
+            progressBar,
+            fileFactory,
+            readerSemaphore,
+          ).generate(dat, indexedRoms),
         // Add patched candidates
         (candidates): WriteCandidate[] =>
           new CandidatePatchGenerator(this.options, progressBar).generate(dat, candidates, patches),
@@ -697,6 +701,7 @@ export default class Igir {
   private async deleteMovedRoms(
     indexedRoms: IndexedFiles,
     movedWriteCandidates: WriteCandidate[],
+    writtenFilesToExclude: File[],
   ): Promise<void> {
     if (movedWriteCandidates.length === 0) {
       return;
@@ -707,6 +712,7 @@ export default class Igir {
     const deletedFilePaths = await new MovedROMDeleter(this.options, progressBar).delete(
       indexedRoms,
       movedWriteCandidates,
+      writtenFilesToExclude,
     );
 
     progressBar.setName('Deleting empty input subdirectories');

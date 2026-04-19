@@ -11,6 +11,9 @@ export const ValidationResult = {
 } as const;
 export type ValidationResultKey = keyof typeof ValidationResult;
 export type ValidationResultValue = (typeof ValidationResult)[ValidationResultKey];
+export const ValidationResultInverted = Object.fromEntries(
+  Object.entries(ValidationResult).map(([key, value]) => [value, key]),
+) as Record<ValidationResultValue, ValidationResultKey>;
 
 /**
  * Validate TorrentZip files.

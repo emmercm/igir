@@ -76,7 +76,7 @@ it('should not throw on non-MAME executables', async () => {
 });
 
 describe('multiple files', () => {
-  const totalDatFiles = 12;
+  const totalDatFiles = 13;
 
   test.each([
     [[path.join(process.cwd(), 'test', 'fixtures', 'dats')]],
@@ -91,7 +91,7 @@ describe('multiple files', () => {
   });
 
   test.each([
-    [['test/fixtures/**/*.dat'], 1],
+    [['test/fixtures/**/*.dat'], 2],
     [['test/fixtures/**/*.zip'], totalDatFiles - 1],
   ])('some files are path excluded: %s', async (datExclude, expectedDats) => {
     await expect(
@@ -168,7 +168,8 @@ describe('single files', () => {
   test.each([
     //[path.join('test', 'fixtures', 'dats', 'mame', 'mame0279*'), 21_472, 48_705, 363_557],
     [path.join('test', 'fixtures', 'dats', 'mame', 'mame2003-plus-libretro-*'), 2926, 5258, 80_837],
-    [path.join('test', 'fixtures', 'dats', 'snes', 'HTGD-snes-*.dat'), 13_770, 13_770, 13_774],
+    [path.join('test', 'fixtures', 'dats', 'ps1', 'HTGD-PlayStation*'), 112, 112, 338],
+    [path.join('test', 'fixtures', 'dats', 'snes', 'HTGD-snes-*'), 13_770, 13_770, 13_774],
     [path.join('test', 'fixtures', 'dats', 'snes', 'libretro-database-snes-*'), 3851, 3851, 3851],
     [
       path.join('test', 'fixtures', 'dats', 'snes', 'mame0263-getsoftlist-snes.dat'),
@@ -176,7 +177,7 @@ describe('single files', () => {
       3690,
       4271,
     ],
-    [path.join('test', 'fixtures', 'dats', 'snes', 'mame-hash-snes-*.dat'), 1909, 3690, 4271],
+    [path.join('test', 'fixtures', 'dats', 'snes', 'mame-hash-snes-*'), 1909, 3690, 4271],
     [
       path.join(
         'test',

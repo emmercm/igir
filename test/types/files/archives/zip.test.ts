@@ -2,6 +2,8 @@ import os from 'node:os';
 import path from 'node:path';
 import stream from 'node:stream';
 
+import { TZValidator, ValidationResult } from '../../../../packages/torrentzip/index.js';
+import { ZipReader } from '../../../../packages/zip/index.js';
 import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import Logger from '../../../../src/console/logger.js';
 import { LogLevel } from '../../../../src/console/logLevel.js';
@@ -117,8 +119,9 @@ describe('createArchive', () => {
           1,
         );
 
-        await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toEqual(true);
-        await expect(new Zip(tempZipPath).isRVZSTD()).resolves.toEqual(false);
+        await expect(TZValidator.validate(new ZipReader(tempZipPath))).resolves.toEqual(
+          ValidationResult.VALID_TORRENTZIP,
+        );
       }
     } finally {
       await FsPoly.rm(tempDir, { recursive: true, force: true });
@@ -156,8 +159,9 @@ describe('createArchive', () => {
           1,
         );
 
-        await expect(new Zip(tempZipPath).isTorrentZip()).resolves.toEqual(false);
-        await expect(new Zip(tempZipPath).isRVZSTD()).resolves.toEqual(true);
+        await expect(TZValidator.validate(new ZipReader(tempZipPath))).resolves.toEqual(
+          ValidationResult.VALID_RVZSTD,
+        );
       }
     } finally {
       await FsPoly.rm(tempDir, { recursive: true, force: true });

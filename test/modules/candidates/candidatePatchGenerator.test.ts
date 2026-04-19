@@ -14,16 +14,22 @@ import PatchScanner from '../../../src/modules/patchScanner.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import type DAT from '../../../src/types/dats/dat.js';
+import Game from '../../../src/types/dats/game.js';
 import Header from '../../../src/types/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
+import ROM from '../../../src/types/dats/rom.js';
+import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
 import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/types/files/archives/archiveFile.js';
-import type File from '../../../src/types/files/file.js';
+import Zip from '../../../src/types/files/archives/zip.js';
+import File from '../../../src/types/files/file.js';
 import FileCache from '../../../src/types/files/fileCache.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import type { OptionsProps } from '../../../src/types/options.js';
 import Options from '../../../src/types/options.js';
-import type WriteCandidate from '../../../src/types/writeCandidate.js';
+import IPSPatch from '../../../src/types/patches/ipsPatch.js';
+import ROMWithFiles from '../../../src/types/romWithFiles.js';
+import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -48,6 +54,7 @@ async function runPatchCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 
@@ -202,6 +209,112 @@ describe('with inferred DATs', () => {
           .every((romWithFiles) => romWithFiles.getInputFile().getPatch() !== undefined),
       ),
     ).toEqual(true);
+  });
+});
+
+describe('with archive file inputs', () => {
+  // ROM and DAT both use CRC 0361b321, matching the "After 0361b321.ips" patch fixture
+  const romCrc = '0361b321';
+  const rom = new ROM({ name: 'before.rom', size: 7, crc32: romCrc });
+  const dat = new LogiqxDAT({
+    header: new Header(),
+    games: [new Game({ name: 'before', roms: [rom] })],
+  });
+
+  const patch = File.fileOf({
+    filePath: path.join('test', 'fixtures', 'patches', 'After 0361b321.ips'),
+  }).then((file) => IPSPatch.patchFrom(file));
+
+  it('should not create patch candidates for archive inputs when not zipping', async () => {
+    // Given a candidate with an ArchiveFile input whose inner entry CRC matches a patch,
+    // but the command is copy (without zip), so patching the archive is not possible
+    const options = new Options({ commands: ['copy'] });
+    const archiveEntry = await ArchiveEntry.entryOf({
+      archive: new Zip('input.zip'),
+      entryPath: 'before.rom',
+      size: 7,
+      crc32: romCrc,
+    });
+    const candidate = new WriteCandidate(new SingleValueGame({ name: 'before', roms: [rom] }), [
+      new ROMWithFiles(
+        rom,
+        new ArchiveFile(archiveEntry, { size: 100 }),
+        await ArchiveEntry.entryOf({
+          archive: new Zip('output.zip'),
+          entryPath: 'before.rom',
+          size: 7,
+          crc32: romCrc,
+        }),
+      ),
+    ]);
+
+    // When generating patched candidates
+    const result = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
+      dat,
+      [candidate],
+      [await patch],
+    );
+
+    // Then no patched candidates should be added because ArchiveFile inputs
+    // cannot be patched without zipping
+    expect(result).toHaveLength(1);
+    result.forEach((c) => {
+      c.getRomsWithFiles().forEach((romWithFiles) => {
+        expect(romWithFiles.getInputFile().getPatch()).toBeUndefined();
+      });
+    });
+  });
+
+  it('should create patch candidates for archive inputs when zipping', async () => {
+    // Given a candidate with an ArchiveFile input whose inner entry CRC matches a patch,
+    // and the command is zip, so patching the archive entry is possible
+    const options = new Options({ commands: ['zip'] });
+    const archiveEntry = await ArchiveEntry.entryOf({
+      archive: new Zip('input.zip'),
+      entryPath: 'before.rom',
+      size: 7,
+      crc32: romCrc,
+    });
+    const candidate = new WriteCandidate(new SingleValueGame({ name: 'before', roms: [rom] }), [
+      new ROMWithFiles(
+        rom,
+        new ArchiveFile(archiveEntry, { size: 100 }),
+        await ArchiveEntry.entryOf({
+          archive: new Zip('output.zip'),
+          entryPath: 'before.rom',
+          size: 7,
+          crc32: romCrc,
+        }),
+      ),
+    ]);
+
+    // When generating patched candidates
+    const result = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
+      dat,
+      [candidate],
+      [await patch],
+    );
+
+    // Then patched candidates should be added alongside the original
+    expect(result.length).toEqual(2);
+    const patchedCandidates = result.filter((writeCandidate) =>
+      writeCandidate
+        .getRomsWithFiles()
+        .some((romWithFiles) => romWithFiles.getInputFile().getPatch() !== undefined),
+    );
+    expect(patchedCandidates.length).toEqual(1);
+
+    patchedCandidates.forEach((writeCandidate) => {
+      writeCandidate.getRomsWithFiles().forEach((romWithFiles) => {
+        // and patched candidates' input files should be converted from ArchiveFile to ArchiveEntry
+        expect(romWithFiles.getInputFile()).toBeInstanceOf(ArchiveEntry);
+
+        // and patched candidates' output files should be ArchiveEntry backed by a Zip archive
+        const outputFile = romWithFiles.getOutputFile();
+        expect(outputFile).toBeInstanceOf(ArchiveEntry);
+        expect((outputFile as ArchiveEntry<Zip>).getArchive()).toBeInstanceOf(Zip);
+      });
+    });
   });
 });
 
