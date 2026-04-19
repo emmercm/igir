@@ -32,7 +32,7 @@ if (await FsPoly.exists(output)) {
 }
 
 logger.info("Bundling with 'bun build --compile' ...");
-const result = await Bun.build({
+const bunBuildConfig = {
   entrypoints: [
     'index.ts',
     ...(await fg(
@@ -57,8 +57,10 @@ const result = await Bun.build({
       description: Package.HOMEPAGE,
     },
   },
-  minify: true,
-  sourcemap: 'inline',
+  // TODO(cemmer): minification seems to break at least Windows, causing chdman to fail `await import` with:
+  //  "ReferenceError: awaitPromise is not defined"
+  // minify: true,
+  // sourcemap: 'inline',
   plugins: [
     {
       name: 'native-addon-loader',
@@ -94,7 +96,9 @@ const result = await Bun.build({
       },
     },
   ],
-});
+} satisfies Bun.BuildConfig;
+logger.info(JSON.stringify(bunBuildConfig, undefined, 2));
+const result = await Bun.build(bunBuildConfig);
 
 if (!result.success) {
   for (const log of result.logs) {
