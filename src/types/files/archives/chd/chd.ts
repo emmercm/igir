@@ -122,7 +122,7 @@ export default abstract class Chd extends Archive {
   async getInfo(): Promise<CHDInfo> {
     return await chdman.info({
       inputFilename: this.getFilePath(),
-      binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
+      binaryPreference: ChdmanBinaryPreference.PREFER_BUNDLED_BINARY,
     });
   }
 }

@@ -43,7 +43,7 @@ export default class ChdBinCue extends Chd {
       outputFilename: cueFile,
       outputBinFilename: binFilePattern,
       splitBin: true,
-      binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
+      binaryPreference: ChdmanBinaryPreference.PREFER_BUNDLED_BINARY,
     });
 
     return [
