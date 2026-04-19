@@ -132,7 +132,7 @@ nav:
       - advanced/file-cache.md
       - advanced/troubleshooting.md
     - Other Topics:
-      - alternatives.md
+      - misc/alternatives.md
       - misc/torrentzip.md
       - misc/rom-dumping.md
     - Project:
@@ -167,6 +167,7 @@ plugins:
         - web-flow
   - redirects:
       redirect_maps:
+        'alternatives.md': 'misc/alternatives.md'
         'archives.md': 'input/reading-archives.md'
         'dats.md': 'dats/introduction.md'
         'dats/overview.md': 'dats/introduction.md'
