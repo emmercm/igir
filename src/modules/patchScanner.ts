@@ -46,7 +46,7 @@ export default class PatchScanner extends Scanner {
     const patches = await this.parsePatchFiles(patchFiles);
     patches.forEach((patch) => {
       if (patch.getCrcBefore() === '00000000') {
-        this.progressBar.logWarn(`failed to parse CRC32 for patch: ${patch.getFile().toString()}`);
+        this.progressBar.logWarn(`${patch.toString()}: couldn't parse base file CRC`);
       }
     });
 
@@ -90,7 +90,7 @@ export default class PatchScanner extends Scanner {
     const patchForFilename = await PatchFactory.patchFromFilename(file);
     if (patchForFilename) {
       this.progressBar.logTrace(
-        `${file.toString()}: found patch type by extension: ${patchForFilename.constructor.name}`,
+        `${patchForFilename.toString()}: found ${patchForFilename.constructor.name} from patch filename extension`,
       );
       return patchForFilename;
     }
@@ -98,11 +98,12 @@ export default class PatchScanner extends Scanner {
     const patchForFileContents = await PatchFactory.patchFromFileContents(file);
     if (patchForFileContents) {
       this.progressBar.logTrace(
-        `${file.toString()}: found patch type by contents: ${patchForFileContents.constructor.name}`,
+        `${patchForFileContents.toString()}: found ${patchForFileContents.constructor.name} from patch file contents`,
       );
       return patchForFileContents;
     }
 
+    this.progressBar.logTrace(`${file.toString()}: is not a known patch file`);
     return undefined;
   }
 }

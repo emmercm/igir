@@ -82,7 +82,7 @@ export default class CandidateWriter extends Module {
       // Deduplicate input->output files
       .map((candidate) => {
         const nonDuplicateRomsWithFiles = candidate.getRomsWithFiles().filter((romWithFiles) => {
-          const inputToOutputFile = `${romWithFiles.getInputFile().toString()} -> ${romWithFiles.getOutputFile().toString()}`;
+          const inputToOutputFile = `${romWithFiles.getInputFile().toString()} → ${romWithFiles.getOutputFile().toString()}`;
           if (inputToOutputFiles.has(inputToOutputFile)) {
             return false;
           }

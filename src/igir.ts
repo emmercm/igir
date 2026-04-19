@@ -405,7 +405,7 @@ export default class Igir {
 
     let matchChecksum = minimumChecksum;
 
-    if (this.options.getPatchFileCount() > 0) {
+    if (this.options.getPatchFileCount() > 0 && !(matchChecksum & ChecksumBitmask.CRC32)) {
       matchChecksum |= ChecksumBitmask.CRC32;
       this.logger.trace('using patch files, enabling CRC32 file checksums');
     }
