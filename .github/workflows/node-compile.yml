@@ -109,7 +109,7 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: ./.github/actions/docker-run-action
         with:
-          image: oven/bun:${{ steps.linux-vars.outputs.BUN_VERSION }}
+          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
@@ -119,6 +119,8 @@ jobs:
             set -euo pipefail
             set -x
             uname -a
+
+            curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
 
             # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
