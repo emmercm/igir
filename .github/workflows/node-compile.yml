@@ -126,6 +126,9 @@ jobs:
             curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
             export PATH="${HOME}/.bun/bin:$PATH"
 
+            sudo apt-get update
+            sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
+
             # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
             npm run compile -- . igir
