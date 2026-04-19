@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import type ProgressBar from '../console/progressBar.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import IntlPoly from '../polyfill/intlPoly.js';
 import DATStatus, { GameStatus } from '../types/datStatus.js';
@@ -66,7 +67,7 @@ export default class ReportGenerator extends Module {
           !usedFilePaths.has(inputFile.getFilePath()) && usedHashes.has(inputFile.hashCode()),
       )
       .map((inputFile) => inputFile.getFilePath())
-      .filter((inputFile) => !usedFilePaths.has(inputFile))
+      .reduce(ArrayPoly.reduceUnique(), [])
       .toSorted();
     const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
 
@@ -76,7 +77,7 @@ export default class ReportGenerator extends Module {
           !usedFilePaths.has(inputFile.getFilePath()) && !usedHashes.has(inputFile.hashCode()),
       )
       .map((inputFile) => inputFile.getFilePath())
-      .filter((inputFile) => !usedFilePaths.has(inputFile))
+      .reduce(ArrayPoly.reduceUnique(), [])
       .toSorted();
     const unusedCsv = await DATStatus.filesToCsv(unusedFilePaths, GameStatus.UNUSED);
 
