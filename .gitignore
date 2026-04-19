@@ -104,6 +104,11 @@ dist
 .tern-port
 
 
+# Bun
+*.map
+CPU.*.md
+Heap.*.md
+
 # Custom
 dist/
 /package
@@ -116,7 +121,6 @@ site/
 *.sh
 igir
 igir.exe
-!.github/**/*.sh
 !test/*.sh
 !packages/*
 
@@ -182,6 +186,7 @@ igir.exe
 *.desktop
 *.fnt
 *.jpg
+*.m3u
 *.png
 *.sa1
 *.sav
