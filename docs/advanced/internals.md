@@ -6,11 +6,11 @@ Information about the inner workings of Igir.
 
 Igir runs these steps in the following order:
 
-1. Scan each DAT input path for every file and parse them, if provided (`--dat <path>`)
-2. Scan each ROM input path for every file (`--input <path>`)
+1. Scan each DAT input path for every file and parse them, if provided (`--dat <path|glob|url>`)
+2. Scan each ROM input path for every file (`--input <path|glob>`)
    - Detect headers in those files, if applicable (see [header docs](../roms/headers.md))
    - Detect trimming of those files, if applicable (see [trimming docs](../roms/trimming.md))
-3. Scan each patch input path for every file (`--patch <path>`) (see [patching docs](../roms/patching.md))
+3. Scan each patch input path for every file (`--patch <path|glob>`) (see [patching docs](../roms/patching.md))
 4. Then for each DAT:
    - Parent/clone information is inferred if the DAT has none (see [DATs docs](../dats/processing.md#parentclone-inference))
    - Parent/clone ROMs sets are merged or split (`--merge-roms <type>`) (see [arcade docs](../usage/arcade.md))
@@ -21,7 +21,7 @@ Igir runs these steps in the following order:
    - Patch files are matched to ROMs found (see [patching docs](../roms/patching.md))
    - ROMs without a potentially bad extension have their extension corrected using its file signature
    - ROM archives that aren't being extracted have their checksums calculated
-   - ROMs are combined (`--zip-dat-name`)
+   - ROMs are combined ([`--zip-dat-name`](../output/writing-archives.md#grouping-roms-by-dat-name))
    - ROMs are written to the output directory, if specified (`copy`, `move`, `link`)
      - Written ROMs are tested for accuracy, if specified (`test`)
    - A "dir2dat" DAT is created, if specified (`dir2dat`) (see [dir2dat docs](../dats/dir2dat.md))

@@ -48,6 +48,7 @@ theme:
     - navigation.path
     - navigation.instant
     - navigation.instant.prefetch
+    - navigation.instant.progress
     - navigation.footer
     - toc.follow
     - toc.integrate
@@ -63,12 +64,12 @@ nav:
       - installation.md
       - commands.md
       - cli.md
-      - alternatives.md
+      - guiding-principles.md
     - General Usage:
       - usage/basic.md
       - usage/personal.md
       - usage/best-practices.md
-    - Hardware-Specific Usage:
+    - Specific Usage:
       - Emulator Frontends:
         - usage/handheld/adam.md
         - usage/desktop/batocera.md
@@ -101,6 +102,7 @@ nav:
       - usage/arcade.md
     - DATs:
       - dats/introduction.md
+      - dats/scanning.md
       - dats/processing.md
       - dats/dir2dat.md
       - dats/fixdats.md
@@ -115,7 +117,7 @@ nav:
       - roms/headers.md
       - roms/trimming.md
       - roms/patching.md
-    - File Outputs:
+    - ROM Outputs:
       - output/path-options.md
       - output/tokens.md
       - output/options.md
@@ -123,15 +125,18 @@ nav:
       - output/playlists.md
       - output/reporting.md
       - output/cleaning.md
-    - Advanced:
+    - Advanced Topics:
+      - advanced/internals.md
       - advanced/logging.md
       - advanced/temp-dir.md
+      - advanced/file-cache.md
       - advanced/troubleshooting.md
-      - advanced/internals.md
-    - Misc:
+    - Other Topics:
+      - misc/alternatives.md
       - misc/torrentzip.md
       - misc/rom-dumping.md
-    - Terms and Conditions:
+    - Project:
+      - acknowledgements.md
       - contributing.md
       - license.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
@@ -162,6 +167,7 @@ plugins:
         - web-flow
   - redirects:
       redirect_maps:
+        'alternatives.md': 'misc/alternatives.md'
         'archives.md': 'input/reading-archives.md'
         'dats.md': 'dats/introduction.md'
         'dats/overview.md': 'dats/introduction.md'
@@ -232,6 +238,8 @@ extra:
       link: https://www.npmjs.com/package/igir
     - icon: simple/bluesky
       link: https://bsky.app/profile/igir.io
+    - icon: simple/patreon
+      link: https://patreon.com/emmercm
 
 copyright: >
   <a href="#__consent">Change cookie settings</a>

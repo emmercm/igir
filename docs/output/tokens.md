@@ -2,7 +2,7 @@
 
 When specifying a ROM [writing command](../commands.md), you have to specify an `--output <path>` directory. Igir has a few replaceable "tokens" that can be referenced in the `--output <path>` directory path. This can aid in sorting ROMs into a more complicated directory structure.
 
-See [output path options](./path-options.md) for other options that will further sort your ROMs into subdirectories.
+See [output path options](path-options.md) for other options that will further sort your ROMs into subdirectories.
 
 As an example, if you want to group all ROMs based on their region, you would specify:
 
@@ -11,8 +11,8 @@ As an example, if you want to group all ROMs based on their region, you would sp
     ```batch
     igir copy extract ^
       --dat *.dat ^
-      --input ROMs\ ^
-      --output "ROMs-Sorted\{region}\"
+      --input ROMs ^
+      --output "ROMs-Sorted\{region}"
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -20,8 +20,8 @@ As an example, if you want to group all ROMs based on their region, you would sp
     ```shell
     igir copy extract \
       --dat *.dat \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{region}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{region}"
     ```
 
 === ":simple-linux: Linux"
@@ -29,8 +29,8 @@ As an example, if you want to group all ROMs based on their region, you would sp
     ```shell
     igir copy extract \
       --dat *.dat \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{region}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{region}"
     ```
 
 This might result in an output structure similar to:
@@ -58,11 +58,11 @@ ROMs-Sorted/
 
 When using [DATs](../dats/introduction.md), you can make use of console & game information contained in them:
 
-- `{datName}` the matching DAT's name, similar to how the [`--dir-dat-name` option](./path-options.md) works
-- `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](./path-options.md) works
+- `{datName}` the matching DAT's name, similar to how the [`--dir-dat-name` option](path-options.md) works
+- `{datDescription}` the matching DAT's description, similar to how the [`--dir-dat-description` option](path-options.md) works
 - `{region}` each of the game's region(s) (e.g. `USA`, `EUR`, `JPN`, `WORLD`)
 - `{language}` each of the game's language(s) (e.g. `EN`, `ES`, `JA`)
-- `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Prototype`, `Retail` (most games will be this), `Sample`, `Test`, `Trained`, `Translated`, `Unlicensed`
+- `{type}` the game's "type," one of: `Aftermarket`, `Alpha`, `Bad`, `Beta`, `BIOS`, `Cracked`, `Debug`, `Demo`, `Device`, `Fixed`, `Hacked`, `Homebrew`, `Overdump`, `Pending Dump`, `Pirated`, `Program`, `Prototype`, `Retail` (most games will be this), `Sample`, `Trained`, `Translated`, `Unlicensed`
 - `{category}` the game's "category" (only some DATs provide this)
 - `{genre}` the game's "genre" (most DATs don't provide this)
 
@@ -107,8 +107,8 @@ As an example, when using No-Intro DATs, ROMs can be sorted into the [MiSTer FPG
     ```batch
     igir copy extract ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
-      --output "ROMs-Sorted\{mister}\"
+      --input ROMs ^
+      --output "ROMs-Sorted\{mister}"
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -116,8 +116,8 @@ As an example, when using No-Intro DATs, ROMs can be sorted into the [MiSTer FPG
     ```shell
     igir copy extract \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{mister}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{mister}"
     ```
 
 === ":simple-linux: Linux"
@@ -125,8 +125,8 @@ As an example, when using No-Intro DATs, ROMs can be sorted into the [MiSTer FPG
     ```shell
     igir copy extract \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
-      --output "ROMs-Sorted/{mister}/"
+      --input ROMs \
+      --output "ROMs-Sorted/{mister}"
     ```
 
 ```text

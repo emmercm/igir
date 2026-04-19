@@ -32,8 +32,8 @@ Igir has a `--writer-threads <threads>` option to limit the number of files bein
     igir copy test clean \
       --dat "Redump*.zip" \
       --dat-name-regex '/gamecube/i' \
-      --input "Games/" \
-      --output "/Volumes/SD2SP2/Games/" \
+      --input "Games" \
+      --output "/Volumes/SD2SP2/Games" \
       --dir-letter \
       --writer-threads 1
     ```
@@ -46,8 +46,8 @@ Igir has a `--writer-threads <threads>` option to limit the number of files bein
     igir copy test clean \
       --dat "Redump*.zip" \
       --dat-name-regex '/gamecube/i' \
-      --input "Games/" \
-      --output "/media/SD2SP2/Games/" \
+      --input "Games" \
+      --output "/media/SD2SP2/Games" \
       --dir-letter \
       --writer-threads 1
     ```

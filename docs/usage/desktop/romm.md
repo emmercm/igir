@@ -68,7 +68,7 @@ This will create all of the local directories necessary. On your host machine (n
     ```batch
     igir copy zip test clean ^
       --dat "No-Intro*.zip" ^
-      --input "ROMs\" ^
+      --input "ROMs" ^
       --output "romm\roms\{romm}"
     ```
 
@@ -77,7 +77,7 @@ This will create all of the local directories necessary. On your host machine (n
     ```shell
     igir copy zip test clean \
       --dat "No-Intro*.zip" \
-      --input "ROMs/" \
+      --input "ROMs" \
       --output "romm/roms/{romm}"
     ```
 
@@ -86,6 +86,6 @@ This will create all of the local directories necessary. On your host machine (n
     ```shell
     igir copy zip test clean \
       --dat "No-Intro*.zip" \
-      --input "ROMs/" \
+      --input "ROMs" \
       --output "romm/roms/{romm}"
     ```

@@ -11,33 +11,33 @@ SpruceOS has its BIOS folder at the root of the SD card at `/BIOS/`, per RetroAr
 === ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
-    
+
     ```batch
     igir copy extract test clean ^
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
-      --input BIOS\ ^
+      --input BIOS ^
       --output E:\BIOS
     ```
 
 === ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/SpruceOS` drive name with whatever your SD card is named:
-    
+
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /Volumes/SpruceOS/BIOS
     ```
 
 === ":simple-linux: Linux"
 
     Replace the `/media/SpruceOS` path with wherever your SD card is mounted:
-    
+
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input BIOS/ \
+      --input BIOS \
       --output /media/SpruceOS/BIOS
     ```
 
@@ -48,11 +48,11 @@ SpruceOS uses its own folder structure similar to [OnionOS](onionos.md):
 === ":fontawesome-brands-windows: Windows"
 
     Replace the `E:\` drive letter with wherever your SD card is:
-    
+
     ```batch
     igir copy extract test clean ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
+      --input ROMs ^
       --output "E:\Roms\{spruce}" ^
       --dir-letter ^
       --no-bios
@@ -61,11 +61,11 @@ SpruceOS uses its own folder structure similar to [OnionOS](onionos.md):
 === ":fontawesome-brands-apple: macOS"
 
     Replace the `/Volumes/SpruceOS` drive name with whatever your SD card is named:
-    
+
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/Volumes/SpruceOS/Roms/{spruce}" \
       --dir-letter \
       --no-bios
@@ -74,11 +74,11 @@ SpruceOS uses its own folder structure similar to [OnionOS](onionos.md):
 === ":simple-linux: Linux"
 
     Replace the `/media/SpruceOS` path with wherever your SD card is mounted:
-    
+
     ```shell
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
+      --input ROMs \
       --output "/media/SpruceOS/Roms/{spruce}" \
       --dir-letter \
       --no-bios

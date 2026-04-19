@@ -1,6 +1,6 @@
 # Commands
 
-Igir takes actions based on commands you specify. Each command has a clear input and output, and Igir will never take surprise actions you did not specify. Multiple commands can (and will likely) be specified at once.
+Igir takes actions based on commands you specify. Each command has a clear input and output, and Igir will never take surprise actions you did not specify (see the [guiding principles](guiding-principles.md)). Multiple commands can (and will likely) be specified at once.
 
 !!! tip
 
@@ -8,78 +8,77 @@ Igir takes actions based on commands you specify. Each command has a clear input
 
 ## ROM writing
 
-Igir has three writing commands. Only one writing command can be specified at a time, and all require the `--output <path>` option.
+Igir has three ROM writing commands. Only one ROM writing command can be specified at a time, and all require at least one [`--input <path|glob>`](roms/scanning.md) and a [`--output <path>`](output/path-options.md).
 
 ### `copy`
 
-Copy files from an input directory to the output directory.
+Copy ROMs from an input directory to the output directory.
 
 Files in the input directories will be left alone, they will _not_ be modified or deleted.
 
 ### `move`
 
-Move files from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their names change in [DATs](dats/introduction.md).
+Move ROMs from an input directory to the output directory. The same directory can be specified for both input & output, resulting in ROMs being renamed as their filenames change in [DATs](dats/introduction.md).
 
 !!! note
 
-    If an input file already exists where it should in the output directory, then Igir will only delete the input file if [`--overwrite` or `--overwrite-invalid`](output/options.md#overwriting-files) is provided. These options ensure the output file is correct, allowing the input file to be safely deleted.
+    The `igir move` command will only delete the source file in the input directory if it's safe to do so. This includes:
+
+    - `igir move` newly writes a file in the output directory.
+    - [`igir move test`](#test) newly writes a file in the output directory, and the file is validated successfully.
+    - [`igir move --overwrite`](output/options.md#overwriting-files) overwrites an existing file in the output directory.
+    - [`igir move --overwrite-invalid`](output/options.md#overwriting-files) successfully validates an existing file; or it overwrites an existing file in the output directory.
 
 !!! note
 
-    Input files that need to be moved to multiple locations in the output directory will be duplicated as needed.
+    Input files that need to be moved to multiple locations in the output directory (because of multiple [DATs](dats/scanning.md), [output tokens](output/tokens.md), or any other reason) will be duplicated as needed.
 
 ### `link`
 
-Create a link in the output directory to a file in the input directory.
+Create a link in the output directory to a ROM in the input directory.
 
 Three different types of links can be created:
 
-| Link mode                                              | Description                                                                                                                                                                                                                                     | What happens when the source file is deleted                                             |
-|--------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
-| Hard link<br><br>`--link-mode hardlink` (default)      | The link file and source file are the exact same file on disk. If either file is changed then all other hard linked files will also reflect those changes.<br><br><i>Supported by most filesystems other than FAT, FAT16, FAT32, and exFAT.</i> | ✅ The linked file isn't changed in any way.                                              |
-| Symbolic link ("symlink")<br><br>`--link-mode symlink` | The link file is a shortcut to the source file. Symlinks generally require administrator privileges on Windows.<br><br><i>Supported by most filesystems other than FAT, FAT16, FAT32, and exFAT.</i>                                            | ❌ The linked file's shortcut is broken, which will cause issues with reading or writing. |
-| Reflink (copy-on-write)<br><br>`--link-mode reflink`   | The link file and source file will be the same file on disk, _until_ any data is changed, at which point the source file is copied to the link location.<br><br><i>Supported by APFS (macOS) and some Linux filesystems.</i>                    | ✅ The linked file isn't changed in any way.                                              |
+| Link mode                                              | Description                                                                                                                                                                                                                                      | What happens when the source file is deleted                                             |
+|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| Hard link<br><br>`--link-mode hardlink` (default)      | The link file and source file are the exact same file on disk. If either file is changed, then all other hard linked files will also reflect those changes.<br><br><i>Supported by most filesystems other than FAT, FAT16, FAT32, and exFAT.</i> | ✅ The linked file isn't changed in any way.                                              |
+| Symbolic link ("symlink")<br><br>`--link-mode symlink` | The link file is a shortcut to the source file. Symlinks generally require administrator privileges on Windows.<br><br><i>Supported by most filesystems other than FAT, FAT16, FAT32, and exFAT.</i>                                             | ❌ The linked file's shortcut is broken, which will cause issues with reading or writing. |
+| Reflink (copy-on-write)<br><br>`--link-mode reflink`   | The link file and source file will be the same file on disk, _until_ any data is changed in the linked file, at which point the source file is copied to the link location.<br><br><i>Supported by APFS (macOS) and some Linux filesystems.</i>  | ✅ The linked file isn't changed in any way.                                              |
 
 ## ROM extracting & zipping
 
-Igir has two ROM archive commands. Archive commands require either the `copy` or `move` write command. Only one archive command can be specified at a time.
+Igir has two ROM archive commands. Archive commands require either the `copy` or `move` write command (above). Only one archive command can be specified at a time.
 
-If no archive command is specified, files will be left as-is. If they are already extracted, then they will stay extracted. If they are already archived (including non-`.zip` archives), then they will stay archived in their original format.
+If no archive command is specified, then files will be left as-is. If they are already extracted, then they will stay extracted; if they are already archived (including non-`.zip` archives), then they will stay archived in their original format.
 
-!!! note
-
-    See the [archives page](input/reading-archives.md) for more information on supported archive types.
+See the [archives page](input/reading-archives.md) for more information on supported archive types.
 
 ### `extract`
 
-ROMs will be extracted from archives as they are being copied or moved. ROMs from the same game will be placed into a subdirectory together.
+ROMs will be extracted from archives when they are being copied or moved. ROMs from the same game will be placed into a subdirectory together by default (see the [`--dir-game-subdir <mode>` option](output/path-options.md#append-the-game-name)).
 
-Input ROMs that are _not_ archived will be copied as-is.
+Input ROMs that are _not_ already archived will be copied as-is, as they have no need to be extracted.
 
 ### `zip`
 
 ROMs will be archived into a `.zip` file as they are being copied or moved. ROMs from the same game will be put into the same `.zip` file.
 
-ROMs that are already in an archive will be re-archived.
-
 !!! note
 
-    You can use the [`--dat-combine` option](dats/processing.md#dat-combining) to cause every ROM in a DAT to be zipped together.
+    Igir will make its best effort to find any already-valid `.zip` files in an input path and copy those as-is without re-zipping.
 
-### `playlist`
-
-Create `.m3u` playlist files for multi-disc games. See the [playlists page](output/playlists.md) for more information.
+    Any invalid `.zip` files (ones that would fail [`igir test`](#test)), and any non-`.zip` files, will be re-zipped into a valid `.zip` file.
 
 ## ROM verification
 
 ### `test`
 
-When writing ROMs (above commands), verify that each file was written correctly.
+When provided with a ROM writing command (above), verify that each file was written correctly:
 
-- `extract test` tests that each ROM file written has the correct size and checksum
-- `zip test` tests that the `.zip` file has all the correct archive entry sizes & checksums, and contains no excess entries
+- `igir extract test` tests that each ROM file written has the correct size and checksum.
+- `igir zip test` tests that the `.zip` file is a valid [TorrentZip/RVZSTD](output/writing-archives.md#torrentzip) archive, has all the correct archive entry sizes & checksums, and contains no excess entries.
 
-When not writing ROMs, verify that each input file is valid.
+When a ROM writing command is not provided, verify that each input file is valid.
 
 ## DAT writing
 
@@ -99,10 +98,14 @@ Files in the output directory that do not [match any ROM](roms/matching.md) in a
 
 See the [output cleaning page](output/cleaning.md) for more information.
 
-## ROM reporting
+## Other files
 
 ### `report`
 
 A report will be generated of what [input files were matched](roms/matching.md) by what [DAT](dats/introduction.md), and what games in what DATs have missing ROMs.
 
 See the [reporting page](output/reporting.md) for more information.
+
+### `playlist`
+
+Create `.m3u` playlist files for multi-disc games. See the [playlists page](output/playlists.md) for more information.

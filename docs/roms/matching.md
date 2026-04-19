@@ -20,7 +20,7 @@ Some DAT release groups do not include filesize information for every file, prev
 
     To constrain what checksums are calculated, you can use the `--input-checksum-quick` option (below), or `--input-checksum-max <algorithm>` which accepts the same algorithm options as `--input-checksum-min <algorithm>` (also below).
 
-For example, if you provide all of these DATs at once with the [`--dat <path>` option](../dats/processing.md):
+For example, if you provide all of these DATs at once with the [`--dat <path|glob|url>` option](../dats/scanning.md):
 
 - No-Intro's Nintendo Game Boy DAT (which includes filesize, CRC32, MD5, and SHA1 information)
 - Hardware Target Game Database's Atari Lynx SMBD (which includes CRC32, MD5, SHA1, and SHA256 information but _not_ filesize)
@@ -44,7 +44,7 @@ The `--input-checksum-quick` option will prevent any extraction of archives (bot
 
 !!! warning
 
-    Different DAT groups catalog CHDs of CD-ROMs (`.bin` & `.cue`) and GD-ROMs (`.gdi` & `.bin`/`.raw`) that use a track sheet plus one or more track files differnetly. Take the Sega Dreamcast for example, Redump catalogs `.bin` & `.cue` files (which is [problematic with CHDs](https://github.com/mamedev/mame/issues/11903)), [MAME Redump](https://github.com/MetalSlug/MAMERedump) catalogs `.chd` CD files, and TOSEC catalogs `.gdi` & `.bin`/`.raw` files. Quick scanning of CHDs means only the SHA1 stored in its header will be used for matching, which may or may not work depending on the DATs you use.
+    Different DAT groups catalog CHDs of CD-ROMs (`.bin` & `.cue`) and GD-ROMs (`.gdi` & `.bin`/`.raw`) that use a track sheet plus one or more track files differently. Take the Sega Dreamcast for example, Redump catalogs `.bin` & `.cue` files (which is [problematic with CHDs](https://github.com/mamedev/mame/issues/11903)), [MAME Redump](https://github.com/MetalSlug/MAMERedump) catalogs `.chd` CD files, and TOSEC catalogs `.gdi` & `.bin`/`.raw` files. Quick scanning of CHDs means only the SHA1 stored in its header will be used for matching, which may or may not work depending on the DATs you use.
 
 ## Manually using other checksum algorithms
 

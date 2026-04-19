@@ -1,6 +1,6 @@
-# Basic Usage Examples
+# Basic Collection Sorting
 
-A walkthrough of an example way to sort your ROM collection.
+A walkthrough of an example way to use Igir to sort your ROM collection.
 
 !!! info
 
@@ -12,17 +12,17 @@ Even though Igir can work without [DATs](../dats/introduction.md), using DATs to
 
 ### First time collection sort
 
-First, you need to download a set of [DATs](../dats/introduction.md). For these examples I'll assume you downloaded a No-Intro daily P/C XML `.zip`.
+First, you need to download a set of [DATs](../dats/introduction.md). For these examples I'll assume you downloaded a [No-Intro daily parent/clone (P/C) XML `.zip`](https://datomatic.no-intro.org/index.php?page=download&op=daily&s=64).
 
-Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have Igir copy these files to a different directory rather than move them. We'll also [zip](../output/writing-archives.md) them to reduce disk space & speed up future scans.
+Let's say that you have a directory named `ROMs/` that contains ROMs for many different systems, and it needs some organization. To make sure we're alright with the output, we'll have Igir copy these files to a different directory rather than move them. We'll also [zip](../output/writing-archives.md) them to reduce disk space and speed up future scans.
 
 === ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir copy zip test ^
       --dat "No-Intro*.zip" ^
-      --input ROMs\ ^
-      --output ROMs-Sorted\ ^
+      --input ROMs ^
+      --output ROMs-Sorted ^
       --dir-dat-name
     ```
 
@@ -31,8 +31,8 @@ Let's say that you have a directory named `ROMs/` that contains ROMs for many di
     ```shell
     igir copy zip test \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
-      --output ROMs-Sorted/ \
+      --input ROMs \
+      --output ROMs-Sorted \
       --dir-dat-name
     ```
 
@@ -41,12 +41,12 @@ Let's say that you have a directory named `ROMs/` that contains ROMs for many di
     ```shell
     igir copy zip test \
       --dat "No-Intro*.zip" \
-      --input ROMs/ \
-      --output ROMs-Sorted/ \
+      --input ROMs \
+      --output ROMs-Sorted \
       --dir-dat-name
     ```
 
-This will organize your ROMs into system-specific subdirectories within the `ROMs-Sorted/` directory and name all of your ROMs according to the No-Intro DATs. Because we copied and didn't move the files, no files were deleted from the `ROMs/` input directory.
+This will organize your ROMs into system-specific subdirectories within the `ROMs-Sorted/` directory and name all of your ROMs according to the No-Intro DATs. Because we copied and didn't [move](../commands.md#move) the files, no files were deleted from the `ROMs/` input directory.
 
 `ROMs-Sorted/` then might look something like this:
 
@@ -73,16 +73,18 @@ ROMs-Sorted/
 
 Let's say that we've done the above first time sort and were happy with the results. We can now consider the `ROMs-Sorted/` directory to be our "golden" or "primary" collection, as every file in there has been matched to a DAT.
 
-We now have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" or delete any unknown files that may have made their way into our collection.
+We now have new ROMs that we want to merge into our collection, and we want to generate a [report](../output/reporting.md) of what ROMs are still missing. We also want to "[clean](../output/cleaning.md)" (recycle/delete) any unknown files that may have made their way into our collection.
+
+We can move any new ROMs in `ROMs-New/` that we didn't already have in `ROMs-Sorted/` into `ROMs-Sorted/` with the command:
 
 === ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move zip test clean report ^
       --dat "No-Intro*.zip" ^
-      --input ROMs-New\ ^
-      --input ROMs-Sorted\ ^
-      --output ROMs-Sorted\ ^
+      --input ROMs-New ^
+      --input ROMs-Sorted ^
+      --output ROMs-Sorted ^
       --dir-dat-name
     ```
 
@@ -91,9 +93,9 @@ We now have new ROMs that we want to merge into our collection, and we want to g
     ```shell
     igir move zip test clean report \
       --dat "No-Intro*.zip" \
-      --input ROMs-New/ \
-      --input ROMs-Sorted/ \
-      --output ROMs-Sorted/ \
+      --input ROMs-New \
+      --input ROMs-Sorted \
+      --output ROMs-Sorted \
       --dir-dat-name
     ```
 
@@ -102,17 +104,17 @@ We now have new ROMs that we want to merge into our collection, and we want to g
     ```shell
     igir move zip test clean report \
       --dat "No-Intro*.zip" \
-      --input ROMs-New/ \
-      --input ROMs-Sorted/ \
-      --output ROMs-Sorted/ \
+      --input ROMs-New \
+      --input ROMs-Sorted \
+      --output ROMs-Sorted \
       --dir-dat-name
     ```
 
-Any new ROMs in `ROMs-New/` that we didn't already have in `ROMs-Sorted/` will be moved to `ROMs-Sorted/`, and a report will be generated for us.
+A report will also be generated for us with the status of every ROM in the DATs.
 
 !!! note
 
-    Note that we're using `ROMs-Sorted/` as both an input directory _and_ as the output directory. This is required to ensure the [`clean` command](../output/cleaning.md) doesn't delete "good" files already in the output directory!
+    Note that we're using `ROMs-Sorted/` as both an input directory _and_ as the output directory. See the [`igir clean` command](../output/cleaning.md) page for more information about why you should do this.
 
     You can always use the [`--clean-dry-run` option](../output/cleaning.md#dry-run) to see what files would be deleted without actually deleting them.
 
@@ -137,13 +139,13 @@ ROMs-Sorted/
 
 ### Flash cart 1G1R
 
-Let's say we've done the above sorting we want to copy some ROMs from `ROMs-Sorted/` to a flash cart.
+Let's say we've done the above sorting and we want to copy some ROMs from `ROMs-Sorted/` to a flash cart.
 
-We would prefer having only one copy of every game because we have a preferred language, and so there is less to scroll through to find what game we want.
+We would prefer having only one copy of every game because we have a preferred language, limited SD card storage, and want to have fewer games to scroll through to find what game we want to play.
 
 !!! note
 
-    The common name for this is "one-game, one-ROM" or "1G1R"—this is what Igir is named after! Igir has some of the most extensive [filtering](../roms/filtering-preferences.md#filters) and [1G1R options](../roms/filtering-preferences.md#preferences-for-1g1r) of any ROM manager.
+    The common name for this is "one game, one ROM" or "1G1R"—this is what Igir is named after! Igir has some of the most extensive [filtering](../roms/filtering-preferences.md#filters) and [1G1R options](../roms/filtering-preferences.md#preferences-for-1g1r) of any ROM manager.
 
 Our example flash cart, like most flash carts, can't read `.zip` files, so we'll need to extract our ROMs during copying.
 
@@ -171,7 +173,7 @@ Our example flash cart, like most flash carts, can't read `.zip` files, so we'll
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
       --input "ROMs-Sorted/Nintendo - Game Boy" \
-      --output /Volumes/FlashCart/ \
+      --output /Volumes/FlashCart \
       --dir-letter \
       --no-bios \
       --single \
@@ -187,7 +189,7 @@ Our example flash cart, like most flash carts, can't read `.zip` files, so we'll
     igir copy extract test clean \
       --dat "No-Intro*.zip" \
       --input "ROMs-Sorted/Nintendo - Game Boy" \
-      --output /media/FlashCart/ \
+      --output /media/FlashCart \
       --dir-letter \
       --no-bios \
       --single \
@@ -209,7 +211,7 @@ Your flash cart might then look something like this:
 
 ## Without DATs
 
-ROM organization is very opinion-based, and your opinion may not match that of DAT groups. To preserve your custom ROM sorting, you can skip providing any DATs by omitting the `--dat <path>` option.
+ROM organization is very opinion-based, and your opinion may not match that of DAT groups. To preserve your custom ROM sorting, you can skip providing any DATs by omitting the [`--dat <path|glob|url>` option](../dats/scanning.md).
 
 !!! note
 
@@ -223,8 +225,8 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
 
     ```batch
     igir move extract test ^
-      --input "ROMs\" ^
-      --output "ROMs\" ^
+      --input "ROMs" ^
+      --output "ROMs" ^
       --dir-mirror
     ```
 
@@ -232,8 +234,8 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
 
     ```shell
     igir move extract test \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror
     ```
 
@@ -241,8 +243,8 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
 
     ```shell
     igir move extract test \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror
     ```
 
@@ -250,14 +252,14 @@ It is possible to extract or zip your ROM files en masse without complicated Bas
 
 ### Fixing file extensions
 
-Igir is able to detect more than 60 ROM and archive file types and automatically correct file extensions when needed during writing. See the [writing options](../output/options.md#fixing-rom-extensions) page for more information.
+Igir is able to detect more than 100 ROM and archive file types and automatically correct file extensions when needed during writing. See the [writing options](../output/options.md#fixing-rom-extensions) page for more information.
 
 === ":fontawesome-brands-windows: Windows"
 
     ```batch
     igir move extract test ^
-      --input "ROMs\" ^
-      --output "ROMs\" ^
+      --input "ROMs" ^
+      --output "ROMs" ^
       --dir-mirror ^
       --fix-extension always
     ```
@@ -266,8 +268,8 @@ Igir is able to detect more than 60 ROM and archive file types and automatically
 
     ```shell
     igir move extract test \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror \
       --fix-extension always
     ```
@@ -276,8 +278,8 @@ Igir is able to detect more than 60 ROM and archive file types and automatically
 
     ```shell
     igir move extract test \
-      --input "ROMs/" \
-      --output "ROMs/" \
+      --input "ROMs" \
+      --output "ROMs" \
       --dir-mirror \
       --fix-extension always
     ```

@@ -13,7 +13,7 @@ Because Batocera uses RetroArch under the hood, the instructions are generally t
     ```shell
     igir copy extract test clean \
       --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
-      --input /media/USB-Drive/BIOS/ \
+      --input /media/USB-Drive/BIOS \
       --output /userdata/bios/
     ```
 
@@ -28,7 +28,7 @@ Batocera uses its own proprietary [ROM folder structure](https://wiki.batocera.o
     ```shell
     igir copy zip test clean \
       --dat "/media/USB-Drive/No-Intro*.zip" \
-      --input "/media/USB-Drive/ROMs/" \
+      --input "/media/USB-Drive/ROMs" \
       --output "/userdata/roms/{batocera}" \
       --dir-letter \
       --no-bios

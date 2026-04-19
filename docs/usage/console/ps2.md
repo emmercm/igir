@@ -32,8 +32,8 @@ Igir has a `--writer-threads <threads>` option to limit the number of files bein
     igir copy extract test clean \
       --dat "Redump*.zip" \
       --dat-name-regex '/playstation 2/i' \
-      --input "ISOs/" \
-      --output "/Volumes/PS2/DVD/" \
+      --input "ISOs" \
+      --output "/Volumes/PS2/DVD" \
       --dir-letter \
       --writer-threads 1
     ```
@@ -46,8 +46,8 @@ Igir has a `--writer-threads <threads>` option to limit the number of files bein
     igir copy extract test clean \
       --dat "Redump*.zip" \
       --dat-name-regex '/playstation 2/i' \
-      --input "ISOs/" \
-      --output "/media/PS2/DVD/" \
+      --input "ISOs" \
+      --output "/media/PS2/DVD" \
       --dir-letter \
       --writer-threads 1
     ```
