@@ -96,6 +96,7 @@ jobs:
         run: |
           set -x
           echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+          echo "BUN_VERSION=$(cat .bun-version)"
 
           DOCKER_ARCH=${{ matrix.docker_arch }}
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
@@ -108,13 +109,14 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: ./.github/actions/docker-run-action
         with:
-          image: node:${{ steps.linux-vars.outputs.VOLTA_NODE }}
+          image: oven/bun:${{ steps.linux-vars.outputs.BUN_VERSION }}
           shell: bash
           options: |
             --platform ${{ matrix.docker_arch }}
             --volume ${{ github.workspace }}:/build
             --workdir /build
           run: |
+            set -euo pipefail
             set -x
             uname -a
 
