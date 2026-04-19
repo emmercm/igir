@@ -156,7 +156,9 @@ jobs:
           ./igir --help
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
           ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
+          mkdir $TMPDIR/.ci-test
           ls -al "$TMPDIR"
+          mkdir .ci-test
           ls -al
           tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
