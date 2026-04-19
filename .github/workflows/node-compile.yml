@@ -96,6 +96,7 @@ jobs:
         run: |
           set -x
           echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+          echo "BUN_VERSION=$(cat .bun-version)" >> "${GITHUB_OUTPUT}"
 
           DOCKER_ARCH=${{ matrix.docker_arch }}
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
@@ -113,10 +114,15 @@ jobs:
           options: |
             --platform ${{ matrix.docker_arch }}
             --volume ${{ github.workspace }}:/build
+            --env BUN_VERSION=${{ steps.linux-vars.outputs.BUN_VERSION }}
             --workdir /build
           run: |
+            set -euo pipefail
             set -x
             uname -a
+
+            curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
+            export PATH="${HOME}/.bun/bin:$PATH"
 
             # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
