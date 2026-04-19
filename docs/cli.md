@@ -17,7 +17,7 @@ ASCII symbols are used to indicate what processing is happening. Here is a table
 | <span style="color:#AA00AA"><b>Σ</b></span> (sigma)            | [DATs](dats/introduction.md) are being parsed                         |
 | <span style="color:#AA00AA"><b>#</b></span> (hash)             | ROMs are having checksums calculated for [matching](roms/matching.md) |
 | <span style="color:#AA00AA"><b>^</b></span> (hat)              | ROMs are being checked for [headers](roms/headers.md)                 |
-| <span style="color:#AA00AA"><b>⌵</b></span> (downward chevron) | ROMs are being checked for [trimming](roms/trimming.md)               |
+| <span style="color:#AA00AA"><b>⌵</b></span> (downward chevron) | ROMs are being checked for [trimming](roms/trim-detection.md)               |
 
 | Symbol (cyan)                                                   | Per-DAT processing operation                                                                  |
 |-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------|

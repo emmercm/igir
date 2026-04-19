@@ -67,7 +67,7 @@ nav:
       - guiding-principles.md
     - General Usage:
       - usage/basic.md
-      - usage/personal.md
+      - usage/real-world.md
       - usage/best-practices.md
     - Specific Usage:
       - Emulator Frontends:
@@ -115,7 +115,7 @@ nav:
       - roms/sets.md
       - roms/filtering-preferences.md
       - roms/headers.md
-      - roms/trimming.md
+      - roms/trim-detection.md
       - roms/patching.md
     - ROM Outputs:
       - output/path-options.md
@@ -182,7 +182,9 @@ plugins:
         'rom-filtering.md': 'roms/filtering-preferences.md'
         'rom-headers.md': 'roms/headers.md'
         'rom-patching.md': 'roms/patching.md'
+        'roms/trimming.md': 'roms/trim-detection.md'
         'usage/collection-sorting.md': 'usage/basic.md'
+        'usage/personal.md': 'usage/real-world.md'
   #- htmlproofer:
   #    raise_error_excludes:
   #      '-1': [ 'http://www.logiqx.com' ]
