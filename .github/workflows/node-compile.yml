@@ -114,6 +114,7 @@ jobs:
           options: |
             --platform ${{ matrix.docker_arch }}
             --volume ${{ github.workspace }}:/build
+            --env BUN_VERSION
             --workdir /build
           run: |
             set -euo pipefail
