@@ -33,7 +33,7 @@ export default abstract class Maxcso extends Archive {
     if (checksumBitmask === ChecksumBitmask.NONE || checksumBitmask & ChecksumBitmask.CRC32) {
       uncompressedCrc32 = await maxcso.uncompressedCrc32({
         inputFilename: this.getFilePath(),
-        binaryPreference: MaxcsoBinaryPreference.PREFER_BUNDLED_BINARY,
+        binaryPreference: MaxcsoBinaryPreference.PREFER_PATH_BINARY,
       });
     }
 
@@ -64,7 +64,7 @@ export default abstract class Maxcso extends Archive {
     await maxcso.decompress({
       inputFilename: this.getFilePath(),
       outputFilename: extractedFilePath,
-      binaryPreference: MaxcsoBinaryPreference.PREFER_BUNDLED_BINARY,
+      binaryPreference: MaxcsoBinaryPreference.PREFER_PATH_BINARY,
     });
   }
 }

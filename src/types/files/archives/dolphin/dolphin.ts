@@ -36,7 +36,7 @@ export default abstract class Dolphin extends Archive {
 
     const digests = await dolphinTool.verify({
       inputFilename: this.getFilePath(),
-      binaryPreference: DolphinToolBinaryPreference.PREFER_BUNDLED_BINARY,
+      binaryPreference: DolphinToolBinaryPreference.PREFER_PATH_BINARY,
     });
     if (checksumBitmask & ChecksumBitmask.MD5) {
       // dolphin-tool only returns CRC32 and SHA1 digests
@@ -44,7 +44,7 @@ export default abstract class Dolphin extends Archive {
         await dolphinTool.verify({
           inputFilename: this.getFilePath(),
           digestAlgorithm: DigestAlgorithm.MD5,
-          binaryPreference: DolphinToolBinaryPreference.PREFER_BUNDLED_BINARY,
+          binaryPreference: DolphinToolBinaryPreference.PREFER_PATH_BINARY,
         })
       ).md5;
     }
@@ -74,7 +74,7 @@ export default abstract class Dolphin extends Archive {
       inputFilename: this.getFilePath(),
       outputFilename: extractedFilePath,
       containerFormat: ContainerFormat.ISO,
-      binaryPreference: DolphinToolBinaryPreference.PREFER_BUNDLED_BINARY,
+      binaryPreference: DolphinToolBinaryPreference.PREFER_PATH_BINARY,
     });
   }
 }

@@ -70,19 +70,19 @@ export default class ChdRaw extends Chd {
       await chdman.extractRaw({
         inputFilename: this.getFilePath(),
         outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_BUNDLED_BINARY,
+        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
     } else if (info.type === CHDType.HARD_DISK) {
       await chdman.extractHd({
         inputFilename: this.getFilePath(),
         outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_BUNDLED_BINARY,
+        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
     } else if (info.type === CHDType.DVD_ROM) {
       await chdman.extractDvd({
         inputFilename: this.getFilePath(),
         outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_BUNDLED_BINARY,
+        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
     } else if (info.type === CHDType.CD_ROM) {
       throw new IgirException("CD-ROM CHDs can't be extracted as raw");
