@@ -167,10 +167,9 @@ export default {
       readable,
       ...transforms,
       output,
-      (err?: NodeJS.ErrnoException | null): void => {
-        if (err) {
-          output.destroy(err);
-        }
+      (): void => {
+        // We don't need to catch or inspect any error, because by the time this callback fires,
+        // all streams in the chain have already been destroyed
       },
     ]);
     return output;
