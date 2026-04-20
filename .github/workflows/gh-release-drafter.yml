@@ -137,5 +137,5 @@ jobs:
       - release
     uses: ./.github/workflows/node-compile.yml
     with:
-      ref: v${{ needs.release.outputs.commit_hash }}
+      ref: ${{ needs.release.outputs.commit_hash }}
     secrets: inherit
