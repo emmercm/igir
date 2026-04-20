@@ -139,7 +139,7 @@
     "prebuildify": "6.0.1",
     "prettier": "3.8.1",
     "tsx": "4.21.0",
-    "typescript": "6.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.58.0",
     "vitest": "4.1.1"
   },
