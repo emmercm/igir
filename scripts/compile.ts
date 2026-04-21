@@ -54,8 +54,11 @@ const bunBuildConfig = {
   ],
   compile: {
     outfile: output,
+    // TODO(cemmer): Windows won't cross-compile (including using 'baseline'): https://github.com/oven-sh/bun/issues/28327
     target:
-      `bun-${argv.platform}-${argv.arch}${argv.arch === 'x64' ? '-baseline' : ''}` as Bun.Build.CompileTarget,
+      process.platform === 'win32'
+        ? undefined
+        : (`bun-${argv.platform}-${argv.arch}${argv.arch === 'x64' ? '-baseline' : ''}` as Bun.Build.CompileTarget),
     autoloadDotenv: false,
     autoloadBunfig: false,
     windows: {
