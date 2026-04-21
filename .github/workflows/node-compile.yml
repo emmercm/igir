@@ -75,6 +75,7 @@ jobs:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
+      # TODO(cemmer): Windows won't cross-compile (including using 'baseline'): https://github.com/oven-sh/bun/issues/28327
       - id: bun-uri
         shell: bash
         run: |
