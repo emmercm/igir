@@ -179,9 +179,53 @@ jobs:
 
           # Install dependencies...
           npm ci --foreground-scripts
+      - id: windows-vars
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        shell: bash
+        run: |
+          set -x
+          echo "NODE_ARCH=$(node --print process.arch)" >> "${GITHUB_OUTPUT}"
+          echo "VOLTA_NODE=$(jq --raw-output '.volta.node' package.json)" >> "${GITHUB_OUTPUT}"
+          echo "BUN_VERSION=$(cat .bun-version)" >> "${GITHUB_OUTPUT}"
+
+          DOCKER_ARCH=${{ matrix.docker_arch }}
+          DOCKER_ARCH=${DOCKER_ARCH/linux\//}
+          DOCKER_ARCH=${DOCKER_ARCH//\//}
+          echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
+
+          NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')
+          BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${DOCKER_ARCH}.tar.gz"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
+      - if: ${{ startsWith(matrix.os, 'windows') }}
+        uses: ./.github/actions/docker-run-action
+        with:
+          image: node:${{ steps.windows-vars.outputs.VOLTA_NODE }}
+          shell: bash
+          options: |
+            --volume ${{ github.workspace }}:/build
+            --env BUN_VERSION=${{ steps.windows-vars.outputs.BUN_VERSION }}
+            --workdir /build
+          run: |
+            set -euo pipefail
+            set -x
+            uname -a
+
+            curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
+            export PATH="${HOME}/.bun/bin:$PATH"
+
+            # Compile the executable
+            npm run compile -- . igir --platform win32 --arch "${{ steps.windows-vars.outputs.NODE_ARCH }}"
+      - if: ${{ startsWith(matrix.os, 'windows') }}
+        shell: pwsh
+        run: |
+          Set-PSDebug -Trace 1
+          $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
+          $NODE_ARCH=$(node --print 'process.arch')
+          $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${{ runner.os }}-${NODE_ARCH}.zip"
+          echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
           # Package the executable and test it before compressing it
-          npm run compile -- . igir.exe
+          #npm run compile -- . igir.exe
           .\igir.exe --help
           .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
           .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
