@@ -126,7 +126,6 @@
     "@vitest/eslint-plugin": "1.6.13",
     "ajv": "8.18.0",
     "auto-changelog": "2.5.0",
-    "caxa": "3.0.1",
     "esbuild": "0.27.4",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",

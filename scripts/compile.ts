@@ -16,14 +16,21 @@ import IgirException from '../src/types/exceptions/igirException.js';
 const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== COMPILING ==========');
 
-const argv = await yargs(process.argv.slice(2))
-  .locale('en')
-  .usage('Usage: $0 [output]')
+const argv = await yargs([])
+  .strictOptions(true)
+  .option('platform', { type: 'string', default: process.platform })
+  .option('arch', { type: 'string', default: process.arch })
   .positional('output', {
     description: 'output file',
     type: 'string',
-    default: Package.NAME + (process.platform === 'win32' ? '.exe' : ''),
-  }).argv;
+    default: Package.NAME,
+  })
+  .middleware((middlewareArgv) => {
+    if (middlewareArgv.platform === 'win32' && !middlewareArgv.output.endsWith('.exe')) {
+      middlewareArgv.output += '.exe';
+    }
+  })
+  .parse(process.argv.slice(2));
 
 const output = path.resolve(argv.output);
 logger.info(`Output: '${output}'`);
@@ -36,18 +43,19 @@ const bunBuildConfig = {
   entrypoints: [
     'index.ts',
     ...(await fg(
-      `node_modules/@emmercm/dolphin-tool-${process.platform}-${process.arch}/dist/{DolphinTool.exe,dolphin-tool,*.dylib}`,
+      `node_modules/@emmercm/dolphin-tool-${argv.platform}-${argv.arch}/dist/{DolphinTool.exe,dolphin-tool,*.dylib}`,
     )),
     ...(await fg(
-      `node_modules/@emmercm/chdman-${process.platform}-${process.arch}/dist/{chdman*,*.dylib}`,
+      `node_modules/@emmercm/chdman-${argv.platform}-${argv.arch}/dist/{chdman*,*.dylib}`,
     )),
     ...(await fg(
-      `node_modules/@emmercm/maxcso-${process.platform}-${process.arch}/dist/{maxcso*,*.dylib}`,
+      `node_modules/@emmercm/maxcso-${argv.platform}-${argv.arch}/dist/{maxcso*,*.dylib}`,
     )),
   ],
   compile: {
     outfile: output,
-    target: `bun-${process.platform}-${process.arch}` as Bun.Build.CompileTarget,
+    target:
+      `bun-${argv.platform}-${argv.arch}${argv.arch === 'x64' ? '-baseline' : ''}` as Bun.Build.CompileTarget,
     autoloadDotenv: false,
     autoloadBunfig: false,
     windows: {
@@ -79,8 +87,8 @@ const bunBuildConfig = {
           const nativePath = requireMatch[0]
             .replace(/^require\(\s*[`'"]/, '')
             .replace(/[`'"],?\s*\)$/, '')
-            .replace('${os.platform()}', process.platform)
-            .replace('${os.arch()}', process.arch);
+            .replace('${os.platform()}', argv.platform)
+            .replace('${os.arch()}', argv.arch);
 
           // Replace prebuilt require() calls with the static native import
           const transformed = source.replaceAll(
@@ -111,7 +119,7 @@ if (!(await FsPoly.exists(output))) {
   throw new IgirException(`output file '${output}' doesn't exist`);
 }
 
-if (process.platform === 'darwin') {
+if (argv.platform === 'darwin') {
   // Remove the signature
   logger.info('Removing macOS signature ...');
   await new Promise<void>((resolve, reject) => {

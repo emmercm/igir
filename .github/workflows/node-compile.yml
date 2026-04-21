@@ -75,10 +75,21 @@ jobs:
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
+      # TODO(cemmer): Windows won't cross-compile (including using 'baseline'): https://github.com/oven-sh/bun/issues/28327
+      - id: bun-uri
+        shell: bash
+        run: |
+          set -x
+          BUN_TARGET=$(node --print 'process.platform')-$(node --print 'process.arch')
+          BUN_TARGET=${BUN_TARGET/win32/windows}
+          BUN_TARGET=${BUN_TARGET/arm64/aarch64}
+          BUN_TARGET=${BUN_TARGET/-x64/-x64-baseline}
+          echo "BUN_URI=https://github.com/oven-sh/bun/releases/download/bun-v$(cat .bun-version)/bun-${BUN_TARGET}.zip" >> "${GITHUB_OUTPUT}"
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: ".bun-version"
+          bun-download-url: ${{ steps.bun-uri.outputs.BUN_URI }}
       - id: npm-cache-dir
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
@@ -179,18 +190,6 @@ jobs:
 
           # Install dependencies...
           npm ci --foreground-scripts
-          if ($NODE_ARCH -notin @("x64")) {
-            # ...and build the missing caxa stub
-            Push-Location
-            cd node_modules\caxa
-            npm install
-            node_modules\.bin\cross-env CGO_ENABLED=0 GOOS=windows "GOARCH=${{ matrix.go_arch }}" go build -o "stubs\stub--win32--${NODE_ARCH}" stubs\stub.go
-            $stubSeparatorBytes = [System.Text.Encoding]::ASCII.GetBytes("`nCAXACAXACAXA`n")
-            $stubFileStream = [System.IO.File]::Open([System.IO.Path]::GetFullPath("stubs\stub--win32--${NODE_ARCH}", $PWD), 'Append', 'Write')
-            $stubFileStream.Write($stubSeparatorBytes, 0, $stubSeparatorBytes.Length)
-            $stubFileStream.Close()
-            Pop-Location
-          }
 
           # Package the executable and test it before compressing it
           npm run compile -- . igir.exe
