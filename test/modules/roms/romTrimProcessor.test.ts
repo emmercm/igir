@@ -14,8 +14,8 @@ import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import FileFactory from '../../../src/types/files/fileFactory.js';
 import FileSignature from '../../../src/types/files/fileSignature.js';
 import type { OptionsProps } from '../../../src/types/options.js';
-import { TrimScanFiles, TrimScanFilesInverted } from '../../../src/types/options.js';
 import Options from '../../../src/types/options.js';
+import { TrimScanFiles, TrimScanFilesInverted } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
