@@ -6,8 +6,8 @@ There are a few different installation options offered for Igir with varying lev
 
 ## Via downloaded executable
 
-[![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)
-[![Bun](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fregistry.npmjs.org%2Figir%2Flatest&query=%24.engines.bun&logo=bun&logoColor=white&label=Bun&color=FBF0DF)](https://bun.com/)
+[![GitHub: release](https://img.shields.io/github/v/release/emmercm/igir?label=emmercm/igir&color=%236e5494&logo=github&logoColor=white)](https://github.com/emmercm/igir/releases/latest)
+[![Bun](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Femmercm%2Figir%2Frefs%2Fheads%2Fmain%2F.bun-version&search=(.%2B)&replace=v%241&logo=bun&logoColor=white&label=Bun&color=FBF0DF)](https://bun.com/)
 
 The most straightforward way to run Igir is by downloading the latest version from the [GitHub releases](https://github.com/emmercm/igir/releases) page.
 
@@ -15,8 +15,8 @@ Igir does not currently provide an auto-update functionality, but many of the fo
 
 ## Via npm
 
-[![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=version&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
-[![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white)](https://nodejs.org/en/download/)
+[![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=igir&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
+[![Node.js](https://img.shields.io/node/v/igir?label=Node.js&logo=node.js&logoColor=white&color=339933)](https://nodejs.org/en/download/)
 
 The best way to ensure that you are always running the most up-to-date version of Igir is to run it via [`npx`](https://docs.npmjs.com/cli/v9/commands/npx) (which comes installed with [Node.js](https://nodejs.org/en/download/)):
 
@@ -68,6 +68,9 @@ npx igir@latest copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir
 
 ## Via Homebrew (macOS)
 
+[![Homebrew](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Femmercm%2Fhomebrew-igir%2Frefs%2Fheads%2Fmain%2FFormula%2Figir.rb&search=url%20%22.%2B%3F(%5B0-9.%5D%2B).tgz%22&replace=v%241&logo=homebrew&logoColor=white&label=emmercm/igir/igir&color=be862d)](https://github.com/emmercm/homebrew-igir)
+[![Node.js](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2FHomebrew%2Fhomebrew-core%2Frefs%2Fheads%2Fmain%2FFormula%2Fn%2Fnode.rb&search=url%20%22.%2B%3F(%5B0-9.%5D%2B)%5C.%5Ba-z.%5D%2B%22&replace=v%241&logo=node.js&logoColor=white&label=Node.js%20(Current)&color=339933)](https://nodejs.org/en/download/)
+
 [Homebrew](https://brew.sh/) is a third-party package manager for macOS. You can install Igir with this command:
 
 ```shell
@@ -91,6 +94,9 @@ brew upgrade igir
 ```
 
 ## Via Docker
+
+[![npm: version](https://img.shields.io/npm/v/igir?color=%23cc3534&label=igir&logo=npm&logoColor=white)](https://www.npmjs.com/package/igir)
+[![Node.js](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fresolve-node.vercel.app%2Flts&search=.%2B&logo=node.js&logoColor=white&label=Node.js%20(LTS)&color=339933)](https://nodejs.org/en/download/)
 
 [Docker](https://www.docker.com/) may be useful or required for dedicated servers such as network-attached storage (NAS) devices. There is no officially published Docker image for Igir, but it is easy to use the official Node.js image:
 
