@@ -80,9 +80,9 @@ jobs:
         run: |
           set -x
           BUN_TARGET=$(node --print 'process.platform')-$(node --print 'process.arch')
-          if [[ "$BUN_TARGET" == *"-x64" ]]; then
-            BUN_TARGET=${BUN_TARGET}-baseline
-          fi
+          BUN_TARGET=${BUN_TARGET/win32/windows}
+          BUN_TARGET=${BUN_TARGET/arm64/aarch64}
+          BUN_TARGET=${BUN_TARGET/-x64/-x64-baseline}
           echo "BUN_URI=https://github.com/oven-sh/bun/releases/download/$(cat .bun-version)/bun-${BUN_TARGET}.zip" >> "${GITHUB_OUTPUT}"
       - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
