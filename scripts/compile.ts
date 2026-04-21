@@ -47,7 +47,8 @@ const bunBuildConfig = {
   ],
   compile: {
     outfile: output,
-    target: `bun-${process.platform}-${process.arch}` as Bun.Build.CompileTarget,
+    target:
+      `bun-${process.platform}-${process.arch}${process.arch === 'x64' ? '-baseline' : ''}` as Bun.Build.CompileTarget,
     autoloadDotenv: false,
     autoloadBunfig: false,
     windows: {
