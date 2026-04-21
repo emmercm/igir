@@ -47,8 +47,9 @@ const bunBuildConfig = {
   ],
   compile: {
     outfile: output,
+    // TODO(cemmer): https://github.com/oven-sh/bun/issues/28327
     target:
-      `bun-${process.platform}-${process.arch}${process.arch === 'x64' ? '-baseline' : ''}` as Bun.Build.CompileTarget,
+      `bun-${process.platform}-${process.arch}${process.arch === 'x64' && process.platform !== 'win32' ? '-baseline' : ''}` as Bun.Build.CompileTarget,
     autoloadDotenv: false,
     autoloadBunfig: false,
     windows: {
