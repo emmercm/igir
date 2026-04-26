@@ -73,7 +73,7 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      - uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           restore-keys: |
@@ -90,7 +90,7 @@ jobs:
       - run: npm run docs:build
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
@@ -127,7 +127,7 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      - uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
@@ -142,7 +142,7 @@ jobs:
       - run: mkdocs gh-deploy --strict --verbose --force
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
           path: .cache
