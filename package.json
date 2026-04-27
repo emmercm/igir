@@ -124,7 +124,7 @@
     "@typescript-eslint/parser": "8.58.0",
     "@vitest/coverage-v8": "4.1.5",
     "@vitest/eslint-plugin": "1.6.13",
-    "ajv": "8.18.0",
+    "ajv": "8.20.0",
     "auto-changelog": "2.5.0",
     "esbuild": "0.28.0",
     "eslint": "9.39.4",
