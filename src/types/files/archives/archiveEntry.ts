@@ -234,7 +234,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
-  withFilePath(filePath: string): this {
+  // eslint-disable-next-line @typescript-eslint/prefer-return-this-type
+  withFilePath(filePath: string): ArchiveEntry<A> {
     if (this.getArchive().getFilePath() === filePath) {
       return this;
     }
