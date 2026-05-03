@@ -331,9 +331,7 @@ export default {
     fsToPatch.writeFile = wrapCallbackMethod(fsToPatch.writeFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.writeFile;
-    fsToPatch.writeFileSync = wrapSyncMethod(
-      fsToPatch.writeFileSync as FsMethod,
-    ) as typeof fs.writeFileSync;
+    fsToPatch.writeFileSync = wrapSyncMethod(fsToPatch.writeFileSync as FsMethod);
     fsToPatch.promises.writeFile = wrapPromiseMethod(
       fsToPatch.promises.writeFile as AsyncFsMethod,
       { useQueue: true },
@@ -342,9 +340,7 @@ export default {
     fsToPatch.appendFile = wrapCallbackMethod(fsToPatch.appendFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.appendFile;
-    fsToPatch.appendFileSync = wrapSyncMethod(
-      fsToPatch.appendFileSync as FsMethod,
-    ) as typeof fs.appendFileSync;
+    fsToPatch.appendFileSync = wrapSyncMethod(fsToPatch.appendFileSync as FsMethod);
     fsToPatch.promises.appendFile = wrapPromiseMethod(
       fsToPatch.promises.appendFile as AsyncFsMethod,
       { useQueue: true },
@@ -353,9 +349,7 @@ export default {
     fsToPatch.copyFile = wrapCallbackMethod(fsToPatch.copyFile as FsMethod, {
       useQueue: true,
     }) as typeof fs.copyFile;
-    fsToPatch.copyFileSync = wrapSyncMethod(
-      fsToPatch.copyFileSync as FsMethod,
-    ) as typeof fs.copyFileSync;
+    fsToPatch.copyFileSync = wrapSyncMethod(fsToPatch.copyFileSync as FsMethod);
     fsToPatch.promises.copyFile = wrapPromiseMethod(fsToPatch.promises.copyFile as AsyncFsMethod, {
       useQueue: true,
     }) as typeof fs.promises.copyFile;
@@ -381,31 +375,31 @@ export default {
     ////////// `graceful-fs` polyfill.js //////////
 
     fsToPatch.chown = wrapCallbackMethod(fsToPatch.chown as FsMethod) as typeof fs.chown;
-    fsToPatch.chownSync = wrapSyncMethod(fsToPatch.chownSync as FsMethod) as typeof fs.chownSync;
+    fsToPatch.chownSync = wrapSyncMethod(fsToPatch.chownSync as FsMethod);
     fsToPatch.promises.chown = wrapPromiseMethod(
       fsToPatch.promises.chown as AsyncFsMethod,
     ) as typeof fs.promises.chown;
 
     fsToPatch.fchown = wrapCallbackMethod(fsToPatch.fchown as FsMethod) as typeof fs.fchown;
-    fsToPatch.fchownSync = wrapSyncMethod(fsToPatch.fchownSync as FsMethod) as typeof fs.fchownSync;
+    fsToPatch.fchownSync = wrapSyncMethod(fsToPatch.fchownSync as FsMethod);
 
     fsToPatch.lchown = wrapCallbackMethod(fsToPatch.lchown as FsMethod) as typeof fs.lchown;
-    fsToPatch.lchownSync = wrapSyncMethod(fsToPatch.lchownSync as FsMethod) as typeof fs.lchownSync;
+    fsToPatch.lchownSync = wrapSyncMethod(fsToPatch.lchownSync as FsMethod);
     fsToPatch.promises.lchown = wrapPromiseMethod(
       fsToPatch.promises.lchown as AsyncFsMethod,
     ) as typeof fs.promises.lchown;
 
     fsToPatch.chmod = wrapCallbackMethod(fsToPatch.chmod as FsMethod) as typeof fs.chmod;
-    fsToPatch.chmodSync = wrapSyncMethod(fsToPatch.chmodSync as FsMethod) as typeof fs.chmodSync;
+    fsToPatch.chmodSync = wrapSyncMethod(fsToPatch.chmodSync as FsMethod);
     fsToPatch.promises.chmod = wrapPromiseMethod(
       fsToPatch.promises.chmod as AsyncFsMethod,
     ) as typeof fs.promises.chmod;
 
     fsToPatch.fchmod = wrapCallbackMethod(fsToPatch.fchmod as FsMethod) as typeof fs.fchmod;
-    fsToPatch.fchmodSync = wrapSyncMethod(fsToPatch.fchmodSync as FsMethod) as typeof fs.fchmodSync;
+    fsToPatch.fchmodSync = wrapSyncMethod(fsToPatch.fchmodSync as FsMethod);
 
     fsToPatch.lchmod = wrapCallbackMethod(fsToPatch.lchmod as FsMethod) as typeof fs.lchmod;
-    fsToPatch.lchmodSync = wrapSyncMethod(fsToPatch.lchmodSync as FsMethod) as typeof fs.lchmodSync;
+    fsToPatch.lchmodSync = wrapSyncMethod(fsToPatch.lchmodSync as FsMethod);
     fsToPatch.promises.lchmod = wrapPromiseMethod(
       fsToPatch.promises.lchmod as AsyncFsMethod,
     ) as typeof fs.promises.lchmod;
@@ -453,7 +447,7 @@ export default {
      */
 
     fsToPatch.access = wrapCallbackMethod(fsToPatch.access as FsMethod) as typeof fs.access;
-    fsToPatch.accessSync = wrapSyncMethod(fsToPatch.accessSync as FsMethod) as typeof fs.accessSync;
+    fsToPatch.accessSync = wrapSyncMethod(fsToPatch.accessSync as FsMethod);
     fsToPatch.promises.access = wrapPromiseMethod(
       fsToPatch.promises.access as AsyncFsMethod,
     ) as typeof fs.promises.access;
@@ -463,39 +457,37 @@ export default {
     }) as typeof fs.fdatasync;
     fsToPatch.fdatasyncSync = wrapSyncMethod(fsToPatch.fdatasyncSync as FsMethod, {
       maxAttempts: 10,
-    }) as typeof fs.fdatasyncSync;
+    });
 
     fsToPatch.fsync = wrapCallbackMethod(fsToPatch.fsync as FsMethod, {
       maxAttempts: 10,
     }) as typeof fs.fsync;
     fsToPatch.fsyncSync = wrapSyncMethod(fsToPatch.fsyncSync as FsMethod, {
       maxAttempts: 10,
-    }) as typeof fs.fsyncSync;
+    });
 
     fsToPatch.ftruncate = wrapCallbackMethod(fsToPatch.ftruncate as FsMethod, {
       maxAttempts: 10,
     }) as typeof fs.ftruncate;
     fsToPatch.ftruncateSync = wrapSyncMethod(fsToPatch.ftruncateSync as FsMethod, {
       maxAttempts: 10,
-    }) as typeof fs.ftruncateSync;
+    });
 
     fsToPatch.futimes = wrapCallbackMethod(fsToPatch.futimes as FsMethod, {
       maxAttempts: 10,
     }) as typeof fs.futimes;
     fsToPatch.futimesSync = wrapSyncMethod(fsToPatch.futimesSync as FsMethod, {
       maxAttempts: 10,
-    }) as typeof fs.futimesSync;
+    });
 
     fsToPatch.link = wrapCallbackMethod(fsToPatch.link as FsMethod) as typeof fs.link;
-    fsToPatch.linkSync = wrapSyncMethod(fsToPatch.linkSync as FsMethod) as typeof fs.linkSync;
+    fsToPatch.linkSync = wrapSyncMethod(fsToPatch.linkSync as FsMethod);
     fsToPatch.promises.link = wrapPromiseMethod(
       fsToPatch.promises.link as AsyncFsMethod,
     ) as typeof fs.promises.link;
 
     fsToPatch.lutimes = wrapCallbackMethod(fsToPatch.lutimes as FsMethod) as typeof fs.lutimes;
-    fsToPatch.lutimesSync = wrapSyncMethod(
-      fsToPatch.lutimesSync as FsMethod,
-    ) as typeof fs.lutimesSync;
+    fsToPatch.lutimesSync = wrapSyncMethod(fsToPatch.lutimesSync as FsMethod);
     fsToPatch.promises.lutimes = wrapPromiseMethod(
       fsToPatch.promises.lutimes as AsyncFsMethod,
     ) as typeof fs.promises.lutimes;
@@ -541,41 +533,37 @@ export default {
     ) as typeof fs.promises.realpath;
 
     fsToPatch.rm = wrapCallbackMethod(fsToPatch.rm as FsMethod) as typeof fs.rm;
-    fsToPatch.rmSync = wrapSyncMethod(fsToPatch.rmSync as FsMethod) as typeof fs.rmSync;
+    fsToPatch.rmSync = wrapSyncMethod(fsToPatch.rmSync as FsMethod);
     fsToPatch.promises.rm = wrapPromiseMethod(
       fsToPatch.promises.rm as AsyncFsMethod,
     ) as typeof fs.promises.rm;
 
     fsToPatch.rmdir = wrapCallbackMethod(fsToPatch.rmdir as FsMethod) as typeof fs.rmdir;
-    fsToPatch.rmdirSync = wrapSyncMethod(fsToPatch.rmdirSync as FsMethod) as typeof fs.rmdirSync;
+    fsToPatch.rmdirSync = wrapSyncMethod(fsToPatch.rmdirSync as FsMethod);
     fsToPatch.promises.rmdir = wrapPromiseMethod(
       fsToPatch.promises.rmdir as AsyncFsMethod,
     ) as typeof fs.promises.rmdir;
 
     fsToPatch.symlink = wrapCallbackMethod(fsToPatch.symlink as FsMethod) as typeof fs.symlink;
-    fsToPatch.symlinkSync = wrapSyncMethod(
-      fsToPatch.symlinkSync as FsMethod,
-    ) as typeof fs.symlinkSync;
+    fsToPatch.symlinkSync = wrapSyncMethod(fsToPatch.symlinkSync as FsMethod);
     fsToPatch.promises.symlink = wrapPromiseMethod(
       fsToPatch.promises.symlink as AsyncFsMethod,
     ) as typeof fs.promises.symlink;
 
     fsToPatch.truncate = wrapCallbackMethod(fsToPatch.truncate as FsMethod) as typeof fs.truncate;
-    fsToPatch.truncateSync = wrapSyncMethod(
-      fsToPatch.truncateSync as FsMethod,
-    ) as typeof fs.truncateSync;
+    fsToPatch.truncateSync = wrapSyncMethod(fsToPatch.truncateSync as FsMethod);
     fsToPatch.promises.truncate = wrapPromiseMethod(
       fsToPatch.promises.truncate as AsyncFsMethod,
     ) as typeof fs.promises.truncate;
 
     fsToPatch.unlink = wrapCallbackMethod(fsToPatch.unlink as FsMethod) as typeof fs.unlink;
-    fsToPatch.unlinkSync = wrapSyncMethod(fsToPatch.unlinkSync as FsMethod) as typeof fs.unlinkSync;
+    fsToPatch.unlinkSync = wrapSyncMethod(fsToPatch.unlinkSync as FsMethod);
     fsToPatch.promises.unlink = wrapPromiseMethod(
       fsToPatch.promises.unlink as AsyncFsMethod,
     ) as typeof fs.promises.unlink;
 
     fsToPatch.utimes = wrapCallbackMethod(fsToPatch.utimes as FsMethod) as typeof fs.utimes;
-    fsToPatch.utimesSync = wrapSyncMethod(fsToPatch.utimesSync as FsMethod) as typeof fs.utimesSync;
+    fsToPatch.utimesSync = wrapSyncMethod(fsToPatch.utimesSync as FsMethod);
     fsToPatch.promises.utimes = wrapPromiseMethod(
       fsToPatch.promises.utimes as AsyncFsMethod,
     ) as typeof fs.promises.utimes;
