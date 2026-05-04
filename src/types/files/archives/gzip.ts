@@ -138,8 +138,10 @@ export default class Gzip extends Archive {
       try {
         await pipelinePromise;
       } catch (error) {
-        // The .destroy() calls above can cause ABORT_ERR
-        if ((error as NodeJS.ErrnoException).code !== 'ABORT_ERR') {
+        // The .destroy() calls above can cause ABORT_ERR on Node.js <24.15, or
+        // ERR_STREAM_PREMATURE_CLOSE on Node.js >=24.15
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== 'ABORT_ERR' && code !== 'ERR_STREAM_PREMATURE_CLOSE') {
           throw error;
         }
       }
