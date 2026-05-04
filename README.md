@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v4.3.2
+     @@   @@        @@   @@   @@       @@    v5.0.1 (Node.js v24.14.1)
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -91,7 +91,7 @@ ROM input options:
       --input-checksum-min       The minimum checksum level to calculate and use for matching
                                 [choices: "CRC32", "MD5", "SHA1", "SHA256"] [default: "CRC32"]
       --input-checksum-max       The maximum checksum level to calculate and use for matching
-                                                   [choices: "CRC32", "MD5", "SHA1", "SHA256"]
+                                 [choices: "CRC32", "MD5", "SHA1", "SHA256"] [default: "SHA1"]
       --input-checksum-archives  Calculate checksums of archive files themselves, allowing
                                  them to match files in DATs
                                         [choices: "never", "auto", "always"] [default: "auto"]
@@ -122,25 +122,27 @@ Patch input options:
       --patch-only     Only write patched ROMs to the output directory               [boolean]
 
 ROM output path options (processed in order):
-  -o, --output               Path to the ROM output directory (supports replaceable symbols,
-                             see below)                                               [string]
-      --dir-mirror           Use the input subdirectory structure for the output directory
+  -o, --output                 Path to the ROM output directory (supports replaceable symbols,
+                               see below)                                             [string]
+      --dir-mirror             Use the input subdirectory structure for the output directory
                                                                                      [boolean]
-      --dir-dat-mirror       Use the DAT subdirectory structure for the output directory
+      --dir-dat-mirror         Use the DAT subdirectory structure for the output directory
                                                                                      [boolean]
-  -D, --dir-dat-name         Use the DAT name as the output subdirectory             [boolean]
-      --dir-dat-description  Use the DAT description as the output subdirectory      [boolean]
-      --dir-letter           Group games in an output subdirectory by the first
-                             --dir-letter-count letters in their name                [boolean]
-      --dir-letter-count     How many game name letters to use for the subdirectory name
+  -D, --dir-dat-name           Use the DAT name as the output subdirectory           [boolean]
+      --dir-dat-description    Use the DAT description as the output subdirectory    [boolean]
+      --dir-letter             Group games in an output subdirectory by the first
+                               --dir-letter-count letters in their name              [boolean]
+      --dir-letter-count       How many game name letters to use for the subdirectory name
                                                                          [number] [default: 1]
-      --dir-letter-limit     Limit the number of games in letter subdirectories, splitting
-                             into multiple subdirectories if necessary                [number]
-      --dir-letter-group     Group letter subdirectories into ranges, combining multiple
-                             letters together (requires --dir-letter-limit)          [boolean]
-      --dir-game-subdir      Append the name of the game as an output subdirectory depending
-                             on its ROMs
+      --dir-letter-limit       Limit the number of games in letter subdirectories, splitting
+                               into multiple subdirectories if necessary              [number]
+      --dir-letter-group       Group letter subdirectories into ranges, combining multiple
+                               letters together (requires --dir-letter-limit)        [boolean]
+      --dir-game-subdir        Append the name of the game as an output subdirectory depending
+                               on how many ROMs a game has
                                 [choices: "never", "multiple", "always"] [default: "multiple"]
+      --output-console-tokens  Path to a JSON file of custom console token definitions to use
+                               instead of the built-in definitions                    [string]
 
 ROM writing options:
       --fix-extension      Read files for known signatures and use the correct extension (also
@@ -149,6 +151,8 @@ ROM writing options:
   -O, --overwrite          Overwrite any files in the output directory               [boolean]
       --overwrite-invalid  Overwrite files in the output directory that are the wrong
                            filesize, checksum, or zip contents                       [boolean]
+      --write-retry        Number of additional retries to attempt when writing a file has
+                           failed (0 disables retries)                   [number] [default: 2]
 
 move command options:
       --move-delete-dirs  Delete empty subdirectories from the input directories after moving
@@ -229,12 +233,12 @@ ROM filtering options:
                                                                                      [boolean]
       --no-bad                 Filter out bad ROM dumps, opposite of --only-bad      [boolean]
 
-One game, one ROM (1G1R) options:
+One game, one ROM (1G1R) options (applied in order):
   -s, --single             Output only a single game per parent (1G1R) (required for all
                            options below, requires DATs with parent/clone information)
                                                                                      [boolean]
-      --prefer-game-regex  Regular expression of game names to prefer                 [string]
-      --prefer-rom-regex   Regular expression of ROM filenames to prefer              [string]
+      --prefer-game-regex  Regular expression of DAT game names to prefer             [string]
+      --prefer-rom-regex   Regular expression of DAT ROM filenames to prefer          [string]
       --prefer-verified    Prefer verified ROM dumps over unverified                 [boolean]
       --prefer-good        Prefer good ROM dumps over bad                            [boolean]
   -l, --prefer-language    List of comma-separated languages in priority order (supported: DA,
@@ -248,9 +252,17 @@ One game, one ROM (1G1R) options:
       --prefer-retail      Prefer retail releases (see --only-retail)                [boolean]
       --prefer-parent      Prefer parent ROMs over clones                            [boolean]
 
+Input file preferences (applied in order):
+      --prefer-filetype        Prefer input files of a type
+                                              [choices: "plain", "archive"] [default: "plain"]
+      --prefer-filename-regex  Regular expression of filenames to prefer
+
 playlist command options:
+      --playlist-mode        Generate playlists depending on how many ROMs a game has
+                                         [choices: "multiple", "always"] [default: "multiple"]
       --playlist-extensions  List of comma-separated file extensions to generate multi-disc
-                             playlists for           [string] [default: ".cue,.gdi,.mdf,.chd"]
+                             playlists for
+                                 [string] [default: ".ccd,.cdi,.chd,.cue,.gdi,.iso,.mdf,.toc"]
 
 dir2dat command options:
       --dir2dat-output  dir2dat output directory                                      [string]
@@ -260,20 +272,23 @@ fixdat command options:
 
 report command options:
       --report-output  Report output file location (formatted with moment.js)
-                                    [string] [default: "./igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
+                                      [string] [default: "igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
 
-Help & debug options:
+Concurrency options:
       --dat-threads     Number of DATs to process in parallel            [number] [default: 2]
       --reader-threads  Maximum number of ROMs to read in parallel per disk
-                                                                         [number] [default: 8]
-      --writer-threads  Maximum number of ROMs to write in parallel      [number] [default: 4]
-      --write-retry     Number of additional retries to attempt when writing a file has failed
-                        (0 disables retries)                             [number] [default: 2]
-      --temp-dir        Path to a directory for temporary files                       [string]
-      --disable-cache   Disable loading or saving the cache file                     [boolean]
-      --cache-path      Location for the cache file                                   [string]
-  -v, --verbose         Enable verbose logging, can specify up to three times (-vvv)   [count]
-  -h, --help            Show help                                                    [boolean]
+                                                                         [number] [default: 6]
+      --writer-threads  Maximum number of ROMs to write in parallel      [number] [default: 3]
+
+Cache & directory options:
+      --temp-dir       Path to a directory for temporary files                        [string]
+      --disable-cache  Disable loading or saving the cache file                      [boolean]
+      --cache-path     Location for the cache file                                    [string]
+
+Help & debug options:
+  -v, --verbose    Enable verbose logging, can specify up to three times (-vvv)        [count]
+      --debug-log  Generate a debug log file to attach to bug reports                 [string]
+  -h, --help       Show help                                                         [boolean]
 
 ----------------------------------------------------------------------------------------------
 
@@ -317,35 +332,35 @@ Advanced usage:
 Example use cases:
 
   Merge new ROMs into an existing ROM collection and delete any unrecognized files:
-    igir copy clean --dat "*.dat" --input New-ROMs/ --input ROMs/ --output ROMs/
+    igir copy clean --dat "*.dat" --input New-ROMs --input ROMs --output ROMs
 
   Organize and zip an existing ROM collection:
-    igir move zip --dat "*.dat" --input ROMs/ --output ROMs/
+    igir move zip --dat "*.dat" --input ROMs --output ROMs
 
   Generate a report on an existing ROM collection, without copying or moving ROMs (read only):
-    igir report --dat "*.dat" --input ROMs/
+    igir report --dat "*.dat" --input ROMs
 
   Produce a 1G1R set per console, preferring English ROMs from USA>WORLD>EUR>JPN:
-    igir copy --dat "*.dat" --input "**/*.zip" --output 1G1R/ --dir-dat-name --single
+    igir copy --dat "*.dat" --input "**/*.zip" --output 1G1R --dir-dat-name --single
     --prefer-language EN --prefer-region USA,WORLD,EUR,JPN
 
   Copy all Mario, Metroid, and Zelda games to one directory:
-    igir copy --input ROMs/ --output Nintendo/ --filter-regex "/(Mario|Metroid|Zelda)/i"
+    igir copy --input ROMs --output Nintendo --filter-regex "/(Mario|Metroid|Zelda)/i"
 
   Copy all BIOS files into one directory, extracting if necessary:
-    igir copy extract --dat "*.dat" --input "**/*.zip" --output BIOS/ --only-bios
+    igir copy extract --dat "*.dat" --input "**/*.zip" --output BIOS --only-bios
 
   Create playlist files for all multi-disc games in an existing collection:
-    igir playlist --input ROMs/
+    igir playlist --input ROMs
 
   Create patched copies of ROMs in an existing collection, not overwriting existing files:
-    igir copy extract --input ROMs/ --patch Patches/ --output ROMs/
+    igir copy extract --input ROMs --patch Patches --output ROMs
 
   Re-build a MAME ROM set for a specific version of MAME:
-    igir copy zip --dat "MAME 0.258.dat" --input MAME/ --output MAME-0.258/ --merge-roms split
+    igir copy zip --dat "MAME 0.258.dat" --input MAME --output MAME-0.258 --merge-roms split
 
   Copy ROMs to an Analogue Pocket and test they were written correctly:
-    igir copy extract test --dat "*.dat" --input ROMs/ --output /Assets/{pocket}/common/
+    igir copy extract test --dat "*.dat" --input ROMs --output /Assets/{pocket}/common
     --dir-letter
 ```
 <!-- WARN: everything above is automatically updated! Update src/modules/argumentsParser.ts instead! -->

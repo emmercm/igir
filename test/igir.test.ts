@@ -18,7 +18,6 @@ import FileCache from '../src/types/files/fileCache.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/types/files/fileChecksums.js';
 import FileFactory from '../src/types/files/fileFactory.js';
 import type { OptionsProps } from '../src/types/options.js';
-import { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,
@@ -27,6 +26,7 @@ import Options, {
   LinkMode,
   LinkModeInverted,
 } from '../src/types/options.js';
+import { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
