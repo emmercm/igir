@@ -1,14 +1,14 @@
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
+import type File from '../models/files/file.js';
+import { ChecksumBitmask } from '../models/files/fileChecksums.js';
+import type FileFactory from '../models/files/fileFactory.js';
+import type Options from '../models/options.js';
+import type Patch from '../models/patches/patch.js';
+import PatchFactory from '../models/patches/patchFactory.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import IntlPoly from '../polyfill/intlPoly.js';
-import type File from '../types/files/file.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import type FileFactory from '../types/files/fileFactory.js';
-import type Options from '../types/options.js';
-import type Patch from '../types/patches/patch.js';
-import PatchFactory from '../types/patches/patchFactory.js';
 import Scanner from './scanner.js';
 
 /**

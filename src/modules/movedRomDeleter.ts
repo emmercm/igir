@@ -3,16 +3,16 @@ import async from 'async';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
+import ArchiveEntry from '../models/files/archives/archiveEntry.js';
+import ArchiveFile from '../models/files/archives/archiveFile.js';
+import ChdBinCue from '../models/files/archives/chd/chdBinCue.js';
+import type File from '../models/files/file.js';
+import type IndexedFiles from '../models/indexedFiles.js';
+import type Options from '../models/options.js';
+import type WriteCandidate from '../models/writeCandidate.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import IntlPoly from '../polyfill/intlPoly.js';
-import ArchiveEntry from '../types/files/archives/archiveEntry.js';
-import ArchiveFile from '../types/files/archives/archiveFile.js';
-import ChdBinCue from '../types/files/archives/chd/chdBinCue.js';
-import type File from '../types/files/file.js';
-import type IndexedFiles from '../types/indexedFiles.js';
-import type Options from '../types/options.js';
-import type WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**

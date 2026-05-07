@@ -6,11 +6,11 @@ import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import Temp from '../../src/globals/temp.js';
+import FileCache from '../../src/models/files/fileCache.js';
+import FileFactory from '../../src/models/files/fileFactory.js';
+import Options from '../../src/models/options.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
-import FileCache from '../../src/types/files/fileCache.js';
-import FileFactory from '../../src/types/files/fileFactory.js';
-import Options from '../../src/types/options.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function createPatchScanner(patch: string[], patchExclude: string[] = []): PatchScanner {

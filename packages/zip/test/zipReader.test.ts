@@ -4,8 +4,8 @@ import stream from 'node:stream';
 import url from 'node:url';
 
 import Temp from '../../../src/globals/temp.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
 import type { CompressionMethodValue } from '../src/fileRecord.js';
 import ZipReader from '../src/zipReader.js';
 

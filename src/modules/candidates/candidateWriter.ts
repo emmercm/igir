@@ -6,22 +6,22 @@ import type CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.
 import type FileMoveMutex from '../../async/fileMoveMutex.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../models/dats/dat.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import Zip from '../../models/files/archives/zip.js';
+import type File from '../../models/files/file.js';
+import { ChecksumBitmask } from '../../models/files/fileChecksums.js';
+import type FileFactory from '../../models/files/fileFactory.js';
+import { CacheMode } from '../../models/files/fileFactory.js';
+import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
+import type Options from '../../models/options.js';
+import type { ZipFormatValue } from '../../models/options.js';
+import { LinkMode, ZipFormat } from '../../models/options.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import type { MoveResultValue } from '../../polyfill/fsPoly.js';
 import FsPoly, { MoveResult } from '../../polyfill/fsPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import Zip from '../../types/files/archives/zip.js';
-import type File from '../../types/files/file.js';
-import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import type FileFactory from '../../types/files/fileFactory.js';
-import { CacheMode } from '../../types/files/fileFactory.js';
-import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
-import type Options from '../../types/options.js';
-import type { ZipFormatValue } from '../../types/options.js';
-import { LinkMode, ZipFormat } from '../../types/options.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 export interface CandidateWriterResults {

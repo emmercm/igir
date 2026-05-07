@@ -5,13 +5,13 @@ import async from 'async';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import GameGrouper from '../gameGrouper.js';
+import type DAT from '../models/dats/dat.js';
+import type File from '../models/files/file.js';
+import type Options from '../models/options.js';
+import { PlaylistMode } from '../models/options.js';
+import type WriteCandidate from '../models/writeCandidate.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import type DAT from '../types/dats/dat.js';
-import type File from '../types/files/file.js';
-import type Options from '../types/options.js';
-import { PlaylistMode } from '../types/options.js';
-import type WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**

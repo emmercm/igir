@@ -15,6 +15,18 @@ import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import Package from './globals/package.js';
 import Temp from './globals/temp.js';
+import type DAT from './models/dats/dat.js';
+import type DATStatus from './models/datStatus.js';
+import IgirException from './models/exceptions/igirException.js';
+import File from './models/files/file.js';
+import FileCache from './models/files/fileCache.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from './models/files/fileChecksums.js';
+import FileFactory from './models/files/fileFactory.js';
+import type IndexedFiles from './models/indexedFiles.js';
+import Options, { InputChecksumArchivesMode, LinkMode } from './models/options.js';
+import OutputFactory from './models/outputFactory.js';
+import type Patch from './models/patches/patch.js';
+import type WriteCandidate from './models/writeCandidate.js';
 import CandidateArchiveFileHasher from './modules/candidates/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidates/candidateCombiner.js';
 import CandidateExtensionCorrector from './modules/candidates/candidateExtensionCorrector.js';
@@ -49,18 +61,6 @@ import StatusGenerator from './modules/statusGenerator.js';
 import ArrayPoly from './polyfill/arrayPoly.js';
 import FsPoly from './polyfill/fsPoly.js';
 import IntlPoly from './polyfill/intlPoly.js';
-import type DAT from './types/dats/dat.js';
-import type DATStatus from './types/datStatus.js';
-import IgirException from './types/exceptions/igirException.js';
-import File from './types/files/file.js';
-import FileCache from './types/files/fileCache.js';
-import { ChecksumBitmask, ChecksumBitmaskInverted } from './types/files/fileChecksums.js';
-import FileFactory from './types/files/fileFactory.js';
-import type IndexedFiles from './types/indexedFiles.js';
-import Options, { InputChecksumArchivesMode, LinkMode } from './types/options.js';
-import OutputFactory from './types/outputFactory.js';
-import type Patch from './types/patches/patch.js';
-import type WriteCandidate from './types/writeCandidate.js';
 
 /**
  * The main class that coordinates file scanning, processing, and writing.

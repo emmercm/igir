@@ -10,7 +10,7 @@ import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
 
 import Defaults from '../globals/defaults.js';
-import IgirException from '../types/exceptions/igirException.js';
+import IgirException from '../models/exceptions/igirException.js';
 import FsReadTransform, { FsReadCallback } from './fsReadTransform.js';
 import gracefulFs from './gracefulFs.js';
 

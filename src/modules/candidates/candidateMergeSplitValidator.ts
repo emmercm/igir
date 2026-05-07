@@ -1,11 +1,11 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../models/dats/dat.js';
+import type Game from '../../models/dats/game.js';
+import type Options from '../../models/options.js';
+import { MergeMode } from '../../models/options.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type Game from '../../types/dats/game.js';
-import type Options from '../../types/options.js';
-import { MergeMode } from '../../types/options.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

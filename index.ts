@@ -9,11 +9,11 @@ import { LogLevel } from './src/console/logLevel.js';
 import MultiBar from './src/console/multiBar.js';
 import Package from './src/globals/package.js';
 import Igir from './src/igir.js';
+import IgirException from './src/models/exceptions/igirException.js';
+import type Options from './src/models/options.js';
 import ArgumentsParser from './src/modules/argumentsParser.js';
 import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';
 import UpdateChecker from './src/modules/updateChecker.js';
-import IgirException from './src/types/exceptions/igirException.js';
-import type Options from './src/types/options.js';
 
 // Double the number of frames tracked in a stack trace
 Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);

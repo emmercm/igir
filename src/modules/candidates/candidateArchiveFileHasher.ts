@@ -1,15 +1,15 @@
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../models/dats/dat.js';
+import ArchiveFile from '../../models/files/archives/archiveFile.js';
+import type FileFactory from '../../models/files/fileFactory.js';
+import type Options from '../../models/options.js';
+import type ROMWithFiles from '../../models/romWithFiles.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import ArchiveFile from '../../types/files/archives/archiveFile.js';
-import type FileFactory from '../../types/files/fileFactory.js';
-import type Options from '../../types/options.js';
-import type ROMWithFiles from '../../types/romWithFiles.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

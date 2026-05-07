@@ -2,14 +2,14 @@ import path from 'node:path';
 
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
+import type DAT from '../models/dats/dat.js';
+import Disk from '../models/dats/disk.js';
+import type Game from '../models/dats/game.js';
+import IgirHeader from '../models/dats/igirHeader.js';
+import LogiqxDAT from '../models/dats/logiqx/logiqxDat.js';
+import type Options from '../models/options.js';
+import type WriteCandidate from '../models/writeCandidate.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import type DAT from '../types/dats/dat.js';
-import Disk from '../types/dats/disk.js';
-import type Game from '../types/dats/game.js';
-import IgirHeader from '../types/dats/igirHeader.js';
-import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
-import type Options from '../types/options.js';
-import type WriteCandidate from '../types/writeCandidate.js';
 import Module from './module.js';
 
 /**

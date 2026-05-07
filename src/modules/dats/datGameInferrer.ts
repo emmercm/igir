@@ -5,21 +5,21 @@ import { parse } from '@gplane/cue';
 
 import type ProgressBar from '../../console/progressBar.js';
 import Package from '../../globals/package.js';
+import type DAT from '../../models/dats/dat.js';
+import Disk from '../../models/dats/disk.js';
+import Game from '../../models/dats/game.js';
+import Header from '../../models/dats/logiqx/header.js';
+import LogiqxDAT from '../../models/dats/logiqx/logiqxDat.js';
+import type { ROMProps } from '../../models/dats/rom.js';
+import ROM from '../../models/dats/rom.js';
+import type Archive from '../../models/files/archives/archive.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import ChdRaw from '../../models/files/archives/chd/chdRaw.js';
+import type File from '../../models/files/file.js';
+import type { ChecksumProps } from '../../models/files/fileChecksums.js';
+import type Options from '../../models/options.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import Disk from '../../types/dats/disk.js';
-import Game from '../../types/dats/game.js';
-import Header from '../../types/dats/logiqx/header.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
-import type { ROMProps } from '../../types/dats/rom.js';
-import ROM from '../../types/dats/rom.js';
-import type Archive from '../../types/files/archives/archive.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import ChdRaw from '../../types/files/archives/chd/chdRaw.js';
-import type File from '../../types/files/file.js';
-import type { ChecksumProps } from '../../types/files/fileChecksums.js';
-import type Options from '../../types/options.js';
 import Module from '../module.js';
 
 /**

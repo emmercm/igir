@@ -1,11 +1,11 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../models/dats/dat.js';
+import type Game from '../../models/dats/game.js';
+import type Options from '../../models/options.js';
+import { PreferRevision } from '../../models/options.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type Game from '../../types/dats/game.js';
-import type Options from '../../types/options.js';
-import { PreferRevision } from '../../types/options.js';
 import Module from '../module.js';
 
 /**

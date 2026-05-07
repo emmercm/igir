@@ -12,6 +12,21 @@ import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
+import type Archive from '../../../src/models/files/archives/archive.js';
+import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import File from '../../../src/models/files/file.js';
+import FileCache from '../../../src/models/files/fileCache.js';
+import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import FileFactory from '../../../src/models/files/fileFactory.js';
+import type { OptionsProps } from '../../../src/models/options.js';
+import Options, {
+  GameSubdirMode,
+  GameSubdirModeInverted,
+  LinkMode,
+  LinkModeInverted,
+  ZipFormat,
+  ZipFormatInverted,
+} from '../../../src/models/options.js';
 import CandidateCombiner from '../../../src/modules/candidates/candidateCombiner.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
@@ -25,21 +40,6 @@ import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js'
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import type Archive from '../../../src/types/files/archives/archive.js';
-import type ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
-import File from '../../../src/types/files/file.js';
-import FileCache from '../../../src/types/files/fileCache.js';
-import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import type { OptionsProps } from '../../../src/types/options.js';
-import Options, {
-  GameSubdirMode,
-  GameSubdirModeInverted,
-  LinkMode,
-  LinkModeInverted,
-  ZipFormat,
-  ZipFormatInverted,
-} from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());

@@ -10,8 +10,8 @@ import Timer from '../src/async/timer.js';
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
 import Package from '../src/globals/package.js';
+import IgirException from '../src/models/exceptions/igirException.js';
 import FsPoly from '../src/polyfill/fsPoly.js';
-import IgirException from '../src/types/exceptions/igirException.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== COMPILING ==========');

@@ -2,12 +2,12 @@ import path from 'node:path';
 
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import type DAT from '../../types/dats/dat.js';
-import type ROM from '../../types/dats/rom.js';
-import SingleValueGame from '../../types/dats/singleValueGame.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import type Options from '../../types/options.js';
-import WriteCandidate from '../../types/writeCandidate.js';
+import type DAT from '../../models/dats/dat.js';
+import type ROM from '../../models/dats/rom.js';
+import SingleValueGame from '../../models/dats/singleValueGame.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import type Options from '../../models/options.js';
+import WriteCandidate from '../../models/writeCandidate.js';
 import Module from '../module.js';
 
 /**

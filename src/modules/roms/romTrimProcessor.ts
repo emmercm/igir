@@ -1,13 +1,13 @@
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import type File from '../../models/files/file.js';
+import FileFactory from '../../models/files/fileFactory.js';
+import type Options from '../../models/options.js';
+import { TrimScanFiles } from '../../models/options.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import type File from '../../types/files/file.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import type Options from '../../types/options.js';
-import { TrimScanFiles } from '../../types/options.js';
 import Module from '../module.js';
 
 /**

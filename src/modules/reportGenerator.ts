@@ -1,12 +1,12 @@
 import path from 'node:path';
 
 import type ProgressBar from '../console/progressBar.js';
+import DATStatus, { GameStatus } from '../models/datStatus.js';
+import type File from '../models/files/file.js';
+import type Options from '../models/options.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
 import IntlPoly from '../polyfill/intlPoly.js';
-import DATStatus, { GameStatus } from '../types/datStatus.js';
-import type File from '../types/files/file.js';
-import type Options from '../types/options.js';
 import Module from './module.js';
 
 /**

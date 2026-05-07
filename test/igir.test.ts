@@ -10,14 +10,10 @@ import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
-import ArgumentsParser from '../src/modules/argumentsParser.js';
-import DATScanner from '../src/modules/dats/datScanner.js';
-import ArrayPoly from '../src/polyfill/arrayPoly.js';
-import FsPoly, { WalkMode } from '../src/polyfill/fsPoly.js';
-import FileCache from '../src/types/files/fileCache.js';
-import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/types/files/fileChecksums.js';
-import FileFactory from '../src/types/files/fileFactory.js';
-import type { OptionsProps } from '../src/types/options.js';
+import FileCache from '../src/models/files/fileCache.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/models/files/fileChecksums.js';
+import FileFactory from '../src/models/files/fileFactory.js';
+import type { OptionsProps } from '../src/models/options.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,
@@ -25,8 +21,12 @@ import Options, {
   InputChecksumArchivesModeInverted,
   LinkMode,
   LinkModeInverted,
-} from '../src/types/options.js';
-import { GameSubdirMode, GameSubdirModeInverted } from '../src/types/options.js';
+} from '../src/models/options.js';
+import { GameSubdirMode, GameSubdirModeInverted } from '../src/models/options.js';
+import ArgumentsParser from '../src/modules/argumentsParser.js';
+import DATScanner from '../src/modules/dats/datScanner.js';
+import ArrayPoly from '../src/polyfill/arrayPoly.js';
+import FsPoly, { WalkMode } from '../src/polyfill/fsPoly.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());

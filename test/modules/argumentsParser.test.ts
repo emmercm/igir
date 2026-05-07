@@ -6,10 +6,8 @@ import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import Defaults from '../../src/globals/defaults.js';
 import Temp from '../../src/globals/temp.js';
-import ArgumentsParser from '../../src/modules/argumentsParser.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
-import ROM from '../../src/types/dats/rom.js';
-import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
+import ROM from '../../src/models/dats/rom.js';
+import { ChecksumBitmask } from '../../src/models/files/fileChecksums.js';
 import {
   FixExtension,
   GameSubdirMode,
@@ -22,7 +20,9 @@ import {
   PreferRevision,
   TrimScanFiles,
   ZipFormat,
-} from '../../src/types/options.js';
+} from '../../src/models/options.js';
+import ArgumentsParser from '../../src/modules/argumentsParser.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];

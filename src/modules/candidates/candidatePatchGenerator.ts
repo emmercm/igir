@@ -2,16 +2,16 @@ import path from 'node:path';
 
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../models/dats/dat.js';
+import ROM from '../../models/dats/rom.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../models/files/archives/archiveFile.js';
+import Zip from '../../models/files/archives/zip.js';
+import type Options from '../../models/options.js';
+import type Patch from '../../models/patches/patch.js';
+import ROMWithFiles from '../../models/romWithFiles.js';
+import WriteCandidate from '../../models/writeCandidate.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import ROM from '../../types/dats/rom.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import ArchiveFile from '../../types/files/archives/archiveFile.js';
-import Zip from '../../types/files/archives/zip.js';
-import type Options from '../../types/options.js';
-import type Patch from '../../types/patches/patch.js';
-import ROMWithFiles from '../../types/romWithFiles.js';
-import WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

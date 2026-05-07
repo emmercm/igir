@@ -8,20 +8,23 @@ import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../../src/models/dats/rom.js';
+import SingleValueGame from '../../../src/models/dats/singleValueGame.js';
+import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../../src/models/files/archives/archiveFile.js';
+import Zip from '../../../src/models/files/archives/zip.js';
+import File from '../../../src/models/files/file.js';
+import FileCache from '../../../src/models/files/fileCache.js';
+import FileFactory from '../../../src/models/files/fileFactory.js';
+import Options, { FixExtension, FixExtensionInverted } from '../../../src/models/options.js';
+import ROMWithFiles from '../../../src/models/romWithFiles.js';
+import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsPoly from '../../../src/polyfill/fsPoly.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import ROM from '../../../src/types/dats/rom.js';
-import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
-import File from '../../../src/types/files/file.js';
-import FileCache from '../../../src/types/files/fileCache.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options, { FixExtension, FixExtensionInverted } from '../../../src/types/options.js';
-import ROMWithFiles from '../../../src/types/romWithFiles.js';
-import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -215,4 +218,42 @@ it('should correct ROMs with missing filenames', async () => {
   } finally {
     await FsPoly.rm(tempDir, { recursive: true, force: true });
   }
+});
+
+it('should correct the extension of an ArchiveFile based on its underlying ArchiveEntry signature', async () => {
+  const options = new Options({
+    commands: ['copy'],
+    fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
+  });
+  const dat = new LogiqxDAT({ header: new Header() });
+
+  const zipPath = path.join('test', 'fixtures', 'roms', 'zip', 'foobar.zip');
+  const zip = new Zip(zipPath);
+  const archiveEntry = await ArchiveEntry.entryOf({
+    archive: zip,
+    entryPath: 'foobar.lnx',
+  });
+  const archiveFile = new ArchiveFile(archiveEntry, {
+    size: await FsPoly.size(zipPath),
+  });
+
+  // DAT-supplied ROM name uses a deliberately-wrong extension; with FixExtension.ALWAYS
+  // we expect it to be corrected to the inner entry's signature (.lnx), not the
+  // archive container's signature (.zip).
+  const rom = new ROM({ name: 'foobar.bogus', size: 1 });
+  const game = new SingleValueGame({ name: 'foobar', roms: [rom] });
+  const outputFile = await File.fileOf({ filePath: 'foobar.bogus' });
+  const candidate = new WriteCandidate(game, [new ROMWithFiles(rom, archiveFile, outputFile)]);
+
+  const correctedCandidates = await new CandidateExtensionCorrector(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
+    new Semaphore(os.availableParallelism()),
+  ).correct(dat, [candidate]);
+
+  expect(correctedCandidates).toHaveLength(1);
+  const correctedRom = correctedCandidates[0].getRomsWithFiles()[0].getRom();
+  expect(correctedRom.getName().toLowerCase()).toMatch(/\.lnx$/);
+  expect(correctedRom.getName().toLowerCase()).not.toMatch(/\.zip$/);
 });

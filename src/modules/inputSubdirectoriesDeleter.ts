@@ -5,10 +5,10 @@ import async from 'async';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
+import type File from '../models/files/file.js';
+import type Options from '../models/options.js';
+import { MoveDeleteDirs } from '../models/options.js';
 import FsPoly, { WalkMode } from '../polyfill/fsPoly.js';
-import type File from '../types/files/file.js';
-import type Options from '../types/options.js';
-import { MoveDeleteDirs } from '../types/options.js';
 import Module from './module.js';
 
 /**

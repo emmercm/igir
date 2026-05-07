@@ -4,21 +4,21 @@ import type { Semaphore } from 'async-mutex';
 
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type DAT from '../../models/dats/dat.js';
+import type ROM from '../../models/dats/rom.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import Chd from '../../models/files/archives/chd/chd.js';
+import type File from '../../models/files/file.js';
+import FileFactory from '../../models/files/fileFactory.js';
+import type FileSignature from '../../models/files/fileSignature.js';
+import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
+import type Options from '../../models/options.js';
+import { FixExtension } from '../../models/options.js';
+import OutputFactory from '../../models/outputFactory.js';
+import type ROMWithFiles from '../../models/romWithFiles.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
 import ArrayPoly from '../../polyfill/arrayPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type ROM from '../../types/dats/rom.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import Chd from '../../types/files/archives/chd/chd.js';
-import type File from '../../types/files/file.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import type FileSignature from '../../types/files/fileSignature.js';
-import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
-import type Options from '../../types/options.js';
-import { FixExtension } from '../../types/options.js';
-import OutputFactory from '../../types/outputFactory.js';
-import type ROMWithFiles from '../../types/romWithFiles.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
 import Module from '../module.js';
 
 /**

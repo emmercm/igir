@@ -4,11 +4,11 @@ import stream from 'node:stream';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import FileCache from '../../../src/models/files/fileCache.js';
+import FileFactory from '../../../src/models/files/fileFactory.js';
+import Options from '../../../src/models/options.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FileCache from '../../../src/types/files/fileCache.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 test.each([

@@ -1,10 +1,10 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import type DAT from '../../types/dats/dat.js';
-import type Options from '../../types/options.js';
-import OutputFactory from '../../types/outputFactory.js';
-import type ROMWithFiles from '../../types/romWithFiles.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
+import type DAT from '../../models/dats/dat.js';
+import type Options from '../../models/options.js';
+import OutputFactory from '../../models/outputFactory.js';
+import type ROMWithFiles from '../../models/romWithFiles.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
 import Module from '../module.js';
 
 /**

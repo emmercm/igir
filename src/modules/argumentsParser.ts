@@ -7,12 +7,10 @@ import yargs from 'yargs';
 import type Logger from '../console/logger.js';
 import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import ConsolePoly from '../polyfill/consolePoly.js';
-import IgirException from '../types/exceptions/igirException.js';
-import { ChecksumBitmask, ChecksumBitmaskInverted } from '../types/files/fileChecksums.js';
-import ROMHeader from '../types/files/romHeader.js';
-import Internationalization from '../types/internationalization.js';
+import IgirException from '../models/exceptions/igirException.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from '../models/files/fileChecksums.js';
+import ROMHeader from '../models/files/romHeader.js';
+import Internationalization from '../models/internationalization.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,
@@ -35,8 +33,10 @@ import Options, {
   TrimScanFilesInverted,
   ZipFormat,
   ZipFormatInverted,
-} from '../types/options.js';
-import PatchFactory from '../types/patches/patchFactory.js';
+} from '../models/options.js';
+import PatchFactory from '../models/patches/patchFactory.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
+import ConsolePoly from '../polyfill/consolePoly.js';
 
 /**
  * Parse a {@link process.argv} (without its first two arguments, the Node.js executable and the

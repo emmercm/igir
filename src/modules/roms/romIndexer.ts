@@ -1,20 +1,20 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import Chd from '../../models/files/archives/chd/chd.js';
+import Dolphin from '../../models/files/archives/dolphin/dolphin.js';
+import Maxcso from '../../models/files/archives/maxcso/maxcso.js';
+import Rar from '../../models/files/archives/rar.js';
+import SevenZip from '../../models/files/archives/sevenZip/sevenZip.js';
+import Tar from '../../models/files/archives/tar.js';
+import Zip from '../../models/files/archives/zip.js';
+import type File from '../../models/files/file.js';
+import type { AllChecksums, ChecksumsToFiles } from '../../models/indexedFiles.js';
+import IndexedFiles from '../../models/indexedFiles.js';
+import type Options from '../../models/options.js';
+import { PreferFiletype } from '../../models/options.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import IntlPoly from '../../polyfill/intlPoly.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import Chd from '../../types/files/archives/chd/chd.js';
-import Dolphin from '../../types/files/archives/dolphin/dolphin.js';
-import Maxcso from '../../types/files/archives/maxcso/maxcso.js';
-import Rar from '../../types/files/archives/rar.js';
-import SevenZip from '../../types/files/archives/sevenZip/sevenZip.js';
-import Tar from '../../types/files/archives/tar.js';
-import Zip from '../../types/files/archives/zip.js';
-import type File from '../../types/files/file.js';
-import type { AllChecksums, ChecksumsToFiles } from '../../types/indexedFiles.js';
-import IndexedFiles from '../../types/indexedFiles.js';
-import type Options from '../../types/options.js';
-import { PreferFiletype } from '../../types/options.js';
 import Module from '../module.js';
 
 /**

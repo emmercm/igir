@@ -2,9 +2,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
+import IgirException from '../../src/models/exceptions/igirException.js';
 import FsPoly, { MoveResult, WalkMode } from '../../src/polyfill/fsPoly.js';
 import IOFile from '../../src/polyfill/ioFile.js';
-import IgirException from '../../src/types/exceptions/igirException.js';
 
 if (!(await FsPoly.exists(Temp.getTempDir()))) {
   await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
