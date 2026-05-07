@@ -9,8 +9,8 @@ import yargs from 'yargs';
 import Timer from '../src/async/timer.js';
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
+import IgirException from '../src/exceptions/igirException.js';
 import Package from '../src/globals/package.js';
-import IgirException from '../src/models/exceptions/igirException.js';
 import FsPoly from '../src/polyfill/fsPoly.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);

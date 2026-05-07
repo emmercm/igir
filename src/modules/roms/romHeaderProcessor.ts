@@ -1,9 +1,9 @@
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type FileFactory from '../../factories/fileFactory.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import type File from '../../models/files/file.js';
-import type FileFactory from '../../models/files/fileFactory.js';
 import ROMHeader from '../../models/files/romHeader.js';
 import type Options from '../../models/options.js';
 import IntlPoly from '../../polyfill/intlPoly.js';

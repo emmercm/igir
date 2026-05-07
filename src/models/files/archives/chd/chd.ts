@@ -7,10 +7,10 @@ import chdman, { CHDInfo, ChdmanBinaryPreference } from 'chdman';
 import { Memoize } from 'typescript-memoize';
 
 import Timer from '../../../../async/timer.js';
+import IgirException from '../../../../exceptions/igirException.js';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../../polyfill/streamPoly.js';
-import IgirException from '../../../exceptions/igirException.js';
 import File from '../../file.js';
 import Archive from '../archive.js';
 

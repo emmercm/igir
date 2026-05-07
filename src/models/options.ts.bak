@@ -9,13 +9,13 @@ import micromatch from 'micromatch';
 import moment from 'moment';
 
 import { LogLevel, LogLevelValue } from '../console/logLevel.js';
-import IgirException from '../exceptions/igirException.js';
 import Temp from '../globals/temp.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly, { FsWalkCallback, WalkMode, WalkModeValue } from '../polyfill/fsPoly.js';
 import URLPoly from '../polyfill/urlPoly.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
+import IgirException from '../../exceptions/igirException.js';
 import File from './files/file.js';
 import {
   ChecksumBitmask,

@@ -5,9 +5,10 @@ import type { Argv } from 'yargs';
 import yargs from 'yargs';
 
 import type Logger from '../console/logger.js';
+import IgirException from '../exceptions/igirException.js';
+import PatchFactory from '../factories/patchFactory.js';
 import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
-import IgirException from '../models/exceptions/igirException.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../models/files/fileChecksums.js';
 import ROMHeader from '../models/files/romHeader.js';
 import Internationalization from '../models/internationalization.js';
@@ -34,7 +35,6 @@ import Options, {
   ZipFormat,
   ZipFormatInverted,
 } from '../models/options.js';
-import PatchFactory from '../models/patches/patchFactory.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import ConsolePoly from '../polyfill/consolePoly.js';
 

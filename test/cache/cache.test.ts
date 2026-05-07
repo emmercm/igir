@@ -1,7 +1,7 @@
 import path from 'node:path';
 
+import Cache from '../../src/cache/cache.js';
 import Temp from '../../src/globals/temp.js';
-import Cache from '../../src/models/cache.js';
 import FsPoly from '../../src/polyfill/fsPoly.js';
 
 const TEST_CACHE_SIZE = 100;

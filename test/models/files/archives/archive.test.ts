@@ -3,8 +3,10 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../../src/cache/fileCache.js';
 import Logger from '../../../../src/console/logger.js';
 import { LogLevel } from '../../../../src/console/logLevel.js';
+import FileFactory from '../../../../src/factories/fileFactory.js';
 import Temp from '../../../../src/globals/temp.js';
 import type Archive from '../../../../src/models/files/archives/archive.js';
 import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
@@ -24,8 +26,6 @@ import ZipSpanned from '../../../../src/models/files/archives/sevenZip/zipSpanne
 import ZipX from '../../../../src/models/files/archives/sevenZip/zipX.js';
 import Tar from '../../../../src/models/files/archives/tar.js';
 import Zip from '../../../../src/models/files/archives/zip.js';
-import FileCache from '../../../../src/models/files/fileCache.js';
-import FileFactory from '../../../../src/models/files/fileFactory.js';
 import Options from '../../../../src/models/options.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';

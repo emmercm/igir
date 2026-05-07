@@ -1,7 +1,7 @@
 import path from 'node:path';
 
+import IgirException from '../../../exceptions/igirException.js';
 import IOFile from '../../../polyfill/ioFile.js';
-import IgirException from '../../exceptions/igirException.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 

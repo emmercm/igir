@@ -9,8 +9,8 @@ import { isNotJunk } from 'junk';
 import nodeDiskInfo from 'node-disk-info';
 import { Memoize } from 'typescript-memoize';
 
+import IgirException from '../exceptions/igirException.js';
 import Defaults from '../globals/defaults.js';
-import IgirException from '../models/exceptions/igirException.js';
 import FsReadTransform, { FsReadCallback } from './fsReadTransform.js';
 import gracefulFs from './gracefulFs.js';
 

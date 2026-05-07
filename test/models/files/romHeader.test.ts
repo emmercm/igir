@@ -3,10 +3,10 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import FileCache from '../../../src/models/files/fileCache.js';
-import FileFactory from '../../../src/models/files/fileFactory.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
 import ROMHeader from '../../../src/models/files/romHeader.js';
 import Options from '../../../src/models/options.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';

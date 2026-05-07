@@ -1,9 +1,9 @@
 import path from 'node:path';
 
+import IgirException from '../../exceptions/igirException.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
 import type IOFile from '../../polyfill/ioFile.js';
-import IgirException from '../exceptions/igirException.js';
 import type File from '../files/file.js';
 
 export default abstract class Patch {

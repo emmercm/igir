@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Ajv } from 'ajv';
 
+import OutputFactory from '../../src/factories/outputFactory.js';
 import outputTokensData from '../../src/models/consoleTokens.json' with { type: 'json' };
 import outputTokensSchema from '../../src/models/consoleTokens.schema.json' with { type: 'json' };
 import Header from '../../src/models/dats/logiqx/header.js';
@@ -11,7 +12,6 @@ import Release from '../../src/models/dats/release.js';
 import ROM from '../../src/models/dats/rom.js';
 import SingleValueGame from '../../src/models/dats/singleValueGame.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../src/models/options.js';
-import OutputFactory from '../../src/models/outputFactory.js';
 
 const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new SingleValueGame({ name: 'Dummy Game' });

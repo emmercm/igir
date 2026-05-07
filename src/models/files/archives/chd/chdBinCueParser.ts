@@ -4,10 +4,10 @@ import path from 'node:path';
 import type { File as CueFile, Track } from '@gplane/cue';
 import { parse, TrackDataType } from '@gplane/cue';
 
+import IgirException from '../../../../exceptions/igirException.js';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
 import StreamPoly from '../../../../polyfill/streamPoly.js';
-import IgirException from '../../../exceptions/igirException.js';
 import type { ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';

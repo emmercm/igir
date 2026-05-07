@@ -1,10 +1,10 @@
 import path from 'node:path';
 
-import Temp from '../../../src/globals/temp.js';
-import Zip from '../../../src/models/files/archives/zip.js';
-import FileCache from '../../../src/models/files/fileCache.js';
-import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FileCache from '../../src/cache/fileCache.js';
+import Temp from '../../src/globals/temp.js';
+import Zip from '../../src/models/files/archives/zip.js';
+import { ChecksumBitmask } from '../../src/models/files/fileChecksums.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
 
 describe('loadFile', () => {
   it('should load after saving', async () => {

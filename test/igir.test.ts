@@ -6,13 +6,13 @@ import stream from 'node:stream';
 import async from 'async';
 
 import MappableSemaphore from '../src/async/mappableSemaphore.js';
+import FileCache from '../src/cache/fileCache.js';
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
+import FileFactory from '../src/factories/fileFactory.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
-import FileCache from '../src/models/files/fileCache.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../src/models/files/fileChecksums.js';
-import FileFactory from '../src/models/files/fileFactory.js';
 import type { OptionsProps } from '../src/models/options.js';
 import Options, {
   FixExtension,

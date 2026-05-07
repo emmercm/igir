@@ -5,9 +5,9 @@ import { Mutex } from 'async-mutex';
 import type { FileHeader } from 'node-unrar-js/dist/index.js';
 import { createExtractorFromFile } from 'node-unrar-js/dist/index.js';
 
+import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
-import IgirException from '../../exceptions/igirException.js';
 import type { ChecksumProps } from '../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';

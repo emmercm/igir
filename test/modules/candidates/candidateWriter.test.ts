@@ -9,15 +9,15 @@ import async from 'async';
 import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphore.js';
 import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import File from '../../../src/models/files/file.js';
-import FileCache from '../../../src/models/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
-import FileFactory from '../../../src/models/files/fileFactory.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options, {
   GameSubdirMode,

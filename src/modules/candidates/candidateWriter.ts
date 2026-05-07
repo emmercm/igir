@@ -6,13 +6,13 @@ import type CandidateWriterSemaphore from '../../async/candidateWriterSemaphore.
 import type FileMoveMutex from '../../async/fileMoveMutex.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
+import type FileFactory from '../../factories/fileFactory.js';
+import { CacheMode } from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import Zip from '../../models/files/archives/zip.js';
 import type File from '../../models/files/file.js';
 import { ChecksumBitmask } from '../../models/files/fileChecksums.js';
-import type FileFactory from '../../models/files/fileFactory.js';
-import { CacheMode } from '../../models/files/fileFactory.js';
 import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
 import type Options from '../../models/options.js';
 import type { ZipFormatValue } from '../../models/options.js';

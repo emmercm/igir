@@ -1,16 +1,16 @@
 import type { Readable } from 'node:stream';
 
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import type File from '../files/file.js';
-import APSPatch from './apsPatch.js';
-import BPSPatch from './bpsPatch.js';
-import DPSPatch from './dpsPatch.js';
-import IPSPatch from './ipsPatch.js';
-import NinjaPatch from './ninjaPatch.js';
-import type Patch from './patch.js';
-import PPFPatch from './ppfPatch.js';
-import UPSPatch from './upsPatch.js';
-import VcdiffPatch from './vcdiffPatch.js';
+import type File from '../models/files/file.js';
+import APSPatch from '../models/patches/apsPatch.js';
+import BPSPatch from '../models/patches/bpsPatch.js';
+import DPSPatch from '../models/patches/dpsPatch.js';
+import IPSPatch from '../models/patches/ipsPatch.js';
+import NinjaPatch from '../models/patches/ninjaPatch.js';
+import type Patch from '../models/patches/patch.js';
+import PPFPatch from '../models/patches/ppfPatch.js';
+import UPSPatch from '../models/patches/upsPatch.js';
+import VcdiffPatch from '../models/patches/vcdiffPatch.js';
+import ArrayPoly from '../polyfill/arrayPoly.js';
 
 interface PatchParser {
   extensions: string[];

@@ -1,25 +1,25 @@
 import type {
   ValidationResultKey,
   ValidationResultValue,
-} from '../../../packages/torrentzip/index.js';
-import { ValidationResultInverted } from '../../../packages/torrentzip/index.js';
-import { TZValidator } from '../../../packages/torrentzip/index.js';
-import { ValidationResult } from '../../../packages/torrentzip/index.js';
-import { ZipReader } from '../../../packages/zip/index.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import Cache from '../cache.js';
-import type Archive from './archives/archive.js';
-import type { ArchiveEntryProps } from './archives/archiveEntry.js';
-import ArchiveEntry from './archives/archiveEntry.js';
-import type Zip from './archives/zip.js';
-import type { FileProps } from './file.js';
-import File from './file.js';
-import FileChecksums, { ChecksumBitmask } from './fileChecksums.js';
-import FileSignature from './fileSignature.js';
-import ROMHeader from './romHeader.js';
-import type { ROMPaddingProps } from './romPadding.js';
-import ROMPadding from './romPadding.js';
+} from '../../packages/torrentzip/index.js';
+import { ValidationResultInverted } from '../../packages/torrentzip/index.js';
+import { TZValidator } from '../../packages/torrentzip/index.js';
+import { ValidationResult } from '../../packages/torrentzip/index.js';
+import { ZipReader } from '../../packages/zip/index.js';
+import type Archive from '../models/files/archives/archive.js';
+import type { ArchiveEntryProps } from '../models/files/archives/archiveEntry.js';
+import ArchiveEntry from '../models/files/archives/archiveEntry.js';
+import type Zip from '../models/files/archives/zip.js';
+import type { FileProps } from '../models/files/file.js';
+import File from '../models/files/file.js';
+import FileChecksums, { ChecksumBitmask } from '../models/files/fileChecksums.js';
+import FileSignature from '../models/files/fileSignature.js';
+import ROMHeader from '../models/files/romHeader.js';
+import type { ROMPaddingProps } from '../models/files/romPadding.js';
+import ROMPadding from '../models/files/romPadding.js';
+import FsPoly from '../polyfill/fsPoly.js';
+import type { FsReadCallback } from '../polyfill/fsReadTransform.js';
+import Cache from './cache.js';
 
 interface CacheValue {
   fileSize?: number;

@@ -1,4 +1,4 @@
-import IgirException from '../../exceptions/igirException.js';
+import IgirException from '../../../exceptions/igirException.js';
 
 export interface DATProps extends CMProObject {
   clrmamepro?: ClrMameProProps;

@@ -1,6 +1,6 @@
-import File from '../../../src/models/files/file.js';
-import Options from '../../../src/models/options.js';
-import PatchFactory from '../../../src/models/patches/patchFactory.js';
+import PatchFactory from '../../src/factories/patchFactory.js';
+import File from '../../src/models/files/file.js';
+import Options from '../../src/models/options.js';
 
 describe('patchFromFilename', () => {
   it('should do nothing if extension not found', async () => {

@@ -4,6 +4,7 @@ import { isNotJunk } from 'junk';
 
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
+import FileFactory from '../factories/fileFactory.js';
 import ArchiveEntry from '../models/files/archives/archiveEntry.js';
 import Chd from '../models/files/archives/chd/chd.js';
 import Gzip from '../models/files/archives/gzip.js';
@@ -11,7 +12,6 @@ import Tar from '../models/files/archives/tar.js';
 import type File from '../models/files/file.js';
 import type { ChecksumBitmaskValue } from '../models/files/fileChecksums.js';
 import { ChecksumBitmask } from '../models/files/fileChecksums.js';
-import FileFactory from '../models/files/fileFactory.js';
 import type Options from '../models/options.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';

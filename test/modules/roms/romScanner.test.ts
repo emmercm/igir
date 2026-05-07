@@ -3,14 +3,14 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import File from '../../../src/models/files/file.js';
-import FileCache from '../../../src/models/files/fileCache.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
-import FileFactory from '../../../src/models/files/fileFactory.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';

@@ -9,11 +9,11 @@ import { CompressionMethod, TZWriter } from '../../../../packages/torrentzip/ind
 import type { CentralDirectoryFileHeader } from '../../../../packages/zip/index.js';
 import { ZipReader } from '../../../../packages/zip/index.js';
 import type { ProgressCallback } from '../../../console/progressBar.js';
+import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
 import FsPoly from '../../../polyfill/fsPoly.js';
 import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import FsReadTransform from '../../../polyfill/fsReadTransform.js';
-import IgirException from '../../exceptions/igirException.js';
 import type { ZipFormatValue } from '../../options.js';
 import { ZipFormat } from '../../options.js';
 import type File from '../file.js';

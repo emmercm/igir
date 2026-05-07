@@ -7,10 +7,10 @@ import type { Entry, SevenZipEntry } from '7z-iterator';
 import _7zIterator from '7z-iterator';
 import async from 'async';
 
+import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import FsPoly, { WalkMode } from '../../../../polyfill/fsPoly.js';
 import type { FsReadCallback } from '../../../../polyfill/fsReadTransform.js';
-import IgirException from '../../../exceptions/igirException.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 

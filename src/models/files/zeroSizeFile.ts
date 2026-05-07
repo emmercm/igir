@@ -1,9 +1,9 @@
 import os from 'node:os';
 import type { Readable } from 'node:stream';
 
+import IgirException from '../../exceptions/igirException.js';
 import FsPoly from '../../polyfill/fsPoly.js';
 import StreamPoly from '../../polyfill/streamPoly.js';
-import IgirException from '../exceptions/igirException.js';
 import File from './file.js';
 
 export default class ZeroSizeFile extends File {

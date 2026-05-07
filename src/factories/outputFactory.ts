@@ -4,24 +4,24 @@ import path from 'node:path';
 
 import { Memoize } from 'typescript-memoize';
 
+import TokenReplacementException from '../exceptions/tokenReplacementException.js';
 import GameGrouper from '../gameGrouper.js';
+import ConsoleTokens from '../models/consoleTokens.js';
+import outputTokensData from '../models/consoleTokens.json' with { type: 'json' };
+import type DAT from '../models/dats/dat.js';
+import Disk from '../models/dats/disk.js';
+import type Game from '../models/dats/game.js';
+import type ROM from '../models/dats/rom.js';
+import type SingleValueGame from '../models/dats/singleValueGame.js';
+import ArchiveEntry from '../models/files/archives/archiveEntry.js';
+import ArchiveFile from '../models/files/archives/archiveFile.js';
+import type File from '../models/files/file.js';
+import ZeroSizeFile from '../models/files/zeroSizeFile.js';
+import type Options from '../models/options.js';
+import { FixExtension, GameSubdirMode } from '../models/options.js';
 import ArrayPoly from '../polyfill/arrayPoly.js';
 import FsPoly from '../polyfill/fsPoly.js';
-import ConsoleTokens from './consoleTokens.js';
-import outputTokensData from './consoleTokens.json' with { type: 'json' };
-import type DAT from './dats/dat.js';
-import Disk from './dats/disk.js';
-import type Game from './dats/game.js';
-import type ROM from './dats/rom.js';
-import type SingleValueGame from './dats/singleValueGame.js';
-import TokenReplacementException from './exceptions/tokenReplacementException.js';
-import ArchiveEntry from './files/archives/archiveEntry.js';
-import ArchiveFile from './files/archives/archiveFile.js';
-import type File from './files/file.js';
-import FileFactory from './files/fileFactory.js';
-import ZeroSizeFile from './files/zeroSizeFile.js';
-import type Options from './options.js';
-import { FixExtension, GameSubdirMode } from './options.js';
+import FileFactory from './fileFactory.js';
 
 interface ConsoleTokensJson {
   consoles: {

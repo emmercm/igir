@@ -4,10 +4,10 @@ import path from 'node:path';
 import async from 'async';
 import fg from 'fast-glob';
 
+import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import Temp from '../../../../globals/temp.js';
 import FsPoly from '../../../../polyfill/fsPoly.js';
-import IgirException from '../../../exceptions/igirException.js';
 import FileChecksums from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
 import type Chd from './chd.js';

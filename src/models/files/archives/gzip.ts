@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import stream from 'node:stream';
 import zlib from 'node:zlib';
 
+import IgirException from '../../../exceptions/igirException.js';
 import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
 import IOFile from '../../../polyfill/ioFile.js';
-import IgirException from '../../exceptions/igirException.js';
 import FileChecksums, { ChecksumBitmask, type ChecksumProps } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';

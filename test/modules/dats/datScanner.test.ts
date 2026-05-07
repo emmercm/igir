@@ -5,10 +5,10 @@ import stream from 'node:stream';
 import which from 'which';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
-import FileCache from '../../../src/models/files/fileCache.js';
-import FileFactory from '../../../src/models/files/fileFactory.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';

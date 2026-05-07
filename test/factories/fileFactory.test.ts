@@ -1,13 +1,13 @@
 import path from 'node:path';
 import stream from 'node:stream';
 
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
-import Temp from '../../../src/globals/temp.js';
-import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
-import FileCache from '../../../src/models/files/fileCache.js';
-import FileFactory from '../../../src/models/files/fileFactory.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FileCache from '../../src/cache/fileCache.js';
+import Logger from '../../src/console/logger.js';
+import { LogLevel } from '../../src/console/logLevel.js';
+import FileFactory from '../../src/factories/fileFactory.js';
+import Temp from '../../src/globals/temp.js';
+import ArchiveEntry from '../../src/models/files/archives/archiveEntry.js';
+import FsPoly from '../../src/polyfill/fsPoly.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
