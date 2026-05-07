@@ -4,7 +4,7 @@ import fg from 'fast-glob';
 
 import Temp from '../../src/globals/temp.js';
 import Options from '../../src/models/options.js';
-import FsPoly, { WalkMode } from '../../src/polyfill/fsPoly.js';
+import FsUtil, { WalkMode } from '../../src/utils/fsUtil.js';
 
 describe('scanPaths', () => {
   test.each([
@@ -118,12 +118,12 @@ describe('scanPaths', () => {
   ])(
     'should sanitize glob-like patterns: %s',
     async (pattern, filePaths, expectedScannedFilePaths) => {
-      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
         await Promise.all(
           filePaths.map(async (filePath) => {
             const tempFilePath = path.join(tempDir, filePath);
-            await FsPoly.touch(tempFilePath);
+            await FsUtil.touch(tempFilePath);
           }),
         );
 
@@ -139,7 +139,7 @@ describe('scanPaths', () => {
             .toSorted(),
         ).toEqual(expectedScannedFilePaths.toSorted());
       } finally {
-        await FsPoly.rm(tempDir, { force: true, recursive: true });
+        await FsUtil.rm(tempDir, { force: true, recursive: true });
       }
     },
   );

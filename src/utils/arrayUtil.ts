@@ -7,7 +7,7 @@ export default {
    * test for equality. Usage:
    *
    * <code>
-   * ['a', 'b', 'c', 'a', 'A', 'C'].filter(ArrayPoly.filterUniqueMapped((str) => str.toUpperCase());
+   * ['a', 'b', 'c', 'a', 'A', 'C'].filter(ArrayUtil.filterUniqueMapped((str) => str.toUpperCase());
    * </code>
    */
   filterUniqueMapped<T>(
@@ -33,7 +33,7 @@ export default {
    * Reduce elements in an array to chunks of size {@link limit}.
    *
    * <code>
-   * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce(ArrayPoly.reduceChunk(3), []);
+   * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce(ArrayUtil.reduceChunk(3), []);
    * </code>
    */
   reduceChunk<T>(limit: number): (previous: T[][], current: T, idx: number, array: T[]) => T[][] {
@@ -59,7 +59,7 @@ export default {
    * Reduce elements in an array to only unique values. Usage:
    *
    * <code>
-   * [1, 2, 3, 1, 1, 3].reduce(ArrayPoly.reduceUnique(), []);
+   * [1, 2, 3, 1, 1, 3].reduce(ArrayUtil.reduceUnique(), []);
    * </code>
    */
   reduceUnique<T>(): (previous: T[], current: T, idx: number, array: T[]) => T[] {

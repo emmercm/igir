@@ -1,6 +1,6 @@
 import IgirException from '../../exceptions/igirException.js';
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import IOFile from '../../polyfill/ioFile.js';
+import IOFile from '../../io/ioFile.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
 

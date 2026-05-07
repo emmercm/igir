@@ -10,9 +10,9 @@ import type File from '../models/files/file.js';
 import type IndexedFiles from '../models/indexedFiles.js';
 import type Options from '../models/options.js';
 import type WriteCandidate from '../models/writeCandidate.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import IntlPoly from '../polyfill/intlPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
+import IntlUtil from '../utils/intlUtil.js';
 import Module from './module.js';
 
 /**
@@ -57,7 +57,7 @@ export default class MovedROMDeleter extends Module {
     });
     this.progressBar.resetProgress(inputFiles.size);
     this.progressBar.logTrace(
-      `considering ${IntlPoly.toLocaleString(inputFiles.size)} unique input paths for deletion`,
+      `considering ${IntlUtil.toLocaleString(inputFiles.size)} unique input paths for deletion`,
     );
 
     // Take the input files from the WriteCandidates that were moved, and look for duplicate input
@@ -97,12 +97,12 @@ export default class MovedROMDeleter extends Module {
       }
     });
     this.progressBar.logTrace(
-      `expanded to ${IntlPoly.toLocaleString(movedRoms.size)} possible input files`,
+      `expanded to ${IntlUtil.toLocaleString(movedRoms.size)} possible input files`,
     );
 
     const fullyConsumedFiles = this.filterOutPartiallyConsumedArchives([...movedRoms], indexedRoms);
     this.progressBar.logTrace(
-      `filtered to ${IntlPoly.toLocaleString(fullyConsumedFiles.length)} fully used input files`,
+      `filtered to ${IntlUtil.toLocaleString(fullyConsumedFiles.length)} fully used input files`,
     );
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
@@ -110,14 +110,14 @@ export default class MovedROMDeleter extends Module {
       writtenFilesToExclude,
     );
     this.progressBar.logTrace(
-      `filtered to ${IntlPoly.toLocaleString(filePathsToDelete.length)} non-output files`,
+      `filtered to ${IntlUtil.toLocaleString(filePathsToDelete.length)} non-output files`,
     );
 
     this.progressBar.resetProgress(filePathsToDelete.length);
     const existingFilePathsCheck = await async.mapLimit(
       filePathsToDelete,
       Defaults.MAX_FS_THREADS,
-      async (filePath: string) => await FsPoly.exists(filePath),
+      async (filePath: string) => await FsUtil.exists(filePath),
     );
     const existingFilePaths = filePathsToDelete.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -126,12 +126,12 @@ export default class MovedROMDeleter extends Module {
       this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
       this.progressBar.resetProgress(existingFilePaths.length);
       this.progressBar.logTrace(
-        `deleting ${IntlPoly.toLocaleString(existingFilePaths.length)} moved file${existingFilePaths.length === 1 ? '' : 's'}`,
+        `deleting ${IntlUtil.toLocaleString(existingFilePaths.length)} moved file${existingFilePaths.length === 1 ? '' : 's'}`,
       );
     }
 
     const filePathChunks = existingFilePaths.reduce(
-      ArrayPoly.reduceChunk(Defaults.OUTPUT_CLEANER_BATCH_SIZE),
+      ArrayUtil.reduceChunk(Defaults.OUTPUT_CLEANER_BATCH_SIZE),
       [],
     );
     for (const filePathChunk of filePathChunks) {
@@ -142,7 +142,7 @@ export default class MovedROMDeleter extends Module {
       await Promise.all(
         filePathChunk.map(async (filePath) => {
           try {
-            await FsPoly.rm(filePath, { force: true });
+            await FsUtil.rm(filePath, { force: true });
           } catch (error) {
             this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
           }
@@ -214,7 +214,7 @@ export default class MovedROMDeleter extends Module {
         }
 
         this.progressBar.logWarn(
-          `${filePath}: not deleting moved file, ${IntlPoly.toLocaleString(unmovedArchiveEntries.length)} archive entr${unmovedArchiveEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedArchiveEntries
+          `${filePath}: not deleting moved file, ${IntlUtil.toLocaleString(unmovedArchiveEntries.length)} archive entr${unmovedArchiveEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedArchiveEntries
             .toSorted()
             .map((entry) => `  ${entry.toString()}`)
             .join('\n')}`,
@@ -231,7 +231,7 @@ export default class MovedROMDeleter extends Module {
 
       filesForKey.push(file);
       const uniqueFilesForKey = filesForKey.filter(
-        ArrayPoly.filterUniqueMapped((fileForKey) => fileForKey.toString()),
+        ArrayUtil.filterUniqueMapped((fileForKey) => fileForKey.toString()),
       );
 
       map.set(key, uniqueFilesForKey);

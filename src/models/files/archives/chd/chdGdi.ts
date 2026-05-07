@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
 
-import FsPoly, { WalkMode } from '../../../../polyfill/fsPoly.js';
+import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
@@ -43,16 +43,16 @@ export default class ChdGdi extends Chd {
     });
 
     // Apply TOSEC-style CRLF line separators to the .gdi file
-    await FsPoly.writeFile(
+    await FsUtil.writeFile(
       gdiFile,
       (await fs.promises.readFile(gdiFile)).toString().replaceAll(/\r?\n/g, '\r\n'),
     );
 
-    await FsPoly.mv(
+    await FsUtil.mv(
       gdiFile,
       path.join(outputDirectory, `${path.parse(this.getFilePath()).name}.gdi`),
     );
 
-    return await FsPoly.walk(outputDirectory, WalkMode.FILES);
+    return await FsUtil.walk(outputDirectory, WalkMode.FILES);
   }
 }

@@ -7,7 +7,7 @@ import IgirHeader from '../models/dats/igirHeader.js';
 import LogiqxDAT from '../models/dats/logiqx/logiqxDat.js';
 import type Options from '../models/options.js';
 import type WriteCandidate from '../models/writeCandidate.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import FsUtil from '../utils/fsUtil.js';
 import Module from './module.js';
 
 /**
@@ -55,8 +55,8 @@ export default class FixdatCreator extends Module {
     }
 
     const fixdatDir = this.options.getFixdatOutput();
-    if (!(await FsPoly.exists(fixdatDir))) {
-      await FsPoly.mkdir(fixdatDir, { recursive: true });
+    if (!(await FsUtil.exists(fixdatDir))) {
+      await FsUtil.mkdir(fixdatDir, { recursive: true });
     }
 
     // Construct a new DAT and write it to the output dir
@@ -65,7 +65,7 @@ export default class FixdatCreator extends Module {
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
     this.progressBar.logInfo(`${originalDat.getName()}: writing fixdat to '${fixdatPath}'`);
-    await FsPoly.writeFile(fixdatPath, fixdatContents);
+    await FsUtil.writeFile(fixdatPath, fixdatContents);
 
     this.progressBar.logTrace(`${originalDat.getName()}: done generating a fixdat`);
     return fixdatPath;

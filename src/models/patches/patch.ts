@@ -1,9 +1,9 @@
 import path from 'node:path';
 
 import IgirException from '../../exceptions/igirException.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import type IOFile from '../../polyfill/ioFile.js';
+import type IOFile from '../../io/ioFile.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
+import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 
 export default abstract class Patch {
@@ -56,7 +56,7 @@ export default abstract class Patch {
   }
 
   toString(): string {
-    return `${this.getFile().toString()} (${this.crcBefore} → ${this.crcAfter ?? '????????'}${this.sizeAfter !== undefined && this.sizeAfter > 0 ? `, ${FsPoly.sizeReadable(this.sizeAfter)}` : ''})`;
+    return `${this.getFile().toString()} (${this.crcBefore} → ${this.crcAfter ?? '????????'}${this.sizeAfter !== undefined && this.sizeAfter > 0 ? `, ${FsUtil.sizeReadable(this.sizeAfter)}` : ''})`;
   }
 
   abstract createPatchedFile(

@@ -35,8 +35,8 @@ import Options, {
   ZipFormat,
   ZipFormatInverted,
 } from '../models/options.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import ConsolePoly from '../polyfill/consolePoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import ConsoleUtil from '../utils/consoleUtil.js';
 
 /**
  * Parse a {@link process.argv} (without its first two arguments, the Node.js executable and the
@@ -79,7 +79,7 @@ export default class ArgumentsParser {
 
     return Math.min(
       // Use the terminal width if it has one
-      ConsolePoly.consoleWidth(),
+      ConsoleUtil.consoleWidth(),
       // Sane maximum
       110,
     );
@@ -166,7 +166,7 @@ export default class ArgumentsParser {
       return yargsObj
         .middleware((middlewareArgv) => {
           // Ignore duplicate commands
-          middlewareArgv._ = middlewareArgv._.reduce(ArrayPoly.reduceUnique(), []);
+          middlewareArgv._ = middlewareArgv._.reduce(ArrayUtil.reduceUnique(), []);
         }, true)
         .check((checkArgv) => {
           ['extract', 'zip'].forEach((command) => {

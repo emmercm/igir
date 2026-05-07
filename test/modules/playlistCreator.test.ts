@@ -12,7 +12,7 @@ import ROMWithFiles from '../../src/models/romWithFiles.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import DATDiscMerger from '../../src/modules/dats/datDiscMerger.js';
 import PlaylistCreator from '../../src/modules/playlistCreator.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const games: Game[] = [
@@ -275,8 +275,8 @@ async function playlistCreator(
 
   return await Promise.all(
     writtenFiles.toSorted().map(async (filePath) => {
-      const contents = (await FsPoly.readFile(filePath)).toString().trim().split('\n');
-      await FsPoly.rm(filePath, { force: true });
+      const contents = (await FsUtil.readFile(filePath)).toString().trim().split('\n');
+      await FsUtil.rm(filePath, { force: true });
       return [filePath.replace(Temp.getTempDir() + path.sep, ''), contents] satisfies [
         string,
         string[],

@@ -2,8 +2,8 @@ import path from 'node:path';
 import type { Readable } from 'node:stream';
 
 import Temp from '../../../globals/temp.js';
-import FsPoly from '../../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
+import FsUtil from '../../../utils/fsUtil.js';
 import File from '../file.js';
 import type ArchiveEntry from './archiveEntry.js';
 
@@ -45,23 +45,23 @@ export default abstract class Archive {
     entryPath: string,
     callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
-    const tempFile = await FsPoly.mktemp(
+    const tempFile = await FsUtil.mktemp(
       path.join(
         Temp.getTempDir(),
-        FsPoly.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
+        FsUtil.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
       ),
     );
 
     const tempDir = path.dirname(tempFile);
-    if (!(await FsPoly.exists(tempDir))) {
-      await FsPoly.mkdir(tempDir, { recursive: true });
+    if (!(await FsUtil.exists(tempDir))) {
+      await FsUtil.mkdir(tempDir, { recursive: true });
     }
 
     try {
       await this.extractEntryToFile(entryPath, tempFile);
       return await callback(tempFile);
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   }
 

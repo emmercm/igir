@@ -1,7 +1,7 @@
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 
-import FsReadTransform, { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import StreamPoly from '../../polyfill/streamPoly.js';
+import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
+import StreamUtil from '../../utils/streamUtil.js';
 import File from './file.js';
 import FileChecksums from './fileChecksums.js';
 import { ChecksumProps } from './fileChecksums.js';
@@ -91,13 +91,13 @@ export default class ROMPadding implements ROMPaddingProps {
       const readableWithCallback =
         callback === undefined
           ? readable
-          : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
+          : StreamUtil.withTransforms(readable, new FsReadTransform(callback));
 
-      const splitStreams = StreamPoly.split(readableWithCallback, this.POSSIBLE_FILL_BYTES.length);
+      const splitStreams = StreamUtil.split(readableWithCallback, this.POSSIBLE_FILL_BYTES.length);
 
       return await Promise.all(
         this.POSSIBLE_FILL_BYTES.map(async (fillByte, idx) => {
-          const paddedStream = StreamPoly.padEnd(splitStreams[idx], paddedSize, fillByte);
+          const paddedStream = StreamUtil.padEnd(splitStreams[idx], paddedSize, fillByte);
           const checksums = await FileChecksums.hashStream(paddedStream, file.getChecksumBitmask());
           return new ROMPadding({ paddedSize: paddedSize, fillByte, ...checksums });
         }),

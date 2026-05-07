@@ -13,8 +13,8 @@ import type { AllChecksums, ChecksumsToFiles } from '../../models/indexedFiles.j
 import IndexedFiles from '../../models/indexedFiles.js';
 import type Options from '../../models/options.js';
 import { PreferFiletype } from '../../models/options.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -34,7 +34,7 @@ export default class ROMIndexer extends Module {
    */
   index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(
-      `indexing ${IntlPoly.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
+      `indexing ${IntlUtil.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
     this.progressBar.resetProgress(files.length);
@@ -57,7 +57,7 @@ export default class ROMIndexer extends Module {
 
   private sortMap(checksumsToFiles: ChecksumsToFiles): void {
     const outputDir = this.options.getOutputDirRoot();
-    const outputDirDisk = FsPoly.diskResolved(outputDir);
+    const outputDirDisk = FsUtil.diskResolved(outputDir);
 
     [...checksumsToFiles.entries()].forEach(([checksum, files]) => {
       const sortedFiles = files.toSorted((fileOne, fileTwo) => {
@@ -125,7 +125,7 @@ export default class ROMIndexer extends Module {
         }
 
         /**
-         * Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
+         * Then, prefer files that are on the same disk for fs efficiency see {@link FsUtil#mv}
          */
         if (outputDirDisk && this.options.shouldMove()) {
           const fileOneInOutputDisk = fileOne.getFilePath().startsWith(outputDirDisk) ? 0 : 1;

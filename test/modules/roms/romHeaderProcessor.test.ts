@@ -12,7 +12,7 @@ import File from '../../../src/models/files/file.js';
 import Options from '../../../src/models/options.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -47,7 +47,7 @@ describe('extension has possible header', () => {
 
   it('should not throw on non-existent files', async () => {
     const tempPath = path.join(Temp.getTempDir(), 'file.nes');
-    await expect(FsPoly.exists(tempPath)).resolves.toEqual(false);
+    await expect(FsUtil.exists(tempPath)).resolves.toEqual(false);
     const inputRomFiles = [await File.fileOf({ filePath: tempPath })];
 
     const processedRomFiles = await new ROMHeaderProcessor(

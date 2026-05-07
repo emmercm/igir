@@ -11,7 +11,7 @@ import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
 import IgirException from '../src/exceptions/igirException.js';
 import Package from '../src/globals/package.js';
-import FsPoly from '../src/polyfill/fsPoly.js';
+import FsUtil from '../src/utils/fsUtil.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== COMPILING ==========');
@@ -34,8 +34,8 @@ const argv = await yargs([])
 
 const output = path.resolve(argv.output);
 logger.info(`Output: '${output}'`);
-if (await FsPoly.exists(output)) {
-  await FsPoly.rm(output);
+if (await FsUtil.exists(output)) {
+  await FsUtil.rm(output);
 }
 
 logger.info("Bundling with 'bun build --compile' ...");
@@ -115,7 +115,7 @@ if (!result.success) {
   throw new IgirException("'bun build --compile' failed");
 }
 
-if (!(await FsPoly.exists(output))) {
+if (!(await FsUtil.exists(output))) {
   throw new IgirException(`output file '${output}' doesn't exist`);
 }
 
@@ -151,7 +151,7 @@ if (argv.platform === 'darwin') {
   });
 }
 
-logger.info(`Output: ${FsPoly.sizeReadable(await FsPoly.size(output))}`);
+logger.info(`Output: ${FsUtil.sizeReadable(await FsUtil.size(output))}`);
 
 logger.info(`Testing: '${output}' ...`);
 const procOutput = await new Promise<string>((resolve, reject) => {

@@ -28,8 +28,8 @@ import Tar from '../../../../src/models/files/archives/tar.js';
 import Zip from '../../../../src/models/files/archives/zip.js';
 import Options from '../../../../src/models/options.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
-import ArrayPoly from '../../../../src/polyfill/arrayPoly.js';
-import FsPoly from '../../../../src/polyfill/fsPoly.js';
+import ArrayUtil from '../../../../src/utils/arrayUtil.js';
+import FsUtil from '../../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -57,7 +57,7 @@ describe('getArchiveEntries', () => {
       ...NkitIso.getExtensions(),
     ]),
   ])("should throw when the file doesn't exist: %s", async (extension) => {
-    const tempFile = (await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
+    const tempFile = (await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
     await expect(new FileFactory(new FileCache(), LOGGER).filesFrom(tempFile)).rejects.toThrow();
   });
 
@@ -163,7 +163,7 @@ describe('extractEntryToFile', () => {
     const archives = archiveEntries
       .filter((entry) => entry instanceof ArchiveEntry)
       .map((entry) => entry.getArchive())
-      .reduce(ArrayPoly.reduceUnique(), []);
+      .reduce(ArrayUtil.reduceUnique(), []);
     expect(archives).toHaveLength(16);
 
     for (const archive of archives) {

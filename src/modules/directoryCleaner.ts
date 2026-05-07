@@ -11,9 +11,9 @@ import { ProgressBarSymbol } from '../console/progressBar.js';
 import Defaults from '../globals/defaults.js';
 import type File from '../models/files/file.js';
 import type Options from '../models/options.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import IntlPoly from '../polyfill/intlPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
+import IntlUtil from '../utils/intlUtil.js';
 import Module from './module.js';
 
 /**
@@ -63,7 +63,7 @@ export default class DirectoryCleaner extends Module {
 
     try {
       this.progressBar.logTrace(
-        `cleaning ${IntlPoly.toLocaleString(filesToClean.length)} file${filesToClean.length === 1 ? '' : 's'}`,
+        `cleaning ${IntlUtil.toLocaleString(filesToClean.length)} file${filesToClean.length === 1 ? '' : 's'}`,
       );
       this.progressBar.resetProgress(filesToClean.length);
       if (this.options.getCleanDryRun()) {
@@ -88,7 +88,7 @@ export default class DirectoryCleaner extends Module {
       while (emptyDirs.length > 0) {
         this.progressBar.resetProgress(emptyDirs.length);
         this.progressBar.logTrace(
-          `cleaning ${IntlPoly.toLocaleString(emptyDirs.length)} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
+          `cleaning ${IntlUtil.toLocaleString(emptyDirs.length)} empty director${emptyDirs.length === 1 ? 'y' : 'ies'}`,
         );
         if (this.options.getCleanDryRun()) {
           this.progressBar.logInfo(
@@ -130,7 +130,7 @@ export default class DirectoryCleaner extends Module {
     const existSemaphore = new MappableSemaphore(Defaults.OUTPUT_CLEANER_BATCH_SIZE);
     const existingFilePathsCheck = await existSemaphore.map(
       filePaths,
-      async (filePath) => await FsPoly.exists(filePath),
+      async (filePath) => await FsUtil.exists(filePath),
     );
     const existingFilePaths = filePaths.filter(
       (_filePath, idx) => existingFilePathsCheck.at(idx) === true,
@@ -146,7 +146,7 @@ export default class DirectoryCleaner extends Module {
       await Promise.all(
         filePathsChunk.map(async (filePath) => {
           try {
-            await FsPoly.rm(filePath, { force: true });
+            await FsUtil.rm(filePath, { force: true });
           } catch (error) {
             this.progressBar.logError(`${filePath}: failed to delete: ${error}`);
           }
@@ -162,7 +162,7 @@ export default class DirectoryCleaner extends Module {
 
       let backupPath = path.join(backupDir, path.basename(filePath));
       let increment = 0;
-      while (await FsPoly.exists(backupPath)) {
+      while (await FsUtil.exists(backupPath)) {
         increment += 1;
         const { name, ext } = path.parse(filePath);
         backupPath = path.join(backupDir, `${name} (${increment})${ext}`);
@@ -170,11 +170,11 @@ export default class DirectoryCleaner extends Module {
 
       this.progressBar.logInfo(`moving cleaned path: ${filePath} -> ${backupPath}`);
       const backupPathDir = path.dirname(backupPath);
-      if (!(await FsPoly.exists(backupPathDir))) {
-        await FsPoly.mkdir(backupPathDir, { recursive: true });
+      if (!(await FsUtil.exists(backupPathDir))) {
+        await FsUtil.mkdir(backupPathDir, { recursive: true });
       }
       try {
-        await FsPoly.mv(filePath, backupPath);
+        await FsUtil.mv(filePath, backupPath);
       } catch (error) {
         this.progressBar.logWarn(`failed to move ${filePath} -> ${backupPath}: ${error}`);
       }
@@ -192,11 +192,11 @@ export default class DirectoryCleaner extends Module {
         )
       )
         .flat()
-        .reduce(ArrayPoly.reduceUnique(), []);
+        .reduce(ArrayUtil.reduceUnique(), []);
     }
 
     // Find all subdirectories and files in the directory
-    if (!(await FsPoly.exists(dirsToClean))) {
+    if (!(await FsUtil.exists(dirsToClean))) {
       return [];
     }
     const subPaths = (await fs.promises.readdir(dirsToClean))
@@ -207,7 +207,7 @@ export default class DirectoryCleaner extends Module {
     const subDirs: string[] = [];
     const subFiles: string[] = [];
     await async.mapLimit(subPaths, Defaults.MAX_FS_THREADS, async (subPath: string) => {
-      if (await FsPoly.isDirectory(subPath)) {
+      if (await FsUtil.isDirectory(subPath)) {
         subDirs.push(subPath);
       } else {
         subFiles.push(subPath);

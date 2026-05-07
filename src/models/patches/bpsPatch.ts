@@ -1,7 +1,7 @@
 import IgirException from '../../exceptions/igirException.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import IOFile from '../../polyfill/ioFile.js';
+import IOFile from '../../io/ioFile.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
+import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
@@ -73,7 +73,7 @@ export default class BPSPatch extends Patch {
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new IgirException(
-          `BPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
+          `BPS patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${this.getFile().toString()}`,
         );
       }
       await Patch.readUpsUint(patchFile); // target size

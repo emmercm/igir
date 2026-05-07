@@ -7,7 +7,7 @@ import fg from 'fast-glob';
 import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import Temp from '../../../../globals/temp.js';
-import FsPoly from '../../../../polyfill/fsPoly.js';
+import FsUtil from '../../../../utils/fsUtil.js';
 import FileChecksums from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
 import type Chd from './chd.js';
@@ -20,7 +20,7 @@ export default class ChdGdiParser {
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd-gdi'));
+    const tempDir = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'chd-gdi'));
 
     let binRawFilePaths: string[] = [];
     try {
@@ -38,7 +38,7 @@ export default class ChdGdiParser {
       }
       return await this.parseGdi(archive, gdiFilePath, binRawFilePaths, checksumBitmask);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true, force: true });
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
     }
   }
 
@@ -78,7 +78,7 @@ export default class ChdGdiParser {
             {
               archive,
               entryPath: path.basename(binRawFilePath).replace(filePrefix, 'track'),
-              size: await FsPoly.size(binRawFilePath),
+              size: await FsUtil.size(binRawFilePath),
               ...(await FileChecksums.hashFile(binRawFilePath, checksumBitmask)),
             },
             checksumBitmask,

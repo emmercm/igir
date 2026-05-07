@@ -7,7 +7,7 @@ import { E_CANCELED, Mutex } from 'async-mutex';
 
 import KeyedMutex from '../async/keyedMutex.js';
 import Timer from '../async/timer.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import FsUtil from '../utils/fsUtil.js';
 
 export interface CacheProps {
   filePath?: string;
@@ -249,7 +249,7 @@ export default class Cache<V> {
    * Load the cache from a file.
    */
   async load(): Promise<Cache<V>> {
-    if (this.filePath === undefined || !(await FsPoly.exists(this.filePath))) {
+    if (this.filePath === undefined || !(await FsUtil.exists(this.filePath))) {
       // Cache doesn't exist, so there is nothing to load
       return this;
     }
@@ -324,12 +324,12 @@ export default class Cache<V> {
 
         // Ensure the directory exists
         const dirPath = path.dirname(this.filePath);
-        if (!(await FsPoly.exists(dirPath))) {
-          await FsPoly.mkdir(dirPath, { recursive: true });
+        if (!(await FsUtil.exists(dirPath))) {
+          await FsUtil.mkdir(dirPath, { recursive: true });
         }
 
         // Write to a temp file first
-        const tempFile = await FsPoly.mktemp(this.filePath);
+        const tempFile = await FsUtil.mktemp(this.filePath);
         try {
           await stream.promises.pipeline(
             stream.Readable.from([Buffer.from(json, 'utf8')]),
@@ -341,15 +341,15 @@ export default class Cache<V> {
           const tempFileCache = await new Cache({ filePath: tempFile }).load();
           if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
             // The written file is bad, don't use it
-            await FsPoly.rm(tempFile, { force: true });
+            await FsUtil.rm(tempFile, { force: true });
             this.hasChanged = true;
             return;
           }
 
           // Overwrite the real file with the temp file
-          await FsPoly.mv(tempFile, this.filePath);
+          await FsUtil.mv(tempFile, this.filePath);
         } catch {
-          await FsPoly.rm(tempFile, { force: true });
+          await FsUtil.rm(tempFile, { force: true });
           this.hasChanged = true;
           return;
         }

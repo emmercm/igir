@@ -18,7 +18,7 @@ import ROMWithFiles from '../../src/models/romWithFiles.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const gameWithNoRoms = new SingleValueGame({
@@ -69,7 +69,7 @@ async function runFixdatCreator(
     return undefined;
   }
 
-  await expect(FsPoly.exists(fixdatPath)).resolves.toEqual(true);
+  await expect(FsUtil.exists(fixdatPath)).resolves.toEqual(true);
 
   try {
     return (
@@ -84,7 +84,7 @@ async function runFixdatCreator(
       ).scan()
     )[0];
   } finally {
-    await FsPoly.rm(fixdatPath, { force: true });
+    await FsUtil.rm(fixdatPath, { force: true });
   }
 }
 

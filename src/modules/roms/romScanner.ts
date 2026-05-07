@@ -5,7 +5,7 @@ import type FileFactory from '../../factories/fileFactory.js';
 import type File from '../../models/files/file.js';
 import { ChecksumBitmask } from '../../models/files/fileChecksums.js';
 import type Options from '../../models/options.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Scanner from '../scanner.js';
 
 /**
@@ -37,7 +37,7 @@ export default class ROMScanner extends Scanner {
       this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(
-      `found ${IntlPoly.toLocaleString(inputFilePaths.length)} input file${inputFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlUtil.toLocaleString(inputFilePaths.length)} input file${inputFilePaths.length === 1 ? '' : 's'}`,
     );
     const filePathsToProcess = inputFilePaths;
 
@@ -57,7 +57,7 @@ export default class ROMScanner extends Scanner {
         },
       );
       this.progressBar.logTrace(
-        `found ${IntlPoly.toLocaleString(outputFilePaths.length)} output file${outputFilePaths.length === 1 ? '' : 's'}`,
+        `found ${IntlUtil.toLocaleString(outputFilePaths.length)} output file${outputFilePaths.length === 1 ? '' : 's'}`,
       );
       outputFilePaths.forEach((filePath) => {
         if (!inputFilePathsSet.has(filePath)) {

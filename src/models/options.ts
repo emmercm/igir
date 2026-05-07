@@ -11,9 +11,9 @@ import moment from 'moment';
 import { LogLevel, LogLevelValue } from '../console/logLevel.js';
 import IgirException from '../exceptions/igirException.js';
 import Temp from '../globals/temp.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly, { FsWalkCallback, WalkMode, WalkModeValue } from '../polyfill/fsPoly.js';
-import URLPoly from '../polyfill/urlPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil, { FsWalkCallback, WalkMode, WalkModeValue } from '../utils/fsUtil.js';
+import URLUtil from '../utils/urlUtil.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
 import File from './files/file.js';
@@ -531,7 +531,7 @@ export default class Options implements OptionsProps {
     this.inputChecksumArchives = options?.inputChecksumArchives;
 
     this.dat = (options?.dat ?? []).map((filePath) =>
-      URLPoly.canParse(filePath) ? filePath : filePath.replaceAll(/[\\/]/g, path.sep),
+      URLUtil.canParse(filePath) ? filePath : filePath.replaceAll(/[\\/]/g, path.sep),
     );
     this.datExclude = (options?.datExclude ?? []).map((filePath) =>
       filePath.replaceAll(/[\\/]/g, path.sep),
@@ -866,7 +866,7 @@ export default class Options implements OptionsProps {
     requireFiles = true,
   ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
-    const uniqueGlobPatterns = globPatterns.reduce(ArrayPoly.reduceUnique(), []);
+    const uniqueGlobPatterns = globPatterns.reduce(ArrayUtil.reduceUnique(), []);
     const globbedPaths: string[] = [];
     for (const uniqueGlobPattern of uniqueGlobPatterns) {
       const paths = await this.globPath(uniqueGlobPattern, walkMode, walkCallback);
@@ -882,7 +882,7 @@ export default class Options implements OptionsProps {
     }
 
     // Remove duplicates
-    return globbedPaths.reduce(ArrayPoly.reduceUnique(), []);
+    return globbedPaths.reduce(ArrayUtil.reduceUnique(), []);
   }
 
   private static async scanPathsWithoutExclusions(
@@ -916,12 +916,12 @@ export default class Options implements OptionsProps {
     }
 
     // Glob the contents of directories
-    if (await FsPoly.isDirectory(inputPath)) {
-      return (await FsPoly.walk(inputPath, walkMode, walkCallback)).map((p) => path.resolve(p));
+    if (await FsUtil.isDirectory(inputPath)) {
+      return (await FsUtil.walk(inputPath, walkMode, walkCallback)).map((p) => path.resolve(p));
     }
 
     // If the file exists, don't process it as a glob pattern
-    if (await FsPoly.exists(inputPath)) {
+    if (await FsUtil.exists(inputPath)) {
       if (walkCallback !== undefined) {
         walkCallback(1);
       }
@@ -938,7 +938,7 @@ export default class Options implements OptionsProps {
 
     // Check for URLs before globbing, as fast-glob may throw on Windows with URL-like paths
     // (e.g. `http:` looks like a drive letter)
-    if (URLPoly.canParse(inputPath)) {
+    if (URLUtil.canParse(inputPath)) {
       // Allow URLs, let the scanner modules deal with them
       if (walkCallback !== undefined) {
         walkCallback(1);
@@ -1537,13 +1537,13 @@ export default class Options implements OptionsProps {
   }
 
   getDir2DatOutput(): string {
-    return FsPoly.makeLegal(
+    return FsUtil.makeLegal(
       this.dir2datOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
 
   getFixdatOutput(): string {
-    return FsPoly.makeLegal(
+    return FsUtil.makeLegal(
       this.fixdatOutput ?? (this.shouldWrite() ? this.getOutputDirRoot() : process.cwd()),
     );
   }
@@ -1554,13 +1554,13 @@ export default class Options implements OptionsProps {
     // Replace date & time tokens
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
-      symbolMatches.reduce(ArrayPoly.reduceUnique(), []).forEach((match) => {
+      symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
         const val = moment().format(match.replace(/^%/, ''));
         reportOutput = reportOutput.replace(match, val);
       });
     }
 
-    return FsPoly.makeLegal(reportOutput);
+    return FsUtil.makeLegal(reportOutput);
   }
 
   getDatThreads(): number {
@@ -1613,7 +1613,7 @@ export default class Options implements OptionsProps {
     // Replace date & time tokens
     const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
-      symbolMatches.reduce(ArrayPoly.reduceUnique(), []).forEach((match) => {
+      symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
         const val = moment().format(match.replace(/^%/, ''));
         debugLog = debugLog.replace(match, val);
       });
@@ -1627,6 +1627,6 @@ export default class Options implements OptionsProps {
   }
 
   private static filterUniqueUpper(array: string[]): string[] {
-    return array.map((value) => value.toUpperCase()).reduce(ArrayPoly.reduceUnique(), []);
+    return array.map((value) => value.toUpperCase()).reduce(ArrayUtil.reduceUnique(), []);
   }
 }

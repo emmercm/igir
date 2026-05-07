@@ -3,9 +3,9 @@ import stream from 'node:stream';
 
 import { Crc32 } from '@aws-crypto/crc32';
 
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import FsReadTransform from '../../polyfill/fsReadTransform.js';
-import StreamPoly from '../../polyfill/streamPoly.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
+import FsReadTransform from '../../streams/fsReadTransform.js';
+import StreamUtil from '../../utils/streamUtil.js';
 import File from './file.js';
 
 export const ChecksumBitmask = {
@@ -81,7 +81,7 @@ export default {
     const streamWithCallback =
       callback === undefined
         ? readable
-        : StreamPoly.withTransforms(readable, new FsReadTransform(callback));
+        : StreamUtil.withTransforms(readable, new FsReadTransform(callback));
 
     let size = 0;
     const crc = checksumBitmask & ChecksumBitmask.CRC32 ? new Crc32() : undefined;

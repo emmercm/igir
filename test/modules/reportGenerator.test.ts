@@ -12,7 +12,7 @@ import Options from '../../src/models/options.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 /**
@@ -95,7 +95,7 @@ async function wrapReportGenerator(
   datStatuses: DATStatus[],
   callback: (contents: string) => void | Promise<void>,
 ): Promise<void> {
-  const reportOutput = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'report.csv'));
+  const reportOutput = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'report.csv'));
   const options = new Options({
     ...optionsProps,
     reportOutput,
@@ -108,10 +108,10 @@ async function wrapReportGenerator(
   );
 
   try {
-    const contents = (await FsPoly.readFile(reportOutput)).toString();
+    const contents = (await FsUtil.readFile(reportOutput)).toString();
     await callback(contents);
   } finally {
-    await FsPoly.rm(reportOutput);
+    await FsUtil.rm(reportOutput);
   }
 }
 

@@ -2,7 +2,7 @@ import type { OpenMode, PathLike } from 'node:fs';
 import fs from 'node:fs';
 
 import Defaults from '../globals/defaults.js';
-import FsPoly from './fsPoly.js';
+import FsUtil from '../utils/fsUtil.js';
 
 /**
  * A wrapper for readable and writable files
@@ -56,7 +56,7 @@ export default class IOFile {
       pathLike,
       await fs.promises.open(pathLike, finalMode),
       finalMode,
-      expectedSize ?? (await FsPoly.size(pathLike)),
+      expectedSize ?? (await FsUtil.size(pathLike)),
     );
   }
 
@@ -66,8 +66,8 @@ export default class IOFile {
    * deleted.
    */
   static async fileOfSize(pathLike: string, flags: OpenMode, size: number): Promise<IOFile> {
-    if (await FsPoly.exists(pathLike)) {
-      await FsPoly.rm(pathLike, { force: true });
+    if (await FsUtil.exists(pathLike)) {
+      await FsUtil.rm(pathLike, { force: true });
     }
 
     const write = await this.fileFrom(pathLike, 'wx+', size);

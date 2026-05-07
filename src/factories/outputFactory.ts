@@ -19,8 +19,8 @@ import type File from '../models/files/file.js';
 import ZeroSizeFile from '../models/files/zeroSizeFile.js';
 import type Options from '../models/options.js';
 import { FixExtension, GameSubdirMode } from '../models/options.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
 import FileFactory from './fileFactory.js';
 
 interface ConsoleTokensJson {
@@ -151,7 +151,7 @@ export default class OutputFactory {
     let output = options.getOutput();
 
     // Replace all {token}s in the output path
-    output = FsPoly.makeLegal(
+    output = FsUtil.makeLegal(
       OutputFactory.replaceTokensInOutputPath(
         options,
         output,
@@ -213,7 +213,7 @@ export default class OutputFactory {
       output = path.join(output, dirLetter);
     }
 
-    return FsPoly.makeLegal(output);
+    return FsUtil.makeLegal(output);
   }
 
   private static replaceTokensInOutputPath(
@@ -427,7 +427,7 @@ export default class OutputFactory {
           return [...arr, ...tuples];
         }, [])
         // Group letters together to create letter ranges
-        .reduce(ArrayPoly.reduceChunk(options.getDirLetterLimit()), [])
+        .reduce(ArrayUtil.reduceChunk(options.getDirLetterLimit()), [])
         .reduce((map, tuples) => {
           const firstTuple = tuples.at(0);
           const lastTuple = tuples.at(-1);

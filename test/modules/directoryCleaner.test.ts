@@ -5,7 +5,7 @@ import File from '../../src/models/files/file.js';
 import type { OptionsProps } from '../../src/models/options.js';
 import Options from '../../src/models/options.js';
 import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
-import FsPoly, { WalkMode } from '../../src/polyfill/fsPoly.js';
+import FsUtil, { WalkMode } from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
@@ -28,8 +28,8 @@ async function runOutputCleaner(
   writtenFilePathsToExclude: string[],
 ): Promise<CleanResult> {
   // Copy the fixture files to a temp directory
-  const tempInputDir = await FsPoly.mkdtemp(Temp.getTempDir());
-  await FsPoly.copyDir(ROM_FIXTURES_DIR, tempInputDir);
+  const tempInputDir = await FsUtil.mkdtemp(Temp.getTempDir());
+  await FsUtil.copyDir(ROM_FIXTURES_DIR, tempInputDir);
 
   try {
     const writtenRomFilesToExclude = await Promise.all(
@@ -38,7 +38,7 @@ async function runOutputCleaner(
       ),
     );
 
-    const before = await FsPoly.walk(tempInputDir, WalkMode.FILES);
+    const before = await FsUtil.walk(tempInputDir, WalkMode.FILES);
     expect(before.length).toBeGreaterThan(0);
 
     const cleanedPaths = (
@@ -54,7 +54,7 @@ async function runOutputCleaner(
       .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
       .toSorted();
 
-    const after = await FsPoly.walk(tempInputDir, WalkMode.FILES);
+    const after = await FsUtil.walk(tempInputDir, WalkMode.FILES);
     const remainingPaths = after
       .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
       .toSorted();
@@ -62,7 +62,7 @@ async function runOutputCleaner(
     const movedPaths =
       optionsProps.cleanBackup === undefined
         ? []
-        : await FsPoly.walk(optionsProps.cleanBackup, WalkMode.FILES);
+        : await FsUtil.walk(optionsProps.cleanBackup, WalkMode.FILES);
 
     return {
       cleanedPaths,
@@ -70,12 +70,12 @@ async function runOutputCleaner(
       movedPaths,
     };
   } finally {
-    await FsPoly.rm(tempInputDir, { recursive: true, force: true });
+    await FsUtil.rm(tempInputDir, { recursive: true, force: true });
   }
 }
 
 it('should delete nothing if nothing written', async () => {
-  const existingFiles = (await FsPoly.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
+  const existingFiles = (await FsUtil.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .toSorted();
   const { remainingPaths } = await runOutputCleaner({}, [], []);
@@ -83,7 +83,7 @@ it('should delete nothing if nothing written', async () => {
 });
 
 it('should delete nothing if no excess files', async () => {
-  const existingFiles = (await FsPoly.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
+  const existingFiles = (await FsUtil.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .toSorted();
   const { remainingPaths } = await runOutputCleaner({}, [], existingFiles);
@@ -137,7 +137,7 @@ it('should delete everything if all unmatched and nothing excluded', async () =>
 });
 
 it('should move everything if all unmatched and nothing excluded', async () => {
-  const tempMoveDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempMoveDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     const { cleanedPaths, remainingPaths, movedPaths } = await runOutputCleaner(
       {
@@ -150,12 +150,12 @@ it('should move everything if all unmatched and nothing excluded', async () => {
     expect(remainingPaths).toHaveLength(0);
     expect(movedPaths).toHaveLength(cleanedPaths.length);
   } finally {
-    await FsPoly.rm(tempMoveDir, { recursive: true, force: true });
+    await FsUtil.rm(tempMoveDir, { recursive: true, force: true });
   }
 });
 
 it('should delete nothing if all unmatched but doing a dry run', async () => {
-  const existingFiles = (await FsPoly.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
+  const existingFiles = (await FsUtil.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
     .toSorted();
   const { remainingPaths } = await runOutputCleaner(
@@ -169,22 +169,22 @@ it('should delete nothing if all unmatched but doing a dry run', async () => {
 });
 
 it('should delete hard links', async () => {
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     const filesDir = path.join(tempDir, 'files');
-    await FsPoly.mkdir(filesDir);
+    await FsUtil.mkdir(filesDir);
     const linksDir = path.join(tempDir, 'links');
-    await FsPoly.mkdir(linksDir);
+    await FsUtil.mkdir(linksDir);
 
-    const tempFileOne = await FsPoly.mktemp(path.join(filesDir, 'one'));
-    await FsPoly.touch(tempFileOne);
-    const tempLinkOne = await FsPoly.mktemp(path.join(linksDir, 'one'));
-    await FsPoly.hardlink(tempFileOne, tempLinkOne);
+    const tempFileOne = await FsUtil.mktemp(path.join(filesDir, 'one'));
+    await FsUtil.touch(tempFileOne);
+    const tempLinkOne = await FsUtil.mktemp(path.join(linksDir, 'one'));
+    await FsUtil.hardlink(tempFileOne, tempLinkOne);
 
-    const tempFileTwo = await FsPoly.mktemp(path.join(filesDir, 'two'));
-    await FsPoly.touch(tempFileTwo);
-    const tempLinkTwo = await FsPoly.mktemp(path.join(linksDir, 'two'));
-    await FsPoly.hardlink(tempFileTwo, tempLinkTwo);
+    const tempFileTwo = await FsUtil.mktemp(path.join(filesDir, 'two'));
+    await FsUtil.touch(tempFileTwo);
+    const tempLinkTwo = await FsUtil.mktemp(path.join(linksDir, 'two'));
+    await FsUtil.hardlink(tempFileTwo, tempLinkTwo);
 
     await new DirectoryCleaner(
       new Options({
@@ -193,7 +193,7 @@ it('should delete hard links', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = (await FsPoly.walk(tempDir, WalkMode.FILES)).toSorted();
+    const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted();
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
@@ -202,27 +202,27 @@ it('should delete hard links', async () => {
       tempLinkOne,
     ]);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true });
+    await FsUtil.rm(tempDir, { recursive: true });
   }
 });
 
 it('should delete symlinks', async () => {
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     const filesDir = path.join(tempDir, 'files');
-    await FsPoly.mkdir(filesDir);
+    await FsUtil.mkdir(filesDir);
     const linksDir = path.join(tempDir, 'links');
-    await FsPoly.mkdir(linksDir);
+    await FsUtil.mkdir(linksDir);
 
-    const tempFileOne = await FsPoly.mktemp(path.join(filesDir, 'one'));
-    await FsPoly.touch(tempFileOne);
-    const tempLinkOne = await FsPoly.mktemp(path.join(linksDir, 'one'));
-    await FsPoly.symlink(tempFileOne, tempLinkOne);
+    const tempFileOne = await FsUtil.mktemp(path.join(filesDir, 'one'));
+    await FsUtil.touch(tempFileOne);
+    const tempLinkOne = await FsUtil.mktemp(path.join(linksDir, 'one'));
+    await FsUtil.symlink(tempFileOne, tempLinkOne);
 
-    const tempFileTwo = await FsPoly.mktemp(path.join(filesDir, 'two'));
-    await FsPoly.touch(tempFileTwo);
-    const tempLinkTwo = await FsPoly.mktemp(path.join(linksDir, 'two'));
-    await FsPoly.symlink(tempFileTwo, tempLinkTwo);
+    const tempFileTwo = await FsUtil.mktemp(path.join(filesDir, 'two'));
+    await FsUtil.touch(tempFileTwo);
+    const tempLinkTwo = await FsUtil.mktemp(path.join(linksDir, 'two'));
+    await FsUtil.symlink(tempFileTwo, tempLinkTwo);
 
     await new DirectoryCleaner(
       new Options({
@@ -231,7 +231,7 @@ it('should delete symlinks', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = (await FsPoly.walk(tempDir, WalkMode.FILES)).toSorted();
+    const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted();
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
@@ -240,6 +240,6 @@ it('should delete symlinks', async () => {
       tempLinkOne,
     ]);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true });
+    await FsUtil.rm(tempDir, { recursive: true });
   }
 });

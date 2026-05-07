@@ -9,8 +9,8 @@ import { Memoize } from 'typescript-memoize';
 import Timer from '../../../../async/timer.js';
 import IgirException from '../../../../exceptions/igirException.js';
 import Temp from '../../../../globals/temp.js';
-import FsPoly from '../../../../polyfill/fsPoly.js';
-import StreamPoly from '../../../../polyfill/streamPoly.js';
+import FsUtil from '../../../../utils/fsUtil.js';
+import StreamUtil from '../../../../utils/streamUtil.js';
 import File from '../../file.js';
 import Archive from '../archive.js';
 
@@ -51,7 +51,7 @@ export default abstract class Chd extends Archive {
       if (this.tempSingletonDirPath !== undefined) {
         return;
       }
-      this.tempSingletonDirPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
+      this.tempSingletonDirPath = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
 
       const extractedFiles = await this.extractArchiveEntries(this.tempSingletonDirPath);
       if (extractedFiles.length === 0) {
@@ -84,10 +84,10 @@ export default abstract class Chd extends Archive {
         async (readable) => {
           if (pregapSize + postgapSize > 0) {
             return await callback(
-              StreamPoly.concat(
-                StreamPoly.staticReadable(pregapSize, 0x00),
+              StreamUtil.concat(
+                StreamUtil.staticReadable(pregapSize, 0x00),
                 readable,
-                StreamPoly.staticReadable(postgapSize, 0x00),
+                StreamUtil.staticReadable(postgapSize, 0x00),
               ),
             );
           }
@@ -109,7 +109,7 @@ export default abstract class Chd extends Archive {
             if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {
               const tempSingletonDirPath = this.tempSingletonDirPath;
               this.tempSingletonDirPath = undefined;
-              await FsPoly.rm(tempSingletonDirPath, { recursive: true, force: true });
+              await FsUtil.rm(tempSingletonDirPath, { recursive: true, force: true });
             }
           });
         },

@@ -1,4 +1,4 @@
-import ArrayPoly from '../polyfill/arrayPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
 
 interface RegionOptions {
   region: string;
@@ -211,12 +211,12 @@ export default class Internationalization {
     regionOption.region.toUpperCase(),
   )
     .filter((region) => region.length > 0)
-    .reduce(ArrayPoly.reduceUnique(), [])
+    .reduce(ArrayUtil.reduceUnique(), [])
     .toSorted();
 
   static readonly REGION_NAMES = this.REGION_OPTIONS.map((regionOption) => regionOption.long)
     .filter((region) => region.length > 0)
-    .reduce(ArrayPoly.reduceUnique(), [])
+    .reduce(ArrayUtil.reduceUnique(), [])
     .toSorted();
 
   static readonly REGION_REGEX = this.REGION_OPTIONS.map(
@@ -227,6 +227,6 @@ export default class Internationalization {
     regionOption.language.toUpperCase(),
   )
     .filter((language) => language.length > 0)
-    .reduce(ArrayPoly.reduceUnique(), [])
+    .reduce(ArrayUtil.reduceUnique(), [])
     .toSorted();
 }

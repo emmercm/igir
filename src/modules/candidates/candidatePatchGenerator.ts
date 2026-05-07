@@ -11,7 +11,7 @@ import type Options from '../../models/options.js';
 import type Patch from '../../models/patches/patch.js';
 import ROMWithFiles from '../../models/romWithFiles.js';
 import WriteCandidate from '../../models/writeCandidate.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -46,7 +46,7 @@ export default class CandidatePatchGenerator extends Module {
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
     this.progressBar.logTrace(
-      `${dat.getName()}: found patches for ${IntlPoly.toLocaleString(crcToPatches.size)} unique CRC32s`,
+      `${dat.getName()}: found patches for ${IntlUtil.toLocaleString(crcToPatches.size)} unique CRC32s`,
     );
 
     const patchedCandidates = this.build(dat, candidates, crcToPatches);
@@ -54,7 +54,7 @@ export default class CandidatePatchGenerator extends Module {
       ? patchedCandidates.length
       : patchedCandidates.length - candidates.length;
     this.progressBar.logTrace(
-      `${dat.getName()}: done generating ${IntlPoly.toLocaleString(patchedCandidateCount)} patched candidate${patchedCandidateCount === 1 ? '' : 's'}`,
+      `${dat.getName()}: done generating ${IntlUtil.toLocaleString(patchedCandidateCount)} patched candidate${patchedCandidateCount === 1 ? '' : 's'}`,
     );
 
     return patchedCandidates;

@@ -25,8 +25,8 @@ import Options, {
 import { GameSubdirMode, GameSubdirModeInverted } from '../src/models/options.js';
 import ArgumentsParser from '../src/modules/argumentsParser.js';
 import DATScanner from '../src/modules/dats/datScanner.js';
-import ArrayPoly from '../src/polyfill/arrayPoly.js';
-import FsPoly, { WalkMode } from '../src/polyfill/fsPoly.js';
+import ArrayUtil from '../src/utils/arrayUtil.js';
+import FsUtil, { WalkMode } from '../src/utils/fsUtil.js';
 import ProgressBarFake from './console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -40,11 +40,11 @@ interface TestOutput {
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
-  const temp = await FsPoly.mkdtemp(Temp.getTempDir());
+  const temp = await FsUtil.mkdtemp(Temp.getTempDir());
 
   // Set up the input directory
   const inputTemp = path.join(temp, 'input');
-  await FsPoly.copyDir(path.join('test', 'fixtures'), inputTemp);
+  await FsUtil.copyDir(path.join('test', 'fixtures'), inputTemp);
 
   // Set up the output directory
   const outputTemp = path.join(temp, 'output');
@@ -54,15 +54,15 @@ async function copyFixturesToTemp(
     await callback(inputTemp, outputTemp);
   } finally {
     // Delete the temp files
-    await FsPoly.rm(inputTemp, { recursive: true });
-    await FsPoly.rm(outputTemp, { force: true, recursive: true });
+    await FsUtil.rm(inputTemp, { recursive: true });
+    await FsUtil.rm(outputTemp, { force: true, recursive: true });
   }
 }
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
   const fileFactory = new FileFactory(new FileCache(), LOGGER);
 
-  const files = await FsPoly.walk(outputDir, WalkMode.FILES);
+  const files = await FsUtil.walk(outputDir, WalkMode.FILES);
 
   return (
     (
@@ -92,7 +92,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
       })
       // Some CHDs, such as raw ones, will produce multiple checksums for the same path. Just pick
       // the first one
-      .filter(ArrayPoly.filterUniqueMapped((tuple) => tuple[0]))
+      .filter(ArrayUtil.filterUniqueMapped((tuple) => tuple[0]))
   );
 }
 
@@ -113,15 +113,15 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     await Promise.all(
       options
         .getInputPaths()
-        .map(async (inputPath) => await FsPoly.walk(inputPath, WalkMode.FILES)),
+        .map(async (inputPath) => await FsUtil.walk(inputPath, WalkMode.FILES)),
     )
   )
     .flat()
-    .reduce(ArrayPoly.reduceUnique(), []);
+    .reduce(ArrayUtil.reduceUnique(), []);
   const outputFilesBefore =
     options.getOutput() === Temp.getTempDir()
       ? []
-      : await FsPoly.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
+      : await FsUtil.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
 
   // For debugging: enable trace logging if the 'help' option is provided
   const logger = options.getHelp() ? new Logger(LogLevel.TRACE, process.stdout) : LOGGER;
@@ -139,18 +139,18 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
           )
         )
           .flat()
-          .filter(ArrayPoly.filterUniqueMapped((tuple) => tuple[0]))
+          .filter(ArrayUtil.filterUniqueMapped((tuple) => tuple[0]))
           .toSorted((a, b) => a[0].localeCompare(b[0]));
 
   const inputFilesAfter = (
     await Promise.all(
       options
         .getInputPaths()
-        .map(async (inputPath) => await FsPoly.walk(inputPath, WalkMode.FILES)),
+        .map(async (inputPath) => await FsUtil.walk(inputPath, WalkMode.FILES)),
     )
   )
     .flat()
-    .reduce(ArrayPoly.reduceUnique(), []);
+    .reduce(ArrayUtil.reduceUnique(), []);
   const movedFiles = inputFilesBefore
     .filter((filePath) => !inputFilesAfter.includes(filePath))
     .map((filePath) => {
@@ -165,7 +165,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const outputFilesAfter =
     options.getOutput() === Temp.getTempDir()
       ? []
-      : await FsPoly.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
+      : await FsUtil.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
   const cleanedFiles = outputFilesBefore
     .filter((filePath) => !outputFilesAfter.includes(filePath))
     .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
@@ -344,12 +344,12 @@ describe('with explicit DATs', () => {
       ];
       await Promise.all(
         junkFiles.map(async (junkFile) => {
-          await FsPoly.touch(junkFile);
-          expect(await FsPoly.exists(junkFile)).toEqual(true);
+          await FsUtil.touch(junkFile);
+          expect(await FsUtil.exists(junkFile)).toEqual(true);
         }),
       );
 
-      const inputFiles = await FsPoly.walk(inputTemp, WalkMode.FILES);
+      const inputFiles = await FsUtil.walk(inputTemp, WalkMode.FILES);
       await Promise.all(
         inputFiles.map(async (inputFile) => {
           await fs.promises.chmod(inputFile, '0444');
@@ -481,11 +481,11 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
-      const inputFiles = await FsPoly.walk(inputDir, WalkMode.FILES);
+      const inputFiles = await FsUtil.walk(inputDir, WalkMode.FILES);
       const inputHardlinks = await Promise.all(
         inputFiles.map(async (inputFile) => {
           const symlink = `${inputFile}.symlink`;
-          await FsPoly.hardlink(inputFile, symlink);
+          await FsUtil.hardlink(inputFile, symlink);
           return symlink;
         }),
       );
@@ -524,11 +524,11 @@ describe('with explicit DATs', () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       // Given some symlinks
       const inputDir = path.join(inputTemp, 'roms', 'raw');
-      const inputFiles = await FsPoly.walk(inputDir, WalkMode.FILES);
+      const inputFiles = await FsUtil.walk(inputDir, WalkMode.FILES);
       const inputSymlinks = await Promise.all(
         inputFiles.map(async (inputFile) => {
           const symlink = `${inputFile}.symlink`;
-          await FsPoly.symlink(inputFile, symlink);
+          await FsUtil.symlink(inputFile, symlink);
           return symlink;
         }),
       );
@@ -730,7 +730,7 @@ describe('with explicit DATs', () => {
           path.join(inputTemp, 'roms', 'zip', 'loremipsum.zip'),
         ].map(async (inputFile) => {
           const junkFile = inputFile.replace(/((\.[a-zA-Z0-9]+)+)$/, '');
-          await FsPoly.mv(inputFile, junkFile);
+          await FsUtil.mv(inputFile, junkFile);
           return junkFile;
         }),
       );
@@ -1498,8 +1498,8 @@ describe('with explicit DATs', () => {
         });
 
         // and some unmatched/stray files are in the output
-        await FsPoly.touch(path.join(outputTemp, 'dummy.rom'));
-        await FsPoly.touch(path.join(outputTemp, 'One', 'dummy.rom'));
+        await FsUtil.touch(path.join(outputTemp, 'dummy.rom'));
+        await FsUtil.touch(path.join(outputTemp, 'One', 'dummy.rom'));
 
         // When all ROMs are copied to the output
         const reportOutput = path.join(outputTemp, 'report.csv');
@@ -1522,7 +1522,7 @@ describe('with explicit DATs', () => {
         expect(cleanResult.cleanedFiles).toEqual([path.join('One', 'dummy.rom')]);
 
         // and the report has all the files from the first copy as FOUND
-        const reportOutputContents = await FsPoly.readFile(reportOutput);
+        const reportOutputContents = await FsUtil.readFile(reportOutput);
         const reportFoundFiles = new Set(
           reportOutputContents
             .toString()
@@ -1553,10 +1553,10 @@ describe('with explicit DATs', () => {
       await Promise.all(
         copyResult.outputFilesAndCrcs.map(async ([filePath]) => {
           const dest = path.join(outputTemp, 'wrongfolder', filePath);
-          if (!(await FsPoly.exists(path.dirname(dest)))) {
-            await FsPoly.mkdir(path.dirname(dest), { recursive: true });
+          if (!(await FsUtil.exists(path.dirname(dest)))) {
+            await FsUtil.mkdir(path.dirname(dest), { recursive: true });
           }
-          await FsPoly.mv(path.join(outputTemp, filePath), dest);
+          await FsUtil.mv(path.join(outputTemp, filePath), dest);
         }),
       );
 
@@ -1682,7 +1682,7 @@ describe('with inferred DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual(inputBefore);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
-      await expect(FsPoly.walk(outputTemp, WalkMode.FILES)).resolves.toHaveLength(0);
+      await expect(FsUtil.walk(outputTemp, WalkMode.FILES)).resolves.toHaveLength(0);
     });
   });
 

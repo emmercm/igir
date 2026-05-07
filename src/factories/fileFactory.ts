@@ -31,8 +31,8 @@ import { ChecksumBitmask } from '../models/files/fileChecksums.js';
 import type FileSignature from '../models/files/fileSignature.js';
 import type ROMHeader from '../models/files/romHeader.js';
 import type ROMPadding from '../models/files/romPadding.js';
-import type { FsReadCallback } from '../polyfill/fsReadTransform.js';
-import URLPoly from '../polyfill/urlPoly.js';
+import type { FsReadCallback } from '../streams/fsReadTransform.js';
+import URLUtil from '../utils/urlUtil.js';
 
 export const CacheMode = {
   RESPECT_CACHED_VALUE: 1,
@@ -56,7 +56,7 @@ export default class FileFactory {
     entryChecksumBitmask = fileChecksumBitmask,
     callback?: FsReadCallback,
   ): Promise<File[]> {
-    if (URLPoly.canParse(filePath)) {
+    if (URLUtil.canParse(filePath)) {
       return [await File.fileOf({ filePath })];
     }
 

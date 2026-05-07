@@ -6,8 +6,8 @@ import * as tar from 'tar';
 
 import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
-import FsPoly from '../../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
+import FsUtil from '../../../utils/fsUtil.js';
 import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
@@ -121,7 +121,7 @@ export default class Tar extends Archive {
       },
       [entryPath.replaceAll('\\', '/')],
     );
-    if (!(await FsPoly.exists(extractedFilePath))) {
+    if (!(await FsUtil.exists(extractedFilePath))) {
       throw new IgirException(`didn't find extracted file '${entryPath}'`);
     }
   }

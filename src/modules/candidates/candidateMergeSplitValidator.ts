@@ -5,7 +5,7 @@ import type Game from '../../models/dats/game.js';
 import type Options from '../../models/options.js';
 import { MergeMode } from '../../models/options.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
 import Module from '../module.js';
 
 /**
@@ -53,7 +53,7 @@ export default class CandidateMergeSplitValidator extends Module {
     const missingGames = candidates
       .filter((candidate) => candidate.getRomsWithFiles().length > 0)
       .map((candidate) => candidate.getGame())
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .flatMap((game) => {
         const missingDependencies: string[] = [];
 

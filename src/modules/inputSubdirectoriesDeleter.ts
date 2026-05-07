@@ -8,7 +8,7 @@ import Defaults from '../globals/defaults.js';
 import type File from '../models/files/file.js';
 import type Options from '../models/options.js';
 import { MoveDeleteDirs } from '../models/options.js';
-import FsPoly, { WalkMode } from '../polyfill/fsPoly.js';
+import FsUtil, { WalkMode } from '../utils/fsUtil.js';
 import Module from './module.js';
 
 /**
@@ -76,10 +76,10 @@ export default class InputSubdirectoriesDeleter extends Module {
       Defaults.MAX_FS_THREADS,
       async (dirPath: string) => {
         try {
-          if ((await FsPoly.walk(dirPath, WalkMode.FILES)).length === 0) {
+          if ((await FsUtil.walk(dirPath, WalkMode.FILES)).length === 0) {
             this.progressBar.incrementTotal(1);
             this.progressBar.incrementInProgress(1);
-            await FsPoly.rm(dirPath, { recursive: true, force: true });
+            await FsUtil.rm(dirPath, { recursive: true, force: true });
             return true;
           }
         } catch {

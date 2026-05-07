@@ -39,7 +39,7 @@ import PatchScanner from '../../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -48,30 +48,30 @@ async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
 ): Promise<void> {
   // Set up the input directory
-  const inputTemp = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
-  await FsPoly.copyDir('./test/fixtures', inputTemp);
+  const inputTemp = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+  await FsUtil.copyDir('./test/fixtures', inputTemp);
 
   // Set up the output directory, but delete it so ROMWriter can make it
-  const outputTemp = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'output'));
-  await FsPoly.rm(outputTemp, { force: true, recursive: true });
+  const outputTemp = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'output'));
+  await FsUtil.rm(outputTemp, { force: true, recursive: true });
 
   try {
     // Call the callback
     await callback(inputTemp, outputTemp);
   } finally {
     // Delete the temp files
-    await FsPoly.rm(inputTemp, { recursive: true });
-    await FsPoly.rm(outputTemp, { force: true, recursive: true });
+    await FsUtil.rm(inputTemp, { recursive: true });
+    await FsUtil.rm(outputTemp, { force: true, recursive: true });
   }
 }
 
 async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
-  if (!(await FsPoly.exists(dirPath))) {
+  if (!(await FsUtil.exists(dirPath))) {
     return [];
   }
 
   return await async.mapLimit(
-    await FsPoly.walk(dirPath, WalkMode.FILES),
+    await FsUtil.walk(dirPath, WalkMode.FILES),
     os.availableParallelism(),
     async (filePath: string): Promise<[string, fs.Stats]> => {
       const stats = await fs.promises.lstat(filePath);
@@ -360,8 +360,8 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
       await Promise.all(
         outputFilesBefore.map(async ([filePath]) => {
           const resolvedPath = path.join(outputTemp, filePath);
-          await FsPoly.rm(resolvedPath);
-          await FsPoly.touch(resolvedPath);
+          await FsUtil.rm(resolvedPath);
+          await FsUtil.touch(resolvedPath);
         }),
       );
 
@@ -441,7 +441,7 @@ describe.each(['raw', 'extract', 'zip'])('%s', (command) => {
         );
 
         // And an extra file that won't be matched
-        await FsPoly.writeFile(
+        await FsUtil.writeFile(
           path.join(inputTemp, 'nonmatch.rom'),
           'CA52A3B3466BF3EB71465AADC7E6D07A',
         );
@@ -1967,8 +1967,8 @@ describe('link', () => {
         await Promise.all(
           outputFilesBefore.map(async ([filePath]) => {
             const resolvedPath = path.join(outputTemp, filePath);
-            await FsPoly.rm(resolvedPath);
-            await FsPoly.touch(resolvedPath);
+            await FsUtil.rm(resolvedPath);
+            await FsUtil.touch(resolvedPath);
           }),
         );
 
@@ -2028,9 +2028,9 @@ describe('link', () => {
         const outputPathAbsolute = path.resolve(path.join(outputTemp, outputPath));
         const outputPathResolved = path.resolve(
           path.dirname(outputPathAbsolute),
-          await FsPoly.readlink(outputPathAbsolute),
+          await FsUtil.readlink(outputPathAbsolute),
         );
-        await expect(FsPoly.exists(outputPathResolved)).resolves.toEqual(true);
+        await expect(FsUtil.exists(outputPathResolved)).resolves.toEqual(true);
         expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
       }
     });

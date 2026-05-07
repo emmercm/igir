@@ -9,8 +9,8 @@ import async from 'async';
 
 import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
-import FsPoly, { WalkMode } from '../../../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../../../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
+import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -88,17 +88,17 @@ export default abstract class SevenZipLib extends Archive {
         throw new IgirException(`failed to find archive entry '${entryPath}'`);
       }
 
-      const extractDir = await FsPoly.mktemp(path.join(extractedFilePath));
+      const extractDir = await FsUtil.mktemp(path.join(extractedFilePath));
       try {
         await foundEntry.create(extractDir, {});
         // 7z-iterator doesn't let you specify the exact file path
-        const extractedFiles = await FsPoly.walk(extractDir, WalkMode.FILES);
+        const extractedFiles = await FsUtil.walk(extractDir, WalkMode.FILES);
         if (extractedFiles.length === 0) {
           throw new IgirException(`failed to extract`);
         }
-        await FsPoly.mv(extractedFiles[0], extractedFilePath);
+        await FsUtil.mv(extractedFiles[0], extractedFilePath);
       } finally {
-        await FsPoly.rm(extractDir, { recursive: true, force: true });
+        await FsUtil.rm(extractDir, { recursive: true, force: true });
       }
     } finally {
       iterator.destroy();

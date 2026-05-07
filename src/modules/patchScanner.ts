@@ -7,8 +7,8 @@ import type File from '../models/files/file.js';
 import { ChecksumBitmask } from '../models/files/fileChecksums.js';
 import type Options from '../models/options.js';
 import type Patch from '../models/patches/patch.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import IntlPoly from '../polyfill/intlPoly.js';
+import FsUtil from '../utils/fsUtil.js';
+import IntlUtil from '../utils/intlUtil.js';
 import Scanner from './scanner.js';
 
 /**
@@ -36,7 +36,7 @@ export default class PatchScanner extends Scanner {
       this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(
-      `found ${IntlPoly.toLocaleString(patchFilePaths.length)} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlUtil.toLocaleString(patchFilePaths.length)} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(patchFilePaths.length);
 
@@ -56,7 +56,7 @@ export default class PatchScanner extends Scanner {
 
   private async parsePatchFiles(patchFiles: File[]): Promise<Patch[]> {
     this.progressBar.logTrace(
-      `parsing ${IntlPoly.toLocaleString(patchFiles.length)} patch file${patchFiles.length === 1 ? '' : 's'}`,
+      `parsing ${IntlUtil.toLocaleString(patchFiles.length)} patch file${patchFiles.length === 1 ? '' : 's'}`,
     );
     if (patchFiles.length === 0) {
       return [];
@@ -71,7 +71,7 @@ export default class PatchScanner extends Scanner {
         const childBar = this.progressBar.addChildBar({
           name: patchFile.toString(),
           total: patchFile.getSize(),
-          progressFormatter: FsPoly.sizeReadable,
+          progressFormatter: FsUtil.sizeReadable,
         });
         try {
           return await this.patchFromFile(patchFile);

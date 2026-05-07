@@ -17,8 +17,8 @@ import type Options from '../../models/options.js';
 import { FixExtension } from '../../models/options.js';
 import type ROMWithFiles from '../../models/romWithFiles.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -61,7 +61,7 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: correcting ${IntlPoly.toLocaleString(romsThatNeedCorrecting)} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
+      `${dat.getName()}: correcting ${IntlUtil.toLocaleString(romsThatNeedCorrecting)} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.resetProgress(romsThatNeedCorrecting);
@@ -110,7 +110,7 @@ export default class CandidateExtensionCorrector extends Module {
           )
         )
           // Eliminate duplicate ROMs caused by extension correction
-          .filter(ArrayPoly.filterUniqueMapped((romWithFiles) => romWithFiles.getRom().hashCode()));
+          .filter(ArrayUtil.filterUniqueMapped((romWithFiles) => romWithFiles.getRom().hashCode()));
 
         const correctedGame = candidate
           .getGame()

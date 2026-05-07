@@ -15,13 +15,13 @@ import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import { TrimScanFiles, TrimScanFilesInverted } from '../../../src/models/options.js';
 import ROMTrimProcessor from '../../../src/modules/roms/romTrimProcessor.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
-if (!(await FsPoly.exists(Temp.getTempDir()))) {
-  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+if (!(await FsUtil.exists(Temp.getTempDir()))) {
+  await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
 }
 
 async function processFile(
@@ -43,11 +43,11 @@ async function processFile(
     }
     signaturePiece.value.copy(trimmedContents, signaturePiece.offset);
   });
-  const tempTrimmedFilePath = await FsPoly.mktemp(
+  const tempTrimmedFilePath = await FsUtil.mktemp(
     path.join(Temp.getTempDir(), `trimmed${fileSignature.getExtension()}`),
   );
   try {
-    await FsPoly.writeFile(tempTrimmedFilePath, trimmedContents);
+    await FsUtil.writeFile(tempTrimmedFilePath, trimmedContents);
     const tempTrimmedFile = await fileFactory.fileFrom(tempTrimmedFilePath, ChecksumBitmask.CRC32);
 
     const processedFiles = await new ROMTrimProcessor(
@@ -60,7 +60,7 @@ async function processFile(
     expect(processedFiles).toHaveLength(1);
     return processedFiles[0];
   } finally {
-    await FsPoly.rm(tempTrimmedFilePath, { force: true });
+    await FsUtil.rm(tempTrimmedFilePath, { force: true });
   }
 }
 

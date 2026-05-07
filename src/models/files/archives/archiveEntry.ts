@@ -2,8 +2,8 @@ import stream from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
-import FsPoly from '../../../polyfill/fsPoly.js';
-import { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
+import { FsReadCallback } from '../../../streams/fsReadTransform.js';
+import FsUtil from '../../../utils/fsUtil.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumPropsWithSize } from '../fileChecksums.js';
@@ -55,7 +55,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       : archiveEntryProps.sha256;
     let finalSymlinkSource = archiveEntryProps.symlinkSource;
 
-    if (await FsPoly.exists(archiveEntryProps.archive.getFilePath())) {
+    if (await FsUtil.exists(archiveEntryProps.archive.getFilePath())) {
       // Calculate checksums
       if (
         (!finalCrcWithHeader && checksumBitmask & ChecksumBitmask.CRC32) ||
@@ -92,8 +92,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSha256WithoutHeader = headerlessChecksums.sha256;
       }
 
-      if (await FsPoly.isSymlink(archiveEntryProps.archive.getFilePath())) {
-        finalSymlinkSource = await FsPoly.readlink(archiveEntryProps.archive.getFilePath());
+      if (await FsUtil.isSymlink(archiveEntryProps.archive.getFilePath())) {
+        finalSymlinkSource = await FsUtil.readlink(archiveEntryProps.archive.getFilePath());
       }
     } else {
       finalCrcWithHeader = finalCrcWithHeader ?? '';

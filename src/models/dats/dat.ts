@@ -1,6 +1,6 @@
 import xml2js from 'xml2js';
 
-import FsPoly from '../../polyfill/fsPoly.js';
+import FsUtil from '../../utils/fsUtil.js';
 import { ChecksumBitmask } from '../files/fileChecksums.js';
 import type Game from './game.js';
 import type Header from './logiqx/header.js';
@@ -148,7 +148,7 @@ export default abstract class DAT {
       filename += ` (${this.getHeader().getVersion()})`;
     }
     filename += '.dat';
-    return FsPoly.makeLegal(filename.trim());
+    return FsUtil.makeLegal(filename.trim());
   }
 
   getRequiredRomChecksumBitmask(): number {
@@ -224,7 +224,7 @@ export default abstract class DAT {
       {
         header: this.getHeader(),
         games: this.getGames().length,
-        gamesSize: FsPoly.sizeReadable(
+        gamesSize: FsUtil.sizeReadable(
           this.getGames()
             .flatMap((game) => game.getRoms())
             .reduce((sum, rom) => sum + rom.getSize(), 0),

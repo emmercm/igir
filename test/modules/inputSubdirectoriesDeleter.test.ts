@@ -4,27 +4,27 @@ import Temp from '../../src/globals/temp.js';
 import File from '../../src/models/files/file.js';
 import Options, { MoveDeleteDirs, MoveDeleteDirsInverted } from '../../src/models/options.js';
 import InputSubdirectoriesDeleter from '../../src/modules/inputSubdirectoriesDeleter.js';
-import FsPoly, { WalkMode } from '../../src/polyfill/fsPoly.js';
+import FsUtil, { WalkMode } from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 async function createTempFiles(): Promise<string> {
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
-    await FsPoly.mkdir(path.join(tempDir, 'GB', 'EUR'), { recursive: true });
-    await FsPoly.touch(
+    await FsUtil.mkdir(path.join(tempDir, 'GB', 'EUR'), { recursive: true });
+    await FsUtil.touch(
       path.join(tempDir, 'GB', 'JPN', 'Gojira-kun - Kaijuu Daikoushin (Japan).gb'),
     );
-    await FsPoly.touch(
+    await FsUtil.touch(
       path.join(tempDir, 'GB', 'USA', 'Contra - The Alien Wars (USA) (SGB Enhanced).gb'),
     );
-    await FsPoly.touch(path.join(tempDir, 'GB', 'USA', 'Shaq Fu (USA) (SGB Enhanced).gb'));
+    await FsUtil.touch(path.join(tempDir, 'GB', 'USA', 'Shaq Fu (USA) (SGB Enhanced).gb'));
 
-    await FsPoly.touch(path.join(tempDir, 'NES', 'EUR', 'Double Dragon (Europe).nes'));
-    await FsPoly.mkdir(path.join(tempDir, 'NES', 'JPN'), { recursive: true });
-    await FsPoly.touch(path.join(tempDir, 'NES', 'USA', 'Dragon Warrior (USA) (Rev 1).nes'));
-    await FsPoly.touch(path.join(tempDir, 'NES', 'USA', 'Rainbow Islands (USA).nes'));
+    await FsUtil.touch(path.join(tempDir, 'NES', 'EUR', 'Double Dragon (Europe).nes'));
+    await FsUtil.mkdir(path.join(tempDir, 'NES', 'JPN'), { recursive: true });
+    await FsUtil.touch(path.join(tempDir, 'NES', 'USA', 'Dragon Warrior (USA) (Rev 1).nes'));
+    await FsUtil.touch(path.join(tempDir, 'NES', 'USA', 'Rainbow Islands (USA).nes'));
   } catch (error) {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
     throw error;
   }
   return tempDir;
@@ -46,7 +46,7 @@ it('should do nothing if not moving files', async () => {
     // No directories were deleted
     expect(deletedDirs).toHaveLength(0);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -60,13 +60,13 @@ it('should do nothing if option is "never"', async () => {
     });
 
     // Files were moved, and they're no longer in the input directory
-    const tempFilePaths = await FsPoly.walk(tempDir, WalkMode.FILES);
+    const tempFilePaths = await FsUtil.walk(tempDir, WalkMode.FILES);
     const tempFiles = await Promise.all(
       tempFilePaths.map(async (filePath) => await File.fileOf({ filePath })),
     );
     await Promise.all(
       tempFilePaths.map(async (filePath) => {
-        await FsPoly.rm(filePath);
+        await FsUtil.rm(filePath);
       }),
     );
 
@@ -77,7 +77,7 @@ it('should do nothing if option is "never"', async () => {
     // No directories were deleted
     expect(deletedDirs).toHaveLength(0);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -97,7 +97,7 @@ it('should do nothing if no ROMs were moved and option isn\'t "always"', async (
     // No directories were deleted
     expect(deletedDirs).toHaveLength(0);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -119,7 +119,7 @@ it('should delete empty directories even if no ROMs were moved when option is "a
       deletedDirs.map((dirPath) => dirPath.replace(tempDir + path.sep, '')).toSorted(),
     ).toEqual([path.join('GB', 'EUR'), path.join('NES', 'JPN')]);
   } finally {
-    await FsPoly.rm(tempDir, {
+    await FsUtil.rm(tempDir, {
       recursive: true,
       force: true,
     });
@@ -136,13 +136,13 @@ it('should delete empty directories that had ROMs moved out of them', async () =
     });
 
     // Files were moved, and they're no longer in the input directory
-    const tempFilePaths = await FsPoly.walk(tempDir, WalkMode.FILES);
+    const tempFilePaths = await FsUtil.walk(tempDir, WalkMode.FILES);
     const tempFiles = await Promise.all(
       tempFilePaths.map(async (filePath) => await File.fileOf({ filePath })),
     );
     await Promise.all(
       tempFilePaths.map(async (filePath) => {
-        await FsPoly.rm(filePath);
+        await FsUtil.rm(filePath);
       }),
     );
 
@@ -157,6 +157,6 @@ it('should delete empty directories that had ROMs moved out of them', async () =
     expect(deletedTempDirs).toContain('GB');
     expect(deletedTempDirs).toContain('NES');
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
 });

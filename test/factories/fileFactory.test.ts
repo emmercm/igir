@@ -7,7 +7,7 @@ import { LogLevel } from '../../src/console/logLevel.js';
 import FileFactory from '../../src/factories/fileFactory.js';
 import Temp from '../../src/globals/temp.js';
 import ArchiveEntry from '../../src/models/files/archives/archiveEntry.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
@@ -52,9 +52,9 @@ describe('filesFrom', () => {
     });
 
     it('should read the entries of non-empty archives with junk extensions: %s', async () => {
-      const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
-      await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
-      await FsPoly.copyFile(filePath, tempFile);
+      const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
+      await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
+      await FsUtil.copyFile(filePath, tempFile);
       try {
         const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(tempFile);
         expect(
@@ -62,7 +62,7 @@ describe('filesFrom', () => {
         ).toEqual(true);
         expect(archiveEntries).toHaveLength(expectedCount);
       } finally {
-        await FsPoly.rm(tempFile, { force: true });
+        await FsUtil.rm(tempFile, { force: true });
       }
     });
   });

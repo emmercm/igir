@@ -1,7 +1,7 @@
 /**
  * Polyfill functionality for the Intl library.
  */
-export default class IntlPoly {
+export default class IntlUtil {
   /**
    * Returns a string with a language-sensitive representation of a number.
    */

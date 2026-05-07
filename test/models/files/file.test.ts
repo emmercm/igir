@@ -8,6 +8,7 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
+import IOFile from '../../../src/io/ioFile.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/models/files/archives/archiveFile.js';
 import Zip from '../../../src/models/files/archives/zip.js';
@@ -17,16 +18,15 @@ import ROMHeader from '../../../src/models/files/romHeader.js';
 import Options from '../../../src/models/options.js';
 import IPSPatch from '../../../src/models/patches/ipsPatch.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import bufferPoly from '../../../src/polyfill/bufferPoly.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
-import IOFile from '../../../src/polyfill/ioFile.js';
+import bufferUtil from '../../../src/utils/bufferUtil.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 describe('fileOf', () => {
   it("should not throw when the file doesn't exist", async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'file'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'));
     const file = await File.fileOf({ filePath: tempFile });
     expect(file.getFilePath()).toEqual(tempFile);
     expect(file.getSize()).toEqual(0);
@@ -53,64 +53,64 @@ describe('getFilePath', () => {
 describe('getSize', () => {
   describe.each([[0], [1], [100], [10_000], [1_000_000]])('bytes: %s', (size) => {
     it("should get the file's size", async () => {
-      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        const tempFile = await FsUtil.mktemp(path.join(tempDir, 'file'));
         await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
         const fileLink = await File.fileOf({ filePath: tempFile });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await FsPoly.rm(tempDir, { recursive: true });
+        await FsUtil.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the hard link's target size", async () => {
-      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        const tempFile = await FsUtil.mktemp(path.join(tempDir, 'file'));
         await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-        const tempLink = await FsPoly.mktemp(path.join(tempDir, 'link'));
-        await FsPoly.hardlink(tempFile, tempLink);
+        const tempLink = await FsUtil.mktemp(path.join(tempDir, 'link'));
+        await FsUtil.hardlink(tempFile, tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await FsPoly.rm(tempDir, { recursive: true });
+        await FsUtil.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the absolute symlink's target size", async () => {
-      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        const tempFile = await FsUtil.mktemp(path.join(tempDir, 'file'));
         await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-        const tempLink = await FsPoly.mktemp(path.join(tempDir, 'link'));
-        await FsPoly.symlink(path.resolve(tempFile), tempLink);
+        const tempLink = await FsUtil.mktemp(path.join(tempDir, 'link'));
+        await FsUtil.symlink(path.resolve(tempFile), tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await FsPoly.rm(tempDir, { recursive: true });
+        await FsUtil.rm(tempDir, { recursive: true });
       }
     });
 
     it("should get the relative symlink's target size: %s", async () => {
-      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
-        const tempFile = await FsPoly.mktemp(path.join(tempDir, 'file'));
+        const tempFile = await FsUtil.mktemp(path.join(tempDir, 'file'));
         await (await IOFile.fileOfSize(tempFile, 'r', size)).close(); // touch
 
-        const tempLink = await FsPoly.mktemp(path.join(tempDir, 'link'));
-        await FsPoly.symlink(await FsPoly.symlinkRelativePath(tempFile, tempLink), tempLink);
+        const tempLink = await FsUtil.mktemp(path.join(tempDir, 'link'));
+        await FsUtil.symlink(await FsUtil.symlinkRelativePath(tempFile, tempLink), tempLink);
         const fileLink = await File.fileOf({ filePath: tempLink });
 
         expect(fileLink.getSize()).toEqual(size);
       } finally {
-        await FsPoly.rm(tempDir, { recursive: true });
+        await FsUtil.rm(tempDir, { recursive: true });
       }
     });
   });
@@ -416,14 +416,14 @@ describe('copyToTempFile', () => {
     ).scan();
     expect(raws).toHaveLength(10);
 
-    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
+    const temp = await FsUtil.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
       await raw.extractToTempFile(async (tempFile) => {
-        await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
+        await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
         expect(tempFile).not.toEqual(raw.getFilePath());
       });
     }
-    await FsPoly.rm(temp, { recursive: true });
+    await FsUtil.rm(temp, { recursive: true });
   });
 });
 
@@ -439,14 +439,14 @@ describe('createReadStream', () => {
     ).scan();
     expect(raws).toHaveLength(9);
 
-    const temp = await FsPoly.mkdtemp(Temp.getTempDir());
+    const temp = await FsUtil.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
       await raw.createReadStream(async (readable) => {
-        const contents = (await bufferPoly.fromReadable(readable)).toString();
+        const contents = (await bufferUtil.fromReadable(readable)).toString();
         expect(contents).toBeTruthy();
       });
     }
-    await FsPoly.rm(temp, { recursive: true });
+    await FsUtil.rm(temp, { recursive: true });
   });
 });
 

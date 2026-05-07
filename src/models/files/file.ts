@@ -8,10 +8,10 @@ import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-t
 
 import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import FsReadTransform, { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import IOFile from '../../polyfill/ioFile.js';
-import URLPoly from '../../polyfill/urlPoly.js';
+import IOFile from '../../io/ioFile.js';
+import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
+import FsUtil from '../../utils/fsUtil.js';
+import URLUtil from '../../utils/urlUtil.js';
 import Patch from '../patches/patch.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
 import ROMHeader from './romHeader.js';
@@ -74,7 +74,7 @@ export default class File implements FileProps {
   readonly canBeCandidateInput?: boolean;
 
   protected constructor(fileProps: FileProps) {
-    const isUrl = URLPoly.canParse(fileProps.filePath);
+    const isUrl = URLUtil.canParse(fileProps.filePath);
 
     this.filePath = isUrl ? fileProps.filePath : path.resolve(fileProps.filePath);
     this.size = fileProps.size ?? 0;
@@ -128,9 +128,9 @@ export default class File implements FileProps {
       : fileProps.sha256;
     let finalSymlinkSource = fileProps.symlinkSource;
 
-    if (await FsPoly.exists(fileProps.filePath)) {
+    if (await FsUtil.exists(fileProps.filePath)) {
       // Calculate size
-      finalSize ??= await FsPoly.size(fileProps.filePath);
+      finalSize ??= await FsUtil.size(fileProps.filePath);
 
       // Calculate checksums
       if (
@@ -157,8 +157,8 @@ export default class File implements FileProps {
         finalSha256WithoutHeader = headerlessChecksums.sha256;
       }
 
-      if (await FsPoly.isSymlink(fileProps.filePath)) {
-        finalSymlinkSource = await FsPoly.readlink(fileProps.filePath);
+      if (await FsUtil.isSymlink(fileProps.filePath)) {
+        finalSymlinkSource = await FsUtil.readlink(fileProps.filePath);
       }
     } else {
       finalSize = finalSize ?? 0;
@@ -291,23 +291,23 @@ export default class File implements FileProps {
   // Other functions
 
   async extractToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
-    await FsPoly.copyFile(this.getFilePath(), destinationPath, callback);
+    await FsUtil.copyFile(this.getFilePath(), destinationPath, callback);
   }
 
   async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
-    const tempFile = await FsPoly.mktemp(
+    const tempFile = await FsUtil.mktemp(
       path.join(Temp.getTempDir(), path.basename(this.getFilePath())),
     );
     const tempDir = path.dirname(tempFile);
-    if (!(await FsPoly.exists(tempDir))) {
-      await FsPoly.mkdir(tempDir, { recursive: true });
+    if (!(await FsUtil.exists(tempDir))) {
+      await FsUtil.mkdir(tempDir, { recursive: true });
     }
     await this.extractToFile(tempFile);
 
     try {
       return await callback(tempFile);
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   }
 
@@ -346,7 +346,7 @@ export default class File implements FileProps {
     // Complex case: create a temp file with the header removed
     if (patch) {
       // Create a patched temp file, then copy it without removing its header
-      const tempFile = await FsPoly.mktemp(
+      const tempFile = await FsUtil.mktemp(
         path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
       );
       await patch.createPatchedFile(this, tempFile, callback);
@@ -365,7 +365,7 @@ export default class File implements FileProps {
         );
         return;
       } finally {
-        await FsPoly.rm(tempFile, { force: true });
+        await FsUtil.rm(tempFile, { force: true });
       }
     }
 
@@ -401,14 +401,14 @@ export default class File implements FileProps {
     }
 
     // Complex case: create a temp patched file and then create read stream at an offset
-    const tempFile = await FsPoly.mktemp(
+    const tempFile = await FsUtil.mktemp(
       path.join(Temp.getTempDir(), path.basename(this.getExtractedFilePath())),
     );
     try {
       await patch.createPatchedFile(this, tempFile);
       return await File.createStreamFromFile(tempFile, callback, start);
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   }
 
@@ -431,13 +431,13 @@ export default class File implements FileProps {
   }
 
   async downloadToPath(filePath: string): Promise<File> {
-    if (await FsPoly.exists(this.getFilePath())) {
+    if (await FsUtil.exists(this.getFilePath())) {
       return this;
     }
 
     const fileDir = path.dirname(filePath);
-    if (!(await FsPoly.exists(fileDir))) {
-      await FsPoly.mkdir(fileDir, { recursive: true });
+    if (!(await FsUtil.exists(fileDir))) {
+      await FsUtil.mkdir(fileDir, { recursive: true });
     }
 
     const sourceUrl = new URL(this.getFilePath());
@@ -481,15 +481,15 @@ export default class File implements FileProps {
   }
 
   async downloadToTempPath(): Promise<File> {
-    if (await FsPoly.exists(this.getFilePath())) {
+    if (await FsUtil.exists(this.getFilePath())) {
       return this;
     }
 
     const lastUrlSegment = new URL(this.getFilePath()).pathname.split('/').slice(-1).at(0);
     const tempPrefix =
-      lastUrlSegment === undefined ? 'temp' : FsPoly.makeLegal(decodeURIComponent(lastUrlSegment));
+      lastUrlSegment === undefined ? 'temp' : FsUtil.makeLegal(decodeURIComponent(lastUrlSegment));
 
-    const filePath = await FsPoly.mktemp(path.join(Temp.getTempDir(), tempPrefix));
+    const filePath = await FsUtil.mktemp(path.join(Temp.getTempDir(), tempPrefix));
     return await this.downloadToPath(filePath);
   }
 

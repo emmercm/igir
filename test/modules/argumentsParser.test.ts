@@ -22,7 +22,7 @@ import {
   ZipFormat,
 } from '../../src/models/options.js';
 import ArgumentsParser from '../../src/modules/argumentsParser.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
@@ -770,10 +770,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--dat-name-regex', tempFile])
@@ -805,7 +805,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -844,10 +844,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--dat-name-regex-exclude', tempFile])
@@ -879,7 +879,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -918,10 +918,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--dat-description-regex', tempFile])
@@ -953,7 +953,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -992,10 +992,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--dat-description-regex-exclude', tempFile])
@@ -1027,7 +1027,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -2702,10 +2702,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-game-regex', tempFile])
@@ -2737,7 +2737,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -2777,10 +2777,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--single', '--prefer-rom-regex', tempFile])
@@ -2812,7 +2812,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -3257,10 +3257,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--prefer-filename-regex', tempFile])
@@ -3292,7 +3292,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -3674,10 +3674,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--filter-regex', tempFile])
@@ -3709,7 +3709,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -3748,10 +3748,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([...dummyCommandAndRequiredArgs, '--filter-regex-exclude', tempFile])
@@ -3783,7 +3783,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 
@@ -3928,10 +3928,10 @@ describe('options', () => {
         ?.some((regex) => regex.test('UPPER')),
     ).toEqual(false);
 
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'temp'));
-    await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
+    await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
     try {
-      await FsPoly.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
+      await FsUtil.writeFile(tempFile, '\n/[a-z]/i\r\n[0-9]\n\n');
       expect(
         argumentsParser
           .parse([
@@ -3993,7 +3993,7 @@ describe('options', () => {
           ?.some((regex) => regex.test('@!#?@!')),
       ).toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile);
+      await FsUtil.rm(tempFile);
     }
   });
 

@@ -11,8 +11,8 @@ import { Memoize } from 'typescript-memoize';
 
 import IgirException from '../exceptions/igirException.js';
 import Defaults from '../globals/defaults.js';
-import FsReadTransform, { FsReadCallback } from './fsReadTransform.js';
-import gracefulFs from './gracefulFs.js';
+import gracefulFs from '../polyfill/gracefulFs.js';
+import FsReadTransform, { FsReadCallback } from '../streams/fsReadTransform.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
 gracefulFs.gracefulify(fs);
@@ -36,7 +36,7 @@ export type FsWalkCallback = (increment: number) => void;
 /**
  * A collection of static filesystem utility functions.
  */
-export default class FsPoly {
+export default class FsUtil {
   // Assume that all drives we're reading from or writing to were already mounted at startup
   // https://github.com/cristiammercado/node-disk-info/issues/36
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

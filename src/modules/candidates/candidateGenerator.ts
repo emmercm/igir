@@ -26,9 +26,9 @@ import type Options from '../../models/options.js';
 import { ZipFormat } from '../../models/options.js';
 import ROMWithFiles from '../../models/romWithFiles.js';
 import WriteCandidate from '../../models/writeCandidate.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -81,7 +81,7 @@ export default class CandidateGenerator extends Module {
               `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
                 .getRomsWithFiles()
                 .map((rwf) => rwf.getInputFile().toString())
-                .reduce(ArrayPoly.reduceUnique(), [])
+                .reduce(ArrayUtil.reduceUnique(), [])
                 .join(', ')}`,
             );
           }
@@ -106,7 +106,7 @@ export default class CandidateGenerator extends Module {
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: generated ${FsPoly.sizeReadable(size)} of ${IntlPoly.toLocaleString(candidates.length)} candidate${candidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: generated ${FsUtil.sizeReadable(size)} of ${IntlUtil.toLocaleString(candidates.length)} candidate${candidates.length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${dat.getName()}: done generating candidates`);
@@ -717,7 +717,7 @@ export default class CandidateGenerator extends Module {
       romsWithFiles.length > 1 &&
       romsWithFiles
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
-        .reduce(ArrayPoly.reduceUnique(), []).length > 1 &&
+        .reduce(ArrayUtil.reduceUnique(), []).length > 1 &&
       game.getDiscMerged()
     ) {
       // This Game is the result of 2+ discs merged together, and we're writing at least 2 files.
@@ -727,7 +727,7 @@ export default class CandidateGenerator extends Module {
 
     if (
       romsWithFiles.filter(
-        ArrayPoly.filterUniqueMapped((romWithFiles) => romWithFiles.getInputFile().getFilePath()),
+        ArrayUtil.filterUniqueMapped((romWithFiles) => romWithFiles.getInputFile().getFilePath()),
       ).length !== 1
     ) {
       // Every input file has to be coming from the same archive
@@ -815,7 +815,7 @@ export default class CandidateGenerator extends Module {
            */
           try {
             const newInputFile = new ArchiveFile(oldInputFile as ArchiveEntry<Archive>, {
-              size: await FsPoly.size(oldInputFile.getFilePath()),
+              size: await FsUtil.size(oldInputFile.getFilePath()),
               checksumBitmask: oldInputFile.getChecksumBitmask(),
             });
             return romWithFiles.withInputFile(newInputFile);
@@ -845,7 +845,7 @@ export default class CandidateGenerator extends Module {
       return;
     }
 
-    let message = `${dat.getName()}: ${game.getName()}: found ${IntlPoly.toLocaleString(foundRomsWithFiles.length)} file${foundRomsWithFiles.length === 1 ? '' : 's'}, missing ${IntlPoly.toLocaleString(missingRoms.length)} file${missingRoms.length === 1 ? '' : 's'}:`;
+    let message = `${dat.getName()}: ${game.getName()}: found ${IntlUtil.toLocaleString(foundRomsWithFiles.length)} file${foundRomsWithFiles.length === 1 ? '' : 's'}, missing ${IntlUtil.toLocaleString(missingRoms.length)} file${missingRoms.length === 1 ? '' : 's'}:`;
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
@@ -873,7 +873,7 @@ export default class CandidateGenerator extends Module {
       // Is a duplicate output path
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
       // Only return one copy of duplicate output paths
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
     if (duplicateOutputPaths.length === 0) {
       // There are no duplicate non-archive output file paths
@@ -888,7 +888,7 @@ export default class CandidateGenerator extends Module {
       const conflictedInputFiles = romsWithFiles
         .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
         .map((romWithFiles) => romWithFiles.getInputFile().toString())
-        .reduce(ArrayPoly.reduceUnique(), []);
+        .reduce(ArrayUtil.reduceUnique(), []);
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
         let message = `${dat.getName()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
@@ -978,7 +978,7 @@ export default class CandidateGenerator extends Module {
     // ...then translate those ArchiveEntries into a list of unique Archives
     const inputArchives = inputArchiveEntries
       .map((archiveEntry) => archiveEntry.getArchive())
-      .filter(ArrayPoly.filterUniqueMapped((archive) => archive.getFilePath()));
+      .filter(ArrayUtil.filterUniqueMapped((archive) => archive.getFilePath()));
 
     if (
       inputArchives.length === 1 &&
@@ -1180,7 +1180,7 @@ export default class CandidateGenerator extends Module {
           },
         ),
       )
-    ).filter(ArrayPoly.filterUniqueMapped((candidate) => candidate.hashCode()));
+    ).filter(ArrayUtil.filterUniqueMapped((candidate) => candidate.hashCode()));
 
     // Note: we're explicitly not de-duplicating input+output pairs here, even though they might
     //  all be the same for every ROM in the case of raw-copying/moving an archive; it is expected

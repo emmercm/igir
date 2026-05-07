@@ -2,7 +2,7 @@ import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 
 type SignaturePiece = {
   offset?: number;

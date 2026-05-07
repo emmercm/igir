@@ -11,9 +11,9 @@ import { ZipReader } from '../../../../packages/zip/index.js';
 import type { ProgressCallback } from '../../../console/progressBar.js';
 import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
-import FsPoly from '../../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../../polyfill/fsReadTransform.js';
-import FsReadTransform from '../../../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
+import FsReadTransform from '../../../streams/fsReadTransform.js';
+import FsUtil from '../../../utils/fsUtil.js';
 import type { ZipFormatValue } from '../../options.js';
 import { ZipFormat } from '../../options.js';
 import type File from '../file.js';
@@ -107,8 +107,8 @@ export default class Zip extends Archive {
     callback?: FsReadCallback,
   ): Promise<void> {
     const extractedDir = path.dirname(extractedFilePath);
-    if (!(await FsPoly.exists(extractedDir))) {
-      await FsPoly.mkdir(extractedDir, { recursive: true });
+    if (!(await FsUtil.exists(extractedDir))) {
+      await FsUtil.mkdir(extractedDir, { recursive: true });
     }
 
     await this.extractEntryToStream(entryPath, async (readable) => {
@@ -164,7 +164,7 @@ export default class Zip extends Archive {
   ): Promise<void> {
     // Pipe the zip contents to disk, using an intermediate temp file because we may be trying to
     // overwrite an input zip file
-    const tempZipFile = await FsPoly.mktemp(this.getFilePath());
+    const tempZipFile = await FsUtil.mktemp(this.getFilePath());
     const torrentZip = await TZWriter.open(
       tempZipFile,
       zipFormat === ZipFormat.RVZSTD ? CompressionMethod.ZSTD : CompressionMethod.DEFLATE,
@@ -173,10 +173,10 @@ export default class Zip extends Archive {
     try {
       await Zip.addArchiveEntries(torrentZip, inputToOutput, compressorThreads, callback);
       await torrentZip.finalize();
-      await FsPoly.mv(tempZipFile, this.getFilePath());
+      await FsUtil.mv(tempZipFile, this.getFilePath());
     } finally {
       await torrentZip.close();
-      await FsPoly.rm(tempZipFile, { force: true });
+      await FsUtil.rm(tempZipFile, { force: true });
     }
   }
 

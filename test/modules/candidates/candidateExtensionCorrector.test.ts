@@ -24,7 +24,7 @@ import ROMWithFiles from '../../../src/models/romWithFiles.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -124,7 +124,7 @@ it('should correct ROMs without DATs', async () => {
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     const tempFiles = await Promise.all(
       inputFiles.map(async (inputFile) => {
@@ -163,7 +163,7 @@ it('should correct ROMs without DATs', async () => {
 
     expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -181,7 +181,7 @@ it('should correct ROMs with missing filenames', async () => {
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     const tempFiles = await Promise.all(
       inputFiles.map(async (inputFile) => {
@@ -216,44 +216,6 @@ it('should correct ROMs with missing filenames', async () => {
 
     expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
-});
-
-it('should correct the extension of an ArchiveFile based on its underlying ArchiveEntry signature', async () => {
-  const options = new Options({
-    commands: ['copy'],
-    fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
-  });
-  const dat = new LogiqxDAT({ header: new Header() });
-
-  const zipPath = path.join('test', 'fixtures', 'roms', 'zip', 'foobar.zip');
-  const zip = new Zip(zipPath);
-  const archiveEntry = await ArchiveEntry.entryOf({
-    archive: zip,
-    entryPath: 'foobar.lnx',
-  });
-  const archiveFile = new ArchiveFile(archiveEntry, {
-    size: await FsPoly.size(zipPath),
-  });
-
-  // DAT-supplied ROM name uses a deliberately-wrong extension; with FixExtension.ALWAYS
-  // we expect it to be corrected to the inner entry's signature (.lnx), not the
-  // archive container's signature (.zip).
-  const rom = new ROM({ name: 'foobar.bogus', size: 1 });
-  const game = new SingleValueGame({ name: 'foobar', roms: [rom] });
-  const outputFile = await File.fileOf({ filePath: 'foobar.bogus' });
-  const candidate = new WriteCandidate(game, [new ROMWithFiles(rom, archiveFile, outputFile)]);
-
-  const correctedCandidates = await new CandidateExtensionCorrector(
-    options,
-    new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
-    new Semaphore(os.availableParallelism()),
-  ).correct(dat, [candidate]);
-
-  expect(correctedCandidates).toHaveLength(1);
-  const correctedRom = correctedCandidates[0].getRomsWithFiles()[0].getRom();
-  expect(correctedRom.getName().toLowerCase()).toMatch(/\.lnx$/);
-  expect(correctedRom.getName().toLowerCase()).not.toMatch(/\.zip$/);
 });

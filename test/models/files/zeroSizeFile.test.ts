@@ -2,48 +2,48 @@ import path from 'node:path';
 
 import Temp from '../../../src/globals/temp.js';
 import ZeroSizeFile from '../../../src/models/files/zeroSizeFile.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 
 describe('extractToFile', () => {
   it('should extract to specified path', async () => {
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
-      const tempFile = await FsPoly.mktemp(path.join(tempDir, 'temp'));
+      const tempFile = await FsUtil.mktemp(path.join(tempDir, 'temp'));
       await ZeroSizeFile.getInstance().extractToFile(tempFile);
-      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
-      await expect(FsPoly.size(tempFile)).resolves.toEqual(0);
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+      await expect(FsUtil.size(tempFile)).resolves.toEqual(0);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true, force: true });
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
     }
   });
 });
 
 describe('extractToTempFile', () => {
   it('should extract to a random path', async () => {
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
       const result = await ZeroSizeFile.getInstance().extractToTempFile(async (tempFile) => {
-        await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
-        await expect(FsPoly.size(tempFile)).resolves.toEqual(0);
+        await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+        await expect(FsUtil.size(tempFile)).resolves.toEqual(0);
         return true;
       });
       expect(result).toEqual(true);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true, force: true });
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
     }
   });
 });
 
 describe('extractAndPatchToFile', () => {
   it('should extract to specified path', async () => {
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
-      const tempFile = await FsPoly.mktemp(path.join(tempDir, 'temp'));
+      const tempFile = await FsUtil.mktemp(path.join(tempDir, 'temp'));
       await ZeroSizeFile.getInstance().extractAndPatchToFile(tempFile);
-      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
-      await expect(FsPoly.size(tempFile)).resolves.toEqual(0);
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+      await expect(FsUtil.size(tempFile)).resolves.toEqual(0);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true, force: true });
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
     }
   });
 });

@@ -1,7 +1,7 @@
 import IgirException from '../../exceptions/igirException.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import IOFile from '../../polyfill/ioFile.js';
+import IOFile from '../../io/ioFile.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
+import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 import FileChecksums, { ChecksumBitmask } from '../files/fileChecksums.js';
 import Patch from './patch.js';
@@ -69,7 +69,7 @@ export default class UPSPatch extends Patch {
       const sourceSize = await Patch.readUpsUint(patchFile);
       if (inputRomFile.getSize() !== sourceSize) {
         throw new IgirException(
-          `UPS patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
+          `UPS patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
       await Patch.readUpsUint(patchFile); // target size
@@ -88,7 +88,7 @@ export default class UPSPatch extends Patch {
     await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await FsPoly.copyFile(tempRomFile, outputRomPath);
+      await FsUtil.copyFile(tempRomFile, outputRomPath);
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {

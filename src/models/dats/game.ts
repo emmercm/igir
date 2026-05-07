@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { Expose, Transform, Type } from 'class-transformer';
 
-import ArrayPoly from '../../polyfill/arrayPoly.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
 import Internationalization from '../internationalization.js';
 import Disk from './disk.js';
 import DeviceRef from './mame/deviceRef.js';
@@ -801,7 +801,7 @@ export default class Game implements GameProps {
         .split(/[,+]/)
         .map((lang) => lang.toUpperCase())
         .filter((lang) => Internationalization.LANGUAGES.includes(lang)) // is known
-        .reduce(ArrayPoly.reduceUnique(), []);
+        .reduce(ArrayUtil.reduceUnique(), []);
       if (twoMatchesParsed.length > 0) {
         return twoMatchesParsed;
       }
@@ -828,7 +828,7 @@ export default class Game implements GameProps {
             // Is known
             Internationalization.LANGUAGES.includes(lang),
         )
-        .reduce(ArrayPoly.reduceUnique(), []);
+        .reduce(ArrayUtil.reduceUnique(), []);
       if (threeMatchesParsed.length > 0) {
         return threeMatchesParsed;
       }

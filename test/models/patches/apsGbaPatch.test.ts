@@ -5,13 +5,13 @@ import Temp from '../../../src/globals/temp.js';
 import File from '../../../src/models/files/file.js';
 import APSGBAPatch from '../../../src/models/patches/apsGbaPatch.js';
 import APSPatch from '../../../src/models/patches/apsPatch.js';
-import bufferPoly from '../../../src/polyfill/bufferPoly.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import bufferUtil from '../../../src/utils/bufferUtil.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await FsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
-  await FsPoly.mkdir(path.dirname(temp), { recursive: true });
-  await FsPoly.writeFile(temp, contents);
+  const temp = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
+  await FsUtil.mkdir(path.dirname(temp), { recursive: true });
+  await FsUtil.writeFile(temp, contents);
   return await File.fileOf({ filePath: temp });
 }
 
@@ -47,16 +47,16 @@ describe('createPatchedFile', () => {
     // All-zero buffer: byte 4 is 0x00 (not '0'), so APSPatch dispatches to APSGBAPatch;
     // the first 4 bytes don't equal "APS1", so createPatchedFile throws
     const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
-    const outputRom = await FsPoly.mktemp('ROM');
+    const outputRom = await FsUtil.mktemp('ROM');
     const patchFile = await writeTemp('00000000 patch.aps', Buffer.alloc(100));
 
     try {
       const patch = await APSPatch.patchFrom(patchFile);
       await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
     } finally {
-      await FsPoly.rm(inputRom.getFilePath());
-      await FsPoly.rm(outputRom, { force: true });
-      await FsPoly.rm(patchFile.getFilePath());
+      await FsUtil.rm(inputRom.getFilePath());
+      await FsUtil.rm(outputRom, { force: true });
+      await FsUtil.rm(patchFile.getFilePath());
     }
   });
 
@@ -68,16 +68,16 @@ describe('createPatchedFile', () => {
     patchContents.writeUInt32LE(5, 8); // targetSize = 5
 
     const inputRom = await writeTemp('ROM', 'AAAAAAAAAA'); // 10 bytes, but patch expects 5
-    const outputRom = await FsPoly.mktemp('ROM');
+    const outputRom = await FsUtil.mktemp('ROM');
     const patchFile = await writeTemp('00000000 patch.aps', patchContents);
 
     try {
       const patch = await APSPatch.patchFrom(patchFile);
       await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
     } finally {
-      await FsPoly.rm(inputRom.getFilePath());
-      await FsPoly.rm(outputRom, { force: true });
-      await FsPoly.rm(patchFile.getFilePath());
+      await FsUtil.rm(inputRom.getFilePath());
+      await FsUtil.rm(outputRom, { force: true });
+      await FsUtil.rm(patchFile.getFilePath());
     }
   });
 
@@ -119,20 +119,20 @@ describe('createPatchedFile', () => {
       expectedContents + String.fromCodePoint(0).repeat(64 * 1024 - expectedContents.length);
 
     const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await FsPoly.mktemp('ROM');
+    const outputRom = await FsUtil.mktemp('ROM');
     const patchFile = await writeTemp('patch 00000000.aps', patchContents);
 
     try {
       const patch = await APSPatch.patchFrom(patchFile);
       await patch.createPatchedFile(inputRom, outputRom);
       const actualContents = (
-        await bufferPoly.fromReadable(fs.createReadStream(outputRom))
+        await bufferUtil.fromReadable(fs.createReadStream(outputRom))
       ).toString();
       expect(actualContents).toEqual(expectedContentsPadded);
     } finally {
-      await FsPoly.rm(inputRom.getFilePath());
-      await FsPoly.rm(outputRom);
-      await FsPoly.rm(patchFile.getFilePath());
+      await FsUtil.rm(inputRom.getFilePath());
+      await FsUtil.rm(outputRom);
+      await FsUtil.rm(patchFile.getFilePath());
     }
   });
 });

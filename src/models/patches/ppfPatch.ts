@@ -1,7 +1,7 @@
 import IgirException from '../../exceptions/igirException.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import IOFile from '../../polyfill/ioFile.js';
+import IOFile from '../../io/ioFile.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
+import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -37,7 +37,7 @@ class PPFHeader {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
         throw new IgirException(
-          `PPF patch expected ROM size of ${FsPoly.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
+          `PPF patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
       blockCheckEnabled = true;

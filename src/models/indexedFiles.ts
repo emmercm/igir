@@ -1,7 +1,7 @@
 import { Memoize } from 'typescript-memoize';
 
 import File from '../models/files/file.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
 import ROM from './dats/rom.js';
 
 export type ChecksumsToFiles = Map<string, File[]>;
@@ -205,7 +205,7 @@ export default class IndexedFiles {
       ...this.sha256.values(),
     ]
       .flat()
-      .filter(ArrayPoly.filterUniqueMapped((file) => file.toString()));
+      .filter(ArrayUtil.filterUniqueMapped((file) => file.toString()));
   }
 
   @Memoize()
@@ -252,6 +252,6 @@ export default class IndexedFiles {
       results = [...results, ...(this.crc32.get(crc32WithSize) ?? [])];
     }
 
-    return results.filter(ArrayPoly.filterUniqueMapped((f) => f.toString()));
+    return results.filter(ArrayUtil.filterUniqueMapped((f) => f.toString()));
   }
 }

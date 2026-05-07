@@ -24,7 +24,7 @@ import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.
 import MovedROMDeleter from '../../src/modules/movedRomDeleter.js';
 import ROMIndexer from '../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../src/modules/roms/romScanner.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 it('should do nothing if no ROMs moved', async () => {
@@ -45,13 +45,13 @@ it('should do nothing if no ROMs moved', async () => {
   );
 
   const exists = await Promise.all(
-    romFiles.map(async (romFile) => await FsPoly.exists(romFile.getFilePath())),
+    romFiles.map(async (romFile) => await FsUtil.exists(romFile.getFilePath())),
   );
   expect(exists).not.toContain(false);
 });
 
 it('should delete raw files', async () => {
-  const inputPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+  const inputPath = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'input'));
   try {
     const options = new Options({
       commands: ['move'],
@@ -61,7 +61,7 @@ it('should delete raw files', async () => {
 
     // Given a plain file
     const rawFile = path.join(inputPath, 'game.rom');
-    await FsPoly.touch(rawFile);
+    await FsUtil.touch(rawFile);
     const inputFile = await File.fileOf({ filePath: rawFile }, ChecksumBitmask.CRC32);
 
     // When - the file is considered "moved" (written to a different output path)
@@ -81,9 +81,9 @@ it('should delete raw files', async () => {
 
     // Then - the file should have been deleted
     expect(deletedPaths).toHaveLength(1);
-    await expect(FsPoly.exists(rawFile)).resolves.toEqual(false);
+    await expect(FsUtil.exists(rawFile)).resolves.toEqual(false);
   } finally {
-    await FsPoly.rm(inputPath, { recursive: true, force: true });
+    await FsUtil.rm(inputPath, { recursive: true, force: true });
   }
 });
 
@@ -446,7 +446,7 @@ describe('should delete archives', () => {
         expectedDeletedFilePaths,
       ]),
     )('%s', async (_, games, expectedDeletedFilePaths) => {
-      const inputPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+      const inputPath = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'input'));
       try {
         const options = new Options({
           commands: ['move', ...(command ? [command] : [])],
@@ -460,7 +460,7 @@ describe('should delete archives', () => {
           await Promise.all(
             dat.getGames().map(async (game): Promise<File[]> => {
               const zipPath = path.join(inputPath, `${game.getName()}.zip`);
-              await FsPoly.touch(zipPath);
+              await FsUtil.touch(zipPath);
               const zip = new Zip(zipPath);
               return await Promise.all(
                 game.getRoms().map(async (rom) => await rom.toArchiveEntry(zip)),
@@ -489,14 +489,14 @@ describe('should delete archives', () => {
 
         expect(deletedFilePaths).toEqual(expectedDeletedFilePaths);
       } finally {
-        await FsPoly.rm(inputPath, { recursive: true });
+        await FsUtil.rm(inputPath, { recursive: true });
       }
     });
   });
 });
 
 it("should not delete files that weren't moved", async () => {
-  const inputPath = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'input'));
+  const inputPath = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'input'));
   try {
     const options = new Options({
       commands: ['move'],
@@ -506,7 +506,7 @@ it("should not delete files that weren't moved", async () => {
 
     // Given a plain file
     const rawFile = path.join(inputPath, 'game.rom');
-    await FsPoly.touch(rawFile);
+    await FsUtil.touch(rawFile);
     const inputFile = await File.fileOf({ filePath: rawFile });
 
     // The file is a "moved" ROM, but it's also a written output (same path)
@@ -526,8 +526,8 @@ it("should not delete files that weren't moved", async () => {
 
     // Then - the file should NOT have been deleted because it's a written output
     expect(deletedPaths).toHaveLength(0);
-    await expect(FsPoly.exists(rawFile)).resolves.toEqual(true);
+    await expect(FsUtil.exists(rawFile)).resolves.toEqual(true);
   } finally {
-    await FsPoly.rm(inputPath, { recursive: true, force: true });
+    await FsUtil.rm(inputPath, { recursive: true, force: true });
   }
 });

@@ -4,13 +4,13 @@ import path from 'node:path';
 import Temp from '../../../src/globals/temp.js';
 import File from '../../../src/models/files/file.js';
 import VcdiffPatch from '../../../src/models/patches/vcdiffPatch.js';
-import bufferPoly from '../../../src/polyfill/bufferPoly.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
+import bufferUtil from '../../../src/utils/bufferUtil.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 
 async function writeTemp(fileName: string, contents: string | Buffer): Promise<File> {
-  const temp = await FsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
-  await FsPoly.mkdir(path.dirname(temp), { recursive: true });
-  await FsPoly.writeFile(temp, contents);
+  const temp = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
+  await FsUtil.mkdir(path.dirname(temp), { recursive: true });
+  await FsUtil.writeFile(temp, contents);
   return await File.fileOf({ filePath: temp });
 }
 
@@ -47,16 +47,16 @@ describe('constructor', () => {
 describe('createPatchedFile', () => {
   test('should throw on invalid patch header', async () => {
     const inputRom = await writeTemp('ROM', 'AAAAAAAAAA');
-    const outputRom = await FsPoly.mktemp('ROM');
+    const outputRom = await FsUtil.mktemp('ROM');
     const patchFile = await writeTemp('00000000 patch.xdelta', Buffer.alloc(10));
 
     try {
       const patch = VcdiffPatch.patchFrom(patchFile);
       await expect(patch.createPatchedFile(inputRom, outputRom)).rejects.toThrow();
     } finally {
-      await FsPoly.rm(inputRom.getFilePath());
-      await FsPoly.rm(outputRom, { force: true });
-      await FsPoly.rm(patchFile.getFilePath());
+      await FsUtil.rm(inputRom.getFilePath());
+      await FsUtil.rm(outputRom, { force: true });
+      await FsUtil.rm(patchFile.getFilePath());
     }
   });
 
@@ -76,20 +76,20 @@ describe('createPatchedFile', () => {
     ],
   ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
     const inputRom = await writeTemp('ROM', baseContents);
-    const outputRom = await FsPoly.mktemp('ROM');
+    const outputRom = await FsUtil.mktemp('ROM');
     const patchFile = await writeTemp('00000000 patch.xdelta', patchContents);
 
     try {
       const patch = VcdiffPatch.patchFrom(patchFile);
       await patch.createPatchedFile(inputRom, outputRom);
       const actualContents = (
-        await bufferPoly.fromReadable(fs.createReadStream(outputRom))
+        await bufferUtil.fromReadable(fs.createReadStream(outputRom))
       ).toString();
       expect(actualContents).toEqual(expectedContents);
     } finally {
-      await FsPoly.rm(inputRom.getFilePath());
-      await FsPoly.rm(outputRom);
-      await FsPoly.rm(patchFile.getFilePath());
+      await FsUtil.rm(inputRom.getFilePath());
+      await FsUtil.rm(outputRom);
+      await FsUtil.rm(patchFile.getFilePath());
     }
   });
 });

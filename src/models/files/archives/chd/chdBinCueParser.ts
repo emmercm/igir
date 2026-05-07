@@ -6,8 +6,8 @@ import { parse, TrackDataType } from '@gplane/cue';
 
 import IgirException from '../../../../exceptions/igirException.js';
 import Temp from '../../../../globals/temp.js';
-import FsPoly from '../../../../polyfill/fsPoly.js';
-import StreamPoly from '../../../../polyfill/streamPoly.js';
+import FsUtil from '../../../../utils/fsUtil.js';
+import StreamUtil from '../../../../utils/streamUtil.js';
 import type { ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -21,7 +21,7 @@ export default class ChdBinCueParser {
     archive: T,
     checksumBitmask: number,
   ): Promise<ArchiveEntry<T>[]> {
-    const tempDir = await FsPoly.mkdtemp(path.join(Temp.getTempDir(), 'chd-bin-cue'));
+    const tempDir = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'chd-bin-cue'));
 
     try {
       const cueFile = (await archive.extractArchiveEntries(tempDir)).find((filePath) =>
@@ -32,7 +32,7 @@ export default class ChdBinCueParser {
       }
       return await this.parseCue(archive, cueFile, checksumBitmask);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true, force: true });
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
     }
   }
 
@@ -77,7 +77,7 @@ export default class ChdBinCueParser {
   ): Promise<ArchiveEntry<T>[]> {
     // Determine the global block size from the first track in the file
     const filePath = path.join(binFileDir, file.name);
-    const fileSize = await FsPoly.size(filePath);
+    const fileSize = await FsUtil.size(filePath);
     const firstTrack = file.tracks.at(0);
     if (!firstTrack) {
       // The file has no tracks, so we can't extract anything
@@ -108,10 +108,10 @@ export default class ChdBinCueParser {
       try {
         const pregappedStream =
           pregapSize + postgapSize > 0
-            ? StreamPoly.concat(
-                StreamPoly.staticReadable(pregapSize, 0x00),
+            ? StreamUtil.concat(
+                StreamUtil.staticReadable(pregapSize, 0x00),
                 readStream,
-                StreamPoly.staticReadable(postgapSize, 0x00),
+                StreamUtil.staticReadable(postgapSize, 0x00),
               )
             : readStream;
         checksums = await FileChecksums.hashStream(pregappedStream, checksumBitmask);

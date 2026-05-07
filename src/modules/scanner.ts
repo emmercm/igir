@@ -13,8 +13,8 @@ import type File from '../models/files/file.js';
 import type { ChecksumBitmaskValue } from '../models/files/fileChecksums.js';
 import { ChecksumBitmask } from '../models/files/fileChecksums.js';
 import type Options from '../models/options.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
 import Module from './module.js';
 
 /**
@@ -49,8 +49,8 @@ export default abstract class Scanner extends Module {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
-          total: await FsPoly.size(inputFile),
-          progressFormatter: FsPoly.sizeReadable,
+          total: await FsUtil.size(inputFile),
+          progressFormatter: FsUtil.sizeReadable,
         });
 
         let files: File[];
@@ -129,7 +129,7 @@ export default abstract class Scanner extends Module {
       throw new Error('must provide ChecksumBitmask when getting unique files');
     }
     const foundFiles = await this.getFilesFromPaths(filePaths, checksumBitmask);
-    return foundFiles.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
+    return foundFiles.filter(ArrayUtil.filterUniqueMapped((file) => file.hashCode()));
   }
 
   private async getFilesFromPath(
@@ -139,9 +139,9 @@ export default abstract class Scanner extends Module {
     progressBar: ProgressBar,
   ): Promise<File[]> {
     try {
-      if (await FsPoly.isSymlink(filePath)) {
-        const realFilePath = await FsPoly.readlinkResolved(filePath);
-        if (!(await FsPoly.exists(realFilePath))) {
+      if (await FsUtil.isSymlink(filePath)) {
+        const realFilePath = await FsUtil.readlinkResolved(filePath);
+        if (!(await FsUtil.exists(realFilePath))) {
           this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
           return [];
         }

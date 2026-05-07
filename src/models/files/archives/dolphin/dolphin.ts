@@ -6,7 +6,7 @@ import dolphinTool, {
   DolphinToolBinaryPreference,
 } from 'dolphin-tool';
 
-import type { FsReadCallback } from '../../../../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';

@@ -10,8 +10,8 @@ import type File from '../models/files/file.js';
 import type Options from '../models/options.js';
 import { PlaylistMode } from '../models/options.js';
 import type WriteCandidate from '../models/writeCandidate.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
 import Module from './module.js';
 
 /**
@@ -109,7 +109,7 @@ export default class PlaylistCreator extends Module {
           .getPlaylistExtensions()
           .some((ext) => outputFile.getFilePath().toLowerCase().endsWith(ext.toLowerCase())),
       )
-      .filter(ArrayPoly.filterUniqueMapped((file) => file.getFilePath()));
+      .filter(ArrayUtil.filterUniqueMapped((file) => file.getFilePath()));
     if (playlistFiles.length === 0) {
       return undefined;
     }
@@ -132,12 +132,12 @@ export default class PlaylistCreator extends Module {
       .toSorted()
       .join('\n')}\n`;
 
-    if (!(await FsPoly.exists(commonDirectory))) {
-      await FsPoly.mkdir(commonDirectory, { recursive: true });
+    if (!(await FsUtil.exists(commonDirectory))) {
+      await FsUtil.mkdir(commonDirectory, { recursive: true });
     }
     const playlistLocation = path.join(commonDirectory, `${playlistBasename}.m3u`);
     this.progressBar.logInfo(`${dat.getName()}: creating playlist '${playlistLocation}'`);
-    await FsPoly.writeFile(playlistLocation, playlistLines);
+    await FsUtil.writeFile(playlistLocation, playlistLines);
     return playlistLocation;
   }
 

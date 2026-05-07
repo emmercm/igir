@@ -18,10 +18,10 @@ import type Options from '../../models/options.js';
 import type { ZipFormatValue } from '../../models/options.js';
 import { LinkMode, ZipFormat } from '../../models/options.js';
 import type WriteCandidate from '../../models/writeCandidate.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import type { MoveResultValue } from '../../polyfill/fsPoly.js';
-import FsPoly, { MoveResult } from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import type { MoveResultValue } from '../../utils/fsUtil.js';
+import FsUtil, { MoveResult } from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 export interface CandidateWriterResults {
@@ -98,7 +98,7 @@ export default class CandidateWriter extends Module {
       .filter((candidate) => candidate.getRomsWithFiles().length > 0);
 
     this.progressBar.logTrace(
-      `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlPoly.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlUtil.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
       this.progressBar.setSymbol(ProgressBarSymbol.TESTING);
@@ -127,7 +127,7 @@ export default class CandidateWriter extends Module {
     });
 
     this.progressBar.logTrace(
-      `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlPoly.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlUtil.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
     const writtenFilePaths = new Set(
@@ -152,8 +152,8 @@ export default class CandidateWriter extends Module {
 
   private static async ensureOutputDirExists(outputFilePath: string): Promise<void> {
     const outputDir = path.dirname(outputFilePath);
-    if (!(await FsPoly.exists(outputDir))) {
-      await FsPoly.mkdir(outputDir, { recursive: true });
+    if (!(await FsUtil.exists(outputDir))) {
+      await FsUtil.mkdir(outputDir, { recursive: true });
     }
   }
 
@@ -190,11 +190,11 @@ export default class CandidateWriter extends Module {
         (sum, [, outputEntry]) => sum + outputEntry.getSize(),
         0,
       ),
-      progressFormatter: FsPoly.sizeReadable,
+      progressFormatter: FsUtil.sizeReadable,
     });
     try {
       // If the output file already exists, see if we need to do anything
-      if (await FsPoly.exists(outputZip.getFilePath())) {
+      if (await FsUtil.exists(outputZip.getFilePath())) {
         if (
           this.options.shouldWrite() &&
           !this.options.getOverwrite() &&
@@ -346,7 +346,7 @@ export default class CandidateWriter extends Module {
       return map;
     }, new Map<string, ArchiveEntry<Zip>>());
     if (actualEntriesByPath.size !== expectedEntriesByPath.size) {
-      return `has ${IntlPoly.toLocaleString(actualEntriesByPath.size)} files, expected ${IntlPoly.toLocaleString(expectedEntriesByPath.size)}`;
+      return `has ${IntlUtil.toLocaleString(actualEntriesByPath.size)} files, expected ${IntlUtil.toLocaleString(expectedEntriesByPath.size)}`;
     }
 
     for (const [entryPath, expectedFile] of expectedEntriesByPath.entries()) {
@@ -392,7 +392,7 @@ export default class CandidateWriter extends Module {
         expectedFile.getCrc32() &&
         actualFile.getSize() !== expectedFile.getSize()
       ) {
-        return `entry '${entryPath}' has the file ${entryPath} of size ${IntlPoly.toLocaleString(actualFile.getSize())}B, expected ${IntlPoly.toLocaleString(expectedFile.getSize())}B`;
+        return `entry '${entryPath}' has the file ${entryPath} of size ${IntlUtil.toLocaleString(actualFile.getSize())}B, expected ${IntlUtil.toLocaleString(expectedFile.getSize())}B`;
       }
     }
 
@@ -430,7 +430,7 @@ export default class CandidateWriter extends Module {
     const lockedFilePaths = this.options.shouldMove()
       ? inputToOutputZipEntries
           .map(([input]) => input.getFilePath())
-          .reduce(ArrayPoly.reduceUnique(), [])
+          .reduce(ArrayUtil.reduceUnique(), [])
       : [];
     return await this.moveMutex.runExclusiveForKeys(lockedFilePaths, async () => {
       // Input files may have been previously moved due to raw-moving, find them
@@ -449,9 +449,9 @@ export default class CandidateWriter extends Module {
           `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entr${movedInputToOutputZipEntries.length === 1 ? 'y' : 'ies'}:`,
           ...movedInputToOutputZipEntries.map(([input, output]) => {
             if (input.getFilePath() === output.getFilePath()) {
-              return `  '${input.getExtractedFilePath()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
+              return `  '${input.getExtractedFilePath()}' (${FsUtil.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}' ${input.getExtractedFilePath() === output.getExtractedFilePath() ? '(rewriting)' : ''}`;
             }
-            return `  '${input.toString()}' (${FsPoly.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}'`;
+            return `  '${input.toString()}' (${FsUtil.sizeReadable(input.getSize())}) → '${output.getExtractedFilePath()}'`;
           }),
         ].join('\n'),
       );
@@ -478,7 +478,7 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.logTrace(
-        `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${IntlPoly.toLocaleString(inputToOutputZipEntries.length)} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
+        `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${IntlUtil.toLocaleString(inputToOutputZipEntries.length)} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
       );
       return true;
     });
@@ -509,7 +509,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsPoly.sizeReadable(totalBytes)} of ${IntlPoly.toLocaleString(inputToOutputEntries.length)} raw file${inputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: writing ${FsUtil.sizeReadable(totalBytes)} of ${IntlUtil.toLocaleString(inputToOutputEntries.length)} raw file${inputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
@@ -567,11 +567,11 @@ export default class CandidateWriter extends Module {
       name: outputFilePath,
       // Files being patched might not have a known final size, just guess it as the input size
       total: outputRomFile.getSize() > 0 ? outputRomFile.getSize() : inputRomFile.getSize(),
-      progressFormatter: FsPoly.sizeReadable,
+      progressFormatter: FsUtil.sizeReadable,
     });
     try {
       // If the output file already exists, see if we need to do anything
-      if (await FsPoly.exists(outputFilePath)) {
+      if (await FsUtil.exists(outputFilePath)) {
         if (
           this.options.shouldWrite() &&
           !this.options.getOverwrite() &&
@@ -725,16 +725,16 @@ export default class CandidateWriter extends Module {
       }
 
       this.progressBar.logInfo(
-        `${dat.getName()}: ${candidate.getName()}: moving file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
+        `${dat.getName()}: ${candidate.getName()}: moving file '${inputRomFile.toString()}' (${FsUtil.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
       );
 
       try {
         await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-        const moveResult = await FsPoly.mv(
+        const moveResult = await FsUtil.mv(
           inputRomFile.getFilePath(),
           outputFilePath,
-          (progress) => {
+          (progress: number) => {
             progressBar.setCompleted(progress);
           },
         );
@@ -760,17 +760,17 @@ export default class CandidateWriter extends Module {
     progressBar: ProgressBar,
   ): Promise<MoveResultValue | undefined> {
     this.progressBar.logInfo(
-      `${dat.getName()}: ${candidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsPoly.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
+      `${dat.getName()}: ${candidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsUtil.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
     );
 
     try {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
-      const tempRawFile = await FsPoly.mktemp(outputFilePath);
+      const tempRawFile = await FsUtil.mktemp(outputFilePath);
       await inputRomFile.extractAndPatchToFile(tempRawFile, (progress) => {
         progressBar.setCompleted(progress);
       });
-      await FsPoly.mv(tempRawFile, outputFilePath);
+      await FsUtil.mv(tempRawFile, outputFilePath);
       return MoveResult.COPIED;
     } catch (error) {
       this.progressBar.logError(
@@ -840,7 +840,7 @@ export default class CandidateWriter extends Module {
 
     // Check size
     if (actualFile.getCrc32() && actualFile.getSize() !== expectedFile.getSize()) {
-      return `is of size ${IntlPoly.toLocaleString(actualFile.getSize())}B, expected ${IntlPoly.toLocaleString(expectedFile.getSize())}B`;
+      return `is of size ${IntlUtil.toLocaleString(actualFile.getSize())}B, expected ${IntlUtil.toLocaleString(expectedFile.getSize())}B`;
     }
 
     this.progressBar.logTrace(
@@ -898,11 +898,11 @@ export default class CandidateWriter extends Module {
     let targetPath = inputRomFile.getFilePath();
     if (this.options.getLinkMode() === LinkMode.SYMLINK && this.options.getSymlinkRelative()) {
       await CandidateWriter.ensureOutputDirExists(linkPath);
-      targetPath = await FsPoly.symlinkRelativePath(targetPath, linkPath);
+      targetPath = await FsUtil.symlinkRelativePath(targetPath, linkPath);
     }
 
     // If the output file already exists, see if we need to do anything
-    if (await FsPoly.exists(linkPath)) {
+    if (await FsUtil.exists(linkPath)) {
       if (
         this.options.shouldWrite() &&
         !this.options.getOverwrite() &&
@@ -1005,17 +1005,17 @@ export default class CandidateWriter extends Module {
         this.progressBar.logInfo(
           `${dat.getName()}: ${candidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`,
         );
-        await FsPoly.symlink(targetPath, linkPath);
+        await FsUtil.symlink(targetPath, linkPath);
       } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
         this.progressBar.logInfo(
           `${dat.getName()}: ${candidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`,
         );
-        await FsPoly.hardlink(targetPath, linkPath);
+        await FsUtil.hardlink(targetPath, linkPath);
       } else {
         this.progressBar.logInfo(
           `${dat.getName()}: ${candidate.getName()}: creating reflink '${targetPath}' → '${linkPath}'`,
         );
-        await FsPoly.reflink(targetPath, linkPath);
+        await FsUtil.reflink(targetPath, linkPath);
       }
       return true;
     } catch (error) {
@@ -1030,20 +1030,20 @@ export default class CandidateWriter extends Module {
     linkPath: string,
     expectedTargetPath: string,
   ): Promise<string | undefined> {
-    if (!(await FsPoly.exists(linkPath))) {
+    if (!(await FsUtil.exists(linkPath))) {
       return "doesn't exist";
     }
 
-    if (!(await FsPoly.isSymlink(linkPath))) {
+    if (!(await FsUtil.isSymlink(linkPath))) {
       return 'is not a symlink';
     }
 
-    const existingSourcePath = await FsPoly.readlink(linkPath);
+    const existingSourcePath = await FsUtil.readlink(linkPath);
     if (path.normalize(existingSourcePath) !== path.normalize(expectedTargetPath)) {
       return `has the target path '${existingSourcePath}', expected '${expectedTargetPath}`;
     }
 
-    if (!(await FsPoly.exists(await FsPoly.readlinkResolved(linkPath)))) {
+    if (!(await FsUtil.exists(await FsUtil.readlinkResolved(linkPath)))) {
       return `has the target path '${existingSourcePath}' which doesn't exist`;
     }
 
@@ -1054,12 +1054,12 @@ export default class CandidateWriter extends Module {
     linkPath: string,
     inputRomPath: string,
   ): Promise<string | undefined> {
-    if (!(await FsPoly.exists(linkPath))) {
+    if (!(await FsUtil.exists(linkPath))) {
       return "doesn't exist";
     }
 
-    const targetInode = await FsPoly.inode(linkPath);
-    const sourceInode = await FsPoly.inode(inputRomPath);
+    const targetInode = await FsUtil.inode(linkPath);
+    const sourceInode = await FsUtil.inode(inputRomPath);
     if (targetInode !== sourceInode) {
       return `references a different file than '${inputRomPath}'`;
     }

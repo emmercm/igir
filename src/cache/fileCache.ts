@@ -17,8 +17,8 @@ import FileSignature from '../models/files/fileSignature.js';
 import ROMHeader from '../models/files/romHeader.js';
 import type { ROMPaddingProps } from '../models/files/romPadding.js';
 import ROMPadding from '../models/files/romPadding.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../streams/fsReadTransform.js';
+import FsUtil from '../utils/fsUtil.js';
 import Cache from './cache.js';
 
 interface CacheValue {
@@ -99,7 +99,7 @@ export default class FileCache {
     forceRecompute = false,
   ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
-    const stats = await FsPoly.stat(filePath);
+    const stats = await FsUtil.stat(filePath);
     const cacheKey = this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS);
 
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
@@ -162,7 +162,7 @@ export default class FileCache {
     callback?: FsReadCallback,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
-    const stats = await FsPoly.stat(archive.getFilePath());
+    const stats = await FsUtil.stat(archive.getFilePath());
     if (stats.size === 0) {
       // An empty file can't have entries
       return [];
@@ -286,7 +286,7 @@ export default class FileCache {
     }
 
     // When using file-path-based keys, we need file stats to detect stale cache entries
-    const stats = usingFilePathKey ? await FsPoly.stat(file.getFilePath()) : undefined;
+    const stats = usingFilePathKey ? await FsUtil.stat(file.getFilePath()) : undefined;
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
@@ -385,11 +385,11 @@ export default class FileCache {
   }
 
   async getOrComputeTzValidation(zip: Zip, forceRecompute = false): Promise<ValidationResultValue> {
-    if (!(await FsPoly.exists(zip.getFilePath()))) {
+    if (!(await FsUtil.exists(zip.getFilePath()))) {
       return ValidationResult.INVALID;
     }
 
-    const stats = await FsPoly.stat(zip.getFilePath());
+    const stats = await FsUtil.stat(zip.getFilePath());
     const currentVersion = Object.keys(ValidationResult).length;
     const cacheKey = this.getCacheKey(zip.getFilePath(), undefined, ValueType.TZ_VALIDATION);
 

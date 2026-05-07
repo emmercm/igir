@@ -10,7 +10,7 @@ import type Patch from '../models/patches/patch.js';
 import PPFPatch from '../models/patches/ppfPatch.js';
 import UPSPatch from '../models/patches/upsPatch.js';
 import VcdiffPatch from '../models/patches/vcdiffPatch.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
 
 interface PatchParser {
   extensions: string[];
@@ -72,7 +72,7 @@ export default class PatchFactory {
   static getSupportedExtensions(): string[] {
     return Object.values(PatchFactory.PATCH_PARSERS)
       .flatMap((parser) => parser.extensions)
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
   }
 

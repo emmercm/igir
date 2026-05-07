@@ -3,7 +3,7 @@ import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
-import ArrayPoly from '../../polyfill/arrayPoly.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
 
 export default class ROMHeader {
   private static readonly HEADERS: Record<string, ROMHeader> = {
@@ -61,7 +61,7 @@ export default class ROMHeader {
   static getSupportedExtensions(): string[] {
     return Object.values(this.HEADERS)
       .map((header) => header.headeredFileExtension)
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
   }
 

@@ -30,7 +30,7 @@ import type WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
-import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
+import ArrayUtil from '../../../src/utils/arrayUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -1016,7 +1016,7 @@ describe('MAME v0.260', () => {
       .flatMap((game) => [...game.getRoms(), ...game.getDisks()])
       .map(async (rom) => await rom.toFile()),
   )
-    .then((files) => files.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode())))
+    .then((files) => files.filter(ArrayUtil.filterUniqueMapped((file) => file.hashCode())))
     .then((files) => IndexedFiles.fromFiles(files));
 
   it('should include disks by default', async () => {

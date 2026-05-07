@@ -4,11 +4,11 @@ import FileCache from '../../src/cache/fileCache.js';
 import Temp from '../../src/globals/temp.js';
 import Zip from '../../src/models/files/archives/zip.js';
 import { ChecksumBitmask } from '../../src/models/files/fileChecksums.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 
 describe('loadFile', () => {
   it('should load after saving', async () => {
-    const tempCache = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const tempCache = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
     const fileCache = new FileCache();
     await fileCache.loadFile(tempCache);
 

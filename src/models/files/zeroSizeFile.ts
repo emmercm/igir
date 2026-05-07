@@ -2,8 +2,8 @@ import os from 'node:os';
 import type { Readable } from 'node:stream';
 
 import IgirException from '../../exceptions/igirException.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import StreamPoly from '../../polyfill/streamPoly.js';
+import FsUtil from '../../utils/fsUtil.js';
+import StreamUtil from '../../utils/streamUtil.js';
 import File from './file.js';
 
 export default class ZeroSizeFile extends File {
@@ -29,14 +29,14 @@ export default class ZeroSizeFile extends File {
   }
 
   async extractToFile(destinationPath: string): Promise<void> {
-    if (await FsPoly.exists(destinationPath)) {
-      await FsPoly.rm(destinationPath, { force: true });
+    if (await FsUtil.exists(destinationPath)) {
+      await FsUtil.rm(destinationPath, { force: true });
     }
-    await FsPoly.touch(destinationPath);
+    await FsUtil.touch(destinationPath);
   }
 
   async createReadStream<T>(callback: (readable: Readable) => Promise<T> | T): Promise<T> {
-    const readable = StreamPoly.staticReadable(0, 0x00);
+    const readable = StreamUtil.staticReadable(0, 0x00);
     return await callback(readable);
   }
 

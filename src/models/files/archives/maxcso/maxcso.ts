@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import maxcso, { MaxcsoBinaryPreference } from 'maxcso';
 
-import type { FsReadCallback } from '../../../../polyfill/fsReadTransform.js';
+import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumBitmaskValue, ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';

@@ -2,8 +2,8 @@ import { writeToString } from '@fast-csv/format';
 import type { ChalkInstance } from 'chalk';
 import chalk from 'chalk';
 
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import IntlPoly from '../polyfill/intlPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import IntlUtil from '../utils/intlUtil.js';
 import type DAT from './dats/dat.js';
 import type Game from './dats/game.js';
 import type File from './files/file.js';
@@ -156,7 +156,7 @@ export default class DATStatus {
         const all = this.allRomTypesToGames.get(type) ?? [];
 
         if (!options.usingDats()) {
-          return `${IntlPoly.toLocaleString(found.length)} ${type}`;
+          return `${IntlUtil.toLocaleString(found.length)} ${type}`;
         }
 
         const percentage = (found.length / all.length) * 100;
@@ -177,10 +177,10 @@ export default class DATStatus {
 
         // Patched ROMs are always found===all
         if (type === ROMType.PATCHED) {
-          return `${color(IntlPoly.toLocaleString(all.length))} ${type}`;
+          return `${color(IntlUtil.toLocaleString(all.length))} ${type}`;
         }
 
-        return `${color(IntlPoly.toLocaleString(found.length))}/${IntlPoly.toLocaleString(all.length)} ${type}`;
+        return `${color(IntlUtil.toLocaleString(found.length))}/${IntlUtil.toLocaleString(all.length)} ${type}`;
       })
       .filter((string_) => string_.length > 0)
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
@@ -201,7 +201,7 @@ export default class DATStatus {
     );
 
     const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted((a, b) => a.getName().localeCompare(b.getName()))
       .map((game) => {
         let status: GameStatusValue = GameStatus.MISSING;
@@ -228,7 +228,7 @@ export default class DATStatus {
             options.shouldWrite() ? romWithFiles.getOutputFile() : romWithFiles.getInputFile(),
           )
           .map((file) => file.getFilePath())
-          .reduce(ArrayPoly.reduceUnique(), []);
+          .reduce(ArrayUtil.reduceUnique(), []);
 
         return DATStatus.buildCsvRow(
           this.getDATName(),
@@ -329,7 +329,7 @@ export default class DATStatus {
     return DATStatus.getAllowedTypes(options)
       .flatMap((type) => romTypesToValues.get(type))
       .filter((value) => value !== undefined)
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
   }
 

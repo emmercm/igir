@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import Cache from '../../src/cache/cache.js';
 import Temp from '../../src/globals/temp.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 
 const TEST_CACHE_SIZE = 100;
 
@@ -165,28 +165,28 @@ describe('delete', () => {
 
 describe('load', () => {
   it('should not throw on nonexistent file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
-    await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
 
     const cache = new Cache<number>({ filePath: tempFile });
     await expect(cache.load()).resolves.toBeTruthy();
   });
 
   it('should not throw on empty file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
-    await FsPoly.touch(tempFile);
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    await FsUtil.touch(tempFile);
     try {
-      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
 
       const cache = new Cache<number>({ filePath: tempFile });
       await expect(cache.load()).resolves.toBeTruthy();
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 
   it('should load after saving a populated cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
 
     const firstCache = new Cache<number>({ filePath: tempFile });
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
@@ -195,7 +195,7 @@ describe('load', () => {
     await firstCache.save();
 
     try {
-      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
 
       const secondCache = new Cache<number>({ filePath: tempFile });
       await secondCache.load();
@@ -207,27 +207,27 @@ describe('load', () => {
         await expect(secondCache.get(String(i))).resolves.toEqual(i);
       }
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 });
 
 describe('save', () => {
   it('should not save an empty cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
 
     const cache = new Cache<number>({ filePath: tempFile });
     await cache.save();
 
     try {
-      await expect(FsPoly.exists(tempFile)).resolves.toEqual(false);
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 
   it('should save a populated cache', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
 
     const cache = new Cache<number>({ filePath: tempFile });
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
@@ -236,9 +236,9 @@ describe('save', () => {
     await cache.save();
 
     try {
-      await expect(FsPoly.exists(tempFile)).resolves.toEqual(true);
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 });

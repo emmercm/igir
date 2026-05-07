@@ -1,7 +1,7 @@
 import IgirException from '../../exceptions/igirException.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import type { FsReadCallback } from '../../polyfill/fsReadTransform.js';
-import IOFile from '../../polyfill/ioFile.js';
+import IOFile from '../../io/ioFile.js';
+import type { FsReadCallback } from '../../streams/fsReadTransform.js';
+import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
 
@@ -32,7 +32,7 @@ export default class DPSPatch extends Patch {
       const originalSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== originalSize) {
         throw new IgirException(
-          `DPS patch expected ROM size of ${FsPoly.sizeReadable(originalSize)}: ${this.getFile().toString()}`,
+          `DPS patch expected ROM size of ${FsUtil.sizeReadable(originalSize)}: ${this.getFile().toString()}`,
         );
       }
 
@@ -49,7 +49,7 @@ export default class DPSPatch extends Patch {
     await inputRomFile.extractToTempFile(async (tempRomFile) => {
       const sourceFile = await IOFile.fileFrom(tempRomFile, 'r');
 
-      await FsPoly.copyFile(tempRomFile, outputRomPath);
+      await FsUtil.copyFile(tempRomFile, outputRomPath);
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
