@@ -1,5 +1,5 @@
-import type { GameProps } from './game.js';
-import Game from './game.js';
+import type { GameProps } from './dats/game.js';
+import Game from './dats/game.js';
 
 export interface SingleValueGameProps extends Omit<
   GameProps,

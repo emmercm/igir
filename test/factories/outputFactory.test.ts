@@ -10,8 +10,8 @@ import Header from '../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
 import Release from '../../src/models/dats/release.js';
 import ROM from '../../src/models/dats/rom.js';
-import SingleValueGame from '../../src/models/dats/singleValueGame.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../src/models/options.js';
+import SingleValueGame from '../../src/models/singleValueGame.js';
 
 const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new SingleValueGame({ name: 'Dummy Game' });

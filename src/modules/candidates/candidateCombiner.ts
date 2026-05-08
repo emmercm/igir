@@ -4,9 +4,9 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type DAT from '../../models/dats/dat.js';
 import type ROM from '../../models/dats/rom.js';
-import SingleValueGame from '../../models/dats/singleValueGame.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import type Options from '../../models/options.js';
+import SingleValueGame from '../../models/singleValueGame.js';
 import WriteCandidate from '../../models/writeCandidate.js';
 import Module from '../module.js';
 

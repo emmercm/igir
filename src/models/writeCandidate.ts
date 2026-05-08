@@ -1,7 +1,7 @@
 import { Memoize } from 'typescript-memoize';
 
-import SingleValueGame from './dats/singleValueGame.js';
 import ROMWithFiles from './romWithFiles.js';
+import SingleValueGame from './singleValueGame.js';
 
 /**
  * A container holding a {@link Game}, optionally a {@link Release} for that {@link Game}, and a

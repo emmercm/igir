@@ -1,8 +1,8 @@
 import ROM from '../../src/models/dats/rom.js';
-import SingleValueGame from '../../src/models/dats/singleValueGame.js';
 import File from '../../src/models/files/file.js';
 import IPSPatch from '../../src/models/patches/ipsPatch.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
+import SingleValueGame from '../../src/models/singleValueGame.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 
 async function dummyFile(): Promise<File> {
