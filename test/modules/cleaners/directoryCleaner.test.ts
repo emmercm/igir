@@ -1,12 +1,12 @@
 import path from 'node:path';
 
-import Temp from '../../src/globals/temp.js';
-import File from '../../src/models/files/file.js';
-import type { OptionsProps } from '../../src/models/options.js';
-import Options from '../../src/models/options.js';
-import DirectoryCleaner from '../../src/modules/directoryCleaner.js';
-import FsUtil, { WalkMode } from '../../src/utils/fsUtil.js';
-import ProgressBarFake from '../console/progressBarFake.js';
+import Temp from '../../../src/globals/temp.js';
+import File from '../../../src/models/files/file.js';
+import type { OptionsProps } from '../../../src/models/options.js';
+import Options from '../../../src/models/options.js';
+import DirectoryCleaner from '../../../src/modules/cleaners/directoryCleaner.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
+import ProgressBarFake from '../../console/progressBarFake.js';
 
 const ROM_FIXTURES_DIR = path.join('test', 'fixtures', 'roms');
 

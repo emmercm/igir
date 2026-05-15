@@ -5,7 +5,7 @@ import type { Semaphore } from 'async-mutex';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import FileFactory from '../../factories/fileFactory.js';
-import OutputFactory from '../../factories/outputFactory.js';
+import OutputFactory from '../../modules/candidates/utils/outputFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import type ROM from '../../models/dats/rom.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';

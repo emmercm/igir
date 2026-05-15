@@ -1,11 +1,11 @@
 import path from 'node:path';
 
-import Temp from '../../src/globals/temp.js';
-import File from '../../src/models/files/file.js';
-import Options, { MoveDeleteDirs, MoveDeleteDirsInverted } from '../../src/models/options.js';
-import InputSubdirectoriesDeleter from '../../src/modules/inputSubdirectoriesDeleter.js';
-import FsUtil, { WalkMode } from '../../src/utils/fsUtil.js';
-import ProgressBarFake from '../console/progressBarFake.js';
+import Temp from '../../../src/globals/temp.js';
+import File from '../../../src/models/files/file.js';
+import Options, { MoveDeleteDirs, MoveDeleteDirsInverted } from '../../../src/models/options.js';
+import InputSubdirectoriesDeleter from '../../../src/modules/cleaners/inputSubdirectoriesDeleter.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
+import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function createTempFiles(): Promise<string> {
   const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());

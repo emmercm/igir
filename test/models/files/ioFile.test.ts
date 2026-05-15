@@ -1,9 +1,9 @@
 import path from 'node:path';
 
-import Defaults from '../../src/globals/defaults.js';
-import Temp from '../../src/globals/temp.js';
-import IOFile from '../../src/io/ioFile.js';
-import FsUtil from '../../src/utils/fsUtil.js';
+import Defaults from '../../../src/globals/defaults.js';
+import Temp from '../../../src/globals/temp.js';
+import IOFile from '../../../src/models/files/ioFile.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 
 if (!(await FsUtil.exists(Temp.getTempDir()))) {
   await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });

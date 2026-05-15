@@ -3,15 +3,15 @@ import path from 'node:path';
 
 import { Ajv } from 'ajv';
 
-import OutputFactory from '../../src/factories/outputFactory.js';
-import outputTokensData from '../../src/models/consoleTokens.json' with { type: 'json' };
-import outputTokensSchema from '../../src/models/consoleTokens.schema.json' with { type: 'json' };
-import Header from '../../src/models/dats/logiqx/header.js';
-import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
-import Release from '../../src/models/dats/release.js';
-import ROM from '../../src/models/dats/rom.js';
-import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../src/models/options.js';
-import SingleValueGame from '../../src/models/singleValueGame.js';
+import OutputFactory from '../../../../src/modules/candidates/utils/outputFactory.js';
+import outputTokensData from '../../../../src/modules/candidates/utils/consoleTokens.json' with { type: 'json' };
+import outputTokensSchema from '../../../../src/modules/candidates/utils/consoleTokens.schema.json' with { type: 'json' };
+import Header from '../../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../../src/models/dats/logiqx/logiqxDat.js';
+import Release from '../../../../src/models/dats/release.js';
+import ROM from '../../../../src/models/dats/rom.js';
+import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../../src/models/options.js';
+import SingleValueGame from '../../../../src/models/singleValueGame.js';
 
 const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new SingleValueGame({ name: 'Dummy Game' });

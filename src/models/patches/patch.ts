@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import IgirException from '../../exceptions/igirException.js';
-import type IOFile from '../../io/ioFile.js';
+import type IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';

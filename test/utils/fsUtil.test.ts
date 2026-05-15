@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import IgirException from '../../src/exceptions/igirException.js';
 import Temp from '../../src/globals/temp.js';
-import IOFile from '../../src/io/ioFile.js';
+import IOFile from '../../src/models/files/ioFile.js';
 import FsUtil, { MoveResult, WalkMode } from '../../src/utils/fsUtil.js';
 
 if (!(await FsUtil.exists(Temp.getTempDir()))) {

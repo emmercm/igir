@@ -1,8 +1,8 @@
 import type { OpenMode, PathLike } from 'node:fs';
 import fs from 'node:fs';
 
-import Defaults from '../globals/defaults.js';
-import FsUtil from '../utils/fsUtil.js';
+import Defaults from '../../globals/defaults.js';
+import FsUtil from '../../utils/fsUtil.js';
 
 /**
  * A wrapper for readable and writable files

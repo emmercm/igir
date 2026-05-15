@@ -11,7 +11,7 @@ import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../models/files/fileChecksums.js';
 import ROMHeader from '../models/files/romHeader.js';
-import Internationalization from '../models/internationalization.js';
+import Internationalization from '../models/dats/internationalization.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,

@@ -1,6 +1,6 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import OutputFactory from '../../factories/outputFactory.js';
+import OutputFactory from '../../modules/candidates/utils/outputFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import type Options from '../../models/options.js';
 import type ROMWithFiles from '../../models/romWithFiles.js';

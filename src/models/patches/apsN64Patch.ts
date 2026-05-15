@@ -1,5 +1,5 @@
 import IgirException from '../../exceptions/igirException.js';
-import IOFile from '../../io/ioFile.js';
+import IOFile from '../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';

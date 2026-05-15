@@ -8,7 +8,7 @@ import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-t
 
 import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
-import IOFile from '../../io/ioFile.js';
+import IOFile from '../../models/files/ioFile.js';
 import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import URLUtil from '../../utils/urlUtil.js';

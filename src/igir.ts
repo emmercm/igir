@@ -16,7 +16,7 @@ import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
 import IgirException from './exceptions/igirException.js';
 import FileFactory from './factories/fileFactory.js';
-import OutputFactory from './factories/outputFactory.js';
+import OutputFactory from './modules/candidates/utils/outputFactory.js';
 import Package from './globals/package.js';
 import Temp from './globals/temp.js';
 import type DAT from './models/dats/dat.js';
@@ -46,10 +46,10 @@ import DATParentInferrer from './modules/dats/datParentInferrer.js';
 import DATPreferer from './modules/dats/datPreferer.js';
 import DATScanner from './modules/dats/datScanner.js';
 import Dir2DatCreator from './modules/dir2DatCreator.js';
-import DirectoryCleaner from './modules/directoryCleaner.js';
+import DirectoryCleaner from './modules/cleaners/directoryCleaner.js';
 import FixdatCreator from './modules/fixdatCreator.js';
-import InputSubdirectoriesDeleter from './modules/inputSubdirectoriesDeleter.js';
-import MovedROMDeleter from './modules/movedRomDeleter.js';
+import InputSubdirectoriesDeleter from './modules/cleaners/inputSubdirectoriesDeleter.js';
+import MovedROMDeleter from './modules/cleaners/movedRomDeleter.js';
 import PatchScanner from './modules/patchScanner.js';
 import PlaylistCreator from './modules/playlistCreator.js';
 import ReportGenerator from './modules/reportGenerator.js';
@@ -217,7 +217,7 @@ export default class Igir {
       writerResults.wrote.forEach((wrote) => candidateWriterResults.wrote.push(wrote));
 
       // Write playlists
-      const playlistPaths = await new PlaylistCreator(this.options, progressBar).create(
+      const playlistPaths = await new PlaylistCreator(this.options, progressBar).write(
         processedDat,
         candidates,
       );

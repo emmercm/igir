@@ -7,7 +7,7 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
-import IOFile from '../../../src/io/ioFile.js';
+import IOFile from '../../../src/models/files/ioFile.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/models/options.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';

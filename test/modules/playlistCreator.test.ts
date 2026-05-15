@@ -268,7 +268,7 @@ async function playlistCreator(
   dat: DAT,
   candidates: WriteCandidate[],
 ): Promise<[string, string[]][]> {
-  const writtenFiles = await new PlaylistCreator(options, new ProgressBarFake()).create(
+  const writtenFiles = await new PlaylistCreator(options, new ProgressBarFake()).write(
     dat,
     candidates,
   );

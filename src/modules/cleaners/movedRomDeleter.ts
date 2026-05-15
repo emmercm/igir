@@ -1,19 +1,19 @@
 import async from 'async';
 
-import type ProgressBar from '../console/progressBar.js';
-import { ProgressBarSymbol } from '../console/progressBar.js';
-import Defaults from '../globals/defaults.js';
-import ArchiveEntry from '../models/files/archives/archiveEntry.js';
-import ArchiveFile from '../models/files/archives/archiveFile.js';
-import ChdBinCue from '../models/files/archives/chd/chdBinCue.js';
-import type File from '../models/files/file.js';
-import type IndexedFiles from '../models/indexedFiles.js';
-import type Options from '../models/options.js';
-import type WriteCandidate from '../models/writeCandidate.js';
-import ArrayUtil from '../utils/arrayUtil.js';
-import FsUtil from '../utils/fsUtil.js';
-import IntlUtil from '../utils/intlUtil.js';
-import Module from './module.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
+import Defaults from '../../globals/defaults.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../models/files/archives/archiveFile.js';
+import ChdBinCue from '../../models/files/archives/chd/chdBinCue.js';
+import type File from '../../models/files/file.js';
+import type IndexedFiles from '../../models/indexedFiles.js';
+import type Options from '../../models/options.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
+import Module from '../module.js';
 
 /**
  * After all output {@link File}s have been written, delete any input {@link File}s that were

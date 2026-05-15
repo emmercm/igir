@@ -9,7 +9,7 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import IgirException from '../../exceptions/igirException.js';
 import type FileFactory from '../../factories/fileFactory.js';
-import GameGrouper from '../../gameGrouper.js';
+import GameGrouper from './utils/gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
 import type DAT from '../../models/dats/dat.js';
 import type { DATObjectProps } from '../../models/dats/datObject.js';

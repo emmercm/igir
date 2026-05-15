@@ -2,14 +2,14 @@ import path from 'node:path';
 
 import async from 'async';
 
-import type ProgressBar from '../console/progressBar.js';
-import { ProgressBarSymbol } from '../console/progressBar.js';
-import Defaults from '../globals/defaults.js';
-import type File from '../models/files/file.js';
-import type Options from '../models/options.js';
-import { MoveDeleteDirs } from '../models/options.js';
-import FsUtil, { WalkMode } from '../utils/fsUtil.js';
-import Module from './module.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
+import Defaults from '../../globals/defaults.js';
+import type File from '../../models/files/file.js';
+import type Options from '../../models/options.js';
+import { MoveDeleteDirs } from '../../models/options.js';
+import FsUtil, { WalkMode } from '../../utils/fsUtil.js';
+import Module from '../module.js';
 
 /**
  * After all output {@link File}s have been written, delete any empty subdirectories that had

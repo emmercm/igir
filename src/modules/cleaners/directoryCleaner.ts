@@ -5,16 +5,16 @@ import async from 'async';
 import { isNotJunk } from 'junk';
 import trash from 'trash';
 
-import MappableSemaphore from '../async/mappableSemaphore.js';
-import type ProgressBar from '../console/progressBar.js';
-import { ProgressBarSymbol } from '../console/progressBar.js';
-import Defaults from '../globals/defaults.js';
-import type File from '../models/files/file.js';
-import type Options from '../models/options.js';
-import ArrayUtil from '../utils/arrayUtil.js';
-import FsUtil from '../utils/fsUtil.js';
-import IntlUtil from '../utils/intlUtil.js';
-import Module from './module.js';
+import MappableSemaphore from '../../async/mappableSemaphore.js';
+import type ProgressBar from '../../console/progressBar.js';
+import { ProgressBarSymbol } from '../../console/progressBar.js';
+import Defaults from '../../globals/defaults.js';
+import type File from '../../models/files/file.js';
+import type Options from '../../models/options.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
+import Module from '../module.js';
 
 /**
  * Recycle any unknown files in the {@link OptionsProps.output} directory, if applicable.

@@ -4,7 +4,7 @@ import async from 'async';
 
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
-import GameGrouper from '../gameGrouper.js';
+import GameGrouper from './dats/utils/gameGrouper.js';
 import type DAT from '../models/dats/dat.js';
 import type File from '../models/files/file.js';
 import type Options from '../models/options.js';
@@ -28,7 +28,7 @@ export default class PlaylistCreator extends Module {
   /**
    * Creates playlists.
    */
-  async create(dat: DAT, candidates: WriteCandidate[]): Promise<string[]> {
+  async write(dat: DAT, candidates: WriteCandidate[]): Promise<string[]> {
     if (!this.options.shouldPlaylist()) {
       return [];
     }

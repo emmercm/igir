@@ -1,4 +1,4 @@
-import ArrayUtil from '../utils/arrayUtil.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
 
 interface RegionOptions {
   region: string;

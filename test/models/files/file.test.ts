@@ -8,7 +8,7 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
-import IOFile from '../../../src/io/ioFile.js';
+import IOFile from '../../../src/models/files/ioFile.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../src/models/files/archives/archiveFile.js';
 import Zip from '../../../src/models/files/archives/zip.js';
