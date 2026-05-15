@@ -5,14 +5,14 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
-import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
+import Options, { ZipFormat, ZipFormatInverted } from '../../../src/models/options.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import { ZipReader } from '../../zip/index.js';
 import type { ValidationResultValue } from '../src/tzValidator.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
 import type { CompressionMethodValue } from '../src/tzWriter.js';
 
-const zipFiles = (await FsPoly.walk(path.join('test', 'fixtures', 'roms'), WalkMode.FILES))
+const zipFiles = (await FsUtil.walk(path.join('test', 'fixtures', 'roms'), WalkMode.FILES))
   .filter((filePath) => filePath.endsWith('.zip'))
   .filter((filePath) => !filePath.includes('invalid'));
 test.each(zipFiles)('fixtures should be invalid TorrentZip/RVZSTD files: %s', async (zipFile) => {
@@ -26,13 +26,13 @@ const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [ZipFormat.RVZSTD]: ValidationResult.VALID_RVZSTD,
 } as const;
 
-const romDirs = (await FsPoly.dirs(path.join('test', 'fixtures', 'roms'))).filter(
+const romDirs = (await FsUtil.dirs(path.join('test', 'fixtures', 'roms'))).filter(
   (dirPath) => !['chd', 'cso', 'gcz', 'nkit', 'rvz', 'wia'].includes(path.basename(dirPath)),
 );
 
 describe.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])('zip format: %s', (zipFormat) => {
   test.each(romDirs)('should write valid zip files: %s', async (input) => {
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
 
     try {
       await new Igir(
@@ -49,7 +49,7 @@ describe.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])('zip format: %s', (zipFo
         new Logger(LogLevel.NEVER, new stream.PassThrough()),
       ).main();
 
-      const writtenFiles = await FsPoly.walk(tempDir, WalkMode.FILES);
+      const writtenFiles = await FsUtil.walk(tempDir, WalkMode.FILES);
       expect(writtenFiles.length).toBeGreaterThan(0);
       for (const writtenFile of writtenFiles) {
         await expect(TZValidator.validate(new ZipReader(writtenFile))).resolves.toEqual(
@@ -57,7 +57,7 @@ describe.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])('zip format: %s', (zipFo
         );
       }
     } finally {
-      await FsPoly.rm(tempDir, {
+      await FsUtil.rm(tempDir, {
         recursive: true,
         force: true,
       });

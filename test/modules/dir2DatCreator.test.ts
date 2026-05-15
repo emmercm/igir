@@ -3,21 +3,21 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
+import FileCache from '../../src/cache/fileCache.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import FileFactory from '../../src/factories/fileFactory.js';
+import type DAT from '../../src/models/dats/dat.js';
+import { ChecksumBitmask } from '../../src/models/files/fileChecksums.js';
+import Options from '../../src/models/options.js';
+import WriteCandidate from '../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import DATGameInferrer from '../../src/modules/dats/datGameInferrer.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import Dir2DatCreator from '../../src/modules/dir2DatCreator.js';
 import ROMIndexer from '../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../src/modules/roms/romScanner.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
-import type DAT from '../../src/types/dats/dat.js';
-import FileCache from '../../src/types/files/fileCache.js';
-import { ChecksumBitmask } from '../../src/types/files/fileChecksums.js';
-import FileFactory from '../../src/types/files/fileFactory.js';
-import Options from '../../src/types/options.js';
-import WriteCandidate from '../../src/types/writeCandidate.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -98,7 +98,7 @@ it('should write a valid DAT', async () => {
   // And the written DAT can be parsed
   let writtenDat: DAT;
   try {
-    await expect(FsPoly.exists(dir2dat)).resolves.toEqual(true);
+    await expect(FsUtil.exists(dir2dat)).resolves.toEqual(true);
     const writtenDats = await new DATScanner(
       new Options({
         ...options,
@@ -111,7 +111,7 @@ it('should write a valid DAT', async () => {
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
   } finally {
-    await FsPoly.rm(dir2dat, { force: true });
+    await FsUtil.rm(dir2dat, { force: true });
   }
 
   // And the written DAT matches the inferred DAT
@@ -200,7 +200,7 @@ it('should use the candidates for games and ROMs', async () => {
   // And the written DAT can be parsed
   let writtenDat: DAT;
   try {
-    await expect(FsPoly.exists(dir2dat)).resolves.toEqual(true);
+    await expect(FsUtil.exists(dir2dat)).resolves.toEqual(true);
     const writtenDats = await new DATScanner(
       new Options({
         ...options,
@@ -213,7 +213,7 @@ it('should use the candidates for games and ROMs', async () => {
     expect(writtenDats).toHaveLength(1);
     [writtenDat] = writtenDats;
   } finally {
-    await FsPoly.rm(dir2dat, { force: true });
+    await FsUtil.rm(dir2dat, { force: true });
   }
 
   // And the written DAT matches the inferred DAT

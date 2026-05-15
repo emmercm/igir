@@ -9,12 +9,23 @@ import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
 import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
+import FileCache from './cache/fileCache.js';
 import type Logger from './console/logger.js';
 import MultiBar from './console/multiBar.js';
 import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
+import IgirException from './exceptions/igirException.js';
+import FileFactory from './factories/fileFactory.js';
 import Package from './globals/package.js';
 import Temp from './globals/temp.js';
+import type DAT from './models/dats/dat.js';
+import type DATStatus from './models/datStatus.js';
+import File from './models/files/file.js';
+import { ChecksumBitmask, ChecksumBitmaskInverted } from './models/files/fileChecksums.js';
+import type IndexedFiles from './models/indexedFiles.js';
+import Options, { InputChecksumArchivesMode, LinkMode } from './models/options.js';
+import type Patch from './models/patches/patch.js';
+import type WriteCandidate from './models/writeCandidate.js';
 import CandidateArchiveFileHasher from './modules/candidates/candidateArchiveFileHasher.js';
 import CandidateCombiner from './modules/candidates/candidateCombiner.js';
 import CandidateExtensionCorrector from './modules/candidates/candidateExtensionCorrector.js';
@@ -25,6 +36,10 @@ import CandidatePostProcessor from './modules/candidates/candidatePostProcessor.
 import CandidateValidator from './modules/candidates/candidateValidator.js';
 import type { CandidateWriterResults } from './modules/candidates/candidateWriter.js';
 import CandidateWriter from './modules/candidates/candidateWriter.js';
+import OutputFactory from './modules/candidates/utils/outputFactory.js';
+import DirectoryCleaner from './modules/cleaners/directoryCleaner.js';
+import InputSubdirectoriesDeleter from './modules/cleaners/inputSubdirectoriesDeleter.js';
+import MovedROMDeleter from './modules/cleaners/movedRomDeleter.js';
 import DATCombiner from './modules/dats/datCombiner.js';
 import DATDiscMerger from './modules/dats/datDiscMerger.js';
 import DATFilter from './modules/dats/datFilter.js';
@@ -34,10 +49,7 @@ import DATParentInferrer from './modules/dats/datParentInferrer.js';
 import DATPreferer from './modules/dats/datPreferer.js';
 import DATScanner from './modules/dats/datScanner.js';
 import Dir2DatCreator from './modules/dir2DatCreator.js';
-import DirectoryCleaner from './modules/directoryCleaner.js';
 import FixdatCreator from './modules/fixdatCreator.js';
-import InputSubdirectoriesDeleter from './modules/inputSubdirectoriesDeleter.js';
-import MovedROMDeleter from './modules/movedRomDeleter.js';
 import PatchScanner from './modules/patchScanner.js';
 import PlaylistCreator from './modules/playlistCreator.js';
 import ReportGenerator from './modules/reportGenerator.js';
@@ -46,21 +58,9 @@ import ROMIndexer from './modules/roms/romIndexer.js';
 import ROMScanner from './modules/roms/romScanner.js';
 import ROMTrimProcessor from './modules/roms/romTrimProcessor.js';
 import StatusGenerator from './modules/statusGenerator.js';
-import ArrayPoly from './polyfill/arrayPoly.js';
-import FsPoly from './polyfill/fsPoly.js';
-import IntlPoly from './polyfill/intlPoly.js';
-import type DAT from './types/dats/dat.js';
-import type DATStatus from './types/datStatus.js';
-import IgirException from './types/exceptions/igirException.js';
-import File from './types/files/file.js';
-import FileCache from './types/files/fileCache.js';
-import { ChecksumBitmask, ChecksumBitmaskInverted } from './types/files/fileChecksums.js';
-import FileFactory from './types/files/fileFactory.js';
-import type IndexedFiles from './types/indexedFiles.js';
-import Options, { InputChecksumArchivesMode, LinkMode } from './types/options.js';
-import OutputFactory from './types/outputFactory.js';
-import type Patch from './types/patches/patch.js';
-import type WriteCandidate from './types/writeCandidate.js';
+import ArrayUtil from './utils/arrayUtil.js';
+import FsUtil from './utils/fsUtil.js';
+import IntlUtil from './utils/intlUtil.js';
 
 /**
  * The main class that coordinates file scanning, processing, and writing.
@@ -90,7 +90,7 @@ export default class Igir {
       process.platform === 'win32'
     ) {
       this.logger.trace('checking Windows for symlink permissions');
-      if (!(await FsPoly.canSymlink(Temp.getTempDir()))) {
+      if (!(await FsUtil.canSymlink(Temp.getTempDir()))) {
         if (!(await isAdmin())) {
           throw new IgirException(
             `${Package.NAME} does not have permissions to create symlinks, please try running as administrator`,
@@ -103,8 +103,8 @@ export default class Igir {
 
     if (this.options.shouldLink() && this.options.getLinkMode() === LinkMode.HARDLINK) {
       const outputDirRoot = this.options.getOutputDirRoot();
-      if (!(await FsPoly.canHardlink(outputDirRoot))) {
-        const outputDisk = FsPoly.diskResolved(outputDirRoot);
+      if (!(await FsUtil.canHardlink(outputDirRoot))) {
+        const outputDisk = FsUtil.diskResolved(outputDirRoot);
         throw new IgirException(`${outputDisk ?? 'filesystem'} does not support hard-linking`);
       }
     }
@@ -117,7 +117,7 @@ export default class Igir {
     } else {
       const cachePath = await this.getCachePath();
       if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
-        if (await FsPoly.exists(cachePath)) {
+        if (await FsUtil.exists(cachePath)) {
           this.logger.trace(`loading the existing file cache at '${cachePath}'`);
         } else {
           this.logger.trace(`creating a new file cache at '${cachePath}'`);
@@ -171,7 +171,7 @@ export default class Igir {
 
     // Process every DAT
     datProcessProgressBar.logTrace(
-      `processing ${IntlPoly.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
+      `processing ${IntlUtil.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
     );
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
       datProcessProgressBar.incrementInProgress();
@@ -217,7 +217,7 @@ export default class Igir {
       writerResults.wrote.forEach((wrote) => candidateWriterResults.wrote.push(wrote));
 
       // Write playlists
-      const playlistPaths = await new PlaylistCreator(this.options, progressBar).create(
+      const playlistPaths = await new PlaylistCreator(this.options, progressBar).write(
         processedDat,
         candidates,
       );
@@ -269,7 +269,7 @@ export default class Igir {
       datProcessProgressBar.incrementCompleted();
     });
     datProcessProgressBar.logTrace(
-      `done processing ${IntlPoly.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
+      `done processing ${IntlUtil.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
     );
 
     datProcessProgressBar.finishWithItems(dats.length, 'DAT', 'processed');
@@ -301,14 +301,14 @@ export default class Igir {
 
     // First, try to use the provided path
     let cachePath = this.options.getCachePath();
-    if (cachePath !== undefined && (await FsPoly.isDirectory(cachePath))) {
+    if (cachePath !== undefined && (await FsUtil.isDirectory(cachePath))) {
       cachePath = path.join(cachePath, defaultFileName);
       this.logger.warn(
         `A directory was provided for the cache path instead of a file, using '${cachePath}' instead`,
       );
     }
     if (cachePath !== undefined) {
-      if (await FsPoly.isWritable(cachePath)) {
+      if (await FsUtil.isWritable(cachePath)) {
         return cachePath;
       }
       this.logger.warn("Provided cache path isn't writable, using the default path");
@@ -319,11 +319,11 @@ export default class Igir {
       path.join(process.cwd(), defaultFileName),
     ]
       .filter((filePath) => filePath.length > 0 && !filePath.startsWith(os.tmpdir()))
-      .reduce(ArrayPoly.reduceUnique(), []);
+      .reduce(ArrayUtil.reduceUnique(), []);
 
     // Next, try to use an already existing path
     const exists = await Promise.all(
-      cachePathCandidates.map(async (pathCandidate) => await FsPoly.exists(pathCandidate)),
+      cachePathCandidates.map(async (pathCandidate) => await FsUtil.exists(pathCandidate)),
     );
     const existsCachePath = cachePathCandidates.find((_, idx) => exists[idx]);
     if (existsCachePath !== undefined) {
@@ -332,7 +332,7 @@ export default class Igir {
 
     // Next, try to find a writable path
     const writable = await Promise.all(
-      cachePathCandidates.map(async (pathCandidate) => await FsPoly.isWritable(pathCandidate)),
+      cachePathCandidates.map(async (pathCandidate) => await FsUtil.isWritable(pathCandidate)),
     );
     const writableCachePath = cachePathCandidates.find((_, idx) => writable[idx]);
     if (writableCachePath !== undefined) {
@@ -695,7 +695,7 @@ export default class Igir {
             ).dir,
         ),
       )
-      .reduce(ArrayPoly.reduceUnique(), []);
+      .reduce(ArrayUtil.reduceUnique(), []);
   }
 
   private async deleteMovedRoms(
@@ -738,7 +738,7 @@ export default class Igir {
     }
 
     const progressBar = this.multiBar.addSingleBar({ name: 'Cleaning output directory' });
-    const uniqueDirsToClean = dirsToClean.reduce(ArrayPoly.reduceUnique(), []);
+    const uniqueDirsToClean = dirsToClean.reduce(ArrayUtil.reduceUnique(), []);
     const filesCleaned = await new DirectoryCleaner(this.options, progressBar).clean(
       uniqueDirsToClean,
       writtenFilesToExclude,

@@ -2,13 +2,13 @@ import os from 'node:os';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
+import Options from '../../../src/models/options.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FileCache from '../../../src/types/files/fileCache.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 test.each([

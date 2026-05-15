@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import moment from 'moment';
 
-import FsPoly from '../polyfill/fsPoly.js';
+import FsUtil from '../utils/fsUtil.js';
 import Package from './package.js';
 
 /**
@@ -32,7 +32,7 @@ export default class Temp {
 }
 
 process.once('exit', () => {
-  FsPoly.rmSync(Temp.getTempDir(), {
+  FsUtil.rmSync(Temp.getTempDir(), {
     force: true,
     recursive: true,
   });

@@ -13,7 +13,7 @@ import type Logger from '../console/logger.js';
 import { LogLevel } from '../console/logLevel.js';
 import MultiBar from '../console/multiBar.js';
 import Package from '../globals/package.js';
-import BufferPoly from '../polyfill/bufferPoly.js';
+import BufferUtil from '../utils/bufferUtil.js';
 
 /**
  * Check for a newer version and log if one is found.
@@ -61,7 +61,7 @@ export default class UpdateChecker {
           timeout: 5000,
         },
         async (res) => {
-          const data = await BufferPoly.fromReadable(res);
+          const data = await BufferUtil.fromReadable(res);
           let json;
           try {
             json = JSON.parse(data.toString()) as {

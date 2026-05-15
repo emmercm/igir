@@ -1,15 +1,15 @@
+import type DAT from '../../../src/models/dats/dat.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import DeviceRef from '../../../src/models/dats/mame/deviceRef.js';
+import ROM from '../../../src/models/dats/rom.js';
+import File from '../../../src/models/files/file.js';
+import Options, { MergeMode, MergeModeInverted } from '../../../src/models/options.js';
+import ROMWithFiles from '../../../src/models/romWithFiles.js';
+import SingleValueGame from '../../../src/models/singleValueGame.js';
+import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateMergeSplitValidator from '../../../src/modules/candidates/candidateMergeSplitValidator.js';
-import type DAT from '../../../src/types/dats/dat.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
-import ROM from '../../../src/types/dats/rom.js';
-import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
-import File from '../../../src/types/files/file.js';
-import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
-import ROMWithFiles from '../../../src/types/romWithFiles.js';
-import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
