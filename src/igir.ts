@@ -246,7 +246,10 @@ export default class Igir {
       }
 
       // Write the output report
-      const datStatus = new StatusGenerator(progressBar).generate(processedDat, candidates);
+      const datStatus = new StatusGenerator(this.options, progressBar).generate(
+        processedDat,
+        candidates,
+      );
       datsStatuses.push(datStatus);
       progressBar.finish(
         [

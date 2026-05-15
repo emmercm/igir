@@ -5,6 +5,7 @@ import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
 import Release from '../../src/models/dats/release.js';
 import ROM from '../../src/models/dats/rom.js';
 import DATStatus from '../../src/models/datStatus.js';
+import Options from '../../src/models/options.js';
 
 // NOTE(cemmer): the majority of tests would expect to be here are covered in
 //  statusGenerator.test.ts instead in order to increase coverage
@@ -43,6 +44,6 @@ function givenDAT(): DAT {
 
 it('getDATName', () => {
   const dat = givenDAT();
-  const datStatus = new DATStatus(dat, []);
+  const datStatus = new DATStatus(new Options(), dat, []);
   expect(datStatus.getDATName()).toEqual('dat name');
 });
