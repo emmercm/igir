@@ -1,20 +1,20 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import Chd from '../../types/files/archives/chd/chd.js';
-import Dolphin from '../../types/files/archives/dolphin/dolphin.js';
-import Maxcso from '../../types/files/archives/maxcso/maxcso.js';
-import Rar from '../../types/files/archives/rar.js';
-import SevenZip from '../../types/files/archives/sevenZip/sevenZip.js';
-import Tar from '../../types/files/archives/tar.js';
-import Zip from '../../types/files/archives/zip.js';
-import type File from '../../types/files/file.js';
-import type { AllChecksums, ChecksumsToFiles } from '../../types/indexedFiles.js';
-import IndexedFiles from '../../types/indexedFiles.js';
-import type Options from '../../types/options.js';
-import { PreferFiletype } from '../../types/options.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import Chd from '../../models/files/archives/chd/chd.js';
+import Dolphin from '../../models/files/archives/dolphin/dolphin.js';
+import Maxcso from '../../models/files/archives/maxcso/maxcso.js';
+import Rar from '../../models/files/archives/rar.js';
+import SevenZip from '../../models/files/archives/sevenZip/sevenZip.js';
+import Tar from '../../models/files/archives/tar.js';
+import Zip from '../../models/files/archives/zip.js';
+import type File from '../../models/files/file.js';
+import type { AllChecksums, ChecksumsToFiles } from '../../models/indexedFiles.js';
+import IndexedFiles from '../../models/indexedFiles.js';
+import type Options from '../../models/options.js';
+import { PreferFiletype } from '../../models/options.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -34,7 +34,7 @@ export default class ROMIndexer extends Module {
    */
   index(files: File[]): IndexedFiles {
     this.progressBar.logTrace(
-      `indexing ${IntlPoly.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
+      `indexing ${IntlUtil.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
     this.progressBar.resetProgress(files.length);
@@ -57,7 +57,7 @@ export default class ROMIndexer extends Module {
 
   private sortMap(checksumsToFiles: ChecksumsToFiles): void {
     const outputDir = this.options.getOutputDirRoot();
-    const outputDirDisk = FsPoly.diskResolved(outputDir);
+    const outputDirDisk = FsUtil.diskResolved(outputDir);
 
     [...checksumsToFiles.entries()].forEach(([checksum, files]) => {
       const sortedFiles = files.toSorted((fileOne, fileTwo) => {
@@ -125,7 +125,7 @@ export default class ROMIndexer extends Module {
         }
 
         /**
-         * Then, prefer files that are on the same disk for fs efficiency see {@link FsPoly#mv}
+         * Then, prefer files that are on the same disk for fs efficiency see {@link FsUtil#mv}
          */
         if (outputDirDisk && this.options.shouldMove()) {
           const fileOneInOutputDisk = fileOne.getFilePath().startsWith(outputDirDisk) ? 0 : 1;

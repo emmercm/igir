@@ -1,9 +1,9 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type Options from '../../types/options.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
+import type DAT from '../../models/dats/dat.js';
+import type Options from '../../models/options.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
 import Module from '../module.js';
 
 /**
@@ -60,7 +60,7 @@ export default class CandidateValidator extends Module {
     return [...outputPathsToCandidates.entries()]
       .filter(([outputPath, candidates]) => {
         const uniqueCandidates = candidates
-          .filter(ArrayPoly.filterUniqueMapped((candidate) => candidate.getGame()))
+          .filter(ArrayUtil.filterUniqueMapped((candidate) => candidate.getGame()))
           .toSorted();
         if (uniqueCandidates.length <= 1) {
           return false;
@@ -69,7 +69,7 @@ export default class CandidateValidator extends Module {
         const uniqueInputFiles = uniqueCandidates
           .flatMap((candidate) => candidate.getRomsWithFiles())
           .map((romWithFiles) => romWithFiles.getInputFile())
-          .filter(ArrayPoly.filterUniqueMapped((inputFile) => inputFile.toString()));
+          .filter(ArrayUtil.filterUniqueMapped((inputFile) => inputFile.toString()));
         if (uniqueInputFiles.length <= 1) {
           // There are multiple WriteCandidates, but all of them have either no ROMs and therefore
           // no ROMWithFiles, or all ROMWithFiles all have the same input file.
@@ -88,6 +88,6 @@ export default class CandidateValidator extends Module {
         return true;
       })
       .flatMap(([, candidates]) => candidates)
-      .reduce(ArrayPoly.reduceUnique(), []);
+      .reduce(ArrayUtil.reduceUnique(), []);
   }
 }

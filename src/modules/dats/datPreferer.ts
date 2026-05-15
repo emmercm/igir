@@ -1,11 +1,11 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type Game from '../../types/dats/game.js';
-import type Options from '../../types/options.js';
-import { PreferRevision } from '../../types/options.js';
+import type DAT from '../../models/dats/dat.js';
+import type Game from '../../models/dats/game.js';
+import type Options from '../../models/options.js';
+import { PreferRevision } from '../../models/options.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -64,7 +64,7 @@ export default class DATPreferer extends Module {
           return undefined;
         }
         this.progressBar.logTrace(
-          `${dat.getName()}: ${parent.getName()} (parent): out of ${IntlPoly.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'}, preferred: ${preferredGame[0].getName()}`,
+          `${dat.getName()}: ${parent.getName()} (parent): out of ${IntlUtil.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'}, preferred: ${preferredGame[0].getName()}`,
         );
         return preferredGame[0].withProps({ cloneOf: undefined });
       })
@@ -76,7 +76,7 @@ export default class DATPreferer extends Module {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${preferredDat.getName()}: preferred to ${IntlPoly.toLocaleString(preferredGames.length)}/${IntlPoly.toLocaleString(dat.getGames().length)} game${preferredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
+      `${preferredDat.getName()}: preferred to ${IntlUtil.toLocaleString(preferredGames.length)}/${IntlUtil.toLocaleString(dat.getGames().length)} game${preferredGames.length === 1 ? '' : 's'} (${FsUtil.sizeReadable(size)})`,
     );
 
     this.progressBar.logTrace(`${preferredDat.getName()}: done preferring DAT games`);

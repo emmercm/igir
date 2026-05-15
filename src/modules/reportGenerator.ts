@@ -1,12 +1,12 @@
 import path from 'node:path';
 
 import type ProgressBar from '../console/progressBar.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import IntlPoly from '../polyfill/intlPoly.js';
-import DATStatus, { GameStatus } from '../types/datStatus.js';
-import type File from '../types/files/file.js';
-import type Options from '../types/options.js';
+import DATStatus, { GameStatus } from '../models/datStatus.js';
+import type File from '../models/files/file.js';
+import type Options from '../models/options.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
+import IntlUtil from '../utils/intlUtil.js';
 import Module from './module.js';
 
 /**
@@ -67,7 +67,7 @@ export default class ReportGenerator extends Module {
           !usedFilePaths.has(inputFile.getFilePath()) && usedHashes.has(inputFile.hashCode()),
       )
       .map((inputFile) => inputFile.getFilePath())
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
     const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
 
@@ -77,7 +77,7 @@ export default class ReportGenerator extends Module {
           !usedFilePaths.has(inputFile.getFilePath()) && !usedHashes.has(inputFile.hashCode()),
       )
       .map((inputFile) => inputFile.getFilePath())
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
     const unusedCsv = await DATStatus.filesToCsv(unusedFilePaths, GameStatus.UNUSED);
 
@@ -85,15 +85,15 @@ export default class ReportGenerator extends Module {
 
     this.progressBar.logInfo(`writing report '${reportPath}'`);
     const reportPathDir = path.dirname(reportPath);
-    if (!(await FsPoly.exists(reportPathDir))) {
-      await FsPoly.mkdir(reportPathDir, { recursive: true });
+    if (!(await FsUtil.exists(reportPathDir))) {
+      await FsUtil.mkdir(reportPathDir, { recursive: true });
     }
     const rows = [...matchedFileCsvs, duplicateCsv, unusedCsv, cleanedCsv].filter(
       (csv) => csv.length > 0,
     );
-    await FsPoly.writeFile(reportPath, rows.join('\n'));
+    await FsUtil.writeFile(reportPath, rows.join('\n'));
     this.progressBar.logTrace(
-      `wrote ${IntlPoly.toLocaleString(datStatuses.length)} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
+      `wrote ${IntlUtil.toLocaleString(datStatuses.length)} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
     );
 
     this.progressBar.logTrace('done generating report');

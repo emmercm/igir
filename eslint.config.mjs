@@ -325,7 +325,11 @@ export default [
   {
     // These files have switch cases on enum values, and have defensive
     // programming in case it was written wrong
-    files: ['src/types/files/archives/**/*.ts', 'src/types/patches/**/*.ts'],
+    files: [
+      'src/factories/**/*.ts',
+      'src/models/files/archives/**/*.ts',
+      'src/models/patches/**/*.ts',
+    ],
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
     },
@@ -337,8 +341,10 @@ export default [
       'test/**/*.ts',
       'packages/*/test/**/*.ts',
       // TODO(cemmer)
-      'src/types/files/**/*.ts',
-      'src/types/patches/**/*.ts',
+      'src/cache/**/*.ts',
+      'src/factories/**/*.ts',
+      'src/models/files/**/*.ts',
+      'src/models/patches/**/*.ts',
     ],
     rules: {
       'jsdoc/require-jsdoc': 'off',

@@ -1,18 +1,18 @@
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
+import type DAT from '../../src/models/dats/dat.js';
+import Game from '../../src/models/dats/game.js';
+import Header from '../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../src/models/dats/rom.js';
+import Options, { PlaylistMode, PlaylistModeInverted } from '../../src/models/options.js';
+import ROMWithFiles from '../../src/models/romWithFiles.js';
+import SingleValueGame from '../../src/models/singleValueGame.js';
+import WriteCandidate from '../../src/models/writeCandidate.js';
 import DATDiscMerger from '../../src/modules/dats/datDiscMerger.js';
 import PlaylistCreator from '../../src/modules/playlistCreator.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
-import type DAT from '../../src/types/dats/dat.js';
-import Game from '../../src/types/dats/game.js';
-import Header from '../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
-import ROM from '../../src/types/dats/rom.js';
-import SingleValueGame from '../../src/types/dats/singleValueGame.js';
-import Options, { PlaylistMode, PlaylistModeInverted } from '../../src/types/options.js';
-import ROMWithFiles from '../../src/types/romWithFiles.js';
-import WriteCandidate from '../../src/types/writeCandidate.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const games: Game[] = [
@@ -268,15 +268,15 @@ async function playlistCreator(
   dat: DAT,
   candidates: WriteCandidate[],
 ): Promise<[string, string[]][]> {
-  const writtenFiles = await new PlaylistCreator(options, new ProgressBarFake()).create(
+  const writtenFiles = await new PlaylistCreator(options, new ProgressBarFake()).write(
     dat,
     candidates,
   );
 
   return await Promise.all(
     writtenFiles.toSorted().map(async (filePath) => {
-      const contents = (await FsPoly.readFile(filePath)).toString().trim().split('\n');
-      await FsPoly.rm(filePath, { force: true });
+      const contents = (await FsUtil.readFile(filePath)).toString().trim().split('\n');
+      await FsUtil.rm(filePath, { force: true });
       return [filePath.replace(Temp.getTempDir() + path.sep, ''), contents] satisfies [
         string,
         string[],

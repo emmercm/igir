@@ -3,19 +3,19 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
+import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import File from '../../../src/models/files/file.js';
+import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import type { OptionsProps } from '../../../src/models/options.js';
+import Options from '../../../src/models/options.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import ArrayPoly from '../../../src/polyfill/arrayPoly.js';
-import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
-import File from '../../../src/types/files/file.js';
-import FileCache from '../../../src/types/files/fileCache.js';
-import { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import type { OptionsProps } from '../../../src/types/options.js';
-import Options from '../../../src/types/options.js';
+import ArrayUtil from '../../../src/utils/arrayUtil.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -129,7 +129,7 @@ describe('multiple files', () => {
       .filter((file) => file instanceof ArchiveEntry)
       .filter((file) => !file.getCrc32())
       .map((file) => file.getArchive().getExtension())
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
     expect(extensionsWithoutCrc32).toEqual(['.chd', '.tar.gz']);
 
@@ -142,7 +142,7 @@ describe('multiple files', () => {
       .filter((file) => file instanceof ArchiveEntry)
       .filter((file) => file.getSha1() !== undefined)
       .map((file) => file.getArchive().getExtension())
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted();
     expect(extensionsWithSha1).toEqual(['.chd', '.gcz', '.rvz', '.wia']);
 
@@ -201,29 +201,29 @@ describe('multiple files', () => {
       .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some hard linked files
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
       const filesDir = path.join(tempDir, 'files');
-      await FsPoly.mkdir(filesDir);
+      await FsUtil.mkdir(filesDir);
 
       const romFiles = await Promise.all(
-        (await FsPoly.walk(romDir, WalkMode.FILES)).map(async (romFile) => {
+        (await FsUtil.walk(romDir, WalkMode.FILES)).map(async (romFile) => {
           // Make a copy of the original file to ensure it's on the same drive
           const tempFile = path.join(filesDir, romFile);
-          await FsPoly.mkdir(path.dirname(tempFile), { recursive: true });
-          await FsPoly.copyFile(romFile, tempFile);
+          await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
+          await FsUtil.copyFile(romFile, tempFile);
           return tempFile;
         }),
       );
 
       const linksDir = path.join(tempDir, 'links');
-      await FsPoly.mkdir(linksDir);
+      await FsUtil.mkdir(linksDir);
 
       await Promise.all(
         romFiles.map(async (romFile) => {
           const tempLink = path.join(linksDir, path.relative(filesDir, romFile));
-          await FsPoly.mkdir(path.dirname(tempLink), { recursive: true });
-          await FsPoly.hardlink(romFile, tempLink);
+          await FsUtil.mkdir(path.dirname(tempLink), { recursive: true });
+          await FsUtil.hardlink(romFile, tempLink);
         }),
       );
 
@@ -235,7 +235,7 @@ describe('multiple files', () => {
       // Then the files scan successfully
       expect(scannedHardLinks).toEqual(scannedRealFiles);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true });
+      await FsUtil.rm(tempDir, { recursive: true });
     }
   });
 
@@ -246,19 +246,19 @@ describe('multiple files', () => {
       .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked files
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
-      const romFiles = await FsPoly.walk(romDir, WalkMode.FILES);
+      const romFiles = await FsUtil.walk(romDir, WalkMode.FILES);
       await Promise.all(
         romFiles.map(async (romFile, idx) => {
           const tempLink = path.join(tempDir, romFile);
-          await FsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+          await FsUtil.mkdir(path.dirname(tempLink), { recursive: true });
           if (idx % 2 === 0) {
             // symlink some files with absolute paths
-            await FsPoly.symlink(path.resolve(romFile), tempLink);
+            await FsUtil.symlink(path.resolve(romFile), tempLink);
           } else {
             // symlink some files with relative paths
-            await FsPoly.symlink(await FsPoly.symlinkRelativePath(romFile, tempLink), tempLink);
+            await FsUtil.symlink(await FsUtil.symlinkRelativePath(romFile, tempLink), tempLink);
           }
         }),
       );
@@ -277,31 +277,31 @@ describe('multiple files', () => {
       // Then the files scan successfully
       expect(scannedSymlinks).toEqual(scannedRealFiles);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true });
+      await FsUtil.rm(tempDir, { recursive: true });
     }
   });
 
   it('should scan symlinked directories', async () => {
     const realRomDir = path.join('test', 'fixtures', 'roms');
-    const romDirs = await FsPoly.dirs(realRomDir);
+    const romDirs = await FsUtil.dirs(realRomDir);
 
     const scannedRealFiles = (await createRomScanner(romDirs).scan())
       .map((file) => [file.toString().replace(process.cwd() + path.sep, ''), file.getCrc32() ?? ''])
       .toSorted((a, b) => a[0].localeCompare(b[0]));
 
     // Given some symlinked dirs
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
       await Promise.all(
         romDirs.map(async (romDir, idx) => {
           const tempLink = path.join(tempDir, romDir);
-          await FsPoly.mkdir(path.dirname(tempLink), { recursive: true });
+          await FsUtil.mkdir(path.dirname(tempLink), { recursive: true });
           if (idx % 2 === 0) {
             // symlink some files with absolute paths
-            await FsPoly.symlink(path.resolve(romDir), tempLink);
+            await FsUtil.symlink(path.resolve(romDir), tempLink);
           } else {
             // symlink some files with relative paths
-            await FsPoly.symlink(await FsPoly.symlinkRelativePath(romDir, tempLink), tempLink);
+            await FsUtil.symlink(await FsUtil.symlinkRelativePath(romDir, tempLink), tempLink);
           }
         }),
       );
@@ -314,7 +314,7 @@ describe('multiple files', () => {
       // Then the dirs scan successfully
       expect(scannedSymlinks).toEqual(scannedRealFiles);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true });
+      await FsUtil.rm(tempDir, { recursive: true });
     }
   });
 });
@@ -437,18 +437,18 @@ describe('checksum constraining', () => {
 
 describe('output directory scanning', () => {
   it('should not scan the output directory when no relevant commands are used', async () => {
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
       const inputDir = path.join(tempDir, 'input');
       const outputDir = path.join(tempDir, 'output');
-      await FsPoly.mkdir(inputDir);
-      await FsPoly.mkdir(outputDir);
+      await FsUtil.mkdir(inputDir);
+      await FsUtil.mkdir(outputDir);
 
-      await FsPoly.copyFile(
+      await FsUtil.copyFile(
         path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
         path.join(inputDir, 'fizzbuzz.nes'),
       );
-      await FsPoly.copyFile(
+      await FsUtil.copyFile(
         path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
         path.join(outputDir, 'loremipsum.rom'),
       );
@@ -464,25 +464,25 @@ describe('output directory scanning', () => {
       expect(files).toHaveLength(1);
       expect(files.every((f) => f.getCanBeCandidateInput())).toBe(true);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true });
+      await FsUtil.rm(tempDir, { recursive: true });
     }
   });
 
   it.each(['playlist', 'report', 'clean'])(
     'should mark output-only files as isOutputFile: %s',
     async (command) => {
-      const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
       try {
         const inputDir = path.join(tempDir, 'input');
         const outputDir = path.join(tempDir, 'output');
-        await FsPoly.mkdir(inputDir);
-        await FsPoly.mkdir(outputDir);
+        await FsUtil.mkdir(inputDir);
+        await FsUtil.mkdir(outputDir);
 
-        await FsPoly.copyFile(
+        await FsUtil.copyFile(
           path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
           path.join(inputDir, 'fizzbuzz.nes'),
         );
-        await FsPoly.copyFile(
+        await FsUtil.copyFile(
           path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
           path.join(outputDir, 'loremipsum.rom'),
         );
@@ -500,19 +500,19 @@ describe('output directory scanning', () => {
         expect(outputFiles).toHaveLength(1);
         expect(outputFiles[0].getFilePath()).toContain('loremipsum.rom');
       } finally {
-        await FsPoly.rm(tempDir, { recursive: true });
+        await FsUtil.rm(tempDir, { recursive: true });
       }
     },
   );
 
   it('should not add output files that are already in the input paths', async () => {
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
       // Output dir is nested inside the input scan area
       const outputDir = path.join(tempDir, 'output');
-      await FsPoly.mkdir(outputDir);
+      await FsUtil.mkdir(outputDir);
 
-      await FsPoly.copyFile(
+      await FsUtil.copyFile(
         path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
         path.join(outputDir, 'fizzbuzz.nes'),
       );
@@ -529,7 +529,7 @@ describe('output directory scanning', () => {
       expect(files).toHaveLength(1);
       expect(files[0].getCanBeCandidateInput()).toBe(true);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true });
+      await FsUtil.rm(tempDir, { recursive: true });
     }
   });
 });

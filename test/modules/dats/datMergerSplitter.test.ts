@@ -1,11 +1,11 @@
+import Disk from '../../../src/models/dats/disk.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import DeviceRef from '../../../src/models/dats/mame/deviceRef.js';
+import ROM from '../../../src/models/dats/rom.js';
+import Options, { MergeMode, MergeModeInverted } from '../../../src/models/options.js';
 import DATMergerSplitter from '../../../src/modules/dats/datMergerSplitter.js';
-import Disk from '../../../src/types/dats/disk.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import DeviceRef from '../../../src/types/dats/mame/deviceRef.js';
-import ROM from '../../../src/types/dats/rom.js';
-import Options, { MergeMode, MergeModeInverted } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 it('should do nothing if no parent/clone info is present', () => {

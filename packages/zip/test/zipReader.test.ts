@@ -4,13 +4,13 @@ import stream from 'node:stream';
 import url from 'node:url';
 
 import Temp from '../../../src/globals/temp.js';
-import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import type { CompressionMethodValue } from '../src/fileRecord.js';
 import ZipReader from '../src/zipReader.js';
 
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
-const fixtures = (await FsPoly.walk(dirname, WalkMode.FILES)).filter(
+const fixtures = (await FsUtil.walk(dirname, WalkMode.FILES)).filter(
   (filePath) => !filePath.endsWith('.ts'),
 );
 
@@ -527,8 +527,8 @@ describe('compressedStream', () => {
     const zip = new ZipReader(filePath);
     const entries = await zip.centralDirectoryFileHeaders();
 
-    if (!(await FsPoly.exists(Temp.getTempDir()))) {
-      await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+    if (!(await FsUtil.exists(Temp.getTempDir()))) {
+      await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
     }
 
     for (const entry of entries.filter(
@@ -536,7 +536,7 @@ describe('compressedStream', () => {
         !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSizeResolved() < 10_485_760, // 10MiB
     )) {
       // Write compressed bytes to file
-      const tempFile = await FsPoly.mktemp(
+      const tempFile = await FsUtil.mktemp(
         path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),
       );
 
@@ -546,9 +546,9 @@ describe('compressedStream', () => {
           fs.createWriteStream(tempFile),
         );
 
-        await expect(FsPoly.size(tempFile)).resolves.toEqual(entry.compressedSizeResolved());
+        await expect(FsUtil.size(tempFile)).resolves.toEqual(entry.compressedSizeResolved());
       } finally {
-        await FsPoly.rm(tempFile, { force: true });
+        await FsUtil.rm(tempFile, { force: true });
       }
     }
   });
@@ -559,8 +559,8 @@ describe('uncompressedStream', () => {
     const zip = new ZipReader(filePath);
     const entries = await zip.centralDirectoryFileHeaders();
 
-    if (!(await FsPoly.exists(Temp.getTempDir()))) {
-      await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+    if (!(await FsUtil.exists(Temp.getTempDir()))) {
+      await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
     }
 
     for (const entry of entries.filter(
@@ -568,7 +568,7 @@ describe('uncompressedStream', () => {
         !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSizeResolved() < 10_485_760, // 10MiB
     )) {
       // Write compressed bytes to file
-      const tempFile = await FsPoly.mktemp(
+      const tempFile = await FsUtil.mktemp(
         path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),
       );
 
@@ -578,13 +578,13 @@ describe('uncompressedStream', () => {
           fs.createWriteStream(tempFile),
         );
 
-        const size = await FsPoly.size(tempFile);
+        const size = await FsUtil.size(tempFile);
         expect(size).toEqual(entry.uncompressedSizeResolved());
 
         const crc32 = (await FileChecksums.hashFile(tempFile, ChecksumBitmask.CRC32)).crc32;
         expect(crc32).toEqual(entry.uncompressedCrc32String());
       } finally {
-        await FsPoly.rm(tempFile, { force: true });
+        await FsUtil.rm(tempFile, { force: true });
       }
     }
   });

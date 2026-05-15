@@ -7,32 +7,32 @@ import async from 'async';
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import GameGrouper from '../../gameGrouper.js';
+import IgirException from '../../exceptions/igirException.js';
+import type FileFactory from '../../factories/fileFactory.js';
 import Defaults from '../../globals/defaults.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import BufferPoly from '../../polyfill/bufferPoly.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import type { DATProps, GameProps, ROMProps } from '../../types/dats/cmpro/cmProParser.js';
-import CMProParser from '../../types/dats/cmpro/cmProParser.js';
-import type DAT from '../../types/dats/dat.js';
-import type { DATObjectProps } from '../../types/dats/datObject.js';
-import DATObject from '../../types/dats/datObject.js';
-import Disk from '../../types/dats/disk.js';
-import Game from '../../types/dats/game.js';
-import Header from '../../types/dats/logiqx/header.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
-import MameDAT from '../../types/dats/mame/mameDat.js';
-import ROM from '../../types/dats/rom.js';
-import SoftwareListDAT from '../../types/dats/softwarelist/softwareListDat.js';
-import SoftwareListsDAT from '../../types/dats/softwarelist/softwareListsDat.js';
-import IgirException from '../../types/exceptions/igirException.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import type File from '../../types/files/file.js';
-import { ChecksumBitmask } from '../../types/files/fileChecksums.js';
-import type FileFactory from '../../types/files/fileFactory.js';
-import type Options from '../../types/options.js';
+import type DAT from '../../models/dats/dat.js';
+import type { DATObjectProps } from '../../models/dats/datObject.js';
+import DATObject from '../../models/dats/datObject.js';
+import Disk from '../../models/dats/disk.js';
+import Game from '../../models/dats/game.js';
+import Header from '../../models/dats/logiqx/header.js';
+import LogiqxDAT from '../../models/dats/logiqx/logiqxDat.js';
+import MameDAT from '../../models/dats/mame/mameDat.js';
+import ROM from '../../models/dats/rom.js';
+import SoftwareListDAT from '../../models/dats/softwarelist/softwareListDat.js';
+import SoftwareListsDAT from '../../models/dats/softwarelist/softwareListsDat.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import type File from '../../models/files/file.js';
+import { ChecksumBitmask } from '../../models/files/fileChecksums.js';
+import type Options from '../../models/options.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import BufferUtil from '../../utils/bufferUtil.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Scanner from '../scanner.js';
+import type { DATProps, GameProps, ROMProps } from './parsers/cmProParser.js';
+import CMProParser from './parsers/cmProParser.js';
+import GameGrouper from './utils/gameGrouper.js';
 
 interface SmdbRow {
   sha256: string;
@@ -72,7 +72,7 @@ export default class DATScanner extends Scanner {
       return [];
     }
     this.progressBar.logTrace(
-      `found ${IntlPoly.toLocaleString(datFilePaths.length)} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlUtil.toLocaleString(datFilePaths.length)} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(datFilePaths.length);
 
@@ -95,7 +95,7 @@ export default class DATScanner extends Scanner {
     }
 
     this.progressBar.logTrace(
-      `downloading ${IntlPoly.toLocaleString(datUrlFiles.length)} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
+      `downloading ${IntlUtil.toLocaleString(datUrlFiles.length)} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setName('Downloading DATs');
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_DOWNLOADING);
@@ -123,7 +123,7 @@ export default class DATScanner extends Scanner {
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
     this.progressBar.logTrace(
-      `parsing ${IntlPoly.toLocaleString(datFiles.length)} DAT file${datFiles.length === 1 ? '' : 's'}`,
+      `parsing ${IntlUtil.toLocaleString(datFiles.length)} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
     if (datFiles.length === 0) {
       return [];
@@ -137,7 +137,7 @@ export default class DATScanner extends Scanner {
         const childBar = this.progressBar.addChildBar({
           name: datFile.toString(),
           total: datFile.getSize(),
-          progressFormatter: FsPoly.sizeReadable,
+          progressFormatter: FsUtil.sizeReadable,
         });
 
         let dat: DAT | undefined;
@@ -167,13 +167,13 @@ export default class DATScanner extends Scanner {
     if (
       !dat &&
       !(datFile instanceof ArchiveEntry) &&
-      (await FsPoly.isExecutable(datFile.getFilePath()))
+      (await FsUtil.isExecutable(datFile.getFilePath()))
     ) {
       dat = await this.parseMameListxml(datFile);
     }
 
     dat ??= await datFile.createReadStream(async (readable) => {
-      const fileContents = await BufferPoly.fromReadable(readable);
+      const fileContents = await BufferUtil.fromReadable(readable);
       return await this.parseDatContents(datFile, fileContents);
     });
 
@@ -194,7 +194,7 @@ export default class DATScanner extends Scanner {
         dat
           .getGames()[0]
           .getRoms()
-          .filter(ArrayPoly.filterUniqueMapped((rom) => `${rom.getName()}|${rom.hashCode()}`))
+          .filter(ArrayUtil.filterUniqueMapped((rom) => `${rom.getName()}|${rom.hashCode()}`))
           .map((rom) => {
             // Use the ROM's filename without its extension as the game name
             const { dir, name } = path.parse(rom.getName());
@@ -215,7 +215,7 @@ export default class DATScanner extends Scanner {
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
     this.progressBar.logTrace(
-      `${datFile.toString()}: ${FsPoly.sizeReadable(size)} of ${IntlPoly.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}, ${IntlPoly.toLocaleString(dat.getParents().length)} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
+      `${datFile.toString()}: ${FsUtil.sizeReadable(size)} of ${IntlUtil.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}, ${IntlUtil.toLocaleString(dat.getParents().length)} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
     );
 
     return dat;
@@ -291,7 +291,7 @@ export default class DATScanner extends Scanner {
 
   private parseXmlDat(datFile: File, fileContents: Buffer | string): DAT | undefined {
     this.progressBar.logTrace(
-      `${datFile.toString()}: attempting to parse ${FsPoly.sizeReadable(fileContents.length)} of XML`,
+      `${datFile.toString()}: attempting to parse ${FsUtil.sizeReadable(fileContents.length)} of XML`,
     );
 
     let datObject: DATObjectProps;

@@ -6,19 +6,19 @@
  * option parsing, and ICU data structure setup — each call costs roughly
  * 2–10 µs in V8 regardless of the number being formatted.
  *
- * `IntlPoly.toLocaleString()` (`src/polyfill/intlPoly.ts`) caches the
+ * `IntlUtil.toLocaleString()` (`src/utils/intlUtil.ts`) caches the
  * `Intl.NumberFormat` instance, so only the first call pays the construction
  * cost. Subsequent calls invoke `.format()` directly (~0.1–0.5 µs).
  *
- * Use `IntlPoly.toLocaleString(expr)` instead:
+ * Use `IntlUtil.toLocaleString(expr)` instead:
  *
  *   // Bad
  *   count.toLocaleString()
  *   files.length.toLocaleString()
  *
  *   // Good
- *   IntlPoly.toLocaleString(count)
- *   IntlPoly.toLocaleString(files.length)
+ *   IntlUtil.toLocaleString(count)
+ *   IntlUtil.toLocaleString(files.length)
  */
 
 export default {
@@ -26,7 +26,7 @@ export default {
     type: 'suggestion',
     docs: {
       description:
-        'Disallow Number#toLocaleString() — use IntlPoly.toLocaleString() to reuse a cached Intl.NumberFormat instance',
+        'Disallow Number#toLocaleString() — use IntlUtil.toLocaleString() to reuse a cached Intl.NumberFormat instance',
     },
   },
   create(context) {
@@ -38,7 +38,7 @@ export default {
         const object = sourceCode.getText(node.callee.object);
         context.report({
           node,
-          message: `Use IntlPoly.toLocaleString(${object}) instead of ${object}.toLocaleString() to reuse a cached Intl.NumberFormat instance.`,
+          message: `Use IntlUtil.toLocaleString(${object}) instead of ${object}.toLocaleString() to reuse a cached Intl.NumberFormat instance.`,
         });
       },
     };
