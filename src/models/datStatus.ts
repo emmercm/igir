@@ -55,7 +55,7 @@ export default class DATStatus {
 
   private readonly incompleteRomTypesToCandidates = new Map<ROMTypeValue, WriteCandidate[]>();
 
-  constructor(dat: DAT, candidates: WriteCandidate[]) {
+  constructor(options: Options, dat: DAT, candidates: WriteCandidate[]) {
     this.dat = dat;
 
     const indexedCandidates = candidates.reduce((map, candidate) => {
@@ -72,11 +72,12 @@ export default class DATStatus {
     dat.getGames().forEach((game: Game) => {
       DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
+      const expectedCount = DATStatus.getExpectedFileCount(game, options);
       const gameCandidates = indexedCandidates.get(game.hashCode());
-      if (gameCandidates !== undefined || game.getRoms().length === 0) {
+      if (gameCandidates !== undefined || expectedCount === 0) {
         const gameCandidate = gameCandidates?.at(0);
 
-        if (gameCandidate && gameCandidate.getRomsWithFiles().length !== game.getRoms().length) {
+        if (gameCandidate && gameCandidate.getRomsWithFiles().length !== expectedCount) {
           // The found ReleaseCandidate is incomplete
           DATStatus.pushValueIntoMap(this.incompleteRomTypesToCandidates, game, gameCandidate);
           return;
@@ -94,6 +95,15 @@ export default class DATStatus {
       DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
       DATStatus.append(this.foundRomTypesToCandidates, ROMType.PATCHED, candidate);
     }
+  }
+
+  /**
+   * Return the number of {@link ROM}s and {@link Disk}s that must be present for a
+   * {@link Game} to be considered FOUND, taking into account options that exclude
+   * certain file types (e.g. `--exclude-disks`).
+   */
+  private static getExpectedFileCount(game: Game, options: Options): number {
+    return game.getRoms().length + (options.getExcludeDisks() ? 0 : game.getDisks().length);
   }
 
   private static pushValueIntoMap<T>(map: Map<ROMTypeValue, T[]>, game: Game, value: T): void {
@@ -216,7 +226,7 @@ export default class DATStatus {
         const foundCandidate = foundCandidates.find((candidate) =>
           candidate?.getGame().equals(game),
         );
-        if (foundCandidate !== undefined || game.getRoms().length === 0) {
+        if (foundCandidate !== undefined || DATStatus.getExpectedFileCount(game, options) === 0) {
           status = GameStatus.FOUND;
         }
 
