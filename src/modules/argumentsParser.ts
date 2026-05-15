@@ -9,9 +9,9 @@ import IgirException from '../exceptions/igirException.js';
 import PatchFactory from '../factories/patchFactory.js';
 import Defaults from '../globals/defaults.js';
 import Package from '../globals/package.js';
+import Internationalization from '../models/dats/internationalization.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from '../models/files/fileChecksums.js';
 import ROMHeader from '../models/files/romHeader.js';
-import Internationalization from '../models/dats/internationalization.js';
 import Options, {
   FixExtension,
   FixExtensionInverted,

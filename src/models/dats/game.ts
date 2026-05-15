@@ -3,8 +3,8 @@ import 'reflect-metadata';
 import { Expose, Transform, Type } from 'class-transformer';
 
 import ArrayUtil from '../../utils/arrayUtil.js';
-import Internationalization from './internationalization.js';
 import Disk from './disk.js';
+import Internationalization from './internationalization.js';
 import DeviceRef from './mame/deviceRef.js';
 import Release from './release.js';
 import ROM from './rom.js';

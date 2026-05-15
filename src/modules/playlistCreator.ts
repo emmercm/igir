@@ -4,7 +4,6 @@ import async from 'async';
 
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
-import GameGrouper from './dats/utils/gameGrouper.js';
 import type DAT from '../models/dats/dat.js';
 import type File from '../models/files/file.js';
 import type Options from '../models/options.js';
@@ -12,6 +11,7 @@ import { PlaylistMode } from '../models/options.js';
 import type WriteCandidate from '../models/writeCandidate.js';
 import ArrayUtil from '../utils/arrayUtil.js';
 import FsUtil from '../utils/fsUtil.js';
+import GameGrouper from './dats/utils/gameGrouper.js';
 import Module from './module.js';
 
 /**

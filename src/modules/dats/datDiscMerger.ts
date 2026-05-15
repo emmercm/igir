@@ -2,12 +2,12 @@ import path from 'node:path';
 
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import GameGrouper from './utils/gameGrouper.js';
 import type DAT from '../../models/dats/dat.js';
 import Game from '../../models/dats/game.js';
 import type Options from '../../models/options.js';
 import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
+import GameGrouper from './utils/gameGrouper.js';
 
 /**
  * Merge multi-disc {@link Game}s in a {@link DAT} into one game.

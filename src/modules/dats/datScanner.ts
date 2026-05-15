@@ -9,7 +9,6 @@ import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import IgirException from '../../exceptions/igirException.js';
 import type FileFactory from '../../factories/fileFactory.js';
-import GameGrouper from './utils/gameGrouper.js';
 import Defaults from '../../globals/defaults.js';
 import type DAT from '../../models/dats/dat.js';
 import type { DATObjectProps } from '../../models/dats/datObject.js';
@@ -33,6 +32,7 @@ import IntlUtil from '../../utils/intlUtil.js';
 import Scanner from '../scanner.js';
 import type { DATProps, GameProps, ROMProps } from './parsers/cmProParser.js';
 import CMProParser from './parsers/cmProParser.js';
+import GameGrouper from './utils/gameGrouper.js';
 
 interface SmdbRow {
   sha256: string;

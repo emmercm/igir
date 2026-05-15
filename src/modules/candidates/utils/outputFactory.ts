@@ -5,9 +5,8 @@ import path from 'node:path';
 import { Memoize } from 'typescript-memoize';
 
 import TokenReplacementException from '../../../exceptions/tokenReplacementException.js';
-import GameGrouper from '../../dats/utils/gameGrouper.js';
+import FileFactory from '../../../factories/fileFactory.js';
 import ConsoleTokens from '../../../models/consoleTokens.js';
-import outputTokensData from './consoleTokens.json' with { type: 'json' };
 import type DAT from '../../../models/dats/dat.js';
 import Disk from '../../../models/dats/disk.js';
 import type Game from '../../../models/dats/game.js';
@@ -21,7 +20,8 @@ import { FixExtension, GameSubdirMode } from '../../../models/options.js';
 import type SingleValueGame from '../../../models/singleValueGame.js';
 import ArrayUtil from '../../../utils/arrayUtil.js';
 import FsUtil from '../../../utils/fsUtil.js';
-import FileFactory from '../../../factories/fileFactory.js';
+import GameGrouper from '../../dats/utils/gameGrouper.js';
+import outputTokensData from './consoleTokens.json' with { type: 'json' };
 
 interface ConsoleTokensJson {
   consoles: {
