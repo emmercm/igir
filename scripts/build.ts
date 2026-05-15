@@ -7,7 +7,7 @@ import fg from 'fast-glob';
 import Timer from '../src/async/timer.js';
 import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
-import FsPoly from '../src/polyfill/fsPoly.js';
+import FsUtil from '../src/utils/fsUtil.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== BUILDING ==========');
@@ -16,9 +16,9 @@ const output = 'dist';
 logger.info(`Output: '${output}'`);
 
 // Delete any previous build output
-if (await FsPoly.exists(output)) {
+if (await FsUtil.exists(output)) {
   logger.info(`Deleting '${output}' ...`);
-  await FsPoly.rm(output, { recursive: true });
+  await FsUtil.rm(output, { recursive: true });
 }
 
 // Transpile the TypeScript
@@ -60,10 +60,10 @@ async function copyfiles(
     inputFiles.map(async (inputFile) => {
       const outputPath = path.join(outputDirectory, inputFile);
       const outputDir = path.dirname(outputPath);
-      if (!(await FsPoly.exists(outputDir))) {
-        await FsPoly.mkdir(outputDir, { recursive: true });
+      if (!(await FsUtil.exists(outputDir))) {
+        await FsUtil.mkdir(outputDir, { recursive: true });
       }
-      await FsPoly.copyFile(inputFile, path.join(outputDirectory, inputFile));
+      await FsUtil.copyFile(inputFile, path.join(outputDirectory, inputFile));
     }),
   );
 }

@@ -1,8 +1,8 @@
+import type DAT from '../../../src/models/dats/dat.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
-import type DAT from '../../../src/types/dats/dat.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const GAME_COUNT = 100;

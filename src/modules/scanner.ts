@@ -4,17 +4,17 @@ import { isNotJunk } from 'junk';
 
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import ArchiveEntry from '../types/files/archives/archiveEntry.js';
-import Chd from '../types/files/archives/chd/chd.js';
-import Gzip from '../types/files/archives/gzip.js';
-import Tar from '../types/files/archives/tar.js';
-import type File from '../types/files/file.js';
-import type { ChecksumBitmaskValue } from '../types/files/fileChecksums.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import FileFactory from '../types/files/fileFactory.js';
-import type Options from '../types/options.js';
+import FileFactory from '../factories/fileFactory.js';
+import ArchiveEntry from '../models/files/archives/archiveEntry.js';
+import Chd from '../models/files/archives/chd/chd.js';
+import Gzip from '../models/files/archives/gzip.js';
+import Tar from '../models/files/archives/tar.js';
+import type File from '../models/files/file.js';
+import type { ChecksumBitmaskValue } from '../models/files/fileChecksums.js';
+import { ChecksumBitmask } from '../models/files/fileChecksums.js';
+import type Options from '../models/options.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
 import Module from './module.js';
 
 /**
@@ -49,8 +49,8 @@ export default abstract class Scanner extends Module {
         this.progressBar.incrementInProgress();
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
-          total: await FsPoly.size(inputFile),
-          progressFormatter: FsPoly.sizeReadable,
+          total: await FsUtil.size(inputFile),
+          progressFormatter: FsUtil.sizeReadable,
         });
 
         let files: File[];
@@ -129,7 +129,7 @@ export default abstract class Scanner extends Module {
       throw new Error('must provide ChecksumBitmask when getting unique files');
     }
     const foundFiles = await this.getFilesFromPaths(filePaths, checksumBitmask);
-    return foundFiles.filter(ArrayPoly.filterUniqueMapped((file) => file.hashCode()));
+    return foundFiles.filter(ArrayUtil.filterUniqueMapped((file) => file.hashCode()));
   }
 
   private async getFilesFromPath(
@@ -139,9 +139,9 @@ export default abstract class Scanner extends Module {
     progressBar: ProgressBar,
   ): Promise<File[]> {
     try {
-      if (await FsPoly.isSymlink(filePath)) {
-        const realFilePath = await FsPoly.readlinkResolved(filePath);
-        if (!(await FsPoly.exists(realFilePath))) {
+      if (await FsUtil.isSymlink(filePath)) {
+        const realFilePath = await FsUtil.readlinkResolved(filePath);
+        if (!(await FsUtil.exists(realFilePath))) {
           this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
           return [];
         }

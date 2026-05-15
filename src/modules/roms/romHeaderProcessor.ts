@@ -1,12 +1,12 @@
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import type File from '../../types/files/file.js';
-import type FileFactory from '../../types/files/fileFactory.js';
-import ROMHeader from '../../types/files/romHeader.js';
-import type Options from '../../types/options.js';
+import type FileFactory from '../../factories/fileFactory.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import type File from '../../models/files/file.js';
+import ROMHeader from '../../models/files/romHeader.js';
+import type Options from '../../models/options.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -47,7 +47,7 @@ export default class ROMHeaderProcessor extends Module {
     }
 
     this.progressBar.logTrace(
-      `processing headers in ${IntlPoly.toLocaleString(filesThatNeedProcessing)} ROM${filesThatNeedProcessing === 1 ? '' : 's'}`,
+      `processing headers in ${IntlUtil.toLocaleString(filesThatNeedProcessing)} ROM${filesThatNeedProcessing === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
     this.progressBar.resetProgress(filesThatNeedProcessing);
@@ -82,7 +82,7 @@ export default class ROMHeaderProcessor extends Module {
       (romFile) => romFile.getFileHeader() !== undefined,
     ).length;
     this.progressBar.logTrace(
-      `found headers in ${IntlPoly.toLocaleString(headeredRomsCount)} ROM${headeredRomsCount === 1 ? '' : 's'}`,
+      `found headers in ${IntlUtil.toLocaleString(headeredRomsCount)} ROM${headeredRomsCount === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done processing file headers');

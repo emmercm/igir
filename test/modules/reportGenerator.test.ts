@@ -1,18 +1,18 @@
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
+import Header from '../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../src/models/dats/rom.js';
+import DATStatus from '../../src/models/datStatus.js';
+import File from '../../src/models/files/file.js';
+import type { OptionsProps } from '../../src/models/options.js';
+import Options from '../../src/models/options.js';
+import ROMWithFiles from '../../src/models/romWithFiles.js';
+import SingleValueGame from '../../src/models/singleValueGame.js';
+import WriteCandidate from '../../src/models/writeCandidate.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
-import Header from '../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
-import ROM from '../../src/types/dats/rom.js';
-import SingleValueGame from '../../src/types/dats/singleValueGame.js';
-import DATStatus from '../../src/types/datStatus.js';
-import File from '../../src/types/files/file.js';
-import type { OptionsProps } from '../../src/types/options.js';
-import Options from '../../src/types/options.js';
-import ROMWithFiles from '../../src/types/romWithFiles.js';
-import WriteCandidate from '../../src/types/writeCandidate.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 /**
@@ -95,7 +95,7 @@ async function wrapReportGenerator(
   datStatuses: DATStatus[],
   callback: (contents: string) => void | Promise<void>,
 ): Promise<void> {
-  const reportOutput = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'report.csv'));
+  const reportOutput = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'report.csv'));
   const options = new Options({
     ...optionsProps,
     reportOutput,
@@ -108,10 +108,10 @@ async function wrapReportGenerator(
   );
 
   try {
-    const contents = (await FsPoly.readFile(reportOutput)).toString();
+    const contents = (await FsUtil.readFile(reportOutput)).toString();
     await callback(contents);
   } finally {
-    await FsPoly.rm(reportOutput);
+    await FsUtil.rm(reportOutput);
   }
 }
 

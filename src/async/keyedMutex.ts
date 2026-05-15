@@ -1,6 +1,6 @@
 import { Mutex } from 'async-mutex';
 
-import ArrayPoly from '../polyfill/arrayPoly.js';
+import ArrayUtil from '../utils/arrayUtil.js';
 
 interface KeyMutexEntry {
   mutex: Mutex;
@@ -52,7 +52,7 @@ export default class KeyedMutex {
     // Sort keys to impose a canonical acquisition order across all callers. Combined with the
     // sequential acquire loop below, this makes multi-key deadlock impossible: no caller can hold
     // a key greater than one it is still waiting on, so no circular wait can form.
-    const uniqueKeys = keys.reduce(ArrayPoly.reduceUnique(), []).toSorted();
+    const uniqueKeys = keys.reduce(ArrayUtil.reduceUnique(), []).toSorted();
 
     let entries: KeyMutexEntry[];
 
@@ -148,7 +148,7 @@ export default class KeyedMutex {
       return;
     }
 
-    keys.reduce(ArrayPoly.reduceUnique(), []).forEach((key) => {
+    keys.reduce(ArrayUtil.reduceUnique(), []).forEach((key) => {
       this.keyMutexes.get(key)?.mutex.release();
     });
   }

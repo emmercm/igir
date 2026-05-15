@@ -4,14 +4,14 @@ import async from 'async';
 
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
-import GameGrouper from '../gameGrouper.js';
-import ArrayPoly from '../polyfill/arrayPoly.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import type DAT from '../types/dats/dat.js';
-import type File from '../types/files/file.js';
-import type Options from '../types/options.js';
-import { PlaylistMode } from '../types/options.js';
-import type WriteCandidate from '../types/writeCandidate.js';
+import type DAT from '../models/dats/dat.js';
+import type File from '../models/files/file.js';
+import type Options from '../models/options.js';
+import { PlaylistMode } from '../models/options.js';
+import type WriteCandidate from '../models/writeCandidate.js';
+import ArrayUtil from '../utils/arrayUtil.js';
+import FsUtil from '../utils/fsUtil.js';
+import GameGrouper from './dats/utils/gameGrouper.js';
 import Module from './module.js';
 
 /**
@@ -28,7 +28,7 @@ export default class PlaylistCreator extends Module {
   /**
    * Creates playlists.
    */
-  async create(dat: DAT, candidates: WriteCandidate[]): Promise<string[]> {
+  async write(dat: DAT, candidates: WriteCandidate[]): Promise<string[]> {
     if (!this.options.shouldPlaylist()) {
       return [];
     }
@@ -109,7 +109,7 @@ export default class PlaylistCreator extends Module {
           .getPlaylistExtensions()
           .some((ext) => outputFile.getFilePath().toLowerCase().endsWith(ext.toLowerCase())),
       )
-      .filter(ArrayPoly.filterUniqueMapped((file) => file.getFilePath()));
+      .filter(ArrayUtil.filterUniqueMapped((file) => file.getFilePath()));
     if (playlistFiles.length === 0) {
       return undefined;
     }
@@ -132,12 +132,12 @@ export default class PlaylistCreator extends Module {
       .toSorted()
       .join('\n')}\n`;
 
-    if (!(await FsPoly.exists(commonDirectory))) {
-      await FsPoly.mkdir(commonDirectory, { recursive: true });
+    if (!(await FsUtil.exists(commonDirectory))) {
+      await FsUtil.mkdir(commonDirectory, { recursive: true });
     }
     const playlistLocation = path.join(commonDirectory, `${playlistBasename}.m3u`);
     this.progressBar.logInfo(`${dat.getName()}: creating playlist '${playlistLocation}'`);
-    await FsPoly.writeFile(playlistLocation, playlistLines);
+    await FsUtil.writeFile(playlistLocation, playlistLines);
     return playlistLocation;
   }
 

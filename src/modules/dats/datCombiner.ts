@@ -2,10 +2,10 @@ import moment from 'moment';
 
 import type ProgressBar from '../../console/progressBar.js';
 import Package from '../../globals/package.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import Header from '../../types/dats/logiqx/header.js';
-import LogiqxDAT from '../../types/dats/logiqx/logiqxDat.js';
+import type DAT from '../../models/dats/dat.js';
+import Header from '../../models/dats/logiqx/header.js';
+import LogiqxDAT from '../../models/dats/logiqx/logiqxDat.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
 import Module from '../module.js';
 
 /**
@@ -26,7 +26,7 @@ export default class DATCombiner extends Module {
       header: DATCombiner.generateHeader(dats),
       games: dats
         .flatMap((dat) => dat.getGames())
-        .filter(ArrayPoly.filterUniqueMapped((game) => game.hashCode())),
+        .filter(ArrayUtil.filterUniqueMapped((game) => game.hashCode())),
     });
 
     this.progressBar.logTrace(`done combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);

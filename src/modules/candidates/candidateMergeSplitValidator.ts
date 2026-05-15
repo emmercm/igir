@@ -1,11 +1,11 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type Game from '../../types/dats/game.js';
-import type Options from '../../types/options.js';
-import { MergeMode } from '../../types/options.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
+import type DAT from '../../models/dats/dat.js';
+import type Game from '../../models/dats/game.js';
+import type Options from '../../models/options.js';
+import { MergeMode } from '../../models/options.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
 import Module from '../module.js';
 
 /**
@@ -53,7 +53,7 @@ export default class CandidateMergeSplitValidator extends Module {
     const missingGames = candidates
       .filter((candidate) => candidate.getRomsWithFiles().length > 0)
       .map((candidate) => candidate.getGame())
-      .reduce(ArrayPoly.reduceUnique(), [])
+      .reduce(ArrayUtil.reduceUnique(), [])
       .flatMap((game) => {
         const missingDependencies: string[] = [];
 
