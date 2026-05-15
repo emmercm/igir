@@ -1,4 +1,4 @@
-import type WriteCandidate from '../types/writeCandidate.js';
+import type WriteCandidate from '../models/writeCandidate.js';
 import KeyedMutex from './keyedMutex.js';
 import MappableSemaphore from './mappableSemaphore.js';
 

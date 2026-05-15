@@ -1,13 +1,13 @@
 import path from 'node:path';
 
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../../src/models/dats/rom.js';
+import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/models/options.js';
+import ROMWithFiles from '../../../src/models/romWithFiles.js';
+import SingleValueGame from '../../../src/models/singleValueGame.js';
+import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidatePostProcessor from '../../../src/modules/candidates/candidatePostProcessor.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import ROM from '../../../src/types/dats/rom.js';
-import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
-import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/types/options.js';
-import ROMWithFiles from '../../../src/types/romWithFiles.js';
-import WriteCandidate from '../../../src/types/writeCandidate.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const singleRomGames = [

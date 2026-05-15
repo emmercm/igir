@@ -7,10 +7,10 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
-import FsPoly, { WalkMode } from '../../../src/polyfill/fsPoly.js';
-import IOFile from '../../../src/polyfill/ioFile.js';
-import FileChecksums, { ChecksumBitmask } from '../../../src/types/files/fileChecksums.js';
-import Options, { ZipFormat, ZipFormatInverted } from '../../../src/types/options.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import IOFile from '../../../src/models/files/ioFile.js';
+import Options, { ZipFormat, ZipFormatInverted } from '../../../src/models/options.js';
+import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import { ZipReader } from '../../zip/index.js';
 import type { ValidationResultValue } from '../src/tzValidator.js';
 import TZValidator, { ValidationResult } from '../src/tzValidator.js';
@@ -22,8 +22,8 @@ const VALIDATION_MAP: Record<CompressionMethodValue, ValidationResultValue> = {
   [CompressionMethod.ZSTD]: ValidationResult.VALID_RVZSTD,
 } as const;
 
-if (!(await FsPoly.exists(Temp.getTempDir()))) {
-  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+if (!(await FsUtil.exists(Temp.getTempDir()))) {
+  await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
 }
 
 test.each([
@@ -56,7 +56,7 @@ test.each([
     ],
   ],
 ])('should write correct zip files: %s', async (zipFormat, expectedChecksums) => {
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
 
   try {
     await new Igir(
@@ -75,7 +75,7 @@ test.each([
       new Logger(LogLevel.NEVER, new stream.PassThrough()),
     ).main();
 
-    const writtenFiles = (await FsPoly.walk(tempDir, WalkMode.FILES)).toSorted();
+    const writtenFiles = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted();
     const writtenFilesHashed = await Promise.all(
       writtenFiles.map(async (filePath) => {
         const checksums = await FileChecksums.hashFile(filePath, ChecksumBitmask.CRC32);
@@ -85,7 +85,7 @@ test.each([
 
     expect(writtenFilesHashed).toEqual(expectedChecksums);
   } finally {
-    await FsPoly.rm(tempDir, {
+    await FsUtil.rm(tempDir, {
       recursive: true,
       force: true,
     });
@@ -99,19 +99,19 @@ const assertSingleFileZip = async (
   compressionMethod: CompressionMethodValue,
   expectedZipMd5: string,
 ): Promise<void> => {
-  const tempFilePath = await FsPoly.mktemp(path.join(Temp.getTempDir(), fileName));
-  const tempZipPath = await FsPoly.mktemp(path.join(Temp.getTempDir(), `${fileName}.zip`));
+  const tempFilePath = await FsUtil.mktemp(path.join(Temp.getTempDir(), fileName));
+  const tempZipPath = await FsUtil.mktemp(path.join(Temp.getTempDir(), `${fileName}.zip`));
   try {
     // Create a file and fill it with zeroes
     const tempFileDir = path.dirname(tempFilePath);
-    if (!(await FsPoly.exists(tempFileDir))) {
-      await FsPoly.mkdir(tempFileDir, { recursive: true });
+    if (!(await FsUtil.exists(tempFileDir))) {
+      await FsUtil.mkdir(tempFileDir, { recursive: true });
     }
     const tempFile = await IOFile.fileOfSize(tempFilePath, 'r', fileSize);
     await tempFile.close();
 
     // Sanity check the temp file
-    await expect(FsPoly.size(tempFilePath)).resolves.toEqual(fileSize);
+    await expect(FsUtil.size(tempFilePath)).resolves.toEqual(fileSize);
     const tempFileMd5 = (await FileChecksums.hashFile(tempFilePath, ChecksumBitmask.MD5)).md5;
     expect(tempFileMd5).toEqual(expectedRawMd5);
 
@@ -133,8 +133,8 @@ const assertSingleFileZip = async (
       expectedZipMd5,
     );
   } finally {
-    await FsPoly.rm(tempZipPath, { force: true });
-    await FsPoly.rm(tempFilePath, { force: true });
+    await FsUtil.rm(tempZipPath, { force: true });
+    await FsUtil.rm(tempFilePath, { force: true });
   }
 };
 
@@ -227,7 +227,7 @@ test.each([
 ])(
   'should compress directories correctly: %s',
   async (inputDirectories, compressionMethod: CompressionMethodValue, expectedZipMd5) => {
-    const tempZipPath = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'dir.zip'));
+    const tempZipPath = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'dir.zip'));
     try {
       const tempZip = await TZWriter.open(tempZipPath, compressionMethod);
       for (const inputDirectory of inputDirectories) {
@@ -246,7 +246,7 @@ test.each([
         expectedZipMd5,
       );
     } finally {
-      await FsPoly.rm(tempZipPath, { force: true });
+      await FsUtil.rm(tempZipPath, { force: true });
     }
   },
 );

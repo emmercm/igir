@@ -1,13 +1,13 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type Game from '../../types/dats/game.js';
-import type Parent from '../../types/dats/parent.js';
-import ROM from '../../types/dats/rom.js';
-import type Options from '../../types/options.js';
-import { MergeMode } from '../../types/options.js';
+import type DAT from '../../models/dats/dat.js';
+import type Game from '../../models/dats/game.js';
+import type Parent from '../../models/dats/parent.js';
+import ROM from '../../models/dats/rom.js';
+import type Options from '../../models/options.js';
+import { MergeMode } from '../../models/options.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -45,7 +45,7 @@ export default class DATMergerSplitter extends Module {
     }, new Map<string, Game>());
 
     this.progressBar.logTrace(
-      `${dat.getName()}: merging & splitting ${IntlPoly.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
+      `${dat.getName()}: merging & splitting ${IntlUtil.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
     this.progressBar.resetProgress(dat.getGames().length);
@@ -55,7 +55,7 @@ export default class DATMergerSplitter extends Module {
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
     const newDat = dat.withGames(newGames);
     this.progressBar.logTrace(
-      `${newDat.getName()}: merged/split to ${IntlPoly.toLocaleString(newDat.getGames().length)} game${newDat.getGames().length === 1 ? '' : 's'}`,
+      `${newDat.getName()}: merged/split to ${IntlUtil.toLocaleString(newDat.getGames().length)} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace(`${newDat.getName()}: done merging & splitting`);
@@ -74,7 +74,7 @@ export default class DATMergerSplitter extends Module {
           .filter((rom) => rom.getStatus() !== 'nodump')
           // Get rid of duplicate ROMs. MAME will sometimes duplicate a file with the exact same
           // name, size, and checksum but with a different "region" (e.g. neogeo).
-          .filter(ArrayPoly.filterUniqueMapped((rom) => rom.getName())),
+          .filter(ArrayUtil.filterUniqueMapped((rom) => rom.getName())),
         disks: game
           .getDisks()
           // Get rid of disks that haven't been dumped yet
@@ -91,7 +91,7 @@ export default class DATMergerSplitter extends Module {
               .getDeviceRefs()
               // De-duplicate DeviceRef names
               .map((deviceRef) => deviceRef.getName())
-              .reduce(ArrayPoly.reduceUnique(), [])
+              .reduce(ArrayUtil.reduceUnique(), [])
               // Get ROMs from the DeviceRef
               .map((deviceRefName) => gameNamesToGames.get(deviceRefName))
               .filter((deviceGame) => deviceGame !== undefined)
@@ -197,7 +197,7 @@ export default class DATMergerSplitter extends Module {
     const allRoms = [...cloneRoms, ...parentGames.flatMap((parentGame) => parentGame.getRoms())];
     // And remove any duplicate ROMs, even if the duplicates exist only in clones and not the parent
     const allRomsDeduplicated = allRoms.filter(
-      ArrayPoly.filterUniqueMapped((rom) => rom.hashCode()),
+      ArrayUtil.filterUniqueMapped((rom) => rom.hashCode()),
     );
     return [
       parentGames[0].withProps({

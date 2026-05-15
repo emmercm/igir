@@ -3,14 +3,14 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
+import FileCache from '../../src/cache/fileCache.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import FileFactory from '../../src/factories/fileFactory.js';
 import Temp from '../../src/globals/temp.js';
+import Options from '../../src/models/options.js';
 import PatchScanner from '../../src/modules/patchScanner.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
-import FileCache from '../../src/types/files/fileCache.js';
-import FileFactory from '../../src/types/files/fileFactory.js';
-import Options from '../../src/types/options.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 function createPatchScanner(patch: string[], patchExclude: string[] = []): PatchScanner {
@@ -100,19 +100,19 @@ describe('multiple files', () => {
       await new Options({ patch: ['test/fixtures/patches/*'] }).scanPatchFilesWithoutExclusions()
     ).filter((filePath) => !FileFactory.isExtensionArchive(filePath));
 
-    const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
       const tempFiles = await Promise.all(
         patchFiles.map(async (patchFile) => {
           const tempFile = path.join(tempDir, `${path.basename(patchFile)}.txt`);
-          await FsPoly.copyFile(patchFile, tempFile);
+          await FsUtil.copyFile(patchFile, tempFile);
           return tempFile;
         }),
       );
       expect(tempFiles.length).toBeGreaterThan(0);
       await expect(createPatchScanner(tempFiles).scan()).resolves.toHaveLength(tempFiles.length);
     } finally {
-      await FsPoly.rm(tempDir, { recursive: true });
+      await FsUtil.rm(tempDir, { recursive: true });
     }
   });
 });

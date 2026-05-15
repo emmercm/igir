@@ -1,17 +1,17 @@
 import path from 'node:path';
 
+import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import ChdRaw from '../../../src/models/files/archives/chd/chdRaw.js';
+import Rvz from '../../../src/models/files/archives/dolphin/rvz.js';
+import Cso from '../../../src/models/files/archives/maxcso/cso.js';
+import Rar from '../../../src/models/files/archives/rar.js';
+import SevenZip from '../../../src/models/files/archives/sevenZip/sevenZip.js';
+import Tar from '../../../src/models/files/archives/tar.js';
+import Zip from '../../../src/models/files/archives/zip.js';
+import File from '../../../src/models/files/file.js';
+import type { OptionsProps } from '../../../src/models/options.js';
+import Options from '../../../src/models/options.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
-import ArchiveEntry from '../../../src/types/files/archives/archiveEntry.js';
-import ChdRaw from '../../../src/types/files/archives/chd/chdRaw.js';
-import Rvz from '../../../src/types/files/archives/dolphin/rvz.js';
-import Cso from '../../../src/types/files/archives/maxcso/cso.js';
-import Rar from '../../../src/types/files/archives/rar.js';
-import SevenZip from '../../../src/types/files/archives/sevenZip/sevenZip.js';
-import Tar from '../../../src/types/files/archives/tar.js';
-import Zip from '../../../src/types/files/archives/zip.js';
-import File from '../../../src/types/files/file.js';
-import type { OptionsProps } from '../../../src/types/options.js';
-import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const CRC = '12345678';

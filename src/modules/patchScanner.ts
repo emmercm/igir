@@ -1,14 +1,14 @@
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import IntlPoly from '../polyfill/intlPoly.js';
-import type File from '../types/files/file.js';
-import { ChecksumBitmask } from '../types/files/fileChecksums.js';
-import type FileFactory from '../types/files/fileFactory.js';
-import type Options from '../types/options.js';
-import type Patch from '../types/patches/patch.js';
-import PatchFactory from '../types/patches/patchFactory.js';
+import type FileFactory from '../factories/fileFactory.js';
+import PatchFactory from '../factories/patchFactory.js';
+import type File from '../models/files/file.js';
+import { ChecksumBitmask } from '../models/files/fileChecksums.js';
+import type Options from '../models/options.js';
+import type Patch from '../models/patches/patch.js';
+import FsUtil from '../utils/fsUtil.js';
+import IntlUtil from '../utils/intlUtil.js';
 import Scanner from './scanner.js';
 
 /**
@@ -36,7 +36,7 @@ export default class PatchScanner extends Scanner {
       this.progressBar.incrementTotal(increment);
     });
     this.progressBar.logTrace(
-      `found ${IntlPoly.toLocaleString(patchFilePaths.length)} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
+      `found ${IntlUtil.toLocaleString(patchFilePaths.length)} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(patchFilePaths.length);
 
@@ -56,7 +56,7 @@ export default class PatchScanner extends Scanner {
 
   private async parsePatchFiles(patchFiles: File[]): Promise<Patch[]> {
     this.progressBar.logTrace(
-      `parsing ${IntlPoly.toLocaleString(patchFiles.length)} patch file${patchFiles.length === 1 ? '' : 's'}`,
+      `parsing ${IntlUtil.toLocaleString(patchFiles.length)} patch file${patchFiles.length === 1 ? '' : 's'}`,
     );
     if (patchFiles.length === 0) {
       return [];
@@ -71,7 +71,7 @@ export default class PatchScanner extends Scanner {
         const childBar = this.progressBar.addChildBar({
           name: patchFile.toString(),
           total: patchFile.getSize(),
-          progressFormatter: FsPoly.sizeReadable,
+          progressFormatter: FsUtil.sizeReadable,
         });
         try {
           return await this.patchFromFile(patchFile);

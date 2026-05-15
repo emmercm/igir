@@ -3,16 +3,16 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
+import File from '../../../src/models/files/file.js';
+import Options from '../../../src/models/options.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
-import File from '../../../src/types/files/file.js';
-import FileCache from '../../../src/types/files/fileCache.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options from '../../../src/types/options.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -47,7 +47,7 @@ describe('extension has possible header', () => {
 
   it('should not throw on non-existent files', async () => {
     const tempPath = path.join(Temp.getTempDir(), 'file.nes');
-    await expect(FsPoly.exists(tempPath)).resolves.toEqual(false);
+    await expect(FsUtil.exists(tempPath)).resolves.toEqual(false);
     const inputRomFiles = [await File.fileOf({ filePath: tempPath })];
 
     const processedRomFiles = await new ROMHeaderProcessor(

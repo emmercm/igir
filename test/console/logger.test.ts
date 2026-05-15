@@ -6,10 +6,10 @@ import Logger from '../../src/console/logger.js';
 import type { LogLevelValue } from '../../src/console/logLevel.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import Temp from '../../src/globals/temp.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 
-if (!(await FsPoly.exists(Temp.getTempDir()))) {
-  await FsPoly.mkdir(Temp.getTempDir(), { recursive: true });
+if (!(await FsUtil.exists(Temp.getTempDir()))) {
+  await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
 }
 
 class LoggerSpy {
@@ -79,7 +79,7 @@ describe('canPrint', () => {
 
 describe('setLogFile', () => {
   it('should write messages to the log file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
@@ -87,12 +87,12 @@ describe('setLogFile', () => {
       const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('test message');
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 
   it('should write messages below the stream log level to the file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.WARN);
       spy.getLogger().setLogFile(tempFile);
@@ -101,12 +101,12 @@ describe('setLogFile', () => {
       const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('below level message');
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 
   it('should strip ANSI codes from file output', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
@@ -115,12 +115,12 @@ describe('setLogFile', () => {
       expect(contents).not.toMatch(/\x1B\[/); // no ANSI escape sequences
       expect(contents).toContain('ansi test message');
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 
   it('should not write empty messages to the file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.ALWAYS);
       spy.getLogger().setLogFile(tempFile);
@@ -128,12 +128,12 @@ describe('setLogFile', () => {
       const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toEqual('');
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 
   it('should include timestamp and level prefix in file output', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
@@ -143,13 +143,13 @@ describe('setLogFile', () => {
       expect(contents).toMatch(/\[\d{2}:\d{2}:\d{2}\.\d{3}\]/);
       expect(contents).toContain('INFO:');
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 
   it('should close the previous file handle when called again', async () => {
-    const tempFile1 = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger1'));
-    const tempFile2 = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger2'));
+    const tempFile1 = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger1'));
+    const tempFile2 = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger2'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile1);
@@ -163,13 +163,13 @@ describe('setLogFile', () => {
       expect(contents2).toContain('second file message');
       expect(contents2).not.toContain('first file message');
     } finally {
-      await FsPoly.rm(tempFile1, { force: true });
-      await FsPoly.rm(tempFile2, { force: true });
+      await FsUtil.rm(tempFile1, { force: true });
+      await FsUtil.rm(tempFile2, { force: true });
     }
   });
 
   it('should append to an existing log file', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy1 = new LoggerSpy(LogLevel.INFO);
       spy1.getLogger().setLogFile(tempFile);
@@ -183,7 +183,7 @@ describe('setLogFile', () => {
       expect(contents).toContain('first message');
       expect(contents).toContain('second message');
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 });
@@ -297,7 +297,7 @@ describe('printLine', () => {
   });
 
   it('should write to the log file with prefix regardless of stream log level', async () => {
-    const tempFile = await FsPoly.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
       spy.getLogger().setLogFile(tempFile);
@@ -305,7 +305,7 @@ describe('printLine', () => {
       const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('FilePrefix');
     } finally {
-      await FsPoly.rm(tempFile, { force: true });
+      await FsUtil.rm(tempFile, { force: true });
     }
   });
 });
