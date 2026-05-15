@@ -9,8 +9,18 @@ on:
       - synchronize  # PR's branch was edited (i.e. new commits)
 
 jobs:
+  # Require a valid PR title before enabling auto-merging
+  pr-renamer:
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/pr-renamer.yml
+
   dependabot-automerge:
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    needs:
+      - pr-renamer
     permissions:
       # actions/checkout@v6, `gh` CLI
       contents: write

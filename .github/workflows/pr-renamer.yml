@@ -8,6 +8,7 @@ on:
       - opened
       - reopened
       - synchronize  # PR's branch was edited (i.e. new commits)
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -27,6 +28,8 @@ jobs:
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           OLD_TITLE: ${{ github.event.pull_request.title }}
         run: |
+          set -x
+
           echo "OLD_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
           # Default to account for early successful termination
           echo "NEW_TITLE=${OLD_TITLE}" >> "${GITHUB_OUTPUT}"
@@ -38,7 +41,7 @@ jobs:
             exit 0
           fi
 
-          if [[ ! "${OLD_TITLE}" =~ ^[a-zA-Z\\(\\)\\!]+: ]]; then
+          if [[ ! "${OLD_TITLE}" =~ ^[a-zA-Z\\(\\)\\!-]+: ]]; then
             echo "ERROR=No conventional commit type found. The allowed list is: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
