@@ -1,0 +1,417 @@
+import path from 'node:path';
+
+import Cache from '../../src/cache/cache.js';
+import Temp from '../../src/globals/temp.js';
+import FsUtil from '../../src/utils/fsUtil.js';
+
+const TEST_CACHE_SIZE = 100;
+
+describe('has', () => {
+  it('should return false with empty cache', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.has(String(i))).resolves.toEqual(false);
+    }
+  });
+
+  it('should return true after setting', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      await expect(cache.has(String(i))).resolves.toEqual(true);
+    }
+  });
+});
+
+describe('keys', () => {
+  it('should return nothing with empty cache', () => {
+    const cache = new Cache<number>();
+    expect(cache.keys().size).toEqual(0);
+  });
+
+  it('should return the correct keys', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+    }
+    expect(cache.keys()).toEqual(
+      new Set(Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx))),
+    );
+  });
+});
+
+describe('size', () => {
+  it('should return zero with empty cache', () => {
+    const cache = new Cache<number>();
+    expect(cache.size()).toEqual(0);
+  });
+
+  it('should return the correct size after setting', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      expect(cache.size()).toEqual(i + 1);
+    }
+  });
+});
+
+describe('get', () => {
+  it('should return undefined with empty cache', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.get(String(i))).resolves.toBeUndefined();
+    }
+  });
+
+  it('should return the value after setting', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      await expect(cache.get(String(i))).resolves.toEqual(i);
+    }
+  });
+});
+
+describe('getOrCompute', () => {
+  it('should compute a value if the key is missing', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (key: string): number => {
+      computed += 1;
+      return Number.parseInt(key, 10);
+    };
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.getOrCompute(String(i), runnable)).resolves.toEqual(i);
+    }
+    expect(computed).toEqual(TEST_CACHE_SIZE);
+  });
+
+  it('should not compute a value if the key exists', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+    }
+
+    let computed = 0;
+    const runnable = (key: string): number => {
+      computed += 1;
+      return Number.parseInt(key, 10);
+    };
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await expect(cache.getOrCompute(String(i), runnable)).resolves.toEqual(i);
+    }
+    expect(computed).toEqual(0);
+  });
+});
+
+describe('set', () => {
+  it("should set a value for a key that doesn't exist", async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      await expect(cache.get(String(i))).resolves.toEqual(i);
+    }
+  });
+
+  it('should set a value for a key that exists', async () => {
+    const cache = new Cache<number>();
+
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+      await cache.set(String(i), i * 2);
+      await expect(cache.get(String(i))).resolves.toEqual(i * 2);
+    }
+  });
+});
+
+describe('delete', () => {
+  it('should delete a single key', async () => {
+    const cache = new Cache<string>();
+
+    await cache.set('key', 'value');
+    await expect(cache.has('key')).resolves.toEqual(true);
+
+    await cache.delete('key');
+    await expect(cache.has('key')).resolves.toEqual(false);
+  });
+
+  it('should delete regex-matched keys', async () => {
+    const cache = new Cache<string>();
+
+    await cache.set('key1', 'value');
+    await expect(cache.has('key1')).resolves.toEqual(true);
+    await cache.set('key2', 'value');
+    await expect(cache.has('key2')).resolves.toEqual(true);
+    await cache.set('key3', 'value');
+    await expect(cache.has('key3')).resolves.toEqual(true);
+
+    await cache.delete(/key[12]/);
+    await expect(cache.has('key1')).resolves.toEqual(false);
+    await expect(cache.has('key2')).resolves.toEqual(false);
+    await expect(cache.has('key3')).resolves.toEqual(true);
+  });
+});
+
+describe('load', () => {
+  it('should not throw on nonexistent file', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
+
+    const cache = new Cache<number>({ filePath: tempFile });
+    await expect(cache.load()).resolves.toBeTruthy();
+  });
+
+  it('should not throw on empty file', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    await FsUtil.touch(tempFile);
+    try {
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+
+      const cache = new Cache<number>({ filePath: tempFile });
+      await expect(cache.load()).resolves.toBeTruthy();
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should load after saving a populated cache', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const firstCache = new Cache<number>({ filePath: tempFile });
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await firstCache.set(String(i), i);
+    }
+    await firstCache.save();
+
+    try {
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+
+      const secondCache = new Cache<number>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(TEST_CACHE_SIZE);
+      expect(secondCache.keys()).toEqual(
+        new Set(Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx))),
+      );
+      for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+        await expect(secondCache.get(String(i))).resolves.toEqual(i);
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+});
+
+describe('save', () => {
+  it('should not save an empty cache', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const cache = new Cache<number>({ filePath: tempFile });
+    await cache.save();
+
+    try {
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should save a populated cache', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const cache = new Cache<number>({ filePath: tempFile });
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+    }
+    await cache.save();
+
+    try {
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+});
+
+describe('getOrComputeAllKeys', () => {
+  it('should compute all values when all keys are missing', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map([
+        ['a', 1],
+        ['b', 2],
+        ['c', 3],
+      ]);
+    };
+
+    const result = await cache.getOrComputeAllKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(
+      new Map([
+        ['a', 1],
+        ['b', 2],
+        ['c', 3],
+      ]),
+    );
+    expect(computed).toEqual(1);
+  });
+
+  it('should return cached values without computing when all keys exist', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 1);
+    await cache.set('b', 2);
+    await cache.set('c', 3);
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map();
+    };
+
+    const result = await cache.getOrComputeAllKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(
+      new Map([
+        ['a', 1],
+        ['b', 2],
+        ['c', 3],
+      ]),
+    );
+    expect(computed).toEqual(0);
+  });
+
+  it('should compute all values when some keys are missing', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 1);
+    // 'b' is missing
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map([
+        ['a', 10],
+        ['b', 20],
+      ]);
+    };
+
+    const result = await cache.getOrComputeAllKeys(['a', 'b'], runnable);
+    expect(result).toEqual(
+      new Map([
+        ['a', 10],
+        ['b', 20],
+      ]),
+    );
+    expect(computed).toEqual(1);
+    // Verify the cache was updated
+    await expect(cache.get('a')).resolves.toEqual(10);
+    await expect(cache.get('b')).resolves.toEqual(20);
+  });
+
+  it('should handle empty keys array', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): Map<string, number> => {
+      computed += 1;
+      return new Map();
+    };
+
+    const result = await cache.getOrComputeAllKeys([], runnable);
+    expect(result).toEqual(new Map());
+    expect(computed).toEqual(0);
+  });
+});
+
+describe('getOrComputeAnyKeys', () => {
+  it('should return undefined for empty keys', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys([], runnable);
+    expect(result).toBeUndefined();
+    expect(computed).toEqual(0);
+  });
+
+  it('should compute and store under all keys when all are missing', async () => {
+    const cache = new Cache<number>();
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(42);
+    expect(computed).toEqual(1);
+    // Verify all keys were populated
+    await expect(cache.get('a')).resolves.toEqual(42);
+    await expect(cache.get('b')).resolves.toEqual(42);
+    await expect(cache.get('c')).resolves.toEqual(42);
+  });
+
+  it('should return cached value without computing when any key exists', async () => {
+    const cache = new Cache<number>();
+    await cache.set('b', 99);
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b', 'c'], runnable);
+    expect(result).toEqual(99);
+    expect(computed).toEqual(0);
+  });
+
+  it('should recompute when shouldRecompute returns true', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 1);
+    await cache.set('b', 1);
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b'], runnable, (value) => value < 10);
+    expect(result).toEqual(42);
+    expect(computed).toEqual(1);
+    // Verify all keys were updated
+    await expect(cache.get('a')).resolves.toEqual(42);
+    await expect(cache.get('b')).resolves.toEqual(42);
+  });
+
+  it('should not recompute when shouldRecompute returns false', async () => {
+    const cache = new Cache<number>();
+    await cache.set('a', 100);
+
+    let computed = 0;
+    const runnable = (): number => {
+      computed += 1;
+      return 42;
+    };
+
+    const result = await cache.getOrComputeAnyKeys(['a', 'b'], runnable, (value) => value < 10);
+    expect(result).toEqual(100);
+    expect(computed).toEqual(0);
+  });
+});

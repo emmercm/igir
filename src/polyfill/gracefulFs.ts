@@ -77,7 +77,7 @@ const RETRY_TIMEOUT_MS = 60_000;
 /** Exponential backoff multiplier between retries. */
 const RETRY_BACKOFF_MULTIPLIER = 1.2;
 
-/** Minimim delay between retries. */
+/** Minimum delay between retries. */
 const RETRY_MIN_BACKOFF_MS = 10;
 
 /** Maximum delay between retries. */

@@ -1,10 +1,10 @@
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type Game from '../../types/dats/game.js';
-import type Options from '../../types/options.js';
+import type DAT from '../../models/dats/dat.js';
+import type Game from '../../models/dats/game.js';
+import type Options from '../../models/options.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -63,7 +63,7 @@ export default class DATFilter extends Module {
         .flatMap((game) => game.getRoms())
         .reduce((sum, rom) => sum + rom.getSize(), 0);
       this.progressBar.logTrace(
-        `${filteredDat.getName()}: filtered to ${IntlPoly.toLocaleString(filteredGames.length)}/${IntlPoly.toLocaleString(dat.getGames().length)} game${filteredGames.length === 1 ? '' : 's'} (${FsPoly.sizeReadable(size)})`,
+        `${filteredDat.getName()}: filtered to ${IntlUtil.toLocaleString(filteredGames.length)}/${IntlUtil.toLocaleString(dat.getGames().length)} game${filteredGames.length === 1 ? '' : 's'} (${FsUtil.sizeReadable(size)})`,
       );
     }
 

@@ -4,21 +4,21 @@ import type { Semaphore } from 'async-mutex';
 
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import type ROM from '../../types/dats/rom.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import Chd from '../../types/files/archives/chd/chd.js';
-import type File from '../../types/files/file.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import type FileSignature from '../../types/files/fileSignature.js';
-import ZeroSizeFile from '../../types/files/zeroSizeFile.js';
-import type Options from '../../types/options.js';
-import { FixExtension } from '../../types/options.js';
-import OutputFactory from '../../types/outputFactory.js';
-import type ROMWithFiles from '../../types/romWithFiles.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
+import FileFactory from '../../factories/fileFactory.js';
+import type DAT from '../../models/dats/dat.js';
+import type ROM from '../../models/dats/rom.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import Chd from '../../models/files/archives/chd/chd.js';
+import type File from '../../models/files/file.js';
+import type FileSignature from '../../models/files/fileSignature.js';
+import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
+import type Options from '../../models/options.js';
+import { FixExtension } from '../../models/options.js';
+import type ROMWithFiles from '../../models/romWithFiles.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
+import OutputFactory from '../../modules/candidates/utils/outputFactory.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -61,7 +61,7 @@ export default class CandidateExtensionCorrector extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: correcting ${IntlPoly.toLocaleString(romsThatNeedCorrecting)} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
+      `${dat.getName()}: correcting ${IntlUtil.toLocaleString(romsThatNeedCorrecting)} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
     this.progressBar.resetProgress(romsThatNeedCorrecting);
@@ -110,7 +110,7 @@ export default class CandidateExtensionCorrector extends Module {
           )
         )
           // Eliminate duplicate ROMs caused by extension correction
-          .filter(ArrayPoly.filterUniqueMapped((romWithFiles) => romWithFiles.getRom().hashCode()));
+          .filter(ArrayUtil.filterUniqueMapped((romWithFiles) => romWithFiles.getRom().hashCode()));
 
         const correctedGame = candidate
           .getGame()

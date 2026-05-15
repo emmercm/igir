@@ -2,14 +2,14 @@ import path from 'node:path';
 
 import type ProgressBar from '../console/progressBar.js';
 import { ProgressBarSymbol } from '../console/progressBar.js';
-import FsPoly from '../polyfill/fsPoly.js';
-import type DAT from '../types/dats/dat.js';
-import Disk from '../types/dats/disk.js';
-import type Game from '../types/dats/game.js';
-import IgirHeader from '../types/dats/igirHeader.js';
-import LogiqxDAT from '../types/dats/logiqx/logiqxDat.js';
-import type Options from '../types/options.js';
-import type WriteCandidate from '../types/writeCandidate.js';
+import type DAT from '../models/dats/dat.js';
+import Disk from '../models/dats/disk.js';
+import type Game from '../models/dats/game.js';
+import IgirHeader from '../models/dats/igirHeader.js';
+import LogiqxDAT from '../models/dats/logiqx/logiqxDat.js';
+import type Options from '../models/options.js';
+import type WriteCandidate from '../models/writeCandidate.js';
+import FsUtil from '../utils/fsUtil.js';
 import Module from './module.js';
 
 /**
@@ -70,8 +70,8 @@ export default class Dir2DatCreator extends Module {
     });
 
     const dir2datDir = this.options.getDir2DatOutput();
-    if (!(await FsPoly.exists(dir2datDir))) {
-      await FsPoly.mkdir(dir2datDir, { recursive: true });
+    if (!(await FsUtil.exists(dir2datDir))) {
+      await FsUtil.mkdir(dir2datDir, { recursive: true });
     }
 
     // Construct a new DAT and write it to the output dir
@@ -80,7 +80,7 @@ export default class Dir2DatCreator extends Module {
     const dir2datContents = dir2dat.toXmlDat();
     const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
     this.progressBar.logInfo(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);
-    await FsPoly.writeFile(dir2datPath, dir2datContents);
+    await FsUtil.writeFile(dir2datPath, dir2datContents);
 
     this.progressBar.logTrace(`${dir2dat.getName()}: done writing dir2dat`);
     return dir2datPath;

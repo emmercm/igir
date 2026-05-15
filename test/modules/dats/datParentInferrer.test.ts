@@ -1,9 +1,9 @@
+import type DAT from '../../../src/models/dats/dat.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import Options from '../../../src/models/options.js';
 import DATParentInferrer from '../../../src/modules/dats/datParentInferrer.js';
-import type DAT from '../../../src/types/dats/dat.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 function buildDat(gameNames: string[]): DAT {

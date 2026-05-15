@@ -1,9 +1,9 @@
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../../src/models/dats/rom.js';
+import Options from '../../../src/models/options.js';
 import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import ROM from '../../../src/types/dats/rom.js';
-import Options from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const singleDiscGames: Game[] = [

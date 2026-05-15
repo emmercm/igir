@@ -1,11 +1,11 @@
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import Release from '../../../src/models/dats/release.js';
+import ROM from '../../../src/models/dats/rom.js';
+import Options, { PreferRevision, PreferRevisionInverted } from '../../../src/models/options.js';
 import DATParentInferrer from '../../../src/modules/dats/datParentInferrer.js';
 import DATPreferer from '../../../src/modules/dats/datPreferer.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import Release from '../../../src/types/dats/release.js';
-import ROM from '../../../src/types/dats/rom.js';
-import Options, { PreferRevision, PreferRevisionInverted } from '../../../src/types/options.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const testGameWarlocked: Game[] = [

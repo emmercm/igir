@@ -1,15 +1,15 @@
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import ArrayPoly from '../../polyfill/arrayPoly.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import type DAT from '../../types/dats/dat.js';
-import ArchiveFile from '../../types/files/archives/archiveFile.js';
-import type FileFactory from '../../types/files/fileFactory.js';
-import type Options from '../../types/options.js';
-import type ROMWithFiles from '../../types/romWithFiles.js';
-import type WriteCandidate from '../../types/writeCandidate.js';
+import type FileFactory from '../../factories/fileFactory.js';
+import type DAT from '../../models/dats/dat.js';
+import ArchiveFile from '../../models/files/archives/archiveFile.js';
+import type Options from '../../models/options.js';
+import type ROMWithFiles from '../../models/romWithFiles.js';
+import type WriteCandidate from '../../models/writeCandidate.js';
+import ArrayUtil from '../../utils/arrayUtil.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -59,7 +59,7 @@ export default class CandidateArchiveFileHasher extends Module {
           .getRomsWithFiles()
           .filter((romWithFiles) => this.romWithFilesNeedsProcessing(romWithFiles))
           .filter((romWithFiles) => romWithFiles.getInputFile().getFilePath())
-          .reduce(ArrayPoly.reduceUnique(), []).length,
+          .reduce(ArrayUtil.reduceUnique(), []).length,
       0,
     );
     if (archiveFileCount === 0) {
@@ -68,7 +68,7 @@ export default class CandidateArchiveFileHasher extends Module {
     }
 
     this.progressBar.logTrace(
-      `${dat.getName()}: generating ${IntlPoly.toLocaleString(archiveFileCount)} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
+      `${dat.getName()}: generating ${IntlUtil.toLocaleString(archiveFileCount)} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
     this.progressBar.resetProgress(archiveFileCount);
@@ -92,7 +92,7 @@ export default class CandidateArchiveFileHasher extends Module {
           .filter((rwf) => this.romWithFilesNeedsProcessing(rwf))
           .map((rwf) => rwf.getInputFile())
           .filter((inputFile): inputFile is ArchiveFile => inputFile instanceof ArchiveFile)
-          .filter(ArrayPoly.filterUniqueMapped((inputFile) => inputFile.getFilePath()));
+          .filter(ArrayUtil.filterUniqueMapped((inputFile) => inputFile.getFilePath()));
         const hashedArchiveFiles = await this.mappableSemaphore.map(
           uniqueInputArchiveFiles,
           async (archiveFile) => {
@@ -103,7 +103,7 @@ export default class CandidateArchiveFileHasher extends Module {
             const childBar = this.progressBar.addChildBar({
               name: archiveFile.toString(),
               total: archiveFile.getSize(),
-              progressFormatter: FsPoly.sizeReadable,
+              progressFormatter: FsUtil.sizeReadable,
             });
 
             try {

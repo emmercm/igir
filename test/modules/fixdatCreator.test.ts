@@ -2,23 +2,23 @@ import os from 'node:os';
 import stream from 'node:stream';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
+import FileCache from '../../src/cache/fileCache.js';
 import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import FileFactory from '../../src/factories/fileFactory.js';
+import type DAT from '../../src/models/dats/dat.js';
+import Header from '../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
+import Release from '../../src/models/dats/release.js';
+import ROM from '../../src/models/dats/rom.js';
+import type { OptionsProps } from '../../src/models/options.js';
+import Options from '../../src/models/options.js';
+import ROMWithFiles from '../../src/models/romWithFiles.js';
+import SingleValueGame from '../../src/models/singleValueGame.js';
+import WriteCandidate from '../../src/models/writeCandidate.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
-import FsPoly from '../../src/polyfill/fsPoly.js';
-import type DAT from '../../src/types/dats/dat.js';
-import Header from '../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../src/types/dats/logiqx/logiqxDat.js';
-import Release from '../../src/types/dats/release.js';
-import ROM from '../../src/types/dats/rom.js';
-import SingleValueGame from '../../src/types/dats/singleValueGame.js';
-import FileCache from '../../src/types/files/fileCache.js';
-import FileFactory from '../../src/types/files/fileFactory.js';
-import type { OptionsProps } from '../../src/types/options.js';
-import Options from '../../src/types/options.js';
-import ROMWithFiles from '../../src/types/romWithFiles.js';
-import WriteCandidate from '../../src/types/writeCandidate.js';
+import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
 const gameWithNoRoms = new SingleValueGame({
@@ -69,7 +69,7 @@ async function runFixdatCreator(
     return undefined;
   }
 
-  await expect(FsPoly.exists(fixdatPath)).resolves.toEqual(true);
+  await expect(FsUtil.exists(fixdatPath)).resolves.toEqual(true);
 
   try {
     return (
@@ -84,7 +84,7 @@ async function runFixdatCreator(
       ).scan()
     )[0];
   } finally {
-    await FsPoly.rm(fixdatPath, { force: true });
+    await FsUtil.rm(fixdatPath, { force: true });
   }
 }
 

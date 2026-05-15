@@ -1,13 +1,13 @@
 import type MappableSemaphore from '../../async/mappableSemaphore.js';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
-import FsPoly from '../../polyfill/fsPoly.js';
-import IntlPoly from '../../polyfill/intlPoly.js';
-import ArchiveEntry from '../../types/files/archives/archiveEntry.js';
-import type File from '../../types/files/file.js';
-import FileFactory from '../../types/files/fileFactory.js';
-import type Options from '../../types/options.js';
-import { TrimScanFiles } from '../../types/options.js';
+import FileFactory from '../../factories/fileFactory.js';
+import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import type File from '../../models/files/file.js';
+import type Options from '../../models/options.js';
+import { TrimScanFiles } from '../../models/options.js';
+import FsUtil from '../../utils/fsUtil.js';
+import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
 /**
@@ -53,7 +53,7 @@ export default class ROMTrimProcessor extends Module {
     }
 
     this.progressBar.logTrace(
-      `processing trimming in ${IntlPoly.toLocaleString(inputRomFiles.length)} ROM${inputRomFiles.length === 1 ? '' : 's'}`,
+      `processing trimming in ${IntlUtil.toLocaleString(inputRomFiles.length)} ROM${inputRomFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_TRIMMING_DETECTION);
     this.progressBar.resetProgress(filesThatNeedProcessing);
@@ -67,7 +67,7 @@ export default class ROMTrimProcessor extends Module {
       const childBar = this.progressBar.addChildBar({
         name: inputFile.toString(),
         total: inputFile.getSize(),
-        progressFormatter: FsPoly.sizeReadable,
+        progressFormatter: FsUtil.sizeReadable,
       });
 
       let fileWithTrimming: File;
@@ -90,7 +90,7 @@ export default class ROMTrimProcessor extends Module {
       (romFile) => romFile.getPaddings().length > 0,
     ).length;
     this.progressBar.logTrace(
-      `found ${IntlPoly.toLocaleString(trimmedRomsCount)} trimmed ROM${trimmedRomsCount === 1 ? '' : 's'}`,
+      `found ${IntlUtil.toLocaleString(trimmedRomsCount)} trimmed ROM${trimmedRomsCount === 1 ? '' : 's'}`,
     );
 
     this.progressBar.logTrace('done processing file trimming');

@@ -5,23 +5,23 @@ import stream from 'node:stream';
 import { Semaphore } from 'async-mutex';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
+import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
+import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../../src/models/dats/rom.js';
+import File from '../../../src/models/files/file.js';
+import Options, { FixExtension, FixExtensionInverted } from '../../../src/models/options.js';
+import ROMWithFiles from '../../../src/models/romWithFiles.js';
+import SingleValueGame from '../../../src/models/singleValueGame.js';
+import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
-import FsPoly from '../../../src/polyfill/fsPoly.js';
-import Game from '../../../src/types/dats/game.js';
-import Header from '../../../src/types/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/types/dats/logiqx/logiqxDat.js';
-import ROM from '../../../src/types/dats/rom.js';
-import SingleValueGame from '../../../src/types/dats/singleValueGame.js';
-import File from '../../../src/types/files/file.js';
-import FileCache from '../../../src/types/files/fileCache.js';
-import FileFactory from '../../../src/types/files/fileFactory.js';
-import Options, { FixExtension, FixExtensionInverted } from '../../../src/types/options.js';
-import ROMWithFiles from '../../../src/types/romWithFiles.js';
-import WriteCandidate from '../../../src/types/writeCandidate.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -121,7 +121,7 @@ it('should correct ROMs without DATs', async () => {
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     const tempFiles = await Promise.all(
       inputFiles.map(async (inputFile) => {
@@ -160,7 +160,7 @@ it('should correct ROMs without DATs', async () => {
 
     expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
 });
 
@@ -178,7 +178,7 @@ it('should correct ROMs with missing filenames', async () => {
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
-  const tempDir = await FsPoly.mkdtemp(Temp.getTempDir());
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     const tempFiles = await Promise.all(
       inputFiles.map(async (inputFile) => {
@@ -213,6 +213,6 @@ it('should correct ROMs with missing filenames', async () => {
 
     expectCorrectedCandidates(candidates, correctedCandidates);
   } finally {
-    await FsPoly.rm(tempDir, { recursive: true, force: true });
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
 });
