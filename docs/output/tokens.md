@@ -87,13 +87,13 @@ To help sort ROMs into unique folder structures for popular frontends & hardware
 - `{batocera}` the [Batocera](../usage/desktop/batocera.md) emulator's directory for the ROM
 - `{es}` the [EmulationStation](../usage/desktop/emulationstation.md) emulator's directory for the ROM
 - `{funkeyos}` the [FunKey OS](../usage/handheld/funkeyos.md) emulator's directory for the ROM
-- `{jelos}` the [JELOS](../usage/handheld/jelos.md) emulator's directory for the ROM
 - `{minui}` the [MinUI](../usage/handheld/minui.md) emulator's directory for the ROM
 - `{mister}` the [MiSTer FPGA](../usage/hardware/mister.md) core's directory for the ROM
 - `{miyoocfw}` the [MiyooCFW](../usage/handheld/miyoocfw.md) emulator's directory for the ROM
 - `{onion}` the [OnionOS / GarlicOS](../usage/handheld/onionos.md) emulator's directory for the ROM
 - `{pocket}` the [Analogue Pocket](../usage/hardware/analogue-pocket.md) core's directory for the ROM
 - `{retrodeck}` the [RetroDECK](../usage/desktop/retrodeck.md) emulator's directory for the ROM
+- `{rocknix}` the [ROCKNIX](../usage/handheld/rocknix.md) emulator's directory for the ROM
 - `{romm}` the [RomM](../usage/desktop/romm.md) manager directory for the ROM
 - `{spruce}` the [SpruceOS](../usage/handheld/spruceos.md) emulator's directory for the ROM
 - `{twmenu}` the [TWiLightMenu++](../usage/handheld/twmenu.md) emulator's directory for the ROM

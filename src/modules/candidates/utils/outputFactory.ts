@@ -314,6 +314,10 @@ export default class OutputFactory {
       .replace('{outputExt}', outputRom.ext.replace(/^\./, '') || '-');
   }
 
+  private static readonly TOKEN_ALIASES: Record<string, string> = {
+    rocknix: 'jelos',
+  };
+
   @Memoize()
   private static loadTokensFile(filePath: string | undefined): ConsoleTokens[] {
     const data = filePath
@@ -326,6 +330,12 @@ export default class OutputFactory {
       const tokensMap = new Map(
         Object.entries(tokens).filter((entry): entry is [string, string] => entry[1] !== undefined),
       );
+      for (const [primary, alias] of Object.entries(OutputFactory.TOKEN_ALIASES)) {
+        const primaryValue = tokensMap.get(primary);
+        if (primaryValue !== undefined && !tokensMap.has(alias)) {
+          tokensMap.set(alias, primaryValue);
+        }
+      }
       return new ConsoleTokens(new RegExp(pattern, flags || undefined), extensions, tokensMap);
     });
   }
