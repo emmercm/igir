@@ -107,7 +107,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
   renovate-label-remover:
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request_target' }}
     permissions:
       # actions/checkout
       contents: read
@@ -119,6 +119,13 @@ jobs:
       # Required for `gh` CLI
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: |
-          gh pr edit "${{ github.event.pull_request.number }}" --remove-label "${{ env.renovate_rebase_label }}"
+          pr_number="${{ github.event.pull_request.number }}"
+          label="${{ env.renovate_rebase_label }}"
+          if gh pr view "${pr_number}" --json labels --jq '.labels[].name' | grep -qFx "${label}"; then
+            echo "Removing label '${label}' from PR #${pr_number}"
+            gh pr edit "${pr_number}" --remove-label "${label}"
+          else
+            echo "PR #${pr_number} does not have label '${label}', skipping"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
