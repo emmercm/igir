@@ -56,6 +56,10 @@
           "type": "string",
           "description": "Batocera ROM directory: roms/{batocera}"
         },
+        "crossmix": {
+          "type": "string",
+          "description": "CrossMix-OS ROM directory: /Roms/{crossmix}"
+        },
         "es": {
           "type": "string",
           "description": "EmulationStation ROM directory: roms/{emulationstation}"

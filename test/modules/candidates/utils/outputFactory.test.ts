@@ -736,6 +736,42 @@ describe('token replacement', () => {
     },
   );
 
+  // Output Token {crossmix}
+  test.each([
+    ['game.a78', path.resolve('Roms', 'ATARI7800', 'game.a78')],
+    ['game.gb', path.resolve('Roms', 'GB', 'game.gb')],
+    ['game.nes', path.resolve('Roms', 'FC', 'game.nes')],
+  ])(
+    'should replace {crossmix} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'Roms/{crossmix}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each(['game.bin', 'game.rom'])(
+    'should throw on {crossmix} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{crossmix}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
+      ).rejects.toThrow(/failed to replace/);
+    },
+  );
+
   // Output Token {spruce}
   test.each([
     ['game.a78', path.resolve('Roms', 'SEVENTYEIGHTHUNDRED', 'game.a78')],
