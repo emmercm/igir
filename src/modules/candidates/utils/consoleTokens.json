@@ -391,6 +391,7 @@
       "extensions": [],
       "tokens": {
         "es": "vic20",
+        "jelos": "vic20",
         "onion": "VIC20",
         "retrodeck": "vic20",
         "romm": "vic-20",
@@ -443,6 +444,7 @@
       "tokens": {
         "batocera": "scv",
         "es": "scv",
+        "jelos": "svc",
         "retrodeck": "scv",
         "romm": "epoch-super-cassette-vision"
       }
@@ -635,6 +637,7 @@
       "extensions": [".jar"],
       "tokens": {
         "es": "j2me",
+        "jelos": "j2me",
         "retrodeck": "j2me",
         "romm": "j2me"
       }
@@ -644,6 +647,7 @@
       "extensions": [".pqa", ".prc"],
       "tokens": {
         "es": "palm",
+        "jelos": "palm",
         "retrodeck": "palm",
         "romm": "palm-os"
       }
@@ -786,6 +790,7 @@
       "extensions": [],
       "tokens": {
         "es": "pcfx",
+        "jelos": "pcfx",
         "onion": "PCFX",
         "retrodeck": "pcfx",
         "romm": "pc-fx"
@@ -797,6 +802,7 @@
       "tokens": {
         "adam": "TIC80",
         "es": "tic80",
+        "jelos": "tic-80",
         "retrodeck": "tic80",
         "spruce": "TIC80"
       }
@@ -1157,6 +1163,7 @@
       "tokens": {
         "batocera": "cdi",
         "es": "cdimono1",
+        "jelos": "cdi",
         "retrodeck": "cdimono1",
         "romm": "philips-cd-i"
       }
@@ -1566,6 +1573,7 @@
       "tokens": {
         "batocera": "psvita",
         "es": "psvita",
+        "jelos": "launcher",
         "retrodeck": "psvita",
         "romm": "psvita"
       }
