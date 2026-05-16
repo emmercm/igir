@@ -41,7 +41,7 @@ jobs:
             exit 0
           fi
 
-          if [[ ! "${OLD_TITLE}" =~ ^[a-zA-Z\\(\\)\\!-]+: ]]; then
+          if [[ ! "${OLD_TITLE}" =~ ^[a-zA-Z()!-]+: ]]; then
             echo "ERROR=No conventional commit type found. The allowed list is: ${ALLOWED_TYPES//|/, }" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
