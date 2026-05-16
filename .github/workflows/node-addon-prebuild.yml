@@ -10,7 +10,7 @@ on:
     branches-ignore:
       - 'main'
       # Don't prebuild on version bump PRs
-      - '*/[0-9]+.[0-9]+.[0-9]+'
+      - '*/[0-9]*.[0-9]*.[0-9]*'
   workflow_dispatch:
     inputs:
       ref:
@@ -43,7 +43,7 @@ jobs:
         with:
           filters: |
             changes:
-              - '.github/workflows/napi-prebuild.yml'
+              - '.github/workflows/node-addon-prebuild.yml'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'
