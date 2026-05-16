@@ -358,7 +358,43 @@ describe('token replacement', () => {
     ).rejects.toThrow(/failed to replace/);
   });
 
-  // Output Token {jelos}
+  // Output Token {rocknix}
+  test.each([
+    ['game.a78', path.resolve('roms', 'atari7800', 'game.a78')],
+    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
+    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
+  ])(
+    'should replace {rocknix} for known extension: %s',
+    async (outputRomFilename, expectedPath) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{rocknix}' });
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        dummyGame,
+        rom,
+        await rom.toFile(),
+      );
+      expect(outputPath.format()).toEqual(expectedPath);
+    },
+  );
+
+  test.each(['game.bin', 'game.rom'])(
+    'should throw on {rocknix} for unknown extension: %s',
+    async (outputRomFilename) => {
+      const options = new Options({ commands: ['copy'], output: 'roms/{rocknix}' });
+
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+
+      await expect(
+        (async (): Promise<unknown> =>
+          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
+      ).rejects.toThrow(/failed to replace/);
+    },
+  );
+
+  // Output Token {jelos} (legacy alias for {rocknix})
   test.each([
     ['game.a78', path.resolve('roms', 'atari7800', 'game.a78')],
     ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
@@ -382,6 +418,36 @@ describe('token replacement', () => {
         (async (): Promise<unknown> =>
           OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
       ).rejects.toThrow(/failed to replace/);
+    },
+  );
+
+  test.each([
+    ['game.a78', 'atari7800'],
+    ['game.gb', 'gb'],
+    ['game.nes', 'nes'],
+  ])(
+    'should resolve {jelos} and {rocknix} to the same value: %s',
+    async (outputRomFilename, expectedDir) => {
+      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+      const file = await rom.toFile();
+
+      const jelosPath = OutputFactory.getPath(
+        new Options({ commands: ['copy'], output: 'roms/{jelos}' }),
+        dummyDat,
+        dummyGame,
+        rom,
+        file,
+      );
+      const rocknixPath = OutputFactory.getPath(
+        new Options({ commands: ['copy'], output: 'roms/{rocknix}' }),
+        dummyDat,
+        dummyGame,
+        rom,
+        file,
+      );
+
+      expect(jelosPath.format()).toEqual(path.resolve('roms', expectedDir, outputRomFilename));
+      expect(jelosPath.format()).toEqual(rocknixPath.format());
     },
   );
 

@@ -314,7 +314,6 @@ Advanced usage:
     {es}        The ROM's emulator-specific /roms/* directory for the 'EmulationStation' image
     (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
-    {jelos}     The ROM's emulator-specific /roms/* directory for JELOS (e.g. "gb")
     {minui}     The ROM's emulator-specific /Roms/* directory for MinUI (e.g. "Game Boy (GB)")
     {mister}    The ROM's core-specific /games/* directory for the MiSTer FPGA (e.g.
     "Gameboy")
@@ -324,6 +323,7 @@ Advanced usage:
     "gb")
     {retrodeck} The ROM's emulator-specific /roms/* directory for the 'RetroDECK' image (e.g.
     "gb")
+    {rocknix}   The ROM's emulator-specific /roms/* directory for ROCKNIX (e.g. "gb")
     {romm}      The ROM's manager-specific /roms/* directory for 'RomM' (e.g. "gb")
     {spruce}    The ROM's emulator-specific /Roms/* directory for SpruceOS (e.g. "GB")
     {twmenu}    The ROM's emulator-specific /roms/* directory for TWiLightMenu++ on the

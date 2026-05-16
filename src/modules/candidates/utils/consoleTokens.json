@@ -26,7 +26,7 @@
         "adam": "AMSTRAD",
         "batocera": "amstradcpc",
         "es": "amstradcpc",
-        "jelos": "amstradcpc",
+        "rocknix": "amstradcpc",
         "mister": "Amstrad",
         "onion": "CPC",
         "retrodeck": "amstradcpc",
@@ -77,7 +77,7 @@
       "tokens": {
         "batocera": "arduboy",
         "es": "arduboy",
-        "jelos": "arduboy",
+        "rocknix": "arduboy",
         "mister": "Arduboy",
         "pocket": "arduboy",
         "retrodeck": "arduboy",
@@ -91,7 +91,7 @@
       "tokens": {
         "batocera": "atari800",
         "es": "atari800",
-        "jelos": "atari800",
+        "rocknix": "atari800",
         "mister": "Atari800",
         "onion": "EIGHTHUNDRED",
         "retrodeck": "atari800",
@@ -120,7 +120,7 @@
         "adam": "A2600",
         "batocera": "atari2600",
         "es": "atari2600",
-        "jelos": "atari2600",
+        "rocknix": "atari2600",
         "mister": "Atari2600",
         "miyoocfw": "2600",
         "onion": "ATARI",
@@ -138,7 +138,7 @@
         "adam": "A5200",
         "batocera": "atari5200",
         "es": "atari5200",
-        "jelos": "atari5200",
+        "rocknix": "atari5200",
         "mister": "Atari5200",
         "onion": "FIFTYTWOHUNDRED",
         "retrodeck": "atari5200",
@@ -154,7 +154,7 @@
         "adam": "A7800",
         "batocera": "atari7800",
         "es": "atari7800",
-        "jelos": "atari7800",
+        "rocknix": "atari7800",
         "mister": "Atari7800",
         "onion": "SEVENTYEIGHTHUNDRED",
         "pocket": "7800",
@@ -170,7 +170,7 @@
       "tokens": {
         "batocera": "jaguar",
         "es": "atarijaguar",
-        "jelos": "atarijaguar",
+        "rocknix": "atarijaguar",
         "onion": "JAGUAR",
         "retrodeck": "atarijaguar",
         "romm": "jaguar"
@@ -184,7 +184,7 @@
         "batocera": "lynx",
         "es": "atarilynx",
         "funkeyos": "Atari lynx",
-        "jelos": "atarilynx",
+        "rocknix": "atarilynx",
         "mister": "AtariLynx",
         "miyoocfw": "LYNX",
         "onion": "LYNX",
@@ -200,7 +200,7 @@
       "tokens": {
         "batocera": "atarist",
         "es": "atarist",
-        "jelos": "atarist",
+        "rocknix": "atarist",
         "mister": "AtariST",
         "onion": "ATARIST",
         "retrodeck": "atarist",
@@ -242,7 +242,7 @@
         "batocera": "wswan",
         "es": "wonderswan",
         "funkeyos": "WonderSwan",
-        "jelos": "wonderswan",
+        "rocknix": "wonderswan",
         "mister": "WonderSwan",
         "miyoocfw": "WSWAN",
         "onion": "WS",
@@ -261,7 +261,7 @@
         "batocera": "wswanc",
         "es": "wswanc",
         "funkeyos": "WonderSwan",
-        "jelos": "wonderswancolor",
+        "rocknix": "wonderswancolor",
         "mister": "WonderSwan",
         "miyoocfw": "WSWAN",
         "onion": "WS",
@@ -308,7 +308,7 @@
       "tokens": {
         "adam": "AMIGA",
         "es": "amiga",
-        "jelos": "amiga",
+        "rocknix": "amiga",
         "mister": "Amiga",
         "onion": "AMIGA",
         "pocket": "amiga",
@@ -324,7 +324,7 @@
         "adam": "AMIGA",
         "batocera": "amigacd32",
         "es": "amigacd32",
-        "jelos": "amigacd32",
+        "rocknix": "amigacd32",
         "mister": "Amiga",
         "onion": "AMIGACD",
         "retrodeck": "amigacd32",
@@ -346,7 +346,7 @@
       "datNameRegex": "/Commodore C?16/i",
       "extensions": [],
       "tokens": {
-        "jelos": "c16",
+        "rocknix": "c16",
         "mister": "C16",
         "romm": "c16"
       }
@@ -358,7 +358,7 @@
         "adam": "C64",
         "batocera": "c64",
         "es": "c64",
-        "jelos": "c64",
+        "rocknix": "c64",
         "mister": "C64",
         "onion": "COMMODORE",
         "pocket": "c64",
@@ -372,7 +372,7 @@
       "extensions": [],
       "tokens": {
         "batocera": "c128",
-        "jelos": "c128",
+        "rocknix": "c128",
         "mister": "C128",
         "romm": "c128"
       }
@@ -391,7 +391,7 @@
       "extensions": [],
       "tokens": {
         "es": "vic20",
-        "jelos": "vic20",
+        "rocknix": "vic20",
         "onion": "VIC20",
         "retrodeck": "vic20",
         "romm": "vic-20",
@@ -405,7 +405,7 @@
         "adam": "COLECO",
         "batocera": "colecovision",
         "es": "colecovision",
-        "jelos": "coleco",
+        "rocknix": "coleco",
         "mister": "Coleco",
         "onion": "COLECO",
         "pocket": "coleco",
@@ -444,7 +444,7 @@
       "tokens": {
         "batocera": "scv",
         "es": "scv",
-        "jelos": "svc",
+        "rocknix": "svc",
         "retrodeck": "scv",
         "romm": "epoch-super-cassette-vision"
       }
@@ -455,7 +455,7 @@
       "tokens": {
         "batocera": "channelf",
         "es": "channelf",
-        "jelos": "channelf",
+        "rocknix": "channelf",
         "mister": "ChannelF",
         "onion": "FAIRCHILD",
         "pocket": "channel_f",
@@ -494,7 +494,7 @@
       "tokens": {
         "batocera": "vectrex",
         "es": "vectrex",
-        "jelos": "vectrex",
+        "rocknix": "vectrex",
         "mister": "Vectrex",
         "miyoocfw": "VECTREX",
         "onion": "VECTREX",
@@ -528,7 +528,7 @@
       "tokens": {
         "batocera": "o2em",
         "es": "odyssey2",
-        "jelos": "odyssey",
+        "rocknix": "odyssey",
         "mister": "Odyssey2",
         "onion": "ODYSSEY",
         "pocket": "odyssey2",
@@ -544,7 +544,7 @@
         "adam": "INTELLI",
         "batocera": "intellivision",
         "es": "intellivision",
-        "jelos": "intellivision",
+        "rocknix": "intellivision",
         "mister": "Intellivision",
         "onion": "INTELLIVISION",
         "pocket": "intv",
@@ -560,7 +560,7 @@
         "adam": "MSX",
         "batocera": "msx1",
         "es": "msx",
-        "jelos": "msx",
+        "rocknix": "msx",
         "mister": "MSX1",
         "onion": "MSX",
         "pocket": "msx",
@@ -576,7 +576,7 @@
         "adam": "MSX",
         "batocera": "msx2",
         "es": "msx2",
-        "jelos": "msx2",
+        "rocknix": "msx2",
         "mister": "MSX",
         "onion": "MSX",
         "retrodeck": "msx2",
@@ -618,7 +618,7 @@
       "tokens": {
         "batocera": "xbox",
         "es": "xbox",
-        "jelos": "xbox",
+        "rocknix": "xbox",
         "retrodeck": "xbox",
         "romm": "xbox"
       }
@@ -637,7 +637,7 @@
       "extensions": [".jar"],
       "tokens": {
         "es": "j2me",
-        "jelos": "j2me",
+        "rocknix": "j2me",
         "retrodeck": "j2me",
         "romm": "j2me"
       }
@@ -647,7 +647,7 @@
       "extensions": [".pqa", ".prc"],
       "tokens": {
         "es": "palm",
-        "jelos": "palm",
+        "rocknix": "palm",
         "retrodeck": "palm",
         "romm": "palm-os"
       }
@@ -676,7 +676,7 @@
         "batocera": "pcengine",
         "es": "pcengine",
         "funkeyos": "PCE-TurboGrafx",
-        "jelos": "tg16",
+        "rocknix": "tg16",
         "minui": "TurboGrafx-16 (PCE)",
         "mister": "TGFX16",
         "miyoocfw": "PCE",
@@ -696,7 +696,7 @@
         "batocera": "pcengine",
         "es": "tg16",
         "funkeyos": "PCE-TurboGrafx",
-        "jelos": "tg16",
+        "rocknix": "tg16",
         "minui": "TurboGrafx-16 (PCE)",
         "mister": "TGFX16",
         "miyoocfw": "PCE",
@@ -715,7 +715,7 @@
         "adam": "PCECD",
         "batocera": "pcenginecd",
         "es": "pcenginecd",
-        "jelos": "tg16cd",
+        "rocknix": "tg16cd",
         "minui": "TurboGrafx-16 CD (PCE)",
         "mister": "TGFX16-CD",
         "miyoocfw": "PCE",
@@ -733,7 +733,7 @@
         "adam": "PCECD",
         "batocera": "pcenginecd",
         "es": "tg-cd",
-        "jelos": "tg16cd",
+        "rocknix": "tg16cd",
         "minui": "TurboGrafx-16 CD (PCE)",
         "mister": "TGFX16-CD",
         "miyoocfw": "PCE",
@@ -750,7 +750,7 @@
       "tokens": {
         "batocera": "supergrafx",
         "es": "supergrafx",
-        "jelos": "sgfx",
+        "rocknix": "sgfx",
         "mister": "TGFX16",
         "onion": "SGFX",
         "pocket": "pce",
@@ -765,7 +765,7 @@
       "tokens": {
         "batocera": "pc88",
         "es": "pc88",
-        "jelos": "pc88",
+        "rocknix": "pc88",
         "mister": "PC8801",
         "onion": "PCEIGHTYEIGHT",
         "retrodeck": "pc88",
@@ -778,7 +778,7 @@
       "tokens": {
         "batocera": "pc98",
         "es": "pc98",
-        "jelos": "pc98",
+        "rocknix": "pc98",
         "onion": "PCNINETYEIGHT",
         "retrodeck": "pc98",
         "romm": "pc-9800-series",
@@ -790,7 +790,7 @@
       "extensions": [],
       "tokens": {
         "es": "pcfx",
-        "jelos": "pcfx",
+        "rocknix": "pcfx",
         "onion": "PCFX",
         "retrodeck": "pcfx",
         "romm": "pc-fx"
@@ -802,7 +802,7 @@
       "tokens": {
         "adam": "TIC80",
         "es": "tic80",
-        "jelos": "tic-80",
+        "rocknix": "tic-80",
         "retrodeck": "tic80",
         "spruce": "TIC80"
       }
@@ -815,7 +815,7 @@
         "batocera": "fds",
         "es": "fds",
         "funkeyos": "NES",
-        "jelos": "fds",
+        "rocknix": "fds",
         "minui": "Famicom Disk System (FC)",
         "mister": "NES",
         "miyoocfw": "NES",
@@ -833,7 +833,7 @@
         "adam": "GW",
         "batocera": "gameandwatch",
         "es": "gameandwatch",
-        "jelos": "gameandwatch",
+        "rocknix": "gameandwatch",
         "mister": "GameNWatch",
         "onion": "GW",
         "pocket": "gameandwatch",
@@ -848,7 +848,7 @@
       "tokens": {
         "batocera": "gc",
         "es": "gc",
-        "jelos": "gamecube",
+        "rocknix": "gamecube",
         "retrodeck": "gc",
         "romm": "ngc"
       }
@@ -861,7 +861,7 @@
         "batocera": "gb",
         "es": "gb",
         "funkeyos": "Game Boy",
-        "jelos": "gb",
+        "rocknix": "gb",
         "minui": "Game Boy (GB)",
         "mister": "Gameboy",
         "miyoocfw": "GB",
@@ -881,7 +881,7 @@
         "batocera": "gba",
         "es": "gba",
         "funkeyos": "Game Boy Advance",
-        "jelos": "gba",
+        "rocknix": "gba",
         "minui": "Game Boy Advance (GBA)",
         "mister": "GBA",
         "miyoocfw": "GBA",
@@ -901,7 +901,7 @@
         "batocera": "gbc",
         "es": "gbc",
         "funkeyos": "Game Boy Color",
-        "jelos": "gbc",
+        "rocknix": "gbc",
         "minui": "Game Boy Color (GBC)",
         "mister": "Gameboy",
         "miyoocfw": "GB",
@@ -919,7 +919,7 @@
       "tokens": {
         "batocera": "n64",
         "es": "n64",
-        "jelos": "n64",
+        "rocknix": "n64",
         "mister": "N64",
         "retrodeck": "n64",
         "romm": "n64",
@@ -942,7 +942,7 @@
       "tokens": {
         "batocera": "3ds",
         "es": "n3ds",
-        "jelos": "3ds",
+        "rocknix": "3ds",
         "retrodeck": "n3ds",
         "romm": "3ds"
       }
@@ -953,7 +953,7 @@
       "tokens": {
         "batocera": "nds",
         "es": "nds",
-        "jelos": "nds",
+        "rocknix": "nds",
         "onion": "NDS",
         "retrodeck": "nds",
         "romm": "nds",
@@ -979,7 +979,7 @@
         "batocera": "nes",
         "es": "famicom",
         "funkeyos": "NES",
-        "jelos": "nes",
+        "rocknix": "nes",
         "minui": "Nintendo Entertainment System (FC)",
         "mister": "NES",
         "miyoocfw": "NES",
@@ -999,7 +999,7 @@
         "batocera": "nes",
         "es": "nes",
         "funkeyos": "NES",
-        "jelos": "nes",
+        "rocknix": "nes",
         "minui": "Nintendo Entertainment System (FC)",
         "mister": "NES",
         "miyoocfw": "NES",
@@ -1019,7 +1019,7 @@
         "batocera": "pokemini",
         "es": "pokemini",
         "funkeyos": "Pokemini",
-        "jelos": "pokemini",
+        "rocknix": "pokemini",
         "minui": "Pokemon mini (PKM)",
         "mister": "PokemonMini",
         "miyoocfw": "POKEMINI",
@@ -1036,7 +1036,7 @@
       "tokens": {
         "batocera": "satellaview",
         "es": "satellaview",
-        "jelos": "satellaview",
+        "rocknix": "satellaview",
         "mister": "SNES",
         "onion": "SATELLAVIEW",
         "pocket": "snes",
@@ -1051,7 +1051,7 @@
       "tokens": {
         "batocera": "sufami",
         "es": "sufami",
-        "jelos": "sufami",
+        "rocknix": "sufami",
         "onion": "SUFAMI",
         "retrodeck": "sufami",
         "romm": "sufami-turbo",
@@ -1066,7 +1066,7 @@
         "batocera": "snes",
         "es": "sfc",
         "funkeyos": "SNES",
-        "jelos": "snes",
+        "rocknix": "snes",
         "minui": "Super Nintendo Entertainment System (SFC)",
         "mister": "SNES",
         "miyoocfw": "SNES",
@@ -1086,7 +1086,7 @@
         "batocera": "snes",
         "es": "snes",
         "funkeyos": "SNES",
-        "jelos": "snes",
+        "rocknix": "snes",
         "minui": "Super Nintendo Entertainment System (SFC)",
         "mister": "SNES",
         "miyoocfw": "SNES",
@@ -1115,7 +1115,7 @@
         "batocera": "virtualboy",
         "es": "virtualboy",
         "funkeyos": "Virtualboy",
-        "jelos": "virtualboy",
+        "rocknix": "virtualboy",
         "minui": "Virtual Boy (VB)",
         "onion": "VB",
         "retrodeck": "virtualboy",
@@ -1129,7 +1129,7 @@
       "tokens": {
         "batocera": "wii",
         "es": "wii",
-        "jelos": "wii",
+        "rocknix": "wii",
         "retrodeck": "wii",
         "romm": "wii"
       }
@@ -1140,7 +1140,7 @@
       "tokens": {
         "batocera": "wiiu",
         "es": "wiiu",
-        "jelos": "wiiu",
+        "rocknix": "wiiu",
         "retrodeck": "wiiu",
         "romm": "wiiu"
       }
@@ -1151,7 +1151,7 @@
       "tokens": {
         "batocera": "3do",
         "es": "3do",
-        "jelos": "3do",
+        "rocknix": "3do",
         "onion": "PANASONIC",
         "retrodeck": "3do",
         "romm": "3do"
@@ -1163,7 +1163,7 @@
       "tokens": {
         "batocera": "cdi",
         "es": "cdimono1",
-        "jelos": "cdi",
+        "rocknix": "cdi",
         "retrodeck": "cdimono1",
         "romm": "philips-cd-i"
       }
@@ -1174,7 +1174,7 @@
       "tokens": {
         "batocera": "videopacplus",
         "es": "videopac",
-        "jelos": "videopac",
+        "rocknix": "videopac",
         "mister": "Odyssey2",
         "onion": "VIDEOPAC",
         "retrodeck": "videopac",
@@ -1197,7 +1197,7 @@
         "adam": "32X",
         "batocera": "sega32x",
         "es": "sega32x",
-        "jelos": "sega32x",
+        "rocknix": "sega32x",
         "minui": "Sega 32X (MD)",
         "mister": "S32X",
         "onion": "THIRTYTWOX",
@@ -1213,7 +1213,7 @@
         "adam": "32X",
         "batocera": "sega32x",
         "es": "sega32xjp",
-        "jelos": "sega32x",
+        "rocknix": "sega32x",
         "minui": "Sega 32X (MD)",
         "mister": "S32X",
         "onion": "THIRTYTWOX",
@@ -1228,7 +1228,7 @@
       "tokens": {
         "batocera": "dreamcast",
         "es": "dreamcast",
-        "jelos": "dreamcast",
+        "rocknix": "dreamcast",
         "retrodeck": "dreamcast",
         "romm": "dc",
         "spruce": "DC"
@@ -1242,7 +1242,7 @@
         "batocera": "gamegear",
         "es": "gamegear",
         "funkeyos": "Game Gear",
-        "jelos": "gamegear",
+        "rocknix": "gamegear",
         "minui": "Sega Game Gear (GG)",
         "mister": "SMS",
         "miyoocfw": "SMS",
@@ -1262,7 +1262,7 @@
         "batocera": "mastersystem",
         "es": "mastersystem",
         "funkeyos": "Sega Master System",
-        "jelos": "mastersystem",
+        "rocknix": "mastersystem",
         "minui": "Sega Master System (SMS)",
         "mister": "SMS",
         "miyoocfw": "SMS",
@@ -1281,7 +1281,7 @@
         "adam": "SEGACD",
         "batocera": "segacd",
         "es": "segacd",
-        "jelos": "segacd",
+        "rocknix": "segacd",
         "minui": "Sega CD (MD)",
         "mister": "MegaCD",
         "miyoocfw": "SMD",
@@ -1298,7 +1298,7 @@
         "adam": "SEGACD",
         "batocera": "segacd",
         "es": "megacdjp",
-        "jelos": "segacd",
+        "rocknix": "segacd",
         "minui": "Sega CD (MD)",
         "mister": "MegaCD",
         "miyoocfw": "SMD",
@@ -1316,7 +1316,7 @@
         "batocera": "megadrive",
         "es": "megadrivejp",
         "funkeyos": "Sega Genesis",
-        "jelos": "genesis",
+        "rocknix": "genesis",
         "minui": "Sega Genesis (MD)",
         "mister": "MegaDrive",
         "miyoocfw": "SMD",
@@ -1336,7 +1336,7 @@
         "batocera": "megadrive",
         "es": "genesis",
         "funkeyos": "Sega Genesis",
-        "jelos": "genesis",
+        "rocknix": "genesis",
         "minui": "Sega Genesis (MD)",
         "mister": "MegaDrive",
         "miyoocfw": "SMD",
@@ -1354,7 +1354,7 @@
       "tokens": {
         "batocera": "saturn",
         "es": "saturn",
-        "jelos": "saturn",
+        "rocknix": "saturn",
         "mister": "Saturn",
         "retrodeck": "saturn",
         "romm": "saturn",
@@ -1368,7 +1368,7 @@
         "adam": "SG1000",
         "batocera": "sg1000",
         "es": "sg-1000",
-        "jelos": "sg-1000",
+        "rocknix": "sg-1000",
         "mister": "SG1000",
         "onion": "SEGASGONE",
         "pocket": "sg1000",
@@ -1392,7 +1392,7 @@
       "tokens": {
         "batocera": "x1",
         "es": "x1",
-        "jelos": "x1",
+        "rocknix": "x1",
         "onion": "XONE",
         "retrodeck": "x1",
         "romm": "x1"
@@ -1404,7 +1404,7 @@
       "tokens": {
         "batocera": "x68000",
         "es": "x68000",
-        "jelos": "x68000",
+        "rocknix": "x68000",
         "mister": "X68000",
         "onion": "X68000",
         "retrodeck": "x68000",
@@ -1429,7 +1429,7 @@
       "tokens": {
         "batocera": "zx81",
         "es": "zx81",
-        "jelos": "zx81",
+        "rocknix": "zx81",
         "mister": "ZX81",
         "retrodeck": "zx81",
         "romm": "zx81"
@@ -1442,7 +1442,7 @@
         "adam": "ZX",
         "batocera": "zxspectrum",
         "es": "zxspectrum",
-        "jelos": "zxspectrum",
+        "rocknix": "zxspectrum",
         "mister": "Spectrum",
         "onion": "ZXS",
         "retrodeck": "zxspectrum",
@@ -1457,7 +1457,7 @@
         "adam": "NEOGEO",
         "batocera": "neogeo",
         "es": "neogeo",
-        "jelos": "neogeo",
+        "rocknix": "neogeo",
         "mister": "NeoGeo",
         "miyoocfw": "NEOGEO",
         "onion": "NEOGEO",
@@ -1473,7 +1473,7 @@
       "tokens": {
         "batocera": "neogeocd",
         "es": "neogeocd",
-        "jelos": "neocd",
+        "rocknix": "neocd",
         "mister": "NeoGeo-CD",
         "onion": "NEOCD",
         "retrodeck": "neogeocd",
@@ -1489,7 +1489,7 @@
         "batocera": "ngp",
         "es": "ngp",
         "funkeyos": "Neo Geo Pocket",
-        "jelos": "ngp",
+        "rocknix": "ngp",
         "minui": "Neo Geo Pocket (NGPC)",
         "onion": "NGP",
         "retrodeck": "ngp",
@@ -1506,7 +1506,7 @@
         "batocera": "ngpc",
         "es": "ngpc",
         "funkeyos": "Neo Geo Pocket",
-        "jelos": "ngpc",
+        "rocknix": "ngpc",
         "minui": "Neo Geo Pocket Color (NGPC)",
         "onion": "NGP",
         "retrodeck": "ngpc",
@@ -1523,7 +1523,7 @@
         "batocera": "psx",
         "es": "psx",
         "funkeyos": "PS1",
-        "jelos": "psx",
+        "rocknix": "psx",
         "minui": "Sony PlayStation (PS)",
         "mister": "PSX",
         "miyoocfw": "PS1",
@@ -1539,7 +1539,7 @@
       "tokens": {
         "batocera": "ps2",
         "es": "ps2",
-        "jelos": "ps2",
+        "rocknix": "ps2",
         "retrodeck": "ps2",
         "romm": "ps2"
       }
@@ -1550,7 +1550,7 @@
       "tokens": {
         "batocera": "ps3",
         "es": "ps3",
-        "jelos": "ps3",
+        "rocknix": "ps3",
         "retrodeck": "ps3",
         "romm": "ps3"
       }
@@ -1561,7 +1561,7 @@
       "tokens": {
         "batocera": "psp",
         "es": "psp",
-        "jelos": "psp",
+        "rocknix": "psp",
         "retrodeck": "psp",
         "romm": "psp",
         "spruce": "PSP"
@@ -1573,7 +1573,7 @@
       "tokens": {
         "batocera": "psvita",
         "es": "psvita",
-        "jelos": "launcher",
+        "rocknix": "launcher",
         "retrodeck": "psvita",
         "romm": "psvita"
       }
@@ -1646,7 +1646,7 @@
         "adam": "SUPERVISION",
         "batocera": "supervision",
         "es": "supervision",
-        "jelos": "supervision",
+        "rocknix": "supervision",
         "mister": "SuperVision",
         "onion": "SUPERVISION",
         "pocket": "supervision",
@@ -1661,7 +1661,7 @@
       "tokens": {
         "batocera": "megaduck",
         "es": "megaduck",
-        "jelos": "megaduck",
+        "rocknix": "megaduck",
         "onion": "MEGADUCK",
         "pocket": "mega_duck",
         "retrodeck": "megaduck",
