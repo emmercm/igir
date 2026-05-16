@@ -55,7 +55,6 @@ jobs:
           else
             echo "No previous release found; scanning all commits reachable by ${CURR_TAG}"
             RANGE="${CURR_TAG}"
-            exit 1
           fi
 
           # Get the commits from the tag range

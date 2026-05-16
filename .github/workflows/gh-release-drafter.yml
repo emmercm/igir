@@ -55,7 +55,8 @@ jobs:
 
       - if: steps.check.outputs.changed == 'true'
         uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
-      - id: npm-cache-dir
+      - if: steps.check.outputs.changed == 'true'
+        id: npm-cache-dir
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
       - if: steps.check.outputs.changed == 'true'
