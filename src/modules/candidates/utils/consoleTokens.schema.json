@@ -64,10 +64,6 @@
           "type": "string",
           "description": "FunKey S ROM subfolder of /"
         },
-        "jelos": {
-          "type": "string",
-          "description": "JELOS ROM directory"
-        },
         "minui": {
           "type": "string",
           "description": "MinUI ROM folder under /Roms"
@@ -91,6 +87,10 @@
         "retrodeck": {
           "type": "string",
           "description": "RetroDECK ROM directory: /roms/{retrodeck}"
+        },
+        "rocknix": {
+          "type": "string",
+          "description": "ROCKNIX ROM directory"
         },
         "romm": {
           "type": "string",
