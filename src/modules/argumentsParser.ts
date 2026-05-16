@@ -1227,6 +1227,7 @@ Advanced usage:
 
     {adam}      The ROM's emulator-specific /ROMS/* directory for the 'Adam' image (e.g. "GB")
     {batocera}  The ROM's emulator-specific /roms/* directory for Batocera (e.g. "gb")
+    {crossmix}  The ROM's emulator-specific /Roms/* directory for CrossMix-OS (e.g. "GB")
     {es}        The ROM's emulator-specific /roms/* directory for the 'EmulationStation' image (e.g. "gb")
     {funkeyos}  The ROM's emulator-specific /* directory for FunKey OS (e.g. "Game Boy")
     {minui}     The ROM's emulator-specific /Roms/* directory for MinUI (e.g. "Game Boy (GB)")
