@@ -73,6 +73,7 @@ nav:
       - Emulator Frontends:
         - usage/handheld/adam.md
         - usage/desktop/batocera.md
+        - usage/handheld/crossmix.md
         - usage/desktop/emuelec.md
         - usage/desktop/emulationstation.md
         - usage/handheld/funkeyos.md
