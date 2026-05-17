@@ -30,7 +30,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['dist/**/*'],
+    ignores: ['dist/**/*', 'site/**/*'],
   },
 
   // @typescript-eslint
@@ -341,8 +341,6 @@ export default [
       'test/**/*.ts',
       'packages/*/test/**/*.ts',
       // TODO(cemmer)
-      'src/cache/**/*.ts',
-      'src/factories/**/*.ts',
       'src/models/files/**/*.ts',
       'src/models/patches/**/*.ts',
     ],
