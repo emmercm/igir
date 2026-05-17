@@ -590,7 +590,7 @@ describe('token replacement', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each(['game.arduboy', 'game.bin', 'game.rom'])(
+  test.each(['game.bin', 'game.rom'])(
     'should throw on {onion} for unknown extension: %s',
     async (outputRomFilename) => {
       const options = new Options({ commands: ['copy'], output: 'Roms/{onion}' });
@@ -634,7 +634,6 @@ describe('token replacement', () => {
     // No unique extensions defined
     ['Bit Corporation - Gamate', path.resolve('gamate', 'Dummy.rom')],
     ['Emerson - Arcadia', path.resolve('arcadia', 'Dummy.rom')],
-    ['Entex - Adventure Vision', path.resolve('avision', 'Dummy.rom')],
     // Unique extensions defined
     ['Atari - 2600', path.resolve('atari2600', 'Dummy.rom')],
     ['Nintendo - Game Boy', path.resolve('gb', 'Dummy.rom')],
