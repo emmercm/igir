@@ -454,17 +454,19 @@ describe('token replacement', () => {
   // Output Token {minui}
   test.each([
     ['game.pce', path.resolve('Roms', 'TurboGrafx-16 (PCE)', 'game.pce')],
+    ['game.fds', path.resolve('Roms', 'Famicom Disk System (FC)', 'game.fds')],
     ['game.gb', path.resolve('Roms', 'Game Boy (GB)', 'game.gb')],
     ['game.sgb', path.resolve('Roms', 'Game Boy (GB)', 'game.sgb')],
     ['game.gba', path.resolve('Roms', 'Game Boy Advance (GBA)', 'game.gba')],
     ['game.gbc', path.resolve('Roms', 'Game Boy Color (GBC)', 'game.gbc')],
     ['game.nes', path.resolve('Roms', 'Nintendo Entertainment System (FC)', 'game.nes')],
     ['game.nez', path.resolve('Roms', 'Nintendo Entertainment System (FC)', 'game.nez')],
-    ['game.min', path.resolve('Roms', 'Pokémon mini (PKM)', 'game.min')],
+    ['game.min', path.resolve('Roms', 'Pokemon mini (PKM)', 'game.min')],
     ['game.sfc', path.resolve('Roms', 'Super Nintendo Entertainment System (SFC)', 'game.sfc')],
     ['game.smc', path.resolve('Roms', 'Super Nintendo Entertainment System (SFC)', 'game.smc')],
     ['game.vb', path.resolve('Roms', 'Virtual Boy (VB)', 'game.vb')],
     ['game.vboy', path.resolve('Roms', 'Virtual Boy (VB)', 'game.vboy')],
+    ['game.32x', path.resolve('Roms', 'Sega 32X (MD)', 'game.32x')],
     ['game.gg', path.resolve('Roms', 'Sega Game Gear (GG)', 'game.gg')],
     ['game.sms', path.resolve('Roms', 'Sega Master System (SMS)', 'game.sms')],
     ['game.gen', path.resolve('Roms', 'Sega Genesis (MD)', 'game.gen')],
@@ -472,6 +474,7 @@ describe('token replacement', () => {
     ['game.mdx', path.resolve('Roms', 'Sega Genesis (MD)', 'game.mdx')],
     ['game.sgd', path.resolve('Roms', 'Sega Genesis (MD)', 'game.sgd')],
     ['game.smd', path.resolve('Roms', 'Sega Genesis (MD)', 'game.smd')],
+    ['game.ngp', path.resolve('Roms', 'Neo Geo Pocket (NGPC)', 'game.ngp')],
     ['game.ngc', path.resolve('Roms', 'Neo Geo Pocket Color (NGPC)', 'game.ngc')],
   ])('should replace {minui} for known extension: %s', async (outputRomFilename, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: 'Roms/{minui}' });
@@ -481,7 +484,7 @@ describe('token replacement', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  test.each(['game.bin', 'game.rom', 'game.mgw', 'game.fds', 'game.32x', 'game.ngp'])(
+  test.each(['game.bin', 'game.rom', 'game.mgw'])(
     'should throw on {minui} for unknown extension: %s',
     async (outputRomFilename) => {
       const options = new Options({ commands: ['copy'], output: 'roms/{minui}' });
