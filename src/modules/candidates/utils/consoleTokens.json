@@ -6,6 +6,7 @@
       "datNameRegex": "/Archimedes/i",
       "extensions": [],
       "tokens": {
+        "es": "archimedes",
         "mister": "ARCHIE",
         "romm": "acorn-archimedes"
       }
@@ -40,6 +41,7 @@
       "datNameRegex": "/PCW/i",
       "extensions": [],
       "tokens": {
+        "batocera": "pcw",
         "mister": "AmstradPCW",
         "romm": "amstrad-pcw"
       }
@@ -67,6 +69,7 @@
       "datNameRegex": "/Apple.*IIGS/i",
       "extensions": [".2mg"],
       "tokens": {
+        "batocera": "apple2gs",
         "es": "apple2gs",
         "retrodeck": "apple2gs",
         "romm": "apple-iigs"
@@ -81,6 +84,7 @@
         "es": "arduboy",
         "rocknix": "arduboy",
         "mister": "Arduboy",
+        "onion": "ARDUBOY",
         "pocket": "arduboy",
         "retrodeck": "arduboy",
         "romm": "arduboy",
@@ -92,6 +96,7 @@
       "extensions": [".atr", ".atx"],
       "tokens": {
         "batocera": "atari800",
+        "crossmix": "ATARI800",
         "es": "atari800",
         "rocknix": "atari800",
         "mister": "Atari800",
@@ -230,6 +235,7 @@
       "datNameRegex": "/Super ?Vision 8000/i",
       "extensions": [],
       "tokens": {
+        "batocera": "sv8000",
         "mister": "Supervision8000",
         "romm": "super-vision-8000"
       }
@@ -238,6 +244,7 @@
       "datNameRegex": "/RX[ -]?78/i",
       "extensions": [],
       "tokens": {
+        "batocera": "rx78",
         "mister": "RX78"
       }
     },
@@ -268,7 +275,7 @@
         "adam": "WSC",
         "batocera": "wswanc",
         "crossmix": "WSC",
-        "es": "wswanc",
+        "es": "wonderswancolor",
         "funkeyos": "WonderSwan",
         "rocknix": "wonderswancolor",
         "mister": "WonderSwan",
@@ -307,6 +314,7 @@
       "datNameRegex": "/PV[ -]?2000/i",
       "extensions": [],
       "tokens": {
+        "batocera": "pv2000",
         "mister": "Casio_PV-2000",
         "romm": "casio-pv-2000"
       }
@@ -331,7 +339,6 @@
       "datNameRegex": "/Amiga CD32/i",
       "extensions": [],
       "tokens": {
-        "adam": "AMIGA",
         "batocera": "amigacd32",
         "crossmix": "AMIGACD",
         "es": "amigacd32",
@@ -346,7 +353,6 @@
       "datNameRegex": "/Amiga CDTV/i",
       "extensions": [],
       "tokens": {
-        "adam": "AMIGA",
         "batocera": "amigacdtv",
         "crossmix": "AMIGACDTV",
         "es": "cdtv",
@@ -394,6 +400,7 @@
       "datNameRegex": "/Plus.*4/i",
       "extensions": [],
       "tokens": {
+        "batocera": "cplus4",
         "crossmix": "CPLUS4",
         "es": "plus4",
         "retrodeck": "plus4",
@@ -404,9 +411,11 @@
       "datNameRegex": "/VIC[ -]?20/i",
       "extensions": [],
       "tokens": {
+        "batocera": "c20",
         "crossmix": "VIC20",
         "es": "vic20",
         "rocknix": "vic20",
+        "mister": "VIC20",
         "onion": "VIC20",
         "retrodeck": "vic20",
         "romm": "vic-20",
@@ -448,7 +457,6 @@
       "extensions": [],
       "tokens": {
         "batocera": "advision",
-        "es": "avision",
         "mister": "AVision",
         "pocket": "avision",
         "romm": "adventure-vision"
@@ -526,6 +534,7 @@
       "datNameRegex": "/Game Master/i",
       "extensions": [],
       "tokens": {
+        "batocera": "gmaster",
         "es": "gmaster",
         "retrodeck": "gmaster",
         "romm": "hartung"
@@ -625,7 +634,7 @@
       "tokens": {
         "adam": "MSX",
         "batocera": "msxturbor",
-        "es": "msx",
+        "es": "msxturbor",
         "mister": "MSX",
         "onion": "MSX",
         "retrodeck": "msxturbor",
@@ -670,6 +679,7 @@
         "crossmix": "PALMOS",
         "es": "palm",
         "rocknix": "palm",
+        "onion": "PALM",
         "retrodeck": "palm",
         "romm": "palm-os"
       }
@@ -834,8 +844,9 @@
         "crossmix": "TIC",
         "es": "tic80",
         "rocknix": "tic-80",
+        "onion": "TIC",
         "retrodeck": "tic80",
-        "spruce": "TIC80"
+        "spruce": "TIC"
       }
     },
     {
@@ -879,7 +890,7 @@
       "datNameRegex": "/GameCube/i",
       "extensions": [".gcm", ".gcz"],
       "tokens": {
-        "batocera": "gc",
+        "batocera": "gamecube",
         "es": "gc",
         "rocknix": "gamecube",
         "retrodeck": "gc",
@@ -1351,7 +1362,7 @@
       "extensions": [],
       "tokens": {
         "adam": "SEGACD",
-        "batocera": "segacd",
+        "batocera": "megacd",
         "crossmix": "SEGACD",
         "es": "megacdjp",
         "rocknix": "segacd",
@@ -1478,7 +1489,6 @@
       "datNameRegex": "/ZX[ -]?80/i",
       "extensions": [],
       "tokens": {
-        "es": "zx81",
         "mister": "ZX81",
         "onion": "ZXEIGHTYONE",
         "retrodeck": "zx81",
@@ -1493,6 +1503,7 @@
         "es": "zx81",
         "rocknix": "zx81",
         "mister": "ZX81",
+        "onion": "ZXEIGHTYONE",
         "retrodeck": "zx81",
         "romm": "zx81"
       }
@@ -1656,6 +1667,7 @@
       "datNameRegex": "/Sord[ -]M(5|five)/i",
       "extensions": [],
       "tokens": {
+        "mister": "Sord M5",
         "romm": "sord-m5",
         "twmenu": "m5"
       }
@@ -1664,6 +1676,7 @@
       "datNameRegex": "/TI[ -]?99[ -]?4A/i",
       "extensions": [".rpk"],
       "tokens": {
+        "batocera": "ti99",
         "es": "ti99",
         "mister": "TI-99_4A",
         "retrodeck": "ti99",
@@ -1674,6 +1687,7 @@
       "datNameRegex": "/Game.?com/i",
       "extensions": [".tgc"],
       "tokens": {
+        "batocera": "gamecom",
         "es": "gamecom",
         "retrodeck": "gamecom",
         "romm": "game-dot-com"
