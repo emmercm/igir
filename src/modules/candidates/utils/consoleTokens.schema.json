@@ -50,63 +50,63 @@
       "properties": {
         "adam": {
           "type": "string",
-          "description": "Adam image ROM subdirectory: /ROMS/{adam}"
+          "description": "Adam image ROM subdirectory /ROMS/{adam}, as defined by https://github.com/eduardofilo/RG350_adam_image/wiki/En:-3.-Content-installation#roms"
         },
         "batocera": {
           "type": "string",
-          "description": "Batocera ROM directory: roms/{batocera}"
+          "description": "Batocera ROM subdirectory roms/{batocera}, as defined by https://wiki.batocera.org/systems"
         },
         "crossmix": {
           "type": "string",
-          "description": "CrossMix-OS ROM directory: /Roms/{crossmix}"
+          "description": "CrossMix-OS ROM subdirectory /Roms/{crossmix}, as defined by https://github.com/cizia64/CrossMix-OS/wiki/Emulators"
         },
         "es": {
           "type": "string",
-          "description": "EmulationStation ROM directory: roms/{emulationstation}"
+          "description": "EmulationStation ROM subdirectory roms/{emulationstation}, as defined by https://gitlab.com/es-de/emulationstation-de/-/raw/master/resources/systems/linux/es_systems.xml"
         },
         "funkeyos": {
           "type": "string",
-          "description": "FunKey S ROM subfolder of /"
+          "description": "FunKey S ROM subdirectory /mnt/{funkeyos}, as defined by https://doc.funkey-project.com/developer_guide/software_reference/sd_card_layout/directory_structure/"
         },
         "minui": {
           "type": "string",
-          "description": "MinUI ROM folder under /Roms"
+          "description": "MinUI ROM subdirectory /Roms/{minui}, as defined by the subdirectories of https://github.com/shauninman/MinUI/tree/main/skeleton/BASE/Roms and https://github.com/shauninman/MinUI/tree/main/skeleton/EXTRAS/Roms"
         },
         "mister": {
           "type": "string",
-          "description": "MiSTer ROM directory: /games/{mister}/"
+          "description": "MiSTer ROM subdirectory /games/{mister}, as defined by https://mister-devel.github.io/MkDocs_MiSTer/cores/console/ and https://mister-devel.github.io/MkDocs_MiSTer/cores/computer/ and https://mister-devel.github.io/MkDocs_MiSTer/cores/other/"
         },
         "miyoocfw": {
           "type": "string",
-          "description": "MiyooCFW ROM subfolder of SD card /roms"
+          "description": "MiyooCFW ROM subdirectory /roms/{miyoocfw}, as defined by https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info"
         },
         "onion": {
           "type": "string",
-          "description": "OnionOS/GarlicOS ROM directory: /Roms/{onion}"
+          "description": "OnionOS/GarlicOS ROM subdirectory /Roms/{onion}, as defined by https://onionui.github.io/docs/emulators/folders"
         },
         "pocket": {
           "type": "string",
-          "description": "Analogue Pocket ROM directory: /Assets/{pocket}/common/"
+          "description": "Analogue Pocket ROM subdirectory /Assets/{pocket}/common"
         },
         "retrodeck": {
           "type": "string",
-          "description": "RetroDECK ROM directory: /roms/{retrodeck}"
+          "description": "RetroDECK ROM subdirectory /roms/{retrodeck}"
         },
         "rocknix": {
           "type": "string",
-          "description": "ROCKNIX ROM directory"
+          "description": "ROCKNIX ROM subdirectory /roms/{rocknix}"
         },
         "romm": {
           "type": "string",
-          "description": "RomM ROM directory: /romm/library/{romm}"
+          "description": "RomM ROM subdirectory /romm/library/{romm}, as defined by https://docs.romm.app/latest/Platforms-and-Players/Supported-Platforms/"
         },
         "spruce": {
           "type": "string",
-          "description": "SpruceOS ROM directory: /Roms/{spruce}"
+          "description": "SpruceOS ROM subdirectory /Roms/{spruce}, as defined by https://github.com/spruceUI/spruceOS/wiki/11.-Adding-Games#rom-folder-chart"
         },
         "twmenu": {
           "type": "string",
-          "description": "TWiLightMenu++ ROM subfolder on SD card: /roms/{twmenu}"
+          "description": "TWiLightMenu++ ROM subdirectory /roms/{twmenu}"
         }
       }
     }
