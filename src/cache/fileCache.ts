@@ -53,6 +53,10 @@ const ValueType = {
 type ValueTypeKey = keyof typeof ValueType;
 type ValueTypeValue = (typeof ValueType)[ValueTypeKey];
 
+/**
+ * A persistent cache of file metadata (checksums, archive entries, ROM headers, signatures,
+ * paddings, and TorrentZip validation results) keyed by file path or checksum.
+ */
 export default class FileCache {
   private static readonly VERSION = 6;
 
@@ -60,10 +64,17 @@ export default class FileCache {
 
   private enabled = true;
 
+  /**
+   * Disable the cache, preventing it from being persisted to disk on {@link save}.
+   */
   disable(): void {
     this.enabled = false;
   }
 
+  /**
+   * Load the cache from a file on disk, then prune entries from older cache versions or stale
+   * value types so subsequent lookups only consider entries compatible with the current schema.
+   */
   async loadFile(cacheFilePath: string): Promise<void> {
     this.cache = await new Cache<CacheValue>({
       filePath: cacheFilePath,
@@ -84,6 +95,9 @@ export default class FileCache {
     await this.cache.delete(/\|[HSZ]\d+$/);
   }
 
+  /**
+   * Persist the cache to its backing file, unless the cache has been disabled.
+   */
   async save(): Promise<void> {
     if (!this.enabled) {
       return;

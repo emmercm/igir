@@ -22,6 +22,9 @@ import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
+/**
+ * A ZIP archive (including variants like .apk, .ipa, .jar, .pk3).
+ */
 export default class Zip extends Archive {
   private readonly zipReader: ZipReader;
 
@@ -30,6 +33,9 @@ export default class Zip extends Archive {
     this.zipReader = new ZipReader(this.getFilePath());
   }
 
+  /**
+   * Construct a new {@link Zip} archive for the given file path.
+   */
   protected new(filePath: string): Archive {
     return new Zip(filePath);
   }
@@ -42,10 +48,16 @@ export default class Zip extends Archive {
     return Zip.getExtensions()[0];
   }
 
+  /**
+   * Returns true: ZIP archives support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
 
+  /**
+   * Returns true: ZIP archives store entry paths.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }
@@ -101,6 +113,9 @@ export default class Zip extends Archive {
     );
   }
 
+  /**
+   * Extract the named entry from the ZIP to the given file path.
+   */
   async extractEntryToFile(
     entryPath: string,
     extractedFilePath: string,
@@ -121,6 +136,9 @@ export default class Zip extends Archive {
     });
   }
 
+  /**
+   * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
+   */
   async extractEntryToStream<T>(
     entryPath: string,
     callback: (readable: Readable) => Promise<T> | T,
@@ -156,6 +174,10 @@ export default class Zip extends Archive {
     }
   }
 
+  /**
+   * Write a ZIP at this archive's path containing the given input/output entry pairs in
+   * the specified ZIP format.
+   */
   async createArchive(
     inputToOutput: [File, ArchiveEntry<Zip>][],
     zipFormat: ZipFormatValue,

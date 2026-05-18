@@ -41,6 +41,9 @@ export const CacheMode = {
 export type CacheModeKey = keyof typeof CacheMode;
 export type CacheModeValue = (typeof CacheMode)[CacheModeKey];
 
+/**
+ * Factory that produces {@link File} and {@link ArchiveEntry} objects from filesystem paths.
+ */
 export default class FileFactory {
   private readonly fileCache: FileCache;
   private readonly logger: Logger;
@@ -50,6 +53,11 @@ export default class FileFactory {
     this.logger = logger;
   }
 
+  /**
+   * Return every {@link File} represented by a path, expanding archives into their entries when
+   * the path is (or appears to be) an archive, and falling back to a single non-archive file
+   * otherwise.
+   */
   async filesFrom(
     filePath: string,
     fileChecksumBitmask: number = ChecksumBitmask.CRC32,
@@ -110,6 +118,9 @@ export default class FileFactory {
     }
   }
 
+  /**
+   * Return a single {@link File} for a path, with its checksums computed per the given bitmask.
+   */
   async fileFrom(
     filePath: string,
     checksumBitmask: number,
@@ -124,6 +135,10 @@ export default class FileFactory {
     );
   }
 
+  /**
+   * Wrap an {@link ArchiveEntry} into an {@link ArchiveFile} backed by the underlying archive
+   * file with its checksums computed per the given bitmask.
+   */
   async archiveFileFrom(
     archiveEntry: ArchiveEntry<Archive>,
     checksumBitmask: number,
@@ -262,6 +277,10 @@ export default class FileFactory {
     return entries;
   }
 
+  /**
+   * Return true if the given file path ends with an extension recognized as a supported
+   * archive format.
+   */
   static isExtensionArchive(filePath: string): boolean {
     return [
       ...Zip.getExtensions(),
@@ -285,18 +304,34 @@ export default class FileFactory {
     ].some((ext) => filePath.toLowerCase().endsWith(ext));
   }
 
+  /**
+   * Return the {@link ROMHeader} for a file if its contents match a known ROM header signature,
+   * or undefined otherwise.
+   */
   async headerFrom(file: File): Promise<ROMHeader | undefined> {
     return await this.fileCache.getOrComputeFileHeader(file);
   }
 
+  /**
+   * Return the {@link FileSignature} detected from the file's contents, or undefined if no
+   * known signature matches.
+   */
   async signatureFrom(file: File, callback?: FsReadCallback): Promise<FileSignature | undefined> {
     return await this.fileCache.getOrComputeFileSignature(file, callback);
   }
 
+  /**
+   * Return the set of {@link ROMPadding} entries describing trailing fill-byte padding that
+   * could be stripped from the file to recover an unpadded ROM.
+   */
   async paddingsFrom(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
     return await this.fileCache.getOrComputeFilePaddings(file, callback);
   }
 
+  /**
+   * Return the TorrentZip validation result for a zip file, indicating whether its structure
+   * conforms to the TorrentZip specification.
+   */
   async tzValidationFrom(
     zip: Zip,
     cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,

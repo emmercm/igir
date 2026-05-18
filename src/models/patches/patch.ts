@@ -6,6 +6,10 @@ import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 
+/**
+ * Base class for a ROM patch, carrying the patch file plus the pre/post checksums and size
+ * that identify the source and result ROMs.
+ */
 export default abstract class Patch {
   private readonly file: File;
 
@@ -55,6 +59,9 @@ export default abstract class Patch {
       .trim();
   }
 
+  /**
+   * Return a human-readable identifier for the patch.
+   */
   toString(): string {
     return `${this.getFile().toString()} (${this.crcBefore} → ${this.crcAfter ?? '????????'}${this.sizeAfter !== undefined && this.sizeAfter > 0 ? `, ${FsUtil.sizeReadable(this.sizeAfter)}` : ''})`;
   }
@@ -65,6 +72,10 @@ export default abstract class Patch {
     callback?: FsReadCallback,
   ): Promise<void>;
 
+  /**
+   * Read a UPS-style variable-length unsigned integer from the given file handle, advancing the
+   * read position past the encoded value.
+   */
   protected static async readUpsUint(fp: IOFile): Promise<number> {
     let data = 0;
     let shift = 1;
@@ -83,6 +94,10 @@ export default abstract class Patch {
     return data;
   }
 
+  /**
+   * Read a VCDIFF-style variable-length unsigned integer from the given file handle, advancing
+   * the read position past the encoded value.
+   */
   static async readVcdiffUintFromFile(fp: IOFile): Promise<number> {
     let num = 0;
 
@@ -98,6 +113,10 @@ export default abstract class Patch {
     return num;
   }
 
+  /**
+   * Read a VCDIFF-style variable-length unsigned integer from a buffer starting at the given
+   * offset, returning the value and the new offset past the encoded bytes.
+   */
   static readVcdiffUintFromBuffer(buffer: Buffer, offset = 0): [number, number] {
     let num = 0;
 

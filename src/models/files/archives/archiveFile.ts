@@ -3,6 +3,10 @@ import File from '../file.js';
 import type Archive from './archive.js';
 import type ArchiveEntry from './archiveEntry.js';
 
+/**
+ * A {@link File} that wraps an {@link ArchiveEntry}, exposing the archive and entry while
+ * presenting itself as a file at the archive's path.
+ */
 export default class ArchiveFile extends File {
   private readonly archiveEntry: ArchiveEntry<Archive>;
 

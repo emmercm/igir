@@ -16,7 +16,13 @@ interface GzipHeaderFooter {
   size?: number;
 }
 
+/**
+ * A gzip-compressed file (or tarball), exposed as an archive with a single entry.
+ */
 export default class Gzip extends Archive {
+  /**
+   * Construct a new {@link Gzip} archive for the given file path.
+   */
   protected new(filePath: string): Gzip {
     return new Gzip(filePath);
   }
@@ -29,10 +35,16 @@ export default class Gzip extends Archive {
     return Gzip.getExtensions()[0];
   }
 
+  /**
+   * Returns true: gzip files support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
 
+  /**
+   * Returns true: gzip files carry an FNAME field for the original filename.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }
@@ -114,6 +126,9 @@ export default class Gzip extends Archive {
     }
   }
 
+  /**
+   * Decompress the gzip file to the given path.
+   */
   async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
     await stream.promises.pipeline(
       fs.createReadStream(this.getFilePath()),
@@ -122,6 +137,10 @@ export default class Gzip extends Archive {
     );
   }
 
+  /**
+   * Decompress the gzip file and invoke the callback with a readable stream of the decompressed
+   * bytes.
+   */
   async extractEntryToStream<T>(
     _entryPath: string,
     callback: (readable: stream.Readable) => Promise<T> | T,

@@ -7,6 +7,9 @@ import FsUtil from '../../../utils/fsUtil.js';
 import File from '../file.js';
 import type ArchiveEntry from './archiveEntry.js';
 
+/**
+ * Base class for an archive file format, providing entry enumeration and extraction.
+ */
 export default abstract class Archive {
   private readonly filePath: string;
 
@@ -41,6 +44,10 @@ export default abstract class Archive {
     callback?: FsReadCallback,
   ): Promise<void>;
 
+  /**
+   * Extract an entry from the archive to a temporary file, invoke the callback with that file's
+   * path, then clean up the file.
+   */
   async extractEntryToTempFile<T>(
     entryPath: string,
     callback: (tempFile: string) => T | Promise<T>,

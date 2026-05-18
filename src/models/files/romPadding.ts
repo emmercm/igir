@@ -11,6 +11,10 @@ export interface ROMPaddingProps extends ChecksumProps {
   fillByte: number;
 }
 
+/**
+ * Describes a ROM file's trailing padding — the padded size and fill byte, plus the checksums
+ * of the padded form.
+ */
 export default class ROMPadding implements ROMPaddingProps {
   private static readonly POSSIBLE_FILL_BYTES = [0x00, 0xff];
 
@@ -45,6 +49,9 @@ export default class ROMPadding implements ROMPaddingProps {
     return this.POSSIBLE_FILL_BYTES.length;
   }
 
+  /**
+   * Construct a {@link ROMPadding} from a plain object — the inverse of {@link toROMPaddingProps}.
+   */
   static fileOfObject(obj: ROMPaddingProps): ROMPadding {
     return plainToInstance(ROMPadding, obj, {
       enableImplicitConversion: true,
@@ -52,6 +59,9 @@ export default class ROMPadding implements ROMPaddingProps {
     });
   }
 
+  /**
+   * Serialize this padding into a plain object suitable for persistence.
+   */
   toROMPaddingProps(): ROMPaddingProps {
     return instanceToPlain(this, { exposeUnsetFields: false }) as ROMPaddingProps;
   }
@@ -76,6 +86,10 @@ export default class ROMPadding implements ROMPaddingProps {
     return this.sha256;
   }
 
+  /**
+   * Compute the set of {@link ROMPadding} entries describing how a file would look if padded
+   * up to the next power-of-two size with each of the known fill bytes.
+   */
   static async paddingsFromFile(file: File, callback?: FsReadCallback): Promise<ROMPadding[]> {
     const paddedSize = Math.pow(2, Math.ceil(Math.log(file.getSize()) / Math.log(2)));
     if (paddedSize === file.getSize()) {
