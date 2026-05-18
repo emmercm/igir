@@ -337,13 +337,7 @@ export default [
 
   // Ignore JSDoc requirements for some files
   {
-    files: [
-      'test/**/*.ts',
-      'packages/*/test/**/*.ts',
-      // TODO(cemmer)
-      'src/models/files/**/*.ts',
-      'src/models/patches/**/*.ts',
-    ],
+    files: ['test/**/*.ts', 'packages/*/test/**/*.ts'],
     rules: {
       'jsdoc/require-jsdoc': 'off',
     },

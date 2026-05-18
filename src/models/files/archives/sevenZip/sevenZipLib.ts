@@ -14,7 +14,13 @@ import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
+/**
+ * Base class for archive formats handled by the 7-Zip library (7z, Z, spanned ZIP, ZipX).
+ */
 export default abstract class SevenZipLib extends Archive {
+  /**
+   * Returns true: 7-Zip-backed formats support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
@@ -73,6 +79,9 @@ export default abstract class SevenZipLib extends Archive {
     }
   }
 
+  /**
+   * Extract the named entry from the archive to the given file path.
+   */
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     const iterator = new _7zIterator(this.getFilePath());
     try {
