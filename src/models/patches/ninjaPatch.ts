@@ -37,11 +37,17 @@ export default class NinjaPatch extends Patch {
 
   static readonly FILE_SIGNATURE = Buffer.from('NINJA');
 
+  /**
+   * Parse a NINJA (.rup) patch file and return a {@link NinjaPatch}.
+   */
   static patchFrom(file: File): NinjaPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new NinjaPatch(file, crcBefore);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

@@ -16,6 +16,9 @@ export interface ArchiveEntryProps<A extends Archive> extends Omit<FileProps, 'f
   readonly entryPath: string;
 }
 
+/**
+ * A single entry inside an {@link Archive}, addressable by its entry path within the archive.
+ */
 @Exclude()
 export default class ArchiveEntry<A extends Archive> extends File implements ArchiveEntryProps<A> {
   readonly archive: A;
@@ -32,6 +35,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     this.entryPath = archiveEntryProps.entryPath.replaceAll('\\', '/');
   }
 
+  /**
+   * Construct an {@link ArchiveEntry} for the given entry props, computing any missing
+   * checksums required by the bitmask.
+   */
   static async entryOf<A extends Archive>(
     archiveEntryProps: ArchiveEntryProps<A>,
     checksumBitmask: number = ChecksumBitmask.NONE,
@@ -121,6 +128,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
+  /**
+   * Construct an {@link ArchiveEntry} by deserializing a plain object — the inverse of
+   * {@link toEntryProps}.
+   */
   static async entryOfObject<A extends Archive>(
     archive: A,
     obj: ArchiveEntryProps<A>,
@@ -132,6 +143,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return await this.entryOf({ ...deserialized, archive });
   }
 
+  /**
+   * Serialize this entry into a plain object suitable for persistence.
+   */
   toEntryProps(): ArchiveEntryProps<A> {
     return instanceToPlain(this, {
       exposeUnsetFields: false,
@@ -151,6 +165,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.archive;
   }
 
+  /**
+   * Returns true if this entry can be extracted from its archive.
+   */
   canExtract(): boolean {
     return this.archive.canExtract(this);
   }
@@ -166,6 +183,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryPath;
   }
 
+  /**
+   * Extract this entry from its archive to the given file path.
+   */
   async extractToFile(extractedFilePath: string, callback?: FsReadCallback): Promise<void> {
     await ArchiveEntry.extractEntryToFile(
       this.getArchive(),
@@ -197,6 +217,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     await archive.extractEntryToFile(entryPath, extractedFilePath, callback);
   }
 
+  /**
+   * Extract this entry to a temporary file, invoke the callback with that file's path, then
+   * clean up the file.
+   */
   async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
     return await ArchiveEntry.extractEntryToTempFile(
       this.getArchive(),
@@ -213,6 +237,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return await archive.extractEntryToTempFile(entryPath, callback);
   }
 
+  /**
+   * Invoke the callback with a readable stream of this entry's bytes, optionally starting at a
+   * byte offset.
+   */
   async createReadStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
@@ -267,6 +295,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     );
   }
 
+  /**
+   * Return an entry with any associated file header cleared and the header-less checksums
+   * promoted to the primary checksum fields.
+   */
   withoutFileHeader(): ArchiveEntry<A> {
     if (this.fileHeader === undefined) {
       return this;
@@ -303,6 +335,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
+  /**
+   * Return a human-readable identifier for this archive entry.
+   */
   toString(): string {
     if (this.getSymlinkSource()) {
       return `${this.getFilePath()}|${this.getExtractedFilePath()} -> ${this.getSymlinkSource()}|${this.getExtractedFilePath()}`;
@@ -310,6 +345,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return `${this.getFilePath()}|${this.getExtractedFilePath()}`;
   }
 
+  /**
+   * Return true if the other file is an {@link ArchiveEntry} with the same archive, entry path,
+   * and underlying file properties.
+   */
   equals(other: File): boolean {
     if (this === other) {
       return true;

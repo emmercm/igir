@@ -14,11 +14,17 @@ export default class IPSPatch extends Patch {
 
   static readonly FILE_SIGNATURES = [Buffer.from('PATCH'), Buffer.from('IPS32')];
 
+  /**
+   * Parse an .ips/.ips32/.ebp patch file and return an {@link IPSPatch}.
+   */
   static patchFrom(file: File): IPSPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new IPSPatch(file, crcBefore);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

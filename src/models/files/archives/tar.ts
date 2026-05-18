@@ -12,7 +12,13 @@ import FileChecksums from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
+/**
+ * A tar (or gzipped tar) archive.
+ */
 export default class Tar extends Archive {
+  /**
+   * Construct a new {@link Tar} archive for the given file path.
+   */
   protected new(filePath: string): Archive {
     return new Tar(filePath);
   }
@@ -21,10 +27,16 @@ export default class Tar extends Archive {
     return ['.tar', '.tar.gz', '.tgz'];
   }
 
+  /**
+   * Returns true: tar archives support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
 
+  /**
+   * Returns true: tar archives store entry paths.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }
@@ -107,6 +119,9 @@ export default class Tar extends Archive {
     return await Promise.all(archiveEntryPromises);
   }
 
+  /**
+   * Extract the named entry from the tar archive to the given file path.
+   */
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     await tar.extract(
       {

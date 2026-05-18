@@ -13,9 +13,15 @@ import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
+/**
+ * A RAR archive.
+ */
 export default class Rar extends Archive {
   private static readonly EXTRACT_MUTEX = new Mutex();
 
+  /**
+   * Construct a new {@link Rar} archive for the given file path.
+   */
   protected new(filePath: string): Archive {
     return new Rar(filePath);
   }
@@ -28,10 +34,16 @@ export default class Rar extends Archive {
     return Rar.getExtensions()[0];
   }
 
+  /**
+   * Returns true: RAR archives support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
 
+  /**
+   * Returns true: RAR archives store entry paths.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }
@@ -94,6 +106,9 @@ export default class Rar extends Archive {
     );
   }
 
+  /**
+   * Extract the named entry from the RAR archive to the given file path.
+   */
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     /**
      * WARN(cemmer): {@link unrar.extract} seems to have issues with extracting files to different

@@ -10,11 +10,20 @@ import type ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
 import ChdBinCueParser from './chdBinCueParser.js';
 
+/**
+ * A CHD that represents a CD-ROM or GD-ROM, exposed as its constituent .cue and .bin tracks.
+ */
 export default class ChdBinCue extends Chd {
+  /**
+   * Construct a new {@link ChdBinCue} archive for the given file path.
+   */
   protected new(filePath: string): Archive {
     return new ChdBinCue(filePath);
   }
 
+  /**
+   * Returns true: bin/cue CHDs support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
@@ -34,6 +43,10 @@ export default class ChdBinCue extends Chd {
     return await ChdBinCueParser.getArchiveEntriesBinCue(this, checksumBitmask);
   }
 
+  /**
+   * Extract the CHD's CD content into the given directory as a .cue file with split .bin tracks,
+   * returning the paths of the produced files.
+   */
   async extractArchiveEntries(outputDirectory: string): Promise<string[]> {
     const outputPrefix = path.parse(this.getFilePath()).name;
     const cueFile = path.join(outputDirectory, `${outputPrefix}.cue`);

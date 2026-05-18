@@ -9,11 +9,21 @@ import { ChecksumBitmask } from '../../fileChecksums.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
+/**
+ * Base class for the maxcso family of compressed disc image formats (CSO, DAX, ZSO).
+ */
 export default abstract class Maxcso extends Archive {
+  /**
+   * Returns true: maxcso formats support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
 
+  /**
+   * Returns false: entry paths for maxcso formats are synthesized by Igir, not stored in the
+   * archive.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return false;
   }
@@ -60,6 +70,9 @@ export default abstract class Maxcso extends Archive {
     ];
   }
 
+  /**
+   * Extract the disc image to the given path as an uncompressed ISO.
+   */
   async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
     await maxcso.decompress({
       inputFilename: this.getFilePath(),
