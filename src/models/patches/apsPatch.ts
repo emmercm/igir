@@ -11,6 +11,10 @@ export default abstract class APSPatch extends Patch {
 
   static readonly FILE_SIGNATURE = Buffer.from('APS1');
 
+  /**
+   * Parse an .aps patch file and return either an {@link APSN64Patch} or {@link APSGBAPatch}
+   * depending on the patch's variant byte.
+   */
   static async patchFrom(file: File): Promise<Patch> {
     return await file.extractToTempIOFile('r', async (patchFile) => {
       patchFile.seek(APSPatch.FILE_SIGNATURE.length);

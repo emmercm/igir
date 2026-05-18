@@ -32,6 +32,10 @@ export interface FileProps extends ChecksumProps {
   readonly canBeCandidateInput?: boolean;
 }
 
+/**
+ * A file on disk (or at a URL), carrying size, checksums, and optional header/padding/patch
+ * metadata.
+ */
 @Exclude()
 export default class File implements FileProps {
   readonly filePath: string;
@@ -107,6 +111,10 @@ export default class File implements FileProps {
     this.canBeCandidateInput = fileProps.canBeCandidateInput;
   }
 
+  /**
+   * Construct a {@link File} for the given props, computing any missing size and checksums
+   * required by the bitmask.
+   */
   static async fileOf(
     fileProps: FileProps,
     checksumBitmask: number = ChecksumBitmask.NONE,
@@ -190,6 +198,9 @@ export default class File implements FileProps {
     });
   }
 
+  /**
+   * Construct a {@link File} by deserializing a plain object — the inverse of {@link toFileProps}.
+   */
   static async fileOfObject(filePath: string, obj: FileProps): Promise<File> {
     const deserialized = plainToClassFromExist(new File({ filePath }), obj, {
       enableImplicitConversion: true,
@@ -198,6 +209,9 @@ export default class File implements FileProps {
     return await this.fileOf(deserialized);
   }
 
+  /**
+   * Serialize this file into a plain object suitable for persistence.
+   */
   toFileProps(): FileProps {
     return instanceToPlain(this, {
       exposeUnsetFields: false,
@@ -270,6 +284,9 @@ export default class File implements FileProps {
     return this.patch;
   }
 
+  /**
+   * Returns true if this file is addressed by a URL rather than a local filesystem path.
+   */
   isURL(): boolean {
     return this.isUrl;
   }
@@ -290,10 +307,16 @@ export default class File implements FileProps {
 
   // Other functions
 
+  /**
+   * Copy this file to the given destination path.
+   */
   async extractToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
     await FsUtil.copyFile(this.getFilePath(), destinationPath, callback);
   }
 
+  /**
+   * Copy this file to a temporary path, invoke the callback with that path, then clean up.
+   */
   async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
     const tempFile = await FsUtil.mktemp(
       path.join(Temp.getTempDir(), path.basename(this.getFilePath())),
@@ -311,6 +334,10 @@ export default class File implements FileProps {
     }
   }
 
+  /**
+   * Copy this file to a temporary path, open it as an {@link IOFile} with the given flags,
+   * invoke the callback with the open handle, then close and clean up.
+   */
   async extractToTempIOFile<T>(
     flags: fs.OpenMode,
     callback: (ioFile: IOFile) => T | Promise<T>,
@@ -325,6 +352,10 @@ export default class File implements FileProps {
     });
   }
 
+  /**
+   * Write this file to the destination path, stripping any header and applying any associated
+   * patch.
+   */
   async extractAndPatchToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
     // TODO(cemmer): option to re-pad a trimmed ROM
 
@@ -380,6 +411,10 @@ export default class File implements FileProps {
     }, start);
   }
 
+  /**
+   * Invoke the callback with a readable stream of this file's bytes, optionally starting at a
+   * byte offset.
+   */
   async createReadStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
@@ -387,6 +422,10 @@ export default class File implements FileProps {
     return await File.createStreamFromFile(this.getFilePath(), callback, start);
   }
 
+  /**
+   * Invoke the callback with a readable stream of this file's bytes after stripping any header
+   * and applying any associated patch.
+   */
   async createPatchedReadStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
   ): Promise<T> {
@@ -412,6 +451,10 @@ export default class File implements FileProps {
     }
   }
 
+  /**
+   * Open a file path as a readable stream and invoke the callback with it, optionally bounded
+   * by start/end byte offsets.
+   */
   static async createStreamFromFile<T>(
     filePath: fs.PathLike,
     callback: (readable: stream.Readable) => Promise<T> | T,
@@ -430,6 +473,10 @@ export default class File implements FileProps {
     }
   }
 
+  /**
+   * Download this URL-backed file to the given local path, following HTTP redirects, and
+   * return a {@link File} for the downloaded copy.
+   */
   async downloadToPath(filePath: string): Promise<File> {
     if (await FsUtil.exists(this.getFilePath())) {
       return this;
@@ -480,6 +527,10 @@ export default class File implements FileProps {
     });
   }
 
+  /**
+   * Download this URL-backed file to a temporary local path and return a {@link File} for the
+   * downloaded copy.
+   */
   async downloadToTempPath(): Promise<File> {
     if (await FsUtil.exists(this.getFilePath())) {
       return this;
@@ -522,6 +573,10 @@ export default class File implements FileProps {
     );
   }
 
+  /**
+   * Return a file with any associated header cleared and the header-less checksums promoted to
+   * the primary checksum fields.
+   */
   withoutFileHeader(): File {
     if (this.fileHeader === undefined) {
       return this;
@@ -566,6 +621,9 @@ export default class File implements FileProps {
    ****************************
    */
 
+  /**
+   * Return a human-readable identifier for this file.
+   */
   toString(): string {
     // TODO(cemmer): indicate if there's a patch?
     if (this.getSymlinkSource()) {
@@ -586,6 +644,9 @@ export default class File implements FileProps {
           `${this.getCrc32()}|${this.getSize()}`);
   }
 
+  /**
+   * Return true if the other file has the same path, hash code, header, and paddings.
+   */
   equals(other: File): boolean {
     if (this === other) {
       return true;

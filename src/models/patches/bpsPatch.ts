@@ -23,6 +23,9 @@ export default class BPSPatch extends Patch {
 
   static readonly FILE_SIGNATURE = Buffer.from('BPS1');
 
+  /**
+   * Parse a .bps patch file and return a {@link BPSPatch}.
+   */
   static async patchFrom(file: File): Promise<BPSPatch> {
     let crcBefore = '';
     let crcAfter = '';
@@ -59,6 +62,9 @@ export default class BPSPatch extends Patch {
     return new BPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

@@ -5,8 +5,15 @@ import IOFile from '../../../models/files/ioFile.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
-// @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
+/**
+ * An NKit-shrunken Wii/GameCube ISO, exposed as a read-only archive carrying the original
+ * disc's checksum and size.
+ * @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
+ */
 export default class NkitIso extends Archive {
+  /**
+   * Construct a new {@link NkitIso} archive for the given file path.
+   */
   protected new(filePath: string): Archive {
     return new NkitIso(filePath);
   }
@@ -19,14 +26,23 @@ export default class NkitIso extends Archive {
     return NkitIso.getExtensions()[0];
   }
 
+  /**
+   * Returns false: NKit ISO files cannot be extracted back to their original form.
+   */
   canExtract(): boolean {
     return false;
   }
 
+  /**
+   * Returns false: entry paths for NKit ISO files are synthesized by Igir.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return false;
   }
 
+  /**
+   * Always throw — extraction is not supported for NKit ISO files.
+   */
   // eslint-disable-next-line @typescript-eslint/require-await
   async extractEntryToFile(): Promise<void> {
     throw new IgirException("extraction isn't supported for NKit ISO files");

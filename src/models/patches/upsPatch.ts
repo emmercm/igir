@@ -19,6 +19,9 @@ export default class UPSPatch extends Patch {
 
   static readonly FILE_SIGNATURE = Buffer.from('UPS1');
 
+  /**
+   * Parse a .ups patch file and return a {@link UPSPatch}.
+   */
   static async patchFrom(file: File): Promise<UPSPatch> {
     let crcBefore = '';
     let crcAfter = '';
@@ -55,6 +58,9 @@ export default class UPSPatch extends Patch {
     return new UPSPatch(file, crcBefore, crcAfter, targetSize);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

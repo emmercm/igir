@@ -9,11 +9,22 @@ import type Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
 
+/**
+ * A CHD that wraps a single raw image (hard disk, DVD-ROM, generic raw data, or the
+ * data+metadata SHA1 view of a CD/GD-ROM).
+ */
 export default class ChdRaw extends Chd {
+  /**
+   * Construct a new {@link ChdRaw} archive for the given file path.
+   */
   protected new(filePath: string): Archive {
     return new ChdRaw(filePath);
   }
 
+  /**
+   * Returns true if the entry has non-zero size; the data+metadata view of a CD/GD-ROM cannot
+   * be extracted.
+   */
   canExtract(archiveEntry: ArchiveEntry<this>): boolean {
     // The data+metadata version of this file can't be extracted
     return archiveEntry.getSize() > 0;
@@ -62,6 +73,10 @@ export default class ChdRaw extends Chd {
     return [rawEntry, extractedEntry];
   }
 
+  /**
+   * Extract the CHD's underlying raw image into the given directory, returning the path of the
+   * produced file.
+   */
   async extractArchiveEntries(outputDirectory: string): Promise<string[]> {
     const outputFilename = path.join(outputDirectory, path.parse(this.getFilePath()).name);
 

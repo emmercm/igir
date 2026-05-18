@@ -12,11 +12,17 @@ import Patch from './patch.js';
 export default class DPSPatch extends Patch {
   static readonly SUPPORTED_EXTENSIONS = ['.dps'];
 
+  /**
+   * Parse a .dps patch file and return a {@link DPSPatch}.
+   */
   static patchFrom(file: File): DPSPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new DPSPatch(file, crcBefore);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,
