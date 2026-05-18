@@ -76,6 +76,10 @@ export default class PatchFactory {
       .toSorted();
   }
 
+  /**
+   * Return a {@link Patch} for a file by matching its filename extension against the supported
+   * patch formats, or undefined if no extension matches.
+   */
   static async patchFromFilename(file: File): Promise<Patch | undefined> {
     const filePath = file.getExtractedFilePath();
 
@@ -107,6 +111,10 @@ export default class PatchFactory {
     return Buffer.concat(chunks).subarray(0, length).toString('hex').toLowerCase();
   }
 
+  /**
+   * Return a {@link Patch} for a file by reading its leading bytes and matching them against
+   * the known patch-format file signatures, or undefined if no signature matches.
+   */
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
     const fileHeader = await file.createReadStream(
       async (readable) => await PatchFactory.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),

@@ -5,6 +5,10 @@ import FsUtil from '../../utils/fsUtil.js';
 import type File from '../files/file.js';
 import Patch from './patch.js';
 
+/**
+ * The parsed header of a PPF (PlayStation Patch File), used to interpret the rest of the
+ * patch body.
+ */
 class PPFHeader {
   static readonly FILE_SIGNATURE = Buffer.from('PPF');
 
@@ -17,6 +21,9 @@ class PPFHeader {
     this.undoDataAvailable = undoDataAvailable;
   }
 
+  /**
+   * Read and validate the PPF header from the patch file, advancing the read position past it.
+   */
   static async fromIOFile(inputRomFile: File, patchFile: IOFile): Promise<PPFHeader> {
     const header = (await patchFile.readNext(5)).toString();
     if (!header.startsWith(PPFHeader.FILE_SIGNATURE.toString())) {
@@ -68,11 +75,17 @@ export default class PPFPatch extends Patch {
 
   static readonly FILE_SIGNATURE = PPFHeader.FILE_SIGNATURE;
 
+  /**
+   * Parse a .ppf patch file and return a {@link PPFPatch}.
+   */
   static patchFrom(file: File): PPFPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new PPFPatch(file, crcBefore);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

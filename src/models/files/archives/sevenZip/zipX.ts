@@ -2,7 +2,13 @@ import path from 'node:path';
 
 import SevenZipLib from './sevenZipLib.js';
 
+/**
+ * An extended ZIP (ZipX) archive.
+ */
 export default class ZipX extends SevenZipLib {
+  /**
+   * Construct a new {@link ZipX} archive for the given file path.
+   */
   protected new(filePath: string): SevenZipLib {
     return new ZipX(filePath);
   }
@@ -20,6 +26,9 @@ export default class ZipX extends SevenZipLib {
     return path.parse(this.getFilePath()).ext;
   }
 
+  /**
+   * Returns true: ZipX archives store entry paths.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return true;
   }

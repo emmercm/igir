@@ -14,6 +14,9 @@ import StreamUtil from '../../../../utils/streamUtil.js';
 import File from '../../file.js';
 import Archive from '../archive.js';
 
+/**
+ * Base class for MAME Compressed Hunks of Data (CHD) disc/disk image formats.
+ */
 export default abstract class Chd extends Archive {
   private tempSingletonHandles = 0;
 
@@ -29,10 +32,17 @@ export default abstract class Chd extends Archive {
     return Chd.getExtensions()[0];
   }
 
+  /**
+   * Returns false: entry paths for CHD formats are synthesized by Igir, not stored in the
+   * archive.
+   */
   hasMeaningfulEntryPaths(): boolean {
     return false;
   }
 
+  /**
+   * Extract the named entry from the CHD to the given file path.
+   */
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
     await this.extractEntryToStreamCached(entryPath, async (readable) => {
       await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));

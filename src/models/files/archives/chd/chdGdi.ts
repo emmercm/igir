@@ -11,11 +11,20 @@ import type ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
 import ChdGdiParser from './chdGdiParser.js';
 
+/**
+ * A CHD that represents a GD-ROM, exposed as its constituent .gdi and track files.
+ */
 export default class ChdGdi extends Chd {
+  /**
+   * Construct a new {@link ChdGdi} archive for the given file path.
+   */
   protected new(filePath: string): Archive {
     return new ChdGdi(filePath);
   }
 
+  /**
+   * Returns true: GD-ROM CHDs support extraction.
+   */
   canExtract(): boolean {
     return true;
   }
@@ -34,6 +43,10 @@ export default class ChdGdi extends Chd {
     return await ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
   }
 
+  /**
+   * Extract the CHD's GD-ROM content into the given directory as a .gdi file with track files,
+   * returning the paths of the produced files.
+   */
   async extractArchiveEntries(outputDirectory: string): Promise<string[]> {
     const gdiFile = path.join(outputDirectory, 'track.gdi');
     await chdman.extractCd({

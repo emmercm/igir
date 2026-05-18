@@ -12,6 +12,9 @@ import Patch from './patch.js';
 export default class APSGBAPatch extends Patch {
   static readonly FILE_SIGNATURE = Buffer.from('APS1');
 
+  /**
+   * Parse a GBA-format .aps patch file and return an {@link APSGBAPatch}.
+   */
   static async patchFrom(file: File): Promise<APSGBAPatch> {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
@@ -25,6 +28,9 @@ export default class APSGBAPatch extends Patch {
     return new APSGBAPatch(file, crcBefore, undefined, targetSize);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

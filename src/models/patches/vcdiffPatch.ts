@@ -61,6 +61,10 @@ interface VcdiffDeltaInstruction {
   mode: VcdiffCopyAddressModeValue;
 }
 
+/**
+ * The parsed VCDIFF header — the secondary decompressor selection and the instruction code
+ * table used to interpret the patch body.
+ */
 class VcdiffHeader {
   static readonly FILE_SIGNATURE = Buffer.from('d6c3c4', 'hex');
 
@@ -145,6 +149,10 @@ class VcdiffHeader {
     this.codeTable = codeTable;
   }
 
+  /**
+   * Read and validate the VCDIFF header from the patch file, advancing the read position past
+   * it.
+   */
   static async fromIOFile(patchFile: IOFile): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
     if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
@@ -195,6 +203,11 @@ class VcdiffHeader {
     return new VcdiffHeader(secondaryDecompressorId, codeTable);
   }
 }
+
+/**
+ * A single delta-encoded window within a VCDIFF patch, holding the adds/runs, instructions,
+ * and copy-address sections together with the source segment that they reference.
+ */
 class VcdiffWindow {
   readonly winIndicator: VcdiffWinIndicatorValue;
 
@@ -236,6 +249,9 @@ class VcdiffWindow {
     this.copyAddressesData = copyAddressesData;
   }
 
+  /**
+   * Read a single VCDIFF window from the patch file, advancing the read position past it.
+   */
   static async fromIOFile(patchFile: IOFile): Promise<VcdiffWindow> {
     const winIndicator = (await patchFile.readNext(1)).readUInt8() as VcdiffWinIndicatorValue;
     let sourceSegmentSize = 0;
@@ -292,6 +308,9 @@ class VcdiffWindow {
     );
   }
 
+  /**
+   * Returns true if the entire instructions-and-sizes section of this window has been consumed.
+   */
   isEOF(): boolean {
     return this.instructionsAndSizeOffset >= this.instructionsAndSizesData.length;
   }
@@ -300,6 +319,9 @@ class VcdiffWindow {
     return this.instructionsAndSizeOffset / this.instructionsAndSizesData.length;
   }
 
+  /**
+   * Read and consume the next instruction-code-table index from the instructions stream.
+   */
   readInstructionIndex(): number {
     const instructionCodeIdx = this.instructionsAndSizesData.readUInt8(
       this.instructionsAndSizeOffset,
@@ -308,6 +330,9 @@ class VcdiffWindow {
     return instructionCodeIdx;
   }
 
+  /**
+   * Read and consume the next variable-length size value from the instructions stream.
+   */
   readInstructionSize(): number {
     const [size, instructionsAndSizeOffset] = Patch.readVcdiffUintFromBuffer(
       this.instructionsAndSizesData,
@@ -317,6 +342,10 @@ class VcdiffWindow {
     return size;
   }
 
+  /**
+   * Apply a VCDIFF ADD instruction, writing the next `size` bytes from this window's data
+   * section into the target file at the current window position.
+   */
   async writeAddData(
     targetFile: IOFile,
     targetWindowPosition: number,
@@ -333,6 +362,10 @@ class VcdiffWindow {
     this.targetWindowOffset += size;
   }
 
+  /**
+   * Apply a VCDIFF RUN instruction, writing `size` repetitions of the next byte from this
+   * window's data section into the target file at the current window position.
+   */
   async writeRunData(
     targetFile: IOFile,
     targetWindowPosition: number,
@@ -352,6 +385,10 @@ class VcdiffWindow {
     this.targetWindowOffset += size;
   }
 
+  /**
+   * Apply a VCDIFF COPY instruction, copying `size` bytes from the source segment or the
+   * already-written target window into the target file at the current window position.
+   */
   async writeCopyData(
     sourceFile: IOFile,
     targetFile: IOFile,
@@ -392,6 +429,10 @@ class VcdiffWindow {
   }
 }
 
+/**
+ * The VCDIFF "near" and "same" address caches used to decode COPY-instruction addresses
+ * across address modes.
+ */
 class VcdiffCache {
   private readonly sNear: number;
 
@@ -410,6 +451,9 @@ class VcdiffCache {
     this.same = Array.from({ length: sSame * 256 });
   }
 
+  /**
+   * Clear both address caches back to their initial state.
+   */
   reset(): void {
     this.near.fill(0);
     this.same.fill(0);
@@ -426,6 +470,10 @@ class VcdiffCache {
     }
   }
 
+  /**
+   * Decode a copy address from the buffer at the given offset under the given address mode,
+   * returning the resolved address and the new offset past the encoded bytes.
+   */
   decode(
     copyAddressesData: Buffer,
     copyAddressesOffset: number,
@@ -477,11 +525,17 @@ export default class VcdiffPatch extends Patch {
 
   static readonly FILE_SIGNATURE = VcdiffHeader.FILE_SIGNATURE;
 
+  /**
+   * Parse a .vcdiff/.xdelta patch file and return a {@link VcdiffPatch}.
+   */
   static patchFrom(file: File): VcdiffPatch {
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
     return new VcdiffPatch(file, crcBefore);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,

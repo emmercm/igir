@@ -28,6 +28,10 @@ const CanBeTrimmed = {
 type CanBeTrimmedKey = keyof typeof CanBeTrimmed;
 type CanBeTrimmedValue = (typeof CanBeTrimmed)[CanBeTrimmedKey];
 
+/**
+ * Build a dynamic SignaturePiece that matches a Super Nintendo ROM's internal header at any of
+ * the LoROM/HiROM/ExHiROM offsets, accounting for an optional fixed-size ROM header prefix.
+ */
 function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
   return {
     offset: headerSize + 0x40_ff_b0,
@@ -74,6 +78,9 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
   };
 }
 
+/**
+ * A known file signature (magic bytes) used to identify a file's format from its contents.
+ */
 export default class FileSignature {
   // @see https://en.wikipedia.org/wiki/List_of_file_signatures
   // @see https://www.garykessler.net/library/file_sigs.html
@@ -568,10 +575,18 @@ export default class FileSignature {
     return Buffer.concat(chunks).subarray(start, end);
   }
 
+  /**
+   * Look up a known {@link FileSignature} by its registered name, or undefined if no match
+   * exists.
+   */
   static signatureFromName(name: string): FileSignature | undefined {
     return this.SIGNATURES_UNSORTED[name];
   }
 
+  /**
+   * Read the leading bytes from a stream and return the matching {@link FileSignature}, or
+   * undefined if no known signature matches.
+   */
   static async signatureFromFileStream(
     readable: stream.Readable,
     callback?: FsReadCallback,
@@ -623,6 +638,10 @@ export default class FileSignature {
     return this.signaturePieces;
   }
 
+  /**
+   * Return true if files matching this signature may have trailing padding that can be safely
+   * trimmed.
+   */
   canBeTrimmed(): boolean {
     return this._canBeTrimmed === CanBeTrimmed.YES;
   }
