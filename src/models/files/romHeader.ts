@@ -5,6 +5,10 @@ import { Memoize } from 'typescript-memoize';
 
 import ArrayUtil from '../../utils/arrayUtil.js';
 
+/**
+ * A known ROM file header (e.g. iNES, A78, LNX, SMC) used to identify and strip platform-specific
+ * headers from ROM files.
+ */
 export default class ROMHeader {
   private static readonly HEADERS: Record<string, ROMHeader> = {
     // http://7800.8bitdev.org/index.php/A78_Header_Specification
@@ -69,10 +73,17 @@ export default class ROMHeader {
     return Object.keys(this.HEADERS).length;
   }
 
+  /**
+   * Look up a known {@link ROMHeader} by its registered name, or undefined if no match exists.
+   */
   static headerFromName(name: string): ROMHeader | undefined {
     return this.HEADERS[name];
   }
 
+  /**
+   * Look up a known {@link ROMHeader} whose headered or headerless extension matches the given
+   * file path, or undefined if no match exists.
+   */
   static headerFromFilename(filePath: string): ROMHeader | undefined {
     const headers = Object.values(this.HEADERS);
     for (const header of headers) {
@@ -109,6 +120,10 @@ export default class ROMHeader {
     return Buffer.concat(chunks).subarray(start, end).toString('hex').toUpperCase();
   }
 
+  /**
+   * Read the leading bytes from a stream and return the matching {@link ROMHeader}, or
+   * undefined if no known header matches.
+   */
   static async headerFromFileStream(readable: stream.Readable): Promise<ROMHeader | undefined> {
     const fileHeader = await ROMHeader.readHeaderHex(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
 

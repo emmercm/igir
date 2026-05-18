@@ -28,6 +28,9 @@ export default class APSN64Patch extends Patch {
     this.patchType = patchType;
   }
 
+  /**
+   * Parse an N64-format .aps patch file and return an {@link APSN64Patch}.
+   */
   static async patchFrom(file: File): Promise<APSN64Patch> {
     let patchType: APSN64PatchTypeValue = APSN64PatchType.SIMPLE;
     const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
@@ -58,6 +61,9 @@ export default class APSN64Patch extends Patch {
     return new APSN64Patch(patchType, file, crcBefore, targetSize);
   }
 
+  /**
+   * Apply this patch to the input ROM file and write the patched result to the output path.
+   */
   async createPatchedFile(
     inputRomFile: File,
     outputRomPath: string,
