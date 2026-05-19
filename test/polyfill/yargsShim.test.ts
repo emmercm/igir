@@ -18,16 +18,16 @@ describe('translations', () => {
     expect(help).toContain('--foo');
   });
 
-  it('should render English error messages for missing required arguments', () => {
-    expect(
-      async () =>
+  it('should render English error messages for missing required arguments', async () => {
+    await expect(
+      (async (): Promise<unknown> =>
         await yargs([])
           .option('foo', { type: 'string', demandOption: true })
           .fail((msg) => {
             throw new Error(msg);
           })
-          .parse([]),
-    ).toThrow(/Missing required argument: foo/);
+          .parse([]))(),
+    ).rejects.toThrow(/Missing required argument: foo/);
   });
 
   it('should accept updateStrings overrides', async () => {
@@ -39,15 +39,15 @@ describe('translations', () => {
     expect(help).not.toContain('Options:');
   });
 
-  it('should pluralize messages with %s substitution', () => {
-    expect(
-      async () =>
+  it('should pluralize messages with %s substitution', async () => {
+    await expect(
+      (async (): Promise<unknown> =>
         await yargs([])
           .demandCommand(2)
           .fail((msg) => {
             throw new Error(msg);
           })
-          .parse(['only-one-arg']),
-    ).toThrow(/Not enough non-option arguments: got 1, need at least 2/);
+          .parse(['only-one-arg']))(),
+    ).rejects.toThrow(/Not enough non-option arguments: got 1, need at least 2/);
   });
 });

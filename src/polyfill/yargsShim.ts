@@ -1,21 +1,8 @@
+import module from 'node:module';
+import path from 'node:path';
 import util from 'node:util';
 
 import type { Argv } from 'yargs';
-
-// Relative paths bypass yargs' `exports` map, which doesn't list these internals.
-// @ts-expect-error yargs ships no types for its factory.
-import { YargsFactory as YargsFactoryRaw } from '../../node_modules/yargs/build/lib/yargs-factory.js';
-// @ts-expect-error yargs ships no types for its platform shims.
-import esmShimRaw from '../../node_modules/yargs/lib/platform-shims/esm.mjs';
-import enLocale from '../../node_modules/yargs/locales/en.json' with { type: 'json' };
-
-type YargsConstructor = (processArgs?: readonly string[] | string, cwd?: string) => Argv;
-type YargsFactoryFn = (shim: object) => YargsConstructor;
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- import is untyped JS
-const YargsFactory: YargsFactoryFn = YargsFactoryRaw;
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- import is untyped JS
-const esmShim: object = esmShimRaw;
 
 /**
  * Igir ships as a single self-contained binary (Bun-compiled). Nothing in the
@@ -31,7 +18,21 @@ const esmShim: object = esmShimRaw;
  * instead of `ENOENT`, and y18n rethrows — crashing every igir invocation.
  */
 
+type YargsConstructor = (processArgs?: readonly string[] | string, cwd?: string) => Argv;
+type YargsFactoryFn = (shim: object) => YargsConstructor;
 type LocaleEntry = string | { one: string; other: string };
+
+// yargs doesn't expose the files that we need, we have to import by file path
+const require = module.createRequire(import.meta.url);
+const yargsRoot = path.dirname(require.resolve('yargs/package.json'));
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- yargs ships no types for these internals */
+const { YargsFactory: YargsFactoryRaw } = require(`${yargsRoot}/build/lib/yargs-factory.js`);
+const { default: esmShimRaw } = require(`${yargsRoot}/lib/platform-shims/esm.mjs`);
+const enLocaleRaw: Record<string, LocaleEntry> = require(`${yargsRoot}/locales/en.json`);
+
+const YargsFactory: YargsFactoryFn = YargsFactoryRaw;
+const esmShim: object = esmShimRaw;
+const enLocale = enLocaleRaw;
 
 /**
  * Apply `util.format` to `template` and `args`, dropping any function-valued
