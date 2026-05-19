@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import type { Argv } from 'yargs';
-import yargs from 'yargs';
 
 import type Logger from '../console/logger.js';
 import IgirException from '../exceptions/igirException.js';
@@ -35,6 +34,7 @@ import Options, {
   ZipFormat,
   ZipFormatInverted,
 } from '../models/options.js';
+import yargs from '../polyfill/yargsShim.js';
 import ArrayUtil from '../utils/arrayUtil.js';
 import ConsoleUtil from '../utils/consoleUtil.js';
 
@@ -199,7 +199,6 @@ export default class ArgumentsParser {
       .parserConfiguration({
         'boolean-negation': false,
       })
-      .locale('en')
       .scriptName(Package.NAME)
       .usage('Usage: $0 [commands..] [options]')
       .updateStrings({
