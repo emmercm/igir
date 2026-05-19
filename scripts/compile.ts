@@ -74,100 +74,100 @@ const bunBuildConfig = {
     {
       name: 'require-rewriter',
       setup(build: Bun.PluginBuilder): void {
-        const nativeRequireRe = /require\(\s*[`'"](?!.*build[/\\]Release).+?\.node[`'"],?\s*\)/g;
-        const literalRequireRe = /require\(\s*[`'"]([^`'"]+)[`'"]\s*\)/g;
-        // const NAME = path.dirname(require.resolve('PKG/package.json'));
-        const packageRootDeclRe =
-          /const\s+(\w+)\s*=\s*path\.dirname\(\s*require\.resolve\(\s*['"`]([^'"`]+)\/package\.json['"`]\s*\)\s*\)\s*;?/g;
-        // require(`${NAME}/sub/path.ext`)
-        const dynamicRequireRe = /require\(\s*`\$\{(\w+)\}([^`]+)`\s*\)/g;
-
         build.onLoad({ filter: /\.ts$/ }, async (args) => {
           let source = await Bun.file(args.path).text();
-          const prependLines: string[] = [];
-          const fileRequire = module.createRequire(args.path);
 
-          // Rewrite prebuilt-addon `require('...node')` calls to a static
-          // native import so Bun embeds the binary into the executable.
-          const nativeMatch = nativeRequireRe.exec(source);
-          nativeRequireRe.lastIndex = 0;
-          if (nativeMatch) {
-            const nativePath = nativeMatch[0]
-              .replace(/^require\(\s*[`'"]/, '')
-              .replace(/[`'"],?\s*\)$/, '')
-              .replace('${os.platform()}', argv.platform)
-              .replace('${os.arch()}', argv.arch);
-            source = source.replaceAll(nativeRequireRe, '__nativeAddon');
-            prependLines.push(
-              `import __nativeAddon from ${JSON.stringify(nativePath)} with { type: "native" };`,
-            );
-          }
-
-          // Resolve `const NAME = path.dirname(require.resolve('PKG/package.json'));`
-          // declarations to absolute filesystem paths, so subsequent template
-          // literal `require(`${NAME}/...`)` calls can be statically rewritten.
-          const packageRoots = new Map<string, string>();
-          for (const match of source.matchAll(packageRootDeclRe)) {
-            const [, varName, pkg] = match;
-            packageRoots.set(varName, path.dirname(fileRequire.resolve(`${pkg}/package.json`)));
-          }
-
-          // Helper to allocate a unique identifier per resolved specifier.
-          const requireSpecifiers = new Map<string, { id: string; isJson: boolean }>();
-          const allocateSpecifier = (absSpecifier: string): string => {
-            let entry = requireSpecifiers.get(absSpecifier);
+          // Dedupe imports by their resolved specifier so multiple `require()`
+          // calls to the same file share a single bundled import. Each entry
+          // remembers the syntactic kind so the emission step below knows
+          // whether to add a `with { type: ... }` attribute and whether to use
+          // `import * as` (for ESM) or a default import (for native/JSON).
+          type ImportKind = 'native' | 'json' | 'esm';
+          const imports = new Map<string, { id: string; kind: ImportKind }>();
+          const allocate = (specifier: string, kind: ImportKind): string => {
+            let entry = imports.get(specifier);
             if (entry === undefined) {
-              entry = {
-                id: `__bundledRequire_${requireSpecifiers.size}`,
-                isJson: absSpecifier.endsWith('.json'),
-              };
-              requireSpecifiers.set(absSpecifier, entry);
+              entry = { id: `__bundledRequire_${imports.size}`, kind };
+              imports.set(specifier, entry);
             }
             return entry.id;
           };
 
-          // Rewrite dynamic `require(`${ROOT}/subpath`)` whose ROOT was
-          // declared via require.resolve('PKG/package.json').
+          // Rewrite prebuilt-addon `require('...node')` calls into static
+          // imports so Bun embeds the binary into the executable. The negative
+          // lookahead skips `build/Release/...` paths, which are the local
+          // fallback that node-gyp builds emit and shouldn't be bundled.
           source = source.replaceAll(
-            dynamicRequireRe,
+            /require\(\s*[`'"]((?!.*build[/\\]Release).+?\.node)[`'"],?\s*\)/g,
+            (_match, spec: string) => {
+              const resolved = spec
+                .replace('${os.platform()}', argv.platform)
+                .replace('${os.arch()}', argv.arch);
+              return allocate(resolved, 'native');
+            },
+          );
+
+          // Detect `const NAME = path.dirname(require.resolve('PKG/package.json'))`
+          // declarations and resolve each PKG to its on-disk root directory.
+          // Source files use this pattern when they need to reach internal
+          // files that the package's `exports` map doesn't expose; the next
+          // pass uses these roots to statically rewrite `require(`${NAME}/...`)`
+          // calls into bundled imports.
+          const fileRequire = module.createRequire(args.path);
+          const packageRoots = new Map<string, string>();
+          for (const [, varName, pkg] of source.matchAll(
+            /const\s+(\w+)\s*=\s*path\.dirname\(\s*require\.resolve\(\s*['"`]([^'"`]+)\/package\.json['"`]\s*\)\s*\)\s*;?/g,
+          )) {
+            packageRoots.set(varName, path.dirname(fileRequire.resolve(`${pkg}/package.json`)));
+          }
+
+          // Rewrite ``require(`${ROOT}/subpath`)`` template literals whose
+          // ROOT was discovered above. Other dynamic requires (unknown var,
+          // arbitrary expressions) are left untouched and will fail to bundle
+          // — that's intentional, since we can't safely resolve them.
+          source = source.replaceAll(
+            /require\(\s*`\$\{(\w+)\}([^`]+)`\s*\)/g,
             (match, varName: string, subpath: string) => {
               const rootPath = packageRoots.get(varName);
               if (rootPath === undefined) {
                 return match;
               }
-              return allocateSpecifier(path.join(rootPath, subpath));
+              const specifier = path.join(rootPath, subpath);
+              return allocate(specifier, specifier.endsWith('.json') ? 'json' : 'esm');
             },
           );
 
-          // Rewrite literal `require('...json')` calls so Bun bundles the JSON.
-          source = source.replaceAll(literalRequireRe, (match, specifier: string) => {
-            if (!specifier.endsWith('.json')) {
-              return match;
-            }
-            return allocateSpecifier(specifier);
-          });
+          // Rewrite plain `require('...json')` literals into static JSON
+          // imports so Bun inlines the JSON contents instead of leaving a
+          // runtime `require` that would need the file on disk.
+          source = source.replaceAll(
+            /require\(\s*[`'"]([^`'"]+\.json)[`'"]\s*\)/g,
+            (_match, specifier: string) => allocate(specifier, 'json'),
+          );
 
-          for (const [specifier, { id, isJson }] of requireSpecifiers) {
-            if (isJson) {
-              prependLines.push(
-                `import ${id} from ${JSON.stringify(specifier)} with { type: "json" };`,
-              );
-            } else {
-              // ESM-as-CJS via `require()` returns the module namespace; mirror
-              // that shape with a namespace import so destructuring works
-              // unchanged ({ default: x }, { NamedExport: y }, etc.).
-              prependLines.push(`import * as ${id} from ${JSON.stringify(specifier)};`);
-            }
+          // Nothing rewritten: hand the source back unchanged so other plugins
+          // (and Bun's default loader) see the file as it was on disk.
+          if (imports.size === 0) {
+            return { contents: source, loader: 'ts' };
           }
 
-          if (prependLines.length > 0) {
-            console.log(prependLines);
-          }
-
-          return {
-            contents: prependLines.length > 0 ? `${prependLines.join('\n')}\n${source}` : source,
-            loader: 'ts',
+          // Emit the collected imports. ESM modules required via Node's
+          // `require()` yield the module namespace, so we mirror that with
+          // `import * as` to keep destructuring shapes (`{ default: x }`,
+          // `{ NamedExport: y }`) working unchanged in the rewritten source.
+          // Native/JSON imports use default-import syntax with the
+          // corresponding `with { type: ... }` import attribute.
+          const attribute: Record<ImportKind, string> = {
+            native: ' with { type: "native" }',
+            json: ' with { type: "json" }',
+            esm: '',
           };
+          const importLines = [...imports].map(([specifier, { id, kind }]) =>
+            kind === 'esm'
+              ? `import * as ${id} from ${JSON.stringify(specifier)};`
+              : `import ${id} from ${JSON.stringify(specifier)}${attribute[kind]};`,
+          );
+          return { contents: `${importLines.join('\n')}\n${source}`, loader: 'ts' };
         });
       },
     },
