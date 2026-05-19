@@ -768,7 +768,7 @@ describe('options', () => {
         ])
         .getDatNameRegex()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -842,7 +842,7 @@ describe('options', () => {
         ])
         .getDatNameRegexExclude()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -916,7 +916,7 @@ describe('options', () => {
         ])
         .getDatDescriptionRegex()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -990,7 +990,7 @@ describe('options', () => {
         ])
         .getDatDescriptionRegexExclude()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -2700,7 +2700,7 @@ describe('options', () => {
         ])
         .getPreferGameRegex()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -2775,7 +2775,7 @@ describe('options', () => {
         ])
         .getPreferRomRegex()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -3255,7 +3255,7 @@ describe('options', () => {
         ])
         .getPreferFilenameRegex()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -3672,7 +3672,7 @@ describe('options', () => {
         ])
         .getFilterRegex()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -3746,7 +3746,7 @@ describe('options', () => {
         ])
         .getFilterRegexExclude()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });
@@ -3926,7 +3926,7 @@ describe('options', () => {
         ])
         .getFilterCategoryRegex()
         ?.some((regex) => regex.test('UPPER')),
-    ).toEqual(false);
+    ).toEqual(true);
 
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'temp'));
     await FsUtil.mkdir(path.dirname(tempFile), { recursive: true });

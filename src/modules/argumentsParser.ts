@@ -59,11 +59,10 @@ export default class ArgumentsParser {
   }
 
   private static readRegexFile(value: string | string[]): string {
-    const lastValue = ArgumentsParser.getLastValue(value);
-    if (fs.existsSync(lastValue)) {
-      return fs.readFileSync(lastValue).toString();
-    }
-    return lastValue;
+    const values = Array.isArray(value) ? value : [value];
+    return values
+      .map((val) => (fs.existsSync(val) ? fs.readFileSync(val).toString() : val))
+      .join('\n');
   }
 
   private static getHelpWidth(argv: string[]): number {
@@ -338,7 +337,6 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'string',
-        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -346,7 +344,6 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'string',
-        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -354,7 +351,6 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to process',
         type: 'string',
-        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -362,7 +358,6 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to exclude from processing',
         type: 'string',
-        // TODO(cemmer): allow multiple values in an "OR" fashion
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
