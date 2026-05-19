@@ -59,6 +59,7 @@ const bunBuildConfig = {
     autoloadDotenv: false,
     autoloadBunfig: false,
     windows: {
+      icon: path.join(import.meta.dirname, '..', 'static', 'windows.ico'),
       title: Package.NAME,
       publisher: Package.AUTHOR,
       version: Package.VERSION,
