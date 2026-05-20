@@ -7,6 +7,7 @@ import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
+import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
 import Disk from '../../../src/models/dats/disk.js';
 import Game from '../../../src/models/dats/game.js';
@@ -23,7 +24,9 @@ import SevenZip from '../../../src/models/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/models/files/archives/tar.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import ROMHeader from '../../../src/models/files/romHeader.js';
+import ROMPadding from '../../../src/models/files/romPadding.js';
 import IndexedFiles from '../../../src/models/indexedFiles.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/models/options.js';
 import type WriteCandidate from '../../../src/models/writeCandidate.js';
@@ -31,6 +34,7 @@ import CandidateGenerator from '../../../src/modules/candidates/candidateGenerat
 import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayUtil from '../../../src/utils/arrayUtil.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
@@ -955,6 +959,127 @@ describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
 
     expect(candidates).toHaveLength(1);
     expect(candidates[0].getName()).toEqual(gameWithNoRoms.getName());
+  });
+
+  test.each([0x00, 0xff])(
+    'should forget paddings when not adding them back: %s',
+    async (fillByte) => {
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+      try {
+        const trimmedFilePath = path.join(tempDir, 'trimmed.rom');
+        const trimmedFileContents = Buffer.alloc(4, 0xab);
+        await FsUtil.writeFile(trimmedFilePath, trimmedFileContents);
+        const trimmedFile = await File.fileOf({ filePath: trimmedFilePath }, ChecksumBitmask.CRC32);
+
+        const paddedFileContents = Buffer.concat([
+          trimmedFileContents,
+          Buffer.alloc(trimmedFileContents.length, fillByte),
+        ]);
+        const paddedChecksums = await FileChecksums.hashData(
+          paddedFileContents,
+          ChecksumBitmask.CRC32,
+        );
+        const trimmedFileWithPaddings = trimmedFile.withPaddings([
+          new ROMPadding({
+            paddedSize: paddedFileContents.length,
+            fillByte,
+            crc32: paddedChecksums.crc32,
+          }),
+        ]);
+
+        const dat = new LogiqxDAT({
+          games: [
+            new Game({
+              name: 'Game',
+              roms: [
+                new ROM({
+                  name: 'padded.rom',
+                  size: paddedFileContents.length,
+                  ...paddedChecksums,
+                }),
+              ],
+            }),
+          ],
+        });
+
+        const candidates = await candidateGenerator(options, dat, [trimmedFileWithPaddings]);
+
+        expect(candidates).toHaveLength(1);
+        expect(candidates[0].getRomsWithFiles()).toHaveLength(1);
+        const inputFIle = candidates[0].getRomsWithFiles()[0].getInputFile();
+        expect(inputFIle.getPaddings()).toHaveLength(0);
+        const outputFile = candidates[0].getRomsWithFiles()[0].getOutputFile();
+        expect(outputFile.getSize()).toEqual(trimmedFileContents.length);
+        expect(outputFile.getCrc32()).toEqual(trimmedFile.getCrc32());
+        expect(outputFile.getCrc32WithoutHeader()).toEqual(trimmedFile.getCrc32());
+      } finally {
+        await FsUtil.rm(tempDir, { recursive: true, force: true });
+      }
+    },
+  );
+
+  test.each([0x00, 0xff])('should keep paddings when adding them back: %s', async (fillByte) => {
+    const trimAddPaddingOptions = new Options({ ...options, trimAddPadding: true });
+
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      const trimmedFilePath = path.join(tempDir, 'trimmed.rom');
+      const trimmedFileContents = Buffer.alloc(4, 0xab);
+      await FsUtil.writeFile(trimmedFilePath, trimmedFileContents);
+      const trimmedFile = await File.fileOf({ filePath: trimmedFilePath }, ChecksumBitmask.CRC32);
+
+      const paddedFileContents = Buffer.concat([
+        trimmedFileContents,
+        Buffer.alloc(trimmedFileContents.length, fillByte),
+      ]);
+      const paddedChecksums = await FileChecksums.hashData(
+        paddedFileContents,
+        ChecksumBitmask.CRC32,
+      );
+      const trimmedFileWithPaddings = trimmedFile.withPaddings([
+        new ROMPadding({
+          paddedSize: paddedFileContents.length,
+          fillByte: 0xbc,
+          crc32: '12345678',
+        }),
+        new ROMPadding({
+          paddedSize: paddedFileContents.length,
+          fillByte,
+          crc32: paddedChecksums.crc32,
+        }),
+        new ROMPadding({
+          paddedSize: paddedFileContents.length,
+          fillByte: 0xcd,
+          crc32: '87654321',
+        }),
+      ]);
+
+      const dat = new LogiqxDAT({
+        games: [
+          new Game({
+            name: 'Game',
+            roms: [
+              new ROM({ name: 'padded.rom', size: paddedFileContents.length, ...paddedChecksums }),
+            ],
+          }),
+        ],
+      });
+
+      const candidates = await candidateGenerator(trimAddPaddingOptions, dat, [
+        trimmedFileWithPaddings,
+      ]);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0].getRomsWithFiles()).toHaveLength(1);
+      const inputFIle = candidates[0].getRomsWithFiles()[0].getInputFile();
+      expect(inputFIle.getPaddings()).toHaveLength(1);
+      const outputFile = candidates[0].getRomsWithFiles()[0].getOutputFile();
+      expect(outputFile.getSize()).toEqual(paddedFileContents.length);
+      expect(outputFile.getCrc32()).toEqual(paddedChecksums.crc32);
+      expect(outputFile.getCrc32WithoutHeader()).toEqual(paddedChecksums.crc32);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
 

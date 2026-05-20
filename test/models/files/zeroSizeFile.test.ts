@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import Temp from '../../../src/globals/temp.js';
 import ZeroSizeFile from '../../../src/models/files/zeroSizeFile.js';
+import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 
 describe('extractToFile', () => {
@@ -50,27 +51,19 @@ describe('extractAndPatchToFile', () => {
 
 describe('createReadStream', () => {
   it('should create a readable of length zero', async () => {
-    const contents = await ZeroSizeFile.getInstance().createReadStream(async (readable) => {
-      const chunks: Buffer[] = [];
-      for await (const chunk of readable as AsyncIterable<Buffer>) {
-        chunks.push(chunk);
-      }
-      return Buffer.concat(chunks);
-    });
+    const contents = await ZeroSizeFile.getInstance().createReadStream(
+      async (readable) => await BufferUtil.fromReadable(readable),
+    );
     expect(contents).toBeDefined();
     expect(contents).toHaveLength(0);
   });
 });
 
-describe('createPatchedReadStream', () => {
+describe('createTransformedReadStream', () => {
   it('should create a readable of length zero', async () => {
-    const contents = await ZeroSizeFile.getInstance().createPatchedReadStream(async (readable) => {
-      const chunks: Buffer[] = [];
-      for await (const chunk of readable as AsyncIterable<Buffer>) {
-        chunks.push(chunk);
-      }
-      return Buffer.concat(chunks);
-    });
+    const contents = await ZeroSizeFile.getInstance().createTransformedReadStream(
+      async (readable) => await BufferUtil.fromReadable(readable),
+    );
     expect(contents).toBeDefined();
     expect(contents).toHaveLength(0);
   });

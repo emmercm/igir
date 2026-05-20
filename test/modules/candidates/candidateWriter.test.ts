@@ -14,10 +14,15 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
+import Game from '../../../src/models/dats/game.js';
+import Header from '../../../src/models/dats/logiqx/header.js';
+import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import ROM from '../../../src/models/dats/rom.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import File from '../../../src/models/files/file.js';
-import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
+import ROMPadding from '../../../src/models/files/romPadding.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options, {
   GameSubdirMode,
@@ -1057,6 +1062,47 @@ describe('extract', () => {
         ])
         .toSorted((a, b) => a[0].localeCompare(b[0]));
       expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
+    });
+  });
+
+  test.each([
+    [
+      'raw/*',
+      [
+        ['empty.rom', '00000000'],
+        ['five.rom', ''],
+      ],
+    ],
+  ])('should add paddings if appropriate', async (inputGlob, expectedFilesAndCrcs) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({
+        commands: ['copy', 'extract', 'test'],
+      });
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
+      const writtenRomsAndCrcs = (
+        await Promise.all(
+          outputFiles.map(
+            async ([outputPath]) =>
+              await new FileFactory(new FileCache(), LOGGER).filesFrom(
+                path.join(outputTemp, outputPath),
+              ),
+          ),
+        )
+      )
+        .flat()
+        .map((entry) => [
+          entry.toString().replace(outputTemp + path.sep, ''),
+          entry.getCrc32() ?? '',
+        ])
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
+      expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
+
+      // TODO:
+      //  - Create a new test fixture file at test/fixtures/roms/raw/trimmed.rom, of size 4 filled with 0xAB bytes
+      //  - Add a new ROM to test/fixtures/dats/one.dat of the trimmed rom padded with 4 extra 0x00 bytes, name it "Padded 0x00"
+      //  - Add a new ROM to test/fixtures/dats/one.dat of the trimmed rom padded with 4 extra 0xFF bytes, name it "Padded 0xFF"
+      //  - Update this test's expectedFilesAndCrcs to ensure that padded ROMs were produced
     });
   });
 

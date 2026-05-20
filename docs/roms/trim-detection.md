@@ -42,6 +42,23 @@ Even though each console has a padding byte that is most common (above), this is
 
 Like other calculated checksums, checksums of the padded files are cached to speed up subsequent runs.
 
+## Adding padding back when writing
+
+By default, when igir matches a trimmed ROM against a DAT entry that describes the *padded* form, it copies the trimmed file as-is — the output file is shorter than the DAT entry and will not have the DAT's checksum.
+
+Pass `--trim-add-padding` to make igir append the missing trailing fill bytes when writing, so the output file matches the DAT entry byte-for-byte:
+
+```bash
+igir copy --dat <dat> --input <trimmed-roms> --output <out> --trim-add-padding
+```
+
+Requirements:
+
+- `--dat` is required (padding only makes sense when there is a DAT to match against).
+- At least one of `copy`, `move`, or `zip` must be in the command list.
+- `--trim-add-padding` is **not** compatible with the `link` command — a link cannot have different content from its target.
+- `--trim-add-padding` is **not** compatible with `--trim-scan-files=never` — trim detection must be active for any padding to be discovered.
+
 ## Controlling the detection strategy
 
 With the default `--trim-scan-files auto` mode, Igir will only calculate padded ROM size & checksums for known file types mentioned above. To save processing time (and because it generally doesn't make sense to archive trimmed ROMs), Igir will not calculate the padding for files in archives by default.

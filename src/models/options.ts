@@ -217,6 +217,7 @@ export interface OptionsProps {
   readonly trimmedGlob?: string;
   readonly trimScanFiles?: string;
   readonly trimScanArchives?: boolean;
+  readonly trimAddPadding?: boolean;
 
   readonly mergeRoms?: string;
   readonly mergeDiscs?: boolean;
@@ -391,6 +392,8 @@ export default class Options implements OptionsProps {
   readonly trimScanFiles?: string;
 
   readonly trimScanArchives: boolean;
+
+  readonly trimAddPadding: boolean;
 
   readonly mergeRoms?: string;
 
@@ -588,6 +591,7 @@ export default class Options implements OptionsProps {
     this.trimmedGlob = options?.trimmedGlob;
     this.trimScanFiles = options?.trimScanFiles;
     this.trimScanArchives = options?.trimScanArchives ?? false;
+    this.trimAddPadding = options?.trimAddPadding ?? false;
 
     this.mergeRoms = options?.mergeRoms;
     this.mergeDiscs = options?.mergeDiscs ?? false;
@@ -1282,6 +1286,10 @@ export default class Options implements OptionsProps {
 
   getTrimScanArchives(): boolean {
     return this.trimScanArchives;
+  }
+
+  getTrimAddPadding(): boolean {
+    return this.trimAddPadding;
   }
 
   /**

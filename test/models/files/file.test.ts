@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import stream from 'node:stream';
@@ -15,10 +16,12 @@ import File from '../../../src/models/files/file.js';
 import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import IOFile from '../../../src/models/files/ioFile.js';
 import ROMHeader from '../../../src/models/files/romHeader.js';
+import ROMPadding from '../../../src/models/files/romPadding.js';
 import Options from '../../../src/models/options.js';
 import IPSPatch from '../../../src/models/patches/ipsPatch.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import bufferUtil from '../../../src/utils/bufferUtil.js';
+import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -404,7 +407,7 @@ describe('getSha256WithoutHeader', () => {
   );
 });
 
-describe('copyToTempFile', () => {
+describe('extractToTempFile', () => {
   it('should do nothing with no archive entry path', async () => {
     const raws = await new ROMScanner(
       new Options({
@@ -424,6 +427,117 @@ describe('copyToTempFile', () => {
       });
     }
     await FsUtil.rm(temp, { recursive: true });
+  });
+});
+
+describe('extractAndPatchToFile', () => {
+  it('writes raw bytes unchanged when no padding is set', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      const inputPath = path.join(tempDir, 'plain-input');
+      const outputPath = path.join(tempDir, 'plain-output');
+      const raw = Buffer.alloc(4, 0xab);
+      await FsUtil.writeFile(inputPath, raw);
+      const file = await File.fileOf({ filePath: inputPath }, ChecksumBitmask.CRC32);
+
+      await file.extractAndPatchToFile(outputPath);
+
+      const written = await fs.promises.readFile(outputPath);
+      expect(written).toEqual(raw);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  describe.each([0x00, 0xff])('fill byte: %s', (fillByte) => {
+    it('writes raw bytes followed by fill bytes when padding is set', async () => {
+      const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+      try {
+        const inputPath = path.join(tempDir, 'trimmed-input');
+        const outputPath = path.join(tempDir, 'padded-output');
+        const raw = Buffer.alloc(4, 0xab);
+        await FsUtil.writeFile(inputPath, raw);
+        const fileWithoutPadding = await File.fileOf(
+          { filePath: inputPath },
+          ChecksumBitmask.CRC32,
+        );
+        const file = fileWithoutPadding.withPaddings([new ROMPadding({ paddedSize: 8, fillByte })]);
+
+        await file.extractAndPatchToFile(outputPath);
+
+        const written = await fs.promises.readFile(outputPath);
+        const expected = Buffer.concat([raw, Buffer.alloc(4, fillByte)]);
+        expect(written).toEqual(expected);
+      } finally {
+        await FsUtil.rm(tempDir, { recursive: true, force: true });
+      }
+    });
+  });
+});
+
+describe('createTransformedReadStream padding', () => {
+  it('returns raw bytes unchanged when paddings is empty', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      const tempFilePath = path.join(tempDir, 'unpadded-input');
+      const raw = Buffer.alloc(4, 0xab);
+      await FsUtil.writeFile(tempFilePath, raw);
+      const file = await File.fileOf({ filePath: tempFilePath }, ChecksumBitmask.CRC32);
+
+      const bytes = await file.createTransformedReadStream(
+        async (readable) => await BufferUtil.fromReadable(readable),
+      );
+
+      expect(bytes).toEqual(raw);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('throws when two paddings are set', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      const tempFilePath = path.join(tempDir, 'multi-padding-input');
+      const raw = Buffer.alloc(4, 0xab);
+      await FsUtil.writeFile(tempFilePath, raw);
+      const fileWithoutPadding = await File.fileOf(
+        { filePath: tempFilePath },
+        ChecksumBitmask.CRC32,
+      );
+      const file = fileWithoutPadding.withPaddings([
+        new ROMPadding({ paddedSize: 8, fillByte: 0x00 }),
+        new ROMPadding({ paddedSize: 8, fillByte: 0xff }),
+      ]);
+
+      await expect(
+        file.createTransformedReadStream(
+          async (readable) => await BufferUtil.fromReadable(readable),
+        ),
+      ).rejects.toThrow(/multiple paddings/i);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test.each([0x00, 0xff])('appends fill bytes when one padding is set: %s', async (fillByte) => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      const tempFilePath = path.join(tempDir, 'trimmed-input');
+      const raw = Buffer.alloc(4, 0xab);
+      await FsUtil.writeFile(tempFilePath, raw);
+      const fileFactory = new FileFactory(new FileCache(), LOGGER);
+      const fileWithoutPadding = await fileFactory.fileFrom(tempFilePath, ChecksumBitmask.CRC32);
+      const file = fileWithoutPadding.withPaddings([new ROMPadding({ paddedSize: 8, fillByte })]);
+
+      const bytes = await file.createTransformedReadStream(
+        async (readable) => await BufferUtil.fromReadable(readable),
+      );
+
+      const expected = Buffer.concat([raw, Buffer.alloc(4, fillByte)]);
+      expect(bytes).toEqual(expected);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
 
