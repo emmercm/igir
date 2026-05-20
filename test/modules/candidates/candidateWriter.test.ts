@@ -14,15 +14,10 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
-import Game from '../../../src/models/dats/game.js';
-import Header from '../../../src/models/dats/logiqx/header.js';
-import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
-import ROM from '../../../src/models/dats/rom.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import File from '../../../src/models/files/file.js';
-import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
-import ROMPadding from '../../../src/models/files/romPadding.js';
+import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options, {
   GameSubdirMode,
