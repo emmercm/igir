@@ -417,7 +417,7 @@ describe('extractToTempFile', () => {
       new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
-    expect(raws).toHaveLength(10);
+    expect(raws).toHaveLength(11);
 
     const temp = await FsUtil.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
@@ -551,7 +551,7 @@ describe('createReadStream', () => {
       new FileFactory(new FileCache(), LOGGER),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
-    expect(raws).toHaveLength(9);
+    expect(raws).toHaveLength(10);
 
     const temp = await FsUtil.mkdtemp(Temp.getTempDir());
     for (const raw of raws) {
