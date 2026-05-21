@@ -139,7 +139,7 @@ export default class Zip extends Archive {
   /**
    * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
    */
-  async extractEntryToStream<T>(
+  override async extractEntryToStream<T>(
     entryPath: string,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,

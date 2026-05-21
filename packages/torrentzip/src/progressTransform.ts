@@ -18,7 +18,7 @@ export default class ProgressTransform extends stream.Transform {
   /**
    * Process the stream.
    */
-  _transform(
+  override _transform(
     chunk: Buffer<ArrayBuffer>,
     _encoding: BufferEncoding,
     callback: TransformCallback,

@@ -11,7 +11,11 @@ export default class ZstdNonThreadedCompressTransform extends stream.Transform {
   /**
    * Buffer all read file data.
    */
-  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: stream.TransformCallback): void {
+  override _transform(
+    chunk: Buffer,
+    _encoding: BufferEncoding,
+    callback: stream.TransformCallback,
+  ): void {
     this.chunks.push(chunk);
     callback();
   }
@@ -19,7 +23,7 @@ export default class ZstdNonThreadedCompressTransform extends stream.Transform {
   /**
    * Compress all file data in a single call.
    */
-  _flush(callback: stream.TransformCallback): void {
+  override _flush(callback: stream.TransformCallback): void {
     try {
       this.push(zstd.compressNonThreaded(Buffer.concat(this.chunks), 19));
     } catch (error) {

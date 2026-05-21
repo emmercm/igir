@@ -99,7 +99,11 @@ export class ZstdDecompressStream extends stream.Transform {
   /**
    * Decompress the chunk and emit the result.
    */
-  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: stream.TransformCallback): void {
+  override _transform(
+    chunk: Buffer,
+    _encoding: BufferEncoding,
+    callback: stream.TransformCallback,
+  ): void {
     if (this.decompressorEnded) {
       callback(new Error('cannot decompress after the compressor has been ended'));
       return;
@@ -119,14 +123,14 @@ export class ZstdDecompressStream extends stream.Transform {
   /**
    * @param callback Function to call when flushing is complete
    */
-  _flush(callback: stream.TransformCallback): void {
+  override _flush(callback: stream.TransformCallback): void {
     this.finalizeDecompressor(callback);
   }
 
   /**
    * Clean up native resources.
    */
-  _destroy(err: Error | null, callback: (error: Error | null) => void): void {
+  override _destroy(err: Error | null, callback: (error: Error | null) => void): void {
     this.cleanup((cleanupError) => {
       if (cleanupError) {
         callback(cleanupError);
