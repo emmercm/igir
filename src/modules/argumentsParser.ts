@@ -336,28 +336,28 @@ export default class ArgumentsParser {
       .option('dat-name-regex', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-name-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-description-regex', {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to process',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
       .option('dat-description-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to exclude from processing',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -772,7 +772,7 @@ export default class ArgumentsParser {
         group: groupRomFiltering,
         alias: 'x',
         description: 'Regular expression of game names to filter to',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -780,7 +780,7 @@ export default class ArgumentsParser {
         group: groupRomFiltering,
         alias: 'X',
         description: 'Regular expression of game names to exclude',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
@@ -827,7 +827,7 @@ export default class ArgumentsParser {
       .option('filter-category-regex', {
         group: groupRomFiltering,
         description: 'Regular expression of categories to filter to',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
         implies: 'dat',
@@ -892,7 +892,7 @@ export default class ArgumentsParser {
       .option('prefer-game-regex', {
         group: groupRomPriority,
         description: 'Regular expression of DAT game names to prefer',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
         implies: 'single',
@@ -900,7 +900,7 @@ export default class ArgumentsParser {
       .option('prefer-rom-regex', {
         group: groupRomPriority,
         description: 'Regular expression of DAT ROM filenames to prefer',
-        type: 'string',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
         implies: 'single',
@@ -991,6 +991,7 @@ export default class ArgumentsParser {
       .option('prefer-filename-regex', {
         group: groupFilePriority,
         description: 'Regular expression of filenames to prefer',
+        type: 'array',
         coerce: ArgumentsParser.readRegexFile,
         requiresArg: true,
       })
