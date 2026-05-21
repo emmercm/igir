@@ -23,7 +23,7 @@ test.each([
   [['test/fixtures/roms/headerless/*'], { headerless: 1 }],
   [['test/fixtures/roms/nkit/*'], { nkit: 1 }],
   [['test/fixtures/roms/rar/*'], { rar: 6 }],
-  [['test/fixtures/roms/raw/*'], { raw: 10 }],
+  [['test/fixtures/roms/raw/*'], { raw: 11 }],
   [['test/fixtures/roms/tar/*'], { tar: 6 }],
   [['test/fixtures/roms/zip/*'], { zip: 7 }],
   // Multiple input paths

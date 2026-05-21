@@ -14,6 +14,7 @@ import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
+import type DAT from '../../../src/models/dats/dat.js';
 import type Archive from '../../../src/models/files/archives/archive.js';
 import type ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import File from '../../../src/models/files/file.js';
@@ -35,10 +36,12 @@ import type { CandidateWriterResults } from '../../../src/modules/candidates/can
 import CandidateWriter from '../../../src/modules/candidates/candidateWriter.js';
 import DATCombiner from '../../../src/modules/dats/datCombiner.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
+import DATScanner from '../../../src/modules/dats/datScanner.js';
 import PatchScanner from '../../../src/modules/patchScanner.js';
 import ROMHeaderProcessor from '../../../src/modules/roms/romHeaderProcessor.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
+import ROMTrimProcessor from '../../../src/modules/roms/romTrimProcessor.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
@@ -126,10 +129,29 @@ async function candidateWriter(
     new FileFactory(new FileCache(), LOGGER),
     readerSemaphore,
   ).process(romFiles);
-  const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(romFilesWithHeaders);
+  const romFilesWithPaddings = await new ROMTrimProcessor(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache(), LOGGER),
+    readerSemaphore,
+  ).process(romFilesWithHeaders);
+  const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(
+    romFilesWithPaddings,
+  );
 
-  const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
-  const dat = new DATCombiner(new ProgressBarFake()).combine(dats);
+  let dat: DAT;
+  if (options.usingDats()) {
+    const scannedDats = await new DATScanner(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      readerSemaphore,
+    ).scan();
+    dat = new DATCombiner(new ProgressBarFake()).combine(scannedDats);
+  } else {
+    const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
+    dat = new DATCombiner(new ProgressBarFake()).combine(dats);
+  }
 
   let candidates = await new CandidateGenerator(
     options,
@@ -658,6 +680,7 @@ describe('zip', () => {
         'loremipsum.zip',
         'one.zip',
         'three.zip',
+        'trimmed.zip',
         'two.zip',
         'unknown.zip',
       ],
@@ -773,6 +796,7 @@ describe('zip', () => {
         'loremipsum.zip',
         'one.zip',
         'three.zip',
+        'trimmed.zip',
         'two.zip',
         'unknown.zip',
       ],
@@ -895,6 +919,7 @@ describe('zip', () => {
         ['igir combined.zip|raw/loremipsum.rom', '70856527'],
         ['igir combined.zip|raw/one.rom', 'f817a89f'],
         ['igir combined.zip|raw/three.rom', 'ff46c5d8'],
+        ['igir combined.zip|raw/trimmed.3ds', 'e964a5b3'],
         ['igir combined.zip|raw/two.rom', '96170874'],
         ['igir combined.zip|raw/unknown.rom', '377a7727'],
         ['igir combined.zip|speed_test_v51.sfc', '8beffd94'],
@@ -915,6 +940,7 @@ describe('zip', () => {
         ['igir combined.zip|loremipsum.rom', '70856527'],
         ['igir combined.zip|one.rom', 'f817a89f'],
         ['igir combined.zip|three.rom', 'ff46c5d8'],
+        ['igir combined.zip|trimmed.3ds', 'e964a5b3'],
         ['igir combined.zip|two.rom', '96170874'],
         ['igir combined.zip|unknown.rom', '377a7727'],
       ],
@@ -1062,6 +1088,49 @@ describe('extract', () => {
 
   test.each([
     [
+      'raw/*',
+      [
+        ['Empty.rom', '00000000'],
+        ['Fizzbuzz.nes', '370517b5'],
+        ['Foobar.lnx', 'b22c9747'],
+        [path.join('One Three', 'One.rom'), 'f817a89f'],
+        [path.join('One Three', 'Three.rom'), 'ff46c5d8'],
+        ['Padded 0x00.3ds', 'b70dcecd'],
+        ['Padded 0xFF.3ds', '05cd6006'],
+      ],
+    ],
+  ])('should add paddings if appropriate', async (inputGlob, expectedFilesAndCrcs) => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      const options = new Options({
+        commands: ['copy', 'extract', 'test'],
+        dat: [path.join(inputTemp, 'dats', 'one.dat')],
+        trimScanFiles: 'auto',
+        trimAddPadding: true,
+      });
+      await candidateWriter(options, inputTemp, inputGlob, 'patches', outputTemp);
+      const outputFiles = await walkAndStat(outputTemp);
+      const writtenRomsAndCrcs = (
+        await Promise.all(
+          outputFiles.map(
+            async ([outputPath]) =>
+              await new FileFactory(new FileCache(), LOGGER).filesFrom(
+                path.join(outputTemp, outputPath),
+              ),
+          ),
+        )
+      )
+        .flat()
+        .map((entry) => [
+          entry.toString().replace(outputTemp + path.sep, ''),
+          entry.getCrc32() ?? '',
+        ])
+        .toSorted((a, b) => a[0].localeCompare(b[0]));
+      expect(writtenRomsAndCrcs).toEqual(expectedFilesAndCrcs);
+    });
+  });
+
+  test.each([
+    [
       '**/!(header*)/*',
       [
         '2048',
@@ -1100,6 +1169,7 @@ describe('extract', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         'three.rom',
@@ -1144,6 +1214,7 @@ describe('extract', () => {
         'loremipsum.rom',
         'one.rom',
         'three.rom',
+        'trimmed.3ds',
         'two.rom',
         'unknown.rom',
       ],
@@ -1237,6 +1308,7 @@ describe('extract', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         'three.rom',
@@ -1266,6 +1338,7 @@ describe('extract', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
       ],
@@ -1309,6 +1382,7 @@ describe('extract', () => {
         'loremipsum.rom',
         'one.rom',
         'three.rom',
+        'trimmed.3ds',
         'two.rom',
         'unknown.rom',
       ],
@@ -1321,6 +1395,7 @@ describe('extract', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
       ],
@@ -1535,6 +1610,7 @@ describe('raw', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         'three.gz',
@@ -1568,6 +1644,7 @@ describe('raw', () => {
         'loremipsum.rom',
         'one.rom',
         'three.rom',
+        'trimmed.3ds',
         'two.rom',
         'unknown.rom',
       ],
@@ -1653,6 +1730,7 @@ describe('raw', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         'three.gz',
@@ -1687,6 +1765,7 @@ describe('raw', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         path.join('zip', 'fizzbuzz.zip'),
@@ -1739,6 +1818,7 @@ describe('raw', () => {
         'loremipsum.rom',
         'one.rom',
         'three.rom',
+        'trimmed.3ds',
         'two.rom',
         'unknown.rom',
       ],
@@ -1751,6 +1831,7 @@ describe('raw', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
       ],

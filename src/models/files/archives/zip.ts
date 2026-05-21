@@ -229,7 +229,7 @@ export default class Zip extends Archive {
         let lastProgress = 0;
         await new Promise((resolve, reject) => {
           inputFile
-            .createPatchedReadStream(async (readable) => {
+            .createTransformedReadStream(async (readable) => {
               readable.on('error', reject);
               await torrentZip.addStream(
                 readable,

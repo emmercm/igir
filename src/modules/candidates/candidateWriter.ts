@@ -767,7 +767,7 @@ export default class CandidateWriter extends Module {
       await CandidateWriter.ensureOutputDirExists(outputFilePath);
 
       const tempRawFile = await FsUtil.mktemp(outputFilePath);
-      await inputRomFile.extractAndPatchToFile(tempRawFile, (progress) => {
+      await inputRomFile.extractAndTransformToFile(tempRawFile, (progress) => {
         progressBar.setCompleted(progress);
       });
       await FsUtil.mv(tempRawFile, outputFilePath);
