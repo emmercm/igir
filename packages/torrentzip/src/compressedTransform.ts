@@ -10,7 +10,7 @@ export default class CompressedTransform extends stream.Transform {
   /**
    * Increment the size and passthrough the data.
    */
-  _transform(
+  override _transform(
     chunk: Buffer<ArrayBuffer>,
     _encoding: BufferEncoding,
     callback: TransformCallback,
