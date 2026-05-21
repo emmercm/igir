@@ -72,4 +72,12 @@
     <description>GameCube-240pSuite-1.19</description>
     <rom name="GameCube-240pSuite-1.19.iso" size="1671168" crc="5eb3d183" md5="f86ae9d9f55c00af3d8b564e9106d813" sha1="c37c47c7b5c052ce955af3df504ea1c665887a0f"/>
   </machine>
+  <machine name="Padded 0x00">
+    <description>Padded 0x00</description>
+    <rom name="Padded 0x00.3ds" size="1024" crc="b70dcecd" md5="e470624284a0b0b6bd6440a9821f75a9" sha1="cadedb0cffc2774618a6ac9fecf9331139ab7497" status="verified"/>
+  </machine>
+  <machine name="Padded 0xFF">
+    <description>Padded 0xFF</description>
+    <rom name="Padded 0xFF.3ds" size="1024" crc="05cd6006" md5="9343fc3ebbcaf49d3b81274920a991ff" sha1="a61a05adf373edb323a10eb12413598f66ac183b" status="verified"/>
+  </machine>
 </datafile>

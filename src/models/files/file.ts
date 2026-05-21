@@ -6,11 +6,13 @@ import stream from 'node:stream';
 
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
+import IgirException from '../../exceptions/igirException.js';
 import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
 import IOFile from '../../models/files/ioFile.js';
 import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
+import StreamUtil from '../../utils/streamUtil.js';
 import URLUtil from '../../utils/urlUtil.js';
 import Patch from '../patches/patch.js';
 import FileChecksums, { ChecksumBitmask, ChecksumProps } from './fileChecksums.js';
@@ -356,13 +358,27 @@ export default class File implements FileProps {
    * Write this file to the destination path, stripping any header and applying any associated
    * patch.
    */
-  async extractAndPatchToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
-    // TODO(cemmer): option to re-pad a trimmed ROM
+  async extractAndTransformToFile(
+    destinationPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    // If there are any paddings then we must use createTransformedReadStream()
+    if (this.getPaddings().length > 0) {
+      await this.createTransformedReadStream(async (readable) => {
+        const writeStream = fs.createWriteStream(destinationPath);
+        if (callback) {
+          await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+        } else {
+          await stream.promises.pipeline(readable, writeStream);
+        }
+      });
+      return;
+    }
 
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
-    // Simple case: create a file without removing its header
+    // No header: create a file without using streams
     if (start <= 0) {
       if (patch) {
         // Patch the file and don't remove its header
@@ -374,7 +390,7 @@ export default class File implements FileProps {
       return;
     }
 
-    // Complex case: create a temp file with the header removed
+    // Headered+patched file: patch to a temp file, and then remove the header using streaming
     if (patch) {
       // Create a patched temp file, then copy it without removing its header
       const tempFile = await FsUtil.mktemp(
@@ -400,7 +416,7 @@ export default class File implements FileProps {
       }
     }
 
-    // Extract this file removing its header
+    // Headered: remove the header using streaming
     await this.createReadStream(async (readable) => {
       const writeStream = fs.createWriteStream(destinationPath);
       if (callback) {
@@ -426,17 +442,33 @@ export default class File implements FileProps {
    * Invoke the callback with a readable stream of this file's bytes after stripping any header
    * and applying any associated patch.
    */
-  async createPatchedReadStream<T>(
+  async createTransformedReadStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
   ): Promise<T> {
-    // TODO(cemmer): option to re-pad a trimmed ROM
-
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
+    const paddings = this.getPaddings();
+    if (paddings.length > 1) {
+      throw new IgirException(
+        `multiple paddings present for ${this.toString()}; callers must narrow to one via withPaddings([...]) before writing`,
+      );
+    }
+    const wrappedCallback =
+      paddings.length === 0
+        ? callback
+        : async (readable: stream.Readable): Promise<T> => {
+            const padding = paddings[0];
+            const padded = StreamUtil.padEnd(
+              readable,
+              padding.getPaddedSize(),
+              padding.getFillByte(),
+            );
+            return await callback(padded);
+          };
 
     // Simple case: create a read stream at an offset
     if (!patch) {
-      return await this.createReadStream(callback, start);
+      return await this.createReadStream(wrappedCallback, start);
     }
 
     // Complex case: create a temp patched file and then create read stream at an offset
@@ -445,7 +477,7 @@ export default class File implements FileProps {
     );
     try {
       await patch.createPatchedFile(this, tempFile);
-      return await File.createStreamFromFile(tempFile, callback, start);
+      return await File.createStreamFromFile(tempFile, wrappedCallback, start);
     } finally {
       await FsUtil.rm(tempFile, { force: true });
     }

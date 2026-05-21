@@ -2612,6 +2612,61 @@ describe('options', () => {
     ).toEqual(false);
   });
 
+  it('should parse "trim-add-padding"', () => {
+    expect(() =>
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--trim-add-padding']),
+    ).toThrow(/dependent|implication/i);
+    expect(() =>
+      argumentsParser.parse([
+        'link',
+        '--input',
+        os.devNull,
+        '--output',
+        os.devNull,
+        '--dat',
+        os.devNull,
+        '--trim-add-padding',
+      ]),
+    ).toThrow(/cannot be used/i);
+    expect(() =>
+      argumentsParser.parse([
+        'test',
+        '--input',
+        os.devNull,
+        '--output',
+        os.devNull,
+        '--dat',
+        os.devNull,
+        '--trim-add-padding',
+      ]),
+    ).toThrow(/missing required command/i);
+    expect(() =>
+      argumentsParser.parse([
+        ...dummyCommandAndRequiredArgs,
+        '--dat',
+        os.devNull,
+        '--trim-add-padding',
+        '--trim-scan-files',
+        'never',
+      ]),
+    ).toThrow(/mutually exclusive/i);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull])
+        .getTrimAddPadding(),
+    ).toEqual(false);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--trim-add-padding'])
+        .getTrimAddPadding(),
+    ).toEqual(true);
+    expect(
+      argumentsParser
+        .parse([...dummyCommandAndRequiredArgs, '--dat', os.devNull, '--trim-add-padding', 'false'])
+        .getTrimAddPadding(),
+    ).toEqual(false);
+  });
+
   it('should parse "single"', () => {
     expect(
       argumentsParser

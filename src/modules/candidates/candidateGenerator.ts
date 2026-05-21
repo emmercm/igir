@@ -597,18 +597,15 @@ export default class CandidateGenerator extends Module {
           (padding.getSha256() !== undefined && padding.getSha256() === rom.getSha256())
         );
       });
-      // ...and we want a padded ROM
-      if (desiredPadding !== undefined) {
-        // ...and we're writing file links
-        if (this.options.shouldLink()) {
-          // ...then we can't use this file
-          this.progressBar.logTrace(
-            `${dat.getName()}: ${game.getName()}: can't use trimmed ROM as target for link: ${inputFile.toString()}`,
-          );
-          return [rom, undefined];
-        }
-        // Otherwise, only remember the padding that we want
-        inputFile = inputFile.withPaddings([desiredPadding]);
+      // ...but we don't want any of the known paddings
+      if (desiredPadding === undefined) {
+        // ...then forget all paddings so that none get added during writing
+        inputFile = inputFile.withPaddings([]);
+      } else {
+        // ...else only remember the padding if we want to add it back
+        inputFile = inputFile.withPaddings(
+          this.options.getTrimAddPadding() ? [desiredPadding] : [],
+        );
       }
     }
 
@@ -1092,22 +1089,14 @@ export default class CandidateGenerator extends Module {
       outputFileSize = inputFile.getSizeWithoutHeader();
     }
 
-    // TODO(cemmer): add this back when allowing file padding restoration
-    // const desiredPadding = inputFile.getPaddings().find((padding) => {
-    //   return (
-    //     (padding.getCrc32() !== undefined && padding.getCrc32() === rom.getCrc32()) ||
-    //     (padding.getMd5() !== undefined && padding.getMd5() === rom.getMd5()) ||
-    //     (padding.getSha1() !== undefined && padding.getSha1() === rom.getSha1()) ||
-    //     (padding.getSha256() !== undefined && padding.getSha256() === rom.getSha256())
-    //   );
-    // });
-    // if (desiredPadding !== undefined) {
-    //   outputFileCrc32 = desiredPadding.getCrc32();
-    //   outputFileMd5 = desiredPadding.getMd5();
-    //   outputFileSha1 = desiredPadding.getSha1();
-    //   outputFileSha256 = desiredPadding.getSha256();
-    //   outputFileSize = desiredPadding.getPaddedSize();
-    // }
+    if (inputFile.getPaddings().length === 1) {
+      const desiredPadding = inputFile.getPaddings()[0];
+      outputFileCrc32 = desiredPadding.getCrc32();
+      outputFileMd5 = desiredPadding.getMd5();
+      outputFileSha1 = desiredPadding.getSha1();
+      outputFileSha256 = desiredPadding.getSha256();
+      outputFileSize = desiredPadding.getPaddedSize();
+    }
 
     // Determine the output file type
     if (
