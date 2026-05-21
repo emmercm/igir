@@ -430,7 +430,7 @@ describe('extractToTempFile', () => {
   });
 });
 
-describe('extractAndPatchToFile', () => {
+describe('extractAndTransformToFile', () => {
   it('writes raw bytes unchanged when no padding is set', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
@@ -440,7 +440,7 @@ describe('extractAndPatchToFile', () => {
       await FsUtil.writeFile(inputPath, raw);
       const file = await File.fileOf({ filePath: inputPath }, ChecksumBitmask.CRC32);
 
-      await file.extractAndPatchToFile(outputPath);
+      await file.extractAndTransformToFile(outputPath);
 
       const written = await fs.promises.readFile(outputPath);
       expect(written).toEqual(raw);
@@ -463,7 +463,7 @@ describe('extractAndPatchToFile', () => {
         );
         const file = fileWithoutPadding.withPaddings([new ROMPadding({ paddedSize: 8, fillByte })]);
 
-        await file.extractAndPatchToFile(outputPath);
+        await file.extractAndTransformToFile(outputPath);
 
         const written = await fs.promises.readFile(outputPath);
         const expected = Buffer.concat([raw, Buffer.alloc(4, fillByte)]);

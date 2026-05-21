@@ -358,7 +358,11 @@ export default class File implements FileProps {
    * Write this file to the destination path, stripping any header and applying any associated
    * patch.
    */
-  async extractAndPatchToFile(destinationPath: string, callback?: FsReadCallback): Promise<void> {
+  async extractAndTransformToFile(
+    destinationPath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    // If there are any paddings then we must use createTransformedReadStream()
     if (this.getPaddings().length > 0) {
       await this.createTransformedReadStream(async (readable) => {
         const writeStream = fs.createWriteStream(destinationPath);
@@ -374,7 +378,7 @@ export default class File implements FileProps {
     const start = this.getFileHeader()?.getDataOffsetBytes() ?? 0;
     const patch = this.getPatch();
 
-    // Simple case: create a file without removing its header
+    // No header: create a file without using streams
     if (start <= 0) {
       if (patch) {
         // Patch the file and don't remove its header
@@ -386,7 +390,7 @@ export default class File implements FileProps {
       return;
     }
 
-    // Complex case: create a temp file with the header removed
+    // Headered+patched file: patch to a temp file, and then remove the header using streaming
     if (patch) {
       // Create a patched temp file, then copy it without removing its header
       const tempFile = await FsUtil.mktemp(
@@ -412,7 +416,7 @@ export default class File implements FileProps {
       }
     }
 
-    // Extract this file removing its header
+    // Headered: remove the header using streaming
     await this.createReadStream(async (readable) => {
       const writeStream = fs.createWriteStream(destinationPath);
       if (callback) {

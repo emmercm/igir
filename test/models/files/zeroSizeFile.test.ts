@@ -35,12 +35,12 @@ describe('extractToTempFile', () => {
   });
 });
 
-describe('extractAndPatchToFile', () => {
+describe('extractAndTransformToFile', () => {
   it('should extract to specified path', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
       const tempFile = await FsUtil.mktemp(path.join(tempDir, 'temp'));
-      await ZeroSizeFile.getInstance().extractAndPatchToFile(tempFile);
+      await ZeroSizeFile.getInstance().extractAndTransformToFile(tempFile);
       await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
       await expect(FsUtil.size(tempFile)).resolves.toEqual(0);
     } finally {
