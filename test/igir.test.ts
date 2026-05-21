@@ -250,6 +250,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Optical Game (Disc 2).chd')}|track03.bin`, '61a363f1'],
         [`${path.join('One', 'Optical Game (Disc 2).chd')}|track04.bin`, 'fc5ff5a0'],
         [path.join('One', 'Optical Game.m3u'), '8da7b4ae'],
+        [path.join('One', 'Padded 0x00.3ds'), 'e964a5b3'],
+        [path.join('One', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
         [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
@@ -321,6 +323,8 @@ describe('with explicit DATs', () => {
         ['Optical Game (Disc 2).chd|track02.raw', 'abc178d5'],
         ['Optical Game (Disc 2).chd|track03.bin', '61a363f1'],
         ['Optical Game (Disc 2).chd|track04.bin', 'fc5ff5a0'],
+        ['Padded 0x00.3ds', 'e964a5b3'],
+        ['Padded 0xFF.3ds', 'e964a5b3'],
         [`${path.join('Three Four Five', '2048')}|2048`, 'd774f042'], // raw
         [`${path.join('Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
@@ -369,6 +373,8 @@ describe('with explicit DATs', () => {
       expect(result.outputFilesAndCrcs).toEqual([
         [`${path.join('-', 'One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
         [`${path.join('-', 'One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [path.join('3ds', 'One', 'Padded 0x00.3ds'), 'e964a5b3'],
+        [path.join('3ds', 'One', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [
           `${path.join('7z', 'Headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`,
           'f6cc9b1c',
@@ -505,6 +511,8 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [path.join('One', 'Padded 0x00.3ds'), 'e964a5b3'],
+        [path.join('One', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -548,6 +556,8 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Foobar.lnx'), 'b22c9747'],
         [path.join('One', 'One Three', 'One.rom'), 'f817a89f'],
         [path.join('One', 'One Three', 'Three.rom'), 'ff46c5d8'],
+        [path.join('One', 'Padded 0x00.3ds'), 'e964a5b3'],
+        [path.join('One', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -656,6 +666,8 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track02.raw'), 'abc178d5'],
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
         [path.join('igir combined', 'O', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
+        [path.join('igir combined', 'P', 'Padded 0x00.3ds'), 'e964a5b3'],
+        [path.join('igir combined', 'P', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [path.join('igir combined', 'S', 'speed_test_v51.smc'), '9adca6cc'],
         [`${path.join('igir combined', 'T', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
         [`${path.join('igir combined', 'T', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
@@ -707,6 +719,7 @@ describe('with explicit DATs', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('rvz', 'GameCube-240pSuite-1.19.rvz'),
         path.join('tar', 'fizzbuzz.tar.gz'),
         path.join('tar', 'foobar.tar.gz'),
@@ -774,7 +787,7 @@ describe('with explicit DATs', () => {
     });
   });
 
-  it('should copy, zip, and test', async () => {
+  it('should copy, pad, zip, and test', async () => {
     await copyFixturesToTemp(async (inputTemp, outputTemp) => {
       const result = await runIgir({
         commands: ['copy', 'zip', 'test'],
@@ -782,6 +795,7 @@ describe('with explicit DATs', () => {
         input: [path.join(inputTemp, 'roms')],
         output: outputTemp,
         dirDatName: true,
+        trimAddPadding: true,
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
@@ -831,6 +845,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Optical Game (Disc 2).zip')}|track02.raw`, 'abc178d5'],
         [`${path.join('One', 'Optical Game (Disc 2).zip')}|track03.bin`, '61a363f1'],
         [`${path.join('One', 'Optical Game (Disc 2).zip')}|track04.bin`, 'fc5ff5a0'],
+        [`${path.join('One', 'Padded 0x00.zip')}|Padded 0x00.3ds`, 'b70dcecd'],
+        [`${path.join('One', 'Padded 0xFF.zip')}|Padded 0xFF.3ds`, '05cd6006'],
         [`${path.join('One', 'Three Four Five.zip')}|Five.rom`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five.zip')}|Four.rom`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five.zip')}|Three.rom`, 'ff46c5d8'],
@@ -941,6 +957,8 @@ describe('with explicit DATs', () => {
         ['One.zip|Optical Game (Disc 2)/track02.raw', 'abc178d5'],
         ['One.zip|Optical Game (Disc 2)/track03.bin', '61a363f1'],
         ['One.zip|Optical Game (Disc 2)/track04.bin', 'fc5ff5a0'],
+        ['One.zip|Padded 0x00.3ds', 'e964a5b3'],
+        ['One.zip|Padded 0xFF.3ds', 'e964a5b3'],
         ['One.zip|Three Four Five/Five.rom', '3e5daf67'],
         ['One.zip|Three Four Five/Four.rom', '1cf3ca74'],
         ['One.zip|Three Four Five/Three.rom', 'ff46c5d8'],
@@ -1074,6 +1092,14 @@ describe('with explicit DATs', () => {
           'fc5ff5a0',
         ],
         [path.join('One', 'Optical Game.m3u'), '8da7b4ae'],
+        [
+          `${path.join('One', 'Padded 0x00.3ds')} -> ${path.join('<input>', 'raw', 'trimmed.3ds')}`,
+          'e964a5b3',
+        ],
+        [
+          `${path.join('One', 'Padded 0xFF.3ds')} -> ${path.join('<input>', 'raw', 'trimmed.3ds')}`,
+          'e964a5b3',
+        ],
         [
           `${path.join('One', 'Three Four Five', '2048')}|2048 -> ${path.join('<input>', 'chd', '2048.chd')}|2048`,
           'd774f042',
@@ -1211,6 +1237,8 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Optical Game (Disc 2)', 'track02.raw'), 'abc178d5'],
         [path.join('One', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
         [path.join('One', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
+        [path.join('One', 'Padded 0x00.3ds'), 'e964a5b3'],
+        [path.join('One', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
         [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
@@ -1464,6 +1492,8 @@ describe('with explicit DATs', () => {
         [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track02.raw'), 'abc178d5'],
         [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track03.bin'), '61a363f1'],
         [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
+        [path.join('OnePlatform', 'Padded 0x00.3ds'), 'e964a5b3'],
+        [path.join('OnePlatform', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [`${path.join('OnePlatform', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
         [`${path.join('OnePlatform', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('OnePlatform', 'Three Four Five', 'Five.rom'), '3e5daf67'],
@@ -1495,6 +1525,7 @@ describe('with explicit DATs', () => {
           dat: [path.join(inputTemp, 'dats', '*')],
           input: [path.join(inputTemp, 'roms', 'raw')],
           output: path.join(outputTemp, '{datName}'),
+          trimScanFiles: 'never',
         });
 
         // and some unmatched/stray files are in the output
@@ -1647,7 +1678,7 @@ describe('with inferred DATs', () => {
         [path.join('R', 'raw', 'loremipsum.rom'), '70856527'],
         [path.join('R', 'raw', 'one.rom'), 'f817a89f'],
         [path.join('R', 'raw', 'three.rom'), 'ff46c5d8'],
-        [path.join('R', 'raw', 'trimmed.rom'), '82656a5d'],
+        [path.join('R', 'raw', 'trimmed.3ds'), 'e964a5b3'],
         [path.join('R', 'raw', 'two.rom'), '96170874'],
         [path.join('R', 'raw', 'unknown.rom'), '377a7727'],
         [`${path.join('S', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`, '8beffd94'],
@@ -1749,7 +1780,7 @@ describe('with inferred DATs', () => {
         [path.join('raw', 'loremipsum.rom'), '70856527'],
         [path.join('raw', 'one.rom'), 'f817a89f'],
         [path.join('raw', 'three.rom'), 'ff46c5d8'],
-        [path.join('raw', 'trimmed.rom'), '82656a5d'],
+        [path.join('raw', 'trimmed.3ds'), 'e964a5b3'],
         [path.join('raw', 'two.rom'), '96170874'],
         [path.join('raw', 'unknown.rom'), '377a7727'],
         [path.join('roms', 'empty.rom'), '00000000'],
@@ -1821,7 +1852,7 @@ describe('with inferred DATs', () => {
         path.join('raw', 'loremipsum.rom'),
         path.join('raw', 'one.rom'),
         path.join('raw', 'three.rom'),
-        path.join('raw', 'trimmed.rom'),
+        path.join('raw', 'trimmed.3ds'),
         path.join('raw', 'two.rom'),
         path.join('raw', 'unknown.rom'),
         path.join('rvz', 'GameCube-240pSuite-1.19.rvz'),
@@ -1918,7 +1949,7 @@ describe('with inferred DATs', () => {
         ['raw.zip|loremipsum.rom', '70856527'],
         ['raw.zip|one.rom', 'f817a89f'],
         ['raw.zip|three.rom', 'ff46c5d8'],
-        ['raw.zip|trimmed.rom', '82656a5d'],
+        ['raw.zip|trimmed.3ds', 'e964a5b3'],
         ['raw.zip|two.rom', '96170874'],
         ['raw.zip|unknown.rom', '377a7727'],
         ['roms.zip|empty.rom', '00000000'],
@@ -2137,8 +2168,8 @@ describe('with inferred DATs', () => {
           'ff46c5d8',
         ],
         [
-          `${path.join('raw', 'trimmed.rom')} -> ${path.join('..', '..', 'input', 'roms', 'raw', 'trimmed.rom')}`,
-          '82656a5d',
+          `${path.join('raw', 'trimmed.3ds')} -> ${path.join('..', '..', 'input', 'roms', 'raw', 'trimmed.3ds')}`,
+          'e964a5b3',
         ],
         [
           `${path.join('raw', 'two.rom')} -> ${path.join('..', '..', 'input', 'roms', 'raw', 'two.rom')}`,
@@ -2324,7 +2355,7 @@ describe('with inferred DATs', () => {
             'loremipsum.rom',
             'one.rom',
             'three.rom',
-            'trimmed.rom',
+            'trimmed.3ds',
             'two.rom',
             'unknown.rom',
           ],

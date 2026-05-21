@@ -74,10 +74,10 @@
   </machine>
   <machine name="Padded 0x00">
     <description>Padded 0x00</description>
-    <rom name="Padded 0x00.rom" size="8" crc="39ef7289" md5="ad920baadce9f5dad5b9617043cc673d" sha1="e36331a1e5e55e79fcb6451ea972f2a8cf9039ff" status="verified"/>
+    <rom name="Padded 0x00.3ds" size="1024" crc="b70dcecd" md5="e470624284a0b0b6bd6440a9821f75a9" sha1="cadedb0cffc2774618a6ac9fecf9331139ab7497" status="verified"/>
   </machine>
   <machine name="Padded 0xFF">
     <description>Padded 0xFF</description>
-    <rom name="Padded 0xFF.rom" size="8" crc="3951549b" md5="4c097376751db97b62ebc39b59b9bcb3" sha1="b735c1aff17b3034acfad93e82c32b2bc0130621" status="verified"/>
+    <rom name="Padded 0xFF.3ds" size="1024" crc="05cd6006" md5="9343fc3ebbcaf49d3b81274920a991ff" sha1="a61a05adf373edb323a10eb12413598f66ac183b" status="verified"/>
   </machine>
 </datafile>

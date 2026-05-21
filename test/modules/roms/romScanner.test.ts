@@ -155,19 +155,19 @@ describe('multiple files', () => {
   it('should scan multiple files with some file exclusions', async () => {
     await expect(
       createRomScanner(['test/fixtures/roms/**/*'], ['test/fixtures/roms/**/*.rom']).scan(),
-    ).resolves.toHaveLength(89);
+    ).resolves.toHaveLength(90);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.rom'],
       ).scan(),
-    ).resolves.toHaveLength(89);
+    ).resolves.toHaveLength(90);
     await expect(
       createRomScanner(
         ['test/fixtures/roms/**/*'],
         ['test/fixtures/roms/**/*.rom', 'test/fixtures/roms/**/*.zip'],
       ).scan(),
-    ).resolves.toHaveLength(76);
+    ).resolves.toHaveLength(77);
   });
 
   it('should scan multiple files with every file excluded', async () => {
