@@ -34,7 +34,7 @@ export default class ZeroSizeFile extends File {
   /**
    * Create an empty file at the given path, overwriting any existing file.
    */
-  async extractToFile(destinationPath: string): Promise<void> {
+  override async extractToFile(destinationPath: string): Promise<void> {
     if (await FsUtil.exists(destinationPath)) {
       await FsUtil.rm(destinationPath, { force: true });
     }
@@ -44,32 +44,32 @@ export default class ZeroSizeFile extends File {
   /**
    * Invoke the callback with a readable stream that produces zero bytes.
    */
-  async createReadStream<T>(callback: (readable: Readable) => Promise<T> | T): Promise<T> {
+  override async createReadStream<T>(callback: (readable: Readable) => Promise<T> | T): Promise<T> {
     const readable = StreamUtil.staticReadable(0, 0x00);
     return await callback(readable);
   }
 
-  withProps(): File {
+  override withProps(): File {
     return this;
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async withFileHeader(): Promise<File> {
+  override async withFileHeader(): Promise<File> {
     throw new IgirException(`${this.constructor.name} can't have a header`);
   }
 
   /**
    * Always throw — a zero-size file cannot have a header.
    */
-  withoutFileHeader(): File {
+  override withoutFileHeader(): File {
     throw new IgirException(`${this.constructor.name} can't have a header`);
   }
 
-  withPaddings(): File {
+  override withPaddings(): File {
     throw new IgirException(`${this.constructor.name} can't be padded`);
   }
 
-  withPatch(): File {
+  override withPatch(): File {
     throw new IgirException(`${this.constructor.name} can't be patched`);
   }
 }

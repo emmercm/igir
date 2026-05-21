@@ -18,7 +18,7 @@ export default class ZipBombProtector extends stream.Transform {
   /**
    * Throw an error if we've read more than the expected bytes.
    */
-  _transform(
+  override _transform(
     chunk: Buffer<ArrayBuffer>,
     _encoding: BufferEncoding,
     callback: TransformCallback,

@@ -13,7 +13,7 @@ export default class UncompressedTransform extends stream.Transform {
   /**
    * Increment the size and update the CRC32, then passthrough the data.
    */
-  _transform(
+  override _transform(
     chunk: Buffer<ArrayBuffer>,
     _encoding: BufferEncoding,
     callback: TransformCallback,

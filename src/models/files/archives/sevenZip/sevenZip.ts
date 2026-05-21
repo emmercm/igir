@@ -23,7 +23,7 @@ export default class SevenZip extends SevenZipLib {
   /**
    * Returns true: 7-Zip archives support extraction.
    */
-  canExtract(): boolean {
+  override canExtract(): boolean {
     return true;
   }
 
