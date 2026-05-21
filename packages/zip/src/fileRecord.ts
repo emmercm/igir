@@ -97,12 +97,13 @@ export default class FileRecord {
    * Return the file modification time, taking extra fields into account.
    */
   fileModificationResolved(): Date {
-    // TODO(cemmer): 0x000d UNIX timestamp
-    // TODO(cemmer): 0x7855 unix extra field new?
+    // Ordered most trustworthy / highest precision first; DOS time is the last-resort fallback.
     return (
+      TimestampUtil.parseNtfsExtraTimestamp(this.extraFields.get(0x00_0a))?.modified ??
       TimestampUtil.parseExtendedTimestamp(this.extraFields.get(0x54_55))?.modified ??
       TimestampUtil.parseUnixExtraTimestamp(this.extraFields.get(0x58_55))?.modified ??
-      TimestampUtil.parseNtfsExtraTimestamp(this.extraFields.get(0x00_0a))?.modified ??
+      TimestampUtil.parseUnixExtraTimestamp(this.extraFields.get(0x00_0d))?.modified ??
+      TimestampUtil.parseInfoZipMacintoshExtraTimestamp(this.extraFields.get(0x33_4d))?.modified ??
       TimestampUtil.parseDOSTimestamp(this.fileModificationTime, this.fileModificationDate)
     );
   }

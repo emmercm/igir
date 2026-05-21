@@ -70,6 +70,10 @@ export default class ROMPadding implements ROMPaddingProps {
     return this.paddedSize;
   }
 
+  getFillByte(): number {
+    return this.fillByte;
+  }
+
   getCrc32(): string | undefined {
     return this.crc32;
   }

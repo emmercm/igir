@@ -17,7 +17,7 @@ export default defineConfig({
     testTimeout: 60_000,
 
     // Don't run any compiled versions of the tests, if they exist
-    exclude: [...configDefaults.exclude, 'dist/**'],
+    exclude: [...configDefaults.exclude, '.*/**', 'dist/**'],
 
     coverage: {
       provider: 'v8',

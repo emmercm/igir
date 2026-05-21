@@ -249,7 +249,7 @@ export default class ArgumentsParser {
             ChecksumBitmaskInverted[ChecksumBitmask.CRC32].toUpperCase()
         ) {
           throw new IgirException(
-            'Arguments input-checksum-quick and input-checksum-min are mutually exclusive',
+            'Arguments "--input-checksum-quick" and "--input-checksum-min" are mutually exclusive',
           );
         }
         if (
@@ -259,7 +259,7 @@ export default class ArgumentsParser {
             ChecksumBitmaskInverted[ChecksumBitmask.SHA1].toUpperCase()
         ) {
           throw new IgirException(
-            'Arguments input-checksum-quick and input-checksum-max are mutually exclusive',
+            'Arguments "--input-checksum-quick" and "--input-checksum-max" are mutually exclusive',
           );
         }
         return true;
@@ -724,6 +724,36 @@ export default class ArgumentsParser {
         description: 'Detect trimming for files within archives (off by default)',
         type: 'boolean',
         implies: 'dat',
+      })
+      .option('trim-add-padding', {
+        group: groupRomTrimmed,
+        description:
+          'When writing matched trimmed ROMs, add back their trailing padding so the output matches the DAT checksum',
+        type: 'boolean',
+        implies: 'dat',
+      })
+      .check((checkArgv) => {
+        if (!checkArgv['trim-add-padding']) {
+          return true;
+        }
+        if (checkArgv._.includes('link')) {
+          throw new IgirException(
+            'Argument "--trim-add-padding" cannot be used with the command "link"',
+          );
+        }
+        if (!['copy', 'move'].some((cmd) => checkArgv._.includes(cmd))) {
+          throw new IgirException(
+            'Missing required command for option trim-add-padding: copy or move',
+          );
+        }
+        if (
+          checkArgv['trim-scan-files'] === TrimScanFilesInverted[TrimScanFiles.NEVER].toLowerCase()
+        ) {
+          throw new IgirException(
+            'Arguments "--trim-add-padding" and "--trim-scan-files never" are mutually exclusive',
+          );
+        }
+        return true;
       })
 
       .option('merge-roms', {
