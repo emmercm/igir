@@ -17,7 +17,11 @@ export default class FsReadTransform extends stream.Transform {
   /**
    * Process the stream.
    */
-  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: stream.TransformCallback): void {
+  override _transform(
+    chunk: Buffer,
+    _encoding: BufferEncoding,
+    callback: stream.TransformCallback,
+  ): void {
     this.progress += chunk.length;
     this.fsReadCallback(this.progress);
 
