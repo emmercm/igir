@@ -52,7 +52,9 @@
   },
   "scripts": {
     "cache:clear": "npm cache clean --force && node ./node_modules/vitest/vitest.mjs --clearCache",
-    "install:hold": "tsx scripts/installHold.ts",
+    "deps:hold": "tsx scripts/dependencyHold.ts",
+    "deps:deprecated": "tsx scripts/dependencyDeprecated.ts",
+    "deps:vulnerabilities": "tsx scripts/dependencyVulnerabilities.ts",
     "postinstall": "node postinstall.mjs",
     "start": "tsx index.ts",
     "build": "tsx scripts/build.ts",
