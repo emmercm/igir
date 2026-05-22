@@ -1,4 +1,4 @@
-import { Crc32 } from '@aws-crypto/crc32';
+import CRC32 from 'crc-32';
 
 import type { ZipReader } from '../../zip/index.js';
 import { CompressionMethod } from '../../zip/index.js';
@@ -122,11 +122,11 @@ export default {
     }
 
     // Validate the zip comment
-    const crc32 = new Crc32();
+    let crc32 = 0;
     for (const fileHeader of centralDirectoryFileHeaders) {
-      crc32.update(fileHeader.raw);
+      crc32 = CRC32.buf(fileHeader.raw, crc32);
     }
-    const cdfhCrc32 = crc32.digest().toString(16).padStart(8, '0').toUpperCase();
+    const cdfhCrc32 = (crc32 >>> 0).toString(16).padStart(8, '0').toUpperCase();
     const isRvZstd = centralDirectoryFileHeaders.some(
       (cdfh) => cdfh.compressionMethod === CompressionMethod.ZSTD,
     );

@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import stream from 'node:stream';
 
-import { Crc32 } from '@aws-crypto/crc32';
+import CRC32 from 'crc-32';
 
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsReadTransform from '../../streams/fsReadTransform.js';
@@ -84,7 +84,8 @@ export default {
         : StreamUtil.withTransforms(readable, new FsReadTransform(callback));
 
     let size = 0;
-    const crc = checksumBitmask & ChecksumBitmask.CRC32 ? new Crc32() : undefined;
+    const hasCrc32 = (checksumBitmask & ChecksumBitmask.CRC32) !== 0;
+    let crc = 0;
     const md5 = checksumBitmask & ChecksumBitmask.MD5 ? crypto.createHash('md5') : undefined;
     const sha1 = checksumBitmask & ChecksumBitmask.SHA1 ? crypto.createHash('sha1') : undefined;
     const sha256 =
@@ -92,7 +93,9 @@ export default {
 
     for await (const chunk of streamWithCallback as AsyncIterable<Buffer>) {
       size += chunk.length;
-      crc?.update(chunk);
+      if (hasCrc32) {
+        crc = CRC32.buf(chunk, crc);
+      }
       md5?.update(chunk);
       sha1?.update(chunk);
       sha256?.update(chunk);
@@ -100,10 +103,7 @@ export default {
 
     return {
       size,
-      crc32:
-        crc?.digest().toString(16).padStart(8, '0') ??
-        // Empty files won't emit any data, default to the empty file CRC32
-        (checksumBitmask & ChecksumBitmask.CRC32 ? '00000000' : undefined),
+      crc32: hasCrc32 ? (crc >>> 0).toString(16).padStart(8, '0') : undefined,
       md5: md5?.digest('hex').padStart(32, '0'),
       sha1: sha1?.digest('hex').padStart(40, '0'),
       sha256: sha256?.digest('hex').padStart(64, '0'),

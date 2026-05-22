@@ -3,7 +3,7 @@ import os from 'node:os';
 import type { Readable } from 'node:stream';
 import stream from 'node:stream';
 
-import { Crc32 } from '@aws-crypto/crc32';
+import CRC32 from 'crc-32';
 
 import CompressedTransform from './compressedTransform.js';
 import CP437Encoder from './cp437Encoder.js';
@@ -404,9 +404,7 @@ export default class TZWriter {
     buffer.writeUInt32LE(Math.min(centralDirectoryConcat.length, 0xff_ff_ff_ff), 12); // length of the CD
     buffer.writeUInt32LE(Math.min(startOfCentralDirectoryOffset, 0xff_ff_ff_ff), 16);
 
-    const cdfhCrc32 = new Crc32()
-      .update(centralDirectoryConcat)
-      .digest()
+    const cdfhCrc32 = (CRC32.buf(centralDirectoryConcat) >>> 0)
       .toString(16)
       .padStart(8, '0')
       .toUpperCase();
