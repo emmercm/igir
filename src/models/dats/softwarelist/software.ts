@@ -25,7 +25,7 @@ export default class Software extends Game {
     return [this.part];
   }
 
-  getRoms(): ROM[] {
+  override getRoms(): ROM[] {
     return this.getParts()
       .flatMap((part) => part.getDataAreas())
       .flatMap((dataArea) => dataArea.getRoms());

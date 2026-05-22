@@ -1,26 +1,26 @@
 import type { TransformCallback } from 'node:stream';
 import stream from 'node:stream';
 
-import { Crc32 } from '@aws-crypto/crc32';
+import CRC32 from 'crc-32';
 
 /**
  * A stream transform to calculate the size and CRC32 of a pre-compression file.
  */
 export default class UncompressedTransform extends stream.Transform {
   private size = 0;
-  private readonly crc32 = new Crc32();
+  private crc32 = 0;
 
   /**
    * Increment the size and update the CRC32, then passthrough the data.
    */
-  _transform(
+  override _transform(
     chunk: Buffer<ArrayBuffer>,
     _encoding: BufferEncoding,
     callback: TransformCallback,
   ): void {
     this.size += chunk.length;
     try {
-      this.crc32.update(chunk);
+      this.crc32 = CRC32.buf(chunk, this.crc32);
     } catch (error) {
       callback(error instanceof Error ? error : new Error(String(error)));
       return;
@@ -35,6 +35,6 @@ export default class UncompressedTransform extends stream.Transform {
   }
 
   getCrc32(): number {
-    return this.crc32.digest();
+    return this.crc32 >>> 0;
   }
 }

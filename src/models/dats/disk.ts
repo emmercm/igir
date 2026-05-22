@@ -25,7 +25,7 @@ export default class Disk extends ROM implements DiskProps {
     );
   }
 
-  withName(name: string): Disk {
+  override withName(name: string): Disk {
     if (name === this.name) {
       return this;
     }

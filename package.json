@@ -75,7 +75,6 @@
     "docs:serve": "mkdocs serve"
   },
   "dependencies": {
-    "@aws-crypto/crc32": "5.2.0",
     "@fast-csv/format": "5.0.5",
     "@fast-csv/parse": "5.0.5",
     "@gplane/cue": "0.2.0",
@@ -85,6 +84,7 @@
     "chalk": "5.6.2",
     "chdman": "0.287.1",
     "class-transformer": "0.5.1",
+    "crc-32": "1.2.2",
     "dolphin-tool": "0.2603.4",
     "fast-glob": "3.3.3",
     "fast-xml-parser": "5.7.2",

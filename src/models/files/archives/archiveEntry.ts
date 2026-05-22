@@ -172,7 +172,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.archive.canExtract(this);
   }
 
-  getExtractedFilePath(): string {
+  override getExtractedFilePath(): string {
     /**
      * Note: {@link Chd} will stuff some extra metadata in the entry path, chop it out
      */
@@ -186,7 +186,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   /**
    * Extract this entry from its archive to the given file path.
    */
-  async extractToFile(extractedFilePath: string, callback?: FsReadCallback): Promise<void> {
+  override async extractToFile(
+    extractedFilePath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     await ArchiveEntry.extractEntryToFile(
       this.getArchive(),
       this.getEntryPath(),
@@ -221,7 +224,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
    * Extract this entry to a temporary file, invoke the callback with that file's path, then
    * clean up the file.
    */
-  async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
+  override async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
     return await ArchiveEntry.extractEntryToTempFile(
       this.getArchive(),
       this.getEntryPath(),
@@ -241,7 +244,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
    * Invoke the callback with a readable stream of this entry's bytes, optionally starting at a
    * byte offset.
    */
-  async createReadStream<T>(
+  override async createReadStream<T>(
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
   ): Promise<T> {
@@ -255,7 +258,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return await this.archive.extractEntryToStream(this.getEntryPath(), callback);
   }
 
-  withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {
+  override withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {
     return new ArchiveEntry({
       ...this,
       ...props,
@@ -263,7 +266,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   }
 
   // eslint-disable-next-line @typescript-eslint/prefer-return-this-type
-  withFilePath(filePath: string): ArchiveEntry<A> {
+  override withFilePath(filePath: string): ArchiveEntry<A> {
     if (this.getArchive().getFilePath() === filePath) {
       return this;
     }
@@ -280,7 +283,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return new ArchiveEntry({ ...this, entryPath });
   }
 
-  async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
+  override async withFileHeader(fileHeader: ROMHeader): Promise<ArchiveEntry<A>> {
     if (fileHeader === this.fileHeader) {
       return this;
     }
@@ -299,7 +302,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
    * Return an entry with any associated file header cleared and the header-less checksums
    * promoted to the primary checksum fields.
    */
-  withoutFileHeader(): ArchiveEntry<A> {
+  override withoutFileHeader(): ArchiveEntry<A> {
     if (this.fileHeader === undefined) {
       return this;
     }
@@ -313,7 +316,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
-  withPaddings(paddings: ROMPadding[]): ArchiveEntry<A> {
+  override withPaddings(paddings: ROMPadding[]): ArchiveEntry<A> {
     return new ArchiveEntry({
       ...this,
       fileHeader: paddings.length > 0 ? undefined : this.getFileHeader(),
@@ -322,7 +325,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
   }
 
-  withPatch(patch: Patch): ArchiveEntry<A> {
+  override withPatch(patch: Patch): ArchiveEntry<A> {
     if (patch.getCrcBefore() !== this.getCrc32()) {
       return this;
     }
@@ -338,7 +341,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   /**
    * Return a human-readable identifier for this archive entry.
    */
-  toString(): string {
+  override toString(): string {
     if (this.getSymlinkSource()) {
       return `${this.getFilePath()}|${this.getExtractedFilePath()} -> ${this.getSymlinkSource()}|${this.getExtractedFilePath()}`;
     }
@@ -349,7 +352,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
    * Return true if the other file is an {@link ArchiveEntry} with the same archive, entry path,
    * and underlying file properties.
    */
-  equals(other: File): boolean {
+  override equals(other: File): boolean {
     if (this === other) {
       return true;
     }

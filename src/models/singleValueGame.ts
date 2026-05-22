@@ -29,7 +29,7 @@ export default class SingleValueGame extends Game implements SingleValueGameProp
     return this.region ?? super.getRegions().at(0);
   }
 
-  getRegions(): string[] {
+  override getRegions(): string[] {
     return this.region ? [this.region] : super.getRegions();
   }
 
@@ -37,7 +37,7 @@ export default class SingleValueGame extends Game implements SingleValueGameProp
     return this.language ?? super.getLanguages().at(0);
   }
 
-  getLanguages(): string[] {
+  override getLanguages(): string[] {
     return this.language ? [this.language] : super.getLanguages();
   }
 
@@ -45,11 +45,11 @@ export default class SingleValueGame extends Game implements SingleValueGameProp
     return this.category ?? super.getCategories().at(0);
   }
 
-  getCategories(): string[] {
+  override getCategories(): string[] {
     return this.category ? [this.category] : super.getCategories();
   }
 
-  withProps(props: SingleValueGameProps): SingleValueGame {
+  override withProps(props: SingleValueGameProps): SingleValueGame {
     return new SingleValueGame({
       ...this,
       ...props,

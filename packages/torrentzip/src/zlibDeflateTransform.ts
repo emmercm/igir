@@ -26,7 +26,7 @@ export default class ZlibCompressTransform extends stream.Transform {
   /**
    * Deflate the chunk and emit the result.
    */
-  _transform(chunk: Buffer, _encoding: BufferEncoding, callback: TransformCallback): void {
+  override _transform(chunk: Buffer, _encoding: BufferEncoding, callback: TransformCallback): void {
     try {
       if (this.deflaterEnded) {
         callback(new Error('cannot compress after the deflater has been ended'));
@@ -47,7 +47,7 @@ export default class ZlibCompressTransform extends stream.Transform {
   /**
    * Close the zlib deflater when the stream ends.
    */
-  _flush(callback: TransformCallback): void {
+  override _flush(callback: TransformCallback): void {
     try {
       this.finalizeDeflater();
       callback();
@@ -59,7 +59,7 @@ export default class ZlibCompressTransform extends stream.Transform {
   /**
    * Clean up resources when stream.destroy() is called.
    */
-  _destroy(err: Error | null, callback: (error: Error | null) => void): void {
+  override _destroy(err: Error | null, callback: (error: Error | null) => void): void {
     try {
       this.cleanup();
       callback(err);

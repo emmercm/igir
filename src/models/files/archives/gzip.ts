@@ -141,7 +141,7 @@ export default class Gzip extends Archive {
    * Decompress the gzip file and invoke the callback with a readable stream of the decompressed
    * bytes.
    */
-  async extractEntryToStream<T>(
+  override async extractEntryToStream<T>(
     _entryPath: string,
     callback: (readable: stream.Readable) => Promise<T> | T,
   ): Promise<T> {

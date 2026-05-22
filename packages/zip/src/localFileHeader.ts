@@ -130,7 +130,7 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return the numerical CRC32, taking the existence of a data descriptor into account.
    */
-  uncompressedCrc32Number(): number {
+  override uncompressedCrc32Number(): number {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.uncompressedCrc32Number()
       : super.uncompressedCrc32Number();
@@ -139,7 +139,7 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return the CRC32 string, taking the existence of a data descriptor into account.
    */
-  uncompressedCrc32String(): string {
+  override uncompressedCrc32String(): string {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.uncompressedCrc32String()
       : super.uncompressedCrc32String();
@@ -148,7 +148,7 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return the compressed size, taking the existence of a data descriptor into account.
    */
-  compressedSizeResolved(): number {
+  override compressedSizeResolved(): number {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.compressedSizeResolved()
       : super.compressedSizeResolved();
@@ -157,7 +157,7 @@ export default class LocalFileHeader extends FileRecord {
   /**
    * Return the uncompressed size, taking the existence of a data descriptor into account.
    */
-  uncompressedSizeResolved(): number {
+  override uncompressedSizeResolved(): number {
     return this.hasDataDescriptor()
       ? this.centralDirectoryFileHeader.uncompressedSizeResolved()
       : super.uncompressedSizeResolved();
