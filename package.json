@@ -122,10 +122,10 @@
     "@types/which": "3.0.4",
     "@types/xml2js": "0.4.14",
     "@types/yargs": "17.0.35",
-    "@typescript-eslint/eslint-plugin": "8.59.0",
-    "@typescript-eslint/parser": "8.59.0",
+    "@typescript-eslint/eslint-plugin": "8.59.4",
+    "@typescript-eslint/parser": "8.59.4",
     "@vitest/coverage-v8": "4.1.7",
-    "@vitest/eslint-plugin": "1.6.16",
+    "@vitest/eslint-plugin": "1.6.18",
     "ajv": "8.20.0",
     "auto-changelog": "2.5.1",
     "esbuild": "0.28.0",
@@ -141,7 +141,7 @@
     "prettier": "3.8.3",
     "tsx": "4.22.3",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.59.0",
+    "typescript-eslint": "8.59.4",
     "vitest": "4.1.7"
   },
   "engines": {
