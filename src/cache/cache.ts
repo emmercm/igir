@@ -45,6 +45,13 @@ export default class Cache<V> {
   }
 
   /**
+   * Return the file path that this cache was loaded from, and will also save to.
+   */
+  getFilePath(): string | undefined {
+    return this.filePath;
+  }
+
+  /**
    * Return if a key exists in the cache, waiting for any existing operations to complete first.
    */
   async has(key: string): Promise<boolean> {
