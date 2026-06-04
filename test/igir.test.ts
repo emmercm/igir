@@ -252,10 +252,11 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Optical Game.m3u'), '8da7b4ae'],
         [path.join('One', 'Padded 0x00.3ds'), 'e964a5b3'],
         [path.join('One', 'Padded 0xFF.3ds'), 'e964a5b3'],
-        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [`${path.join('One', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('One', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
+        [path.join('One', 'Three Four Five', 'Three Four Five.m3u'), '8b42a921'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
         [`${path.join('One', 'UMD.cso')}|UMD.iso`, 'e90f7cf5'],
         [path.join('Patchable', '0F09A40.rom'), '2f943e86'],
@@ -325,8 +326,8 @@ describe('with explicit DATs', () => {
         ['Optical Game (Disc 2).chd|track04.bin', 'fc5ff5a0'],
         ['Padded 0x00.3ds', 'e964a5b3'],
         ['Padded 0xFF.3ds', 'e964a5b3'],
-        [`${path.join('Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [`${path.join('Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
         [path.join('Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -371,8 +372,6 @@ describe('with explicit DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [`${path.join('-', 'One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('-', 'One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
         [path.join('3ds', 'One', 'Padded 0x00.3ds'), 'e964a5b3'],
         [path.join('3ds', 'One', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [
@@ -412,6 +411,9 @@ describe('with explicit DATs', () => {
         [`${path.join('chd', 'One', 'Optical Game (Disc 2).chd')}|track03.bin`, '61a363f1'],
         [`${path.join('chd', 'One', 'Optical Game (Disc 2).chd')}|track04.bin`, 'fc5ff5a0'],
         [path.join('chd', 'One', 'Optical Game.m3u'), '8da7b4ae'],
+        [`${path.join('chd', 'One', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('chd', 'One', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
+        [path.join('chd', 'One', 'Three Four Five', 'Three Four Five.m3u'), '8b42a921'],
         [`${path.join('cso', 'One', 'UMD.cso')}|UMD.iso`, 'e90f7cf5'],
         [
           `${path.join('gcz', 'One', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
@@ -669,8 +671,8 @@ describe('with explicit DATs', () => {
         [path.join('igir combined', 'P', 'Padded 0x00.3ds'), 'e964a5b3'],
         [path.join('igir combined', 'P', 'Padded 0xFF.3ds'), 'e964a5b3'],
         [path.join('igir combined', 'S', 'speed_test_v51.smc'), '9adca6cc'],
-        [`${path.join('igir combined', 'T', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('igir combined', 'T', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [`${path.join('igir combined', 'T', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('igir combined', 'T', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
         [path.join('igir combined', 'T', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('igir combined', 'T', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('igir combined', 'T', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -850,8 +852,8 @@ describe('with explicit DATs', () => {
         [`${path.join('One', 'Three Four Five.zip')}|Five.rom`, '3e5daf67'],
         [`${path.join('One', 'Three Four Five.zip')}|Four.rom`, '1cf3ca74'],
         [`${path.join('One', 'Three Four Five.zip')}|Three.rom`, 'ff46c5d8'],
-        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [`${path.join('One', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('One', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
         [`${path.join('One', 'UMD.zip')}|UMD.iso`, 'e90f7cf5'],
         [`${path.join('Patchable', '0F09A40.zip')}|0F09A40.rom`, '2f943e86'],
         [`${path.join('Patchable', '3708F2C.zip')}|3708F2C.rom`, '20891c9f'],
@@ -972,8 +974,8 @@ describe('with explicit DATs', () => {
         ['Patchable.zip|Best.rom', '1e3d78cf'],
         ['Patchable.zip|C01173E.rom', 'dfaebe28'],
         ['Patchable.zip|KDULVQN.rom', 'b1c303e4'],
-        [`${path.join('Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [`${path.join('Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
       ]);
       expect(result.movedFiles).toHaveLength(0);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -1101,11 +1103,11 @@ describe('with explicit DATs', () => {
           'e964a5b3',
         ],
         [
-          `${path.join('One', 'Three Four Five', '2048')}|2048 -> ${path.join('<input>', 'chd', '2048.chd')}|2048`,
+          `${path.join('One', 'Three Four Five', '2048.chd')}|2048 -> ${path.join('<input>', 'chd', '2048.chd')}|2048`,
           'd774f042',
         ], // raw
         [
-          `${path.join('One', 'Three Four Five', '4096')}|4096 -> ${path.join('<input>', 'chd', '4096.chd')}|4096`,
+          `${path.join('One', 'Three Four Five', '4096.chd')}|4096 -> ${path.join('<input>', 'chd', '4096.chd')}|4096`,
           '2e19ca09',
         ], // raw
         [
@@ -1116,6 +1118,7 @@ describe('with explicit DATs', () => {
           `${path.join('One', 'Three Four Five', 'Four.rom')} -> ${path.join('<input>', 'raw', 'four.rom')}`,
           '1cf3ca74',
         ],
+        [path.join('One', 'Three Four Five', 'Three Four Five.m3u'), '8b42a921'],
         [
           `${path.join('One', 'Three Four Five', 'Three.rom')} -> ${path.join('<input>', 'raw', 'three.rom')}`,
           'ff46c5d8',
@@ -1239,8 +1242,8 @@ describe('with explicit DATs', () => {
         [path.join('One', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
         [path.join('One', 'Padded 0x00.3ds'), 'e964a5b3'],
         [path.join('One', 'Padded 0xFF.3ds'), 'e964a5b3'],
-        [`${path.join('One', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('One', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [`${path.join('One', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('One', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
         [path.join('One', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('One', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('One', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -1494,8 +1497,8 @@ describe('with explicit DATs', () => {
         [path.join('OnePlatform', 'Optical Game (Disc 2)', 'track04.bin'), 'fc5ff5a0'],
         [path.join('OnePlatform', 'Padded 0x00.3ds'), 'e964a5b3'],
         [path.join('OnePlatform', 'Padded 0xFF.3ds'), 'e964a5b3'],
-        [`${path.join('OnePlatform', 'Three Four Five', '2048')}|2048`, 'd774f042'], // raw
-        [`${path.join('OnePlatform', 'Three Four Five', '4096')}|4096`, '2e19ca09'], // raw
+        [`${path.join('OnePlatform', 'Three Four Five', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('OnePlatform', 'Three Four Five', '4096.chd')}|4096`, '2e19ca09'], // raw
         [path.join('OnePlatform', 'Three Four Five', 'Five.rom'), '3e5daf67'],
         [path.join('OnePlatform', 'Three Four Five', 'Four.rom'), '1cf3ca74'],
         [path.join('OnePlatform', 'Three Four Five', 'Three.rom'), 'ff46c5d8'],
@@ -1625,14 +1628,19 @@ describe('with inferred DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        [`${path.join('#', '2048.chd')}|2048`, 'd774f042'], // raw
-        [`${path.join('#', '4096.chd')}|4096`, '2e19ca09'], // raw
+        [`${path.join('#', '2048', '2048.chd')}|2048`, 'd774f042'], // raw
+        [`${path.join('#', '4096', '4096.chd')}|4096`, '2e19ca09'], // raw
         [`${path.join('B', 'best.gz')}|best.rom`, '1e3d78cf'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM`, 'xxxxxxxx'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'],
         [`${path.join('C', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
+        [`${path.join('C', 'CD-ROM', 'CD-ROM.chd')}|CD-ROM`, 'xxxxxxxx'],
+        [`${path.join('C', 'CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'],
+        [`${path.join('C', 'CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'],
+        [`${path.join('C', 'CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'],
+        [`${path.join('C', 'CD-ROM', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'],
         [
           `${path.join('D', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`,
           'f6cc9b1c',
@@ -1642,16 +1650,22 @@ describe('with inferred DATs', () => {
         [`${path.join('F2', 'foobar.zip')}|foobar.lnx`, 'b22c9747'],
         [`${path.join('F2', 'fourfive.zip')}|five.rom`, '3e5daf67'],
         [`${path.join('F2', 'fourfive.zip')}|four.rom`, '1cf3ca74'],
+        [`${path.join('G1', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'],
+        [`${path.join('G1', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
+        [`${path.join('G1', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
+        [`${path.join('G1', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
+        [`${path.join('G1', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
+        [`${path.join('G1', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
+        [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'],
+        [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
+        [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
+        [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
+        [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
+        [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
         [
-          `${path.join('G', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
+          `${path.join('G2', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
           '5eb3d183',
         ],
-        [`${path.join('G', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'],
-        [`${path.join('G', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
-        [`${path.join('G', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
-        [`${path.join('G', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
-        [`${path.join('G', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
-        [`${path.join('G', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
         [path.join('H', 'headered', 'allpads.nes'), '9180a163'],
         [path.join('H', 'headered', 'color_test.nes'), 'c9c1b7aa'],
         [path.join('H', 'headered', 'speed_test_v51.smc'), '9adca6cc'],
@@ -1728,14 +1742,14 @@ describe('with inferred DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        ['2048.chd|2048', 'd774f042'], // <disk> raw
-        ['4096.chd|4096', '2e19ca09'], // <disk> raw
+        [`${path.join('2048', '2048.chd')}|2048`, 'd774f042'], // <disk> raw
+        [`${path.join('4096', '4096.chd')}|4096`, '2e19ca09'], // <disk> raw
         ['best.rom', '1e3d78cf'],
-        ['CD-ROM.chd|CD-ROM', 'xxxxxxxx'], // <disk> raw
-        ['CD-ROM.chd|CD-ROM (Track 1).bin', '49ca35fb'], // <disk> CD-ROM
-        ['CD-ROM.chd|CD-ROM (Track 2).bin', '0316f720'], // <disk> CD-ROM
-        ['CD-ROM.chd|CD-ROM (Track 3).bin', 'a320af40'], // <disk> CD-ROM
-        ['CD-ROM.chd|CD-ROM.cue', 'xxxxxxxx'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM`, 'xxxxxxxx'], // <disk> raw
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'], // <disk> CD-ROM
         ['diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['fds_joypad_test.fds', '1e58456d'],
         ['fizzbuzz.nes', '370517b5'],
@@ -1743,12 +1757,12 @@ describe('with inferred DATs', () => {
         [path.join('fourfive', 'five.rom'), '3e5daf67'],
         [path.join('fourfive', 'four.rom'), '1cf3ca74'],
         ['GameCube-240pSuite-1.19.iso', '5eb3d183'],
-        ['GD-ROM.chd|GD-ROM', 'xxxxxxxx'], // <disk> raw
-        ['GD-ROM.chd|GD-ROM.gdi', 'f16f621c'], // <disk> GD-ROM
-        ['GD-ROM.chd|track01.bin', '9796ed9a'], // <disk> GD-ROM
-        ['GD-ROM.chd|track02.raw', 'abc178d5'], // <disk> GD-ROM
-        ['GD-ROM.chd|track03.bin', '61a363f1'], // <disk> GD-ROM
-        ['GD-ROM.chd|track04.bin', 'fc5ff5a0'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'], // <disk> raw
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track03.bin`, '61a363f1'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'], // <disk> GD-ROM
         [path.join('GD-ROM', 'GD-ROM.gdi'), 'f16f621c'],
         [path.join('GD-ROM', 'track01.bin'), '9796ed9a'],
         [path.join('GD-ROM', 'track02.raw'), 'abc178d5'],
@@ -1890,18 +1904,18 @@ describe('with inferred DATs', () => {
       });
 
       expect(result.outputFilesAndCrcs).toEqual([
-        ['2048|2048', 'd774f042'], // <disk> raw
-        ['4096|4096', '2e19ca09'], // <disk> raw
+        [`${path.join('2048', '2048.chd')}|2048`, 'd774f042'], // <disk> raw
+        [`${path.join('4096', '4096.chd')}|4096`, '2e19ca09'], // <disk> raw
         ['best.zip|best.rom', '1e3d78cf'],
         ['CD-ROM.zip|CD-ROM (Track 1).bin', '49ca35fb'],
         ['CD-ROM.zip|CD-ROM (Track 2).bin', '0316f720'],
         ['CD-ROM.zip|CD-ROM (Track 3).bin', 'a320af40'],
         ['CD-ROM.zip|CD-ROM.cue', '4ce39e73'],
-        ['CD-ROM|CD-ROM', 'xxxxxxxx'], // <disk> raw
-        ['CD-ROM|CD-ROM (Track 1).bin', '49ca35fb'], // <disk> CD-ROM
-        ['CD-ROM|CD-ROM (Track 2).bin', '0316f720'], // <disk> CD-ROM
-        ['CD-ROM|CD-ROM (Track 3).bin', 'a320af40'], // <disk> CD-ROM
-        ['CD-ROM|CD-ROM.cue', 'xxxxxxxx'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM`, 'xxxxxxxx'], // <disk> raw
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`, '49ca35fb'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`, '0316f720'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'], // <disk> CD-ROM
+        [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'], // <disk> CD-ROM
         ['diagnostic_test_cartridge.a78.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
         ['fds_joypad_test.fds.zip|fds_joypad_test.fds', '1e58456d'],
         ['fizzbuzz.zip|fizzbuzz.nes', '370517b5'],
@@ -1914,12 +1928,12 @@ describe('with inferred DATs', () => {
         ['GD-ROM.zip|track02.raw', 'abc178d5'],
         ['GD-ROM.zip|track03.bin', '61a363f1'],
         ['GD-ROM.zip|track04.bin', 'fc5ff5a0'],
-        ['GD-ROM|GD-ROM', 'xxxxxxxx'], // <disk> raw
-        ['GD-ROM|GD-ROM.gdi', 'f16f621c'], // <disk> GD-ROM
-        ['GD-ROM|track01.bin', '9796ed9a'], // <disk> GD-ROM
-        ['GD-ROM|track02.raw', 'abc178d5'], // <disk> GD-ROM
-        ['GD-ROM|track03.bin', '61a363f1'], // <disk> GD-ROM
-        ['GD-ROM|track04.bin', 'fc5ff5a0'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'], // <disk> raw
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track03.bin`, '61a363f1'], // <disk> GD-ROM
+        [`${path.join('GD-ROM', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'], // <disk> GD-ROM
         ['headered.zip|allpads.nes', '9180a163'],
         ['headered.zip|color_test.nintendoentertainmentsystem', 'c9c1b7aa'],
         ['headered.zip|speed_test_v51.smc', '9adca6cc'],
@@ -1983,11 +1997,11 @@ describe('with inferred DATs', () => {
 
       expect(result.outputFilesAndCrcs).toEqual([
         [
-          `2048.chd|2048 -> ${path.join('..', 'input', 'roms', 'chd', '2048.chd')}|2048`,
+          `${path.join('2048', '2048.chd')}|2048 -> ${path.join('..', '..', 'input', 'roms', 'chd', '2048.chd')}|2048`,
           'd774f042',
         ], // raw
         [
-          `4096.chd|4096 -> ${path.join('..', 'input', 'roms', 'chd', '4096.chd')}|4096`,
+          `${path.join('4096', '4096.chd')}|4096 -> ${path.join('..', '..', 'input', 'roms', 'chd', '4096.chd')}|4096`,
           '2e19ca09',
         ], // raw
         [
@@ -2012,6 +2026,26 @@ describe('with inferred DATs', () => {
         ],
         [
           `CD-ROM.chd|CD-ROM.cue -> ${path.join('..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM.cue`,
+          'xxxxxxxx',
+        ],
+        [
+          `${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM -> ${path.join('..', '..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM`,
+          'xxxxxxxx',
+        ],
+        [
+          `${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 1).bin -> ${path.join('..', '..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 1).bin`,
+          '49ca35fb',
+        ],
+        [
+          `${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 2).bin -> ${path.join('..', '..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 2).bin`,
+          '0316f720',
+        ],
+        [
+          `${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 3).bin -> ${path.join('..', '..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`,
+          'a320af40',
+        ],
+        [
+          `${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM.cue -> ${path.join('..', '..', 'input', 'roms', 'chd', 'CD-ROM.chd')}|CD-ROM.cue`,
           'xxxxxxxx',
         ],
         [
@@ -2064,6 +2098,30 @@ describe('with inferred DATs', () => {
         ],
         [
           `GD-ROM.chd|track04.bin -> ${path.join('..', 'input', 'roms', 'chd', 'GD-ROM.chd|track04.bin')}`,
+          'fc5ff5a0',
+        ],
+        [
+          `${path.join('GD-ROM', 'GD-ROM.chd')}|GD-ROM -> ${path.join('..', '..', 'input', 'roms', 'chd', 'GD-ROM.chd')}|GD-ROM`,
+          'xxxxxxxx',
+        ],
+        [
+          `${path.join('GD-ROM', 'GD-ROM.chd')}|GD-ROM.gdi -> ${path.join('..', '..', 'input', 'roms', 'chd', 'GD-ROM.chd')}|GD-ROM.gdi`,
+          'f16f621c',
+        ],
+        [
+          `${path.join('GD-ROM', 'GD-ROM.chd')}|track01.bin -> ${path.join('..', '..', 'input', 'roms', 'chd', 'GD-ROM.chd')}|track01.bin`,
+          '9796ed9a',
+        ],
+        [
+          `${path.join('GD-ROM', 'GD-ROM.chd')}|track02.raw -> ${path.join('..', '..', 'input', 'roms', 'chd', 'GD-ROM.chd')}|track02.raw`,
+          'abc178d5',
+        ],
+        [
+          `${path.join('GD-ROM', 'GD-ROM.chd')}|track03.bin -> ${path.join('..', '..', 'input', 'roms', 'chd', 'GD-ROM.chd')}|track03.bin`,
+          '61a363f1',
+        ],
+        [
+          `${path.join('GD-ROM', 'GD-ROM.chd')}|track04.bin -> ${path.join('..', '..', 'input', 'roms', 'chd', 'GD-ROM.chd')}|track04.bin`,
           'fc5ff5a0',
         ],
         [
