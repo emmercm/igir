@@ -136,6 +136,8 @@ here is how you can perform each RomVault action in Igir:
 
     RomVault respects the directory structure of DATs and "mirrors" it in the sorted directory ("RomRoot"). This can be achieved with a combination of the [`--dir-dat-mirror`](../output/path-options.md#mirror-the-dat-subdirectory) and [`--dir-dat-name`](../output/path-options.md#append-dat-name) options.
 
+    By default, RomVault will always group ROMs into a subdirectory named after the game ("set"), even if the game only has one ROM. This can be achieved with the [`--dir-game-subdir always` option](../output/path-options.md#append-the-game-name).
+
     During writing, RomVault will move unmatched files in the sorted directory ("RomRoot") to the unsorted directory ("ToSort"). This can be achieved with a combination of the [`igir clean` command](../output/cleaning.md) and the [`--clean-backup <path>` option](../output/cleaning.md#backing-up-cleaned-files).
 
 5. **Generate reports**
@@ -155,6 +157,7 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
       --output "RomRoot" ^
       --dir-dat-mirror ^
       --dir-dat-name ^
+      --dir-game-subdir always ^
       --overwrite-invalid ^
       --clean-backup "ToSort" ^
       --zip-format torrentzip ^
@@ -174,6 +177,7 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
       --output "RomRoot" \
       --dir-dat-mirror \
       --dir-dat-name \
+      --dir-game-subdir always \
       --overwrite-invalid \
       --clean-backup "ToSort" \
       --zip-format torrentzip \
@@ -193,6 +197,7 @@ Tying it all together, the Igir command to achieve the same behavior as RomVault
       --output "RomRoot" \
       --dir-dat-mirror \
       --dir-dat-name \
+      --dir-game-subdir always \
       --overwrite-invalid \
       --clean-backup "ToSort" \
       --zip-format torrentzip \
