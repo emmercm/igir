@@ -141,8 +141,8 @@ export default class MultiBar {
   /**
    * Queue a log message to be printed to the terminal.
    */
-  static log(logLevel: LogLevelValue, message: string): void {
-    this.multiBars.at(0)?.log(logLevel, message);
+  static log(logLevel: LogLevelValue, message: string, prefix?: string): void {
+    this.multiBars.at(0)?.log(logLevel, message, prefix);
   }
 
   /**
