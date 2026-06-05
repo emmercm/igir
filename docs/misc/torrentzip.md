@@ -46,7 +46,7 @@ In April 2024, [RomVault v3.7.0](https://wiki.romvault.com/doku.php?id=whats_new
 
 !!! warning
 
-    In May 2026, [RomVault v3.7.6](https://wiki.romvault.com/doku.php?id=whats_new#romvault_376) meaningfully changed how zero-byte files are represented in RVZSTD archives.
+    In May 2026, [RomVault v3.7.6](https://wiki.romvault.com/doku.php?id=whats_new#romvault_376) meaningfully changed how zero-byte files are represented in RVZSTD archives. You can see the details of this change in [igir#2274](https://github.com/emmercm/igir/pull/2274/changes).
 
     RVZSTD archives containing zero-byte files that were written by RomVault before v3.7.6 or Igir before v5.1.0 are considered invalid and will need to be rewritten.
 
