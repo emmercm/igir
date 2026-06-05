@@ -1132,6 +1132,18 @@ describe('MAME v0.260', () => {
         ],
         disks: new Disk({ name: 'area51mx', sha1: '5ff10f4e87094d4449eabf3de7549564ca568c7e' }),
       }),
+      new Game({
+        name: 'jojo',
+        description: "JoJo's Venture (Europe 990128)",
+        roms: [new ROM({ name: 'jojo_euro.29f400.u2', size: 524_288, crc32: '513e40ec' })],
+        disks: [new Disk({ name: 'cap-jjk-3', sha1: 'dc6e74b5e02e13f62cb8c4e234dd6061501e49c1' })],
+      }),
+      new Game({
+        name: 'jojoa',
+        description: "JoJo's Venture (Asia 990128)",
+        roms: [new ROM({ name: 'jojo_asia.29f400.u2', size: 524_288, crc32: '789aa72a' })],
+        disks: [new Disk({ name: 'cap-jjk-3', sha1: 'dc6e74b5e02e13f62cb8c4e234dd6061501e49c1' })],
+      }),
     ],
   });
 
@@ -1144,7 +1156,7 @@ describe('MAME v0.260', () => {
     .then((files) => files.filter(ArrayUtil.filterUniqueMapped((file) => file.hashCode())))
     .then((files) => IndexedFiles.fromFiles(files));
 
-  it('should include disks by default', async () => {
+  it('should include disks by default when zipping', async () => {
     const options = new Options({
       commands: ['copy', 'zip'],
       dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
@@ -1167,20 +1179,68 @@ describe('MAME v0.260', () => {
       `${path.resolve('2spicy.zip')}|6.0.0010a.bin`,
       `${path.resolve('2spicy.zip')}|fpr-24370b.ic6`,
       `${path.resolve('2spicy.zip')}|vid_bios.u504`,
-      path.resolve('2spicy', 'dvp-0027a'),
-      path.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01'),
+      path.resolve('2spicy', 'dvp-0027a.chd'),
+      path.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01.chd'),
       `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hh.hh`,
       `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_hl.hl`,
       `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_lh.lh`,
       `${path.resolve('a51mxr3k.zip')}|1.0_r3k_max-a51_kit_ll.ll`,
       `${path.resolve('a51mxr3k.zip')}|jagwave.rom`,
-      path.resolve('a51mxr3k', 'area51mx'),
+      path.resolve('a51mxr3k', 'area51mx.chd'),
       `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3h.3h`,
       `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3k.3k`,
       `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3m.3m`,
       `${path.resolve('area51mx.zip')}|2.0_68020_max-a51_kit_3p.3p`,
       `${path.resolve('area51mx.zip')}|jagwave.rom`,
-      path.resolve('area51mx', 'area51mx'),
+      path.resolve('area51mx', 'area51mx.chd'),
+      `${path.resolve('jojo.zip')}|jojo_euro.29f400.u2`,
+      path.resolve('jojo', 'cap-jjk-3.chd'),
+      `${path.resolve('jojoa.zip')}|jojo_asia.29f400.u2`,
+      path.resolve('jojoa', 'cap-jjk-3.chd'),
+    ]);
+  });
+
+  it('should include disks by default when extracting', async () => {
+    const options = new Options({
+      commands: ['copy', 'extract'],
+      dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+    });
+
+    const candidates = await new CandidateGenerator(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new MappableSemaphore(os.availableParallelism()),
+    ).generate(mameDat, await mameIndexedFiles);
+
+    const outputFiles = candidates
+      .flatMap((candidate) => candidate.getRomsWithFiles())
+      .map((romWithFiles) => romWithFiles.getOutputFile().toString())
+      .toSorted();
+    expect(outputFiles).toEqual([
+      path.resolve('2spicy', '6.0.0009.bin'),
+      path.resolve('2spicy', '6.0.0010.bin'),
+      path.resolve('2spicy', '6.0.0010a.bin'),
+      path.resolve('2spicy', 'dvp-0027a.chd'),
+      path.resolve('2spicy', 'fpr-24370b.ic6'),
+      path.resolve('2spicy', 'mda-c0004a_revb_lindyellow_v2.4.20_mvl31a_boot_2.01.chd'),
+      path.resolve('2spicy', 'vid_bios.u504'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hh.hh'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_hl.hl'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_lh.lh'),
+      path.resolve('a51mxr3k', '1.0_r3k_max-a51_kit_ll.ll'),
+      path.resolve('a51mxr3k', 'area51mx.chd'),
+      path.resolve('a51mxr3k', 'jagwave.rom'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3h.3h'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3k.3k'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
+      path.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
+      path.resolve('area51mx', 'area51mx.chd'),
+      path.resolve('area51mx', 'jagwave.rom'),
+      path.resolve('jojo', 'cap-jjk-3.chd'),
+      path.resolve('jojo', 'jojo_euro.29f400.u2'),
+      path.resolve('jojoa', 'cap-jjk-3.chd'),
+      path.resolve('jojoa', 'jojo_asia.29f400.u2'),
     ]);
   });
 
@@ -1218,6 +1278,8 @@ describe('MAME v0.260', () => {
       path.resolve('area51mx', '2.0_68020_max-a51_kit_3m.3m'),
       path.resolve('area51mx', '2.0_68020_max-a51_kit_3p.3p'),
       path.resolve('area51mx', 'jagwave.rom'),
+      path.resolve('jojo_asia.29f400.u2'),
+      path.resolve('jojo_euro.29f400.u2'),
     ]);
   });
 });

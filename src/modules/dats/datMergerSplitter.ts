@@ -194,14 +194,21 @@ export default class DATMergerSplitter extends Module {
           }),
       ),
     );
-    const allRoms = [...cloneRoms, ...parentGames.flatMap((parentGame) => parentGame.getRoms())];
-    // And remove any duplicate ROMs, even if the duplicates exist only in clones and not the parent
-    const allRomsDeduplicated = allRoms.filter(
-      ArrayUtil.filterUniqueMapped((rom) => rom.hashCode()),
-    );
+    const allRomsDeduplicated = [
+      ...cloneRoms,
+      ...parentGames.flatMap((parentGame) => parentGame.getRoms()),
+    ]
+      // Remove any duplicate ROMs, even if the duplicates exist only in clones and not the parent
+      .filter(ArrayUtil.filterUniqueMapped((rom) => rom.hashCode()));
+    const cloneDisks = cloneGames.flatMap((game) => game.getDisks());
+    const allDisksDeduplicated = [
+      ...cloneDisks,
+      ...parentGames.flatMap((parentGame) => parentGame.getDisks()),
+    ].filter(ArrayUtil.filterUniqueMapped((disk) => disk.getName()));
     return [
       parentGames[0].withProps({
         roms: allRomsDeduplicated,
+        disks: allDisksDeduplicated,
       }),
     ];
   }
