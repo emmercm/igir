@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
-
+import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
 import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
@@ -52,7 +51,6 @@ export default class ChdGdi extends Chd {
     await chdman.extractCd({
       inputFilename: this.getFilePath(),
       outputFilename: gdiFile,
-      binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
     });
 
     // Apply TOSEC-style CRLF line separators to the .gdi file

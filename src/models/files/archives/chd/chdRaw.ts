@@ -1,7 +1,6 @@
 import path from 'node:path';
 
-import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
-
+import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
 import IgirException from '../../../../exceptions/igirException.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
@@ -85,19 +84,16 @@ export default class ChdRaw extends Chd {
       await chdman.extractRaw({
         inputFilename: this.getFilePath(),
         outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
     } else if (info.type === CHDType.HARD_DISK) {
       await chdman.extractHd({
         inputFilename: this.getFilePath(),
         outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
     } else if (info.type === CHDType.DVD_ROM) {
       await chdman.extractDvd({
         inputFilename: this.getFilePath(),
         outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
       });
     } else if (info.type === CHDType.CD_ROM) {
       throw new IgirException("CD-ROM CHDs can't be extracted as raw");

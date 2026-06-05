@@ -79,6 +79,8 @@ await copyfiles(
     'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
     'packages/*/deps/**/appveyor.yml',
     'packages/*/deps/**/Package.swift',
+    // chdman: ignore everything due to size
+    'packages/chdman/deps/**',
     // zlib
     'packages/zlib*/deps/**/amiga/**',
     'packages/zlib*/deps/**/contrib/**',

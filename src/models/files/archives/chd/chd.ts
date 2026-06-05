@@ -3,9 +3,10 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import { Mutex } from 'async-mutex';
-import chdman, { CHDInfo, ChdmanBinaryPreference } from 'chdman';
 import { Memoize } from 'typescript-memoize';
 
+import type { CHDInfo } from '../../../../../packages/chdman/index.js';
+import chdman from '../../../../../packages/chdman/index.js';
 import Timer from '../../../../async/timer.js';
 import IgirException from '../../../../exceptions/igirException.js';
 import Temp from '../../../../globals/temp.js';
@@ -130,9 +131,6 @@ export default abstract class Chd extends Archive {
 
   @Memoize()
   async getInfo(): Promise<CHDInfo> {
-    return await chdman.info({
-      inputFilename: this.getFilePath(),
-      binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
-    });
+    return await chdman.info({ inputFilename: this.getFilePath() });
   }
 }
