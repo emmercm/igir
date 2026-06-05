@@ -624,12 +624,12 @@ describe('zip', () => {
     [
       '**/!(header*)/*',
       [
-        '2048', // <disk>
-        '4096', // <disk>
-        'CD-ROM', // <disk>
+        path.join('2048', '2048.chd'), // <disk>
+        path.join('4096', '4096.chd'), // <disk>
         'CD-ROM.zip',
-        'GD-ROM', // <disk>
+        path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
         'GD-ROM.zip',
+        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
         'GameCube-240pSuite-1.19.zip',
         'UMD.zip',
         'best.zip',
@@ -731,12 +731,12 @@ describe('zip', () => {
     [
       '**/!(header*)/*',
       [
-        '2048', // <disk>
-        '4096', // <disk>
-        'CD-ROM', // <disk>
+        path.join('2048', '2048.chd'), // <disk>
+        path.join('4096', '4096.chd'), // <disk>
         'CD-ROM.zip',
-        'GD-ROM', // <disk>
+        path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
         'GD-ROM.zip',
+        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
         'GameCube-240pSuite-1.19.zip',
         'UMD.zip',
         'best.zip',
@@ -1133,10 +1133,19 @@ describe('extract', () => {
     [
       '**/!(header*)/*',
       [
-        '2048',
-        '4096',
-        'CD-ROM', // <disk>
-        'GD-ROM', // <disk>
+        '2048.chd', // <disk>
+        '4096.chd', // <disk>
+        'CD-ROM.chd', // <disk>
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
+        path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
+        path.join('CD-ROM', 'CD-ROM (Track 3).bin'), // <disk>
+        path.join('CD-ROM', 'CD-ROM.cue'), // <disk>
+        'GD-ROM.chd', // <disk>
+        path.join('GD-ROM', 'GD-ROM.gdi'), // <disk>
+        path.join('GD-ROM', 'track01.bin'), // <disk>
+        path.join('GD-ROM', 'track02.raw'), // <disk>
+        path.join('GD-ROM', 'track03.bin'), // <disk>
+        path.join('GD-ROM', 'track04.bin'), // <disk>
         'GameCube-240pSuite-1.19.iso',
         'UMD.iso',
         'best.rom',
@@ -1272,10 +1281,19 @@ describe('extract', () => {
     [
       '**/!(header*)/*',
       [
-        '2048',
-        '4096',
-        'CD-ROM', // <disk>
-        'GD-ROM', // <disk>
+        '2048.chd', // <disk>
+        '4096.chd', // <disk>
+        'CD-ROM.chd', // <disk>
+        path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
+        path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
+        path.join('CD-ROM', 'CD-ROM (Track 3).bin'), // <disk>
+        path.join('CD-ROM', 'CD-ROM.cue'), // <disk>
+        'GD-ROM.chd', // <disk>
+        path.join('GD-ROM', 'GD-ROM.gdi'), // <disk>
+        path.join('GD-ROM', 'track01.bin'), // <disk>
+        path.join('GD-ROM', 'track02.raw'), // <disk>
+        path.join('GD-ROM', 'track03.bin'), // <disk>
+        path.join('GD-ROM', 'track04.bin'), // <disk>
         'GameCube-240pSuite-1.19.iso',
         'UMD.iso',
         'best.rom',
@@ -1321,7 +1339,16 @@ describe('extract', () => {
         path.join('chd', '4096.chd'),
         path.join('chd', 'CD-ROM.chd'),
         path.join('chd', 'GD-ROM.chd'),
+        path.join('discs', 'CD-ROM (Track 1).bin'),
+        path.join('discs', 'CD-ROM (Track 2).bin'),
+        path.join('discs', 'CD-ROM (Track 3).bin'),
+        path.join('discs', 'CD-ROM.cue'),
+        path.join('discs', 'GD-ROM.gdi'),
         path.join('discs', 'UMD.iso'),
+        path.join('discs', 'track01.bin'),
+        path.join('discs', 'track02.raw'),
+        path.join('discs', 'track03.bin'),
+        path.join('discs', 'track04.bin'),
         path.join('patchable', '0F09A40.rom'),
         path.join('patchable', '3708F2C.rom'),
         path.join('patchable', '612644F.rom'),
@@ -1575,12 +1602,10 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       [
-        '2048',
-        '4096',
-        'CD-ROM', // <disk> raw
-        'CD-ROM.chd',
-        'GD-ROM', // <disk> raw
-        'GD-ROM.chd',
+        '2048.chd', // <disk> raw
+        '4096.chd', // <disk> raw
+        'CD-ROM.chd', // <disk> raw
+        'GD-ROM.chd', // <disk> raw
         'GameCube-240pSuite-1.19.gcz',
         'UMD.cso',
         'best.gz',
@@ -1695,12 +1720,10 @@ describe('raw', () => {
     [
       '**/!(header*)/*',
       [
-        '2048',
-        '4096',
-        'CD-ROM', // <disk> raw
-        'CD-ROM.chd',
-        'GD-ROM', // <disk> raw
-        'GD-ROM.chd',
+        '2048.chd', // <disk> raw
+        '4096.chd', // <disk> raw
+        'CD-ROM.chd', // <disk> raw
+        'GD-ROM.chd', // <disk> raw
         'GameCube-240pSuite-1.19.gcz',
         'UMD.cso',
         'best.gz',
