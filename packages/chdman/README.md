@@ -1,6 +1,53 @@
 # chdman Node-API Bindings
 
-A recreation of MAME's chdman tool.
+A recreation of MAME's chdman CHD listing and extraction, as a Node-API (N-API)
+native addon. It is built directly on the public MAME `chd_file`/`cdrom_file`
+libraries (compiled from the `deps/mame` submodule); it does **not** `#include`
+`chdman.cpp`. The only tool-specific logic is a small, clearly delimited "ported
+region" in `binding.cpp` copied from `chdman.cpp` at the submodule's MAME version.
+Listing and extraction use no temporary files: the TOC text and per-track byte
+sequence are produced in memory and streamed to Node via pull-based reader handles.
+
+## API
+
+`index.ts` exports a default object with these async methods:
+
+- `info({ inputFilename })` — CHD header metadata (`type`, `logicalSize`, `sha1`,
+  `dataSha1`, compression, etc.). `type` is one of `CHDType`
+  (`RAW`/`HARD_DISK`/`CD_ROM`/`GD_ROM`/`DVD_ROM`).
+- `listCdBinCueTracks({ inputFilename, binNamePattern, cueName })` — fast,
+  TOC-only listing of a CD/GD-ROM as cue/bin: returns the `.cue` text plus a
+  `TrackDescriptor[]` (`index`, `filename`, `type`, `size`). Reads only the
+  header/metadata; never decompresses.
+- `listGdRomTracks({ inputFilename, trackBaseName, gdiName })` — TOC-only listing
+  of a GD-ROM as gdi. The `.gdi` text is already TOSEC-normalized (quote-stripped,
+  CRLF, no blank lines).
+- `openTrackReader({ inputFilename, mode, trackIndex })` — a pull-based reader for
+  one cue/bin or gdi track (`mode` is `'cuebin'` or `'gdi'`). Decompresses only the
+  requested track.
+- `openRawReader({ inputFilename })` — a pull-based reader over a RAW/HARD_DISK/
+  DVD_ROM CHD's logical bytes.
+
+Each reader exposes `read(maxBytes): Promise<Buffer | null>` (resolving `null` at
+EOF) and `close()`. The named export `readableFromReader(reader)` wraps a reader in
+a `stream.Readable`; callers must consume it to the end or `destroy()` it so the
+native reader is released.
+
+### GD-ROM as cue/bin
+
+GD-ROMs may be extracted as cue/bin as well as gdi. Some GD-ROMs cannot be
+expressed as cue/bin — a high-density track's `padframes` exceeds
+`frames + splitframes`, so chdman's per-track frame count underflows and extraction
+would run far past 100% of the disc. The listing/reader detect this and throw
+(the protection the chdman CLI's progress watchdog provided), so callers fall back
+to gdi/raw rather than decompressing a runaway image.
+
+### Re-porting on MAME submodule bumps
+
+The "ported region" in `binding.cpp` is annotated with the `chdman.cpp` line ranges
+it was copied from. When bumping the `deps/mame` submodule, diff each sub-block
+against the cited ranges in the new `chdman.cpp` and re-capture the golden
+snapshots with `scripts/chdGoldenCapture.ts`.
 
 ## License
 

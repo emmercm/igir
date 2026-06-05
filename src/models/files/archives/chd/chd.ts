@@ -1,30 +1,73 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import stream from 'node:stream';
 
-import { Mutex } from 'async-mutex';
 import { Memoize } from 'typescript-memoize';
 
 import type { CHDInfo } from '../../../../../packages/chdman/index.js';
-import chdman from '../../../../../packages/chdman/index.js';
-import Timer from '../../../../async/timer.js';
+import chdman, { readableFromReader } from '../../../../../packages/chdman/index.js';
 import IgirException from '../../../../exceptions/igirException.js';
-import Temp from '../../../../globals/temp.js';
-import FsUtil from '../../../../utils/fsUtil.js';
-import StreamUtil from '../../../../utils/streamUtil.js';
-import File from '../../file.js';
 import Archive from '../archive.js';
+
+/**
+ * How a single listed file is produced when a CHD is extracted.
+ */
+export interface ChdListedFile {
+  // Output filename, equal to the {@link ArchiveEntry} path
+  filename: string;
+  // Byte size including any pregap/postgap
+  size: number;
+  // Undefined for the generated .cue/.gdi text file
+  trackIndex?: number;
+}
+
+/**
+ * The set of files a CHD exposes, plus the generated table-of-contents text.
+ */
+export interface ChdListing {
+  mode: 'cuebin' | 'gdi';
+  tocFilename: string;
+  tocText: string;
+  files: ChdListedFile[];
+}
+
+/**
+ * A {@link stream.Transform} that drops the first `count` bytes of its input.
+ */
+class SkipBytesTransform extends stream.Transform {
+  private remaining: number;
+
+  constructor(count: number) {
+    super();
+    this.remaining = count;
+  }
+
+  /**
+   * Pass through bytes after the leading `count` bytes have been dropped.
+   */
+  override _transform(
+    chunk: Buffer,
+    _encoding: BufferEncoding,
+    callback: stream.TransformCallback,
+  ): void {
+    if (this.remaining > 0) {
+      if (chunk.length <= this.remaining) {
+        this.remaining -= chunk.length;
+        callback();
+        return;
+      }
+      const sliced = chunk.subarray(this.remaining);
+      this.remaining = 0;
+      callback(undefined, sliced);
+      return;
+    }
+    callback(undefined, chunk);
+  }
+}
 
 /**
  * Base class for MAME Compressed Hunks of Data (CHD) disc/disk image formats.
  */
 export default abstract class Chd extends Archive {
-  private tempSingletonHandles = 0;
-
-  private readonly tempSingletonMutex = new Mutex();
-
-  private tempSingletonDirPath?: string;
-
   static getExtensions(): string[] {
     return ['.chd'];
   }
@@ -41,91 +84,60 @@ export default abstract class Chd extends Archive {
     return false;
   }
 
+  protected abstract getListing(): Promise<ChdListing>;
+
+  /**
+   * Open a {@link stream.Readable} for one listed file, decompressing only that file's data.
+   */
+  protected async streamFile(file: ChdListedFile, listing: ChdListing): Promise<stream.Readable> {
+    if (file.trackIndex === undefined) {
+      return stream.Readable.from(Buffer.from(listing.tocText));
+    }
+    const reader = await chdman.openTrackReader({
+      inputFilename: this.getFilePath(),
+      mode: listing.mode,
+      trackIndex: file.trackIndex,
+    });
+    return readableFromReader(reader);
+  }
+
   /**
    * Extract the named entry from the CHD to the given file path.
    */
   async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
-    await this.extractEntryToStreamCached(entryPath, async (readable) => {
+    await this.extractEntryToStream(entryPath, async (readable) => {
       await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
     });
   }
 
-  abstract extractArchiveEntries(outputDirectory: string): Promise<string[]>;
-
-  private async extractEntryToStreamCached<T>(
+  /**
+   * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback
+   * with it.
+   */
+  override async extractEntryToStream<T>(
     entryPath: string,
     callback: (readable: stream.Readable) => Promise<T> | T,
+    start = 0,
   ): Promise<T> {
-    await this.tempSingletonMutex.runExclusive(async () => {
-      this.tempSingletonHandles += 1;
-
-      if (this.tempSingletonDirPath !== undefined) {
-        return;
-      }
-      this.tempSingletonDirPath = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
-
-      const extractedFiles = await this.extractArchiveEntries(this.tempSingletonDirPath);
-      if (extractedFiles.length === 0) {
-        this.tempSingletonDirPath = undefined;
-        throw new IgirException(`failed to extract`);
-      }
-    });
-
-    const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
-    if (this.tempSingletonDirPath === undefined) {
-      throw new Error('CHD singleton path is required (this should never happen!)');
+    const listing = await this.getListing();
+    const file = listing.files.find((listedFile) => listedFile.filename === entryPath);
+    if (file === undefined) {
+      throw new IgirException(`CHD entry not found: ${this.getFilePath()}|${entryPath}`);
     }
-    const filePath = path.join(this.tempSingletonDirPath, extractedEntryPath);
 
-    // Parse the entry path for any extra start/stop parameters
-    const [trackSizeAndPregap, trackOffset] = (sizeAndOffset ?? '').split('@');
-    const [trackSize, pregapSizeString, postgapSizeString] = trackSizeAndPregap.split('+');
-    const pregapSize = pregapSizeString === undefined ? 0 : Number.parseInt(pregapSizeString, 10);
-    const postgapSize =
-      postgapSizeString === undefined ? 0 : Number.parseInt(postgapSizeString, 10);
-    const streamStart = Number.parseInt(trackOffset ?? '0', 10);
-    const streamEnd =
-      !trackSize || Number.isNaN(Number(trackSize))
-        ? undefined
-        : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
+    let readable = await this.streamFile(file, listing);
+    // Preserve base-class semantics: a non-zero start offset (e.g. a detected ROM
+    // header) must skip that many leading bytes of the forward-only stream.
+    if (start > 0) {
+      readable = readable.pipe(new SkipBytesTransform(start));
+    }
 
     try {
-      return await File.createStreamFromFile(
-        filePath,
-        async (readable) => {
-          if (pregapSize + postgapSize > 0) {
-            return await callback(
-              StreamUtil.concat(
-                StreamUtil.staticReadable(pregapSize, 0x00),
-                readable,
-                StreamUtil.staticReadable(postgapSize, 0x00),
-              ),
-            );
-          }
-          return await callback(readable);
-        },
-        streamStart,
-        streamEnd,
-      );
+      return await callback(readable);
     } catch (error) {
-      throw new IgirException(
-        `failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`,
-      );
+      throw new IgirException(`failed to read ${this.getFilePath()}|${entryPath}: ${error}`);
     } finally {
-      // Give a grace period before deleting the temp file, the next read may be of the same file
-      Timer.setTimeout(
-        async () => {
-          await this.tempSingletonMutex.runExclusive(async () => {
-            this.tempSingletonHandles -= 1;
-            if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {
-              const tempSingletonDirPath = this.tempSingletonDirPath;
-              this.tempSingletonDirPath = undefined;
-              await FsUtil.rm(tempSingletonDirPath, { recursive: true, force: true });
-            }
-          });
-        },
-        process.env.NODE_ENV === 'test' ? 100 : 5000,
-      );
+      readable.destroy();
     }
   }
 

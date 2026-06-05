@@ -1,29 +1,306 @@
 // chdman native addon.
-//
-// chdman.cpp is a CLI tool whose entry point is `int CLIB_DECL main(...)`. We
-// rename that symbol via a build-time macro and #include the (unmodified)
-// submodule source so that all of its `static` handlers become visible to the
-// N-API glue appended below, without editing anything under deps/mame.
-#define main chdman_main
-#include "deps/mame/src/tools/chdman.cpp"
-#undef main
-
-// MAME normally generates src/version.cpp at build time; it is not part of the
-// submodule, and chdman.cpp references only `build_version`, so we define that
-// stub here. The leading `extern` declaration forces external linkage (a
-// namespace-scope `const` array would otherwise be internal-linkage in C++) so
-// chdman.cpp's `extern const char build_version[]` reference resolves.
-extern const char build_version[];
-const char build_version[] = "chdman (igir native addon)";
-
 #include <napi.h>
+#include "cdrom.h"      // cdrom_file
+#include "chd.h"        // chd_file, chd_codec_type
+#include "chdcodec.h"   // chd_codec_type constants
+#include "path.h"       // core_filename_extract_base
+#include "strformat.h"  // util::string_format, util::stream_format
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <iostream>
-#include <mutex>
+#include <cstring>
+#include <memory>
 #include <optional>
+#include <ostream>
+#include <regex>
 #include <sstream>
-#include <streambuf>
+#include <vector>
+
+// ===== BEGIN ported from deps/mame/src/tools/chdman.cpp @ MAME 0.288 (submodule tag mame0288) =====
+// Re-port when bumping the MAME submodule: diff each sub-block against the cited
+// line range. Helpers are `port_`-prefixed to avoid name clashes.
+
+// MODE_* constants (chdman.cpp lines 71-73).
+enum {
+  MODE_NORMAL = 0,
+  MODE_CUEBIN = 1,
+  MODE_GDI = 2,
+};
+
+// chdman.cpp: msf_string_from_frames (verbatim, line 1072).
+static std::string port_msf_string_from_frames(uint32_t frames) {
+  return util::string_format("%02d:%02d:%02d", frames / (75 * 60), (frames / 75) % 60, frames % 75);
+}
+
+// chdman's do_extract_cd writes `frames - padframes + splitframes` data frames
+// per split bin (chdman.cpp line 2968). Some GD-ROM CHDs cannot be expressed as
+// cue/bin: their high-density track has padframes exceeding frames+splitframes, so
+// that uint32 formula underflows to ~4.29e9 frames (~10 TB) and extraction would
+// run far past chdman's total_bytes (chdman.cpp line 2734) -- i.e. past 100% of
+// the disc. The chdman CLI relied on a progress watchdog to abort that runaway;
+// we instead detect the underflow up front and throw, so callers (e.g. ChdBinCue)
+// fall back to gdi/raw for such GD-ROMs instead of decompressing forever.
+static uint32_t port_actual_frames(const cdrom_file::track_info& t, int tracknum) {
+  const int64_t frames = int64_t(t.frames) + int64_t(t.splitframes) - int64_t(t.padframes);
+  if (frames < 0) {
+    throw std::runtime_error(
+        "CHD cannot be extracted as cue/bin: track " + std::to_string(tracknum + 1) +
+        " frame count underflows (padframes " + std::to_string(t.padframes) + " > frames " +
+        std::to_string(t.frames) + " + splitframes " + std::to_string(t.splitframes) + ")");
+  }
+  return static_cast<uint32_t>(frames);
+}
+
+// chdman.cpp output_track_metadata 1527-1586, MODE_GDI + MODE_CUEBIN only,
+// writing to std::ostream& via util::stream_format(out, ...).
+static void port_output_track_metadata(int mode, std::ostream& out, int tracknum,
+    const cdrom_file::track_info& info, const std::string& filename,
+    uint32_t frameoffs, uint64_t outputoffs) {
+  if (mode == MODE_GDI) {
+    const int tracktype = info.trktype == cdrom_file::CD_TRACK_AUDIO ? 0 : 4;
+    const bool needquote = filename.find(' ') != std::string::npos;
+    const char* const quotestr = needquote ? "\"" : "";
+    util::stream_format(out, "%d %d %d %d %s%s%s %d\n", tracknum + 1, frameoffs, tracktype,
+        info.datasize, quotestr, filename, quotestr, outputoffs);
+  } else if (mode == MODE_CUEBIN) {
+    // specify a new file when writing to the beginning of a file
+    if (outputoffs == 0)
+      util::stream_format(out, "FILE \"%s\" BINARY\n", filename);
+
+    // determine submode
+    std::string tempstr;
+    switch (info.trktype) {
+      case cdrom_file::CD_TRACK_MODE1:
+      case cdrom_file::CD_TRACK_MODE1_RAW:
+        tempstr = util::string_format("MODE1/%04d", info.datasize);
+        break;
+
+      case cdrom_file::CD_TRACK_MODE2:
+      case cdrom_file::CD_TRACK_MODE2_FORM1:
+      case cdrom_file::CD_TRACK_MODE2_FORM2:
+      case cdrom_file::CD_TRACK_MODE2_FORM_MIX:
+      case cdrom_file::CD_TRACK_MODE2_RAW:
+        tempstr = util::string_format("MODE2/%04d", info.datasize);
+        break;
+
+      case cdrom_file::CD_TRACK_AUDIO:
+        tempstr.assign("AUDIO");
+        break;
+    }
+
+    // output TRACK entry
+    util::stream_format(out, "  TRACK %02d %s\n", tracknum + 1, tempstr);
+
+    // output PREGAP tag if pregap sectors are not in the file
+    if ((info.pregap > 0) && (info.pgdatasize == 0)) {
+      util::stream_format(out, "    PREGAP %s\n", port_msf_string_from_frames(info.pregap));
+      util::stream_format(out, "    INDEX 01 %s\n", port_msf_string_from_frames(frameoffs));
+    } else if ((info.pregap > 0) && (info.pgdatasize > 0)) {
+      util::stream_format(out, "    INDEX 00 %s\n", port_msf_string_from_frames(frameoffs));
+      util::stream_format(out, "    INDEX 01 %s\n",
+          port_msf_string_from_frames(frameoffs + info.pregap));
+    }
+
+    // if no pregap at all, output index 01 only
+    if (info.pregap == 0) {
+      util::stream_format(out, "    INDEX 01 %s\n", port_msf_string_from_frames(frameoffs));
+    }
+
+    // output POSTGAP
+    if (info.postgap > 0)
+      util::stream_format(out, "    POSTGAP %s\n", port_msf_string_from_frames(info.postgap));
+  }
+}
+
+// chdman.cpp 2848-2912, GD-ROM Redump TOC adjustment, mutating toc in place.
+static void apply_gdrom_cuebin_toc_adjustment(cdrom_file::toc& toc) {
+  // TOSEC GDI-based CHDs have the padframes field set to non-0 where the pregaps
+  // for the next track would be
+  const bool has_physical_pregap = toc.tracks[0].padframes == 0;
+
+  for (int tracknum = 1; tracknum < int(toc.numtrks); tracknum++) {
+    // pgdatasize should never be set in GD-ROMs currently, so if it is set then
+    // assume the TOC has proper pregap values
+    if (toc.tracks[tracknum].pgdatasize != 0)
+      break;
+
+    // don't adjust the first track of the single-density and high-density areas
+    if (toc.tracks[tracknum].physframeofs == 45000)
+      continue;
+
+    if (!has_physical_pregap) {
+      // NOTE: This will generate a cue with PREGAP commands instead of INDEX 00
+      // because the pregap data isn't baked into the bins
+      toc.tracks[tracknum].pregap += toc.tracks[tracknum - 1].padframes;
+
+      // "type 1" and "type 2" don't require any adjustments
+      if (tracknum + 1 >= int(toc.numtrks) &&
+          toc.tracks[tracknum].trktype != cdrom_file::CD_TRACK_AUDIO) {
+        if (toc.tracks[tracknum - 1].trktype != cdrom_file::CD_TRACK_AUDIO) {
+          // "type 3" where the high-density area is just two data tracks
+          toc.tracks[tracknum - 1].padframes += 225;
+
+          toc.tracks[tracknum].pregap += 225;
+          toc.tracks[tracknum].splitframes = 225;
+          toc.tracks[tracknum].pgdatasize = toc.tracks[tracknum].datasize;
+          toc.tracks[tracknum].pgtype = toc.tracks[tracknum].trktype;
+        } else {
+          // "type 3 split"
+          toc.tracks[tracknum - 1].frames -= 75;
+          toc.tracks[tracknum].pregap += 75;
+        }
+      }
+    } else {
+      int curextra = 150;  // 00:02:00
+      if (tracknum + 1 >= int(toc.numtrks) &&
+          toc.tracks[tracknum].trktype != cdrom_file::CD_TRACK_AUDIO)
+        curextra += 75;  // 00:01:00, special case when last track is data
+
+      toc.tracks[tracknum - 1].padframes = curextra;
+
+      toc.tracks[tracknum].pregap += curextra;
+      toc.tracks[tracknum].splitframes = curextra;
+      toc.tracks[tracknum].pgdatasize = toc.tracks[tracknum].datasize;
+      toc.tracks[tracknum].pgtype = toc.tracks[tracknum].trktype;
+    }
+  }
+}
+
+// chdman.cpp 2744-2804, %t templating for one track (always split-bin).
+static std::string FormatTrackName(const std::string& pattern, int tracknum) {
+  const std::regex variables_regex("(%*)(%([+-]?\\d+)?([a-zA-Z]))");
+  std::string::const_iterator name_itr = pattern.begin();
+  std::string::const_iterator name_end = pattern.end();
+  std::string filename_formatted = pattern;
+  std::smatch variable_matches;
+
+  while (std::regex_search(name_itr, name_end, variable_matches, variables_regex)) {
+    // full_match will always have one leading %, so if leading_escape has an even
+    // number of %s then we can know that we're working on an unescaped %
+    const std::string leading_escape = variable_matches[1].str();
+    const std::string full_match = variable_matches[2].str();
+    const std::string format_part = variable_matches[3].str();
+    const std::string format_type = variable_matches[4].str();
+
+    if ((leading_escape.size() % 2) == 0) {
+      std::string replacement;
+
+      if (format_type == "t") {
+        // track number (always split-bin here, so always replaced)
+        replacement = util::string_format("%" + format_part + "d", tracknum + 1);
+      }
+
+      if (!replacement.empty()) {
+        size_t index = std::string::npos;
+        while ((index = filename_formatted.find(full_match)) != std::string::npos)
+          filename_formatted.replace(index, full_match.size(), replacement);
+      }
+    }
+
+    name_itr = variable_matches.suffix().first;  // move past match for next loop
+  }
+
+  return filename_formatted;
+}
+
+// One track in the in-memory listing. `size` is the data-only byte count written
+// to the split bin (subcode is never included in cue/gdi extraction).
+struct TrackOut {
+  int index;
+  std::string filename;
+  std::string type;
+  uint64_t size;
+};
+
+// Build the TOC text and per-track listing for a CHD, mirroring chdman's
+// do_extract_cd (2638-3021) but writing to memory instead of files. For MODE_GDI
+// the TOC text is normalized to igir's historical ChdGdi output (quote-stripped,
+// CRLF line endings) after assembly.
+static void BuildListing(const std::string& inputPath, int mode,
+                         const std::string& binPatternOrBase, const std::string& /*tocName*/,
+                         std::string& tocTextOut, std::vector<TrackOut>& tracksOut) {
+  chd_file chd;
+  std::error_condition err = chd.open(inputPath, false, nullptr);
+  if (err)
+    throw std::runtime_error("failed to open CHD: " + err.message());
+  cdrom_file cdrom(&chd);
+  cdrom_file::toc toc = cdrom.get_toc();
+  const bool isGdrom = cdrom.is_gdrom();
+  if (mode == MODE_CUEBIN && isGdrom)
+    apply_gdrom_cuebin_toc_adjustment(toc);
+
+  std::ostringstream toc_text;
+
+  // header: gdi -> "<numtrks>\n"; cuebin -> no header (chdman emits the CD_ROM
+  // header only in MODE_NORMAL)
+  if (mode == MODE_GDI) {
+    util::stream_format(toc_text, "%d\n", toc.numtrks);
+  }
+
+  uint64_t outputoffs = 0;
+  std::string trackbin_name;
+  uint32_t discoffs = 0;
+  for (int tracknum = 0; tracknum < int(toc.numtrks); tracknum++) {
+    const cdrom_file::track_info& t = toc.tracks[tracknum];
+    std::string filename;
+    if (mode == MODE_GDI) {
+      const char* ext = (t.trktype == cdrom_file::CD_TRACK_AUDIO) ? ".raw" : ".bin";
+      filename = FormatTrackName(binPatternOrBase + "%02t" + ext, tracknum);
+    } else {
+      filename = FormatTrackName(binPatternOrBase, tracknum);
+    }
+    if (filename != trackbin_name) {
+      outputoffs = 0;
+      if (mode != MODE_GDI)
+        discoffs = 0;
+      trackbin_name = filename;
+    }
+    if (mode == MODE_CUEBIN && isGdrom) {
+      if (tracknum == 0)
+        toc_text << "REM SINGLE-DENSITY AREA\n";
+      else if (t.physframeofs == 45000)
+        toc_text << "REM HIGH-DENSITY AREA\n";
+    }
+    port_output_track_metadata(mode, toc_text, tracknum, t,
+        std::string(core_filename_extract_base(filename)), discoffs, outputoffs);
+
+    // SIZE = data bytes ONLY. chdman's do_extract_cd loop (2966-3018) writes
+    // exactly actualframes*datasize bytes per split bin. Virtual pregap
+    // (pgdatasize==0) and postgap are cue/gdi COMMANDS (PREGAP/POSTGAP), never
+    // bytes in the file; data-in-file pregaps are already folded into
+    // actualframes via splitframes. So DO NOT add pregap/postgap bytes.
+    const uint32_t actualframes = port_actual_frames(t, tracknum);
+    const uint64_t dataBytes = uint64_t(actualframes) * t.datasize;
+    tracksOut.push_back(TrackOut{tracknum, filename,
+        std::string(cdrom_file::get_type_string(t.trktype)), dataBytes});
+
+    outputoffs += dataBytes;
+    discoffs += actualframes + t.padframes;
+  }
+
+  std::string text = toc_text.str();
+
+  if (mode == MODE_GDI) {
+    // chdman emits gdi lines like `1 0 4 2352 "track01.bin" 0` with quotes and
+    // LF. igir's historical ChdGdi output is quote-stripped, CRLF, no empty
+    // lines, with a trailing CRLF. Normalize to match.
+    std::string normalized;
+    std::istringstream lines(text);
+    std::string line;
+    while (std::getline(lines, line)) {
+      if (line.empty())
+        continue;
+      line.erase(std::remove(line.begin(), line.end(), '"'), line.end());
+      normalized += line;
+      normalized += "\r\n";
+    }
+    text = normalized;
+  }
+
+  tocTextOut = text;
+  chd.close();
+}
+// ===== END ported region =====
 
 // ---- chdman info ----
 
@@ -119,8 +396,7 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
 
   chd_file chd;
   // NOTE: this reads only the CHD header and runs synchronously on the V8 main
-  // thread; it is fast enough that no AsyncWorker is needed. Do not copy this
-  // synchronous pattern for bulk extraction (see extract*, which use AsyncWorker).
+  // thread; it is fast enough that no AsyncWorker is needed.
   std::error_condition err = chd.open(inputPath, false, nullptr);
   if (err) {
     Napi::Error::New(env, "failed to open CHD: " + err.message()).ThrowAsJavaScriptException();
@@ -164,216 +440,339 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
   return deferred.Promise();
 }
 
-// ---- chdman extract ----
+// ---- chdman list tracks ----
 
-// Discards everything written to it (used for stdout, which only carries progress).
-struct NullBuffer : std::streambuf {
-  int overflow(int ch) override { return ch; }
-};
-
-// Thrown by the stderr watchdog to abort a runaway/invalid chdman extraction,
-// mirroring how @emmercm/chdman killed the subprocess on >100% / nan% progress.
-struct ChdmanAbortError : public std::exception {
-  explicit ChdmanAbortError(std::string message) : message_(std::move(message)) {}
-  const char* what() const noexcept override { return message_.c_str(); }
-private:
-  std::string message_;
-};
-
-// Captures chdman's stderr (so a fatal_error's human message can be recovered) and
-// watches the progress output. chdman prints "Extracting, X.Y% complete... \r" to
-// std::cerr; a valid extraction never exceeds 100%, so a percentage >= 101% or a
-// "nan%" indicates a runaway/invalid extraction that would otherwise write gigabytes
-// before failing. On detecting that, it throws to abort the in-progress chdman call.
-class WatchdogBuffer : public std::streambuf {
-public:
-  std::string text() const { return captured_; }
-protected:
-  std::streamsize xsputn(const char* s, std::streamsize count) override {
-    append(s, count);
-    return count;
+// List the tracks of a CD-ROM/GD-ROM CHD: returns the in-memory TOC text plus a
+// per-track descriptor (index, output filename, type string, data-only size).
+static Napi::Value ListTracks(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (info.Length() < 4 || !info[0].IsString() || !info[1].IsNumber() ||
+      !info[2].IsString() || !info[3].IsString()) {
+    Napi::TypeError::New(env, "listTracks(inputFilename, mode, binPatternOrBase, tocName) required")
+        .ThrowAsJavaScriptException();
+    return env.Null();
   }
-  int overflow(int ch) override {
-    if (ch != traits_type::eof()) {
-      const char c = static_cast<char>(ch);
-      append(&c, 1);
+  std::string inputPath = info[0].As<Napi::String>();
+  int mode = info[1].As<Napi::Number>().Int32Value();
+  std::string binArg = info[2].As<Napi::String>();
+  std::string tocName = info[3].As<Napi::String>();
+
+  // No serialization needed: BuildListing uses its own chd_file/cdrom_file and
+  // touches no shared state.
+  Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+  try {
+    std::string tocText;
+    std::vector<TrackOut> tracks;
+    BuildListing(inputPath, mode, binArg, tocName, tocText, tracks);
+    Napi::Object out = Napi::Object::New(env);
+    out.Set("tocText", tocText);
+    Napi::Array arr = Napi::Array::New(env, tracks.size());
+    for (uint32_t i = 0; i < tracks.size(); i++) {
+      Napi::Object t = Napi::Object::New(env);
+      t.Set("index", Napi::Number::New(env, double(tracks[i].index)));
+      t.Set("filename", tracks[i].filename);
+      t.Set("type", tracks[i].type);
+      t.Set("size", Napi::Number::New(env, double(tracks[i].size)));
+      arr.Set(i, t);
     }
-    return ch;
+    out.Set("tracks", arr);
+    deferred.Resolve(out);
+  } catch (const std::error_condition& e) {
+    deferred.Reject(Napi::Error::New(env, e.message()).Value());
+  } catch (const std::exception& e) {
+    deferred.Reject(Napi::Error::New(env, e.what()).Value());
+  } catch (...) {
+    deferred.Reject(Napi::Error::New(env, "unknown error listing CHD tracks").Value());
   }
-private:
-  void append(const char* s, std::streamsize count) {
-    captured_.append(s, static_cast<size_t>(count));
-    for (std::streamsize i = 0; i < count; i++) {
-      const char c = s[i];
-      if (c == '\r' || c == '\n') {
-        checkLine();
-        line_.clear();
-      } else {
-        line_ += c;
+  return deferred.Promise();
+}
+
+// ---- chdman per-track pull reader ----
+
+// A pull-based reader over a single CD-ROM (cue/bin) or GD-ROM (gdi) track. It
+// owns its OWN chd_file + cdrom_file so that concurrent readers are fully
+// independent (no shared state), and emits exactly the
+// bytes chdman's do_extract_cd would write for that split-bin track: the DATA
+// FRAMES ONLY. Virtual pregap/postgap are cue/gdi commands, never bytes;
+// data-in-file pregaps are pulled from the previous track via splitframes.
+class TrackReader : public Napi::ObjectWrap<TrackReader> {
+public:
+  static Napi::Function GetClass(Napi::Env env) {
+    return DefineClass(env, "TrackReader",
+                       {
+                           InstanceMethod("read", &TrackReader::Read),
+                           InstanceMethod("close", &TrackReader::Close),
+                       });
+  }
+
+  explicit TrackReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<TrackReader>(info) {
+    Napi::Env env = info.Env();
+    input_ = info[0].As<Napi::String>();
+    mode_ = info[1].As<Napi::Number>().Int32Value();
+    trackIndex_ = info[2].As<Napi::Number>().Int32Value();
+    std::error_condition err = chd_.open(input_, false, nullptr);
+    if (err) {
+      Napi::Error::New(env, "failed to open CHD: " + err.message()).ThrowAsJavaScriptException();
+      return;
+    }
+    try {
+      cdrom_ = std::make_unique<cdrom_file>(&chd_);
+      toc_ = cdrom_->get_toc();
+      if (mode_ == MODE_CUEBIN && cdrom_->is_gdrom()) {
+        apply_gdrom_cuebin_toc_adjustment(toc_);
       }
-    }
-  }
-  void checkLine() {
-    if (line_.find("nan%") != std::string::npos) {
-      throw ChdmanAbortError("chdman aborted: invalid input (nan% progress)");
-    }
-    const size_t percent = line_.find('%');
-    if (percent == std::string::npos) {
+    } catch (const std::exception& e) {
+      Napi::Error::New(env, std::string("failed to read CHD TOC: ") + e.what())
+          .ThrowAsJavaScriptException();
+      return;
+    } catch (...) {
+      Napi::Error::New(env, "failed to read CHD TOC").ThrowAsJavaScriptException();
       return;
     }
-    size_t start = percent;
-    while (start > 0 && (std::isdigit(static_cast<unsigned char>(line_[start - 1])) ||
-                         line_[start - 1] == '.')) {
-      start--;
-    }
-    if (start == percent) {
+    chdVersion_ = chd_.version();
+    const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
+    try {
+      actualframes_ = port_actual_frames(t, trackIndex_);
+    } catch (const std::exception& e) {
+      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
       return;
     }
-    const double value = std::strtod(line_.substr(start, percent - start).c_str(), nullptr);
-    if (value >= 101.0) {
-      throw ChdmanAbortError("chdman aborted: runaway extraction (" +
-                             line_.substr(start, percent - start) + "% progress)");
-    }
+    frame_ = 0;
   }
-  std::string captured_;
-  std::string line_;
-};
 
-// Capture chdman's diagnostic output in memory by swapping the std::cout/std::cerr
-// stream buffers for the duration of a call: stdout (progress) is discarded and
-// stderr (error messages) is captured and watched for runaway progress. chdman
-// writes all console output via util::stream_format(std::cout/std::cerr, ...), so
-// this needs no temporary files and never touches the process's stdout/stderr file
-// descriptors, leaving the host application's own console output untouched.
-class StreamCapture {
-public:
-  StreamCapture()
-    : oldOut_(std::cout.rdbuf(&nullBuffer_)),
-      oldErr_(std::cerr.rdbuf(&watchdogBuffer_)),
-      oldErrExceptions_(std::cerr.exceptions()) {
-    // Make exceptions thrown by the watchdog propagate out of std::ostream writes.
-    std::cerr.exceptions(std::ios_base::badbit);
-  }
-  ~StreamCapture() {
-    // Clear the watchdog-set badbit BEFORE restoring the exception mask: if the old
-    // mask included badbit, restoring it while badbit is set would throw from this
-    // destructor. Then restore the mask and the original stream buffers.
-    std::cerr.clear();
-    std::cerr.exceptions(oldErrExceptions_);
-    std::cout.rdbuf(oldOut_);
-    std::cerr.rdbuf(oldErr_);
-  }
-  StreamCapture(const StreamCapture&) = delete;
-  StreamCapture& operator=(const StreamCapture&) = delete;
-  std::string stderrText() { return watchdogBuffer_.text(); }
+  Napi::Value Read(const Napi::CallbackInfo& info);
+  void Close(const Napi::CallbackInfo&) { closed_ = true; }
+
+  // Emit up to maxBytes of this track's DATA-FRAME bytes (no pregap/postgap
+  // silence). Mirrors do_extract_cd's per-frame read/byte-swap/splitframes pull.
+  size_t Produce(uint8_t* out, size_t maxBytes);
 
 private:
-  NullBuffer nullBuffer_;
-  WatchdogBuffer watchdogBuffer_;
-  std::streambuf* oldOut_;
-  std::streambuf* oldErr_;
-  std::ios_base::iostate oldErrExceptions_;
+  std::string input_;
+  int mode_ = MODE_CUEBIN;
+  int trackIndex_ = 0;
+  uint32_t chdVersion_ = 0;
+  chd_file chd_;
+  std::unique_ptr<cdrom_file> cdrom_;
+  cdrom_file::toc toc_{};
+  uint32_t actualframes_ = 0;
+  uint32_t frame_ = 0;
+  std::vector<uint8_t> frameBuf_;
+  size_t frameBufPos_ = 0;
+  bool closed_ = false;
 };
 
-// Serialize all chdman calls: chdman has file-scope statics (e.g. lastprogress).
-static std::mutex g_chdmanMutex;
+size_t TrackReader::Produce(uint8_t* out, size_t maxBytes) {
+  size_t written = 0;
+  const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
+  while (written < maxBytes && frame_ < actualframes_) {
+    if (frameBufPos_ >= frameBuf_.size()) {
+      int trk;
+      int frameofs;
+      if (trackIndex_ > 0 && frame_ < t.splitframes) {
+        // pull data from previous track, the reverse of how splitframes is used
+        // when making the GD-ROM CHDs
+        trk = trackIndex_ - 1;
+        frameofs = toc_.tracks[trk].frames - t.splitframes + frame_;
+      } else {
+        trk = trackIndex_;
+        frameofs = int(frame_) - int(t.splitframes);
+      }
+      const cdrom_file::track_info& st = toc_.tracks[trk];
+      frameBuf_.assign(st.datasize, 0);
+      cdrom_->read_data(cdrom_->get_track_start_phys(trk) + frameofs, frameBuf_.data(), st.trktype,
+                        true);
+      // for CDRWin and GDI audio tracks must be reversed; for GDI with CHD
+      // version < 5 the source CHD audio tracks are already reversed
+      const bool swap = ((mode_ == MODE_GDI && chdVersion_ > 4) || mode_ == MODE_CUEBIN) &&
+                        st.trktype == cdrom_file::CD_TRACK_AUDIO;
+      if (swap) {
+        for (uint32_t i = 0; i + 1 < st.datasize; i += 2) {
+          std::swap(frameBuf_[i], frameBuf_[i + 1]);
+        }
+      }
+      frameBufPos_ = 0;
+      frame_++;
+    }
+    size_t avail = frameBuf_.size() - frameBufPos_;
+    size_t n = std::min(maxBytes - written, avail);
+    std::memcpy(out + written, frameBuf_.data() + frameBufPos_, n);
+    frameBufPos_ += n;
+    written += n;
+  }
+  return written;
+}
 
-class ExtractWorker : public Napi::AsyncWorker {
+// Drives TrackReader::Produce on a worker thread so that the (blocking, possibly
+// decompressing) CHD reads never run on the V8 main thread.
+class TrackReadWorker : public Napi::AsyncWorker {
 public:
-  ExtractWorker(Napi::Env env, bool isCd, std::string input, std::string output,
-                bool splitBin, std::string outputBin)
-    : Napi::AsyncWorker(env), deferred_(Napi::Promise::Deferred::New(env)),
-      isCd_(isCd), input_(std::move(input)), output_(std::move(output)),
-      splitBin_(splitBin), outputBin_(std::move(outputBin)) {}
+  TrackReadWorker(Napi::Env env, TrackReader* reader, size_t maxBytes)
+    : Napi::AsyncWorker(env), deferred_(Napi::Promise::Deferred::New(env)), reader_(reader),
+      buf_(maxBytes) {}
 
   Napi::Promise GetPromise() { return deferred_.Promise(); }
 
   void Execute() override {
-    std::lock_guard<std::mutex> lock(g_chdmanMutex);
-    StreamCapture capture;
     try {
-      parameters_map params;
-      std::string empty;
-      // do_extract_cd mutates the string pointed to by OPTION_OUTPUT_BIN (it
-      // strips the extension in place), so pass a local copy, not the member.
-      std::string outputBin = outputBin_;
-      params[OPTION_INPUT] = &input_;
-      params[OPTION_OUTPUT] = &output_;
-      if (isCd_) {
-        if (!outputBin.empty()) params[OPTION_OUTPUT_BIN] = &outputBin;
-        if (splitBin_) params[OPTION_OUTPUT_SPLITBIN] = &empty;
-        do_extract_cd(params);
-      } else {
-        do_extract_raw(params);
-      }
-    } catch (const std::error_condition& e) {
-      SetError(e.message());
-    } catch (const ChdmanAbortError& e) {
-      SetError(e.what());
-    } catch (const fatal_error& e) {
-      std::string msg = capture.stderrText();
-      SetError(msg.empty() ? ("chdman error " + std::to_string(e.error())) : msg);
+      n_ = reader_->Produce(buf_.data(), buf_.size());
     } catch (const std::exception& e) {
       SetError(e.what());
     } catch (...) {
-      SetError("unknown chdman error");
+      SetError("unknown CHD read error");
     }
   }
 
-  void OnOK() override { deferred_.Resolve(Env().Undefined()); }
+  void OnOK() override {
+    Napi::Env env = Env();
+    if (n_ == 0) {
+      deferred_.Resolve(env.Null());
+    } else {
+      deferred_.Resolve(Napi::Buffer<uint8_t>::Copy(env, buf_.data(), n_));
+    }
+  }
+
   void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
 
 private:
   Napi::Promise::Deferred deferred_;
-  bool isCd_;
-  std::string input_, output_;
-  bool splitBin_;
-  std::string outputBin_;
+  TrackReader* reader_;
+  std::vector<uint8_t> buf_;
+  size_t n_ = 0;
 };
 
-static Napi::Value ExtractRaw(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  if (info.Length() < 2 || !info[0].IsString() || !info[1].IsString()) {
-    Napi::TypeError::New(env, "inputFilename and outputFilename (strings) required")
-        .ThrowAsJavaScriptException();
-    return env.Null();
-  }
-  std::string input = info[0].As<Napi::String>();
-  std::string output = info[1].As<Napi::String>();
-  auto* worker = new ExtractWorker(env, false, input, output, false, "");
+Napi::Value TrackReader::Read(const Napi::CallbackInfo& info) {
+  size_t maxBytes = info[0].As<Napi::Number>().Uint32Value();
+  auto* worker = new TrackReadWorker(info.Env(), this, maxBytes);
   Napi::Promise promise = worker->GetPromise();
   worker->Queue();
   return promise;
 }
 
-static Napi::Value ExtractCd(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  if (info.Length() < 2 || !info[0].IsString() || !info[1].IsString()) {
-    Napi::TypeError::New(env, "inputFilename and outputFilename (strings) required")
-        .ThrowAsJavaScriptException();
-    return env.Null();
+// ---- chdman raw logical reader ----
+
+// A pull-based reader over the full logical byte range of a RAW, HARD_DISK, or
+// DVD CHD. Owns its own chd_file and emits exactly the bytes chd_file::read_bytes
+// would write, i.e. the same bytes chdman's extractRaw would produce.
+class RawReader : public Napi::ObjectWrap<RawReader> {
+public:
+  static Napi::Function GetClass(Napi::Env env) {
+    return DefineClass(env, "RawReader",
+                       {
+                           InstanceMethod("read", &RawReader::Read),
+                           InstanceMethod("close", &RawReader::Close),
+                       });
   }
-  std::string input = info[0].As<Napi::String>();
-  std::string output = info[1].As<Napi::String>();
-  bool splitBin = info.Length() > 2 && info[2].ToBoolean();
-  std::string outputBin = (info.Length() > 3 && info[3].IsString())
-    ? std::string(info[3].As<Napi::String>()) : std::string();
-  auto* worker = new ExtractWorker(env, true, input, output, splitBin, outputBin);
+
+  explicit RawReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<RawReader>(info) {
+    Napi::Env env = info.Env();
+    std::string input = info[0].As<Napi::String>();
+    std::error_condition err = chd_.open(input, false, nullptr);
+    if (err) {
+      Napi::Error::New(env, "failed to open CHD: " + err.message()).ThrowAsJavaScriptException();
+      return;
+    }
+    total_ = chd_.logical_bytes();
+  }
+
+  Napi::Value Read(const Napi::CallbackInfo& info);
+  void Close(const Napi::CallbackInfo&) { closed_ = true; }
+
+  // Emit up to maxBytes of this CHD's logical bytes starting at pos_.
+  size_t Produce(uint8_t* out, size_t maxBytes) {
+    if (pos_ >= total_) return 0;
+    // maxBytes comes from Read's Uint32Value(), so the clamped result always fits in uint32_t.
+    uint32_t n = static_cast<uint32_t>(std::min<uint64_t>(maxBytes, total_ - pos_));
+    std::error_condition err = chd_.read_bytes(pos_, out, n);
+    if (err) throw std::runtime_error("CHD read_bytes failed: " + err.message());
+    pos_ += n;
+    return n;
+  }
+
+private:
+  chd_file chd_;
+  uint64_t total_ = 0;
+  uint64_t pos_ = 0;
+  bool closed_ = false;
+};
+
+class RawReadWorker : public Napi::AsyncWorker {
+public:
+  RawReadWorker(Napi::Env env, RawReader* reader, size_t maxBytes)
+    : Napi::AsyncWorker(env), deferred_(Napi::Promise::Deferred::New(env)), reader_(reader),
+      buf_(maxBytes) {}
+
+  Napi::Promise GetPromise() { return deferred_.Promise(); }
+
+  void Execute() override {
+    try {
+      n_ = reader_->Produce(buf_.data(), buf_.size());
+    } catch (const std::exception& e) {
+      SetError(e.what());
+    } catch (...) {
+      SetError("unknown CHD read error");
+    }
+  }
+
+  void OnOK() override {
+    Napi::Env env = Env();
+    if (n_ == 0) {
+      deferred_.Resolve(env.Null());
+    } else {
+      deferred_.Resolve(Napi::Buffer<uint8_t>::Copy(env, buf_.data(), n_));
+    }
+  }
+
+  void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
+
+private:
+  Napi::Promise::Deferred deferred_;
+  RawReader* reader_;
+  std::vector<uint8_t> buf_;
+  size_t n_ = 0;
+};
+
+Napi::Value RawReader::Read(const Napi::CallbackInfo& info) {
+  size_t maxBytes = info[0].As<Napi::Number>().Uint32Value();
+  auto* worker = new RawReadWorker(info.Env(), this, maxBytes);
   Napi::Promise promise = worker->GetPromise();
   worker->Queue();
   return promise;
 }
 
-// Diagnostic: return the bundled chdman/MAME build version string.
-static Napi::Value Version(const Napi::CallbackInfo& info) {
-  return Napi::String::New(info.Env(), build_version);
+// Holds the class constructors for every ObjectWrap type registered by this
+// addon.  Stored as the addon's instance data so factories can retrieve them
+// without a global.
+struct Addon {
+  Napi::FunctionReference trackReader;
+  Napi::FunctionReference rawReader;
+};
+
+// Factory: construct a TrackReader from the class constructor stored as the
+// addon's instance data.
+static Napi::Value OpenTrackReader(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  Napi::Function ctor = env.GetInstanceData<Addon>()->trackReader.Value();
+  return ctor.New({info[0], info[1], info[2]});
+}
+
+// Factory: construct a RawReader from the class constructor stored as the
+// addon's instance data.
+static Napi::Value OpenRawReader(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  Napi::Function ctor = env.GetInstanceData<Addon>()->rawReader.Value();
+  return ctor.New({info[0]});
 }
 
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
+  Napi::Function trackReaderClass = TrackReader::GetClass(env);
+  Napi::Function rawReaderClass = RawReader::GetClass(env);
+  env.SetInstanceData(new Addon{ Napi::Persistent(trackReaderClass), Napi::Persistent(rawReaderClass) });
+
   exports.Set("info", Napi::Function::New(env, Info));
-  exports.Set("extractRaw", Napi::Function::New(env, ExtractRaw));
-  exports.Set("extractCd", Napi::Function::New(env, ExtractCd));
-  exports.Set("version", Napi::Function::New(env, Version));
+  exports.Set("listTracks", Napi::Function::New(env, ListTracks));
+  exports.Set("openTrackReader", Napi::Function::New(env, OpenTrackReader));
+  exports.Set("openRawReader", Napi::Function::New(env, OpenRawReader));
   return exports;
 }
 

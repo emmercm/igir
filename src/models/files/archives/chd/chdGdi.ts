@@ -1,14 +1,15 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
-import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
-import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
+import async from 'async';
+
+import chdman, { CHDType, readableFromReader } from '../../../../../packages/chdman/index.js';
+import Defaults from '../../../../globals/defaults.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
-import { ChecksumBitmask } from '../../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
-import type ArchiveEntry from '../archiveEntry.js';
+import ArchiveEntry from '../archiveEntry.js';
+import type { ChdListing } from './chd.js';
 import Chd from './chd.js';
-import ChdGdiParser from './chdGdiParser.js';
 
 /**
  * A CHD that represents a GD-ROM, exposed as its constituent .gdi and track files.
@@ -28,6 +29,32 @@ export default class ChdGdi extends Chd {
     return true;
   }
 
+  protected async getListing(): Promise<ChdListing> {
+    const prefix = path.parse(this.getFilePath()).name;
+    const listing = await chdman.listGdRomTracks({
+      inputFilename: this.getFilePath(),
+      trackBaseName: 'track',
+      gdiName: `${prefix}.gdi`,
+    });
+    // listGdRomTracks already returns TOSEC-style CRLF-normalized TOC text
+    return {
+      mode: 'gdi',
+      tocFilename: `${prefix}.gdi`,
+      tocText: listing.tocText,
+      files: [
+        { filename: `${prefix}.gdi`, size: listing.tocText.length },
+        ...listing.tracks.map((track) => ({
+          filename: track.filename,
+          size: track.size,
+          trackIndex: track.index,
+        })),
+      ],
+    };
+  }
+
+  /**
+   * List the .gdi and track entries this CHD exposes, computing each entry's checksums.
+   */
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       // Doing a quick scan
@@ -39,31 +66,43 @@ export default class ChdGdi extends Chd {
       return [];
     }
 
-    return await ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
-  }
+    const listing = await this.getListing();
 
-  /**
-   * Extract the CHD's GD-ROM content into the given directory as a .gdi file with track files,
-   * returning the paths of the produced files.
-   */
-  async extractArchiveEntries(outputDirectory: string): Promise<string[]> {
-    const gdiFile = path.join(outputDirectory, 'track.gdi');
-    await chdman.extractCd({
-      inputFilename: this.getFilePath(),
-      outputFilename: gdiFile,
-    });
-
-    // Apply TOSEC-style CRLF line separators to the .gdi file
-    await FsUtil.writeFile(
-      gdiFile,
-      (await fs.promises.readFile(gdiFile)).toString().replaceAll(/\r?\n/g, '\r\n'),
+    const gdiEntry = await ArchiveEntry.entryOf(
+      {
+        archive: this,
+        entryPath: listing.tocFilename,
+        size: listing.tocText.length,
+        ...(await FileChecksums.hashData(listing.tocText, checksumBitmask)),
+      },
+      checksumBitmask,
     );
 
-    await FsUtil.mv(
-      gdiFile,
-      path.join(outputDirectory, `${path.parse(this.getFilePath()).name}.gdi`),
+    const trackFiles = listing.files.flatMap((file) =>
+      file.trackIndex === undefined
+        ? []
+        : [{ filename: file.filename, size: file.size, trackIndex: file.trackIndex }],
+    );
+    const trackEntries = await async.mapLimit(
+      trackFiles,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      async (file: (typeof trackFiles)[number]): Promise<ArchiveEntry<this>> => {
+        const reader = await chdman.openTrackReader({
+          inputFilename: this.getFilePath(),
+          mode: 'gdi',
+          trackIndex: file.trackIndex,
+        });
+        const checksums = await FileChecksums.hashStream(
+          readableFromReader(reader),
+          checksumBitmask,
+        );
+        return await ArchiveEntry.entryOf(
+          { archive: this, entryPath: file.filename, size: file.size, ...checksums },
+          checksumBitmask,
+        );
+      },
     );
 
-    return await FsUtil.walk(outputDirectory, WalkMode.FILES);
+    return [gdiEntry, ...trackEntries];
   }
 }
