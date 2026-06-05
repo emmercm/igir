@@ -48,10 +48,16 @@ export default {
     }
 
     const centralDirectoryFileHeaders = await zipReader.centralDirectoryFileHeaders();
+    const isRvZstd = centralDirectoryFileHeaders.some(
+      (cdfh) => cdfh.compressionMethod !== CompressionMethod.DEFLATE,
+    );
+
     for (const cdFileHeader of centralDirectoryFileHeaders) {
       if (
-        cdFileHeader.compressionMethod !== CompressionMethod.DEFLATE &&
-        cdFileHeader.compressionMethod !== CompressionMethod.ZSTD
+        (isRvZstd &&
+          cdFileHeader.compressionMethod !== CompressionMethod.ZSTD &&
+          cdFileHeader.compressionMethod !== CompressionMethod.STORE) ||
+        (!isRvZstd && cdFileHeader.compressionMethod !== CompressionMethod.DEFLATE)
       ) {
         // Not a valid compression method
         return ValidationResult.INVALID;
@@ -65,7 +71,9 @@ export default {
               (cdFileHeader.zip64ExtendedInformation !== undefined &&
                 cdFileHeader.versionNeeded === 45))) ||
           (cdFileHeader.compressionMethod === CompressionMethod.ZSTD &&
-            cdFileHeader.versionNeeded === 63)
+            cdFileHeader.versionNeeded === 63) ||
+          (cdFileHeader.compressionMethod === CompressionMethod.STORE &&
+            cdFileHeader.versionNeeded === 20)
         ) ||
         !(
           cdFileHeader.generalPurposeBitFlag === 0x02 ||
@@ -78,6 +86,9 @@ export default {
             cdFileHeader.fileModificationDate === 8600) ||
           (cdFileHeader.compressionMethod === CompressionMethod.ZSTD &&
             cdFileHeader.fileModificationTime === 0 &&
+            cdFileHeader.fileModificationDate === 0) ||
+          (cdFileHeader.compressionMethod === CompressionMethod.STORE &&
+            cdFileHeader.fileModificationTime === 0 &&
             cdFileHeader.fileModificationDate === 0)
         ) ||
         (cdFileHeader.compressedSize >= 0xff_ff_ff_ff &&
@@ -86,6 +97,8 @@ export default {
         (cdFileHeader.uncompressedSize >= 0xff_ff_ff_ff &&
           (cdFileHeader.zip64ExtendedInformation?.uncompressedSize ?? 0) <
             cdFileHeader.uncompressedSize) ||
+        (cdFileHeader.compressionMethod === CompressionMethod.STORE &&
+          cdFileHeader.uncompressedSize !== 0) ||
         cdFileHeader.fileNameResolved().includes('\\') ||
         !(
           cdFileHeader.extraFields.size === 0 ||
@@ -98,11 +111,6 @@ export default {
       ) {
         return ValidationResult.INVALID;
       }
-    }
-
-    if (new Set(centralDirectoryFileHeaders.map((cdfh) => cdfh.compressionMethod)).size > 1) {
-      // All files have to have the same compression method
-      return ValidationResult.INVALID;
     }
 
     // Validate filename sorting
@@ -127,9 +135,6 @@ export default {
       crc32 = CRC32.buf(fileHeader.raw, crc32);
     }
     const cdfhCrc32 = (crc32 >>> 0).toString(16).padStart(8, '0').toUpperCase();
-    const isRvZstd = centralDirectoryFileHeaders.some(
-      (cdfh) => cdfh.compressionMethod === CompressionMethod.ZSTD,
-    );
     if (
       (!isRvZstd && eocd.comment !== `TORRENTZIPPED-${cdfhCrc32}`) ||
       (isRvZstd && eocd.comment !== `RVZSTD-${cdfhCrc32}`)
@@ -158,36 +163,12 @@ export default {
       expectedOffset += localFileHeader.raw.length + localFileHeader.compressedSizeResolved();
 
       if (
-        localFileHeader.compressionMethod !== CompressionMethod.DEFLATE &&
-        localFileHeader.compressionMethod !== CompressionMethod.ZSTD
-      ) {
-        // Not a valid compression method
-        return ValidationResult.INVALID;
-      }
-
-      if (
-        !(
-          (localFileHeader.compressionMethod === CompressionMethod.DEFLATE &&
-            ((localFileHeader.zip64ExtendedInformation === undefined &&
-              localFileHeader.versionNeeded === 20) ||
-              (localFileHeader.zip64ExtendedInformation !== undefined &&
-                localFileHeader.versionNeeded === 45))) ||
-          (localFileHeader.compressionMethod === CompressionMethod.ZSTD &&
-            localFileHeader.versionNeeded === 63)
-        ) ||
-        !(
-          localFileHeader.generalPurposeBitFlag === 0x02 ||
-          (localFileHeader.generalPurposeBitFlag === (0x02 | 0x8_00) &&
-            !CP437Encoder.canEncode(localFileHeader.fileNameResolved()))
-        ) ||
-        !(
-          (localFileHeader.compressionMethod === CompressionMethod.DEFLATE &&
-            localFileHeader.fileModificationTime === 48_128 &&
-            localFileHeader.fileModificationDate === 8600) ||
-          (localFileHeader.compressionMethod === CompressionMethod.ZSTD &&
-            localFileHeader.fileModificationTime === 0 &&
-            localFileHeader.fileModificationDate === 0)
-        ) ||
+        localFileHeader.versionNeeded !== centralDirectoryFileHeader.versionNeeded ||
+        localFileHeader.generalPurposeBitFlag !==
+          centralDirectoryFileHeader.generalPurposeBitFlag ||
+        localFileHeader.compressionMethod !== centralDirectoryFileHeader.compressionMethod ||
+        localFileHeader.fileModificationTime !== centralDirectoryFileHeader.fileModificationTime ||
+        localFileHeader.fileModificationDate !== centralDirectoryFileHeader.fileModificationDate ||
         !localFileHeader.uncompressedCrc32.equals(centralDirectoryFileHeader.uncompressedCrc32) ||
         // TorrentZip LFH sizes can differ from the CDFH when zip64
         !(
