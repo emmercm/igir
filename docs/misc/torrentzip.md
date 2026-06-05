@@ -44,6 +44,12 @@ In January 2024, [MAME v0.262](https://www.mamedev.org/releases/whatsnew_0262.tx
 
 In April 2024, [RomVault v3.7.0](https://wiki.romvault.com/doku.php?id=whats_new#romvault_370) defined a derivative of the TorrentZip specification called "RVZSTD" that uses Zstandard compression instead of DEFLATE. Igir can read RVZSTD archives, and it can create them if specified with the [`--zip-format rvzstd`](../output/writing-archives.md#rvzstd).
 
+!!! warning
+
+    In May 2026, [RomVault v3.7.6](https://wiki.romvault.com/doku.php?id=whats_new#romvault_376) meaningfully changed how zero-byte files are represented in RVZSTD archives. You can see the details of this change in [igir#2274](https://github.com/emmercm/igir/pull/2274/changes).
+
+    RVZSTD archives containing zero-byte files that were written by RomVault before v3.7.6 or Igir before v5.1.0 are considered invalid and will need to be rewritten.
+
 ## Achieving deterministic archives
 
 For TorrentZip archives to be deterministic, meaning that they compress the same every time, they must follow these rules:
@@ -94,15 +100,15 @@ RVZSTD:
 - Zstandard v1.5.5 (April 2023)
   - Compiled with `-DZSTD_MULTITHREAD`
 - Compression level 19 (`ZSTD_CLEVEL_MAX`), which has the compression parameters:
-  - `ZSTD_c_windowLog`: 23 (2^23 bytes == 8 MiB)
-  - `ZSTD_c_chainLog`: 24 (2^24 == 16,777,216 entries)
-  - `ZSTD_c_hashLog`: 22 (2^22 == 4,194,304 entries)
-  - `ZSTD_c_searchLog`: 7 (2^7 == 128 comparisons)
+  - `ZSTD_c_windowLog`: 23 (2<sup>23</sup> bytes == 8 MiB)
+  - `ZSTD_c_chainLog`: 24 (2<sup>24</sup> == 16,777,216 entries)
+  - `ZSTD_c_hashLog`: 22 (2<sup>22</sup> == 4,194,304 entries)
+  - `ZSTD_c_searchLog`: 7 (2<sup>7</sup> == 128 comparisons)
   - `ZSTD_c_minMatch`: 3 (bytes)
   - `ZSTD_c_targetLength`: 256 (bytes)
   - `ZSTD_c_strategy`: `ZSTD_btultra2`
 - Using streaming compression (`ZSTD_compressStream2()`), with `ZSTD_c_nbWorkers` >0
-  - _Except_ if the uncompressed file is empty (is of size 0), in which case `ZSTD_compress()` should be used (no streaming and no workers/threads)
+  - _Except_ if the uncompressed file is zero bytes, in which case no compression is used
 - With no other options set (the defaults are used), such as:
   - Long-distance matching (`ZSTD_c_enableLongDistanceMatching` default OFF, `ZSTD_c_ldm*` options)
   - Frame checksums (`ZSTD_c_checksumFlag` default OFF)
@@ -162,15 +168,20 @@ Here is a visual representation of a TorrentZip archive, with details about ever
 |            | Local file header          | 0       | 4       | 0x04034b50 ("PK♥♦")                        |
 |            | signature                  |         |         |                                            |
 |            +----------------------------+---------+---------+-------------------------+------------------+
-|            | Version needed             | 4       | 2       | 45 if a Zip64 extra     | 63               |
-|            | to extract                 |         |         | data record is          |                  |
-|            |                            |         |         | required, otherwise 20  |                  |
+|            | Version needed             | 4       | 2       | 45 if a Zip64 extra     | 20 if the        |
+|            | to extract                 |         |         | data record is          | uncompressed     |
+|            |                            |         |         | required, otherwise 20  | size is 0,       |
+|            |                            |         |         |                         | otherwise 63     |
 |            +----------------------------+---------+---------+-------------------------+------------------+
 |            | General purpose bit flag   | 6       | 2       | 0x02 (max compression) if the file name    |
 |            |                            |         |         | is CP437-encodable; 0x02|0x800=0x802 if    |
 |            |                            |         |         | the file name requires UTF-8 encoding      |
 |            +----------------------------+---------+---------+-------------------------+------------------+
-|            | Compression method         | 8       | 2       | 8 (for DEFLATE)         | 93 (for Zstd)    |
+|            | Compression method         | 8       | 2       | 8 (for DEFLATE)         | 0 (for STORE) if |
+|            |                            |         |         |                         | the uncompressed |
+|            |                            |         |         |                         | size is 0,       |
+|            |                            |         |         |                         | otherwise 93     |
+|            |                            |         |         |                         | (for Zstd)       |
 |            +----------------------------+---------+---------+-------------------------+------------------+
 |            | Last mod file time         | 10      | 2       | 48128 (11:32:00 PM)     | 0 (00:00:00 AM)  |
 |            +----------------------------+---------+---------+-------------------------+------------------+

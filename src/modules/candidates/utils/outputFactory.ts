@@ -522,17 +522,35 @@ export default class OutputFactory {
       output = path.join(dir, output);
     }
 
+    const hasMultipleFiles =
+      game.getRoms().length + (options.getExcludeDisks() ? 0 : game.getDisks().length) > 1;
+
+    if (rom instanceof Disk) {
+      if (
+        // When the ROMs are zipped, MAME expects Disks to be in a subdirectory named after the
+        // Game. This makes the directory tree slightly more human-readable, and it also helps
+        // deconflict any duplicate Disk names.
+        options.shouldZip() ||
+        // When the ROMs aren't zipped, MAME expects all files to be in the same subdirectory named
+        // after the Game.
+        options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
+        (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE && hasMultipleFiles)
+      ) {
+        output = path.join(game.getName(), output);
+      }
+      return output;
+    }
+
     if (
       (options.getDirGameSubdir() === GameSubdirMode.MULTIPLE &&
-        game.getRoms().length > 1 &&
+        hasMultipleFiles &&
         // Ignore Games/ROMs coming from SMDB-like DATs that already have a complete directory
         // structure in the ROM name
         !(/[\\/]/.test(game.getName()) && /[\\/]/.test(rom.getName())) &&
         // Output file is not an archive
         !FileFactory.isExtensionArchive(ext) &&
         !(inputFile instanceof ArchiveFile)) ||
-      options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
-      (rom instanceof Disk && game.getRoms().length > 1) // MAME behavior
+      options.getDirGameSubdir() === GameSubdirMode.ALWAYS
     ) {
       output = path.join(game.getName(), output);
     }
@@ -617,8 +635,12 @@ export default class OutputFactory {
   }
 
   private static getRomBasename(rom: ROM, inputFile: File): string {
-    const romNameSanitized = rom.getName();
-    const { base, ...parsedRomPath } = path.posix.parse(romNameSanitized);
+    if (rom instanceof Disk) {
+      // MAME DATs don't include a filename extension for Disks, but MAME expects files to have one
+      return `${rom.getName().replace(/\.chd$/i, '')}.chd`;
+    }
+
+    const { base, ...parsedRomPath } = path.posix.parse(rom.getName());
 
     // Alter the output extension of the file
     const fileHeader = inputFile.getFileHeader();
