@@ -11,7 +11,6 @@ import type { ProgressCallback } from './progressTransform.js';
 import ProgressTransform from './progressTransform.js';
 import UncompressedTransform from './uncompressedTransform.js';
 import ZlibDeflateTransform from './zlibDeflateTransform.js';
-import ZstdNonThreadedCompressTransform from './zstdNonThreadedCompressTransform.js';
 import ZstdThreadedCompressTransform from './zstdThreadedCompressTransform.js';
 
 export const CompressionMethod = {
@@ -108,7 +107,7 @@ export default class TZWriter {
     if (this.compressionMethod === CompressionMethod.DEFLATE) {
       compressorTransform = new ZlibDeflateTransform();
     } else if (uncompressedSize === 0) {
-      compressorTransform = new ZstdNonThreadedCompressTransform();
+      compressorTransform = new stream.PassThrough();
     } else {
       compressorTransform = new ZstdThreadedCompressTransform(compressorThreads);
     }
@@ -172,6 +171,8 @@ export default class TZWriter {
 
     if (this.compressionMethod === CompressionMethod.DEFLATE) {
       buffer.writeUInt16LE(20, 4); // version needed
+    } else if (uncompressedSize === 0) {
+      buffer.writeUInt16LE(20, 4); // version needed
     } else {
       buffer.writeUInt16LE(63, 4); // version needed
     }
@@ -180,6 +181,8 @@ export default class TZWriter {
 
     if (this.compressionMethod === CompressionMethod.DEFLATE) {
       buffer.writeUInt16LE(8, 8); // compression method
+    } else if (uncompressedSize === 0) {
+      buffer.writeUInt16LE(0, 8); // compression method
     } else {
       buffer.writeUInt16LE(93, 8); // compression method
     }
