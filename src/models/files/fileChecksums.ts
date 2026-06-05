@@ -109,4 +109,11 @@ export default {
       sha256: sha256?.digest('hex').padStart(64, '0'),
     };
   },
+
+  checksumBitmaskString(checksumBitmask: number): string {
+    return Object.values(ChecksumBitmask)
+      .filter((bitmask) => bitmask > 0 && (checksumBitmask & bitmask) > 0)
+      .map((bitmask) => ChecksumBitmaskInverted[bitmask])
+      .join(', ');
+  },
 };

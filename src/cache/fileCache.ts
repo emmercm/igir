@@ -6,6 +6,8 @@ import { ValidationResultInverted } from '../../packages/torrentzip/index.js';
 import { TZValidator } from '../../packages/torrentzip/index.js';
 import { ValidationResult } from '../../packages/torrentzip/index.js';
 import { ZipReader } from '../../packages/zip/index.js';
+import { LogLevel } from '../console/logLevel.js';
+import MultiBar from '../console/multiBar.js';
 import type Archive from '../models/files/archives/archive.js';
 import type { ArchiveEntryProps } from '../models/files/archives/archiveEntry.js';
 import ArchiveEntry from '../models/files/archives/archiveEntry.js';
@@ -76,6 +78,8 @@ export default class FileCache {
    * value types so subsequent lookups only consider entries compatible with the current schema.
    */
   async loadFile(cacheFilePath: string): Promise<void> {
+    this.logTrace(`loading: ${cacheFilePath}`);
+
     this.cache = await new Cache<CacheValue>({
       filePath: cacheFilePath,
       fileFlushMillis: 120_000,
@@ -93,6 +97,8 @@ export default class FileCache {
     await this.cache.delete(new RegExp(`\\|(?!(${Object.values(ValueType).join('|')}))[^|]+$`));
     // Delete old versioned header/signature/validation keys (pre-version-in-value migration)
     await this.cache.delete(/\|[HSZ]\d+$/);
+
+    this.logTrace(`loaded: ${cacheFilePath}`);
   }
 
   /**
@@ -103,7 +109,9 @@ export default class FileCache {
       return;
     }
 
+    this.logTrace(`saving: ${this.cache.getFilePath()}`);
     await this.cache.save();
+    this.logTrace(`saved: ${this.cache.getFilePath()}`);
   }
 
   async getOrComputeFileChecksums(
@@ -141,8 +149,17 @@ export default class FileCache {
           return true;
         }
 
-        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
-          // File has changed since being cached
+        // File has changed since being cached?
+        if (cached.fileSize !== stats.size) {
+          this.logTrace(
+            `${filePath}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
+          );
+          return true;
+        }
+        if (cached.modifiedTimeSec !== stats.mtimeS) {
+          this.logTrace(
+            `${filePath}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
+          );
           return true;
         }
 
@@ -153,8 +170,14 @@ export default class FileCache {
           (cachedFile.sha1 ? ChecksumBitmask.SHA1 : 0) |
           (cachedFile.sha256 ? ChecksumBitmask.SHA256 : 0);
         const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
-        // We need checksums that haven't been cached yet
-        return remainingBitmask > 0;
+        if (remainingBitmask > 0) {
+          // We need checksums that haven't been cached yet
+          this.logTrace(
+            `${filePath}: cache miss, cache is missing: ${FileChecksums.checksumBitmaskString(remainingBitmask)}`,
+          );
+          return true;
+        }
+        return false;
       },
     );
 
@@ -208,8 +231,17 @@ export default class FileCache {
           return true;
         }
 
-        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
-          // File has changed since being cached
+        // File has changed since being cached?
+        if (cached.fileSize !== stats.size) {
+          this.logTrace(
+            `${archive.getFilePath()}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
+          );
+          return true;
+        }
+        if (cached.modifiedTimeSec !== stats.mtimeS) {
+          this.logTrace(
+            `${archive.getFilePath()}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
+          );
           return true;
         }
 
@@ -217,6 +249,7 @@ export default class FileCache {
         if (cachedEntries.length === 0) {
           // A quick checksum scan may have prevented us from getting any entries from an archive
           // (such as bin/cue CHDs), assume we want to re-scan the archive
+          this.logTrace(`${archive.getFilePath()}: cache miss, cache has zero archive entries`);
           return true;
         }
         const existingBitmask =
@@ -225,8 +258,14 @@ export default class FileCache {
           (cachedEntries.every((props) => props.sha1 !== undefined) ? ChecksumBitmask.SHA1 : 0) |
           (cachedEntries.every((props) => props.sha256 !== undefined) ? ChecksumBitmask.SHA256 : 0);
         const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
-        // We need checksums that haven't been cached yet
-        return remainingBitmask > 0;
+        if (remainingBitmask > 0) {
+          // We need checksums that haven't been cached yet
+          this.logTrace(
+            `${archive.getFilePath()}: cache miss, cache is missing: ${FileChecksums.checksumBitmaskString(remainingBitmask)}`,
+          );
+          return true;
+        }
+        return false;
       },
     );
 
@@ -314,19 +353,40 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (
-          stats !== undefined &&
-          (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS)
-        ) {
-          // File has changed since being cached
+        // File has changed since being cached?
+        if (stats !== undefined && cached.fileSize !== stats.size) {
+          this.logTrace(
+            `${file.getFilePath()}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
+          );
           return true;
         }
-        if (cached.value === undefined) {
-          // "Not found" is valid — only recompute if the known item list has changed
-          return cached.version !== currentVersion;
+        if (stats !== undefined && cached.modifiedTimeSec !== stats.mtimeS) {
+          this.logTrace(
+            `${file.getFilePath()}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
+          );
+          return true;
         }
+
+        if (cached.value === undefined) {
+          // "Not found" is valid, only recompute if the known item list has changed
+          if (cached.version !== currentVersion) {
+            this.logTrace(
+              `${file.getFilePath()}: cache miss, cached version ${cached.version} !== current version ${currentVersion}`,
+            );
+            return true;
+          }
+          return false;
+        }
+
         // Recompute if the cached name no longer maps to a known item
-        return typeof cached.value !== 'string' || fromName(cached.value) === undefined;
+        if (typeof cached.value !== 'string' || fromName(cached.value) === undefined) {
+          this.logTrace(
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string,@typescript-eslint/restrict-template-expressions
+            `${file.getFilePath()}: cache miss, cached value unrecognized: ${cached.value}`,
+          );
+          return true;
+        }
+        return false;
       },
     );
 
@@ -430,8 +490,17 @@ export default class FileCache {
           return true;
         }
 
-        if (cached.fileSize !== stats.size || cached.modifiedTimeSec !== stats.mtimeS) {
-          // File has changed since being cached
+        // File has changed since being cached?
+        if (cached.fileSize !== stats.size) {
+          this.logTrace(
+            `${zip.getFilePath()}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
+          );
+          return true;
+        }
+        if (cached.modifiedTimeSec !== stats.mtimeS) {
+          this.logTrace(
+            `${zip.getFilePath()}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
+          );
           return true;
         }
 
@@ -439,11 +508,20 @@ export default class FileCache {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (ValidationResult[cachedResult] === undefined) {
           // ValidationResult options have been internally renamed, we have to recalculate
+          this.logTrace(
+            `${zip.getFilePath()}: cache miss, cached value unrecognized: ${cachedResult}`,
+          );
           return true;
         }
         if (ValidationResult[cachedResult] === ValidationResult.INVALID) {
           // INVALID results should be recalculated if the known validation types have changed
-          return cached.version !== currentVersion;
+          if (cached.version !== currentVersion) {
+            this.logTrace(
+              `${zip.getFilePath()}: cache miss, cached version ${cached.version} !== current version ${currentVersion}`,
+            );
+            return true;
+          }
+          return false;
         }
         return false;
       },
@@ -477,5 +555,9 @@ export default class FileCache {
     valueType: ValueTypeValue,
   ): string {
     return `V${FileCache.VERSION}|${filePath}|${fileSubIdentifier ?? ''}|${valueType}`;
+  }
+
+  private logTrace(message: string): void {
+    MultiBar.log(LogLevel.TRACE, message, FileCache.name);
   }
 }
