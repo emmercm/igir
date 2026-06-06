@@ -21,7 +21,7 @@
       # (we don't force-include that header). osdsync.cpp gates its pthread
       # thread-priority path on these; without them it compiles a no-op. OSD_MAC
       # and OSD_SDL are intentionally omitted: they select the full OSD object
-      # (osdobj_common), which this addon replaces with shims/osdlib_min.cpp and
+      # (osdobj_common), which this addon replaces with stubs/osdlib.cpp and
       # never compiles, and no compiled source references them.
       ["OS=='mac'", { "defines": ["SDLMAME_UNIX", "SDLMAME_MACOSX", "SDLMAME_DARWIN"] }],
 
@@ -231,10 +231,10 @@
       "conditions": [
         ["OS=='mac'", {
           "sources": [
-            # osdlib_min.cpp replaces MAME's osdlib_macosx.cpp, whose only external
+            # stubs/osdlib.cpp replaces MAME's osdlib_macosx.cpp, whose only external
             # dependency (CoreFoundation/ApplicationServices, for clipboard) is dead
             # code here; see that file for why.
-            "shims/osdlib_min.cpp",
+            "stubs/osdlib.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
             "<(mame)/src/osd/modules/file/posixptty.cpp",
@@ -243,9 +243,9 @@
         }],
         ["OS=='linux'", {
           "sources": [
-            # osdlib_min.cpp replaces MAME's osdlib_unix.cpp, which #includes
+            # stubs/osdlib.cpp replaces MAME's osdlib_unix.cpp, which #includes
             # <SDL2/SDL.h>; see that file for why.
-            "shims/osdlib_min.cpp",
+            "stubs/osdlib.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
             "<(mame)/src/osd/modules/file/posixptty.cpp",
@@ -320,7 +320,7 @@
 
     {
       "target_name": "chdman",
-      "sources": ["binding.cpp"],
+      "sources": ["binding.cpp", "stubs/utf8proc.cpp", "stubs/win_utf8_io.cpp"],
       "dependencies": [
         "mame_utils", "mame_ocore",
         "zlib", "zstd", "flac", "lzma7z"
@@ -334,7 +334,7 @@
       "conditions": [
         # Linux: statically link the C++ runtime so the .node carries no
         # libstdc++/libgcc dependency (glibc stays dynamic, as a .so requires).
-        # macOS needs no link_settings: using osdlib_min.cpp drops the only
+        # macOS needs no link_settings: using stubs/osdlib.cpp drops the only
         # external frameworks (CoreFoundation/ApplicationServices) MAME's
         # osdlib_macosx.cpp pulled in, so the .node links against libSystem only.
         ["OS=='linux'", {
