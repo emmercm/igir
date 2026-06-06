@@ -28,6 +28,10 @@
       }]
     ],
 
+    # node-gyp compiles addons with -fno-exceptions/-fno-rtti; remove those
+    # inherited flags so the -fexceptions/-frtti below are not overridden (order
+    # of appended flags is not guaranteed on gcc).
+    "cflags_cc!": ["-fno-exceptions", "-fno-rtti"],
     "cflags_cc": [
       "-std=c++17",
       # MAME uses C++ exceptions and RTTI
@@ -119,6 +123,10 @@
       "defines": [
         # Pull MAME's bundled libFLAC config.h (PACKAGE_VERSION + CPU detection).
         "HAVE_CONFIG_H",
+        # Static linking: without this, FLAC_API defaults to __declspec(dllimport)
+        # on Windows (MSVC), so compiling libFLAC's own sources fails with C2491
+        # "definition of dllimport not allowed". Must match mame_utils below.
+        "FLAC__NO_DLL",
         # Portability / minimal SIMD: disable all hand-written FLAC SIMD (paired
         # with omitting the *_intrin_*.c sources below) -> pure scalar build.
         "FLAC__NO_ASM",
@@ -207,7 +215,9 @@
         }],
         ["OS=='linux'", {
           "sources": [
-            "<(mame)/src/osd/modules/lib/osdlib_unix.cpp",
+            # osdlib_min.cpp replaces MAME's osdlib_unix.cpp, which #includes
+            # <SDL2/SDL.h>; see that file for why.
+            "osdlib_min.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
             "<(mame)/src/osd/modules/file/posixptty.cpp",

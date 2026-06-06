@@ -93,7 +93,7 @@ await copyfiles(
     'packages/zlib*/deps/**',
     'packages/zstd*/deps/**',
     'packages/*/addon*/**',
-    'packages/*/binding.cpp',
+    'packages/*/**/*.cpp',
     'packages/*/binding.gyp',
     'src/**/*.json',
   ],
