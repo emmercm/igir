@@ -224,15 +224,6 @@
     },
 
     {
-      "target_name": "utf8proc",
-      "type": "static_library",
-      # Static linking: don't decorate symbols with DLL import/export.
-      "defines": ["UTF8PROC_STATIC"],
-      "include_dirs": ["<(mame)/3rdparty/utf8proc"],
-      "sources": ["<(mame)/3rdparty/utf8proc/utf8proc.c"]
-    },
-
-    {
       "target_name": "mame_ocore",
       "type": "static_library",
       "include_dirs": [
@@ -292,10 +283,13 @@
         "<(mame)/3rdparty/flac/include",
         "<(mame)/3rdparty/utf8proc"
       ],
-      # These must match the defines used to build the lzma/utf8proc/flac static
-      # libs: chdcodec.cpp and unicode.cpp include those libraries' public
-      # headers, so struct layouts and symbol linkage have to agree (ABI
-      # consistency). FLAC__NO_DLL also keeps FLAC symbols statically linked.
+      # These must match the defines used to build the lzma/flac static libs:
+      # chdcodec.cpp includes those libraries' public headers, so struct layouts
+      # and symbol linkage have to agree (ABI consistency). FLAC__NO_DLL also
+      # keeps FLAC symbols statically linked. utf8proc is NOT compiled in: the
+      # only caller (unicode.cpp's normalize_unicode) is never reached, so the
+      # linker dead-strips it; UTF8PROC_STATIC still makes its header declare a
+      # plain (non-dllimport) extern for that dead reference.
       "defines": ["Z7_ST", "UTF8PROC_STATIC", "FLAC__NO_DLL"],
       "sources": [
         "<(mame)/src/lib/util/avhuff.cpp",
@@ -331,7 +325,7 @@
       "sources": ["binding.cpp"],
       "dependencies": [
         "mame_utils", "mame_ocore",
-        "zlib", "zstd", "flac", "lzma7z", "utf8proc"
+        "zlib", "zstd", "flac", "lzma7z"
       ],
       "include_dirs": [
         "<!(node -p \"require('node-addon-api').include_dir\")",

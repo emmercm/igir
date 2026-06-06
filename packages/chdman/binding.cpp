@@ -1,4 +1,10 @@
 // chdman native addon.
+//
+// Thread-safety contract: every reader/info call uses its OWN chd_file (+
+// cdrom_file), so concurrent operations on different CHDs share no addon state.
+// This relies on MAME's codec stack (zlib/zstd/lzma/flac) keeping all mutable
+// state per-instance; the bundled libraries do, so independent chd_files never
+// contend.
 #include <napi.h>
 #include "cdrom.h"      // cdrom_file
 #include "chd.h"        // chd_file, chd_codec_type
@@ -616,6 +622,9 @@ size_t TrackReader::Produce(uint8_t* out, size_t maxBytes) {
       }
       const cdrom_file::track_info& st = toc_.tracks[trk];
       frameBuf_.assign(st.datasize, 0);
+      // read_data's bool result is intentionally ignored, matching chdman's
+      // do_extract_cd (chdman.cpp line 2987): on a read miss the pre-zeroed
+      // buffer is emitted as silence rather than erroring, for byte parity.
       cdrom_->read_data(cdrom_->get_track_start_phys(trk) + frameofs, frameBuf_.data(), st.trktype,
                         true);
       // for CDRWin and GDI audio tracks must be reversed; for GDI with CHD
@@ -694,10 +703,12 @@ Napi::Value TrackReader::Read(const Napi::CallbackInfo& info) {
     return deferred.Promise();
   }
   size_t maxBytes = info[0].As<Napi::Number>().Uint32Value();
-  reading_ = true;
-  Ref();  // keep this object (and chd_) alive while the worker thread reads
+  // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
+  // if that allocation throws, reading_/Ref() must not be left dangling.
   auto* worker = new TrackReadWorker(env, this, maxBytes);
   Napi::Promise promise = worker->GetPromise();
+  reading_ = true;
+  Ref();  // keep this object (and chd_) alive while the worker thread reads
   worker->Queue();
   return promise;
 }
@@ -830,10 +841,12 @@ Napi::Value RawReader::Read(const Napi::CallbackInfo& info) {
     return deferred.Promise();
   }
   size_t maxBytes = info[0].As<Napi::Number>().Uint32Value();
-  reading_ = true;
-  Ref();  // keep this object (and chd_) alive while the worker thread reads
+  // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
+  // if that allocation throws, reading_/Ref() must not be left dangling.
   auto* worker = new RawReadWorker(env, this, maxBytes);
   Napi::Promise promise = worker->GetPromise();
+  reading_ = true;
+  Ref();  // keep this object (and chd_) alive while the worker thread reads
   worker->Queue();
   return promise;
 }
