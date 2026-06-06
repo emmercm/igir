@@ -102,9 +102,9 @@ const binding = ((): ChdmanBinding => {
       `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
     ) as ChdmanBinding;
   } catch {
-    /* fall through to local build */
+    /* ignored */
   }
-  return require('./build/Release/chdman.node') as ChdmanBinding;
+  return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
 })();
 
 const exported = {
