@@ -6,8 +6,6 @@
 #include "path.h"       // core_filename_extract_base
 #include "strformat.h"  // util::string_format, util::stream_format
 #include <algorithm>
-#include <cmath>
-#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <optional>
@@ -507,6 +505,11 @@ public:
 
   explicit TrackReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<TrackReader>(info) {
     Napi::Env env = info.Env();
+    if (info.Length() < 3 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
+      Napi::TypeError::New(env, "TrackReader(inputFilename, mode, trackIndex) required")
+          .ThrowAsJavaScriptException();
+      return;
+    }
     input_ = info[0].As<Napi::String>();
     mode_ = info[1].As<Napi::Number>().Int32Value();
     trackIndex_ = info[2].As<Napi::Number>().Int32Value();
@@ -529,6 +532,12 @@ public:
       Napi::Error::New(env, "failed to read CHD TOC").ThrowAsJavaScriptException();
       return;
     }
+    // toc_.tracks is a fixed-size array; reject an out-of-range index before it
+    // is used below (and in Produce) to avoid an out-of-bounds read.
+    if (trackIndex_ < 0 || trackIndex_ >= int(toc_.numtrks)) {
+      Napi::RangeError::New(env, "track index out of range").ThrowAsJavaScriptException();
+      return;
+    }
     chdVersion_ = chd_.version();
     const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
     try {
@@ -541,13 +550,39 @@ public:
   }
 
   Napi::Value Read(const Napi::CallbackInfo& info);
-  void Close(const Napi::CallbackInfo&) { closed_ = true; }
+
+  // Deterministically release the CHD file handle. If a read worker is in
+  // flight, the actual teardown is deferred to FinishRead() so the worker
+  // thread is never reading chd_/cdrom_ while the main thread frees them.
+  void Close(const Napi::CallbackInfo&) {
+    closed_ = true;
+    if (!reading_) {
+      Teardown();
+    }
+  }
+
+  // Called on the main thread by the read worker once Produce has fully
+  // completed (Execute has returned), so touching chd_/cdrom_ here is safe.
+  void FinishRead() {
+    reading_ = false;
+    if (closed_) {
+      Teardown();
+    }
+    Unref();  // balances the Ref() taken in Read(); may allow GC of this object
+  }
 
   // Emit up to maxBytes of this track's DATA-FRAME bytes (no pregap/postgap
   // silence). Mirrors do_extract_cd's per-frame read/byte-swap/splitframes pull.
   size_t Produce(uint8_t* out, size_t maxBytes);
 
 private:
+  // Idempotent: chd_file::close() resets its file handle and cdrom_.reset() on
+  // an already-null pointer is a no-op, so repeated calls are safe.
+  void Teardown() {
+    cdrom_.reset();
+    chd_.close();
+  }
+
   std::string input_;
   int mode_ = MODE_CUEBIN;
   int trackIndex_ = 0;
@@ -560,6 +595,7 @@ private:
   std::vector<uint8_t> frameBuf_;
   size_t frameBufPos_ = 0;
   bool closed_ = false;
+  bool reading_ = false;
 };
 
 size_t TrackReader::Produce(uint8_t* out, size_t maxBytes) {
@@ -630,9 +666,13 @@ public:
     } else {
       deferred_.Resolve(Napi::Buffer<uint8_t>::Copy(env, buf_.data(), n_));
     }
+    reader_->FinishRead();  // last use of reader_: may release it
   }
 
-  void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
+  void OnError(const Napi::Error& e) override {
+    deferred_.Reject(e.Value());
+    reader_->FinishRead();  // last use of reader_: may release it
+  }
 
 private:
   Napi::Promise::Deferred deferred_;
@@ -642,8 +682,21 @@ private:
 };
 
 Napi::Value TrackReader::Read(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+  if (closed_) {
+    deferred.Reject(Napi::Error::New(env, "read after close").Value());
+    return deferred.Promise();
+  }
+  if (reading_) {
+    // Only one read worker may touch this reader's mutable state at a time.
+    deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
+    return deferred.Promise();
+  }
   size_t maxBytes = info[0].As<Napi::Number>().Uint32Value();
-  auto* worker = new TrackReadWorker(info.Env(), this, maxBytes);
+  reading_ = true;
+  Ref();  // keep this object (and chd_) alive while the worker thread reads
+  auto* worker = new TrackReadWorker(env, this, maxBytes);
   Napi::Promise promise = worker->GetPromise();
   worker->Queue();
   return promise;
@@ -666,6 +719,10 @@ public:
 
   explicit RawReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<RawReader>(info) {
     Napi::Env env = info.Env();
+    if (info.Length() < 1 || !info[0].IsString()) {
+      Napi::TypeError::New(env, "RawReader(inputFilename) required").ThrowAsJavaScriptException();
+      return;
+    }
     std::string input = info[0].As<Napi::String>();
     std::error_condition err = chd_.open(input, false, nullptr);
     if (err) {
@@ -676,7 +733,26 @@ public:
   }
 
   Napi::Value Read(const Napi::CallbackInfo& info);
-  void Close(const Napi::CallbackInfo&) { closed_ = true; }
+
+  // Deterministically release the CHD file handle. If a read worker is in
+  // flight, the actual teardown is deferred to FinishRead() so the worker
+  // thread is never reading chd_ while the main thread frees it.
+  void Close(const Napi::CallbackInfo&) {
+    closed_ = true;
+    if (!reading_) {
+      Teardown();
+    }
+  }
+
+  // Called on the main thread by the read worker once Produce has fully
+  // completed (Execute has returned), so touching chd_ here is safe.
+  void FinishRead() {
+    reading_ = false;
+    if (closed_) {
+      Teardown();
+    }
+    Unref();  // balances the Ref() taken in Read(); may allow GC of this object
+  }
 
   // Emit up to maxBytes of this CHD's logical bytes starting at pos_.
   size_t Produce(uint8_t* out, size_t maxBytes) {
@@ -690,10 +766,15 @@ public:
   }
 
 private:
+  // Idempotent: chd_file::close() resets its file handle, so repeated calls are
+  // safe.
+  void Teardown() { chd_.close(); }
+
   chd_file chd_;
   uint64_t total_ = 0;
   uint64_t pos_ = 0;
   bool closed_ = false;
+  bool reading_ = false;
 };
 
 class RawReadWorker : public Napi::AsyncWorker {
@@ -721,9 +802,13 @@ public:
     } else {
       deferred_.Resolve(Napi::Buffer<uint8_t>::Copy(env, buf_.data(), n_));
     }
+    reader_->FinishRead();  // last use of reader_: may release it
   }
 
-  void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
+  void OnError(const Napi::Error& e) override {
+    deferred_.Reject(e.Value());
+    reader_->FinishRead();  // last use of reader_: may release it
+  }
 
 private:
   Napi::Promise::Deferred deferred_;
@@ -733,8 +818,21 @@ private:
 };
 
 Napi::Value RawReader::Read(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+  if (closed_) {
+    deferred.Reject(Napi::Error::New(env, "read after close").Value());
+    return deferred.Promise();
+  }
+  if (reading_) {
+    // Only one read worker may touch this reader's mutable state at a time.
+    deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
+    return deferred.Promise();
+  }
   size_t maxBytes = info[0].As<Napi::Number>().Uint32Value();
-  auto* worker = new RawReadWorker(info.Env(), this, maxBytes);
+  reading_ = true;
+  Ref();  // keep this object (and chd_) alive while the worker thread reads
+  auto* worker = new RawReadWorker(env, this, maxBytes);
   Napi::Promise promise = worker->GetPromise();
   worker->Queue();
   return promise;
