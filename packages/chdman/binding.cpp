@@ -1,24 +1,18 @@
-// chdman native addon.
-//
-// Thread-safety contract: every reader/info call uses its OWN chd_file (+
-// cdrom_file), so concurrent operations on different CHDs share no addon state.
-// This relies on MAME's codec stack (zlib/zstd/lzma/flac) keeping all mutable
-// state per-instance; the bundled libraries do, so independent chd_files never
-// contend.
-#include <napi.h>
-#include "cdrom.h"      // cdrom_file
-#include "chd.h"        // chd_file, chd_codec_type
-#include "chdcodec.h"   // chd_codec_type constants
-#include "path.h"       // core_filename_extract_base
-#include "strformat.h"  // util::string_format, util::stream_format
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <napi.h>
 #include <optional>
 #include <ostream>
 #include <regex>
 #include <sstream>
 #include <vector>
+
+#include "cdrom.h"
+#include "chd.h"
+#include "chdcodec.h"
+#include "path.h"
+#include "strformat.h"
 
 // ===== BEGIN ported from deps/mame/src/tools/chdman.cpp @ MAME 0.288 (submodule tag mame0288) =====
 // Re-port when bumping the MAME submodule: diff each sub-block against the cited
@@ -41,8 +35,7 @@ static std::string port_msf_string_from_frames(uint32_t frames) {
 // cue/bin: their high-density track has padframes exceeding frames+splitframes, so
 // that uint32 formula underflows to ~4.29e9 frames (~10 TB) and extraction would
 // run far past chdman's total_bytes (chdman.cpp line 2734) -- i.e. past 100% of
-// the disc. The chdman CLI relied on a progress watchdog to abort that runaway;
-// we instead detect the underflow up front and throw, so callers (e.g. ChdBinCue)
+// the disc. We need to detect the underflow up front and throw, so callers (e.g. ChdBinCue)
 // fall back to gdi/raw for such GD-ROMs instead of decompressing forever.
 static uint32_t port_actual_frames(const cdrom_file::track_info& t, int tracknum) {
   const int64_t frames = int64_t(t.frames) + int64_t(t.splitframes) - int64_t(t.padframes);

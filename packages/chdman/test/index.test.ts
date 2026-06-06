@@ -8,30 +8,42 @@ import chdman, { CHDType, readableFromReader } from '../index.js';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 
-interface Golden {
-  tocText: string;
-  tocName: string;
-  files: { name: string; size: number; sha1: string }[];
+const sha1 = (buffer: Buffer): string => crypto.createHash('sha1').update(buffer).digest('hex');
+
+interface GoldenFile {
+  name: string;
+  size: number;
+  sha1: string;
+  bytes: Buffer;
 }
 
-const isGolden = (value: unknown): value is Golden =>
-  typeof value === 'object' &&
-  value !== null &&
-  'tocText' in value &&
-  typeof value.tocText === 'string' &&
-  'tocName' in value &&
-  typeof value.tocName === 'string' &&
-  'files' in value &&
-  Array.isArray(value.files);
+interface Golden {
+  tocName: string;
+  tocText: string;
+  files: GoldenFile[];
+}
 
-const golden = (name: string): Golden => {
-  const parsed: unknown = JSON.parse(
-    fs.readFileSync(path.join(FIXTURES, 'golden', name)).toString(),
-  );
-  if (!isGolden(parsed)) {
-    throw new Error(`invalid golden fixture: ${name}`);
+/**
+ * Load a golden directory: the single `.cue`/`.gdi` file is the expected TOC,
+ * and every other file is an expected extracted track (sorted by name to match
+ * the order tracks are listed in).
+ */
+const golden = (directory: string): Golden => {
+  const root = path.join(FIXTURES, 'golden', directory);
+  const entries = fs.readdirSync(root).filter((name) => !name.startsWith('.'));
+  const tocName = entries.find((name) => name.endsWith('.cue') || name.endsWith('.gdi'));
+  if (tocName === undefined) {
+    throw new Error(`no .cue/.gdi TOC file in golden/${directory}`);
   }
-  return parsed;
+  const tocText = fs.readFileSync(path.join(root, tocName)).toString();
+  const files = entries
+    .filter((name) => name !== tocName)
+    .toSorted((a, b) => a.localeCompare(b))
+    .map((name) => {
+      const bytes = fs.readFileSync(path.join(root, name));
+      return { name, size: bytes.length, sha1: sha1(bytes), bytes };
+    });
+  return { tocName, tocText, files };
 };
 
 describe('info', () => {
@@ -56,55 +68,59 @@ describe('info', () => {
 
 describe('listTracks', () => {
   it('lists CD-ROM cue/bin tracks with parity TOC text and sizes', async () => {
-    const expected = golden('cd-rom.cuebin.json');
+    const expected = golden('cd-rom.cuebin');
     const result = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
-      cueName: 'CD-ROM.cue',
+      cueName: expected.tocName,
     });
     expect(result.tocText).toEqual(expected.tocText);
-    expect(result.tracks.map((t) => ({ name: t.filename, size: t.size }))).toEqual(
-      expected.files.map((f) => ({ name: f.name, size: f.size })),
-    );
+    expect(
+      result.tracks
+        .toSorted((a, b) => a.filename.localeCompare(b.filename))
+        .map((track) => ({ name: track.filename, size: track.size })),
+    ).toEqual(expected.files.map((file) => ({ name: file.name, size: file.size })));
   });
 
   it('lists GD-ROM gdi tracks with parity TOC text and sizes', async () => {
-    const expected = golden('gd-rom.gdi.json');
+    const expected = golden('gd-rom.gdi');
     const result = await chdman.listGdRomTracks({
       inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
       trackBaseName: 'track',
-      gdiName: 'GD-ROM.gdi',
+      gdiName: expected.tocName,
     });
     expect(result.tocText).toEqual(expected.tocText);
-    expect(result.tracks.map((t) => ({ name: t.filename, size: t.size }))).toEqual(
-      expected.files.map((f) => ({ name: f.name, size: f.size })),
-    );
+    expect(
+      result.tracks
+        .toSorted((a, b) => a.filename.localeCompare(b.filename))
+        .map((track) => ({ name: track.filename, size: track.size })),
+    ).toEqual(expected.files.map((file) => ({ name: file.name, size: file.size })));
   });
 });
 
-async function readerSha1(reader: {
+async function readAll(reader: {
   read: (n: number) => Promise<Buffer | null>;
   close: () => void;
-}): Promise<{ size: number; sha1: string }> {
-  const hash = crypto.createHash('sha1');
-  let size = 0;
+}): Promise<Buffer> {
+  const chunks: Buffer[] = [];
   for (;;) {
     const chunk = await reader.read(64 * 1024);
-    if (chunk === null || chunk.length === 0) break;
-    size += chunk.length;
-    hash.update(chunk);
+    if (chunk === null || chunk.length === 0) {
+      break;
+    }
+    chunks.push(chunk);
   }
   reader.close();
-  return { size, sha1: hash.digest('hex') };
+  return Buffer.concat(chunks);
 }
 
 describe('openTrackReader', () => {
   it('streams CD-ROM cue/bin tracks byte-identically to the golden', async () => {
-    const expected = golden('cd-rom.cuebin.json');
+    const expected = golden('cd-rom.cuebin');
     const listing = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
-      cueName: 'CD-ROM.cue',
+      cueName: expected.tocName,
     });
     for (const track of listing.tracks) {
       const reader = await chdman.openTrackReader({
@@ -112,19 +128,21 @@ describe('openTrackReader', () => {
         mode: 'cuebin',
         trackIndex: track.index,
       });
-      const got = await readerSha1(reader);
-      const want = expected.files.find((f) => f.name === track.filename);
-      expect(want).toBeDefined();
-      expect(got).toEqual({ size: want?.size, sha1: want?.sha1 });
+      const got = await readAll(reader);
+      const want = expected.files.find((file) => file.name === track.filename);
+      if (want === undefined) {
+        throw new Error(`no golden file for track ${track.filename}`);
+      }
+      expect({ size: got.length, sha1: sha1(got) }).toEqual({ size: want.size, sha1: want.sha1 });
     }
   });
 
   it('streams GD-ROM gdi tracks byte-identically to the golden', async () => {
-    const expected = golden('gd-rom.gdi.json');
+    const expected = golden('gd-rom.gdi');
     const listing = await chdman.listGdRomTracks({
       inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
       trackBaseName: 'track',
-      gdiName: 'GD-ROM.gdi',
+      gdiName: expected.tocName,
     });
     for (const track of listing.tracks) {
       const reader = await chdman.openTrackReader({
@@ -132,10 +150,12 @@ describe('openTrackReader', () => {
         mode: 'gdi',
         trackIndex: track.index,
       });
-      const got = await readerSha1(reader);
-      const want = expected.files.find((f) => f.name === track.filename);
-      expect(want).toBeDefined();
-      expect(got).toEqual({ size: want?.size, sha1: want?.sha1 });
+      const got = await readAll(reader);
+      const want = expected.files.find((file) => file.name === track.filename);
+      if (want === undefined) {
+        throw new Error(`no golden file for track ${track.filename}`);
+      }
+      expect({ size: got.length, sha1: sha1(got) }).toEqual({ size: want.size, sha1: want.sha1 });
     }
   });
 });
@@ -144,32 +164,33 @@ describe('openRawReader', () => {
   it('streams a HARD_DISK CHD logical image with size == logicalSize', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
     const reader = await chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
-    const got = await readerSha1(reader);
-    expect(got.size).toEqual(info.logicalSize);
-    expect(got.sha1).toEqual(info.dataSha1);
+    const got = await readAll(reader);
+    expect(got.length).toEqual(info.logicalSize);
+    expect(sha1(got)).toEqual(info.dataSha1);
   });
 });
 
 describe('readableFromReader', () => {
   it('produces a Readable whose bytes match the golden track', async () => {
-    const expected = golden('cd-rom.cuebin.json');
+    const expected = golden('cd-rom.cuebin');
+    const want = expected.files.find((file) => file.name === 'CD-ROM (Track 1).bin');
+    if (want === undefined) {
+      throw new Error('missing golden track CD-ROM (Track 1).bin');
+    }
     const reader = await chdman.openTrackReader({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       mode: 'cuebin',
       trackIndex: 0,
     });
     const readable = readableFromReader(reader);
-    const hash = crypto.createHash('sha1');
-    let size = 0;
+    const chunks: Buffer[] = [];
     for await (const chunk of readable) {
       if (Buffer.isBuffer(chunk)) {
-        size += chunk.length;
-        hash.update(chunk);
+        chunks.push(chunk);
       }
     }
-    const want = expected.files.find((f) => f.name === 'CD-ROM (Track 1).bin');
-    expect(want).toBeDefined();
-    expect({ size, sha1: hash.digest('hex') }).toEqual({ size: want?.size, sha1: want?.sha1 });
+    const got = Buffer.concat(chunks);
+    expect({ size: got.length, sha1: sha1(got) }).toEqual({ size: want.size, sha1: want.sha1 });
   });
 });
 

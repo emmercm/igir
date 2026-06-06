@@ -1,38 +1,13 @@
-# binding.gyp - builds the chdman Node addon and compiles its MAME/3rdparty
-# dependencies into it as static libraries. Three cross-cutting goals drive the
-# define/flag choices below:
-#   * Maximum portability: target each architecture's baseline ISA only and
-#     disable hand-written SIMD, so the binary runs on any supported CPU.
-#   * Fully static: every 3rdparty library is compiled in (no external runtime
-#     dependencies); only OS-provided system libraries remain.
-#   * Fast execution (secondarily, small size): on top of node-gyp's default
-#     per-file optimization (-O3 on gcc/clang/xcode; /Ox /Ot on MSVC, the last
-#     already with /GL + /LTCG whole-program optimization), enable cross-module
-#     LTO on gcc/clang/xcode and let the linker internalize and strip everything
-#     but the N-API entry point. Applied to every configuration, matching the
-#     other addons in packages/. No SIMD instruction sets are enabled: -O3's
-#     baseline-ISA auto-vectorization is kept, but there is no -march/-mavx/-msse
-#     and no hand-written SIMD.
 {
   "variables": {
     "mame": "deps/mame"
   },
   "target_defaults": {
     "conditions": [
-      # MAME's corefile.cpp #errors unless CRLF is defined (selects line-ending
-      # translation: CR/LF on Windows, LF elsewhere).
       ["OS=='win'", { "defines": ["CRLF=3"] }],
       ["OS!='win'", { "defines": ["CRLF=2"] }],
 
-      # Linux gcc/clang speed + size tuning (all configurations). Hidden
-      # visibility internalizes every symbol except the N-API entry point
-      # (binding.cpp's NODE_API_MODULE marks it visibility("default")), and
-      # -ffunction-sections/-fdata-sections paired with --gc-sections lets the
-      # linker drop everything unreferenced: smaller .node, and more for LTO to
-      # inline/strip. A loadable module is never interposed, so
-      # -fno-semantic-interposition lets the compiler inline across the
-      # would-be shared-object boundary. The mac/MSVC equivalents live in
-      # xcode_settings/msvs_settings below.
+      # Build optimizations
       ["OS=='linux'", {
         "cflags": [
           "-ffunction-sections", "-fdata-sections",
@@ -41,18 +16,10 @@
         ],
         "ldflags": ["-Wl,--gc-sections"],
         "conditions": [
-          # gcc: cross-module LTO. -flto=auto partitions the whole-program step
-          # across all cores (same generated code as monolithic LTO, much
-          # faster build). gyp builds the static libs with plain `ar`, which
-          # records no LTO plugin, so -ffat-lto-objects keeps real machine code
-          # in each archive member -- the final link resolves symbols normally
-          # and the LTO plugin still optimizes via the embedded bytecode.
           ["clang==0", {
             "cflags": ["-flto=auto", "-ffat-lto-objects"],
             "ldflags": ["-flto=auto"]
           }],
-          # clang on Linux: ThinLTO -- near-monolithic runtime speed, parallel
-          # and incremental, so it needs no fat objects.
           ["clang==1", {
             "cflags": ["-flto=thin"],
             "ldflags": ["-flto=thin"]
@@ -60,25 +27,17 @@
         ]
       }]
     ],
-    # gcc/clang toolchain flags. The same needs are expressed per-toolchain in
-    # xcode_settings (macOS) and msvs_settings (Windows) below.
+
     "cflags_cc": [
-      # MAME requires the C++17 language standard.
       "-std=c++17",
-      # MAME uses C++ exceptions (chd_file throws std::error_condition) and RTTI,
-      # but node-gyp builds addons with -fno-exceptions/-fno-rtti. Re-enable
-      # both; appended last, these override node-gyp's flags.
+      # MAME uses C++ exceptions and RTTI
       "-fexceptions", "-frtti"
     ],
     "xcode_settings": {
-      # C++17 language standard.
       "CLANG_CXX_LANGUAGE_STANDARD": "c++17",
-      # Exceptions + RTTI, appended last to override node-gyp's -fno-* flags.
+      # MAME uses C++ exceptions and RTTI
       "OTHER_CPLUSPLUSFLAGS": ["-fexceptions", "-frtti"],
-      # macOS clang speed + size tuning (all configurations), mirroring the
-      # Linux flags above. Monolithic LTO across every static lib and the
-      # binding; hidden visibility keeps only the N-API entry point exported so
-      # LTO and dead-code stripping can internalize/drop the rest.
+      # Build optimizations
       "LLVM_LTO": "YES",
       "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
       "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
@@ -87,16 +46,14 @@
     },
     "msvs_settings": {
       "VCCLCompilerTool": {
-        # Static linking: /MT uses the static CRT, so the addon has no MSVC
-        # runtime-DLL dependency.
         "RuntimeLibrary": "0",
-        # C++17 language standard (/std:c++17) and C++ exceptions (/EHsc).
-        "AdditionalOptions": ["/std:c++17", "/EHsc"]
+        "AdditionalOptions": [
+          "/std:c++17",
+          # MAME uses C++ exceptions and RTTI,
+          "/EHsc"
+        ]
       }
     }
-    # Windows: MSVC already performs /GL whole-program optimization, /LTCG, and
-    # /Ot speed-favoring optimization (node-gyp's addon.gypi + common.gypi), so
-    # there is nothing further to add for the optimization goal here.
   },
 
   "targets": [
