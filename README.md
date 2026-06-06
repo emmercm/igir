@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v5.0.2 (Node.js v26.1.0)
+     @@   @@        @@   @@   @@       @@    v5.1.0 (Node.js v26.1.0)
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -101,13 +101,13 @@ DAT input options:
                                                                                        [array]
       --dat-exclude                    Path(s) to DAT files or archives to exclude from
                                        processing (supports globbing)                  [array]
-      --dat-name-regex                 Regular expression of DAT names to process     [string]
+      --dat-name-regex                 Regular expression of DAT names to process      [array]
       --dat-name-regex-exclude         Regular expression of DAT names to exclude from
-                                       processing                                     [string]
+                                       processing                                      [array]
       --dat-description-regex          Regular expression of DAT descriptions to process
-                                                                                      [string]
+                                                                                       [array]
       --dat-description-regex-exclude  Regular expression of DAT descriptions to exclude from
-                                       processing                                     [string]
+                                       processing                                      [array]
       --dat-combine                    Combine every game from every found & filtered DAT into
                                        one DAT                                       [boolean]
       --dat-ignore-parent-clone        Ignore any parent/clone information found in DATs
@@ -190,6 +190,8 @@ Trimmed ROM options:
                                         [choices: "never", "auto", "always"] [default: "auto"]
       --trim-scan-archives  Detect trimming for files within archives (off by default)
                                                                                      [boolean]
+      --trim-add-padding    When writing matched trimmed ROMs, add back their trailing padding
+                            so the output matches the DAT checksum                   [boolean]
 
 ROM set options (requires DATs):
       --merge-roms             ROM merge/split mode (requires DATs with parent/clone
@@ -202,8 +204,8 @@ ROM set options (requires DATs):
       --allow-incomplete-sets  Allow writing games that don't have all of their ROMs [boolean]
 
 ROM filtering options:
-  -x, --filter-regex           Regular expression of game names to filter to          [string]
-  -X, --filter-regex-exclude   Regular expression of game names to exclude            [string]
+  -x, --filter-regex           Regular expression of game names to filter to           [array]
+  -X, --filter-regex-exclude   Regular expression of game names to exclude             [array]
   -L, --filter-language        List of comma-separated languages to filter to (supported: DA,
                                DE, EL, EN, ES, FI, FR, IT, JA, KO, NL, NO, PT, RU, SV, ZH)
                                                                                       [string]
@@ -211,7 +213,7 @@ ROM filtering options:
                                ASI, AUS, BEL, BRA, CAN, CHN, DAN, EUR, FRA, FYN, GER, GRE, HK,
                                HOL, ITA, JPN, KOR, MEX, NOR, NZ, POR, RUS, SPA, SWE, TAI, UK,
                                UNK, USA, WORLD)                                       [string]
-      --filter-category-regex  Regular expression of categories to filter to          [string]
+      --filter-category-regex  Regular expression of categories to filter to           [array]
       --no-bios                Filter out BIOS files, opposite of --only-bios        [boolean]
       --no-device              Filter out MAME devies, opposite of --only-device     [boolean]
       --no-unlicensed          Filter out unlicensed ROMs, opposite of --only-unlicensed
@@ -237,8 +239,8 @@ One game, one ROM (1G1R) options (applied in order):
   -s, --single             Output only a single game per parent (1G1R) (required for all
                            options below, requires DATs with parent/clone information)
                                                                                      [boolean]
-      --prefer-game-regex  Regular expression of DAT game names to prefer             [string]
-      --prefer-rom-regex   Regular expression of DAT ROM filenames to prefer          [string]
+      --prefer-game-regex  Regular expression of DAT game names to prefer              [array]
+      --prefer-rom-regex   Regular expression of DAT ROM filenames to prefer           [array]
       --prefer-verified    Prefer verified ROM dumps over unverified                 [boolean]
       --prefer-good        Prefer good ROM dumps over bad                            [boolean]
   -l, --prefer-language    List of comma-separated languages in priority order (supported: DA,
@@ -255,7 +257,7 @@ One game, one ROM (1G1R) options (applied in order):
 Input file preferences (applied in order):
       --prefer-filetype        Prefer input files of a type
                                               [choices: "plain", "archive"] [default: "plain"]
-      --prefer-filename-regex  Regular expression of filenames to prefer
+      --prefer-filename-regex  Regular expression of filenames to prefer               [array]
 
 playlist command options:
       --playlist-mode        Generate playlists depending on how many ROMs a game has
