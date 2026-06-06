@@ -206,7 +206,7 @@
             # osdlib_min.cpp replaces MAME's osdlib_macosx.cpp, whose only external
             # dependency (CoreFoundation/ApplicationServices, for clipboard) is dead
             # code here; see that file for why.
-            "osdlib_min.cpp",
+            "shims/osdlib_min.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
             "<(mame)/src/osd/modules/file/posixptty.cpp",
@@ -217,7 +217,7 @@
           "sources": [
             # osdlib_min.cpp replaces MAME's osdlib_unix.cpp, which #includes
             # <SDL2/SDL.h>; see that file for why.
-            "osdlib_min.cpp",
+            "shims/osdlib_min.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
             "<(mame)/src/osd/modules/file/posixptty.cpp",
