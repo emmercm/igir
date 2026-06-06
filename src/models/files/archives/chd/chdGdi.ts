@@ -7,11 +7,12 @@ import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
 import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
-import type { ChdListing } from './chd.js';
+import type { ChdListedFile, ChdListing } from './chd.js';
 import Chd from './chd.js';
 
 /**
@@ -44,14 +45,11 @@ export default class ChdGdi extends Chd {
       mode: 'gdi',
       tocFilename: `${prefix}.gdi`,
       tocText: listing.tocText,
-      files: [
-        { filename: `${prefix}.gdi`, size: listing.tocText.length },
-        ...listing.tracks.map((track) => ({
-          filename: track.filename,
-          size: track.size,
-          trackIndex: track.index,
-        })),
-      ],
+      files: listing.tracks.map((track) => ({
+        filename: track.filename,
+        size: track.size,
+        trackIndex: track.index,
+      })),
     };
   }
 
@@ -82,12 +80,17 @@ export default class ChdGdi extends Chd {
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    return await this.consumeEntryStream(
-      entryPath,
-      await this.streamFile(entryPath),
-      callback,
-      start,
-    );
+    let readable = await this.streamFile(entryPath);
+    // A non-zero start offset (e.g. a detected ROM header) must skip that many
+    // leading bytes of the forward-only stream.
+    if (start > 0) {
+      readable = readable.pipe(new SkipBytesTransform(start));
+    }
+    try {
+      return await callback(readable);
+    } finally {
+      readable.destroy();
+    }
   }
 
   /**
@@ -119,11 +122,7 @@ export default class ChdGdi extends Chd {
       checksumBitmask,
     );
 
-    const trackFiles = listing.files.flatMap((file) =>
-      file.trackIndex === undefined
-        ? []
-        : [{ filename: file.filename, size: file.size, trackIndex: file.trackIndex }],
-    );
+    const trackFiles = listing.files;
     if (callback) {
       callback(
         0,
@@ -134,7 +133,7 @@ export default class ChdGdi extends Chd {
     const trackEntries = await async.mapLimit(
       trackFiles,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-      async (file: (typeof trackFiles)[number]): Promise<ArchiveEntry<this>> => {
+      async (file: ChdListedFile): Promise<ArchiveEntry<this>> => {
         const readable = await chdman.openTrackReader({
           inputFilename: this.getFilePath(),
           mode: 'gdi',

@@ -5,25 +5,24 @@ import { Memoize } from 'typescript-memoize';
 
 import type { CHDInfo } from '../../../../../packages/chdman/index.js';
 import chdman from '../../../../../packages/chdman/index.js';
-import IgirException from '../../../../exceptions/igirException.js';
 import FsReadTransform, { FsReadCallback } from '../../../../streams/fsReadTransform.js';
-import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import Archive from '../archive.js';
 
 /**
- * How a single listed file is produced when a CHD is extracted.
+ * A single track file a CHD exposes when extracted. The generated .cue/.gdi text is carried
+ * separately as {@link ChdListing.tocText}, not as one of these.
  */
 export interface ChdListedFile {
   // Output filename, equal to the {@link ArchiveEntry} path
   filename: string;
   // Byte size including any pregap/postgap
   size: number;
-  // Undefined for the generated .cue/.gdi text file
-  trackIndex?: number;
+  // 0-based chdman track index
+  trackIndex: number;
 }
 
 /**
- * The set of files a CHD exposes, plus the generated table-of-contents text.
+ * The track files a CHD exposes, plus the generated table-of-contents text.
  */
 export interface ChdListing {
   mode: 'cuebin' | 'gdi';
@@ -68,33 +67,6 @@ export default abstract class Chd extends Archive {
         await stream.promises.pipeline(readable, writeStream);
       }
     });
-  }
-
-  /**
-   * Skip the first `start` bytes of an entry's stream, invoke the callback with it, and always
-   * tear the stream down afterward. Subclasses resolve and open the per-entry readable
-   * themselves and hand it here, so extracting one file never requires listing the whole CHD.
-   */
-  protected async consumeEntryStream<T>(
-    entryPath: string,
-    readable: stream.Readable,
-    callback: (readable: stream.Readable) => Promise<T> | T,
-    start: number,
-  ): Promise<T> {
-    let result = readable;
-    // A non-zero start offset (e.g. a detected ROM header) must skip that many
-    // leading bytes of the forward-only stream.
-    if (start > 0) {
-      result = result.pipe(new SkipBytesTransform(start));
-    }
-
-    try {
-      return await callback(result);
-    } catch (error) {
-      throw new IgirException(`failed to read ${this.getFilePath()}|${entryPath}: ${error}`);
-    } finally {
-      result.destroy();
-    }
   }
 
   @Memoize()
