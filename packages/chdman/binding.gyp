@@ -4,27 +4,24 @@
   },
   "target_defaults": {
     "conditions": [
-      ["OS=='win'", { "defines": ["CRLF=3"] }],
+      # NOMINMAX stops <windows.h> from defining min()/max() macros, which
+      # otherwise clobber std::numeric_limits<>::max() etc. (e.g. strconv.cpp).
+      ["OS=='win'", { "defines": ["CRLF=3", "NOMINMAX"] }],
       ["OS!='win'", { "defines": ["CRLF=2"] }],
 
-      # Build optimizations
+      # Build optimizations. Use plain -flto: both gcc and clang accept it, while
+      # -flto=auto (gcc) and -flto=thin (clang) are compiler-specific. node-gyp's
+      # `clang` variable reflects how node itself was built, not the addon's CXX,
+      # so it can't pick the right flavor (a clang-built node compiling with gcc
+      # would pass gcc an unsupported -flto=thin, breaking from-source installs).
       ["OS=='linux'", {
         "cflags": [
           "-ffunction-sections", "-fdata-sections",
           "-fvisibility=hidden", "-fvisibility-inlines-hidden",
-          "-fno-semantic-interposition"
+          "-fno-semantic-interposition",
+          "-flto"
         ],
-        "ldflags": ["-Wl,--gc-sections"],
-        "conditions": [
-          ["clang==0", {
-            "cflags": ["-flto=auto", "-ffat-lto-objects"],
-            "ldflags": ["-flto=auto"]
-          }],
-          ["clang==1", {
-            "cflags": ["-flto=thin"],
-            "ldflags": ["-flto=thin"]
-          }]
-        ]
+        "ldflags": ["-Wl,--gc-sections", "-flto"]
       }]
     ],
 
@@ -206,7 +203,10 @@
       "conditions": [
         ["OS=='mac'", {
           "sources": [
-            "<(mame)/src/osd/modules/lib/osdlib_macosx.cpp",
+            # osdlib_min.cpp replaces MAME's osdlib_macosx.cpp, whose only external
+            # dependency (CoreFoundation/ApplicationServices, for clipboard) is dead
+            # code here; see that file for why.
+            "osdlib_min.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
             "<(mame)/src/osd/modules/file/posixptty.cpp",
@@ -258,9 +258,12 @@
       # linker dead-strips it; UTF8PROC_STATIC still makes its header declare a
       # plain (non-dllimport) extern for that dead reference.
       "defines": ["Z7_ST", "UTF8PROC_STATIC", "FLAC__NO_DLL"],
+      # avhuff (the AVHUFF CHD codec, referenced by chd.cpp/chdcodec.cpp) needs
+      # bitmap + palette + huffman; the AVI container (aviio), laserdisc VBI
+      # (vbiparse), and the dvdrom/harddisk file wrappers are not referenced by
+      # the CHD read/list path, so they are omitted.
       "sources": [
         "<(mame)/src/lib/util/avhuff.cpp",
-        "<(mame)/src/lib/util/aviio.cpp",
         "<(mame)/src/lib/util/bitmap.cpp",
         "<(mame)/src/lib/util/cdrom.cpp",
         "<(mame)/src/lib/util/chd.cpp",
@@ -269,10 +272,8 @@
         "<(mame)/src/lib/util/corefile.cpp",
         "<(mame)/src/lib/util/corestr.cpp",
         "<(mame)/src/lib/util/delegate.cpp",
-        "<(mame)/src/lib/util/dvdrom.cpp",
         "<(mame)/src/lib/util/dynamicclass.cpp",
         "<(mame)/src/lib/util/flac.cpp",
-        "<(mame)/src/lib/util/harddisk.cpp",
         "<(mame)/src/lib/util/hashing.cpp",
         "<(mame)/src/lib/util/huffman.cpp",
         "<(mame)/src/lib/util/ioprocs.cpp",
@@ -282,7 +283,6 @@
         "<(mame)/src/lib/util/path.cpp",
         "<(mame)/src/lib/util/strformat.cpp",
         "<(mame)/src/lib/util/unicode.cpp",
-        "<(mame)/src/lib/util/vbiparse.cpp",
         "<(mame)/src/lib/util/vecstream.cpp"
       ]
     },
@@ -301,16 +301,11 @@
         "<(mame)/3rdparty/flac/include"
       ],
       "conditions": [
-        # macOS: osdlib_macosx references these system frameworks (clipboard via
-        # CoreFoundation). They ship on every Mac and are the only non-libc
-        # external deps; everything else is statically linked into the .node.
-        ["OS=='mac'", {
-          "link_settings": {
-            "libraries": ["-framework CoreFoundation", "-framework ApplicationServices"]
-          }
-        }],
         # Linux: statically link the C++ runtime so the .node carries no
         # libstdc++/libgcc dependency (glibc stays dynamic, as a .so requires).
+        # macOS needs no link_settings: using osdlib_min.cpp drops the only
+        # external frameworks (CoreFoundation/ApplicationServices) MAME's
+        # osdlib_macosx.cpp pulled in, so the .node links against libSystem only.
         ["OS=='linux'", {
           "ldflags": ["-static-libstdc++", "-static-libgcc"]
         }]
