@@ -39,7 +39,7 @@ export interface TrackDescriptor {
   size: number;
 }
 
-export interface Listing {
+export interface TrackListing {
   tocText: string;
   tracks: TrackDescriptor[];
 }
@@ -56,7 +56,9 @@ export interface ListGdRomOptions {
   gdiName: string;
 }
 
-export interface NativeTrackReader {
+// The raw pull-based handle the native addon returns. Internal only: callers
+// consume the stream.Readable wrapper returned by openTrackReader/openRawReader.
+interface NativeTrackReader {
   read: (maxBytes: number) => Promise<Buffer | null>;
   close: () => void;
 }
@@ -73,17 +75,24 @@ export interface OpenRawReaderOptions {
 
 const MODE_CUEBIN = 1;
 const MODE_GDI = 2;
+// The track-listing/reading mode the native addon understands. Constrained to the
+// two valid values so callers can't pass an arbitrary number.
+type ChdmanMode = typeof MODE_CUEBIN | typeof MODE_GDI;
 const READER_CHUNK_SIZE = 1024 * 1024; // 1 MiB per pull
 
 interface ChdmanBinding {
   info: (inputFilename: string) => Promise<Omit<CHDInfo, 'type'> & { type: string }>;
   listTracks: (
     inputFilename: string,
-    mode: number,
+    mode: ChdmanMode,
     binPatternOrBase: string,
     tocName: string,
-  ) => Promise<Listing>;
-  openTrackReader: (inputFilename: string, mode: number, trackIndex: number) => NativeTrackReader;
+  ) => Promise<TrackListing>;
+  openTrackReader: (
+    inputFilename: string,
+    mode: ChdmanMode,
+    trackIndex: number,
+  ) => NativeTrackReader;
   openRawReader: (inputFilename: string) => NativeTrackReader;
 }
 
@@ -115,7 +124,7 @@ const exported = {
    * List the tracks of a CD-ROM CHD as they would be extracted to a cue/bin
    * pair, returning the cue TOC text and a descriptor for every track.
    */
-  async listCdBinCueTracks(options: ListCdBinCueOptions): Promise<Listing> {
+  async listCdBinCueTracks(options: ListCdBinCueOptions): Promise<TrackListing> {
     return await binding.listTracks(
       options.inputFilename,
       MODE_CUEBIN,
@@ -128,7 +137,7 @@ const exported = {
    * List the tracks of a GD-ROM CHD as they would be extracted to a gdi plus
    * split track files, returning the gdi TOC text and a descriptor for every track.
    */
-  async listGdRomTracks(options: ListGdRomOptions): Promise<Listing> {
+  async listGdRomTracks(options: ListGdRomOptions): Promise<TrackListing> {
     return await binding.listTracks(
       options.inputFilename,
       MODE_GDI,
@@ -138,22 +147,26 @@ const exported = {
   },
 
   /**
-   * Open a pull-based reader over a single CD-ROM (cue/bin) or GD-ROM (gdi) track,
-   * yielding exactly the bytes chdman writes for that split-bin track.
+   * Open a pull-based {@link stream.Readable} over a single CD-ROM (cue/bin) or
+   * GD-ROM (gdi) track, yielding exactly the bytes chdman writes for that
+   * split-bin track. The underlying CHD is released when the stream ends, errors,
+   * or is destroyed.
    */
-  async openTrackReader(options: OpenTrackReaderOptions): Promise<NativeTrackReader> {
+  async openTrackReader(options: OpenTrackReaderOptions): Promise<stream.Readable> {
     const mode = options.mode === 'gdi' ? MODE_GDI : MODE_CUEBIN;
-    return await Promise.resolve(
-      binding.openTrackReader(options.inputFilename, mode, options.trackIndex),
-    );
+    const reader = binding.openTrackReader(options.inputFilename, mode, options.trackIndex);
+    return await Promise.resolve(readableFromReader(reader));
   },
 
   /**
-   * Open a pull-based reader over the full logical byte range of a RAW, HARD_DISK,
-   * or DVD CHD, yielding exactly the bytes chdman's extractRaw would write.
+   * Open a pull-based {@link stream.Readable} over the full logical byte range of
+   * a RAW, HARD_DISK, or DVD CHD, yielding exactly the bytes chdman's extractRaw
+   * would write. The underlying CHD is released when the stream ends, errors, or
+   * is destroyed.
    */
-  async openRawReader(options: OpenRawReaderOptions): Promise<NativeTrackReader> {
-    return await Promise.resolve(binding.openRawReader(options.inputFilename));
+  async openRawReader(options: OpenRawReaderOptions): Promise<stream.Readable> {
+    const reader = binding.openRawReader(options.inputFilename);
+    return await Promise.resolve(readableFromReader(reader));
   },
 };
 export default exported;
@@ -163,7 +176,7 @@ export default exported;
  * the stream ends, errors, or is destroyed. Callers must consume the stream to
  * its end or call `destroy()` so the native reader is released.
  */
-export function readableFromReader(reader: NativeTrackReader): stream.Readable {
+function readableFromReader(reader: NativeTrackReader): stream.Readable {
   let closed = false;
   const closeOnce = (): void => {
     if (!closed) {

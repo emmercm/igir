@@ -1,9 +1,12 @@
 import path from 'node:path';
+import stream from 'node:stream';
 
 import async from 'async';
 
-import chdman, { CHDType, readableFromReader } from '../../../../../packages/chdman/index.js';
+import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
+import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
+import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
@@ -29,7 +32,7 @@ export default class ChdBinCue extends Chd {
     return true;
   }
 
-  protected async getListing(): Promise<ChdListing> {
+  private async getListing(): Promise<ChdListing> {
     const prefix = path.parse(this.getFilePath()).name;
     const listing = await chdman.listCdBinCueTracks({
       inputFilename: this.getFilePath(),
@@ -52,9 +55,47 @@ export default class ChdBinCue extends Chd {
   }
 
   /**
+   * Stream one entry: the .cue TOC text, or a .bin track resolved by its track number (the
+   * `(Track N)` produced by {@link getListing}'s pattern maps to chdman track index N - 1).
+   */
+  private async streamFile(entryPath: string): Promise<stream.Readable> {
+    if (entryPath.toLowerCase().endsWith('.cue')) {
+      return stream.Readable.from(Buffer.from((await this.getListing()).tocText));
+    }
+    const trackNumber = /\(Track (\d+)\)\.bin$/i.exec(entryPath);
+    if (trackNumber === null) {
+      throw new IgirException(`CHD entry not found: ${this.getFilePath()}|${entryPath}`);
+    }
+    return await chdman.openTrackReader({
+      inputFilename: this.getFilePath(),
+      mode: 'cuebin',
+      trackIndex: Number(trackNumber[1]) - 1,
+    });
+  }
+
+  /**
+   * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback.
+   */
+  override async extractEntryToStream<T>(
+    entryPath: string,
+    callback: (readable: stream.Readable) => Promise<T> | T,
+    start = 0,
+  ): Promise<T> {
+    return await this.consumeEntryStream(
+      entryPath,
+      await this.streamFile(entryPath),
+      callback,
+      start,
+    );
+  }
+
+  /**
    * List the .cue and .bin track entries this CHD exposes, computing each track's checksums.
    */
-  async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
+  async getArchiveEntries(
+    checksumBitmask: ChecksumBitmaskValue,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<this>[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       // Doing a quick scan
       return [];
@@ -84,19 +125,30 @@ export default class ChdBinCue extends Chd {
         ? []
         : [{ filename: file.filename, size: file.size, trackIndex: file.trackIndex }],
     );
+    if (callback) {
+      callback(
+        0,
+        trackFiles.reduce((total, file) => total + file.size, 0),
+      );
+    }
+    let overallProgress = 0;
     const trackEntries = await async.mapLimit(
       trackFiles,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (file: (typeof trackFiles)[number]): Promise<ArchiveEntry<this>> => {
-        const reader = await chdman.openTrackReader({
+        const readable = await chdman.openTrackReader({
           inputFilename: this.getFilePath(),
           mode: 'cuebin',
           trackIndex: file.trackIndex,
         });
-        const checksums = await FileChecksums.hashStream(
-          readableFromReader(reader),
-          checksumBitmask,
-        );
+        let lastProgress = 0;
+        const checksums = await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
+          overallProgress = overallProgress - lastProgress + progress;
+          if (callback) {
+            callback(overallProgress);
+          }
+          lastProgress = progress;
+        });
         return await ArchiveEntry.entryOf(
           { archive: this, entryPath: file.filename, size: file.size, ...checksums },
           checksumBitmask,

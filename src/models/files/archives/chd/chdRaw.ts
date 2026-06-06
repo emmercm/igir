@@ -1,12 +1,11 @@
 import path from 'node:path';
 import type stream from 'node:stream';
 
-import chdman, { CHDType, readableFromReader } from '../../../../../packages/chdman/index.js';
+import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
-import type { ChdListing } from './chd.js';
 import Chd from './chd.js';
 
 /**
@@ -77,24 +76,16 @@ export default class ChdRaw extends Chd {
   }
 
   /**
-   * Describe the single logical file this CHD exposes, without decompressing it.
+   * Open a stream over the CHD's logical bytes, skipping the first `start` bytes, and invoke the
+   * callback. A raw CHD exposes a single logical image, so the entry path is not needed to
+   * resolve it.
    */
-  protected async getListing(): Promise<ChdListing> {
-    const name = path.parse(this.getFilePath()).name;
-    const info = await this.getInfo();
-    return {
-      mode: 'cuebin',
-      tocFilename: name,
-      tocText: '',
-      files: [{ filename: name, size: info.logicalSize, trackIndex: 0 }],
-    };
-  }
-
-  /**
-   * Open a Node Readable over the CHD's logical bytes, decompressing on demand.
-   */
-  protected override async streamFile(): Promise<stream.Readable> {
-    const reader = await chdman.openRawReader({ inputFilename: this.getFilePath() });
-    return readableFromReader(reader);
+  override async extractEntryToStream<T>(
+    entryPath: string,
+    callback: (readable: stream.Readable) => Promise<T> | T,
+    start = 0,
+  ): Promise<T> {
+    const readable = await chdman.openRawReader({ inputFilename: this.getFilePath() });
+    return await this.consumeEntryStream(entryPath, readable, callback, start);
   }
 }

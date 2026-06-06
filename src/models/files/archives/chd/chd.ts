@@ -4,8 +4,10 @@ import stream from 'node:stream';
 import { Memoize } from 'typescript-memoize';
 
 import type { CHDInfo } from '../../../../../packages/chdman/index.js';
-import chdman, { readableFromReader } from '../../../../../packages/chdman/index.js';
+import chdman from '../../../../../packages/chdman/index.js';
 import IgirException from '../../../../exceptions/igirException.js';
+import FsReadTransform, { FsReadCallback } from '../../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import Archive from '../archive.js';
 
 /**
@@ -31,40 +33,6 @@ export interface ChdListing {
 }
 
 /**
- * A {@link stream.Transform} that drops the first `count` bytes of its input.
- */
-class SkipBytesTransform extends stream.Transform {
-  private remaining: number;
-
-  constructor(count: number) {
-    super();
-    this.remaining = count;
-  }
-
-  /**
-   * Pass through bytes after the leading `count` bytes have been dropped.
-   */
-  override _transform(
-    chunk: Buffer,
-    _encoding: BufferEncoding,
-    callback: stream.TransformCallback,
-  ): void {
-    if (this.remaining > 0) {
-      if (chunk.length <= this.remaining) {
-        this.remaining -= chunk.length;
-        callback();
-        return;
-      }
-      const sliced = chunk.subarray(this.remaining);
-      this.remaining = 0;
-      callback(undefined, sliced);
-      return;
-    }
-    callback(undefined, chunk);
-  }
-}
-
-/**
  * Base class for MAME Compressed Hunks of Data (CHD) disc/disk image formats.
  */
 export default abstract class Chd extends Archive {
@@ -84,60 +52,48 @@ export default abstract class Chd extends Archive {
     return false;
   }
 
-  protected abstract getListing(): Promise<ChdListing>;
-
-  /**
-   * Open a {@link stream.Readable} for one listed file, decompressing only that file's data.
-   */
-  protected async streamFile(file: ChdListedFile, listing: ChdListing): Promise<stream.Readable> {
-    if (file.trackIndex === undefined) {
-      return stream.Readable.from(Buffer.from(listing.tocText));
-    }
-    const reader = await chdman.openTrackReader({
-      inputFilename: this.getFilePath(),
-      mode: listing.mode,
-      trackIndex: file.trackIndex,
-    });
-    return readableFromReader(reader);
-  }
-
   /**
    * Extract the named entry from the CHD to the given file path.
    */
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    entryPath: string,
+    extractedFilePath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
     await this.extractEntryToStream(entryPath, async (readable) => {
-      await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
+      const writeStream = fs.createWriteStream(extractedFilePath);
+      if (callback) {
+        await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readable, writeStream);
+      }
     });
   }
 
   /**
-   * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback
-   * with it.
+   * Skip the first `start` bytes of an entry's stream, invoke the callback with it, and always
+   * tear the stream down afterward. Subclasses resolve and open the per-entry readable
+   * themselves and hand it here, so extracting one file never requires listing the whole CHD.
    */
-  override async extractEntryToStream<T>(
+  protected async consumeEntryStream<T>(
     entryPath: string,
+    readable: stream.Readable,
     callback: (readable: stream.Readable) => Promise<T> | T,
-    start = 0,
+    start: number,
   ): Promise<T> {
-    const listing = await this.getListing();
-    const file = listing.files.find((listedFile) => listedFile.filename === entryPath);
-    if (file === undefined) {
-      throw new IgirException(`CHD entry not found: ${this.getFilePath()}|${entryPath}`);
-    }
-
-    let readable = await this.streamFile(file, listing);
-    // Preserve base-class semantics: a non-zero start offset (e.g. a detected ROM
-    // header) must skip that many leading bytes of the forward-only stream.
+    let result = readable;
+    // A non-zero start offset (e.g. a detected ROM header) must skip that many
+    // leading bytes of the forward-only stream.
     if (start > 0) {
-      readable = readable.pipe(new SkipBytesTransform(start));
+      result = result.pipe(new SkipBytesTransform(start));
     }
 
     try {
-      return await callback(readable);
+      return await callback(result);
     } catch (error) {
       throw new IgirException(`failed to read ${this.getFilePath()}|${entryPath}: ${error}`);
     } finally {
-      readable.destroy();
+      result.destroy();
     }
   }
 

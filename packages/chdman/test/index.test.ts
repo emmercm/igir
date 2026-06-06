@@ -1,10 +1,9 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import type stream from 'node:stream';
 
-import { describe, expect, it } from 'vitest';
-
-import chdman, { CHDType, readableFromReader } from '../index.js';
+import chdman, { CHDType } from '../index.js';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 
@@ -98,19 +97,13 @@ describe('listTracks', () => {
   });
 });
 
-async function readAll(reader: {
-  read: (n: number) => Promise<Buffer | null>;
-  close: () => void;
-}): Promise<Buffer> {
+async function streamBytes(readable: stream.Readable): Promise<Buffer> {
   const chunks: Buffer[] = [];
-  for (;;) {
-    const chunk = await reader.read(64 * 1024);
-    if (chunk === null || chunk.length === 0) {
-      break;
+  for await (const chunk of readable) {
+    if (Buffer.isBuffer(chunk)) {
+      chunks.push(chunk);
     }
-    chunks.push(chunk);
   }
-  reader.close();
   return Buffer.concat(chunks);
 }
 
@@ -123,12 +116,12 @@ describe('openTrackReader', () => {
       cueName: expected.tocName,
     });
     for (const track of listing.tracks) {
-      const reader = await chdman.openTrackReader({
+      const readable = await chdman.openTrackReader({
         inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
         mode: 'cuebin',
         trackIndex: track.index,
       });
-      const got = await readAll(reader);
+      const got = await streamBytes(readable);
       const want = expected.files.find((file) => file.name === track.filename);
       if (want === undefined) {
         throw new Error(`no golden file for track ${track.filename}`);
@@ -145,12 +138,12 @@ describe('openTrackReader', () => {
       gdiName: expected.tocName,
     });
     for (const track of listing.tracks) {
-      const reader = await chdman.openTrackReader({
+      const readable = await chdman.openTrackReader({
         inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
         mode: 'gdi',
         trackIndex: track.index,
       });
-      const got = await readAll(reader);
+      const got = await streamBytes(readable);
       const want = expected.files.find((file) => file.name === track.filename);
       if (want === undefined) {
         throw new Error(`no golden file for track ${track.filename}`);
@@ -163,34 +156,31 @@ describe('openTrackReader', () => {
 describe('openRawReader', () => {
   it('streams a HARD_DISK CHD logical image with size == logicalSize', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
-    const reader = await chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
-    const got = await readAll(reader);
+    const readable = await chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
+    const got = await streamBytes(readable);
     expect(got.length).toEqual(info.logicalSize);
     expect(sha1(got)).toEqual(info.dataSha1);
   });
 });
 
-describe('readableFromReader', () => {
-  it('produces a Readable whose bytes match the golden track', async () => {
-    const expected = golden('cd-rom.cuebin');
-    const want = expected.files.find((file) => file.name === 'CD-ROM (Track 1).bin');
-    if (want === undefined) {
-      throw new Error('missing golden track CD-ROM (Track 1).bin');
-    }
-    const reader = await chdman.openTrackReader({
+describe('openTrackReader early termination', () => {
+  it('releases the CHD when the Readable is destroyed before EOF', async () => {
+    const readable = await chdman.openTrackReader({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       mode: 'cuebin',
       trackIndex: 0,
     });
-    const readable = readableFromReader(reader);
-    const chunks: Buffer[] = [];
+    // Consume only the first chunk, then break: the for-await loop destroys the
+    // Readable, which must close the native reader without erroring.
+    let chunks = 0;
     for await (const chunk of readable) {
       if (Buffer.isBuffer(chunk)) {
-        chunks.push(chunk);
+        chunks += 1;
+        break;
       }
     }
-    const got = Buffer.concat(chunks);
-    expect({ size: got.length, sha1: sha1(got) }).toEqual({ size: want.size, sha1: want.sha1 });
+    expect(chunks).toEqual(1);
+    expect(readable.destroyed).toBe(true);
   });
 });
 
