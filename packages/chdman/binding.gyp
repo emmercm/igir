@@ -4,9 +4,16 @@
   },
   "target_defaults": {
     "conditions": [
-      # NOMINMAX stops <windows.h> from defining min()/max() macros, which
-      # otherwise clobber std::numeric_limits<>::max() etc. (e.g. strconv.cpp).
-      ["OS=='win'", { "defines": ["CRLF=3", "NOMINMAX"] }],
+      # Windows defines mirroring MAME's windows_cfg.lua:
+      #   NOMINMAX           - stop <windows.h> defining min()/max() macros, which
+      #                        clobber std::numeric_limits<>::max() etc. (strconv.cpp)
+      #   UNICODE/_UNICODE   - make TCHAR/osd::text::tstring resolve to wide chars,
+      #                        as the Windows OSD assumes (winptty.cpp -> CreateFileW)
+      #   WIN32_LEAN_AND_MEAN- keep <windows.h> from pulling in winsock.h v1, which
+      #                        would conflict with winsocket.cpp's <winsock2.h>
+      ["OS=='win'", {
+        "defines": ["CRLF=3", "NOMINMAX", "UNICODE", "_UNICODE", "WIN32_LEAN_AND_MEAN"]
+      }],
       ["OS!='win'", { "defines": ["CRLF=2"] }],
 
       # Build optimizations. Use plain -flto: both gcc and clang accept it, while
