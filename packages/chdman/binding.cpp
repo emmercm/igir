@@ -31,21 +31,31 @@ static std::string port_msf_string_from_frames(uint32_t frames) {
 }
 
 // chdman's do_extract_cd writes `frames - padframes + splitframes` data frames
-// per split bin (chdman.cpp line 2968). Some GD-ROM CHDs cannot be expressed as
-// cue/bin: their high-density track has padframes exceeding frames+splitframes, so
-// that uint32 formula underflows to ~4.29e9 frames (~10 TB) and extraction would
-// run far past chdman's total_bytes (chdman.cpp line 2734) -- i.e. past 100% of
-// the disc. We need to detect the underflow up front and throw, so callers (e.g. ChdBinCue)
-// fall back to gdi/raw for such GD-ROMs instead of decompressing forever.
-static uint32_t port_actual_frames(const cdrom_file::track_info& t, int tracknum) {
+// per split bin (chdman.cpp line 2968). Callers must first confirm the track does
+// not underflow via cuebin_underflow_error().
+static uint32_t port_actual_frames(const cdrom_file::track_info& t) {
+  return static_cast<uint32_t>(int64_t(t.frames) + int64_t(t.splitframes) - int64_t(t.padframes));
+}
+
+// Some GD-ROM CHDs cannot be expressed as cue/bin: their high-density track has
+// padframes exceeding frames+splitframes, so chdman's uint32 frame formula above
+// underflows to ~4.29e9 frames (~10 TB) and extraction would run far past chdman's
+// total_bytes (chdman.cpp line 2734) -- i.e. past 100% of the disc. The chdman CLI
+// relied on a progress watchdog to abort that runaway; we instead detect the
+// underflow up front so callers (e.g. ChdBinCue) fall back to gdi/raw.
+//
+// Returns the reason `t` cannot be extracted as cue/bin, or an empty string if it
+// is safe. Returning the message (rather than throwing) keeps it off the C++
+// exception path, whose what() string MSVC mis-copies on arm64 in this build; the
+// caller hands the returned std::string straight to Napi::Error, which is unaffected.
+static std::string cuebin_underflow_error(const cdrom_file::track_info& t, int tracknum) {
   const int64_t frames = int64_t(t.frames) + int64_t(t.splitframes) - int64_t(t.padframes);
-  if (frames < 0) {
-    throw std::runtime_error(
-        "CHD cannot be extracted as cue/bin: track " + std::to_string(tracknum + 1) +
-        " frame count underflows (padframes " + std::to_string(t.padframes) + " > frames " +
-        std::to_string(t.frames) + " + splitframes " + std::to_string(t.splitframes) + ")");
+  if (frames >= 0) {
+    return {};
   }
-  return static_cast<uint32_t>(frames);
+  return "CHD cannot be extracted as cue/bin: track " + std::to_string(tracknum + 1) +
+         " frame count underflows (padframes " + std::to_string(t.padframes) + " > frames " +
+         std::to_string(t.frames) + " + splitframes " + std::to_string(t.splitframes) + ")";
 }
 
 // chdman.cpp output_track_metadata 1527-1586, MODE_GDI + MODE_CUEBIN only,
@@ -213,13 +223,16 @@ struct TrackOut {
 // do_extract_cd (2638-3021) but writing to memory instead of files. For MODE_GDI
 // the TOC text is normalized to igir's historical ChdGdi output (quote-stripped,
 // CRLF line endings) after assembly.
-static void BuildListing(const std::string& inputPath, int mode,
+static bool BuildListing(const std::string& inputPath, int mode,
                          const std::string& binPatternOrBase, const std::string& /*tocName*/,
-                         std::string& tocTextOut, std::vector<TrackOut>& tracksOut) {
+                         std::string& tocTextOut, std::vector<TrackOut>& tracksOut,
+                         std::string& errorOut) {
   chd_file chd;
   std::error_condition err = chd.open(inputPath, false, nullptr);
-  if (err)
-    throw std::runtime_error("failed to open CHD: " + err.message());
+  if (err) {
+    errorOut = "failed to open CHD: " + err.message();
+    return false;
+  }
   cdrom_file cdrom(&chd);
   cdrom_file::toc toc = cdrom.get_toc();
   const bool isGdrom = cdrom.is_gdrom();
@@ -266,7 +279,11 @@ static void BuildListing(const std::string& inputPath, int mode,
     // (pgdatasize==0) and postgap are cue/gdi COMMANDS (PREGAP/POSTGAP), never
     // bytes in the file; data-in-file pregaps are already folded into
     // actualframes via splitframes. So DO NOT add pregap/postgap bytes.
-    const uint32_t actualframes = port_actual_frames(t, tracknum);
+    errorOut = cuebin_underflow_error(t, tracknum);
+    if (!errorOut.empty()) {
+      return false;  // chd is closed by its destructor
+    }
+    const uint32_t actualframes = port_actual_frames(t);
     const uint64_t dataBytes = uint64_t(actualframes) * t.datasize;
     tracksOut.push_back(TrackOut{tracknum, filename,
         std::string(cdrom_file::get_type_string(t.trktype)), dataBytes});
@@ -296,6 +313,7 @@ static void BuildListing(const std::string& inputPath, int mode,
 
   tocTextOut = text;
   chd.close();
+  return true;
 }
 // ===== END ported region =====
 
@@ -460,7 +478,11 @@ static Napi::Value ListTracks(const Napi::CallbackInfo& info) {
   try {
     std::string tocText;
     std::vector<TrackOut> tracks;
-    BuildListing(inputPath, mode, binArg, tocName, tocText, tracks);
+    std::string error;
+    if (!BuildListing(inputPath, mode, binArg, tocName, tocText, tracks, error)) {
+      deferred.Reject(Napi::Error::New(env, error).Value());
+      return deferred.Promise();
+    }
     Napi::Object out = Napi::Object::New(env);
     out.Set("tocText", tocText);
     Napi::Array arr = Napi::Array::New(env, tracks.size());
@@ -539,12 +561,12 @@ public:
     }
     chdVersion_ = chd_.version();
     const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
-    try {
-      actualframes_ = port_actual_frames(t, trackIndex_);
-    } catch (const std::exception& e) {
-      Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+    const std::string underflow = cuebin_underflow_error(t, trackIndex_);
+    if (!underflow.empty()) {
+      Napi::Error::New(env, underflow).ThrowAsJavaScriptException();
       return;
     }
+    actualframes_ = port_actual_frames(t);
     frame_ = 0;
   }
 
