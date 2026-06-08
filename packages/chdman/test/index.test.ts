@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type stream from 'node:stream';
 
+import BufferUtil from '../../../src/utils/bufferUtil.js';
 import chdman, { CHDType } from '../index.js';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
@@ -65,7 +65,7 @@ describe('info', () => {
   });
 });
 
-describe('listTracks', () => {
+describe('listCdBinCueTracks', () => {
   it('lists CD-ROM cue/bin tracks with parity TOC text and sizes', async () => {
     const expected = golden('cd-rom.cuebin');
     const result = await chdman.listCdBinCueTracks({
@@ -81,6 +81,22 @@ describe('listTracks', () => {
     ).toEqual(expected.files.map((file) => ({ name: file.name, size: file.size })));
   });
 
+  it('refuses to list a GD-ROM as cue/bin instead of producing a runaway track', async () => {
+    // Some GD-ROM CHDs cannot be expressed as cue/bin: a high-density track has
+    // padframes exceeding frames+splitframes, so chdman's frame formula underflows
+    // and extraction would decompress ~10 TB. This must be refused up front (the
+    // protection the old chdman progress-watchdog provided), not streamed forever.
+    await expect(
+      chdman.listCdBinCueTracks({
+        inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
+        binNamePattern: 'GD-ROM (Track %t).bin',
+        cueName: 'GD-ROM.cue',
+      }),
+    ).rejects.toThrow(/cannot be extracted as cue\/bin/);
+  });
+});
+
+describe('listGdRomTracks', () => {
   it('lists GD-ROM gdi tracks with parity TOC text and sizes', async () => {
     const expected = golden('gd-rom.gdi');
     const result = await chdman.listGdRomTracks({
@@ -97,16 +113,6 @@ describe('listTracks', () => {
   });
 });
 
-async function streamBytes(readable: stream.Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of readable) {
-    if (Buffer.isBuffer(chunk)) {
-      chunks.push(chunk);
-    }
-  }
-  return Buffer.concat(chunks);
-}
-
 describe('openTrackReader', () => {
   it('streams CD-ROM cue/bin tracks byte-identically to the golden', async () => {
     const expected = golden('cd-rom.cuebin');
@@ -121,7 +127,7 @@ describe('openTrackReader', () => {
         mode: 'cuebin',
         trackIndex: track.index,
       });
-      const got = await streamBytes(readable);
+      const got = await BufferUtil.fromReadable(readable);
       const want = expected.files.find((file) => file.name === track.filename);
       if (want === undefined) {
         throw new Error(`no golden file for track ${track.filename}`);
@@ -143,7 +149,7 @@ describe('openTrackReader', () => {
         mode: 'gdi',
         trackIndex: track.index,
       });
-      const got = await streamBytes(readable);
+      const got = await BufferUtil.fromReadable(readable);
       const want = expected.files.find((file) => file.name === track.filename);
       if (want === undefined) {
         throw new Error(`no golden file for track ${track.filename}`);
@@ -151,19 +157,38 @@ describe('openTrackReader', () => {
       expect({ size: got.length, sha1: sha1(got) }).toEqual({ size: want.size, sha1: want.sha1 });
     }
   });
-});
 
-describe('openRawReader', () => {
-  it('streams a HARD_DISK CHD logical image with size == logicalSize', async () => {
-    const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
-    const readable = await chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
-    const got = await streamBytes(readable);
-    expect(got.length).toEqual(info.logicalSize);
-    expect(sha1(got)).toEqual(info.dataSha1);
+  it('streams multiple independent readers in parallel byte-identically', async () => {
+    const expected = golden('cd-rom.cuebin');
+    const listing = await chdman.listCdBinCueTracks({
+      inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
+      binNamePattern: 'CD-ROM (Track %t).bin',
+      cueName: expected.tocName,
+    });
+    // Open every track reader at once and consume them concurrently; each owns
+    // its own chd_file, so results must be independent of interleaving.
+    const results = await Promise.all(
+      listing.tracks.map(async (track) => {
+        const readable = await chdman.openTrackReader({
+          inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
+          mode: 'cuebin',
+          trackIndex: track.index,
+        });
+        return { filename: track.filename, bytes: await BufferUtil.fromReadable(readable) };
+      }),
+    );
+    for (const result of results) {
+      const want = expected.files.find((file) => file.name === result.filename);
+      if (want === undefined) {
+        throw new Error(`no golden file for track ${result.filename}`);
+      }
+      expect({ size: result.bytes.length, sha1: sha1(result.bytes) }).toEqual({
+        size: want.size,
+        sha1: want.sha1,
+      });
+    }
   });
-});
 
-describe('openTrackReader early termination', () => {
   it('releases the CHD when the Readable is destroyed before EOF', async () => {
     const readable = await chdman.openTrackReader({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
@@ -182,24 +207,11 @@ describe('openTrackReader early termination', () => {
     expect(chunks).toEqual(1);
     expect(readable.destroyed).toBe(true);
   });
-});
-
-describe('cue/bin runaway guard', () => {
-  // Some GD-ROM CHDs cannot be expressed as cue/bin: a high-density track has
-  // padframes exceeding frames+splitframes, so chdman's frame formula underflows
-  // and extraction would decompress ~10 TB. This must be refused up front (the
-  // protection the old chdman progress-watchdog provided), not streamed forever.
-  it('refuses to list a GD-ROM as cue/bin instead of producing a runaway track', async () => {
-    await expect(
-      chdman.listCdBinCueTracks({
-        inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
-        binNamePattern: 'GD-ROM (Track %t).bin',
-        cueName: 'GD-ROM.cue',
-      }),
-    ).rejects.toThrow(/cannot be extracted as cue\/bin/);
-  });
 
   it('refuses to open a runaway GD-ROM cue/bin track reader', async () => {
+    // The same high-density-track frame underflow that blocks listCdBinCueTracks
+    // (see that suite) must also be refused when opening a track reader directly,
+    // rather than streaming a ~10 TB runaway.
     await expect(
       chdman.openTrackReader({
         inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
@@ -207,5 +219,33 @@ describe('cue/bin runaway guard', () => {
         trackIndex: 2,
       }),
     ).rejects.toThrow(/cannot be extracted as cue\/bin/);
+  });
+});
+
+describe('openRawReader', () => {
+  it('streams a HARD_DISK CHD logical image with size == logicalSize', async () => {
+    const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
+    const readable = await chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
+    const got = await BufferUtil.fromReadable(readable);
+    expect(got.length).toEqual(info.logicalSize);
+    expect(sha1(got)).toEqual(info.dataSha1);
+  });
+
+  it('streams multiple raw readers over the same CHD in parallel', async () => {
+    const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
+    // Three independent readers over the same file, consumed concurrently. Each
+    // owns its own chd_file, so all three must yield the identical logical image.
+    const results = await Promise.all(
+      [0, 1, 2].map(async () => {
+        const readable = await chdman.openRawReader({
+          inputFilename: path.join(FIXTURES, '2048.chd'),
+        });
+        return await BufferUtil.fromReadable(readable);
+      }),
+    );
+    for (const bytes of results) {
+      expect(bytes.length).toEqual(info.logicalSize);
+      expect(sha1(bytes)).toEqual(info.dataSha1);
+    }
   });
 });

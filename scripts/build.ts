@@ -107,7 +107,7 @@ await copyfiles(
     'packages/*/deps/**/{CMakeLists.txt,*.cmake,*.cmakein,*.cmake.in}', // CMake
     'packages/*/deps/**/{Makefile*,*.mak,*.mk}', // Make
     'packages/*/deps/**/*.pc.in', // pkg-config
-    'packages/*/deps/**/*.vcxproj', // Visual Studio
+    'packages/*/deps/**/{*.sln,*.vcxproj}', // Visual Studio
     'packages/*/deps/**/Package.swift',
     // chdman
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',

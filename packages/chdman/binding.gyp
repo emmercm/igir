@@ -60,6 +60,7 @@
       "LLVM_LTO": "YES",
       "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
       "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
+      "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
       "DEAD_CODE_STRIPPING": "YES",
       "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
     },
@@ -75,12 +76,20 @@
         "AdditionalOptions": [
           "/std:c++17",
           # MAME uses C++ exceptions and RTTI,
-          "/EHsc"
+          "/EHsc",
+          "/D__DATE__=0",
+          "/D__TIME__=0",
+          "/D__TIMESTAMP__=0"
         ]
       },
       "VCLinkerTool": {
         # Drop unreferenced functions/data (matches --gc-sections / dead-strip).
-        "OptimizeReferences": "2"
+        "OptimizeReferences": "2",
+        "AdditionalOptions": [
+          "/Brepro",
+          "/deterministic",
+          "/DEBUG:NONE"
+        ]
       }
     }
   },
@@ -229,22 +238,12 @@
         "<(mame)/src/osd/modules/osdmodule.cpp"
       ],
       "conditions": [
-        ["OS=='mac'", {
+        ["OS!='win'", {
           "sources": [
-            # stubs/osdlib.cpp replaces MAME's osdlib_macosx.cpp, whose only external
-            # dependency (CoreFoundation/ApplicationServices, for clipboard) is dead
-            # code here; see that file for why.
-            "stubs/osdlib.cpp",
-            "<(mame)/src/osd/modules/file/posixdir.cpp",
-            "<(mame)/src/osd/modules/file/posixfile.cpp",
-            "<(mame)/src/osd/modules/file/posixptty.cpp",
-            "<(mame)/src/osd/modules/file/posixsocket.cpp"
-          ]
-        }],
-        ["OS=='linux'", {
-          "sources": [
-            # stubs/osdlib.cpp replaces MAME's osdlib_unix.cpp, which #includes
-            # <SDL2/SDL.h>; see that file for why.
+            # stubs/osdlib.cpp replaces MAME's osdlib_macosx.cpp (macOS) /
+            # osdlib_unix.cpp (Linux); both pull an external dependency in solely
+            # for clipboard support, which the CHD listing/reading code never
+            # uses. See that file for why.
             "stubs/osdlib.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
