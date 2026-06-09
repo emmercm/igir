@@ -1,11 +1,11 @@
 mkdocs-material==9.7.6
 
 # https://github.com/mkdocs/mkdocs/issues/4032
-click==8.3.3
+click==8.4.1
 
 mkdocs-exclude-search==0.6.6
 mkdocs-git-committers-plugin-2==2.5.0
-mkdocs-git-revision-date-localized-plugin==1.5.1
+mkdocs-git-revision-date-localized-plugin==1.5.2
 mkdocs-htmlproofer-plugin==1.5.0
 mkdocs-redirects==1.2.3
 mkdocs-unused-files==0.2.0
