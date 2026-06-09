@@ -3,7 +3,7 @@ import stream from 'node:stream';
 
 import { Memoize } from 'typescript-memoize';
 
-import type { CHDInfo } from '../../../../../packages/chdman/index.js';
+import type { CHDInfo, TrackReaderModeValue } from '../../../../../packages/chdman/index.js';
 import chdman from '../../../../../packages/chdman/index.js';
 import FsReadTransform, { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import Archive from '../archive.js';
@@ -25,7 +25,7 @@ export interface ChdListedFile {
  * The track files a CHD exposes, plus the generated table-of-contents text.
  */
 export interface ChdListing {
-  mode: 'cuebin' | 'gdi';
+  mode: TrackReaderModeValue;
   tocFilename: string;
   tocText: string;
   files: ChdListedFile[];

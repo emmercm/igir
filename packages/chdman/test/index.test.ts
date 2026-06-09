@@ -9,44 +9,44 @@ const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 
 const sha1 = (buffer: Buffer): string => crypto.createHash('sha1').update(buffer).digest('hex');
 
-interface GoldenFile {
+interface ExpectedTrack {
   name: string;
   size: number;
   sha1: string;
   bytes: Buffer;
 }
 
-interface Golden {
+interface ExpectedTrackListing {
   tocName: string;
   tocText: string;
-  files: GoldenFile[];
+  tracks: ExpectedTrack[];
 }
 
 /**
- * Load a golden directory: the single `.cue`/`.gdi` file is the expected TOC,
- * and every other file is an expected extracted track (sorted by name to match
- * the order tracks are listed in).
+ * Generate the expected track listing for a fixture directory: the single `.cue`/`.gdi`
+ * file is the expected TOC, and every other file is an expected extracted track (sorted by
+ * name to match the order tracks are listed in).
  */
-const golden = (directory: string): Golden => {
-  const root = path.join(FIXTURES, 'golden', directory);
+const generateExpectedTrackListing = (directory: string): ExpectedTrackListing => {
+  const root = path.join(FIXTURES, 'expected', directory);
   const entries = fs.readdirSync(root).filter((name) => !name.startsWith('.'));
   const tocName = entries.find((name) => name.endsWith('.cue') || name.endsWith('.gdi'));
   if (tocName === undefined) {
-    throw new Error(`no .cue/.gdi TOC file in golden/${directory}`);
+    throw new Error(`no .cue/.gdi TOC file in expected/${directory}`);
   }
   const tocText = fs.readFileSync(path.join(root, tocName)).toString();
-  const files = entries
+  const tracks = entries
     .filter((name) => name !== tocName)
     .toSorted((a, b) => a.localeCompare(b))
     .map((name) => {
       const bytes = fs.readFileSync(path.join(root, name));
       return { name, size: bytes.length, sha1: sha1(bytes), bytes };
     });
-  return { tocName, tocText, files };
+  return { tocName, tocText, tracks };
 };
 
 describe('info', () => {
-  it('reads a HARD_DISK CHD header', async () => {
+  it('should read a HARD_DISK CHD header', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
     expect(info.type).toEqual(CHDType.HARD_DISK);
     expect(Object.values(CHDType)).toContain(info.type);
@@ -54,20 +54,20 @@ describe('info', () => {
     expect(info.logicalSize).toBeGreaterThan(0);
   });
 
-  it('detects a CD-ROM CHD', async () => {
+  it('should detect a CD-ROM CHD', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, 'CD-ROM.chd') });
     expect(info.type).toEqual(CHDType.CD_ROM);
   });
 
-  it('detects a GD-ROM CHD', async () => {
+  it('should detect a GD-ROM CHD', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, 'GD-ROM.chd') });
     expect(info.type).toEqual(CHDType.GD_ROM);
   });
 });
 
 describe('listCdBinCueTracks', () => {
-  it('lists CD-ROM cue/bin tracks with parity TOC text and sizes', async () => {
-    const expected = golden('cd-rom.cuebin');
+  it('should list CD-ROM cue/bin tracks with parity TOC text and sizes', async () => {
+    const expected = generateExpectedTrackListing('cd-rom.cuebin');
     const result = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
@@ -78,10 +78,10 @@ describe('listCdBinCueTracks', () => {
       result.tracks
         .toSorted((a, b) => a.filename.localeCompare(b.filename))
         .map((track) => ({ name: track.filename, size: track.size })),
-    ).toEqual(expected.files.map((file) => ({ name: file.name, size: file.size })));
+    ).toEqual(expected.tracks.map((track) => ({ name: track.name, size: track.size })));
   });
 
-  it('refuses to list a GD-ROM as cue/bin instead of producing a runaway track', async () => {
+  it('should refuse to list a GD-ROM as cue/bin instead of producing a runaway track', async () => {
     // Some GD-ROM CHDs cannot be expressed as cue/bin: a high-density track has
     // padframes exceeding frames+splitframes, so chdman's frame formula underflows
     // and extraction would decompress ~10 TB. This must be refused up front (the
@@ -97,8 +97,8 @@ describe('listCdBinCueTracks', () => {
 });
 
 describe('listGdRomTracks', () => {
-  it('lists GD-ROM gdi tracks with parity TOC text and sizes', async () => {
-    const expected = golden('gd-rom.gdi');
+  it('should list GD-ROM gdi tracks with parity TOC text and sizes', async () => {
+    const expected = generateExpectedTrackListing('gd-rom.gdi');
     const result = await chdman.listGdRomTracks({
       inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
       trackBaseName: 'track',
@@ -109,13 +109,13 @@ describe('listGdRomTracks', () => {
       result.tracks
         .toSorted((a, b) => a.filename.localeCompare(b.filename))
         .map((track) => ({ name: track.filename, size: track.size })),
-    ).toEqual(expected.files.map((file) => ({ name: file.name, size: file.size })));
+    ).toEqual(expected.tracks.map((track) => ({ name: track.name, size: track.size })));
   });
 });
 
 describe('openTrackReader', () => {
-  it('streams CD-ROM cue/bin tracks byte-identically to the golden', async () => {
-    const expected = golden('cd-rom.cuebin');
+  it('should stream CD-ROM cue/bin tracks byte-identically to the expected tracks', async () => {
+    const expected = generateExpectedTrackListing('cd-rom.cuebin');
     const listing = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
@@ -128,16 +128,16 @@ describe('openTrackReader', () => {
         trackIndex: track.index,
       });
       const got = await BufferUtil.fromReadable(readable);
-      const want = expected.files.find((file) => file.name === track.filename);
+      const want = expected.tracks.find((expectedTrack) => expectedTrack.name === track.filename);
       if (want === undefined) {
-        throw new Error(`no golden file for track ${track.filename}`);
+        throw new Error(`no expected track for ${track.filename}`);
       }
       expect({ size: got.length, sha1: sha1(got) }).toEqual({ size: want.size, sha1: want.sha1 });
     }
   });
 
-  it('streams GD-ROM gdi tracks byte-identically to the golden', async () => {
-    const expected = golden('gd-rom.gdi');
+  it('should stream GD-ROM gdi tracks byte-identically to the expected tracks', async () => {
+    const expected = generateExpectedTrackListing('gd-rom.gdi');
     const listing = await chdman.listGdRomTracks({
       inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
       trackBaseName: 'track',
@@ -150,16 +150,16 @@ describe('openTrackReader', () => {
         trackIndex: track.index,
       });
       const got = await BufferUtil.fromReadable(readable);
-      const want = expected.files.find((file) => file.name === track.filename);
+      const want = expected.tracks.find((expectedTrack) => expectedTrack.name === track.filename);
       if (want === undefined) {
-        throw new Error(`no golden file for track ${track.filename}`);
+        throw new Error(`no expected track for ${track.filename}`);
       }
       expect({ size: got.length, sha1: sha1(got) }).toEqual({ size: want.size, sha1: want.sha1 });
     }
   });
 
-  it('streams multiple independent readers in parallel byte-identically', async () => {
-    const expected = golden('cd-rom.cuebin');
+  it('should stream multiple independent readers in parallel byte-identically', async () => {
+    const expected = generateExpectedTrackListing('cd-rom.cuebin');
     const listing = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
@@ -178,9 +178,9 @@ describe('openTrackReader', () => {
       }),
     );
     for (const result of results) {
-      const want = expected.files.find((file) => file.name === result.filename);
+      const want = expected.tracks.find((expectedTrack) => expectedTrack.name === result.filename);
       if (want === undefined) {
-        throw new Error(`no golden file for track ${result.filename}`);
+        throw new Error(`no expected track for ${result.filename}`);
       }
       expect({ size: result.bytes.length, sha1: sha1(result.bytes) }).toEqual({
         size: want.size,
@@ -189,7 +189,7 @@ describe('openTrackReader', () => {
     }
   });
 
-  it('releases the CHD when the Readable is destroyed before EOF', async () => {
+  it('should release the CHD when the Readable is destroyed before EOF', async () => {
     const readable = await chdman.openTrackReader({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       mode: 'cuebin',
@@ -208,7 +208,7 @@ describe('openTrackReader', () => {
     expect(readable.destroyed).toBe(true);
   });
 
-  it('refuses to open a runaway GD-ROM cue/bin track reader', async () => {
+  it('should refuse to open a runaway GD-ROM cue/bin track reader', async () => {
     // The same high-density-track frame underflow that blocks listCdBinCueTracks
     // (see that suite) must also be refused when opening a track reader directly,
     // rather than streaming a ~10 TB runaway.
@@ -223,7 +223,7 @@ describe('openTrackReader', () => {
 });
 
 describe('openRawReader', () => {
-  it('streams a HARD_DISK CHD logical image with size == logicalSize', async () => {
+  it('should stream a HARD_DISK CHD logical image with size == logicalSize', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
     const readable = await chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
     const got = await BufferUtil.fromReadable(readable);
@@ -231,7 +231,7 @@ describe('openRawReader', () => {
     expect(sha1(got)).toEqual(info.dataSha1);
   });
 
-  it('streams multiple raw readers over the same CHD in parallel', async () => {
+  it('should stream multiple raw readers over the same CHD in parallel', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
     // Three independent readers over the same file, consumed concurrently. Each
     // owns its own chd_file, so all three must yield the identical logical image.

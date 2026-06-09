@@ -16,23 +16,12 @@
       }],
       ["OS!='win'", { "defines": ["CRLF=2"] }],
 
-      # POSIX OSD selectors, mirroring MAME's mac_cfg.lua / sdl_cfg.lua plus the
-      # SDLMAME_<os> values that src/osd/sdl/sdlprefix.h would otherwise derive
-      # (we don't force-include that header). osdsync.cpp gates its pthread
-      # thread-priority path on these; without them it compiles a no-op. OSD_MAC
-      # and OSD_SDL are intentionally omitted: they select the full OSD object
-      # (osdobj_common), which this addon replaces with stubs/osdlib.cpp and
-      # never compiles, and no compiled source references them.
+      # mac_cfg.lua, sdl_cfg.lua, sdlprefix.h defines
       ["OS=='mac'", { "defines": ["SDLMAME_UNIX", "SDLMAME_MACOSX", "SDLMAME_DARWIN"] }],
+      ["OS=='linux'", { "defines": ["SDLMAME_UNIX", "SDLMAME_LINUX"] }],
 
-      # Build optimizations. Use plain -flto: both gcc and clang accept it, while
-      # -flto=auto (gcc) and -flto=thin (clang) are compiler-specific. node-gyp's
-      # `clang` variable reflects how node itself was built, not the addon's CXX,
-      # so it can't pick the right flavor (a clang-built node compiling with gcc
-      # would pass gcc an unsupported -flto=thin, breaking from-source installs).
+      # Build optimizations
       ["OS=='linux'", {
-        # SDLMAME_LINUX is what sdlprefix.h derives from __linux__ under SDLMAME_UNIX.
-        "defines": ["SDLMAME_UNIX", "SDLMAME_LINUX"],
         "cflags": [
           "-ffunction-sections", "-fdata-sections",
           "-fvisibility=hidden", "-fvisibility-inlines-hidden",
@@ -43,9 +32,7 @@
       }]
     ],
 
-    # node-gyp compiles addons with -fno-exceptions/-fno-rtti; remove those
-    # inherited flags so the -fexceptions/-frtti below are not overridden (order
-    # of appended flags is not guaranteed on gcc).
+    # MAME uses C++ exceptions and RTTI
     "cflags_cc!": ["-fno-exceptions", "-fno-rtti"],
     "cflags_cc": [
       "-std=c++17",
@@ -67,15 +54,10 @@
     "msvs_settings": {
       "VCCLCompilerTool": {
         "RuntimeLibrary": "0",
-        # Function-level linking (the MSVC equivalent of gcc/clang
-        # -ffunction-sections) so /OPT:REF below can drop unreferenced functions
-        # and their external refs -- e.g. unicode.cpp's never-called utf8proc
-        # callers and FLAC's unused file-init (fopen_utf8). Without it the whole
-        # object is linked and those refs become LNK2001 unresolved externals.
         "EnableFunctionLevelLinking": "true",
         "AdditionalOptions": [
           "/std:c++17",
-          # MAME uses C++ exceptions and RTTI,
+          # MAME uses C++ exceptions and RTTI
           "/EHsc",
           "/D__DATE__=0",
           "/D__TIME__=0",
@@ -83,7 +65,7 @@
         ]
       },
       "VCLinkerTool": {
-        # Drop unreferenced functions/data (matches --gc-sections / dead-strip).
+        # Build optimizations
         "OptimizeReferences": "2",
         "AdditionalOptions": [
           "/Brepro",
@@ -240,10 +222,6 @@
       "conditions": [
         ["OS!='win'", {
           "sources": [
-            # stubs/osdlib.cpp replaces MAME's osdlib_macosx.cpp (macOS) /
-            # osdlib_unix.cpp (Linux); both pull an external dependency in solely
-            # for clipboard support, which the CHD listing/reading code never
-            # uses. See that file for why.
             "stubs/osdlib.cpp",
             "<(mame)/src/osd/modules/file/posixdir.cpp",
             "<(mame)/src/osd/modules/file/posixfile.cpp",
@@ -252,7 +230,9 @@
           ]
         }],
         ["OS=='win'", {
-          "include_dirs": ["<(mame)/src/osd/windows"],
+          "include_dirs": [
+            "<(mame)/src/osd/windows"
+          ],
           "sources": [
             "<(mame)/src/osd/modules/lib/osdlib_win32.cpp",
             "<(mame)/src/osd/modules/file/windir.cpp",
@@ -285,10 +265,6 @@
       # linker dead-strips it; UTF8PROC_STATIC still makes its header declare a
       # plain (non-dllimport) extern for that dead reference.
       "defines": ["Z7_ST", "UTF8PROC_STATIC", "FLAC__NO_DLL"],
-      # avhuff (the AVHUFF CHD codec, referenced by chd.cpp/chdcodec.cpp) needs
-      # bitmap + palette + huffman; the AVI container (aviio), laserdisc VBI
-      # (vbiparse), and the dvdrom/harddisk file wrappers are not referenced by
-      # the CHD read/list path, so they are omitted.
       "sources": [
         "<(mame)/src/lib/util/avhuff.cpp",
         "<(mame)/src/lib/util/bitmap.cpp",
@@ -309,8 +285,6 @@
         "<(mame)/src/lib/util/palette.cpp",
         "<(mame)/src/lib/util/path.cpp",
         "<(mame)/src/lib/util/strformat.cpp",
-        # timeconv.cpp provides util::system_clock_time_point_from_ntfs_duration,
-        # referenced by the Windows winutil.cpp file timestamp code.
         "<(mame)/src/lib/util/timeconv.cpp",
         "<(mame)/src/lib/util/unicode.cpp",
         "<(mame)/src/lib/util/vecstream.cpp"
@@ -331,17 +305,10 @@
         "<(mame)/3rdparty/flac/include"
       ],
       "conditions": [
-        # Linux: statically link the C++ runtime so the .node carries no
-        # libstdc++/libgcc dependency (glibc stays dynamic, as a .so requires).
-        # macOS needs no link_settings: using stubs/osdlib.cpp drops the only
-        # external frameworks (CoreFoundation/ApplicationServices) MAME's
-        # osdlib_macosx.cpp pulled in, so the .node links against libSystem only.
+        # Static linking
         ["OS=='linux'", {
           "ldflags": ["-static-libstdc++", "-static-libgcc"]
         }],
-        # Windows: the OSD file modules reference system libraries that MSVC does
-        # not auto-link -- winsocket.cpp needs Winsock (ws2_32) and winfile.cpp
-        # needs PathIsRelativeW (shlwapi).
         ["OS=='win'", {
           "link_settings": {
             "libraries": ["-lws2_32", "-lshlwapi"]

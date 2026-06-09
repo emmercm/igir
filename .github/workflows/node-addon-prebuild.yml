@@ -45,6 +45,7 @@ jobs:
           filters: |
             changes:
               - '.github/workflows/node-addon-prebuild.yml'
+              - '.gitmodules'
               - 'packages/chdman/**'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
