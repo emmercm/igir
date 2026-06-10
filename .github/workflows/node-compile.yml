@@ -143,6 +143,7 @@ jobs:
             # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
             npm run compile -- . igir
+            rm -rf node_modules
             ./igir --help
             ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
             ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
@@ -168,6 +169,7 @@ jobs:
           # Package the executable and test it before compressing it
           npm ci --foreground-scripts
           npm run compile -- . igir
+          rm -rf node_modules
           ./igir --help
           ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
           ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
@@ -188,11 +190,10 @@ jobs:
           $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${{ runner.os }}-${NODE_ARCH}.zip"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
-          # Install dependencies...
-          npm ci --foreground-scripts
-
           # Package the executable and test it before compressing it
+          npm ci --foreground-scripts
           npm run compile -- . igir.exe
+          Remove-Item node_modules -Recurse -Force
           .\igir.exe --help
           .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
           .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
