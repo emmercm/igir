@@ -847,6 +847,25 @@ export default class CandidateGenerator extends Module {
       message += `\n  ${rom.getName()}`;
     });
     this.progressBar.logTrace(message);
+
+    // Warn if the only reason we're missing files is that we don't know if we can rewrite .cue
+    // files extracted from CHDs with the right contents such that it matches a DAT perfectly
+    if (missingRoms.every((rom) => rom.getName().toLowerCase().endsWith('.cue'))) {
+      const chdInputFile = foundRomsWithFiles
+        .map((romWithFiles) => romWithFiles.getInputFile())
+        .find(
+          (inputFile): inputFile is ArchiveEntry<ChdBinCue> =>
+            inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof ChdBinCue,
+        );
+      const missingCueRom = missingRoms.find(
+        (rom) => this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom),
+      );
+      if (chdInputFile !== undefined && missingCueRom !== undefined) {
+        this.progressBar.logWarn(
+          `${dat.getName()}: ${game.getName()}: cannot extract .cue sheets from CHDs because Igir doesn't know how to rewrite the track filenames accurately: ${chdInputFile.getArchive().getFilePath()}`,
+        );
+      }
+    }
   }
 
   private hasConflictingOutputFiles(dat: DAT, romsWithFiles: ROMWithFiles[]): boolean {

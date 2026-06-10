@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="true" type="NodeJSConfigurationType" node-parameters="--import tsx" typescript-loader="none">
+  <configuration default="true" type="NodeJSConfigurationType" node-parameters="--import tsx">
     <EXTENSION ID="com.intellij.javascript.debugger.execution.StartBrowserRunConfigurationExtension">
       <browser with-js-debugger="true" />
     </EXTENSION>
