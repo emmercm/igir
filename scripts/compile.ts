@@ -3,7 +3,6 @@
 import child_process from 'node:child_process';
 import fs from 'node:fs';
 import module from 'node:module';
-import os from 'node:os';
 import path from 'node:path';
 
 import fg from 'fast-glob';
