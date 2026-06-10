@@ -1,7 +1,9 @@
 /// <reference types="@types/bun" />
 
 import child_process from 'node:child_process';
+import fs from 'node:fs';
 import module from 'node:module';
+import os from 'node:os';
 import path from 'node:path';
 
 import fg from 'fast-glob';
@@ -12,6 +14,7 @@ import Logger from '../src/console/logger.js';
 import { LogLevel } from '../src/console/logLevel.js';
 import IgirException from '../src/exceptions/igirException.js';
 import Package from '../src/globals/package.js';
+import Temp from '../src/globals/temp.js';
 import FsUtil from '../src/utils/fsUtil.js';
 
 const logger = new Logger(LogLevel.TRACE, process.stdout);
@@ -108,18 +111,24 @@ const bunBuildConfig = {
           );
 
           // Detect `const NAME = path.dirname(require.resolve('PKG/package.json'))`
-          // declarations and resolve each PKG to its on-disk root directory.
-          // Source files use this pattern when they need to reach internal
-          // files that the package's `exports` map doesn't expose; the next
-          // pass uses these roots to statically rewrite `require(`${NAME}/...`)`
-          // calls into bundled imports.
+          // declarations, resolve each PKG to its on-disk root directory, and
+          // strip the declaration from the source. Source files use this pattern
+          // when they need to reach internal files that the package's `exports`
+          // map doesn't expose; the next pass uses these roots to statically
+          // rewrite `require(`${NAME}/...`)` calls into bundled imports, so the
+          // declaration has no runtime purpose once those calls are rewritten.
+          // It MUST be removed: a surviving `require.resolve('PKG/package.json')`
+          // throws `Cannot find module` whenever the compiled binary runs from a
+          // directory tree that doesn't contain the package on disk (see #2282).
           const fileRequire = module.createRequire(args.path);
           const packageRoots = new Map<string, string>();
-          for (const [, varName, pkg] of source.matchAll(
+          source = source.replaceAll(
             /const\s+(\w+)\s*=\s*path\.dirname\(\s*require\.resolve\(\s*['"`]([^'"`]+)\/package\.json['"`]\s*\)\s*\)\s*;?/g,
-          )) {
-            packageRoots.set(varName, path.dirname(fileRequire.resolve(`${pkg}/package.json`)));
-          }
+            (_match, varName: string, pkg: string) => {
+              packageRoots.set(varName, path.dirname(fileRequire.resolve(`${pkg}/package.json`)));
+              return '';
+            },
+          );
 
           // Rewrite ``require(`${ROOT}/subpath`)`` template literals whose
           // ROOT was discovered above. Other dynamic requires (unknown var,
@@ -221,26 +230,40 @@ if (argv.platform === 'darwin') {
 
 logger.info(`Output: ${FsUtil.sizeReadable(await FsUtil.size(output))}`);
 
-logger.info(`Testing: '${output}' ...`);
-const procOutput = await new Promise<string>((resolve, reject) => {
-  const proc = child_process.spawn(output, ['--help'], { windowsHide: true });
-  let procOutput = '';
-  proc.stdout.on('data', (chunk: Buffer) => {
-    procOutput += chunk.toString();
+// Run from an isolated directory that contains no source files
+const testDirectory = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'compile'));
+try {
+  const testFile = path.join(testDirectory, path.basename(output));
+  logger.info(`Copying: '${output}' -> '${testFile}' ...`);
+  await FsUtil.copyFile(output, testFile);
+  await fs.promises.chmod(testFile, 0o755); // chmod +x
+
+  logger.info(`Testing: '${testFile}' ...`);
+  const procOutput = await new Promise<string>((resolve, reject) => {
+    const proc = child_process.spawn(testFile, ['--help'], {
+      cwd: path.dirname(testFile),
+      windowsHide: true,
+    });
+    let procOutput = '';
+    proc.stdout.on('data', (chunk: Buffer) => {
+      procOutput += chunk.toString();
+    });
+    proc.stderr.on('data', (chunk: Buffer) => {
+      procOutput += chunk.toString();
+    });
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve(procOutput);
+      } else {
+        reject(new Error(`${testFile} exited with code ${code}`));
+      }
+    });
+    proc.on('error', reject);
   });
-  proc.stderr.on('data', (chunk: Buffer) => {
-    procOutput += chunk.toString();
-  });
-  proc.on('close', (code) => {
-    if (code === 0) {
-      resolve(procOutput);
-    } else {
-      reject(new Error(`${output} exited with code ${code}`));
-    }
-  });
-  proc.on('error', reject);
-});
-logger.trace(procOutput);
+  logger.trace(procOutput);
+} finally {
+  await FsUtil.rm(testDirectory, { recursive: true, force: true });
+}
 
 Timer.cancelAll();
 logger.info('Finished!');
