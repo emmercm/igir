@@ -27,11 +27,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # actionlint
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version: 'stable'
       - run: go install github.com/rhysd/actionlint/cmd/actionlint@latest
       - run: actionlint
+
+      # zizmor
+      - uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+
 
   # !!! This check should be required by GitHub !!!
   linter-status-check:
