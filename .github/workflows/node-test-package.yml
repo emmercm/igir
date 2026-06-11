@@ -170,7 +170,10 @@ jobs:
         run: |
           echo "PACKAGE_NAME=$(jq --raw-output '.name' package.json)" >> "${GITHUB_OUTPUT}"
       - run: |
-          npx --yes "https://pkg.pr.new/${{ steps.package.outputs.PACKAGE_NAME }}@${{ github.event.pull_request.base.ref }}" --help
+          npx --yes "https://pkg.pr.new/${PACKAGE_NAME}@${BASE_REF}" --help
+        env:
+          PACKAGE_NAME: ${{ steps.package.outputs.PACKAGE_NAME }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
       - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
           message: |
