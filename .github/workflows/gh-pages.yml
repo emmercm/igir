@@ -21,7 +21,6 @@ concurrency:
 
 env:
   ref: ${{ inputs.ref || github.ref }}
-  cache_version: v2
 
 jobs:
   path-filter:
@@ -73,12 +72,6 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
-          restore-keys: |
-            mkdocs-${{ env.cache_version }}-refs/heads/main
-          path: .cache
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.x
@@ -90,10 +83,6 @@ jobs:
       - run: npm run docs:build
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
-          path: .cache
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
@@ -127,10 +116,6 @@ jobs:
             static
             LICENSE
             README.md
-      - uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
-          path: .cache
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.x
@@ -142,7 +127,3 @@ jobs:
       - run: mkdocs gh-deploy --strict --verbose --force
         env:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ github.token }}
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          key: mkdocs-${{ env.cache_version }}-${{ env.ref }}
-          path: .cache
