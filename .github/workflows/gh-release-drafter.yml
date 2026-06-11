@@ -129,4 +129,3 @@ jobs:
     uses: ./.github/workflows/node-compile.yml
     with:
       ref: ${{ needs.release.outputs.commit_hash }}
-    secrets: inherit
