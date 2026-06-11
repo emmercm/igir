@@ -85,6 +85,12 @@ async function walkAndStat(dirPath: string): Promise<[string, Stats][]> {
       stats.ctime = new Date(0);
       stats.ctimeMs = 0;
       stats.nlink = 0;
+      for (const symbol of Object.getOwnPropertySymbols(stats)) {
+        // TODO(cemmer): @types/ndoe doesn't yet have partialAtimeNs/partialMtimeNs/partialCtimeNs from Node.js v26.2.0
+        if (symbol.description?.endsWith('timeNs')) {
+          Reflect.deleteProperty(stats, symbol);
+        }
+      }
       // Hard-code properties that Ubuntu sometimes reports false negatives for
       stats.blocks = 0;
 
