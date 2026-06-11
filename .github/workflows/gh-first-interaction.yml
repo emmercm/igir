@@ -1,6 +1,10 @@
 name: GitHub First Interaction
 
 on:
+  # zizmor: ignore[dangerous-triggers] This workflow won't work with `pull_request`, it would
+  #   never be able to get the pull-requests:write permission it needs. `pull_request_target`
+  #   is safe because the workflow has no secrets, no code is checked out, and there is no chance
+  #   for code execution.
   pull_request_target:
     types:
       - opened

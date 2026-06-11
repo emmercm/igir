@@ -10,7 +10,10 @@ name: GitHub Merge Queue
 
 on:
   # A PR merge has occurred, or a PR is no longer eligible for the queue; move on to the next PR
-  pull_request_target:
+  # Tradeoff: `pull_request_target` would allow this workflow to work with forked repositories,
+  #   but it's easy to get security wrong with `pull_request_target`. This workflow references
+  #   a personal access token, so we should avoid `pull_request_target`.
+  pull_request:
     types:
       - closed
       - converted_to_draft
@@ -28,8 +31,6 @@ jobs:
   update-pr-branch:
     runs-on: ubuntu-latest
     steps:
-      # Required for `gh` CLI
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: |
           pr_search="sort:created-asc"
 
@@ -61,19 +62,15 @@ jobs:
         env:
           # GitHub won't run workflows off of code commits+pushes from the `github-actions` user
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
   # Add a label to the oldest Renovate auto-merge PR that has conflicts, such that Renovate rebases it
   renovate-label-adder:
     permissions:
-      # actions/checkout
-      contents: read
-      # `gh` CLI actions
       pull-requests: write
       issues: write
     runs-on: ubuntu-latest
     steps:
-      # Required for `gh` CLI
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: |
           author="app/renovate"
           pr_search="author:${author} sort:created-asc -label:${{ env.renovate_rebase_label }}"
@@ -105,19 +102,15 @@ jobs:
           done <<< "${eligible_prs}"
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
 
   renovate-label-remover:
-    if: ${{ github.event_name == 'pull_request_target' }}
+    if: ${{ github.event_name == 'pull_request' }}
     permissions:
-      # actions/checkout
-      contents: read
-      # `gh` CLI actions
       pull-requests: write
       issues: write
     runs-on: ubuntu-latest
     steps:
-      # Required for `gh` CLI
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: |
           pr_number="${{ github.event.pull_request.number }}"
           label="${{ env.renovate_rebase_label }}"
@@ -129,3 +122,4 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

@@ -1,7 +1,10 @@
 name: Pull Request Renamer
 
 on:
-  # pull_request_target required for pull-requests:write permission on fork PRs
+  # zizmor: ignore[dangerous-triggers] This workflow won't work with `pull_request`, it would
+  #   never be able to get the pull-requests:write permission it needs. `pull_request_target`
+  #   is safe because the workflow has no secrets, no code is checked out, and there is no chance
+  #   for code execution.
   pull_request_target:
     types:
       - edited  # PR's title was changed
@@ -17,9 +20,6 @@ concurrency:
 jobs:
   rename:
     permissions:
-      # actions/checkout
-      contents: read
-      # `gh` CLI
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
@@ -75,11 +75,10 @@ jobs:
           fi
 
           echo "NEW_TITLE=${NEW_TITLE}" >> "${GITHUB_OUTPUT}"
-      # Required for `gh` CLI
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: gh-pr-edit
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
           NEW_TITLE: ${{ steps.title-massager.outputs.NEW_TITLE }}
         run: gh pr edit "${{ github.event.pull_request.number }}" --title "${NEW_TITLE}"
