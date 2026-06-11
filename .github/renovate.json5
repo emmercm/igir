@@ -51,9 +51,9 @@
   rebaseLabel: 'renovate/rebase',
   updateNotScheduled: true, // default
 
-  // Stability settings: don't raise a PR until a dependency is at least 3 days old
+  // Stability settings: don't raise a PR until a dependency is at least 7 days old
   rangeStrategy: 'pin',
-  minimumReleaseAge: '3 days',
+  minimumReleaseAge: '7 days',
   internalChecksFilter: 'strict',
 
   packageRules: [
@@ -65,16 +65,15 @@
       allowedVersions: '/^v?\\d*[02468]\\./',
       // 'Current' releases are considered unstable by default; override so Renovate doesn't skip them
       ignoreUnstable: false,
-      // The Docker images (used to build executables) frequently don't get published until days
-      //  after the Node.js version was updated, so try to prevent immediately failing PRs
-      minimumReleaseAge: '5 days',
       // Renovate's defaults for these options (overrides our global defaults)
+      minimumReleaseAge: '0 days',
       schedule: 'at any time',
     },
     {
       matchPackageNames: ['bun'],
       groupName: 'Bun',
       // Renovate's defaults for these options (overrides our global defaults)
+      minimumReleaseAge: '0 days',
       schedule: 'at any time',
     },
 

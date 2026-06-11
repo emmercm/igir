@@ -10,12 +10,14 @@ concurrency:
 jobs:
   path-filter:
     permissions:
-      pull-requests: read
+      pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - id: filter
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         with:
@@ -29,9 +31,14 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    permissions:
+      contents: read # actions/checkout
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - id: npm-cache-dir
         shell: bash
@@ -69,9 +76,14 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    permissions:
+      contents: read # actions/checkout
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - id: npm-cache-dir
         shell: bash
@@ -109,9 +121,14 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    permissions:
+      contents: read # actions/checkout
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - id: npm-cache-dir
         shell: bash

@@ -25,10 +25,8 @@ env:
 jobs:
   release:
     permissions:
-      # actions/checkout@v6
-      contents: read
-      # thollander/actions-comment-pull-request
-      pull-requests: write
+      contents: read # actions/checkout
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     outputs:
       commit_hash: ${{ steps.pr-finder.outputs.GIT_SHA }}
@@ -37,6 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
           submodules: 'recursive'
           # auto-changelog needs a full fetch for tag info
@@ -55,18 +54,6 @@ jobs:
 
       - if: steps.check.outputs.changed == 'true'
         uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
-      - if: steps.check.outputs.changed == 'true'
-        id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - if: steps.check.outputs.changed == 'true'
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-            ${{ runner.os }}-
       - if: steps.check.outputs.changed == 'true'
         run: npm ci
 
@@ -133,10 +120,12 @@ jobs:
 
   # Kick off binary compilation
   compile:
-    if: ${{ needs.release.outputs.release_id }}
     needs:
       - release
+    if: ${{ needs.release.outputs.release_id }}
+    permissions:
+      pull-requests: read # node-compile.yml (dorny/paths-filter)
+      contents: write # node-compile.yml (gh release upload)
     uses: ./.github/workflows/node-compile.yml
     with:
       ref: ${{ needs.release.outputs.commit_hash }}
-    secrets: inherit
