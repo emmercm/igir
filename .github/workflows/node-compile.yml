@@ -24,7 +24,7 @@ env:
 jobs:
   path-filter:
     permissions:
-      pull-requests: read
+      pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
@@ -45,12 +45,12 @@ jobs:
               - '*'
 
   node-compile:
+    name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name != 'pull_request' }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
+    permissions:
+      contents: read # actions/checkout
     strategy:
       fail-fast: false
       matrix:
@@ -69,6 +69,8 @@ jobs:
           - os: windows-11-arm
             go_arch: arm64
 
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -214,12 +216,11 @@ jobs:
           retention-days: 7
 
   release-update:
-    if: ${{ github.event_name != 'pull_request' }}
     needs:
       - node-compile
+    if: ${{ github.event_name != 'pull_request' }}
     permissions:
-      # actions/checkout@v6, `gh` CLI
-      contents: write
+      contents: write # actions/checkout, gh release upload
     runs-on: ubuntu-latest
     steps:
       # Get the package version
@@ -249,10 +250,11 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   compile-status-check:
-    if: always()
     needs:
       - path-filter
       - node-compile
+    if: always()
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1

@@ -20,7 +20,7 @@ concurrency:
 jobs:
   path-filter:
     permissions:
-      pull-requests: read
+      pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
@@ -42,6 +42,8 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    permissions:
+      contents: read # actions/checkout
     runs-on: ubuntu-latest
     outputs:
       package_name: ${{ steps.pkg-pr-new.outputs.PACKAGE_NAME }}
@@ -72,11 +74,12 @@ jobs:
           echo "PACKAGE_URL=$(jq --raw-output '.packages[0].url' pkg.json)" >> "${GITHUB_OUTPUT}"
 
   test-npx:
-    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    name: test-npx (${{ matrix.os }})
     needs:
       - pkg-pr-new
-    name: test-npx (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    permissions:
+      contents: read # actions/checkout
     strategy:
       fail-fast: false
       matrix:
@@ -87,6 +90,7 @@ jobs:
           - macos-15-intel
           - windows-latest
           - windows-11-arm
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -98,11 +102,12 @@ jobs:
   # TODO(cemmer): bunx testing, https://github.com/oven-sh/bun/issues/17946
 
   test-npm-install-global:
-    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    name: test-npm-install-global (${{ matrix.os }})
     needs:
       - pkg-pr-new
-    name: test-npm-install-global (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    if: ${{ startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    permissions:
+      contents: read # actions/checkout
     strategy:
       fail-fast: false
       matrix:
@@ -113,6 +118,7 @@ jobs:
           - macos-15-intel
           - windows-latest
           - windows-11-arm
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -128,11 +134,12 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   test-package-status-check:
-    if: always()
     needs:
       - pkg-pr-new
       - test-npx
       - test-npm-install-global
+    if: always()
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
@@ -141,14 +148,14 @@ jobs:
           allowed-skips: pkg-pr-new, test-npx, test-npm-install-global
 
   npm-exec-branch-comment:
-    # TODO(cemmer): need pull_request_target to comment
-    if: ${{ github.event.pull_request.user.login == 'emmercm' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     needs:
       - pkg-pr-new
       - test-npx
       - test-npm-install-global
+    # TODO(cemmer): need pull_request_target to comment
+    if: ${{ github.event.pull_request.user.login == 'emmercm' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     permissions:
-      pull-requests: write
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
       - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
@@ -163,12 +170,12 @@ jobs:
           comment-tag: npm-exec
 
   npm-exec-merge-comment:
-    # TODO(cemmer): need pull_request_target to comment
-    if: ${{ github.event.pull_request.user.login == 'emmercm' && needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     needs:
       - path-filter
+    # TODO(cemmer): need pull_request_target to comment
+    if: ${{ github.event.pull_request.user.login == 'emmercm' && needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     permissions:
-      pull-requests: write
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

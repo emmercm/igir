@@ -29,6 +29,7 @@ env:
 jobs:
   # Update the oldest auto-merge PR that's out-of-date with the base branch
   update-pr-branch:
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - run: |
@@ -67,8 +68,8 @@ jobs:
   # Add a label to the oldest Renovate auto-merge PR that has conflicts, such that Renovate rebases it
   renovate-label-adder:
     permissions:
-      pull-requests: write
-      issues: write
+      pull-requests: write # gh pr edit
+      issues: write # gh pr edit
     runs-on: ubuntu-latest
     steps:
       - run: |
@@ -107,8 +108,8 @@ jobs:
   renovate-label-remover:
     if: ${{ github.event_name == 'pull_request' }}
     permissions:
-      pull-requests: write
-      issues: write
+      pull-requests: write # gh pr edit
+      issues: write # gh pr edit
     runs-on: ubuntu-latest
     steps:
       - run: |

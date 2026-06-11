@@ -24,6 +24,8 @@ run-name: '${{ github.workflow }}: incrementing ${{ inputs.increment }}'
 
 jobs:
   bump:
+    permissions:
+      contents: read # actions/checkout
     runs-on: ubuntu-latest
     steps:
       # Setup and install

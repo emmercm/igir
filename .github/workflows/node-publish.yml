@@ -12,12 +12,9 @@ on:
 jobs:
   node-publish:
     permissions:
-      # actions/checkout@v6
-      contents: read
-      # `npm publish --provenance`
-      id-token: write
-      # thollander/actions-comment-pull-request
-      pull-requests: write
+      contents: read # actions/checkout
+      id-token: write # npm publish --provenance
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

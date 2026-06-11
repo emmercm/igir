@@ -29,7 +29,7 @@ jobs:
   path-filter:
     if: ${{ github.actor == 'emmercm' }}
     permissions:
-      pull-requests: read
+      pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.change-filter.outputs.changes == 'true' && steps.commit-filter.outputs.changes == 'false' && 'true' || 'false' }}
@@ -59,15 +59,12 @@ jobs:
               - 'packages/*/prebuilds*/**'
 
   prebuild:
+    name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch || 'default' }})
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
-    timeout-minutes: 30 # QEMU cross-builds
-    name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch || 'default' }})
+    permissions:
+      contents: read # actions/checkout
     strategy:
       fail-fast: false
       matrix:
@@ -81,6 +78,11 @@ jobs:
           - os: macos-latest
           - os: windows-latest
           - os: windows-11-arm
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # QEMU cross-builds
+    defaults:
+      run:
+        shell: bash
     steps:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -176,6 +178,8 @@ jobs:
   commit:
     needs:
       - prebuild
+    permissions:
+      contents: read # actions/checkout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

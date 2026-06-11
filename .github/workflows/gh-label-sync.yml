@@ -13,6 +13,9 @@ concurrency:
 jobs:
   dry-run:
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read # actions/checkout
+      issues: read # EndBug/label-sync
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -27,9 +30,10 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   labels-status-check:
-    if: always()
     needs:
       - dry-run
+    if: always()
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
@@ -39,6 +43,9 @@ jobs:
 
   sync:
     if: github.event_name == 'push'
+    permissions:
+      contents: read # actions/checkout
+      issues: write # EndBug/label-sync
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

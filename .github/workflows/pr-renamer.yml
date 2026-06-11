@@ -20,7 +20,7 @@ concurrency:
 jobs:
   rename:
     permissions:
-      pull-requests: write
+      pull-requests: write # gh pr edit
     runs-on: ubuntu-latest
     steps:
       - id: title-massager
@@ -98,9 +98,10 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   title-status-check:
-    if: always()
     needs:
       - rename
+    if: always()
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1

@@ -13,20 +13,18 @@ jobs:
   pr-renamer:
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     permissions:
-      contents: read
-      pull-requests: write
+      contents: read # pr-renamer.yml
+      pull-requests: write # pr-renamer.yml (gh pr edit)
     uses: ./.github/workflows/pr-renamer.yml
 
   dependabot-automerge:
-    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     needs:
       - pr-renamer
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     permissions:
-      # actions/checkout@v6, `gh` CLI
-      contents: write
-      # `gh` CLI
-      repository-projects: read
-      pull-requests: write
+      contents: write # gh pr merge
+      repository-projects: read # gh pr merge
+      pull-requests: write # gh pr merge
     runs-on: ubuntu-latest
     steps:
       - run: gh pr merge "${{ github.event.pull_request.number }}" --squash --auto

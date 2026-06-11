@@ -9,6 +9,8 @@ concurrency:
 
 jobs:
   renovate-lint:
+    permissions:
+      contents: read # actions/checkout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -19,6 +21,8 @@ jobs:
           pattern: 'renovate.json5'
 
   shellcheck:
+    permissions:
+      contents: read # actions/checkout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -28,6 +32,8 @@ jobs:
         uses: ludeeus/action-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca # master
 
   actionlint:
+    permissions:
+      contents: read # actions/checkout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -40,9 +46,9 @@ jobs:
       - run: actionlint
 
   zizmor:
-    runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # zizmorcore/zizmor-action
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -54,12 +60,13 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   linter-status-check:
-    if: always()
     needs:
       - renovate-lint
       - shellcheck
       - actionlint
       - zizmor
+    if: always()
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1

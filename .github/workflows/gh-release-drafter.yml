@@ -25,10 +25,8 @@ env:
 jobs:
   release:
     permissions:
-      # actions/checkout@v6
-      contents: read
-      # thollander/actions-comment-pull-request
-      pull-requests: write
+      contents: read # actions/checkout
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     outputs:
       commit_hash: ${{ steps.pr-finder.outputs.GIT_SHA }}
@@ -122,9 +120,12 @@ jobs:
 
   # Kick off binary compilation
   compile:
-    if: ${{ needs.release.outputs.release_id }}
     needs:
       - release
+    if: ${{ needs.release.outputs.release_id }}
+    permissions:
+      pull-requests: read # node-compile.yml (dorny/paths-filter)
+      contents: write # node-compile.yml (gh release upload)
     uses: ./.github/workflows/node-compile.yml
     with:
       ref: ${{ needs.release.outputs.commit_hash }}

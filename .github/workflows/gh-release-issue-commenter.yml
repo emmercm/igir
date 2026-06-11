@@ -21,9 +21,9 @@ env:
 jobs:
   comment:
     permissions:
-      contents: read
-      pull-requests: read
-      issues: write
+      contents: read # actions/checkout
+      pull-requests: read # gh pr view, gh api
+      issues: write # gh issue comment
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

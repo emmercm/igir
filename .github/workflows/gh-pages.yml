@@ -25,7 +25,7 @@ env:
 jobs:
   path-filter:
     permissions:
-      pull-requests: read
+      pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
@@ -47,6 +47,8 @@ jobs:
     needs:
       - path-filter
     if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    permissions:
+      contents: read # actions/checkout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -60,6 +62,8 @@ jobs:
     needs:
       - path-filter
     if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.changes == 'true' }}
+    permissions:
+      contents: read # actions/checkout, mkdocs-git-committers
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -89,11 +93,12 @@ jobs:
 
   # !!! This check should be required by GitHub !!!
   pages-status-check:
-    if: always()
     needs:
       - path-filter
       - lint
       - build
+    if: always()
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
@@ -104,7 +109,7 @@ jobs:
   deploy:
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
-      contents: write
+      contents: write # mkdocs gh-deploy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
