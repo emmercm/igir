@@ -1,7 +1,7 @@
 name: Dependabot Automerge
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       # - edited  # PR's base branch was changed
       - opened
@@ -13,24 +13,21 @@ jobs:
   pr-renamer:
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     permissions:
-      contents: read
-      pull-requests: write
+      contents: read # pr-renamer.yml
+      pull-requests: write # pr-renamer.yml (gh pr edit)
     uses: ./.github/workflows/pr-renamer.yml
 
   dependabot-automerge:
-    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     needs:
       - pr-renamer
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     permissions:
-      # actions/checkout@v6, `gh` CLI
-      contents: write
-      # `gh` CLI
-      repository-projects: read
-      pull-requests: write
+      contents: write # gh pr merge
+      repository-projects: read # gh pr merge
+      pull-requests: write # gh pr merge
     runs-on: ubuntu-latest
     steps:
-      # Required for `gh` CLI
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: gh pr merge "${{ github.event.pull_request.number }}" --squash --auto
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
