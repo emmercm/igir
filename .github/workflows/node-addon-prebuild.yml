@@ -36,6 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
       # Prebuild if any relevant source file has changed
       - id: change-filter
@@ -84,6 +85,7 @@ jobs:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
@@ -178,6 +180,8 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          # zizmor: ignore[artipacked] The persisted credentials are required for the
+          #   subsequent `git push` that commits the prebuilds back to the branch.
           ref: ${{ env.ref }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}

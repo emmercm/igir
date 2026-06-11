@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - uses: formsort/action-check-codecov-config@6934627a1a84ceb56108a2d83223a15dc354ea38 # v1
 
   # !!! The codecov/project check should be required by GitHub !!!
@@ -30,6 +32,7 @@ jobs:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - id: npm-cache-dir

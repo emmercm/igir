@@ -32,6 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
       - id: filter
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
@@ -50,6 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
       # TODO(cemmer): MD060, markdownlint doesn't like the way WebStorm aligns tables
       - run: docker run --rm --volume "${PWD}:/workdir" ghcr.io/igorshubovych/markdownlint-cli:latest --disable MD013 MD033 MD041 MD046 MD060 -- "**/*.md"
@@ -62,6 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0
@@ -106,6 +109,9 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          # zizmor: ignore[artipacked] The persisted credentials are required for the
+          #   subsequent `mkdocs gh-deploy`, which pushes the built site to the gh-pages branch.
+          #   TODO(cemmer): replace with actions/upload-pages-artifact
           ref: ${{ env.ref }}
           # the `git-revision-date-localized` plugin needs full history to find page creation date
           fetch-depth: 0

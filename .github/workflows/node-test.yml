@@ -30,6 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
       - id: filter
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
@@ -58,6 +59,7 @@ jobs:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
@@ -100,6 +102,7 @@ jobs:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
@@ -138,6 +141,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -174,6 +178,7 @@ jobs:
       # Setup and install
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: ${{ env.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
@@ -204,6 +209,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - run: |
           npx --yes license-checker-rseidelsohn@latest --production --excludePrivatePackages --onlyAllow '0BSD;Apache-2.0;Artistic-2.0;BlueOak-1.0.0;BSD-2-Clause;BSD-3-Clause;BSD-3-Clause-Clear;BSL-1.0;CC-BY-4.0;CC-BY-SA-4.0;CC0-1.0;CECILL-2.0;CECILL-2.1;ClArtistic;CNRI-Python-GPL-Compatible;EFL-2.0;EUDatagrid;FTL;GPL-2.0-or-later;GPL-3.0-only;GPL-3.0-or-later;HPND;ICU;IJG;Intel;ISC;LGPL-2.1-or-later;LGPL-3.0-only;LGPL-3.0-or-later;libpng-2.0;MIT;MIT-0;MPL-2.0;NCSA;Python-2.0;Ruby;SGI-B-2.0;Sleepycat;SMLNJ;Unicode-DFS-2016;Unlicense;UPL-1.0;Vim;W3C;WTFPL;X11;Zend-2.0;Zlib;zlib-acknowledgement;ZPL-2.1'
