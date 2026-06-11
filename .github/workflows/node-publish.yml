@@ -12,30 +12,18 @@ on:
 jobs:
   node-publish:
     permissions:
-      # actions/checkout@v6
-      contents: read
-      # `npm publish --provenance`
-      id-token: write
-      # thollander/actions-comment-pull-request
-      pull-requests: write
+      contents: read # actions/checkout
+      id-token: write # npm publish --provenance
+      pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
           registry-url: 'https://registry.npmjs.org'
-      - id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-            ${{ runner.os }}-
       - run: npm ci
       - id: publish
         name: npm publish
@@ -46,8 +34,6 @@ jobs:
             echo "PACKAGE_NAME=$(jq --raw-output '.name' package.json)"
             echo "PACKAGE_VERSION=$(jq --raw-output '.version' package.json)"
           } >> "${GITHUB_OUTPUT}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Comment back on the PR that caused this push
       - id: pr-finder

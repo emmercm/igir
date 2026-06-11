@@ -1,6 +1,10 @@
 name: GitHub First Interaction
 
 on:
+  # zizmor: ignore[dangerous-triggers] This workflow won't work with `pull_request`, it would
+  #   never be able to get the pull-requests:write permission it needs. `pull_request_target`
+  #   is safe because the workflow has no secrets, no code is checked out, and there is no chance
+  #   for code execution.
   pull_request_target:
     types:
       - opened
@@ -10,6 +14,9 @@ jobs:
     name: Welcome First Time Contributors
     # TODO(cemmer): https://github.com/actions/first-interaction/issues/394
     if: ${{ !contains(github.event.pull_request.user.login, '[bot]') }}
+    permissions:
+      issues: write # actions/first-interaction
+      pull-requests: write # actions/first-interaction
     runs-on: ubuntu-latest
     steps:
       - uses: actions/first-interaction@1c4688942c71f71d4f5502a26ea67c331730fa4d # v3.1.0

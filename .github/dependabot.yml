@@ -11,6 +11,8 @@ updates:
     commit-message:
       prefix: Chore
       include: scope
+    cooldown:
+      default-days: 7
     # Disable non-security updates, let Renovate handle it
     open-pull-requests-limit: 0
     labels: []
@@ -23,6 +25,8 @@ updates:
     commit-message:
       prefix: Chore
       include: scope
+    cooldown:
+      default-days: 7
     # Disable non-security updates, let Renovate handle it
     open-pull-requests-limit: 0
     labels: [ ]
