@@ -1103,7 +1103,7 @@ export default class ArgumentsParser {
 
       .option('report-output', {
         group: groupReport,
-        description: 'Report output file location (formatted with moment.js)',
+        description: 'Report output file location (formatted with Moment.js date/time tokens)',
         type: 'string',
         coerce: ArgumentsParser.getLastValue, // don't allow string[] values
         requiresArg: true,

@@ -1,11 +1,10 @@
-import moment from 'moment';
-
 import type ProgressBar from '../../console/progressBar.js';
 import Package from '../../globals/package.js';
 import type DAT from '../../models/dats/dat.js';
 import Header from '../../models/dats/logiqx/header.js';
 import LogiqxDAT from '../../models/dats/logiqx/logiqxDat.js';
 import ArrayUtil from '../../utils/arrayUtil.js';
+import DateUtil from '../../utils/dateUtil.js';
 import Module from '../module.js';
 
 /**
@@ -35,7 +34,7 @@ export default class DATCombiner extends Module {
 
   private static generateHeader(dats: DAT[]): Header {
     const datName = 'igir combined';
-    const date = moment().format('YYYYMMDD-HHmmss');
+    const date = DateUtil.format('YYYYMMDD-HHmmss');
     return new Header({
       name: datName,
       description: datName,

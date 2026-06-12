@@ -6,12 +6,12 @@ import path from 'node:path';
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer';
 import fg from 'fast-glob';
 import micromatch from 'micromatch';
-import moment from 'moment';
 
 import { LogLevel, LogLevelValue } from '../console/logLevel.js';
 import IgirException from '../exceptions/igirException.js';
 import Temp from '../globals/temp.js';
 import ArrayUtil from '../utils/arrayUtil.js';
+import DateUtil from '../utils/dateUtil.js';
 import FsUtil, { FsWalkCallback, WalkMode, WalkModeValue } from '../utils/fsUtil.js';
 import URLUtil from '../utils/urlUtil.js';
 import Disk from './dats/disk.js';
@@ -1562,8 +1562,9 @@ export default class Options implements OptionsProps {
     // Replace date & time tokens
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
+      const now = new Date();
       symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
-        const val = moment().format(match.replace(/^%/, ''));
+        const val = DateUtil.format(match.replace(/^%/, ''), now);
         reportOutput = reportOutput.replace(match, val);
       });
     }
@@ -1621,8 +1622,9 @@ export default class Options implements OptionsProps {
     // Replace date & time tokens
     const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
+      const now = new Date();
       symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
-        const val = moment().format(match.replace(/^%/, ''));
+        const val = DateUtil.format(match.replace(/^%/, ''), now);
         debugLog = debugLog.replace(match, val);
       });
     }
