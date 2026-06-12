@@ -2,8 +2,7 @@ import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 
-import moment from 'moment';
-
+import DateUtil from '../utils/dateUtil.js';
 import FsUtil from '../utils/fsUtil.js';
 import Package from './package.js';
 
@@ -16,7 +15,7 @@ export default class Temp {
   private static globalTempDir = path.join(
     os.tmpdir(),
     Package.NAME,
-    moment().format('YYYYMMDD-HHmmss') +
+    DateUtil.format('YYYYMMDD-HHmmss') +
       (process.env.NODE_ENV === 'test'
         ? `.${crypto.randomBytes(4).readUInt32LE().toString(36)}`
         : ''),

@@ -2,11 +2,11 @@ import fs from 'node:fs';
 import type tty from 'node:tty';
 
 import chalk from 'chalk';
-import moment from 'moment';
 import stripAnsi from 'strip-ansi';
 import terminalLink from 'terminal-link';
 
 import Package from '../globals/package.js';
+import DateUtil from '../utils/dateUtil.js';
 import type { LogLevelValue } from './logLevel.js';
 import { LogLevel, LogLevelInverted } from './logLevel.js';
 
@@ -112,7 +112,7 @@ export default class Logger {
     const chalkFunc = chalkFuncs[messageLogLevel];
 
     const loggerTime =
-      currentLogLevel <= LogLevel.TRACE ? `[${moment().format('HH:mm:ss.SSS')}] ` : '';
+      currentLogLevel <= LogLevel.TRACE ? `[${DateUtil.format('HH:mm:ss.SSS')}] ` : '';
     const levelPrefix = `${chalkFunc(LogLevelInverted[messageLogLevel])}: `;
     const loggerPrefix =
       currentLogLevel <= LogLevel.TRACE && prefix ? chalk.dim(`${prefix}: `) : '';
