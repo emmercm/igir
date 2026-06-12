@@ -67,6 +67,10 @@
             "/NOLOGO",
             "/OPT:REF",
             "/DEBUG:NONE"
+          ],
+          # Node.js v26.3.0 Windows started adding "/opt:lldltojobs=<lto_jobs>" which MSVC throws LNK1117 on
+          "AdditionalOptions/": [
+            ["exclude", "lldltojobs"]
           ]
         }
       }
