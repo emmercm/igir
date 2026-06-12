@@ -1,6 +1,5 @@
-import moment from 'moment';
-
 import Package from '../../globals/package.js';
+import DateUtil from '../../utils/dateUtil.js';
 import type Options from '../options.js';
 import type DAT from './dat.js';
 import Header from './logiqx/header.js';
@@ -23,7 +22,7 @@ export default class IgirHeader extends Header {
     );
     const inputOptionsString = JSON.stringify(Object.fromEntries(inputOptions), undefined, 2);
 
-    const date = moment().format('YYYYMMDD-HHmmss');
+    const date = DateUtil.format('YYYYMMDD-HHmmss');
     super({
       name: `${originalDat.getHeader().getName().trim()} ${datType}`.trim(),
       description: `${originalDat.getHeader().getDescription()?.trim()} ${datType}`.trim(),
