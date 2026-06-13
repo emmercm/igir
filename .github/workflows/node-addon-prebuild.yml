@@ -45,6 +45,8 @@ jobs:
           filters: |
             changes:
               - '.github/workflows/node-addon-prebuild.yml'
+              - '.gitmodules'
+              - 'packages/chdman/**'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'
@@ -136,7 +138,7 @@ jobs:
             set -x
             uname -a
 
-            find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+            find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
               rm -rf addon* prebuilds*
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
@@ -154,7 +156,7 @@ jobs:
         run: |
           set -x
           node --print 'process'
-          find packages -maxdepth 1 -type d \( -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+          find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
             rm -rf addon* prebuilds*
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"

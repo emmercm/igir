@@ -1,29 +1,40 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import stream from 'node:stream';
 
-import { Mutex } from 'async-mutex';
-import chdman, { CHDInfo, ChdmanBinaryPreference } from 'chdman';
 import { Memoize } from 'typescript-memoize';
 
-import Timer from '../../../../async/timer.js';
-import IgirException from '../../../../exceptions/igirException.js';
-import Temp from '../../../../globals/temp.js';
-import FsUtil from '../../../../utils/fsUtil.js';
-import StreamUtil from '../../../../utils/streamUtil.js';
-import File from '../../file.js';
+import type { CHDInfo, TrackReaderModeValue } from '../../../../../packages/chdman/index.js';
+import chdman from '../../../../../packages/chdman/index.js';
+import FsReadTransform, { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import Archive from '../archive.js';
+
+/**
+ * A single track file a CHD exposes when extracted. The generated .cue/.gdi text is carried
+ * separately as {@link ChdListing.tocText}, not as one of these.
+ */
+export interface ChdListedFile {
+  // Output filename, equal to the {@link ArchiveEntry} path
+  filename: string;
+  // Byte size including any pregap/postgap
+  size: number;
+  // 0-based chdman track index
+  trackIndex: number;
+}
+
+/**
+ * The track files a CHD exposes, plus the generated table-of-contents text.
+ */
+export interface ChdListing {
+  mode: TrackReaderModeValue;
+  tocFilename: string;
+  tocText: string;
+  files: ChdListedFile[];
+}
 
 /**
  * Base class for MAME Compressed Hunks of Data (CHD) disc/disk image formats.
  */
 export default abstract class Chd extends Archive {
-  private tempSingletonHandles = 0;
-
-  private readonly tempSingletonMutex = new Mutex();
-
-  private tempSingletonDirPath?: string;
-
   static getExtensions(): string[] {
     return ['.chd'];
   }
@@ -43,96 +54,23 @@ export default abstract class Chd extends Archive {
   /**
    * Extract the named entry from the CHD to the given file path.
    */
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
-    await this.extractEntryToStreamCached(entryPath, async (readable) => {
-      await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
-    });
-  }
-
-  abstract extractArchiveEntries(outputDirectory: string): Promise<string[]>;
-
-  private async extractEntryToStreamCached<T>(
+  async extractEntryToFile(
     entryPath: string,
-    callback: (readable: stream.Readable) => Promise<T> | T,
-  ): Promise<T> {
-    await this.tempSingletonMutex.runExclusive(async () => {
-      this.tempSingletonHandles += 1;
-
-      if (this.tempSingletonDirPath !== undefined) {
-        return;
-      }
-      this.tempSingletonDirPath = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'chd'));
-
-      const extractedFiles = await this.extractArchiveEntries(this.tempSingletonDirPath);
-      if (extractedFiles.length === 0) {
-        this.tempSingletonDirPath = undefined;
-        throw new IgirException(`failed to extract`);
+    extractedFilePath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    await this.extractEntryToStream(entryPath, async (readable) => {
+      const writeStream = fs.createWriteStream(extractedFilePath);
+      if (callback) {
+        await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readable, writeStream);
       }
     });
-
-    const [extractedEntryPath, sizeAndOffset] = entryPath.split('|');
-    if (this.tempSingletonDirPath === undefined) {
-      throw new Error('CHD singleton path is required (this should never happen!)');
-    }
-    const filePath = path.join(this.tempSingletonDirPath, extractedEntryPath);
-
-    // Parse the entry path for any extra start/stop parameters
-    const [trackSizeAndPregap, trackOffset] = (sizeAndOffset ?? '').split('@');
-    const [trackSize, pregapSizeString, postgapSizeString] = trackSizeAndPregap.split('+');
-    const pregapSize = pregapSizeString === undefined ? 0 : Number.parseInt(pregapSizeString, 10);
-    const postgapSize =
-      postgapSizeString === undefined ? 0 : Number.parseInt(postgapSizeString, 10);
-    const streamStart = Number.parseInt(trackOffset ?? '0', 10);
-    const streamEnd =
-      !trackSize || Number.isNaN(Number(trackSize))
-        ? undefined
-        : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
-
-    try {
-      return await File.createStreamFromFile(
-        filePath,
-        async (readable) => {
-          if (pregapSize + postgapSize > 0) {
-            return await callback(
-              StreamUtil.concat(
-                StreamUtil.staticReadable(pregapSize, 0x00),
-                readable,
-                StreamUtil.staticReadable(postgapSize, 0x00),
-              ),
-            );
-          }
-          return await callback(readable);
-        },
-        streamStart,
-        streamEnd,
-      );
-    } catch (error) {
-      throw new IgirException(
-        `failed to read ${this.getFilePath()}|${entryPath} at ${filePath}: ${error}`,
-      );
-    } finally {
-      // Give a grace period before deleting the temp file, the next read may be of the same file
-      Timer.setTimeout(
-        async () => {
-          await this.tempSingletonMutex.runExclusive(async () => {
-            this.tempSingletonHandles -= 1;
-            if (this.tempSingletonHandles <= 0 && this.tempSingletonDirPath !== undefined) {
-              const tempSingletonDirPath = this.tempSingletonDirPath;
-              this.tempSingletonDirPath = undefined;
-              await FsUtil.rm(tempSingletonDirPath, { recursive: true, force: true });
-            }
-          });
-        },
-        process.env.NODE_ENV === 'test' ? 100 : 5000,
-      );
-    }
   }
 
   @Memoize()
   async getInfo(): Promise<CHDInfo> {
-    return await chdman.info({
-      inputFilename: this.getFilePath(),
-      binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
-    });
+    return await chdman.info({ inputFilename: this.getFilePath() });
   }
 }

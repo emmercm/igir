@@ -30,7 +30,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['.*/**', 'dist/**', 'site/**'],
+    ignores: ['.*/**', 'dist/**', 'packages/*/deps/**', 'site/**'],
   },
 
   // @typescript-eslint

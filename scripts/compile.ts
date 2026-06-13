@@ -49,9 +49,6 @@ const bunBuildConfig = {
       `node_modules/@emmercm/dolphin-tool-${argv.platform}-${argv.arch}/dist/{DolphinTool.exe,dolphin-tool,*.dylib}`,
     )),
     ...(await fg(
-      `node_modules/@emmercm/chdman-${argv.platform}-${argv.arch}/dist/{chdman*,*.dylib}`,
-    )),
-    ...(await fg(
       `node_modules/@emmercm/maxcso-${argv.platform}-${argv.arch}/dist/{maxcso*,*.dylib}`,
     )),
   ],

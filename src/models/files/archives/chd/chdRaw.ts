@@ -1,8 +1,8 @@
 import path from 'node:path';
+import type stream from 'node:stream';
 
-import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
-
-import IgirException from '../../../../exceptions/igirException.js';
+import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
+import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
@@ -30,6 +30,9 @@ export default class ChdRaw extends Chd {
     return archiveEntry.getSize() > 0;
   }
 
+  /**
+   * List the raw entries this CHD exposes.
+   */
   async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
     const info = await this.getInfo();
 
@@ -74,39 +77,27 @@ export default class ChdRaw extends Chd {
   }
 
   /**
-   * Extract the CHD's underlying raw image into the given directory, returning the path of the
-   * produced file.
+   * Open a stream over the CHD's logical bytes, skipping the first `start` bytes, and invoke the
+   * callback. A raw CHD exposes a single logical image, so the entry path is not needed to
+   * resolve it.
    */
-  async extractArchiveEntries(outputDirectory: string): Promise<string[]> {
-    const outputFilename = path.join(outputDirectory, path.parse(this.getFilePath()).name);
-
-    const info = await this.getInfo();
-    if (info.type === CHDType.RAW) {
-      await chdman.extractRaw({
-        inputFilename: this.getFilePath(),
-        outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
-      });
-    } else if (info.type === CHDType.HARD_DISK) {
-      await chdman.extractHd({
-        inputFilename: this.getFilePath(),
-        outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
-      });
-    } else if (info.type === CHDType.DVD_ROM) {
-      await chdman.extractDvd({
-        inputFilename: this.getFilePath(),
-        outputFilename,
-        binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
-      });
-    } else if (info.type === CHDType.CD_ROM) {
-      throw new IgirException("CD-ROM CHDs can't be extracted as raw");
-    } else if (info.type === CHDType.GD_ROM) {
-      throw new IgirException("GD-ROM CHDs can't be extracted as raw");
-    } else {
-      return [];
+  override async extractEntryToStream<T>(
+    _entryPath: string,
+    callback: (readable: stream.Readable) => Promise<T> | T,
+    start = 0,
+  ): Promise<T> {
+    let readable: stream.Readable = await chdman.openRawReader({
+      inputFilename: this.getFilePath(),
+    });
+    // A non-zero start offset (e.g. a detected ROM header) must skip that many
+    // leading bytes of the forward-only stream.
+    if (start > 0) {
+      readable = readable.pipe(new SkipBytesTransform(start));
     }
-
-    return [outputFilename];
+    try {
+      return await callback(readable);
+    } finally {
+      readable.destroy();
+    }
   }
 }

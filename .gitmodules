@@ -4,3 +4,7 @@
 [submodule "packages/zstd-1.5.5/deps/zstd"]
 	path = packages/zstd-1.5.5/deps/zstd
 	url = https://github.com/facebook/zstd.git
+[submodule "packages/chdman/deps/mame"]
+	path = packages/chdman/deps/mame
+	url = https://github.com/mamedev/mame.git
+	shallow = true
