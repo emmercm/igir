@@ -202,11 +202,76 @@ if (!(await FsUtil.exists(output))) {
 // TODO(cemmer): Bun only embeds one icon resolution in the exe: https://github.com/oven-sh/bun/issues/32428
 if (argv.platform === 'win32') {
   logger.info('Updating the exe icon ...');
-  const exe = NtExecutable.from(await fs.promises.readFile(output));
+
+  // PE/COFF header field offsets (see PE format spec). SectionAlignment,
+  // FileAlignment, SizeOfImage, and SizeOfHeaders sit at the same optional-header
+  // offsets for both PE32 and PE32+.
+  const SECTION_HEADER_SIZE = 40;
+  const original = await fs.promises.readFile(output);
+  const peOffset = original.readUInt32LE(0x3c);
+  if (original.toString('latin1', peOffset, peOffset + 4) !== 'PE\0\0') {
+    throw new IgirException(`'${output}' is not a PE executable`);
+  }
+  const sectionCount = original.readUInt16LE(peOffset + 6);
+  const optionalHeaderSize = original.readUInt16LE(peOffset + 20);
+  const optionalHeaderOffset = peOffset + 24;
+  const sectionTableOffset = optionalHeaderOffset + optionalHeaderSize;
+  const sectionAlignment = original.readUInt32LE(optionalHeaderOffset + 32);
+  const fileAlignment = original.readUInt32LE(optionalHeaderOffset + 36);
+
+  const sectionName = (buffer: Buffer, index: number): string =>
+    buffer
+      .toString(
+        'latin1',
+        sectionTableOffset + index * SECTION_HEADER_SIZE,
+        sectionTableOffset + index * SECTION_HEADER_SIZE + 8,
+      )
+      .replace(/\0+$/, '');
+
+  // Locate the `.bun` section and assert it's the trailing section both in the
+  // section table and by file offset (so everything before it is a clean PE).
+  const bunIndex = Array.from({ length: sectionCount }, (_, index) => index).find(
+    (index) => sectionName(original, index) === '.bun',
+  );
+  if (bunIndex === undefined) {
+    throw new IgirException(`'${output}' has no '.bun' section`);
+  }
+  if (bunIndex !== sectionCount - 1) {
+    throw new IgirException("'.bun' section isn't last in the section table");
+  }
+  const bunHeaderOffset = sectionTableOffset + bunIndex * SECTION_HEADER_SIZE;
+  const bunRawOffset = original.readUInt32LE(bunHeaderOffset + 20);
+  for (let index = 0; index < sectionCount; index += 1) {
+    if (
+      index !== bunIndex &&
+      original.readUInt32LE(sectionTableOffset + index * SECTION_HEADER_SIZE + 20) > bunRawOffset
+    ) {
+      throw new IgirException("'.bun' section isn't last by file offset");
+    }
+  }
+  // The `.bun` payload (the section's raw data plus the trailing overlay Bun reads
+  // beyond it) is everything from its raw offset to EOF.
+  const bunHeader = Buffer.from(
+    original.subarray(bunHeaderOffset, bunHeaderOffset + SECTION_HEADER_SIZE),
+  );
+  const bunPayload = Buffer.from(original.subarray(bunRawOffset));
+
+  // Build a clean PE without `.bun`: drop its raw data (it's the file tail) and its
+  // section-table entry, then decrement the section count.
+  const clean = Buffer.from(original.subarray(0, bunRawOffset));
+  clean.fill(0, bunHeaderOffset, bunHeaderOffset + SECTION_HEADER_SIZE);
+  clean.writeUInt16LE(sectionCount - 1, peOffset + 6);
+
+  // Let resedit rewrite the icons now that only `.reloc` follows `.rsrc`.
+  const exe = NtExecutable.from(clean);
   const resource = NtExecutableResource.from(exe);
   const iconFile = Data.IconFile.from(await fs.promises.readFile(windowsIcon));
   const icons = iconFile.icons.map((icon) => icon.data);
-  for (const iconGroup of Resource.IconGroupEntry.fromEntries(resource.entries)) {
+  const iconGroups = Resource.IconGroupEntry.fromEntries(resource.entries);
+  if (iconGroups.length === 0) {
+    throw new IgirException(`'${output}' has no icon group to replace`);
+  }
+  for (const iconGroup of iconGroups) {
     Resource.IconGroupEntry.replaceIconsForResource(
       resource.entries,
       iconGroup.id,
@@ -215,7 +280,46 @@ if (argv.platform === 'win32') {
     );
   }
   resource.outputResource(exe);
-  await fs.promises.writeFile(output, Buffer.from(exe.generate()));
+  const rewritten = Buffer.from(exe.generate());
+
+  // Re-append `.bun` as a fresh trailing section. resedit shifted `.rsrc`/`.reloc`,
+  // so compute a non-overlapping virtual address (after the last section) and a
+  // file-aligned raw offset (at the end of the rewritten image). Bun reads beyond
+  // the nominal raw size, so VirtualSize/SizeOfRawData are left unchanged.
+  const alignUp = (value: number, alignment: number): number =>
+    Math.ceil(value / alignment) * alignment;
+  const newSectionCount = rewritten.readUInt16LE(peOffset + 6);
+  let maxVirtualEnd = 0;
+  for (let index = 0; index < newSectionCount; index += 1) {
+    const headerOffset = sectionTableOffset + index * SECTION_HEADER_SIZE;
+    maxVirtualEnd = Math.max(
+      maxVirtualEnd,
+      rewritten.readUInt32LE(headerOffset + 12) + rewritten.readUInt32LE(headerOffset + 8),
+    );
+  }
+  const newBunVirtualAddress = alignUp(maxVirtualEnd, sectionAlignment);
+  const newBunRawOffset = alignUp(rewritten.length, fileAlignment);
+
+  // Ensure there's room in the headers region for one more section entry.
+  const newBunHeaderOffset = sectionTableOffset + newSectionCount * SECTION_HEADER_SIZE;
+  const firstSectionRawOffset = rewritten.readUInt32LE(sectionTableOffset + 20);
+  if (newBunHeaderOffset + SECTION_HEADER_SIZE > firstSectionRawOffset) {
+    throw new IgirException('no room in PE headers to re-add the .bun section');
+  }
+
+  bunHeader.writeUInt32LE(newBunVirtualAddress, 12);
+  bunHeader.writeUInt32LE(newBunRawOffset, 20);
+
+  const patched = Buffer.from(rewritten);
+  patched.writeUInt16LE(newSectionCount + 1, peOffset + 6);
+  bunHeader.copy(patched, newBunHeaderOffset);
+  patched.writeUInt32LE(
+    alignUp(newBunVirtualAddress + bunPayload.length, sectionAlignment),
+    optionalHeaderOffset + 56,
+  );
+
+  const padding = Buffer.alloc(newBunRawOffset - patched.length);
+  await fs.promises.writeFile(output, Buffer.concat([patched, padding, bunPayload]));
 }
 
 if (argv.platform === 'darwin') {
