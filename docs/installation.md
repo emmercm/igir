@@ -74,6 +74,7 @@ npx igir@latest copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir
 [Homebrew](https://brew.sh/) is a third-party package manager for macOS. You can install Igir with this command:
 
 ```shell
+brew trust emmercm/igir
 brew install emmercm/igir/igir
 ```
 

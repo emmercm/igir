@@ -1,24 +1,18 @@
-# ROM Filtering & Preferences
+# ROM Filtering
 
-Igir offers many options for filtering as well as 1G1R preferences/priorities (when combined with the `--single` option).
+Igir offers _many_ options for filtering out unwanted games. ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](../output/reporting.md).
 
-ROM filters cut down the list of games desired for a set, and any games filtered out will not appear in [reports](../output/reporting.md). ROM preferences decide what duplicates to eliminate (1G1R).
-
-!!! tip
-
-    Filters & preferences are applied before generating [fixdats](../dats/fixdats.md) and [dir2dats](../dats/dir2dat.md), allowing you to DATs for your exact needs!
-
-## Filters
-
-Multiple filter options can be specified at once.
+Multiple filter options can be specified at once, and they will all be applied in a "logical and" fahsion.
 
 !!! note
 
-    Filters are applied against all [DATs](../dats/scanning.md) _before_ [ROM matching](matching.md) happens.
+    Filters are applied against all [DATs](../dats/scanning.md) _before_ [ROM matching](matching.md) happens. If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files.
 
-    If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files.
+!!! tip
 
-### Game name filter
+    Filters and [1G1R preferences](1g1r.md) are applied before generating [fixdats](../dats/fixdats.md) and [dir2dats](../dats/dir2dat.md), allowing you to generate DATs for your exact needs!
+
+## Game name filter
 
 ```text
 --filter-regex <pattern|filename>, --filter-regex-exclude <pattern|filename>
@@ -26,12 +20,19 @@ Multiple filter options can be specified at once.
 
 Only include or exclude games based on if their DAT name (or filename if not using DATs) matches a regular expression.
 
-Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
+Regex [flags](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags) can be optionally provided in the form `/<pattern>/<flags>`.
 
-```text
-Mario|Zelda
-/mario|zelda/i
-```
+!!! example
+
+    Filter to only Mario or Zelda games:
+
+    ```text
+    --filter-regex "Mario|Zelda"
+    ```
+
+    ```text
+    --filter-regex ""/mario|zelda/i"
+    ```
 
 A filename can be provided to a file that contains one or more lines of patterns. Multiple patterns will be combined in a logical "or" fashion. For example:
 
@@ -52,7 +53,7 @@ Tetris (World) (Rev 1)
 Wario Land II (USA, Europe) (SGB Enhanced)
 ```
 
-### Language filter
+## Language filter
 
 ```text
 --filter-language [languages..]
@@ -84,7 +85,23 @@ Spanish:
 
 A game can have many languages, and all of them are considered during filtering.
 
-### Region filter
+!!! example
+
+    Filter to only games in English or Japanese:
+
+    ```text
+    --filter-language En,Ja
+    ```
+
+!!! example
+
+    Filter to only games in Chinese:
+
+    ```text
+    --filter-language Zh
+    ```
+
+## Region filter
 
 ```text
 --filter-region [regions..]
@@ -116,9 +133,25 @@ Spain:
   Star Trek - The Next Generation (Spain)
 ```
 
-A game can only have one primary region. The first region detected is what is used.
+A game can have many regions, and all of them are considered during filtering.
 
-### Category filter
+!!! example
+
+    Filter to only games from Australia or New Zealand
+
+    ```text
+    --filter-region AUS,NZ
+    ```
+
+!!! example
+
+    Filter to only games from South Korea:
+
+    ```text
+    --filter-region KOR
+    ```
+
+## Category filter
 
 ```text
 --filter-category-regex <pattern|filename>
@@ -128,9 +161,9 @@ Only include games whose category matches the provided regular expression.
 
 !!! warning
 
-    This options requires that the DATs you use include category information. Not every DAT release group includes category information (e.g. MAME, TOSEC), and not every release group includes category in every version of their DATs (e.g. No-Intro). Games without categories will always be filtered out by this option!
+    This options requires that the DATs you use include category information. Not every DAT release group includes category information (e.g. MAME and TOSEC don't), and not every release group includes category in every version of their DATs (e.g. No-Intro doesn't always). Games without categories will always be filtered out by this option!
 
-### BIOS
+## BIOS
 
 ```text
 --no-bios, --only-bios
@@ -147,7 +180,7 @@ Filter out, or only include games that are marked `isbios="yes"` in the DAT, or 
 
     `--only-bios` is a great option to collate all BIOS files across all consoles to one directory.
 
-### MAME devices
+## MAME devices
 
 ```text
 --no-device, --only-device
@@ -155,7 +188,7 @@ Filter out, or only include games that are marked `isbios="yes"` in the DAT, or 
 
 Filter out or only include [MAME devices](https://wiki.mamedev.org/index.php/MAME_Device_Basics). MAME devices typically represent physical devices, such as microcontrollers, video display controllers, sounds boards, and more. Many MAME devices don't have any associated ROM files.
 
-### Unlicensed
+## Unlicensed
 
 ```text
 --no-unlicensed, --only-unlicensed
@@ -170,7 +203,9 @@ Caihong Zhanshi - Rainbow Prince (Taiwan) (Unl)
 
 These games are still considered "retail" releases (below).
 
-### Only retail
+---
+
+## Only retail
 
 ```text
 --only-retail
@@ -259,7 +294,7 @@ Enables all the following `--no-*` options, as well as filtering out games that 
   R-Type DX (U) [C][t2]
   ```
 
-### Debug
+## Debug
 
 ```text
 --no-debug, --only-debug
@@ -272,7 +307,7 @@ Megaman - Battle Network 2 (USA) (Debug Version)
 Perfect Dark (USA) (2000-03-22) (Debug)
 ```
 
-### Demos
+## Demos
 
 ```text
 --no-demo, --only-demo
@@ -298,7 +333,7 @@ Coria and the Sunken City (Unknown) (Demo)
 Two Hearts (Japan) (Demo) (Unl)
 ```
 
-### Betas
+## Betas
 
 ```text
 --no-beta, --only-beta
@@ -311,7 +346,7 @@ Cosmo Tank (Japan) (Beta)
 F-15 Strike Eagle II (USA, Europe) (Beta) (July, 1992)
 ```
 
-### Samples
+## Samples
 
 ```text
 --no-sample, --only-sample
@@ -324,7 +359,7 @@ Mega Man III (USA) (Sample)
 Shin Nihon Pro Wrestling - Toukon Sanjuushi (Japan) (Sample)
 ```
 
-### Prototypes
+## Prototypes
 
 ```text
 --no-prototype, --only-prototype
@@ -337,7 +372,7 @@ Philip & Marlowe in Bloomland (USA) (Proto)
 Sword of Hope, The (Europe) (Proto)
 ```
 
-### Program application ROMS
+## Program application ROMS
 
 ```text
 --no-program, --only-program
@@ -354,7 +389,7 @@ AGB Aging Cartridge (World) (v1.0) (Test Program)
 AGB-Parallel Interface Cartridge (Japan) (En) (Program)
 ```
 
-### Aftermarket ROMs
+## Aftermarket ROMs
 
 ```text
 --no-aftermarket, --only-aftermarket
@@ -367,7 +402,7 @@ Bub-O Escape (World) (v2.5) (Aftermarket) (Unl)
 D-Fuzed (World) (v1.1.0) (GB Compatible) (Aftermarket) (Unl)
 ```
 
-### Homebrew
+## Homebrew
 
 ```text
 --no-homebrew, --only-homebrew
@@ -380,7 +415,7 @@ Game Boy Camera Gallery 2022, The (World) (Aftermarket) (Homebrew)
 GB-Wordyl (World) (Aftermarket) (Homebrew)
 ```
 
-### Unverified dumps
+## Unverified dumps
 
 ```text
 --no-unverified, --only-unverified
@@ -409,7 +444,7 @@ Mario & Luigi - Superstar Saga (U) [!]
 
     This is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[!]` in their names!
 
-### Bad dumps
+## Bad dumps
 
 ```text
 --no-bad, --only-bad
@@ -433,189 +468,3 @@ Micro Machines Military - It's a Blast! (E) [x]
 !!! warning
 
     This is a [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools#Good_codes) naming convention, other groups such as [No-Intro](https://no-intro.org/) never include `[b]` in their names!
-
-## Preferences for 1G1R
-
-The `--single` option is required for all the following `--prefer-*` options.
-
-Multiple `--prefer-*` options can be specified at once, and they will be applied in the following order of importance (most important to least important).
-
-!!! note
-
-    Filters are applied against all [DATs](../dats/scanning.md) _before_ [ROM matching](matching.md) happens.
-
-    If no DATs are provided, Igir will [infer DATs](../dats/dir2dat.md) from the input files, and then [infer parents](../dats/processing.md#parentclone-inference) among those games.
-
-### Prefer game names
-
-```text
---prefer-game-regex <pattern|filename>
-```
-
-Prefer games if their DAT name (or filename if not using DATs) matches a regular expression.
-
-Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
-
-```text
-Mario|Zelda
-/mario|zelda/i
-```
-
-### Prefer ROM filenames
-
-```text
---prefer-rom-regex <pattern|filename>
-```
-
-Prefer games if any of their ROM filenames matches a regular expression.
-
-Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
-
-```text
-Mario.*\\.gb$
-/mario.*\\.gb$/i
-```
-
-!!! note
-
-    This option is for preferring ROM filenames as they appear within DATs. See [`--prefer-filename-regex <pattern|filename>`](#prefer-filename) below for preferring input filenames.
-
-### Prefer verified
-
-```text
---prefer-verified
-```
-
-Prefer games that contain `[!]` in their name over those that don't.
-
-See the [unverified dumps](#unverified-dumps) section for more information about "verified" and "unverified" ROM dumps.
-
-### Prefer good
-
-```text
---prefer-good
-```
-
-Prefer games that _don't_ contain `[b]` or `[b#]` in their name over those that do.
-
-See the [bad dumps](#bad-dumps) section for more information about "good" and "bad" ROM dumps.
-
-### Prefer language
-
-```text
---prefer-language [languages..]
-```
-
-Prefer games of certain languages over those in other languages. Multiple languages can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood languages.
-
-If a game doesn't have language information specified in its name, the region's primary language will be used.
-
-For example, to prefer games in English and _then_ Japanese, the command would be:
-
-```text
---prefer-language En,Ja
-```
-
-### Prefer region
-
-```text
---prefer-region [regions..]
-```
-
-Prefer games from certain regions over those from other regions. Multiple regions can be specified, in priority order, with commas between them. See the `--help` message for the full list of understood regions.
-
-For example, to prefer games from: USA (highest priority), "world," and then Europe, the command would be:
-
-```text
---prefer-region USA,WORLD,EUR
-```
-
-### Prefer revision
-
-```text
---prefer-revision <older|newer>
-```
-
-Prefer newer or older revisions, versions, or ring codes of a game.
-
-Revisions can be numeric:
-
-```text
-Frogger (Europe) (En,Fr,De,Es,It,Nl) (GB Compatible)
-Frogger (USA) (Rev 1) (GB Compatible)
-Frogger (USA) (Rev 2) (GB Compatible)
-```
-
-or alphabetical:
-
-```text
-MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es)
-MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev A)
-MSR - Metropolis Street Racer (Europe) (En,Fr,De,Es) (Rev B)
-```
-
-Versions can be semantic:
-
-```text
-F1 World Grand Prix for Dreamcast v1.011 (1999)(Video System)(JP)(en)[!]
-F1 World Grand Prix for Dreamcast v1.000 (1999)(Video System)(PAL)(M4)[!]
-F1 World Grand Prix v1.006 (2000)(Video System)(US)(M4)[!]
-```
-
-Ring codes can be numeric:
-
-```text
-Sonic CD (USA) (RE125)
-Sonic CD (USA) (RE125) (Alt)
-```
-
-### Prefer retail
-
-```text
---prefer-retail
-```
-
-Prefer games that are considered "retail" releases over those that aren't.
-
-See the [only retail](#only-retail) section for more information on what games are considered "retail."
-
-### Prefer parent
-
-```text
---prefer-parent
-```
-
-Prefer games that DATs consider the "parent" of other game clones, over the clones themselves.
-
-It is unlikely you will often use this option, it is more likely other preference options will accomplish what you want.
-
-## Preferences for input files
-
-These options let you choose what input file will be used when multiple input files [match a ROM](matching.md).
-
-Unlike the 1G1R preference options above, these options do _not_ require the `--single` option.
-
-### Prefer file type
-
-```text
---prefer-filetype {plain,archive}
-```
-
-Prefer an input file if it's plain/un-archived, or archived.
-
-This is most useful when _not_ supplying the `extract` or `zip` commands, where input files are use exactly as-is, byte-for-byte.
-
-### Prefer filename
-
-```text
---prefer-filename-regex <pattern|filename>
-```
-
-Prefer an input file if it matches a regular expression.
-
-Regex flags can be optionally provided in the form `/<pattern>/<flags>`, for example:
-
-```text
-\\.(gcz|rvz)$
-/\\.(gcz|rvz)$/i
-```
