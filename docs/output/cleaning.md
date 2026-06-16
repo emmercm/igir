@@ -6,7 +6,7 @@ When using [DATs](../dats/scanning.md), these files will be deleted from the out
 
 - Files that do not match any ROM in any DAT.
 - Files that match a ROM in a DAT, but do not have the correct directory & filename.
-- Files that match a ROM in a DAT, but were excluded due to [filtering](../roms/filtering-preferences.md#filters) or [1G1R](../roms/filtering-preferences.md#preferences-for-1g1r) options.
+- Files that match a ROM in a DAT, but were excluded due to [filtering](../roms/filtering.md) or [1G1R](../roms/1g1r.md) options.
 
 !!! note
 
