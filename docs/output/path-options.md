@@ -22,63 +22,65 @@ The output path can make use of [tokens](tokens.md), replaceable symbols that wi
 
 This option mirrors the subdirectory structure of where ROMs were found in one of the input directories.
 
-For example, if this is the input directory structure:
+!!! example
 
-```text
-ROMs-Input/
-└── gb
-    ├── mario
-    │   ├── mario land 2.gb
-    │   └── mario land.gb
-    └── pokemon
-        ├── pokemon blue.gb
-        ├── pokemon red.gb
-        └── pokemon yellow.gb
-```
+    If this is the input directory structure:
 
-when combined with a [DAT](../dats/introduction.md), the ROMs will be written with a standardized name, but the output subdirectory structure will match the input:
-
-=== ":fontawesome-brands-windows: Windows"
-
-    ```batch
-    igir copy ^
-      --dat "No-Intro*.zip" ^
-      --input "ROMs-Input" ^
-      --output "ROMs-Output" ^
-      --dir-mirror
+    ```text
+    ROMs-Input/
+    └── gb
+        ├── mario
+        │   ├── mario land 2.gb
+        │   └── mario land.gb
+        └── pokemon
+            ├── pokemon blue.gb
+            ├── pokemon red.gb
+            └── pokemon yellow.gb
     ```
 
-=== ":fontawesome-brands-apple: macOS"
+    when combined with a [DAT](../dats/introduction.md), the ROMs will be written with a standardized name, but the output subdirectory structure will match the input:
 
-    ```shell
-    igir copy \
-      --dat "No-Intro*.zip" \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-mirror
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --dat "No-Intro*.zip" ^
+          --input "ROMs-Input" ^
+          --output "ROMs-Output" ^
+          --dir-mirror
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --dat "No-Intro*.zip" \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-mirror
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat "No-Intro*.zip" \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-mirror
+        ```
+
+    ```text
+    ROMs-Output/
+    └── gb
+        ├── mario
+        │   ├── Super Mario Land (World) (Rev 1).gb
+        │   └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
+        └── pokemon
+            ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
+            ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
+            └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
     ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --dat "No-Intro*.zip" \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-mirror
-    ```
-
-```text
-ROMs-Output/
-└── gb
-    ├── mario
-    │   ├── Super Mario Land (World) (Rev 1).gb
-    │   └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
-    └── pokemon
-        ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
-        ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
-        └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
-```
 
 !!! tip
 
@@ -92,81 +94,79 @@ ROMs-Output/
 
 This option mirrors the subdirectory structure of where DATs were found in one of the DAT directories.
 
-For example, if this is the DAT directory structure:
+!!! example
 
-```text
-DATs/
-├── No-Intro Love Pack (PC) (2025-05-09)
-│   └── No-Intro
-│      ├── Sega - Game Gear (Parent-Clone) (20241203-185356).dat
-│      ├── Sega - Master System - Mark III (Parent-Clone) (20241225-050512).dat
-│      ├── Sega - Mega Drive - Genesis (Parent-Clone) (20250210-102212).dat
-│      └── ...
-└── Redump (2025-05-09)
-    ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
-    ├── Sony - PlayStation 2 - Datfile (11623) (2025-05-09 15-01-56).dat
-    ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
-    └── ...
-```
+    If this is the DAT directory structure:
 
-ROMs that are matched to one of those DATs will use the DAT's relative dirname in the output directory.
-
-For example, given a command such as:
-
-=== ":fontawesome-brands-windows: Windows"
-
-    ```batch
-    igir copy ^
-      --dat "DATs" ^
-      --input "ROMs-Input" ^
-      --output "ROMs-Output" ^
-      --dir-dat-mirror
+    ```text
+    DATs/
+    ├── No-Intro Love Pack (PC) (2025-05-09)
+    │   └── No-Intro
+    │      ├── Sega - Game Gear (Parent-Clone) (20241203-185356).dat
+    │      ├── Sega - Master System - Mark III (Parent-Clone) (20241225-050512).dat
+    │      ├── Sega - Mega Drive - Genesis (Parent-Clone) (20250210-102212).dat
+    │      └── ...
+    └── Redump (2025-05-09)
+        ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
+        ├── Sony - PlayStation 2 - Datfile (11623) (2025-05-09 15-01-56).dat
+        ├── Sony - PlayStation - Datfile (10853) (2025-05-09 17-16-34).dat
+        └── ...
     ```
 
-=== ":fontawesome-brands-apple: macOS"
+    ROMs that are matched to one of those DATs will use the DAT's relative dirname in the output directory:
 
-    ```shell
-    igir copy \
-      --dat "DATs" \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-dat-mirror
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --dat "DATs" ^
+          --input "ROMs-Input" ^
+          --output "ROMs-Output" ^
+          --dir-dat-mirror
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --dat "DATs" \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-dat-mirror
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat "DATs" \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-dat-mirror
+        ```
+
+    ```text
+    ROMs-Output/
+    ├── No-Intro Love Pack (PC) (2025-05-09)
+    │   └── No-Intro
+    │       ├── Alex Kidd in Miracle World (USA, Europe, Brazil) (En) (Rev 1).sms
+    │       ├── Earthworm Jim 2 (USA).md
+    │       ├── Psycho Fox (USA, Europe, Brazil) (En) (Beta).sms
+    │       ├── Shinobi II - The Silent Fury (World).gg
+    │       ├── Rocket Knight Adventures (USA).md
+    │       └── Sonic Drift 2 (World).gg
+    └── Redump (2025-05-09)
+        ├── Devil May Cry (USA).iso
+        ├── Spyro - Year of the Dragon (USA)
+        │   ├── Spyro - Year of the Dragon (USA).bin
+        │   └── Spyro - Year of the Dragon (USA).cue
+        ├── Tony Hawk's Pro Skater 2 (USA)
+        │   ├── Tony Hawk's Pro Skater 2 (USA).bin
+        │   └── Tony Hawk's Pro Skater 2 (USA).cue
+        └── SSX on Tour (USA).iso
     ```
 
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --dat "DATs" \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-dat-mirror
-    ```
-
-you would get a result similar to:
-
-```text
-ROMs-Output/
-├── No-Intro Love Pack (PC) (2025-05-09)
-│   └── No-Intro
-│       ├── Alex Kidd in Miracle World (USA, Europe, Brazil) (En) (Rev 1).sms
-│       ├── Earthworm Jim 2 (USA).md
-│       ├── Psycho Fox (USA, Europe, Brazil) (En) (Beta).sms
-│       ├── Shinobi II - The Silent Fury (World).gg
-│       ├── Rocket Knight Adventures (USA).md
-│       └── Sonic Drift 2 (World).gg
-└── Redump (2025-05-09)
-    ├── Devil May Cry (USA).iso
-    ├── Spyro - Year of the Dragon (USA)
-    │   ├── Spyro - Year of the Dragon (USA).bin
-    │   └── Spyro - Year of the Dragon (USA).cue
-    ├── Tony Hawk's Pro Skater 2 (USA)
-    │   ├── Tony Hawk's Pro Skater 2 (USA).bin
-    │   └── Tony Hawk's Pro Skater 2 (USA).cue
-    └── SSX on Tour (USA).iso
-```
-
-!!! tip
+!!! warning
 
     You probably want to combine this option with the [`--dir-dat-name`](#append-dat-name) or [`--dir-dat-description`](#append-dat-description) options to avoid mixing ROMs from different consoles into the same subdirectory.
 
@@ -178,68 +178,70 @@ ROMs-Output/
 
 This option appends the matching [DAT](../dats/introduction.md)'s name (not its filename) to each file, causing ROMs to be grouped by their console.
 
-For example, here are some ROMs from multiple consoles combined in one input directory:
+!!! example
 
-```text
-ROMs-Input/
-├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
-├── Pokemon - Crystal Version (USA, Europe) (Rev 1).gbc
-├── Pokemon - Emerald Version (USA, Europe).gba
-├── Pokemon - Gold Version (USA, Europe) (SGB Enhanced) (GB Compatible).gbc
-├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
-├── Pokemon - Ruby Version (USA, Europe) (Rev 2).gba
-├── Pokemon - Sapphire Version (USA, Europe) (Rev 2).gba
-├── Pokemon - Silver Version (USA, Europe) (SGB Enhanced) (GB Compatible).gbc
-└── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
-```
+    Here are some ROMs from multiple consoles combined in one input directory:
 
-The ROMs will be grouped by their DAT name in the output directory:
-
-=== ":fontawesome-brands-windows: Windows"
-
-    ```batch
-    igir copy ^
-      --dat "No-Intro*.zip" ^
-      --input "ROMs-Input" ^
-      --output "ROMs-Output" ^
-      --dir-dat-name
-    ```
-
-=== ":fontawesome-brands-apple: macOS"
-
-    ```shell
-    igir copy \
-      --dat "No-Intro*.zip" \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-dat-name
-    ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --dat "No-Intro*.zip" \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-dat-name
-    ```
-
-```text
-ROMs-Output/
-├── Game Boy
-│   ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
-│   ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
-│   └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
-├── Game Boy Advance
-│   ├── Pokemon - Emerald Version (USA, Europe).gba
-│   ├── Pokemon - Ruby Version (USA, Europe) (Rev 2).gba
-│   └── Pokemon - Sapphire Version (USA, Europe) (Rev 2).gba
-└── Game Boy Color
+    ```text
+    ROMs-Input/
+    ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
     ├── Pokemon - Crystal Version (USA, Europe) (Rev 1).gbc
+    ├── Pokemon - Emerald Version (USA, Europe).gba
     ├── Pokemon - Gold Version (USA, Europe) (SGB Enhanced) (GB Compatible).gbc
-    └── Pokemon - Silver Version (USA, Europe) (SGB Enhanced) (GB Compatible).gbc
-```
+    ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
+    ├── Pokemon - Ruby Version (USA, Europe) (Rev 2).gba
+    ├── Pokemon - Sapphire Version (USA, Europe) (Rev 2).gba
+    ├── Pokemon - Silver Version (USA, Europe) (SGB Enhanced) (GB Compatible).gbc
+    └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
+    ```
+
+    The input ROMs will be grouped by their DAT name when written to the output directory:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --dat "No-Intro*.zip" ^
+          --input "ROMs-Input" ^
+          --output "ROMs-Output" ^
+          --dir-dat-name
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --dat "No-Intro*.zip" \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-dat-name
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat "No-Intro*.zip" \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-dat-name
+        ```
+
+    ```text
+    ROMs-Output/
+    ├── Game Boy
+    │   ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
+    │   ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
+    │   └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
+    ├── Game Boy Advance
+    │   ├── Pokemon - Emerald Version (USA, Europe).gba
+    │   ├── Pokemon - Ruby Version (USA, Europe) (Rev 2).gba
+    │   └── Pokemon - Sapphire Version (USA, Europe) (Rev 2).gba
+    └── Game Boy Color
+        ├── Pokemon - Crystal Version (USA, Europe) (Rev 1).gbc
+        ├── Pokemon - Gold Version (USA, Europe) (SGB Enhanced) (GB Compatible).gbc
+        └── Pokemon - Silver Version (USA, Europe) (SGB Enhanced) (GB Compatible).gbc
+    ```
 
 !!! tip
 
@@ -297,61 +299,63 @@ This option appends one or more letters as a subdirectory. This option is furthe
 
 For devices such as flash carts that are slow to scroll, it can be helpful to limit the number of files in one subdirectory. One way to do that is to group games by their first letter.
 
-For example, here are some ROMs that have don't all share the same first letter:
+!!! example
 
-```text
-ROMs-Input/
-├── Kirby's Dream Land (USA, Europe).gb
-├── Kirby's Dream Land 2 (USA, Europe) (SGB Enhanced).gb
-├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
-├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
-├── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
-├── Super Mario Land (World) (Rev 1).gb
-└── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
-```
+    Here are some ROMs that have don't all share the same first letter:
 
-The ROMs will be grouped together by their first letter in the output directory:
-
-=== ":fontawesome-brands-windows: Windows"
-
-    ```batch
-    igir copy ^
-      --input "ROMs-Input" ^
-      --output "ROMs-Output" ^
-      --dir-letter
-    ```
-
-=== ":fontawesome-brands-apple: macOS"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter
-    ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter
-    ```
-
-```text
-ROMs-Output/
-├── K
-│   ├── Kirby's Dream Land (USA, Europe).gb
-│   └── Kirby's Dream Land 2 (USA, Europe) (SGB Enhanced).gb
-├── P
-│   ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
-│   ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
-│   └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
-└── S
+    ```text
+    ROMs-Input/
+    ├── Kirby's Dream Land (USA, Europe).gb
+    ├── Kirby's Dream Land 2 (USA, Europe) (SGB Enhanced).gb
+    ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
+    ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
+    ├── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
     ├── Super Mario Land (World) (Rev 1).gb
     └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
-```
+    ```
+
+    The ROMs will be grouped together by their first letter in the output directory:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --input "ROMs-Input" ^
+          --output "ROMs-Output" ^
+          --dir-letter
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter
+        ```
+
+    ```text
+    ROMs-Output/
+    ├── K
+    │   ├── Kirby's Dream Land (USA, Europe).gb
+    │   └── Kirby's Dream Land 2 (USA, Europe) (SGB Enhanced).gb
+    ├── P
+    │   ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
+    │   ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
+    │   └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
+    └── S
+        ├── Super Mario Land (World) (Rev 1).gb
+        └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
+    ```
 
 !!! tip
 
@@ -365,51 +369,53 @@ ROMs-Output/
 
 This option controls the number of leading letters to use for the `--dir-letter` option, with a default of one letter.
 
-For example, if we increase the number of letters used for subdirectory names from the above example, then the output would be:
+!!! example
 
-=== ":fontawesome-brands-windows: Windows"
+    Increasing the number of letters used for subdirectory names from the above example would produce the output:
 
-    ```batch
-    igir copy ^
-      --input "ROMs-Input" ^
-      --output "ROMs-Output" ^
-      --dir-letter ^
-      --dir-letter-count 3
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --input "ROMs-Input" ^
+          --output "ROMs-Output" ^
+          --dir-letter ^
+          --dir-letter-count 3
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter \
+          --dir-letter-count 3
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter \
+          --dir-letter-count 3
+        ```
+
+    ```text
+    ROMs-Output/
+    ├── KIR
+    │   ├── Kirby's Dream Land (USA, Europe)
+    │   └── Kirby's Dream Land 2 (USA, Europe) (SGB Enhanced)
+    ├── POK
+    │   ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
+    │   ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
+    │   └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
+    └── SUP
+        ├── Super Mario Land (World) (Rev 1).gb
+        └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
     ```
-
-=== ":fontawesome-brands-apple: macOS"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter \
-      --dir-letter-count 3
-    ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter \
-      --dir-letter-count 3
-    ```
-
-```text
-ROMs-Output/
-├── KIR
-│   ├── Kirby's Dream Land (USA, Europe)
-│   └── Kirby's Dream Land 2 (USA, Europe) (SGB Enhanced)
-├── POK
-│   ├── Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb
-│   ├── Pokemon - Red Version (USA, Europe) (SGB Enhanced).gb
-│   └── Pokemon - Yellow Version - Special Pikachu Edition (USA, Europe) (CGB+SGB Enhanced).gb
-└── SUP
-    ├── Super Mario Land (World) (Rev 1).gb
-    └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
-```
 
 !!! tip
 
@@ -425,63 +431,65 @@ This option limits the number of games that can exist in a letter subdirectory, 
 
 This helps when navigating on devices that are slow to scroll, such as flash carts. Additionally, some devices may have a limit on the number of files they will display in a folder, so you may be required to split them.
 
-For example, here are some ROMs that all start with the same first letter:
+!!! example
 
-```text
-ROMs-Input/
-├── Shaq Fu (USA) (SGB Enhanced).gb
-├── Space Invaders (USA) (SGB Enhanced).gb
-├── Star Wars (USA, Europe) (Rev 1).gb
-├── Star Wars - The Empire Strikes Back (USA, Europe).gb
-├── Street Fighter II (USA, Europe) (Rev 1) (SGB Enhanced).gb
-├── Super Mario Land (World) (Rev 1).gb
-└── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
-```
+    Here are some ROMs that all start with the same first letter:
 
-If we limit the number of files per letter folder, then the output would be:
-
-=== ":fontawesome-brands-windows: Windows"
-
-    ```batch
-    igir copy ^
-      --input "ROMs-Input" ^
-      --output "ROMs-Output" ^
-      --dir-letter ^
-      --dir-letter-limit 5
-    ```
-
-=== ":fontawesome-brands-apple: macOS"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter \
-      --dir-letter-limit 5
-    ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter \
-      --dir-letter-limit 5
-    ```
-
-```text
-ROMs-Output/
-├── S1
-│   ├── Shaq Fu (USA) (SGB Enhanced).gb
-│   ├── Space Invaders (USA) (SGB Enhanced).gb
-│   ├── Star Wars (USA, Europe) (Rev 1).gb
-│   ├── Star Wars - The Empire Strikes Back (USA, Europe).gb
-│   └── Street Fighter II (USA, Europe) (Rev 1) (SGB Enhanced).gb
-└── S2
+    ```text
+    ROMs-Input/
+    ├── Shaq Fu (USA) (SGB Enhanced).gb
+    ├── Space Invaders (USA) (SGB Enhanced).gb
+    ├── Star Wars (USA, Europe) (Rev 1).gb
+    ├── Star Wars - The Empire Strikes Back (USA, Europe).gb
+    ├── Street Fighter II (USA, Europe) (Rev 1) (SGB Enhanced).gb
     ├── Super Mario Land (World) (Rev 1).gb
     └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
-```
+    ```
+
+    If we limit the number of files per letter folder, then the output would be:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --input "ROMs-Input" ^
+          --output "ROMs-Output" ^
+          --dir-letter ^
+          --dir-letter-limit 5
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter \
+          --dir-letter-limit 5
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter \
+          --dir-letter-limit 5
+        ```
+
+    ```text
+    ROMs-Output/
+    ├── S1
+    │   ├── Shaq Fu (USA) (SGB Enhanced).gb
+    │   ├── Space Invaders (USA) (SGB Enhanced).gb
+    │   ├── Star Wars (USA, Europe) (Rev 1).gb
+    │   ├── Star Wars - The Empire Strikes Back (USA, Europe).gb
+    │   └── Street Fighter II (USA, Europe) (Rev 1) (SGB Enhanced).gb
+    └── S2
+        ├── Super Mario Land (World) (Rev 1).gb
+        └── Super Mario Land 2 - 6 Golden Coins (USA, Europe) (Rev 2).gb
+    ```
 
 ### Group multiple letters together
 
@@ -491,88 +499,84 @@ ROMs-Output/
 
 This option will combine multiple letter subdirectories, creating letter ranges. This requires the `--dir-letter-limit <limit>` option, as that will help determine what the letter ranges should be.
 
-For example, here are some ROMs that all start with different letters:
+!!! example
 
-```text
-ROMs-Input/
-├── Alleyway (World).gb
-├── Battletoads (USA, Europe).gb
-├── Centipede (USA) (Majesco).gb
-├── Donkey Kong (World) (Rev 1) (SGB Enhanced).gb
-├── Earthworm Jim (USA).gb
-├── Final Fantasy Adventure (USA).gb
-├── Game Boy Wars Turbo (Japan) (SGB Enhanced).gb
-├── Harvest Moon GB (USA) (SGB Enhanced).gb
-├── James Bond 007 (USA, Europe) (SGB Enhanced).gb
-├── Kirby's Dream Land (USA, Europe).gb
-├── Legend of Zelda, The - Link's Awakening (USA, Europe) (Rev 2).gb
-├── Mario's Picross (USA, Europe) (SGB Enhanced).gb
-└── Pocket Bomberman (Europe) (SGB Enhanced).gb
-```
+    Here are some ROMs that all start with different letters:
 
-We can group the games into letter ranges, with a max of 10 games in each subdirectory like this:
-
-=== ":fontawesome-brands-windows: Windows"
-
-    ```batch
-    igir copy ^
-      --input "ROMs-Input" ^
-      --output "ROMs-Output" ^
-      --dir-letter ^
-      --dir-letter-limit 10 ^
-      --dir-letter-group
-    ```
-
-=== ":fontawesome-brands-apple: macOS"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter \
-      --dir-letter-limit 10 \
-      --dir-letter-group
-    ```
-
-=== ":simple-linux: Linux"
-
-    ```shell
-    igir copy \
-      --input "ROMs-Input" \
-      --output "ROMs-Output" \
-      --dir-letter \
-      --dir-letter-limit 10 \
-      --dir-letter-group
-    ```
-
-```text
-ROMs-Output/
-├── A-K
-│   ├── Alleyway (World).gb
-│   ├── Battletoads (USA, Europe).gb
-│   ├── Centipede (USA) (Majesco).gb
-│   ├── Donkey Kong (World) (Rev 1) (SGB Enhanced).gb
-│   ├── Earthworm Jim (USA).gb
-│   ├── Final Fantasy Adventure (USA).gb
-│   ├── Game Boy Wars Turbo (Japan) (SGB Enhanced).gb
-│   ├── Harvest Moon GB (USA) (SGB Enhanced).gb
-│   ├── James Bond 007 (USA, Europe) (SGB Enhanced).gb
-│   ├── Kirby's Dream Land (USA, Europe).gb
-└── L-P
+    ```text
+    ROMs-Input/
+    ├── Alleyway (World).gb
+    ├── Battletoads (USA, Europe).gb
+    ├── Centipede (USA) (Majesco).gb
+    ├── Donkey Kong (World) (Rev 1) (SGB Enhanced).gb
+    ├── Earthworm Jim (USA).gb
+    ├── Final Fantasy Adventure (USA).gb
+    ├── Game Boy Wars Turbo (Japan) (SGB Enhanced).gb
+    ├── Harvest Moon GB (USA) (SGB Enhanced).gb
+    ├── James Bond 007 (USA, Europe) (SGB Enhanced).gb
+    ├── Kirby's Dream Land (USA, Europe).gb
     ├── Legend of Zelda, The - Link's Awakening (USA, Europe) (Rev 2).gb
     ├── Mario's Picross (USA, Europe) (SGB Enhanced).gb
     └── Pocket Bomberman (Europe) (SGB Enhanced).gb
-```
+    ```
 
-You can also combine this option with `--dir-letter-count <count>` for ranges with more letters.
+    We can group the games into letter ranges, with a max of 10 games in each subdirectory like this:
 
-!!! tip
+    === ":fontawesome-brands-windows: Windows"
 
-    This option is helpful with smaller ROM collections because `--dir-letter` may leave some letter subdirectories with few ROMs in them.
+        ```batch
+        igir copy ^
+          --input "ROMs-Input" ^
+          --output "ROMs-Output" ^
+          --dir-letter ^
+          --dir-letter-limit 10 ^
+          --dir-letter-group
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter \
+          --dir-letter-limit 10 \
+          --dir-letter-group
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --input "ROMs-Input" \
+          --output "ROMs-Output" \
+          --dir-letter \
+          --dir-letter-limit 10 \
+          --dir-letter-group
+        ```
+
+    ```text
+    ROMs-Output/
+    ├── A-K
+    │   ├── Alleyway (World).gb
+    │   ├── Battletoads (USA, Europe).gb
+    │   ├── Centipede (USA) (Majesco).gb
+    │   ├── Donkey Kong (World) (Rev 1) (SGB Enhanced).gb
+    │   ├── Earthworm Jim (USA).gb
+    │   ├── Final Fantasy Adventure (USA).gb
+    │   ├── Game Boy Wars Turbo (Japan) (SGB Enhanced).gb
+    │   ├── Harvest Moon GB (USA) (SGB Enhanced).gb
+    │   ├── James Bond 007 (USA, Europe) (SGB Enhanced).gb
+    │   ├── Kirby's Dream Land (USA, Europe).gb
+    └── L-P
+        ├── Legend of Zelda, The - Link's Awakening (USA, Europe) (Rev 2).gb
+        ├── Mario's Picross (USA, Europe) (SGB Enhanced).gb
+        └── Pocket Bomberman (Europe) (SGB Enhanced).gb
+    ```
 
 !!! note
 
-    This is how the [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) organizes most of their SMDBs, grouping ROMs into subdirectories of ~200 ROMs each.
+    You can also combine this option with `--dir-letter-count <count>` for ranges with more letters. This is how the [Hardware Target Game Database](https://github.com/frederic-mahe/Hardware-Target-Game-Database) organizes most of their SMDBs, grouping ROMs into subdirectories of ~200 ROMs each.
 
     You can achieve a result similar to the Hardware Target Game Database DATs with the following options:
 
@@ -608,6 +612,14 @@ You can also combine this option with `--dir-letter-count <count>` for ranges wi
           --dir-letter-group \
           --dir-letter-limit 200
         ```
+
+!!! note
+
+    Letter ranges never overlap: all games that share a leading letter are kept together in a single range subdirectory, so adjacent ranges never share a boundary letter (you will see `A-B`, `C-D`, `E-F` rather than `A-C`, `C-E`). If a single letter has more games than the limit allows, that letter is instead split into numbered subdirectories (for example `A1`, `A2`).
+
+!!! tip
+
+    This option is helpful with smaller ROM collections because `--dir-letter` may leave some letter subdirectories with few ROMs in them.
 
 ## Append the game name
 
