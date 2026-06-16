@@ -6,6 +6,7 @@ import module from 'node:module';
 import path from 'node:path';
 
 import fg from 'fast-glob';
+import { Data, NtExecutable, NtExecutableResource, Resource } from 'resedit';
 import yargs from 'yargs';
 
 import Timer from '../src/async/timer.js';
@@ -42,6 +43,7 @@ if (await FsUtil.exists(output)) {
 }
 
 logger.info("Bundling with 'bun build --compile' ...");
+const windowsIcon = path.join(import.meta.dirname, '..', 'static', 'windows.ico');
 const bunBuildConfig = {
   entrypoints: [
     'index.ts',
@@ -62,11 +64,12 @@ const bunBuildConfig = {
     autoloadDotenv: false,
     autoloadBunfig: false,
     windows: {
-      icon: path.join(import.meta.dirname, '..', 'static', 'windows.ico'),
+      icon: windowsIcon,
       title: Package.NAME,
       publisher: Package.AUTHOR,
       version: Package.VERSION,
-      description: Package.HOMEPAGE,
+      description: Package.DESCRIPTION.replaceAll(/[^\x00-\x7F]/g, '').trim(),
+      copyright: Package.HOMEPAGE,
     },
   },
   // TODO(cemmer): minification seems to break at least Windows, causing chdman to fail `await import` with:
@@ -194,6 +197,25 @@ if (!result.success) {
 
 if (!(await FsUtil.exists(output))) {
   throw new IgirException(`output file '${output}' doesn't exist`);
+}
+
+// TODO(cemmer): Bun only embeds one icon resolution in the exe: https://github.com/oven-sh/bun/issues/32428
+if (argv.platform === 'win32') {
+  logger.info('Updating the exe icon ...');
+  const exe = NtExecutable.from(await fs.promises.readFile(output));
+  const resource = NtExecutableResource.from(exe);
+  const iconFile = Data.IconFile.from(await fs.promises.readFile(windowsIcon));
+  const icons = iconFile.icons.map((icon) => icon.data);
+  for (const iconGroup of Resource.IconGroupEntry.fromEntries(resource.entries)) {
+    Resource.IconGroupEntry.replaceIconsForResource(
+      resource.entries,
+      iconGroup.id,
+      iconGroup.lang,
+      icons,
+    );
+  }
+  resource.outputResource(exe);
+  await fs.promises.writeFile(output, Buffer.from(exe.generate()));
 }
 
 if (argv.platform === 'darwin') {
