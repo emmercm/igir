@@ -71,7 +71,7 @@ Super Smash Bros. Melee (USA) (En,Ja) (Rev 2)
 
 !!! note
 
-    If a DAT has any parent/clone information then Igir will use that and skip inference. If you want to ignore this information and use Igir's inference instead, you can provide the `--dat-ignore-parent-clone` option.[Nintendo - Nintendo 64 (BigEndian) (Parent-Clone) (20260609-194259).dat](../../../../../Downloads/Nintendo%20-%20Nintendo%2064%20%28BigEndian%29%20%28Parent-Clone%29%20%2820260609-194259%29.dat)
+    If a DAT has any parent/clone information then Igir will use that and skip inference. If you want to ignore this information and use Igir's inference instead, you can provide the `--dat-ignore-parent-clone` option.
 
 !!! note
 
