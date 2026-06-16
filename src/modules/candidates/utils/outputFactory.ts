@@ -603,7 +603,9 @@ export default class OutputFactory {
         // Output file is not an archive
         !FileFactory.isExtensionArchive(ext) &&
         !(inputFile instanceof ArchiveFile)) ||
-      options.getDirGameSubdir() === GameSubdirMode.ALWAYS
+      options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
+      // Discs merged together are always grouped into a subdirectory named after the game
+      game.getDiscMerged()
     ) {
       output = path.join(game.getName(), output);
     }
@@ -651,14 +653,12 @@ export default class OutputFactory {
           oldExtMatch[1];
 
     // The Game is the result of 2+ discs merged together, and we're not extracting this file, so
-    // we want to group discs together and generate a basename based on the original game name.
+    // we generate a basename based on the original disc name (with multi-track suffixes
+    // collapsed). The game-name subdirectory is applied uniformly in getName().
     if (game.getDiscMerged()) {
-      return path.join(
-        game.getName(),
-        GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
-          /(\.[a-zA-Z0-9]+)+$/,
-          oldExt,
-        ),
+      return GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
+        /(\.[a-zA-Z0-9]+)+$/,
+        oldExt,
       );
     }
 
