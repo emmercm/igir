@@ -63,6 +63,13 @@ export default class SoftwareListsDAT extends DAT implements SoftwareListsDATPro
     return this.getSoftwareLists().flatMap((softwareList) => softwareList.getGames());
   }
 
+  /**
+   * @inheritdoc
+   */
+  isMame(): boolean {
+    return true;
+  }
+
   withGames(games: Game[]): DAT {
     // This DAT is a list of DATs, so we need to type change here
     return new SoftwareListDAT({ ...this, software: games });

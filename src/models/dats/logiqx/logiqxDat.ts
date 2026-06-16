@@ -9,6 +9,7 @@ import Header from './header.js';
 export interface LogiqxDATProps extends DATProps {
   header?: Header;
   games?: Game | Game[];
+  machine?: Game | Game[];
 }
 
 /**
@@ -35,6 +36,7 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
     super(props);
     this.header = props?.header;
     this.game = props?.games;
+    this.machine = props?.machine;
     this.generateGameNamesToParents();
   }
 
@@ -77,7 +79,21 @@ export default class LogiqxDAT extends DAT implements LogiqxDATProps {
     return [];
   }
 
+  /**
+   * @inheritdoc
+   */
+  isMame(): boolean {
+    // The MAME-derived `<machine>` element is used rather than the standard Logiqx `<game>`
+    if (Array.isArray(this.machine)) {
+      return this.machine.length > 0;
+    }
+    return this.machine !== undefined;
+  }
+
   withGames(games: Game[]): DAT {
-    return new LogiqxDAT({ ...this, games, machine: [] });
+    // Preserve which element the games came from so {@link isMame} stays accurate
+    return this.isMame()
+      ? new LogiqxDAT({ ...this, games: undefined, machine: games })
+      : new LogiqxDAT({ ...this, games, machine: undefined });
   }
 }

@@ -1,12 +1,9 @@
-import type { CHDInfo } from 'chdman';
-import { CHDType } from 'chdman';
 import { isNotJunk } from 'junk';
 
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import FileFactory from '../factories/fileFactory.js';
 import ArchiveEntry from '../models/files/archives/archiveEntry.js';
-import Chd from '../models/files/archives/chd/chd.js';
 import Gzip from '../models/files/archives/gzip.js';
 import Tar from '../models/files/archives/tar.js';
 import type File from '../models/files/file.js';
@@ -114,7 +111,7 @@ export default abstract class Scanner extends Module {
           });
         }
 
-        await this.logWarnings(files);
+        this.logWarnings(files);
         this.progressBar.incrementCompleted();
         return files;
       })
@@ -200,7 +197,7 @@ export default abstract class Scanner extends Module {
     }
   }
 
-  private async logWarnings(files: File[]): Promise<void> {
+  private logWarnings(files: File[]): void {
     if (this.options.getInputChecksumQuick()) {
       const archiveWithoutChecksums = files
         .filter((file) => file instanceof ArchiveEntry)
@@ -211,29 +208,6 @@ export default abstract class Scanner extends Module {
           `${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`,
         );
         return;
-      }
-
-      const chdInfos = await Promise.all(
-        files
-          .filter((file) => file instanceof ArchiveEntry)
-          .map((archiveEntry) => archiveEntry.getArchive())
-          .filter((archive) => archive instanceof Chd)
-          .map(async (chd) => [chd, await chd.getInfo()] satisfies [Chd, CHDInfo]),
-      );
-
-      const cdRom = chdInfos.find(([, info]) => info.type === CHDType.CD_ROM);
-      if (cdRom !== undefined) {
-        this.progressBar.logWarn(
-          `${cdRom[0].getFilePath()}: quick checksums will skip .cue/.bin files in CD-ROM CHDs`,
-        );
-        return;
-      }
-
-      const gdRom = chdInfos.find(([, info]) => info.type === CHDType.GD_ROM);
-      if (gdRom !== undefined) {
-        this.progressBar.logWarn(
-          `${gdRom[0].getFilePath()}: quick checksums will skip .gdi/.bin/.raw files in GD-ROM CHDs`,
-        );
       }
     }
   }

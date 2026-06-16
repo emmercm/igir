@@ -61,6 +61,13 @@ export default class SoftwareListDAT extends DAT implements SoftwareListDATProps
     return [this.software];
   }
 
+  /**
+   * @inheritdoc
+   */
+  isMame(): boolean {
+    return true;
+  }
+
   withGames(games: Game[]): DAT {
     return new SoftwareListDAT({ ...this, software: games });
   }

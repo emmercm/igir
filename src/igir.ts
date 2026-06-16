@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import async from 'async';
 import chalk from 'chalk';
+import { CHDType } from 'chdman';
 import isAdmin from 'is-admin';
 
 import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
@@ -20,6 +21,8 @@ import Package from './globals/package.js';
 import Temp from './globals/temp.js';
 import type DAT from './models/dats/dat.js';
 import type DATStatus from './models/datStatus.js';
+import ArchiveEntry from './models/files/archives/archiveEntry.js';
+import Chd from './models/files/archives/chd/chd.js';
 import File from './models/files/file.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from './models/files/fileChecksums.js';
 import type IndexedFiles from './models/indexedFiles.js';
@@ -137,6 +140,7 @@ export default class Igir {
     // Scan and process input files
     let dats = await this.processDATScanner(fileFactory, readerSemaphore);
     const indexedRoms = await this.processROMScanner(
+      dats,
       fileFactory,
       readerSemaphore,
       this.determineScanningBitmask(dats),
@@ -510,17 +514,25 @@ export default class Igir {
         game.getRoms().some((rom) => {
           const isArchive = FileFactory.isExtensionArchive(rom.getName());
           if (isArchive) {
+            if (dats.every((dat) => dat.isMame())) {
+              this.logger.trace(
+                `${dat.getName()}: contains archives, but every DAT is a MAME DAT, skipping enabling checksum calculation of raw archive contents`,
+              );
+              return false;
+            }
             this.logger.trace(
               `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
             );
+            return true;
           }
-          return isArchive;
+          return false;
         }),
       ),
     );
   }
 
   private async processROMScanner(
+    dats: DAT[],
     fileFactory: FileFactory,
     readerSemaphore: MappableSemaphore,
     checksumBitmask: number,
@@ -537,6 +549,28 @@ export default class Igir {
       readerSemaphore,
     ).scan(checksumBitmask, checksumArchives);
     const romScannerProgressBarName = romProgressBar.getName();
+
+    if (dats.some((dat) => !dat.isMame())) {
+      const chds = rawRomFiles
+        .filter((file) => file instanceof ArchiveEntry)
+        .map((file) => file.getArchive())
+        .filter((file) => file instanceof Chd);
+      const chdToType = await Promise.all(
+        chds.map(async (chd): Promise<[Chd, CHDType]> => [chd, (await chd.getInfo()).type]),
+      );
+      const cdRom = chdToType.find(([, type]) => type === CHDType.CD_ROM);
+      if (cdRom !== undefined) {
+        romProgressBar.logWarn(
+          `${cdRom[0].getFilePath()}: quick checksumming will not process .cue/.bin files in CD-ROM CHDs!`,
+        );
+      }
+      const gdRom = chdToType.find(([, type]) => type === CHDType.GD_ROM);
+      if (gdRom !== undefined) {
+        romProgressBar.logWarn(
+          `${gdRom[0].getFilePath()}: quick checksumming will not process .gdi/.bin/.raw files in GD-ROM CHDs!`,
+        );
+      }
+    }
 
     romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(
