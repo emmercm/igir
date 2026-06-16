@@ -8,6 +8,44 @@ By default, Igir will use CRC32 + filesize to match input files to ROMs found in
 
     The main drawback of CRC32 checksums are their small keyspace of 4.29 billion unique values (below). This might seem like a lot, but it's sufficiently small enough that it is very possible for two different files to have the same CRC32. Chances of these "collisions" can be reduced by also comparing the filesize of the two different files, which Igir does.
 
+## Preferences for input files
+
+These options let you choose what input file will be used when multiple input files [match a ROM](matching.md).
+
+Unlike other [1G1R preference](1g1r.md) options that use the `--prefer-*` option prefix, these options do _not_ require the `--single` option.
+
+### Prefer file type
+
+```text
+--prefer-filetype {plain,archive}
+```
+
+Prefer an input file if it's plain/un-archived, or archived.
+
+This is most useful when _not_ supplying the `extract` or `zip` commands, where input files are use exactly as-is, byte-for-byte.
+
+### Prefer filename
+
+```text
+--prefer-filename-regex <pattern|filename>
+```
+
+Prefer an input file if it matches a regular expression.
+
+Regex [flags](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags) can be optionally provided in the form `/<pattern>/<flags>`.
+
+!!! example
+
+    Prefer input files with a `.gcz` or `.rvz` extension:
+
+    ```text
+    --prefer-filename-regex "\\.(gcz|rvz)$"
+    ```
+
+    ```text
+    --prefer-filename-regex "/\\.(gcz|rvz)$/i"
+    ```
+
 ## Automatically using other checksum algorithms
 
 Some DAT release groups do not include every checksum type for every file. For example, CHDs in MAME DATs only include SHA1 checksums and nothing else, not even filesize information.
