@@ -115,7 +115,8 @@ nav:
       - roms/scanning.md
       - roms/matching.md
       - roms/sets.md
-      - roms/filtering-preferences.md
+      - roms/filtering.md
+      - roms/1g1r.md
       - roms/headers.md
       - roms/trim-detection.md
       - roms/patching.md
@@ -161,6 +162,7 @@ plugins:
   - social
   - git-revision-date-localized:
       enable_creation_date: true
+      ignored_commits_file: .git-blame-ignore-revs
   - git-committers:
       enabled: !ENV [CI, false]
       repository: emmercm/igir
@@ -181,9 +183,10 @@ plugins:
         'overview.md': 'introduction.md'
         'reporting.md': 'output/reporting.md'
         'rom-dumping.md': 'misc/rom-dumping.md'
-        'rom-filtering.md': 'roms/filtering-preferences.md'
+        'rom-filtering.md': 'roms/filtering.md'
         'rom-headers.md': 'roms/headers.md'
         'rom-patching.md': 'roms/patching.md'
+        'roms/filtering-preferences.md': 'roms/filtering.md'
         'roms/trimming.md': 'roms/trim-detection.md'
         'usage/collection-sorting.md': 'usage/basic.md'
         'usage/handheld/jelos.md': 'usage/handheld/rocknix.md'

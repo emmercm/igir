@@ -196,7 +196,7 @@ I have this script `igir_pocket_sync.sh` at the root of my Analogue Pocket's SD 
       -v
     ```
 
-That lets me create an EN+USA preferred 1G1R set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core.
+That lets me create an EN+USA preferred [1G1R](../roms/1g1r.md) set for my Pocket on the fly, making sure I don't delete BIOS files needed for each core.
 
 ## Nintendo 64
 
