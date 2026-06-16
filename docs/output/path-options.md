@@ -690,3 +690,7 @@ You can change this behavior with the `--dir-game-subdir <mode>` option:
 | `--dir-game-subdir never`              | Games with multiple ROMs are never grouped into their own subdirectory, which may cause conflicting output files |
 | `--dir-game-subdir multiple` (default) | Games with multiple ROMs are grouped into their own subdirectory, games with a single ROM are not                |
 | `--dir-game-subdir always`             | Every game is grouped into its own subdirectory, no matter the number of ROMs it has                             |
+
+!!! note
+
+    When [`--merge-discs`](../roms/sets.md#merging-multi-disc-games) groups a multi-disc game together, every disc is placed in a single subdirectory named after the game regardless of the `--dir-game-subdir <mode>` mode. This prevents conflicting output files between discs.

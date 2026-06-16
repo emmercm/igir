@@ -7,6 +7,8 @@ import Header from '../../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../../src/models/dats/logiqx/logiqxDat.js';
 import Release from '../../../../src/models/dats/release.js';
 import ROM from '../../../../src/models/dats/rom.js';
+import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
+import ChdBinCue from '../../../../src/models/files/archives/chd/chdBinCue.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../../src/models/options.js';
 import SingleValueGame from '../../../../src/models/singleValueGame.js';
 import outputTokensData from '../../../../src/modules/candidates/utils/consoleTokens.json' with { type: 'json' };
@@ -1197,6 +1199,81 @@ describe('should respect "--dir-game-subdir"', () => {
       await dummyRom.toFile(),
     );
     expect(outputPath.format()).toEqual(path.resolve(os.devNull, 'game', 'Dummy.rom'));
+  });
+});
+
+describe('should respect "--merge-discs"', () => {
+  const discMergedGame = new SingleValueGame({
+    name: 'Metal Gear Solid (USA)',
+    roms: [
+      new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).chd', size: 0, crc32: '' }),
+      new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).chd', size: 0, crc32: '' }),
+    ],
+    discMerged: true,
+  });
+
+  test.each(
+    [
+      GameSubdirModeInverted[GameSubdirMode.NEVER].toLowerCase(),
+      GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+      GameSubdirModeInverted[GameSubdirMode.ALWAYS].toLowerCase(),
+    ].map((mode) => [mode]),
+  )('raw-copies merged discs to a single subdirectory: "%s"', async (dirGameSubdir) => {
+    const options = new Options({
+      commands: ['copy'],
+      output: os.devNull,
+      dirGameSubdir,
+    });
+
+    for (const rom of discMergedGame.getRoms()) {
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        discMergedGame,
+        rom,
+        await ArchiveEntry.entryOf({
+          archive: new ChdBinCue(rom.getName()),
+          entryPath: rom.getName(),
+          size: 0,
+          crc32: '',
+        }),
+      );
+      expect(outputPath.format()).toEqual(
+        path.resolve(os.devNull, 'Metal Gear Solid (USA)', rom.getName()),
+      );
+    }
+  });
+
+  test.each(
+    [
+      GameSubdirModeInverted[GameSubdirMode.NEVER].toLowerCase(),
+      GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+      GameSubdirModeInverted[GameSubdirMode.ALWAYS].toLowerCase(),
+    ].map((mode) => [mode]),
+  )('extracts merged discs into a single subdirectory: "%s"', async (dirGameSubdir) => {
+    const options = new Options({
+      commands: ['copy', 'extract'],
+      output: os.devNull,
+      dirGameSubdir,
+    });
+
+    for (const rom of discMergedGame.getRoms()) {
+      const outputPath = OutputFactory.getPath(
+        options,
+        dummyDat,
+        discMergedGame,
+        rom,
+        await ArchiveEntry.entryOf({
+          archive: new ChdBinCue(rom.getName()),
+          entryPath: rom.getName(),
+          size: 0,
+          crc32: '',
+        }),
+      );
+      expect(outputPath.format()).toEqual(
+        path.resolve(os.devNull, 'Metal Gear Solid (USA)', rom.getName()),
+      );
+    }
   });
 });
 
