@@ -10,6 +10,7 @@ import type FileFactory from '../../factories/fileFactory.js';
 import { CacheMode } from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../models/files/archives/archiveFile.js';
 import Zip from '../../models/files/archives/zip.js';
 import type File from '../../models/files/file.js';
 import { ChecksumBitmask } from '../../models/files/fileChecksums.js';
@@ -175,9 +176,6 @@ export default class CandidateWriter extends Module {
         romWithFiles.getOutputFile() as ArchiveEntry<Zip>,
       ]) satisfies [File, ArchiveEntry<Zip>][];
     if (inputToOutputZipEntries.length === 0) {
-      this.progressBar.logTrace(
-        `${dat.getName()}: ${candidate.getName()}: no zip archives to write`,
-      );
       return;
     }
 
@@ -500,8 +498,6 @@ export default class CandidateWriter extends Module {
 
     // Return no files if there are none to write
     if (inputToOutputEntries.length === 0) {
-      // TODO(cemmer): unit test
-      this.progressBar.logTrace(`${dat.getName()}: ${candidate.getName()}: no raw files to write`);
       return;
     }
 
@@ -509,7 +505,7 @@ export default class CandidateWriter extends Module {
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
     this.progressBar.logTrace(
-      `${dat.getName()}: ${candidate.getName()}: writing ${FsUtil.sizeReadable(totalBytes)} of ${IntlUtil.toLocaleString(inputToOutputEntries.length)} raw file${inputToOutputEntries.length === 1 ? '' : 's'}`,
+      `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldMove() ? 'moving' : 'copying'} ${FsUtil.sizeReadable(totalBytes)} of ${IntlUtil.toLocaleString(inputToOutputEntries.length)} ${inputToOutputEntries.some(([input]) => input instanceof ArchiveFile) ? 'archive' : 'raw'} file${inputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
     // Group the input->output pairs by the input file's path. The goal is to extract entries from
