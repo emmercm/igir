@@ -18,7 +18,6 @@ import ZeroSizeFile from '../../../models/files/zeroSizeFile.js';
 import type Options from '../../../models/options.js';
 import { FixExtension, GameSubdirMode } from '../../../models/options.js';
 import type SingleValueGame from '../../../models/singleValueGame.js';
-import ArrayUtil from '../../../utils/arrayUtil.js';
 import FsUtil from '../../../utils/fsUtil.js';
 import GameGrouper from '../../dats/utils/gameGrouper.js';
 import outputTokensData from './consoleTokens.json' with { type: 'json' };
@@ -383,6 +382,51 @@ export default class OutputFactory {
     return output;
   }
 
+  /**
+   * Greedily pack tuples into groups that respect {@link limit}, grouping by whole letters so
+   * that a single letter is never split across two groups. This guarantees that adjacent letter
+   * ranges never share a boundary letter and therefore never overlap. A letter whose own count
+   * exceeds the limit is placed alone in its group; splitting it is left to the numeric-suffix
+   * logic in {@link getDirLetterParsed}.
+   */
+  private static groupTuplesByLetter(
+    tuples: [string, Set<string>][],
+    limit: number,
+  ): [string, Set<string>][][] {
+    if (limit <= 0) {
+      // No limit: everything belongs in a single group
+      return tuples.length > 0 ? [tuples] : [];
+    }
+
+    // Group consecutive tuples that share the same letter; a letter is never split
+    const letterRuns: [string, Set<string>][][] = [];
+    for (const tuple of tuples) {
+      const lastRun = letterRuns.at(-1);
+      if (lastRun?.[0][0] === tuple[0]) {
+        lastRun.push(tuple);
+      } else {
+        letterRuns.push([tuple]);
+      }
+    }
+
+    // Greedily pack whole letter-runs into groups while respecting the limit
+    const groups: [string, Set<string>][][] = [];
+    let current: [string, Set<string>][] = [];
+    for (const run of letterRuns) {
+      if (current.length > 0 && current.length + run.length > limit) {
+        groups.push(current);
+        current = [];
+      }
+      for (const tuple of run) {
+        current.push(tuple);
+      }
+    }
+    if (current.length > 0) {
+      groups.push(current);
+    }
+    return groups;
+  }
+
   private static getDirLetterParsed(
     options: Options,
     romBasename?: string,
@@ -411,7 +455,8 @@ export default class OutputFactory {
     }, new Map<string, Set<string>>());
 
     if (options.getDirLetterGroup()) {
-      lettersToFilenames = [...lettersToFilenames.entries()]
+      // Flatten into a sorted list of [letter, Set(filenames)] tuples, one per subpath
+      const flatTuples = [...lettersToFilenames.entries()]
         .toSorted((a, b) => a[0].localeCompare(b[0]))
         // Generate a tuple of [letter, Set(filenames)] for every subpath
         .reduce<[string, Set<string>][]>((arr, [letter, filenames]) => {
@@ -435,10 +480,13 @@ export default class OutputFactory {
                 [letter, new Set(subPathFilenames)] satisfies [string, Set<string>],
             );
           return [...arr, ...tuples];
-        }, [])
-        // Group letters together to create letter ranges
-        .reduce(ArrayUtil.reduceChunk(options.getDirLetterLimit()), [])
-        .reduce((map, tuples) => {
+        }, []);
+
+      // Group whole letters together to create letter ranges. A single letter is never split
+      // across two groups, so adjacent ranges can never share a boundary letter and therefore
+      // cannot overlap (e.g. "A-B", "C-D" instead of "A-C", "C-E").
+      lettersToFilenames = this.groupTuplesByLetter(flatTuples, options.getDirLetterLimit()).reduce(
+        (map, tuples) => {
           const firstTuple = tuples.at(0);
           const lastTuple = tuples.at(-1);
           if (firstTuple === undefined || lastTuple === undefined) {
@@ -446,7 +494,10 @@ export default class OutputFactory {
               'there should be at least one letter tuple (this should never happen!)',
             );
           }
-          const letterRange = `${firstTuple[0]}-${lastTuple[0]}`;
+          // A group that spans only a single letter is named for that letter alone (e.g. "A"),
+          // not as a range (e.g. "A-A"); this also keeps numeric-suffix splits as "A1", not "A-A1".
+          const letterRange =
+            firstTuple[0] === lastTuple[0] ? firstTuple[0] : `${firstTuple[0]}-${lastTuple[0]}`;
           const existingFilenames = map.get(letterRange) ?? new Set<string>();
           for (const [, filenames] of tuples) {
             for (const filename of filenames) {
@@ -455,7 +506,9 @@ export default class OutputFactory {
           }
           map.set(letterRange, existingFilenames);
           return map;
-        }, new Map<string, Set<string>>());
+        },
+        new Map<string, Set<string>>(),
+      );
     }
 
     // Split the letter directories, if needed
@@ -550,7 +603,9 @@ export default class OutputFactory {
         // Output file is not an archive
         !FileFactory.isExtensionArchive(ext) &&
         !(inputFile instanceof ArchiveFile)) ||
-      options.getDirGameSubdir() === GameSubdirMode.ALWAYS
+      options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
+      // Discs merged together are always grouped into a subdirectory named after the game
+      game.getDiscMerged()
     ) {
       output = path.join(game.getName(), output);
     }
@@ -598,14 +653,12 @@ export default class OutputFactory {
           oldExtMatch[1];
 
     // The Game is the result of 2+ discs merged together, and we're not extracting this file, so
-    // we want to group discs together and generate a basename based on the original game name.
+    // we generate a basename based on the original disc name (with multi-track suffixes
+    // collapsed). The game-name subdirectory is applied uniformly in getName().
     if (game.getDiscMerged()) {
-      return path.join(
-        game.getName(),
-        GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
-          /(\.[a-zA-Z0-9]+)+$/,
-          oldExt,
-        ),
+      return GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
+        /(\.[a-zA-Z0-9]+)+$/,
+        oldExt,
       );
     }
 

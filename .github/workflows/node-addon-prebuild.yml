@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ref: ${{ inputs.ref || github.head_ref }}
+  ref: ${{ inputs.ref || github.ref }}
 
 jobs:
   path-filter:

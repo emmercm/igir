@@ -15,8 +15,8 @@ Igir runs these steps in the following order:
    - Parent/clone information is inferred if the DAT has none (see [DATs docs](../dats/processing.md#parentclone-inference))
    - Parent/clone ROMs sets are merged or split (`--merge-roms <type>`) (see [arcade docs](../usage/arcade.md))
    - Multi-disc games are merged (`--merge-discs`) (see [ROM set docs](../roms/sets.md))
-   - ROMs in the DAT are filtered to only those desired (`--filter-*` options) (see [filtering & preference docs](../roms/filtering-preferences.md))
-   - ROMs in the DAT are filtered to the preferred clone (`--single`, see [filtering & preference docs](../roms/filtering-preferences.md#preferences-for-1g1r))
+   - ROMs in the DAT are filtered to only those desired (`--filter-*` options) (see [filtering docs](../roms/filtering.md))
+   - ROMs in the DAT are filtered to the preferred clone (`--single`, see [1G1R docs](../roms/1g1r.md))
    - Input files are matched to ROMs in the DAT (see [matching docs](../roms/matching.md))
    - Patch files are matched to ROMs found (see [patching docs](../roms/patching.md))
    - ROMs without a potentially bad extension have their extension corrected using its file signature

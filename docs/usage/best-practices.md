@@ -4,11 +4,11 @@
 
 **Use DATs.**
 
-While [DATs](../dats/introduction.md) are optional, they allow you to organize your ROMs in a human-understandable manner and [remove](../output/cleaning.md) unknown files. Additional metadata provided by some DAT groups allows you [filter your ROM set](../roms/filtering-preferences.md) to only what you care about.
+While [DATs](../dats/introduction.md) are optional, they allow you to organize your ROMs in a human-understandable manner and [remove](../output/cleaning.md) unknown files. Additional metadata provided by some DAT groups allows you [filter your ROM set](../roms/filtering.md) to only what you care about.
 
 **Choose DAT groups with parent/clone information.**
 
-[Parent/clone information](../dats/introduction.md#parentclone-pc-dats) lets you apply [1G1R preference rules](../roms/filtering-preferences.md). For example, prefer No-Intro's Game Boy DAT over TOSEC's, as TOSEC doesn't provide parent/clone information.
+[Parent/clone information](../dats/introduction.md#parentclone-pc-dats) lets you apply [1G1R preference rules](../roms/1g1r.md). For example, prefer No-Intro's Game Boy DAT over TOSEC's, as TOSEC doesn't provide parent/clone information.
 
 **Use consistent versions across all devices.**
 
@@ -16,7 +16,7 @@ DATs work best if you store them alongside your primary ROM collection and when 
 
 **Process DATs from different groups separately.**
 
-DAT groups have some overlap between them, so using DATs from multiple groups at the same time may cause duplicate files or filename collisions. Different groups also have different conventions that may require different settings, such as [filters](../roms/filtering-preferences.md#filters) and [1G1R preferences](../roms/filtering-preferences.md#preferences-for-1g1r).
+DAT groups have some overlap between them, so using DATs from multiple groups at the same time may cause duplicate files or filename collisions. Different groups also have different conventions that may require different settings, such as [filters](../roms/filtering.md) and [1G1R preferences](../roms/1g1r.md).
 
 Keep ROM sets organized by DATs from different groups in separate directories. For example, create different directories for No-Intro, Redump, and TOSEC-organized ROM sets.
 
@@ -26,7 +26,7 @@ Keep ROM sets organized by DATs from different groups in separate directories. F
 
 Having a consolidated collection that only consists of ROMs matched to DATs allows for easy copying to other places, such as flash carts. This will allow you to recreate sub-collections in case of any file loss.
 
-Additionally, sub-collections are likely to have [filtering and preference rules](../roms/filtering-preferences.md) applied based on the use case, but you may not want to filter out ROMs from your primary collection in the same way.
+Additionally, sub-collections are likely to have [filtering](../roms/filtering.md) and [1G1R preference](../roms/1g1r.md) rules applied based on the use case, but you may not want to filter out ROMs from your primary collection in the same way.
 
 **Provide the output directory as an input directory when cleaning.**
 

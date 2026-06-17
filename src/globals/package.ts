@@ -18,6 +18,8 @@ export default class Package {
 
   static readonly NAME = packageJson.name;
 
+  static readonly DESCRIPTION = packageJson.description;
+
   static readonly HOMEPAGE = packageJson.homepage;
 
   static readonly VERSION = packageJson.version;
