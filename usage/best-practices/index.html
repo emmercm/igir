@@ -2491,6 +2491,8 @@
       
         
       
+        
+      
     
     
     
@@ -2630,14 +2632,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../../roms/filtering-preferences/" class="md-nav__link">
+      <a href="../../roms/filtering/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ROM Filtering &amp; Preferences
+    ROM Filtering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roms/1g1r/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ROM 1G1R Preferences
   
 
     
@@ -3735,18 +3765,18 @@
 <h1 id="best-practices">Best Practices</h1>
 <h2 id="dats">DATs</h2>
 <p><strong>Use DATs.</strong></p>
-<p>While <a href="../../dats/introduction/">DATs</a> are optional, they allow you to organize your ROMs in a human-understandable manner and <a href="../../output/cleaning/">remove</a> unknown files. Additional metadata provided by some DAT groups allows you <a href="../../roms/filtering-preferences/">filter your ROM set</a> to only what you care about.</p>
+<p>While <a href="../../dats/introduction/">DATs</a> are optional, they allow you to organize your ROMs in a human-understandable manner and <a href="../../output/cleaning/">remove</a> unknown files. Additional metadata provided by some DAT groups allows you <a href="../../roms/filtering/">filter your ROM set</a> to only what you care about.</p>
 <p><strong>Choose DAT groups with parent/clone information.</strong></p>
-<p><a href="../../dats/introduction/#parentclone-pc-dats">Parent/clone information</a> lets you apply <a href="../../roms/filtering-preferences/">1G1R preference rules</a>. For example, prefer No-Intro's Game Boy DAT over TOSEC's, as TOSEC doesn't provide parent/clone information.</p>
+<p><a href="../../dats/introduction/#parentclone-pc-dats">Parent/clone information</a> lets you apply <a href="../../roms/1g1r/">1G1R preference rules</a>. For example, prefer No-Intro's Game Boy DAT over TOSEC's, as TOSEC doesn't provide parent/clone information.</p>
 <p><strong>Use consistent versions across all devices.</strong></p>
 <p>DATs work best if you store them alongside your primary ROM collection and when you use the same DAT versions across all devices (i.e. your primary collection, handhelds, flash carts, etc.). Some DAT groups release new versions as often as daily, so keeping your collection in sync is easier with consistent DATs.</p>
 <p><strong>Process DATs from different groups separately.</strong></p>
-<p>DAT groups have some overlap between them, so using DATs from multiple groups at the same time may cause duplicate files or filename collisions. Different groups also have different conventions that may require different settings, such as <a href="../../roms/filtering-preferences/#filters">filters</a> and <a href="../../roms/filtering-preferences/#preferences-for-1g1r">1G1R preferences</a>.</p>
+<p>DAT groups have some overlap between them, so using DATs from multiple groups at the same time may cause duplicate files or filename collisions. Different groups also have different conventions that may require different settings, such as <a href="../../roms/filtering/">filters</a> and <a href="../../roms/1g1r/">1G1R preferences</a>.</p>
 <p>Keep ROM sets organized by DATs from different groups in separate directories. For example, create different directories for No-Intro, Redump, and TOSEC-organized ROM sets.</p>
 <h2 id="file-inputs">File Inputs</h2>
 <p><strong>Keep one primary collection and then copy to other sub-collections.</strong></p>
 <p>Having a consolidated collection that only consists of ROMs matched to DATs allows for easy copying to other places, such as flash carts. This will allow you to recreate sub-collections in case of any file loss.</p>
-<p>Additionally, sub-collections are likely to have <a href="../../roms/filtering-preferences/">filtering and preference rules</a> applied based on the use case, but you may not want to filter out ROMs from your primary collection in the same way.</p>
+<p>Additionally, sub-collections are likely to have <a href="../../roms/filtering/">filtering</a> and <a href="../../roms/1g1r/">1G1R preference</a> rules applied based on the use case, but you may not want to filter out ROMs from your primary collection in the same way.</p>
 <p><strong>Provide the output directory as an input directory when cleaning.</strong></p>
 <p>If you use new DATs with an existing collection that may have changed ROM names, then <a href="../../output/cleaning/"><code>igir clean</code></a> may delete files from your output directory that have the wrong filename.</p>
 <p>The solution is to provide the output directory as an additional <a href="../../roms/scanning/">input</a> directory, allowing Igir to move/rename files to the updated name. Igir will only ever <a href="../../commands/#copy">copy</a> or <a href="../../commands/#move">move</a> files from an input directory to the output directory, allowing users to be very intentional with Igir's behavior.</p>
@@ -3826,7 +3856,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="April 19, 2026 20:54:52 UTC">April 19, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 16, 2026 15:42:50 UTC">June 16, 2026</span>
   </span>
 
     

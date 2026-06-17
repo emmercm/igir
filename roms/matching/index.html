@@ -2389,6 +2389,8 @@
       
         
       
+        
+      
     
     
     
@@ -2532,6 +2534,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#preferences-for-input-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preferences for input files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Preferences for input files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prefer-file-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prefer file type
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefer-filename" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prefer filename
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#automatically-using-other-checksum-algorithms" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2608,14 +2649,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../filtering-preferences/" class="md-nav__link">
+      <a href="../filtering/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    ROM Filtering &amp; Preferences
+    ROM Filtering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1g1r/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ROM 1G1R Preferences
   
 
     
@@ -3717,6 +3786,27 @@
 <p class="admonition-title">Note</p>
 <p>The main drawback of CRC32 checksums are their small keyspace of 4.29 billion unique values (below). This might seem like a lot, but it's sufficiently small enough that it is very possible for two different files to have the same CRC32. Chances of these "collisions" can be reduced by also comparing the filesize of the two different files, which Igir does.</p>
 </div>
+<h2 id="preferences-for-input-files">Preferences for input files</h2>
+<p>These options let you choose what input file will be used when multiple input files <a href="./">match a ROM</a>.</p>
+<p>Unlike other <a href="../1g1r/">1G1R preference</a> options that use the <code>--prefer-*</code> option prefix, these options do <em>not</em> require the <code>--single</code> option.</p>
+<h3 id="prefer-file-type">Prefer file type</h3>
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>--prefer-filetype {plain,archive}
+</span></code></pre></div>
+<p>Prefer an input file if it's plain/un-archived, or archived.</p>
+<p>This is most useful when <em>not</em> supplying the <code>extract</code> or <code>zip</code> commands, where input files are use exactly as-is, byte-for-byte.</p>
+<h3 id="prefer-filename">Prefer filename</h3>
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>--prefer-filename-regex &lt;pattern|filename&gt;
+</span></code></pre></div>
+<p>Prefer an input file if it matches a regular expression.</p>
+<p>Regex <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags">flags</a> can be optionally provided in the form <code>/&lt;pattern&gt;/&lt;flags&gt;</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Prefer input files with a <code>.gcz</code> or <code>.rvz</code> extension:</p>
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>--prefer-filename-regex &quot;\\.(gcz|rvz)$&quot;
+</span></code></pre></div>
+<div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>--prefer-filename-regex &quot;/\\.(gcz|rvz)$/i&quot;
+</span></code></pre></div>
+</div>
 <h2 id="automatically-using-other-checksum-algorithms">Automatically using other checksum algorithms</h2>
 <p>Some DAT release groups do not include every checksum type for every file. For example, CHDs in MAME DATs only include SHA1 checksums and nothing else, not even filesize information.</p>
 <p>Some DAT release groups do not include filesize information for every file, preventing safe matching of CRC32. For example, not every <a href="https://github.com/frederic-mahe/Hardware-Target-Game-Database/tree/master/EverDrive%20Pack%20SMDBs">Hardware Target Game Database SMDB</a> includes file sizes, but they typically include all common checksum types.</p>
@@ -3753,9 +3843,9 @@
 <p>Most people do not need to calculate checksums above CRC32. CRC32 + filesize is sufficient to match ROMs and test written files in the gross majority of cases. The below information is for people that <em>truly</em> know they need higher checksums.</p>
 </div>
 <p>You can specify higher checksum algorithms with the <code>--input-checksum-min &lt;algorithm&gt;</code> option like this:</p>
-<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-checksum-min<span class="w"> </span>MD5
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-checksum-min<span class="w"> </span>SHA1
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-checksum-min<span class="w"> </span>SHA256
+<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-checksum-min<span class="w"> </span>MD5
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-checksum-min<span class="w"> </span>SHA1
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span>--input-checksum-min<span class="w"> </span>SHA256
 </span></code></pre></div>
 <p>This option defines the <em>minimum</em> checksum that will be used based on digest size (below). If not every ROM in every DAT provides the checksum you specify, Igir may automatically calculate and match files based on a higher checksum (see above), but never lower.</p>
 <p>The reason you might want to do this is to have a higher confidence that found files <em>exactly</em> match ROMs in DATs. Keep in mind that explicitly enabling non-CRC32 checksums will <em>greatly</em> slow down scanning of files within archives (see <code>--input-checksum-quick</code> above).</p>
@@ -3851,7 +3941,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="April 19, 2026 20:54:52 UTC">April 19, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 16, 2026 15:42:50 UTC">June 16, 2026</span>
   </span>
 
     
