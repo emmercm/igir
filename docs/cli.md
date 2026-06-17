@@ -17,14 +17,14 @@ ASCII symbols are used to indicate what processing is happening. Here is a table
 | <span style="color:#AA00AA"><b>Σ</b></span> (sigma)            | [DATs](dats/introduction.md) are being parsed                         |
 | <span style="color:#AA00AA"><b>#</b></span> (hash)             | ROMs are having checksums calculated for [matching](roms/matching.md) |
 | <span style="color:#AA00AA"><b>^</b></span> (hat)              | ROMs are being checked for [headers](roms/headers.md)                 |
-| <span style="color:#AA00AA"><b>⌵</b></span> (downward chevron) | ROMs are being checked for [trimming](roms/trim-detection.md)               |
+| <span style="color:#AA00AA"><b>⌵</b></span> (downward chevron) | ROMs are being checked for [trimming](roms/trim-detection.md)         |
 
 | Symbol (cyan)                                                   | Per-DAT processing operation                                                                  |
 |-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
 | <span style="color:#00AAAA"><b>∩</b></span> (intersection)      | DATs are having parent/clone information [inferred](dats/processing.md#parentclone-inference) |
 | <span style="color:#00AAAA"><b>↔</b></span> (left/right arrows) | DATs are having [merge/split rules](usage/arcade.md#rom-set-merge-types) applied              |
 | <span style="color:#00AAAA"><b>∆</b></span> (delta)             | DAT is being [filtered](roms/filtering.md)                                                    |
-| <span style="color:#00AAAA"><b>⇅</b></span> (up/down arrows)    | ROM [1G1R rules](roms/1g1r.md) are being applied                                              |
+| <span style="color:#00AAAA"><b>⇅</b></span> (up/down arrows)    | DAT is having [1G1R rules](roms/1g1r.md) applied                                              |
 | <span style="color:#00AAAA"><b>Σ</b></span> (sigma)             | ROMs are being [matched](roms/matching.md) to the DAT                                         |
 | <span style="color:#00AAAA"><b>.</b></span> (period)            | ROM matches are having their [extension corrected](output/options.md#fixing-rom-extensions)   |
 | <span style="color:#00AAAA"><b>≟</b></span> (question equal)    | ROM matches are being checked for issues                                                      |
