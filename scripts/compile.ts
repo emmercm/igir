@@ -62,10 +62,12 @@ const bunBuildConfig = {
     autoloadDotenv: false,
     autoloadBunfig: false,
     windows: {
+      icon: path.join(import.meta.dirname, '..', 'static', 'windows.ico'),
       title: Package.NAME,
       publisher: Package.AUTHOR,
       version: Package.VERSION,
-      description: Package.HOMEPAGE,
+      description: Package.DESCRIPTION.replaceAll(/[^\x00-\x7F]/g, '').trim(),
+      copyright: Package.HOMEPAGE,
     },
   },
   // TODO(cemmer): minification seems to break at least Windows, causing chdman to fail `await import` with:
