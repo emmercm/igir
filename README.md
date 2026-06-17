@@ -61,7 +61,7 @@ $ igir --help
  @@      @@  @@      @@      @@         @@   ROM collection manager
    @@@@@@   @@         @@@@@@   @@@@@@@@@    https://igir.io/
           @@@     @@@@        @@@
-     @@   @@        @@   @@   @@       @@    v5.1.1 (Node.js v26.1.0)
+     @@   @@        @@   @@   @@       @@    v5.1.2 (Node.js v26.3.0)
      @@   @@        @@   @@   @@       @@
      @@   @@@@@@@@@@@@   @@   @@       @@
 
@@ -273,7 +273,7 @@ fixdat command options:
       --fixdat-output  Fixdat output directory                                        [string]
 
 report command options:
-      --report-output  Report output file location (formatted with moment.js)
+      --report-output  Report output file location (formatted with Moment.js date/time tokens)
                                       [string] [default: "igir_%YYYY-%MM-%DDT%HH:%mm:%ss.csv"]
 
 Concurrency options:

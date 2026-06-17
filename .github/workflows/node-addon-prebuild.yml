@@ -9,8 +9,6 @@ on:
   push:
     branches-ignore:
       - 'main'
-      # Don't prebuild on version bump PRs
-      - '*/[0-9]*.[0-9]*.[0-9]*'
   workflow_dispatch:
     inputs:
       ref:
@@ -26,6 +24,27 @@ env:
   ref: ${{ inputs.ref || github.ref }}
 
 jobs:
+  # Perform some `on.push.branches-ignore` here so that the 'prebuild-status-check' job can still run
+  branch-gate:
+    if: ${{ github.actor == 'emmercm' }}
+    permissions: {}
+    runs-on: ubuntu-latest
+    outputs:
+      should-prebuild: ${{ steps.branch-gate.outputs.should-prebuild }}
+    steps:
+      - id: branch-gate
+        env:
+          REF: ${{ env.ref }}
+        run: |
+          set -x
+          branch="${REF#refs/heads/}"
+          # Don't prebuild on version bump branches (e.g. 'emmercm/1.2.3')
+          if [[ "${branch}" =~ /[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "should-prebuild=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "should-prebuild=true" >> "${GITHUB_OUTPUT}"
+          fi
+
   path-filter:
     if: ${{ github.actor == 'emmercm' }}
     permissions:
@@ -61,8 +80,9 @@ jobs:
   prebuild:
     name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch || 'default' }})
     needs:
+      - branch-gate
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (needs.branch-gate.outputs.should-prebuild == 'true' && needs.path-filter.outputs.changes == 'true') || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read # actions/checkout
     strategy:
@@ -222,6 +242,7 @@ jobs:
   prebuild-status-check:
     needs:
       - path-filter
+      - branch-gate
       - prebuild
       - commit
     if: always()
@@ -231,4 +252,4 @@ jobs:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: path-filter, prebuild, commit
+          allowed-skips: branch-gate, path-filter, prebuild, commit
