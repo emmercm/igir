@@ -14,7 +14,7 @@ on:
   workflow_call:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: pr-renamer-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
