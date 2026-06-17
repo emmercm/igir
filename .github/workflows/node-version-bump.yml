@@ -22,6 +22,10 @@ on:
         default: true
 run-name: '${{ github.workflow }}: incrementing ${{ inputs.increment }}'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false # queue
+
 jobs:
   bump:
     permissions:
