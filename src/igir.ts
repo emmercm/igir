@@ -509,25 +509,21 @@ export default class Igir {
     if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.ALWAYS) {
       return true;
     }
-    return dats.some((dat) =>
-      dat.getGames().some((game) =>
-        game.getRoms().some((rom) => {
-          const isArchive = FileFactory.isExtensionArchive(rom.getName());
-          if (isArchive) {
-            if (dats.every((dat) => dat.isMame())) {
+    return dats.some(
+      (dat) =>
+        dat.isMame() &&
+        dat.getGames().some((game) =>
+          game.getRoms().some((rom) => {
+            const isArchive = FileFactory.isExtensionArchive(rom.getName());
+            if (isArchive) {
               this.logger.trace(
-                `${dat.getName()}: contains archives, but every DAT is a MAME DAT, skipping enabling checksum calculation of raw archive contents`,
+                `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
               );
-              return false;
+              return true;
             }
-            this.logger.trace(
-              `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
-            );
-            return true;
-          }
-          return false;
-        }),
-      ),
+            return false;
+          }),
+        ),
     );
   }
 
