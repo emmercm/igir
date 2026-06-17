@@ -14,7 +14,9 @@
     }
   },
   "bin": "igir.exe",
-  "checkver": "github",
+  "checkver": {
+    "github": "https://github.com/emmercm/igir"
+  },
   "autoupdate": {
     "architecture": {
       "64bit": {
