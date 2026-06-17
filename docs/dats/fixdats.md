@@ -57,4 +57,4 @@ ROMs-Sorted/
 
 !!! info
 
-    Fixdats are affected by [filter & preference (1G1R) options](../roms/filtering-preferences.md). This is because those options are applied to all DATs _before_ [ROM matching](../roms/matching.md) happens.
+    Fixdats are affected by [filter](../roms/filtering.md) & [1G1R](../roms/1g1r.md) options. This is because those options are applied to all DATs _before_ [ROM matching](../roms/matching.md) happens.

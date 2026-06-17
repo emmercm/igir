@@ -139,13 +139,13 @@ ROMs-Sorted/
 
 ### Flash cart 1G1R
 
-Let's say we've done the above sorting and we want to copy some ROMs from `ROMs-Sorted/` to a flash cart.
+Let's say we've done the above sorting, and we want to copy some ROMs from `ROMs-Sorted/` to a flash cart.
 
 We would prefer having only one copy of every game because we have a preferred language, limited SD card storage, and want to have fewer games to scroll through to find what game we want to play.
 
 !!! note
 
-    The common name for this is "one game, one ROM" or "1G1R"—this is what Igir is named after! Igir has some of the most extensive [filtering](../roms/filtering-preferences.md#filters) and [1G1R options](../roms/filtering-preferences.md#preferences-for-1g1r) of any ROM manager.
+    The common name for this is "one game, one ROM" or "1G1R"—this is what Igir is named after! Igir has some of the most extensive [filtering](../roms/filtering.md) and [1G1R options](../roms/1g1r.md) of any ROM manager.
 
 Our example flash cart, like most flash carts, can't read `.zip` files, so we'll need to extract our ROMs during copying.
 

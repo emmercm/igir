@@ -9,6 +9,10 @@ on:
       - published
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name || github.ref }}
+  cancel-in-progress: false # queue
+
 jobs:
   node-publish:
     permissions:

@@ -7,3 +7,7 @@ f7865f77090c8fb2b9e5868a0b415af63983118d
 # Refactor: sort modules into groups
 # https://github.com/emmercm/igir/pull/1332
 6746d8a7b07c285649247d31edf0480058c722cc
+
+# Refactor: major source file reorganization
+# https://github.com/emmercm/igir/pull/2230
+21d19c47131aa50feb6913d6076033bff3305e21
