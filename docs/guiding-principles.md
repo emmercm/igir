@@ -28,7 +28,7 @@ It is intended that Igir lives by these tenets:
 
 - **Igir should not spy on you.**
 
-  Igir should not make any network requests other than what is required, including emitting any kind of usage or telemetry data.
+  Igir should not make any network requests other than what is requested (e.g. [DAT downloading](dats/scanning.md#dat-urls)), including emitting any kind of usage or telemetry data.
 
 - **Igir should be semantically versioned.**
 
