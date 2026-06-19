@@ -3,7 +3,6 @@ import stream from 'node:stream';
 import zlib from 'node:zlib';
 
 import StreamUtil from '../../../src/utils/streamUtil.js';
-import zstd from '../../zstd-1.5.5/index.js';
 import type CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
 import type { CompressionMethodValue, IFileRecord } from './fileRecord.js';
 import FileRecord, { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
@@ -190,16 +189,15 @@ export default class LocalFileHeader extends FileRecord {
       case CompressionMethod.DEFLATE: {
         return StreamUtil.withTransforms(
           this.compressedStream(highWaterMark),
-          zlib.createInflateRaw(),
+          zlib.createInflateRaw({ chunkSize: highWaterMark }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }
       case CompressionMethod.ZSTD_DEPRECATED:
       case CompressionMethod.ZSTD: {
         return StreamUtil.withTransforms(
-          this.compressedStream(),
-          // TODO(cemmer): replace with zlib in Node.js 24
-          new zstd.DecompressStream(),
+          this.compressedStream(highWaterMark),
+          zlib.createZstdDecompress({ chunkSize: highWaterMark }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }

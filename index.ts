@@ -21,7 +21,11 @@ Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);
 const logger = new Logger(LogLevel.WARN, process.stdout);
 logger.printHeader();
 
-if (process.versions.node && !semver.satisfies(process.versions.node, Package.ENGINES_NODE)) {
+if (
+  !process.versions.bun &&
+  process.versions.node &&
+  !semver.satisfies(process.versions.node, Package.ENGINES_NODE)
+) {
   logger.error(`${Package.NAME} requires a Node.js version of ${Package.ENGINES_NODE}`);
   process.exit(1);
 }
