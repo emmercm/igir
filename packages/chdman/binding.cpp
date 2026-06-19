@@ -717,7 +717,10 @@ private:
 size_t TrackReader::Produce(uint8_t* out, size_t maxBytes) {
   size_t written = 0;
   const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
-  while (written < maxBytes && frame_ < actualframes_) {
+  // frame_ is bumped when a frame is loaded, so the final frame's bytes can still be
+  // buffered after frame_ reaches actualframes_. Keep draining frameBuf_ on leftover
+  // bytes too, else a read(maxBytes) boundary mid-frame would drop that tail.
+  while (written < maxBytes && (frameBufPos_ < frameBuf_.size() || frame_ < actualframes_)) {
     if (frameBufPos_ >= frameBuf_.size()) {
       int trk;
       int frameofs;

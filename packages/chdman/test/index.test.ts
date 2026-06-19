@@ -208,6 +208,27 @@ describe('openTrackReader', () => {
     expect(readable.destroyed).toBe(true);
   });
 
+  it('should not drop the tail of the final frame when a read boundary falls mid-frame', async () => {
+    // CD-ROM-large.chd has one 56-frame (131712-byte) track whose final frame straddles
+    // the stream's 64KiB read boundary (131712 % 65536 = 640 < 2352), so the full track
+    // must stream out even when a read boundary falls inside its last frame.
+    const listing = await chdman.listCdBinCueTracks({
+      inputFilename: path.join(FIXTURES, 'CD-ROM-large.chd'),
+      binNamePattern: 'CD-ROM-large (Track %t).bin',
+      cueName: 'CD-ROM-large.cue',
+    });
+    const readable = await chdman.openTrackReader({
+      inputFilename: path.join(FIXTURES, 'CD-ROM-large.chd'),
+      mode: 'cuebin',
+      trackIndex: 0,
+    });
+    const got = await BufferUtil.fromReadable(readable);
+    expect({ size: got.length, sha1: sha1(got) }).toEqual({
+      size: listing.tracks[0].size,
+      sha1: '5e16fcf761fb240f925da55682c9fba2a7717ea6',
+    });
+  });
+
   it('should refuse to open a runaway GD-ROM cue/bin track reader', async () => {
     // The same high-density-track frame underflow that blocks listCdBinCueTracks
     // (see that suite) must also be refused when opening a track reader directly,
