@@ -95,11 +95,11 @@ jobs:
         node-version: [ '' ]
         include:
           - os: ubuntu-latest
-            node-version: 20
+            node-version: 22
           - os: macos-latest
-            node-version: 20
+            node-version: 22
           - os: windows-latest
-            node-version: 20
+            node-version: 22
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
@@ -179,7 +179,7 @@ jobs:
       contents: read # actions/checkout
     strategy:
       matrix:
-        node-version: [ '', 20 ]
+        node-version: [ '', 22 ]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
