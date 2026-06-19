@@ -256,7 +256,7 @@ try {
       if (code === 0) {
         resolve(procOutput);
       } else {
-        reject(new Error(`${testFile} exited with code ${code}`));
+        reject(new Error(`${testFile} exited with code ${code}, output:\n${procOutput}`));
       }
     });
     proc.on('error', reject);
