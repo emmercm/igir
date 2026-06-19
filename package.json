@@ -95,7 +95,7 @@
     "micromatch": "4.0.8",
     "node-addon-api": "8.8.0",
     "node-disk-info": "1.3.0",
-    "node-gyp": "12.3.0",
+    "node-gyp": "13.0.0",
     "node-gyp-build": "4.8.4",
     "node-unrar-js": "2.0.2",
     "reflect-metadata": "0.2.2",
