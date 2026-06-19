@@ -107,7 +107,7 @@
     "terminal-size": "4.0.1",
     "trash": "10.1.1",
     "typescript-memoize": "1.1.1",
-    "which": "6.0.1",
+    "which": "7.0.0",
     "wrap-ansi": "10.0.0",
     "xml2js": "0.6.2",
     "yargs": "18.0.0"
