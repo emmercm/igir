@@ -1,6 +1,9 @@
+import path from 'node:path';
+
 import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import MergedDiscGame from '../../../src/models/dats/mergedDiscGame.js';
 import ROM from '../../../src/models/dats/rom.js';
 import Options from '../../../src/models/options.js';
 import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
@@ -319,4 +322,55 @@ it('should merge multi-disc games and leave single disc games alone', () => {
       ],
     ],
   ]);
+});
+
+it('should de-conflict duplicate ROM names per sub-game in a MergedDiscGame', () => {
+  const options = new Options({ mergeDiscs: true });
+  const discOne = new Game({
+    name: 'Pippo (Disc 1)',
+    roms: [
+      new ROM({ name: 'track01.bin', size: 100, crc32: '11111111' }),
+      new ROM({ name: 'track02.bin', size: 200, crc32: '22222222' }),
+    ],
+  });
+  const discTwo = new Game({
+    name: 'Pippo (Disc 2)',
+    roms: [
+      new ROM({ name: 'track01.bin', size: 300, crc32: '33333333' }),
+      new ROM({ name: 'track02.bin', size: 400, crc32: '44444444' }),
+    ],
+  });
+  const dat = new LogiqxDAT({ header: new Header(), games: [discOne, discTwo] });
+
+  const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
+
+  expect(result.getGames()).toHaveLength(1);
+  const merged = result.getGames()[0];
+  expect(merged).toBeInstanceOf(MergedDiscGame);
+  // The duplicate names are de-conflicted by prefixing each sub-game's original name, and the
+  // sub-games carry the same renamed ROM instances that getRoms() flattens.
+  expect(merged.getRoms().map((rom) => rom.getName())).toEqual([
+    path.join('Pippo (Disc 1)', 'track01.bin'),
+    path.join('Pippo (Disc 1)', 'track02.bin'),
+    path.join('Pippo (Disc 2)', 'track01.bin'),
+    path.join('Pippo (Disc 2)', 'track02.bin'),
+  ]);
+  const subGames = (merged as MergedDiscGame).getSubGames();
+  expect(subGames).toHaveLength(2);
+  expect(subGames[0].getRoms().map((rom) => rom.getName())).toEqual([
+    path.join('Pippo (Disc 1)', 'track01.bin'),
+    path.join('Pippo (Disc 1)', 'track02.bin'),
+  ]);
+});
+
+it('should return a plain Game (not a MergedDiscGame) for single-disc groups', () => {
+  const options = new Options({ mergeDiscs: true });
+  const dat = new LogiqxDAT({ header: new Header(), games: [singleDiscGames[0]] });
+
+  const result = new DATDiscMerger(options, new ProgressBarFake()).merge(dat);
+
+  expect(result.getGames()).toHaveLength(1);
+  const game = result.getGames()[0];
+  expect(game).toBeInstanceOf(Game);
+  expect(game).not.toBeInstanceOf(MergedDiscGame);
 });
