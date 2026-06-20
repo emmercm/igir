@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
