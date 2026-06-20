@@ -142,6 +142,7 @@ nav:
       - acknowledgements.md
       - contributing.md
       - license.md
+      - security.md
   # https://github.com/squidfunk/mkdocs-material/issues/889#issuecomment-582297142: how-to open nav links in new tabs
   - Download ↗: https://github.com/emmercm/igir/releases/latest" target="_blank
   - Discuss ↗: https://github.com/emmercm/igir/discussions" target="_blank
