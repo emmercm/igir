@@ -14,8 +14,8 @@ on:
   workflow_call:
 
 concurrency:
-  group: pr-renamer-${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  group: pr-renamer-${{ github.head_ref || github.ref }}
+  cancel-in-progress: false # queue
 
 jobs:
   rename:
