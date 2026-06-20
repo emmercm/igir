@@ -350,16 +350,16 @@ it('should de-conflict duplicate ROM names per sub-game in a MergedDiscGame', ()
   // The duplicate names are de-conflicted by prefixing each sub-game's original name, and the
   // sub-games carry the same renamed ROM instances that getRoms() flattens.
   expect(merged.getRoms().map((rom) => rom.getName())).toEqual([
-    path.join('Pippo (Disc 1)', 'track01.bin'),
-    path.join('Pippo (Disc 1)', 'track02.bin'),
-    path.join('Pippo (Disc 2)', 'track01.bin'),
-    path.join('Pippo (Disc 2)', 'track02.bin'),
+    'Pippo (Disc 1)/track01.bin',
+    'Pippo (Disc 1)/track02.bin',
+    'Pippo (Disc 2)/track01.bin',
+    'Pippo (Disc 2)/track02.bin',
   ]);
   const subGames = (merged as MergedDiscGame).getSubGames();
   expect(subGames).toHaveLength(2);
   expect(subGames[0].getRoms().map((rom) => rom.getName())).toEqual([
-    path.join('Pippo (Disc 1)', 'track01.bin'),
-    path.join('Pippo (Disc 1)', 'track02.bin'),
+    'Pippo (Disc 1)/track01.bin',
+    'Pippo (Disc 1)/track02.bin',
   ]);
 });
 
