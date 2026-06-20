@@ -29,6 +29,7 @@ export default class MultiBar {
 
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
+  private lastRawOutput = '';
   private lastOutput = '';
   private stopped = false;
   private readonly sigwinchHandler?: () => void;
@@ -55,6 +56,8 @@ export default class MultiBar {
         }
         this.terminalColumns = this.terminal.columns;
         this.terminalRows = this.terminal.rows;
+        // The terminal size affects line truncation, so force a full re-render
+        this.lastRawOutput = '';
         this.clearAndRender();
       };
       process.on('SIGWINCH', this.sigwinchHandler);
@@ -188,7 +191,7 @@ export default class MultiBar {
       Math.max(1000 / MultiBar.RENDER_MIN_FPS, 1),
     );
 
-    const outputLines = this.singleBars
+    const rawLines = this.singleBars
       .flatMap((singleBar) => {
         const lines = singleBar
           .format()
@@ -199,14 +202,29 @@ export default class MultiBar {
         }
         return lines;
       })
-      .slice(0, this.terminalRows - 1)
-      .map((line) => {
-        const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
-        if (stripChars <= 0) {
-          return `${MultiBar.OUTPUT_PADDING}${line}`;
-        }
-        return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
-      });
+      .slice(0, this.terminalRows - 1);
+
+    // `format()` must run every render (above) to keep each bar's last output and display state
+    // fresh, but ANSI-stripping and truncating every line is expensive. Skip that pipeline when
+    // the bars haven't visibly changed since the last render.
+    const rawOutput = rawLines.join('\n');
+    if (rawOutput === this.lastRawOutput && MultiBar.logQueue.length === 0) {
+      return;
+    }
+    this.lastRawOutput = rawOutput;
+
+    const outputLines = rawLines.map((line) => {
+      // The visible (ANSI-stripped) length can only be shorter than the raw length, so a line that
+      // already fits within the terminal needs no stripping or truncation.
+      if (line.length <= this.terminalColumns - 10) {
+        return `${MultiBar.OUTPUT_PADDING}${line}`;
+      }
+      const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
+      if (stripChars <= 0) {
+        return `${MultiBar.OUTPUT_PADDING}${line}`;
+      }
+      return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
+    });
     const output = outputLines.length > 0 ? `${outputLines.join('\n')}\n` : '';
 
     if (output === this.lastOutput && MultiBar.logQueue.length === 0) {
