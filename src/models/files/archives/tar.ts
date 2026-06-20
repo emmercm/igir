@@ -108,6 +108,7 @@ export default class Tar extends Archive {
     await new Promise<void>((resolve, reject) => {
       writeStream.on('end', resolve);
       readStream.on('error', reject);
+      writeStream.on('error', reject);
     });
 
     // NOTE(cemmer): for whatever promise hell reason, if we tell `tar` to be strict, the exception
