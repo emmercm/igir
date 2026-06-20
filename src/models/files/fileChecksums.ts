@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import stream from 'node:stream';
-
-import CRC32 from 'crc-32';
+import zlib from 'node:zlib';
 
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 import FsReadTransform from '../../streams/fsReadTransform.js';
@@ -94,7 +93,7 @@ export default {
     for await (const chunk of streamWithCallback as AsyncIterable<Buffer>) {
       size += chunk.length;
       if (hasCrc32) {
-        crc = CRC32.buf(chunk, crc);
+        crc = zlib.crc32(chunk, crc);
       }
       md5?.update(chunk);
       sha1?.update(chunk);

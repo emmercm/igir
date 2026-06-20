@@ -1,7 +1,6 @@
 import type { TransformCallback } from 'node:stream';
 import stream from 'node:stream';
-
-import CRC32 from 'crc-32';
+import zlib from 'node:zlib';
 
 /**
  * A stream transform to calculate the size and CRC32 of a pre-compression file.
@@ -20,7 +19,7 @@ export default class UncompressedTransform extends stream.Transform {
   ): void {
     this.size += chunk.length;
     try {
-      this.crc32 = CRC32.buf(chunk, this.crc32);
+      this.crc32 = zlib.crc32(chunk, this.crc32);
     } catch (error) {
       callback(error instanceof Error ? error : new Error(String(error)));
       return;
