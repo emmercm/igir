@@ -66,12 +66,7 @@ export default [
           allowNever: true,
         },
       ],
-      '@typescript-eslint/unbound-method': [
-        'error',
-        {
-          ignoreStatic: true,
-        },
-      ],
+      '@typescript-eslint/unbound-method': 'error',
     },
   },
   {

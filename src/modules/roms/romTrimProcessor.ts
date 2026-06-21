@@ -67,7 +67,7 @@ export default class ROMTrimProcessor extends Module {
       const childBar = this.progressBar.addChildBar({
         name: inputFile.toString(),
         total: inputFile.getSize(),
-        progressFormatter: FsUtil.sizeReadable,
+        progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
       });
 
       let fileWithTrimming: File;

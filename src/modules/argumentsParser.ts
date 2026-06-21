@@ -270,7 +270,7 @@ export default class ArgumentsParser {
         choices: Object.values(ChecksumBitmask)
           .filter((bitmask) => bitmask !== ChecksumBitmask.NONE)
           .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: ChecksumBitmaskInverted[ChecksumBitmask.CRC32].toUpperCase(),
       })
@@ -280,7 +280,7 @@ export default class ArgumentsParser {
         choices: Object.values(ChecksumBitmask)
           .filter((bitmask) => bitmask !== ChecksumBitmask.NONE)
           .map((bitmask) => ChecksumBitmaskInverted[bitmask].toUpperCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: ChecksumBitmaskInverted[ChecksumBitmask.SHA1].toUpperCase(),
       })
@@ -304,7 +304,7 @@ export default class ArgumentsParser {
         description:
           'Calculate checksums of archive files themselves, allowing them to match files in DATs',
         choices: Object.keys(InputChecksumArchivesMode).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: InputChecksumArchivesModeInverted[InputChecksumArchivesMode.AUTO].toLowerCase(),
       })
@@ -337,28 +337,28 @@ export default class ArgumentsParser {
         group: groupDatInput,
         description: 'Regular expression of DAT names to process',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
       })
       .option('dat-name-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT names to exclude from processing',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
       })
       .option('dat-description-regex', {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to process',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
       })
       .option('dat-description-regex-exclude', {
         group: groupDatInput,
         description: 'Regular expression of DAT descriptions to exclude from processing',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
       })
       .option('dat-combine', {
@@ -432,7 +432,7 @@ export default class ArgumentsParser {
         alias: 'o',
         description: 'Path to the ROM output directory (supports replaceable symbols, see below)',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
       .middleware((middlewareArgv) => {
@@ -517,7 +517,7 @@ export default class ArgumentsParser {
         description:
           'Append the name of the game as an output subdirectory depending on how many ROMs a game has',
         choices: Object.keys(GameSubdirMode).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
       })
@@ -526,7 +526,7 @@ export default class ArgumentsParser {
         description:
           'Path to a JSON file of custom console token definitions to use instead of the built-in definitions',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
 
@@ -535,7 +535,7 @@ export default class ArgumentsParser {
         description:
           'Read files for known signatures and use the correct extension (also affects dir2dat)',
         choices: Object.keys(FixExtension).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
       })
@@ -579,7 +579,7 @@ export default class ArgumentsParser {
         group: groupRomMove,
         description: 'Delete empty subdirectories from the input directories after moving ROMs',
         choices: Object.keys(MoveDeleteDirs).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: MoveDeleteDirsInverted[MoveDeleteDirs.AUTO].toLowerCase(),
       })
@@ -595,7 +595,7 @@ export default class ArgumentsParser {
         group: groupRomClean,
         description: 'Directory to move cleaned files to (instead of being recycled)',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
       .option('clean-dry-run', {
@@ -620,7 +620,7 @@ export default class ArgumentsParser {
         group: groupRomZip,
         description: 'The structure format to use for written zip files',
         choices: Object.keys(ZipFormat).map((format) => format.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: ZipFormatInverted[ZipFormat.TORRENTZIP].toLowerCase(),
       })
@@ -629,7 +629,7 @@ export default class ArgumentsParser {
         alias: 'Z',
         description: 'Glob pattern of ROM filenames to exclude from zipping',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
       .option('zip-dat-name', {
@@ -654,7 +654,7 @@ export default class ArgumentsParser {
         group: groupRomLink,
         description: 'File linking mode',
         choices: Object.keys(LinkMode).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: LinkModeInverted[LinkMode.HARDLINK].toLowerCase(),
       })
@@ -684,7 +684,7 @@ export default class ArgumentsParser {
         group: groupRomHeader,
         description: 'Glob pattern of input filenames to force header detection for',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
       .option('remove-headers', {
@@ -707,7 +707,7 @@ export default class ArgumentsParser {
         description:
           'Glob pattern of input filenames to force trimming detection for (overriding all options below)',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         implies: 'dat',
       })
@@ -715,7 +715,7 @@ export default class ArgumentsParser {
         group: groupRomTrimmed,
         description: 'Detect trimming for uncompressed files',
         choices: Object.keys(TrimScanFiles).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: TrimScanFilesInverted[TrimScanFiles.AUTO].toLowerCase(),
       })
@@ -760,7 +760,7 @@ export default class ArgumentsParser {
         group: groupRomSet,
         description: 'ROM merge/split mode (requires DATs with parent/clone information)',
         choices: Object.keys(MergeMode).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase(),
       })
@@ -803,7 +803,7 @@ export default class ArgumentsParser {
         alias: 'x',
         description: 'Regular expression of game names to filter to',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
       })
       .option('filter-regex-exclude', {
@@ -811,7 +811,7 @@ export default class ArgumentsParser {
         alias: 'X',
         description: 'Regular expression of game names to exclude',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
       })
       .option('filter-language', {
@@ -858,7 +858,7 @@ export default class ArgumentsParser {
         group: groupRomFiltering,
         description: 'Regular expression of categories to filter to',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
         implies: 'dat',
       });
@@ -923,7 +923,7 @@ export default class ArgumentsParser {
         group: groupRomPriority,
         description: 'Regular expression of DAT game names to prefer',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
         implies: 'single',
       })
@@ -931,7 +931,7 @@ export default class ArgumentsParser {
         group: groupRomPriority,
         description: 'Regular expression of DAT ROM filenames to prefer',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
         implies: 'single',
       })
@@ -993,7 +993,7 @@ export default class ArgumentsParser {
         group: groupRomPriority,
         description: 'Prefer older or newer revisions, versions, or ring codes',
         choices: Object.keys(PreferRevision).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         implies: 'single',
       })
@@ -1014,7 +1014,7 @@ export default class ArgumentsParser {
         group: groupFilePriority,
         description: 'Prefer input files of a type',
         choices: Object.keys(PreferFiletype).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: PreferFiletypeInverted[PreferFiletype.PLAIN].toLowerCase(),
       })
@@ -1022,7 +1022,7 @@ export default class ArgumentsParser {
         group: groupFilePriority,
         description: 'Regular expression of filenames to prefer',
         type: 'array',
-        coerce: ArgumentsParser.readRegexFile,
+        coerce: ArgumentsParser.readRegexFile.bind(ArgumentsParser),
         requiresArg: true,
       })
 
@@ -1030,7 +1030,7 @@ export default class ArgumentsParser {
         group: groupPlaylist,
         description: 'Generate playlists depending on how many ROMs a game has',
         choices: Object.keys(PlaylistMode).map((mode) => mode.toLowerCase()),
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: PlaylistModeInverted[PlaylistMode.MULTIPLE].toLowerCase(),
       })
@@ -1069,7 +1069,7 @@ export default class ArgumentsParser {
         group: groupDir2Dat,
         description: 'dir2dat output directory',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -1087,7 +1087,7 @@ export default class ArgumentsParser {
         group: groupFixdat,
         description: 'Fixdat output directory',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
       .check((checkArgv) => {
@@ -1105,7 +1105,7 @@ export default class ArgumentsParser {
         group: groupReport,
         description: 'Report output file location (formatted with Moment.js date/time tokens)',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         default: `${Package.NAME}_%YYYY-%MM-%DDT%HH:%mm:%ss.csv`,
       })
@@ -1144,7 +1144,7 @@ export default class ArgumentsParser {
         group: groupDirectory,
         description: 'Path to a directory for temporary files',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
       })
       .option('disable-cache', {
@@ -1156,7 +1156,7 @@ export default class ArgumentsParser {
         group: groupDirectory,
         description: 'Location for the cache file',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: true,
         conflicts: ['disable-cache'],
       })
@@ -1171,7 +1171,7 @@ export default class ArgumentsParser {
         group: groupHelpDebug,
         description: 'Generate a debug log file to attach to bug reports',
         type: 'string',
-        coerce: ArgumentsParser.getLastValue, // don't allow string[] values
+        coerce: ArgumentsParser.getLastValue.bind(ArgumentsParser), // don't allow string[] values
         requiresArg: false, // explicitly false! we can default this
       })
       .middleware((middlewareArgv) => {
