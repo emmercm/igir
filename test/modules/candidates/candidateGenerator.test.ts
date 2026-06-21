@@ -14,6 +14,7 @@ import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
 import MameDAT from '../../../src/models/dats/mame/mameDat.js';
+import MergedDiscGame from '../../../src/models/dats/mergedDiscGame.js';
 import Release from '../../../src/models/dats/release.js';
 import ROM from '../../../src/models/dats/rom.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
@@ -935,6 +936,342 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         .getRomsWithFiles()
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath()),
     ).toEqual(files.map((file) => path.resolve(mergedGameName, path.basename(file.getFilePath()))));
+  });
+
+  it('should not consider disc-merged games incomplete when .cue files are unknown in CHDs', async () => {
+    const discOne = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 1)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 1).bin',
+          size: 705_614_112,
+          crc32: 'e32f4a7e',
+        }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 2)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 2).bin',
+          size: 731_911_824,
+          crc32: '21b5d15d',
+        }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    // Each disc is its own CHD. The .bin track is known, but the .cue track has unknown
+    // checksums (as real CHDs do, because we don't know what the extracted .cue should be).
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              if (rom.getName().toLowerCase().endsWith('.cue')) {
+                return await ArchiveEntry.entryOf({
+                  archive,
+                  entryPath: rom.getName(),
+                  size: 0,
+                  crc32: 'x'.repeat(8),
+                });
+              }
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(options, discMergedDat, files);
+
+    // The merged game should produce a candidate with every ROM, including both .cue files
+    const mergedGame = discMergedDat.getGames().at(0);
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getRomsWithFiles()).toHaveLength(mergedGame?.getRoms().length ?? 0);
+  });
+
+  it('should not consider 3-disc-merged games incomplete when .cue files are unknown in CHDs', async () => {
+    const discs = [1, 2, 3].map(
+      (n) =>
+        new Game({
+          name: `Three Discs (USA) (Disc ${n})`,
+          roms: [
+            new ROM({ name: `Three Discs (USA) (Disc ${n}).cue`, size: 97, crc32: `0000000${n}` }),
+            new ROM({
+              name: `Three Discs (USA) (Disc ${n}).bin`,
+              size: 100 * n,
+              crc32: `1111111${n}`,
+            }),
+          ],
+        }),
+    );
+    const dat = new LogiqxDAT({ games: discs });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              if (rom.getName().toLowerCase().endsWith('.cue')) {
+                return await ArchiveEntry.entryOf({
+                  archive,
+                  entryPath: rom.getName(),
+                  size: 0,
+                  crc32: 'x'.repeat(8),
+                });
+              }
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(options, discMergedDat, files);
+
+    const mergedGame = discMergedDat.getGames().at(0);
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getRomsWithFiles()).toHaveLength(mergedGame?.getRoms().length ?? 0);
+  });
+
+  it('should source each unknown .cue from the same CHD as its disc, with no output conflict', async () => {
+    const discOne = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 1)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 1).bin',
+          size: 705_614_112,
+          crc32: 'e32f4a7e',
+        }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 2)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 2).bin',
+          size: 731_911_824,
+          crc32: '21b5d15d',
+        }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              if (rom.getName().toLowerCase().endsWith('.cue')) {
+                return await ArchiveEntry.entryOf({
+                  archive,
+                  entryPath: rom.getName(),
+                  size: 0,
+                  crc32: 'x'.repeat(8),
+                });
+              }
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(options, discMergedDat, files);
+
+    // One complete candidate (no output-path conflict would have dropped it)
+    expect(candidates).toHaveLength(1);
+    const romsWithFiles = candidates[0].getRomsWithFiles();
+    expect(romsWithFiles).toHaveLength(4);
+
+    // Each disc's .cue must be sourced from the same CHD as that disc's .bin
+    const inputPathFor = (substring: string, extension: string): string | undefined =>
+      romsWithFiles
+        .find(
+          (rwf) =>
+            rwf.getRom().getName().includes(substring) &&
+            rwf.getRom().getName().toLowerCase().endsWith(extension),
+        )
+        ?.getInputFile()
+        .getFilePath();
+    expect(inputPathFor('(Disc 1)', '.cue')).toEqual(inputPathFor('(Disc 1)', '.bin'));
+    expect(inputPathFor('(Disc 2)', '.cue')).toEqual(inputPathFor('(Disc 2)', '.bin'));
+    expect(inputPathFor('(Disc 1)', '.cue')).not.toEqual(inputPathFor('(Disc 2)', '.cue'));
+  });
+
+  it('should resolve each disc when two discs share a byte-identical track', async () => {
+    // Both discs contain a .bin with identical checksum + size (e.g. a shared audio track), so the
+    // two ROMs share a hash code but have different filenames. The per-sub-game slice keys on name +
+    // hash code, so each disc still resolves its own CHD rather than collapsing onto one entry.
+    const discOne = new Game({
+      name: 'Shared Track (USA) (Disc 1)',
+      roms: [
+        new ROM({ name: 'Shared Track (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({ name: 'Shared Track (USA) (Disc 1).bin', size: 1024, crc32: 'abcdabcd' }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Shared Track (USA) (Disc 2)',
+      roms: [
+        new ROM({ name: 'Shared Track (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        // Same checksum + size as Disc 1's .bin -> identical hash code, different filename
+        new ROM({ name: 'Shared Track (USA) (Disc 2).bin', size: 1024, crc32: 'abcdabcd' }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              if (rom.getName().toLowerCase().endsWith('.cue')) {
+                return await ArchiveEntry.entryOf({
+                  archive,
+                  entryPath: rom.getName(),
+                  size: 0,
+                  crc32: 'x'.repeat(8),
+                });
+              }
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(options, discMergedDat, files);
+
+    expect(candidates).toHaveLength(1);
+    const romsWithFiles = candidates[0].getRomsWithFiles();
+    expect(romsWithFiles).toHaveLength(4);
+
+    const inputPathFor = (substring: string, extension: string): string | undefined =>
+      romsWithFiles
+        .find(
+          (rwf) =>
+            rwf.getRom().getName().includes(substring) &&
+            rwf.getRom().getName().toLowerCase().endsWith(extension),
+        )
+        ?.getInputFile()
+        .getFilePath();
+    // Each disc's cue + bin resolve to the same CHD, and the two discs resolve to different CHDs
+    expect(inputPathFor('(Disc 1)', '.cue')).toEqual(inputPathFor('(Disc 1)', '.bin'));
+    expect(inputPathFor('(Disc 2)', '.cue')).toEqual(inputPathFor('(Disc 2)', '.bin'));
+    expect(inputPathFor('(Disc 1)', '.bin')).not.toEqual(inputPathFor('(Disc 2)', '.bin'));
+  });
+
+  it('should stay complete after withProps re-wraps the MergedDiscGame', async () => {
+    const discOne = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 1)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).cue', size: 97, crc32: '9eeb6dff' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 1).bin',
+          size: 705_614_112,
+          crc32: 'e32f4a7e',
+        }),
+      ],
+    });
+    const discTwo = new Game({
+      name: 'Metal Gear Solid (USA) (Disc 2)',
+      roms: [
+        new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).cue', size: 97, crc32: 'f2ac185c' }),
+        new ROM({
+          name: 'Metal Gear Solid (USA) (Disc 2).bin',
+          size: 731_911_824,
+          crc32: '21b5d15d',
+        }),
+      ],
+    });
+    const dat = new LogiqxDAT({ games: [discOne, discTwo] });
+    const discMergedDat = new DATDiscMerger(
+      new Options({ ...options, mergeDiscs: true }),
+      new ProgressBarFake(),
+    ).merge(dat);
+
+    // Simulate the DATFilter/DATPreferer rebuild that runs between DATDiscMerger and
+    // CandidateGenerator. The subclass identity and sub-games must survive this rebuild.
+    const reWrappedDat = discMergedDat.withGames(
+      discMergedDat.getGames().map((game) => game.withProps({ cloneOf: undefined })),
+    );
+    expect(reWrappedDat.getGames()[0]).toBeInstanceOf(MergedDiscGame);
+
+    const files = (
+      await Promise.all(
+        dat.getGames().map(async (game) => {
+          const archive = new ChdBinCue(`${game.getName()}.chd`);
+          return await Promise.all(
+            game.getRoms().map(async (rom) => {
+              if (rom.getName().toLowerCase().endsWith('.cue')) {
+                return await ArchiveEntry.entryOf({
+                  archive,
+                  entryPath: rom.getName(),
+                  size: 0,
+                  crc32: 'x'.repeat(8),
+                });
+              }
+              return await ArchiveEntry.entryOf({
+                archive,
+                entryPath: rom.getName(),
+                size: rom.getSize(),
+                crc32: rom.getCrc32(),
+              });
+            }),
+          );
+        }),
+      )
+    ).flat();
+
+    const candidates = await candidateGenerator(options, reWrappedDat, files);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].getRomsWithFiles()).toHaveLength(4);
   });
 });
 
