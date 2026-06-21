@@ -65,6 +65,7 @@ export default class Zip extends Archive {
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
+    forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
 
@@ -80,9 +81,12 @@ export default class Zip extends Archive {
       entries.filter((entry) => !entry.isDirectory()),
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (entryFile: CentralDirectoryFileHeader): Promise<ArchiveEntry<this>> => {
-        // Calculate non-CRC32 checksums if needed
+        // Calculate checksums from the file's bytes if needed
         let checksums: ChecksumProps = {};
-        if (checksumBitmask & ~ChecksumBitmask.CRC32) {
+        if (
+          checksumBitmask & ~ChecksumBitmask.CRC32 ||
+          (forceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
+        ) {
           const entryStream = await entryFile.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
           let lastProgress = 0;
           try {

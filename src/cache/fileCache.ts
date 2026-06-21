@@ -82,7 +82,7 @@ export default class FileCache {
 
     this.cache = await new Cache<CacheValue>({
       filePath: cacheFilePath,
-      fileFlushMillis: 120_000,
+      fileFlushMillis: 5 * 60 * 1000,
       saveOnExit: true,
     }).load();
 
@@ -197,6 +197,7 @@ export default class FileCache {
     checksumBitmask: number,
     forceRecompute = false,
     callback?: FsReadCallback,
+    forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(archive.getFilePath());
@@ -219,6 +220,7 @@ export default class FileCache {
         computedEntries = (await archive.getArchiveEntries(
           checksumBitmask,
           callback,
+          forceChecksumCalculation,
         )) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,

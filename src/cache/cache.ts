@@ -16,7 +16,7 @@ export interface CacheProps {
 }
 
 /**
- * A cache of a fixed size that ejects the oldest inserted key.
+ * A cache of an unbounded size.
  */
 export default class Cache<V> {
   private keyValues = new Map<string, V>();
