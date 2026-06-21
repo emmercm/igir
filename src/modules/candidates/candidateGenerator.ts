@@ -9,6 +9,7 @@ import type FileFactory from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import Disk from '../../models/dats/disk.js';
 import type Game from '../../models/dats/game.js';
+import MergedDiscGame from '../../models/dats/mergedDiscGame.js';
 import type ROM from '../../models/dats/rom.js';
 import type Archive from '../../models/files/archives/archive.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
@@ -289,6 +290,17 @@ export default class CandidateGenerator extends Module {
       return new Map();
     }
 
+    if (game instanceof MergedDiscGame) {
+      // Resolve each disc independently so every disc is the single-archive case the code already
+      // handles correctly (including pulling an unknown .cue from the same CHD that holds its .bins).
+      return this.findOptimalInputFilesForMergedDiscGame(
+        dat,
+        game,
+        romsAndInputFiles,
+        indexedFiles,
+      );
+    }
+
     const archiveWithEveryRom = this.findArchiveFileWithEveryRomForGame(
       dat,
       game,
@@ -310,6 +322,71 @@ export default class CandidateGenerator extends Module {
     );
   }
 
+  /**
+   * Resolve input files for a {@link MergedDiscGame} one sub-game at a time. Any ROM not resolved
+   * to a single containing archive falls back to its first matched input file.
+   */
+  private findOptimalInputFilesForMergedDiscGame(
+    dat: DAT,
+    game: MergedDiscGame,
+    romsAndInputFiles: [ROM, File[]][],
+    indexedFiles: IndexedFiles,
+  ): Map<ROM, File> {
+    // All intermediate matching is keyed by a stable ROM name + hash code string rather than by ROM
+    // instance, so it survives any earlier reinstantiation
+    const entryKey = (rom: ROM): string => `${rom.getName()}|${rom.hashCode()}`;
+    const entriesByKey = new Map<string, [ROM, File[]]>(
+      romsAndInputFiles.map((romAndInputFiles) => [
+        entryKey(romAndInputFiles[0]),
+        romAndInputFiles,
+      ]),
+    );
+
+    // Resolve each sub-game's single containing archive, keyed by entryKey
+    const filesByKey = new Map<string, File>();
+    for (const subGame of game.getSubGames()) {
+      const subGameRoms = subGame.getRoms();
+      const subGameRomsAndInputFiles = subGameRoms
+        .map((subGameRom) => entriesByKey.get(entryKey(subGameRom)))
+        .filter((entry) => entry !== undefined);
+      if (subGameRomsAndInputFiles.length === 0) {
+        continue;
+      }
+
+      const archiveWithEveryRom = this.findArchiveFileWithEveryRomForGame(
+        dat,
+        subGame,
+        subGameRoms,
+        subGameRomsAndInputFiles,
+        indexedFiles,
+      );
+      if (archiveWithEveryRom === undefined) {
+        continue;
+      }
+      for (const [rom, inputFile] of archiveWithEveryRom) {
+        filesByKey.set(entryKey(rom), inputFile);
+      }
+    }
+
+    const resolved = new Map<ROM, File>();
+    for (const [rom, inputFiles] of romsAndInputFiles) {
+      const inputFile = filesByKey.get(entryKey(rom)) ?? inputFiles.at(0);
+      if (inputFile !== undefined) {
+        resolved.set(rom, inputFile);
+      }
+    }
+    return resolved;
+  }
+
+  /**
+   * Find a single input {@link Archive} that contains every one of a {@link Game}'s {@link ROM}s, and
+   * return a map from each ROM to its matching entry within that archive. Preferring one archive for
+   * the whole game avoids output-path conflicts when raw-copying and avoids leaving archives partially
+   * used when zipping. Returns `undefined` when extracting (the source archive doesn't matter) or when
+   * no single archive holds every ROM, leaving the caller to fall back to per-ROM matching. ROMs with
+   * no matching entry are omitted from the returned map, so it is always a `Map<ROM, File>` of only
+   * resolved ROMs.
+   */
   private findArchiveFileWithEveryRomForGame(
     dat: DAT,
     game: Game,
@@ -455,7 +532,7 @@ export default class CandidateGenerator extends Module {
     // An Archive was found, use that as the only possible input file
     // For each of this Game's ROMs, find the matching ArchiveEntry from this Archive
     return new Map(
-      romsAndInputFiles.map(([rom, inputFiles]) => {
+      romsAndInputFiles.flatMap(([rom, inputFiles]) => {
         const archiveEntries = inputFiles.filter(
           (inputFile) =>
             inputFile.getFilePath() === archiveWithEveryRom.getFilePath() &&
@@ -484,7 +561,7 @@ export default class CandidateGenerator extends Module {
             ?.find((file) => file.getExtractedFilePath().toLowerCase().endsWith('.cue'));
         }
 
-        return [rom, archiveEntry as ArchiveEntry<Archive>];
+        return archiveEntry === undefined ? [] : [[rom, archiveEntry]];
       }),
     );
   }

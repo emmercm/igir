@@ -15,7 +15,7 @@ on:
 
 concurrency:
   group: pr-renamer-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false # queue
 
 jobs:
   rename:

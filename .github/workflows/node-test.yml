@@ -129,10 +129,6 @@ jobs:
         run: |
           rm -rf packages/*/addon* packages/*/prebuilds*
       - run: npm install --foreground-scripts
-      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
 
       # Test the source files
       - run: npm run test:unit
@@ -165,10 +161,6 @@ jobs:
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
       - run: npm ci --ignore-scripts
-      - if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       - run: npm run test:unit:bun
 
   node-e2e:
@@ -204,9 +196,6 @@ jobs:
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
       - run: npm ci --foreground-scripts
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       # Test the built files
       - run: ./test/endToEndTest.sh
 
