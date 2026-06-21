@@ -3,7 +3,8 @@ import path from 'node:path';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type DAT from '../../models/dats/dat.js';
-import Game from '../../models/dats/game.js';
+import type Game from '../../models/dats/game.js';
+import MergedDiscGame from '../../models/dats/mergedDiscGame.js';
 import type Options from '../../models/options.js';
 import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
@@ -69,21 +70,22 @@ export default class DATDiscMerger extends Module {
         .filter(([, count]) => count > 1)
         .map(([romName]) => romName)
         .toSorted();
-      if (duplicateRomNames.length > 1) {
-        // De-conflict the filenames by adding a subfolder of the original game's name
-        const deconflictedRoms = games.flatMap((game) =>
-          game.getRoms().map((rom) => rom.withName(path.join(game.getName(), rom.getName()))),
-        );
-        return new Game({
-          name: gameName,
-          roms: deconflictedRoms,
-          discMerged: true,
-        });
-      }
 
-      return new Game({
+      const subGames =
+        duplicateRomNames.length > 1
+          ? // De-conflict the filenames by adding a subfolder of the original game's name
+            games.map((game) =>
+              game.withProps({
+                roms: game
+                  .getRoms()
+                  .map((rom) => rom.withName(path.join(game.getName(), rom.getName()))),
+              }),
+            )
+          : games;
+
+      return new MergedDiscGame({
         name: gameName,
-        roms: roms,
+        subGames,
         discMerged: true,
       });
     });
