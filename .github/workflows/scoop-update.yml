@@ -14,6 +14,11 @@ on:
         description: 'Release tag to update the Scoop manifest to (e.g. v5.1.1)'
         required: false
         type: string
+      auto-merge:
+        description: 'Auto-merge pull request?'
+        required: true
+        type: boolean
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}
@@ -53,12 +58,14 @@ jobs:
             echo "user_name=${USER_NAME}"
           } >> "${GITHUB_OUTPUT}"
 
-      # Download the Windows release assets, recompute their hashes, and rewrite the manifest
+      # Download the Windows release assets, recompute their hashes, rewrite the manifest, and commit
       - id: manifest
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.vars.outputs.tag }}
           VERSION: ${{ steps.vars.outputs.version }}
+          USER_EMAIL: ${{ steps.vars.outputs.user_email }}
+          USER_NAME: ${{ steps.vars.outputs.user_name }}
         run: |
           set -euo pipefail
 
@@ -89,6 +96,10 @@ jobs:
             echo "The Scoop manifest is already up to date with ${TAG}"
             echo "changed=false" >> "${GITHUB_OUTPUT}"
           else
+            git config user.email "${USER_EMAIL}"
+            git config user.name "${USER_NAME}"
+            git add bucket/igir.json
+            git commit -m "Chore: update Scoop manifest to ${TAG}"
             echo "changed=true" >> "${GITHUB_OUTPUT}"
           fi
 
@@ -97,17 +108,23 @@ jobs:
         if: ${{ steps.manifest.outputs.changed == 'true' }}
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          # GitHub won't run workflows off of events from the `github-actions` user
-          # But also, I want the PR to be created under my name for cosmetic reasons
+          # GitHub won't run workflows off of code commits+pushes from the `${{github.token}}` token
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           author: ${{ steps.vars.outputs.user_name }} <${{ steps.vars.outputs.user_email }}>
           base: main
           branch: ${{ github.actor }}/scoop-${{ steps.vars.outputs.version }}
           delete-branch: true
-          commit-message: 'Chore: update Scoop manifest to ${{ steps.vars.outputs.tag }}'
           title: 'Chore: update Scoop manifest to ${{ steps.vars.outputs.tag }}'
-          body: 'Automated Scoop manifest bump for the [`${{ steps.vars.outputs.tag }}`](https://github.com/${{ github.repository }}/releases/tag/${{ steps.vars.outputs.tag }}) release.'
+          assignees: ${{ !inputs.auto-merge && github.repository_owner || '' }}
+          reviewers: ${{ (!inputs.auto-merge && github.repository_owner != github.actor) && github.repository_owner || '' }}
       - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        run: |
+          {
+            echo "# ${{ steps.vars.outputs.tag }}"
+            echo ""
+            echo "${{ steps.create-pull-request.outputs.pull-request-url }}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
         run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --squash --auto
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
