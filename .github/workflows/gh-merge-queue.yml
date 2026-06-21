@@ -36,7 +36,14 @@ jobs:
     permissions: {}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Full history so the local merge has a valid merge base
+          fetch-depth: 0
+          # Token needed to trigger Actions on push
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
+          set -x
           pr_search="sort:created-asc"
 
           # Wait for the merge state status to be updated
@@ -53,19 +60,72 @@ jobs:
           echo "PRs found:"
           gh pr list --search "${pr_search}" --json number,title,mergeable,mergeStateStatus,autoMergeRequest | jq
 
-          eligible_prs="$(gh pr list --search "${pr_search}" --json number,isDraft,mergeable,mergeStateStatus,autoMergeRequest --jq '.[] | select(.isDraft==false and .mergeable=="MERGEABLE" and .mergeStateStatus=="BEHIND" and .autoMergeRequest!=null) | .number')"
+          # Eligible: auto-merge, non-draft PRs that are either mergeable+BEHIND, or CONFLICTING
+          eligible_prs="$(gh pr list --search "${pr_search}" --json number,isDraft,mergeable,mergeStateStatus,autoMergeRequest,headRefName,baseRefName,headRepository --jq '
+            .[]
+            | select(.isDraft==false and .autoMergeRequest!=null)
+            | select((.mergeable=="MERGEABLE" and .mergeStateStatus=="BEHIND") or .mergeable=="CONFLICTING")
+            | [.number, .mergeable, .headRefName, .baseRefName, .headRepository.nameWithOwner] | @tsv')"
           if [[ "${eligible_prs}" == "" ]]; then
             echo "No eligible PRs found"
             exit 0
           fi
-          echo "$(echo "${eligible_prs}" | wc -l | awk '{print $1}') eligible PRs found: $(echo "${eligible_prs}" | awk '{print $1}' | awk 'ORS=", "' | sed 's/, *$//')"
+          echo "$(echo "${eligible_prs}" | wc -l | awk '{print $1}') eligible PRs found"
 
-          while read -r number; do
-            echo "Updating PR #${number}"
-            gh pr update-branch "${number}" && break
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          while IFS=$'\t' read -r number mergeable head_ref base_ref head_repo; do
+            [[ -z "${number}" ]] && continue
+
+            if [[ "${mergeable}" == "MERGEABLE" ]]; then
+              echo "Updating PR #${number}"
+              gh pr update-branch "${number}" && break
+              continue
+            fi
+
+            # CONFLICTING: attempt a local merge of the base branch into the PR branch.
+            # The head branch may live in a fork, so fetch/push its own repository (which equals
+            #   `origin` for same-repo PRs). The base branch always lives in `origin`.
+            head_remote="https://github.com/${head_repo}.git"
+            echo "Attempting to resolve conflicts in PR #${number} (${head_repo}:${head_ref} <- ${base_ref})"
+            git fetch origin "${base_ref}"
+            git fetch "${head_remote}" "${head_ref}"
+            git checkout -B "pr-${number}" FETCH_HEAD
+
+            if git merge --no-edit "origin/${base_ref}"; then
+              echo "PR #${number} merged cleanly, pushing"
+              git push "${head_remote}" "HEAD:${head_ref}" && break
+              continue
+            fi
+
+            conflicted="$(git diff --name-only --diff-filter=U)"
+            all_prebuilds=true
+            while IFS= read -r file; do
+              [[ -z "${file}" ]] && continue
+              case "${file}" in
+                packages/*/addon-*/prebuilds/*/*.node) ;;
+                *) all_prebuilds=false ;;
+              esac
+            done <<< "${conflicted}"
+
+            if [[ "${all_prebuilds}" != "true" ]]; then
+              echo "PR #${number} has conflicts outside of prebuilt binaries, skipping"
+              git merge --abort
+              continue
+            fi
+
+            echo "Resolving prebuilt-binary conflicts in PR #${number} by keeping the PR's own versions"
+            while IFS= read -r file; do
+              [[ -z "${file}" ]] && continue
+              git checkout --ours -- "${file}"
+              git add -- "${file}"
+            done <<< "${conflicted}"
+            git commit --no-edit
+            git push "${head_remote}" "HEAD:${head_ref}" && break
           done <<< "${eligible_prs}"
         env:
-          # GitHub won't run workflows off of code commits+pushes from the `github-actions` user
+          # GitHub won't run workflows off of code commits+pushes from the `${{github.token}}` token
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           GH_REPO: ${{ github.repository }}
 
