@@ -103,7 +103,7 @@ export default class CandidateArchiveFileHasher extends Module {
             const childBar = this.progressBar.addChildBar({
               name: archiveFile.toString(),
               total: archiveFile.getSize(),
-              progressFormatter: FsUtil.sizeReadable,
+              progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
             });
 
             try {

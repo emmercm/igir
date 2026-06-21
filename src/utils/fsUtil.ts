@@ -37,6 +37,8 @@ export type FsWalkCallback = (increment: number) => void;
  * A collection of static filesystem utility functions.
  */
 export default class FsUtil {
+  private static readonly SIZE_READABLE_SUFFIXES = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+
   // Assume that all drives we're reading from or writing to were already mounted at startup
   // https://github.com/cristiammercado/node-disk-info/issues/36
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -654,12 +656,11 @@ export default class FsUtil {
    * @see https://gist.github.com/zentala/1e6f72438796d74531803cc3833c039c
    */
   static sizeReadable(bytes: number): string {
-    const k = 1024;
-    const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const k = process.platform === 'darwin' ? 1000 : 1024;
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
     const bytesDivided = bytes / k ** i;
     if (Number.isInteger(bytesDivided)) {
-      return `${bytesDivided}${sizes[i]}`;
+      return `${bytesDivided}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
     }
     let fractionDigits = 1;
     if (bytesDivided === 0) {
@@ -674,7 +675,7 @@ export default class FsUtil {
     ) {
       fractionDigits = 0;
     }
-    return `${bytesDivided.toFixed(fractionDigits)}${sizes[i]}`;
+    return `${bytesDivided.toFixed(fractionDigits)}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
   }
 
   /**
