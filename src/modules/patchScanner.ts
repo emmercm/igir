@@ -71,7 +71,7 @@ export default class PatchScanner extends Scanner {
         const childBar = this.progressBar.addChildBar({
           name: patchFile.toString(),
           total: patchFile.getSize(),
-          progressFormatter: FsUtil.sizeReadable,
+          progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
         });
         try {
           return await this.patchFromFile(patchFile);

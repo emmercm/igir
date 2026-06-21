@@ -26,42 +26,42 @@ export default class PatchFactory {
     {
       extensions: APSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [APSPatch.FILE_SIGNATURE],
-      factory: APSPatch.patchFrom,
+      factory: APSPatch.patchFrom.bind(APSPatch),
     },
     {
       extensions: BPSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [BPSPatch.FILE_SIGNATURE],
-      factory: BPSPatch.patchFrom,
+      factory: BPSPatch.patchFrom.bind(BPSPatch),
     },
     {
       extensions: DPSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [],
-      factory: DPSPatch.patchFrom,
+      factory: DPSPatch.patchFrom.bind(DPSPatch),
     },
     {
       extensions: IPSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: IPSPatch.FILE_SIGNATURES,
-      factory: IPSPatch.patchFrom,
+      factory: IPSPatch.patchFrom.bind(IPSPatch),
     },
     {
       extensions: NinjaPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [NinjaPatch.FILE_SIGNATURE],
-      factory: NinjaPatch.patchFrom,
+      factory: NinjaPatch.patchFrom.bind(NinjaPatch),
     },
     {
       extensions: PPFPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [PPFPatch.FILE_SIGNATURE],
-      factory: PPFPatch.patchFrom,
+      factory: PPFPatch.patchFrom.bind(PPFPatch),
     },
     {
       extensions: UPSPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [UPSPatch.FILE_SIGNATURE],
-      factory: UPSPatch.patchFrom,
+      factory: UPSPatch.patchFrom.bind(UPSPatch),
     },
     {
       extensions: VcdiffPatch.SUPPORTED_EXTENSIONS,
       fileSignatures: [VcdiffPatch.FILE_SIGNATURE],
-      factory: VcdiffPatch.patchFrom,
+      factory: VcdiffPatch.patchFrom.bind(VcdiffPatch),
     },
   ];
 
