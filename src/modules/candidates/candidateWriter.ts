@@ -334,6 +334,7 @@ export default class CandidateWriter extends Module {
               progressBar.setTotal(total);
             }
           },
+          true,
         )) ?? [];
     } catch (error) {
       return `failed to get archive contents: ${error}`;

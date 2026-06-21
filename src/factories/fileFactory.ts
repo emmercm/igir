@@ -161,6 +161,7 @@ export default class FileFactory {
     checksumBitmask: number,
     cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
     callback?: FsReadCallback,
+    forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(
@@ -168,6 +169,7 @@ export default class FileFactory {
         checksumBitmask,
         cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
         callback,
+        forceChecksumCalculation,
       );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it

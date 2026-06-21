@@ -53,11 +53,12 @@ export default class Tar extends Archive {
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
+    _forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<this>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<this>>[] = [];
 
     // WARN(cemmer): entries in tar archives don't have headers, the entire file has to be read to
-    // calculate the CRCs
+    // calculate the CRCs, so the CRC32 is always recalculated regardless of _forceChecksumCalculation
     let errorMessage: string | undefined;
     const writeStream = new tar.Parser({
       onwarn: (code, message): void => {
