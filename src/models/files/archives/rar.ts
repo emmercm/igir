@@ -51,6 +51,7 @@ export default class Rar extends Archive {
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
+    forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<this>[]> {
     const rar = await createExtractorFromFile({
       filepath: this.getFilePath(),
@@ -71,9 +72,12 @@ export default class Rar extends Archive {
       fileHeaders,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader: FileHeader): Promise<ArchiveEntry<this>> => {
-        // Calculate non-CRC32 checksums if needed
+        // Calculate checksums from the file's bytes if needed
         let checksums: ChecksumProps = {};
-        if (checksumBitmask & ~ChecksumBitmask.CRC32) {
+        if (
+          checksumBitmask & ~ChecksumBitmask.CRC32 ||
+          (forceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
+        ) {
           let lastProgress = 0;
           checksums = await this.extractEntryToStream(fileHeader.name, async (readable) => {
             return await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {

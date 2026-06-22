@@ -50,7 +50,7 @@ export default abstract class Scanner extends Module {
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
           total: await FsUtil.size(inputFile),
-          progressFormatter: FsUtil.sizeReadable,
+          progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
         });
 
         let files: File[];

@@ -26,6 +26,7 @@ import ZipSpanned from '../../../../src/models/files/archives/sevenZip/zipSpanne
 import ZipX from '../../../../src/models/files/archives/sevenZip/zipX.js';
 import Tar from '../../../../src/models/files/archives/tar.js';
 import Zip from '../../../../src/models/files/archives/zip.js';
+import { ChecksumBitmask } from '../../../../src/models/files/fileChecksums.js';
 import Options from '../../../../src/models/options.js';
 import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import ArrayUtil from '../../../../src/utils/arrayUtil.js';
@@ -101,6 +102,35 @@ describe('getArchiveEntries', () => {
       const entry = entries[0];
       expect((entry as ArchiveEntry<Archive>).getEntryPath()).toEqual(expectedEntryPath);
       expect(entry.getCrc32()).toEqual(expectedCrc);
+    },
+  );
+
+  test.each([
+    [
+      './test/fixtures/roms/gz/fizzbuzz.gz',
+      (filePath: string): Archive => new Gzip(filePath),
+      '370517b5',
+    ],
+    [
+      './test/fixtures/roms/rar/fizzbuzz.rar',
+      (filePath: string): Archive => new Rar(filePath),
+      '370517b5',
+    ],
+    [
+      './test/fixtures/roms/zip/fizzbuzz.zip',
+      (filePath: string): Archive => new Zip(filePath),
+      '370517b5',
+    ],
+  ] satisfies [string, (filePath: string) => Archive, string][])(
+    'should recalculate the CRC32 from the bytes when forced: %s',
+    async (filePath, archiveFactory, expectedCrc) => {
+      const entries = await archiveFactory(filePath).getArchiveEntries(
+        ChecksumBitmask.CRC32,
+        undefined,
+        true,
+      );
+      expect(entries).toHaveLength(1);
+      expect(entries[0].getCrc32()).toEqual(expectedCrc);
     },
   );
 

@@ -227,18 +227,16 @@ jobs:
           git add --all packages
           git status
 
-          USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          USER_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
-          git config --global user.email "${USER_EMAIL}"
+          git config user.email "${USER_EMAIL}"
 
-          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
+          USER_NAME="github-actions[bot]"
           echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
-          git config --global user.name "${USER_NAME}"
+          git config user.name "${USER_NAME}"
 
           git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}" || exit 0
           git push
-        env:
-          GH_TOKEN: ${{ github.token }}
 
   # !!! This check should be required by GitHub !!!
   prebuild-status-check:

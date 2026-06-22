@@ -188,7 +188,7 @@ export default class CandidateWriter extends Module {
         (sum, [, outputEntry]) => sum + outputEntry.getSize(),
         0,
       ),
-      progressFormatter: FsUtil.sizeReadable,
+      progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
     });
     try {
       // If the output file already exists, see if we need to do anything
@@ -334,6 +334,7 @@ export default class CandidateWriter extends Module {
               progressBar.setTotal(total);
             }
           },
+          true,
         )) ?? [];
     } catch (error) {
       return `failed to get archive contents: ${error}`;
@@ -563,7 +564,7 @@ export default class CandidateWriter extends Module {
       name: outputFilePath,
       // Files being patched might not have a known final size, just guess it as the input size
       total: outputRomFile.getSize() > 0 ? outputRomFile.getSize() : inputRomFile.getSize(),
-      progressFormatter: FsUtil.sizeReadable,
+      progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
     });
     try {
       // If the output file already exists, see if we need to do anything

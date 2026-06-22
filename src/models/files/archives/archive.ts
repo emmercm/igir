@@ -36,6 +36,7 @@ export default abstract class Archive {
   abstract getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
+    forceChecksumCalculation?: boolean,
   ): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(
