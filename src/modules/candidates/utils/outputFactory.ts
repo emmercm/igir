@@ -657,8 +657,8 @@ export default class OutputFactory {
     const gameName =
       game instanceof MergedDiscGame
         ? // The Game is the result of 2+ discs merged together, and we're not extracting this file,
-          // so we generate a basename based on the original disc name (with multi-track suffixes
-          // collapsed). The game-name subdirectory is applied uniformly in getName().
+          // so we generate a basename based on the original game/disc name (with track numbers
+          // stripped). OutputFactory#getName() will group multiple discs together.
           (game
             .getSubGames()
             .find((subGame) =>
