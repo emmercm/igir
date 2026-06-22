@@ -3,10 +3,10 @@ import path from 'node:path';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import type DAT from '../../models/dats/dat.js';
+import Game from '../../models/dats/game.js';
 import type ROM from '../../models/dats/rom.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import type Options from '../../models/options.js';
-import SingleValueGame from '../../models/singleValueGame.js';
 import WriteCandidate from '../../models/writeCandidate.js';
 import Module from '../module.js';
 
@@ -43,7 +43,7 @@ export default class CandidateCombiner extends Module {
     return [candidate];
   }
 
-  private static buildGame(dat: DAT, candidates: WriteCandidate[]): SingleValueGame {
+  private static buildGame(dat: DAT, candidates: WriteCandidate[]): Game {
     const name = dat.getName();
 
     const roms = candidates
@@ -61,7 +61,7 @@ export default class CandidateCombiner extends Module {
         .values(),
     ];
 
-    return new SingleValueGame({
+    return new Game({
       name,
       roms: uniqueRoms,
     });
@@ -69,7 +69,7 @@ export default class CandidateCombiner extends Module {
 
   private static buildCombinedCandidate(
     dat: DAT,
-    game: SingleValueGame,
+    game: Game,
     candidates: WriteCandidate[],
   ): WriteCandidate {
     const romsWithFiles = candidates.flatMap((candidate) =>

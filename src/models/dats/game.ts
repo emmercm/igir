@@ -113,7 +113,12 @@ export interface GameProps {
   // ********** IGIR FIELDS **********
 
   readonly dir2datSource?: string;
-  readonly discMerged?: boolean;
+
+  // A single region/language that this {@link Game} has been narrowed down to, set when a
+  // {@link Game} is "exploded" into one copy per region/language during candidate generation.
+  // When defined, these take precedence over the values otherwise derived from the game name.
+  readonly region?: string;
+  readonly language?: string;
 }
 
 /**
@@ -226,8 +231,8 @@ export default class Game implements GameProps {
   readonly genre?: string;
 
   readonly dir2datSource?: string;
-
-  readonly discMerged: boolean;
+  readonly region?: string;
+  readonly language?: string;
 
   constructor(props?: GameProps) {
     this.name = props?.name ?? '';
@@ -250,7 +255,8 @@ export default class Game implements GameProps {
     this.genre = props?.genre;
 
     this.dir2datSource = props?.dir2datSource;
-    this.discMerged = props?.discMerged ?? false;
+    this.region = props?.region;
+    this.language = props?.language;
   }
 
   /**
@@ -367,10 +373,6 @@ export default class Game implements GameProps {
 
   getCloneOfId(): string | undefined {
     return this.cloneOfId;
-  }
-
-  getDiscMerged(): boolean {
-    return this.discMerged;
   }
 
   // Computed getters
@@ -737,6 +739,10 @@ export default class Game implements GameProps {
   // Internationalization
 
   getRegions(): string[] {
+    if (this.region !== undefined) {
+      return [this.region];
+    }
+
     const longRegionsMatch = this.getName().match(Game.LONG_REGIONS_REGEX);
     if (longRegionsMatch !== null) {
       return longRegionsMatch[1]
@@ -767,6 +773,10 @@ export default class Game implements GameProps {
   }
 
   getLanguages(): string[] {
+    if (this.language !== undefined) {
+      return [this.language];
+    }
+
     const shortLanguages = this.getTwoLetterLanguagesFromName();
     if (shortLanguages.length > 0) {
       return shortLanguages;
