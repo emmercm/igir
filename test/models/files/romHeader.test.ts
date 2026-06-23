@@ -24,7 +24,7 @@ describe('headerFromFilename', () => {
     },
   );
 
-  test.each(['', '   ', '.nes', 'rom.zip', 'rom.nes.zip'])(
+  test.each(['', ' '.repeat(3), '.nes', 'rom.zip', 'rom.nes.zip'])(
     'should not get a file header for extension: %s',
     (filePath) => {
       const fileHeader = ROMHeader.headerFromFilename(filePath);
