@@ -17,7 +17,6 @@ import ROM from '../../../src/models/dats/rom.js';
 import File from '../../../src/models/files/file.js';
 import Options, { FixExtension, FixExtensionInverted } from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
@@ -138,7 +137,7 @@ it('should correct ROMs without DATs', async () => {
           size: tempFile.getSize(),
         }),
       ];
-      const game = new SingleValueGame({
+      const game = new Game({
         name: path.parse(tempFile.getFilePath()).name,
         roms: roms,
       });
@@ -233,7 +232,7 @@ it('should correct ROMs with missing filenames', async () => {
     const candidates = tempFiles.map((tempFile) => {
       // No ROM in the DAT has a filename, therefore all of them should be corrected
       const roms = [new ROM({ name: '', size: tempFile.getSize() })];
-      const game = new SingleValueGame({
+      const game = new Game({
         name: path.parse(tempFile.getFilePath()).name,
         roms: roms,
       });

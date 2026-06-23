@@ -1,7 +1,6 @@
 import Game from '../../../src/models/dats/game.js';
 import MergedDiscGame from '../../../src/models/dats/mergedDiscGame.js';
 import ROM from '../../../src/models/dats/rom.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 
 const discOne = new Game({
   name: 'Game (Disc 1)',
@@ -33,11 +32,10 @@ describe('getRoms', () => {
 
   it('should seed the inherited roms field so an object spread sees the flattened ROMs', () => {
     const merged = new MergedDiscGame({ name: 'Game', subGames: [discOne, discTwo] });
-    // Several call sites build a SingleValueGame via `new SingleValueGame({ ...game })`, which
-    // reads the raw `roms` field, not getRoms(). The constructor must seed `super` from the
-    // sub-games for that spread to carry every ROM.
-    const singleValueGame = new SingleValueGame({ ...merged });
-    expect(singleValueGame.getRoms()).toEqual([...discOne.getRoms(), ...discTwo.getRoms()]);
+    // An object spread (e.g. `new Game({ ...game })`) reads the raw `roms` field, not getRoms().
+    // The constructor must seed `super` from the sub-games for that spread to carry every ROM.
+    const spreadGame = new Game({ ...merged });
+    expect(spreadGame.getRoms()).toEqual([...discOne.getRoms(), ...discTwo.getRoms()]);
   });
 });
 

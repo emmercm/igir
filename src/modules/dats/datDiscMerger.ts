@@ -86,7 +86,6 @@ export default class DATDiscMerger extends Module {
       return new MergedDiscGame({
         name: gameName,
         subGames,
-        discMerged: true,
       });
     });
   }

@@ -8,7 +8,6 @@ import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/models/dats/rom.js';
 import Options, { PlaylistMode, PlaylistModeInverted } from '../../src/models/options.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
-import SingleValueGame from '../../src/models/singleValueGame.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import DATDiscMerger from '../../src/modules/dats/datDiscMerger.js';
 import PlaylistCreator from '../../src/modules/playlistCreator.js';
@@ -232,7 +231,7 @@ async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
   return await Promise.all(
     dat.getGames().map(async (game) => {
       return new WriteCandidate(
-        new SingleValueGame({ ...game }),
+        new Game({ ...game }),
         await Promise.all(
           game.getRoms().map(async (rom) => {
             const file = await rom.toFile();

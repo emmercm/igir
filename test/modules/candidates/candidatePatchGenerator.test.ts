@@ -20,7 +20,6 @@ import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import IPSPatch from '../../../src/models/patches/ipsPatch.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import CandidatePatchGenerator from '../../../src/modules/candidates/candidatePatchGenerator.js';
@@ -235,7 +234,7 @@ describe('with archive file inputs', () => {
       size: 7,
       crc32: romCrc,
     });
-    const candidate = new WriteCandidate(new SingleValueGame({ name: 'before', roms: [rom] }), [
+    const candidate = new WriteCandidate(new Game({ name: 'before', roms: [rom] }), [
       new ROMWithFiles(
         rom,
         new ArchiveFile(archiveEntry, { size: 100 }),
@@ -275,7 +274,7 @@ describe('with archive file inputs', () => {
       size: 7,
       crc32: romCrc,
     });
-    const candidate = new WriteCandidate(new SingleValueGame({ name: 'before', roms: [rom] }), [
+    const candidate = new WriteCandidate(new Game({ name: 'before', roms: [rom] }), [
       new ROMWithFiles(
         rom,
         new ArchiveFile(archiveEntry, { size: 100 }),

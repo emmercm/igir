@@ -18,7 +18,6 @@ import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import IndexedFiles from '../../../src/models/indexedFiles.js';
 import Options from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import MovedROMDeleter from '../../../src/modules/cleaners/movedRomDeleter.js';
@@ -66,7 +65,7 @@ it('should delete raw files', async () => {
 
     // When - the file is considered "moved" (written to a different output path)
     const outputFile = inputFile.withFilePath(path.join('output', 'game.rom'));
-    const movedWriteCandidate = new WriteCandidate(new SingleValueGame({ name: 'game' }), [
+    const movedWriteCandidate = new WriteCandidate(new Game({ name: 'game' }), [
       new ROMWithFiles(
         new ROM({ name: 'game.rom', size: 0, crc32: '00000000' }),
         inputFile,
@@ -510,7 +509,7 @@ it("should not delete files that weren't moved", async () => {
     const inputFile = await File.fileOf({ filePath: rawFile });
 
     // The file is a "moved" ROM, but it's also a written output (same path)
-    const movedWriteCandidate = new WriteCandidate(new SingleValueGame({ name: 'game' }), [
+    const movedWriteCandidate = new WriteCandidate(new Game({ name: 'game' }), [
       new ROMWithFiles(
         new ROM({ name: 'game.rom', size: 0, crc32: '00000000' }),
         inputFile,
