@@ -164,6 +164,48 @@ it('should correct ROMs without DATs', async () => {
   }
 });
 
+it('should not truncate names with periods when correcting from file signature', async () => {
+  const options = new Options({
+    // No DAT has been provided, therefore all ROMs should be corrected
+    fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+  });
+  const dat = new LogiqxDAT({ header: new Header() });
+
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+  try {
+    // A CHD file whose name contains periods, but no extension on the inferred ROM name
+    const gameName = 'J. B. Harold Murder Club (USA) (En,Ja)';
+    const tempFile = path.join(tempDir, `${gameName}.chd`);
+    await FsUtil.copyFile(path.join('test', 'fixtures', 'roms', 'chd', 'CD-ROM.chd'), tempFile);
+    const inputFile = await File.fileOf({ filePath: tempFile });
+
+    // The inferred ROM name has no extension (this is what a raw CHD entry produces)
+    const rom = new ROM({ name: gameName, size: inputFile.getSize() });
+    const game = new Game({ name: gameName, roms: [rom] });
+    const outputFile = inputFile.withFilePath(path.join(tempDir, gameName));
+    const candidates = [new WriteCandidate(game, [new ROMWithFiles(rom, inputFile, outputFile)])];
+
+    const correctedCandidates = await new CandidateExtensionCorrector(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache(), LOGGER),
+      new Semaphore(os.availableParallelism()),
+    ).correct(dat, candidates);
+
+    expect(correctedCandidates).toHaveLength(1);
+    expect(correctedCandidates[0].getRomsWithFiles()).toHaveLength(1);
+    const correctedRomName = correctedCandidates
+      .at(0)
+      ?.getRomsWithFiles()
+      .at(0)
+      ?.getRom()
+      .getName();
+    expect(correctedRomName).toEqual(`${gameName}.chd`);
+  } finally {
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 it('should correct ROMs with missing filenames', async () => {
   const options = new Options({
     dat: [path.join('test', 'fixtures', 'dats')],

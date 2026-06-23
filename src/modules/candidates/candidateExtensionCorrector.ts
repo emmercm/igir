@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import type { Semaphore } from 'async-mutex';
 
 import type ProgressBar from '../../console/progressBar.js';
@@ -166,7 +164,7 @@ export default class CandidateExtensionCorrector extends Module {
     await this.readerSemaphore.runExclusive(async () => {
       this.progressBar.incrementInProgress();
       this.progressBar.logTrace(
-        `${dat.getName()}: ${candidate.getName()}: correcting extension for: ${romWithFiles
+        `${dat.getName()}: ${candidate.getName()}: correcting ROM extension for: ${romWithFiles
           .getInputFile()
           .toString()}`,
       );
@@ -180,8 +178,15 @@ export default class CandidateExtensionCorrector extends Module {
           correctedRom,
           romWithFiles.getInputFile(),
         );
-        if (correctedRomName !== undefined) {
+        if (correctedRomName === undefined) {
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${candidate.getName()}: didn't correct ROM extension`,
+          );
+        } else {
           correctedRom = correctedRom.withName(correctedRomName);
+          this.progressBar.logTrace(
+            `${dat.getName()}: ${candidate.getName()}: corrected ROM extension to: ${correctedRomName}`,
+          );
         }
       } finally {
         childBar.delete();
@@ -208,11 +213,10 @@ export default class CandidateExtensionCorrector extends Module {
       );
     }
     if (fileSignature !== undefined) {
-      const { dir, name } = path.parse(correctedRom.getName());
-      return path.format({
-        dir,
-        name: name + fileSignature.getExtension(),
-      });
+      // Replace the file's existing extension (if any) with the one detected from its signature.
+      // A strict extension regex is used rather than path.parse(), which would mistake a period
+      // inside the filename for an extension and truncate everything after it.
+      return correctedRom.getName().replace(/\.[a-zA-Z0-9]+$/, '') + fileSignature.getExtension();
     }
 
     // Strip the extension from files claiming to be an archive
