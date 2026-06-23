@@ -13,7 +13,6 @@ import type { AllChecksums, ChecksumsToFiles } from '../../models/indexedFiles.j
 import IndexedFiles from '../../models/indexedFiles.js';
 import type Options from '../../models/options.js';
 import { PreferFiletype } from '../../models/options.js';
-import FsUtil from '../../utils/fsUtil.js';
 import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
@@ -57,7 +56,6 @@ export default class ROMIndexer extends Module {
 
   private sortMap(checksumsToFiles: ChecksumsToFiles): void {
     const outputDir = this.options.getOutputDirRoot();
-    const outputDirDisk = FsUtil.diskResolved(outputDir);
 
     [...checksumsToFiles.entries()].forEach(([checksum, files]) => {
       const sortedFiles = files.toSorted((fileOne, fileTwo) => {
@@ -121,17 +119,6 @@ export default class ROMIndexer extends Module {
           const fileTwoInOutput = fileTwo.getFilePath().startsWith(outputDir) ? 1 : 0;
           if (fileOneInOutput !== fileTwoInOutput) {
             return fileOneInOutput - fileTwoInOutput;
-          }
-        }
-
-        /**
-         * Then, prefer files that are on the same disk for fs efficiency see {@link FsUtil#mv}
-         */
-        if (outputDirDisk && this.options.shouldMove()) {
-          const fileOneInOutputDisk = fileOne.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
-          const fileTwoInOutputDisk = fileTwo.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
-          if (fileOneInOutputDisk !== fileTwoInOutputDisk) {
-            return fileOneInOutputDisk - fileTwoInOutputDisk;
           }
         }
 
