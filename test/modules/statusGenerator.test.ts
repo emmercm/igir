@@ -22,7 +22,6 @@ import type { OptionsProps } from '../../src/models/options.js';
 import Options from '../../src/models/options.js';
 import IPSPatch from '../../src/models/patches/ipsPatch.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
-import SingleValueGame from '../../src/models/singleValueGame.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import DATPreferer from '../../src/modules/dats/datPreferer.js';
@@ -227,7 +226,7 @@ describe('toConsole', () => {
 
   it('should always print patched games as found', async () => {
     const options = new Options(defaultOptions);
-    const game = new SingleValueGame({ name: 'patched game' });
+    const game = new Game({ name: 'patched game' });
     const rom = new ROM({ name: 'patched.rom', size: 123, crc32: '00000000' });
     const candidates = [
       new WriteCandidate(game, [
@@ -369,7 +368,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
           const outputFile = await File.fileOf({ filePath: zip.getFilePath() });
           return new WriteCandidate(
-            new SingleValueGame({ ...game }),
+            new Game({ ...game }),
             game.getRoms().map((rom) => new ROMWithFiles(rom, inputFile, outputFile)),
           );
         }),
@@ -470,7 +469,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
                 .slice(0, 1)
                 .map(async (rom) => new ROMWithFiles(rom, await rom.toFile(), await rom.toFile())),
             );
-            return new WriteCandidate(new SingleValueGame({ ...game }), romWithFiles);
+            return new WriteCandidate(new Game({ ...game }), romWithFiles);
           }),
       );
 
@@ -529,7 +528,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
   it('should always report patched games as found', async () => {
     const options = new Options(defaultOptions);
-    const game = new SingleValueGame({ name: 'patched game' });
+    const game = new Game({ name: 'patched game' });
     const rom = new ROM({ name: 'patched.rom', size: 123, crc32: '00000000' });
     const candidates = [
       new WriteCandidate(game, [

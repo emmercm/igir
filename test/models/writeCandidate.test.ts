@@ -1,8 +1,8 @@
+import Game from '../../src/models/dats/game.js';
 import ROM from '../../src/models/dats/rom.js';
 import File from '../../src/models/files/file.js';
 import IPSPatch from '../../src/models/patches/ipsPatch.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
-import SingleValueGame from '../../src/models/singleValueGame.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 
 async function dummyFile(): Promise<File> {
@@ -17,7 +17,7 @@ async function patchedFile(): Promise<File> {
 
 describe('getName', () => {
   it('should return the game name', async () => {
-    const game = new SingleValueGame({ name: 'My Game' });
+    const game = new Game({ name: 'My Game' });
     const file = await dummyFile();
     const rom = new ROM({ name: 'my.rom', size: 0 });
     const candidate = new WriteCandidate(game, [new ROMWithFiles(rom, file, file)]);
@@ -27,7 +27,7 @@ describe('getName', () => {
 
 describe('isPatched', () => {
   it('should return false when no ROMs have patches', async () => {
-    const game = new SingleValueGame({ name: 'Test Game' });
+    const game = new Game({ name: 'Test Game' });
     const file = await dummyFile();
     const rom = new ROM({ name: 'test.rom', size: 0 });
     const candidate = new WriteCandidate(game, [new ROMWithFiles(rom, file, file)]);
@@ -35,13 +35,13 @@ describe('isPatched', () => {
   });
 
   it('should return false for an empty candidate', () => {
-    const game = new SingleValueGame({ name: 'Empty Game' });
+    const game = new Game({ name: 'Empty Game' });
     const candidate = new WriteCandidate(game, []);
     expect(candidate.isPatched()).toEqual(false);
   });
 
   it('should return true when at least one ROM has a patch', async () => {
-    const game = new SingleValueGame({ name: 'Patched Game' });
+    const game = new Game({ name: 'Patched Game' });
     const outputFile = await dummyFile();
     const inputFileWithPatch = await patchedFile();
     const rom = new ROM({ name: 'file.rom', size: 0 });
@@ -54,11 +54,11 @@ describe('isPatched', () => {
 
 describe('withGame', () => {
   it('should return a new instance with the new game', async () => {
-    const game = new SingleValueGame({ name: 'Original' });
+    const game = new Game({ name: 'Original' });
     const file = await dummyFile();
     const rom = new ROM({ name: 'test.rom', size: 0 });
     const candidate = new WriteCandidate(game, [new ROMWithFiles(rom, file, file)]);
-    const newGame = new SingleValueGame({ name: 'Updated' });
+    const newGame = new Game({ name: 'Updated' });
     const updated = candidate.withGame(newGame);
     expect(updated).not.toBe(candidate);
     expect(updated.getName()).toEqual('Updated');
@@ -68,7 +68,7 @@ describe('withGame', () => {
 
 describe('withRomsWithFiles', () => {
   it('should return the same instance when ROMs are identical', async () => {
-    const game = new SingleValueGame({ name: 'Test' });
+    const game = new Game({ name: 'Test' });
     const file = await dummyFile();
     const rom = new ROM({ name: 'test.rom', size: 0 });
     const romsWithFiles = [new ROMWithFiles(rom, file, file)];
@@ -78,7 +78,7 @@ describe('withRomsWithFiles', () => {
   });
 
   it('should return a new instance when ROMs are different', async () => {
-    const game = new SingleValueGame({ name: 'Test' });
+    const game = new Game({ name: 'Test' });
     const file = await dummyFile();
     const rom1 = new ROM({ name: 'one.rom', size: 1, crc32: '11111111' });
     const rom2 = new ROM({ name: 'two.rom', size: 2, crc32: '22222222' });
@@ -93,7 +93,7 @@ describe('withRomsWithFiles', () => {
 
 describe('hashCode', () => {
   it('should return a stable hashCode', async () => {
-    const game = new SingleValueGame({ name: 'Stable' });
+    const game = new Game({ name: 'Stable' });
     const file = await dummyFile();
     const rom = new ROM({ name: 'stable.rom', size: 0 });
     const candidate = new WriteCandidate(game, [new ROMWithFiles(rom, file, file)]);
@@ -103,15 +103,15 @@ describe('hashCode', () => {
   it('should produce different hashCodes for different games', async () => {
     const file = await dummyFile();
     const rom = new ROM({ name: 'game.rom', size: 0 });
-    const game1 = new SingleValueGame({ name: 'Game A' });
-    const game2 = new SingleValueGame({ name: 'Game B' });
+    const game1 = new Game({ name: 'Game A' });
+    const game2 = new Game({ name: 'Game B' });
     const candidate1 = new WriteCandidate(game1, [new ROMWithFiles(rom, file, file)]);
     const candidate2 = new WriteCandidate(game2, [new ROMWithFiles(rom, file, file)]);
     expect(candidate1.hashCode()).not.toEqual(candidate2.hashCode());
   });
 
   it('should produce different hashCodes for different ROMs', async () => {
-    const game = new SingleValueGame({ name: 'Same Game' });
+    const game = new Game({ name: 'Same Game' });
     const file = await dummyFile();
     const rom1 = new ROM({ name: 'one.rom', size: 1, crc32: '11111111' });
     const rom2 = new ROM({ name: 'two.rom', size: 2, crc32: '22222222' });
