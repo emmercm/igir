@@ -7,6 +7,7 @@ import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import FileFactory from '../../src/factories/fileFactory.js';
 import type DAT from '../../src/models/dats/dat.js';
+import Game from '../../src/models/dats/game.js';
 import Header from '../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
 import Release from '../../src/models/dats/release.js';
@@ -14,22 +15,21 @@ import ROM from '../../src/models/dats/rom.js';
 import type { OptionsProps } from '../../src/models/options.js';
 import Options from '../../src/models/options.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
-import SingleValueGame from '../../src/models/singleValueGame.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import DATScanner from '../../src/modules/dats/datScanner.js';
 import FixdatCreator from '../../src/modules/fixdatCreator.js';
 import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-const gameWithNoRoms = new SingleValueGame({
+const gameWithNoRoms = new Game({
   name: 'game with no ROMs',
 });
-const gameWithOneRom = new SingleValueGame({
+const gameWithOneRom = new Game({
   name: 'game with one ROM',
   roms: new ROM({ name: 'one.rom', size: 1, crc32: '12345678' }),
   release: [new Release('game with one ROM', 'USA'), new Release('game with one ROM', 'EUR')],
 });
-const gameWithTwoRoms = new SingleValueGame({
+const gameWithTwoRoms = new Game({
   name: 'game with two ROMs',
   roms: [
     new ROM({ name: 'two.a', size: 2, crc32: 'abcdef90' }),
@@ -41,7 +41,7 @@ const dat = new LogiqxDAT({
   games: [gameWithNoRoms, gameWithOneRom, gameWithTwoRoms],
 });
 
-async function generateCandidates(games: SingleValueGame[]): Promise<WriteCandidate[]> {
+async function generateCandidates(games: Game[]): Promise<WriteCandidate[]> {
   return await Promise.all(
     games.map(
       async (game) =>

@@ -7,6 +7,7 @@ import FileCache from '../../../src/cache/fileCache.js';
 import Logger from '../../../src/console/logger.js';
 import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
+import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/models/dats/rom.js';
@@ -16,7 +17,6 @@ import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import Options from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateArchiveFileHasher from '../../../src/modules/candidates/candidateArchiveFileHasher.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -40,7 +40,7 @@ describe('hash', () => {
   it('should return the same candidates when options do not require hashing', async () => {
     // Options without 'test' or 'overwrite-invalid' do not require hashing
     const options = new Options({ commands: ['copy'], output: 'output' });
-    const game = new SingleValueGame({ name: 'Test Game' });
+    const game = new Game({ name: 'Test Game' });
     const file = await File.fileOf({ filePath: 'dummy.rom', size: 0, crc32: '00000000' });
     const rom = new ROM({ name: 'dummy.rom', size: 0 });
     const candidates = [new WriteCandidate(game, [new ROMWithFiles(rom, file, file)])];
@@ -68,7 +68,7 @@ describe('hash', () => {
     const archiveEntry = await ArchiveEntry.entryOf({ archive: zip, entryPath: 'foobar.lnx' });
     const archiveFile = new ArchiveFile(archiveEntry);
 
-    const game = new SingleValueGame({ name: 'Zip Game' });
+    const game = new Game({ name: 'Zip Game' });
     const rom = new ROM({ name: 'foobar.lnx', size: 0 });
     const candidates = [
       new WriteCandidate(game, [new ROMWithFiles(rom, archiveFile, archiveFile)]),
@@ -88,7 +88,7 @@ describe('hash', () => {
     const archiveFile = new ArchiveFile(archiveEntry);
     const outputFile = await File.fileOf({ filePath: 'output.rom', size: 0, crc32: '00000000' });
 
-    const game = new SingleValueGame({ name: 'Zip Game' });
+    const game = new Game({ name: 'Zip Game' });
     const rom = new ROM({ name: 'foobar.lnx', size: 0 });
     const candidates = [new WriteCandidate(game, [new ROMWithFiles(rom, archiveFile, outputFile)])];
     const dat = new LogiqxDAT({ header: new Header() });
@@ -106,7 +106,7 @@ describe('hash', () => {
     });
     const outputFile = await File.fileOf({ filePath: 'output.rom', size: 0, crc32: '00000000' });
 
-    const game = new SingleValueGame({ name: 'Plain Game' });
+    const game = new Game({ name: 'Plain Game' });
     const rom = new ROM({
       name: 'one.rom',
       size: inputFile.getSize(),

@@ -1,11 +1,11 @@
 import path from 'node:path';
 
+import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/models/dats/rom.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidatePostProcessor from '../../../src/modules/candidates/candidatePostProcessor.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -20,21 +20,21 @@ const singleRomGames = [
   'Brilliant',
 ].map(
   (name) =>
-    new SingleValueGame({
+    new Game({
       name,
       roms: new ROM({ name: `${name}.rom`, size: 0, crc32: '00000000' }),
     }),
 );
 const subDirRomGames = ['Cheerful', 'Confident', 'Cool'].map(
   (name) =>
-    new SingleValueGame({
+    new Game({
       name,
       roms: new ROM({ name: `disk1\\${name}.rom`, size: 0, crc32: '00000000' }),
     }),
 );
 const multiRomGames = ['Dainty', 'Daring', 'Dazzling', 'Dedicated'].map(
   (name) =>
-    new SingleValueGame({
+    new Game({
       name,
       roms: [
         new ROM({ name: `${name}.cue`, size: 0, crc32: '00000000' }),
