@@ -859,7 +859,7 @@ describe('should respect "--dir-dat-mirror"', () => {
   ])('option is true: %s', async (datPath, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
-      dat: [datPath.split(/[\\/]/)[0]],
+      dat: [datPath.split(/[\\/]/, 1)[0]],
       output: os.devNull,
       dirDatMirror: true,
     });

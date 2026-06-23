@@ -277,10 +277,10 @@ export default class MultiBar {
           this.terminal.cursorTo(0);
         }
 
-        const newLineCount = newLines.length - 1;
+        const newlineCount = newLines.length - 1;
         const lastLineCount = lastLines.length - 1;
 
-        for (let i = firstChangedRow; i < newLineCount; i++) {
+        for (let i = firstChangedRow; i < newlineCount; i++) {
           this.terminal.cursorTo(0);
           this.terminal.write(newLines[i]);
           this.terminal.clearLine(1); // erase leftover chars if the new line is shorter
@@ -291,7 +291,7 @@ export default class MultiBar {
         this.terminal.cursorTo(0);
 
         // Erase any extra lines from the old output by clearing them in-place, then stepping back up
-        const extraOldLines = Math.max(0, lastLineCount - newLineCount);
+        const extraOldLines = Math.max(0, lastLineCount - newlineCount);
         for (let i = 0; i < extraOldLines; i++) {
           this.terminal.clearLine(0);
           if (i < extraOldLines - 1) {

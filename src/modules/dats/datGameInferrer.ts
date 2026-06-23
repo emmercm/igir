@@ -351,7 +351,7 @@ export default class DATGameInferrer extends Module {
                 .trim()
                 .split(/\r?\n/)
                 .slice(1)
-                .map((line) => line.split(' ')[4]);
+                .map((line) => line.split(' ', 5)[4]);
               const trackFiles = trackFilePaths
                 .map((trackFilePath) =>
                   path.join(path.dirname(gdiFile.getFilePath()), trackFilePath),

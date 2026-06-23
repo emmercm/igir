@@ -298,7 +298,7 @@ export default class DATScanner extends Scanner {
     try {
       datObject = DATObject.fromXmlString(fileContents);
     } catch (error) {
-      const message = (error as Error).message.split('\n').join(', ');
+      const message = (error as Error).message.replaceAll('\n', ', ');
       this.progressBar.logTrace(`${datFile.toString()}: failed to parse DAT XML: ${message}`);
       return undefined;
     }
