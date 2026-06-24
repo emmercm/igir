@@ -200,21 +200,23 @@ Here is a visual representation of a TorrentZip archive, with details about ever
 |            | File name length (n)       | 26      | 2       | The length in bytes of the                 |
 |            |                            |         |         | encoded filename                           |
 |            +----------------------------+---------+---------+--------------------------------------------+
-|            | Extra field length (m)     | 28      | 2       | 0 if the uncompressed size is              |
-|            |                            |         |         | <0xFFFFFFFF, otherwise 20 bytes            |
-|            |                            |         |         | +8 more bytes if this local file           |
-|            |                            |         |         | header's byte offset is >=0xFFFFFFFF       |
+|            | Extra field length (m)     | 28      | 2       | 0 only if the uncompressed size is         |
+|            |                            |         |         | <0xFFFFFFFF (compressed size and byte      |
+|            |                            |         |         | offset to this header are not              |
+|            |                            |         |         | considered), otherwise 20 bytes +8 more    |
+|            |                            |         |         | bytes if this local file header's byte     |
+|            |                            |         |         | offset is >=0xFFFFFFFF                     |
 |            +----------------------------+---------+---------+--------------------------------------------+
 |            | File name                  | 30      | n       | The CP437 or UTF-8 encoded filename        |
 |            +----------+-----------------+---------+---------+--------------------------------------------+
 |            | Extra    | Extra data      | 30+n    | 2       | 0x0001 (Zip64 extended information         |
-|            | field    | record 1:       |         |         | extra field)                               |
+|            | fields   | record 1:       |         |         | extra field)                               |
 |            | (present | header ID       |         |         |                                            |
 |            | if extra +-----------------+---------+---------+--------------------------------------------+
 |            | field    | Extra data      | 30+n+2  | 2       | (same as the extra field length above      |
 |            | length   | record 1:       |         |         | -4 bytes for the header ID & data          |
-|            | >0)      | record size     |         |         | size fields)                               |
-|            |          +-----------------+---------+---------+--------------------------------------------+
+|            | above is | record size     |         |         | size fields)                               |
+|            | >0)      +-----------------+---------+---------+--------------------------------------------+
 |            |          | Zip64:          | 30+n+4  | 8       | The uncompressed file's size               |
 |            |          | uncompressed    |         |         | (always present)                           |
 |            |          | file size       |         |         |                                            |
@@ -225,7 +227,7 @@ Here is a visual representation of a TorrentZip archive, with details about ever
 |            |          | Zip64: offset   | 30+n+20 | 0 or 8  | Present if this local file header's byte   |
 |            |          | of local header |         |         | offset is >=0xFFFFFFFF, otherwise omitted  |
 |            |          +-----------------+---------+---------+--------------------------------------------+
-|            |          | Zip64: number   | 30+n+28 | 0       | (not used / omitted)                       |
+|            |          | Zip64: number   | *       | 0       | (not used / omitted)                       |
 |            |          | of the disk on  |         |         |                                            |
 |            |          | which this      |         |         |                                            |
 |            |          | file starts     |         |         |                                            |
@@ -272,9 +274,14 @@ Here is a visual representation of a TorrentZip archive, with details about ever
 | ("CDFH") 1 | header signature           |         |         |                                            |
 |            +----------------------------+---------+---------+--------------------------------------------+
 |            | Version made by            | 4       | 2       | 0                                          |
-|            +----------------------------+---------+---------+--------------------------------------------+
-|            | Version needed to extract  | 6       | 2       | (same as local file header)                |
-|            +----------------------------+---------+---------+--------------------------------------------+
+|            +----------------------------+---------+---------+-------------------------+------------------+
+|            | Version needed to extract  | 6       | 2       | 45 if a Zip64 extra     | (same as local   |
+|            |                            |         |         | data record is          | file header)     |
+|            |                            |         |         | required (which may     |                  |
+|            |                            |         |         | differ from the local   |                  |
+|            |                            |         |         | file header),           |                  |
+|            |                            |         |         | otherwise 20            |                  |
+|            +----------------------------+---------+---------+-------------------------+------------------+
 |            | General purpose bit flag   | 8       | 2       | (same as local file header)                |
 |            +----------------------------+---------+---------+--------------------------------------------+
 |            | Compression method         | 10      | 2       | (same as local file header)                |
@@ -311,14 +318,14 @@ Here is a visual representation of a TorrentZip archive, with details about ever
 |            | File name                  | 46      | n       | (same as local file header)                |
 |            +----------+-----------------+---------+---------+--------------------------------------------+
 |            | Extra    | Extra data      | 46+n    | 2       | 0x0001 (Zip64 extended information         |
-|            | field    | record 1:       |         |         | extra field)                               |
+|            | fields   | record 1:       |         |         | extra field)                               |
 |            | (present | header ID       |         |         |                                            |
 |            | if extra +-----------------+---------+---------+--------------------------------------------+
 |            | field    | Extra data      | 46+n+2  | 2       | (same as the extra field length above      |
 |            | length   | record 1:       |         |         | -4 bytes for the header ID & data          |
-|            | >0)      | size            |         |         | size fields)                               |
-|            |          +-----------------+---------+---------+--------------------------------------------+
-|            |          | Zip64:          | 46+n+10 | 0 or 8  | Present if uncompressed size               |
+|            | above is | size            |         |         | size fields)                               |
+|            | >0)      +-----------------+---------+---------+--------------------------------------------+
+|            |          | Zip64:          | 46+n+4  | 0 or 8  | Present if uncompressed size               |
 |            |          | uncompressed    |         |         | is >=0xFFFFFFFF                            |
 |            |          | file size       |         |         |                                            |
 |            |          +-----------------+---------+---------+--------------------------------------------+
