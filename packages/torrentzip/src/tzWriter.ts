@@ -322,6 +322,12 @@ export default class TZWriter {
     this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE.copy(buffer);
     buffer.writeUInt16LE(0, 4); // version made by
     localFileHeader.rawBytes.copy(buffer, 6, 4, 4 + 2); // version needed to extract
+    if (extraFieldLength > 0 && buffer.readUInt16LE(6) < 45) {
+      // The CDFH and LFH have different conditions for when the zip64 extra field is necessary.
+      // A <0xFFFFFFFF size file with an LFH byte >=0xFFFFFFFF requires a zip64 extra field in the
+      // CDFH, but not for the LFH (confusingly).
+      buffer.writeUInt16LE(45, 6); // version needed (for zip64)
+    }
     localFileHeader.rawBytes.copy(buffer, 8, 6, 6 + 2); // general purpose flag
     localFileHeader.rawBytes.copy(buffer, 10, 8, 8 + 2); // compression method
     localFileHeader.rawBytes.copy(buffer, 12, 10, 10 + 2); // file last modification time
