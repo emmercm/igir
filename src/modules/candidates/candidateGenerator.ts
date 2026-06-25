@@ -57,11 +57,11 @@ export default class CandidateGenerator extends Module {
    */
   async generate(dat: DAT, indexedFiles: IndexedFiles): Promise<WriteCandidate[]> {
     if (indexedFiles.getFiles().length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no input ROMs to make candidates from`);
+      this.prefixedLogger.trace(`${dat.getName()}: no input ROMs to make candidates from`);
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: generating candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: generating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.resetProgress(dat.getGames().length);
 
@@ -77,7 +77,7 @@ export default class CandidateGenerator extends Module {
         try {
           gameCandidates = await this.buildCandidatesForGame(dat, game, indexedFiles);
           if (gameCandidates.length > 0) {
-            this.progressBar.logTrace(
+            this.prefixedLogger.trace(
               `${dat.getName()}: ${game.getName()}: found candidate: ${gameCandidates[0]
                 .getRomsWithFiles()
                 .map((rwf) => rwf.getInputFile().toString())
@@ -90,7 +90,7 @@ export default class CandidateGenerator extends Module {
           if (!(error instanceof TokenReplacementException)) {
             throw error;
           }
-          this.progressBar.logDebug(
+          this.prefixedLogger.debug(
             `${dat.getName()}: ${game.getName()}: failed to generate candidate: ${error.message}`,
           );
         } finally {
@@ -105,11 +105,11 @@ export default class CandidateGenerator extends Module {
     const size = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .reduce((sum, romWithFiles) => sum + romWithFiles.getRom().getSize(), 0);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: generated ${FsUtil.sizeReadable(size)} of ${IntlUtil.toLocaleString(candidates.length)} candidate${candidates.length === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace(`${dat.getName()}: done generating candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: done generating candidates`);
     return candidates;
   }
 
@@ -166,7 +166,7 @@ export default class CandidateGenerator extends Module {
       .filter((romWithFiles) => romWithFiles !== undefined);
     if (romsAndRomsWithFiles.length > 0 && foundRomsWithFiles.length === 0) {
       // The Game has ROMs, but none were found
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${game.getName()}: could not find any valid input file for any ROM, game cannot be written`,
       );
       return [];
@@ -240,7 +240,7 @@ export default class CandidateGenerator extends Module {
           !inputFile.canExtract()
         ) {
           // We need to read the extracted file, but can't, so we can't use this file
-          this.progressBar.logTrace(
+          this.prefixedLogger.trace(
             `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because it can't be extracted: ${inputFile.toString()}`,
           );
           return false;
@@ -256,7 +256,7 @@ export default class CandidateGenerator extends Module {
           if (outputPath.entryPath !== inputFile.getExtractedFilePath()) {
             // The input file is an ArchiveEntry that we won't rewrite and its name doesn't match
             // what we want it to be
-            this.progressBar.logTrace(
+            this.prefixedLogger.trace(
               `${dat.getName()}: ${game.getName()}: ${rom.getName()}: can't use archive because the entry '${inputFile.getExtractedFilePath()}' doesn't have the correct path '${outputPath.entryPath}'`,
             );
             return false;
@@ -453,7 +453,7 @@ export default class CandidateGenerator extends Module {
           indexedFiles,
         );
         if (unusedEntries.length > 0) {
-          this.progressBar.logTrace(
+          this.prefixedLogger.trace(
             `${dat.getName()}: ${game.getName()}: not preferring archive that contains every ROM, plus the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
           );
           return false;
@@ -508,14 +508,14 @@ export default class CandidateGenerator extends Module {
       return undefined;
     }
     if (filteredArchivesWithEveryRom.length > 1) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: '${archiveWithEveryRom.getFilePath()}'; ignoring:\n${filteredArchivesWithEveryRom
           .slice(1)
           .map((archive) => `  ${archive.getFilePath()}`)
           .join('\n')}`,
       );
     } else {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${game.getName()}: preferring input archive that contains every ROM: '${archiveWithEveryRom.getFilePath()}'`,
       );
     }
@@ -613,7 +613,7 @@ export default class CandidateGenerator extends Module {
       !this.options.canRemoveHeader(path.extname(inputFile.getExtractedFilePath()))
     ) {
       // ...then forget the input file's header, so that we don't later remove it
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${game.getName()}: not removing header, ignoring that one was found for: ${inputFile.toString()}`,
       );
       inputFile = inputFile.withoutFileHeader();
@@ -629,7 +629,7 @@ export default class CandidateGenerator extends Module {
         (inputFile.getSha256() !== undefined && inputFile.getSha256() === rom.getSha256()))
     ) {
       // ...then forget the input file's padding, so that we don't later add it back
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${game.getName()}: not adding padding, ignoring that file is trimmed: ${inputFile.toString()}`,
       );
       inputFile = inputFile.withPaddings([]);
@@ -649,7 +649,7 @@ export default class CandidateGenerator extends Module {
       this.options.shouldLink()
     ) {
       // ...then we can't use this file
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${game.getName()}: can't use headered ROM as target for link: ${inputFile.toString()}`,
       );
       return [rom, undefined];
@@ -685,7 +685,7 @@ export default class CandidateGenerator extends Module {
       const romWithFiles = new ROMWithFiles(rom, inputFile, outputFile);
       return [rom, romWithFiles];
     } catch (error) {
-      this.progressBar.logError(`${dat.getName()}: ${game.getName()}: ${error}`);
+      this.prefixedLogger.error(`${dat.getName()}: ${game.getName()}: ${error}`);
       return [rom, undefined];
     }
   }
@@ -849,7 +849,7 @@ export default class CandidateGenerator extends Module {
               !this.options.shouldZipRom(romWithFiles.getRom())
             ) {
               // We must be able to use the entire archive as-is if we're not extracting or zipping
-              this.progressBar.logTrace(
+              this.prefixedLogger.trace(
                 `${dat.getName()}: ${game.getName()}: ${romWithFiles.getRom().getName()}: can't raw-write archive: ${shouldGenerateArchiveFile}`,
               );
               return undefined;
@@ -876,7 +876,7 @@ export default class CandidateGenerator extends Module {
             });
             return romWithFiles.withInputFile(newInputFile);
           } catch (error) {
-            this.progressBar.logWarn(`${dat.getName()}: ${game.getName()}: ${error}`);
+            this.prefixedLogger.warn(`${dat.getName()}: ${game.getName()}: ${error}`);
             return undefined;
           }
         }),
@@ -905,7 +905,7 @@ export default class CandidateGenerator extends Module {
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
-    this.progressBar.logTrace(message);
+    this.prefixedLogger.trace(message);
   }
 
   private hasConflictingOutputFiles(dat: DAT, romsWithFiles: ROMWithFiles[]): boolean {
@@ -951,7 +951,7 @@ export default class CandidateGenerator extends Module {
         conflictedInputFiles.forEach((conflictedInputFile) => {
           message += `\n  ${conflictedInputFile}`;
         });
-        this.progressBar.logWarn(message);
+        this.prefixedLogger.warn(message);
       }
     }
     return hasConflict;
@@ -1055,7 +1055,7 @@ export default class CandidateGenerator extends Module {
         indexedFiles,
       );
       if (unusedEntries.length > 0) {
-        this.progressBar.logTrace(
+        this.prefixedLogger.trace(
           `${dat.getName()}: ${game.getName()}: cannot use '${inputArchive.getFilePath()}' as an input file, it has the excess entries:\n${unusedEntries.map((unusedEntry) => `  ${unusedEntry.toString()}`).join('\n')}`,
         );
         return true;
@@ -1128,7 +1128,7 @@ export default class CandidateGenerator extends Module {
     try {
       outputPathParsed = OutputFactory.getPath(this.options, dat, game, rom, inputFile);
     } catch (error) {
-      this.progressBar.logTrace(`${dat.getName()}: ${game.getName()}: ${error}`);
+      this.prefixedLogger.trace(`${dat.getName()}: ${game.getName()}: ${error}`);
       return undefined;
     }
     const outputFilePath = outputPathParsed.format();

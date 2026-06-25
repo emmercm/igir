@@ -31,21 +31,21 @@ export default class CandidatePatchGenerator extends Module {
    */
   generate(dat: DAT, candidates: WriteCandidate[], patches: Patch[]): WriteCandidate[] {
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to make patched candidates for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to make patched candidates for`);
       return candidates;
     }
 
     if (patches.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no patches to make patched candidates for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no patches to make patched candidates for`);
       return candidates;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: generating patched candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: generating patched candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_PATCHING);
     this.progressBar.resetProgress(candidates.length);
 
     const crcToPatches = CandidatePatchGenerator.indexPatchesByCrcBefore(patches);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: found patches for ${IntlUtil.toLocaleString(crcToPatches.size)} unique CRC32s`,
     );
 
@@ -53,7 +53,7 @@ export default class CandidatePatchGenerator extends Module {
     const patchedCandidateCount = this.options.getPatchOnly()
       ? patchedCandidates.length
       : patchedCandidates.length - candidates.length;
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: done generating ${IntlUtil.toLocaleString(patchedCandidateCount)} patched candidate${patchedCandidateCount === 1 ? '' : 's'}`,
     );
 
@@ -78,7 +78,7 @@ export default class CandidatePatchGenerator extends Module {
     crcToPatches: Map<string, Patch[]>,
   ): WriteCandidate[] {
     if (this.options.getPatchOnly()) {
-      this.progressBar.logTrace(`${dat.getName()}: only returning patched candidates`);
+      this.prefixedLogger.trace(`${dat.getName()}: only returning patched candidates`);
     }
 
     return candidates.flatMap((unpatchedCandidate) => {
@@ -206,7 +206,7 @@ export default class CandidatePatchGenerator extends Module {
             crc32: outputFile.getCrc32(),
           });
 
-          this.progressBar.logTrace(
+          this.prefixedLogger.trace(
             `${dat.getName()}: ${inputFile.toString()}: patch candidate generated: ${outputFile.toString()}`,
           );
         }
