@@ -65,8 +65,10 @@
       allowedVersions: '/^v?\\d*[02468]\\./',
       // 'Current' releases are considered unstable by default; override so Renovate doesn't skip them
       ignoreUnstable: false,
+      // The Docker images (used to build executables) frequently don't get published until days
+      //  after the Node.js version was updated, so try to prevent immediately failing PRs
+      minimumReleaseAge: '5 days',
       // Renovate's defaults for these options (overrides our global defaults)
-      minimumReleaseAge: '0 days',
       schedule: 'at any time',
     },
     {
