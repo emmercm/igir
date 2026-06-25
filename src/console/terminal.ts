@@ -32,9 +32,9 @@ export default class Terminal {
   private columns = 65_536;
   private rows = 65_536;
 
-  // The logical live-region frame most recently provided (full width, un-truncated).
+  // The logical live-region frame most recently provided (full width, un-truncated)
   private liveRegionRaw = '';
-  // The physical block currently on screen (padded/truncated, ending in a newline), or '' if none.
+  // The physical block currently on screen (padded/truncated, ending in a newline), or '' if none
   private lastDisplayed = '';
   // Log lines waiting to be printed above the live region. Queued (rather than written immediately)
   // while a live region is on screen so they can be flushed in the same synchronized update that
@@ -67,7 +67,7 @@ export default class Terminal {
   setStream(stream: tty.WriteStream | NodeJS.WritableStream): void {
     this.pendingPaint?.cancel();
     this.pendingPaint = undefined;
-    // Flush any queued logs to the current stream before switching so they aren't lost.
+    // Flush any queued logs to the current stream before switching so they aren't lost
     this.flushPendingLogs();
     this.showCursor();
     this.detachStream();
@@ -121,7 +121,7 @@ export default class Terminal {
     }
 
     if (this.liveRegionRaw === '' && this.lastDisplayed === '') {
-      // No live region to coordinate with — nothing to tear, so write immediately.
+      // No live region to coordinate with — nothing to tear, so write immediately
       this.stream.write(`${text}\n`);
       return;
     }
@@ -151,7 +151,7 @@ export default class Terminal {
       this.hideCursor();
     }
 
-    // We're about to paint, so drop any rate-limited paint that was deferred for queued logs.
+    // We're about to paint, so drop any rate-limited paint that was deferred for queued logs
     this.pendingPaint?.cancel();
     this.pendingPaint = undefined;
 
@@ -226,7 +226,7 @@ export default class Terminal {
     this.pendingPaint = undefined;
 
     // A coalesced paint may still be queued; once it fires `paint()` will be a harmless no-op
-    // because `liveRegionRaw` is now empty, but reset the guard so a later region can re-queue.
+    // because `liveRegionRaw` is now empty, but reset the guard so a later region can re-queue
     this.liveRegionPaintQueued = false;
     this.liveRegionRaw = '';
     if (
@@ -234,7 +234,7 @@ export default class Terminal {
       (this.lastDisplayed !== '' || this.pendingLogLines.length > 0)
     ) {
       // Clear the region and flush any still-queued logs in one synchronized update before tearing
-      // down, so the last batch of log lines isn't lost.
+      // down, so the last batch of log lines isn't lost
       this.withSynchronizedUpdate(() => {
         if (this.lastDisplayed !== '') {
           this.clearDisplayed();
@@ -271,7 +271,7 @@ export default class Terminal {
       .slice(0, this.rows - 1)
       .map((line) => {
         // The visible (ANSI-stripped) length can only be shorter than the raw length, so a line
-        // that already fits within the terminal needs no stripping or truncation.
+        // that already fits within the terminal needs no stripping or truncation
         if (line.length <= this.columns - 10) {
           return `${LIVE_REGION_PADDING}${line}`;
         }
