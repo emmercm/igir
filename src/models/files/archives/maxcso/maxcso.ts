@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import maxcso, { MaxcsoBinaryPreference } from 'maxcso';
 
+import { logger } from '../../../../console/logger.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumBitmaskValue, ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums from '../../fileChecksums.js';
@@ -63,6 +64,12 @@ export default abstract class Maxcso extends Archive {
       });
     }
     const { crc32, ...checksumsWithoutCrc } = checksums;
+
+    if (crc32 !== undefined && crc32 !== uncompressedCrc32) {
+      logger.warn(
+        `${this.getFilePath()}: archive is invalid, maxcso returned the CRC32 ${uncompressedCrc32} but it should be ${crc32}`,
+      );
+    }
 
     return [
       await ArchiveEntry.entryOf(

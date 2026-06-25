@@ -6,6 +6,7 @@ import dolphinTool, {
   DolphinToolBinaryPreference,
 } from 'dolphin-tool';
 
+import { logger } from '../../../../console/logger.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums from '../../fileChecksums.js';
@@ -59,11 +60,26 @@ export default abstract class Dolphin extends Archive {
       ).md5;
     }
 
-    const checksums: ChecksumProps = { crc32: digests.crc32, md5: digests.md5, sha1: digests.sha1 };
+    let checksums: ChecksumProps = {};
     if (checksumBitmask & ChecksumBitmask.SHA256) {
-      checksums.sha256 = await this.extractEntryToStream('', async (readable) => {
-        return (await FileChecksums.hashStream(readable, ChecksumBitmask.SHA256, callback)).sha256;
+      checksums = await this.extractEntryToStream('', async (readable) => {
+        return await FileChecksums.hashStream(readable, checksumBitmask, callback);
       });
+    }
+    const { crc32, md5, sha1, ...checksumsWithoutCrcMd5Sha1 } = checksums;
+
+    if (crc32 !== undefined && crc32 !== digests.crc32) {
+      logger.warn(
+        `${this.getFilePath()}: archive is invalid, dolphin-tool returned the CRC32 ${digests.crc32} but it should be ${crc32}`,
+      );
+    } else if (md5 !== undefined && md5 !== digests.md5) {
+      logger.warn(
+        `${this.getFilePath()}: archive is invalid, dolphin-tool returned the MD5 ${digests.md5} but it should be ${md5}`,
+      );
+    } else if (sha1 !== undefined && sha1 !== digests.sha1) {
+      logger.warn(
+        `${this.getFilePath()}: archive is invalid, dolphin-tool returned the SHA1 ${digests.sha1} but it should be ${sha1}`,
+      );
     }
 
     return [
@@ -72,7 +88,10 @@ export default abstract class Dolphin extends Archive {
           archive: this,
           entryPath,
           size: Number(size),
-          ...checksums,
+          crc32: crc32 ?? digests.crc32,
+          md5: md5 ?? digests.md5,
+          sha1: sha1 ?? digests.sha1,
+          ...checksumsWithoutCrcMd5Sha1,
         },
         checksumBitmask,
       ),

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import stream from 'node:stream';
 import zlib from 'node:zlib';
 
+import { logger } from '../../../console/logger.js';
 import IgirException from '../../../exceptions/igirException.js';
 import IOFile from '../../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
@@ -10,10 +11,10 @@ import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 import Tar from './tar.js';
 
-interface GzipHeaderFooter {
+interface GzipHeaderTrailer {
   fname?: string;
-  crc32?: string;
-  size?: number;
+  crc32: string;
+  size: number;
 }
 
 /**
@@ -65,9 +66,9 @@ export default class Gzip extends Archive {
       /* ignored */
     }
 
-    const gzipHeaderFooter = await this.getHeaderFooterInfo();
+    const gzipHeaderTrailer = await this.getHeaderTrailerInfo();
     if (callback) {
-      callback(0, gzipHeaderFooter.size);
+      callback(0, gzipHeaderTrailer.size);
     }
 
     // Calculate checksums from the file's bytes if needed
@@ -82,13 +83,19 @@ export default class Gzip extends Archive {
     }
     const { crc32, ...checksumsWithoutCrc } = checksums;
 
+    if (crc32 !== undefined && crc32 !== gzipHeaderTrailer.crc32) {
+      logger.warn(
+        `${this.getFilePath()}: gzip is invalid, the trailer has the CRC32 ${gzipHeaderTrailer.crc32} but it should be ${crc32}`,
+      );
+    }
+
     return [
       await ArchiveEntry.entryOf(
         {
           archive: this,
-          entryPath: gzipHeaderFooter.fname ?? '', // let CandidateExtensionCorrector sort it out
-          size: gzipHeaderFooter.size,
-          crc32: crc32 ?? gzipHeaderFooter.crc32,
+          entryPath: gzipHeaderTrailer.fname ?? '', // let CandidateExtensionCorrector sort it out
+          size: gzipHeaderTrailer.size,
+          crc32: crc32 ?? gzipHeaderTrailer.crc32,
           ...checksumsWithoutCrc,
         },
         checksumBitmask,
@@ -96,7 +103,7 @@ export default class Gzip extends Archive {
     ];
   }
 
-  private async getHeaderFooterInfo(): Promise<GzipHeaderFooter> {
+  private async getHeaderTrailerInfo(): Promise<GzipHeaderTrailer> {
     const file = await IOFile.fileFrom(this.getFilePath(), 'r');
     try {
       const header = await file.readAt(0, 10);
@@ -124,9 +131,9 @@ export default class Gzip extends Archive {
         }
       }
 
-      const footer = await file.readAt(file.getSize() - 8, 8);
-      const crc32 = footer.readUInt32LE().toString(16).toLowerCase();
-      const size = footer.readUInt32LE(4);
+      const trailer = await file.readAt(file.getSize() - 8, 8);
+      const crc32 = trailer.readUInt32LE().toString(16).toLowerCase();
+      const size = trailer.readUInt32LE(4);
 
       return { fname, crc32, size };
     } finally {

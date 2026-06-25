@@ -5,6 +5,7 @@ import { Mutex } from 'async-mutex';
 import type { FileHeader } from 'node-unrar-js/dist/index.js';
 import { createExtractorFromFile } from 'node-unrar-js/dist/index.js';
 
+import { logger } from '../../../console/logger.js';
 import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
@@ -72,6 +73,8 @@ export default class Rar extends Archive {
       fileHeaders,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader: FileHeader): Promise<ArchiveEntry<this>> => {
+        const fileHeaderCrc32 = fileHeader.crc.toString(16);
+
         // Calculate checksums from the file's bytes if needed
         let checksums: ChecksumProps = {};
         if (
@@ -91,12 +94,18 @@ export default class Rar extends Archive {
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
+        if (crc32 !== undefined && crc32 !== fileHeaderCrc32) {
+          logger.warn(
+            `${this.getFilePath()}: rar is invalid, the file header for '${fileHeader.name}' has the CRC32 ${fileHeaderCrc32} but it should be ${crc32}`,
+          );
+        }
+
         const entry = await ArchiveEntry.entryOf(
           {
             archive: this,
             entryPath: fileHeader.name,
             size: fileHeader.unpSize,
-            crc32: crc32 ?? fileHeader.crc.toString(16),
+            crc32: crc32 ?? fileHeaderCrc32,
             ...checksumsWithoutCrc,
           },
           checksumBitmask,
