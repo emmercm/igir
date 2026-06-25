@@ -42,11 +42,11 @@ export default class ROMHeaderProcessor extends Module {
       this.fileNeedsProcessing(inputFile),
     ).length;
     if (filesThatNeedProcessing === 0) {
-      this.progressBar.logTrace('no ROMs need their header processed');
+      this.prefixedLogger.trace('no ROMs need their header processed');
       return inputRomFiles;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `processing headers in ${IntlUtil.toLocaleString(filesThatNeedProcessing)} ROM${filesThatNeedProcessing === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HEADER_DETECTION);
@@ -66,7 +66,7 @@ export default class ROMHeaderProcessor extends Module {
       try {
         fileWithHeader = await this.getFileWithHeader(inputFile);
       } catch (error) {
-        this.progressBar.logError(
+        this.prefixedLogger.error(
           `${inputFile.toString()}: failed to process ROM header: ${error}`,
         );
         fileWithHeader = inputFile;
@@ -81,11 +81,11 @@ export default class ROMHeaderProcessor extends Module {
     const headeredRomsCount = parsedFiles.filter(
       (romFile) => romFile.getFileHeader() !== undefined,
     ).length;
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `found headers in ${IntlUtil.toLocaleString(headeredRomsCount)} ROM${headeredRomsCount === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace('done processing file headers');
+    this.prefixedLogger.trace('done processing file headers');
     return parsedFiles;
   }
 
@@ -115,18 +115,18 @@ export default class ROMHeaderProcessor extends Module {
   }
 
   private async getFileWithHeader(inputFile: File): Promise<File> {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${inputFile.toString()}: reading potentially headered file by file contents`,
     );
     const headerForFileStream = await this.fileFactory.headerFrom(inputFile);
     if (headerForFileStream) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${inputFile.toString()}: found header by file contents: ${headerForFileStream.getHeaderedFileExtension()}`,
       );
       // TODO(cemmer): figure out a way to cache this
       return await inputFile.withFileHeader(headerForFileStream);
     }
-    this.progressBar.logTrace(`${inputFile.toString()}: didn't find header by file contents`);
+    this.prefixedLogger.trace(`${inputFile.toString()}: didn't find header by file contents`);
     return inputFile;
   }
 }

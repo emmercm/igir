@@ -29,14 +29,14 @@ export default class ROMScanner extends Scanner {
     checksumBitmask: number = ChecksumBitmask.CRC32,
     checksumArchives = false,
   ): Promise<File[]> {
-    this.progressBar.logTrace('scanning ROM files');
+    this.prefixedLogger.trace('scanning ROM files');
     this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
     this.progressBar.resetProgress(0);
 
     const inputFilePaths = await this.options.scanInputFilesWithoutExclusions((increment) => {
       this.progressBar.incrementTotal(increment);
     });
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `found ${IntlUtil.toLocaleString(inputFilePaths.length)} input file${inputFilePaths.length === 1 ? '' : 's'}`,
     );
     const filePathsToProcess = inputFilePaths;
@@ -56,7 +56,7 @@ export default class ROMScanner extends Scanner {
           this.progressBar.incrementTotal(increment);
         },
       );
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `found ${IntlUtil.toLocaleString(outputFilePaths.length)} output file${outputFilePaths.length === 1 ? '' : 's'}`,
       );
       outputFilePaths.forEach((filePath) => {
@@ -82,7 +82,7 @@ export default class ROMScanner extends Scanner {
       });
     }
 
-    this.progressBar.logTrace('done scanning ROM files');
+    this.prefixedLogger.trace('done scanning ROM files');
     return files;
   }
 }

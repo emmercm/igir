@@ -30,11 +30,11 @@ export default class CandidateCombiner extends Module {
     }
 
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to make patched candidates for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to make patched candidates for`);
       return candidates;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: generating consolidated candidate`);
+    this.prefixedLogger.trace(`${dat.getName()}: generating consolidated candidate`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_COMBINING);
     this.progressBar.resetProgress(candidates.length);
 

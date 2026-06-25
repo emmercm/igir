@@ -1,8 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
-import Logger from '../../src/console/logger.js';
 import { LogLevel } from '../../src/console/logLevel.js';
 import Defaults from '../../src/globals/defaults.js';
 import Temp from '../../src/globals/temp.js';
@@ -27,7 +25,7 @@ import FsUtil from '../../src/utils/fsUtil.js';
 const dummyRequiredArgs = ['--input', os.devNull, '--output', os.devNull];
 const dummyCommandAndRequiredArgs = ['copy', ...dummyRequiredArgs];
 
-const argumentsParser = new ArgumentsParser(new Logger(LogLevel.NEVER, new stream.PassThrough()));
+const argumentsParser = new ArgumentsParser();
 
 describe('commands', () => {
   it('should throw on no commands', () => {

@@ -1,20 +1,15 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import which from 'which';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import DATScanner from '../../../src/modules/dats/datScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 function createDatScanner(props: OptionsProps): DATScanner {
   return new DATScanner(
@@ -27,7 +22,7 @@ function createDatScanner(props: OptionsProps): DATScanner {
       ],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   );
 }
@@ -208,7 +203,7 @@ describe('single files', () => {
       const dats = await new DATScanner(
         new Options({ dat: [datPath] }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(os.availableParallelism()),
       ).scan();
       expect(dats).toHaveLength(1);

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import type { Argv } from 'yargs';
 
-import type Logger from '../console/logger.js';
+import { logger } from '../console/logger.js';
 import IgirException from '../exceptions/igirException.js';
 import PatchFactory from '../factories/patchFactory.js';
 import Defaults from '../globals/defaults.js';
@@ -45,12 +45,6 @@ import ConsoleUtil from '../utils/consoleUtil.js';
  * This class will not be run concurrently with any other class.
  */
 export default class ArgumentsParser {
-  private readonly logger: Logger;
-
-  constructor(logger: Logger) {
-    this.logger = logger;
-  }
-
   private static getLastValue<T>(arr: T | T[]): T {
     if (Array.isArray(arr) && arr.length > 0) {
       return arr.at(-1) as T;
@@ -420,7 +414,7 @@ export default class ArgumentsParser {
           }
         }
         if (checkArgv.patch && !checkArgv._.includes('extract') && !checkArgv._.includes('zip')) {
-          this.logger.warn(
+          logger.warn(
             "archived files can't be patched unless the 'extract' or 'zip' command is used",
           );
         }
@@ -443,7 +437,7 @@ export default class ArgumentsParser {
               outputResolved.startsWith(path.resolve(inputPath as string)),
             )
           ) {
-            this.logger.warn(
+            logger.warn(
               `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
             );
           }
@@ -1176,9 +1170,7 @@ export default class ArgumentsParser {
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv['clean-dry-run'] === true && middlewareArgv.verbose < 1) {
-          this.logger.warn(
-            '--clean-dry-run prints INFO logs for files skipped, enable them with -v',
-          );
+          logger.warn('--clean-dry-run prints INFO logs for files skipped, enable them with -v');
         }
       })
 
@@ -1188,7 +1180,7 @@ export default class ArgumentsParser {
             MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.dirMirror || checkArgv.dirLetter)
         ) {
-          this.logger.warn(
+          logger.warn(
             `at least one --dir-* option was provided, be careful about how you organize non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`,
           );
         }
@@ -1198,7 +1190,7 @@ export default class ArgumentsParser {
             MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.noBios || checkArgv.noDevice)
         ) {
-          this.logger.warn(
+          logger.warn(
             `--no-bios and --no-device may leave non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
@@ -1209,7 +1201,7 @@ export default class ArgumentsParser {
           (checkArgv.mergeRoms as string).toLowerCase() ===
             MergeModeInverted[MergeMode.SPLIT].toLowerCase()
         ) {
-          this.logger.warn(
+          logger.warn(
             `--single may leave '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
@@ -1219,7 +1211,7 @@ export default class ArgumentsParser {
           (checkArgv.mergeRoms as string).toLowerCase() ===
             MergeModeInverted[MergeMode.MERGED].toLowerCase()
         ) {
-          this.logger.warn(
+          logger.warn(
             `--single doesn't make sense for '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets, nothing will be filtered out`,
           );
         }
@@ -1311,7 +1303,7 @@ Example use cases:
         if (err) {
           throw err;
         }
-        this.logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
+        logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
         throw new IgirException(msg);
       });
 
@@ -1319,7 +1311,7 @@ Example use cases:
       .strictOptions(true)
       .parse(argv, {}, (_err, _parsedArgv, output) => {
         if (output) {
-          this.logger.colorizeYargs(`${output.trimEnd()}\n`);
+          logger.colorizeYargs(`${output.trimEnd()}\n`);
         }
       });
 

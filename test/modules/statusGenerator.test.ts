@@ -1,12 +1,9 @@
 import path from 'node:path';
-import stream from 'node:stream';
 
 import stripAnsi from 'strip-ansi';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import FileCache from '../../src/cache/fileCache.js';
-import Logger from '../../src/console/logger.js';
-import { LogLevel } from '../../src/console/logLevel.js';
 import FileFactory from '../../src/factories/fileFactory.js';
 import type DAT from '../../src/models/dats/dat.js';
 import Disk from '../../src/models/dats/disk.js';
@@ -104,7 +101,7 @@ async function candidateGenerator(
   return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(2),
   ).generate(dat, romsIndexed);
 }

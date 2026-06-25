@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import type File from '../../../src/models/files/file.js';
@@ -17,8 +14,6 @@ import { TrimScanFiles, TrimScanFilesInverted } from '../../../src/models/option
 import ROMTrimProcessor from '../../../src/modules/roms/romTrimProcessor.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 if (!(await FsUtil.exists(Temp.getTempDir()))) {
   await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
@@ -34,7 +29,7 @@ async function processFile(
     trimScanFiles: TrimScanFilesInverted[TrimScanFiles.AUTO].toLowerCase(),
     ...optionsProps,
   });
-  const fileFactory = new FileFactory(new FileCache(), LOGGER);
+  const fileFactory = new FileFactory(new FileCache());
 
   const trimmedContents = Buffer.alloc(size, paddingByte);
   fileSignature.getSignaturePieces().forEach((signaturePiece) => {
