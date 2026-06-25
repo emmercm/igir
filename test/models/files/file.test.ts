@@ -1,12 +1,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
@@ -24,8 +21,6 @@ import bufferUtil from '../../../src/utils/bufferUtil.js';
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 describe('fileOf', () => {
   it("should not throw when the file doesn't exist", async () => {
@@ -414,7 +409,7 @@ describe('extractToTempFile', () => {
         input: ['./test/fixtures/roms/raw'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(11);
@@ -525,7 +520,7 @@ describe('createTransformedReadStream padding', () => {
       const tempFilePath = path.join(tempDir, 'trimmed-input');
       const raw = Buffer.alloc(4, 0xab);
       await FsUtil.writeFile(tempFilePath, raw);
-      const fileFactory = new FileFactory(new FileCache(), LOGGER);
+      const fileFactory = new FileFactory(new FileCache());
       const fileWithoutPadding = await fileFactory.fileFrom(tempFilePath, ChecksumBitmask.CRC32);
       const file = fileWithoutPadding.withPaddings([new ROMPadding({ paddedSize: 8, fillByte })]);
 
@@ -548,7 +543,7 @@ describe('createReadStream', () => {
         input: ['./test/fixtures/roms/raw/!(empty).*'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(raws).toHaveLength(10);

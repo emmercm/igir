@@ -7,7 +7,6 @@ import ROM from '../../../src/models/dats/rom.js';
 import File from '../../../src/models/files/file.js';
 import Options, { MergeMode, MergeModeInverted } from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateMergeSplitValidator from '../../../src/modules/candidates/candidateMergeSplitValidator.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -16,7 +15,7 @@ async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
   const dummyFile = await File.fileOf({ filePath: '' });
   return dat.getGames().map((game) => {
     return new WriteCandidate(
-      new SingleValueGame({ ...game }),
+      new Game({ ...game }),
       game.getRoms().map((rom) => new ROMWithFiles(rom, dummyFile, dummyFile)),
     );
   });

@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import Game from '../../../src/models/dats/game.js';
@@ -18,7 +15,6 @@ import { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
 import IndexedFiles from '../../../src/models/indexedFiles.js';
 import Options from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import MovedROMDeleter from '../../../src/modules/cleaners/movedRomDeleter.js';
@@ -33,7 +29,7 @@ it('should do nothing if no ROMs moved', async () => {
       input: ['./test/fixtures/roms'],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
@@ -66,7 +62,7 @@ it('should delete raw files', async () => {
 
     // When - the file is considered "moved" (written to a different output path)
     const outputFile = inputFile.withFilePath(path.join('output', 'game.rom'));
-    const movedWriteCandidate = new WriteCandidate(new SingleValueGame({ name: 'game' }), [
+    const movedWriteCandidate = new WriteCandidate(new Game({ name: 'game' }), [
       new ROMWithFiles(
         new ROM({ name: 'game.rom', size: 0, crc32: '00000000' }),
         inputFile,
@@ -473,7 +469,7 @@ describe('should delete archives', () => {
         const candidates = await new CandidateGenerator(
           options,
           new ProgressBarFake(),
-          new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+          new FileFactory(new FileCache()),
           new MappableSemaphore(os.availableParallelism()),
         ).generate(dat, indexedRomFiles);
 
@@ -510,7 +506,7 @@ it("should not delete files that weren't moved", async () => {
     const inputFile = await File.fileOf({ filePath: rawFile });
 
     // The file is a "moved" ROM, but it's also a written output (same path)
-    const movedWriteCandidate = new WriteCandidate(new SingleValueGame({ name: 'game' }), [
+    const movedWriteCandidate = new WriteCandidate(new Game({ name: 'game' }), [
       new ROMWithFiles(
         new ROM({ name: 'game.rom', size: 0, crc32: '00000000' }),
         inputFile,

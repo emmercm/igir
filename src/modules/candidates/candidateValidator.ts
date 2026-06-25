@@ -27,11 +27,11 @@ export default class CandidateValidator extends Module {
     }
 
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to validate`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to validate`);
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: validating candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: validating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
     this.progressBar.resetProgress(candidates.length);
 
@@ -40,7 +40,7 @@ export default class CandidateValidator extends Module {
       return conflictedOutputPaths;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: done validating candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: done validating candidates`);
     return [];
   }
 
@@ -84,7 +84,7 @@ export default class CandidateValidator extends Module {
         uniqueCandidates.forEach((candidate) => {
           message += `\n  ${candidate.getName()}`;
         });
-        this.progressBar.logError(message);
+        this.prefixedLogger.error(message);
         return true;
       })
       .flatMap(([, candidates]) => candidates)

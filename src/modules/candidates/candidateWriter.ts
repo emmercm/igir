@@ -98,7 +98,7 @@ export default class CandidateWriter extends Module {
       // Filter to only the candidates that actually have matched files (and therefore output)
       .filter((candidate) => candidate.getRomsWithFiles().length > 0);
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlUtil.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
     if (this.options.shouldTest() && !this.options.getOverwrite()) {
@@ -110,7 +110,7 @@ export default class CandidateWriter extends Module {
 
     await this.candidateSemaphore.map(writableCandidates, async (candidate) => {
       this.progressBar.incrementInProgress();
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
       );
 
@@ -121,13 +121,13 @@ export default class CandidateWriter extends Module {
         await this.writeRaw(dat, candidate);
       }
 
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${candidate.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} candidate`,
       );
       this.progressBar.incrementCompleted();
     });
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: done ${this.options.shouldWrite() ? 'writing' : 'testing'} ${IntlUtil.toLocaleString(writableCandidates.length)} candidate${writableCandidates.length === 1 ? '' : 's'}`,
     );
 
@@ -199,11 +199,11 @@ export default class CandidateWriter extends Module {
           !this.options.getOverwriteInvalid()
         ) {
           if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputZip.getFilePath())) {
-            this.progressBar.logWarn(
+            this.prefixedLogger.warn(
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())?.getName()}'`,
             );
           } else {
-            this.progressBar.logDebug(
+            this.prefixedLogger.debug(
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file`,
             );
           }
@@ -219,7 +219,7 @@ export default class CandidateWriter extends Module {
             childBar,
           );
           if (this.options.shouldWrite() && !existingTest) {
-            this.progressBar.logDebug(
+            this.prefixedLogger.debug(
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
@@ -229,7 +229,7 @@ export default class CandidateWriter extends Module {
             return;
           }
           if (!this.options.shouldWrite() && existingTest) {
-            this.progressBar.logError(
+            this.prefixedLogger.error(
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: ${existingTest}`,
             );
             return;
@@ -240,7 +240,7 @@ export default class CandidateWriter extends Module {
           this.options.shouldWrite() &&
           CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputZip.getFilePath())
         ) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())?.getName()}'`,
           );
         }
@@ -280,9 +280,9 @@ export default class CandidateWriter extends Module {
           }
           const message = `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
           if (i < this.options.getWriteRetry()) {
-            this.progressBar.logWarn(`${message}, retrying`);
+            this.prefixedLogger.warn(`${message}, retrying`);
           } else {
-            this.progressBar.logError(message);
+            this.prefixedLogger.error(message);
             return; // final error, do not continue
           }
         }
@@ -305,7 +305,7 @@ export default class CandidateWriter extends Module {
     expectedArchiveEntries: ArchiveEntry<Zip>[],
     progressBar: ProgressBar,
   ): Promise<string | undefined> {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${zipFilePath}: testing zip`,
     );
 
@@ -412,7 +412,7 @@ export default class CandidateWriter extends Module {
       return 'is not a valid RVZSTD file';
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${zipFilePath}: test passed`,
     );
     return undefined;
@@ -443,7 +443,7 @@ export default class CandidateWriter extends Module {
           })
         : inputToOutputZipEntries;
 
-      this.progressBar.logInfo(
+      this.prefixedLogger.info(
         [
           `${dat.getName()}: ${candidate.getName()}: creating zip archive '${outputZip.getFilePath()}' with the entr${movedInputToOutputZipEntries.length === 1 ? 'y' : 'ies'}:`,
           ...movedInputToOutputZipEntries.map(([input, output]) => {
@@ -470,13 +470,13 @@ export default class CandidateWriter extends Module {
           },
         );
       } catch (error) {
-        this.progressBar.logError(
+        this.prefixedLogger.error(
           `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: failed to create zip: ${error}`,
         );
         return false;
       }
 
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: wrote ${IntlUtil.toLocaleString(inputToOutputZipEntries.length)} archive entr${inputToOutputZipEntries.length === 1 ? 'y' : 'ies'}`,
       );
       return true;
@@ -505,7 +505,7 @@ export default class CandidateWriter extends Module {
     const totalBytes = inputToOutputEntries
       .flatMap(([, outputFile]) => outputFile)
       .reduce((sum, file) => sum + file.getSize(), 0);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${this.options.shouldMove() ? 'moving' : 'copying'} ${FsUtil.sizeReadable(totalBytes)} of ${IntlUtil.toLocaleString(inputToOutputEntries.length)} ${inputToOutputEntries.some(([input]) => input instanceof ArchiveFile) ? 'archive' : 'raw'} file${inputToOutputEntries.length === 1 ? '' : 's'}`,
     );
 
@@ -551,7 +551,7 @@ export default class CandidateWriter extends Module {
           movedInputPath ?? inputRomFile.getFilePath(),
         ]));
       if (!wasMoved) {
-        this.progressBar.logDebug(
+        this.prefixedLogger.debug(
           `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
         );
         return;
@@ -575,11 +575,11 @@ export default class CandidateWriter extends Module {
           !this.options.getOverwriteInvalid()
         ) {
           if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputFilePath)) {
-            this.progressBar.logWarn(
+            this.prefixedLogger.warn(
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)?.getName()}'`,
             );
           } else {
-            this.progressBar.logDebug(
+            this.prefixedLogger.debug(
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file`,
             );
           }
@@ -595,7 +595,7 @@ export default class CandidateWriter extends Module {
             childBar,
           );
           if (this.options.shouldWrite() && !existingTest) {
-            this.progressBar.logDebug(
+            this.prefixedLogger.debug(
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file, the existing file is correct`,
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
@@ -603,7 +603,7 @@ export default class CandidateWriter extends Module {
             return;
           }
           if (!this.options.shouldWrite() && existingTest) {
-            this.progressBar.logError(
+            this.prefixedLogger.error(
               `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: ${existingTest}`,
             );
             return;
@@ -614,7 +614,7 @@ export default class CandidateWriter extends Module {
           this.options.shouldWrite() &&
           CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputFilePath)
         ) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)?.getName()}'`,
           );
         }
@@ -654,9 +654,9 @@ export default class CandidateWriter extends Module {
           }
           const message = `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: written file ${writtenTest}`;
           if (i < this.options.getWriteRetry()) {
-            this.progressBar.logWarn(`${message}, retrying`);
+            this.prefixedLogger.warn(`${message}, retrying`);
           } else {
-            this.progressBar.logError(message);
+            this.prefixedLogger.error(message);
             return; // final error, do not continue
           }
         }
@@ -721,7 +721,7 @@ export default class CandidateWriter extends Module {
         return [copyResult, undefined];
       }
 
-      this.progressBar.logInfo(
+      this.prefixedLogger.info(
         `${dat.getName()}: ${candidate.getName()}: moving file '${inputRomFile.toString()}' (${FsUtil.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
       );
 
@@ -737,7 +737,7 @@ export default class CandidateWriter extends Module {
         );
         return [moveResult, outputFilePath];
       } catch (error) {
-        this.progressBar.logError(
+        this.prefixedLogger.error(
           `${dat.getName()}: ${candidate.getName()}: failed to move file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
         );
         if ((error as NodeJS.ErrnoException).code === 'ENOSPC') {
@@ -756,7 +756,7 @@ export default class CandidateWriter extends Module {
     outputFilePath: string,
     progressBar: ProgressBar,
   ): Promise<MoveResultValue | undefined> {
-    this.progressBar.logInfo(
+    this.prefixedLogger.info(
       `${dat.getName()}: ${candidate.getName()}: ${inputRomFile instanceof ArchiveEntry ? 'extracting' : 'copying'} file '${inputRomFile.toString()}' (${FsUtil.sizeReadable(inputRomFile.getSize())}) → '${outputFilePath}'`,
     );
 
@@ -770,7 +770,7 @@ export default class CandidateWriter extends Module {
       await FsUtil.mv(tempRawFile, outputFilePath);
       return MoveResult.COPIED;
     } catch (error) {
-      this.progressBar.logError(
+      this.prefixedLogger.error(
         `${dat.getName()}: ${candidate.getName()}: failed to ${inputRomFile instanceof ArchiveEntry ? 'extract' : 'copy'} file '${inputRomFile.toString()}' → '${outputFilePath}': ${error}`,
       );
       if ((error as NodeJS.ErrnoException).code === 'ENOSPC') {
@@ -788,7 +788,7 @@ export default class CandidateWriter extends Module {
     expectedFile: File,
     progressBar?: ProgressBar,
   ): Promise<string | undefined> {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: testing raw file`,
     );
 
@@ -840,7 +840,7 @@ export default class CandidateWriter extends Module {
       return `is of size ${IntlUtil.toLocaleString(actualFile.getSize())}B, expected ${IntlUtil.toLocaleString(expectedFile.getSize())}B`;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: test passed`,
     );
     return undefined;
@@ -885,7 +885,7 @@ export default class CandidateWriter extends Module {
   ): Promise<void> {
     // Input and output are the exact same, do nothing
     if (outputRomFile.equals(inputRomFile)) {
-      this.progressBar.logDebug(
+      this.prefixedLogger.debug(
         `${dat.getName()}: ${candidate.getName()}: ${outputRomFile.toString()}: input and output files are the same, skipping`,
       );
       return;
@@ -906,11 +906,11 @@ export default class CandidateWriter extends Module {
         !this.options.getOverwriteInvalid()
       ) {
         if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(linkPath)) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)?.getName()}'`,
           );
         } else {
-          this.progressBar.logDebug(
+          this.prefixedLogger.debug(
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file`,
           );
         }
@@ -930,13 +930,13 @@ export default class CandidateWriter extends Module {
           existingTest = await this.testWrittenRaw(dat, candidate, linkPath, outputRomFile);
         }
         if (this.options.shouldWrite() && !existingTest) {
-          this.progressBar.logDebug(
+          this.prefixedLogger.debug(
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing link, the existing link is correct`,
           );
           return;
         }
         if (!this.options.shouldWrite() && existingTest) {
-          this.progressBar.logError(
+          this.prefixedLogger.error(
             `${dat.getName()}: ${candidate.getName()}: ${linkPath}: ${existingTest}`,
           );
           return;
@@ -944,7 +944,7 @@ export default class CandidateWriter extends Module {
       }
 
       if (this.options.shouldWrite() && CandidateWriter.OUTPUT_PATHS_WRITTEN.has(linkPath)) {
-        this.progressBar.logWarn(
+        this.prefixedLogger.warn(
           `${dat.getName()}: ${candidate.getName()}: ${linkPath}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)?.getName()}'`,
         );
       }
@@ -981,9 +981,9 @@ export default class CandidateWriter extends Module {
         }
         const message = `${dat.getName()}: ${candidate.getName()} ${linkPath}: written link ${writtenTest}`;
         if (i < this.options.getWriteRetry()) {
-          this.progressBar.logWarn(`${message}, retrying`);
+          this.prefixedLogger.warn(`${message}, retrying`);
         } else {
-          this.progressBar.logError(message);
+          this.prefixedLogger.error(message);
           return; // final error, do not continue
         }
       }
@@ -999,24 +999,24 @@ export default class CandidateWriter extends Module {
     try {
       await CandidateWriter.ensureOutputDirExists(linkPath);
       if (this.options.getLinkMode() === LinkMode.SYMLINK) {
-        this.progressBar.logInfo(
+        this.prefixedLogger.info(
           `${dat.getName()}: ${candidate.getName()}: creating symlink '${targetPath}' → '${linkPath}'`,
         );
         await FsUtil.symlink(targetPath, linkPath);
       } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
-        this.progressBar.logInfo(
+        this.prefixedLogger.info(
           `${dat.getName()}: ${candidate.getName()}: creating hard link '${targetPath}' → '${linkPath}'`,
         );
         await FsUtil.hardlink(targetPath, linkPath);
       } else {
-        this.progressBar.logInfo(
+        this.prefixedLogger.info(
           `${dat.getName()}: ${candidate.getName()}: creating reflink '${targetPath}' → '${linkPath}'`,
         );
         await FsUtil.reflink(targetPath, linkPath);
       }
       return true;
     } catch (error) {
-      this.progressBar.logError(
+      this.prefixedLogger.error(
         `${dat.getName()}: ${candidate.getName()}: ${linkPath}: failed to link from ${targetPath}: ${error}`,
       );
       return false;

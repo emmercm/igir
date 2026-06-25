@@ -160,6 +160,7 @@ export default [
         'error',
         {
           case: 'camelCase',
+          checkDirectories: false,
         },
       ],
 
@@ -210,6 +211,8 @@ export default [
       // ********** Recommended Overrides **********
 
       // ***** unicorn:recommended *****
+      // Superseded by other rules
+      'unicorn/no-this-outside-of-class': 'off', // made safe by @typescript-eslint/unbound-method
       // Fixes
       'unicorn/prefer-single-call': [
         'error',
@@ -233,6 +236,7 @@ export default [
       'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
       'unicorn/no-array-callback-reference': 'off',
       'unicorn/no-array-method-this-argument': 'off',
+      'unicorn/prefer-https': 'off', // TODO(cemmer): turn back on when comments can be excluded
       'unicorn/prefer-type-error': 'off',
 
       // ***** eslint:recommended *****

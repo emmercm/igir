@@ -10,6 +10,7 @@ import ConsoleTokens from '../../../models/consoleTokens.js';
 import type DAT from '../../../models/dats/dat.js';
 import Disk from '../../../models/dats/disk.js';
 import type Game from '../../../models/dats/game.js';
+import MergedDiscGame from '../../../models/dats/mergedDiscGame.js';
 import type ROM from '../../../models/dats/rom.js';
 import ArchiveEntry from '../../../models/files/archives/archiveEntry.js';
 import ArchiveFile from '../../../models/files/archives/archiveFile.js';
@@ -17,9 +18,7 @@ import type File from '../../../models/files/file.js';
 import ZeroSizeFile from '../../../models/files/zeroSizeFile.js';
 import type Options from '../../../models/options.js';
 import { FixExtension, GameSubdirMode } from '../../../models/options.js';
-import type SingleValueGame from '../../../models/singleValueGame.js';
 import FsUtil from '../../../utils/fsUtil.js';
-import GameGrouper from '../../dats/utils/gameGrouper.js';
 import outputTokensData from './consoleTokens.json' with { type: 'json' };
 
 interface ConsoleTokensJson {
@@ -102,7 +101,7 @@ export default class OutputFactory {
   static getPath(
     options: Options,
     dat: DAT,
-    game: SingleValueGame,
+    game: Game,
     rom: ROM,
     inputFile: File,
     romBasenames?: string[],
@@ -142,7 +141,7 @@ export default class OutputFactory {
   private static getDir(
     options: Options,
     dat: DAT,
-    game?: SingleValueGame,
+    game?: Game,
     inputFile?: File,
     romBasename?: string,
     romBasenames?: string[],
@@ -220,7 +219,7 @@ export default class OutputFactory {
     outputPath: string,
     dat: DAT,
     inputRomPath?: string,
-    game?: SingleValueGame,
+    game?: Game,
     outputRomFilename?: string,
   ): string {
     let result = outputPath;
@@ -241,18 +240,20 @@ export default class OutputFactory {
     return result;
   }
 
-  private static replaceGameTokens(input: string, game?: SingleValueGame): string {
+  private static replaceGameTokens(input: string, game?: Game): string {
     if (!game) {
       return input;
     }
     let output = input;
 
-    const gameRegion = game.getRegion();
+    // The {@link Game} has been exploded into a single region, language, and category (if any), so
+    // we can simply use the first value of each.
+    const gameRegion = game.getRegions().at(0);
     if (gameRegion) {
       output = output.replace('{region}', gameRegion);
     }
 
-    const gameLanguage = game.getLanguage();
+    const gameLanguage = game.getLanguages().at(0);
     if (gameLanguage) {
       output = output.replace('{language}', gameLanguage);
     }
@@ -264,7 +265,7 @@ export default class OutputFactory {
       output = output.replace('{genre}', gameGenre);
     }
 
-    const gameCategory = game.getCategory();
+    const gameCategory = game.getCategories().at(0);
     if (gameCategory) {
       output = output.replace('{category}', gameCategory);
     }
@@ -605,7 +606,7 @@ export default class OutputFactory {
         !(inputFile instanceof ArchiveFile)) ||
       options.getDirGameSubdir() === GameSubdirMode.ALWAYS ||
       // Discs merged together are always grouped into a subdirectory named after the game
-      game.getDiscMerged()
+      game instanceof MergedDiscGame
     ) {
       output = path.join(game.getName(), output);
     }
@@ -652,26 +653,27 @@ export default class OutputFactory {
         : // Respect the input file's extension
           oldExtMatch[1];
 
-    // The Game is the result of 2+ discs merged together, and we're not extracting this file, so
-    // we generate a basename based on the original disc name (with multi-track suffixes
-    // collapsed). The game-name subdirectory is applied uniformly in getName().
-    if (game.getDiscMerged()) {
-      return GameGrouper.getMultiTrackDiscCommonName(rom.getName()).replace(
-        /(\.[a-zA-Z0-9]+)+$/,
-        oldExt,
-      );
-    }
-
     // Generate the archive name from the game name
-
+    const gameName =
+      game instanceof MergedDiscGame
+        ? // The Game is the result of 2+ discs merged together, and we're not extracting this file,
+          // so we generate a basename based on the original game/disc name (with track numbers
+          // stripped). OutputFactory#getName() will group multiple discs together.
+          (game
+            .getSubGames()
+            .find((subGame) =>
+              subGame.getRoms().some((subRom) => subRom.getName() === rom.getName()),
+            )
+            ?.getName() ?? game.getName())
+        : game.getName();
     // If we got a filename with 2+ extensions, but the additional extensions
     // are actually part of the game's name, then just use the last extension
     const oldExtSub = oldExt.split('.').slice(0, -1).join('.');
-    if (oldExtSub.length > 0 && game.getName().endsWith(oldExtSub)) {
-      return game.getName().slice(0, game.getName().lastIndexOf(oldExtSub)) + oldExt;
+    if (oldExtSub.length > 0 && gameName.endsWith(oldExtSub)) {
+      return gameName.slice(0, gameName.lastIndexOf(oldExtSub)) + oldExt;
     }
 
-    return game.getName() + oldExt;
+    return gameName + oldExt;
   }
 
   private static getEntryPath(options: Options, game: Game, rom: ROM, inputFile: File): string {

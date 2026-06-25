@@ -8,6 +8,7 @@ import async from 'async';
 import { CompressionMethod, TZWriter } from '../../../../packages/torrentzip/index.js';
 import type { CentralDirectoryFileHeader } from '../../../../packages/zip/index.js';
 import { ZipReader } from '../../../../packages/zip/index.js';
+import { logger } from '../../../console/logger.js';
 import type { ProgressCallback } from '../../../console/progressBar.js';
 import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
@@ -103,6 +104,12 @@ export default class Zip extends Archive {
           }
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
+
+        if (crc32 !== undefined && crc32 !== entryFile.uncompressedCrc32String()) {
+          logger.warn(
+            `${this.getFilePath()}: zip is invalid, the central directory file header for '${entryFile.fileNameResolved()}' has the CRC32 ${entryFile.uncompressedCrc32String()} but it should be ${crc32}`,
+          );
+        }
 
         return await ArchiveEntry.entryOf(
           {

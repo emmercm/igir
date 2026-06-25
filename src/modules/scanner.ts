@@ -142,7 +142,7 @@ export default abstract class Scanner extends Module {
       if (await FsUtil.isSymlink(filePath)) {
         const realFilePath = await FsUtil.readlinkResolved(filePath);
         if (!(await FsUtil.exists(realFilePath))) {
-          this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
+          this.prefixedLogger.warn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
           return [];
         }
       }
@@ -164,7 +164,7 @@ export default abstract class Scanner extends Module {
           fileFromPath instanceof ArchiveEntry &&
           FileFactory.isExtensionArchive(fileFromPath.getExtractedFilePath())
         ) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${filePath}: can't scan archives within archives: ${fileFromPath.getExtractedFilePath()}`,
           );
         }
@@ -181,11 +181,11 @@ export default abstract class Scanner extends Module {
 
       if (filesFromPath.length === 0) {
         if (this.options.getInputChecksumQuick()) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${filePath}: didn't find any files in the archive, try disabling --input-checksum-quick`,
           );
         } else {
-          this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
+          this.prefixedLogger.warn(`${filePath}: didn't find any files in the archive`);
         }
       }
       return filesFromPath.filter(
@@ -195,7 +195,7 @@ export default abstract class Scanner extends Module {
             isNotJunk(fileFromPath.getExtractedFilePath())),
       );
     } catch (error) {
-      this.progressBar.logError(`${filePath}: failed to parse file: ${error}`);
+      this.prefixedLogger.error(`${filePath}: failed to parse file: ${error}`);
       return [];
     }
   }
@@ -207,7 +207,7 @@ export default abstract class Scanner extends Module {
         .map((archiveEntry) => archiveEntry.getArchive())
         .find((archive) => archive instanceof Gzip || archive instanceof Tar);
       if (archiveWithoutChecksums !== undefined) {
-        this.progressBar.logWarn(
+        this.prefixedLogger.warn(
           `${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`,
         );
         return;
@@ -223,7 +223,7 @@ export default abstract class Scanner extends Module {
 
       const cdRom = chdInfos.find(([, info]) => info.type === CHDType.CD_ROM);
       if (cdRom !== undefined) {
-        this.progressBar.logWarn(
+        this.prefixedLogger.warn(
           `${cdRom[0].getFilePath()}: quick checksums will skip .cue/.bin files in CD-ROM CHDs`,
         );
         return;
@@ -231,7 +231,7 @@ export default abstract class Scanner extends Module {
 
       const gdRom = chdInfos.find(([, info]) => info.type === CHDType.GD_ROM);
       if (gdRom !== undefined) {
-        this.progressBar.logWarn(
+        this.prefixedLogger.warn(
           `${gdRom[0].getFilePath()}: quick checksums will skip .gdi/.bin/.raw files in GD-ROM CHDs`,
         );
       }

@@ -3,20 +3,21 @@ import path from 'node:path';
 
 import { Ajv } from 'ajv';
 
+import Game from '../../../../src/models/dats/game.js';
 import Header from '../../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../../src/models/dats/logiqx/logiqxDat.js';
+import MergedDiscGame from '../../../../src/models/dats/mergedDiscGame.js';
 import Release from '../../../../src/models/dats/release.js';
 import ROM from '../../../../src/models/dats/rom.js';
 import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
 import ChdBinCue from '../../../../src/models/files/archives/chd/chdBinCue.js';
 import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../../src/models/options.js';
-import SingleValueGame from '../../../../src/models/singleValueGame.js';
 import outputTokensData from '../../../../src/modules/candidates/utils/consoleTokens.json' with { type: 'json' };
 import outputTokensSchema from '../../../../src/modules/candidates/utils/consoleTokens.schema.json' with { type: 'json' };
 import OutputFactory from '../../../../src/modules/candidates/utils/outputFactory.js';
 
 const dummyDat = new LogiqxDAT({ header: new Header() });
-const dummyGame = new SingleValueGame({ name: 'Dummy Game' });
+const dummyGame = new Game({ name: 'Dummy Game' });
 const dummyRom = new ROM({ name: 'Dummy.rom', size: 0, crc32: '00000000' });
 
 test.each(['test', 'report', 'zip', 'clean'])(
@@ -77,7 +78,7 @@ describe('token replacement', () => {
   ])('should replace {region}: %s', async (output, region, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
-    const game = new SingleValueGame({
+    const game = new Game({
       region,
     });
 
@@ -91,7 +92,7 @@ describe('token replacement', () => {
   ])('should replace {language}: %s', async (output, language, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
-    const game = new SingleValueGame({
+    const game = new Game({
       language,
     });
 
@@ -105,7 +106,7 @@ describe('token replacement', () => {
   ])('should replace {genre}: %s', async (output, genre, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
-    const game = new SingleValueGame({
+    const game = new Game({
       genre,
     });
 
@@ -120,8 +121,8 @@ describe('token replacement', () => {
   ])('should replace {category}: %s', async (output, category, expectedPath) => {
     const options = new Options({ commands: ['copy'], output });
     const dat = new LogiqxDAT({ header: new Header() });
-    const game = new SingleValueGame({
-      category,
+    const game = new Game({
+      categories: category,
     });
 
     const outputPath = OutputFactory.getPath(options, dat, game, dummyRom, await dummyRom.toFile());
@@ -157,7 +158,7 @@ describe('token replacement', () => {
     ['Game', 'Retail'],
   ])('should replace {type}: %s', async (gameName, expectedPath) => {
     const options = new Options({ commands: ['copy'], output: '{type}' });
-    const game = new SingleValueGame({
+    const game = new Game({
       name: gameName,
       release: [
         new Release(gameName, 'USA'),
@@ -858,7 +859,7 @@ describe('should respect "--dir-dat-mirror"', () => {
   ])('option is true: %s', async (datPath, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
-      dat: [datPath.split(/[\\/]/)[0]],
+      dat: [datPath.split(/[\\/]/, 1)[0]],
       output: os.devNull,
       dirDatMirror: true,
     });
@@ -1053,7 +1054,7 @@ describe('should respect "--dir-letter"', () => {
   });
 
   describe('game with multiple ROMs', () => {
-    const game = new SingleValueGame({
+    const game = new Game({
       name: 'Apidya (Unknown)',
       roms: [
         new ROM({ name: 'disk1\\apidya_disk1_00.0.raw', size: 265_730, crc32: '555b1be8' }),
@@ -1090,14 +1091,14 @@ describe('should respect "--dir-letter"', () => {
 describe('should respect "--dir-game-subdir"', () => {
   test.each(
     [
-      new SingleValueGame({
+      new Game({
         name: 'game',
       }),
-      new SingleValueGame({
+      new Game({
         name: 'game',
         roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
       }),
-      new SingleValueGame({
+      new Game({
         name: 'game',
         roms: [
           new ROM({ name: 'one.rom', size: 0, crc32: '' }),
@@ -1126,20 +1127,20 @@ describe('should respect "--dir-game-subdir"', () => {
     (
       [
         [
-          new SingleValueGame({
+          new Game({
             name: 'game',
           }),
           path.resolve(os.devNull, 'Dummy.rom'),
         ],
         [
-          new SingleValueGame({
+          new Game({
             name: 'game',
             roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
           }),
           path.resolve(os.devNull, 'Dummy.rom'),
         ],
         [
-          new SingleValueGame({
+          new Game({
             name: 'game',
             roms: [
               new ROM({ name: 'one.rom', size: 0, crc32: '' }),
@@ -1148,7 +1149,7 @@ describe('should respect "--dir-game-subdir"', () => {
           }),
           path.resolve(os.devNull, 'game', 'Dummy.rom'),
         ],
-      ] satisfies [SingleValueGame, string][]
+      ] satisfies [Game, string][]
     ).map(([game, expectedPath]) => [game.getName(), game, expectedPath]),
   )('"multiple": %s', async (_, game, expectedPath) => {
     const options = new Options({
@@ -1169,14 +1170,14 @@ describe('should respect "--dir-game-subdir"', () => {
 
   test.each(
     [
-      new SingleValueGame({
+      new Game({
         name: 'game',
       }),
-      new SingleValueGame({
+      new Game({
         name: 'game',
         roms: new ROM({ name: 'one.rom', size: 0, crc32: '' }),
       }),
-      new SingleValueGame({
+      new Game({
         name: 'game',
         roms: [
           new ROM({ name: 'one.rom', size: 0, crc32: '' }),
@@ -1203,13 +1204,18 @@ describe('should respect "--dir-game-subdir"', () => {
 });
 
 describe('should respect "--merge-discs"', () => {
-  const discMergedGame = new SingleValueGame({
+  const discMergedGame = new MergedDiscGame({
     name: 'Metal Gear Solid (USA)',
-    roms: [
-      new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).chd', size: 0, crc32: '' }),
-      new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).chd', size: 0, crc32: '' }),
+    subGames: [
+      new Game({
+        name: 'Metal Gear Solid (USA) (Disc 1)',
+        roms: new ROM({ name: 'Metal Gear Solid (USA) (Disc 1).chd', size: 0, crc32: '' }),
+      }),
+      new Game({
+        name: 'Metal Gear Solid (USA) (Disc 2)',
+        roms: new ROM({ name: 'Metal Gear Solid (USA) (Disc 2).chd', size: 0, crc32: '' }),
+      }),
     ],
-    discMerged: true,
   });
 
   test.each(
@@ -1275,6 +1281,95 @@ describe('should respect "--merge-discs"', () => {
       );
     }
   });
+
+  // A TOSEC-style GD-ROM multi-disc game whose discs are each a single CHD holding multiple raw
+  // tracks. The track ROMs carry no disc identity in their names, and when merged they are
+  // de-conflicted with a disc-name subdirectory.
+  const tosecGdRomMergedGame = new MergedDiscGame({
+    name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)[!]',
+    subGames: [
+      new Game({
+        name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)(Disc 1 of 2)[!]',
+        roms: [
+          new ROM({
+            name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)(Disc 1 of 2)[!]/track01.bin',
+            size: 0,
+            crc32: '',
+          }),
+          new ROM({
+            name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)(Disc 1 of 2)[!]/track02.raw',
+            size: 0,
+            crc32: '',
+          }),
+          new ROM({
+            name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)(Disc 1 of 2)[!]/track03.raw',
+            size: 0,
+            crc32: '',
+          }),
+        ],
+      }),
+      new Game({
+        name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)(Disc 2 of 2)[!]',
+        roms: [
+          new ROM({
+            name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)(Disc 2 of 2)[!]/track01.bin',
+            size: 0,
+            crc32: '',
+          }),
+          new ROM({
+            name: 'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)(Disc 2 of 2)[!]/track02.raw',
+            size: 0,
+            crc32: '',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  test.each(
+    [
+      GameSubdirModeInverted[GameSubdirMode.NEVER].toLowerCase(),
+      GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
+      GameSubdirModeInverted[GameSubdirMode.ALWAYS].toLowerCase(),
+    ].map((mode) => [mode]),
+  )(
+    'raw-copies every track of a GD-ROM disc CHD to one output file per disc: "%s"',
+    async (dirGameSubdir) => {
+      const options = new Options({
+        commands: ['copy'],
+        output: os.devNull,
+        dirGameSubdir,
+      });
+
+      for (const subGame of tosecGdRomMergedGame.getSubGames()) {
+        const outputPaths = new Set<string>();
+        for (const rom of subGame.getRoms()) {
+          const outputPath = OutputFactory.getPath(
+            options,
+            dummyDat,
+            tosecGdRomMergedGame,
+            rom,
+            await ArchiveEntry.entryOf({
+              archive: new ChdBinCue(`${subGame.getName()}.chd`),
+              entryPath: rom.getName(),
+              size: 0,
+              crc32: '',
+            }),
+          );
+          outputPaths.add(outputPath.format());
+        }
+
+        // Every track of this disc collapses to exactly one output file named after the disc
+        expect([...outputPaths]).toEqual([
+          path.resolve(
+            os.devNull,
+            'Deep Fighter v1.001 (2000)(Ubi Soft)(PAL)(DE)[!]',
+            `${subGame.getName()}.chd`,
+          ),
+        ]);
+      }
+    },
+  );
 });
 
 describe('outputTokens.json', () => {
@@ -1288,7 +1383,7 @@ describe('outputTokens.json', () => {
 });
 
 describe('multi-rom games with path structure included in game name', () => {
-  const game = new SingleValueGame({
+  const game = new Game({
     name: 'Top10/A-D/Cool Game',
     roms: [
       new ROM({ name: 'Top10/A-D/Cool Game.cue', size: 0, crc32: '' }),

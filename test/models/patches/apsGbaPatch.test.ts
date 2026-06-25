@@ -115,8 +115,7 @@ describe('createPatchedFile', () => {
       'ABCDEFAAAAAAAAAAEEEE',
     ],
   ])('should apply the patch #%#: %s', async (baseContents, patchContents, expectedContents) => {
-    const expectedContentsPadded =
-      expectedContents + String.fromCodePoint(0).repeat(64 * 1024 - expectedContents.length);
+    const expectedContentsPadded = expectedContents.padEnd(64 * 1024, String.fromCodePoint(0));
 
     const inputRom = await writeTemp('ROM', baseContents);
     const outputRom = await FsUtil.mktemp('ROM');

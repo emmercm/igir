@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import Temp from '../../src/globals/temp.js';
+import Game from '../../src/models/dats/game.js';
 import Header from '../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../src/models/dats/logiqx/logiqxDat.js';
 import ROM from '../../src/models/dats/rom.js';
@@ -9,7 +10,6 @@ import File from '../../src/models/files/file.js';
 import type { OptionsProps } from '../../src/models/options.js';
 import Options from '../../src/models/options.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
-import SingleValueGame from '../../src/models/singleValueGame.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import ReportGenerator from '../../src/modules/reportGenerator.js';
 import FsUtil from '../../src/utils/fsUtil.js';
@@ -27,7 +27,7 @@ const datStatusEmpty = new DATStatus(
 );
 
 const gamesSingle = [
-  new SingleValueGame({
+  new Game({
     name: 'One',
     roms: [new ROM({ name: 'One.rom', size: 123, crc32: 'abcdef01' })],
   }),
@@ -55,19 +55,19 @@ async function buildDatStatusSingle(): Promise<DATStatus> {
 }
 
 const gamesMultiple = [
-  new SingleValueGame({
+  new Game({
     name: 'Two',
     roms: [new ROM({ name: 'Two.rom', size: 234, crc32: 'bcdef012' })],
   }),
-  new SingleValueGame({
+  new Game({
     name: 'Three',
     roms: [new ROM({ name: 'Three.rom', size: 345, crc32: 'cdef0123' })],
   }),
-  new SingleValueGame({
+  new Game({
     name: 'Four',
     roms: [new ROM({ name: 'Four.rom', size: 456, crc32: 'def01234' })],
   }),
-  new SingleValueGame({
+  new Game({
     name: 'Five',
     roms: [],
   }),

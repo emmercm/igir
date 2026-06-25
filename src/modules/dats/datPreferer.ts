@@ -24,7 +24,7 @@ export default class DATPreferer extends Module {
    */
   prefer(dat: DAT): DAT {
     if (!this.options.getSingle()) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: not running in single/1G1R mode, not preferring games`,
       );
       return dat;
@@ -32,17 +32,17 @@ export default class DATPreferer extends Module {
 
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no games to prefer`);
+      this.prefixedLogger.trace(`${dat.getName()}: no games to prefer`);
       return dat;
     }
 
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no parent has games, not preferring games`);
+      this.prefixedLogger.trace(`${dat.getName()}: no parent has games, not preferring games`);
       return dat;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: preferring DAT games`);
+    this.prefixedLogger.trace(`${dat.getName()}: preferring DAT games`);
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_PREFERRING);
     this.progressBar.resetProgress(dat.getParents().length);
 
@@ -63,7 +63,7 @@ export default class DATPreferer extends Module {
         if (preferredGame === undefined) {
           return undefined;
         }
-        this.progressBar.logTrace(
+        this.prefixedLogger.trace(
           `${dat.getName()}: ${parent.getName()} (parent): out of ${IntlUtil.toLocaleString(parent.getGames().length)} game${parent.getGames().length === 1 ? '' : 's'}, preferred: ${preferredGame[0].getName()}`,
         );
         return preferredGame[0].withProps({ cloneOf: undefined });
@@ -75,11 +75,11 @@ export default class DATPreferer extends Module {
       .getGames()
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${preferredDat.getName()}: preferred to ${IntlUtil.toLocaleString(preferredGames.length)}/${IntlUtil.toLocaleString(dat.getGames().length)} game${preferredGames.length === 1 ? '' : 's'} (${FsUtil.sizeReadable(size)})`,
     );
 
-    this.progressBar.logTrace(`${preferredDat.getName()}: done preferring DAT games`);
+    this.prefixedLogger.trace(`${preferredDat.getName()}: done preferring DAT games`);
     return preferredDat;
   }
 

@@ -28,14 +28,14 @@ export default class PatchScanner extends Scanner {
    * Scan & process {@link Patch}es.
    */
   async scan(): Promise<Patch[]> {
-    this.progressBar.logTrace('scanning patch files');
+    this.prefixedLogger.trace('scanning patch files');
     this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
     this.progressBar.resetProgress(0);
 
     const patchFilePaths = await this.options.scanPatchFilesWithoutExclusions((increment) => {
       this.progressBar.incrementTotal(increment);
     });
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `found ${IntlUtil.toLocaleString(patchFilePaths.length)} patch file${patchFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(patchFilePaths.length);
@@ -46,16 +46,16 @@ export default class PatchScanner extends Scanner {
     const patches = await this.parsePatchFiles(patchFiles);
     patches.forEach((patch) => {
       if (patch.getCrcBefore() === '00000000') {
-        this.progressBar.logWarn(`${patch.toString()}: couldn't parse base file CRC`);
+        this.prefixedLogger.warn(`${patch.toString()}: couldn't parse base file CRC`);
       }
     });
 
-    this.progressBar.logTrace('done scanning patch files');
+    this.prefixedLogger.trace('done scanning patch files');
     return patches;
   }
 
   private async parsePatchFiles(patchFiles: File[]): Promise<Patch[]> {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `parsing ${IntlUtil.toLocaleString(patchFiles.length)} patch file${patchFiles.length === 1 ? '' : 's'}`,
     );
     if (patchFiles.length === 0) {
@@ -76,7 +76,7 @@ export default class PatchScanner extends Scanner {
         try {
           return await this.patchFromFile(patchFile);
         } catch (error) {
-          this.progressBar.logWarn(`${patchFile.toString()}: failed to parse patch: ${error}`);
+          this.prefixedLogger.warn(`${patchFile.toString()}: failed to parse patch: ${error}`);
           return undefined;
         } finally {
           childBar.delete();
@@ -89,7 +89,7 @@ export default class PatchScanner extends Scanner {
   private async patchFromFile(file: File): Promise<Patch | undefined> {
     const patchForFilename = await PatchFactory.patchFromFilename(file);
     if (patchForFilename) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${patchForFilename.toString()}: found ${patchForFilename.constructor.name} from patch filename extension`,
       );
       return patchForFilename;
@@ -97,13 +97,13 @@ export default class PatchScanner extends Scanner {
 
     const patchForFileContents = await PatchFactory.patchFromFileContents(file);
     if (patchForFileContents) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${patchForFileContents.toString()}: found ${patchForFileContents.constructor.name} from patch file contents`,
       );
       return patchForFileContents;
     }
 
-    this.progressBar.logTrace(`${file.toString()}: is not a known patch file`);
+    this.prefixedLogger.trace(`${file.toString()}: is not a known patch file`);
     return undefined;
   }
 }

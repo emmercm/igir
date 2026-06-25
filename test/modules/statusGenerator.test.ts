@@ -1,12 +1,9 @@
 import path from 'node:path';
-import stream from 'node:stream';
 
 import stripAnsi from 'strip-ansi';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import FileCache from '../../src/cache/fileCache.js';
-import Logger from '../../src/console/logger.js';
-import { LogLevel } from '../../src/console/logLevel.js';
 import FileFactory from '../../src/factories/fileFactory.js';
 import type DAT from '../../src/models/dats/dat.js';
 import Disk from '../../src/models/dats/disk.js';
@@ -22,7 +19,6 @@ import type { OptionsProps } from '../../src/models/options.js';
 import Options from '../../src/models/options.js';
 import IPSPatch from '../../src/models/patches/ipsPatch.js';
 import ROMWithFiles from '../../src/models/romWithFiles.js';
-import SingleValueGame from '../../src/models/singleValueGame.js';
 import WriteCandidate from '../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../src/modules/candidates/candidateGenerator.js';
 import DATPreferer from '../../src/modules/dats/datPreferer.js';
@@ -105,7 +101,7 @@ async function candidateGenerator(
   return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(2),
   ).generate(dat, romsIndexed);
 }
@@ -227,7 +223,7 @@ describe('toConsole', () => {
 
   it('should always print patched games as found', async () => {
     const options = new Options(defaultOptions);
-    const game = new SingleValueGame({ name: 'patched game' });
+    const game = new Game({ name: 'patched game' });
     const rom = new ROM({ name: 'patched.rom', size: 123, crc32: '00000000' });
     const candidates = [
       new WriteCandidate(game, [
@@ -369,7 +365,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
           const outputFile = await File.fileOf({ filePath: zip.getFilePath() });
           return new WriteCandidate(
-            new SingleValueGame({ ...game }),
+            new Game({ ...game }),
             game.getRoms().map((rom) => new ROMWithFiles(rom, inputFile, outputFile)),
           );
         }),
@@ -470,7 +466,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
                 .slice(0, 1)
                 .map(async (rom) => new ROMWithFiles(rom, await rom.toFile(), await rom.toFile())),
             );
-            return new WriteCandidate(new SingleValueGame({ ...game }), romWithFiles);
+            return new WriteCandidate(new Game({ ...game }), romWithFiles);
           }),
       );
 
@@ -529,7 +525,7 @@ dat,no roms,FOUND,,false,false,true,false,false,false,false,false,false,false,fa
 
   it('should always report patched games as found', async () => {
     const options = new Options(defaultOptions);
-    const game = new SingleValueGame({ name: 'patched game' });
+    const game = new Game({ name: 'patched game' });
     const rom = new ROM({ name: 'patched.rom', size: 123, crc32: '00000000' });
     const candidates = [
       new WriteCandidate(game, [

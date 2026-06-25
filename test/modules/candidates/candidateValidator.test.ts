@@ -5,7 +5,6 @@ import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/models/dats/rom.js';
 import Options from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateValidator from '../../../src/modules/candidates/candidateValidator.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
@@ -15,7 +14,7 @@ async function datToCandidates(dat: DAT): Promise<WriteCandidate[]> {
     dat.getGames().map(
       async (game) =>
         new WriteCandidate(
-          new SingleValueGame({ ...game }),
+          new Game({ ...game }),
           await Promise.all(
             game.getRoms().map(async (rom) => {
               const dummyFile = await rom.toFile();
