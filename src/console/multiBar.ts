@@ -1,13 +1,8 @@
-import tty from 'node:tty';
-
-import stripAnsi from 'strip-ansi';
-
 import Timer from '../async/timer.js';
-import type Logger from './logger.js';
-import type { LogLevelValue } from './logLevel.js';
-import { LogLevel } from './logLevel.js';
+import { logger } from './logger.js';
 import type { SingleBarOptions } from './singleBar.js';
 import SingleBar from './singleBar.js';
+import { LIVE_REGION_PADDING, terminal } from './terminal.js';
 
 const exitHandler = (): void => {
   MultiBar.stop();
@@ -18,58 +13,29 @@ process.once('SIGTERM', exitHandler);
 
 /**
  * A wrapper for multiple {@link SingleBar}s. Should be treated as a singleton.
+ *
+ * {@link MultiBar} produces the live-region frame (the combined text of all of its bars) and hands
+ * it to the {@link Terminal}, which owns the output stream and draws it. {@link MultiBar} never
+ * writes to the terminal itself.
  */
 export default class MultiBar {
-  private static readonly RENDER_MIN_FPS = 4;
-  private static readonly OUTPUT_PADDING = ' ';
+  private static readonly RENDER_MIN_FPS = 5;
 
   private static readonly multiBars: MultiBar[] = [];
-  private static readonly logQueue: [LogLevelValue, string, string | undefined][] = [];
-  private static lastPrintedLog?: [LogLevelValue, string, string | undefined];
 
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
-  private lastRawOutput = '';
-  private lastOutput = '';
   private stopped = false;
-  private readonly sigwinchHandler?: () => void;
 
-  private readonly logger: Logger;
-  private readonly terminal: tty.WriteStream | NodeJS.WritableStream;
-  private terminalColumns = 65_536;
-  private terminalRows = 65_536;
-
-  private constructor(logger: Logger) {
-    this.logger = logger;
-    this.terminal = logger.getStream() ?? process.stdout;
-
-    // Disable the cursor
-    if (this.terminal instanceof tty.WriteStream) {
-      this.terminal.write('\x1B[?25l');
-    }
-
-    // Set a maximum size for the MultiBar based on terminal size
-    if (this.terminal instanceof tty.WriteStream) {
-      this.sigwinchHandler = (): void => {
-        if (!(this.terminal instanceof tty.WriteStream)) {
-          return;
-        }
-        this.terminalColumns = this.terminal.columns;
-        this.terminalRows = this.terminal.rows;
-        // The terminal size affects line truncation, so force a full re-render
-        this.lastRawOutput = '';
-        this.clearAndRender();
-      };
-      process.on('SIGWINCH', this.sigwinchHandler);
-      this.sigwinchHandler();
-    }
+  private constructor() {
+    // Instances are created via the static `create()` factory.
   }
 
   /**
    * Create a new {@link MultiBar} instance.
    */
-  static create(logger: Logger): MultiBar {
-    const multiBar = new MultiBar(logger);
+  static create(): MultiBar {
+    const multiBar = new MultiBar();
     this.multiBars.push(multiBar);
     return multiBar;
   }
@@ -103,11 +69,18 @@ export default class MultiBar {
       this.singleBars.splice(insertionIndex, 0, singleBar);
     }
 
+    // Force a render so a new top-level bar appears immediately. This also starts the periodic
+    // render loop; child bars are added under an already-rendered top-level bar and are picked up
+    // by the next render tick.
+    if (singleBar.getIndentSize() === 0) {
+      this.clearAndRender();
+    }
+
     return singleBar;
   }
 
   /**
-   * Log the {@link SingleBar}'s last output and remove it.
+   * Log the {@link SingleBar}'s last output and remove it from the live region.
    */
   freezeSingleBar(singleBar: SingleBar): void {
     const idx = this.singleBars.indexOf(singleBar);
@@ -115,18 +88,23 @@ export default class MultiBar {
       return;
     }
 
-    // Render one last time, then log the output
-    this.clearAndRender();
+    // Refresh just this bar's last output to capture its final state (e.g. a finish message)
+    singleBar.format();
     const lastOutput = singleBar.getLastOutput();
+
+    // Remove the bar so the live region no longer includes it
+    this.singleBars.splice(idx, 1);
+
+    // Emit the snapshot as a permanent line above the live region
     if (lastOutput !== undefined) {
-      this.log(
-        LogLevel.ALWAYS,
-        `${singleBar.getIndentSize() === 0 ? '\n' : ''}${MultiBar.OUTPUT_PADDING}${lastOutput}`,
+      logger.printFrozenBar(
+        `${singleBar.getIndentSize() === 0 ? '\n' : ''}${LIVE_REGION_PADDING}${lastOutput}`,
       );
     }
 
-    // Remove the single bar
-    this.singleBars.splice(idx, 1);
+    // Redraw the live region without this bar. The Terminal dedupes an unchanged frame, so this is
+    // a cheap no-op if the bar was never displayed.
+    this.clearAndRender();
   }
 
   /**
@@ -142,41 +120,7 @@ export default class MultiBar {
   }
 
   /**
-   * Queue a log message to be printed to the terminal.
-   */
-  static log(logLevel: LogLevelValue, message: string, prefix?: string): void {
-    this.multiBars.at(0)?.log(logLevel, message, prefix);
-  }
-
-  /**
-   * Queue a log message to be printed to the terminal.
-   */
-  log(logLevel: LogLevelValue, message: string, prefix?: string): void {
-    // Find the last log line that would have been printed immediately before this message
-    const lastPrintedLog =
-      MultiBar.logQueue.findLast(([logLevel]) => this.logger.canPrint(logLevel)) ??
-      MultiBar.lastPrintedLog;
-
-    const isFrozenPattern = new RegExp(`^\n*${MultiBar.OUTPUT_PADDING}`);
-    const lastPrintedLogIsFrozen =
-      lastPrintedLog !== undefined && isFrozenPattern.test(lastPrintedLog[1]);
-    const thisMessageIsFrozen = isFrozenPattern.test(message);
-
-    if (lastPrintedLogIsFrozen) {
-      if (thisMessageIsFrozen) {
-        // Print frozen progress bars next to each other
-        message = message.replace(/^\n+/, '');
-      } else {
-        // Otherwise, add a newline after the previous frozen progress bar
-        message = `\n${message}`;
-      }
-    }
-
-    MultiBar.logQueue.push([logLevel, message, prefix]);
-  }
-
-  /**
-   * Clear the last output and render the progress bars.
+   * Recompute the combined live-region frame and hand it to the {@link Terminal} to draw.
    */
   clearAndRender(): void {
     if (this.stopped) {
@@ -184,14 +128,19 @@ export default class MultiBar {
     }
 
     this.renderTimer?.cancel();
-    this.renderTimer = Timer.setTimeout(
-      () => {
-        this.clearAndRender();
-      },
-      Math.max(1000 / MultiBar.RENDER_MIN_FPS, 1),
-    );
+    if (terminal.isInteractive()) {
+      // Only keep re-rendering to advance ETAs/animation when there's a live region to draw.
+      // On a non-TTY nothing is drawn, so running the (expensive) format() pipeline on a loop is
+      // pure waste; explicit calls (setSymbol/setName/freeze) still render on demand.
+      this.renderTimer = Timer.setTimeout(
+        () => {
+          this.clearAndRender();
+        },
+        Math.max(1000 / MultiBar.RENDER_MIN_FPS, 1),
+      );
+    }
 
-    const rawLines = this.singleBars
+    const rawOutput = this.singleBars
       .flatMap((singleBar) => {
         const lines = singleBar
           .format()
@@ -202,108 +151,11 @@ export default class MultiBar {
         }
         return lines;
       })
-      .slice(0, this.terminalRows - 1);
+      .join('\n');
 
     // `format()` must run every render (above) to keep each bar's last output and display state
-    // fresh, but ANSI-stripping and truncating every line is expensive. Skip that pipeline when
-    // the bars haven't visibly changed since the last render.
-    const rawOutput = rawLines.join('\n');
-    if (rawOutput === this.lastRawOutput && MultiBar.logQueue.length === 0) {
-      return;
-    }
-    this.lastRawOutput = rawOutput;
-
-    const outputLines = rawLines.map((line) => {
-      // The visible (ANSI-stripped) length can only be shorter than the raw length, so a line that
-      // already fits within the terminal needs no stripping or truncation.
-      if (line.length <= this.terminalColumns - 10) {
-        return `${MultiBar.OUTPUT_PADDING}${line}`;
-      }
-      const stripChars = stripAnsi(line).length - this.terminalColumns + 10;
-      if (stripChars <= 0) {
-        return `${MultiBar.OUTPUT_PADDING}${line}`;
-      }
-      return `${MultiBar.OUTPUT_PADDING}${line.slice(0, line.length - stripChars)}…`;
-    });
-    const output = outputLines.length > 0 ? `${outputLines.join('\n')}\n` : '';
-
-    if (output === this.lastOutput && MultiBar.logQueue.length === 0) {
-      // Nothing new to render
-      return;
-    }
-
-    // Clear the entire progress bar area before printing logs
-    let screenCleared = false;
-    if (this.terminal instanceof tty.WriteStream && MultiBar.logQueue.length > 0) {
-      const rowsToMoveUp = this.lastOutput.split('\n').length - 1;
-      if (rowsToMoveUp > 0) {
-        this.terminal.moveCursor(0, -rowsToMoveUp);
-        this.terminal.cursorTo(0);
-        this.terminal.clearScreenDown();
-        screenCleared = true;
-      }
-    }
-
-    // Write out all queued logs
-    let log = MultiBar.logQueue.shift();
-    while (log !== undefined) {
-      if (this.logger.printLine(log[0], log[1], log[2])) {
-        MultiBar.lastPrintedLog = log;
-      }
-      log = MultiBar.logQueue.shift();
-    }
-
-    if (this.terminal instanceof tty.WriteStream) {
-      if (screenCleared) {
-        // Screen was cleared for logs; write the full output
-        this.terminal.write(output);
-      } else {
-        // Partial repaint: find the first changed line, move up to it, then overwrite in-place
-        const lastLines = this.lastOutput.split('\n');
-        const newLines = output.split('\n');
-
-        let firstChangedRow = 0;
-        while (
-          firstChangedRow < lastLines.length - 1 &&
-          firstChangedRow < newLines.length - 1 &&
-          lastLines[firstChangedRow] === newLines[firstChangedRow]
-        ) {
-          firstChangedRow++;
-        }
-
-        const rowsToMoveUp = lastLines.length - 1 - firstChangedRow;
-        if (rowsToMoveUp > 0) {
-          this.terminal.moveCursor(0, -rowsToMoveUp);
-          this.terminal.cursorTo(0);
-        }
-
-        const newlineCount = newLines.length - 1;
-        const lastLineCount = lastLines.length - 1;
-
-        for (let i = firstChangedRow; i < newlineCount; i++) {
-          this.terminal.cursorTo(0);
-          this.terminal.write(newLines[i]);
-          this.terminal.clearLine(1); // erase leftover chars if the new line is shorter
-          this.terminal.write('\n');
-        }
-
-        // Cursor is now at row newLineCount; ensure column 0
-        this.terminal.cursorTo(0);
-
-        // Erase any extra lines from the old output by clearing them in-place, then stepping back up
-        const extraOldLines = Math.max(0, lastLineCount - newlineCount);
-        for (let i = 0; i < extraOldLines; i++) {
-          this.terminal.clearLine(0);
-          if (i < extraOldLines - 1) {
-            this.terminal.moveCursor(0, 1);
-          }
-        }
-        if (extraOldLines > 1) {
-          this.terminal.moveCursor(0, -(extraOldLines - 1));
-        }
-      }
-    }
-    this.lastOutput = output;
+    // fresh. The Terminal dedupes unchanged frames, so we always hand off the latest one.
+    terminal.setLiveRegion(rawOutput);
   }
 
   /**
@@ -327,7 +179,6 @@ export default class MultiBar {
 
     // One last render
     this.clearAndRender();
-    this.renderTimer?.cancel();
 
     // Freeze (and delete) any lingering progress bars
     const singleBarsCopy = [...this.singleBars];
@@ -335,16 +186,8 @@ export default class MultiBar {
       progressBar.freeze();
     });
 
-    // Remove the SIGWINCH listener
-    if (this.sigwinchHandler !== undefined) {
-      process.off('SIGWINCH', this.sigwinchHandler);
-    }
-
-    // Restore the cursor
-    if (this.terminal instanceof tty.WriteStream) {
-      this.terminal.write('\x1B[?25h');
-    }
-
+    this.renderTimer?.cancel();
+    terminal.clearLiveRegion();
     this.stopped = true;
   }
 }

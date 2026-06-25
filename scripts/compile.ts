@@ -9,14 +9,12 @@ import fg from 'fast-glob';
 import yargs from 'yargs';
 
 import Timer from '../src/async/timer.js';
-import Logger from '../src/console/logger.js';
-import { LogLevel } from '../src/console/logLevel.js';
+import { logger } from '../src/console/logger.js';
 import IgirException from '../src/exceptions/igirException.js';
 import Package from '../src/globals/package.js';
 import Temp from '../src/globals/temp.js';
 import FsUtil from '../src/utils/fsUtil.js';
 
-const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== COMPILING ==========');
 
 const argv = await yargs([])
