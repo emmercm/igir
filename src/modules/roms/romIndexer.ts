@@ -32,7 +32,7 @@ export default class ROMIndexer extends Module {
    * Index files.
    */
   index(files: File[]): IndexedFiles {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `indexing ${IntlUtil.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
@@ -46,11 +46,11 @@ export default class ROMIndexer extends Module {
       this.progressBar.incrementCompleted();
     });
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `found ${result.getSize()} unique file${result.getSize() === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace('done indexing files');
+    this.prefixedLogger.trace('done indexing files');
     return result;
   }
 

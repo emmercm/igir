@@ -34,11 +34,11 @@ export default class PlaylistCreator extends Module {
     }
 
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to create playlists for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to create playlists for`);
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: writing playlists`);
+    this.prefixedLogger.trace(`${dat.getName()}: writing playlists`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.resetProgress(candidates.length);
 
@@ -90,7 +90,7 @@ export default class PlaylistCreator extends Module {
 
     // TODO(cemmer): something with the remaining candidates?
 
-    this.progressBar.logTrace(`${dat.getName()}: done writing playlists`);
+    this.prefixedLogger.trace(`${dat.getName()}: done writing playlists`);
     return writtenPlaylistPaths;
   }
 
@@ -136,7 +136,7 @@ export default class PlaylistCreator extends Module {
       await FsUtil.mkdir(commonDirectory, { recursive: true });
     }
     const playlistLocation = path.join(commonDirectory, `${playlistBasename}.m3u`);
-    this.progressBar.logInfo(`${dat.getName()}: creating playlist '${playlistLocation}'`);
+    this.prefixedLogger.info(`${dat.getName()}: creating playlist '${playlistLocation}'`);
     await FsUtil.writeFile(playlistLocation, playlistLines);
     return playlistLocation;
   }

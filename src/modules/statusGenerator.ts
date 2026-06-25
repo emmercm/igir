@@ -20,11 +20,11 @@ export default class StatusGenerator extends Module {
    * Generate a {@link DATStatus} for the {@link DAT}.
    */
   generate(dat: DAT, candidates: WriteCandidate[]): DATStatus {
-    this.progressBar.logTrace(`${dat.getName()}: generating ROM statuses`);
+    this.prefixedLogger.trace(`${dat.getName()}: generating ROM statuses`);
 
     const datStatus = new DATStatus(this.options, dat, candidates);
 
-    this.progressBar.logTrace(`${dat.getName()}: done generating ROM statuses`);
+    this.prefixedLogger.trace(`${dat.getName()}: done generating ROM statuses`);
     return datStatus;
   }
 }

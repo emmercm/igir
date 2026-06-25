@@ -9,9 +9,7 @@ import semver from 'semver';
 import terminalLink from 'terminal-link';
 import which from 'which';
 
-import type Logger from '../console/logger.js';
-import { LogLevel } from '../console/logLevel.js';
-import MultiBar from '../console/multiBar.js';
+import { logger } from '../console/logger.js';
 import Package from '../globals/package.js';
 import BufferUtil from '../utils/bufferUtil.js';
 
@@ -19,12 +17,6 @@ import BufferUtil from '../utils/bufferUtil.js';
  * Check for a newer version and log if one is found.
  */
 export default class UpdateChecker {
-  private readonly logger: Logger;
-
-  constructor(logger: Logger) {
-    this.logger = logger;
-  }
-
   /**
    * Check for a newer version and log if one is found.
    */
@@ -49,7 +41,7 @@ export default class UpdateChecker {
       } else {
         message += ` via npm: ${color(`npm update ${Package.NAME}`)}`;
       }
-      MultiBar.log(LogLevel.NOTICE, message);
+      logger.notice(message);
     }
   }
 
