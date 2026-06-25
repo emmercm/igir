@@ -76,14 +76,14 @@ export default class Logger {
   ): boolean {
     const willPrint = this.logLevel <= logLevel;
     if (!willPrint && this.logFileHandle === undefined) {
-      // The message is filtered out and there's no log file to tee it to, so skip the string work.
+      // The message is filtered out and there's no log file to tee it to, so skip the string work
       return false;
     }
 
     let messageString = String(message);
 
     // Keep consecutive frozen progress-bar snapshots visually adjacent, and separate a frozen
-    // snapshot from a following non-frozen log line with a blank line.
+    // snapshot from a following non-frozen log line with a blank line
     if (this.lastPrintedFrozen) {
       if (frozen) {
         messageString = messageString.replace(/^\n+/, '');

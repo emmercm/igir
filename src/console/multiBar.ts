@@ -28,7 +28,7 @@ export default class MultiBar {
   private stopped = false;
 
   private constructor() {
-    // Instances are created via the static `create()` factory.
+    // Instances are created via the static `create()` factory
   }
 
   /**

@@ -1,13 +1,10 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import { Semaphore } from 'async-mutex';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import Game from '../../../src/models/dats/game.js';
@@ -23,8 +20,6 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 it('should do nothing with no candidates', async () => {
   const options = new Options();
   const dat = new LogiqxDAT({ header: new Header() });
@@ -33,7 +28,7 @@ it('should do nothing with no candidates', async () => {
   const correctedCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new Semaphore(os.availableParallelism()),
   ).correct(dat, candidates);
 
@@ -65,7 +60,7 @@ it('should do nothing when no ROMs need correcting', async () => {
   const correctedCandidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new Semaphore(os.availableParallelism()),
   ).correct(dat, candidates);
 
@@ -116,7 +111,7 @@ it('should correct ROMs without DATs', async () => {
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
@@ -153,7 +148,7 @@ it('should correct ROMs without DATs', async () => {
     const correctedCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new Semaphore(os.availableParallelism()),
     ).correct(dat, candidates);
 
@@ -173,7 +168,7 @@ it('should correct ROMs with missing filenames', async () => {
   const inputFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
@@ -206,7 +201,7 @@ it('should correct ROMs with missing filenames', async () => {
     const correctedCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new Semaphore(os.availableParallelism()),
     ).correct(dat, candidates);
 

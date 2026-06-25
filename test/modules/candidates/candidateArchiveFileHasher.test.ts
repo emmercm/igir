@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
@@ -24,7 +21,7 @@ import ProgressBarFake from '../../console/progressBarFake.js';
 const FIXTURE_ROMS_DIR = path.join('test', 'fixtures', 'roms');
 
 function buildFileFactory(): FileFactory {
-  return new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough()));
+  return new FileFactory(new FileCache());
 }
 
 function buildHasher(options: Options): CandidateArchiveFileHasher {
