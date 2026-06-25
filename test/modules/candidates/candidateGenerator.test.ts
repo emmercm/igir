@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
@@ -37,8 +34,6 @@ import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ArrayUtil from '../../../src/utils/arrayUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 const gameWithNoRoms = new Game({
   name: 'game with no ROMs',
@@ -93,7 +88,7 @@ async function candidateGenerator(
   return await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedFiles);
 }
@@ -1502,7 +1497,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
@@ -1546,7 +1541,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 
@@ -1591,7 +1586,7 @@ describe('MAME v0.260', () => {
     const candidates = await new CandidateGenerator(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).generate(mameDat, await mameIndexedFiles);
 

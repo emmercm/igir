@@ -1,18 +1,13 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import ROMHeader from '../../../src/models/files/romHeader.js';
 import Options from '../../../src/models/options.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 describe('headerFromFilename', () => {
   test.each(['rom.a78', 'rom.lnx', 'rom.nes', 'rom.fds', 'rom.smc', 'rom.zip.fds'])(
@@ -40,7 +35,7 @@ describe('headerFromFileStream', () => {
         input: ['./test/fixtures/roms/headered'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(headeredRoms).toHaveLength(6);
@@ -64,7 +59,7 @@ describe('headerFromFileStream', () => {
         ],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(headeredRoms.length).toBeGreaterThan(0);

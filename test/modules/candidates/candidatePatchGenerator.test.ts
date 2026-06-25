@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import type DAT from '../../../src/models/dats/dat.js';
 import Game from '../../../src/models/dats/game.js';
@@ -31,8 +28,6 @@ import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 // Run DATGameInferrer, but condense all DATs down to one
 async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT> {
   const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
@@ -53,14 +48,14 @@ async function runPatchCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 
   const patches = await new PatchScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
@@ -92,7 +87,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -113,7 +108,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -148,7 +143,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -191,7 +186,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.cpus().length),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -328,14 +323,14 @@ describe('with explicit DATs', () => {
       await new DATScanner(
         options,
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(os.availableParallelism()),
       ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
 

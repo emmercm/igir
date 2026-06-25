@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import Game from '../../../src/models/dats/game.js';
@@ -32,7 +29,7 @@ it('should do nothing if no ROMs moved', async () => {
       input: ['./test/fixtures/roms'],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
   expect(romFiles.length).toBeGreaterThan(0);
@@ -472,7 +469,7 @@ describe('should delete archives', () => {
         const candidates = await new CandidateGenerator(
           options,
           new ProgressBarFake(),
-          new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+          new FileFactory(new FileCache()),
           new MappableSemaphore(os.availableParallelism()),
         ).generate(dat, indexedRomFiles);
 

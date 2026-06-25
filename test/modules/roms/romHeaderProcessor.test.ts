@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import File from '../../../src/models/files/file.js';
@@ -15,8 +12,6 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 describe('extension has possible header', () => {
   it('should do nothing if extension not found', async () => {
     const inputRomFiles = await new ROMScanner(
@@ -24,7 +19,7 @@ describe('extension has possible header', () => {
         input: ['./test/fixtures/roms/{,**/}*.rom'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
@@ -34,7 +29,7 @@ describe('extension has possible header', () => {
         commands: ['copy', 'extract'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).process(inputRomFiles);
 
@@ -55,7 +50,7 @@ describe('extension has possible header', () => {
         commands: ['copy', 'extract'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).process(inputRomFiles);
 
@@ -69,7 +64,7 @@ describe('extension has possible header', () => {
         input: ['./test/fixtures/roms/headered/*{.a78,.lnx,.nes,.fds,.smc}*'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
@@ -79,7 +74,7 @@ describe('extension has possible header', () => {
         commands: ['copy', 'extract'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).process(inputRomFiles);
 
@@ -97,7 +92,7 @@ describe('extension has possible header', () => {
         input: ['./test/fixtures/roms/headered/*{.7z,.rar,.zip}'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
@@ -105,7 +100,7 @@ describe('extension has possible header', () => {
     const processedRomFiles = await new ROMHeaderProcessor(
       new Options(),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).process(inputRomFiles);
 
@@ -125,7 +120,7 @@ describe('should read file for header', () => {
         input: ['./test/fixtures/roms/!(headered){,/}*'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
@@ -136,7 +131,7 @@ describe('should read file for header', () => {
         header: '**/*',
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).process(inputRomFiles);
 
@@ -154,7 +149,7 @@ describe('should read file for header', () => {
         input: ['./test/fixtures/roms/headered/!(*{.a78,.lnx,.nes,.fds,.smc}*)'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(inputRomFiles.length).toBeGreaterThan(0);
@@ -165,7 +160,7 @@ describe('should read file for header', () => {
         header: '**/*',
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).process(inputRomFiles);
 

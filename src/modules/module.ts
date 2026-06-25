@@ -1,3 +1,5 @@
+import { logger } from '../console/logger.js';
+import type PrefixedLogger from '../console/prefixedLogger.js';
 import type ProgressBar from '../console/progressBar.js';
 
 /**
@@ -5,9 +7,10 @@ import type ProgressBar from '../console/progressBar.js';
  */
 export default abstract class Module {
   protected readonly progressBar: ProgressBar;
+  protected readonly prefixedLogger: PrefixedLogger;
 
   protected constructor(progressBar: ProgressBar, loggerPrefix: string) {
     this.progressBar = progressBar;
-    this.progressBar.setLoggerPrefix(loggerPrefix);
+    this.prefixedLogger = logger.child(loggerPrefix);
   }
 }

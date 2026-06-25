@@ -19,7 +19,7 @@ export default class DATCombiner extends Module {
    * Combine the DATs.
    */
   combine(dats: DAT[]): DAT {
-    this.progressBar.logTrace(`combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
+    this.prefixedLogger.trace(`combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
 
     const newDat = new LogiqxDAT({
       header: DATCombiner.generateHeader(dats),
@@ -28,7 +28,7 @@ export default class DATCombiner extends Module {
         .filter(ArrayUtil.filterUniqueMapped((game) => game.hashCode())),
     });
 
-    this.progressBar.logTrace(`done combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
+    this.prefixedLogger.trace(`done combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
     return newDat;
   }
 

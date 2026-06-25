@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import type tty from 'node:tty';
 
 import chalk from 'chalk';
 import stripAnsi from 'strip-ansi';
@@ -9,19 +8,24 @@ import Package from '../globals/package.js';
 import DateUtil from '../utils/dateUtil.js';
 import type { LogLevelValue } from './logLevel.js';
 import { LogLevel, LogLevelInverted } from './logLevel.js';
+import PrefixedLogger from './prefixedLogger.js';
+import type Terminal from './terminal.js';
+import { terminal } from './terminal.js';
 
 /**
- * {@link Logger} is a class that deals with the formatting and outputting log messages to a stream.
+ * {@link Logger} owns log-message semantics: it formats and filters messages by {@link LogLevel},
+ * tees them to an optional log file, and coordinates the blank-line spacing around frozen
+ * progress-bar snapshots. It writes finished lines to the output via {@link Terminal}.
  */
 export default class Logger {
-  private logLevel: LogLevelValue;
-  private readonly stream: tty.WriteStream | NodeJS.WritableStream;
+  private readonly terminal: Terminal;
 
+  private logLevel: LogLevelValue = LogLevel.TRACE;
   private logFileHandle: number | undefined;
+  private lastPrintedFrozen = false;
 
-  constructor(logLevel: LogLevelValue, stream: tty.WriteStream | NodeJS.WritableStream) {
-    this.logLevel = logLevel;
-    this.stream = stream;
+  constructor(terminal: Terminal) {
+    this.terminal = terminal;
 
     process.once('exit', () => {
       if (this.logFileHandle !== undefined) {
@@ -34,22 +38,21 @@ export default class Logger {
     return this.logLevel;
   }
 
-  /**
-   * Can the logger print a message at the specified LogLevel?
-   */
-  canPrint(logLevel: LogLevelValue): boolean {
-    return this.logLevel <= logLevel;
-  }
-
   setLogLevel(logLevel: LogLevelValue): void {
     this.logLevel = logLevel;
   }
 
-  getStream(): NodeJS.WritableStream | undefined {
-    return this.stream;
+  /**
+   * Create a {@link PrefixedLogger} that prepends every message it logs with the given prefix.
+   */
+  child(prefix: string): PrefixedLogger {
+    return new PrefixedLogger(this, prefix);
   }
 
-  setLogFile(logFile: string): void {
+  /**
+   * Open (or replace) a file that every message is additionally written to, regardless of log level.
+   */
+  openLogFile(logFile: string): void {
     if (this.logFileHandle !== undefined) {
       fs.closeSync(this.logFileHandle);
     }
@@ -57,23 +60,56 @@ export default class Logger {
   }
 
   /**
-   * Print a message (with an ending newline) at the specified LogLevel.
+   * Print a frozen progress-bar snapshot (always, as a permanent line above the live region). The
+   * line is marked as frozen so that consecutive snapshots stay visually adjacent and a following
+   * non-frozen log line is separated from it by a blank line.
    */
-  printLine(logLevel: LogLevelValue, message: unknown = '', prefix?: string): boolean {
-    if (this.logFileHandle !== undefined) {
-      const formattedMessage = stripAnsi(
-        Logger.formatMessage(LogLevel.TRACE, logLevel, String(message), prefix),
-      );
-      if (formattedMessage.trim()) {
-        fs.writeSync(this.logFileHandle, `${stripAnsi(formattedMessage)}\n`);
-      }
-    }
+  printFrozenBar(message: unknown = '', prefix?: string): boolean {
+    return this.write(LogLevel.ALWAYS, message, prefix, true);
+  }
 
-    if (this.logLevel > logLevel) {
+  private write(
+    logLevel: LogLevelValue,
+    message: unknown,
+    prefix?: string,
+    frozen = false,
+  ): boolean {
+    const willPrint = this.logLevel <= logLevel;
+    if (!willPrint && this.logFileHandle === undefined) {
+      // The message is filtered out and there's no log file to tee it to, so skip the string work
       return false;
     }
 
-    this.stream.write(`${this.formatMessage(logLevel, String(message), prefix)}\n`);
+    let messageString = String(message);
+
+    // Keep consecutive frozen progress-bar snapshots visually adjacent, and separate a frozen
+    // snapshot from a following non-frozen log line with a blank line
+    if (this.lastPrintedFrozen) {
+      if (frozen) {
+        messageString = messageString.replace(/^\n+/, '');
+      } else {
+        messageString = `\n${messageString}`;
+      }
+    }
+
+    if (willPrint) {
+      this.lastPrintedFrozen = frozen;
+    }
+
+    if (this.logFileHandle !== undefined) {
+      const formattedMessage = stripAnsi(
+        Logger.formatMessage(LogLevel.TRACE, logLevel, messageString, prefix),
+      );
+      if (formattedMessage.trim()) {
+        fs.writeSync(this.logFileHandle, `${formattedMessage}\n`);
+      }
+    }
+
+    if (!willPrint) {
+      return false;
+    }
+
+    this.terminal.writeLine(Logger.formatMessage(this.logLevel, logLevel, messageString, prefix));
     return true;
   }
 
@@ -81,11 +117,7 @@ export default class Logger {
    * Print a newline.
    */
   newLine(): void {
-    this.printLine(LogLevel.ALWAYS);
-  }
-
-  private formatMessage(messageLogLevel: LogLevelValue, message: string, prefix?: string): string {
-    return Logger.formatMessage(this.logLevel, messageLogLevel, message, prefix);
+    this.write(LogLevel.ALWAYS, '');
   }
 
   private static formatMessage(
@@ -125,28 +157,28 @@ export default class Logger {
       .join('\n');
   }
 
-  trace = (message: unknown = ''): void => {
-    this.printLine(LogLevel.TRACE, message);
+  trace = (message: unknown = '', prefix?: string): void => {
+    this.write(LogLevel.TRACE, message, prefix);
   };
 
-  debug = (message: unknown = ''): void => {
-    this.printLine(LogLevel.DEBUG, message);
+  debug = (message: unknown = '', prefix?: string): void => {
+    this.write(LogLevel.DEBUG, message, prefix);
   };
 
-  info = (message: unknown = ''): void => {
-    this.printLine(LogLevel.INFO, message);
+  info = (message: unknown = '', prefix?: string): void => {
+    this.write(LogLevel.INFO, message, prefix);
   };
 
-  warn = (message: unknown = ''): void => {
-    this.printLine(LogLevel.WARN, message);
+  warn = (message: unknown = '', prefix?: string): void => {
+    this.write(LogLevel.WARN, message, prefix);
   };
 
-  error = (message: unknown = ''): void => {
-    this.printLine(LogLevel.ERROR, message);
+  error = (message: unknown = '', prefix?: string): void => {
+    this.write(LogLevel.ERROR, message, prefix);
   };
 
-  notice = (message: unknown = ''): void => {
-    this.printLine(LogLevel.NOTICE, message);
+  notice = (message: unknown = '', prefix?: string): void => {
+    this.write(LogLevel.NOTICE, message, prefix);
   };
 
   /**
@@ -178,14 +210,14 @@ export default class Logger {
     logoSplit[midLine + 1] =
       `${logoSplit[midLine + 1].padEnd(maxLineLen, ' ')}   v${Package.VERSION} ${chalk.dim(`(${runtime})`)}`;
 
-    this.printLine(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
+    this.write(LogLevel.ALWAYS, `${logoSplit.join('\n')}\n`);
   }
 
   /**
    * Print a colorized yargs help string.
    */
   colorizeYargs(help: string): void {
-    this.printLine(
+    this.write(
       LogLevel.ALWAYS,
       help
         .replace(/^(Usage:.+)/, chalk.bold('$1'))
@@ -218,3 +250,9 @@ export default class Logger {
     );
   }
 }
+
+/**
+ * The application-wide {@link Logger}. Import this to log from anywhere without threading a logger
+ * through constructors. Configured (log level, log file) at startup in the entry point.
+ */
+export const logger = new Logger(terminal);

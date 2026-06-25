@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../../src/cache/fileCache.js';
-import Logger from '../../../../src/console/logger.js';
-import { LogLevel } from '../../../../src/console/logLevel.js';
 import FileFactory from '../../../../src/factories/fileFactory.js';
 import Temp from '../../../../src/globals/temp.js';
 import type Archive from '../../../../src/models/files/archives/archive.js';
@@ -33,8 +30,6 @@ import ArrayUtil from '../../../../src/utils/arrayUtil.js';
 import FsUtil from '../../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 describe('getArchiveEntries', () => {
   test.each([
     ...new Set([
@@ -59,7 +54,7 @@ describe('getArchiveEntries', () => {
     ]),
   ])("should throw when the file doesn't exist: %s", async (extension) => {
     const tempFile = (await FsUtil.mktemp(path.join(Temp.getTempDir(), 'file'))) + extension;
-    await expect(new FileFactory(new FileCache(), LOGGER).filesFrom(tempFile)).rejects.toThrow();
+    await expect(new FileFactory(new FileCache()).filesFrom(tempFile)).rejects.toThrow();
   });
 
   test.each([
@@ -96,7 +91,7 @@ describe('getArchiveEntries', () => {
   ])(
     'should enumerate the single file archive: %s',
     async (filePath, expectedEntryPath, expectedCrc) => {
-      const entries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
+      const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
       expect(entries).toHaveLength(1);
 
       const entry = entries[0];
@@ -168,7 +163,7 @@ describe('getArchiveEntries', () => {
       ],
     ],
   ])('should enumerate the multi file archive: %s', async (filePath, expectedEntries) => {
-    const entries = await new FileFactory(new FileCache(), LOGGER).filesFrom(filePath);
+    const entries = await new FileFactory(new FileCache()).filesFrom(filePath);
     expect(entries).toHaveLength(expectedEntries.length);
 
     for (const [idx, entry] of entries.entries()) {
@@ -187,7 +182,7 @@ describe('extractEntryToFile', () => {
         input: ['./test/fixtures/roms/7z', './test/fixtures/roms/rar', './test/fixtures/roms/zip'],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const archives = archiveEntries

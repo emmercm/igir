@@ -5,43 +5,13 @@ import stream from 'node:stream';
 import Logger from '../../src/console/logger.js';
 import type { LogLevelValue } from '../../src/console/logLevel.js';
 import { LogLevel } from '../../src/console/logLevel.js';
+import Terminal from '../../src/console/terminal.js';
 import Temp from '../../src/globals/temp.js';
 import FsUtil from '../../src/utils/fsUtil.js';
+import LoggerSpy from './loggerSpy.js';
 
 if (!(await FsUtil.exists(Temp.getTempDir()))) {
   await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
-}
-
-class LoggerSpy {
-  private readonly stream: NodeJS.WritableStream;
-
-  private readonly spy: Promise<string>;
-
-  private readonly logger: Logger;
-
-  constructor(logLevel: LogLevelValue) {
-    this.stream = new stream.PassThrough();
-    this.spy = new Promise((resolve) => {
-      const buffers: Uint8Array[] = [];
-      this.stream.on('data', (chunk: Buffer) => {
-        buffers.push(chunk);
-      });
-      this.stream.on('end', () => {
-        resolve(Buffer.concat(buffers).toString());
-      });
-    });
-
-    this.logger = new Logger(logLevel, this.stream);
-  }
-
-  getLogger(): Logger {
-    return this.logger;
-  }
-
-  async getOutput(): Promise<string> {
-    this.stream.end();
-    return await this.spy;
-  }
 }
 
 function getLevelsAbove(logLevel: LogLevelValue): LogLevelValue[] {
@@ -55,25 +25,19 @@ function getLogLevelsAtOrBelow(logLevel: LogLevelValue): LogLevelValue[] {
 describe('setLogLevel_getLogLevel', () => {
   const logLevels = Object.values(LogLevel);
   test.each(logLevels)('should reflect: %s', (logLevel) => {
-    const logger = new Logger(LogLevel.TRACE, new stream.PassThrough());
+    const logger = new Logger(new Terminal(new stream.PassThrough()));
     logger.setLogLevel(logLevel);
     expect(logger.getLogLevel()).toEqual(logLevel);
   });
 });
 
-describe('canPrint', () => {
-  it('should return false for levels strictly below logger level', () => {
-    const logger = new Logger(LogLevel.WARN, new stream.PassThrough());
-    expect(logger.canPrint(LogLevel.TRACE)).toEqual(false);
-    expect(logger.canPrint(LogLevel.DEBUG)).toEqual(false);
-    expect(logger.canPrint(LogLevel.INFO)).toEqual(false);
-  });
-
-  it('should return true for the logger level and levels above', () => {
-    const logger = new Logger(LogLevel.WARN, new stream.PassThrough());
-    expect(logger.canPrint(LogLevel.WARN)).toEqual(true);
-    expect(logger.canPrint(LogLevel.ERROR)).toEqual(true);
-    expect(logger.canPrint(LogLevel.ALWAYS)).toEqual(true);
+describe('child', () => {
+  it('should stamp the prefix on messages at TRACE level', async () => {
+    const spy = new LoggerSpy(LogLevel.TRACE);
+    spy.getLogger().child('ChildPrefix').trace('child message');
+    const output = await spy.getOutput();
+    expect(output).toContain('child message');
+    expect(output).toContain('ChildPrefix');
   });
 });
 
@@ -82,7 +46,7 @@ describe('setLogFile', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
-      spy.getLogger().setLogFile(tempFile);
+      spy.getLogger().openLogFile(tempFile);
       spy.getLogger().info('test message');
       const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toContain('test message');
@@ -95,7 +59,7 @@ describe('setLogFile', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.WARN);
-      spy.getLogger().setLogFile(tempFile);
+      spy.getLogger().openLogFile(tempFile);
       spy.getLogger().info('below level message');
       await expect(spy.getOutput()).resolves.toEqual('');
       const contents = (await fs.promises.readFile(tempFile)).toString();
@@ -109,7 +73,7 @@ describe('setLogFile', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
-      spy.getLogger().setLogFile(tempFile);
+      spy.getLogger().openLogFile(tempFile);
       spy.getLogger().info('ansi test message');
       const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).not.toMatch(/\x1B\[/); // no ANSI escape sequences
@@ -123,7 +87,7 @@ describe('setLogFile', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.ALWAYS);
-      spy.getLogger().setLogFile(tempFile);
+      spy.getLogger().openLogFile(tempFile);
       spy.getLogger().newLine();
       const contents = (await fs.promises.readFile(tempFile)).toString();
       expect(contents).toEqual('');
@@ -136,7 +100,7 @@ describe('setLogFile', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
-      spy.getLogger().setLogFile(tempFile);
+      spy.getLogger().openLogFile(tempFile);
       spy.getLogger().info('timestamped message');
       const contents = (await fs.promises.readFile(tempFile)).toString();
       // File output uses TRACE-level formatting (always includes timestamp)
@@ -152,9 +116,9 @@ describe('setLogFile', () => {
     const tempFile2 = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger2'));
     try {
       const spy = new LoggerSpy(LogLevel.INFO);
-      spy.getLogger().setLogFile(tempFile1);
+      spy.getLogger().openLogFile(tempFile1);
       spy.getLogger().info('first file message');
-      spy.getLogger().setLogFile(tempFile2);
+      spy.getLogger().openLogFile(tempFile2);
       spy.getLogger().info('second file message');
       const contents1 = (await fs.promises.readFile(tempFile1)).toString();
       const contents2 = (await fs.promises.readFile(tempFile2)).toString();
@@ -172,11 +136,11 @@ describe('setLogFile', () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {
       const spy1 = new LoggerSpy(LogLevel.INFO);
-      spy1.getLogger().setLogFile(tempFile);
+      spy1.getLogger().openLogFile(tempFile);
       spy1.getLogger().info('first message');
 
       const spy2 = new LoggerSpy(LogLevel.INFO);
-      spy2.getLogger().setLogFile(tempFile);
+      spy2.getLogger().openLogFile(tempFile);
       spy2.getLogger().info('second message');
 
       const contents = (await fs.promises.readFile(tempFile)).toString();
@@ -214,6 +178,12 @@ describe('trace', () => {
     spy.getLogger().trace('trace message');
     await expect(spy.getOutput()).resolves.toContain('trace message');
   });
+
+  it('should include the prefix in stream output at TRACE level', async () => {
+    const spy = new LoggerSpy(LogLevel.TRACE);
+    spy.getLogger().trace('trace message', 'MyPrefix');
+    await expect(spy.getOutput()).resolves.toContain('MyPrefix');
+  });
 });
 
 describe('debug', () => {
@@ -241,6 +211,25 @@ describe('info', () => {
     const spy = new LoggerSpy(logLevel);
     spy.getLogger().info('info message');
     await expect(spy.getOutput()).resolves.toContain('info message');
+  });
+
+  it('should not include the prefix in stream output above TRACE level', async () => {
+    const spy = new LoggerSpy(LogLevel.INFO);
+    spy.getLogger().info('info message', 'MyPrefix');
+    await expect(spy.getOutput()).resolves.not.toContain('MyPrefix');
+  });
+
+  it('should write the prefix to the log file regardless of stream level', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    try {
+      const spy = new LoggerSpy(LogLevel.INFO);
+      spy.getLogger().openLogFile(tempFile);
+      spy.getLogger().info('prefixed message', 'FilePrefix');
+      const contents = (await fs.promises.readFile(tempFile)).toString();
+      expect(contents).toContain('FilePrefix');
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
   });
 });
 
@@ -272,41 +261,25 @@ describe('error', () => {
   });
 });
 
-describe('printLine', () => {
-  it('should return true when the message is printed to the stream', () => {
+describe('printFrozenBar', () => {
+  it('should keep consecutive frozen snapshots visually adjacent', async () => {
+    const spy = new LoggerSpy(LogLevel.ALWAYS);
+    spy.getLogger().printFrozenBar(' first bar');
+    spy.getLogger().printFrozenBar('\n second bar');
+    const output = await spy.getOutput();
+    expect(output).toContain('first bar');
+    expect(output).toContain('second bar');
+    expect(output).not.toContain('\n\n');
+  });
+
+  it('should separate a following log line with a blank line', async () => {
     const spy = new LoggerSpy(LogLevel.INFO);
-    expect(spy.getLogger().printLine(LogLevel.INFO, 'message')).toEqual(true);
-  });
-
-  it('should return false when the log level is below the logger level', async () => {
-    const spy = new LoggerSpy(LogLevel.WARN);
-    expect(spy.getLogger().printLine(LogLevel.INFO, 'message')).toEqual(false);
-    await expect(spy.getOutput()).resolves.toEqual('');
-  });
-
-  it('should include prefix in stream output when logger is at TRACE level', async () => {
-    const spy = new LoggerSpy(LogLevel.TRACE);
-    spy.getLogger().printLine(LogLevel.TRACE, 'trace message', 'MyPrefix');
-    await expect(spy.getOutput()).resolves.toContain('MyPrefix');
-  });
-
-  it('should not include prefix in stream output when logger is above TRACE level', async () => {
-    const spy = new LoggerSpy(LogLevel.INFO);
-    spy.getLogger().printLine(LogLevel.INFO, 'info message', 'MyPrefix');
-    await expect(spy.getOutput()).resolves.not.toContain('MyPrefix');
-  });
-
-  it('should write to the log file with prefix regardless of stream log level', async () => {
-    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
-    try {
-      const spy = new LoggerSpy(LogLevel.INFO);
-      spy.getLogger().setLogFile(tempFile);
-      spy.getLogger().printLine(LogLevel.INFO, 'prefixed message', 'FilePrefix');
-      const contents = (await fs.promises.readFile(tempFile)).toString();
-      expect(contents).toContain('FilePrefix');
-    } finally {
-      await FsUtil.rm(tempFile, { force: true });
-    }
+    spy.getLogger().printFrozenBar(' frozen bar');
+    spy.getLogger().info('following message');
+    const output = await spy.getOutput();
+    expect(output).toContain('frozen bar');
+    expect(output).toContain('following message');
+    expect(output).toContain('\n\n');
   });
 });
 

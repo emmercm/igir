@@ -26,16 +26,16 @@ export default class DATDiscMerger extends Module {
    */
   merge(dat: DAT): DAT {
     if (!this.options.getMergeDiscs()) {
-      this.progressBar.logTrace(`${dat.getName()}: not merging discs`);
+      this.prefixedLogger.trace(`${dat.getName()}: not merging discs`);
       return dat;
     }
 
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no games to merge`);
+      this.prefixedLogger.trace(`${dat.getName()}: no games to merge`);
       return dat;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: merging ${IntlUtil.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
@@ -43,11 +43,11 @@ export default class DATDiscMerger extends Module {
 
     const groupedGames = this.groupGames(dat.getGames());
     const newDat = dat.withGames(groupedGames);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${newDat.getName()}: merged to ${IntlUtil.toLocaleString(newDat.getGames().length)} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace(`${newDat.getName()}: done merging`);
+    this.prefixedLogger.trace(`${newDat.getName()}: done merging`);
     return newDat;
   }
 
