@@ -905,7 +905,7 @@ export default class CandidateGenerator extends Module {
     missingRoms.forEach((rom) => {
       message += `\n  ${rom.getName()}`;
     });
-    this.prefixedLogger.logTrace(message);
+    this.prefixedLogger.trace(message);
 
     // Warn if the only reason we're missing files is that we don't know if we can rewrite .cue
     // files extracted from CHDs with the right contents such that it matches a DAT perfectly
@@ -920,7 +920,7 @@ export default class CandidateGenerator extends Module {
         (rom) => this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom),
       );
       if (chdInputFile !== undefined && missingCueRom !== undefined) {
-        this.prefixedLogger.logWarn(
+        this.prefixedLogger.trace(
           `${dat.getName()}: ${game.getName()}: cannot extract .cue sheets from CHDs because Igir doesn't know how to rewrite the track filenames accurately: ${chdInputFile.getArchive().getFilePath()}`,
         );
       }
