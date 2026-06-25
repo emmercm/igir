@@ -40,6 +40,9 @@ export default class Terminal {
   // while a live region is on screen so they can be flushed in the same synchronized update that
   // repaints the region — otherwise the logs and the bars would be drawn as two separate frames.
   private pendingLogLines: string[] = [];
+  // Whether the content most recently written above the live region ended with a blank line. Used
+  // to drop the region's own leading blank-line separator so the gap is always exactly one line.
+  private lastWriteEndedBlank = false;
 
   private cursorHidden = false;
   private sigwinchHandler?: () => void;
@@ -72,6 +75,7 @@ export default class Terminal {
     this.showCursor();
     this.detachStream();
     this.lastDisplayed = '';
+    this.lastWriteEndedBlank = false;
     this.stream = stream;
     this.attachStream(stream);
   }
@@ -123,6 +127,7 @@ export default class Terminal {
     if (this.liveRegionRaw === '' && this.lastDisplayed === '') {
       // No live region to coordinate with — nothing to tear, so write immediately
       this.stream.write(`${text}\n`);
+      this.lastWriteEndedBlank = Terminal.endsWithBlankLine(text);
       return;
     }
 
@@ -201,20 +206,29 @@ export default class Terminal {
       return;
     }
 
-    const displayed = this.renderFrame();
-    if (this.pendingLogLines.length === 0 && displayed === this.lastDisplayed) {
-      return;
-    }
-
-    this.withSynchronizedUpdate(() => {
-      // Clear the region, print the queued logs where it was, then redraw the region fresh below
-      if (this.pendingLogLines.length > 0) {
+    if (this.pendingLogLines.length === 0) {
+      // No queued logs, so the content above the region is unchanged: render with the current
+      // blank-line state and skip the paint entirely if the frame hasn't changed.
+      const displayed = this.renderFrame();
+      if (displayed === this.lastDisplayed) {
+        return;
+      }
+      this.withSynchronizedUpdate(() => {
+        this.repaint(this.lastDisplayed, displayed);
+      });
+      this.lastDisplayed = displayed;
+    } else {
+      // Clear the region, print the queued logs where it was, then redraw the region fresh below.
+      // The region is rendered after flushing so its leading blank-line separator reflects the
+      // just-written logs.
+      this.withSynchronizedUpdate(() => {
         this.clearDisplayed();
         this.flushPendingLogs();
-      }
-      this.repaint(this.lastDisplayed, displayed);
-    });
-    this.lastDisplayed = displayed;
+        const displayed = this.renderFrame();
+        this.repaint('', displayed);
+        this.lastDisplayed = displayed;
+      });
+    }
     this.lastPaintMs = Date.now();
   }
 
@@ -253,7 +267,9 @@ export default class Terminal {
     if (this.pendingLogLines.length === 0) {
       return;
     }
+
     this.stream.write(`${this.pendingLogLines.join('\n')}\n`);
+    this.lastWriteEndedBlank = Terminal.endsWithBlankLine(this.pendingLogLines.at(-1) ?? '');
     this.pendingLogLines = [];
   }
 
@@ -266,7 +282,15 @@ export default class Terminal {
       return '';
     }
 
-    const outputLines = this.liveRegionRaw
+    // The producer prepends a blank-line separator so the region is offset from the content above
+    // it. If that content already ended with a blank line, drop the separator so the gap stays
+    // exactly one line rather than two.
+    let raw = this.liveRegionRaw;
+    if (this.lastWriteEndedBlank && raw.startsWith('\n')) {
+      raw = raw.slice(1);
+    }
+
+    const outputLines = raw
       .split('\n')
       .slice(0, this.rows - 1)
       .map((line) => {
@@ -375,6 +399,14 @@ export default class Terminal {
     } finally {
       this.stream.write('\x1B[?2026l');
     }
+  }
+
+  /**
+   * Whether writing the given text (which is always followed by a newline) leaves a blank line at
+   * the bottom — i.e. the text is empty or already ends with a newline.
+   */
+  private static endsWithBlankLine(text: string): boolean {
+    return text === '' || text.endsWith('\n');
   }
 
   private hideCursor(): void {
