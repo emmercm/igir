@@ -132,7 +132,13 @@ export default class CandidateGenerator extends Module {
           rom.getSha1() === 'da39a3ee5e6b4b0d3255bfef95601890afd80709' ||
           rom.getSha256() === 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
       ) {
-        // It's an empty file, we always know how to create those
+        // It's an empty file. Prefer real, matching input files (e.g. an empty entry inside an
+        // archive) when they exist, so the containing archive can be recognized as holding every
+        // ROM and raw-copied/moved intact. Fall back to synthesizing one when none are found.
+        const foundFiles = indexedFiles.findFiles(rom);
+        if (foundFiles.length > 0) {
+          return [rom, foundFiles];
+        }
         return [rom, [ZeroSizeFile.getInstance()]];
       }
 
@@ -1038,16 +1044,28 @@ export default class CandidateGenerator extends Module {
       // We need to rehydrate information from IndexedFiles because raw-copying/moving archives
       // would have lost this information
       .map((romWithFiles) => {
+        const rom = romWithFiles.getRom();
         const inputFile = romWithFiles.getInputFile();
-        return indexedFiles
-          .findFiles(romWithFiles.getRom())
-          .find(
+        const candidates = indexedFiles
+          .findFiles(rom)
+          .filter(
             (foundFile) =>
               foundFile.getFilePath() === inputFile.getFilePath() &&
               (inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile) &&
               foundFile instanceof ArchiveEntry &&
               inputFile.getArchive() === foundFile.getArchive(),
           );
+        // Prefer the entry whose path matches the ROM name. This matters whenever a Game has
+        // multiple ROMs that share a checksum but have different names - since those ROMs would
+        // otherwise all resolve to the same first matching entry, hiding which entries are
+        // actually used.
+        return (
+          candidates.find(
+            (foundFile) =>
+              foundFile instanceof ArchiveEntry &&
+              foundFile.getExtractedFilePath() === rom.getName(),
+          ) ?? candidates.at(0)
+        );
       })
       .filter((inputFile) => inputFile instanceof ArchiveEntry || inputFile instanceof ArchiveFile);
     // ...then translate those ArchiveEntries into a list of unique Archives
@@ -1099,19 +1117,20 @@ export default class CandidateGenerator extends Module {
     }
 
     /**
-     * Find the Archive's entries (all of them, not just ones that match ROMs in this Game)
-     * NOTE(cemmer): we need to use hashCode() because a Game may have duplicate ROMs that all got
-     *  matched to the same input file, so not every archive entry may be in {@link inputFiles}
+     * Find the entry paths of the Archive's entries that match a ROM from this Game. We identify
+     * used entries by path rather than by checksum because a Game can have multiple ROMs that share
+     * a checksum but have different names. Within an archive, entry paths are unique, so the path
+     * identifies the entry unambiguously.
      */
-    const archiveEntryHashCodes = new Set(
+    const usedEntryPaths = new Set(
       inputFiles
         .filter(
-          (file) =>
+          (file): file is ArchiveEntry<Archive> =>
             file.getFilePath() === archive.getFilePath() &&
             file instanceof ArchiveEntry &&
             file.getArchive() === archive,
         )
-        .map((entry) => entry.hashCode()),
+        .map((entry) => entry.getExtractedFilePath()),
     );
 
     // Find which of the Archive's entries didn't match to a ROM from this Game
@@ -1126,12 +1145,13 @@ export default class CandidateGenerator extends Module {
           // different archive type)
           return false;
         }
-
-        return (
-          (!(archive instanceof ChdBinCue) ||
-            !file.getExtractedFilePath().toLowerCase().endsWith('.cue')) &&
-          !archiveEntryHashCodes.has(file.hashCode())
-        );
+        if (
+          archive instanceof ChdBinCue &&
+          file.getExtractedFilePath().toLowerCase().endsWith('.cue')
+        ) {
+          return false;
+        }
+        return !usedEntryPaths.has(file.getExtractedFilePath());
       },
     );
   }
