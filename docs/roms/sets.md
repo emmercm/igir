@@ -27,7 +27,7 @@ The `--merge-discs` option will merge these separate discs into a single game. T
 
     This option doesn't require you to supply DATs with the [`--dat <path|glob|url>` option](../dats/scanning.md), but doing so will greatly increase the chance of the option working as intended.
 
-!!! info
+!!! tip
 
     Multi-disc games can also be associated together for emulators and frontends with the [`igir playlist` command](../output/playlists.md).
 

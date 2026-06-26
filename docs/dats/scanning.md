@@ -55,34 +55,69 @@ There have been many DAT-like formats developed over the years. Igir supports th
 
 ## DAT URLs
 
-The `--dat <path|glob|url>` option is unique in that it can download files from URLs, which can be helpful with files that keep a consistent URL but update on a regular basis. For example:
+The `--dat <path|glob|url>` option is unique in that it can download files from URLs, which can be helpful with files that keep a consistent URL but update on a regular basis.
 
-=== ":fontawesome-brands-windows: Windows"
+!!! example
 
-    ```batch
-    igir copy ^
-      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" ^
-      --input ROMs ^
-      --output ROMs-Sorted
-    ```
+    Copying only the BIOS ROMs from your collection, naming them what [RetroArch](../usage/desktop/retroarch.md) expects:
 
-=== ":fontawesome-brands-apple: macOS"
+    === ":fontawesome-brands-windows: Windows"
 
-    ```shell
-    igir copy \
-      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
-      --input ROMs \
-      --output ROMs-Sorted
-    ```
+        ```batch
+        igir copy ^
+          --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" ^
+          --input ROMs ^
+          --output RetroArch-BIOS
+        ```
 
-=== ":simple-linux: Linux"
+    === ":fontawesome-brands-apple: macOS"
 
-    ```shell
-    igir copy \
-      --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/DOOM.dat" \
-      --input ROMs \
-      --output ROMs-Sorted
-    ```
+        ```shell
+        igir copy \
+          --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+          --input ROMs \
+          --output RetroArch-BIOS
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat "https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat" \
+          --input ROMs \
+          --output RetroArch-BIOS
+        ```
+
+!!! example
+
+    Copying Nintendo Entertainment System ROMs, naming them in a way that is easy to browse from an [EverDrive](../usage/hardware/everdrive.md):
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt" ^
+          --input ROMs ^
+          --output EverDrive-NES
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt" \
+          --input ROMs \
+          --output EverDrive-NES
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat "https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt" \
+          --input ROMs \
+          --output EverDrive-NES
+        ```
 
 !!! note
 
@@ -97,3 +132,40 @@ You can ignore certain DAT files from being scanned with the option:
 ```
 
 This can help you exclude DATs that you don't want to process to cut down on processing time or to make your resulting collection smaller.
+
+!!! example
+
+    Processing a directory of DATs while excluding any "Beta" and "Demo" DATs:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --dat DATs ^
+          --dat-exclude "DATs\*Beta*" ^
+          --dat-exclude "DATs\*Demo*" ^
+          --input ROMs ^
+          --output ROMs-Sorted
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --dat DATs \
+          --dat-exclude "DATs/*Beta*" \
+          --dat-exclude "DATs/*Demo*" \
+          --input ROMs \
+          --output ROMs-Sorted
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat DATs \
+          --dat-exclude "DATs/*Beta*" \
+          --dat-exclude "DATs/*Demo*" \
+          --input ROMs \
+          --output ROMs-Sorted
+        ```
