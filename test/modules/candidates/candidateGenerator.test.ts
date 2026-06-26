@@ -722,6 +722,75 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     });
   });
 
+  describe('archive containing an empty file', () => {
+    const gameWithEmptyRom = new Game({
+      name: 'game with an empty ROM',
+      roms: [
+        new ROM({ name: 'two.a', size: 2, crc32: 'abcdef90' }),
+        new ROM({ name: 'two.b', size: 3, crc32: '09876543' }),
+        new ROM({ name: 'empty.txt', size: 0, crc32: '00000000' }),
+      ],
+    });
+    const datWithEmptyRomGame = new LogiqxDAT({ header: new Header(), games: [gameWithEmptyRom] });
+
+    it('should raw-write the whole archive when its empty entry is the one the game needs', async () => {
+      // Given an archive that contains exactly the game's ROMs, including the empty file
+      const archive = new Zip('with-empty.zip');
+      const files = await Promise.all([
+        ArchiveEntry.entryOf({ archive, entryPath: 'two.a', size: 2, crc32: 'abcdef90' }),
+        ArchiveEntry.entryOf({ archive, entryPath: 'two.b', size: 3, crc32: '09876543' }),
+        ArchiveEntry.entryOf({ archive, entryPath: 'empty.txt', size: 0, crc32: '00000000' }),
+      ]);
+
+      // When
+      const candidates = await candidateGenerator(options, datWithEmptyRomGame, files);
+
+      // Then the game is matched, and every ROM (including the empty one) is sourced from the
+      // archive so it's raw-copied intact rather than the empty file becoming a stray output
+      expect(candidates).toHaveLength(1);
+      const romsWithFiles = candidates[0].getRomsWithFiles();
+      expect(romsWithFiles).toHaveLength(gameWithEmptyRom.getRoms().length);
+      for (const romWithFiles of romsWithFiles) {
+        expect(romWithFiles.getInputFile().getFilePath()).toEqual(archive.getFilePath());
+      }
+    });
+
+    it('should not raw-write an archive that has an excess empty entry', async () => {
+      // Given an archive that contains the game's ROMs plus an excess empty entry
+      const archive = new Zip('with-excess-empty.zip');
+      const files = await Promise.all([
+        ArchiveEntry.entryOf({ archive, entryPath: 'two.a', size: 2, crc32: 'abcdef90' }),
+        ArchiveEntry.entryOf({ archive, entryPath: 'two.b', size: 3, crc32: '09876543' }),
+        ArchiveEntry.entryOf({ archive, entryPath: 'empty.txt', size: 0, crc32: '00000000' }),
+        ArchiveEntry.entryOf({ archive, entryPath: 'excess.txt', size: 0, crc32: '00000000' }),
+      ]);
+
+      // When
+      const candidates = await candidateGenerator(options, datWithEmptyRomGame, files);
+
+      // Then the archive can't be raw-copied verbatim (it would include the excess empty file), so
+      // no candidate is produced when raw-writing
+      expect(candidates).toHaveLength(0);
+    });
+
+    it('should not raw-write an archive whose empty entry has the wrong name', async () => {
+      // Given an archive whose empty entry has a name the game doesn't expect
+      const archive = new Zip('with-wrong-empty.zip');
+      const files = await Promise.all([
+        ArchiveEntry.entryOf({ archive, entryPath: 'two.a', size: 2, crc32: 'abcdef90' }),
+        ArchiveEntry.entryOf({ archive, entryPath: 'two.b', size: 3, crc32: '09876543' }),
+        ArchiveEntry.entryOf({ archive, entryPath: 'wrong.txt', size: 0, crc32: '00000000' }),
+      ]);
+
+      // When
+      const candidates = await candidateGenerator(options, datWithEmptyRomGame, files);
+
+      // Then the archive doesn't contain the empty entry under the correct name, so it can't be
+      // raw-copied as-is
+      expect(candidates).toHaveLength(0);
+    });
+  });
+
   describe('prefer input files from the same archive', () => {
     it('should behave like normal with only one ROM', async () => {
       // Given
