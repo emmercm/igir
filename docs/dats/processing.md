@@ -29,6 +29,40 @@ Headerless|Encrypted
 
     `--dat-name-regex-exclude <pattern|filename>` is particularly helpful for excluding some No-Intro DATs versions such as "encrypted" and "headerless".
 
+!!! example
+
+    Processing a directory of No-Intro DATs while excluding the "headerless" and "encrypted" variants:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --dat "No-Intro*.zip" ^
+          --dat-name-regex-exclude "/headerless|encrypted/i" ^
+          --input ROMs ^
+          --output ROMs-Sorted
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --dat "No-Intro*.zip" \
+          --dat-name-regex-exclude "/headerless|encrypted/i" \
+          --input ROMs \
+          --output ROMs-Sorted
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat "No-Intro*.zip" \
+          --dat-name-regex-exclude "/headerless|encrypted/i" \
+          --input ROMs \
+          --output ROMs-Sorted
+        ```
+
 ### DAT description regex filtering
 
 ```text
@@ -47,9 +81,42 @@ The `--dat-combine` option lets you combine every game from every parsed DAT int
 
 This may be desirable when creating a [dir2dat](dir2dat.md), a [fixdat](fixdats.md), or other complicated situations.
 
-!!! note
+!!! example
 
-    You may want to use [`--allow-incomplete-sets`](../roms/sets.md#allowing-inexact-sets) when combining DATs.
+    TOSEC separates DATs by region, so combining all regions for one console into one DAT may be desirable:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --dat "TOSEC*.zip" ^
+          --dat-name-regex "/Dreamcast/i" ^
+          --dat-combine ^
+          --input ROMs ^
+          --output ROMs-Dreamcast
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --dat "TOSEC*.zip" \
+          --dat-name-regex "/Dreamcast/i" \
+          --dat-combine \
+          --input ROMs \
+          --output ROMs-Dreamcast
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --dat "TOSEC*.zip" \
+          --dat-name-regex "/Dreamcast/i" \
+          --dat-combine \
+          --input ROMs \
+          --output ROMs-Dreamcast
+        ```
 
 !!! note
 
