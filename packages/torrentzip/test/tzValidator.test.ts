@@ -1,8 +1,5 @@
 import path from 'node:path';
-import stream from 'node:stream';
 
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import Options, { ZipFormat, ZipFormatInverted } from '../../../src/models/options.js';
@@ -46,7 +43,6 @@ describe.each([ZipFormat.TORRENTZIP, ZipFormat.RVZSTD])('zip format: %s', (zipFo
           dirDatName: true,
           disableCache: true,
         }),
-        new Logger(LogLevel.NEVER, new stream.PassThrough()),
       ).main();
 
       const writtenFiles = await FsUtil.walk(tempDir, WalkMode.FILES);

@@ -1,7 +1,7 @@
 import { Memoize } from 'typescript-memoize';
 
+import Game from './dats/game.js';
 import ROMWithFiles from './romWithFiles.js';
-import SingleValueGame from './singleValueGame.js';
 
 /**
  * A container holding a {@link Game}, optionally a {@link Release} for that {@link Game}, and a
@@ -10,18 +10,18 @@ import SingleValueGame from './singleValueGame.js';
  * has been found.
  */
 export default class WriteCandidate {
-  private readonly game: SingleValueGame;
+  private readonly game: Game;
 
   private readonly romsWithFiles: ROMWithFiles[];
 
-  constructor(game: SingleValueGame, romsWithFiles: ROMWithFiles[]) {
+  constructor(game: Game, romsWithFiles: ROMWithFiles[]) {
     this.game = game;
     this.romsWithFiles = romsWithFiles;
   }
 
   // Property getters
 
-  getGame(): SingleValueGame {
+  getGame(): Game {
     return this.game;
   }
 
@@ -57,7 +57,7 @@ export default class WriteCandidate {
 
   // Immutable setters
 
-  withGame(game: SingleValueGame): WriteCandidate {
+  withGame(game: Game): WriteCandidate {
     return new WriteCandidate(game, this.romsWithFiles);
   }
 

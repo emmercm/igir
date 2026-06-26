@@ -1,10 +1,7 @@
 import os from 'node:os';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Options from '../../../src/models/options.js';
 import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
@@ -45,7 +42,7 @@ test.each([
   const romFiles = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 

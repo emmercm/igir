@@ -27,13 +27,13 @@ export default class DATMergerSplitter extends Module {
   merge(dat: DAT): DAT {
     // Don't do anything if no type provided
     if (this.options.getMergeRoms() === undefined) {
-      this.progressBar.logTrace(`${dat.getName()}: no ROM merge option provided, doing nothing`);
+      this.prefixedLogger.trace(`${dat.getName()}: no ROM merge option provided, doing nothing`);
       return dat;
     }
 
     // Parent/clone information is required to merge & split
     if (!dat.hasParentCloneInfo()) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: DAT doesn't have parent/clone info, doing nothing`,
       );
       return dat;
@@ -44,7 +44,7 @@ export default class DATMergerSplitter extends Module {
       return map;
     }, new Map<string, Game>());
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: merging & splitting ${IntlUtil.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_MERGE_SPLIT);
@@ -54,11 +54,11 @@ export default class DATMergerSplitter extends Module {
       .getParents()
       .flatMap((parent) => this.mergeParent(dat, parent, gameNamesToGames));
     const newDat = dat.withGames(newGames);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${newDat.getName()}: merged/split to ${IntlUtil.toLocaleString(newDat.getGames().length)} game${newDat.getGames().length === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace(`${newDat.getName()}: done merging & splitting`);
+    this.prefixedLogger.trace(`${newDat.getName()}: done merging & splitting`);
     return newDat;
   }
 
@@ -119,7 +119,7 @@ export default class DATMergerSplitter extends Module {
           const romOfGame = gameNamesToGames.get(romOf);
           if (romOfGame === undefined) {
             // Invalid romOf attribute, external BIOS not found
-            this.progressBar.logTrace(`${dat.getName()}: invalid romOf: ${romOf}`);
+            this.prefixedLogger.trace(`${dat.getName()}: invalid romOf: ${romOf}`);
             return game;
           }
           biosGame = romOfGame;
@@ -160,7 +160,7 @@ export default class DATMergerSplitter extends Module {
         const parentGame = gameNamesToGames.get(cloneOf);
         if (!parentGame) {
           // Invalid cloneOf attribute, parent not found
-          this.progressBar.logTrace(
+          this.prefixedLogger.trace(
             `${dat.getName()}: ${game.getName()} references an invalid parent: ${cloneOf}`,
           );
           return game;

@@ -2,7 +2,6 @@ import type { Stats } from 'node:fs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import async from 'async';
 
@@ -10,8 +9,6 @@ import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphor
 import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
@@ -44,8 +41,6 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ROMTrimProcessor from '../../../src/modules/roms/romTrimProcessor.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
@@ -123,7 +118,7 @@ async function candidateWriter(
     romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       readerSemaphore,
     ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
   } catch {
@@ -132,13 +127,13 @@ async function candidateWriter(
   const romFilesWithHeaders = await new ROMHeaderProcessor(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).process(romFiles);
   const romFilesWithPaddings = await new ROMTrimProcessor(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).process(romFilesWithHeaders);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(
@@ -150,7 +145,7 @@ async function candidateWriter(
     const scannedDats = await new DATScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       readerSemaphore,
     ).scan();
     dat = new DATCombiner(new ProgressBarFake()).combine(scannedDats);
@@ -162,14 +157,14 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       readerSemaphore,
     ).scan();
     candidates = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
@@ -181,7 +176,7 @@ async function candidateWriter(
   candidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
@@ -190,7 +185,7 @@ async function candidateWriter(
   return await new CandidateWriter(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     writerSemaphore,
     new FileMoveMutex(),
   ).write(dat, candidates);
@@ -534,7 +529,7 @@ describe('zip', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
-        const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
           path.join(outputTemp, outputFiles[0][0]),
         );
         expect(archiveEntries).toHaveLength(1);
@@ -567,7 +562,7 @@ describe('zip', () => {
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
       const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
-      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
         path.join(outputTemp, outputFiles[0][0]),
       );
       expect(archiveEntries).toHaveLength(1);
@@ -610,9 +605,7 @@ describe('zip', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -966,9 +959,7 @@ describe('zip', () => {
         // Then
         expect(outputFiles).toHaveLength(1);
         const outputFile = path.join(outputTemp, outputFiles[0][0]);
-        const writtenRomsAndCrcs = (
-          await new FileFactory(new FileCache(), LOGGER).filesFrom(outputFile)
-        )
+        const writtenRomsAndCrcs = (await new FileFactory(new FileCache()).filesFrom(outputFile))
           .map((entry) => [
             entry.toString().replace(outputTemp + path.sep, ''),
             entry.getCrc32() ?? '',
@@ -1076,9 +1067,7 @@ describe('extract', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -1119,9 +1108,7 @@ describe('extract', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -1363,7 +1350,7 @@ describe('extract', () => {
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1420,7 +1407,7 @@ describe('extract', () => {
         'unknown.rom',
       ],
       [
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1588,9 +1575,7 @@ describe('raw', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -1786,7 +1771,7 @@ describe('raw', () => {
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
         path.join('patchable', 'best.gz'),
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1852,7 +1837,7 @@ describe('raw', () => {
         'unknown.rom',
       ],
       [
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),

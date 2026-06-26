@@ -1,8 +1,6 @@
 import type { ValidationResultValue } from '../../packages/torrentzip/index.js';
 import type FileCache from '../cache/fileCache.js';
-import type Logger from '../console/logger.js';
-import { LogLevel } from '../console/logLevel.js';
-import MultiBar from '../console/multiBar.js';
+import { logger } from '../console/logger.js';
 import IgirException from '../exceptions/igirException.js';
 import type Archive from '../models/files/archives/archive.js';
 import type ArchiveEntry from '../models/files/archives/archiveEntry.js';
@@ -46,11 +44,9 @@ export type CacheModeValue = (typeof CacheMode)[CacheModeKey];
  */
 export default class FileFactory {
   private readonly fileCache: FileCache;
-  private readonly logger: Logger;
 
-  constructor(fileCache: FileCache, logger: Logger) {
+  constructor(fileCache: FileCache) {
     this.fileCache = fileCache;
-    this.logger = logger;
   }
 
   /**
@@ -161,6 +157,7 @@ export default class FileFactory {
     checksumBitmask: number,
     cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
     callback?: FsReadCallback,
+    forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(
@@ -168,12 +165,12 @@ export default class FileFactory {
         checksumBitmask,
         cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
         callback,
+        forceChecksumCalculation,
       );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
       // may be an incomplete/corrupted file
-      MultiBar.log(
-        LogLevel.WARN,
+      logger.warn(
         `${archive.getFilePath()}: failed to parse ${archive.getExtension()} file: ${error}`,
       );
       return undefined;

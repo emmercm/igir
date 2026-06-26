@@ -28,7 +28,7 @@ jobs:
       should-test: ${{ steps.filter.outputs.should-test }}
       should-delete-prebuilds: ${{ steps.filter.outputs.should-delete-prebuilds }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Setup and install
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -95,16 +95,16 @@ jobs:
         node-version: [ '' ]
         include:
           - os: ubuntu-latest
-            node-version: 20
+            node-version: 22
           - os: macos-latest
-            node-version: 20
+            node-version: 22
           - os: windows-latest
-            node-version: 20
+            node-version: 22
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       # Setup and install
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -128,10 +128,6 @@ jobs:
         run: |
           rm -rf packages/*/addon* packages/*/prebuilds*
       - run: npm install --foreground-scripts
-      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
 
       # Test the source files
       - run: npm run test:unit
@@ -145,7 +141,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -164,10 +160,6 @@ jobs:
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
       - run: npm ci --ignore-scripts
-      - if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       - run: npm run test:unit:bun
 
   node-e2e:
@@ -179,12 +171,12 @@ jobs:
       contents: read # actions/checkout
     strategy:
       matrix:
-        node-version: [ '', 20 ]
+        node-version: [ '', 22 ]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       # Setup and install
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -203,9 +195,6 @@ jobs:
             ${{ runner.os }}-npm-
             ${{ runner.os }}-
       - run: npm ci --foreground-scripts
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
       # Test the built files
       - run: ./test/endToEndTest.sh
 
@@ -218,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0

@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import type DAT from '../../../src/models/dats/dat.js';
 import Game from '../../../src/models/dats/game.js';
@@ -20,7 +17,6 @@ import type { OptionsProps } from '../../../src/models/options.js';
 import Options from '../../../src/models/options.js';
 import IPSPatch from '../../../src/models/patches/ipsPatch.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
-import SingleValueGame from '../../../src/models/singleValueGame.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import CandidatePatchGenerator from '../../../src/modules/candidates/candidatePatchGenerator.js';
@@ -31,8 +27,6 @@ import PatchScanner from '../../../src/modules/patchScanner.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 // Run DATGameInferrer, but condense all DATs down to one
 async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT> {
@@ -54,14 +48,14 @@ async function runPatchCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 
   const patches = await new PatchScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
@@ -93,7 +87,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -114,7 +108,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -149,7 +143,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -192,7 +186,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.cpus().length),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -235,7 +229,7 @@ describe('with archive file inputs', () => {
       size: 7,
       crc32: romCrc,
     });
-    const candidate = new WriteCandidate(new SingleValueGame({ name: 'before', roms: [rom] }), [
+    const candidate = new WriteCandidate(new Game({ name: 'before', roms: [rom] }), [
       new ROMWithFiles(
         rom,
         new ArchiveFile(archiveEntry, { size: 100 }),
@@ -275,7 +269,7 @@ describe('with archive file inputs', () => {
       size: 7,
       crc32: romCrc,
     });
-    const candidate = new WriteCandidate(new SingleValueGame({ name: 'before', roms: [rom] }), [
+    const candidate = new WriteCandidate(new Game({ name: 'before', roms: [rom] }), [
       new ROMWithFiles(
         rom,
         new ArchiveFile(archiveEntry, { size: 100 }),
@@ -329,14 +323,14 @@ describe('with explicit DATs', () => {
       await new DATScanner(
         options,
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(os.availableParallelism()),
       ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
 

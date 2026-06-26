@@ -1,4 +1,4 @@
-import CRC32 from 'crc-32';
+import zlib from 'node:zlib';
 
 import type { ZipReader } from '../../zip/index.js';
 import { CompressionMethod } from '../../zip/index.js';
@@ -66,14 +66,13 @@ export default {
       if (
         !(
           (cdFileHeader.compressionMethod === CompressionMethod.DEFLATE &&
-            ((cdFileHeader.zip64ExtendedInformation === undefined &&
-              cdFileHeader.versionNeeded === 20) ||
-              (cdFileHeader.zip64ExtendedInformation !== undefined &&
-                cdFileHeader.versionNeeded === 45))) ||
+            cdFileHeader.versionNeeded ===
+              (cdFileHeader.zip64ExtendedInformation === undefined ? 20 : 45)) ||
           (cdFileHeader.compressionMethod === CompressionMethod.ZSTD &&
             cdFileHeader.versionNeeded === 63) ||
           (cdFileHeader.compressionMethod === CompressionMethod.STORE &&
-            cdFileHeader.versionNeeded === 20)
+            cdFileHeader.versionNeeded ===
+              (cdFileHeader.zip64ExtendedInformation === undefined ? 20 : 45))
         ) ||
         !(
           cdFileHeader.generalPurposeBitFlag === 0x02 ||
@@ -132,7 +131,7 @@ export default {
     // Validate the zip comment
     let crc32 = 0;
     for (const fileHeader of centralDirectoryFileHeaders) {
-      crc32 = CRC32.buf(fileHeader.raw, crc32);
+      crc32 = zlib.crc32(fileHeader.raw, crc32);
     }
     const cdfhCrc32 = (crc32 >>> 0).toString(16).padStart(8, '0').toUpperCase();
     if (
@@ -163,7 +162,12 @@ export default {
       expectedOffset += localFileHeader.raw.length + localFileHeader.compressedSizeResolved();
 
       if (
-        localFileHeader.versionNeeded !== centralDirectoryFileHeader.versionNeeded ||
+        !(
+          localFileHeader.versionNeeded === centralDirectoryFileHeader.versionNeeded ||
+          (localFileHeader.zip64ExtendedInformation === undefined &&
+            centralDirectoryFileHeader.zip64ExtendedInformation !== undefined &&
+            centralDirectoryFileHeader.versionNeeded === 45)
+        ) ||
         localFileHeader.generalPurposeBitFlag !==
           centralDirectoryFileHeader.generalPurposeBitFlag ||
         localFileHeader.compressionMethod !== centralDirectoryFileHeader.compressionMethod ||

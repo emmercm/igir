@@ -4,7 +4,7 @@ import os from 'node:os';
 
 import semver from 'semver';
 
-import Logger from './src/console/logger.js';
+import { logger } from './src/console/logger.js';
 import { LogLevel } from './src/console/logLevel.js';
 import MultiBar from './src/console/multiBar.js';
 import IgirException from './src/exceptions/igirException.js';
@@ -18,10 +18,14 @@ import UpdateChecker from './src/modules/updateChecker.js';
 // Double the number of frames tracked in a stack trace
 Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);
 
-const logger = new Logger(LogLevel.WARN, process.stdout);
+logger.setLogLevel(LogLevel.WARN); // don't print any timestamps
 logger.printHeader();
 
-if (process.versions.node && !semver.satisfies(process.versions.node, Package.ENGINES_NODE)) {
+if (
+  !process.versions.bun &&
+  process.versions.node &&
+  !semver.satisfies(process.versions.node, Package.ENGINES_NODE)
+) {
   logger.error(`${Package.NAME} requires a Node.js version of ${Package.ENGINES_NODE}`);
   process.exit(1);
 }
@@ -48,14 +52,13 @@ process.once('SIGINT', () => {
 let options: Options;
 try {
   const argv = process.argv.slice(2);
-  options = new ArgumentsParser(logger).parse(argv);
+  options = new ArgumentsParser().parse(argv);
 
   logger.setLogLevel(options.getLogLevel());
   const debugLog = options.getDebugLog();
   if (debugLog !== undefined) {
-    logger.newLine();
-    logger.printLine(LogLevel.NOTICE, `Writing debug log to: ${debugLog}`);
-    logger.setLogFile(debugLog);
+    logger.notice(`Writing debug log to: ${debugLog}`);
+    logger.openLogFile(debugLog);
   }
 
   const argvString = argv
@@ -83,17 +86,20 @@ if (options.getDebugLog()) {
   logger.trace(`process: ${process.platform} ${process.arch}`);
   logger.trace(`process.execPath: ${process.execPath}`);
   logger.trace(`process.versions: ${JSON.stringify(process.versions)}`);
-  logger.trace(`os.release: ${os.release()}`);
+  logger.trace(`os.version: ${os.version()}`);
+  logger.trace(`os.freemem / os.totalmem: ${os.freemem()} / ${os.totalmem()}`);
   logger.trace(`os.userInfo: ${JSON.stringify(os.userInfo())}`);
+  logger.trace(`os.cpus: ${JSON.stringify(os.cpus())}`);
+  logger.trace(`os.availableParallelism: ${os.availableParallelism()}`);
   logger.trace(`package.json: ${JSON.stringify(Package.JSON)}`);
 }
 
 // Start the main process
 try {
-  new EndOfLifeChecker(logger).check(process.version);
-  void new UpdateChecker(logger).check();
+  new EndOfLifeChecker().check(process.version);
+  void new UpdateChecker().check();
 
-  await new Igir(options, logger).main();
+  await new Igir(options).main();
   MultiBar.stop();
 } catch (error) {
   multiBarStopAndNewline();

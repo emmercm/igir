@@ -41,12 +41,12 @@ export default class CandidateArchiveFileHasher extends Module {
   //  probably want to delete this file and let CandidateWriter handle things
   async hash(dat: DAT, candidates: WriteCandidate[]): Promise<WriteCandidate[]> {
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to hash ArchiveFiles for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to hash ArchiveFiles for`);
       return candidates;
     }
 
     if (!this.options.shouldTest() && !this.options.getOverwriteInvalid()) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: not testing or overwriting invalid files, no need`,
       );
       return candidates;
@@ -63,11 +63,11 @@ export default class CandidateArchiveFileHasher extends Module {
       0,
     );
     if (archiveFileCount === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no ArchiveFiles to hash`);
+      this.prefixedLogger.trace(`${dat.getName()}: no ArchiveFiles to hash`);
       return candidates;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: generating ${IntlUtil.toLocaleString(archiveFileCount)} hashed ArchiveFile candidate${archiveFileCount === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_HASHING);
@@ -75,7 +75,7 @@ export default class CandidateArchiveFileHasher extends Module {
 
     const hashedCandidates = this.hashArchiveFiles(dat, candidates);
 
-    this.progressBar.logTrace(`${dat.getName()}: done generating hashed ArchiveFile candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: done generating hashed ArchiveFile candidates`);
     return await hashedCandidates;
   }
 
@@ -97,13 +97,13 @@ export default class CandidateArchiveFileHasher extends Module {
           uniqueInputArchiveFiles,
           async (archiveFile) => {
             this.progressBar.incrementInProgress();
-            this.progressBar.logTrace(
+            this.prefixedLogger.trace(
               `${dat.getName()}: ${candidate.getName()}: calculating checksums for: ${archiveFile.toString()}`,
             );
             const childBar = this.progressBar.addChildBar({
               name: archiveFile.toString(),
               total: archiveFile.getSize(),
-              progressFormatter: FsUtil.sizeReadable,
+              progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
             });
 
             try {

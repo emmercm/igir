@@ -29,7 +29,7 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -73,7 +73,7 @@ jobs:
     timeout-minutes: 20
     steps:
       # Setup and install
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -140,9 +140,6 @@ jobs:
 
             curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
             export PATH="${HOME}/.bun/bin:$PATH"
-
-            apt-get update
-            apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0
 
             # Compile the executable and test it before compressing it
             npm ci --foreground-scripts
@@ -224,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Get the package version
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           ref: ${{ env.ref }}

@@ -11,7 +11,7 @@ import FileMoveMutex from './async/fileMoveMutex.js';
 import MappableSemaphore from './async/mappableSemaphore.js';
 import Timer from './async/timer.js';
 import FileCache from './cache/fileCache.js';
-import type Logger from './console/logger.js';
+import { logger } from './console/logger.js';
 import MultiBar from './console/multiBar.js';
 import type ProgressBar from './console/progressBar.js';
 import { ProgressBarSymbol } from './console/progressBar.js';
@@ -70,13 +70,11 @@ import IntlUtil from './utils/intlUtil.js';
  */
 export default class Igir {
   private readonly options: Options;
-  private readonly logger: Logger;
   private readonly multiBar: MultiBar;
 
-  constructor(options: Options, logger: Logger) {
+  constructor(options: Options) {
     this.options = options;
-    this.logger = logger;
-    this.multiBar = MultiBar.create(logger);
+    this.multiBar = MultiBar.create();
   }
 
   /**
@@ -92,7 +90,7 @@ export default class Igir {
       this.options.getLinkMode() === LinkMode.SYMLINK &&
       process.platform === 'win32'
     ) {
-      this.logger.trace('checking Windows for symlink permissions');
+      logger.trace('checking Windows for symlink permissions');
       if (!(await FsUtil.canSymlink(Temp.getTempDir()))) {
         if (!(await isAdmin())) {
           throw new IgirException(
@@ -101,36 +99,37 @@ export default class Igir {
         }
         throw new IgirException(`${Package.NAME} does not have permissions to create symlinks`);
       }
-      this.logger.trace('Windows has symlink permissions');
+      logger.trace('Windows has symlink permissions');
     }
 
     if (this.options.shouldLink() && this.options.getLinkMode() === LinkMode.HARDLINK) {
       const outputDirRoot = this.options.getOutputDirRoot();
       if (!(await FsUtil.canHardlink(outputDirRoot))) {
-        const outputDisk = FsUtil.diskResolved(outputDirRoot);
-        throw new IgirException(`${outputDisk ?? 'filesystem'} does not support hard-linking`);
+        throw new IgirException(
+          `the filesystem that '${outputDirRoot}' is on does not support hard-linking`,
+        );
       }
     }
 
     // File cache options
     const fileCache = new FileCache();
     if (this.options.getDisableCache()) {
-      this.logger.trace('disabling the file cache');
+      logger.trace('disabling the file cache');
       fileCache.disable();
     } else {
       const cachePath = await this.getCachePath();
       if (cachePath !== undefined && process.env.NODE_ENV !== 'test') {
         if (await FsUtil.exists(cachePath)) {
-          this.logger.trace(`loading the existing file cache at '${cachePath}'`);
+          logger.trace(`loading the existing file cache at '${cachePath}'`);
         } else {
-          this.logger.trace(`creating a new file cache at '${cachePath}'`);
+          logger.trace(`creating a new file cache at '${cachePath}'`);
         }
         await fileCache.loadFile(cachePath);
       } else {
-        this.logger.trace('not using a file for the file cache');
+        logger.trace('not using a file for the file cache');
       }
     }
-    const fileFactory = new FileFactory(fileCache, this.logger);
+    const fileFactory = new FileFactory(fileCache);
 
     // Semaphores
     const readerSemaphore = new MappableSemaphore(this.options.getReaderThreads());
@@ -174,7 +173,7 @@ export default class Igir {
     const datsStatuses: DATStatus[] = [];
 
     // Process every DAT
-    datProcessProgressBar.logTrace(
+    logger.trace(
       `processing ${IntlUtil.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
     );
     await async.eachLimit(dats, this.options.getDatThreads(), async (dat: DAT): Promise<void> => {
@@ -272,10 +271,10 @@ export default class Igir {
         progressBar.delete();
       }
 
-      progressBar.logTrace('done processing DAT');
+      logger.trace('done processing DAT');
       datProcessProgressBar.incrementCompleted();
     });
-    datProcessProgressBar.logTrace(
+    logger.trace(
       `done processing ${IntlUtil.toLocaleString(dats.length)} DAT${dats.length === 1 ? '' : 's'}`,
     );
 
@@ -310,7 +309,7 @@ export default class Igir {
     let cachePath = this.options.getCachePath();
     if (cachePath !== undefined && (await FsUtil.isDirectory(cachePath))) {
       cachePath = path.join(cachePath, defaultFileName);
-      this.logger.warn(
+      logger.warn(
         `A directory was provided for the cache path instead of a file, using '${cachePath}' instead`,
       );
     }
@@ -318,7 +317,7 @@ export default class Igir {
       if (await FsUtil.isWritable(cachePath)) {
         return cachePath;
       }
-      this.logger.warn("Provided cache path isn't writable, using the default path");
+      logger.warn("Provided cache path isn't writable, using the default path");
     }
 
     const cachePathCandidates = [
@@ -357,7 +356,7 @@ export default class Igir {
       return [];
     }
     if (!this.options.usingDats()) {
-      this.logger.warn('No DAT files provided, consider using some for the best results!');
+      logger.warn('No DAT files provided, consider using some for the best results!');
       return [];
     }
 
@@ -383,7 +382,7 @@ export default class Igir {
       )
         .filter(([bool]) => bool)
         .forEach(([, option]) => {
-          progressBar.logWarn(
+          logger.warn(
             `${option} is most helpful when processing multiple DATs, only one DAT was found`,
           );
         });
@@ -414,7 +413,7 @@ export default class Igir {
 
     if (this.options.getPatchFileCount() > 0 && !(matchChecksum & ChecksumBitmask.CRC32)) {
       matchChecksum |= ChecksumBitmask.CRC32;
-      this.logger.trace('using patch files, enabling CRC32 file checksums');
+      logger.trace('using patch files, enabling CRC32 file checksums');
     }
 
     if (this.options.shouldDir2Dat()) {
@@ -428,7 +427,7 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(
+          logger.trace(
             `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
           );
         });
@@ -445,7 +444,7 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(
+          logger.trace(
             `no DATs provided, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
           );
         });
@@ -465,7 +464,7 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(
+          logger.trace(
             `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
           );
         });
@@ -486,7 +485,7 @@ export default class Igir {
         )
         .forEach((bitmask) => {
           matchChecksum |= bitmask;
-          this.logger.trace(
+          logger.trace(
             `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,
           );
         });
@@ -494,9 +493,7 @@ export default class Igir {
 
     if (matchChecksum === ChecksumBitmask.NONE) {
       matchChecksum |= ChecksumBitmask.CRC32;
-      this.logger.trace(
-        'at least one checksum algorithm is required, enabling CRC32 file checksums',
-      );
+      logger.trace('at least one checksum algorithm is required, enabling CRC32 file checksums');
     }
 
     return matchChecksum;
@@ -516,7 +513,7 @@ export default class Igir {
           game.getRoms().some((rom) => {
             const isArchive = FileFactory.isExtensionArchive(rom.getName());
             if (isArchive) {
-              this.logger.trace(
+              logger.trace(
                 `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
               );
               return true;
@@ -556,13 +553,13 @@ export default class Igir {
       );
       const cdRom = chdToType.find(([, type]) => type === CHDType.CD_ROM);
       if (cdRom !== undefined) {
-        romProgressBar.logWarn(
+        logger.warn(
           `${cdRom[0].getFilePath()}: quick checksumming will not process .cue/.bin files in CD-ROM CHDs!`,
         );
       }
       const gdRom = chdToType.find(([, type]) => type === CHDType.GD_ROM);
       if (gdRom !== undefined) {
-        romProgressBar.logWarn(
+        logger.warn(
           `${gdRom[0].getFilePath()}: quick checksumming will not process .gdi/.bin/.raw files in GD-ROM CHDs!`,
         );
       }

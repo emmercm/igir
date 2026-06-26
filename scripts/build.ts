@@ -5,11 +5,9 @@ import esbuild from 'esbuild';
 import fg from 'fast-glob';
 
 import Timer from '../src/async/timer.js';
-import Logger from '../src/console/logger.js';
-import { LogLevel } from '../src/console/logLevel.js';
+import { logger } from '../src/console/logger.js';
 import FsUtil from '../src/utils/fsUtil.js';
 
-const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== BUILDING ==========');
 
 const output = 'dist';

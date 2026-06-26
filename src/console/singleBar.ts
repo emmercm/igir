@@ -4,7 +4,6 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
 import IntlUtil from '../utils/intlUtil.js';
 import TimeUtil from '../utils/timeUtil.js';
-import type { LogLevelValue } from './logLevel.js';
 import type MultiBar from './multiBar.js';
 import type { ColoredSymbol } from './progressBar.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
@@ -44,7 +43,6 @@ export default class SingleBar extends ProgressBar {
   private static readonly BAR_SIZE = 30;
 
   private readonly multiBar: MultiBar;
-  private loggerPrefix?: string;
 
   private displayDelay?: number;
   private displayCreated?: number;
@@ -61,6 +59,15 @@ export default class SingleBar extends ProgressBar {
   private finishedMessage?: string;
 
   private lastOutput?: string;
+
+  // Memoize the formatted `completed`/`total` values. `total` is constant for the life of the bar,
+  // and `completed` repeats across the renders where it hasn't advanced yet, so a single-slot cache
+  // per value avoids re-running the (potentially expensive) progress formatter every render.
+  private lastFormattedCompletedValue?: number;
+  private lastFormattedCompleted = '';
+  private lastFormattedTotalValue?: number;
+  private lastFormattedTotal = '';
+
   private valueTimeBuffer: number[][] = [];
   private valueTimeBufferIndex = 0;
   private valueTimeBufferSize = 0;
@@ -97,7 +104,6 @@ export default class SingleBar extends ProgressBar {
   addChildBar(options?: SingleBarOptions): ProgressBar {
     return this.multiBar.addSingleBar(
       {
-        displayDelay: 2000,
         indentSize: this.indentSize + (this.symbol?.symbol ? 2 : 0),
         progressBarSizeMultiplier: this.progressBarSizeMultiplier / 2,
         showProgressNewline: false,
@@ -202,17 +208,6 @@ export default class SingleBar extends ProgressBar {
     this.finishedMessage = finishedMessage;
   }
 
-  setLoggerPrefix(prefix: string): void {
-    this.loggerPrefix = prefix;
-  }
-
-  /**
-   * Queue a log message to be printed to the terminal.
-   */
-  log(logLevel: LogLevelValue, message: string): void {
-    this.multiBar.log(logLevel, message, this.loggerPrefix);
-  }
-
   /**
    * Log this {@link SingleBar}'s last output and freeze it.
    */
@@ -291,8 +286,18 @@ export default class SingleBar extends ProgressBar {
     bar += CHALK_PROGRESS_INCOMPLETE(BAR_INCOMPLETE_CHAR.repeat(Math.max(incompleteSize, 0)));
     bar += ' ';
 
-    const formattedCompleted = this.progressFormatter(this.completed);
-    const formattedTotal = this.progressFormatter(this.total);
+    if (this.completed !== this.lastFormattedCompletedValue) {
+      this.lastFormattedCompletedValue = this.completed;
+      this.lastFormattedCompleted = this.progressFormatter(this.completed);
+    }
+    const formattedCompleted = this.lastFormattedCompleted;
+
+    if (this.total !== this.lastFormattedTotalValue) {
+      this.lastFormattedTotalValue = this.total;
+      this.lastFormattedTotal = this.progressFormatter(this.total);
+    }
+    const formattedTotal = this.lastFormattedTotal;
+
     const paddedCompleted = formattedCompleted.padStart(
       Math.max(formattedTotal.length, this.indentSize > 0 ? 7 : 0),
       ' ',

@@ -1,0 +1,130 @@
+# Requires repo secret: PERSONAL_ACCESS_TOKEN with permissions:
+#   Contents: read and write
+#   Pull Requests: read and write
+
+name: Scoop Update
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to update the Scoop manifest to (e.g. v5.1.1)'
+        required: false
+        type: string
+      auto-merge:
+        description: 'Auto-merge pull request?'
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false # queue
+
+jobs:
+  scoop-update:
+    permissions:
+      contents: read # actions/checkout, gh release download
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: main
+
+      # Resolve the release tag/version to update to, and the commit author
+      - id: vars
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          TAG="${RELEASE_TAG:-${INPUT_TAG:-}}"
+          if [[ -z "${TAG}" ]]; then
+            TAG="$(gh release view --json tagName --jq '.tagName')"
+          fi
+
+          USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
+
+          {
+            echo "tag=${TAG}"
+            echo "version=${TAG#v}"
+            echo "user_email=${USER_EMAIL}"
+            echo "user_name=${USER_NAME}"
+          } >> "${GITHUB_OUTPUT}"
+
+      # Download the Windows release assets, recompute their hashes, rewrite the manifest, and commit
+      - id: manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.vars.outputs.tag }}
+          VERSION: ${{ steps.vars.outputs.version }}
+          USER_EMAIL: ${{ steps.vars.outputs.user_email }}
+          USER_NAME: ${{ steps.vars.outputs.user_name }}
+        run: |
+          set -euo pipefail
+
+          TMP="$(mktemp -d)"
+          gh release download "${TAG}" \
+            --pattern "igir-${VERSION}-Windows-x64.zip" \
+            --pattern "igir-${VERSION}-Windows-arm64.zip" \
+            --dir "${TMP}"
+          X64_HASH="$(sha256sum "${TMP}/igir-${VERSION}-Windows-x64.zip" | cut -d' ' -f1)"
+          ARM64_HASH="$(sha256sum "${TMP}/igir-${VERSION}-Windows-arm64.zip" | cut -d' ' -f1)"
+
+          BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          jq \
+            --arg version "${VERSION}" \
+            --arg x64_url "${BASE}/igir-${VERSION}-Windows-x64.zip" \
+            --arg x64_hash "${X64_HASH}" \
+            --arg arm64_url "${BASE}/igir-${VERSION}-Windows-arm64.zip" \
+            --arg arm64_hash "${ARM64_HASH}" \
+            '.version = $version
+              | .architecture["64bit"].url = $x64_url
+              | .architecture["64bit"].hash = $x64_hash
+              | .architecture["arm64"].url = $arm64_url
+              | .architecture["arm64"].hash = $arm64_hash' \
+            bucket/igir.json > bucket/igir.json.tmp
+          mv bucket/igir.json.tmp bucket/igir.json
+
+          if git diff --quiet -- bucket/igir.json; then
+            echo "The Scoop manifest is already up to date with ${TAG}"
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          else
+            git config user.email "${USER_EMAIL}"
+            git config user.name "${USER_NAME}"
+            git add bucket/igir.json
+            git commit -m "Chore: update Scoop manifest to ${TAG}"
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      # Open a pull request and let it merge itself once checks pass
+      - id: create-pull-request
+        if: ${{ steps.manifest.outputs.changed == 'true' }}
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          # GitHub won't run workflows off of code commits+pushes from the `${{github.token}}` token
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          author: ${{ steps.vars.outputs.user_name }} <${{ steps.vars.outputs.user_email }}>
+          base: main
+          branch: ${{ github.actor }}/scoop-${{ steps.vars.outputs.version }}
+          delete-branch: true
+          title: 'Chore: update Scoop manifest to ${{ steps.vars.outputs.tag }}'
+          assignees: ${{ !inputs.auto-merge && github.repository_owner || '' }}
+          reviewers: ${{ (!inputs.auto-merge && github.repository_owner != github.actor) && github.repository_owner || '' }}
+      - if: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        run: |
+          {
+            echo "# ${{ steps.vars.outputs.tag }}"
+            echo ""
+            echo "${{ steps.create-pull-request.outputs.pull-request-url }}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
+        run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --squash --auto
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}

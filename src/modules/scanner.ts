@@ -47,7 +47,7 @@ export default abstract class Scanner extends Module {
         const childBar = this.progressBar.addChildBar({
           name: inputFile,
           total: await FsUtil.size(inputFile),
-          progressFormatter: FsUtil.sizeReadable,
+          progressFormatter: FsUtil.sizeReadable.bind(FsUtil),
         });
 
         let files: File[];
@@ -139,7 +139,7 @@ export default abstract class Scanner extends Module {
       if (await FsUtil.isSymlink(filePath)) {
         const realFilePath = await FsUtil.readlinkResolved(filePath);
         if (!(await FsUtil.exists(realFilePath))) {
-          this.progressBar.logWarn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
+          this.prefixedLogger.warn(`${filePath}: broken symlink, '${realFilePath}' doesn't exist`);
           return [];
         }
       }
@@ -161,7 +161,7 @@ export default abstract class Scanner extends Module {
           fileFromPath instanceof ArchiveEntry &&
           FileFactory.isExtensionArchive(fileFromPath.getExtractedFilePath())
         ) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${filePath}: can't scan archives within archives: ${fileFromPath.getExtractedFilePath()}`,
           );
         }
@@ -178,11 +178,11 @@ export default abstract class Scanner extends Module {
 
       if (filesFromPath.length === 0) {
         if (this.options.getInputChecksumQuick()) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${filePath}: didn't find any files in the archive, try disabling --input-checksum-quick`,
           );
         } else {
-          this.progressBar.logWarn(`${filePath}: didn't find any files in the archive`);
+          this.prefixedLogger.warn(`${filePath}: didn't find any files in the archive`);
         }
       }
       return filesFromPath.filter(
@@ -192,7 +192,7 @@ export default abstract class Scanner extends Module {
             isNotJunk(fileFromPath.getExtractedFilePath())),
       );
     } catch (error) {
-      this.progressBar.logError(`${filePath}: failed to parse file: ${error}`);
+      this.prefixedLogger.error(`${filePath}: failed to parse file: ${error}`);
       return [];
     }
   }
@@ -204,7 +204,7 @@ export default abstract class Scanner extends Module {
         .map((archiveEntry) => archiveEntry.getArchive())
         .find((archive) => archive instanceof Gzip || archive instanceof Tar);
       if (archiveWithoutChecksums !== undefined) {
-        this.progressBar.logWarn(
+        this.prefixedLogger.warn(
           `${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`,
         );
         return;

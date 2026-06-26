@@ -6,8 +6,7 @@ import { ValidationResultInverted } from '../../packages/torrentzip/index.js';
 import { TZValidator } from '../../packages/torrentzip/index.js';
 import { ValidationResult } from '../../packages/torrentzip/index.js';
 import { ZipReader } from '../../packages/zip/index.js';
-import { LogLevel } from '../console/logLevel.js';
-import MultiBar from '../console/multiBar.js';
+import { logger } from '../console/logger.js';
 import type Archive from '../models/files/archives/archive.js';
 import type { ArchiveEntryProps } from '../models/files/archives/archiveEntry.js';
 import ArchiveEntry from '../models/files/archives/archiveEntry.js';
@@ -66,6 +65,8 @@ export default class FileCache {
 
   private enabled = true;
 
+  private readonly prefixedLogger = logger.child(FileCache.name);
+
   /**
    * Disable the cache, preventing it from being persisted to disk on {@link save}.
    */
@@ -78,11 +79,11 @@ export default class FileCache {
    * value types so subsequent lookups only consider entries compatible with the current schema.
    */
   async loadFile(cacheFilePath: string): Promise<void> {
-    this.logTrace(`loading: ${cacheFilePath}`);
+    this.prefixedLogger.trace(`loading: ${cacheFilePath}`);
 
     this.cache = await new Cache<CacheValue>({
       filePath: cacheFilePath,
-      fileFlushMillis: 120_000,
+      fileFlushMillis: 5 * 60 * 1000,
       saveOnExit: true,
     }).load();
 
@@ -98,7 +99,7 @@ export default class FileCache {
     // Delete old versioned header/signature/validation keys (pre-version-in-value migration)
     await this.cache.delete(/\|[HSZ]\d+$/);
 
-    this.logTrace(`loaded: ${cacheFilePath}`);
+    this.prefixedLogger.trace(`loaded: ${cacheFilePath}`);
   }
 
   /**
@@ -109,9 +110,9 @@ export default class FileCache {
       return;
     }
 
-    this.logTrace(`saving: ${this.cache.getFilePath()}`);
+    this.prefixedLogger.trace(`saving: ${this.cache.getFilePath()}`);
     await this.cache.save();
-    this.logTrace(`saved: ${this.cache.getFilePath()}`);
+    this.prefixedLogger.trace(`saved: ${this.cache.getFilePath()}`);
   }
 
   async getOrComputeFileChecksums(
@@ -151,13 +152,13 @@ export default class FileCache {
 
         // File has changed since being cached?
         if (cached.fileSize !== stats.size) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${filePath}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
           );
           return true;
         }
         if (cached.modifiedTimeSec !== stats.mtimeS) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${filePath}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
           );
           return true;
@@ -172,7 +173,7 @@ export default class FileCache {
         const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
         if (remainingBitmask > 0) {
           // We need checksums that haven't been cached yet
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${filePath}: cache miss, cache is missing: ${FileChecksums.checksumBitmaskString(remainingBitmask)}`,
           );
           return true;
@@ -197,6 +198,7 @@ export default class FileCache {
     checksumBitmask: number,
     forceRecompute = false,
     callback?: FsReadCallback,
+    forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(archive.getFilePath());
@@ -219,6 +221,7 @@ export default class FileCache {
         computedEntries = (await archive.getArchiveEntries(
           checksumBitmask,
           callback,
+          forceChecksumCalculation,
         )) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
@@ -233,13 +236,13 @@ export default class FileCache {
 
         // File has changed since being cached?
         if (cached.fileSize !== stats.size) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${archive.getFilePath()}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
           );
           return true;
         }
         if (cached.modifiedTimeSec !== stats.mtimeS) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${archive.getFilePath()}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
           );
           return true;
@@ -249,7 +252,9 @@ export default class FileCache {
         if (cachedEntries.length === 0) {
           // A quick checksum scan may have prevented us from getting any entries from an archive
           // (such as bin/cue CHDs), assume we want to re-scan the archive
-          this.logTrace(`${archive.getFilePath()}: cache miss, cache has zero archive entries`);
+          this.prefixedLogger.trace(
+            `${archive.getFilePath()}: cache miss, cache has zero archive entries`,
+          );
           return true;
         }
         const existingBitmask =
@@ -260,7 +265,7 @@ export default class FileCache {
         const remainingBitmask = checksumBitmask - (checksumBitmask & existingBitmask);
         if (remainingBitmask > 0) {
           // We need checksums that haven't been cached yet
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${archive.getFilePath()}: cache miss, cache is missing: ${FileChecksums.checksumBitmaskString(remainingBitmask)}`,
           );
           return true;
@@ -355,13 +360,13 @@ export default class FileCache {
       (cached) => {
         // File has changed since being cached?
         if (stats !== undefined && cached.fileSize !== stats.size) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${file.getFilePath()}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
           );
           return true;
         }
         if (stats !== undefined && cached.modifiedTimeSec !== stats.mtimeS) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${file.getFilePath()}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
           );
           return true;
@@ -370,7 +375,7 @@ export default class FileCache {
         if (cached.value === undefined) {
           // "Not found" is valid, only recompute if the known item list has changed
           if (cached.version !== currentVersion) {
-            this.logTrace(
+            this.prefixedLogger.trace(
               `${file.getFilePath()}: cache miss, cached version ${cached.version} !== current version ${currentVersion}`,
             );
             return true;
@@ -380,7 +385,7 @@ export default class FileCache {
 
         // Recompute if the cached name no longer maps to a known item
         if (typeof cached.value !== 'string' || fromName(cached.value) === undefined) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             // eslint-disable-next-line @typescript-eslint/no-base-to-string,@typescript-eslint/restrict-template-expressions
             `${file.getFilePath()}: cache miss, cached value unrecognized: ${cached.value}`,
           );
@@ -492,13 +497,13 @@ export default class FileCache {
 
         // File has changed since being cached?
         if (cached.fileSize !== stats.size) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${zip.getFilePath()}: cache miss, cached file size ${cached.fileSize} !== real size ${stats.size}`,
           );
           return true;
         }
         if (cached.modifiedTimeSec !== stats.mtimeS) {
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${zip.getFilePath()}: cache miss, cached file mtime ${cached.modifiedTimeSec} !== real mtime ${stats.mtimeS}`,
           );
           return true;
@@ -508,7 +513,7 @@ export default class FileCache {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (ValidationResult[cachedResult] === undefined) {
           // ValidationResult options have been internally renamed, we have to recalculate
-          this.logTrace(
+          this.prefixedLogger.trace(
             `${zip.getFilePath()}: cache miss, cached value unrecognized: ${cachedResult}`,
           );
           return true;
@@ -516,7 +521,7 @@ export default class FileCache {
         if (ValidationResult[cachedResult] === ValidationResult.INVALID) {
           // INVALID results should be recalculated if the known validation types have changed
           if (cached.version !== currentVersion) {
-            this.logTrace(
+            this.prefixedLogger.trace(
               `${zip.getFilePath()}: cache miss, cached version ${cached.version} !== current version ${currentVersion}`,
             );
             return true;
@@ -555,9 +560,5 @@ export default class FileCache {
     valueType: ValueTypeValue,
   ): string {
     return `V${FileCache.VERSION}|${filePath}|${fileSubIdentifier ?? ''}|${valueType}`;
-  }
-
-  private logTrace(message: string): void {
-    MultiBar.log(LogLevel.TRACE, message, FileCache.name);
   }
 }

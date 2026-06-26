@@ -1,14 +1,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import async from 'async';
 
 import MappableSemaphore from '../src/async/mappableSemaphore.js';
 import FileCache from '../src/cache/fileCache.js';
-import Logger from '../src/console/logger.js';
-import { LogLevel } from '../src/console/logLevel.js';
+import { terminal } from '../src/console/terminal.js';
 import FileFactory from '../src/factories/fileFactory.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
@@ -28,8 +26,6 @@ import DATScanner from '../src/modules/dats/datScanner.js';
 import ArrayUtil from '../src/utils/arrayUtil.js';
 import FsUtil, { WalkMode } from '../src/utils/fsUtil.js';
 import ProgressBarFake from './console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 interface TestOutput {
   outputFilesAndCrcs: string[][];
@@ -60,7 +56,7 @@ async function copyFixturesToTemp(
 }
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
-  const fileFactory = new FileFactory(new FileCache(), LOGGER);
+  const fileFactory = new FileFactory(new FileCache());
 
   const files = await FsUtil.walk(outputDir, WalkMode.FILES);
 
@@ -97,7 +93,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 }
 
 const defaultOptions = new Options({
-  ...new ArgumentsParser(LOGGER).parse(['--help']),
+  ...new ArgumentsParser().parse(['--help']),
   help: false,
 });
 
@@ -124,8 +120,10 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       : await FsUtil.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
 
   // For debugging: enable trace logging if the 'help' option is provided
-  const logger = options.getHelp() ? new Logger(LogLevel.TRACE, process.stdout) : LOGGER;
-  await new Igir(options, logger).main();
+  if (options.getHelp()) {
+    terminal.setStream(process.stdout);
+  }
+  await new Igir(options).main();
 
   const outputFilesAndCrcs =
     options.getOutput() === Temp.getTempDir()
@@ -186,7 +184,6 @@ describe('with explicit DATs', () => {
           new Options({
             dat: ['src/*'],
           }),
-          LOGGER,
         ).main();
       })(),
     ).rejects.toThrow(/no valid dat files/i);
@@ -686,6 +683,7 @@ describe('with explicit DATs', () => {
         path.join('chd', '4096.chd'),
         path.join('cso', 'UMD.cso'),
         path.join('cso', 'UMD.zso'),
+        'empty.rom',
         'fizzbuzz.zip',
         'foobar.lnx',
         path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
@@ -714,6 +712,7 @@ describe('with explicit DATs', () => {
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
         path.join('rar', 'loremipsum.rar'),
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -2355,7 +2354,7 @@ describe('with inferred DATs', () => {
       const dats = await new DATScanner(
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(2),
       ).scan();
       expect(dats).toHaveLength(1);

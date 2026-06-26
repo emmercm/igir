@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import type File from '../../../src/models/files/file.js';
 import Options from '../../../src/models/options.js';
@@ -17,8 +14,6 @@ import DATGameInferrer from '../../../src/modules/dats/datGameInferrer.js';
 import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 async function runCombinedCandidateGenerator(
   options: Options,
@@ -32,7 +27,7 @@ async function runCombinedCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 
@@ -47,7 +42,7 @@ it('should do nothing if option not specified', async () => {
       input: [path.join('test', 'fixtures', 'roms', 'raw')],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
@@ -78,7 +73,7 @@ it('should combine candidates', async () => {
       input: [path.join('test', 'fixtures', 'roms', 'raw')],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 

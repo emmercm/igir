@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Setup and install
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           submodules: 'recursive'
@@ -59,11 +59,11 @@ jobs:
 
           USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
           echo "USER_EMAIL=${USER_EMAIL}" >> "${GITHUB_OUTPUT}"
-          git config --global user.email "${USER_EMAIL}"
+          git config user.email "${USER_EMAIL}"
 
           USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
           echo "USER_NAME=${USER_NAME}" >> "${GITHUB_OUTPUT}"
-          git config --global user.name "${USER_NAME}"
+          git config user.name "${USER_NAME}"
 
           PACKAGE_VERSION="$(jq --raw-output '.version' package.json)"
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "${GITHUB_OUTPUT}"
@@ -75,7 +75,7 @@ jobs:
       - id: create-pull-request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
-          # GitHub won't run workflows off of events from the `github-actions` user
+          # GitHub won't run workflows off of code commits+pushes from the `${{github.token}}` token
           # But also, I want the PR to be created under my name for cosmetic reasons
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           author: ${{ steps.bump-and-commit.outputs.USER_NAME }} <${{ steps.bump-and-commit.outputs.USER_EMAIL }}>

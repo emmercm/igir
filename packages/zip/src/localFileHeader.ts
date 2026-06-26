@@ -3,8 +3,8 @@ import stream from 'node:stream';
 import zlib from 'node:zlib';
 
 import StreamUtil from '../../../src/utils/streamUtil.js';
-import zstd from '../../zstd-1.5.5/index.js';
 import type CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
+import DataDescriptor from './dataDescriptor.js';
 import type { CompressionMethodValue, IFileRecord } from './fileRecord.js';
 import FileRecord, { CompressionMethod, CompressionMethodInverted } from './fileRecord.js';
 import FileRecordUtil from './fileRecordUtil.js';
@@ -20,10 +20,7 @@ export interface ILocalFileHeader extends IFileRecord {
  * @see https://en.wikipedia.org/wiki/ZIP_(file_format)#Local_file_header
  */
 export default class LocalFileHeader extends FileRecord {
-  // eslint-disable-next-line unicorn/no-array-reverse
-  static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').reverse();
-  // eslint-disable-next-line unicorn/no-array-reverse
-  static readonly DATA_DESCRIPTOR_SIGNATURE = Buffer.from('08074b50', 'hex').reverse();
+  static readonly LOCAL_FILE_HEADER_SIGNATURE = Buffer.from('04034b50', 'hex').toReversed();
 
   // Size with the signature, and without variable length fields at the end
   private static readonly LOCAL_FILE_HEADER_SIZE = 30;
@@ -128,6 +125,24 @@ export default class LocalFileHeader extends FileRecord {
   }
 
   /**
+   * Return the data descriptor that follows this file's data when general purpose bit 3 is set,
+   * or undefined when there is no data descriptor.
+   */
+  async dataDescriptor(): Promise<DataDescriptor | undefined> {
+    if (!this.hasDataDescriptor()) {
+      return undefined;
+    }
+
+    const position = this.getLocalFileDataRelativeOffset() + this.compressedSizeResolved();
+    const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
+    try {
+      return await DataDescriptor.fromFileHandle(fileHandle, position, this.versionNeeded >= 45);
+    } finally {
+      await fileHandle.close();
+    }
+  }
+
+  /**
    * Return the numerical CRC32, taking the existence of a data descriptor into account.
    */
   override uncompressedCrc32Number(): number {
@@ -190,16 +205,15 @@ export default class LocalFileHeader extends FileRecord {
       case CompressionMethod.DEFLATE: {
         return StreamUtil.withTransforms(
           this.compressedStream(highWaterMark),
-          zlib.createInflateRaw(),
+          zlib.createInflateRaw({ chunkSize: highWaterMark }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }
       case CompressionMethod.ZSTD_DEPRECATED:
       case CompressionMethod.ZSTD: {
         return StreamUtil.withTransforms(
-          this.compressedStream(),
-          // TODO(cemmer): replace with zlib in Node.js 24
-          new zstd.DecompressStream(),
+          this.compressedStream(highWaterMark),
+          zlib.createZstdDecompress({ chunkSize: highWaterMark }),
           new ZipBombProtector(this.uncompressedSizeResolved()),
         );
       }

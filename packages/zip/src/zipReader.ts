@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 
+import ArchiveExtraDataRecord from './archiveExtraDataRecord.js';
 import CentralDirectoryFileHeader from './centralDirectoryFileHeader.js';
+import DataDescriptor from './dataDescriptor.js';
 import EndOfCentralDirectory from './endOfCentralDirectory.js';
 import LocalFileHeader from './localFileHeader.js';
 
@@ -47,6 +49,57 @@ export default class ZipReader {
     }
   }
 
+  /**
+   * Return the archive extra data record that may appear between the last local file's data and the
+   * start of the central directory, or undefined when there isn't one.
+   */
+  async archiveExtraDataRecord(): Promise<ArchiveExtraDataRecord | undefined> {
+    const fileHandle = await fs.promises.open(this.zipFilePath, 'r');
+    try {
+      const endOfLocalFiles = await this.endOfLocalFiles(fileHandle);
+      return await ArchiveExtraDataRecord.fromFileHandle(fileHandle, endOfLocalFiles);
+    } finally {
+      await fileHandle.close();
+    }
+  }
+
+  /**
+   * Return the byte position immediately after the last local file's data and optional data
+   * descriptor.
+   */
+  private async endOfLocalFiles(fileHandle: fs.promises.FileHandle): Promise<number> {
+    const centralDirectoryFileHeaders = await this.centralDirectoryFileHeaders();
+    if (centralDirectoryFileHeaders.length === 0) {
+      return 0;
+    }
+
+    // The entry with the highest local file header offset is physically last, so its data end
+    // (plus any data descriptor) marks the end of the local files region. Only this one entry's
+    // local file header needs to be read.
+    const lastCentralDirectoryFileHeader = centralDirectoryFileHeaders.reduce((last, current) =>
+      current.localFileHeaderRelativeOffsetResolved() > last.localFileHeaderRelativeOffsetResolved()
+        ? current
+        : last,
+    );
+
+    const localFileHeader = await LocalFileHeader.localFileHeaderFromFileHandle(
+      lastCentralDirectoryFileHeader,
+      fileHandle,
+    );
+    const dataEnd =
+      localFileHeader.getLocalFileDataRelativeOffset() + localFileHeader.compressedSizeResolved();
+    if (!localFileHeader.hasDataDescriptor()) {
+      return dataEnd;
+    }
+
+    const dataDescriptor = await DataDescriptor.fromFileHandle(
+      fileHandle,
+      dataEnd,
+      localFileHeader.versionNeeded >= 45,
+    );
+    return dataEnd + dataDescriptor.raw.length;
+  }
+
   private async assertValidMagicNumber(fileHandle: fs.promises.FileHandle): Promise<void> {
     const magicNumber = await this.readMagicNumber(fileHandle);
     if (
@@ -55,7 +108,7 @@ export default class ZipReader {
       // No files in the zip
       !magicNumber.equals(EndOfCentralDirectory.END_OF_CENTRAL_DIRECTORY_RECORD_SIGNATURE) &&
       // The zip is spanned, and this ISN'T the first file
-      !magicNumber.equals(LocalFileHeader.DATA_DESCRIPTOR_SIGNATURE)
+      !magicNumber.equals(DataDescriptor.DATA_DESCRIPTOR_SIGNATURE)
     ) {
       throw new Error(`unknown zip file magic number: ${magicNumber.toString('hex')}`);
     }

@@ -145,16 +145,16 @@ export default class DATParentInferrer extends Module {
    */
   infer(dat: DAT): DAT {
     if (dat.hasParentCloneInfo() && !this.options.getDatIgnoreParentClone()) {
-      this.progressBar.logTrace(`${dat.getName()}: DAT has parent/clone info, skipping`);
+      this.prefixedLogger.trace(`${dat.getName()}: DAT has parent/clone info, skipping`);
       return dat;
     }
 
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no games to process`);
+      this.prefixedLogger.trace(`${dat.getName()}: no games to process`);
       return dat;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: inferring parents for ${IntlUtil.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
@@ -178,11 +178,11 @@ export default class DATParentInferrer extends Module {
 
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
     const inferredDat = dat.withGames(newGames);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${inferredDat.getName()}: grouped to ${IntlUtil.toLocaleString(inferredDat.getParents().length)} parent${inferredDat.getParents().length === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace('done inferring parents');
+    this.prefixedLogger.trace('done inferring parents');
     return inferredDat;
   }
 
