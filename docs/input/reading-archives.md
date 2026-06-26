@@ -20,10 +20,6 @@ Igir supports most common archive formats:
 | `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅                                         |
 | `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                    | ✅                                             | ✅                                         |
 
-<small>
-<sup>1</sup> may require you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
-</small>
-
 !!! note
 
     Igir will not read the contents of archives within archives. A warning will be [logged](../advanced/logging.md) for any archive found within an archive.
