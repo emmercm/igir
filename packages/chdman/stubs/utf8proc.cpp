@@ -8,26 +8,22 @@
 // here satisfies the Windows linker without compiling utf8proc's ~2 MB Unicode
 // tables; the bodies are unreachable (proven by the gcc/clang dead-strip), so their
 // trivial behavior is never run.
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 extern "C" {
 
-int32_t utf8proc_tolower(int32_t c) {
-  return c;
-}
+int32_t utf8proc_tolower(int32_t c) { return c; }
 
-int32_t utf8proc_toupper(int32_t c) {
-  return c;
-}
+int32_t utf8proc_toupper(int32_t c) { return c; }
 
 ptrdiff_t utf8proc_map(const uint8_t* str, ptrdiff_t strlen, uint8_t** dstptr, int options) {
-  (void) str;
-  (void) strlen;
-  (void) options;
-  if (dstptr != NULL) {
-    *dstptr = NULL;
-  }
-  return -1;
+    (void)str;
+    (void)strlen;
+    (void)options;
+    if (dstptr != nullptr) {
+        *dstptr = nullptr;
+    }
+    return -1;
 }
 }

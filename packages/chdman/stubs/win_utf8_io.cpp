@@ -6,13 +6,13 @@
 // --gc-sections, but MSVC requires the symbol to resolve at link time even from
 // dead code. Defining it here avoids compiling FLAC's Windows UTF-8 file shim; the
 // body is unreachable (proven by the gcc/clang dead-strip), so it is never run.
-#include <stdio.h>
+#include <cstdio>
 
 extern "C" {
 
 FILE* fopen_utf8(const char* filename, const char* mode) {
-  (void) filename;
-  (void) mode;
-  return NULL;
+    (void)filename;
+    (void)mode;
+    return nullptr;
 }
 }

@@ -11,10 +11,9 @@
 // control, etc.) is unreferenced. Compiling this in their place keeps the .node
 // self-contained (libSystem/glibc only). Windows keeps osdlib_win32.cpp, which
 // only uses always-present system DLLs (MAME 0.288, submodule tag mame0288).
-#include "osdcore.h"  // const char *osd_getenv(const char *)
 
 #include <cstdlib>
 
-const char* osd_getenv(const char* name) {
-  return std::getenv(name);
-}
+#include "osdcore.h"  // const char *osd_getenv(const char *)
+
+const char* osd_getenv(const char* name) { return std::getenv(name); }
