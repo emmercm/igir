@@ -24,3 +24,34 @@ Input file exclusions can be provided with the option:
 ```
 
 This can help you exclude files that take a long time to process or are unnecessary to process.
+
+!!! example
+
+    Scanning a directory of ROMs, excluding CHD files:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir copy ^
+          --input ROMs ^
+          --input-exclude "ROMs\**\*.chd" ^
+          --output ROMs-Sorted
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir copy \
+          --input ROMs \
+          --input-exclude "ROMs/**/*.chd" \
+          --output ROMs-Sorted
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir copy \
+          --input ROMs \
+          --input-exclude "ROMs/**/*.chd" \
+          --output ROMs-Sorted
+        ```
