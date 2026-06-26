@@ -78,7 +78,7 @@ The `--input-checksum-quick` option will prevent any extraction of archives (bot
 
 !!! tip
 
-    MAME DATs catalog CHDs by the SHA1 found in their header, regardless of what type of CHD it is ("raw", CD-ROM, GD-ROM, etc.). As long as you're ok with trusting the headers in all other archives, you can greatly speed up the scanning of CHD files with the `--input-checksum-quick` when only processing MAME DATs.
+    MAME DATs catalog CHDs by the SHA1 found in their header, regardless of what type of CHD it is ("raw", CD-ROM, GD-ROM, etc.). As long as you're ok with trusting the headers in all other archives, you can greatly speed up the scanning of CHD files with `--input-checksum-quick` when only processing MAME DATs.
 
 !!! warning
 
