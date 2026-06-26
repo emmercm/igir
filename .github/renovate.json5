@@ -27,8 +27,6 @@
     branchTopic: '{{{datasource}}}-{{{depName}}}-vulnerability',
     prCreation: 'immediate',
   },
-  // WARN: "When the lockfileVersion is higher than 1 in package-lock.json, remediations are only possible when changes are made to package.json."
-  transitiveRemediation: true,
 
   // Use pseudo semantic commit (and therefore PR title) commit messages
   // "{{{commitMessagePrefix}}} {{{commitMessageAction}}} {{{commitMessageTopic}}} {{{commitMessageExtra}}} {{{commitMessageSuffix}}}"
@@ -90,17 +88,17 @@
       matchUpdateTypes: ['pin', 'pinDigest'],
       commitMessageAction: 'pin',
       groupName: 'version ranges',
+      recreateWhen: 'always',
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
-      recreateWhen: 'always',
     },
 
     // Perform version rollbacks immediately
     {
       matchUpdateTypes: ['rollback'],
+      recreateWhen: 'always',
       // Renovate's defaults for these options (overrides our global defaults)
       schedule: 'at any time',
-      recreateWhen: 'always',
     },
 
     // Perform major version updates immediately
@@ -192,24 +190,24 @@
         // https://github.com/renovatebot/renovate/issues/519
         groupName: 'dev dependencies',
         matchDepTypes: ['devDependencies'],
-        excludePackageNames: [
-          '@types/async',
-          '@types/cli-progress',
-          '@types/micromatch',
-          '@types/semver',
-          '@types/xml2js',
-          '@types/yargs',
+        matchPackageNames: [
+          '!@types/async',
+          '!@types/cli-progress',
+          '!@types/micromatch',
+          '!@types/semver',
+          '!@types/xml2js',
+          '!@types/yargs',
         ],
         // Only group non-major updates
         matchUpdateTypes: ['patch', 'minor'],
       },
       {
         // Group ESLint together so files can be fixed automatically
-        matchPackagePatterns: [
-          'typescript-eslint',
-          '^@typescript-eslint',
-          '^eslint',
-          '/eslint'
+        matchPackageNames: [
+          '/typescript-eslint/',
+          '/^@typescript-eslint/',
+          '/^eslint/',
+          '//eslint/',
         ],
         groupName: 'ESLint',
         // Only group non-major updates
@@ -218,15 +216,15 @@
       {
         // Hold back ESLint major updates, plugins such as eslint-plugin-unicorn usually need to
         // be updated first
-        matchPackagePatterns: ['eslint'],
+        matchPackageNames: ['/eslint/'],
         matchUpdateTypes: ['major'],
         minimumReleaseAge: '14 days',
       },
       {
         // Update TypeScript-related ESLint more frequently so that TypeScript can update
-        matchPackagePatterns: [
-          'typescript-eslint',
-          '^@typescript-eslint/',
+        matchPackageNames: [
+          '/typescript-eslint/',
+          '/^@typescript-eslint//',
         ],
         matchUpdateTypes: ['major', 'minor'],
         schedule: 'at any time',
