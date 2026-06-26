@@ -1350,7 +1350,7 @@ describe('extract', () => {
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1407,7 +1407,7 @@ describe('extract', () => {
         'unknown.rom',
       ],
       [
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1771,7 +1771,7 @@ describe('raw', () => {
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
         path.join('patchable', 'best.gz'),
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1837,7 +1837,7 @@ describe('raw', () => {
         'unknown.rom',
       ],
       [
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
