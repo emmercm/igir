@@ -4,9 +4,7 @@ import { Memoize } from 'typescript-memoize';
 
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 
-type SignaturePiece = {
-  offset?: number;
-} & (
+type SignaturePiece = (
   | {
       // Static values
       value: Buffer;
@@ -19,7 +17,9 @@ type SignaturePiece = {
       length: number;
       match: (buffer: Buffer) => boolean;
     }
-);
+) & {
+  offset?: number;
+};
 
 const CanBeTrimmed = {
   NO: 0,

@@ -218,11 +218,13 @@ export default eslintConfig.defineConfig([
         },
       ],
       // Style and clarity preference differences
+      'unicorn/consistent-class-member-order': 'off',
       'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
       'unicorn/import-style': 'off', // mostly overridden by noNodeSubpathImports.mjs
       'unicorn/max-nested-calls': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/no-await-expression-member': 'off',
+      'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
       'unicorn/no-hex-escape': 'off',
       'unicorn/no-unreadable-new-expression': 'off',
       'unicorn/no-useless-undefined': 'off',

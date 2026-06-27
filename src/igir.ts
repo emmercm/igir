@@ -374,12 +374,13 @@ export default class Igir {
     }
 
     if (dats.length === 1) {
-      for (const [, option] of (
-        [
-          [this.options.getDirDatName(), '--dir-dat-name'],
-          [this.options.getDirDatDescription(), '--dir-dat-description'],
-        ] satisfies [boolean, string][]
-      ).filter(([bool]) => bool)) {
+      for (const [bool, option] of [
+        [this.options.getDirDatName(), '--dir-dat-name'],
+        [this.options.getDirDatDescription(), '--dir-dat-description'],
+      ] satisfies [boolean, string][]) {
+        if (!bool) {
+          continue;
+        }
         logger.warn(
           `${option} is most helpful when processing multiple DATs, only one DAT was found`,
         );

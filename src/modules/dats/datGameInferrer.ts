@@ -180,7 +180,10 @@ export default class DATGameInferrer extends Module {
         md5Map.get(file.getMd5() ?? ''),
         sha1Map.get(file.getSha1() ?? ''),
         sha256Map.get(file.getSha256() ?? ''),
-      ].filter((checksumProps) => checksumProps !== undefined)) {
+      ]) {
+        if (checksumProps === undefined) {
+          continue;
+        }
         enrichedFile = enrichedFile.withProps(checksumProps);
       }
 
