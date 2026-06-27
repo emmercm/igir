@@ -467,11 +467,7 @@ export default class CandidateGenerator extends Module {
         }
 
         // If we're zipping, only consider zip archives that we might be able to raw-write
-        if (this.options.shouldZip() && !(archive instanceof Zip)) {
-          return false;
-        }
-
-        return true;
+        return !(this.options.shouldZip() && !(archive instanceof Zip));
       })
       .toSorted((a, b) => {
         // First, prefer the archive that isn't from the output directory

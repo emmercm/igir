@@ -226,11 +226,8 @@ export default class DATMergerSplitter extends Module {
         // Parent doesn't have a ROM of the same name -> keep it
         return true;
       }
-      if (parentHashCode !== rom.hashCode()) {
-        // Parent has a ROM of the same name, but a different checksum -> keep it
-        return true;
-      }
-      return false;
+      // Parent has a ROM of the same name, but a different checksum -> keep it
+      return parentHashCode !== rom.hashCode();
     });
   }
 }

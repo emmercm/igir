@@ -163,14 +163,10 @@ export default class CandidateArchiveFileHasher extends Module {
       return false;
     }
 
-    if (romWithFiles.getInputFile().equals(romWithFiles.getOutputFile())) {
-      /**
-       * There's no need to calculate the checksum, {@link CandidateWriter} will skip
-       * writing over itself
-       */
-      return false;
-    }
-
-    return true;
+    /**
+     * There's no need to calculate the checksum, {@link CandidateWriter} will skip
+     * writing over itself
+     */
+    return !romWithFiles.getInputFile().equals(romWithFiles.getOutputFile());
   }
 }

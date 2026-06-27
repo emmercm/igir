@@ -16,6 +16,7 @@ import EndOfLifeChecker from './src/modules/endOfLifeChecker.js';
 import UpdateChecker from './src/modules/updateChecker.js';
 
 // Double the number of frames tracked in a stack trace
+// eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
 Error.stackTraceLimit = Math.max(Error.stackTraceLimit, 25);
 
 logger.setLogLevel(LogLevel.WARN); // don't print any timestamps

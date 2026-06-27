@@ -60,10 +60,12 @@ export default class ROMScanner extends Scanner {
         `found ${IntlUtil.toLocaleString(outputFilePaths.length)} output file${outputFilePaths.length === 1 ? '' : 's'}`,
       );
       for (const filePath of outputFilePaths) {
-        if (!inputFilePathsSet.has(filePath)) {
-          filePathsToProcess.push(filePath);
-          outputFilePathsSet.add(filePath);
+        if (inputFilePathsSet.has(filePath)) {
+          continue;
         }
+
+        filePathsToProcess.push(filePath);
+        outputFilePathsSet.add(filePath);
       }
     }
 

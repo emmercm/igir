@@ -199,14 +199,11 @@ export default class MovedROMDeleter extends Module {
               // The input archive entry was moved
               return false;
             }
-            if (
+            // Ignore the .cue file from CHDs
+            return !(
               inputFile.getArchive() instanceof ChdBinCue &&
               inputFile.getExtractedFilePath().toLowerCase().endsWith('.cue')
-            ) {
-              // Ignore the .cue file from CHDs
-              return false;
-            }
-            return true;
+            );
           },
         );
 
