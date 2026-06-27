@@ -28,6 +28,11 @@ export default abstract class DAT {
   abstract withGames(games: Game[]): DAT;
 
   /**
+   * Whether this {@link DAT} is a MAME (or MAME-derived) DAT.
+   */
+  abstract isMame(): boolean;
+
+  /**
    * Group all {@link Game} clones together into one {@link Parent}. If no parent/clone information
    * exists, then there will be one {@link Parent} for every {@link Game}.
    */
