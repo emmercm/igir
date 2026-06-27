@@ -167,8 +167,8 @@ export default abstract class Scanner extends Module {
         }
       }
 
-      const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
-      if (checksumArchives && fileIsArchive) {
+      const isFileAnArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
+      if (checksumArchives && isFileAnArchive) {
         filesFromPath.push(
           await this.fileFactory.fileFrom(filePath, checksumBitmask, (progress) => {
             progressBar.setCompleted(progress);

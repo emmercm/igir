@@ -145,7 +145,7 @@ export default class Terminal {
       return;
     }
     // Detect the empty -> non-empty edge (the live region first appearing) before overwriting
-    const regionAppeared = this.liveRegionRaw === '' && raw !== '';
+    const hasRegionAppeared = this.liveRegionRaw === '' && raw !== '';
     this.liveRegionRaw = raw;
 
     if (!(this.stream instanceof tty.WriteStream)) {
@@ -154,7 +154,7 @@ export default class Terminal {
     }
 
     // Hide the cursor while the live region is on screen so it doesn't flicker between repaints
-    if (regionAppeared) {
+    if (hasRegionAppeared) {
       this.hideCursor();
     }
 

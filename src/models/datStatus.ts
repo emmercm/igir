@@ -85,7 +85,6 @@ export default class DATStatus {
 
         // The found ReleaseCandidate is complete
         DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
-        continue;
       }
     }
 

@@ -76,7 +76,8 @@ export default {
         if (XML_IGNORE_PATHS.has(jPathOrMatcher)) {
           return false;
         }
-        for (const attr of XML_IGNORE_ATTRS[jPathOrMatcher] ?? []) {
+        const attrsToIgnore = XML_IGNORE_ATTRS[jPathOrMatcher] ?? [];
+        for (const attr of attrsToIgnore) {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete attrs[attr];
         }

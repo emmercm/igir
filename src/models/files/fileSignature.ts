@@ -602,7 +602,7 @@ export default class FileSignature {
     }
 
     for (const romSignature of this.SIGNATURES) {
-      const signatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
+      const didSignatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
         if (signaturePiece.value === undefined) {
           return signaturePiece.match(fileHeader);
         }
@@ -612,7 +612,7 @@ export default class FileSignature {
         );
         return signatureValue.equals(signaturePiece.value);
       });
-      if (signatureMatch) {
+      if (didSignatureMatch) {
         return romSignature;
       }
     }

@@ -46,10 +46,10 @@ export default class DataDescriptor {
     const descriptor = buffer.subarray(0, bytesRead);
 
     // The signature is optional; only consume it when present.
-    const signaturePresent = descriptor
+    const isSignaturePresent = descriptor
       .subarray(0, this.DATA_DESCRIPTOR_SIGNATURE.length)
       .equals(this.DATA_DESCRIPTOR_SIGNATURE);
-    let offset = signaturePresent ? this.DATA_DESCRIPTOR_SIGNATURE.length : 0;
+    let offset = isSignaturePresent ? this.DATA_DESCRIPTOR_SIGNATURE.length : 0;
 
     const uncompressedCrc32 = Buffer.from(descriptor.subarray(offset, offset + 4));
     offset += 4;
@@ -66,7 +66,7 @@ export default class DataDescriptor {
 
     return new DataDescriptor({
       raw: Buffer.from(descriptor.subarray(0, offset)),
-      signaturePresent,
+      signaturePresent: isSignaturePresent,
       uncompressedCrc32,
       compressedSize,
       uncompressedSize,

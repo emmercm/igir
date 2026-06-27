@@ -100,7 +100,6 @@ export default abstract class DAT {
           // The DAT is bad, the game is referencing a parent that doesn't exist
           gameNamesToParents.set(cloneOf, new Parent(game));
         }
-        continue;
       }
     }
 

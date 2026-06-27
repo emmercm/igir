@@ -56,9 +56,9 @@ export default class DATGameInferrer extends Module {
         // `.filter()` rather than `.find()` because a file can be found in overlapping input paths,
         // therefore it should be counted in both
         .filter((inputPath) => filePath.startsWith(inputPath));
-      for (const inputPath of matchedInputPaths.length > 0
-        ? matchedInputPaths
-        : [DATGameInferrer.DEFAULT_DAT_NAME]) {
+      const inputPathsToUse =
+        matchedInputPaths.length > 0 ? matchedInputPaths : [DATGameInferrer.DEFAULT_DAT_NAME];
+      for (const inputPath of inputPathsToUse) {
         if (map.has(inputPath)) {
           map.get(inputPath)?.push(file);
         } else {

@@ -274,7 +274,6 @@ class VcdiffWindow {
       (await patchFile.readNext(4)).readUInt32BE(); // TODO(cemmer): handle
     }
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const addsAndRunsData = await patchFile.readNext(addsAndRunsDataLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.DATACOMP) {
       // TODO(cemmer)
@@ -283,7 +282,6 @@ class VcdiffWindow {
       );
     }
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const instructionsAndSizesData = await patchFile.readNext(instructionsAndSizesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.INSTCOMP) {
       // TODO(cemmer)
@@ -292,7 +290,6 @@ class VcdiffWindow {
       );
     }
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const copyAddressesData = await patchFile.readNext(copyAddressesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.ADDRCOMP) {
       // TODO(cemmer)

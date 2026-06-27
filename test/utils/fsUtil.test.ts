@@ -618,10 +618,10 @@ describe('isWritable', () => {
     // File does not exist yet
     await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
 
-    const writable = await FsUtil.isWritable(tempFile);
+    const isWritable = await FsUtil.isWritable(tempFile);
 
     // File should not have been left behind
-    expect(writable).toEqual(true);
+    expect(isWritable).toEqual(true);
     await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
   });
 });

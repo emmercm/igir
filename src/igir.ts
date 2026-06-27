@@ -374,11 +374,11 @@ export default class Igir {
     }
 
     if (dats.length === 1) {
-      for (const [bool, option] of [
+      for (const [isOptionEnabled, option] of [
         [this.options.getDirDatName(), '--dir-dat-name'],
         [this.options.getDirDatDescription(), '--dir-dat-description'],
       ] satisfies [boolean, string][]) {
-        if (!bool) {
+        if (!isOptionEnabled) {
           continue;
         }
         logger.warn(

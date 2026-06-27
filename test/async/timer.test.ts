@@ -10,20 +10,20 @@ describe('setTimeout', () => {
   });
 
   it('should cancel all', () => {
-    let ran = false;
+    let didRun = false;
     Timer.setTimeout(() => {
-      ran = true;
+      didRun = true;
     }, 1000);
     Timer.cancelAll();
-    expect(ran).toEqual(false);
+    expect(didRun).toEqual(false);
   });
 
   it('should cancel', () => {
-    let ran = false;
+    let didRun = false;
     const timer = Timer.setTimeout(() => {
-      ran = true;
+      didRun = true;
     }, 1000);
     timer.cancel();
-    expect(ran).toEqual(false);
+    expect(didRun).toEqual(false);
   });
 });

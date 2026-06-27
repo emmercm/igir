@@ -26,10 +26,10 @@ const CHALK_PROGRESS_COMPLETE_DEFAULT = chalk.reset;
 const CHALK_PROGRESS_IN_PROGRESS = chalk.blackBright; // 50% gray (typically)
 const CHALK_PROGRESS_INCOMPLETE = chalk.ansi256(240); // 33% gray
 
-const UNICODE_SUPPORTED = isUnicodeSupported();
-const BAR_COMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
-const BAR_IN_PROGRESS_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
-const BAR_INCOMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
+const IS_UNICODE_SUPPORTED = isUnicodeSupported();
+const BAR_COMPLETE_CHAR = IS_UNICODE_SUPPORTED ? '■' : '▬';
+const BAR_IN_PROGRESS_CHAR = IS_UNICODE_SUPPORTED ? '■' : '▬';
+const BAR_INCOMPLETE_CHAR = IS_UNICODE_SUPPORTED ? '■' : '▬';
 
 const DEFAULT_ETA = '--:--:--';
 

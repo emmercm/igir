@@ -29,7 +29,6 @@ export default class MappableSemaphore extends Semaphore {
 
     let firstError: Error | undefined;
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const results = await Promise.allSettled(
       values.map(
         async (value) =>

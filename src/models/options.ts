@@ -1563,7 +1563,8 @@ export default class Options implements OptionsProps {
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       const now = new Date();
-      for (const match of symbolMatches.reduce(ArrayUtil.reduceUnique(), [])) {
+      const uniqueMatches = symbolMatches.reduce<string[]>(ArrayUtil.reduceUnique(), []);
+      for (const match of uniqueMatches) {
         const val = DateUtil.format(match.replace(/^%/, ''), now);
         reportOutput = reportOutput.replace(match, val);
       }
@@ -1623,7 +1624,8 @@ export default class Options implements OptionsProps {
     const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       const now = new Date();
-      for (const match of symbolMatches.reduce(ArrayUtil.reduceUnique(), [])) {
+      const uniqueMatches = symbolMatches.reduce<string[]>(ArrayUtil.reduceUnique(), []);
+      for (const match of uniqueMatches) {
         const val = DateUtil.format(match.replace(/^%/, ''), now);
         debugLog = debugLog.replace(match, val);
       }

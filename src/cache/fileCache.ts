@@ -128,7 +128,6 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedFile: File | undefined;
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
@@ -216,7 +215,6 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedEntries: ArchiveEntry<T>[] | undefined;
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
@@ -339,14 +337,14 @@ export default class FileCache {
     }
 
     const cacheKeys = this.getChecksumCacheKeys(file, valueType);
-    const usingFilePathKey = cacheKeys.length === 0;
-    if (usingFilePathKey) {
+    const isUsingFilePathKey = cacheKeys.length === 0;
+    if (isUsingFilePathKey) {
       // No checksums available to use as cache keys, fall back to file path
       cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, valueType));
     }
 
     // When using file-path-based keys, we need file stats to detect stale cache entries
-    const stats = usingFilePathKey ? await FsUtil.stat(file.getFilePath()) : undefined;
+    const stats = isUsingFilePathKey ? await FsUtil.stat(file.getFilePath()) : undefined;
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,

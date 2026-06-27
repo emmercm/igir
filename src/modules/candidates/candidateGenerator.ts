@@ -233,14 +233,14 @@ export default class CandidateGenerator extends Module {
         return [rom, inputFiles];
       }
 
-      const rawWriting =
+      const isAreRawWriting =
         this.options.shouldWrite() &&
         !this.options.shouldExtractRom(rom) &&
         !this.options.shouldZipRom(rom);
 
       const filteredInputFiles = inputFiles.filter((inputFile) => {
         if (
-          !rawWriting &&
+          !isAreRawWriting &&
           inputFile instanceof ArchiveEntry &&
           !(rom instanceof Disk) &&
           !inputFile.canExtract()
@@ -253,7 +253,7 @@ export default class CandidateGenerator extends Module {
         }
 
         if (
-          rawWriting &&
+          isAreRawWriting &&
           inputFile instanceof ArchiveEntry &&
           rom.getName().trim() !== '' &&
           inputFile.getArchive().hasMeaningfulEntryPaths()

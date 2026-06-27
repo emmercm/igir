@@ -83,7 +83,7 @@ export default class FileFactory {
         return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
       }
       const entries: ArchiveEntry<Archive>[] = [];
-      let anyParsed = false;
+      let wasAnyParsed = false;
       for (const archive of archives) {
         const result = await this.entriesFromArchive(
           archive,
@@ -92,13 +92,13 @@ export default class FileFactory {
           callback,
         );
         if (result !== undefined) {
-          anyParsed = true;
+          wasAnyParsed = true;
           for (const entry of result) {
             entries.push(entry);
           }
         }
       }
-      if (!anyParsed) {
+      if (!wasAnyParsed) {
         // The file isn't actually an archive
         return [await this.fileFrom(filePath, fileChecksumBitmask)];
       }
@@ -267,7 +267,7 @@ export default class FileFactory {
       return undefined;
     }
     const entries: ArchiveEntry<Archive>[] = [];
-    let anyParsed = false;
+    let wasAnyParsed = false;
     for (const archive of archives) {
       const result = await this.entriesFromArchive(
         archive,
@@ -276,13 +276,13 @@ export default class FileFactory {
         callback,
       );
       if (result !== undefined) {
-        anyParsed = true;
+        wasAnyParsed = true;
         for (const entry of result) {
           entries.push(entry);
         }
       }
     }
-    if (!anyParsed) {
+    if (!wasAnyParsed) {
       // The file isn't actually an archive
       return undefined;
     }
