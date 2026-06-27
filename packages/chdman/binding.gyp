@@ -32,17 +32,25 @@
       }]
     ],
 
-    # MAME uses C++ exceptions and RTTI
-    "cflags_cc!": ["-fno-exceptions", "-fno-rtti"],
+    "cflags_cc!": [
+      # MAME uses C++ exceptions and RTTI
+      "-fno-exceptions", "-fno-rtti",
+      # Override Node.js' common.gypi
+      "-std=gnu++17"
+    ],
     "cflags_cc": [
       "-std=c++20",
       # MAME uses C++ exceptions and RTTI
       "-fexceptions", "-frtti"
     ],
     "xcode_settings": {
+      "OTHER_CPLUSPLUSFLAGS": [
+        # MAME uses C++ exceptions and RTTI
+        "-fexceptions", "-frtti"
+        # Override Node.js' common.gypi
+        "-std=c++20"
+      ],
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
-      # MAME uses C++ exceptions and RTTI
-      "OTHER_CPLUSPLUSFLAGS": ["-fexceptions", "-frtti"],
       # Build optimizations
       "LLVM_LTO": "YES",
       "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
