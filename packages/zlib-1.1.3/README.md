@@ -2,7 +2,7 @@
 
 Specific version required for TorrentZip.
 
-The source code for [zlib v1.1.3](https://github.com/madler/zlib/tree/v1.1.3) (July 1998) doesn't include a license. The [license](https://github.com/madler/zlib/blob/352cb28d12baf02863ff5d4d96be0587ced419a1/LICENSE) added for v1.2.13 (October 2022) is custom and extremely permissive.
+The source code for [zlib v1.1.3](https://github.com/madler/zlib/tree/v1.1.3) (July 1998) doesn't include a license. The [license](https://github.com/madler/zlib/blob/v1.2.13/LICENSE) added for v1.2.13 (October 2022) is custom and extremely permissive.
 
 ## Credits
 
