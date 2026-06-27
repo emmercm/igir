@@ -867,7 +867,7 @@ export default class Options implements OptionsProps {
     globPatterns: string[],
     walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
-    requireFiles = true,
+    shouldRequireFiles = true,
   ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns.reduce(ArrayUtil.reduceUnique(), []);
@@ -879,7 +879,7 @@ export default class Options implements OptionsProps {
       }
     }
 
-    if (requireFiles && globbedPaths.length === 0) {
+    if (shouldRequireFiles && globbedPaths.length === 0) {
       throw new IgirException(
         `no files found in director${globPatterns.length === 1 ? 'y' : 'ies'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`,
       );
@@ -894,13 +894,13 @@ export default class Options implements OptionsProps {
     excludeGlobPatterns: string[],
     walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
-    requireIncludeFiles = true,
+    shouldRequireIncludeFiles = true,
   ): Promise<string[]> {
     const includePaths = await this.scanPaths(
       includeGlobPatterns,
       walkMode,
       walkCallback,
-      requireIncludeFiles,
+      shouldRequireIncludeFiles,
     );
     const excludePaths = await this.scanPaths(excludeGlobPatterns, walkMode, undefined, false);
     const excludePathsSet = new Set(excludePaths);

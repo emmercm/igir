@@ -77,9 +77,9 @@ class VcdiffHeader {
     ];
 
     // ADD+NOOP
-    for (let addSize = 0; addSize <= 17; addSize += 1) {
+    for (let sizeToAdd = 0; sizeToAdd <= 17; sizeToAdd += 1) {
       entries.push([
-        { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+        { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
         { type: VcdiffInstruction.NOOP, size: 0, mode: 0 },
       ]);
     }

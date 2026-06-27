@@ -39,7 +39,7 @@ export default class DataDescriptor {
   static async fromFileHandle(
     fileHandle: fs.promises.FileHandle,
     position: number,
-    zip64: boolean,
+    isZip64: boolean,
   ): Promise<DataDescriptor> {
     const buffer = Buffer.allocUnsafe(this.MAX_DATA_DESCRIPTOR_SIZE);
     const { bytesRead } = await fileHandle.read({ buffer, position });
@@ -55,14 +55,14 @@ export default class DataDescriptor {
     offset += 4;
 
     // ZIP64 format archives use 8-byte sizes.
-    const compressedSize = zip64
+    const compressedSize = isZip64
       ? Number(descriptor.readBigUInt64LE(offset))
       : descriptor.readUInt32LE(offset);
-    offset += zip64 ? 8 : 4;
-    const uncompressedSize = zip64
+    offset += isZip64 ? 8 : 4;
+    const uncompressedSize = isZip64
       ? Number(descriptor.readBigUInt64LE(offset))
       : descriptor.readUInt32LE(offset);
-    offset += zip64 ? 8 : 4;
+    offset += isZip64 ? 8 : 4;
 
     return new DataDescriptor({
       raw: Buffer.from(descriptor.subarray(0, offset)),

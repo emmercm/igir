@@ -528,7 +528,7 @@ export default class Igir {
     fileFactory: FileFactory,
     readerSemaphore: MappableSemaphore,
     checksumBitmask: number,
-    checksumArchives: boolean,
+    shouldChecksumArchives: boolean,
   ): Promise<IndexedFiles> {
     const romProgressBar = this.multiBar.addSingleBar({
       name: 'Scanning for ROMs',
@@ -539,7 +539,7 @@ export default class Igir {
       romProgressBar,
       fileFactory,
       readerSemaphore,
-    ).scan(checksumBitmask, checksumArchives);
+    ).scan(checksumBitmask, shouldChecksumArchives);
 
     if (dats.some((dat) => !dat.isMame())) {
       const chds = rawRomFiles

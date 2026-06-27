@@ -16,9 +16,9 @@ class PPFHeader {
 
   readonly undoDataAvailable: boolean;
 
-  constructor(version: number, undoDataAvailable: boolean) {
+  constructor(version: number, isUndoDataAvailable: boolean) {
     this.version = version;
-    this.undoDataAvailable = undoDataAvailable;
+    this.undoDataAvailable = isUndoDataAvailable;
   }
 
   /**

@@ -53,7 +53,6 @@ export default class Tar extends Archive {
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
-    _forceChecksumCalculation = false,
   ): Promise<ArchiveEntry<this>[]> {
     const archiveEntryPromises: Promise<ArchiveEntry<this>>[] = [];
 

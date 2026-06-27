@@ -53,14 +53,14 @@ export default class Gzip extends Archive {
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<Archive>[]> {
     // See if this file is actually a .tar.gz
     try {
       return await new Tar(this.getFilePath()).getArchiveEntries(
         checksumBitmask,
         callback,
-        forceChecksumCalculation,
+        shouldForceChecksumCalculation,
       );
     } catch {
       /* ignored */
@@ -75,7 +75,7 @@ export default class Gzip extends Archive {
     let checksums: ChecksumProps = {};
     if (
       checksumBitmask & ~ChecksumBitmask.CRC32 ||
-      (forceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
+      (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
     ) {
       checksums = await this.extractEntryToStream('', async (readable) => {
         return await FileChecksums.hashStream(readable, checksumBitmask, callback);

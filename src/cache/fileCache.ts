@@ -119,7 +119,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
     callback?: FsReadCallback,
-    forceRecompute = false,
+    shouldForceRecompute = false,
   ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(filePath);
@@ -146,7 +146,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 
@@ -196,9 +196,9 @@ export default class FileCache {
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
-    forceRecompute = false,
+    shouldForceRecompute = false,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(archive.getFilePath());
@@ -221,7 +221,7 @@ export default class FileCache {
         computedEntries = (await archive.getArchiveEntries(
           checksumBitmask,
           callback,
-          forceChecksumCalculation,
+          shouldForceChecksumCalculation,
         )) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
@@ -230,7 +230,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 
@@ -459,7 +459,10 @@ export default class FileCache {
     return Array.from(fillByteToRomPaddingProps.values(), (props) => new ROMPadding(props));
   }
 
-  async getOrComputeTzValidation(zip: Zip, forceRecompute = false): Promise<ValidationResultValue> {
+  async getOrComputeTzValidation(
+    zip: Zip,
+    shouldForceRecompute = false,
+  ): Promise<ValidationResultValue> {
     if (!(await FsUtil.exists(zip.getFilePath()))) {
       return ValidationResult.INVALID;
     }
@@ -487,7 +490,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 
