@@ -39,7 +39,6 @@
       "-fno-exceptions", "-fno-rtti"
     ],
     "cflags_cc": [
-      # MAME requires C++20
       "-std=c++20",
       # MAME uses C++ exceptions and RTTI
       "-fexceptions", "-frtti"
@@ -47,7 +46,6 @@
     "xcode_settings": {
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
       "OTHER_CPLUSPLUSFLAGS": [
-        # Override Node.js' common.gypi
         "-std=c++20",
         # MAME uses C++ exceptions and RTTI
         "-fexceptions", "-frtti"
@@ -65,7 +63,6 @@
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
         "AdditionalOptions": [
-          # Override Node.js' common.gypi
           "/std:c++20",
           # MAME uses C++ exceptions and RTTI
           "/EHsc",
