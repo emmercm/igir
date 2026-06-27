@@ -151,7 +151,7 @@ export default class IOFile {
     }
 
     // If the file is large, read from the open file handle
-    let bytesRead = 0;
+    let bytesRead: number;
     try {
       bytesRead = (await this.fileHandle.read(this.tempBuffer, 0, size, position)).bytesRead;
     } catch {

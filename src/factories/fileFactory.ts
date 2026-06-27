@@ -108,7 +108,7 @@ export default class FileFactory {
         throw new IgirException(`file doesn't exist: ${filePath}`);
       }
       if (typeof error === 'string') {
-        throw new Error(error);
+        throw new Error(error, { cause: error });
       }
       throw error;
     }

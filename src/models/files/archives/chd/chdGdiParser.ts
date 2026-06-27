@@ -22,7 +22,6 @@ export default class ChdGdiParser {
   ): Promise<ArchiveEntry<T>[]> {
     const tempDir = await FsUtil.mkdtemp(path.join(Temp.getTempDir(), 'chd-gdi'));
 
-    let binRawFilePaths: string[] = [];
     try {
       const gdiFilePath = (await archive.extractArchiveEntries(tempDir)).find((filePath) =>
         filePath.endsWith('.gdi'),
@@ -30,7 +29,7 @@ export default class ChdGdiParser {
       if (gdiFilePath === undefined) {
         throw new IgirException(`failed to extract .gdi file`);
       }
-      binRawFilePaths = await fg(`${fg.convertPathToPattern(tempDir)}/*.{bin,raw}`);
+      const binRawFilePaths = await fg(`${fg.convertPathToPattern(tempDir)}/*.{bin,raw}`);
       if (binRawFilePaths.length === 0) {
         throw new IgirException(
           `failed to find bin/raw files for GD-ROM: ${archive.getFilePath()}`,
@@ -87,9 +86,11 @@ export default class ChdGdiParser {
           if (error instanceof Error) {
             throw error;
           } else if (typeof error === 'string') {
-            throw new Error(error);
+            throw new Error(error, { cause: error });
           } else {
-            throw new Error(`unknown error when parsing GD-ROM bin/raw file: ${binRawFilePath}`);
+            throw new Error(`unknown error when parsing GD-ROM bin/raw file: ${binRawFilePath}`, {
+              cause: error,
+            });
           }
         }
       },

@@ -204,10 +204,12 @@
       {
         // Group ESLint together so files can be fixed automatically
         matchPackageNames: [
-          '/typescript-eslint/',
-          '/^@typescript-eslint/',
-          '/^eslint/',
+          '/^@eslint//',
+          'eslint',
+          '/^eslint-/',
           '//eslint/',
+          'typescript-eslint',
+          '/^@typescript-eslint//',
         ],
         groupName: 'ESLint',
         // Only group non-major updates
