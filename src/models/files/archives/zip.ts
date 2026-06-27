@@ -227,7 +227,8 @@ export default class Zip extends Archive {
       const pathLowerB = outputB.getEntryPath().toLowerCase();
       if (pathLowerA < pathLowerB) {
         return -1;
-      } else if (pathLowerA > pathLowerB) {
+      }
+      if (pathLowerA > pathLowerB) {
         return 1;
       }
       return 0;

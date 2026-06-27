@@ -44,11 +44,11 @@ export default class PatchScanner extends Scanner {
     this.progressBar.resetProgress(patchFiles.length);
 
     const patches = await this.parsePatchFiles(patchFiles);
-    patches.forEach((patch) => {
+    for (const patch of patches) {
       if (patch.getCrcBefore() === '00000000') {
         this.prefixedLogger.warn(`${patch.toString()}: couldn't parse base file CRC`);
       }
-    });
+    }
 
     this.prefixedLogger.trace('done scanning patch files');
     return patches;

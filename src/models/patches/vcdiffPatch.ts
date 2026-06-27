@@ -155,7 +155,7 @@ class VcdiffHeader {
    */
   static async fromIOFile(patchFile: IOFile): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
-    if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
+    if (!header.equals(this.FILE_SIGNATURE)) {
       await patchFile.close();
       throw new IgirException(
         `Vcdiff patch header is invalid: ${patchFile.getPathLike().toString()}`,
@@ -184,7 +184,8 @@ class VcdiffHeader {
       }
     }
 
-    const codeTable = VcdiffHeader.DEFAULT_CODE_TABLE;
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
+    const codeTable = this.DEFAULT_CODE_TABLE;
     if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
       if (codeTableLength) {
@@ -273,6 +274,7 @@ class VcdiffWindow {
       (await patchFile.readNext(4)).readUInt32BE(); // TODO(cemmer): handle
     }
 
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const addsAndRunsData = await patchFile.readNext(addsAndRunsDataLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.DATACOMP) {
       // TODO(cemmer)
@@ -281,6 +283,7 @@ class VcdiffWindow {
       );
     }
 
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const instructionsAndSizesData = await patchFile.readNext(instructionsAndSizesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.INSTCOMP) {
       // TODO(cemmer)
@@ -289,6 +292,7 @@ class VcdiffWindow {
       );
     }
 
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const copyAddressesData = await patchFile.readNext(copyAddressesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.ADDRCOMP) {
       // TODO(cemmer)
@@ -529,7 +533,7 @@ export default class VcdiffPatch extends Patch {
    * Parse a .vcdiff/.xdelta patch file and return a {@link VcdiffPatch}.
    */
   static patchFrom(file: File): VcdiffPatch {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     return new VcdiffPatch(file, crcBefore);
   }
 
@@ -571,14 +575,7 @@ export default class VcdiffPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await VcdiffPatch.applyPatch(
-          patchFile,
-          sourceFile,
-          targetFile,
-          header,
-          copyCache,
-          callback,
-        );
+        await this.applyPatch(patchFile, sourceFile, targetFile, header, copyCache, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();

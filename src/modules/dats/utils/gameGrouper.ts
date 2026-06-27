@@ -1,13 +1,10 @@
 export default {
-  getMultiTrackDiscCommonName(romName: string): string {
-    return (
-      romName
-        // Redump CD-ROM
-        .replace(/ ?\(Track [0-9]+\)/i, '')
-        // TOSEC CD-ROM
-        .replace(/ ?\(Track [0-9]+ of [0-9]+\)/i, '')
-    );
-  },
+  getMultiTrackDiscCommonName: (romName: string): string =>
+    romName
+      // Redump CD-ROM
+      .replace(/ ?\(Track [0-9]+\)/i, '')
+      // TOSEC CD-ROM
+      .replace(/ ?\(Track [0-9]+ of [0-9]+\)/i, ''),
 
   getMultiDiscCommonName(gameName: string): string {
     return (

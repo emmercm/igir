@@ -85,13 +85,13 @@ export default class ChdGdiParser {
         } catch (error) {
           if (error instanceof Error) {
             throw error;
-          } else if (typeof error === 'string') {
-            throw new Error(error, { cause: error });
-          } else {
-            throw new Error(`unknown error when parsing GD-ROM bin/raw file: ${binRawFilePath}`, {
-              cause: error,
-            });
           }
+          if (typeof error === 'string') {
+            throw new Error(error, { cause: error });
+          }
+          throw new Error(`unknown error when parsing GD-ROM bin/raw file: ${binRawFilePath}`, {
+            cause: error,
+          });
         }
       },
     );

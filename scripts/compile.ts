@@ -64,7 +64,7 @@ const bunBuildConfig = {
       title: Package.NAME,
       publisher: Package.AUTHOR,
       version: Package.VERSION,
-      description: Package.DESCRIPTION.replaceAll(/[^\x00-\x7F]/g, '').trim(),
+      description: Package.DESCRIPTION.replaceAll(/[^\u{0}-\u{7F}]/gu, '').trim(),
       copyright: Package.HOMEPAGE,
     },
   },

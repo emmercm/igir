@@ -119,24 +119,24 @@ it('should write a valid DAT', async () => {
     writtenDat
       .getParents()
       .map((parent) => parent.getName())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   ).toEqual(
     inferredDat
       .getParents()
       .map((parent) => parent.getName())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   );
   expect(writtenDat.getGames()).toHaveLength(inferredDat.getGames().length);
   expect(
     writtenDat
       .getGames()
       .map((game) => game.hashCode())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   ).toEqual(
     inferredDat
       .getGames()
       .map((game) => game.hashCode())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   );
 });
 
@@ -219,13 +219,13 @@ it('should use the candidates for games and ROMs', async () => {
 
   expect(writtenDat.getParents()).toHaveLength(inferredDat.getParents().length);
   const writtenParentNames = new Set(writtenDat.getParents().map((parent) => parent.getName()));
-  for (const inferredParentName of inferredDat.getParents().map((parent) => parent.getName())) {
-    expect(writtenParentNames.has(inferredParentName)).toEqual(false);
+  for (const inferredParent of inferredDat.getParents()) {
+    expect(writtenParentNames.has(inferredParent.getName())).toEqual(false);
   }
 
   expect(writtenDat.getGames()).toHaveLength(inferredDat.getGames().length);
   const writtenGameHashes = new Set(writtenDat.getGames().map((game) => game.hashCode()));
-  for (const inferredGameHash of inferredDat.getGames().map((game) => game.hashCode())) {
-    expect(writtenGameHashes.has(inferredGameHash)).toEqual(false);
+  for (const inferredGame of inferredDat.getGames()) {
+    expect(writtenGameHashes.has(inferredGame.hashCode())).toEqual(false);
   }
 });

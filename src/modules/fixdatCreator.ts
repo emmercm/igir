@@ -46,7 +46,7 @@ export default class FixdatCreator extends Module {
     // Find all the games that have at least one missing ROM
     const gamesWithMissingRoms = originalDat
       .getGames()
-      .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
+      .filter((game) => game.getRoms().some((rom) => !writtenRomHashCodes.has(rom.hashCode())));
     if (gamesWithMissingRoms.length === 0) {
       this.prefixedLogger.debug(
         `${originalDat.getName()}: not creating a fixdat, all games were found`,

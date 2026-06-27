@@ -83,7 +83,7 @@ export default class ChdBinCueParser {
       // The file has no tracks, so we can't extract anything
       return [];
     }
-    const globalBlockSize = ChdBinCueParser.parseCueTrackBlockSize(firstTrack);
+    const globalBlockSize = this.parseCueTrackBlockSize(firstTrack);
     let nextItemTimeOffset = Math.floor(fileSize / globalBlockSize);
 
     const archiveEntries: ArchiveEntry<T>[] = [];
@@ -94,13 +94,13 @@ export default class ChdBinCueParser {
         continue;
       }
 
-      const startingTimeOffset = ChdBinCueParser.calculateLength(firstIndex.startingTime);
+      const startingTimeOffset = this.calculateLength(firstIndex.startingTime);
       const sectors = nextItemTimeOffset - startingTimeOffset;
       nextItemTimeOffset = startingTimeOffset;
       const trackOffset = startingTimeOffset * globalBlockSize;
       const trackSize = sectors * globalBlockSize;
-      const pregapSize = ChdBinCueParser.calculateLength(track.preGap) * globalBlockSize;
-      const postgapSize = ChdBinCueParser.calculateLength(track.postGap) * globalBlockSize;
+      const pregapSize = this.calculateLength(track.preGap) * globalBlockSize;
+      const postgapSize = this.calculateLength(track.postGap) * globalBlockSize;
 
       // Calculate checksums, including the pregap
       let checksums: ChecksumProps;

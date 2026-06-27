@@ -198,17 +198,17 @@ export default abstract class Scanner extends Module {
   }
 
   private logWarnings(files: File[]): void {
-    if (this.options.getInputChecksumQuick()) {
-      const archiveWithoutChecksums = files
-        .filter((file) => file instanceof ArchiveEntry)
-        .map((archiveEntry) => archiveEntry.getArchive())
-        .find((archive) => archive instanceof Gzip || archive instanceof Tar);
-      if (archiveWithoutChecksums !== undefined) {
-        this.prefixedLogger.warn(
-          `${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`,
-        );
-        return;
-      }
+    if (!this.options.getInputChecksumQuick()) {
+      return;
+    }
+    const archiveWithoutChecksums = files
+      .filter((file) => file instanceof ArchiveEntry)
+      .map((archiveEntry) => archiveEntry.getArchive())
+      .find((archive) => archive instanceof Gzip || archive instanceof Tar);
+    if (archiveWithoutChecksums !== undefined) {
+      this.prefixedLogger.warn(
+        `${archiveWithoutChecksums.getFilePath()}: quick checksums will skip ${archiveWithoutChecksums.getExtension()} files`,
+      );
     }
   }
 }

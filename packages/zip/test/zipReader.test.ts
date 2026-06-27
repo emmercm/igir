@@ -531,10 +531,16 @@ describe('compressedStream', () => {
       await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
     }
 
-    for (const entry of entries.filter(
-      (entry) =>
-        !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSizeResolved() < 10_485_760, // 10MiB
-    )) {
+    for (const entry of entries) {
+      if (
+        entry.isDirectory() ||
+        entry.isEncrypted() ||
+        entry.compressedSizeResolved() >= 10_485_760
+      ) {
+        // Skip directories, encrypted entries, and entries larger than 10MiB
+        continue;
+      }
+
       // Write compressed bytes to file
       const tempFile = await FsUtil.mktemp(
         path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),
@@ -563,10 +569,16 @@ describe('uncompressedStream', () => {
       await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
     }
 
-    for (const entry of entries.filter(
-      (entry) =>
-        !entry.isDirectory() && !entry.isEncrypted() && entry.compressedSizeResolved() < 10_485_760, // 10MiB
-    )) {
+    for (const entry of entries) {
+      if (
+        entry.isDirectory() ||
+        entry.isEncrypted() ||
+        entry.compressedSizeResolved() >= 10_485_760
+      ) {
+        // Skip directories, encrypted entries, and entries larger than 10MiB
+        continue;
+      }
+
       // Write compressed bytes to file
       const tempFile = await FsUtil.mktemp(
         path.join(Temp.getTempDir(), path.basename(entry.fileNameResolved())),

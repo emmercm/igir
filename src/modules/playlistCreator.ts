@@ -72,7 +72,7 @@ export default class PlaylistCreator extends Module {
       (candidate) => candidate.getGame().getName(),
     );
     await async.mapLimit(
-      [...gameNamesToCandidates.entries()],
+      [...gameNamesToCandidates],
       this.options.getWriterThreads(),
       async ([gameName, candidates]: [string, WriteCandidate[]]) => {
         const writtenFile = await this.maybeWritePlaylist(dat, candidates, gameName);
@@ -124,7 +124,7 @@ export default class PlaylistCreator extends Module {
           .replace(/^[\\/]/, '')
           .replaceAll('\\', '/'),
       )
-      .toSorted()
+      .toSorted((a, b) => a.localeCompare(b))
       .join('\n')}\n`;
 
     if (!(await FsUtil.exists(commonDirectory))) {

@@ -536,7 +536,7 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
       path.resolve('output', 'AUS', 'Advance Wars - Dual Strike (USA, Australia).nds'),
       path.resolve(
@@ -561,7 +561,7 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
       path.resolve(
         'output',
@@ -608,7 +608,7 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
       path.resolve(
         'output',
@@ -631,7 +631,7 @@ describe('token replacement', () => {
       .flatMap((candidate) =>
         candidate.getRomsWithFiles().map((rwf) => rwf.getOutputFile().toString()),
       )
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
       path.resolve(
         'output',
@@ -824,7 +824,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       const romsWithFiles = firstCandidate.getRomsWithFiles();
       expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
 
-      for (const romsWithFile of romsWithFiles.values()) {
+      for (const romsWithFile of romsWithFiles) {
         const inputFile = romsWithFile.getInputFile();
         expect(inputFile.getFilePath()).toEqual(archive.getFilePath());
       }
@@ -1573,7 +1573,7 @@ describe('MAME v0.260', () => {
     const outputFiles = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
       `${path.resolve('2spicy.zip')}|6.0.0009.bin`,
       `${path.resolve('2spicy.zip')}|6.0.0010.bin`,
@@ -1617,7 +1617,7 @@ describe('MAME v0.260', () => {
     const outputFiles = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
       path.resolve('2spicy', '6.0.0009.bin'),
       path.resolve('2spicy', '6.0.0010.bin'),
@@ -1662,7 +1662,7 @@ describe('MAME v0.260', () => {
     const outputFiles = candidates
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .map((romWithFiles) => romWithFiles.getOutputFile().toString())
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(outputFiles).toEqual([
       path.resolve('2spicy', '6.0.0009.bin'),
       path.resolve('2spicy', '6.0.0010.bin'),

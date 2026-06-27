@@ -116,7 +116,9 @@ it('should delete empty directories even if no ROMs were moved when option is "a
 
     // The directories that had files moved out of them were deleted
     expect(
-      deletedDirs.map((dirPath) => dirPath.replace(tempDir + path.sep, '')).toSorted(),
+      deletedDirs
+        .map((dirPath) => dirPath.replace(tempDir + path.sep, ''))
+        .toSorted((a, b) => a.localeCompare(b)),
     ).toEqual([path.join('GB', 'EUR'), path.join('NES', 'JPN')]);
   } finally {
     await FsUtil.rm(tempDir, {
@@ -153,7 +155,7 @@ it('should delete empty directories that had ROMs moved out of them', async () =
     // The directories that had files moved out of them were deleted
     const deletedTempDirs = deletedDirs
       .map((dirPath) => dirPath.replace(tempDir + path.sep, ''))
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(deletedTempDirs).toContain('GB');
     expect(deletedTempDirs).toContain('NES');
   } finally {

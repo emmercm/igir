@@ -238,8 +238,11 @@ it('should merge multi-disc games and leave single disc games alone', () => {
   expect(
     result
       .getGames()
-      .map((game) => [game.getName(), game.getRoms().map((rom) => rom.getName())])
-      .toSorted(),
+      .map((game): [string, string[]] => [
+        game.getName(),
+        game.getRoms().map((rom) => rom.getName()),
+      ])
+      .toSorted((a, b) => a[0].localeCompare(b[0])),
   ).toEqual([
     [
       'D2 v1.000 (2000)(Sega)(US)(Disc 1 of 4)[!][10S]',
