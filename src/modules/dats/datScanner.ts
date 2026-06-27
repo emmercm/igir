@@ -412,7 +412,7 @@ export default class DATScanner extends Scanner {
         (entry) =>
           new ROM({
             name: entry.name ?? '',
-            size: Number.parseInt(entry.size ?? '0', 10),
+            size: Math.trunc(Number(entry.size ?? '0')),
             crc32: entry.crc,
             md5: entry.md5,
             sha1: entry.sha1,
@@ -431,7 +431,7 @@ export default class DATScanner extends Scanner {
         (entry) =>
           new Disk({
             name: entry.name ?? '',
-            size: Number.parseInt(entry.size ?? '0', 10),
+            size: Math.trunc(Number(entry.size ?? '0')),
             crc32: entry.crc,
             md5: entry.md5,
             sha1: entry.sha1,
@@ -469,7 +469,7 @@ export default class DATScanner extends Scanner {
   ): Promise<DAT | undefined> {
     this.prefixedLogger.trace(`${datFile.toString()}: attempting to parse SMDB`);
 
-    let rows: SmdbRow[] = [];
+    let rows: SmdbRow[];
     try {
       rows = await DATScanner.parseSourceMaterialTsv(fileContents);
     } catch (error) {
@@ -487,14 +487,13 @@ export default class DATScanner extends Scanner {
     const rowNamesToRows = GameGrouper.groupMultiDiscGames(rows, (row) =>
       row.name.replace(/\.[^.]*$/, ''),
     );
-    const games = [...rowNamesToRows.entries()].map(([gameName, rows]) => {
+    const games = Array.from(rowNamesToRows, ([gameName, rows]) => {
       const roms = rows.map(
         (row) =>
           new ROM({
             name: row.name,
-            size: Number.parseInt(
-              row.size !== undefined && row.size.length > 0 ? row.size : '0',
-              10,
+            size: Math.trunc(
+              Number(row.size !== undefined && row.size.length > 0 ? row.size : '0'),
             ),
             crc32: row.crc,
             md5: row.md5,
@@ -551,7 +550,7 @@ export default class DATScanner extends Scanner {
 
   private shouldFilterOut(dat: DAT): boolean {
     const datNameRegex = this.options.getDatNameRegex();
-    if (datNameRegex && !datNameRegex.some((regex) => regex.test(dat.getName()))) {
+    if (datNameRegex?.every((regex) => !regex.test(dat.getName()))) {
       return true;
     }
 
@@ -563,19 +562,13 @@ export default class DATScanner extends Scanner {
     const datDescription = dat.getDescription();
 
     const datDescriptionRegex = this.options.getDatDescriptionRegex();
-    if (
-      datDescription &&
-      datDescriptionRegex &&
-      !datDescriptionRegex.some((regex) => regex.test(datDescription))
-    ) {
+    if (datDescription && datDescriptionRegex?.every((regex) => !regex.test(datDescription))) {
       return true;
     }
 
     const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-    if (datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription))) {
-      return true;
-    }
-
-    return false;
+    return Boolean(
+      datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription)),
+    );
   }
 }

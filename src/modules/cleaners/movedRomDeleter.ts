@@ -3,6 +3,7 @@ import async from 'async';
 import type ProgressBar from '../../console/progressBar.js';
 import { ProgressBarSymbol } from '../../console/progressBar.js';
 import Defaults from '../../globals/defaults.js';
+import type Archive from '../../models/files/archives/archive.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import ArchiveFile from '../../models/files/archives/archiveFile.js';
 import ChdBinCue from '../../models/files/archives/chd/chdBinCue.js';
@@ -50,11 +51,10 @@ export default class MovedROMDeleter extends Module {
 
     // Get a count of all unique input file paths
     const inputFiles = new Set<string>();
-    movedWriteCandidates.forEach((candidate) => {
-      candidate
-        .getRomsWithFiles()
-        .forEach((romWithFiles) => inputFiles.add(romWithFiles.getInputFile().getFilePath()));
-    });
+    for (const candidate of movedWriteCandidates) {
+      for (const romWithFiles of candidate.getRomsWithFiles())
+        inputFiles.add(romWithFiles.getInputFile().getFilePath());
+    }
     this.progressBar.resetProgress(inputFiles.size);
     this.prefixedLogger.trace(
       `considering ${IntlUtil.toLocaleString(inputFiles.size)} unique input paths for deletion`,
@@ -63,7 +63,7 @@ export default class MovedROMDeleter extends Module {
     // Take the input files from the WriteCandidates that were moved, and look for duplicate input
     // files that could also be deleted (even if they weren't chosen to be used in a WriteCandidate)
     const movedRoms = new Set<File>();
-    movedWriteCandidates.forEach((writeCandidate) => {
+    for (const writeCandidate of movedWriteCandidates) {
       for (const romsWithFiles of writeCandidate.getRomsWithFiles()) {
         const inputFile = romsWithFiles.getInputFile();
         let possibleDuplicates =
@@ -93,9 +93,9 @@ export default class MovedROMDeleter extends Module {
           );
         }
 
-        possibleDuplicates.forEach((duplicate) => movedRoms.add(duplicate));
+        for (const duplicate of possibleDuplicates) movedRoms.add(duplicate);
       }
-    });
+    }
     this.prefixedLogger.trace(
       `expanded to ${IntlUtil.toLocaleString(movedRoms.size)} possible input files`,
     );
@@ -170,7 +170,7 @@ export default class MovedROMDeleter extends Module {
     const groupedMovedRoms = MovedROMDeleter.groupFilesByFilePath(movedRoms);
 
     // For each moved input path
-    return [...groupedMovedRoms.entries()]
+    return [...groupedMovedRoms]
       .map(([filePath, movedEntries]) => {
         if (movedEntries.length === 1 && !(movedEntries[0] instanceof ArchiveEntry)) {
           // The input file is either a plain File or an ArchiveFile; either way, it was fully moved
@@ -189,24 +189,23 @@ export default class MovedROMDeleter extends Module {
 
         const inputFilesForPath = groupedInputRoms.get(filePath) ?? [];
 
-        const unmovedArchiveEntries = inputFilesForPath.filter((inputFile) => {
-          if (!(inputFile instanceof ArchiveEntry)) {
-            // We're only considering input archive entries
-            return false;
-          }
-          if (movedEntryHashCodes.has(inputFile.hashCode())) {
-            // The input archive entry was moved
-            return false;
-          }
-          if (
-            inputFile.getArchive() instanceof ChdBinCue &&
-            inputFile.getExtractedFilePath().toLowerCase().endsWith('.cue')
-          ) {
+        const unmovedArchiveEntries = inputFilesForPath.filter(
+          (inputFile): inputFile is ArchiveEntry<Archive> => {
+            if (!(inputFile instanceof ArchiveEntry)) {
+              // We're only considering input archive entries
+              return false;
+            }
+            if (movedEntryHashCodes.has(inputFile.hashCode())) {
+              // The input archive entry was moved
+              return false;
+            }
             // Ignore the .cue file from CHDs
-            return false;
-          }
-          return true;
-        });
+            return !(
+              inputFile.getArchive() instanceof ChdBinCue &&
+              inputFile.getExtractedFilePath().toLowerCase().endsWith('.cue')
+            );
+          },
+        );
 
         if (unmovedArchiveEntries.length === 0) {
           // All archive entries were consumed
@@ -215,7 +214,7 @@ export default class MovedROMDeleter extends Module {
 
         this.prefixedLogger.warn(
           `${filePath}: not deleting moved file, ${IntlUtil.toLocaleString(unmovedArchiveEntries.length)} archive entr${unmovedArchiveEntries.length === 1 ? 'y was' : 'ies were'} unmatched:\n${unmovedArchiveEntries
-            .toSorted()
+            .toSorted((a, b) => a.getEntryPath().localeCompare(b.getEntryPath()))
             .map((entry) => `  ${entry.toString()}`)
             .join('\n')}`,
         );

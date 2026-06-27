@@ -1376,9 +1376,9 @@ describe('outputTokens.json', () => {
   it('should adhere to its schema', () => {
     const ajv = new Ajv();
     const validate = ajv.compile(outputTokensSchema);
-    const valid = validate(outputTokensData);
+    const isValid = validate(outputTokensData);
     expect(validate.errors).toBeNull();
-    expect(valid).toBe(true);
+    expect(isValid).toBe(true);
   });
 });
 

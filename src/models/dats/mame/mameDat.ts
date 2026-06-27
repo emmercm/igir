@@ -82,6 +82,13 @@ export default class MameDAT extends DAT implements MameDATProps {
     return [];
   }
 
+  /**
+   * @inheritdoc
+   */
+  isMame(): boolean {
+    return true;
+  }
+
   withGames(games: Game[]): DAT {
     return new MameDAT({ ...this, machine: games, games: [] });
   }

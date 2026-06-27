@@ -32,18 +32,18 @@ export default class BPSPatch extends Patch {
     let targetSize = 0;
 
     await file.extractToTempIOFile('r', async (patchFile) => {
-      patchFile.seek(BPSPatch.FILE_SIGNATURE.length);
-      await Patch.readUpsUint(patchFile); // source size
-      targetSize = await Patch.readUpsUint(patchFile);
+      patchFile.seek(this.FILE_SIGNATURE.length);
+      await super.readUpsUint(patchFile); // source size
+      targetSize = await super.readUpsUint(patchFile);
 
       patchFile.seek(patchFile.getSize() - 12);
-      // eslint-disable-next-line unicorn/no-array-reverse
+
       crcBefore = (await patchFile.readNext(4)).reverse().toString('hex');
-      // eslint-disable-next-line unicorn/no-array-reverse
+
       crcAfter = (await patchFile.readNext(4)).reverse().toString('hex');
 
       // Validate the patch contents
-      // eslint-disable-next-line unicorn/no-array-reverse
+
       const patchChecksumExpected = (await patchFile.readNext(4)).reverse().toString('hex');
       patchFile.seek(0);
       const patchData = await patchFile.readNext(patchFile.getSize() - 4);
@@ -124,7 +124,7 @@ export default class BPSPatch extends Patch {
     let targetRelativeOffset = 0;
 
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
-      const blockHeader = await Patch.readUpsUint(patchFile);
+      const blockHeader = await super.readUpsUint(patchFile);
       const action = (blockHeader & 3) as BPSActionValue;
       const length = (blockHeader >> 2) + 1;
 
@@ -134,12 +134,12 @@ export default class BPSPatch extends Patch {
         const data = await patchFile.readNext(length);
         await targetFile.write(data);
       } else if (action === BPSAction.SOURCE_COPY) {
-        const offset = await Patch.readUpsUint(patchFile);
+        const offset = await super.readUpsUint(patchFile);
         sourceRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
         await targetFile.write(await sourceFile.readAt(sourceRelativeOffset, length));
         sourceRelativeOffset += length;
       } else if (action === BPSAction.TARGET_COPY) {
-        const offset = await Patch.readUpsUint(patchFile);
+        const offset = await super.readUpsUint(patchFile);
         targetRelativeOffset += (offset & 1 ? -1 : 1) * (offset >> 1);
         // WARN: you explicitly can't read the target file all at once, you have to read byte by
         // byte, because later iterations of the loop may need to read data that was changed by

@@ -76,7 +76,7 @@ describe('setLogFile', () => {
       spy.getLogger().openLogFile(tempFile);
       spy.getLogger().info('ansi test message');
       const contents = (await fs.promises.readFile(tempFile)).toString();
-      expect(contents).not.toMatch(/\x1B\[/); // no ANSI escape sequences
+      expect(contents).not.toMatch(/\u{1B}\[/u); // no ANSI escape sequences
       expect(contents).toContain('ansi test message');
     } finally {
       await FsUtil.rm(tempFile, { force: true });

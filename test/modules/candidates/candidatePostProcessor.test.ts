@@ -75,7 +75,7 @@ it('should do nothing with no options', async () => {
   const outputFilePaths = candidates
     .flatMap((candidate) => candidate.getRomsWithFiles())
     .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
   expect(outputFilePaths).toEqual([
     path.resolve('Output', 'Admirable.rom'),
     path.resolve('Output', 'Adorable.rom'),
@@ -186,7 +186,7 @@ describe('dirLetterLimit', () => {
       const outputFilePaths = candidates
         .flatMap((candidate) => candidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
-        .toSorted();
+        .toSorted((a, b) => a.localeCompare(b));
       expect(outputFilePaths).toEqual(expectedFilePaths);
     },
   );
@@ -383,7 +383,7 @@ describe('dirLetterGroup', () => {
       const outputFilePaths = candidates
         .flatMap((candidate) => candidate.getRomsWithFiles())
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
-        .toSorted();
+        .toSorted((a, b) => a.localeCompare(b));
       expect(outputFilePaths).toEqual(expectedFilePaths);
     },
   );

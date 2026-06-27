@@ -67,7 +67,7 @@ export default class Zip extends Archive {
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
 
@@ -87,7 +87,7 @@ export default class Zip extends Archive {
         let checksums: ChecksumProps = {};
         if (
           checksumBitmask & ~ChecksumBitmask.CRC32 ||
-          (forceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
+          (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
         ) {
           const entryStream = await entryFile.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
           let lastProgress = 0;
@@ -171,7 +171,9 @@ export default class Zip extends Archive {
     try {
       entryStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
     } catch (error) {
-      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
+      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
+        cause: error,
+      });
     }
     if (start > 0) {
       entryStream = entryStream.pipe(new SkipBytesTransform(start));
@@ -224,7 +226,8 @@ export default class Zip extends Archive {
       const pathLowerB = outputB.getEntryPath().toLowerCase();
       if (pathLowerA < pathLowerB) {
         return -1;
-      } else if (pathLowerA > pathLowerB) {
+      }
+      if (pathLowerA > pathLowerB) {
         return 1;
       }
       return 0;
@@ -262,6 +265,7 @@ export default class Zip extends Archive {
       } catch (error) {
         throw new Error(
           `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}': ${error}`,
+          { cause: error },
         );
       }
     }

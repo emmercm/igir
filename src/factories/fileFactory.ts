@@ -83,7 +83,7 @@ export default class FileFactory {
         return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
       }
       const entries: ArchiveEntry<Archive>[] = [];
-      let anyParsed = false;
+      let wasAnyParsed = false;
       for (const archive of archives) {
         const result = await this.entriesFromArchive(
           archive,
@@ -92,13 +92,13 @@ export default class FileFactory {
           callback,
         );
         if (result !== undefined) {
-          anyParsed = true;
+          wasAnyParsed = true;
           for (const entry of result) {
             entries.push(entry);
           }
         }
       }
-      if (!anyParsed) {
+      if (!wasAnyParsed) {
         // The file isn't actually an archive
         return [await this.fileFrom(filePath, fileChecksumBitmask)];
       }
@@ -108,7 +108,7 @@ export default class FileFactory {
         throw new IgirException(`file doesn't exist: ${filePath}`);
       }
       if (typeof error === 'string') {
-        throw new Error(error);
+        throw new Error(error, { cause: error });
       }
       throw error;
     }
@@ -157,7 +157,7 @@ export default class FileFactory {
     checksumBitmask: number,
     cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(
@@ -165,7 +165,7 @@ export default class FileFactory {
         checksumBitmask,
         cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
         callback,
-        forceChecksumCalculation,
+        shouldForceChecksumCalculation,
       );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
@@ -183,37 +183,52 @@ export default class FileFactory {
   ): Archive[] {
     if (Zip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Zip(filePath)];
-    } else if (Tar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Tar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Tar(filePath)];
-    } else if (Rar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Rar.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Rar(filePath)];
-    } else if (Gzip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Gzip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Gzip(filePath)];
-    } else if (SevenZip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (SevenZip.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new SevenZip(filePath)];
-    } else if (Z.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Z.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Z(filePath)];
-    } else if (ZipSpanned.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (ZipSpanned.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new ZipSpanned(filePath)];
-    } else if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new ZipX(filePath)];
-    } else if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Cso(filePath)];
-    } else if (Dax.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Dax.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Dax(filePath)];
-    } else if (Zso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Zso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Zso(filePath)];
-    } else if (Gcz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Gcz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Gcz(filePath)];
-    } else if (Rvz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Rvz.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Rvz(filePath)];
-    } else if (Wia.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Wia.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Wia(filePath)];
-    } else if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (Chd.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       // Unfortunately, some CHDs such as GD-ROMs can be extracted to different formats (bin/cue,
       // gdi/bin/raw, etc.), so we may need to scan the file a few different ways
       return [new ChdBinCue(filePath), new ChdGdi(filePath), new ChdRaw(filePath)];
-    } else if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+    }
+    if (NkitIso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new NkitIso(filePath)];
     }
 
@@ -252,7 +267,7 @@ export default class FileFactory {
       return undefined;
     }
     const entries: ArchiveEntry<Archive>[] = [];
-    let anyParsed = false;
+    let wasAnyParsed = false;
     for (const archive of archives) {
       const result = await this.entriesFromArchive(
         archive,
@@ -261,13 +276,13 @@ export default class FileFactory {
         callback,
       );
       if (result !== undefined) {
-        anyParsed = true;
+        wasAnyParsed = true;
         for (const entry of result) {
           entries.push(entry);
         }
       }
     }
-    if (!anyParsed) {
+    if (!wasAnyParsed) {
       // The file isn't actually an archive
       return undefined;
     }

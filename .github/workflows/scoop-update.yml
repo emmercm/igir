@@ -124,7 +124,7 @@ jobs:
             echo ""
             echo "${{ steps.create-pull-request.outputs.pull-request-url }}"
           } >> "${GITHUB_STEP_SUMMARY}"
-      - if: ${{ steps.create-pull-request.outputs.pull-request-number && inputs.auto-merge }}
+      - if: ${{ steps.create-pull-request.outputs.pull-request-number && (github.event_name != 'workflow_dispatch' || inputs.auto-merge) }}
         run: gh pr merge "${{ steps.create-pull-request.outputs.pull-request-number }}" --squash --auto
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}

@@ -30,19 +30,19 @@ describe('acquire', () => {
     const mutex = new KeyedMutex();
     await mutex.acquire('A');
 
-    let secondAcquired = false;
+    let isSecondAcquired = false;
     const second = mutex.acquire('A').then(() => {
-      secondAcquired = true;
+      isSecondAcquired = true;
     });
 
     await new Promise((resolve) => {
       setTimeout(resolve, 10);
     });
-    expect(secondAcquired).toBe(false);
+    expect(isSecondAcquired).toBe(false);
 
     mutex.release('A');
     await second;
-    expect(secondAcquired).toBe(true);
+    expect(isSecondAcquired).toBe(true);
 
     mutex.release('A');
   });
@@ -66,19 +66,19 @@ describe('acquireMultiple', () => {
     const mutex = new KeyedMutex();
     await mutex.acquireMultiple(['A', 'B', 'C']);
 
-    let overlapAcquired = false;
+    let isOverlapAcquired = false;
     const overlap = mutex.acquireMultiple(['B']).then(() => {
-      overlapAcquired = true;
+      isOverlapAcquired = true;
     });
 
     await new Promise((resolve) => {
       setTimeout(resolve, 10);
     });
-    expect(overlapAcquired).toBe(false);
+    expect(isOverlapAcquired).toBe(false);
 
     mutex.releaseMultiple(['A', 'B', 'C']);
     await overlap;
-    expect(overlapAcquired).toBe(true);
+    expect(isOverlapAcquired).toBe(true);
 
     mutex.releaseMultiple(['B']);
   });
@@ -167,13 +167,13 @@ describe('runExclusiveForKey', () => {
 
   it('should support custom maxSize', async () => {
     const mutex = new KeyedMutex(1);
-    let aExecuted = false;
+    let isAExecuted = false;
 
     await mutex.runExclusiveForKey('A', async () => {
-      aExecuted = true;
+      isAExecuted = true;
       await Promise.resolve();
     });
-    expect(aExecuted).toBe(true);
+    expect(isAExecuted).toBe(true);
 
     // Insert a different key, which should evict A.
     await mutex.runExclusiveForKey('B', async () => {
@@ -190,7 +190,7 @@ describe('runExclusiveForKey', () => {
 
   it('should not evict locked keys', async () => {
     const mutex = new KeyedMutex(2);
-    let bWasAcquired = false;
+    let isBWasAcquired = false;
 
     // Start an exclusive operation for A that will hold the lock.
     const aPromise = mutex.runExclusiveForKey('A', async () => {
@@ -202,7 +202,7 @@ describe('runExclusiveForKey', () => {
 
     // Try to acquire B and C (should not evict A since it's locked).
     await mutex.runExclusiveForKey('B', async () => {
-      bWasAcquired = true;
+      isBWasAcquired = true;
       await Promise.resolve();
     });
 
@@ -215,7 +215,7 @@ describe('runExclusiveForKey', () => {
 
     // All three keys should still be in the cache.
     // We can't directly test this, but we can verify the operations completed.
-    expect(bWasAcquired).toBe(true);
+    expect(isBWasAcquired).toBe(true);
   });
 
   it('should evict the least-recently-used unlocked key when maxSize is exceeded', async () => {
@@ -300,7 +300,9 @@ describe('runExclusiveForKeys', () => {
       const out = [...keys];
       for (let i = out.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
-        [out[i], out[j]] = [out[j], out[i]];
+        const temp = out[i];
+        out[i] = out[j];
+        out[j] = temp;
       }
       return out;
     };

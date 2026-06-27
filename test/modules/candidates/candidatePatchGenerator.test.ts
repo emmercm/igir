@@ -161,19 +161,19 @@ describe('with inferred DATs', () => {
     expect(patchedCandidates.length).toBeGreaterThan(0);
 
     // Then - patched candidates' output files should be ArchiveEntry (zip mode)
-    patchedCandidates.forEach((candidate) => {
-      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const candidate of patchedCandidates) {
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         expect(romWithFiles.getOutputFile()).toBeInstanceOf(ArchiveEntry);
-      });
-    });
+      }
+    }
 
     // Then - no input file should be an ArchiveFile (they should remain as-is or be
     // converted to ArchiveEntry)
-    candidates.forEach((candidate) => {
-      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const candidate of candidates) {
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         expect(romWithFiles.getInputFile()).not.toBeInstanceOf(ArchiveFile);
-      });
-    });
+      }
+    }
   });
 
   it('should only create patch candidates with relevant patches', async () => {
@@ -252,11 +252,11 @@ describe('with archive file inputs', () => {
     // Then no patched candidates should be added because ArchiveFile inputs
     // cannot be patched without zipping
     expect(result).toHaveLength(1);
-    result.forEach((c) => {
-      c.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const c of result) {
+      for (const romWithFiles of c.getRomsWithFiles()) {
         expect(romWithFiles.getInputFile().getPatch()).toBeUndefined();
-      });
-    });
+      }
+    }
   });
 
   it('should create patch candidates for archive inputs when zipping', async () => {
@@ -298,8 +298,8 @@ describe('with archive file inputs', () => {
     );
     expect(patchedCandidates.length).toEqual(1);
 
-    patchedCandidates.forEach((writeCandidate) => {
-      writeCandidate.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const writeCandidate of patchedCandidates) {
+      for (const romWithFiles of writeCandidate.getRomsWithFiles()) {
         // and patched candidates' input files should be converted from ArchiveFile to ArchiveEntry
         expect(romWithFiles.getInputFile()).toBeInstanceOf(ArchiveEntry);
 
@@ -307,8 +307,8 @@ describe('with archive file inputs', () => {
         const outputFile = romWithFiles.getOutputFile();
         expect(outputFile).toBeInstanceOf(ArchiveEntry);
         expect((outputFile as ArchiveEntry<Zip>).getArchive()).toBeInstanceOf(Zip);
-      });
-    });
+      }
+    }
   });
 });
 
@@ -337,22 +337,22 @@ describe('with explicit DATs', () => {
     // And pre-assert all Game names and ROM names have path separators in them
     const totalRoms = dat.getGames().reduce((gameSum, game) => gameSum + game.getRoms().length, 0);
     expect(totalRoms).toBeGreaterThan(0);
-    dat.getGames().forEach((game) => {
+    for (const game of dat.getGames()) {
       expect(/[\\/]/.exec(game.getName())).toBeTruthy();
-      game.getRoms().forEach((rom) => {
+      for (const rom of game.getRoms()) {
         expect(/[\\/]/.exec(rom.getName())).toBeTruthy();
-      });
-    });
+      }
+    }
 
     // When
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
     // Then all Game names and ROM names should maintain their path separators
-    candidates.forEach((candidate) => {
+    for (const candidate of candidates) {
       expect(/[\\/]/.exec(candidate.getGame().getName())).toBeTruthy();
-      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         expect(/[\\/]/.exec(romWithFiles.getRom().getName())).toBeTruthy();
-      });
-    });
+      }
+    }
   });
 });

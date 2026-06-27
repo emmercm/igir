@@ -106,10 +106,12 @@ export default class Terminal {
   }
 
   private detachStream(): void {
-    if (this.sigwinchHandler !== undefined) {
-      process.off('SIGWINCH', this.sigwinchHandler);
-      this.sigwinchHandler = undefined;
+    if (this.sigwinchHandler === undefined) {
+      return;
     }
+
+    process.off('SIGWINCH', this.sigwinchHandler);
+    this.sigwinchHandler = undefined;
   }
 
   /**
@@ -143,7 +145,7 @@ export default class Terminal {
       return;
     }
     // Detect the empty -> non-empty edge (the live region first appearing) before overwriting
-    const regionAppeared = this.liveRegionRaw === '' && raw !== '';
+    const hasRegionAppeared = this.liveRegionRaw === '' && raw !== '';
     this.liveRegionRaw = raw;
 
     if (!(this.stream instanceof tty.WriteStream)) {
@@ -152,7 +154,7 @@ export default class Terminal {
     }
 
     // Hide the cursor while the live region is on screen so it doesn't flicker between repaints
-    if (regionAppeared) {
+    if (hasRegionAppeared) {
       this.hideCursor();
     }
 
@@ -393,11 +395,11 @@ export default class Terminal {
       return;
     }
 
-    this.stream.write('\x1B[?2026h');
+    this.stream.write('\u{1B}[?2026h');
     try {
       paint();
     } finally {
-      this.stream.write('\x1B[?2026l');
+      this.stream.write('\u{1B}[?2026l');
     }
   }
 
@@ -410,15 +412,17 @@ export default class Terminal {
   }
 
   private hideCursor(): void {
-    if (this.stream instanceof tty.WriteStream && !this.cursorHidden) {
-      this.stream.write('\x1B[?25l');
-      this.cursorHidden = true;
+    if (!(this.stream instanceof tty.WriteStream && !this.cursorHidden)) {
+      return;
     }
+
+    this.stream.write('\u{1B}[?25l');
+    this.cursorHidden = true;
   }
 
   private showCursor(): void {
     if (this.cursorHidden && this.stream instanceof tty.WriteStream) {
-      this.stream.write('\x1B[?25h');
+      this.stream.write('\u{1B}[?25h');
     }
     this.cursorHidden = false;
   }

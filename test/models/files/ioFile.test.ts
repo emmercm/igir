@@ -187,7 +187,9 @@ describe('write', () => {
 
         const contents = await FsUtil.readFile(tempFile);
         expect(contents).toEqual(
-          Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'),
+          Buffer.from(
+            '\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}',
+          ),
         );
       } finally {
         await FsUtil.rm(tempFile);
@@ -205,7 +207,7 @@ describe('write', () => {
         await file.close();
 
         const contents = await FsUtil.readFile(tempFile);
-        expect(contents).toEqual(Buffer.from('ABCDEF01\x00\x00\x00\x00\x00\x00\x00\x00'));
+        expect(contents).toEqual(Buffer.from('ABCDEF01\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}'));
       } finally {
         await FsUtil.rm(tempFile);
       }
@@ -240,7 +242,9 @@ describe('writeAt', () => {
 
         const contents = await FsUtil.readFile(tempFile);
         expect(contents).toEqual(
-          Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'),
+          Buffer.from(
+            '\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}',
+          ),
         );
       } finally {
         await FsUtil.rm(tempFile);
@@ -258,7 +262,7 @@ describe('writeAt', () => {
         await file.close();
 
         const contents = await FsUtil.readFile(tempFile);
-        expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00ABCDEF01\x00\x00'));
+        expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}ABCDEF01\u{0}\u{0}'));
       } finally {
         await FsUtil.rm(tempFile);
       }
@@ -273,7 +277,7 @@ describe('writeAt', () => {
         await file.close();
 
         const contents = await FsUtil.readFile(tempFile);
-        expect(contents).toEqual(Buffer.from('\x00\x00\x00\x00\x00\x00ABCDEF01'));
+        expect(contents).toEqual(Buffer.from('\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}ABCDEF01'));
       } finally {
         await FsUtil.rm(tempFile);
       }

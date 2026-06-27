@@ -72,7 +72,7 @@ export default class Logger {
     logLevel: LogLevelValue,
     message: unknown,
     prefix?: string,
-    frozen = false,
+    isFrozen = false,
   ): boolean {
     const willPrint = this.logLevel <= logLevel;
     if (!willPrint && this.logFileHandle === undefined) {
@@ -85,7 +85,7 @@ export default class Logger {
     // Keep consecutive frozen progress-bar snapshots visually adjacent, and separate a frozen
     // snapshot from a following non-frozen log line with a blank line
     if (this.lastPrintedFrozen) {
-      if (frozen) {
+      if (isFrozen) {
         messageString = messageString.replace(/^\n+/, '');
       } else {
         messageString = `\n${messageString}`;
@@ -93,7 +93,7 @@ export default class Logger {
     }
 
     if (willPrint) {
-      this.lastPrintedFrozen = frozen;
+      this.lastPrintedFrozen = isFrozen;
     }
 
     if (this.logFileHandle !== undefined) {

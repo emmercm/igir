@@ -39,34 +39,34 @@ export default class DataDescriptor {
   static async fromFileHandle(
     fileHandle: fs.promises.FileHandle,
     position: number,
-    zip64: boolean,
+    isZip64: boolean,
   ): Promise<DataDescriptor> {
     const buffer = Buffer.allocUnsafe(this.MAX_DATA_DESCRIPTOR_SIZE);
     const { bytesRead } = await fileHandle.read({ buffer, position });
     const descriptor = buffer.subarray(0, bytesRead);
 
     // The signature is optional; only consume it when present.
-    const signaturePresent = descriptor
+    const isSignaturePresent = descriptor
       .subarray(0, this.DATA_DESCRIPTOR_SIGNATURE.length)
       .equals(this.DATA_DESCRIPTOR_SIGNATURE);
-    let offset = signaturePresent ? this.DATA_DESCRIPTOR_SIGNATURE.length : 0;
+    let offset = isSignaturePresent ? this.DATA_DESCRIPTOR_SIGNATURE.length : 0;
 
     const uncompressedCrc32 = Buffer.from(descriptor.subarray(offset, offset + 4));
     offset += 4;
 
     // ZIP64 format archives use 8-byte sizes.
-    const compressedSize = zip64
+    const compressedSize = isZip64
       ? Number(descriptor.readBigUInt64LE(offset))
       : descriptor.readUInt32LE(offset);
-    offset += zip64 ? 8 : 4;
-    const uncompressedSize = zip64
+    offset += isZip64 ? 8 : 4;
+    const uncompressedSize = isZip64
       ? Number(descriptor.readBigUInt64LE(offset))
       : descriptor.readUInt32LE(offset);
-    offset += zip64 ? 8 : 4;
+    offset += isZip64 ? 8 : 4;
 
     return new DataDescriptor({
       raw: Buffer.from(descriptor.subarray(0, offset)),
-      signaturePresent,
+      signaturePresent: isSignaturePresent,
       uncompressedCrc32,
       compressedSize,
       uncompressedSize,

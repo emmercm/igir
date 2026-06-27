@@ -15,13 +15,13 @@ export default {
     const out = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
     let current = 0;
     let activeStream: stream.Readable | undefined = undefined;
-    let destroyed = false;
+    let isDestroyed = false;
 
     /**
      * Pipe the next input stream to the output stream.
      */
     function pipeNext(): void {
-      if (destroyed) {
+      if (isDestroyed) {
         return;
       }
 
@@ -40,7 +40,7 @@ export default {
 
     // Allow the passthrough to be destroyed
     out._destroy = (err: Error | null, callback: (error?: Error | null) => void): void => {
-      destroyed = true;
+      isDestroyed = true;
       if (typeof activeStream?.destroy === 'function') {
         activeStream.destroy(err ?? undefined);
       }

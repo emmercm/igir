@@ -77,9 +77,9 @@ class VcdiffHeader {
     ];
 
     // ADD+NOOP
-    for (let addSize = 0; addSize <= 17; addSize += 1) {
+    for (let sizeToAdd = 0; sizeToAdd <= 17; sizeToAdd += 1) {
       entries.push([
-        { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+        { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
         { type: VcdiffInstruction.NOOP, size: 0, mode: 0 },
       ]);
     }
@@ -104,10 +104,10 @@ class VcdiffHeader {
 
     // ADD+COPY
     for (let copyMode = 0; copyMode <= 5; copyMode += 1) {
-      for (let addSize = 1; addSize <= 4; addSize += 1) {
+      for (let sizeToAdd = 1; sizeToAdd <= 4; sizeToAdd += 1) {
         for (let copySize = 4; copySize <= 6; copySize += 1) {
           entries.push([
-            { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+            { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
             {
               type: VcdiffInstruction.COPY,
               size: copySize,
@@ -118,9 +118,9 @@ class VcdiffHeader {
       }
     }
     for (let copyMode = 6; copyMode <= 8; copyMode += 1) {
-      for (let addSize = 1; addSize <= 4; addSize += 1) {
+      for (let sizeToAdd = 1; sizeToAdd <= 4; sizeToAdd += 1) {
         entries.push([
-          { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+          { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
           { type: VcdiffInstruction.COPY, size: 4, mode: copyMode },
         ]);
       }
@@ -155,7 +155,7 @@ class VcdiffHeader {
    */
   static async fromIOFile(patchFile: IOFile): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
-    if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
+    if (!header.equals(this.FILE_SIGNATURE)) {
       await patchFile.close();
       throw new IgirException(
         `Vcdiff patch header is invalid: ${patchFile.getPathLike().toString()}`,
@@ -184,7 +184,7 @@ class VcdiffHeader {
       }
     }
 
-    const codeTable = VcdiffHeader.DEFAULT_CODE_TABLE;
+    const codeTable = this.DEFAULT_CODE_TABLE;
     if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
       if (codeTableLength) {
@@ -529,7 +529,7 @@ export default class VcdiffPatch extends Patch {
    * Parse a .vcdiff/.xdelta patch file and return a {@link VcdiffPatch}.
    */
   static patchFrom(file: File): VcdiffPatch {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     return new VcdiffPatch(file, crcBefore);
   }
 
@@ -571,14 +571,7 @@ export default class VcdiffPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await VcdiffPatch.applyPatch(
-          patchFile,
-          sourceFile,
-          targetFile,
-          header,
-          copyCache,
-          callback,
-        );
+        await this.applyPatch(patchFile, sourceFile, targetFile, header, copyCache, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();

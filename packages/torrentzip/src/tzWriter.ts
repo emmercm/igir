@@ -160,23 +160,21 @@ export default class TZWriter {
     compressedSize?: number,
     uncompressedSize?: number,
   ): Buffer<ArrayBuffer> {
-    const cp437 = CP437Encoder.canEncode(filename);
-    const encodedFilename = cp437 ? CP437Encoder.encode(filename) : Buffer.from(filename, 'utf8');
+    const isCp437 = CP437Encoder.canEncode(filename);
+    const encodedFilename = isCp437 ? CP437Encoder.encode(filename) : Buffer.from(filename, 'utf8');
 
     const buffer = Buffer.allocUnsafe(
       TZWriter.LOCAL_FILE_HEADER_MIN_LENGTH + encodedFilename.length,
     );
     TZWriter.LOCAL_FILE_HEADER_SIGNATURE.copy(buffer);
 
-    if (this.compressionMethod === CompressionMethod.DEFLATE) {
-      buffer.writeUInt16LE(20, 4); // version needed
-    } else if (uncompressedSize === 0) {
+    if (this.compressionMethod === CompressionMethod.DEFLATE || uncompressedSize === 0) {
       buffer.writeUInt16LE(20, 4); // version needed
     } else {
       buffer.writeUInt16LE(63, 4); // version needed
     }
 
-    buffer.writeUInt16LE(0x02 | (cp437 ? 0x0 : 0x8_00), 6); // general purpose flag (max compression)
+    buffer.writeUInt16LE(0x02 | (isCp437 ? 0x0 : 0x8_00), 6); // general purpose flag (max compression)
 
     if (this.compressionMethod === CompressionMethod.DEFLATE) {
       buffer.writeUInt16LE(8, 8); // compression method
@@ -262,11 +260,11 @@ export default class TZWriter {
       this.filePosition += centralDirectoryFileHeadersConcat.length;
 
       // Determine if a zip64 EOCD needs to be written
-      const zip64 =
+      const isZip64 =
         centralDirectoryFileHeadersConcat.length >= 0xff_ff_ff_ff ||
         startOfCentralDirectoryOffset >= 0xff_ff_ff_ff ||
         this.localFileHeaders.length >= 0xff_ff;
-      if (zip64) {
+      if (isZip64) {
         const zip64EndOfCentralDirectoryOffset = this.filePosition;
         const zip64EndOfCentralDirectoryRecord = TZWriter.zip64EndOfCentralDirectoryRecord(
           centralDirectoryFileHeadersConcat,

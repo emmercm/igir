@@ -76,6 +76,10 @@ Many archives store a single checksum type in their file directory, and this che
 
 The `--input-checksum-quick` option will prevent any extraction of archives (both in-memory _and_ using temporary files) to calculate checksums of files contained inside. This means that Igir will rely solely on the information available in the archive's file directory. Unarchived files will still have their checksum calculated as normal. See the [archive formats](../input/reading-archives.md) page for more information about what file types contain what checksum information.
 
+!!! tip
+
+    MAME DATs catalog CHDs by the SHA1 found in their header, regardless of what type of CHD it is ("raw", CD-ROM, GD-ROM, etc.). As long as you're ok with trusting the headers in all other archives, you can greatly speed up the scanning of CHD files with `--input-checksum-quick` when only processing MAME DATs.
+
 !!! warning
 
     If an archive format doesn't contain any checksum information (e.g. `.cso`, `.tar.gz`), then there will be no way to match those input files to DATs when quick scanning! Only use quick scanning when all input archives store checksums of their files!

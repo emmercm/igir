@@ -223,9 +223,9 @@ export default class CandidateWriter extends Module {
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
-            inputToOutputZipEntries.forEach(([inputRomFile]) => {
+            for (const [inputRomFile] of inputToOutputZipEntries) {
               this.enqueueFileDeletion(candidate, inputRomFile);
-            });
+            }
             return;
           }
           if (!this.options.shouldWrite() && existingTest) {
@@ -252,9 +252,9 @@ export default class CandidateWriter extends Module {
       CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputZip.getFilePath(), dat);
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
-      let written = false;
+      let wasWritten = false;
       for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-        written = await this.writeZipFile(
+        wasWritten = await this.writeZipFile(
           dat,
           candidate,
           outputZip,
@@ -262,11 +262,11 @@ export default class CandidateWriter extends Module {
           childBar,
         );
 
-        if (written && !this.options.shouldTest()) {
+        if (wasWritten && !this.options.shouldTest()) {
           // Successfully written, unknown if valid
           break;
         }
-        if (written && this.options.shouldTest()) {
+        if (wasWritten && this.options.shouldTest()) {
           const writtenTest = await this.testZipContents(
             dat,
             candidate,
@@ -288,10 +288,10 @@ export default class CandidateWriter extends Module {
         }
       }
 
-      if (written) {
-        inputToOutputZipEntries.forEach(([inputRomFile]) => {
+      if (wasWritten) {
+        for (const [inputRomFile] of inputToOutputZipEntries) {
           this.enqueueFileDeletion(candidate, inputRomFile);
-        });
+        }
       }
     } finally {
       childBar.delete();
@@ -348,7 +348,7 @@ export default class CandidateWriter extends Module {
       return `has ${IntlUtil.toLocaleString(actualEntriesByPath.size)} files, expected ${IntlUtil.toLocaleString(expectedEntriesByPath.size)}`;
     }
 
-    for (const [entryPath, expectedFile] of expectedEntriesByPath.entries()) {
+    for (const [entryPath, expectedFile] of expectedEntriesByPath) {
       // Check existence
       if (!actualEntriesByPath.has(entryPath)) {
         return `is missing the file ${entryPath}`;
@@ -957,13 +957,13 @@ export default class CandidateWriter extends Module {
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
-      const written = await this.writeRawLink(dat, candidate, targetPath, linkPath);
+      const wasWritten = await this.writeRawLink(dat, candidate, targetPath, linkPath);
 
-      if (written && !this.options.shouldTest()) {
+      if (wasWritten && !this.options.shouldTest()) {
         // Successfully written, unknown if valid
         break;
       }
-      if (written && this.options.shouldTest()) {
+      if (wasWritten && this.options.shouldTest()) {
         let writtenTest;
         if (this.options.getLinkMode() === LinkMode.SYMLINK) {
           writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);

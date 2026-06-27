@@ -28,6 +28,11 @@ export default abstract class DAT {
   abstract withGames(games: Game[]): DAT;
 
   /**
+   * Whether this {@link DAT} is a MAME (or MAME-derived) DAT.
+   */
+  abstract isMame(): boolean;
+
+  /**
    * Group all {@link Game} clones together into one {@link Parent}. If no parent/clone information
    * exists, then there will be one {@link Parent} for every {@link Game}.
    */
@@ -41,10 +46,10 @@ export default abstract class DAT {
     const gameIdsToParents = new Map<string, Parent>();
 
     // Find all parents
-    this.getGames().forEach((game: Game) => {
+    for (const game of this.getGames()) {
       if (game.getCloneOfId() !== undefined) {
         // Is a clone
-        return;
+        continue;
       }
       const id = game.getId();
       if (id !== undefined) {
@@ -55,12 +60,12 @@ export default abstract class DAT {
           // Two games have the same name, assume this one is a clone
           parent.addChild(game);
         }
-        return;
+        continue;
       }
 
       if (game.getCloneOf() !== undefined) {
         // Is a clone
-        return;
+        continue;
       }
       const parent = gameNamesToParents.get(game.getName());
       if (parent === undefined) {
@@ -69,10 +74,10 @@ export default abstract class DAT {
         // Two games have the same name, assume this one is a clone
         parent.addChild(game);
       }
-    });
+    }
 
     // Find all clones
-    this.getGames().forEach((game: Game) => {
+    for (const game of this.getGames()) {
       const cloneOfId = game.getCloneOfId();
       if (cloneOfId !== undefined) {
         const id = game.getId();
@@ -83,7 +88,7 @@ export default abstract class DAT {
           // The DAT is bad, the game is referencing a parent that doesn't exist
           gameIdsToParents.set(cloneOfId, new Parent(game));
         }
-        return;
+        continue;
       }
 
       const cloneOf = game.getCloneOf();
@@ -95,9 +100,8 @@ export default abstract class DAT {
           // The DAT is bad, the game is referencing a parent that doesn't exist
           gameNamesToParents.set(cloneOf, new Parent(game));
         }
-        return;
       }
-    });
+    }
 
     this.parents = [...gameIdsToParents.values(), ...gameNamesToParents.values()];
 
@@ -153,8 +157,8 @@ export default abstract class DAT {
 
   getRequiredRomChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) => {
-      game.getRoms().forEach((rom) => {
+    for (const game of this.getGames()) {
+      for (const rom of game.getRoms()) {
         if (rom.getCrc32() && rom.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
         } else if (rom.getMd5()) {
@@ -164,15 +168,15 @@ export default abstract class DAT {
         } else if (rom.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      });
-    });
+      }
+    }
     return checksumBitmask;
   }
 
   getRequiredDiskChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) => {
-      game.getDisks().forEach((disk) => {
+    for (const game of this.getGames()) {
+      for (const disk of game.getDisks()) {
         if (disk.getCrc32() && disk.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
         } else if (disk.getMd5()) {
@@ -182,8 +186,8 @@ export default abstract class DAT {
         } else if (disk.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      });
-    });
+      }
+    }
     return checksumBitmask;
   }
 

@@ -34,7 +34,7 @@ export default {
       'CallExpression[callee.type="MemberExpression"][callee.property.name="toLocaleString"][arguments.length=0]'(
         node,
       ) {
-        const sourceCode = context.getSourceCode();
+        const sourceCode = context.sourceCode;
         const object = sourceCode.getText(node.callee.object);
         context.report({
           node,

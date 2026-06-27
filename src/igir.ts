@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import async from 'async';
 import chalk from 'chalk';
+import { CHDType } from 'chdman';
 import isAdmin from 'is-admin';
 
 import CandidateWriterSemaphore from './async/candidateWriterSemaphore.js';
@@ -20,6 +21,8 @@ import Package from './globals/package.js';
 import Temp from './globals/temp.js';
 import type DAT from './models/dats/dat.js';
 import type DATStatus from './models/datStatus.js';
+import ArchiveEntry from './models/files/archives/archiveEntry.js';
+import Chd from './models/files/archives/chd/chd.js';
 import File from './models/files/file.js';
 import { ChecksumBitmask, ChecksumBitmaskInverted } from './models/files/fileChecksums.js';
 import type IndexedFiles from './models/indexedFiles.js';
@@ -75,7 +78,7 @@ export default class Igir {
   }
 
   /**
-   * The main method for this application.
+   * The main method for this app.
    */
   async main(): Promise<void> {
     Temp.setTempDir(this.options.getTempDir());
@@ -136,6 +139,7 @@ export default class Igir {
     // Scan and process input files
     let dats = await this.processDATScanner(fileFactory, readerSemaphore);
     const indexedRoms = await this.processROMScanner(
+      dats,
       fileFactory,
       readerSemaphore,
       this.determineScanningBitmask(dats),
@@ -192,16 +196,16 @@ export default class Igir {
         patches,
       );
 
-      candidates.forEach((candidate) => {
-        candidate.getRomsWithFiles().forEach((romWithFiles) => {
+      for (const candidate of candidates) {
+        for (const romWithFiles of candidate.getRomsWithFiles()) {
           // Files in the output directory that matched to a DAT should be excluded from cleaning.
           // Note that only the correct/output path is excluded, not the current/input path. Files
           // that aren't in the correct location will be deleted.
           if (!romWithFiles.getInputFile().getCanBeCandidateInput()) {
             filesToExcludeFromCleaning.push(romWithFiles.getOutputFile());
           }
-        });
-      });
+        }
+      }
       romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
@@ -212,8 +216,8 @@ export default class Igir {
         writerSemaphore,
         moveMutex,
       ).write(processedDat, candidates);
-      writerResults.moved.forEach((moved) => candidateWriterResults.moved.push(moved));
-      writerResults.wrote.forEach((wrote) => candidateWriterResults.wrote.push(wrote));
+      for (const moved of writerResults.moved) candidateWriterResults.moved.push(moved);
+      for (const wrote of writerResults.wrote) candidateWriterResults.wrote.push(wrote);
 
       // Write playlists
       const playlistPaths = await new PlaylistCreator(this.options, progressBar).write(
@@ -370,18 +374,17 @@ export default class Igir {
     }
 
     if (dats.length === 1) {
-      (
-        [
-          [this.options.getDirDatName(), '--dir-dat-name'],
-          [this.options.getDirDatDescription(), '--dir-dat-description'],
-        ] satisfies [boolean, string][]
-      )
-        .filter(([bool]) => bool)
-        .forEach(([, option]) => {
-          logger.warn(
-            `${option} is most helpful when processing multiple DATs, only one DAT was found`,
-          );
-        });
+      for (const [isOptionEnabled, option] of [
+        [this.options.getDirDatName(), '--dir-dat-name'],
+        [this.options.getDirDatDescription(), '--dir-dat-description'],
+      ] satisfies [boolean, string][]) {
+        if (!isOptionEnabled) {
+          continue;
+        }
+        logger.warn(
+          `${option} is most helpful when processing multiple DATs, only one DAT was found`,
+        );
+      }
     }
 
     if (this.options.getDatCombine()) {
@@ -413,79 +416,79 @@ export default class Igir {
     }
 
     if (this.options.shouldDir2Dat()) {
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask),
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
-          );
-        });
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0
+        ) {
+          continue;
+        }
+        matchChecksum |= bitmask;
+        logger.trace(
+          `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
+        );
+      }
     }
 
     if (dats.length === 0) {
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask),
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `no DATs provided, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
-          );
-        });
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0
+        ) {
+          continue;
+        }
+        matchChecksum |= bitmask;
+        logger.trace(
+          `no DATs provided, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
+        );
+      }
     }
 
-    dats.forEach((dat) => {
+    for (const dat of dats) {
       const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask) &&
-            // Should be enabled for this DAT
-            (datMinimumRomBitmask & bitmask) > 0,
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
-          );
-        });
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0 ||
+          // Should not be enabled for this DAT
+          (datMinimumRomBitmask & bitmask) === 0
+        ) {
+          continue;
+        }
+        matchChecksum |= bitmask;
+        logger.trace(
+          `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
+        );
+      }
 
       if (this.options.getExcludeDisks()) {
-        return;
+        continue;
       }
       const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask) &&
-            // Should be enabled for this DAT
-            (datMinimumDiskBitmask & bitmask) > 0,
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,
-          );
-        });
-    });
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0 ||
+          // Should not be enabled for this DAT
+          (datMinimumDiskBitmask & bitmask) === 0
+        ) {
+          continue;
+        }
+        matchChecksum |= bitmask;
+        logger.trace(
+          `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,
+        );
+      }
+    }
 
     if (matchChecksum === ChecksumBitmask.NONE) {
       matchChecksum |= ChecksumBitmask.CRC32;
@@ -502,26 +505,30 @@ export default class Igir {
     if (this.options.getInputChecksumArchives() === InputChecksumArchivesMode.ALWAYS) {
       return true;
     }
-    return dats.some((dat) =>
-      dat.getGames().some((game) =>
-        game.getRoms().some((rom) => {
-          const isArchive = FileFactory.isExtensionArchive(rom.getName());
-          if (isArchive) {
-            logger.trace(
-              `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
-            );
-          }
-          return isArchive;
-        }),
-      ),
+    return dats.some(
+      (dat) =>
+        dat.isMame() &&
+        dat.getGames().some((game) =>
+          game.getRoms().some((rom) => {
+            const isArchive = FileFactory.isExtensionArchive(rom.getName());
+            if (isArchive) {
+              logger.trace(
+                `${dat.getName()}: contains archives, enabling checksum calculation of raw archive contents`,
+              );
+              return true;
+            }
+            return false;
+          }),
+        ),
     );
   }
 
   private async processROMScanner(
+    dats: DAT[],
     fileFactory: FileFactory,
     readerSemaphore: MappableSemaphore,
     checksumBitmask: number,
-    checksumArchives: boolean,
+    shouldChecksumArchives: boolean,
   ): Promise<IndexedFiles> {
     const romProgressBar = this.multiBar.addSingleBar({
       name: 'Scanning for ROMs',
@@ -532,9 +539,31 @@ export default class Igir {
       romProgressBar,
       fileFactory,
       readerSemaphore,
-    ).scan(checksumBitmask, checksumArchives);
-    const romScannerProgressBarName = romProgressBar.getName();
+    ).scan(checksumBitmask, shouldChecksumArchives);
 
+    if (dats.some((dat) => !dat.isMame())) {
+      const chds = rawRomFiles
+        .filter((file) => file instanceof ArchiveEntry)
+        .map((file) => file.getArchive())
+        .filter((file) => file instanceof Chd);
+      const chdToType = await Promise.all(
+        chds.map(async (chd): Promise<[Chd, CHDType]> => [chd, (await chd.getInfo()).type]),
+      );
+      const cdRom = chdToType.find(([, type]) => type === CHDType.CD_ROM);
+      if (cdRom !== undefined) {
+        logger.warn(
+          `${cdRom[0].getFilePath()}: quick checksumming will not process .cue/.bin files in CD-ROM CHDs!`,
+        );
+      }
+      const gdRom = chdToType.find(([, type]) => type === CHDType.GD_ROM);
+      if (gdRom !== undefined) {
+        logger.warn(
+          `${gdRom[0].getFilePath()}: quick checksumming will not process .gdi/.bin/.raw files in GD-ROM CHDs!`,
+        );
+      }
+    }
+
+    const romScannerProgressBarName = romProgressBar.getName();
     romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(
       this.options,

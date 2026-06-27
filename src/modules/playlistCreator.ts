@@ -71,22 +71,17 @@ export default class PlaylistCreator extends Module {
       remainingCandidates,
       (candidate) => candidate.getGame().getName(),
     );
-    remainingCandidates = (
-      await async.mapLimit(
-        [...gameNamesToCandidates.entries()],
-        this.options.getWriterThreads(),
-        async ([gameName, candidates]: [string, WriteCandidate[]]) => {
-          const writtenFile = await this.maybeWritePlaylist(dat, candidates, gameName);
-          if (writtenFile === undefined) {
-            // We didn't write a playlist file, keep this candidate for more processing
-            return candidates;
-          }
-          writtenPlaylistPaths.push(writtenFile);
-        },
-      )
-    )
-      .flat()
-      .filter((candidate) => candidate !== undefined);
+    await async.mapLimit(
+      [...gameNamesToCandidates],
+      this.options.getWriterThreads(),
+      async ([gameName, candidates]: [string, WriteCandidate[]]) => {
+        const writtenFile = await this.maybeWritePlaylist(dat, candidates, gameName);
+        if (writtenFile === undefined) {
+          return;
+        }
+        writtenPlaylistPaths.push(writtenFile);
+      },
+    );
 
     // TODO(cemmer): something with the remaining candidates?
 
@@ -129,7 +124,7 @@ export default class PlaylistCreator extends Module {
           .replace(/^[\\/]/, '')
           .replaceAll('\\', '/'),
       )
-      .toSorted()
+      .toSorted((a, b) => a.localeCompare(b))
       .join('\n')}\n`;
 
     if (!(await FsUtil.exists(commonDirectory))) {

@@ -273,14 +273,16 @@ async function playlistCreator(
   );
 
   return await Promise.all(
-    writtenFiles.toSorted().map(async (filePath) => {
-      const contents = (await FsUtil.readFile(filePath)).toString().trim().split('\n');
-      await FsUtil.rm(filePath, { force: true });
-      return [filePath.replace(Temp.getTempDir() + path.sep, ''), contents] satisfies [
-        string,
-        string[],
-      ];
-    }),
+    writtenFiles
+      .toSorted((a, b) => a.localeCompare(b))
+      .map(async (filePath) => {
+        const contents = (await FsUtil.readFile(filePath)).toString().trim().split('\n');
+        await FsUtil.rm(filePath, { force: true });
+        return [filePath.replace(Temp.getTempDir() + path.sep, ''), contents] satisfies [
+          string,
+          string[],
+        ];
+      }),
   );
 }
 

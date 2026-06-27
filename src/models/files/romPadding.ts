@@ -53,7 +53,7 @@ export default class ROMPadding implements ROMPaddingProps {
    * Construct a {@link ROMPadding} from a plain object — the inverse of {@link toROMPaddingProps}.
    */
   static fileOfObject(obj: ROMPaddingProps): ROMPadding {
-    return plainToInstance(ROMPadding, obj, {
+    return plainToInstance(this, obj, {
       enableImplicitConversion: true,
       excludeExtraneousValues: true,
     });

@@ -32,12 +32,12 @@ async function processFile(
   const fileFactory = new FileFactory(new FileCache());
 
   const trimmedContents = Buffer.alloc(size, paddingByte);
-  fileSignature.getSignaturePieces().forEach((signaturePiece) => {
+  for (const signaturePiece of fileSignature.getSignaturePieces()) {
     if (signaturePiece.value === undefined) {
       throw new Error('only static header values are supported in this test fixture');
     }
     signaturePiece.value.copy(trimmedContents, signaturePiece.offset);
-  });
+  }
   const tempTrimmedFilePath = await FsUtil.mktemp(
     path.join(Temp.getTempDir(), `trimmed${fileSignature.getExtension()}`),
   );

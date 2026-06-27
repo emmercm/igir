@@ -17,12 +17,12 @@ See the [DAT scanning page](scanning.md) for details about how to supply DATs to
 A number of different release groups maintain sets of DATs, the most popular are:
 
 - [No-Intro](https://datomatic.no-intro.org/index.php?page=download&s=64&op=daily) (cartridge-based consoles)
-- [Redump](http://redump.org/downloads/) (optical media-based consoles)
+- [Redump](https://redump.info/downloads) (optical media-based consoles)
+- [The Old School Emulation Center (TOSEC)](https://www.tosecdev.org/downloads/category/22-datfiles)
 - [MAME](https://www.mamedev.org/release.html) (official "full driver" MAME ListXML)
 
 And some less popular release groups are:
 
-- [The Old School Emulation Center (TOSEC)](https://www.tosecdev.org/downloads/category/22-datfiles)
 - [GoodTools](https://github.com/Eggmansworld/Datfiles/releases/tag/goodtools) (home computers, gen 1-5 consoles)
 - [libretro (RetroArch)](https://www.libretro.com/):
   - [Custom DATs](https://github.com/libretro/libretro-database/tree/master/dat) (specific games, some optical media-based consoles)

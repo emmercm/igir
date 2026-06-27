@@ -32,13 +32,13 @@ export default class ReportGenerator extends Module {
 
     const reportPath = this.options.getReportOutput();
 
-    const anyGamesFoundAtAll = datStatuses.some((datStatus) =>
+    const hasAnyGamesFoundAtAll = datStatuses.some((datStatus) =>
       datStatus.anyGamesFound(this.options),
     );
     const matchedFileCsvs = (
       await Promise.all(
         datStatuses
-          .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
+          .filter((datStatus) => datStatus.anyGamesFound(this.options) || !hasAnyGamesFoundAtAll)
           .toSorted((a, b) => a.getDATName().localeCompare(b.getDATName()))
           .map(async (datsStatus) => await datsStatus.toCsv(this.options)),
       )
@@ -68,7 +68,7 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
 
     const unusedFilePaths = scannedRomFiles
@@ -78,7 +78,7 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     const unusedCsv = await DATStatus.filesToCsv(unusedFilePaths, GameStatus.UNUSED);
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);

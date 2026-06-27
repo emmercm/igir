@@ -119,7 +119,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
     callback?: FsReadCallback,
-    forceRecompute = false,
+    shouldForceRecompute = false,
   ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(filePath);
@@ -146,7 +146,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 
@@ -196,9 +196,9 @@ export default class FileCache {
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
-    forceRecompute = false,
+    shouldForceRecompute = false,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(archive.getFilePath());
@@ -221,7 +221,7 @@ export default class FileCache {
         computedEntries = (await archive.getArchiveEntries(
           checksumBitmask,
           callback,
-          forceChecksumCalculation,
+          shouldForceChecksumCalculation,
         )) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
@@ -230,7 +230,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 
@@ -337,14 +337,14 @@ export default class FileCache {
     }
 
     const cacheKeys = this.getChecksumCacheKeys(file, valueType);
-    const usingFilePathKey = cacheKeys.length === 0;
-    if (usingFilePathKey) {
+    const isUsingFilePathKey = cacheKeys.length === 0;
+    if (isUsingFilePathKey) {
       // No checksums available to use as cache keys, fall back to file path
       cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, valueType));
     }
 
     // When using file-path-based keys, we need file stats to detect stale cache entries
-    const stats = usingFilePathKey ? await FsUtil.stat(file.getFilePath()) : undefined;
+    const stats = isUsingFilePathKey ? await FsUtil.stat(file.getFilePath()) : undefined;
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
@@ -426,16 +426,12 @@ export default class FileCache {
         const perTypePaddings: ROMPaddingProps[] = paddingProps.map((props) => ({
           paddedSize: props.paddedSize,
           fillByte: props.fillByte,
-          ...(bitmask === ChecksumBitmask.CRC32 && props.crc32 !== undefined
-            ? { crc32: props.crc32 }
-            : {}),
-          ...(bitmask === ChecksumBitmask.MD5 && props.md5 !== undefined ? { md5: props.md5 } : {}),
-          ...(bitmask === ChecksumBitmask.SHA1 && props.sha1 !== undefined
-            ? { sha1: props.sha1 }
-            : {}),
-          ...(bitmask === ChecksumBitmask.SHA256 && props.sha256 !== undefined
-            ? { sha256: props.sha256 }
-            : {}),
+          ...(bitmask === ChecksumBitmask.CRC32 &&
+            props.crc32 !== undefined && { crc32: props.crc32 }),
+          ...(bitmask === ChecksumBitmask.MD5 && props.md5 !== undefined && { md5: props.md5 }),
+          ...(bitmask === ChecksumBitmask.SHA1 && props.sha1 !== undefined && { sha1: props.sha1 }),
+          ...(bitmask === ChecksumBitmask.SHA256 &&
+            props.sha256 !== undefined && { sha256: props.sha256 }),
         }));
         resultMap.set(cacheKeys[i], { value: perTypePaddings });
       }
@@ -446,24 +442,27 @@ export default class FileCache {
     const fillByteToRomPaddingProps = new Map<number, ROMPaddingProps>();
     for (const cacheValue of cachedResults.values()) {
       const paddingPropsList = cacheValue.value as ROMPaddingProps[];
-      for (const element of paddingPropsList.values()) {
+      for (const element of paddingPropsList) {
         const existing = fillByteToRomPaddingProps.get(element.fillByte) ?? {
           paddedSize: element.paddedSize,
           fillByte: element.fillByte,
         };
         fillByteToRomPaddingProps.set(element.fillByte, {
           ...existing,
-          ...(element.crc32 === undefined ? {} : { crc32: element.crc32 }),
-          ...(element.md5 === undefined ? {} : { md5: element.md5 }),
-          ...(element.sha1 === undefined ? {} : { sha1: element.sha1 }),
-          ...(element.sha256 === undefined ? {} : { sha256: element.sha256 }),
+          ...(element.crc32 !== undefined && { crc32: element.crc32 }),
+          ...(element.md5 !== undefined && { md5: element.md5 }),
+          ...(element.sha1 !== undefined && { sha1: element.sha1 }),
+          ...(element.sha256 !== undefined && { sha256: element.sha256 }),
         });
       }
     }
-    return [...fillByteToRomPaddingProps.values()].map((props) => new ROMPadding(props));
+    return Array.from(fillByteToRomPaddingProps.values(), (props) => new ROMPadding(props));
   }
 
-  async getOrComputeTzValidation(zip: Zip, forceRecompute = false): Promise<ValidationResultValue> {
+  async getOrComputeTzValidation(
+    zip: Zip,
+    shouldForceRecompute = false,
+  ): Promise<ValidationResultValue> {
     if (!(await FsUtil.exists(zip.getFilePath()))) {
       return ValidationResult.INVALID;
     }
@@ -491,7 +490,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 

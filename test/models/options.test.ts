@@ -136,8 +136,8 @@ describe('scanPaths', () => {
         expect(
           scannedFilePaths
             .map((scannedFilePath) => scannedFilePath.replace(tempDir + path.sep, ''))
-            .toSorted(),
-        ).toEqual(expectedScannedFilePaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedScannedFilePaths.toSorted((a, b) => a.localeCompare(b)));
       } finally {
         await FsUtil.rm(tempDir, { force: true, recursive: true });
       }

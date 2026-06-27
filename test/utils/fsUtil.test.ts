@@ -396,9 +396,8 @@ describe.skipIf(process.platform === 'win32')('isExecutable', () => {
     await FsUtil.touch(tempFile);
     try {
       // Remove the executable bit
-      await import('node:fs').then(async (fs) => {
-        await fs.promises.chmod(tempFile, 0o644);
-      });
+      const fs = await import('node:fs');
+      await fs.promises.chmod(tempFile, 0o644);
       await expect(FsUtil.isExecutable(tempFile)).resolves.toEqual(false);
     } finally {
       await FsUtil.rm(tempFile);
@@ -410,9 +409,8 @@ describe.skipIf(process.platform === 'win32')('isExecutable', () => {
     await FsUtil.touch(tempFile);
     try {
       // Set the executable bit
-      await import('node:fs').then(async (fs) => {
-        await fs.promises.chmod(tempFile, 0o755);
-      });
+      const fs = await import('node:fs');
+      await fs.promises.chmod(tempFile, 0o755);
       await expect(FsUtil.isExecutable(tempFile)).resolves.toEqual(true);
     } finally {
       await FsUtil.rm(tempFile);
@@ -620,10 +618,10 @@ describe('isWritable', () => {
     // File does not exist yet
     await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
 
-    const writable = await FsUtil.isWritable(tempFile);
+    const isWritable = await FsUtil.isWritable(tempFile);
 
     // File should not have been left behind
-    expect(writable).toEqual(true);
+    expect(isWritable).toEqual(true);
     await expect(FsUtil.exists(tempFile)).resolves.toEqual(false);
   });
 });

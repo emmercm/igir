@@ -4,13 +4,6 @@ import type { SingleBarOptions } from './singleBar.js';
 import SingleBar from './singleBar.js';
 import { LIVE_REGION_PADDING, terminal } from './terminal.js';
 
-const exitHandler = (): void => {
-  MultiBar.stop();
-};
-process.once('exit', exitHandler);
-process.once('SIGINT', exitHandler);
-process.once('SIGTERM', exitHandler);
-
 /**
  * A wrapper for multiple {@link SingleBar}s. Should be treated as a singleton.
  *
@@ -22,6 +15,8 @@ export default class MultiBar {
   private static readonly RENDER_MIN_FPS = 5;
 
   private static readonly multiBars: MultiBar[] = [];
+
+  private static exitHandlersRegistered = false;
 
   private readonly singleBars: SingleBar[] = [];
   private renderTimer?: Timer;
@@ -35,6 +30,16 @@ export default class MultiBar {
    * Create a new {@link MultiBar} instance.
    */
   static create(): MultiBar {
+    if (!this.exitHandlersRegistered) {
+      const exitHandler = (): void => {
+        this.stop();
+      };
+      process.once('exit', exitHandler);
+      process.once('SIGINT', exitHandler);
+      process.once('SIGTERM', exitHandler);
+      this.exitHandlersRegistered = true;
+    }
+
     const multiBar = new MultiBar();
     this.multiBars.push(multiBar);
     return multiBar;
@@ -182,9 +187,9 @@ export default class MultiBar {
 
     // Freeze (and delete) any lingering progress bars
     const singleBarsCopy = [...this.singleBars];
-    singleBarsCopy.forEach((progressBar) => {
+    for (const progressBar of singleBarsCopy) {
       progressBar.freeze();
-    });
+    }
 
     this.renderTimer?.cancel();
     terminal.clearLiveRegion();

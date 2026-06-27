@@ -295,7 +295,7 @@ export interface OptionsProps {
 }
 
 /**
- * A collection of all options for a single invocation of the application.
+ * A collection of all options for a single invocation of the app.
  */
 export default class Options implements OptionsProps {
   @Expose({ name: '_' })
@@ -385,6 +385,7 @@ export default class Options implements OptionsProps {
 
   readonly header?: string;
 
+  // eslint-disable-next-line unicorn/no-non-function-verb-prefix
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
@@ -674,7 +675,7 @@ export default class Options implements OptionsProps {
    * Construct a {@link Options} from a generic object, such as one from `yargs`.
    */
   static fromObject(obj: object): Options {
-    return plainToInstance(Options, obj, {
+    return plainToInstance(this, obj, {
       enableImplicitConversion: true,
     });
   }
@@ -867,7 +868,7 @@ export default class Options implements OptionsProps {
     globPatterns: string[],
     walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
-    requireFiles = true,
+    shouldRequireFiles = true,
   ): Promise<string[]> {
     // Limit to scanning one glob pattern at a time to keep memory in check
     const uniqueGlobPatterns = globPatterns.reduce(ArrayUtil.reduceUnique(), []);
@@ -879,7 +880,7 @@ export default class Options implements OptionsProps {
       }
     }
 
-    if (requireFiles && globbedPaths.length === 0) {
+    if (shouldRequireFiles && globbedPaths.length === 0) {
       throw new IgirException(
         `no files found in director${globPatterns.length === 1 ? 'y' : 'ies'}: ${globPatterns.map((p) => `'${p}'`).join(', ')}`,
       );
@@ -894,13 +895,13 @@ export default class Options implements OptionsProps {
     excludeGlobPatterns: string[],
     walkMode: WalkModeValue,
     walkCallback?: FsWalkCallback,
-    requireIncludeFiles = true,
+    shouldRequireIncludeFiles = true,
   ): Promise<string[]> {
     const includePaths = await this.scanPaths(
       includeGlobPatterns,
       walkMode,
       walkCallback,
-      requireIncludeFiles,
+      shouldRequireIncludeFiles,
     );
     const excludePaths = await this.scanPaths(excludeGlobPatterns, walkMode, undefined, false);
     const excludePathsSet = new Set(excludePaths);
@@ -1209,7 +1210,7 @@ export default class Options implements OptionsProps {
         (filePath) =>
           !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),
       )
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
   }
 
   getCleanBackup(): string | undefined {
@@ -1306,6 +1307,7 @@ export default class Options implements OptionsProps {
     }
     // Option was provided with extensions, we should remove headers on name match
     return this.removeHeaders.some(
+      // eslint-disable-next-line unicorn/no-non-function-verb-prefix
       (removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase(),
     );
   }
@@ -1563,10 +1565,11 @@ export default class Options implements OptionsProps {
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       const now = new Date();
-      symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
+      const uniqueMatches = symbolMatches.reduce<string[]>(ArrayUtil.reduceUnique(), []);
+      for (const match of uniqueMatches) {
         const val = DateUtil.format(match.replace(/^%/, ''), now);
         reportOutput = reportOutput.replace(match, val);
-      });
+      }
     }
 
     return FsUtil.makeLegal(reportOutput);
@@ -1623,10 +1626,11 @@ export default class Options implements OptionsProps {
     const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       const now = new Date();
-      symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
+      const uniqueMatches = symbolMatches.reduce<string[]>(ArrayUtil.reduceUnique(), []);
+      for (const match of uniqueMatches) {
         const val = DateUtil.format(match.replace(/^%/, ''), now);
         debugLog = debugLog.replace(match, val);
-      });
+      }
     }
 
     return debugLog;

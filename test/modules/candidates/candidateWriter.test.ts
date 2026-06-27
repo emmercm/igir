@@ -105,7 +105,7 @@ async function candidateWriter(
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
     inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
-    ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
+    ...(patchGlob && { patch: [path.join(inputTemp, patchGlob)] }),
     output: outputTemp,
     dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
@@ -625,16 +625,15 @@ describe('zip', () => {
       [
         path.join('2048', '2048.chd'), // <disk>
         path.join('4096', '4096.chd'), // <disk>
+        'best.zip',
         'CD-ROM.zip',
         path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
-        'GD-ROM.zip',
-        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
-        'GameCube-240pSuite-1.19.zip',
-        'UMD.zip',
-        'best.zip',
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.zip',
+        'GD-ROM.zip',
+        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
         'invalid.zip',
         'loremipsum.zip',
         'one.zip',
@@ -643,6 +642,7 @@ describe('zip', () => {
         'raw.zip',
         'three.zip',
         'two.zip',
+        'UMD.zip',
         'unknown.zip',
       ],
     ],
@@ -716,7 +716,9 @@ describe('zip', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -732,16 +734,15 @@ describe('zip', () => {
       [
         path.join('2048', '2048.chd'), // <disk>
         path.join('4096', '4096.chd'), // <disk>
+        'best.zip',
         'CD-ROM.zip',
         path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
-        'GD-ROM.zip',
-        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
-        'GameCube-240pSuite-1.19.zip',
-        'UMD.zip',
-        'best.zip',
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.zip',
+        'GD-ROM.zip',
+        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
         'invalid.zip',
         'loremipsum.zip',
         'one.zip',
@@ -750,6 +751,7 @@ describe('zip', () => {
         'raw.zip',
         'three.zip',
         'two.zip',
+        'UMD.zip',
         'unknown.zip',
       ],
       [
@@ -842,28 +844,29 @@ describe('zip', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );
@@ -1128,24 +1131,23 @@ describe('extract', () => {
       [
         '2048.chd', // <disk>
         '4096.chd', // <disk>
+        'best.rom',
         'CD-ROM.chd', // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 3).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM.cue'), // <disk>
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        path.join('fourfive', 'five.rom'),
+        path.join('fourfive', 'four.rom'),
+        'GameCube-240pSuite-1.19.iso',
         'GD-ROM.chd', // <disk>
         path.join('GD-ROM', 'GD-ROM.gdi'), // <disk>
         path.join('GD-ROM', 'track01.bin'), // <disk>
         path.join('GD-ROM', 'track02.raw'), // <disk>
         path.join('GD-ROM', 'track03.bin'), // <disk>
         path.join('GD-ROM', 'track04.bin'), // <disk>
-        'GameCube-240pSuite-1.19.iso',
-        'UMD.iso',
-        'best.rom',
-        'fizzbuzz.nes',
-        'foobar.lnx',
-        path.join('fourfive', 'five.rom'),
-        path.join('fourfive', 'four.rom'),
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1160,9 +1162,9 @@ describe('extract', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1176,6 +1178,7 @@ describe('extract', () => {
         path.join('raw', 'unknown.rom'),
         'three.rom',
         'two.rom',
+        'UMD.iso',
         'unknown.rom',
       ],
     ],
@@ -1260,7 +1263,9 @@ describe('extract', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1276,24 +1281,23 @@ describe('extract', () => {
       [
         '2048.chd', // <disk>
         '4096.chd', // <disk>
+        'best.rom',
         'CD-ROM.chd', // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 3).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM.cue'), // <disk>
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        path.join('fourfive', 'five.rom'),
+        path.join('fourfive', 'four.rom'),
+        'GameCube-240pSuite-1.19.iso',
         'GD-ROM.chd', // <disk>
         path.join('GD-ROM', 'GD-ROM.gdi'), // <disk>
         path.join('GD-ROM', 'track01.bin'), // <disk>
         path.join('GD-ROM', 'track02.raw'), // <disk>
         path.join('GD-ROM', 'track03.bin'), // <disk>
         path.join('GD-ROM', 'track04.bin'), // <disk>
-        'GameCube-240pSuite-1.19.iso',
-        'UMD.iso',
-        'best.rom',
-        'fizzbuzz.nes',
-        'foobar.lnx',
-        path.join('fourfive', 'five.rom'),
-        path.join('fourfive', 'four.rom'),
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1308,9 +1312,9 @@ describe('extract', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1324,6 +1328,7 @@ describe('extract', () => {
         path.join('raw', 'unknown.rom'),
         'three.rom',
         'two.rom',
+        'UMD.iso',
         'unknown.rom',
       ],
       [
@@ -1463,28 +1468,29 @@ describe('extract', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );
@@ -1595,14 +1601,13 @@ describe('raw', () => {
       [
         '2048.chd', // <disk> raw
         '4096.chd', // <disk> raw
-        'CD-ROM.chd', // <disk> raw
-        'GD-ROM.chd', // <disk> raw
-        'GameCube-240pSuite-1.19.gcz',
-        'UMD.cso',
         'best.gz',
+        'CD-ROM.chd', // <disk> raw
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.gcz',
+        'GD-ROM.chd', // <disk> raw
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1615,9 +1620,9 @@ describe('raw', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1631,6 +1636,7 @@ describe('raw', () => {
         path.join('raw', 'unknown.rom'),
         'three.gz',
         'two.gz',
+        'UMD.cso',
         'unknown.zip',
       ],
     ],
@@ -1697,7 +1703,9 @@ describe('raw', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1713,14 +1721,13 @@ describe('raw', () => {
       [
         '2048.chd', // <disk> raw
         '4096.chd', // <disk> raw
-        'CD-ROM.chd', // <disk> raw
-        'GD-ROM.chd', // <disk> raw
-        'GameCube-240pSuite-1.19.gcz',
-        'UMD.cso',
         'best.gz',
+        'CD-ROM.chd', // <disk> raw
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.gcz',
+        'GD-ROM.chd', // <disk> raw
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1733,9 +1740,9 @@ describe('raw', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1749,6 +1756,7 @@ describe('raw', () => {
         path.join('raw', 'unknown.rom'),
         'three.gz',
         'two.gz',
+        'UMD.cso',
         'unknown.zip',
       ],
       [
@@ -1901,28 +1909,29 @@ describe('raw', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );

@@ -10,6 +10,12 @@ The `dir2dat` command creates a [Logiqx XML](http://www.logiqx.com/DatFAQs/) DAT
 
 Example usage:
 
+=== ":fontawesome-brands-windows: Windows"
+
+=== ":fontawesome-brands-apple: macOS"
+
+=== ":simple-linux: Linux"
+
 ```shell
 igir dir2dat --input <path|glob> [--input <path|glob>..]
 ```

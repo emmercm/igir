@@ -14,6 +14,7 @@ import type { FsReadCallback } from '../streams/fsReadTransform.js';
 import FsReadTransform from '../streams/fsReadTransform.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
+// eslint-disable-next-line unicorn/no-top-level-side-effects
 gracefulFs.gracefulify(fs);
 
 export const MoveResult = {
@@ -114,7 +115,7 @@ export default class FsUtil {
       throw new IgirException(`can't copy '${src}' to nonexistent directory '${destDir}'`);
     }
 
-    const destPreviouslyExisted = await this.exists(dest);
+    const didDestPreviouslyExist = await this.exists(dest);
 
     const readStream = fs.createReadStream(src, {
       highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
@@ -133,7 +134,7 @@ export default class FsUtil {
       await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
     }
 
-    if (destPreviouslyExisted) {
+    if (didDestPreviouslyExist) {
       // Windows doesn't update mtime on overwrite?
       await this.touch(dest);
     }
@@ -330,14 +331,14 @@ export default class FsUtil {
    * @returns if the current runtime can write to {@link filePath}
    */
   static async isWritable(filePath: string): Promise<boolean> {
-    const exists = await this.exists(filePath);
+    const didExist = await this.exists(filePath);
     try {
       await this.touch(filePath);
       return true;
     } catch {
       return false;
     } finally {
-      if (!exists) {
+      if (!didExist) {
         await this.rm(filePath, { force: true });
       }
     }
@@ -499,7 +500,7 @@ export default class FsUtil {
       throw new IgirException(`can't copy '${src}' to nonexistent directory '${destDir}'`);
     }
 
-    const destPreviouslyExisted = await this.exists(dest);
+    const didDestPreviouslyExist = await this.exists(dest);
 
     try {
       await fs.promises.copyFile(src, dest, fs.constants.COPYFILE_FICLONE);
@@ -520,7 +521,7 @@ export default class FsUtil {
       await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
     }
 
-    if (destPreviouslyExisted) {
+    if (didDestPreviouslyExist) {
       // Windows doesn't update mtime on overwrite?
       await this.touch(dest);
     }
@@ -607,7 +608,7 @@ export default class FsUtil {
     const k = process.platform === 'darwin' ? 1000 : 1024;
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
     const bytesDivided = bytes / k ** i;
-    if (Number.isInteger(bytesDivided)) {
+    if (Number.isSafeInteger(bytesDivided)) {
       return `${bytesDivided}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
     }
     let fractionDigits = 1;
@@ -750,7 +751,7 @@ export default class FsUtil {
 
     if (walkMode === WalkMode.FILES) {
       const files = entries
-        .filter((_entry, idx) => !entryIsDirectory[idx])
+        .filter((_entry, idx) => entryIsDirectory.at(idx) === false)
         .map((entry) => path.join(pathLike.toString(), entry.name));
       if (callback) {
         callback(files.length);

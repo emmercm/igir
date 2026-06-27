@@ -27,7 +27,7 @@ export default class ROMScanner extends Scanner {
    */
   async scan(
     checksumBitmask: number = ChecksumBitmask.CRC32,
-    checksumArchives = false,
+    shouldChecksumArchives = false,
   ): Promise<File[]> {
     this.prefixedLogger.trace('scanning ROM files');
     this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
@@ -59,18 +59,24 @@ export default class ROMScanner extends Scanner {
       this.prefixedLogger.trace(
         `found ${IntlUtil.toLocaleString(outputFilePaths.length)} output file${outputFilePaths.length === 1 ? '' : 's'}`,
       );
-      outputFilePaths.forEach((filePath) => {
-        if (!inputFilePathsSet.has(filePath)) {
-          filePathsToProcess.push(filePath);
-          outputFilePathsSet.add(filePath);
+      for (const filePath of outputFilePaths) {
+        if (inputFilePathsSet.has(filePath)) {
+          continue;
         }
-      });
+
+        filePathsToProcess.push(filePath);
+        outputFilePathsSet.add(filePath);
+      }
     }
 
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_HASHING);
     this.progressBar.resetProgress(filePathsToProcess.length);
 
-    let files = await this.getFilesFromPaths(filePathsToProcess, checksumBitmask, checksumArchives);
+    let files = await this.getFilesFromPaths(
+      filePathsToProcess,
+      checksumBitmask,
+      shouldChecksumArchives,
+    );
 
     // We need to remember what files came from the output directory so they aren't used for writing
     if (outputFilePathsSet.size > 0) {

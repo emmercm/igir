@@ -18,7 +18,7 @@ export default class Timer {
     const timer = new Timer(
       setTimeout(() => {
         runnable();
-        Timer.TIMERS.delete(timer);
+        this.TIMERS.delete(timer);
       }, timeoutMillis),
     );
     return timer;
@@ -28,7 +28,7 @@ export default class Timer {
     const timer = new Timer(
       setInterval(() => {
         runnable();
-        Timer.TIMERS.delete(timer);
+        this.TIMERS.delete(timer);
       }, timeoutMillis),
     );
     return timer;
@@ -38,7 +38,7 @@ export default class Timer {
    * Cancel all pending timers.
    */
   static cancelAll(): void {
-    Timer.TIMERS.forEach((timer) => {
+    this.TIMERS.forEach((timer) => {
       timer.cancel();
     });
   }
