@@ -35,12 +35,12 @@
     # MAME uses C++ exceptions and RTTI
     "cflags_cc!": ["-fno-exceptions", "-fno-rtti"],
     "cflags_cc": [
-      "-std=c++17",
+      "-std=c++20",
       # MAME uses C++ exceptions and RTTI
       "-fexceptions", "-frtti"
     ],
     "xcode_settings": {
-      "CLANG_CXX_LANGUAGE_STANDARD": "c++17",
+      "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
       # MAME uses C++ exceptions and RTTI
       "OTHER_CPLUSPLUSFLAGS": ["-fexceptions", "-frtti"],
       # Build optimizations
@@ -56,7 +56,7 @@
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
         "AdditionalOptions": [
-          "/std:c++17",
+          "/std:c++20",
           # MAME uses C++ exceptions and RTTI
           "/EHsc",
           "/D__DATE__=0",
