@@ -19,16 +19,22 @@ export default class DATCombiner extends Module {
    * Combine the DATs.
    */
   combine(dats: DAT[]): DAT {
-    this.progressBar.logTrace(`combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
+    this.prefixedLogger.trace(`combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
+
+    const games = dats
+      .flatMap((dat) => dat.getGames())
+      .filter(ArrayUtil.filterUniqueMapped((game) => game.hashCode()));
+
+    // Preserve MAME provenance so that consumers relying on {@link DAT.isMame} (e.g. raw archive
+    // checksumming decisions) continue to treat the combined DAT as MAME-derived
+    const isMame = dats.some((dat) => dat.isMame());
 
     const newDat = new LogiqxDAT({
       header: DATCombiner.generateHeader(dats),
-      games: dats
-        .flatMap((dat) => dat.getGames())
-        .filter(ArrayUtil.filterUniqueMapped((game) => game.hashCode())),
+      ...(isMame ? { machine: games } : { games }),
     });
 
-    this.progressBar.logTrace(`done combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
+    this.prefixedLogger.trace(`done combining ${dats.length} DAT${dats.length === 1 ? '' : 's'}`);
     return newDat;
   }
 

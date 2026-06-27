@@ -17,7 +17,7 @@ export default abstract class APSPatch extends Patch {
    */
   static async patchFrom(file: File): Promise<Patch> {
     return await file.extractToTempIOFile('r', async (patchFile) => {
-      patchFile.seek(APSPatch.FILE_SIGNATURE.length);
+      patchFile.seek(this.FILE_SIGNATURE.length);
 
       const byteFive = (await patchFile.readNext(1)).toString();
       const byteSix = (await patchFile.readNext(1)).readUInt8();

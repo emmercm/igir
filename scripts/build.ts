@@ -5,11 +5,9 @@ import esbuild from 'esbuild';
 import fg from 'fast-glob';
 
 import Timer from '../src/async/timer.js';
-import Logger from '../src/console/logger.js';
-import { LogLevel } from '../src/console/logLevel.js';
+import { logger } from '../src/console/logger.js';
 import FsUtil from '../src/utils/fsUtil.js';
 
-const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== BUILDING ==========');
 
 const output = 'dist';
@@ -24,7 +22,7 @@ if (await FsUtil.exists(output)) {
 // Transpile the TypeScript
 logger.info(`Running 'esbuild' ...`);
 await esbuild.build({
-  entryPoints: await fg('!(node_modules|scripts|test|*.config){,/**/}!(*.test).ts'),
+  entryPoints: await fg('!(.*|node_modules|scripts|test|*.config){,/**/}!(*.test).ts'),
   outdir: path.join(output),
   platform: 'node',
   bundle: false,
@@ -69,34 +67,74 @@ async function copyfiles(
 }
 await copyfiles(
   [
-    'packages/*/deps/**',
+    'packages/chdman/deps/mame/3rdparty/flac/include/FLAC/**/*',
+    'packages/chdman/deps/mame/3rdparty/flac/include/share/**/*',
+    'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/**/*',
+    'packages/chdman/deps/mame/3rdparty/flac/**/{COPYING,LICENSE}*',
+    'packages/chdman/deps/mame/3rdparty/lzma/C/**/*',
+    'packages/chdman/deps/mame/3rdparty/lzma/**/{COPYING,LICENSE}*',
+    'packages/chdman/deps/mame/3rdparty/utf8proc/utf8proc.h',
+    'packages/chdman/deps/mame/3rdparty/utf8proc/**/{COPYING,LICENSE}*',
+    'packages/chdman/deps/mame/3rdparty/zlib/**/*',
+    'packages/chdman/deps/mame/3rdparty/zlib/**/{COPYING,LICENSE}*',
+    'packages/chdman/deps/mame/3rdparty/zstd/lib/**/*',
+    'packages/chdman/deps/mame/3rdparty/zstd/**/{COPYING,LICENSE}*',
+    'packages/chdman/deps/mame/src/emu/emucore.h',
+    'packages/chdman/deps/mame/src/emu/emufwd.h',
+    'packages/chdman/deps/mame/src/lib/util/**/*',
+    'packages/chdman/deps/mame/src/osd/*',
+    'packages/chdman/deps/mame/src/osd/modules/*',
+    'packages/chdman/deps/mame/src/osd/modules/file/**/*',
+    'packages/chdman/deps/mame/src/osd/modules/lib/**/*',
+    'packages/chdman/deps/mame/src/osd/windows/**/*',
+    'packages/chdman/deps/mame/{COPYING,LICENSE}*',
+    'packages/zlib*/deps/**',
+    'packages/zstd*/deps/**',
     'packages/*/addon*/**',
-    'packages/*/binding.cpp',
+    'packages/*/**/*.cpp',
     'packages/*/binding.gyp',
     'src/**/*.json',
   ],
   [
     'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
+    'packages/*/deps/**/*.{ico,pdf}',
     'packages/*/deps/**/appveyor.yml',
+    'packages/*/deps/**/configure',
+    'packages/*/deps/**/BUCK', // Buck
+    'packages/*/deps/**/*.modulemap', // Clang
+    'packages/*/deps/**/{CMakeLists.txt,*.cmake,*.cmakein,*.cmake.in}', // CMake
+    'packages/*/deps/**/{Makefile*,*.mak,*.mk}', // Make
+    'packages/*/deps/**/*.pc.in', // pkg-config
+    'packages/*/deps/**/{*.sln,*.vcxproj}', // Visual Studio
     'packages/*/deps/**/Package.swift',
+    // chdman
+    'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',
+    'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/metadata*.c',
+    'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/ogg*.c',
     // zlib
-    'packages/zlib*/deps/**/amiga/**',
-    'packages/zlib*/deps/**/contrib/**',
-    'packages/zlib*/deps/**/msdos/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/amiga/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/contrib/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/doc/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/examples/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/msdos/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/old/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/os2/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/os400/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/qnx/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/test/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/watcom/**',
     // zstd
-    'packages/zstd*/deps/**/build/meson/**',
-    'packages/zstd*/deps/**/build/single_file_libs/**',
-    'packages/zstd*/deps/**/build/VS2008/**',
-    'packages/zstd*/deps/**/contrib/**',
-    'packages/zstd*/deps/**/examples/**',
-    'packages/zstd*/deps/**/doc/**',
-    'packages/zstd*/deps/**/lib/deprecated/**',
-    'packages/zstd*/deps/**/lib/dictBuilder/**',
-    'packages/zstd*/deps/**/lib/dll/**',
-    'packages/zstd*/deps/**/lib/legacy/**',
-    'packages/zstd*/deps/**/programs/**',
-    'packages/zstd*/deps/**/tests/**',
-    'packages/zstd*/deps/**/zlibWrapper/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/build/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/contrib/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/examples/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/doc/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/deprecated/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/dictBuilder/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/dll/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/legacy/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/programs/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/tests/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/zlibWrapper/**',
   ],
   output,
 );

@@ -189,10 +189,10 @@ function wrapCallbackMethod<T extends FsMethod>(originalFn: T, options?: RetryOp
             return;
           }
 
-          const exceeded =
+          const didExceedMaxAttempts =
             Date.now() - startTime >= RETRY_TIMEOUT_MS ||
             (options?.maxAttempts !== undefined && attempts >= options.maxAttempts);
-          if (exceeded || !TRANSIENT_ERRNO_CODES.has(err.code ?? '')) {
+          if (didExceedMaxAttempts || !TRANSIENT_ERRNO_CODES.has(err.code ?? '')) {
             userCallback(err, ...resultData);
             return;
           }
@@ -239,10 +239,13 @@ function wrapSyncMethod<T extends FsMethod>(
       } catch (error: unknown) {
         attempts++;
 
-        const exceeded =
+        const didExceedMaxAttempts =
           Date.now() - startTime >= RETRY_TIMEOUT_MS ||
           (options?.maxAttempts !== undefined && attempts >= options.maxAttempts);
-        if (exceeded || !TRANSIENT_ERRNO_CODES.has((error as NodeJS.ErrnoException).code ?? '')) {
+        if (
+          didExceedMaxAttempts ||
+          !TRANSIENT_ERRNO_CODES.has((error as NodeJS.ErrnoException).code ?? '')
+        ) {
           throw error;
         }
 
@@ -275,11 +278,13 @@ function wrapPromiseMethod<T extends AsyncFsMethod>(originalFn: T, options?: Ret
         innerPromise.then(resolve).catch((error: unknown) => {
           attempts++;
 
-          const exceeded =
+          const didExceedMaxAttempts =
             Date.now() - startTime >= RETRY_TIMEOUT_MS ||
             (options?.maxAttempts !== undefined && attempts >= options.maxAttempts);
-
-          if (exceeded || !TRANSIENT_ERRNO_CODES.has((error as NodeJS.ErrnoException).code ?? '')) {
+          if (
+            didExceedMaxAttempts ||
+            !TRANSIENT_ERRNO_CODES.has((error as NodeJS.ErrnoException).code ?? '')
+          ) {
             reject(error instanceof Error ? error : new Error(String(error)));
             return;
           }

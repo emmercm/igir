@@ -1,15 +1,19 @@
-import fs from 'node:fs';
 import path from 'node:path';
+import stream from 'node:stream';
 
-import chdman, { ChdmanBinaryPreference, CHDType } from 'chdman';
+import async from 'async';
 
-import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
+import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
+import IgirException from '../../../../exceptions/igirException.js';
+import Defaults from '../../../../globals/defaults.js';
+import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
-import { ChecksumBitmask } from '../../fileChecksums.js';
+import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
-import type ArchiveEntry from '../archiveEntry.js';
+import ArchiveEntry from '../archiveEntry.js';
+import type { ChdListedFile, ChdListing } from './chd.js';
 import Chd from './chd.js';
-import ChdGdiParser from './chdGdiParser.js';
 
 /**
  * A CHD that represents a GD-ROM, exposed as its constituent .gdi and track files.
@@ -29,7 +33,73 @@ export default class ChdGdi extends Chd {
     return true;
   }
 
-  async getArchiveEntries(checksumBitmask: ChecksumBitmaskValue): Promise<ArchiveEntry<this>[]> {
+  private async getListing(): Promise<ChdListing> {
+    const prefix = path.parse(this.getFilePath()).name;
+    const listing = await chdman.listGdRomTracks({
+      inputFilename: this.getFilePath(),
+      trackBaseName: 'track',
+      gdiName: `${prefix}.gdi`,
+    });
+    // listGdRomTracks already returns TOSEC-style CRLF-normalized TOC text
+    return {
+      mode: 'gdi',
+      tocFilename: `${prefix}.gdi`,
+      tocText: listing.tocText,
+      files: listing.tracks.map((track) => ({
+        filename: track.filename,
+        size: track.size,
+        trackIndex: track.index,
+      })),
+    };
+  }
+
+  /**
+   * Stream one entry: the .gdi TOC text, or a track resolved by its number (the `trackNN`
+   * produced by {@link getListing}'s pattern maps to chdman track index NN - 1).
+   */
+  private async streamFile(entryPath: string): Promise<stream.Readable> {
+    if (entryPath.toLowerCase().endsWith('.gdi')) {
+      return stream.Readable.from(Buffer.from((await this.getListing()).tocText));
+    }
+    const trackNumber = /track(\d+)\.(?:bin|raw)$/i.exec(entryPath);
+    if (trackNumber === null) {
+      throw new IgirException(`CHD entry not found: ${this.getFilePath()}|${entryPath}`);
+    }
+    return await chdman.openTrackReader({
+      inputFilename: this.getFilePath(),
+      mode: 'gdi',
+      trackIndex: Number(trackNumber[1]) - 1,
+    });
+  }
+
+  /**
+   * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback.
+   */
+  override async extractEntryToStream<T>(
+    entryPath: string,
+    callback: (readable: stream.Readable) => Promise<T> | T,
+    start = 0,
+  ): Promise<T> {
+    let readable = await this.streamFile(entryPath);
+    // A non-zero start offset (e.g. a detected ROM header) must skip that many
+    // leading bytes of the forward-only stream.
+    if (start > 0) {
+      readable = readable.pipe(new SkipBytesTransform(start));
+    }
+    try {
+      return await callback(readable);
+    } finally {
+      readable.destroy();
+    }
+  }
+
+  /**
+   * List the .gdi and track entries this CHD exposes, computing each entry's checksums.
+   */
+  async getArchiveEntries(
+    checksumBitmask: ChecksumBitmaskValue,
+    callback?: FsReadCallback,
+  ): Promise<ArchiveEntry<this>[]> {
     if (checksumBitmask === ChecksumBitmask.NONE) {
       // Doing a quick scan
       return [];
@@ -40,32 +110,50 @@ export default class ChdGdi extends Chd {
       return [];
     }
 
-    return await ChdGdiParser.getArchiveEntriesGdRom(this, checksumBitmask);
-  }
+    const listing = await this.getListing();
 
-  /**
-   * Extract the CHD's GD-ROM content into the given directory as a .gdi file with track files,
-   * returning the paths of the produced files.
-   */
-  async extractArchiveEntries(outputDirectory: string): Promise<string[]> {
-    const gdiFile = path.join(outputDirectory, 'track.gdi');
-    await chdman.extractCd({
-      inputFilename: this.getFilePath(),
-      outputFilename: gdiFile,
-      binaryPreference: ChdmanBinaryPreference.PREFER_PATH_BINARY,
-    });
-
-    // Apply TOSEC-style CRLF line separators to the .gdi file
-    await FsUtil.writeFile(
-      gdiFile,
-      (await fs.promises.readFile(gdiFile)).toString().replaceAll(/\r?\n/g, '\r\n'),
+    const gdiEntry = await ArchiveEntry.entryOf(
+      {
+        archive: this,
+        entryPath: listing.tocFilename,
+        size: listing.tocText.length,
+        ...(await FileChecksums.hashData(listing.tocText, checksumBitmask)),
+      },
+      checksumBitmask,
     );
 
-    await FsUtil.mv(
-      gdiFile,
-      path.join(outputDirectory, `${path.parse(this.getFilePath()).name}.gdi`),
+    const trackFiles = listing.files;
+    if (callback) {
+      callback(
+        0,
+        trackFiles.reduce((total, file) => total + file.size, 0),
+      );
+    }
+    let overallProgress = 0;
+    const trackEntries = await async.mapLimit(
+      trackFiles,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      async (file: ChdListedFile): Promise<ArchiveEntry<this>> => {
+        const readable = await chdman.openTrackReader({
+          inputFilename: this.getFilePath(),
+          mode: 'gdi',
+          trackIndex: file.trackIndex,
+        });
+        let lastProgress = 0;
+        const checksums = await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
+          overallProgress = overallProgress - lastProgress + progress;
+          if (callback) {
+            callback(overallProgress);
+          }
+          lastProgress = progress;
+        });
+        return await ArchiveEntry.entryOf(
+          { archive: this, entryPath: file.filename, size: file.size, ...checksums },
+          checksumBitmask,
+        );
+      },
     );
 
-    return await FsUtil.walk(outputDirectory, WalkMode.FILES);
+    return [gdiEntry, ...trackEntries];
   }
 }

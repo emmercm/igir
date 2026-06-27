@@ -1,16 +1,10 @@
-import stream from 'node:stream';
-
 import stripAnsi from 'strip-ansi';
 
-import Logger from '../../src/console/logger.js';
-import { LogLevel } from '../../src/console/logLevel.js';
 import MultiBar from '../../src/console/multiBar.js';
 import { ProgressBarSymbol } from '../../src/console/progressBar.js';
 import SingleBar from '../../src/console/singleBar.js';
 
-const WRITABLE = new stream.PassThrough();
-const LOGGER = new Logger(LogLevel.ALWAYS, WRITABLE);
-const MULTIBAR = MultiBar.create(LOGGER);
+const MULTIBAR = MultiBar.create();
 
 test('addChildBar', () => {
   const singleBar = new SingleBar(MULTIBAR);

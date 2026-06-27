@@ -9,14 +9,12 @@ import fg from 'fast-glob';
 import yargs from 'yargs';
 
 import Timer from '../src/async/timer.js';
-import Logger from '../src/console/logger.js';
-import { LogLevel } from '../src/console/logLevel.js';
+import { logger } from '../src/console/logger.js';
 import IgirException from '../src/exceptions/igirException.js';
 import Package from '../src/globals/package.js';
 import Temp from '../src/globals/temp.js';
 import FsUtil from '../src/utils/fsUtil.js';
 
-const logger = new Logger(LogLevel.TRACE, process.stdout);
 logger.info('========== COMPILING ==========');
 
 const argv = await yargs([])
@@ -49,9 +47,6 @@ const bunBuildConfig = {
       `node_modules/@emmercm/dolphin-tool-${argv.platform}-${argv.arch}/dist/{DolphinTool.exe,dolphin-tool,*.dylib}`,
     )),
     ...(await fg(
-      `node_modules/@emmercm/chdman-${argv.platform}-${argv.arch}/dist/{chdman*,*.dylib}`,
-    )),
-    ...(await fg(
       `node_modules/@emmercm/maxcso-${argv.platform}-${argv.arch}/dist/{maxcso*,*.dylib}`,
     )),
   ],
@@ -66,7 +61,7 @@ const bunBuildConfig = {
       title: Package.NAME,
       publisher: Package.AUTHOR,
       version: Package.VERSION,
-      description: Package.DESCRIPTION.replaceAll(/[^\x00-\x7F]/g, '').trim(),
+      description: Package.DESCRIPTION.replaceAll(/[^\u{0}-\u{7F}]/gu, '').trim(),
       copyright: Package.HOMEPAGE,
     },
   },

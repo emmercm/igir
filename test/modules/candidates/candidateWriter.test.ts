@@ -2,7 +2,6 @@ import type { Stats } from 'node:fs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import async from 'async';
 
@@ -10,8 +9,6 @@ import CandidateWriterSemaphore from '../../../src/async/candidateWriterSemaphor
 import FileMoveMutex from '../../../src/async/fileMoveMutex.js';
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import type DAT from '../../../src/models/dats/dat.js';
@@ -44,8 +41,6 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ROMTrimProcessor from '../../../src/modules/roms/romTrimProcessor.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 async function copyFixturesToTemp(
   callback: (input: string, output: string) => void | Promise<void>,
@@ -110,7 +105,7 @@ async function candidateWriter(
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
     inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
-    ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
+    ...(patchGlob && { patch: [path.join(inputTemp, patchGlob)] }),
     output: outputTemp,
     dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
@@ -123,7 +118,7 @@ async function candidateWriter(
     romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       readerSemaphore,
     ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
   } catch {
@@ -132,13 +127,13 @@ async function candidateWriter(
   const romFilesWithHeaders = await new ROMHeaderProcessor(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).process(romFiles);
   const romFilesWithPaddings = await new ROMTrimProcessor(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).process(romFilesWithHeaders);
   const indexedRomFiles = new ROMIndexer(options, new ProgressBarFake()).index(
@@ -150,7 +145,7 @@ async function candidateWriter(
     const scannedDats = await new DATScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       readerSemaphore,
     ).scan();
     dat = new DATCombiner(new ProgressBarFake()).combine(scannedDats);
@@ -162,14 +157,14 @@ async function candidateWriter(
   let candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).generate(dat, indexedRomFiles);
   if (patchGlob) {
     const patches = await new PatchScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       readerSemaphore,
     ).scan();
     candidates = new CandidatePatchGenerator(options, new ProgressBarFake()).generate(
@@ -181,7 +176,7 @@ async function candidateWriter(
   candidates = await new CandidateExtensionCorrector(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     readerSemaphore,
   ).correct(dat, candidates);
   candidates = new CandidateCombiner(options, new ProgressBarFake()).combine(dat, candidates);
@@ -190,7 +185,7 @@ async function candidateWriter(
   return await new CandidateWriter(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     writerSemaphore,
     new FileMoveMutex(),
   ).write(dat, candidates);
@@ -534,7 +529,7 @@ describe('zip', () => {
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
         const outputFiles = await walkAndStat(outputTemp);
         expect(outputFiles).toHaveLength(1);
-        const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
+        const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
           path.join(outputTemp, outputFiles[0][0]),
         );
         expect(archiveEntries).toHaveLength(1);
@@ -567,7 +562,7 @@ describe('zip', () => {
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
       const outputFiles = await walkAndStat(outputTemp);
       expect(outputFiles).toHaveLength(1);
-      const archiveEntries = await new FileFactory(new FileCache(), LOGGER).filesFrom(
+      const archiveEntries = await new FileFactory(new FileCache()).filesFrom(
         path.join(outputTemp, outputFiles[0][0]),
       );
       expect(archiveEntries).toHaveLength(1);
@@ -610,9 +605,7 @@ describe('zip', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -632,16 +625,15 @@ describe('zip', () => {
       [
         path.join('2048', '2048.chd'), // <disk>
         path.join('4096', '4096.chd'), // <disk>
+        'best.zip',
         'CD-ROM.zip',
         path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
-        'GD-ROM.zip',
-        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
-        'GameCube-240pSuite-1.19.zip',
-        'UMD.zip',
-        'best.zip',
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.zip',
+        'GD-ROM.zip',
+        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
         'invalid.zip',
         'loremipsum.zip',
         'one.zip',
@@ -650,6 +642,7 @@ describe('zip', () => {
         'raw.zip',
         'three.zip',
         'two.zip',
+        'UMD.zip',
         'unknown.zip',
       ],
     ],
@@ -723,7 +716,9 @@ describe('zip', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -739,16 +734,15 @@ describe('zip', () => {
       [
         path.join('2048', '2048.chd'), // <disk>
         path.join('4096', '4096.chd'), // <disk>
+        'best.zip',
         'CD-ROM.zip',
         path.join('CD-ROM', 'CD-ROM.chd'), // <disk>
-        'GD-ROM.zip',
-        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
-        'GameCube-240pSuite-1.19.zip',
-        'UMD.zip',
-        'best.zip',
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.zip',
+        'GD-ROM.zip',
+        path.join('GD-ROM', 'GD-ROM.chd'), // <disk>
         'invalid.zip',
         'loremipsum.zip',
         'one.zip',
@@ -757,6 +751,7 @@ describe('zip', () => {
         'raw.zip',
         'three.zip',
         'two.zip',
+        'UMD.zip',
         'unknown.zip',
       ],
       [
@@ -849,28 +844,29 @@ describe('zip', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );
@@ -966,9 +962,7 @@ describe('zip', () => {
         // Then
         expect(outputFiles).toHaveLength(1);
         const outputFile = path.join(outputTemp, outputFiles[0][0]);
-        const writtenRomsAndCrcs = (
-          await new FileFactory(new FileCache(), LOGGER).filesFrom(outputFile)
-        )
+        const writtenRomsAndCrcs = (await new FileFactory(new FileCache()).filesFrom(outputFile))
           .map((entry) => [
             entry.toString().replace(outputTemp + path.sep, ''),
             entry.getCrc32() ?? '',
@@ -1076,9 +1070,7 @@ describe('extract', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -1119,9 +1111,7 @@ describe('extract', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -1141,24 +1131,23 @@ describe('extract', () => {
       [
         '2048.chd', // <disk>
         '4096.chd', // <disk>
+        'best.rom',
         'CD-ROM.chd', // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 3).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM.cue'), // <disk>
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        path.join('fourfive', 'five.rom'),
+        path.join('fourfive', 'four.rom'),
+        'GameCube-240pSuite-1.19.iso',
         'GD-ROM.chd', // <disk>
         path.join('GD-ROM', 'GD-ROM.gdi'), // <disk>
         path.join('GD-ROM', 'track01.bin'), // <disk>
         path.join('GD-ROM', 'track02.raw'), // <disk>
         path.join('GD-ROM', 'track03.bin'), // <disk>
         path.join('GD-ROM', 'track04.bin'), // <disk>
-        'GameCube-240pSuite-1.19.iso',
-        'UMD.iso',
-        'best.rom',
-        'fizzbuzz.nes',
-        'foobar.lnx',
-        path.join('fourfive', 'five.rom'),
-        path.join('fourfive', 'four.rom'),
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1173,9 +1162,9 @@ describe('extract', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1189,6 +1178,7 @@ describe('extract', () => {
         path.join('raw', 'unknown.rom'),
         'three.rom',
         'two.rom',
+        'UMD.iso',
         'unknown.rom',
       ],
     ],
@@ -1273,7 +1263,9 @@ describe('extract', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1289,24 +1281,23 @@ describe('extract', () => {
       [
         '2048.chd', // <disk>
         '4096.chd', // <disk>
+        'best.rom',
         'CD-ROM.chd', // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 1).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 2).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM (Track 3).bin'), // <disk>
         path.join('CD-ROM', 'CD-ROM.cue'), // <disk>
+        'fizzbuzz.nes',
+        'foobar.lnx',
+        path.join('fourfive', 'five.rom'),
+        path.join('fourfive', 'four.rom'),
+        'GameCube-240pSuite-1.19.iso',
         'GD-ROM.chd', // <disk>
         path.join('GD-ROM', 'GD-ROM.gdi'), // <disk>
         path.join('GD-ROM', 'track01.bin'), // <disk>
         path.join('GD-ROM', 'track02.raw'), // <disk>
         path.join('GD-ROM', 'track03.bin'), // <disk>
         path.join('GD-ROM', 'track04.bin'), // <disk>
-        'GameCube-240pSuite-1.19.iso',
-        'UMD.iso',
-        'best.rom',
-        'fizzbuzz.nes',
-        'foobar.lnx',
-        path.join('fourfive', 'five.rom'),
-        path.join('fourfive', 'four.rom'),
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1321,9 +1312,9 @@ describe('extract', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1337,6 +1328,7 @@ describe('extract', () => {
         path.join('raw', 'unknown.rom'),
         'three.rom',
         'two.rom',
+        'UMD.iso',
         'unknown.rom',
       ],
       [
@@ -1363,7 +1355,7 @@ describe('extract', () => {
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1420,7 +1412,7 @@ describe('extract', () => {
         'unknown.rom',
       ],
       [
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1476,28 +1468,29 @@ describe('extract', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );
@@ -1588,9 +1581,7 @@ describe('raw', () => {
         await Promise.all(
           outputFiles.map(
             async ([outputPath]) =>
-              await new FileFactory(new FileCache(), LOGGER).filesFrom(
-                path.join(outputTemp, outputPath),
-              ),
+              await new FileFactory(new FileCache()).filesFrom(path.join(outputTemp, outputPath)),
           ),
         )
       )
@@ -1610,14 +1601,13 @@ describe('raw', () => {
       [
         '2048.chd', // <disk> raw
         '4096.chd', // <disk> raw
-        'CD-ROM.chd', // <disk> raw
-        'GD-ROM.chd', // <disk> raw
-        'GameCube-240pSuite-1.19.gcz',
-        'UMD.cso',
         'best.gz',
+        'CD-ROM.chd', // <disk> raw
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.gcz',
+        'GD-ROM.chd', // <disk> raw
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1630,9 +1620,9 @@ describe('raw', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1646,6 +1636,7 @@ describe('raw', () => {
         path.join('raw', 'unknown.rom'),
         'three.gz',
         'two.gz',
+        'UMD.cso',
         'unknown.zip',
       ],
     ],
@@ -1712,7 +1703,9 @@ describe('raw', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1728,14 +1721,13 @@ describe('raw', () => {
       [
         '2048.chd', // <disk> raw
         '4096.chd', // <disk> raw
-        'CD-ROM.chd', // <disk> raw
-        'GD-ROM.chd', // <disk> raw
-        'GameCube-240pSuite-1.19.gcz',
-        'UMD.cso',
         'best.gz',
+        'CD-ROM.chd', // <disk> raw
         'fizzbuzz.zip',
         'foobar.zip',
         'fourfive.zip',
+        'GameCube-240pSuite-1.19.gcz',
+        'GD-ROM.chd', // <disk> raw
         'invalid.7z',
         'invalid.rar',
         'invalid.tar.gz',
@@ -1748,9 +1740,9 @@ describe('raw', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
+        path.join('patchable', 'before.rom'),
         path.join('patchable', 'C01173E.rom'),
         path.join('patchable', 'KDULVQN.rom'),
-        path.join('patchable', 'before.rom'),
         path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
@@ -1764,6 +1756,7 @@ describe('raw', () => {
         path.join('raw', 'unknown.rom'),
         'three.gz',
         'two.gz',
+        'UMD.cso',
         'unknown.zip',
       ],
       [
@@ -1786,7 +1779,7 @@ describe('raw', () => {
         path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
         path.join('patchable', 'best.gz'),
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1852,7 +1845,7 @@ describe('raw', () => {
         'unknown.rom',
       ],
       [
-        // Note: raw/empty.rom is missing because we don't use input files to write empty files
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1916,28 +1909,29 @@ describe('raw', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );

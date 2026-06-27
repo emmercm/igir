@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import type { Argv } from 'yargs';
 
-import type Logger from '../console/logger.js';
+import { logger } from '../console/logger.js';
 import IgirException from '../exceptions/igirException.js';
 import PatchFactory from '../factories/patchFactory.js';
 import Defaults from '../globals/defaults.js';
@@ -45,12 +45,6 @@ import ConsoleUtil from '../utils/consoleUtil.js';
  * This class will not be run concurrently with any other class.
  */
 export default class ArgumentsParser {
-  private readonly logger: Logger;
-
-  constructor(logger: Logger) {
-    this.logger = logger;
-  }
-
   private static getLastValue<T>(arr: T | T[]): T {
     if (Array.isArray(arr) && arr.length > 0) {
       return arr.at(-1) as T;
@@ -68,11 +62,13 @@ export default class ArgumentsParser {
   private static getHelpWidth(argv: string[]): number {
     // Look for --help/-h with a numerical value
     for (let i = 0; i < argv.length; i += 1) {
-      if (argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h') {
-        const helpFlagVal = Number.parseInt(argv[i + 1], 10);
-        if (!Number.isNaN(helpFlagVal)) {
-          return Number.parseInt(argv[i + 1], 10);
-        }
+      if (!(argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h')) {
+        continue;
+      }
+
+      const helpFlagVal = Math.trunc(Number(argv[i + 1]));
+      if (!Number.isNaN(helpFlagVal)) {
+        return helpFlagVal;
       }
     }
 
@@ -138,25 +134,24 @@ export default class ArgumentsParser {
       ['dir2dat', 'fixdat'],
     ];
     const addCommands = (yargsObj: Argv, previousCommands: string[] = []): Argv => {
-      commands
-        .filter(([command]) => {
-          // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
-          if (previousCommands.includes(command)) {
-            return false;
-          }
-          // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
-          const incompatibleCommands = previousCommands.flatMap((previousCommand) =>
-            mutuallyExclusiveCommands
-              .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
-              .flat(),
-          );
-          return !incompatibleCommands.includes(command);
-        })
-        .forEach(([command, description]) => {
-          yargsObj.command(command, description, (yargsSubObj) =>
-            addCommands(yargsSubObj, [...previousCommands, command]),
-          );
-        });
+      for (const [command, description] of commands) {
+        // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
+        if (previousCommands.includes(command)) {
+          continue;
+        }
+        // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
+        const incompatibleCommands = previousCommands.flatMap((previousCommand) =>
+          mutuallyExclusiveCommands
+            .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
+            .flat(),
+        );
+        if (incompatibleCommands.includes(command)) {
+          continue;
+        }
+        yargsObj.command(command, description, (yargsSubObj) =>
+          addCommands(yargsSubObj, [...previousCommands, command]),
+        );
+      }
 
       if (previousCommands.length === 0) {
         // Only register the check function once
@@ -168,7 +163,7 @@ export default class ArgumentsParser {
           middlewareArgv._ = middlewareArgv._.reduce(ArrayUtil.reduceUnique(), []);
         }, true)
         .check((checkArgv) => {
-          ['extract', 'zip'].forEach((command) => {
+          for (const command of ['extract', 'zip']) {
             if (
               checkArgv._.includes(command) &&
               ['copy', 'move'].every((write) => !checkArgv._.includes(write))
@@ -177,9 +172,9 @@ export default class ArgumentsParser {
                 `Command "${command}" also requires the commands copy or move`,
               );
             }
-          });
+          }
 
-          ['clean'].forEach((command) => {
+          for (const command of ['clean']) {
             if (
               checkArgv._.includes(command) &&
               ['copy', 'move', 'link'].every((write) => !checkArgv._.includes(write))
@@ -188,7 +183,7 @@ export default class ArgumentsParser {
                 `Command "${command}" requires one of the commands: copy, move, or link`,
               );
             }
-          });
+          }
 
           return true;
         });
@@ -420,7 +415,7 @@ export default class ArgumentsParser {
           }
         }
         if (checkArgv.patch && !checkArgv._.includes('extract') && !checkArgv._.includes('zip')) {
-          this.logger.warn(
+          logger.warn(
             "archived files can't be patched unless the 'extract' or 'zip' command is used",
           );
         }
@@ -436,17 +431,20 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .middleware((middlewareArgv) => {
-        if (middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input) {
-          const outputResolved = path.resolve(middlewareArgv.output as string);
-          if (
-            !middlewareArgv.input.some((inputPath) =>
-              outputResolved.startsWith(path.resolve(inputPath as string)),
-            )
-          ) {
-            this.logger.warn(
-              `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
-            );
-          }
+        if (
+          !(middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input)
+        ) {
+          return;
+        }
+        const outputResolved = path.resolve(middlewareArgv.output as string);
+        if (
+          middlewareArgv.input.every(
+            (inputPath) => !outputResolved.startsWith(path.resolve(inputPath as string)),
+          )
+        ) {
+          logger.warn(
+            `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
+          );
         }
       }, false)
       .option('dir-mirror', {
@@ -741,7 +739,7 @@ export default class ArgumentsParser {
             'Argument "--trim-add-padding" cannot be used with the command "link"',
           );
         }
-        if (!['copy', 'move'].some((cmd) => checkArgv._.includes(cmd))) {
+        if (['copy', 'move'].every((cmd) => !checkArgv._.includes(cmd))) {
           throw new IgirException(
             'Missing required command for option trim-add-padding: copy or move',
           );
@@ -862,11 +860,11 @@ export default class ArgumentsParser {
         requiresArg: true,
         implies: 'dat',
       });
-    [
+    for (const [key, description] of [
       ['bios', 'BIOS files'],
       ['device', 'MAME devies'],
       ['unlicensed', 'unlicensed ROMs'],
-    ].forEach(([key, description]) => {
+    ]) {
       yargsParser
         .option(`no-${key}`, {
           group: groupRomFiltering,
@@ -879,13 +877,13 @@ export default class ArgumentsParser {
           conflicts: [`no-${key}`],
           hidden: true,
         });
-    });
+    }
     yargsParser.option('only-retail', {
       group: groupRomFiltering,
       description: 'Filter to only retail releases, enabling all the following "no" options',
       type: 'boolean',
     });
-    [
+    for (const [key, description] of [
       ['debug', 'debug ROMs'],
       ['demo', 'demo ROMs'],
       ['beta', 'beta ROMs'],
@@ -896,7 +894,7 @@ export default class ArgumentsParser {
       ['homebrew', 'homebrew ROMs'],
       ['unverified', 'unverified ROMs'],
       ['bad', 'bad ROM dumps'],
-    ].forEach(([key, description]) => {
+    ]) {
       yargsParser
         .option(`no-${key}`, {
           group: groupRomFiltering,
@@ -909,7 +907,7 @@ export default class ArgumentsParser {
           conflicts: [`no-${key}`],
           hidden: true,
         });
-    });
+    }
 
     yargsParser
       .option('single', {
@@ -1176,9 +1174,7 @@ export default class ArgumentsParser {
       })
       .middleware((middlewareArgv) => {
         if (middlewareArgv['clean-dry-run'] === true && middlewareArgv.verbose < 1) {
-          this.logger.warn(
-            '--clean-dry-run prints INFO logs for files skipped, enable them with -v',
-          );
+          logger.warn('--clean-dry-run prints INFO logs for files skipped, enable them with -v');
         }
       })
 
@@ -1188,7 +1184,7 @@ export default class ArgumentsParser {
             MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.dirMirror || checkArgv.dirLetter)
         ) {
-          this.logger.warn(
+          logger.warn(
             `at least one --dir-* option was provided, be careful about how you organize non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets into different subdirectories`,
           );
         }
@@ -1198,7 +1194,7 @@ export default class ArgumentsParser {
             MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase() &&
           (checkArgv.noBios || checkArgv.noDevice)
         ) {
-          this.logger.warn(
+          logger.warn(
             `--no-bios and --no-device may leave non-'${MergeModeInverted[MergeMode.FULLNONMERGED].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
@@ -1209,7 +1205,7 @@ export default class ArgumentsParser {
           (checkArgv.mergeRoms as string).toLowerCase() ===
             MergeModeInverted[MergeMode.SPLIT].toLowerCase()
         ) {
-          this.logger.warn(
+          logger.warn(
             `--single may leave '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets in an unplayable state`,
           );
         }
@@ -1219,7 +1215,7 @@ export default class ArgumentsParser {
           (checkArgv.mergeRoms as string).toLowerCase() ===
             MergeModeInverted[MergeMode.MERGED].toLowerCase()
         ) {
-          this.logger.warn(
+          logger.warn(
             `--single doesn't make sense for '${MergeModeInverted[MergeMode.SPLIT].toLowerCase()}' ROM sets, nothing will be filtered out`,
           );
         }
@@ -1231,6 +1227,7 @@ export default class ArgumentsParser {
       .version(false)
 
       // NOTE(cemmer): the .epilogue() renders after .example() but I want them switched
+      /* eslint-disable unicorn/no-incorrect-template-string-interpolation */
       .epilogue(
         `${'-'.repeat(ArgumentsParser.getHelpWidth(argv))}
 
@@ -1311,7 +1308,7 @@ Example use cases:
         if (err) {
           throw err;
         }
-        this.logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
+        logger.colorizeYargs(`${_yargs.help().toString().trimEnd()}\n`);
         throw new IgirException(msg);
       });
 
@@ -1319,7 +1316,7 @@ Example use cases:
       .strictOptions(true)
       .parse(argv, {}, (_err, _parsedArgv, output) => {
         if (output) {
-          this.logger.colorizeYargs(`${output.trimEnd()}\n`);
+          logger.colorizeYargs(`${output.trimEnd()}\n`);
         }
       });
 

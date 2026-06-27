@@ -1,14 +1,11 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import { TZValidator, ValidationResult } from '../../../../packages/torrentzip/index.js';
 import { ZipReader } from '../../../../packages/zip/index.js';
 import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../../src/cache/fileCache.js';
-import Logger from '../../../../src/console/logger.js';
-import { LogLevel } from '../../../../src/console/logLevel.js';
 import FileFactory from '../../../../src/factories/fileFactory.js';
 import Temp from '../../../../src/globals/temp.js';
 import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
@@ -20,15 +17,13 @@ import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import FsUtil from '../../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 async function findRoms(input: string): Promise<File[]> {
   return await new ROMScanner(
     new Options({
       input: [input],
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 }
@@ -54,7 +49,7 @@ describe('createArchive', () => {
       await FsUtil.copyFile(rom.getFilePath(), tempFilePath);
 
       // And a candidate is partially generated for that file
-      const tempFiles = await new FileFactory(new FileCache(), LOGGER).filesFrom(tempFilePath);
+      const tempFiles = await new FileFactory(new FileCache()).filesFrom(tempFilePath);
       const inputToOutput = await Promise.all(
         tempFiles.map(async (tempFile) => {
           const archiveEntry = await ArchiveEntry.entryOf({

@@ -28,17 +28,17 @@ export default class ReportGenerator extends Module {
     cleanedOutputFiles: string[],
     datStatuses: DATStatus[],
   ): Promise<void> {
-    this.progressBar.logTrace('generating report');
+    this.prefixedLogger.trace('generating report');
 
     const reportPath = this.options.getReportOutput();
 
-    const anyGamesFoundAtAll = datStatuses.some((datStatus) =>
+    const hasAnyGamesFoundAtAll = datStatuses.some((datStatus) =>
       datStatus.anyGamesFound(this.options),
     );
     const matchedFileCsvs = (
       await Promise.all(
         datStatuses
-          .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
+          .filter((datStatus) => datStatus.anyGamesFound(this.options) || !hasAnyGamesFoundAtAll)
           .toSorted((a, b) => a.getDATName().localeCompare(b.getDATName()))
           .map(async (datsStatus) => await datsStatus.toCsv(this.options)),
       )
@@ -68,7 +68,7 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
 
     const unusedFilePaths = scannedRomFiles
@@ -78,12 +78,12 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     const unusedCsv = await DATStatus.filesToCsv(unusedFilePaths, GameStatus.UNUSED);
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);
 
-    this.progressBar.logInfo(`writing report '${reportPath}'`);
+    this.prefixedLogger.info(`writing report '${reportPath}'`);
     const reportPathDir = path.dirname(reportPath);
     if (!(await FsUtil.exists(reportPathDir))) {
       await FsUtil.mkdir(reportPathDir, { recursive: true });
@@ -92,11 +92,11 @@ export default class ReportGenerator extends Module {
       (csv) => csv.length > 0,
     );
     await FsUtil.writeFile(reportPath, rows.join('\n'));
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `wrote ${IntlUtil.toLocaleString(datStatuses.length)} CSV row${datStatuses.length === 1 ? '' : 's'}: ${reportPath}`,
     );
 
-    this.progressBar.logTrace('done generating report');
+    this.prefixedLogger.trace('done generating report');
     this.progressBar.finish(reportPath);
     this.progressBar.freeze();
   }

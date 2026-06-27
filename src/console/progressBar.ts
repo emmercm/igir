@@ -3,8 +3,6 @@ import chalk from 'chalk';
 import isUnicodeSupported from 'is-unicode-supported';
 
 import IntlUtil from '../utils/intlUtil.js';
-import type { LogLevelValue } from './logLevel.js';
-import { LogLevel } from './logLevel.js';
 import type { SingleBarOptions } from './singleBar.js';
 
 /**
@@ -12,41 +10,41 @@ import type { SingleBarOptions } from './singleBar.js';
  * @see https://www.htmlsymbols.xyz/
  * @see https://www.fileformat.info/info/unicode/font/lucida_console/grid.htm (win32)
  */
-const UNICODE_SUPPORTED = isUnicodeSupported();
+const IS_UNICODE_SUPPORTED = isUnicodeSupported();
 export interface ColoredSymbol {
   symbol: string;
   color: ChalkInstance;
 }
 export const ProgressBarSymbol: Record<string, ColoredSymbol> = {
   NONE: { symbol: '', color: chalk.reset },
-  WAITING: { symbol: UNICODE_SUPPORTED ? '⋯' : '…', color: chalk.grey },
-  DONE: { symbol: UNICODE_SUPPORTED ? '✓' : '√', color: chalk.green },
+  WAITING: { symbol: IS_UNICODE_SUPPORTED ? '⋯' : '…', color: chalk.grey },
+  DONE: { symbol: IS_UNICODE_SUPPORTED ? '✓' : '√', color: chalk.green },
   // Files
-  FILE_SCANNING: { symbol: UNICODE_SUPPORTED ? '↻' : '○', color: chalk.magenta },
+  FILE_SCANNING: { symbol: IS_UNICODE_SUPPORTED ? '↻' : '○', color: chalk.magenta },
   DAT_DOWNLOADING: { symbol: '↓', color: chalk.magenta },
   DAT_PARSING: { symbol: 'Σ', color: chalk.magenta },
   ROM_HASHING: { symbol: '#', color: chalk.magenta },
   ROM_HEADER_DETECTION: { symbol: '^', color: chalk.magenta },
-  ROM_TRIMMING_DETECTION: { symbol: UNICODE_SUPPORTED ? '⌵' : 'v', color: chalk.magenta },
+  ROM_TRIMMING_DETECTION: { symbol: IS_UNICODE_SUPPORTED ? '⌵' : 'v', color: chalk.magenta },
   ROM_INDEXING: { symbol: '♦', color: chalk.magenta },
-  PATCH_PARSING: { symbol: UNICODE_SUPPORTED ? 'ℙ' : 'P', color: chalk.magenta },
+  PATCH_PARSING: { symbol: IS_UNICODE_SUPPORTED ? 'ℙ' : 'P', color: chalk.magenta },
   // Processing a single DAT
   DAT_GROUPING_SIMILAR: { symbol: '∩', color: chalk.cyan },
   DAT_MERGE_SPLIT: { symbol: '↔', color: chalk.cyan },
   DAT_FILTERING: { symbol: '∆', color: chalk.cyan },
-  DAT_PREFERRING: { symbol: UNICODE_SUPPORTED ? '⇅' : '↨', color: chalk.cyan },
+  DAT_PREFERRING: { symbol: IS_UNICODE_SUPPORTED ? '⇅' : '↨', color: chalk.cyan },
   // Candidates generation
   CANDIDATE_GENERATING: { symbol: 'Σ', color: chalk.cyan },
-  CANDIDATE_PATCHING: { symbol: UNICODE_SUPPORTED ? 'ℙ' : 'P', color: chalk.cyan },
+  CANDIDATE_PATCHING: { symbol: IS_UNICODE_SUPPORTED ? 'ℙ' : 'P', color: chalk.cyan },
   CANDIDATE_EXTENSION_CORRECTION: { symbol: '.', color: chalk.cyan },
   CANDIDATE_HASHING: { symbol: '#', color: chalk.cyan },
-  CANDIDATE_VALIDATING: { symbol: UNICODE_SUPPORTED ? '≟' : '?', color: chalk.cyan },
-  CANDIDATE_COMBINING: { symbol: UNICODE_SUPPORTED ? '∪' : 'U', color: chalk.cyan },
+  CANDIDATE_VALIDATING: { symbol: IS_UNICODE_SUPPORTED ? '≟' : '?', color: chalk.cyan },
+  CANDIDATE_COMBINING: { symbol: IS_UNICODE_SUPPORTED ? '∪' : 'U', color: chalk.cyan },
   // Candidate writing
-  TESTING: { symbol: UNICODE_SUPPORTED ? '≟' : '?', color: chalk.yellow },
-  WRITING: { symbol: UNICODE_SUPPORTED ? '✎' : '»', color: chalk.yellow },
-  RECYCLING: { symbol: UNICODE_SUPPORTED ? '♻' : '»', color: chalk.blue },
-  DELETING: { symbol: UNICODE_SUPPORTED ? '✕' : 'X', color: chalk.red },
+  TESTING: { symbol: IS_UNICODE_SUPPORTED ? '≟' : '?', color: chalk.yellow },
+  WRITING: { symbol: IS_UNICODE_SUPPORTED ? '✎' : '»', color: chalk.yellow },
+  RECYCLING: { symbol: IS_UNICODE_SUPPORTED ? '♻' : '»', color: chalk.blue },
+  DELETING: { symbol: IS_UNICODE_SUPPORTED ? '✕' : 'X', color: chalk.red },
 } as const;
 
 export type ProgressCallback = (progress: number, total: number) => void;
@@ -93,54 +91,6 @@ export default abstract class ProgressBar {
     this.finish(
       `${IntlUtil.toLocaleString(count)} ${noun.trim()}${count === 1 ? '' : pluralSuffix} ${verb}`,
     );
-  }
-
-  abstract setLoggerPrefix(prefix: string): void;
-
-  abstract log(logLevel: LogLevelValue, message: string): void;
-
-  /**
-   * Log a TRACE message.
-   *
-   * This should be used to log internal actions that most users shouldn't care about, but could be
-   * helpful in bug reports.
-   */
-  logTrace(message: string): void {
-    this.log(LogLevel.TRACE, message);
-  }
-
-  /**
-   * Log a DEBUG message.
-   *
-   * This should be used to log actions that weren't taken (i.e. skipped writing a ROM because it
-   * already exists, etc.).
-   */
-  logDebug(message: string): void {
-    this.log(LogLevel.DEBUG, message);
-  }
-
-  /**
-   * Log an INFO message.
-   *
-   * This should be used to log actions that were taken (i.e. copying/moving ROMs, recycling files,
-   * writing DATs, etc.).
-   */
-  logInfo(message: string): void {
-    this.log(LogLevel.INFO, message);
-  }
-
-  /**
-   * Log a WARN message.
-   */
-  logWarn(message: string): void {
-    this.log(LogLevel.WARN, message);
-  }
-
-  /**
-   * Log an ERROR message.
-   */
-  logError(message: string): void {
-    this.log(LogLevel.ERROR, message);
   }
 
   abstract freeze(): void;

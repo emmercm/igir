@@ -4,7 +4,6 @@ import { linearRegression, linearRegressionLine } from 'simple-statistics';
 
 import IntlUtil from '../utils/intlUtil.js';
 import TimeUtil from '../utils/timeUtil.js';
-import type { LogLevelValue } from './logLevel.js';
 import type MultiBar from './multiBar.js';
 import type { ColoredSymbol } from './progressBar.js';
 import ProgressBar, { ProgressBarSymbol } from './progressBar.js';
@@ -27,10 +26,10 @@ const CHALK_PROGRESS_COMPLETE_DEFAULT = chalk.reset;
 const CHALK_PROGRESS_IN_PROGRESS = chalk.blackBright; // 50% gray (typically)
 const CHALK_PROGRESS_INCOMPLETE = chalk.ansi256(240); // 33% gray
 
-const UNICODE_SUPPORTED = isUnicodeSupported();
-const BAR_COMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
-const BAR_IN_PROGRESS_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
-const BAR_INCOMPLETE_CHAR = UNICODE_SUPPORTED ? '■' : '▬';
+const IS_UNICODE_SUPPORTED = isUnicodeSupported();
+const BAR_COMPLETE_CHAR = IS_UNICODE_SUPPORTED ? '■' : '▬';
+const BAR_IN_PROGRESS_CHAR = IS_UNICODE_SUPPORTED ? '■' : '▬';
+const BAR_INCOMPLETE_CHAR = IS_UNICODE_SUPPORTED ? '■' : '▬';
 
 const DEFAULT_ETA = '--:--:--';
 
@@ -44,7 +43,6 @@ export default class SingleBar extends ProgressBar {
   private static readonly BAR_SIZE = 30;
 
   private readonly multiBar: MultiBar;
-  private loggerPrefix?: string;
 
   private displayDelay?: number;
   private displayCreated?: number;
@@ -208,17 +206,6 @@ export default class SingleBar extends ProgressBar {
     this.inProgress = 0;
 
     this.finishedMessage = finishedMessage;
-  }
-
-  setLoggerPrefix(prefix: string): void {
-    this.loggerPrefix = prefix;
-  }
-
-  /**
-   * Queue a log message to be printed to the terminal.
-   */
-  log(logLevel: LogLevelValue, message: string): void {
-    this.multiBar.log(logLevel, message, this.loggerPrefix);
   }
 
   /**

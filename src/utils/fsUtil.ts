@@ -6,15 +6,15 @@ import stream from 'node:stream';
 
 import async from 'async';
 import { isNotJunk } from 'junk';
-import nodeDiskInfo from 'node-disk-info';
-import { Memoize } from 'typescript-memoize';
 
 import IgirException from '../exceptions/igirException.js';
 import Defaults from '../globals/defaults.js';
 import gracefulFs from '../polyfill/gracefulFs.js';
-import FsReadTransform, { FsReadCallback } from '../streams/fsReadTransform.js';
+import type { FsReadCallback } from '../streams/fsReadTransform.js';
+import FsReadTransform from '../streams/fsReadTransform.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
+// eslint-disable-next-line unicorn/no-top-level-side-effects
 gracefulFs.gracefulify(fs);
 
 export const MoveResult = {
@@ -38,22 +38,6 @@ export type FsWalkCallback = (increment: number) => void;
  */
 export default class FsUtil {
   private static readonly SIZE_READABLE_SUFFIXES = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
-
-  // Assume that all drives we're reading from or writing to were already mounted at startup
-  // https://github.com/cristiammercado/node-disk-info/issues/36
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  private static readonly DRIVES = (() => {
-    if (process.platform === 'win32') {
-      // https://support.microsoft.com/en-us/topic/windows-management-instrumentation-command-line-wmic-removal-from-windows-e9e83c7f-4992-477f-ba1d-96f694b8665d
-      // https://github.com/cristiammercado/node-disk-info/issues/29
-      return [];
-    }
-    try {
-      return nodeDiskInfo.getDiskInfoSync();
-    } catch {
-      return [];
-    }
-  })();
 
   /**
    * @param dirPath the path to a temporary directory
@@ -131,7 +115,7 @@ export default class FsUtil {
       throw new IgirException(`can't copy '${src}' to nonexistent directory '${destDir}'`);
     }
 
-    const destPreviouslyExisted = await this.exists(dest);
+    const didDestPreviouslyExist = await this.exists(dest);
 
     const readStream = fs.createReadStream(src, {
       highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
@@ -150,7 +134,7 @@ export default class FsUtil {
       await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
     }
 
-    if (destPreviouslyExisted) {
+    if (didDestPreviouslyExist) {
       // Windows doesn't update mtime on overwrite?
       await this.touch(dest);
     }
@@ -169,30 +153,6 @@ export default class FsUtil {
         (await this.isDirectory(filePath)) ? filePath : undefined,
       )
     ).filter((childDir) => childDir !== undefined);
-  }
-
-  /**
-   * @returns the path to the disk that {@link filePath} is on
-   */
-  static diskResolved(filePath: string): string | undefined {
-    const filePathResolved = path.resolve(filePath);
-    return this.disksSync().find((drive) => filePathResolved.startsWith(drive.mounted))?.mounted;
-  }
-
-  @Memoize()
-  // https://github.com/cristiammercado/node-disk-info/issues/36
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  private static disksSync() {
-    return (
-      this.DRIVES.filter((drive) => drive.available > 0)
-        .filter(
-          // Evidently the typing of 'node-disk-info' is wrong, the mounted path can be undefined
-          // https://github.com/emmercm/igir/issues/1862
-          (drive) => (drive.mounted as string | undefined) !== undefined && drive.mounted !== '/',
-        )
-        // Sort by mount points with the deepest number of subdirectories first
-        .toSorted((a, b) => b.mounted.split(/[\\/]/).length - a.mounted.split(/[\\/]/).length)
-    );
   }
 
   /**
@@ -334,7 +294,7 @@ export default class FsUtil {
       return false;
     }
 
-    if (
+    return (
       // Standard UNC: \\Server\Share\Path
       // Extended UNC: \\?\UNC\Server\Share\Path
       filePath.startsWith(`\\\\`) ||
@@ -342,18 +302,7 @@ export default class FsUtil {
       filePath.toLowerCase().startsWith('smb://') ||
       // /mnt/smb/share/folder/
       filePath.toLowerCase().startsWith('/mnt/smb/')
-    ) {
-      return true;
-    }
-    const filePathDrive = this.disksSync().find((drive) => resolvedPath.startsWith(drive.mounted));
-
-    if (!filePathDrive) {
-      // Assume 'false' by default
-      return false;
-    }
-    return filePathDrive.filesystem
-      .replaceAll(/[\\/]/g, path.sep)
-      .startsWith(`${path.sep}${path.sep}`);
+    );
   }
 
   /**
@@ -382,14 +331,14 @@ export default class FsUtil {
    * @returns if the current runtime can write to {@link filePath}
    */
   static async isWritable(filePath: string): Promise<boolean> {
-    const exists = await this.exists(filePath);
+    const didExist = await this.exists(filePath);
     try {
       await this.touch(filePath);
       return true;
     } catch {
       return false;
     } finally {
-      if (!exists) {
+      if (!didExist) {
         await this.rm(filePath, { force: true });
       }
     }
@@ -551,7 +500,7 @@ export default class FsUtil {
       throw new IgirException(`can't copy '${src}' to nonexistent directory '${destDir}'`);
     }
 
-    const destPreviouslyExisted = await this.exists(dest);
+    const didDestPreviouslyExist = await this.exists(dest);
 
     try {
       await fs.promises.copyFile(src, dest, fs.constants.COPYFILE_FICLONE);
@@ -572,7 +521,7 @@ export default class FsUtil {
       await fs.promises.chmod(dest, stat.mode | chmodOwnerWrite);
     }
 
-    if (destPreviouslyExisted) {
+    if (didDestPreviouslyExist) {
       // Windows doesn't update mtime on overwrite?
       await this.touch(dest);
     }
@@ -659,7 +608,7 @@ export default class FsUtil {
     const k = process.platform === 'darwin' ? 1000 : 1024;
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
     const bytesDivided = bytes / k ** i;
-    if (Number.isInteger(bytesDivided)) {
+    if (Number.isSafeInteger(bytesDivided)) {
       return `${bytesDivided}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
     }
     let fractionDigits = 1;
@@ -802,7 +751,7 @@ export default class FsUtil {
 
     if (walkMode === WalkMode.FILES) {
       const files = entries
-        .filter((_entry, idx) => !entryIsDirectory[idx])
+        .filter((_entry, idx) => entryIsDirectory.at(idx) === false)
         .map((entry) => path.join(pathLike.toString(), entry.name));
       if (callback) {
         callback(files.length);

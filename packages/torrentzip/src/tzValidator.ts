@@ -66,14 +66,13 @@ export default {
       if (
         !(
           (cdFileHeader.compressionMethod === CompressionMethod.DEFLATE &&
-            ((cdFileHeader.zip64ExtendedInformation === undefined &&
-              cdFileHeader.versionNeeded === 20) ||
-              (cdFileHeader.zip64ExtendedInformation !== undefined &&
-                cdFileHeader.versionNeeded === 45))) ||
+            cdFileHeader.versionNeeded ===
+              (cdFileHeader.zip64ExtendedInformation === undefined ? 20 : 45)) ||
           (cdFileHeader.compressionMethod === CompressionMethod.ZSTD &&
             cdFileHeader.versionNeeded === 63) ||
           (cdFileHeader.compressionMethod === CompressionMethod.STORE &&
-            cdFileHeader.versionNeeded === 20)
+            cdFileHeader.versionNeeded ===
+              (cdFileHeader.zip64ExtendedInformation === undefined ? 20 : 45))
         ) ||
         !(
           cdFileHeader.generalPurposeBitFlag === 0x02 ||
@@ -117,14 +116,7 @@ export default {
     const fileNamesLowerCase = centralDirectoryFileHeaders.map((fileHeader) =>
       fileHeader.fileNameResolved().toLowerCase(),
     );
-    const fileNamesLowerCaseSorted = fileNamesLowerCase.toSorted((a, b) => {
-      if (a < b) {
-        return -1;
-      } else if (a > b) {
-        return 1;
-      }
-      return 0;
-    });
+    const fileNamesLowerCaseSorted = fileNamesLowerCase.toSorted((a, b) => a.localeCompare(b));
     if (fileNamesLowerCase.some((name, i) => name !== fileNamesLowerCaseSorted[i])) {
       return ValidationResult.INVALID;
     }
@@ -163,7 +155,12 @@ export default {
       expectedOffset += localFileHeader.raw.length + localFileHeader.compressedSizeResolved();
 
       if (
-        localFileHeader.versionNeeded !== centralDirectoryFileHeader.versionNeeded ||
+        !(
+          localFileHeader.versionNeeded === centralDirectoryFileHeader.versionNeeded ||
+          (localFileHeader.zip64ExtendedInformation === undefined &&
+            centralDirectoryFileHeader.zip64ExtendedInformation !== undefined &&
+            centralDirectoryFileHeader.versionNeeded === 45)
+        ) ||
         localFileHeader.generalPurposeBitFlag !==
           centralDirectoryFileHeader.generalPurposeBitFlag ||
         localFileHeader.compressionMethod !== centralDirectoryFileHeader.compressionMethod ||

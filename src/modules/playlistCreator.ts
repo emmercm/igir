@@ -34,11 +34,11 @@ export default class PlaylistCreator extends Module {
     }
 
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to create playlists for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to create playlists for`);
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: writing playlists`);
+    this.prefixedLogger.trace(`${dat.getName()}: writing playlists`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.resetProgress(candidates.length);
 
@@ -71,26 +71,21 @@ export default class PlaylistCreator extends Module {
       remainingCandidates,
       (candidate) => candidate.getGame().getName(),
     );
-    remainingCandidates = (
-      await async.mapLimit(
-        [...gameNamesToCandidates.entries()],
-        this.options.getWriterThreads(),
-        async ([gameName, candidates]: [string, WriteCandidate[]]) => {
-          const writtenFile = await this.maybeWritePlaylist(dat, candidates, gameName);
-          if (writtenFile === undefined) {
-            // We didn't write a playlist file, keep this candidate for more processing
-            return candidates;
-          }
-          writtenPlaylistPaths.push(writtenFile);
-        },
-      )
-    )
-      .flat()
-      .filter((candidate) => candidate !== undefined);
+    await async.mapLimit(
+      [...gameNamesToCandidates],
+      this.options.getWriterThreads(),
+      async ([gameName, candidates]: [string, WriteCandidate[]]) => {
+        const writtenFile = await this.maybeWritePlaylist(dat, candidates, gameName);
+        if (writtenFile === undefined) {
+          return;
+        }
+        writtenPlaylistPaths.push(writtenFile);
+      },
+    );
 
     // TODO(cemmer): something with the remaining candidates?
 
-    this.progressBar.logTrace(`${dat.getName()}: done writing playlists`);
+    this.prefixedLogger.trace(`${dat.getName()}: done writing playlists`);
     return writtenPlaylistPaths;
   }
 
@@ -129,14 +124,14 @@ export default class PlaylistCreator extends Module {
           .replace(/^[\\/]/, '')
           .replaceAll('\\', '/'),
       )
-      .toSorted()
+      .toSorted((a, b) => a.localeCompare(b))
       .join('\n')}\n`;
 
     if (!(await FsUtil.exists(commonDirectory))) {
       await FsUtil.mkdir(commonDirectory, { recursive: true });
     }
     const playlistLocation = path.join(commonDirectory, `${playlistBasename}.m3u`);
-    this.progressBar.logInfo(`${dat.getName()}: creating playlist '${playlistLocation}'`);
+    this.prefixedLogger.info(`${dat.getName()}: creating playlist '${playlistLocation}'`);
     await FsUtil.writeFile(playlistLocation, playlistLines);
     return playlistLocation;
   }

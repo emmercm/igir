@@ -43,7 +43,7 @@ export default class InputSubdirectoriesDeleter extends Module {
       return [];
     }
 
-    this.progressBar.logTrace('deleting empty input subdirectories');
+    this.prefixedLogger.trace('deleting empty input subdirectories');
     this.progressBar.setSymbol(ProgressBarSymbol.DELETING);
     this.progressBar.resetProgress(0);
 
@@ -63,7 +63,7 @@ export default class InputSubdirectoriesDeleter extends Module {
     );
     const deletedDirs = await this.walkAndDelete([...dirsToMaybeDelete], [...inputPathsNormalized]);
 
-    this.progressBar.logTrace('done deleting empty input subdirectories');
+    this.prefixedLogger.trace('done deleting empty input subdirectories');
     return deletedDirs;
   }
 

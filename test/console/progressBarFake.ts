@@ -49,14 +49,6 @@ export default class ProgressBarFake extends ProgressBar {
     // @typescript-eslint/no-empty-function
   }
 
-  setLoggerPrefix(): void {
-    // @typescript-eslint/no-empty-function
-  }
-
-  log(): void {
-    // @typescript-eslint/no-empty-function
-  }
-
   freeze(): void {
     // @typescript-eslint/no-empty-function
   }

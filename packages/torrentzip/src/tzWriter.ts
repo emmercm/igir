@@ -160,23 +160,21 @@ export default class TZWriter {
     compressedSize?: number,
     uncompressedSize?: number,
   ): Buffer<ArrayBuffer> {
-    const cp437 = CP437Encoder.canEncode(filename);
-    const encodedFilename = cp437 ? CP437Encoder.encode(filename) : Buffer.from(filename, 'utf8');
+    const isCp437 = CP437Encoder.canEncode(filename);
+    const encodedFilename = isCp437 ? CP437Encoder.encode(filename) : Buffer.from(filename, 'utf8');
 
     const buffer = Buffer.allocUnsafe(
       TZWriter.LOCAL_FILE_HEADER_MIN_LENGTH + encodedFilename.length,
     );
     TZWriter.LOCAL_FILE_HEADER_SIGNATURE.copy(buffer);
 
-    if (this.compressionMethod === CompressionMethod.DEFLATE) {
-      buffer.writeUInt16LE(20, 4); // version needed
-    } else if (uncompressedSize === 0) {
+    if (this.compressionMethod === CompressionMethod.DEFLATE || uncompressedSize === 0) {
       buffer.writeUInt16LE(20, 4); // version needed
     } else {
       buffer.writeUInt16LE(63, 4); // version needed
     }
 
-    buffer.writeUInt16LE(0x02 | (cp437 ? 0x0 : 0x8_00), 6); // general purpose flag (max compression)
+    buffer.writeUInt16LE(0x02 | (isCp437 ? 0x0 : 0x8_00), 6); // general purpose flag (max compression)
 
     if (this.compressionMethod === CompressionMethod.DEFLATE) {
       buffer.writeUInt16LE(8, 8); // compression method
@@ -262,11 +260,11 @@ export default class TZWriter {
       this.filePosition += centralDirectoryFileHeadersConcat.length;
 
       // Determine if a zip64 EOCD needs to be written
-      const zip64 =
+      const isZip64 =
         centralDirectoryFileHeadersConcat.length >= 0xff_ff_ff_ff ||
         startOfCentralDirectoryOffset >= 0xff_ff_ff_ff ||
         this.localFileHeaders.length >= 0xff_ff;
-      if (zip64) {
+      if (isZip64) {
         const zip64EndOfCentralDirectoryOffset = this.filePosition;
         const zip64EndOfCentralDirectoryRecord = TZWriter.zip64EndOfCentralDirectoryRecord(
           centralDirectoryFileHeadersConcat,
@@ -322,6 +320,12 @@ export default class TZWriter {
     this.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE.copy(buffer);
     buffer.writeUInt16LE(0, 4); // version made by
     localFileHeader.rawBytes.copy(buffer, 6, 4, 4 + 2); // version needed to extract
+    if (extraFieldLength > 0 && buffer.readUInt16LE(6) < 45) {
+      // The CDFH and LFH have different conditions for when the zip64 extra field is necessary.
+      // A <0xFFFFFFFF size file with an LFH byte >=0xFFFFFFFF requires a zip64 extra field in the
+      // CDFH, but not for the LFH (confusingly).
+      buffer.writeUInt16LE(45, 6); // version needed (for zip64)
+    }
     localFileHeader.rawBytes.copy(buffer, 8, 6, 6 + 2); // general purpose flag
     localFileHeader.rawBytes.copy(buffer, 10, 8, 8 + 2); // compression method
     localFileHeader.rawBytes.copy(buffer, 12, 10, 10 + 2); // file last modification time

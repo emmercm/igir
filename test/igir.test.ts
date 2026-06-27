@@ -1,14 +1,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import async from 'async';
 
 import MappableSemaphore from '../src/async/mappableSemaphore.js';
 import FileCache from '../src/cache/fileCache.js';
-import Logger from '../src/console/logger.js';
-import { LogLevel } from '../src/console/logLevel.js';
+import { terminal } from '../src/console/terminal.js';
 import FileFactory from '../src/factories/fileFactory.js';
 import Temp from '../src/globals/temp.js';
 import Igir from '../src/igir.js';
@@ -28,8 +26,6 @@ import DATScanner from '../src/modules/dats/datScanner.js';
 import ArrayUtil from '../src/utils/arrayUtil.js';
 import FsUtil, { WalkMode } from '../src/utils/fsUtil.js';
 import ProgressBarFake from './console/progressBarFake.js';
-
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
 
 interface TestOutput {
   outputFilesAndCrcs: string[][];
@@ -60,7 +56,7 @@ async function copyFixturesToTemp(
 }
 
 async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[][]> {
-  const fileFactory = new FileFactory(new FileCache(), LOGGER);
+  const fileFactory = new FileFactory(new FileCache());
 
   const files = await FsUtil.walk(outputDir, WalkMode.FILES);
 
@@ -97,7 +93,7 @@ async function walkWithCrc(inputDir: string, outputDir: string): Promise<string[
 }
 
 const defaultOptions = new Options({
-  ...new ArgumentsParser(LOGGER).parse(['--help']),
+  ...new ArgumentsParser().parse(['--help']),
   help: false,
 });
 
@@ -124,8 +120,10 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
       : await FsUtil.walk(options.getOutputDirRoot(), WalkMode.FILES); // the output dir is a parent of the input dir, ignore all output
 
   // For debugging: enable trace logging if the 'help' option is provided
-  const logger = options.getHelp() ? new Logger(LogLevel.TRACE, process.stdout) : LOGGER;
-  await new Igir(options, logger).main();
+  if (options.getHelp()) {
+    terminal.setStream(process.stdout);
+  }
+  await new Igir(options).main();
 
   const outputFilesAndCrcs =
     options.getOutput() === Temp.getTempDir()
@@ -155,12 +153,12 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     .filter((filePath) => !inputFilesAfter.includes(filePath))
     .map((filePath) => {
       let replaced = filePath;
-      options.getInputPaths().forEach((inputPath) => {
+      for (const inputPath of options.getInputPaths()) {
         replaced = replaced.replace(inputPath + path.sep, '');
-      });
+      }
       return replaced;
     })
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
 
   const outputFilesAfter =
     options.getOutput() === Temp.getTempDir()
@@ -169,7 +167,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const cleanedFiles = outputFilesBefore
     .filter((filePath) => !outputFilesAfter.includes(filePath))
     .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
 
   return {
     outputFilesAndCrcs,
@@ -186,7 +184,6 @@ describe('with explicit DATs', () => {
           new Options({
             dat: ['src/*'],
           }),
-          LOGGER,
         ).main();
       })(),
     ).rejects.toThrow(/no valid dat files/i);
@@ -686,6 +683,7 @@ describe('with explicit DATs', () => {
         path.join('chd', '4096.chd'),
         path.join('cso', 'UMD.cso'),
         path.join('cso', 'UMD.zso'),
+        'empty.rom',
         'fizzbuzz.zip',
         'foobar.lnx',
         path.join('gcz', 'GameCube-240pSuite-1.19.gcz'),
@@ -694,11 +692,11 @@ describe('with explicit DATs', () => {
         path.join('gz', 'loremipsum.gz'),
         path.join('gz', 'one.gz'),
         path.join('gz', 'three.gz'),
-        path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
         path.join('headered', 'diagnostic_test_cartridge.a78.7z'),
         path.join('headered', 'fds_joypad_test.fds.zip'),
+        path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'speed_test_v51.smc'),
         'loremipsum.7z',
         path.join('nkit', 'GameCube-240pSuite-1.19.nkit.iso'),
@@ -707,13 +705,14 @@ describe('with explicit DATs', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
         path.join('patchable', 'best.gz'),
+        path.join('patchable', 'C01173E.rom'),
+        path.join('patchable', 'KDULVQN.rom'),
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
         path.join('rar', 'loremipsum.rar'),
+        path.join('raw', 'empty.rom'),
         path.join('raw', 'five.rom'),
         path.join('raw', 'fizzbuzz.nes'),
         path.join('raw', 'foobar.lnx'),
@@ -1548,9 +1547,9 @@ describe('with explicit DATs', () => {
 
         // Then none of the good/correct files from the first copy weren't cleaned
         const finalFiles = new Set(cleanResult.outputFilesAndCrcs.map(([filePath]) => filePath));
-        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+        for (const [filePath] of copyResult.outputFilesAndCrcs) {
           expect(finalFiles).toContain(filePath);
-        });
+        }
 
         // and the dummy file that was in an output directory was deleted, and the other wasn't
         expect(cleanResult.cleanedFiles).toEqual([path.join('One', 'dummy.rom')]);
@@ -1567,9 +1566,9 @@ describe('with explicit DATs', () => {
             .filter(Boolean)
             .flatMap((filePath) => filePath.split('|')),
         );
-        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+        for (const [filePath] of copyResult.outputFilesAndCrcs) {
           expect(reportFoundFiles).toContain(path.join(outputTemp, filePath.replace(/\|.+/, '')));
-        });
+        }
       });
     },
   );
@@ -1607,9 +1606,9 @@ describe('with explicit DATs', () => {
 
       // Then every file from the first copy was cleaned, because they were moved to the wrong directory
       const cleanedFiles = new Set(cleanResult.cleanedFiles.map((filePath) => filePath));
-      copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+      for (const [filePath] of copyResult.outputFilesAndCrcs) {
         expect(cleanedFiles).toContain(path.join('wrongfolder', filePath));
-      });
+      }
     });
   });
 });
@@ -1650,22 +1649,22 @@ describe('with inferred DATs', () => {
         [`${path.join('F2', 'foobar.zip')}|foobar.lnx`, 'b22c9747'],
         [`${path.join('F2', 'fourfive.zip')}|five.rom`, '3e5daf67'],
         [`${path.join('F2', 'fourfive.zip')}|four.rom`, '1cf3ca74'],
-        [`${path.join('G1', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'],
-        [`${path.join('G1', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
-        [`${path.join('G1', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
-        [`${path.join('G1', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
-        [`${path.join('G1', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
-        [`${path.join('G1', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
+        [
+          `${path.join('G1', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
+          '5eb3d183',
+        ],
         [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'],
         [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
         [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
         [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
         [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
         [`${path.join('G1', 'GD-ROM', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
-        [
-          `${path.join('G2', 'GameCube-240pSuite-1.19.gcz')}|GameCube-240pSuite-1.19.iso`,
-          '5eb3d183',
-        ],
+        [`${path.join('G2', 'GD-ROM.chd')}|GD-ROM`, 'xxxxxxxx'],
+        [`${path.join('G2', 'GD-ROM.chd')}|GD-ROM.gdi`, 'f16f621c'],
+        [`${path.join('G2', 'GD-ROM.chd')}|track01.bin`, '9796ed9a'],
+        [`${path.join('G2', 'GD-ROM.chd')}|track02.raw`, 'abc178d5'],
+        [`${path.join('G2', 'GD-ROM.chd')}|track03.bin`, '61a363f1'],
+        [`${path.join('G2', 'GD-ROM.chd')}|track04.bin`, 'fc5ff5a0'],
         [path.join('H', 'headered', 'allpads.nes'), '9180a163'],
         [path.join('H', 'headered', 'color_test.nes'), 'c9c1b7aa'],
         [path.join('H', 'headered', 'speed_test_v51.smc'), '9adca6cc'],
@@ -1831,11 +1830,11 @@ describe('with inferred DATs', () => {
         path.join('gz', 'three.gz'),
         path.join('gz', 'two.gz'),
         path.join('gz', 'unknown.gz'),
-        path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'allpads.nes'),
         path.join('headered', 'color_test.nintendoentertainmentsystem'),
         path.join('headered', 'diagnostic_test_cartridge.a78.7z'),
         path.join('headered', 'fds_joypad_test.fds.zip'),
+        path.join('headered', 'LCDTestROM.lnx.rar'),
         path.join('headered', 'speed_test_v51.smc'),
         path.join('headerless', 'speed_test_v51.sfc.gz'),
         'invalid.7z',
@@ -1848,10 +1847,10 @@ describe('with inferred DATs', () => {
         path.join('patchable', '612644F.rom'),
         path.join('patchable', '65D1206.rom'),
         path.join('patchable', '92C85C9.rom'),
-        path.join('patchable', 'C01173E.rom'),
-        path.join('patchable', 'KDULVQN.rom'),
         path.join('patchable', 'before.rom'),
         path.join('patchable', 'best.gz'),
+        path.join('patchable', 'C01173E.rom'),
+        path.join('patchable', 'KDULVQN.rom'),
         path.join('rar', 'fizzbuzz.rar'),
         path.join('rar', 'foobar.rar'),
         path.join('rar', 'invalid.rar'),
@@ -2293,11 +2292,11 @@ describe('with inferred DATs', () => {
         ['speed_test_v51.sfc', '8beffd94'],
       ]);
       expect(result.movedFiles).toEqual([
-        'LCDTestROM.lnx.rar',
         'allpads.nes',
         'color_test.nintendoentertainmentsystem',
         'diagnostic_test_cartridge.a78.7z',
         'fds_joypad_test.fds.zip',
+        'LCDTestROM.lnx.rar',
         'speed_test_v51.smc',
       ]);
       expect(result.cleanedFiles).toHaveLength(0);
@@ -2355,7 +2354,7 @@ describe('with inferred DATs', () => {
       const dats = await new DATScanner(
         new Options({ dat: writtenDir2Dats.map((datPath) => path.join(outputTemp, datPath)) }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(2),
       ).scan();
       expect(dats).toHaveLength(1);

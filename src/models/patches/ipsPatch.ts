@@ -18,7 +18,7 @@ export default class IPSPatch extends Patch {
    * Parse an .ips/.ips32/.ebp patch file and return an {@link IPSPatch}.
    */
   static patchFrom(file: File): IPSPatch {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     return new IPSPatch(file, crcBefore);
   }
 
@@ -66,7 +66,7 @@ export default class IPSPatch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      await IPSPatch.applyPatch(patchFile, targetFile, offsetSize, eofString, callback);
+      await this.applyPatch(patchFile, targetFile, offsetSize, eofString, callback);
     } finally {
       await targetFile.close();
     }

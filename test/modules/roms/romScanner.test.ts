@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import Temp from '../../../src/globals/temp.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
@@ -18,8 +15,6 @@ import ArrayUtil from '../../../src/utils/arrayUtil.js';
 import FsUtil, { WalkMode } from '../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 function createRomScanner(input: string[], inputExclude: string[] = []): ROMScanner {
   return new ROMScanner(
     new Options({
@@ -27,7 +22,7 @@ function createRomScanner(input: string[], inputExclude: string[] = []): ROMScan
       inputExclude,
     }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   );
 }
@@ -102,7 +97,7 @@ describe('multiple files', () => {
       const scannedFiles = await new ROMScanner(
         new Options(optionsProps),
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(os.availableParallelism()),
       ).scan(checksumBitmask, true);
       expect(scannedFiles).toHaveLength(expectedRomFiles);
@@ -118,7 +113,7 @@ describe('multiple files', () => {
     const scannedFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan(
       Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0),
@@ -130,7 +125,7 @@ describe('multiple files', () => {
       .filter((file) => !file.getCrc32())
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(extensionsWithoutCrc32).toEqual(['.chd', '.tar.gz']);
 
     const entriesWithMd5 = scannedFiles
@@ -143,7 +138,7 @@ describe('multiple files', () => {
       .filter((file) => file.getSha1() !== undefined)
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     expect(extensionsWithSha1).toEqual(['.chd', '.gcz', '.rvz', '.wia']);
 
     const entriesWithSha256 = scannedFiles
@@ -324,7 +319,7 @@ describe('checksum constraining', () => {
     const scannedFiles = await new ROMScanner(
       new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan(ChecksumBitmask.CRC32);
 
@@ -341,7 +336,7 @@ describe('checksum constraining', () => {
     const scannedFiles = await new ROMScanner(
       new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan(ChecksumBitmask.MD5);
 
@@ -358,7 +353,7 @@ describe('checksum constraining', () => {
     const scannedFiles = await new ROMScanner(
       new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan(ChecksumBitmask.SHA1);
 
@@ -375,7 +370,7 @@ describe('checksum constraining', () => {
     const scannedFiles = await new ROMScanner(
       new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan(ChecksumBitmask.SHA256);
 
@@ -396,7 +391,7 @@ describe('checksum constraining', () => {
     const scannedFiles = await new ROMScanner(
       new Options({ input: [path.join('test', 'fixtures', 'roms', 'raw')] }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan(allBitmasks);
 
@@ -418,7 +413,7 @@ describe('checksum constraining', () => {
         inputChecksumQuick: true,
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan(ChecksumBitmask.MD5);
 
@@ -456,7 +451,7 @@ describe('output directory scanning', () => {
       const files = await new ROMScanner(
         new Options({ input: [inputDir], commands: ['copy'], output: outputDir }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(os.availableParallelism()),
       ).scan();
 
@@ -490,7 +485,7 @@ describe('output directory scanning', () => {
         const files = await new ROMScanner(
           new Options({ input: [inputDir], commands: ['copy', command], output: outputDir }),
           new ProgressBarFake(),
-          new FileFactory(new FileCache(), LOGGER),
+          new FileFactory(new FileCache()),
           new MappableSemaphore(os.availableParallelism()),
         ).scan();
 
@@ -521,7 +516,7 @@ describe('output directory scanning', () => {
         // Input covers the whole tempDir (including the output subdir)
         new Options({ input: [tempDir], commands: ['copy', 'clean'], output: outputDir }),
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(os.availableParallelism()),
       ).scan();
 

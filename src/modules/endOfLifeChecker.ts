@@ -1,8 +1,6 @@
 import semver from 'semver';
 
-import type Logger from '../console/logger.js';
-import { LogLevel } from '../console/logLevel.js';
-import MultiBar from '../console/multiBar.js';
+import { logger } from '../console/logger.js';
 
 /**
  * Check if the current Node.js version has reached EOL and log if it has.
@@ -34,45 +32,38 @@ export default class EndOfLifeChecker {
     [26, new Date('2029-04-30')], // exact day not confirmed yet
   ] satisfies [number, Date][];
 
-  private readonly logger: Logger;
-
-  constructor(logger: Logger) {
-    this.logger = logger;
-  }
-
   /**
    * Check the current Node.js version.
    */
   check(nodejsVersion: string, now = new Date()): void {
     for (const [majorVersion, endOfLifeDate] of EndOfLifeChecker.END_OF_SECURITY_SUPPORT_DATES) {
-      if (semver.satisfies(nodejsVersion, `^${majorVersion}`)) {
-        if (now > endOfLifeDate) {
-          // We are past the EOL of a known version, warn and return
-          MultiBar.log(
-            LogLevel.WARN,
-            `Node.js v${majorVersion} reached end-of-life on ${endOfLifeDate.toDateString()}, you should update to an actively maintained LTS version`,
-          );
-          return;
-        }
-
-        if (majorVersion % 2 === 1) {
-          // We are within the support period of a non-LTS version, warn and return
-          MultiBar.log(
-            LogLevel.WARN,
-            `Node.js v${majorVersion} has a very short support window (ending on ${endOfLifeDate.toDateString()}), you should consider using an LTS version`,
-          );
-          return;
-        }
-
-        break;
+      if (!semver.satisfies(nodejsVersion, `^${majorVersion}`)) {
+        continue;
       }
+
+      if (now > endOfLifeDate) {
+        // We are past the EOL of a known version, warn and return
+        logger.warn(
+          `Node.js v${majorVersion} reached end-of-life on ${endOfLifeDate.toDateString()}, you should update to an actively maintained LTS version`,
+        );
+        return;
+      }
+
+      if (majorVersion % 2 === 1) {
+        // We are within the support period of a non-LTS version, warn and return
+        logger.warn(
+          `Node.js v${majorVersion} has a very short support window (ending on ${endOfLifeDate.toDateString()}), you should consider using an LTS version`,
+        );
+        return;
+      }
+
+      break;
     }
 
     const coercedVersion = semver.coerce(nodejsVersion);
     if (coercedVersion && coercedVersion.major % 2 === 1) {
       // We are on an unknown non-LTS version, warn and return
-      MultiBar.log(
-        LogLevel.WARN,
+      logger.warn(
         `Node.js v${coercedVersion.major} has a very short support window, you should consider using an LTS version`,
       );
     }

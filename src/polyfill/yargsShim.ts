@@ -6,7 +6,7 @@ import type { Argv } from 'yargs';
 
 /**
  * Igir ships as a single self-contained binary (Bun-compiled). Nothing in the
- * application — neither igir nor its dependencies — may rely on files being
+ * app — neither igir nor its dependencies — may rely on files being
  * present on disk relative to the executable. Every asset that the runtime
  * needs must be a static `import` so the bundler embeds it into the binary.
  *

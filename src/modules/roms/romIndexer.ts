@@ -13,7 +13,6 @@ import type { AllChecksums, ChecksumsToFiles } from '../../models/indexedFiles.j
 import IndexedFiles from '../../models/indexedFiles.js';
 import type Options from '../../models/options.js';
 import { PreferFiletype } from '../../models/options.js';
-import FsUtil from '../../utils/fsUtil.js';
 import IntlUtil from '../../utils/intlUtil.js';
 import Module from '../module.js';
 
@@ -33,7 +32,7 @@ export default class ROMIndexer extends Module {
    * Index files.
    */
   index(files: File[]): IndexedFiles {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `indexing ${IntlUtil.toLocaleString(files.length)} file${files.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_INDEXING);
@@ -42,24 +41,23 @@ export default class ROMIndexer extends Module {
     // Index the files
     const result = IndexedFiles.fromFiles(files);
     // Then apply some sorting preferences
-    Object.keys(result).forEach((checksum) => {
+    for (const checksum of Object.keys(result)) {
       this.sortMap(result[checksum as keyof AllChecksums]);
       this.progressBar.incrementCompleted();
-    });
+    }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `found ${result.getSize()} unique file${result.getSize() === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace('done indexing files');
+    this.prefixedLogger.trace('done indexing files');
     return result;
   }
 
   private sortMap(checksumsToFiles: ChecksumsToFiles): void {
     const outputDir = this.options.getOutputDirRoot();
-    const outputDirDisk = FsUtil.diskResolved(outputDir);
 
-    [...checksumsToFiles.entries()].forEach(([checksum, files]) => {
+    for (const [checksum, files] of checksumsToFiles) {
       const sortedFiles = files.toSorted((fileOne, fileTwo) => {
         // First, prefer files that aren't from the output directory
         const fileOneIsOutputFile = fileOne.getCanBeCandidateInput() ? 0 : 1;
@@ -71,18 +69,17 @@ export default class ROMIndexer extends Module {
         // ********** Preferences that are user-controlled **********
 
         // Prefer either archives or un-archived/plain files
+        let fileOneArchive;
+        let fileTwoArchive;
         if (this.options.getPreferFiletype() === PreferFiletype.ARCHIVE) {
-          const fileOneArchive = fileOne instanceof ArchiveEntry ? 0 : 1;
-          const fileTwoArchive = fileTwo instanceof ArchiveEntry ? 0 : 1;
-          if (fileOneArchive !== fileTwoArchive) {
-            return fileOneArchive - fileTwoArchive;
-          }
+          fileOneArchive = fileOne instanceof ArchiveEntry ? 0 : 1;
+          fileTwoArchive = fileTwo instanceof ArchiveEntry ? 0 : 1;
         } else {
-          const fileOneArchive = fileOne instanceof ArchiveEntry ? 1 : 0;
-          const fileTwoArchive = fileTwo instanceof ArchiveEntry ? 1 : 0;
-          if (fileOneArchive !== fileTwoArchive) {
-            return fileOneArchive - fileTwoArchive;
-          }
+          fileOneArchive = fileOne instanceof ArchiveEntry ? 1 : 0;
+          fileTwoArchive = fileTwo instanceof ArchiveEntry ? 1 : 0;
+        }
+        if (fileOneArchive !== fileTwoArchive) {
+          return fileOneArchive - fileTwoArchive;
         }
 
         // Then, prefer files whose filename matches the preferred regex
@@ -124,22 +121,11 @@ export default class ROMIndexer extends Module {
           }
         }
 
-        /**
-         * Then, prefer files that are on the same disk for fs efficiency see {@link FsUtil#mv}
-         */
-        if (outputDirDisk && this.options.shouldMove()) {
-          const fileOneInOutputDisk = fileOne.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
-          const fileTwoInOutputDisk = fileTwo.getFilePath().startsWith(outputDirDisk) ? 0 : 1;
-          if (fileOneInOutputDisk !== fileTwoInOutputDisk) {
-            return fileOneInOutputDisk - fileTwoInOutputDisk;
-          }
-        }
-
         // Otherwise, be deterministic
         return fileOne.toString().localeCompare(fileTwo.toString());
       });
       checksumsToFiles.set(checksum, sortedFiles);
-    });
+    }
   }
 
   /**

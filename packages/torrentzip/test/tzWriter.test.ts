@@ -3,8 +3,6 @@ import os from 'node:os';
 import path from 'node:path';
 import stream from 'node:stream';
 
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import Temp from '../../../src/globals/temp.js';
 import Igir from '../../../src/igir.js';
 import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileChecksums.js';
@@ -76,10 +74,11 @@ test.each([
         dirDatName: true,
         disableCache: true,
       }),
-      new Logger(LogLevel.NEVER, new stream.PassThrough()),
     ).main();
 
-    const writtenFiles = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted();
+    const writtenFiles = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted((a, b) =>
+      a.localeCompare(b),
+    );
     const writtenFilesHashed = await Promise.all(
       writtenFiles.map(async (filePath) => {
         const checksums = await FileChecksums.hashFile(filePath, ChecksumBitmask.CRC32);

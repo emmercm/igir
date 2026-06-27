@@ -58,7 +58,7 @@ const heldBackDependencies = Object.entries(packageJson)
         ) as PackageJson;
 
         const depPackageNewerVersions = semver
-          // eslint-disable-next-line unicorn/no-array-sort
+
           .sort(depPackageJsonLatest.versions ?? [])
           .filter(
             (remoteVersion) =>

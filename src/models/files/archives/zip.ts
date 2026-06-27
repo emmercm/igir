@@ -8,11 +8,13 @@ import async from 'async';
 import { CompressionMethod, TZWriter } from '../../../../packages/torrentzip/index.js';
 import type { CentralDirectoryFileHeader } from '../../../../packages/zip/index.js';
 import { ZipReader } from '../../../../packages/zip/index.js';
+import { logger } from '../../../console/logger.js';
 import type { ProgressCallback } from '../../../console/progressBar.js';
 import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
 import type { ZipFormatValue } from '../../options.js';
 import { ZipFormat } from '../../options.js';
@@ -65,7 +67,7 @@ export default class Zip extends Archive {
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<this>[]> {
     const entries = await this.zipReader.centralDirectoryFileHeaders();
 
@@ -85,7 +87,7 @@ export default class Zip extends Archive {
         let checksums: ChecksumProps = {};
         if (
           checksumBitmask & ~ChecksumBitmask.CRC32 ||
-          (forceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
+          (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
         ) {
           const entryStream = await entryFile.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
           let lastProgress = 0;
@@ -102,6 +104,12 @@ export default class Zip extends Archive {
           }
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
+
+        if (crc32 !== undefined && crc32 !== entryFile.uncompressedCrc32String()) {
+          logger.warn(
+            `${this.getFilePath()}: zip is invalid, the central directory file header for '${entryFile.fileNameResolved()}' has the CRC32 ${entryFile.uncompressedCrc32String()} but it should be ${crc32}`,
+          );
+        }
 
         return await ArchiveEntry.entryOf(
           {
@@ -148,11 +156,6 @@ export default class Zip extends Archive {
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    if (start > 0) {
-      // Can't start the stream at an uncompressed offset
-      return await super.extractEntryToStream(entryPath, callback, start);
-    }
-
     // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
     const entries = await this.zipReader.centralDirectoryFileHeaders();
     const entry = entries.find(
@@ -168,7 +171,12 @@ export default class Zip extends Archive {
     try {
       entryStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
     } catch (error) {
-      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
+      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
+        cause: error,
+      });
+    }
+    if (start > 0) {
+      entryStream = entryStream.pipe(new SkipBytesTransform(start));
     }
 
     try {
@@ -218,7 +226,8 @@ export default class Zip extends Archive {
       const pathLowerB = outputB.getEntryPath().toLowerCase();
       if (pathLowerA < pathLowerB) {
         return -1;
-      } else if (pathLowerA > pathLowerB) {
+      }
+      if (pathLowerA > pathLowerB) {
         return 1;
       }
       return 0;
@@ -256,6 +265,7 @@ export default class Zip extends Archive {
       } catch (error) {
         throw new Error(
           `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}': ${error}`,
+          { cause: error },
         );
       }
     }

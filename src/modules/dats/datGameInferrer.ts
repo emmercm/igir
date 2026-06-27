@@ -41,7 +41,7 @@ export default class DATGameInferrer extends Module {
    * Infer {@link Game}s from input files.
    */
   async infer(romFiles: File[]): Promise<DAT[]> {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferring DATs for ${IntlUtil.toLocaleString(romFiles.length)} ROM${romFiles.length === 1 ? '' : 's'}`,
     );
 
@@ -56,29 +56,29 @@ export default class DATGameInferrer extends Module {
         // `.filter()` rather than `.find()` because a file can be found in overlapping input paths,
         // therefore it should be counted in both
         .filter((inputPath) => filePath.startsWith(inputPath));
-      (matchedInputPaths.length > 0
-        ? matchedInputPaths
-        : [DATGameInferrer.DEFAULT_DAT_NAME]
-      ).forEach((inputPath) => {
+      const inputPathsToUse =
+        matchedInputPaths.length > 0 ? matchedInputPaths : [DATGameInferrer.DEFAULT_DAT_NAME];
+      for (const inputPath of inputPathsToUse) {
         if (map.has(inputPath)) {
           map.get(inputPath)?.push(file);
         } else {
           map.set(inputPath, [file]);
         }
-      });
+      }
       return map;
     }, new Map<string, File[]>());
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(inputPathsToRomFiles.size)} DAT${inputPathsToRomFiles.size === 1 ? '' : 's'}`,
     );
 
     const dats = await Promise.all(
-      [...inputPathsToRomFiles.entries()].map(
+      Array.from(
+        inputPathsToRomFiles,
         async ([inputPath, datRomFiles]) => await this.createDAT(inputPath, datRomFiles),
       ),
     );
 
-    this.progressBar.logTrace('done inferring DATs');
+    this.prefixedLogger.trace('done inferring DATs');
     return dats;
   }
 
@@ -140,7 +140,7 @@ export default class DATGameInferrer extends Module {
           dir2datSource: gameRomFiles
             .map((romFile) => romFile.getFilePath())
             .reduce(ArrayUtil.reduceUnique(), [])
-            .toSorted()
+            .toSorted((a, b) => a.localeCompare(b))
             .join(', '),
         });
       })
@@ -175,16 +175,17 @@ export default class DATGameInferrer extends Module {
     return files.map((file) => {
       let enrichedFile = file;
 
-      [
+      for (const checksumProps of [
         crc32Map.get(`${file.getCrc32()}|${file.getSize()}`),
         md5Map.get(file.getMd5() ?? ''),
         sha1Map.get(file.getSha1() ?? ''),
         sha256Map.get(file.getSha256() ?? ''),
-      ]
-        .filter((checksumProps) => checksumProps !== undefined)
-        .forEach((checksumProps) => {
-          enrichedFile = enrichedFile.withProps(checksumProps);
-        });
+      ]) {
+        if (checksumProps === undefined) {
+          continue;
+        }
+        enrichedFile = enrichedFile.withProps(checksumProps);
+      }
 
       return enrichedFile;
     });
@@ -207,14 +208,14 @@ export default class DATGameInferrer extends Module {
       return map;
     }, new Map<string, File[]>());
     return new Map(
-      [...crc32Map].map(([key, romFiles]) => {
+      Array.from(crc32Map, ([key, romFiles]) => {
         const checksums: ChecksumProps = {};
-        romFiles.forEach((romFile) => {
+        for (const romFile of romFiles) {
           checksums.crc32 = romFile.getCrc32() ?? checksums.crc32;
           checksums.md5 = romFile.getMd5() ?? checksums.md5;
           checksums.sha1 = romFile.getSha1() ?? checksums.sha1;
           checksums.sha256 = romFile.getSha256() ?? checksums.sha256;
-        });
+        }
         return [key, checksums];
       }),
     );
@@ -245,7 +246,7 @@ export default class DATGameInferrer extends Module {
   }
 
   private inferArchiveEntries(romFiles: File[]): [string, ArchiveEntry<Archive>[]][] {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferring games from archives from ${IntlUtil.toLocaleString(romFiles.length)} file${romFiles.length === 1 ? '' : 's'}`,
     );
 
@@ -262,12 +263,12 @@ export default class DATGameInferrer extends Module {
         return map;
       }, new Map<string, ArchiveEntry<Archive>[]>());
 
-    const results = [...archivePathsToArchiveEntries.values()].map((archiveEntries) => {
+    const results = Array.from(archivePathsToArchiveEntries.values(), (archiveEntries) => {
       const gameName = DATGameInferrer.getGameName(archiveEntries[0]);
       return [gameName, archiveEntries] satisfies [string, ArchiveEntry<Archive>[]];
     });
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(results.length)} games from archives`,
     );
     return results;
@@ -275,7 +276,7 @@ export default class DATGameInferrer extends Module {
 
   private async inferBinCueFiles(romFiles: File[]): Promise<[string, File[]][]> {
     const rawFiles = romFiles.filter((file) => !(file instanceof ArchiveEntry));
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferring games from cue files from ${IntlUtil.toLocaleString(rawFiles.length)} non-archive${rawFiles.length === 1 ? '' : 's'}`,
     );
 
@@ -313,7 +314,7 @@ export default class DATGameInferrer extends Module {
       )
     ).filter((result) => result !== undefined);
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(results.length)} games from cue files`,
     );
     return results;
@@ -321,7 +322,7 @@ export default class DATGameInferrer extends Module {
 
   private async inferGdiFiles(romFiles: File[]): Promise<[string, File[]][]> {
     const rawFiles = romFiles.filter((file) => !(file instanceof ArchiveEntry));
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferring games from gdi files from ${IntlUtil.toLocaleString(rawFiles.length)} non-archive${rawFiles.length === 1 ? '' : 's'}`,
     );
 
@@ -351,7 +352,7 @@ export default class DATGameInferrer extends Module {
                 .trim()
                 .split(/\r?\n/)
                 .slice(1)
-                .map((line) => line.split(' ')[4]);
+                .map((line) => line.split(' ', 5)[4]);
               const trackFiles = trackFilePaths
                 .map((trackFilePath) =>
                   path.join(path.dirname(gdiFile.getFilePath()), trackFilePath),
@@ -371,14 +372,14 @@ export default class DATGameInferrer extends Module {
       )
     ).filter((result) => result !== undefined);
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(results.length)} games from cue files`,
     );
     return results;
   }
 
   private inferRawFiles(romFiles: File[]): [string, File[]][] {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferring games from raw files from ${IntlUtil.toLocaleString(romFiles.length)} file${romFiles.length === 1 ? '' : 's'}`,
     );
 
@@ -413,9 +414,9 @@ export default class DATGameInferrer extends Module {
         return map;
       }, new Map<string, File[]>());
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(results.size)} games from raw files`,
     );
-    return [...results.entries()];
+    return [...results];
   }
 }

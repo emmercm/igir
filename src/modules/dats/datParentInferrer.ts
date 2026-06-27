@@ -145,16 +145,16 @@ export default class DATParentInferrer extends Module {
    */
   infer(dat: DAT): DAT {
     if (dat.hasParentCloneInfo() && !this.options.getDatIgnoreParentClone()) {
-      this.progressBar.logTrace(`${dat.getName()}: DAT has parent/clone info, skipping`);
+      this.prefixedLogger.trace(`${dat.getName()}: DAT has parent/clone info, skipping`);
       return dat;
     }
 
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no games to process`);
+      this.prefixedLogger.trace(`${dat.getName()}: no games to process`);
       return dat;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: inferring parents for ${IntlUtil.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_GROUPING_SIMILAR);
@@ -172,35 +172,35 @@ export default class DATParentInferrer extends Module {
       }
       return map;
     }, new Map<string, Game[]>());
-    const groupedGames = [...strippedNamesToGames.entries()]
+    const groupedGames = [...strippedNamesToGames]
       .toSorted((a, b) => a[0].localeCompare(b[0]))
       .map(([, games]) => games);
 
     const newGames = groupedGames.flatMap((games) => DATParentInferrer.electParent(games));
     const inferredDat = dat.withGames(newGames);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${inferredDat.getName()}: grouped to ${IntlUtil.toLocaleString(inferredDat.getParents().length)} parent${inferredDat.getParents().length === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace('done inferring parents');
+    this.prefixedLogger.trace('done inferring parents');
     return inferredDat;
   }
 
   private static stripGameRegionAndLanguage(name: string): string {
     let strippedName = name
       // ***** Regions *****
-      .replace(DATParentInferrer.REGION_CODES_REGEX, '')
-      .replace(DATParentInferrer.REGION_NAMES_REGEX, '')
-      .replace(DATParentInferrer.LATIN_AMERICA_REGEX, '');
-    Internationalization.REGION_REGEX.forEach((regex) => {
+      .replace(this.REGION_CODES_REGEX, '')
+      .replace(this.REGION_NAMES_REGEX, '')
+      .replace(this.LATIN_AMERICA_REGEX, '');
+    for (const regex of Internationalization.REGION_REGEX) {
       strippedName = strippedName.replace(regex, '');
-    });
+    }
     // ***** Languages *****
     return (
       strippedName
-        .replace(DATParentInferrer.LANGUAGES_REGEX, '')
+        .replace(this.LANGUAGES_REGEX, '')
         // ***** Cleanup *****
-        .replaceAll(DATParentInferrer.MULTI_SPACE_REGEX, ' ')
+        .replaceAll(this.MULTI_SPACE_REGEX, ' ')
         .trim()
     );
   }
@@ -209,128 +209,128 @@ export default class DATParentInferrer extends Module {
     return (
       name
         // ***** Retail types *****
-        .replace(DATParentInferrer.ALT_PAREN_REGEX, '')
-        .replace(DATParentInferrer.COLLECTORS_EDITION_REGEX, '')
-        .replace(DATParentInferrer.DIGITAL_RELEASE_REGEX, '')
-        .replace(DATParentInferrer.DISNEY_CLASSIC_REGEX, '')
-        .replace(DATParentInferrer.EVERCADE_REGEX, '')
-        .replace(DATParentInferrer.EXTRA_BOX_REGEX, '')
-        .replace(DATParentInferrer.EUROPEAN_VERSION_REGEX, '')
-        .replace(DATParentInferrer.FUKKOKUBAN_REGEX, '') // "reprint"
-        .replace(DATParentInferrer.GENTEIBAN_REGEX, '') // "limited edition"
-        .replace(DATParentInferrer.LIMITED_EDITION_REGEX, '')
-        .replace(DATParentInferrer.LIMITED_RUN_REGEX, '')
-        .replace(DATParentInferrer.LODGENET_REGEX, '')
-        .replace(DATParentInferrer.MADE_IN_REGEX, '')
-        .replace(DATParentInferrer.MAJOR_WAVE_REGEX, '')
-        .replace(DATParentInferrer.MIDWAY_CLASSICS_REGEX, '')
-        .replace(DATParentInferrer.PREMIUM_REGEX, '')
-        .replace(DATParentInferrer.PREVIEW_DISC_REGEX, '')
-        .replace(DATParentInferrer.QUBYTE_REGEX, '')
-        .replace(DATParentInferrer.RECALLED_REGEX, '')
-        .replace(DATParentInferrer.RENKABAN_REGEX, '') // "cheap edition"
-        .replace(DATParentInferrer.REPRINT_REGEX, '')
-        .replace(DATParentInferrer.RERELEASE_REGEX, '')
-        .replace(DATParentInferrer.RETRO_BIT_REGEX, '')
-        .replace(DATParentInferrer.REV_VERSION_REGEX, '')
-        .replace(DATParentInferrer.SEISANBAN_REGEX, '') // "production version"
-        .replace(DATParentInferrer.SHOTENBAN_REGEX, '') // "bookstore edition"
-        .replace(DATParentInferrer.SPECIAL_PACK_REGEX, '')
-        .replace(DATParentInferrer.STEAM_REGEX, '')
-        .replace(DATParentInferrer.SWITCH_ONLINE_REGEX, '')
-        .replace(DATParentInferrer.THE_BEST_REGEX, '')
-        .replace(DATParentInferrer.TAIOUBAN_REGEX, '') // "compatible version"
-        .replace(DATParentInferrer.TOKUBETSUBAN_REGEX, '') // "special edition"
-        .replace(DATParentInferrer.VIRTUAL_CONSOLE_REGEX, '')
+        .replace(this.ALT_PAREN_REGEX, '')
+        .replace(this.COLLECTORS_EDITION_REGEX, '')
+        .replace(this.DIGITAL_RELEASE_REGEX, '')
+        .replace(this.DISNEY_CLASSIC_REGEX, '')
+        .replace(this.EVERCADE_REGEX, '')
+        .replace(this.EXTRA_BOX_REGEX, '')
+        .replace(this.EUROPEAN_VERSION_REGEX, '')
+        .replace(this.FUKKOKUBAN_REGEX, '') // "reprint"
+        .replace(this.GENTEIBAN_REGEX, '') // "limited edition"
+        .replace(this.LIMITED_EDITION_REGEX, '')
+        .replace(this.LIMITED_RUN_REGEX, '')
+        .replace(this.LODGENET_REGEX, '')
+        .replace(this.MADE_IN_REGEX, '')
+        .replace(this.MAJOR_WAVE_REGEX, '')
+        .replace(this.MIDWAY_CLASSICS_REGEX, '')
+        .replace(this.PREMIUM_REGEX, '')
+        .replace(this.PREVIEW_DISC_REGEX, '')
+        .replace(this.QUBYTE_REGEX, '')
+        .replace(this.RECALLED_REGEX, '')
+        .replace(this.RENKABAN_REGEX, '') // "cheap edition"
+        .replace(this.REPRINT_REGEX, '')
+        .replace(this.RERELEASE_REGEX, '')
+        .replace(this.RETRO_BIT_REGEX, '')
+        .replace(this.REV_VERSION_REGEX, '')
+        .replace(this.SEISANBAN_REGEX, '') // "production version"
+        .replace(this.SHOTENBAN_REGEX, '') // "bookstore edition"
+        .replace(this.SPECIAL_PACK_REGEX, '')
+        .replace(this.STEAM_REGEX, '')
+        .replace(this.SWITCH_ONLINE_REGEX, '')
+        .replace(this.THE_BEST_REGEX, '')
+        .replace(this.TAIOUBAN_REGEX, '') // "compatible version"
+        .replace(this.TOKUBETSUBAN_REGEX, '') // "special edition"
+        .replace(this.VIRTUAL_CONSOLE_REGEX, '')
         // ***** Non-retail types *****
-        .replace(DATParentInferrer.DATE_REGEX, '') // YYYY-MM-DD
+        .replace(this.DATE_REGEX, '') // YYYY-MM-DD
         .replace(Game.AFTERMARKET_REGEX, '')
         .replace(Game.ALPHA_REGEX, '')
         .replace(Game.BETA_REGEX, '')
-        .replace(DATParentInferrer.BUILD_REGEX, '')
-        .replace(DATParentInferrer.BUNG_PAREN_REGEX, '')
+        .replace(this.BUILD_REGEX, '')
+        .replace(this.BUNG_PAREN_REGEX, '')
         .replace(Game.DEBUG_REGEX, '')
         .replace(Game.DEMO_REGEX, '')
         .replace(Game.HACK_PAREN_REGEX, '')
         .replace(Game.HOMEBREW_REGEX, '')
-        .replace(DATParentInferrer.KIOSK_REGEX, '')
-        .replace(DATParentInferrer.NOT_FOR_RESALE_REGEX, '')
-        .replace(DATParentInferrer.PUBLIC_DOMAIN_REGEX, '') // "public domain"
+        .replace(this.KIOSK_REGEX, '')
+        .replace(this.NOT_FOR_RESALE_REGEX, '')
+        .replace(this.PUBLIC_DOMAIN_REGEX, '') // "public domain"
         .replace(Game.PIRATED_PAREN_REGEX, '')
         .replace(Game.PROGRAM_REGEX, '')
         .replace(Game.PROTOTYPE_REGEX, '')
         .replace(Game.SAMPLE_REGEX, '')
-        .replace(DATParentInferrer.SPACEWORLD_REGEX, '')
+        .replace(this.SPACEWORLD_REGEX, '')
         .replace(Game.UNLICENSED_REGEX, '')
-        .replace(DATParentInferrer.PAREN_VERSION_REGEX, '')
-        .replace(DATParentInferrer.PAREN_VERSION_LONG_REGEX, '')
+        .replace(this.PAREN_VERSION_REGEX, '')
+        .replace(this.PAREN_VERSION_LONG_REGEX, '')
         // ***** Good Tools *****
-        .replace(DATParentInferrer.VERIFIED_REGEX, '')
-        .replace(DATParentInferrer.ALT_BRACKET_REGEX, '')
+        .replace(this.VERIFIED_REGEX, '')
+        .replace(this.ALT_BRACKET_REGEX, '')
         .replace(Game.BAD_REGEX, '')
-        .replace(DATParentInferrer.BUNG_BRACKET_REGEX, '')
-        .replace(DATParentInferrer.BAD_CHECKSUM_REGEX, '')
+        .replace(this.BUNG_BRACKET_REGEX, '')
+        .replace(this.BAD_CHECKSUM_REGEX, '')
         .replace(Game.FIXED_REGEX, '')
         .replace(Game.HACK_BRACKET_REGEX, '')
-        .replace(DATParentInferrer.MIA_STRIP_REGEX, '')
+        .replace(this.MIA_STRIP_REGEX, '')
         .replace(Game.OVERDUMP_REGEX, '')
-        .replace(DATParentInferrer.PENDING_DUMP_REGEX, '')
+        .replace(this.PENDING_DUMP_REGEX, '')
         .replace(Game.PIRATED_BRACKET_REGEX, '')
         .replace(Game.TRAINER_REGEX, '')
         .replace(Game.TRANSLATED_REGEX, '')
-        .replace(DATParentInferrer.BAD_DUMP_REGEX, '')
-        .replace(DATParentInferrer.WXN_REGEX, '')
-        .replace(DATParentInferrer.GOOD_SMS_REGEX, '') // GoodSMS
-        .replace(DATParentInferrer.GOOD_GBA_BRACKET_REGEX, '') // GoodGBA
-        .replace(DATParentInferrer.GOOD_GBA_PAREN_REGEX, '') // GoodGBA
-        .replace(DATParentInferrer.GOOD_GBX_REGEX, '') // GoodGBx
-        .replace(DATParentInferrer.GOOD_GEN_PAREN_REGEX, '') // GoodGen
-        .replace(DATParentInferrer.GOOD_GEN_BRACKET_REGEX, '') // GoodGen
-        .replace(DATParentInferrer.GOOD_NES_PAREN_REGEX, '') // GoodNES
-        .replace(DATParentInferrer.GOOD_NES_BRACKET_REGEX, '') // GoodNES
-        .replace(DATParentInferrer.GOOD_SNES_REGEX, '') // GoodSNES
-        .replace(DATParentInferrer.GOOD_N64_REGEX, '') // GoodN64
+        .replace(this.BAD_DUMP_REGEX, '')
+        .replace(this.WXN_REGEX, '')
+        .replace(this.GOOD_SMS_REGEX, '') // GoodSMS
+        .replace(this.GOOD_GBA_BRACKET_REGEX, '') // GoodGBA
+        .replace(this.GOOD_GBA_PAREN_REGEX, '') // GoodGBA
+        .replace(this.GOOD_GBX_REGEX, '') // GoodGBx
+        .replace(this.GOOD_GEN_PAREN_REGEX, '') // GoodGen
+        .replace(this.GOOD_GEN_BRACKET_REGEX, '') // GoodGen
+        .replace(this.GOOD_NES_PAREN_REGEX, '') // GoodNES
+        .replace(this.GOOD_NES_BRACKET_REGEX, '') // GoodNES
+        .replace(this.GOOD_SNES_REGEX, '') // GoodSNES
+        .replace(this.GOOD_N64_REGEX, '') // GoodN64
         // ***** TOSEC *****
-        .replace(DATParentInferrer.TOSEC_REGION_REGEX, '') // region
-        .replace(DATParentInferrer.TOSEC_LANGUAGE_REGEX, '') // language
-        .replace(DATParentInferrer.TOSEC_DEMO_REGEX, '') // demo
-        .replace(DATParentInferrer.TOSEC_DATE_REGEX, '') // YYYY-MM-DD
-        .replace(DATParentInferrer.TOSEC_VIDEO_REGEX, '') // video
-        .replace(DATParentInferrer.TOSEC_MULTI_LANG_REGEX, '') // language
-        .replace(DATParentInferrer.TOSEC_COPYRIGHT_REGEX, '') // copyright
-        .replace(DATParentInferrer.TOSEC_DEVELOPMENT_REGEX, '') // development
-        .replace(DATParentInferrer.TOSEC_DUMP_FLAGS_REGEX, '')
-        .replace(DATParentInferrer.TOSEC_INLINE_VERSION_REGEX, '$1 $2')
+        .replace(this.TOSEC_REGION_REGEX, '') // region
+        .replace(this.TOSEC_LANGUAGE_REGEX, '') // language
+        .replace(this.TOSEC_DEMO_REGEX, '') // demo
+        .replace(this.TOSEC_DATE_REGEX, '') // YYYY-MM-DD
+        .replace(this.TOSEC_VIDEO_REGEX, '') // video
+        .replace(this.TOSEC_MULTI_LANG_REGEX, '') // language
+        .replace(this.TOSEC_COPYRIGHT_REGEX, '') // copyright
+        .replace(this.TOSEC_DEVELOPMENT_REGEX, '') // development
+        .replace(this.TOSEC_DUMP_FLAGS_REGEX, '')
+        .replace(this.TOSEC_INLINE_VERSION_REGEX, '$1 $2')
         // ***** Specific cases *****
-        .replace(DATParentInferrer.YEAR_ABBREVIATION_REGEX, '$1') // year abbreviations
+        .replace(this.YEAR_ABBREVIATION_REGEX, '$1') // year abbreviations
         // ***** Console-specific *****
         // Nintendo - Game Boy
-        .replace(DATParentInferrer.SGB_ENHANCED_REGEX, '')
+        .replace(this.SGB_ENHANCED_REGEX, '')
         // Nintendo - Game Boy Color
-        .replace(DATParentInferrer.GB_COMPATIBLE_REGEX, '')
+        .replace(this.GB_COMPATIBLE_REGEX, '')
         // Nintendo - GameCube
-        .replace(DATParentInferrer.GAMECUBE_REGEX, '')
+        .replace(this.GAMECUBE_REGEX, '')
         // Nintendo - Super Nintendo Entertainment System
-        .replace(DATParentInferrer.NINTENDO_POWER_REGEX, '') // "Nintendo Power"
+        .replace(this.NINTENDO_POWER_REGEX, '') // "Nintendo Power"
         // Sega - Dreamcast
-        .replace(DATParentInferrer.DREAMCAST_BOXCODE_REGEX, '') // TOSEC boxcode
-        .replace(DATParentInferrer.DREAMCAST_RING_CODE_REGEX, '') // TOSEC ring code
-        .replaceAll(DATParentInferrer.DREAMCAST_TOSEC_REGEX, '') // TOSEC
-        .replace(DATParentInferrer.FOR_DREAMCAST_REGEX, '')
+        .replace(this.DREAMCAST_BOXCODE_REGEX, '') // TOSEC boxcode
+        .replace(this.DREAMCAST_RING_CODE_REGEX, '') // TOSEC ring code
+        .replaceAll(this.DREAMCAST_TOSEC_REGEX, '') // TOSEC
+        .replace(this.FOR_DREAMCAST_REGEX, '')
         // Sega - Mega Drive / Genesis
-        .replace(DATParentInferrer.MEGAPLAY_REGEX, '') // "MegaPlay version"
+        .replace(this.MEGAPLAY_REGEX, '') // "MegaPlay version"
         // Sega - Sega/Mega CD
-        .replace(DATParentInferrer.RING_CODE_STRIP_REGEX, '')
+        .replace(this.RING_CODE_STRIP_REGEX, '')
         // Sony - PlayStation 1
-        .replace(DATParentInferrer.EDC_REGEX, '') // copy protection
-        .replace(DATParentInferrer.PSONE_BOOKS_REGEX, '')
-        .replace(DATParentInferrer.PS1_SERIAL_REGEX, '')
+        .replace(this.EDC_REGEX, '') // copy protection
+        .replace(this.PSONE_BOOKS_REGEX, '')
+        .replace(this.PS1_SERIAL_REGEX, '')
         // Sony - PlayStation 3
-        .replace(DATParentInferrer.PS3_BIOS_REGEX, '') // BIOS
+        .replace(this.PS3_BIOS_REGEX, '') // BIOS
         // Sony - PlayStation Portable
-        .replace(DATParentInferrer.PSP_SERIAL_REGEX, '')
+        .replace(this.PSP_SERIAL_REGEX, '')
         // ***** Cleanup *****
-        .replaceAll(DATParentInferrer.MULTI_SPACE_REGEX, ' ')
+        .replaceAll(this.MULTI_SPACE_REGEX, ' ')
         .trim()
     );
     // ***** EXPLICITLY LEFT ALONE *****
@@ -343,7 +343,7 @@ export default class DATParentInferrer extends Module {
     // Index games by their name without the region and language
     const strippedNamesToGames = games.reduce((map, game) => {
       let strippedGameName = game.getName();
-      strippedGameName = DATParentInferrer.stripGameRegionAndLanguage(strippedGameName);
+      strippedGameName = this.stripGameRegionAndLanguage(strippedGameName);
       if (!map.has(strippedGameName)) {
         // If there is a conflict after stripping the region & language, then we know the two games
         // only differ by region & language. Assume the first one seen in the DAT should be the
@@ -358,8 +358,8 @@ export default class DATParentInferrer extends Module {
       // Retail games do not have variants such as "(Demo)", so if we fully strip the game name and
       //  find a match, then we have reasonable confidence that match is this game's parent.
       let strippedGameName = game.getName();
-      strippedGameName = DATParentInferrer.stripGameRegionAndLanguage(strippedGameName);
-      strippedGameName = DATParentInferrer.stripGameVariants(strippedGameName);
+      strippedGameName = this.stripGameRegionAndLanguage(strippedGameName);
+      strippedGameName = this.stripGameVariants(strippedGameName);
       const retailParent = strippedNamesToGames.get(strippedGameName);
       if (retailParent) {
         if (retailParent.hashCode() === game.hashCode()) {

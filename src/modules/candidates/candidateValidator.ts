@@ -27,11 +27,11 @@ export default class CandidateValidator extends Module {
     }
 
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to validate`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to validate`);
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: validating candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: validating candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
     this.progressBar.resetProgress(candidates.length);
 
@@ -40,28 +40,28 @@ export default class CandidateValidator extends Module {
       return conflictedOutputPaths;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: done validating candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: done validating candidates`);
     return [];
   }
 
   private validateUniqueOutputPaths(dat: DAT, candidates: WriteCandidate[]): WriteCandidate[] {
     const outputPathsToCandidates = candidates.reduce((map, candidate) => {
-      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         const key = romWithFiles.getOutputFile().getFilePath();
         if (map.has(key)) {
           map.get(key)?.push(candidate);
         } else {
           map.set(key, [candidate]);
         }
-      });
+      }
       return map;
     }, new Map<string, WriteCandidate[]>());
 
-    return [...outputPathsToCandidates.entries()]
+    return [...outputPathsToCandidates]
       .filter(([outputPath, candidates]) => {
         const uniqueCandidates = candidates
           .filter(ArrayUtil.filterUniqueMapped((candidate) => candidate.getGame()))
-          .toSorted();
+          .toSorted((a, b) => a.getName().localeCompare(b.getName()));
         if (uniqueCandidates.length <= 1) {
           return false;
         }
@@ -81,10 +81,10 @@ export default class CandidateValidator extends Module {
         }
 
         let message = `${dat.getName()}: multiple games writing to the same output path: ${outputPath}`;
-        uniqueCandidates.forEach((candidate) => {
+        for (const candidate of uniqueCandidates) {
           message += `\n  ${candidate.getName()}`;
-        });
-        this.progressBar.logError(message);
+        }
+        this.prefixedLogger.error(message);
         return true;
       })
       .flatMap(([, candidates]) => candidates)

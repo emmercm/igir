@@ -46,7 +46,7 @@ export default class CandidateExtensionCorrector extends Module {
    */
   async correct(dat: DAT, candidates: WriteCandidate[]): Promise<WriteCandidate[]> {
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to correct extensions for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to correct extensions for`);
       return candidates;
     }
 
@@ -54,11 +54,11 @@ export default class CandidateExtensionCorrector extends Module {
       .flatMap((candidate) => candidate.getRomsWithFiles())
       .filter((romWithFiles) => this.romNeedsCorrecting(romWithFiles)).length;
     if (romsThatNeedCorrecting === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no output files need their extension corrected`);
+      this.prefixedLogger.trace(`${dat.getName()}: no output files need their extension corrected`);
       return candidates;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${dat.getName()}: correcting ${IntlUtil.toLocaleString(romsThatNeedCorrecting)} output file extension${romsThatNeedCorrecting === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_EXTENSION_CORRECTION);
@@ -66,7 +66,7 @@ export default class CandidateExtensionCorrector extends Module {
 
     const correctedCandidates = await this.correctExtensions(dat, candidates);
 
-    this.progressBar.logTrace(`${dat.getName()}: done correcting output file extensions`);
+    this.prefixedLogger.trace(`${dat.getName()}: done correcting output file extensions`);
     return correctedCandidates;
   }
 
@@ -163,7 +163,7 @@ export default class CandidateExtensionCorrector extends Module {
 
     await this.readerSemaphore.runExclusive(async () => {
       this.progressBar.incrementInProgress();
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: ${candidate.getName()}: correcting ROM extension for: ${romWithFiles
           .getInputFile()
           .toString()}`,
@@ -179,12 +179,12 @@ export default class CandidateExtensionCorrector extends Module {
           romWithFiles.getInputFile(),
         );
         if (correctedRomName === undefined) {
-          this.progressBar.logTrace(
+          this.prefixedLogger.trace(
             `${dat.getName()}: ${candidate.getName()}: didn't correct ROM extension`,
           );
         } else {
           correctedRom = correctedRom.withName(correctedRomName);
-          this.progressBar.logTrace(
+          this.prefixedLogger.trace(
             `${dat.getName()}: ${candidate.getName()}: corrected ROM extension to: ${correctedRomName}`,
           );
         }
@@ -208,7 +208,7 @@ export default class CandidateExtensionCorrector extends Module {
     try {
       fileSignature = await this.fileFactory.signatureFrom(inputFile);
     } catch (error) {
-      this.progressBar.logError(
+      this.prefixedLogger.error(
         `${dat.getName()}: failed to correct file extension for '${inputFile.toString()}': ${error}`,
       );
     }

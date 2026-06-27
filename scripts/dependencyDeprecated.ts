@@ -59,8 +59,8 @@ function formatAge(date: Date): string {
 const flaggedDependencies = Object.entries(packageJson)
   .filter(([dependencyType]) => dependencyTypes.has(dependencyType))
   .map(([dependencyType, dependencies]) => {
-    const flagged = Object.entries(dependencies as Record<string, string>)
-      .map(([depPackageName, _]): [string, string] | undefined => {
+    const flagged = Object.keys(dependencies as Record<string, string>)
+      .map((depPackageName): [string, string] | undefined => {
         const depPackageVersion = 'latest';
         const depPackageNameVersion = `${depPackageName}@${depPackageVersion}`;
 

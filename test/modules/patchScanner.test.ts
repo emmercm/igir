@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import FileCache from '../../src/cache/fileCache.js';
-import Logger from '../../src/console/logger.js';
-import { LogLevel } from '../../src/console/logLevel.js';
 import FileFactory from '../../src/factories/fileFactory.js';
 import Temp from '../../src/globals/temp.js';
 import Options from '../../src/models/options.js';
@@ -17,7 +14,7 @@ function createPatchScanner(patch: string[], patchExclude: string[] = []): Patch
   return new PatchScanner(
     new Options({ patch, patchExclude }),
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), new Logger(LogLevel.NEVER, new stream.PassThrough())),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   );
 }

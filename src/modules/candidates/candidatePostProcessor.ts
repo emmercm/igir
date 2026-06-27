@@ -24,11 +24,11 @@ export default class CandidatePostProcessor extends Module {
    */
   process(dat: DAT, candidates: WriteCandidate[]): WriteCandidate[] {
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to post-process`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to post-process`);
       return candidates;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: processing candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: processing candidates`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_GENERATING);
     this.progressBar.resetProgress(candidates.length);
 
@@ -50,7 +50,7 @@ export default class CandidatePostProcessor extends Module {
       this.postProcessCandidate(dat, candidate, outputFileBasenames),
     );
 
-    this.progressBar.logTrace(`${dat.getName()}: done processing candidates`);
+    this.prefixedLogger.trace(`${dat.getName()}: done processing candidates`);
     return processedCandidates;
   }
 

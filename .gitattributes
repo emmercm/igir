@@ -1,4 +1,6 @@
 # Stop `core.autocrlf true`
 test/fixtures/roms/**  binary
+*.bin  binary
 *.cue  text eol=lf
 *.gdi  text eol=crlf
+*.raw  binary

@@ -25,13 +25,13 @@ export default class CandidateMergeSplitValidator extends Module {
    */
   validate(dat: DAT, candidates: WriteCandidate[]): string[] {
     if (candidates.length === 0) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${dat.getName()}: no candidates to validate merged & split ROM sets for`,
       );
       return [];
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: validating merged & split ROM sets`);
+    this.prefixedLogger.trace(`${dat.getName()}: validating merged & split ROM sets`);
     this.progressBar.setSymbol(ProgressBarSymbol.CANDIDATE_VALIDATING);
     this.progressBar.resetProgress(candidates.length);
 
@@ -87,21 +87,21 @@ export default class CandidateMergeSplitValidator extends Module {
               return deviceGame.getName();
             })
             .filter((deviceGameName) => deviceGameName !== undefined)
-            .toSorted();
+            .toSorted((a, b) => a.localeCompare(b));
           for (const missingDeviceGame of missingDeviceGames) {
             missingDependencies.push(missingDeviceGame);
           }
         }
 
         if (missingDependencies.length > 0) {
-          this.progressBar.logWarn(
+          this.prefixedLogger.warn(
             `${dat.getName()}: ${game.getName()}: missing dependent ROM set${missingDependencies.length === 1 ? '' : 's'}: ${missingDependencies.join(', ')}`,
           );
         }
         return missingDependencies;
       });
 
-    this.progressBar.logTrace(`${dat.getName()}: done validating merged & split ROM sets`);
+    this.prefixedLogger.trace(`${dat.getName()}: done validating merged & split ROM sets`);
     return missingGames;
   }
 }

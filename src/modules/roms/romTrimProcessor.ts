@@ -48,11 +48,11 @@ export default class ROMTrimProcessor extends Module {
       this.fileNeedsProcessing(inputFile),
     ).length;
     if (filesThatNeedProcessing === 0) {
-      this.progressBar.logTrace('no ROMs can be trimmed');
+      this.prefixedLogger.trace('no ROMs can be trimmed');
       return inputRomFiles;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `processing trimming in ${IntlUtil.toLocaleString(inputRomFiles.length)} ROM${inputRomFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setSymbol(ProgressBarSymbol.ROM_TRIMMING_DETECTION);
@@ -74,7 +74,7 @@ export default class ROMTrimProcessor extends Module {
       try {
         fileWithTrimming = await this.getFile(inputFile, childBar);
       } catch (error) {
-        this.progressBar.logError(
+        this.prefixedLogger.error(
           `${inputFile.toString()}: failed to process ROM trimming: ${error}`,
         );
         fileWithTrimming = inputFile;
@@ -89,11 +89,11 @@ export default class ROMTrimProcessor extends Module {
     const trimmedRomsCount = parsedFiles.filter(
       (romFile) => romFile.getPaddings().length > 0,
     ).length;
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `found ${IntlUtil.toLocaleString(trimmedRomsCount)} trimmed ROM${trimmedRomsCount === 1 ? '' : 's'}`,
     );
 
-    this.progressBar.logTrace('done processing file trimming');
+    this.prefixedLogger.trace('done processing file trimming');
     return parsedFiles;
   }
 
@@ -121,12 +121,8 @@ export default class ROMTrimProcessor extends Module {
       return false;
     }
 
-    if (inputFile.getSize() === 0 || (inputFile.getSize() & (inputFile.getSize() - 1)) === 0) {
-      // Is a power of two, so it isn't trimmed
-      return false;
-    }
-
-    return true;
+    // Is a power of two, so it isn't trimmed
+    return !(inputFile.getSize() === 0 || (inputFile.getSize() & (inputFile.getSize() - 1)) === 0);
   }
 
   private async getFile(inputFile: File, progressBar: ProgressBar): Promise<File> {

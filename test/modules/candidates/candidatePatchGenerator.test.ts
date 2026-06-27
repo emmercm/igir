@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../src/cache/fileCache.js';
-import Logger from '../../../src/console/logger.js';
-import { LogLevel } from '../../../src/console/logLevel.js';
 import FileFactory from '../../../src/factories/fileFactory.js';
 import type DAT from '../../../src/models/dats/dat.js';
 import Game from '../../../src/models/dats/game.js';
@@ -31,8 +28,6 @@ import ROMIndexer from '../../../src/modules/roms/romIndexer.js';
 import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 // Run DATGameInferrer, but condense all DATs down to one
 async function buildInferredDat(options: Options, romFiles: File[]): Promise<DAT> {
   const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
@@ -53,14 +48,14 @@ async function runPatchCandidateGenerator(
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(dat, indexedRomFiles);
 
   const patches = await new PatchScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
@@ -92,7 +87,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -113,7 +108,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -148,7 +143,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -166,19 +161,19 @@ describe('with inferred DATs', () => {
     expect(patchedCandidates.length).toBeGreaterThan(0);
 
     // Then - patched candidates' output files should be ArchiveEntry (zip mode)
-    patchedCandidates.forEach((candidate) => {
-      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const candidate of patchedCandidates) {
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         expect(romWithFiles.getOutputFile()).toBeInstanceOf(ArchiveEntry);
-      });
-    });
+      }
+    }
 
     // Then - no input file should be an ArchiveFile (they should remain as-is or be
     // converted to ArchiveEntry)
-    candidates.forEach((candidate) => {
-      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const candidate of candidates) {
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         expect(romWithFiles.getInputFile()).not.toBeInstanceOf(ArchiveFile);
-      });
-    });
+      }
+    }
   });
 
   it('should only create patch candidates with relevant patches', async () => {
@@ -191,7 +186,7 @@ describe('with inferred DATs', () => {
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.cpus().length),
     ).scan();
     const dat = await buildInferredDat(options, romFiles);
@@ -257,11 +252,11 @@ describe('with archive file inputs', () => {
     // Then no patched candidates should be added because ArchiveFile inputs
     // cannot be patched without zipping
     expect(result).toHaveLength(1);
-    result.forEach((c) => {
-      c.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const c of result) {
+      for (const romWithFiles of c.getRomsWithFiles()) {
         expect(romWithFiles.getInputFile().getPatch()).toBeUndefined();
-      });
-    });
+      }
+    }
   });
 
   it('should create patch candidates for archive inputs when zipping', async () => {
@@ -303,8 +298,8 @@ describe('with archive file inputs', () => {
     );
     expect(patchedCandidates.length).toEqual(1);
 
-    patchedCandidates.forEach((writeCandidate) => {
-      writeCandidate.getRomsWithFiles().forEach((romWithFiles) => {
+    for (const writeCandidate of patchedCandidates) {
+      for (const romWithFiles of writeCandidate.getRomsWithFiles()) {
         // and patched candidates' input files should be converted from ArchiveFile to ArchiveEntry
         expect(romWithFiles.getInputFile()).toBeInstanceOf(ArchiveEntry);
 
@@ -312,8 +307,8 @@ describe('with archive file inputs', () => {
         const outputFile = romWithFiles.getOutputFile();
         expect(outputFile).toBeInstanceOf(ArchiveEntry);
         expect((outputFile as ArchiveEntry<Zip>).getArchive()).toBeInstanceOf(Zip);
-      });
-    });
+      }
+    }
   });
 });
 
@@ -328,36 +323,36 @@ describe('with explicit DATs', () => {
       await new DATScanner(
         options,
         new ProgressBarFake(),
-        new FileFactory(new FileCache(), LOGGER),
+        new FileFactory(new FileCache()),
         new MappableSemaphore(os.availableParallelism()),
       ).scan()
     )[0];
     const romFiles = await new ROMScanner(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
 
     // And pre-assert all Game names and ROM names have path separators in them
     const totalRoms = dat.getGames().reduce((gameSum, game) => gameSum + game.getRoms().length, 0);
     expect(totalRoms).toBeGreaterThan(0);
-    dat.getGames().forEach((game) => {
+    for (const game of dat.getGames()) {
       expect(/[\\/]/.exec(game.getName())).toBeTruthy();
-      game.getRoms().forEach((rom) => {
+      for (const rom of game.getRoms()) {
         expect(/[\\/]/.exec(rom.getName())).toBeTruthy();
-      });
-    });
+      }
+    }
 
     // When
     const candidates = await runPatchCandidateGenerator(options, dat, romFiles);
 
     // Then all Game names and ROM names should maintain their path separators
-    candidates.forEach((candidate) => {
+    for (const candidate of candidates) {
       expect(/[\\/]/.exec(candidate.getGame().getName())).toBeTruthy();
-      candidate.getRomsWithFiles().forEach((romWithFiles) => {
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         expect(/[\\/]/.exec(romWithFiles.getRom().getName())).toBeTruthy();
-      });
-    });
+      }
+    }
   });
 });

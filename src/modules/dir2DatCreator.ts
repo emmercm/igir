@@ -32,11 +32,11 @@ export default class Dir2DatCreator extends Module {
     }
 
     if (candidates.length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no candidates to create dir2dat for`);
+      this.prefixedLogger.trace(`${dat.getName()}: no candidates to create dir2dat for`);
       return undefined;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: writing dir2dat`);
+    this.prefixedLogger.trace(`${dat.getName()}: writing dir2dat`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.resetProgress(1);
 
@@ -58,7 +58,7 @@ export default class Dir2DatCreator extends Module {
       }
       return map;
     }, new Map<Game, WriteCandidate[]>());
-    const gamesFromCandidates = [...gamesToCandidates.entries()].map(([game, candidates]) => {
+    const gamesFromCandidates = Array.from(gamesToCandidates, ([game, candidates]) => {
       const roms = candidates
         .at(0)
         ?.getRomsWithFiles()
@@ -79,10 +79,10 @@ export default class Dir2DatCreator extends Module {
     const dir2dat = new LogiqxDAT({ header, games: gamesFromCandidates });
     const dir2datContents = dir2dat.toXmlDat();
     const dir2datPath = path.join(dir2datDir, dir2dat.getFilename());
-    this.progressBar.logInfo(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);
+    this.prefixedLogger.info(`${dir2dat.getName()}: creating dir2dat '${dir2datPath}'`);
     await FsUtil.writeFile(dir2datPath, dir2datContents);
 
-    this.progressBar.logTrace(`${dir2dat.getName()}: done writing dir2dat`);
+    this.prefixedLogger.trace(`${dir2dat.getName()}: done writing dir2dat`);
     return dir2datPath;
   }
 }

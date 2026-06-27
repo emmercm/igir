@@ -859,7 +859,7 @@ describe('should respect "--dir-dat-mirror"', () => {
   ])('option is true: %s', async (datPath, expectedPath) => {
     const options = new Options({
       commands: ['copy'],
-      dat: [datPath.split(/[\\/]/)[0]],
+      dat: [datPath.split(/[\\/]/, 1)[0]],
       output: os.devNull,
       dirDatMirror: true,
     });
@@ -1376,9 +1376,9 @@ describe('outputTokens.json', () => {
   it('should adhere to its schema', () => {
     const ajv = new Ajv();
     const validate = ajv.compile(outputTokensSchema);
-    const valid = validate(outputTokensData);
+    const isValid = validate(outputTokensData);
     expect(validate.errors).toBeNull();
-    expect(valid).toBe(true);
+    expect(isValid).toBe(true);
   });
 });
 

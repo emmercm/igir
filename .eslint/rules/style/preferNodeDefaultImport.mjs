@@ -30,7 +30,7 @@ export default {
     fixable: 'code',
   },
   create(context) {
-    const sourceCode = context.getSourceCode();
+    const sourceCode = context.sourceCode;
     return {
       ImportDeclaration(node) {
         if (node.importKind === 'type') {

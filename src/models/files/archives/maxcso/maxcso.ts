@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import maxcso, { MaxcsoBinaryPreference } from 'maxcso';
 
+import { logger } from '../../../../console/logger.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumBitmaskValue, ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums from '../../fileChecksums.js';
@@ -31,7 +32,7 @@ export default abstract class Maxcso extends Archive {
   async getArchiveEntries(
     checksumBitmask: ChecksumBitmaskValue,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<Archive>[]> {
     const entryPath = `${path.parse(this.getFilePath()).name}.iso`;
     const size = (await maxcso.header(this.getFilePath())).uncompressedSize;
@@ -43,7 +44,7 @@ export default abstract class Maxcso extends Archive {
     // Read the CRC32 from maxcso if needed
     let uncompressedCrc32: string | undefined;
     if (
-      !forceChecksumCalculation &&
+      !shouldForceChecksumCalculation &&
       (checksumBitmask === ChecksumBitmask.NONE || checksumBitmask & ChecksumBitmask.CRC32)
     ) {
       uncompressedCrc32 = await maxcso.uncompressedCrc32({
@@ -56,13 +57,19 @@ export default abstract class Maxcso extends Archive {
     let checksums: ChecksumProps = {};
     if (
       checksumBitmask & ~ChecksumBitmask.CRC32 ||
-      (forceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
+      (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
     ) {
       checksums = await this.extractEntryToStream('', async (readable) => {
         return await FileChecksums.hashStream(readable, checksumBitmask, callback);
       });
     }
     const { crc32, ...checksumsWithoutCrc } = checksums;
+
+    if (crc32 !== undefined && crc32 !== uncompressedCrc32) {
+      logger.warn(
+        `${this.getFilePath()}: archive is invalid, maxcso returned the CRC32 ${uncompressedCrc32} but it should be ${crc32}`,
+      );
+    }
 
     return [
       await ArchiveEntry.entryOf(

@@ -61,7 +61,7 @@ export default class DATScanner extends Scanner {
    * Scan files and parse {@link DAT}s.
    */
   async scan(): Promise<DAT[]> {
-    this.progressBar.logTrace('scanning DAT files');
+    this.prefixedLogger.trace('scanning DAT files');
     this.progressBar.setSymbol(ProgressBarSymbol.FILE_SCANNING);
     this.progressBar.resetProgress(0);
 
@@ -71,12 +71,12 @@ export default class DATScanner extends Scanner {
     if (datFilePaths.length === 0) {
       return [];
     }
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `found ${IntlUtil.toLocaleString(datFilePaths.length)} DAT file${datFilePaths.length === 1 ? '' : 's'}`,
     );
     this.progressBar.resetProgress(datFilePaths.length);
 
-    this.progressBar.logTrace('enumerating DAT archives');
+    this.prefixedLogger.trace('enumerating DAT archives');
     const datFiles = await this.getUniqueFilesFromPaths(datFilePaths, ChecksumBitmask.CRC32);
     this.progressBar.resetProgress(datFiles.length);
 
@@ -84,7 +84,7 @@ export default class DATScanner extends Scanner {
     this.progressBar.resetProgress(downloadedDats.length);
     const parsedDats = await this.parseDatFiles(downloadedDats);
 
-    this.progressBar.logTrace('done scanning DAT files');
+    this.prefixedLogger.trace('done scanning DAT files');
     return parsedDats;
   }
 
@@ -94,7 +94,7 @@ export default class DATScanner extends Scanner {
       return datFiles;
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `downloading ${IntlUtil.toLocaleString(datUrlFiles.length)} DAT${datUrlFiles.length === 1 ? '' : 's'} from URL${datUrlFiles.length === 1 ? '' : 's'}`,
     );
     this.progressBar.setName('Downloading DATs');
@@ -103,10 +103,10 @@ export default class DATScanner extends Scanner {
     return (
       await async.mapLimit(datFiles, Defaults.MAX_FS_THREADS, async (datFile: File) => {
         try {
-          this.progressBar.logTrace(`${datFile.toString()}: downloading`);
+          this.prefixedLogger.trace(`${datFile.toString()}: downloading`);
           // TODO(cemmer): these never get deleted?
           const downloadedDatFile = await datFile.downloadToTempPath();
-          this.progressBar.logTrace(
+          this.prefixedLogger.trace(
             `${datFile.toString()}: downloaded to '${downloadedDatFile.toString()}'`,
           );
           return await this.getFilesFromPaths(
@@ -122,7 +122,7 @@ export default class DATScanner extends Scanner {
 
   // Parse each file into a DAT
   private async parseDatFiles(datFiles: File[]): Promise<DAT[]> {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `parsing ${IntlUtil.toLocaleString(datFiles.length)} DAT file${datFiles.length === 1 ? '' : 's'}`,
     );
     if (datFiles.length === 0) {
@@ -144,7 +144,7 @@ export default class DATScanner extends Scanner {
         try {
           dat = await this.parseDatFile(datFile);
         } catch (error) {
-          this.progressBar.logWarn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
+          this.prefixedLogger.warn(`${datFile.toString()}: failed to parse DAT file: ${error}`);
         } finally {
           childBar.delete();
         }
@@ -214,7 +214,7 @@ export default class DATScanner extends Scanner {
       .getGames()
       .flatMap((game) => game.getRoms())
       .reduce((sum, rom) => sum + rom.getSize(), 0);
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${datFile.toString()}: ${FsUtil.sizeReadable(size)} of ${IntlUtil.toLocaleString(dat.getGames().length)} game${dat.getGames().length === 1 ? '' : 's'}, ${IntlUtil.toLocaleString(dat.getParents().length)} parent${dat.getParents().length === 1 ? '' : 's'} parsed`,
     );
 
@@ -222,7 +222,7 @@ export default class DATScanner extends Scanner {
   }
 
   private async parseMameListxml(mameExecutable: File): Promise<DAT | undefined> {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${mameExecutable.toString()}: attempting to get ListXML from MAME executable`,
     );
 
@@ -252,7 +252,7 @@ export default class DATScanner extends Scanner {
         proc.on('error', reject);
       });
     } catch (error) {
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${mameExecutable.toString()}: failed to get ListXML from MAME executable: ${error}`,
       );
       return undefined;
@@ -266,7 +266,7 @@ export default class DATScanner extends Scanner {
     fileContents: Buffer | string,
   ): Promise<DAT | undefined> {
     if (fileContents.length === 0) {
-      this.progressBar.logTrace(`${datFile.toString()}: file is empty`);
+      this.prefixedLogger.trace(`${datFile.toString()}: file is empty`);
       return undefined;
     }
 
@@ -285,12 +285,12 @@ export default class DATScanner extends Scanner {
       return smdbParsed;
     }
 
-    this.progressBar.logTrace(`${datFile.toString()}: failed to parse DAT file`);
+    this.prefixedLogger.trace(`${datFile.toString()}: failed to parse DAT file`);
     return undefined;
   }
 
   private parseXmlDat(datFile: File, fileContents: Buffer | string): DAT | undefined {
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${datFile.toString()}: attempting to parse ${FsUtil.sizeReadable(fileContents.length)} of XML`,
     );
 
@@ -298,18 +298,18 @@ export default class DATScanner extends Scanner {
     try {
       datObject = DATObject.fromXmlString(fileContents);
     } catch (error) {
-      const message = (error as Error).message.split('\n').join(', ');
-      this.progressBar.logTrace(`${datFile.toString()}: failed to parse DAT XML: ${message}`);
+      const message = (error as Error).message.replaceAll('\n', ', ');
+      this.prefixedLogger.trace(`${datFile.toString()}: failed to parse DAT XML: ${message}`);
       return undefined;
     }
 
-    this.progressBar.logTrace(`${datFile.toString()}: parsed XML, deserializing to DAT`);
+    this.prefixedLogger.trace(`${datFile.toString()}: parsed XML, deserializing to DAT`);
 
     if (datObject.datafile) {
       try {
         return LogiqxDAT.fromObject(datObject.datafile, { filePath: datFile.getFilePath() });
       } catch (error) {
-        this.progressBar.logTrace(`${datFile.toString()}: failed to parse DAT object: ${error}`);
+        this.prefixedLogger.trace(`${datFile.toString()}: failed to parse DAT object: ${error}`);
         return undefined;
       }
     }
@@ -318,7 +318,7 @@ export default class DATScanner extends Scanner {
       try {
         return MameDAT.fromObject(datObject.mame, { filePath: datFile.getFilePath() });
       } catch (error) {
-        this.progressBar.logTrace(
+        this.prefixedLogger.trace(
           `${datFile.toString()}: failed to parse MAME DAT object: ${error}`,
         );
         return undefined;
@@ -331,7 +331,7 @@ export default class DATScanner extends Scanner {
           filePath: datFile.getFilePath(),
         });
       } catch (error) {
-        this.progressBar.logTrace(
+        this.prefixedLogger.trace(
           `${datFile.toString()}: failed to parse software list DAT object: ${error}`,
         );
         return undefined;
@@ -342,14 +342,14 @@ export default class DATScanner extends Scanner {
       try {
         return SoftwareListDAT.fromObject(datObject.softwarelist);
       } catch (error) {
-        this.progressBar.logTrace(
+        this.prefixedLogger.trace(
           `${datFile.toString()}: failed to parse software list DAT object: ${error}`,
         );
         return undefined;
       }
     }
 
-    this.progressBar.logTrace(
+    this.prefixedLogger.trace(
       `${datFile.toString()}: parsed XML, but failed to find a known DAT root`,
     );
     return undefined;
@@ -366,17 +366,17 @@ export default class DATScanner extends Scanner {
       return undefined;
     }
 
-    this.progressBar.logTrace(`${datFile.toString()}: attempting to parse CMPro DAT`);
+    this.prefixedLogger.trace(`${datFile.toString()}: attempting to parse CMPro DAT`);
 
     let cmproDat: DATProps;
     try {
       cmproDat = new CMProParser(fileContentsString).parse();
     } catch (error) {
-      this.progressBar.logTrace(`${datFile.toString()}: failed to parse CMPro DAT: ${error}`);
+      this.prefixedLogger.trace(`${datFile.toString()}: failed to parse CMPro DAT: ${error}`);
       return undefined;
     }
 
-    this.progressBar.logTrace(`${datFile.toString()}: parsed CMPro DAT, deserializing to DAT`);
+    this.prefixedLogger.trace(`${datFile.toString()}: parsed CMPro DAT, deserializing to DAT`);
 
     const header = new Header({
       name: cmproDat.clrmamepro?.name,
@@ -412,7 +412,7 @@ export default class DATScanner extends Scanner {
         (entry) =>
           new ROM({
             name: entry.name ?? '',
-            size: Number.parseInt(entry.size ?? '0', 10),
+            size: Math.trunc(Number(entry.size ?? '0')),
             crc32: entry.crc,
             md5: entry.md5,
             sha1: entry.sha1,
@@ -431,7 +431,7 @@ export default class DATScanner extends Scanner {
         (entry) =>
           new Disk({
             name: entry.name ?? '',
-            size: Number.parseInt(entry.size ?? '0', 10),
+            size: Math.trunc(Number(entry.size ?? '0')),
             crc32: entry.crc,
             md5: entry.md5,
             sha1: entry.sha1,
@@ -467,34 +467,33 @@ export default class DATScanner extends Scanner {
     datFile: File,
     fileContents: Buffer | string,
   ): Promise<DAT | undefined> {
-    this.progressBar.logTrace(`${datFile.toString()}: attempting to parse SMDB`);
+    this.prefixedLogger.trace(`${datFile.toString()}: attempting to parse SMDB`);
 
-    let rows: SmdbRow[] = [];
+    let rows: SmdbRow[];
     try {
       rows = await DATScanner.parseSourceMaterialTsv(fileContents);
     } catch (error) {
-      this.progressBar.logTrace(`${datFile.toString()}: failed to parse SMDB: ${error}`);
+      this.prefixedLogger.trace(`${datFile.toString()}: failed to parse SMDB: ${error}`);
       return undefined;
     }
 
     if (rows.length === 0) {
-      this.progressBar.logTrace(`${datFile.toString()}: failed to parse SMDB, file has no rows`);
+      this.prefixedLogger.trace(`${datFile.toString()}: failed to parse SMDB, file has no rows`);
       return undefined;
     }
 
-    this.progressBar.logTrace(`${datFile.toString()}: parsed SMDB, deserializing to DAT`);
+    this.prefixedLogger.trace(`${datFile.toString()}: parsed SMDB, deserializing to DAT`);
 
     const rowNamesToRows = GameGrouper.groupMultiDiscGames(rows, (row) =>
       row.name.replace(/\.[^.]*$/, ''),
     );
-    const games = [...rowNamesToRows.entries()].map(([gameName, rows]) => {
+    const games = Array.from(rowNamesToRows, ([gameName, rows]) => {
       const roms = rows.map(
         (row) =>
           new ROM({
             name: row.name,
-            size: Number.parseInt(
-              row.size !== undefined && row.size.length > 0 ? row.size : '0',
-              10,
+            size: Math.trunc(
+              Number(row.size !== undefined && row.size.length > 0 ? row.size : '0'),
             ),
             crc32: row.crc,
             md5: row.md5,
@@ -551,7 +550,7 @@ export default class DATScanner extends Scanner {
 
   private shouldFilterOut(dat: DAT): boolean {
     const datNameRegex = this.options.getDatNameRegex();
-    if (datNameRegex && !datNameRegex.some((regex) => regex.test(dat.getName()))) {
+    if (datNameRegex?.every((regex) => !regex.test(dat.getName()))) {
       return true;
     }
 
@@ -563,19 +562,13 @@ export default class DATScanner extends Scanner {
     const datDescription = dat.getDescription();
 
     const datDescriptionRegex = this.options.getDatDescriptionRegex();
-    if (
-      datDescription &&
-      datDescriptionRegex &&
-      !datDescriptionRegex.some((regex) => regex.test(datDescription))
-    ) {
+    if (datDescription && datDescriptionRegex?.every((regex) => !regex.test(datDescription))) {
       return true;
     }
 
     const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-    if (datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription))) {
-      return true;
-    }
-
-    return false;
+    return Boolean(
+      datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription)),
+    );
   }
 }

@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
-import stream from 'node:stream';
 
 import MappableSemaphore from '../../src/async/mappableSemaphore.js';
 import FileCache from '../../src/cache/fileCache.js';
-import Logger from '../../src/console/logger.js';
-import { LogLevel } from '../../src/console/logLevel.js';
 import FileFactory from '../../src/factories/fileFactory.js';
 import type DAT from '../../src/models/dats/dat.js';
 import { ChecksumBitmask } from '../../src/models/files/fileChecksums.js';
@@ -20,8 +17,6 @@ import ROMScanner from '../../src/modules/roms/romScanner.js';
 import FsUtil from '../../src/utils/fsUtil.js';
 import ProgressBarFake from '../console/progressBarFake.js';
 
-const LOGGER = new Logger(LogLevel.NEVER, new stream.PassThrough());
-
 it('should do nothing if dir2dat command not provided', async () => {
   // Given some input ROMs
   const options = new Options({
@@ -31,7 +26,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   const files = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan();
 
@@ -44,7 +39,7 @@ it('should do nothing if dir2dat command not provided', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
@@ -67,7 +62,7 @@ it('should write a valid DAT', async () => {
   const files = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
@@ -80,7 +75,7 @@ it('should write a valid DAT', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
@@ -105,7 +100,7 @@ it('should write a valid DAT', async () => {
         dat: [dir2dat],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(writtenDats).toHaveLength(1);
@@ -124,24 +119,24 @@ it('should write a valid DAT', async () => {
     writtenDat
       .getParents()
       .map((parent) => parent.getName())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   ).toEqual(
     inferredDat
       .getParents()
       .map((parent) => parent.getName())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   );
   expect(writtenDat.getGames()).toHaveLength(inferredDat.getGames().length);
   expect(
     writtenDat
       .getGames()
       .map((game) => game.hashCode())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   ).toEqual(
     inferredDat
       .getGames()
       .map((game) => game.hashCode())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   );
 });
 
@@ -154,7 +149,7 @@ it('should use the candidates for games and ROMs', async () => {
   const files = await new ROMScanner(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
 
@@ -167,7 +162,7 @@ it('should use the candidates for games and ROMs', async () => {
   const candidates = await new CandidateGenerator(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache(), LOGGER),
+    new FileFactory(new FileCache()),
     new MappableSemaphore(os.availableParallelism()),
   ).generate(inferredDat, new ROMIndexer(options, new ProgressBarFake()).index(files));
 
@@ -207,7 +202,7 @@ it('should use the candidates for games and ROMs', async () => {
         dat: [dir2dat],
       }),
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new MappableSemaphore(os.availableParallelism()),
     ).scan();
     expect(writtenDats).toHaveLength(1);
@@ -224,13 +219,13 @@ it('should use the candidates for games and ROMs', async () => {
 
   expect(writtenDat.getParents()).toHaveLength(inferredDat.getParents().length);
   const writtenParentNames = new Set(writtenDat.getParents().map((parent) => parent.getName()));
-  for (const inferredParentName of inferredDat.getParents().map((parent) => parent.getName())) {
-    expect(writtenParentNames.has(inferredParentName)).toEqual(false);
+  for (const inferredParent of inferredDat.getParents()) {
+    expect(writtenParentNames.has(inferredParent.getName())).toEqual(false);
   }
 
   expect(writtenDat.getGames()).toHaveLength(inferredDat.getGames().length);
   const writtenGameHashes = new Set(writtenDat.getGames().map((game) => game.hashCode()));
-  for (const inferredGameHash of inferredDat.getGames().map((game) => game.hashCode())) {
-    expect(writtenGameHashes.has(inferredGameHash)).toEqual(false);
+  for (const inferredGame of inferredDat.getGames()) {
+    expect(writtenGameHashes.has(inferredGame.hashCode())).toEqual(false);
   }
 });

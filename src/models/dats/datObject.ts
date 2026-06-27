@@ -47,8 +47,8 @@ const XML_IGNORE_PATHS = new Set([
 // These attributes aren't read during deserialization, so try to save memory by skipping them
 const XML_IGNORE_ATTRS = {
   ...['machine', 'game'].reduce<Record<string, string[]>>((obj, tag) => {
-    obj[`mame.${tag}`] = ['ismechanical', 'runnable', 'sampleof', 'sourcefile'];
-    obj[`mame.${tag}.rom`] = ['offset', 'optional', 'region'];
+    obj[`mame.${tag}` satisfies string] = ['ismechanical', 'runnable', 'sampleof', 'sourcefile'];
+    obj[`mame.${tag}.rom` satisfies string] = ['offset', 'optional', 'region'];
     return obj;
   }, {}),
 };
@@ -60,8 +60,8 @@ export default {
   /**
    * Parse the contents of an XML file to a {@link DATObjectProps} object.
    */
-  fromXmlString(xmlContents: Buffer | string): DATObjectProps {
-    return new XMLParser({
+  fromXmlString: (xmlContents: Buffer | string): DATObjectProps =>
+    new XMLParser({
       processEntities: {
         // MAME DATs need higher limits
         maxTotalExpansions: Number.MAX_SAFE_INTEGER,
@@ -76,15 +76,15 @@ export default {
         if (XML_IGNORE_PATHS.has(jPathOrMatcher)) {
           return false;
         }
-        (XML_IGNORE_ATTRS[jPathOrMatcher] ?? []).forEach((attr) => {
+        const attrsToIgnore = XML_IGNORE_ATTRS[jPathOrMatcher] ?? [];
+        for (const attr of attrsToIgnore) {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete attrs[attr];
-        });
+        }
         return true;
       },
       parseTagValue: false, // don't try to parse any number-like values
       parseAttributeValue: false, // don't try to parse any number-like values
       attributeNamePrefix: '',
-    }).parse(xmlContents) as DATObjectProps;
-  },
+    }).parse(xmlContents) as DATObjectProps,
 };

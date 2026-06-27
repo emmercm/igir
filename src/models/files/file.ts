@@ -171,12 +171,12 @@ export default class File implements FileProps {
         finalSymlinkSource = await FsUtil.readlink(fileProps.filePath);
       }
     } else {
-      finalSize = finalSize ?? 0;
+      finalSize ??= 0;
     }
-    finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
-    finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
-    finalSha1WithoutHeader = finalSha1WithoutHeader ?? finalSha1WithHeader;
-    finalSha256WithoutHeader = finalSha256WithoutHeader ?? finalSha256WithHeader;
+    finalCrcWithoutHeader ??= finalCrcWithHeader;
+    finalMd5WithoutHeader ??= finalMd5WithHeader;
+    finalSha1WithoutHeader ??= finalSha1WithHeader;
+    finalSha256WithoutHeader ??= finalSha256WithHeader;
 
     return new File({
       filePath: fileProps.filePath,
@@ -535,7 +535,7 @@ export default class File implements FileProps {
             res.statusCode < 400 &&
             res.headers.location
           ) {
-            const redirectedUrl = new URL(res.headers.location, sourceUrl).toString();
+            const redirectedUrl = new URL(res.headers.location, sourceUrl).href;
             File.fileOf({ filePath: redirectedUrl })
               .then(async (file) => await file.downloadToPath(filePath))
               .then(resolve)

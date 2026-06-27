@@ -24,11 +24,11 @@ export default class DATFilter extends Module {
   filter(dat: DAT): DAT {
     // Return early if there aren't any games
     if (dat.getGames().length === 0) {
-      this.progressBar.logTrace(`${dat.getName()}: no games to filter`);
+      this.prefixedLogger.trace(`${dat.getName()}: no games to filter`);
       return dat;
     }
 
-    this.progressBar.logTrace(`${dat.getName()}: filtering DAT`);
+    this.prefixedLogger.trace(`${dat.getName()}: filtering DAT`);
     this.progressBar.setSymbol(ProgressBarSymbol.DAT_FILTERING);
     this.progressBar.resetProgress(dat.getGames().length);
 
@@ -56,18 +56,18 @@ export default class DATFilter extends Module {
     // TODO(cemmer): warning if every game was filtered out?
 
     if (filteredDat.getGames() === dat.getGames()) {
-      this.progressBar.logTrace(`${filteredDat.getName()}: didn't filter out any games`);
+      this.prefixedLogger.trace(`${filteredDat.getName()}: didn't filter out any games`);
     } else {
       const size = filteredDat
         .getGames()
         .flatMap((game) => game.getRoms())
         .reduce((sum, rom) => sum + rom.getSize(), 0);
-      this.progressBar.logTrace(
+      this.prefixedLogger.trace(
         `${filteredDat.getName()}: filtered to ${IntlUtil.toLocaleString(filteredGames.length)}/${IntlUtil.toLocaleString(dat.getGames().length)} game${filteredGames.length === 1 ? '' : 's'} (${FsUtil.sizeReadable(size)})`,
       );
     }
 
-    this.progressBar.logTrace(`${filteredDat.getName()}: done filtering DAT`);
+    this.prefixedLogger.trace(`${filteredDat.getName()}: done filtering DAT`);
     return filteredDat;
   }
 
@@ -128,7 +128,7 @@ export default class DATFilter extends Module {
     if (langs.size === 0) {
       return false;
     }
-    return !game.getLanguages().some((lang) => langs.has(lang));
+    return game.getLanguages().every((lang) => !langs.has(lang));
   }
 
   private regionNotAllowed(game: Game): boolean {
@@ -136,6 +136,6 @@ export default class DATFilter extends Module {
     if (regions.size === 0) {
       return false;
     }
-    return !game.getRegions().some((region) => regions.has(region));
+    return game.getRegions().every((region) => !regions.has(region));
   }
 }

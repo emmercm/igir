@@ -30,7 +30,7 @@ export default class FixdatCreator extends Module {
       return undefined;
     }
 
-    this.progressBar.logTrace(`${originalDat.getName()}: generating a fixdat`);
+    this.prefixedLogger.trace(`${originalDat.getName()}: generating a fixdat`);
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     this.progressBar.resetProgress(1);
 
@@ -46,9 +46,9 @@ export default class FixdatCreator extends Module {
     // Find all the games that have at least one missing ROM
     const gamesWithMissingRoms = originalDat
       .getGames()
-      .filter((game) => !game.getRoms().every((rom) => writtenRomHashCodes.has(rom.hashCode())));
+      .filter((game) => game.getRoms().some((rom) => !writtenRomHashCodes.has(rom.hashCode())));
     if (gamesWithMissingRoms.length === 0) {
-      this.progressBar.logDebug(
+      this.prefixedLogger.debug(
         `${originalDat.getName()}: not creating a fixdat, all games were found`,
       );
       return undefined;
@@ -64,10 +64,10 @@ export default class FixdatCreator extends Module {
     const fixdat = new LogiqxDAT({ header, games: gamesWithMissingRoms });
     const fixdatContents = fixdat.toXmlDat();
     const fixdatPath = path.join(fixdatDir, fixdat.getFilename());
-    this.progressBar.logInfo(`${originalDat.getName()}: writing fixdat to '${fixdatPath}'`);
+    this.prefixedLogger.info(`${originalDat.getName()}: writing fixdat to '${fixdatPath}'`);
     await FsUtil.writeFile(fixdatPath, fixdatContents);
 
-    this.progressBar.logTrace(`${originalDat.getName()}: done generating a fixdat`);
+    this.prefixedLogger.trace(`${originalDat.getName()}: done generating a fixdat`);
     return fixdatPath;
   }
 }

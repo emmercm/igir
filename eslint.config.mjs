@@ -1,10 +1,10 @@
 import path from 'node:path';
 import url from 'node:url';
 
-import { FlatCompat } from '@eslint/eslintrc';
 import eslint from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
 import eslintPluginVitest from '@vitest/eslint-plugin';
+import eslintConfig from 'eslint/config';
 import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
@@ -22,23 +22,18 @@ import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImpo
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: eslint.configs.recommended,
-  allConfig: eslint.configs.all,
-});
 
-export default [
+export default eslintConfig.defineConfig([
   {
-    ignores: ['.*/**', 'dist/**', 'site/**'],
+    ignores: ['.*/**', 'dist/**', 'packages/*/deps/**', 'site/**'],
   },
 
   // @typescript-eslint
   eslint.configs.recommended,
-  ...compat.extends(
-    'plugin:@typescript-eslint/strict-type-checked',
-    'plugin:@typescript-eslint/stylistic-type-checked',
-  ),
+  {
+    files: ['**/*.{js,ts}'],
+    extends: [tseslint.configs.strictTypeChecked, tseslint.configs.stylisticTypeChecked],
+  },
   {
     languageOptions: {
       parserOptions: {
@@ -138,6 +133,7 @@ export default [
       },
       sourceType: 'module',
       globals: {
+        ...globals.builtin,
         ...eslintPluginVitest.environments.env.globals,
       },
     },
@@ -160,6 +156,7 @@ export default [
         'error',
         {
           case: 'camelCase',
+          checkDirectories: false,
         },
       ],
 
@@ -210,6 +207,8 @@ export default [
       // ********** Recommended Overrides **********
 
       // ***** unicorn:recommended *****
+      // Superseded by other rules
+      'unicorn/no-this-outside-of-class': 'off', // made safe by @typescript-eslint/unbound-method
       // Fixes
       'unicorn/prefer-single-call': [
         'error',
@@ -219,23 +218,29 @@ export default [
         },
       ],
       // Style and clarity preference differences
-      'unicorn/import-style': 'off',
-      'unicorn/no-array-for-each': 'off',
+      'unicorn/consistent-class-member-order': 'off',
+      'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
+      'unicorn/import-style': 'off', // mostly overridden by noNodeSubpathImports.mjs
+      'unicorn/max-nested-calls': 'off',
+      'unicorn/name-replacements': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/no-await-expression-member': 'off',
+      'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
       'unicorn/no-hex-escape': 'off',
+      'unicorn/no-unreadable-new-expression': 'off',
       'unicorn/no-useless-undefined': 'off',
       'unicorn/prefer-string-raw': 'off',
       'unicorn/prefer-switch': 'off',
       'unicorn/prefer-ternary': 'off',
-      'unicorn/prevent-abbreviations': 'off',
-      // Too many false positives 😡
-      'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
-      'unicorn/no-array-callback-reference': 'off',
-      'unicorn/no-array-method-this-argument': 'off',
       'unicorn/prefer-type-error': 'off',
+      // Overly broad rules with too many false positives 😡
+      'unicorn/no-unsafe-string-replacement': 'off', // doesn't curly braces in regex search
+      'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context
+      'unicorn/prefer-https': 'off', // comments can't be excluded
+      'unicorn/prefer-iterator-to-array': 'off', // ArrayIterator#toArray() doesn't exist
+      'unicorn/prefer-minimal-ternary': 'off', // lots of false positives, hurts readability
 
-      // ***** eslint:recommended *****
+      // ***** ESLint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
     },
@@ -293,7 +298,7 @@ export default [
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          /*** @eslint/js defaults ***/
+          /*** @ESLint/js defaults ***/
           vars: 'all',
           caughtErrors: 'all',
           reportUsedIgnorePattern: false,
@@ -337,4 +342,4 @@ export default [
       'jsdoc/require-jsdoc': 'off',
     },
   },
-];
+]);
