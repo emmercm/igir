@@ -175,7 +175,9 @@ export default class Zip extends Archive {
     try {
       entryStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
     } catch (error) {
-      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`);
+      throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
+        cause: error,
+      });
     }
 
     try {
@@ -263,6 +265,7 @@ export default class Zip extends Archive {
       } catch (error) {
         throw new Error(
           `failed to write '${inputFile.toString()}' to '${outputArchiveEntry.toString()}': ${error}`,
+          { cause: error },
         );
       }
     }

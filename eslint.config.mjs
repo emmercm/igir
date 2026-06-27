@@ -1,10 +1,10 @@
 import path from 'node:path';
 import url from 'node:url';
 
-import { FlatCompat } from '@eslint/eslintrc';
 import eslint from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
 import eslintPluginVitest from '@vitest/eslint-plugin';
+import eslintConfig from 'eslint/config';
 import eslintPluginJsdoc from 'eslint-plugin-jsdoc';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
@@ -22,23 +22,18 @@ import preferNodeDefaultImport from './.eslint/rules/style/preferNodeDefaultImpo
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: eslint.configs.recommended,
-  allConfig: eslint.configs.all,
-});
 
-export default [
+export default eslintConfig.defineConfig([
   {
     ignores: ['.*/**', 'dist/**', 'packages/*/deps/**', 'site/**'],
   },
 
   // @typescript-eslint
   eslint.configs.recommended,
-  ...compat.extends(
-    'plugin:@typescript-eslint/strict-type-checked',
-    'plugin:@typescript-eslint/stylistic-type-checked',
-  ),
+  {
+    files: ['**/*.{js,ts}'],
+    extends: [tseslint.configs.strictTypeChecked, tseslint.configs.stylisticTypeChecked],
+  },
   {
     languageOptions: {
       parserOptions: {
@@ -341,4 +336,4 @@ export default [
       'jsdoc/require-jsdoc': 'off',
     },
   },
-];
+]);

@@ -38,7 +38,7 @@ class PPFHeader {
     }
     patchFile.skipNext(50); // description
 
-    let blockCheckEnabled = false;
+    let blockCheckEnabled: boolean;
     let undoDataAvailable = false;
     if (version === 2) {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();

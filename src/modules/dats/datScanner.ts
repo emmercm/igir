@@ -469,7 +469,7 @@ export default class DATScanner extends Scanner {
   ): Promise<DAT | undefined> {
     this.prefixedLogger.trace(`${datFile.toString()}: attempting to parse SMDB`);
 
-    let rows: SmdbRow[] = [];
+    let rows: SmdbRow[];
     try {
       rows = await DATScanner.parseSourceMaterialTsv(fileContents);
     } catch (error) {
