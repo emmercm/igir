@@ -235,8 +235,9 @@ export default eslintConfig.defineConfig([
       'unicorn/no-array-callback-reference': 'off',
       'unicorn/no-array-method-this-argument': 'off',
       'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context 😡
-      'unicorn/prefer-https': 'off', // TODO(cemmer): turn back on when comments can be excluded
+      'unicorn/prefer-https': 'off', // comments can't be excluded 😡
       'unicorn/prefer-iterator-to-array': 'off', // ArrayIterator#toArray() doesn't exist 😡
+      'unicorn/prefer-minimal-ternary': 'off', // lots of false positives, hurts readability
       'unicorn/prefer-type-error': 'off',
 
       // ***** ESLint:recommended *****

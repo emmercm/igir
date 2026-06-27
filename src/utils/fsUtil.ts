@@ -608,7 +608,7 @@ export default class FsUtil {
     const k = process.platform === 'darwin' ? 1000 : 1024;
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
     const bytesDivided = bytes / k ** i;
-    if (Number.isInteger(bytesDivided)) {
+    if (Number.isSafeInteger(bytesDivided)) {
       return `${bytesDivided}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
     }
     let fractionDigits = 1;

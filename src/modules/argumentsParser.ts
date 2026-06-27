@@ -429,17 +429,20 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .middleware((middlewareArgv) => {
-        if (middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input) {
-          const outputResolved = path.resolve(middlewareArgv.output as string);
-          if (
-            middlewareArgv.input.every(
-              (inputPath) => !outputResolved.startsWith(path.resolve(inputPath as string)),
-            )
-          ) {
-            logger.warn(
-              `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
-            );
-          }
+        if (
+          !(middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input)
+        ) {
+          return;
+        }
+        const outputResolved = path.resolve(middlewareArgv.output as string);
+        if (
+          middlewareArgv.input.every(
+            (inputPath) => !outputResolved.startsWith(path.resolve(inputPath as string)),
+          )
+        ) {
+          logger.warn(
+            `'${middlewareArgv.output as string}' was provided as the output path but not as an input path, the 'clean' command may delete more files than you intended!`,
+          );
         }
       }, false)
       .option('dir-mirror', {
