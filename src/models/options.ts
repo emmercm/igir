@@ -385,6 +385,7 @@ export default class Options implements OptionsProps {
 
   readonly header?: string;
 
+  // eslint-disable-next-line unicorn/no-non-function-verb-prefix
   readonly removeHeaders?: string[];
 
   readonly trimmedGlob?: string;
@@ -1306,6 +1307,7 @@ export default class Options implements OptionsProps {
     }
     // Option was provided with extensions, we should remove headers on name match
     return this.removeHeaders.some(
+      // eslint-disable-next-line unicorn/no-non-function-verb-prefix
       (removeHeader) => removeHeader.toLowerCase() === extension.toLowerCase(),
     );
   }

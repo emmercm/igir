@@ -104,10 +104,10 @@ class VcdiffHeader {
 
     // ADD+COPY
     for (let copyMode = 0; copyMode <= 5; copyMode += 1) {
-      for (let addSize = 1; addSize <= 4; addSize += 1) {
+      for (let sizeToAdd = 1; sizeToAdd <= 4; sizeToAdd += 1) {
         for (let copySize = 4; copySize <= 6; copySize += 1) {
           entries.push([
-            { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+            { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
             {
               type: VcdiffInstruction.COPY,
               size: copySize,
@@ -118,9 +118,9 @@ class VcdiffHeader {
       }
     }
     for (let copyMode = 6; copyMode <= 8; copyMode += 1) {
-      for (let addSize = 1; addSize <= 4; addSize += 1) {
+      for (let sizeToAdd = 1; sizeToAdd <= 4; sizeToAdd += 1) {
         entries.push([
-          { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+          { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
           { type: VcdiffInstruction.COPY, size: 4, mode: copyMode },
         ]);
       }
