@@ -57,11 +57,7 @@ export default class Gzip extends Archive {
   ): Promise<ArchiveEntry<Archive>[]> {
     // See if this file is actually a .tar.gz
     try {
-      return await new Tar(this.getFilePath()).getArchiveEntries(
-        checksumBitmask,
-        callback,
-        shouldForceChecksumCalculation,
-      );
+      return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
     } catch {
       /* ignored */
     }
