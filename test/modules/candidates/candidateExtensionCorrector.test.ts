@@ -182,7 +182,7 @@ it('should not truncate names with periods when correcting from file signature',
     const correctedCandidates = await new CandidateExtensionCorrector(
       options,
       new ProgressBarFake(),
-      new FileFactory(new FileCache(), LOGGER),
+      new FileFactory(new FileCache()),
       new Semaphore(os.availableParallelism()),
     ).correct(dat, candidates);
 
