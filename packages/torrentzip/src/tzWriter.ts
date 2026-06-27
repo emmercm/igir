@@ -168,9 +168,7 @@ export default class TZWriter {
     );
     TZWriter.LOCAL_FILE_HEADER_SIGNATURE.copy(buffer);
 
-    if (this.compressionMethod === CompressionMethod.DEFLATE) {
-      buffer.writeUInt16LE(20, 4); // version needed
-    } else if (uncompressedSize === 0) {
+    if (this.compressionMethod === CompressionMethod.DEFLATE || uncompressedSize === 0) {
       buffer.writeUInt16LE(20, 4); // version needed
     } else {
       buffer.writeUInt16LE(63, 4); // version needed

@@ -222,6 +222,7 @@ export default eslintConfig.defineConfig([
       'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
       'unicorn/import-style': 'off', // mostly overridden by noNodeSubpathImports.mjs
       'unicorn/max-nested-calls': 'off',
+      'unicorn/name-replacements': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/no-await-expression-member': 'off',
       'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
@@ -232,7 +233,6 @@ export default eslintConfig.defineConfig([
       'unicorn/prefer-switch': 'off',
       'unicorn/prefer-ternary': 'off',
       'unicorn/prefer-type-error': 'off',
-      'unicorn/prevent-abbreviations': 'off',
       // Overly broad rules with too many false positives 😡
       'unicorn/no-unsafe-string-replacement': 'off', // doesn't curly braces in regex search
       'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context

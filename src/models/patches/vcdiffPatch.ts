@@ -184,7 +184,6 @@ class VcdiffHeader {
       }
     }
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const codeTable = this.DEFAULT_CODE_TABLE;
     if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
