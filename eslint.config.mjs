@@ -218,9 +218,9 @@ export default eslintConfig.defineConfig([
         },
       ],
       // Style and clarity preference differences
-      'unicorn/import-style': 'off',
+      'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
+      'unicorn/import-style': 'off', // mostly overridden by noNodeSubpathImports.mjs
       'unicorn/max-nested-calls': 'off',
-      'unicorn/no-array-for-each': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/no-await-expression-member': 'off',
       'unicorn/no-hex-escape': 'off',
@@ -229,17 +229,14 @@ export default eslintConfig.defineConfig([
       'unicorn/prefer-string-raw': 'off',
       'unicorn/prefer-switch': 'off',
       'unicorn/prefer-ternary': 'off',
-      'unicorn/prevent-abbreviations': 'off',
-      // Too many false positives 😡
-      'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
-      'unicorn/no-array-callback-reference': 'off',
-      'unicorn/no-array-method-this-argument': 'off',
-      'unicorn/no-unsafe-string-replacement': 'off', // false positives on curly braces in regex 😡
-      'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context 😡
-      'unicorn/prefer-https': 'off', // comments can't be excluded 😡
-      'unicorn/prefer-iterator-to-array': 'off', // ArrayIterator#toArray() doesn't exist 😡
-      'unicorn/prefer-minimal-ternary': 'off', // lots of false positives, hurts readability
       'unicorn/prefer-type-error': 'off',
+      'unicorn/prevent-abbreviations': 'off',
+      // Overly broad rules with too many false positives 😡
+      'unicorn/no-unsafe-string-replacement': 'off', // doesn't curly braces in regex search
+      'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context
+      'unicorn/prefer-https': 'off', // comments can't be excluded
+      'unicorn/prefer-iterator-to-array': 'off', // ArrayIterator#toArray() doesn't exist
+      'unicorn/prefer-minimal-ternary': 'off', // lots of false positives, hurts readability
 
       // ***** ESLint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
