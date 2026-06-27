@@ -20,11 +20,23 @@ Igir does not currently provide an auto-update functionality, but many of the fo
 
 The best way to ensure that you are always running the most up-to-date version of Igir is to run it via [`npx`](https://docs.npmjs.com/cli/v9/commands/npx) (which comes installed with [Node.js](https://nodejs.org/en/download/)):
 
+=== ":fontawesome-brands-windows: Windows"
+
+=== ":fontawesome-brands-apple: macOS"
+
+=== ":simple-linux: Linux"
+
 ```shell
 npx igir@latest [commands..] [options]
 ```
 
 for example:
+
+=== ":fontawesome-brands-windows: Windows"
+
+=== ":fontawesome-brands-apple: macOS"
+
+=== ":simple-linux: Linux"
 
 ```shell
 npx igir@latest copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir-dat-name
@@ -38,19 +50,21 @@ npx igir@latest copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir
 
     === ":fontawesome-brands-apple: macOS"
 
-        ```bash
-        alias igir="npx igir@latest"
-        ```
-
     === ":simple-linux: Linux"
 
-        ```bash
-        alias igir="npx igir@latest"
-        ```
+    ```bash
+    alias igir="npx igir@latest"
+    ```
 
 !!! tip
 
     Igir also supports [Bun](https://bun.com/), which typically executes JavaScript faster and with less memory usage. You can run the latest version of Igir like this:
+
+    === ":fontawesome-brands-windows: Windows"
+
+    === ":fontawesome-brands-apple: macOS"
+
+    === ":simple-linux: Linux"
 
     ```shell
     bunx igir@latest [commands..] [options]
@@ -61,6 +75,12 @@ npx igir@latest copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir
 !!! note
 
     If you want to help beta test Igir, you can run the most bleeding-edge version (sometimes called a "nightly") with the command:
+
+    === ":fontawesome-brands-windows: Windows"
+
+    === ":fontawesome-brands-apple: macOS"
+
+    === ":simple-linux: Linux"
 
     ```shell
     npx --yes "https://pkg.pr.new/igir@main" [commands..] [options]
@@ -73,12 +93,20 @@ npx igir@latest copy extract --dat *.dat --input ROMs --output ROMs-Sorted --dir
 
 [Homebrew](https://brew.sh/) is a third-party package manager for macOS. You can install Igir with this command:
 
+=== ":fontawesome-brands-apple: macOS"
+
+=== ":simple-linux: Linux"
+
 ```shell
 brew trust emmercm/igir
 brew install emmercm/igir/igir
 ```
 
 and then run Igir as if it were any other executable:
+
+=== ":fontawesome-brands-apple: macOS"
+
+=== ":simple-linux: Linux"
 
 ```shell
 igir copy extract \
@@ -89,6 +117,10 @@ igir copy extract \
 ```
 
 Igir can then be updated with _either_ of these commands
+
+=== ":fontawesome-brands-apple: macOS"
+
+=== ":simple-linux: Linux"
 
 ```shell
 # Update every Homebrew package
@@ -105,12 +137,16 @@ brew upgrade igir
 
 [Scoop](https://scoop.sh/) is a third-party command-line installer for Windows. You can install Igir with this command:
 
+=== ":fontawesome-brands-windows: Windows"
+
 ```shell
 scoop bucket add igir https://github.com/emmercm/igir
 scoop install igir
 ```
 
 and then run Igir as if it were any other executable:
+
+=== ":fontawesome-brands-windows: Windows"
 
 ```batch
 igir copy extract ^
@@ -121,6 +157,8 @@ igir copy extract ^
 ```
 
 Igir can then be updated with _either_ of these commands:
+
+=== ":fontawesome-brands-windows: Windows"
 
 ```shell
 # Update every Scoop app
