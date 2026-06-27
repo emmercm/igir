@@ -184,6 +184,7 @@ class VcdiffHeader {
       }
     }
 
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const codeTable = this.DEFAULT_CODE_TABLE;
     if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
@@ -273,6 +274,7 @@ class VcdiffWindow {
       (await patchFile.readNext(4)).readUInt32BE(); // TODO(cemmer): handle
     }
 
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const addsAndRunsData = await patchFile.readNext(addsAndRunsDataLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.DATACOMP) {
       // TODO(cemmer)
@@ -281,6 +283,7 @@ class VcdiffWindow {
       );
     }
 
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const instructionsAndSizesData = await patchFile.readNext(instructionsAndSizesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.INSTCOMP) {
       // TODO(cemmer)
@@ -289,6 +292,7 @@ class VcdiffWindow {
       );
     }
 
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const copyAddressesData = await patchFile.readNext(copyAddressesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.ADDRCOMP) {
       // TODO(cemmer)

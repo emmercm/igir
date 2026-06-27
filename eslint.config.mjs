@@ -234,6 +234,7 @@ export default eslintConfig.defineConfig([
       'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
       'unicorn/no-array-callback-reference': 'off',
       'unicorn/no-array-method-this-argument': 'off',
+      'unicorn/no-unsafe-string-replacement': 'off', // false positives on curly braces in regex 😡
       'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context 😡
       'unicorn/prefer-https': 'off', // comments can't be excluded 😡
       'unicorn/prefer-iterator-to-array': 'off', // ArrayIterator#toArray() doesn't exist 😡

@@ -60,8 +60,8 @@ export default {
   /**
    * Parse the contents of an XML file to a {@link DATObjectProps} object.
    */
-  fromXmlString(xmlContents: Buffer | string): DATObjectProps {
-    return new XMLParser({
+  fromXmlString: (xmlContents: Buffer | string): DATObjectProps =>
+    new XMLParser({
       processEntities: {
         // MAME DATs need higher limits
         maxTotalExpansions: Number.MAX_SAFE_INTEGER,
@@ -85,6 +85,5 @@ export default {
       parseTagValue: false, // don't try to parse any number-like values
       parseAttributeValue: false, // don't try to parse any number-like values
       attributeNamePrefix: '',
-    }).parse(xmlContents) as DATObjectProps;
-  },
+    }).parse(xmlContents) as DATObjectProps,
 };

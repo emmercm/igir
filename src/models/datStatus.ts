@@ -69,7 +69,7 @@ export default class DATStatus {
     }, new Map<string, WriteCandidate[]>());
 
     // Un-patched ROMs
-    dat.getGames().forEach((game: Game) => {
+    for (const game of dat.getGames()) {
       DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
       const expectedCount = DATStatus.getExpectedFileCount(game, options);
@@ -80,14 +80,14 @@ export default class DATStatus {
         if (gameCandidate && gameCandidate.getRomsWithFiles().length !== expectedCount) {
           // The found ReleaseCandidate is incomplete
           DATStatus.pushValueIntoMap(this.incompleteRomTypesToCandidates, game, gameCandidate);
-          return;
+          continue;
         }
 
         // The found ReleaseCandidate is complete
         DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
-        return;
+        continue;
       }
-    });
+    }
 
     // Patched ROMs
     for (const candidate of candidates) {
@@ -140,8 +140,7 @@ export default class DATStatus {
       ...this.incompleteRomTypesToCandidates.values(),
     ]
       .flat()
-      .filter((candidate) => candidate !== undefined)
-      .flatMap((candidate) => candidate.getRomsWithFiles())
+      .flatMap((candidate) => (candidate === undefined ? [] : candidate.getRomsWithFiles()))
       .map((romWithFiles) => romWithFiles.getInputFile());
   }
 
@@ -166,12 +165,11 @@ export default class DATStatus {
       })
       .map((type) => {
         const found = this.foundRomTypesToCandidates.get(type) ?? [];
-        const all = this.allRomTypesToGames.get(type) ?? [];
-
         if (!options.usingDats()) {
           return `${IntlUtil.toLocaleString(found.length)} ${type}`;
         }
 
+        const all = this.allRomTypesToGames.get(type) ?? [];
         const percentage = (found.length / all.length) * 100;
         let color: ChalkInstance;
         if (percentage >= 100) {

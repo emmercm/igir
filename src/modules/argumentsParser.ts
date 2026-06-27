@@ -1225,6 +1225,7 @@ export default class ArgumentsParser {
       .version(false)
 
       // NOTE(cemmer): the .epilogue() renders after .example() but I want them switched
+      /* eslint-disable unicorn/no-incorrect-template-string-interpolation */
       .epilogue(
         `${'-'.repeat(ArgumentsParser.getHelpWidth(argv))}
 

@@ -539,7 +539,6 @@ export default class Igir {
       fileFactory,
       readerSemaphore,
     ).scan(checksumBitmask, checksumArchives);
-    const romScannerProgressBarName = romProgressBar.getName();
 
     if (dats.some((dat) => !dat.isMame())) {
       const chds = rawRomFiles
@@ -563,6 +562,7 @@ export default class Igir {
       }
     }
 
+    const romScannerProgressBarName = romProgressBar.getName();
     romProgressBar.setName('Detecting ROM headers');
     const romFilesWithHeaders = await new ROMHeaderProcessor(
       this.options,

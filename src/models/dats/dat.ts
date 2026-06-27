@@ -46,10 +46,10 @@ export default abstract class DAT {
     const gameIdsToParents = new Map<string, Parent>();
 
     // Find all parents
-    this.getGames().forEach((game: Game) => {
+    for (const game of this.getGames()) {
       if (game.getCloneOfId() !== undefined) {
         // Is a clone
-        return;
+        continue;
       }
       const id = game.getId();
       if (id !== undefined) {
@@ -60,12 +60,12 @@ export default abstract class DAT {
           // Two games have the same name, assume this one is a clone
           parent.addChild(game);
         }
-        return;
+        continue;
       }
 
       if (game.getCloneOf() !== undefined) {
         // Is a clone
-        return;
+        continue;
       }
       const parent = gameNamesToParents.get(game.getName());
       if (parent === undefined) {
@@ -74,10 +74,10 @@ export default abstract class DAT {
         // Two games have the same name, assume this one is a clone
         parent.addChild(game);
       }
-    });
+    }
 
     // Find all clones
-    this.getGames().forEach((game: Game) => {
+    for (const game of this.getGames()) {
       const cloneOfId = game.getCloneOfId();
       if (cloneOfId !== undefined) {
         const id = game.getId();
@@ -88,7 +88,7 @@ export default abstract class DAT {
           // The DAT is bad, the game is referencing a parent that doesn't exist
           gameIdsToParents.set(cloneOfId, new Parent(game));
         }
-        return;
+        continue;
       }
 
       const cloneOf = game.getCloneOf();
@@ -100,9 +100,9 @@ export default abstract class DAT {
           // The DAT is bad, the game is referencing a parent that doesn't exist
           gameNamesToParents.set(cloneOf, new Parent(game));
         }
-        return;
+        continue;
       }
-    });
+    }
 
     this.parents = [...gameIdsToParents.values(), ...gameNamesToParents.values()];
 

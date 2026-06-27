@@ -751,7 +751,7 @@ export default class FsUtil {
 
     if (walkMode === WalkMode.FILES) {
       const files = entries
-        .filter((_entry, idx) => !entryIsDirectory[idx])
+        .filter((_entry, idx) => entryIsDirectory.at(idx) === false)
         .map((entry) => path.join(pathLike.toString(), entry.name));
       if (callback) {
         callback(files.length);

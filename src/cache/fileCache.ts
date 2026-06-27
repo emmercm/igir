@@ -128,6 +128,7 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedFile: File | undefined;
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
@@ -215,6 +216,7 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedEntries: ArchiveEntry<T>[] | undefined;
+    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
