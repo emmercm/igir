@@ -103,12 +103,12 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
         finalSymlinkSource = await FsUtil.readlink(archiveEntryProps.archive.getFilePath());
       }
     } else {
-      finalCrcWithHeader = finalCrcWithHeader ?? '';
+      finalCrcWithHeader ??= '';
     }
-    finalCrcWithoutHeader = finalCrcWithoutHeader ?? finalCrcWithHeader;
-    finalMd5WithoutHeader = finalMd5WithoutHeader ?? finalMd5WithHeader;
-    finalSha1WithoutHeader = finalSha1WithoutHeader ?? finalSha1WithHeader;
-    finalSha256WithoutHeader = finalSha256WithoutHeader ?? finalSha256WithHeader;
+    finalCrcWithoutHeader ??= finalCrcWithHeader;
+    finalMd5WithoutHeader ??= finalMd5WithHeader;
+    finalSha1WithoutHeader ??= finalSha1WithHeader;
+    finalSha256WithoutHeader ??= finalSha256WithHeader;
 
     return new ArchiveEntry<A>({
       size: finalSize ?? 0,

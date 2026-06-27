@@ -77,9 +77,9 @@ class VcdiffHeader {
     ];
 
     // ADD+NOOP
-    for (let addSize = 0; addSize <= 17; addSize += 1) {
+    for (let sizeToAdd = 0; sizeToAdd <= 17; sizeToAdd += 1) {
       entries.push([
-        { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+        { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
         { type: VcdiffInstruction.NOOP, size: 0, mode: 0 },
       ]);
     }
@@ -104,10 +104,10 @@ class VcdiffHeader {
 
     // ADD+COPY
     for (let copyMode = 0; copyMode <= 5; copyMode += 1) {
-      for (let addSize = 1; addSize <= 4; addSize += 1) {
+      for (let sizeToAdd = 1; sizeToAdd <= 4; sizeToAdd += 1) {
         for (let copySize = 4; copySize <= 6; copySize += 1) {
           entries.push([
-            { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+            { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
             {
               type: VcdiffInstruction.COPY,
               size: copySize,
@@ -118,9 +118,9 @@ class VcdiffHeader {
       }
     }
     for (let copyMode = 6; copyMode <= 8; copyMode += 1) {
-      for (let addSize = 1; addSize <= 4; addSize += 1) {
+      for (let sizeToAdd = 1; sizeToAdd <= 4; sizeToAdd += 1) {
         entries.push([
-          { type: VcdiffInstruction.ADD, size: addSize, mode: 0 },
+          { type: VcdiffInstruction.ADD, size: sizeToAdd, mode: 0 },
           { type: VcdiffInstruction.COPY, size: 4, mode: copyMode },
         ]);
       }
@@ -274,7 +274,6 @@ class VcdiffWindow {
       (await patchFile.readNext(4)).readUInt32BE(); // TODO(cemmer): handle
     }
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const addsAndRunsData = await patchFile.readNext(addsAndRunsDataLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.DATACOMP) {
       // TODO(cemmer)
@@ -283,7 +282,6 @@ class VcdiffWindow {
       );
     }
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const instructionsAndSizesData = await patchFile.readNext(instructionsAndSizesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.INSTCOMP) {
       // TODO(cemmer)
@@ -292,7 +290,6 @@ class VcdiffWindow {
       );
     }
 
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const copyAddressesData = await patchFile.readNext(copyAddressesLength);
     if (deltaEncodingIndicator & VcdiffDeltaIndicator.ADDRCOMP) {
       // TODO(cemmer)

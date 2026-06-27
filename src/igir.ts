@@ -374,11 +374,11 @@ export default class Igir {
     }
 
     if (dats.length === 1) {
-      for (const [bool, option] of [
+      for (const [isOptionEnabled, option] of [
         [this.options.getDirDatName(), '--dir-dat-name'],
         [this.options.getDirDatDescription(), '--dir-dat-description'],
       ] satisfies [boolean, string][]) {
-        if (!bool) {
+        if (!isOptionEnabled) {
           continue;
         }
         logger.warn(
@@ -528,7 +528,7 @@ export default class Igir {
     fileFactory: FileFactory,
     readerSemaphore: MappableSemaphore,
     checksumBitmask: number,
-    checksumArchives: boolean,
+    shouldChecksumArchives: boolean,
   ): Promise<IndexedFiles> {
     const romProgressBar = this.multiBar.addSingleBar({
       name: 'Scanning for ROMs',
@@ -539,7 +539,7 @@ export default class Igir {
       romProgressBar,
       fileFactory,
       readerSemaphore,
-    ).scan(checksumBitmask, checksumArchives);
+    ).scan(checksumBitmask, shouldChecksumArchives);
 
     if (dats.some((dat) => !dat.isMame())) {
       const chds = rawRomFiles

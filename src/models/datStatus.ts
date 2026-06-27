@@ -85,7 +85,6 @@ export default class DATStatus {
 
         // The found ReleaseCandidate is complete
         DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
-        continue;
       }
     }
 
@@ -298,38 +297,38 @@ export default class DATStatus {
     gameName: string,
     status: GameStatusValue,
     filePaths: string[] = [],
-    patched = false,
-    bios = false,
-    retail = false,
-    unlicensed = false,
-    debug = false,
-    demo = false,
-    beta = false,
-    sample = false,
-    prototype = false,
-    test = false,
-    aftermarket = false,
-    homebrew = false,
-    bad = false,
+    isPatched = false,
+    isBios = false,
+    isRetail = false,
+    isUnlicensed = false,
+    isDebug = false,
+    isDemo = false,
+    isBeta = false,
+    isSample = false,
+    isPrototype = false,
+    isTest = false,
+    isAftermarket = false,
+    isHomebrew = false,
+    isBad = false,
   ): string[] {
     return [
       datName,
       gameName,
       GameStatusInverted[status],
       filePaths.join('|'),
-      String(patched),
-      String(bios),
-      String(retail),
-      String(unlicensed),
-      String(debug),
-      String(demo),
-      String(beta),
-      String(sample),
-      String(prototype),
-      String(test),
-      String(aftermarket),
-      String(homebrew),
-      String(bad),
+      String(isPatched),
+      String(isBios),
+      String(isRetail),
+      String(isUnlicensed),
+      String(isDebug),
+      String(isDemo),
+      String(isBeta),
+      String(isSample),
+      String(isPrototype),
+      String(isTest),
+      String(isAftermarket),
+      String(isHomebrew),
+      String(isBad),
     ];
   }
 

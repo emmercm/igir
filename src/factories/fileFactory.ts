@@ -83,7 +83,7 @@ export default class FileFactory {
         return [await this.fileFrom(filePath, fileChecksumBitmask, callback)];
       }
       const entries: ArchiveEntry<Archive>[] = [];
-      let anyParsed = false;
+      let wasAnyParsed = false;
       for (const archive of archives) {
         const result = await this.entriesFromArchive(
           archive,
@@ -92,13 +92,13 @@ export default class FileFactory {
           callback,
         );
         if (result !== undefined) {
-          anyParsed = true;
+          wasAnyParsed = true;
           for (const entry of result) {
             entries.push(entry);
           }
         }
       }
-      if (!anyParsed) {
+      if (!wasAnyParsed) {
         // The file isn't actually an archive
         return [await this.fileFrom(filePath, fileChecksumBitmask)];
       }
@@ -157,7 +157,7 @@ export default class FileFactory {
     checksumBitmask: number,
     cacheModeValue: CacheModeValue = CacheMode.RESPECT_CACHED_VALUE,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<A>[] | undefined> {
     try {
       return await this.fileCache.getOrComputeArchiveChecksums(
@@ -165,7 +165,7 @@ export default class FileFactory {
         checksumBitmask,
         cacheModeValue === CacheMode.IGNORE_CACHED_VALUE,
         callback,
-        forceChecksumCalculation,
+        shouldForceChecksumCalculation,
       );
     } catch (error) {
       // The file at the given path may not be of the type asserted by the given extension, or it
@@ -267,7 +267,7 @@ export default class FileFactory {
       return undefined;
     }
     const entries: ArchiveEntry<Archive>[] = [];
-    let anyParsed = false;
+    let wasAnyParsed = false;
     for (const archive of archives) {
       const result = await this.entriesFromArchive(
         archive,
@@ -276,13 +276,13 @@ export default class FileFactory {
         callback,
       );
       if (result !== undefined) {
-        anyParsed = true;
+        wasAnyParsed = true;
         for (const entry of result) {
           entries.push(entry);
         }
       }
     }
-    if (!anyParsed) {
+    if (!wasAnyParsed) {
       // The file isn't actually an archive
       return undefined;
     }

@@ -16,9 +16,9 @@ class PPFHeader {
 
   readonly undoDataAvailable: boolean;
 
-  constructor(version: number, undoDataAvailable: boolean) {
+  constructor(version: number, isUndoDataAvailable: boolean) {
     this.version = version;
-    this.undoDataAvailable = undoDataAvailable;
+    this.undoDataAvailable = isUndoDataAvailable;
   }
 
   /**
@@ -38,8 +38,8 @@ class PPFHeader {
     }
     patchFile.skipNext(50); // description
 
-    let blockCheckEnabled: boolean;
-    let undoDataAvailable = false;
+    let isBlockCheckEnabled: boolean;
+    let isUndoDataAvailable = false;
     if (version === 2) {
       const sourceSize = (await patchFile.readNext(4)).readUInt32LE();
       if (inputRomFile.getSize() !== sourceSize) {
@@ -47,22 +47,22 @@ class PPFHeader {
           `PPF patch expected ROM size of ${FsUtil.sizeReadable(sourceSize)}: ${patchFile.getPathLike().toString()}`,
         );
       }
-      blockCheckEnabled = true;
+      isBlockCheckEnabled = true;
     } else if (version === 3) {
       patchFile.skipNext(1); // image type
-      blockCheckEnabled = (await patchFile.readNext(1)).readUInt8() === 0x01;
-      undoDataAvailable = (await patchFile.readNext(1)).readUInt8() === 0x01;
+      isBlockCheckEnabled = (await patchFile.readNext(1)).readUInt8() === 0x01;
+      isUndoDataAvailable = (await patchFile.readNext(1)).readUInt8() === 0x01;
       patchFile.skipNext(1); // dummy
     } else {
       throw new IgirException(
         `PPF v${version} isn't supported: ${patchFile.getPathLike().toString()}`,
       );
     }
-    if (blockCheckEnabled) {
+    if (isBlockCheckEnabled) {
       patchFile.skipNext(1024);
     }
 
-    return new PPFHeader(version, undoDataAvailable);
+    return new PPFHeader(version, isUndoDataAvailable);
   }
 }
 

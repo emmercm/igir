@@ -39,7 +39,7 @@ export default abstract class Scanner extends Module {
   protected async getFilesFromPaths(
     filePaths: string[],
     checksumBitmask: number,
-    checksumArchives = false,
+    shouldChecksumArchives = false,
   ): Promise<File[]> {
     return (
       await this.mappableSemaphore.map(filePaths, async (inputFile) => {
@@ -55,7 +55,7 @@ export default abstract class Scanner extends Module {
           files = await this.getFilesFromPath(
             inputFile,
             checksumBitmask,
-            checksumArchives,
+            shouldChecksumArchives,
             childBar,
           );
         } finally {
@@ -132,7 +132,7 @@ export default abstract class Scanner extends Module {
   private async getFilesFromPath(
     filePath: string,
     checksumBitmask: number,
-    checksumArchives: boolean,
+    shouldChecksumArchives: boolean,
     progressBar: ProgressBar,
   ): Promise<File[]> {
     try {
@@ -167,8 +167,8 @@ export default abstract class Scanner extends Module {
         }
       }
 
-      const fileIsArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
-      if (checksumArchives && fileIsArchive) {
+      const isFileAnArchive = filesFromPath.some((file) => file instanceof ArchiveEntry);
+      if (shouldChecksumArchives && isFileAnArchive) {
         filesFromPath.push(
           await this.fileFactory.fileFrom(filePath, checksumBitmask, (progress) => {
             progressBar.setCompleted(progress);

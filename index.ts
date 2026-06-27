@@ -35,9 +35,9 @@ if (
  * neatly printed after this)
  */
 function multiBarStopAndNewline(): void {
-  const needNewline = MultiBar.isActive();
+  const isNewlineNeeded = MultiBar.isActive();
   MultiBar.stop();
-  if (needNewline) {
+  if (isNewlineNeeded) {
     logger.newLine();
   }
 }

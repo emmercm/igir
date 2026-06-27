@@ -119,7 +119,7 @@ export default class FileCache {
     filePath: string,
     checksumBitmask: number,
     callback?: FsReadCallback,
-    forceRecompute = false,
+    shouldForceRecompute = false,
   ): Promise<File> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(filePath);
@@ -128,7 +128,6 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedFile: File | undefined;
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
@@ -147,7 +146,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 
@@ -197,9 +196,9 @@ export default class FileCache {
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
-    forceRecompute = false,
+    shouldForceRecompute = false,
     callback?: FsReadCallback,
-    forceChecksumCalculation = false,
+    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<T>[]> {
     // NOTE(cemmer): we're explicitly not catching ENOENT errors here, we want it to bubble up
     const stats = await FsUtil.stat(archive.getFilePath());
@@ -216,14 +215,13 @@ export default class FileCache {
     // NOTE(cemmer): we're using the cache as a mutex here, so even if this function is called
     //  multiple times concurrently, entries will only be fetched once.
     let computedEntries: ArchiveEntry<T>[] | undefined;
-    // eslint-disable-next-line unicorn/no-declarations-before-early-exit
     const cachedValue = await this.cache.getOrCompute(
       cacheKey,
       async () => {
         computedEntries = (await archive.getArchiveEntries(
           checksumBitmask,
           callback,
-          forceChecksumCalculation,
+          shouldForceChecksumCalculation,
         )) as ArchiveEntry<T>[];
         return {
           fileSize: stats.size,
@@ -232,7 +230,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 
@@ -339,14 +337,14 @@ export default class FileCache {
     }
 
     const cacheKeys = this.getChecksumCacheKeys(file, valueType);
-    const usingFilePathKey = cacheKeys.length === 0;
-    if (usingFilePathKey) {
+    const isUsingFilePathKey = cacheKeys.length === 0;
+    if (isUsingFilePathKey) {
       // No checksums available to use as cache keys, fall back to file path
       cacheKeys.push(this.getCacheKey(file.getFilePath(), undefined, valueType));
     }
 
     // When using file-path-based keys, we need file stats to detect stale cache entries
-    const stats = usingFilePathKey ? await FsUtil.stat(file.getFilePath()) : undefined;
+    const stats = isUsingFilePathKey ? await FsUtil.stat(file.getFilePath()) : undefined;
 
     const cachedValue = await this.cache.getOrComputeAnyKeys(
       cacheKeys,
@@ -461,7 +459,10 @@ export default class FileCache {
     return Array.from(fillByteToRomPaddingProps.values(), (props) => new ROMPadding(props));
   }
 
-  async getOrComputeTzValidation(zip: Zip, forceRecompute = false): Promise<ValidationResultValue> {
+  async getOrComputeTzValidation(
+    zip: Zip,
+    shouldForceRecompute = false,
+  ): Promise<ValidationResultValue> {
     if (!(await FsUtil.exists(zip.getFilePath()))) {
       return ValidationResult.INVALID;
     }
@@ -489,7 +490,7 @@ export default class FileCache {
         };
       },
       (cached) => {
-        if (forceRecompute) {
+        if (shouldForceRecompute) {
           return true;
         }
 

@@ -150,7 +150,8 @@ export default class KeyedMutex {
       return;
     }
 
-    for (const key of keys.reduce(ArrayUtil.reduceUnique(), [])) {
+    const uniqueKeys = keys.reduce<string[]>(ArrayUtil.reduceUnique(), []);
+    for (const key of uniqueKeys) {
       this.keyMutexes.get(key)?.mutex.release();
     }
   }

@@ -32,13 +32,13 @@ export default class ReportGenerator extends Module {
 
     const reportPath = this.options.getReportOutput();
 
-    const anyGamesFoundAtAll = datStatuses.some((datStatus) =>
+    const hasAnyGamesFoundAtAll = datStatuses.some((datStatus) =>
       datStatus.anyGamesFound(this.options),
     );
     const matchedFileCsvs = (
       await Promise.all(
         datStatuses
-          .filter((datStatus) => datStatus.anyGamesFound(this.options) || !anyGamesFoundAtAll)
+          .filter((datStatus) => datStatus.anyGamesFound(this.options) || !hasAnyGamesFoundAtAll)
           .toSorted((a, b) => a.getDATName().localeCompare(b.getDATName()))
           .map(async (datsStatus) => await datsStatus.toCsv(this.options)),
       )

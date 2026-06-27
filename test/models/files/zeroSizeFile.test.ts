@@ -23,12 +23,12 @@ describe('extractToTempFile', () => {
   it('should extract to a random path', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {
-      const result = await ZeroSizeFile.getInstance().extractToTempFile(async (tempFile) => {
+      const didAssert = await ZeroSizeFile.getInstance().extractToTempFile(async (tempFile) => {
         await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
         await expect(FsUtil.size(tempFile)).resolves.toEqual(0);
         return true;
       });
-      expect(result).toEqual(true);
+      expect(didAssert).toEqual(true);
     } finally {
       await FsUtil.rm(tempDir, { recursive: true, force: true });
     }
