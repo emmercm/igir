@@ -1,0 +1,67 @@
+# clang-tidy checks for igir's first-party C++ native addons.
+# Read by clang-tidy (CI gate) and clangd (in-editor).
+#
+# Scope: only the first-party translation units are passed on the command line
+# (binding.cpp + stubs). HeaderFilterRegex is intentionally empty so diagnostics
+# are reported for the main .cpp only and NOT for any included headers -- this
+# keeps vendored deps/ headers (napi.h, chd.h, zlib.h, zstd.h, MAME) out of the
+# report.
+#
+# A broad, opinionated set with the noisy / low-safety-value checks removed, plus
+# checks that only fire on idiomatic node-addon-api / vendored code, not real
+# defects:
+#   - cppcoreguidelines-slicing: returning a Napi::Buffer as a Napi::Value is a
+#     handle conversion, not object slicing.
+#   - bugprone-crtp-constructor-accessibility: Napi::ObjectWrap<T> requires a
+#     public constructor for the framework to call.
+#   - clang-analyzer-optin.cplusplus.UninitializedObject: fires inside
+#     node-addon-api headers, not our code.
+#   - cppcoreguidelines-owning-memory: Napi::AsyncWorker self-deletes after Queue(),
+#     so the raw `new` is the documented idiom (we don't annotate with gsl::owner).
+#   - misc-override-with-different-visibility: the standard AsyncWorker subclass
+#     pattern overrides protected Execute/OnOK/OnError as public.
+#   - misc-use-anonymous-namespace / misc-use-internal-linkage: file-local symbols
+#     already have internal linkage via `static`; one target is the macro-generated
+#     __napi_InitAll (from NODE_API_MODULE), which cannot be moved.
+#   - cppcoreguidelines-avoid-do-while, -macro-usage, misc-header-include-cycle:
+#     zlib/zstd-idiomatic loops, zlib's conditional DEF_MEM_LEVEL, and cycles in
+#     vendored headers.
+
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-crtp-constructor-accessibility,
+  clang-analyzer-*,
+  -clang-analyzer-optin.cplusplus.UninitializedObject,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-slicing,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-macro-usage,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
+  -misc-use-internal-linkage,
+  -misc-override-with-different-visibility,
+  -misc-header-include-cycle,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  portability-*,
+  readability-*,
+  -readability-implicit-bool-conversion,
+  -readability-braces-around-statements,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle: file
