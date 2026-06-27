@@ -187,6 +187,17 @@
       }
     },
     {
+      "datNameRegex": "/Jaguar CD/i",
+      "extensions": [],
+      "tokens": {
+        "batocera": "jaguarcd",
+        "es": "atarijaguarcd",
+        "rocknix": "atarijaguar",
+        "retrodeck": "atarijaguarcd",
+        "romm": "atari-jaguar-cd"
+      }
+    },
+    {
       "datNameRegex": "/Lynx/i",
       "extensions": [".lnx", ".lyx"],
       "tokens": {
@@ -206,7 +217,7 @@
       }
     },
     {
-      "datNameRegex": "/Atari.*ST/i",
+      "datNameRegex": "/Atari.*\\bST/i",
       "extensions": [".msa", ".st", ".stx"],
       "tokens": {
         "batocera": "atarist",
@@ -1217,7 +1228,7 @@
       }
     },
     {
-      "datNameRegex": "/CD[ -]?i/i",
+      "datNameRegex": "/CD[ -]?i\\b/i",
       "extensions": [],
       "tokens": {
         "batocera": "cdi",
@@ -1698,6 +1709,13 @@
       "extensions": [],
       "tokens": {
         "pocket": "game_king"
+      }
+    },
+    {
+      "datNameRegex": "/NUON/i",
+      "extensions": [],
+      "tokens": {
+        "romm": "nuon"
       }
     },
     {
