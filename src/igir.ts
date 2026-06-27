@@ -415,13 +415,15 @@ export default class Igir {
     }
 
     if (this.options.shouldDir2Dat()) {
-      for (const bitmask of Object.values(ChecksumBitmask).filter(
-        (bitmask) =>
-          bitmask >= minimumChecksum &&
-          bitmask <= maximumChecksum &&
-          // Has not been enabled yet
-          !(matchChecksum & bitmask),
-      )) {
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0
+        ) {
+          continue;
+        }
         matchChecksum |= bitmask;
         logger.trace(
           `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
@@ -430,13 +432,15 @@ export default class Igir {
     }
 
     if (dats.length === 0) {
-      for (const bitmask of Object.values(ChecksumBitmask).filter(
-        (bitmask) =>
-          bitmask >= minimumChecksum &&
-          bitmask <= maximumChecksum &&
-          // Has not been enabled yet
-          !(matchChecksum & bitmask),
-      )) {
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0
+        ) {
+          continue;
+        }
         matchChecksum |= bitmask;
         logger.trace(
           `no DATs provided, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
@@ -446,15 +450,17 @@ export default class Igir {
 
     for (const dat of dats) {
       const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
-      for (const bitmask of Object.values(ChecksumBitmask).filter(
-        (bitmask) =>
-          bitmask >= minimumChecksum &&
-          bitmask <= maximumChecksum &&
-          // Has not been enabled yet
-          !(matchChecksum & bitmask) &&
-          // Should be enabled for this DAT
-          (datMinimumRomBitmask & bitmask) > 0,
-      )) {
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0 ||
+          // Should not be enabled for this DAT
+          (datMinimumRomBitmask & bitmask) === 0
+        ) {
+          continue;
+        }
         matchChecksum |= bitmask;
         logger.trace(
           `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
@@ -465,15 +471,17 @@ export default class Igir {
         continue;
       }
       const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
-      for (const bitmask of Object.values(ChecksumBitmask).filter(
-        (bitmask) =>
-          bitmask >= minimumChecksum &&
-          bitmask <= maximumChecksum &&
-          // Has not been enabled yet
-          !(matchChecksum & bitmask) &&
-          // Should be enabled for this DAT
-          (datMinimumDiskBitmask & bitmask) > 0,
-      )) {
+      for (const bitmask of Object.values(ChecksumBitmask)) {
+        if (
+          bitmask < minimumChecksum ||
+          bitmask > maximumChecksum ||
+          // Has already been enabled
+          (matchChecksum & bitmask) !== 0 ||
+          // Should not be enabled for this DAT
+          (datMinimumDiskBitmask & bitmask) === 0
+        ) {
+          continue;
+        }
         matchChecksum |= bitmask;
         logger.trace(
           `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,

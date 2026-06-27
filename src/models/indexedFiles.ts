@@ -181,14 +181,18 @@ export default class IndexedFiles {
     padded: ChecksumsToFiles,
   ): ChecksumsToFiles {
     const result = new Map(withHeaders);
-    for (const [checksum, files] of [...withoutHeaders]
+    for (const [checksum, files] of withoutHeaders) {
       // Prefer "raw" files as they exist on disk, without any header manipulation
-      .filter(([checksum]) => !result.has(checksum))) {
+      if (result.has(checksum)) {
+        continue;
+      }
       result.set(checksum, files);
     }
-    for (const [checksum, files] of [...padded]
+    for (const [checksum, files] of padded) {
       // Prefer "raw" files as they exist on disk, without any padding manipulation
-      .filter(([checksum]) => !result.has(checksum))) {
+      if (result.has(checksum)) {
+        continue;
+      }
       result.set(checksum, files);
     }
     return result;

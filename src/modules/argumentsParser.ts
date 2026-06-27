@@ -132,10 +132,10 @@ export default class ArgumentsParser {
       ['dir2dat', 'fixdat'],
     ];
     const addCommands = (yargsObj: Argv, previousCommands: string[] = []): Argv => {
-      for (const [command, description] of commands.filter(([command]) => {
+      for (const [command, description] of commands) {
         // Don't allow/show duplicate commands, i.e. don't give `igir copy copy` as an option
         if (previousCommands.includes(command)) {
-          return false;
+          continue;
         }
         // Don't allow/show conflicting commands, i.e. don't give `igir copy move` as an option
         const incompatibleCommands = previousCommands.flatMap((previousCommand) =>
@@ -143,8 +143,9 @@ export default class ArgumentsParser {
             .filter((mutuallyExclusive) => mutuallyExclusive.includes(previousCommand))
             .flat(),
         );
-        return !incompatibleCommands.includes(command);
-      })) {
+        if (incompatibleCommands.includes(command)) {
+          continue;
+        }
         yargsObj.command(command, description, (yargsSubObj) =>
           addCommands(yargsSubObj, [...previousCommands, command]),
         );

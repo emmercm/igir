@@ -853,11 +853,11 @@ describe('zip', () => {
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        for (const [statsBefore, statsAfter] of romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )) {
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         }
@@ -1477,11 +1477,11 @@ describe('extract', () => {
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        for (const [statsBefore, statsAfter] of romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )) {
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         }
@@ -1918,11 +1918,11 @@ describe('raw', () => {
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        for (const [statsBefore, statsAfter] of romFilesBefore
-          .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
-          .filter((statsTuple): statsTuple is [Stats, Stats] =>
-            statsTuple.every((val) => val !== undefined),
-          )) {
+        for (const [inputFile, statsBefore] of romFilesBefore) {
+          const statsAfter = romFilesAfter.get(inputFile);
+          if (statsAfter === undefined) {
+            continue;
+          }
           // File wasn't deleted, ensure it wasn't touched
           expect(statsAfter).toEqual(statsBefore);
         }

@@ -90,7 +90,10 @@ export default class DATStatus {
     });
 
     // Patched ROMs
-    for (const candidate of candidates.filter((candidate) => candidate.isPatched())) {
+    for (const candidate of candidates) {
+      if (!candidate.isPatched()) {
+        continue;
+      }
       const game = candidate.getGame();
       DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
       DATStatus.append(this.foundRomTypesToCandidates, ROMType.PATCHED, candidate);

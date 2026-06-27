@@ -414,9 +414,11 @@ export default class CandidateGenerator extends Module {
 
     // Group this Game's ROMs by the input Archives that contain them
     const inputArchivesToRoms = romsAndInputFiles.reduce((map, [rom, files]) => {
-      for (const archive of files
-        .filter((file) => file instanceof ArchiveEntry)
-        .map((archive): Archive => archive.getArchive())) {
+      for (const file of files) {
+        if (!(file instanceof ArchiveEntry)) {
+          continue;
+        }
+        const archive: Archive = file.getArchive();
         // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
         //  optical media games that have the same track multiple times.
         if (!map.has(archive)) {
