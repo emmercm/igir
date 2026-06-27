@@ -47,8 +47,8 @@ const XML_IGNORE_PATHS = new Set([
 // These attributes aren't read during deserialization, so try to save memory by skipping them
 const XML_IGNORE_ATTRS = {
   ...['machine', 'game'].reduce<Record<string, string[]>>((obj, tag) => {
-    obj[`mame.${tag}`] = ['ismechanical', 'runnable', 'sampleof', 'sourcefile'];
-    obj[`mame.${tag}.rom`] = ['offset', 'optional', 'region'];
+    obj[`mame.${tag}` satisfies string] = ['ismechanical', 'runnable', 'sampleof', 'sourcefile'];
+    obj[`mame.${tag}.rom` satisfies string] = ['offset', 'optional', 'region'];
     return obj;
   }, {}),
 };
