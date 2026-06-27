@@ -116,14 +116,7 @@ export default {
     const fileNamesLowerCase = centralDirectoryFileHeaders.map((fileHeader) =>
       fileHeader.fileNameResolved().toLowerCase(),
     );
-    const fileNamesLowerCaseSorted = fileNamesLowerCase.toSorted((a, b) => {
-      if (a < b) {
-        return -1;
-      } else if (a > b) {
-        return 1;
-      }
-      return 0;
-    });
+    const fileNamesLowerCaseSorted = fileNamesLowerCase.toSorted((a, b) => a.localeCompare(b));
     if (fileNamesLowerCase.some((name, i) => name !== fileNamesLowerCaseSorted[i])) {
       return ValidationResult.INVALID;
     }

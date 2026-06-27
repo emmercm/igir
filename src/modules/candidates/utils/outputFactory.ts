@@ -74,7 +74,7 @@ export class OutputPath implements ParsedPathWithEntryPath {
       path
         .format(this)
         // No double slashes / empty subdir name
-        .replaceAll(/\/{2,}/g, path.sep) // unix
+        .replaceAll(/\/{2,}/g, path.sep) // Unix
         .replace(/(?<!^\\*)\\{2,}/, path.sep) // windows, preserving network paths
         // No trailing slashes
         .replace(/[\\/]+$/, '')
@@ -457,7 +457,7 @@ export default class OutputFactory {
 
     if (options.getDirLetterGroup()) {
       // Flatten into a sorted list of [letter, Set(filenames)] tuples, one per subpath
-      const flatTuples = [...lettersToFilenames.entries()]
+      const flatTuples = [...lettersToFilenames]
         .toSorted((a, b) => a[0].localeCompare(b[0]))
         // Generate a tuple of [letter, Set(filenames)] for every subpath
         .reduce<[string, Set<string>][]>((arr, [letter, filenames]) => {
@@ -474,7 +474,7 @@ export default class OutputFactory {
             }
             return subPathMap;
           }, new Map<string, string[]>());
-          const tuples = [...subPathsToFilenames.entries()]
+          const tuples = [...subPathsToFilenames]
             .toSorted(([subPathOne], [subPathTwo]) => subPathOne.localeCompare(subPathTwo))
             .map(
               ([, subPathFilenames]) =>
@@ -514,47 +514,42 @@ export default class OutputFactory {
 
     // Split the letter directories, if needed
     if (options.getDirLetterLimit()) {
-      lettersToFilenames = [...lettersToFilenames.entries()].reduce(
-        (lettersMap, [letter, filenames]) => {
-          // ROMs may have been grouped together into a subdirectory. For example, when a game has
-          // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
-          // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
-          // subdir, or just the ROM's basename otherwise.
-          const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
-            const subPath = filename.replace(/[\\/].+$/, '');
-            if (subPathMap.has(subPath)) {
-              subPathMap.get(subPath)?.push(filename);
-            } else {
-              subPathMap.set(subPath, [filename]);
-            }
-            return subPathMap;
-          }, new Map<string, string[]>());
-
-          if (subPathsToFilenames.size <= options.getDirLetterLimit()) {
-            lettersMap.set(letter, new Set(filenames));
-            return lettersMap;
+      lettersToFilenames = [...lettersToFilenames].reduce((lettersMap, [letter, filenames]) => {
+        // ROMs may have been grouped together into a subdirectory. For example, when a game has
+        // multiple ROMs, they get grouped by their game name. Therefore, we have to understand
+        // what the "sub-path" should be within the letter directory: the dirname if the ROM has a
+        // subdir, or just the ROM's basename otherwise.
+        const subPathsToFilenames = [...filenames].reduce((subPathMap, filename) => {
+          const subPath = filename.replace(/[\\/].+$/, '');
+          if (subPathMap.has(subPath)) {
+            subPathMap.get(subPath)?.push(filename);
+          } else {
+            subPathMap.set(subPath, [filename]);
           }
+          return subPathMap;
+        }, new Map<string, string[]>());
 
-          const subPaths = [...subPathsToFilenames.keys()].toSorted();
-          const chunkSize = options.getDirLetterLimit();
-          for (let i = 0; i < subPaths.length; i += chunkSize) {
-            const chunk = subPaths
-              .slice(i, i + chunkSize)
-              .flatMap((subPath) => subPathsToFilenames.get(subPath) ?? []);
-
-            const newLetter = `${letter}${i / chunkSize + 1}`;
-            lettersMap.set(newLetter, new Set(chunk));
-          }
-
+        if (subPathsToFilenames.size <= options.getDirLetterLimit()) {
+          lettersMap.set(letter, new Set(filenames));
           return lettersMap;
-        },
-        new Map<string, Set<string>>(),
-      );
+        }
+
+        const subPaths = [...subPathsToFilenames.keys()].toSorted((a, b) => a.localeCompare(b));
+        const chunkSize = options.getDirLetterLimit();
+        for (let i = 0; i < subPaths.length; i += chunkSize) {
+          const chunk = subPaths
+            .slice(i, i + chunkSize)
+            .flatMap((subPath) => subPathsToFilenames.get(subPath) ?? []);
+
+          const newLetter = `${letter}${i / chunkSize + 1}`;
+          lettersMap.set(newLetter, new Set(chunk));
+        }
+
+        return lettersMap;
+      }, new Map<string, Set<string>>());
     }
 
-    const foundEntry = [...lettersToFilenames.entries()].find(([, filenames]) =>
-      filenames.has(romBasename),
-    );
+    const foundEntry = [...lettersToFilenames].find(([, filenames]) => filenames.has(romBasename));
     return foundEntry ? foundEntry[0] : undefined;
   }
 

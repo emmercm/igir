@@ -87,7 +87,7 @@ export default class CandidateMergeSplitValidator extends Module {
               return deviceGame.getName();
             })
             .filter((deviceGameName) => deviceGameName !== undefined)
-            .toSorted();
+            .toSorted((a, b) => a.localeCompare(b));
           for (const missingDeviceGame of missingDeviceGames) {
             missingDependencies.push(missingDeviceGame);
           }

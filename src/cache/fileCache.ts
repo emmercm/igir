@@ -426,16 +426,12 @@ export default class FileCache {
         const perTypePaddings: ROMPaddingProps[] = paddingProps.map((props) => ({
           paddedSize: props.paddedSize,
           fillByte: props.fillByte,
-          ...(bitmask === ChecksumBitmask.CRC32 && props.crc32 !== undefined
-            ? { crc32: props.crc32 }
-            : {}),
-          ...(bitmask === ChecksumBitmask.MD5 && props.md5 !== undefined ? { md5: props.md5 } : {}),
-          ...(bitmask === ChecksumBitmask.SHA1 && props.sha1 !== undefined
-            ? { sha1: props.sha1 }
-            : {}),
-          ...(bitmask === ChecksumBitmask.SHA256 && props.sha256 !== undefined
-            ? { sha256: props.sha256 }
-            : {}),
+          ...(bitmask === ChecksumBitmask.CRC32 &&
+            props.crc32 !== undefined && { crc32: props.crc32 }),
+          ...(bitmask === ChecksumBitmask.MD5 && props.md5 !== undefined && { md5: props.md5 }),
+          ...(bitmask === ChecksumBitmask.SHA1 && props.sha1 !== undefined && { sha1: props.sha1 }),
+          ...(bitmask === ChecksumBitmask.SHA256 &&
+            props.sha256 !== undefined && { sha256: props.sha256 }),
         }));
         resultMap.set(cacheKeys[i], { value: perTypePaddings });
       }
@@ -446,17 +442,17 @@ export default class FileCache {
     const fillByteToRomPaddingProps = new Map<number, ROMPaddingProps>();
     for (const cacheValue of cachedResults.values()) {
       const paddingPropsList = cacheValue.value as ROMPaddingProps[];
-      for (const element of paddingPropsList.values()) {
+      for (const element of paddingPropsList) {
         const existing = fillByteToRomPaddingProps.get(element.fillByte) ?? {
           paddedSize: element.paddedSize,
           fillByte: element.fillByte,
         };
         fillByteToRomPaddingProps.set(element.fillByte, {
           ...existing,
-          ...(element.crc32 === undefined ? {} : { crc32: element.crc32 }),
-          ...(element.md5 === undefined ? {} : { md5: element.md5 }),
-          ...(element.sha1 === undefined ? {} : { sha1: element.sha1 }),
-          ...(element.sha256 === undefined ? {} : { sha256: element.sha256 }),
+          ...(element.crc32 !== undefined && { crc32: element.crc32 }),
+          ...(element.md5 !== undefined && { md5: element.md5 }),
+          ...(element.sha1 !== undefined && { sha1: element.sha1 }),
+          ...(element.sha256 !== undefined && { sha256: element.sha256 }),
         });
       }
     }

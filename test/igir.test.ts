@@ -153,12 +153,12 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
     .filter((filePath) => !inputFilesAfter.includes(filePath))
     .map((filePath) => {
       let replaced = filePath;
-      options.getInputPaths().forEach((inputPath) => {
+      for (const inputPath of options.getInputPaths()) {
         replaced = replaced.replace(inputPath + path.sep, '');
-      });
+      }
       return replaced;
     })
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
 
   const outputFilesAfter =
     options.getOutput() === Temp.getTempDir()
@@ -167,7 +167,7 @@ async function runIgir(optionsProps: OptionsProps): Promise<TestOutput> {
   const cleanedFiles = outputFilesBefore
     .filter((filePath) => !outputFilesAfter.includes(filePath))
     .map((filePath) => filePath.replace(options.getOutputDirRoot() + path.sep, ''))
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
 
   return {
     outputFilesAndCrcs,
@@ -1547,9 +1547,9 @@ describe('with explicit DATs', () => {
 
         // Then none of the good/correct files from the first copy weren't cleaned
         const finalFiles = new Set(cleanResult.outputFilesAndCrcs.map(([filePath]) => filePath));
-        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+        for (const [filePath] of copyResult.outputFilesAndCrcs) {
           expect(finalFiles).toContain(filePath);
-        });
+        }
 
         // and the dummy file that was in an output directory was deleted, and the other wasn't
         expect(cleanResult.cleanedFiles).toEqual([path.join('One', 'dummy.rom')]);
@@ -1566,9 +1566,9 @@ describe('with explicit DATs', () => {
             .filter(Boolean)
             .flatMap((filePath) => filePath.split('|')),
         );
-        copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+        for (const [filePath] of copyResult.outputFilesAndCrcs) {
           expect(reportFoundFiles).toContain(path.join(outputTemp, filePath.replace(/\|.+/, '')));
-        });
+        }
       });
     },
   );
@@ -1606,9 +1606,9 @@ describe('with explicit DATs', () => {
 
       // Then every file from the first copy was cleaned, because they were moved to the wrong directory
       const cleanedFiles = new Set(cleanResult.cleanedFiles.map((filePath) => filePath));
-      copyResult.outputFilesAndCrcs.forEach(([filePath]) => {
+      for (const [filePath] of copyResult.outputFilesAndCrcs) {
         expect(cleanedFiles).toContain(path.join('wrongfolder', filePath));
-      });
+      }
     });
   });
 });

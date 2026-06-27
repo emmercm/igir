@@ -105,7 +105,7 @@ export default class DirectoryCleaner extends Module {
     }
 
     this.prefixedLogger.trace('done cleaning files in output');
-    return filesToClean.toSorted();
+    return filesToClean.toSorted((a, b) => a.localeCompare(b));
   }
 
   private async trashOrDelete(filePaths: string[]): Promise<void> {

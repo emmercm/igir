@@ -105,7 +105,7 @@ async function candidateWriter(
     ...optionsProps,
     input: [path.join(inputTemp, 'roms', inputGlob)],
     inputExclude: [path.join(inputTemp, 'roms', '**', '*.nkit.*')],
-    ...(patchGlob ? { patch: [path.join(inputTemp, patchGlob)] } : {}),
+    ...(patchGlob && { patch: [path.join(inputTemp, patchGlob)] }),
     output: outputTemp,
     dirGameSubdir: GameSubdirModeInverted[GameSubdirMode.MULTIPLE].toLowerCase(),
   });
@@ -716,7 +716,9 @@ describe('zip', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -842,28 +844,29 @@ describe('zip', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
+        for (const [statsBefore, statsAfter] of romFilesBefore
           .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
           .filter((statsTuple): statsTuple is [Stats, Stats] =>
             statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+          )) {
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );
@@ -1260,7 +1263,9 @@ describe('extract', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1463,28 +1468,29 @@ describe('extract', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
+        for (const [statsBefore, statsAfter] of romFilesBefore
           .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
           .filter((statsTuple): statsTuple is [Stats, Stats] =>
             statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+          )) {
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );
@@ -1697,7 +1703,9 @@ describe('raw', () => {
 
       // When
       await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-      const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+      const outputFiles = (await walkAndStat(outputTemp))
+        .map((pair) => pair[0])
+        .toSorted((a, b) => a.localeCompare(b));
 
       // Then the expected files were written
       expect(outputFiles).toEqual(expectedOutputPaths);
@@ -1901,28 +1909,29 @@ describe('raw', () => {
 
         // When
         await candidateWriter(options, inputTemp, inputGlob, undefined, outputTemp);
-        const outputFiles = (await walkAndStat(outputTemp)).map((pair) => pair[0]).toSorted();
+        const outputFiles = (await walkAndStat(outputTemp))
+          .map((pair) => pair[0])
+          .toSorted((a, b) => a.localeCompare(b));
 
         // Then the expected files were written
         expect(outputFiles).toEqual(expectedOutputPaths);
 
         // And the expected files were moved (deleted)
         const romFilesAfter = new Map(await walkAndStat(path.join(inputTemp, 'roms')));
-        romFilesBefore
+        for (const [statsBefore, statsAfter] of romFilesBefore
           .map(([inputFile, statsBefore]) => [statsBefore, romFilesAfter.get(inputFile)])
           .filter((statsTuple): statsTuple is [Stats, Stats] =>
             statsTuple.every((val) => val !== undefined),
-          )
-          .forEach(([statsBefore, statsAfter]) => {
-            // File wasn't deleted, ensure it wasn't touched
-            expect(statsAfter).toEqual(statsBefore);
-          });
+          )) {
+          // File wasn't deleted, ensure it wasn't touched
+          expect(statsAfter).toEqual(statsBefore);
+        }
         expect(
           romFilesBefore
             .filter(([inputFile]) => !romFilesAfter.has(inputFile))
             .map(([inputFile]) => inputFile)
-            .toSorted(),
-        ).toEqual(expectedDeletedInputPaths.toSorted());
+            .toSorted((a, b) => a.localeCompare(b)),
+        ).toEqual(expectedDeletedInputPaths.toSorted((a, b) => a.localeCompare(b)));
       });
     },
   );

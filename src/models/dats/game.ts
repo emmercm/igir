@@ -274,26 +274,20 @@ export default class Game implements GameProps {
         cloneofid: this.cloneOfId,
         isdevice: this.getIsDevice() ? 'yes' : undefined,
       },
-      ...(this.dir2datSource === undefined
-        ? {}
-        : {
-            xml_comment: this.dir2datSource,
-          }),
-      ...(this.description === undefined
-        ? {}
-        : {
-            description: {
-              _: this.description,
-            },
-          }),
+      ...(this.dir2datSource !== undefined && {
+        xml_comment: this.dir2datSource,
+      }),
+      ...(this.description !== undefined && {
+        description: {
+          _: this.description,
+        },
+      }),
       category: this.getCategories().map((category) => ({ _: category })),
-      ...(this.manufacturer === undefined
-        ? {}
-        : {
-            manufacturer: {
-              _: this.manufacturer,
-            },
-          }),
+      ...(this.manufacturer !== undefined && {
+        manufacturer: {
+          _: this.manufacturer,
+        },
+      }),
       release: this.getReleases().map((release) => release.toXmlDatObj()),
       rom: this.getRoms().map((rom) => rom.toXmlDatObj()),
       disk: this.getDisks().map((disk) => disk.toXmlDatObj()),
@@ -406,7 +400,8 @@ export default class Game implements GameProps {
       if (ringCodeMatches[1] === '') {
         // Redump doesn't always include a number
         return 1;
-      } else if (!Number.isNaN(ringCodeMatches[1])) {
+      }
+      if (!Number.isNaN(ringCodeMatches[1])) {
         return Number(ringCodeMatches[1]);
       }
     }
@@ -544,7 +539,7 @@ export default class Game implements GameProps {
   }
 
   /**
-   * Is this game a "program" application?
+   * Is this game a "program" app?
    */
   isProgram(): boolean {
     return (
@@ -878,7 +873,7 @@ export default class Game implements GameProps {
     let hashCode = this.getName();
     hashCode += `|${this.getRoms()
       .map((rom) => rom.hashCode())
-      .toSorted()
+      .toSorted((a, b) => a.localeCompare(b))
       .join(',')}`;
     return hashCode;
   }

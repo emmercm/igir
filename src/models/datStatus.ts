@@ -336,11 +336,14 @@ export default class DATStatus {
     options: Options,
     romTypesToValues: Map<ROMTypeValue, T[]>,
   ): T[] {
-    return DATStatus.getAllowedTypes(options)
-      .flatMap((type) => romTypesToValues.get(type))
-      .filter((value) => value !== undefined)
-      .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+    return (
+      this.getAllowedTypes(options)
+        .flatMap((type) => romTypesToValues.get(type))
+        .filter((value) => value !== undefined)
+        .reduce(ArrayUtil.reduceUnique(), [])
+        // eslint-disable-next-line unicorn/require-array-sort-compare
+        .toSorted()
+    );
   }
 
   private static getAllowedTypes(options: Options): ROMTypeValue[] {

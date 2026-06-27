@@ -90,10 +90,9 @@ export default {
    * Format a {@link Date} using the common subset of Moment.js display tokens. Defaults to the
    * current time.
    */
-  format(pattern: string, date: Date = new Date()): string {
-    return pattern.replace(
+  format: (pattern: string, date: Date = new Date()): string =>
+    pattern.replace(
       TOKEN_PATTERN,
       (match: string, literal: string | undefined) => literal ?? TOKENS[match](date),
-    );
-  },
+    ),
 };

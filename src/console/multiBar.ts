@@ -182,9 +182,9 @@ export default class MultiBar {
 
     // Freeze (and delete) any lingering progress bars
     const singleBarsCopy = [...this.singleBars];
-    singleBarsCopy.forEach((progressBar) => {
+    for (const progressBar of singleBarsCopy) {
       progressBar.freeze();
-    });
+    }
 
     this.renderTimer?.cancel();
     terminal.clearLiveRegion();

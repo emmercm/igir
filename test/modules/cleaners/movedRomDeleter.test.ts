@@ -481,7 +481,7 @@ describe('should delete archives', () => {
           )
         )
           .map((filePath) => filePath.replace(inputPath + path.sep, ''))
-          .toSorted();
+          .toSorted((a, b) => a.localeCompare(b));
 
         expect(deletedFilePaths).toEqual(expectedDeletedFilePaths);
       } finally {

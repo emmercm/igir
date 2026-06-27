@@ -6931,7 +6931,7 @@ describe('MAME v0.258', () => {
     }, new Map<string, string[]>());
 
     // Includes BIOS files
-    expect(gameNamesToRomNames.get('100lions')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('100lions')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '01.02.08_left.u3',
         '01.02.08_right.u2',
@@ -7031,9 +7031,9 @@ describe('MAME v0.258', () => {
         '24013001_right.u83',
         '25012805_left.u70',
         '25012805_right.u83',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('100lionsa')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('100lionsa')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '01.02.08_left.u3',
         '01.02.08_right.u2',
@@ -7133,9 +7133,9 @@ describe('MAME v0.258', () => {
         '25012805_right.u83',
         '30223811.u73',
         '30223811.u86',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7164,9 +7164,9 @@ describe('MAME v0.258', () => {
         'srb-05.m5',
         'srb-06.m6',
         'srb-07.m7',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942a')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942a')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7195,9 +7195,9 @@ describe('MAME v0.258', () => {
         'sr-16.n1',
         'sr-17.n2',
         'sra-03.m3',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942abl')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942abl')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.bin',
         '2.bin',
@@ -7219,9 +7219,9 @@ describe('MAME v0.258', () => {
         'sb-7.e10',
         'sb-8.k3',
         'sb-9.m11',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942b')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942b')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7250,9 +7250,9 @@ describe('MAME v0.258', () => {
         'sr-15.l2',
         'sr-16.n1',
         'sr-17.n2',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942h')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942h')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7281,9 +7281,9 @@ describe('MAME v0.258', () => {
         'supercharger_1942_@3.m3',
         'supercharger_1942_@4.m4',
         'supercharger_1942_@5.m5',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942p')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942p')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.bin',
         '2.bin',
@@ -7298,9 +7298,9 @@ describe('MAME v0.258', () => {
         '11.bin',
         '12.bin',
         'ic22.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942w')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942w')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7329,18 +7329,14 @@ describe('MAME v0.258', () => {
         'sw-05.m5',
         'sw-06.m6',
         'sw-07.m7',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('2spicy')?.toSorted()).toEqual(
-      [
-        '6.0.0009.bin',
-        '6.0.0010.bin',
-        '6.0.0010a.bin',
-        'fpr-24370b.ic6',
-        'vid_bios.u504',
-      ].toSorted(),
+    expect(gameNamesToRomNames.get('2spicy')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['6.0.0009.bin', '6.0.0010.bin', '6.0.0010a.bin', 'fpr-24370b.ic6', 'vid_bios.u504'].toSorted(
+        (a, b) => a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('aof2')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aof2')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sp-s2.sp1',
         'sp-s.sp1',
@@ -7390,9 +7386,9 @@ describe('MAME v0.258', () => {
         '056-c6.c6',
         '056-c7.c7',
         '056-c8.c8',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('aof2a')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aof2a')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sp-s2.sp1',
         'sp-s.sp1',
@@ -7443,9 +7439,9 @@ describe('MAME v0.258', () => {
         '056-c6.c6',
         '056-c7.c7',
         '056-c8.c8',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('aes')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aes')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '000-lo.lo',
         'neo-epo.bin',
@@ -7462,10 +7458,13 @@ describe('MAME v0.258', () => {
         'uni-bios_3_2.rom',
         'uni-bios_3_3.rom',
         'uni-bios_4_0.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('bbtime')?.toSorted()).toEqual(['bbtime.svg', 'hd38820a65']);
-    expect(gameNamesToRomNames.get('c64')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('bbtime')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'bbtime.svg',
+      'hd38820a65',
+    ]);
+    expect(gameNamesToRomNames.get('c64')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '325302-01.uab4',
         '901225-01.u5',
@@ -7511,9 +7510,9 @@ describe('MAME v0.258', () => {
         'turboprocessus.u4',
         'turborom2.u4',
         'turborom.u4',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpach')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpach')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'b1.u27',
         'b2.u26',
@@ -7527,9 +7526,9 @@ describe('MAME v0.258', () => {
         'u60.bin',
         'u61.bin',
         'u62.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpacha')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpacha')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'arrange_u26.bin',
         'arrange_u27.bin',
@@ -7543,9 +7542,9 @@ describe('MAME v0.258', () => {
         'u53.bin',
         'u60.bin',
         'u61.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpachj')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpachj')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'eeprom-ddonpach.bin',
         'u6.bin',
@@ -7559,31 +7558,35 @@ describe('MAME v0.258', () => {
         'u60.bin',
         'u61.bin',
         'u62.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
 
     // Includes device ROMs
-    expect(gameNamesToRomNames.get('area51mx')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2.0_68020_max-a51_kit_3h.3h',
         '2.0_68020_max-a51_kit_3k.3k',
         '2.0_68020_max-a51_kit_3m.3m',
         '2.0_68020_max-a51_kit_3p.3p',
         'jagwave.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToDiskNames.get('area51mx')?.toSorted()).toEqual(['area51mx']);
-    expect(gameNamesToRomNames.get('a51mxr3k')?.toSorted()).toEqual(
+    expect(gameNamesToDiskNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'area51mx',
+    ]);
+    expect(gameNamesToRomNames.get('a51mxr3k')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.0_r3k_max-a51_kit_hh.hh',
         '1.0_r3k_max-a51_kit_hl.hl',
         '1.0_r3k_max-a51_kit_lh.lh',
         '1.0_r3k_max-a51_kit_ll.ll',
         'jagwave.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToDiskNames.get('a51mxr3k')?.toSorted()).toEqual(['area51mx']);
-    expect(gameNamesToRomNames.get('galaga')?.toSorted()).toEqual(
+    expect(gameNamesToDiskNames.get('a51mxr3k')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'area51mx',
+    ]);
+    expect(gameNamesToRomNames.get('galaga')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '51xx.bin',
         '54xx.bin',
@@ -7601,9 +7604,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamf')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagamf')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '51xx.bin',
         '54xx.bin',
@@ -7621,9 +7624,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamk')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagamk')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '51xx.bin',
         '54xx.bin',
@@ -7641,9 +7644,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamw')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagamw')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '51xx.bin',
         '54xx.bin',
@@ -7661,9 +7664,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagao')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagao')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '51xx.bin',
         '54xx.bin',
@@ -7681,9 +7684,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('gallag')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('gallag')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '51xx.bin',
         'gallag.1',
@@ -7701,9 +7704,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('gatsbee')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('gatsbee')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.4b',
         '2.4c',
@@ -7722,9 +7725,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('nebulbee')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('nebulbee')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1c.bin',
         '1d.bin',
@@ -7742,9 +7745,9 @@ describe('MAME v0.258', () => {
         'nebulbee.04',
         'nebulbee.07',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('liblrabl')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('liblrabl')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2c.rom',
         '5b.rom',
@@ -7759,7 +7762,7 @@ describe('MAME v0.258', () => {
         'lr1-4.3d',
         'lr1-5.5l',
         'lr1-6.2p',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
 
     // No change to BIOS or devices
@@ -7799,13 +7802,13 @@ describe('MAME v0.258', () => {
     }, new Map<string, string[]>());
 
     // Excludes device files
-    expect(gameNamesToRomNames.get('100lions')?.toSorted()).toEqual(
-      ['10219211.u73', '10219211.u86'].toSorted(),
+    expect(gameNamesToRomNames.get('100lions')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['10219211.u73', '10219211.u86'].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('100lionsa')?.toSorted()).toEqual(
-      ['30223811.u73', '30223811.u86'].toSorted(),
+    expect(gameNamesToRomNames.get('100lionsa')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['30223811.u73', '30223811.u86'].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7834,9 +7837,9 @@ describe('MAME v0.258', () => {
         'srb-05.m5',
         'srb-06.m6',
         'srb-07.m7',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942a')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942a')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7865,9 +7868,9 @@ describe('MAME v0.258', () => {
         'sr-16.n1',
         'sr-17.n2',
         'sra-03.m3',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942abl')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942abl')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.bin',
         '2.bin',
@@ -7889,9 +7892,9 @@ describe('MAME v0.258', () => {
         'sb-7.e10',
         'sb-8.k3',
         'sb-9.m11',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942b')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942b')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7920,9 +7923,9 @@ describe('MAME v0.258', () => {
         'sr-15.l2',
         'sr-16.n1',
         'sr-17.n2',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942h')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942h')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7951,9 +7954,9 @@ describe('MAME v0.258', () => {
         'supercharger_1942_@3.m3',
         'supercharger_1942_@4.m4',
         'supercharger_1942_@5.m5',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942p')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942p')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.bin',
         '2.bin',
@@ -7968,9 +7971,9 @@ describe('MAME v0.258', () => {
         '11.bin',
         '12.bin',
         'ic22.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942w')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942w')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -7999,10 +8002,10 @@ describe('MAME v0.258', () => {
         'sw-05.m5',
         'sw-06.m6',
         'sw-07.m7',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('2spicy')?.toSorted()).toEqual([]);
-    expect(gameNamesToRomNames.get('aof2')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('2spicy')?.toSorted((a, b) => a.localeCompare(b))).toEqual([]);
+    expect(gameNamesToRomNames.get('aof2')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '056-p1.p1',
         '056-s1.s1',
@@ -8018,9 +8021,9 @@ describe('MAME v0.258', () => {
         '056-c6.c6',
         '056-c7.c7',
         '056-c8.c8',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('aof2a')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aof2a')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '056-p1.p1',
         '056-epr.ep1',
@@ -8037,9 +8040,9 @@ describe('MAME v0.258', () => {
         '056-c6.c6',
         '056-c7.c7',
         '056-c8.c8',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('aes')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aes')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '000-lo.lo',
         'neo-epo.bin',
@@ -8056,30 +8059,37 @@ describe('MAME v0.258', () => {
         'uni-bios_3_2.rom',
         'uni-bios_3_3.rom',
         'uni-bios_4_0.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('area51mx')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2.0_68020_max-a51_kit_3h.3h',
         '2.0_68020_max-a51_kit_3k.3k',
         '2.0_68020_max-a51_kit_3m.3m',
         '2.0_68020_max-a51_kit_3p.3p',
         'jagwave.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToDiskNames.get('area51mx')?.toSorted()).toEqual(['area51mx']);
-    expect(gameNamesToRomNames.get('a51mxr3k')?.toSorted()).toEqual(
+    expect(gameNamesToDiskNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'area51mx',
+    ]);
+    expect(gameNamesToRomNames.get('a51mxr3k')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.0_r3k_max-a51_kit_hh.hh',
         '1.0_r3k_max-a51_kit_hl.hl',
         '1.0_r3k_max-a51_kit_lh.lh',
         '1.0_r3k_max-a51_kit_ll.ll',
         'jagwave.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToDiskNames.get('a51mxr3k')?.toSorted()).toEqual(['area51mx']);
-    expect(gameNamesToRomNames.get('bbtime')?.toSorted()).toEqual(['bbtime.svg', 'hd38820a65']);
-    expect(gameNamesToRomNames.get('c64')?.toSorted()).toEqual(
+    expect(gameNamesToDiskNames.get('a51mxr3k')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'area51mx',
+    ]);
+    expect(gameNamesToRomNames.get('bbtime')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'bbtime.svg',
+      'hd38820a65',
+    ]);
+    expect(gameNamesToRomNames.get('c64')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '901225-01.u5',
         '901226-01.u3',
@@ -8114,9 +8124,9 @@ describe('MAME v0.258', () => {
         'turboprocessus.u4',
         'turborom2.u4',
         'turborom.u4',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpach')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpach')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'b1.u27',
         'b2.u26',
@@ -8130,9 +8140,9 @@ describe('MAME v0.258', () => {
         'u60.bin',
         'u61.bin',
         'u62.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpacha')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpacha')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'arrange_u26.bin',
         'arrange_u27.bin',
@@ -8146,9 +8156,9 @@ describe('MAME v0.258', () => {
         'u53.bin',
         'u60.bin',
         'u61.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpachj')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpachj')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'eeprom-ddonpach.bin',
         'u6.bin',
@@ -8162,9 +8172,9 @@ describe('MAME v0.258', () => {
         'u60.bin',
         'u61.bin',
         'u62.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galaga')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galaga')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'gg1_1b.3p',
         'gg1_2b.3m',
@@ -8180,9 +8190,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamf')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagamf')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2600j.bin',
         '2700k.bin',
@@ -8198,9 +8208,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamk')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagamk')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '3400c.bin',
         'gg1-5.3f',
@@ -8216,9 +8226,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamw')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagamw')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2600j.bin',
         '2700k.bin',
@@ -8234,9 +8244,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagao')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galagao')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'gg1-1.3p',
         'gg1-2.3m',
@@ -8252,9 +8262,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('gallag')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('gallag')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'gallag.1',
         'gallag.2',
@@ -8271,9 +8281,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('gatsbee')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('gatsbee')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.4b',
         '2.4c',
@@ -8290,9 +8300,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('nebulbee')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('nebulbee')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1c.bin',
         '1d.bin',
@@ -8309,9 +8319,9 @@ describe('MAME v0.258', () => {
         'nebulbee.04',
         'nebulbee.07',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('liblrabl')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('liblrabl')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2c.rom',
         '5b.rom',
@@ -8326,7 +8336,7 @@ describe('MAME v0.258', () => {
         'lr1-4.3d',
         'lr1-5.5l',
         'lr1-6.2p',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
 
     // No change to BIOS or devices
@@ -8366,7 +8376,7 @@ describe('MAME v0.258', () => {
     }, new Map<string, string[]>());
 
     // No change
-    expect(gameNamesToRomNames.get('aes')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aes')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '000-lo.lo',
         'neo-epo.bin',
@@ -8383,20 +8393,25 @@ describe('MAME v0.258', () => {
         'uni-bios_3_2.rom',
         'uni-bios_3_3.rom',
         'uni-bios_4_0.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('area51mx')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2.0_68020_max-a51_kit_3h.3h',
         '2.0_68020_max-a51_kit_3k.3k',
         '2.0_68020_max-a51_kit_3m.3m',
         '2.0_68020_max-a51_kit_3p.3p',
         'jagwave.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToDiskNames.get('area51mx')?.toSorted()).toEqual(['area51mx']);
-    expect(gameNamesToRomNames.get('bbtime')?.toSorted()).toEqual(['bbtime.svg', 'hd38820a65']);
-    expect(gameNamesToRomNames.get('liblrabl')?.toSorted()).toEqual(
+    expect(gameNamesToDiskNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'area51mx',
+    ]);
+    expect(gameNamesToRomNames.get('bbtime')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'bbtime.svg',
+      'hd38820a65',
+    ]);
+    expect(gameNamesToRomNames.get('liblrabl')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2c.rom',
         '5b.rom',
@@ -8411,17 +8426,17 @@ describe('MAME v0.258', () => {
         'lr1-4.3d',
         'lr1-5.5l',
         'lr1-6.2p',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
 
     // Clones exclude parent ROMs
-    expect(gameNamesToRomNames.get('100lions')?.toSorted()).toEqual(
-      ['10219211.u73', '10219211.u86'].toSorted(),
+    expect(gameNamesToRomNames.get('100lions')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['10219211.u73', '10219211.u86'].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('100lionsa')?.toSorted()).toEqual(
-      ['30223811.u73', '30223811.u86'].toSorted(),
+    expect(gameNamesToRomNames.get('100lionsa')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['30223811.u73', '30223811.u86'].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sb-0.f1',
         'sb-1.k6',
@@ -8450,21 +8465,29 @@ describe('MAME v0.258', () => {
         'srb-05.m5',
         'srb-06.m6',
         'srb-07.m7',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942a')?.toSorted()).toEqual(
-      ['sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7', 'sra-03.m3'].toSorted(),
+    expect(gameNamesToRomNames.get('1942a')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7', 'sra-03.m3'].toSorted((a, b) =>
+        a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('1942abl')?.toSorted()).toEqual(
-      ['3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin'].toSorted(),
+    expect(gameNamesToRomNames.get('1942abl')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['3.bin', '5.bin', '7.bin', '9.bin', '11.bin', '13.bin', '14.bin', '16.bin'].toSorted(
+        (a, b) => a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('1942b')?.toSorted()).toEqual(
-      ['sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7'].toSorted(),
+    expect(gameNamesToRomNames.get('1942b')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['sr-03.m3', 'sr-04.m4', 'sr-05.m5', 'sr-06.m6', 'sr-07.m7'].toSorted((a, b) =>
+        a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('1942h')?.toSorted()).toEqual(
-      ['supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5'].toSorted(),
+    expect(gameNamesToRomNames.get('1942h')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['supercharger_1942_@3.m3', 'supercharger_1942_@4.m4', 'supercharger_1942_@5.m5'].toSorted(
+        (a, b) => a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('1942p')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942p')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.bin',
         '2.bin',
@@ -8477,26 +8500,28 @@ describe('MAME v0.258', () => {
         '10.bin',
         '11.bin',
         '12.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('1942w')?.toSorted()).toEqual(
-      ['sw-02.f2', 'sw-03.m3', 'sw-04.m4', 'sw-05.m5', 'sw-07.m7'].toSorted(),
+    expect(gameNamesToRomNames.get('1942w')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['sw-02.f2', 'sw-03.m3', 'sw-04.m4', 'sw-05.m5', 'sw-07.m7'].toSorted((a, b) =>
+        a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('2spicy')?.toSorted()).toEqual(
-      [
-        // It exactly matches its BIOS
-      ].toSorted(),
-    );
-    expect(gameNamesToRomNames.get('a51mxr3k')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('2spicy')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      // It exactly matches its BIOS
+    ]);
+    expect(gameNamesToRomNames.get('a51mxr3k')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.0_r3k_max-a51_kit_hh.hh',
         '1.0_r3k_max-a51_kit_hl.hl',
         '1.0_r3k_max-a51_kit_lh.lh',
         '1.0_r3k_max-a51_kit_ll.ll',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToDiskNames.get('a51mxr3k')?.toSorted()).toEqual([]);
-    expect(gameNamesToRomNames.get('aof2')?.toSorted()).toEqual(
+    expect(gameNamesToDiskNames.get('a51mxr3k')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      [],
+    );
+    expect(gameNamesToRomNames.get('aof2')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '056-p1.p1',
         '056-s1.s1',
@@ -8512,10 +8537,12 @@ describe('MAME v0.258', () => {
         '056-c6.c6',
         '056-c7.c7',
         '056-c8.c8',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('aof2a')?.toSorted()).toEqual(['056-epr.ep1']);
-    expect(gameNamesToRomNames.get('c64')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aof2a')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      '056-epr.ep1',
+    ]);
+    expect(gameNamesToRomNames.get('c64')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '901225-01.u5',
         '901226-01.u3',
@@ -8550,9 +8577,9 @@ describe('MAME v0.258', () => {
         'turboprocessus.u4',
         'turborom2.u4',
         'turborom.u4',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpach')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpach')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'b1.u27',
         'b2.u26',
@@ -8566,19 +8593,22 @@ describe('MAME v0.258', () => {
         'u60.bin',
         'u61.bin',
         'u62.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpacha')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpacha')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'arrange_u26.bin',
         'arrange_u27.bin',
         'arrange_u51.bin',
         'arrange_u62.bin',
         'eeprom-ddonpach.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpachj')?.toSorted()).toEqual(['u26.bin', 'u27.bin']);
-    expect(gameNamesToRomNames.get('galaga')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpachj')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'u26.bin',
+      'u27.bin',
+    ]);
+    expect(gameNamesToRomNames.get('galaga')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'gg1_1b.3p',
         'gg1_2b.3m',
@@ -8594,32 +8624,32 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamf')?.toSorted()).toEqual(
-      ['3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600fast.bin', '3700g.bin'].toSorted(),
+    expect(gameNamesToRomNames.get('galagamf')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600fast.bin', '3700g.bin'].toSorted(
+        (a, b) => a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('galagamk')?.toSorted()).toEqual(
-      ['3400c.bin', 'gg1-5.3f', 'mk2-1', 'mk2-2', 'mk2-4'].toSorted(),
+    expect(gameNamesToRomNames.get('galagamk')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['3400c.bin', 'gg1-5.3f', 'mk2-1', 'mk2-2', 'mk2-4'].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('galagamw')?.toSorted()).toEqual(
-      ['3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600e.bin', '3700g.bin'].toSorted(),
+    expect(gameNamesToRomNames.get('galagamw')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['3200a.bin', '3300b.bin', '3400c.bin', '3500d.bin', '3600e.bin', '3700g.bin'].toSorted(
+        (a, b) => a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('galagao')?.toSorted()).toEqual(
-      ['gg1-1.3p', 'gg1-2.3m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c'].toSorted(),
+    expect(gameNamesToRomNames.get('galagao')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['gg1-1.3p', 'gg1-2.3m', 'gg1-4.2l', 'gg1-5.3f', 'gg1-7.2c'].toSorted((a, b) =>
+        a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('gallag')?.toSorted()).toEqual(
-      [
-        'gallag.1',
-        'gallag.2',
-        'gallag.4',
-        'gallag.5',
-        'gallag.6',
-        'gallag.7',
-        'gallag.8',
-      ].toSorted(),
+    expect(gameNamesToRomNames.get('gallag')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['gallag.1', 'gallag.2', 'gallag.4', 'gallag.5', 'gallag.6', 'gallag.7', 'gallag.8'].toSorted(
+        (a, b) => a.localeCompare(b),
+      ),
     );
-    expect(gameNamesToRomNames.get('gatsbee')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('gatsbee')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1.4b',
         '2.4c',
@@ -8631,9 +8661,9 @@ describe('MAME v0.258', () => {
         'gallag.6',
         'gg1-5.3f',
         'gg1-7.2c',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('nebulbee')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('nebulbee')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1c.bin',
         '1d.bin',
@@ -8645,7 +8675,7 @@ describe('MAME v0.258', () => {
         'nebulbee.02',
         'nebulbee.04',
         'nebulbee.07',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
 
     // No change to BIOS or devices
@@ -8685,7 +8715,7 @@ describe('MAME v0.258', () => {
     }, new Map<string, string[]>());
 
     // No change from regular non-merged (because there are no clones)
-    expect(gameNamesToRomNames.get('aes')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aes')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '000-lo.lo',
         'neo-epo.bin',
@@ -8702,10 +8732,13 @@ describe('MAME v0.258', () => {
         'uni-bios_3_2.rom',
         'uni-bios_3_3.rom',
         'uni-bios_4_0.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('bbtime')?.toSorted()).toEqual(['bbtime.svg', 'hd38820a65']);
-    expect(gameNamesToRomNames.get('c64')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('bbtime')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'bbtime.svg',
+      'hd38820a65',
+    ]);
+    expect(gameNamesToRomNames.get('c64')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         // NOTE(cemmer): excludes clones
         '901225-01.u5',
@@ -8741,9 +8774,9 @@ describe('MAME v0.258', () => {
         'turboprocessus.u4',
         'turborom2.u4',
         'turborom.u4',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('liblrabl')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('liblrabl')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '2c.rom',
         '5b.rom',
@@ -8758,20 +8791,20 @@ describe('MAME v0.258', () => {
         'lr1-4.3d',
         'lr1-5.5l',
         'lr1-6.2p',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
 
     // Clones are merged in
-    expect(gameNamesToRomNames.get('100lions')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('100lions')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '100lionsa\\30223811.u73',
         '100lionsa\\30223811.u86',
         '10219211.u73',
         '10219211.u86',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
     expect(gameNamesToRomNames.has('100lionsa')).toEqual(false);
-    expect(gameNamesToRomNames.get('1942')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('1942')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '1942a\\sr-04.m4',
         '1942a\\sr-05.m5',
@@ -8832,7 +8865,7 @@ describe('MAME v0.258', () => {
         'srb-05.m5',
         'srb-06.m6',
         'srb-07.m7',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
     expect(gameNamesToRomNames.has('1942a')).toEqual(false);
     expect(gameNamesToRomNames.has('1942abl')).toEqual(false);
@@ -8840,12 +8873,10 @@ describe('MAME v0.258', () => {
     expect(gameNamesToRomNames.has('1942h')).toEqual(false);
     expect(gameNamesToRomNames.has('1942p')).toEqual(false);
     expect(gameNamesToRomNames.has('1942w')).toEqual(false);
-    expect(gameNamesToRomNames.get('2spicy')?.toSorted()).toEqual(
-      [
-        // It exactly matches its BIOS
-      ].toSorted(),
-    );
-    expect(gameNamesToRomNames.get('area51mx')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('2spicy')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      // It exactly matches its BIOS
+    ]);
+    expect(gameNamesToRomNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'a51mxr3k\\1.0_r3k_max-a51_kit_hh.hh',
         'a51mxr3k\\1.0_r3k_max-a51_kit_hl.hl',
@@ -8856,12 +8887,14 @@ describe('MAME v0.258', () => {
         '2.0_68020_max-a51_kit_3m.3m',
         '2.0_68020_max-a51_kit_3p.3p',
         'jagwave.rom',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToDiskNames.get('area51mx')?.toSorted()).toEqual(['area51mx']);
+    expect(gameNamesToDiskNames.get('area51mx')?.toSorted((a, b) => a.localeCompare(b))).toEqual([
+      'area51mx',
+    ]);
     expect(gameNamesToRomNames.has('a51mxr3k')).toEqual(false);
     expect(gameNamesToDiskNames.has('a51mxr3k')).toEqual(false);
-    expect(gameNamesToRomNames.get('aof2')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('aof2')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'aof2a\\056-epr.ep1',
         '056-p1.p1',
@@ -8878,10 +8911,10 @@ describe('MAME v0.258', () => {
         '056-c6.c6',
         '056-c7.c7',
         '056-c8.c8',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
     expect(gameNamesToRomNames.has('aof2a')).toEqual(false);
-    expect(gameNamesToRomNames.get('galaga')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('galaga')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'galagamf\\3200a.bin',
         'galagamf\\3300b.bin',
@@ -8930,9 +8963,9 @@ describe('MAME v0.258', () => {
         'prom-3.1c',
         'prom-4.2n',
         'prom-5.5n',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('ddonpach')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('ddonpach')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'ddonpacha\\arrange_u26.bin',
         'ddonpacha\\arrange_u27.bin',
@@ -8953,7 +8986,7 @@ describe('MAME v0.258', () => {
         'u60.bin',
         'u61.bin',
         'u62.bin',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
     expect(gameNamesToRomNames.has('ddonpacha')).toEqual(false);
     expect(gameNamesToRomNames.has('ddonpachj')).toEqual(false);
@@ -9327,7 +9360,7 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
     }, new Map<string, string[]>());
 
     // No change
-    expect(gameNamesToRomNames.get('neogeo')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('neogeo')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         'sp-s3.sp1',
         'sp-s2.sp1',
@@ -9367,10 +9400,10 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
         'sm1.sm1',
         'sfix.sfix',
         '000-lo.lo',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
     // Clones exclude parent ROMs
-    expect(gameNamesToRomNames.get('3countb')?.toSorted()).toEqual(
+    expect(gameNamesToRomNames.get('3countb')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
       [
         '043-p1.p1',
         '043-s1.s1',
@@ -9381,10 +9414,10 @@ describe('FinalBurn Neo Neo Geo e544671', () => {
         '043-m1.m1',
         '043-v1.v1',
         '043-v2.v2',
-      ].toSorted(),
+      ].toSorted((a, b) => a.localeCompare(b)),
     );
-    expect(gameNamesToRomNames.get('3countba')?.toSorted()).toEqual(
-      ['043-epr.ep1', '043-epr.ep2'].toSorted(),
+    expect(gameNamesToRomNames.get('3countba')?.toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ['043-epr.ep1', '043-epr.ep2'].toSorted((a, b) => a.localeCompare(b)),
     );
   });
 });

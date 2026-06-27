@@ -487,7 +487,7 @@ export default class DATScanner extends Scanner {
     const rowNamesToRows = GameGrouper.groupMultiDiscGames(rows, (row) =>
       row.name.replace(/\.[^.]*$/, ''),
     );
-    const games = [...rowNamesToRows.entries()].map(([gameName, rows]) => {
+    const games = [...rowNamesToRows].map(([gameName, rows]) => {
       const roms = rows.map(
         (row) =>
           new ROM({
@@ -551,7 +551,7 @@ export default class DATScanner extends Scanner {
 
   private shouldFilterOut(dat: DAT): boolean {
     const datNameRegex = this.options.getDatNameRegex();
-    if (datNameRegex && !datNameRegex.some((regex) => regex.test(dat.getName()))) {
+    if (datNameRegex?.every((regex) => !regex.test(dat.getName()))) {
       return true;
     }
 
@@ -563,11 +563,7 @@ export default class DATScanner extends Scanner {
     const datDescription = dat.getDescription();
 
     const datDescriptionRegex = this.options.getDatDescriptionRegex();
-    if (
-      datDescription &&
-      datDescriptionRegex &&
-      !datDescriptionRegex.some((regex) => regex.test(datDescription))
-    ) {
+    if (datDescription && datDescriptionRegex?.every((regex) => !regex.test(datDescription))) {
       return true;
     }
 

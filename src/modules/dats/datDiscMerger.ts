@@ -54,7 +54,7 @@ export default class DATDiscMerger extends Module {
   private groupGames(games: Game[]): Game[] {
     const gameNamesToGames = GameGrouper.groupMultiDiscGames(games, (game) => game.getName());
 
-    return [...gameNamesToGames.entries()].flatMap(([gameName, games]) => {
+    return [...gameNamesToGames].flatMap(([gameName, games]) => {
       if (games.length === 1) {
         return games[0];
       }
@@ -66,10 +66,10 @@ export default class DATDiscMerger extends Module {
         map.set(rom.getName(), (map.get(rom.getName()) ?? 0) + 1);
         return map;
       }, new Map<string, number>());
-      const duplicateRomNames = [...romNamesToCount.entries()]
+      const duplicateRomNames = [...romNamesToCount]
         .filter(([, count]) => count > 1)
         .map(([romName]) => romName)
-        .toSorted();
+        .toSorted((a, b) => a.localeCompare(b));
 
       const subGames =
         duplicateRomNames.length > 1

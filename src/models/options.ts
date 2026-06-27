@@ -295,7 +295,7 @@ export interface OptionsProps {
 }
 
 /**
- * A collection of all options for a single invocation of the application.
+ * A collection of all options for a single invocation of the app.
  */
 export default class Options implements OptionsProps {
   @Expose({ name: '_' })
@@ -1209,7 +1209,7 @@ export default class Options implements OptionsProps {
         (filePath) =>
           !writtenFilesNormalized.has(filePath) && !cleanExcludedFilesNormalized.has(filePath),
       )
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
   }
 
   getCleanBackup(): string | undefined {
@@ -1563,10 +1563,10 @@ export default class Options implements OptionsProps {
     const symbolMatches = reportOutput.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       const now = new Date();
-      symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
+      for (const match of symbolMatches.reduce(ArrayUtil.reduceUnique(), [])) {
         const val = DateUtil.format(match.replace(/^%/, ''), now);
         reportOutput = reportOutput.replace(match, val);
-      });
+      }
     }
 
     return FsUtil.makeLegal(reportOutput);
@@ -1623,10 +1623,10 @@ export default class Options implements OptionsProps {
     const symbolMatches = debugLog.match(/%([a-zA-Z])(\1|o)*/g);
     if (symbolMatches) {
       const now = new Date();
-      symbolMatches.reduce(ArrayUtil.reduceUnique(), []).forEach((match) => {
+      for (const match of symbolMatches.reduce(ArrayUtil.reduceUnique(), [])) {
         const val = DateUtil.format(match.replace(/^%/, ''), now);
         debugLog = debugLog.replace(match, val);
-      });
+      }
     }
 
     return debugLog;

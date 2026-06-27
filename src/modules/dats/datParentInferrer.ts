@@ -172,7 +172,7 @@ export default class DATParentInferrer extends Module {
       }
       return map;
     }, new Map<string, Game[]>());
-    const groupedGames = [...strippedNamesToGames.entries()]
+    const groupedGames = [...strippedNamesToGames]
       .toSorted((a, b) => a[0].localeCompare(b[0]))
       .map(([, games]) => games);
 
@@ -192,9 +192,9 @@ export default class DATParentInferrer extends Module {
       .replace(DATParentInferrer.REGION_CODES_REGEX, '')
       .replace(DATParentInferrer.REGION_NAMES_REGEX, '')
       .replace(DATParentInferrer.LATIN_AMERICA_REGEX, '');
-    Internationalization.REGION_REGEX.forEach((regex) => {
+    for (const regex of Internationalization.REGION_REGEX) {
       strippedName = strippedName.replace(regex, '');
-    });
+    }
     // ***** Languages *****
     return (
       strippedName

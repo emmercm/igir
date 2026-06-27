@@ -535,7 +535,7 @@ export default class File implements FileProps {
             res.statusCode < 400 &&
             res.headers.location
           ) {
-            const redirectedUrl = new URL(res.headers.location, sourceUrl).toString();
+            const redirectedUrl = new URL(res.headers.location, sourceUrl).href;
             File.fileOf({ filePath: redirectedUrl })
               .then(async (file) => await file.downloadToPath(filePath))
               .then(resolve)

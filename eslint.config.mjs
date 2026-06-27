@@ -218,10 +218,12 @@ export default eslintConfig.defineConfig([
       ],
       // Style and clarity preference differences
       'unicorn/import-style': 'off',
+      'unicorn/max-nested-calls': 'off',
       'unicorn/no-array-for-each': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/no-await-expression-member': 'off',
       'unicorn/no-hex-escape': 'off',
+      'unicorn/no-unreadable-new-expression': 'off',
       'unicorn/no-useless-undefined': 'off',
       'unicorn/prefer-string-raw': 'off',
       'unicorn/prefer-switch': 'off',
@@ -232,9 +234,10 @@ export default eslintConfig.defineConfig([
       'unicorn/no-array-callback-reference': 'off',
       'unicorn/no-array-method-this-argument': 'off',
       'unicorn/prefer-https': 'off', // TODO(cemmer): turn back on when comments can be excluded
+      'unicorn/prefer-iterator-to-array': 'off', // ArrayIterator#toArray() doesn't exist 😡
       'unicorn/prefer-type-error': 'off',
 
-      // ***** eslint:recommended *****
+      // ***** ESLint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
     },
@@ -292,7 +295,7 @@ export default eslintConfig.defineConfig([
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          /*** @eslint/js defaults ***/
+          /*** @ESLint/js defaults ***/
           vars: 'all',
           caughtErrors: 'all',
           reportUsedIgnorePattern: false,

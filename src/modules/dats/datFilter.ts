@@ -128,7 +128,7 @@ export default class DATFilter extends Module {
     if (langs.size === 0) {
       return false;
     }
-    return !game.getLanguages().some((lang) => langs.has(lang));
+    return game.getLanguages().every((lang) => !langs.has(lang));
   }
 
   private regionNotAllowed(game: Game): boolean {
@@ -136,6 +136,6 @@ export default class DATFilter extends Module {
     if (regions.size === 0) {
       return false;
     }
-    return !game.getRegions().some((region) => regions.has(region));
+    return game.getRegions().every((region) => !regions.has(region));
   }
 }

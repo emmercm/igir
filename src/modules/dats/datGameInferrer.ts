@@ -56,16 +56,15 @@ export default class DATGameInferrer extends Module {
         // `.filter()` rather than `.find()` because a file can be found in overlapping input paths,
         // therefore it should be counted in both
         .filter((inputPath) => filePath.startsWith(inputPath));
-      (matchedInputPaths.length > 0
+      for (const inputPath of matchedInputPaths.length > 0
         ? matchedInputPaths
-        : [DATGameInferrer.DEFAULT_DAT_NAME]
-      ).forEach((inputPath) => {
+        : [DATGameInferrer.DEFAULT_DAT_NAME]) {
         if (map.has(inputPath)) {
           map.get(inputPath)?.push(file);
         } else {
           map.set(inputPath, [file]);
         }
-      });
+      }
       return map;
     }, new Map<string, File[]>());
     this.prefixedLogger.trace(
@@ -73,7 +72,7 @@ export default class DATGameInferrer extends Module {
     );
 
     const dats = await Promise.all(
-      [...inputPathsToRomFiles.entries()].map(
+      [...inputPathsToRomFiles].map(
         async ([inputPath, datRomFiles]) => await this.createDAT(inputPath, datRomFiles),
       ),
     );
@@ -140,7 +139,7 @@ export default class DATGameInferrer extends Module {
           dir2datSource: gameRomFiles
             .map((romFile) => romFile.getFilePath())
             .reduce(ArrayUtil.reduceUnique(), [])
-            .toSorted()
+            .toSorted((a, b) => a.localeCompare(b))
             .join(', '),
         });
       })
@@ -175,16 +174,14 @@ export default class DATGameInferrer extends Module {
     return files.map((file) => {
       let enrichedFile = file;
 
-      [
+      for (const checksumProps of [
         crc32Map.get(`${file.getCrc32()}|${file.getSize()}`),
         md5Map.get(file.getMd5() ?? ''),
         sha1Map.get(file.getSha1() ?? ''),
         sha256Map.get(file.getSha256() ?? ''),
-      ]
-        .filter((checksumProps) => checksumProps !== undefined)
-        .forEach((checksumProps) => {
-          enrichedFile = enrichedFile.withProps(checksumProps);
-        });
+      ].filter((checksumProps) => checksumProps !== undefined)) {
+        enrichedFile = enrichedFile.withProps(checksumProps);
+      }
 
       return enrichedFile;
     });
@@ -209,12 +206,12 @@ export default class DATGameInferrer extends Module {
     return new Map(
       [...crc32Map].map(([key, romFiles]) => {
         const checksums: ChecksumProps = {};
-        romFiles.forEach((romFile) => {
+        for (const romFile of romFiles) {
           checksums.crc32 = romFile.getCrc32() ?? checksums.crc32;
           checksums.md5 = romFile.getMd5() ?? checksums.md5;
           checksums.sha1 = romFile.getSha1() ?? checksums.sha1;
           checksums.sha256 = romFile.getSha256() ?? checksums.sha256;
-        });
+        }
         return [key, checksums];
       }),
     );
@@ -416,6 +413,6 @@ export default class DATGameInferrer extends Module {
     this.prefixedLogger.trace(
       `inferred ${IntlUtil.toLocaleString(results.size)} games from raw files`,
     );
-    return [...results.entries()];
+    return [...results];
   }
 }

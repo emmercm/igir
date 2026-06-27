@@ -234,16 +234,16 @@ export default class Cache<V> {
   async delete(key: string | RegExp): Promise<void> {
     let keysToDelete: string[];
     if (key instanceof RegExp) {
-      keysToDelete = [...this.keys().keys()].filter((k) => k.match(key) !== null);
+      keysToDelete = [...this.keys()].filter((k) => k.match(key) !== null);
     } else {
       keysToDelete = [key];
     }
 
     // Note: avoiding lockKey() because it could get expensive with many keys to delete
     await this.keyedMutex.runExclusiveGlobally(() => {
-      keysToDelete.forEach((k) => {
+      for (const k of keysToDelete) {
         this.deleteUnsafe(k);
-      });
+      }
     });
   }
 

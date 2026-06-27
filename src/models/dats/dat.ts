@@ -158,8 +158,8 @@ export default abstract class DAT {
 
   getRequiredRomChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) => {
-      game.getRoms().forEach((rom) => {
+    for (const game of this.getGames()) {
+      for (const rom of game.getRoms()) {
         if (rom.getCrc32() && rom.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
         } else if (rom.getMd5()) {
@@ -169,15 +169,15 @@ export default abstract class DAT {
         } else if (rom.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      });
-    });
+      }
+    }
     return checksumBitmask;
   }
 
   getRequiredDiskChecksumBitmask(): number {
     let checksumBitmask = 0;
-    this.getGames().forEach((game) => {
-      game.getDisks().forEach((disk) => {
+    for (const game of this.getGames()) {
+      for (const disk of game.getDisks()) {
         if (disk.getCrc32() && disk.getSize()) {
           checksumBitmask |= ChecksumBitmask.CRC32;
         } else if (disk.getMd5()) {
@@ -187,8 +187,8 @@ export default abstract class DAT {
         } else if (disk.getSha256()) {
           checksumBitmask |= ChecksumBitmask.SHA256;
         }
-      });
-    });
+      }
+    }
     return checksumBitmask;
   }
 

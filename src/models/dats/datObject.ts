@@ -76,10 +76,10 @@ export default {
         if (XML_IGNORE_PATHS.has(jPathOrMatcher)) {
           return false;
         }
-        (XML_IGNORE_ATTRS[jPathOrMatcher] ?? []).forEach((attr) => {
+        for (const attr of XML_IGNORE_ATTRS[jPathOrMatcher] ?? []) {
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete attrs[attr];
-        });
+        }
         return true;
       },
       parseTagValue: false, // don't try to parse any number-like values

@@ -78,7 +78,7 @@ export default class Igir {
   }
 
   /**
-   * The main method for this application.
+   * The main method for this app.
    */
   async main(): Promise<void> {
     Temp.setTempDir(this.options.getTempDir());
@@ -196,16 +196,16 @@ export default class Igir {
         patches,
       );
 
-      candidates.forEach((candidate) => {
-        candidate.getRomsWithFiles().forEach((romWithFiles) => {
+      for (const candidate of candidates) {
+        for (const romWithFiles of candidate.getRomsWithFiles()) {
           // Files in the output directory that matched to a DAT should be excluded from cleaning.
           // Note that only the correct/output path is excluded, not the current/input path. Files
           // that aren't in the correct location will be deleted.
           if (!romWithFiles.getInputFile().getCanBeCandidateInput()) {
             filesToExcludeFromCleaning.push(romWithFiles.getOutputFile());
           }
-        });
-      });
+        }
+      }
       romOutputDirs = [...romOutputDirs, ...this.getCandidateOutputDirs(processedDat, candidates)];
 
       // Write the output files
@@ -216,8 +216,8 @@ export default class Igir {
         writerSemaphore,
         moveMutex,
       ).write(processedDat, candidates);
-      writerResults.moved.forEach((moved) => candidateWriterResults.moved.push(moved));
-      writerResults.wrote.forEach((wrote) => candidateWriterResults.wrote.push(wrote));
+      for (const moved of writerResults.moved) candidateWriterResults.moved.push(moved);
+      for (const wrote of writerResults.wrote) candidateWriterResults.wrote.push(wrote);
 
       // Write playlists
       const playlistPaths = await new PlaylistCreator(this.options, progressBar).write(
@@ -374,18 +374,16 @@ export default class Igir {
     }
 
     if (dats.length === 1) {
-      (
+      for (const [, option] of (
         [
           [this.options.getDirDatName(), '--dir-dat-name'],
           [this.options.getDirDatDescription(), '--dir-dat-description'],
         ] satisfies [boolean, string][]
-      )
-        .filter(([bool]) => bool)
-        .forEach(([, option]) => {
-          logger.warn(
-            `${option} is most helpful when processing multiple DATs, only one DAT was found`,
-          );
-        });
+      ).filter(([bool]) => bool)) {
+        logger.warn(
+          `${option} is most helpful when processing multiple DATs, only one DAT was found`,
+        );
+      }
     }
 
     if (this.options.getDatCombine()) {
@@ -417,79 +415,71 @@ export default class Igir {
     }
 
     if (this.options.shouldDir2Dat()) {
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask),
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
-          );
-        });
+      for (const bitmask of Object.values(ChecksumBitmask).filter(
+        (bitmask) =>
+          bitmask >= minimumChecksum &&
+          bitmask <= maximumChecksum &&
+          // Has not been enabled yet
+          !(matchChecksum & bitmask),
+      )) {
+        matchChecksum |= bitmask;
+        logger.trace(
+          `generating a dir2dat, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
+        );
+      }
     }
 
     if (dats.length === 0) {
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask),
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `no DATs provided, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
-          );
-        });
+      for (const bitmask of Object.values(ChecksumBitmask).filter(
+        (bitmask) =>
+          bitmask >= minimumChecksum &&
+          bitmask <= maximumChecksum &&
+          // Has not been enabled yet
+          !(matchChecksum & bitmask),
+      )) {
+        matchChecksum |= bitmask;
+        logger.trace(
+          `no DATs provided, enabling ${ChecksumBitmaskInverted[bitmask]} file checksums`,
+        );
+      }
     }
 
-    dats.forEach((dat) => {
+    for (const dat of dats) {
       const datMinimumRomBitmask = dat.getRequiredRomChecksumBitmask();
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask) &&
-            // Should be enabled for this DAT
-            (datMinimumRomBitmask & bitmask) > 0,
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
-          );
-        });
+      for (const bitmask of Object.values(ChecksumBitmask).filter(
+        (bitmask) =>
+          bitmask >= minimumChecksum &&
+          bitmask <= maximumChecksum &&
+          // Has not been enabled yet
+          !(matchChecksum & bitmask) &&
+          // Should be enabled for this DAT
+          (datMinimumRomBitmask & bitmask) > 0,
+      )) {
+        matchChecksum |= bitmask;
+        logger.trace(
+          `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for ROMs, enabling`,
+        );
+      }
 
       if (this.options.getExcludeDisks()) {
-        return;
+        continue;
       }
       const datMinimumDiskBitmask = dat.getRequiredDiskChecksumBitmask();
-      Object.values(ChecksumBitmask)
-        .filter(
-          (bitmask) =>
-            bitmask >= minimumChecksum &&
-            bitmask <= maximumChecksum &&
-            // Has not been enabled yet
-            !(matchChecksum & bitmask) &&
-            // Should be enabled for this DAT
-            (datMinimumDiskBitmask & bitmask) > 0,
-        )
-        .forEach((bitmask) => {
-          matchChecksum |= bitmask;
-          logger.trace(
-            `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,
-          );
-        });
-    });
+      for (const bitmask of Object.values(ChecksumBitmask).filter(
+        (bitmask) =>
+          bitmask >= minimumChecksum &&
+          bitmask <= maximumChecksum &&
+          // Has not been enabled yet
+          !(matchChecksum & bitmask) &&
+          // Should be enabled for this DAT
+          (datMinimumDiskBitmask & bitmask) > 0,
+      )) {
+        matchChecksum |= bitmask;
+        logger.trace(
+          `${dat.getName()}: needs ${ChecksumBitmaskInverted[bitmask]} file checksums for disks, enabling`,
+        );
+      }
+    }
 
     if (matchChecksum === ChecksumBitmask.NONE) {
       matchChecksum |= ChecksumBitmask.CRC32;
