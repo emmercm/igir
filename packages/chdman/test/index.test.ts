@@ -199,10 +199,12 @@ describe('openTrackReader', () => {
     // Readable, which must close the native reader without erroring.
     let chunks = 0;
     for await (const chunk of readable) {
-      if (Buffer.isBuffer(chunk)) {
-        chunks += 1;
-        break;
+      if (!Buffer.isBuffer(chunk)) {
+        continue;
       }
+
+      chunks += 1;
+      break;
     }
     expect(chunks).toEqual(1);
     expect(readable.destroyed).toBe(true);

@@ -1,7 +1,5 @@
 import { isNotJunk } from 'junk';
 
-import type { CHDInfo } from '../../packages/chdman/index.js';
-import { CHDType } from '../../packages/chdman/index.js';
 import type MappableSemaphore from '../async/mappableSemaphore.js';
 import type ProgressBar from '../console/progressBar.js';
 import FileFactory from '../factories/fileFactory.js';

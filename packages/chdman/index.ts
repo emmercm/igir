@@ -121,12 +121,14 @@ const binding = ((): ChdmanBinding => {
  * call `destroy()` so the native reader is released.
  */
 function readableFromReader(reader: NativeTrackReader): stream.Readable {
-  let closed = false;
+  let isClosed = false;
   const closeOnce = (): void => {
-    if (!closed) {
-      closed = true;
-      reader.close();
+    if (isClosed) {
+      return;
     }
+
+    isClosed = true;
+    reader.close();
   };
   return new stream.Readable({
     highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
