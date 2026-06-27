@@ -412,7 +412,7 @@ export default class DATScanner extends Scanner {
         (entry) =>
           new ROM({
             name: entry.name ?? '',
-            size: Number.parseInt(entry.size ?? '0', 10),
+            size: Math.trunc(Number(entry.size ?? '0')),
             crc32: entry.crc,
             md5: entry.md5,
             sha1: entry.sha1,
@@ -431,7 +431,7 @@ export default class DATScanner extends Scanner {
         (entry) =>
           new Disk({
             name: entry.name ?? '',
-            size: Number.parseInt(entry.size ?? '0', 10),
+            size: Math.trunc(Number(entry.size ?? '0')),
             crc32: entry.crc,
             md5: entry.md5,
             sha1: entry.sha1,
@@ -487,14 +487,13 @@ export default class DATScanner extends Scanner {
     const rowNamesToRows = GameGrouper.groupMultiDiscGames(rows, (row) =>
       row.name.replace(/\.[^.]*$/, ''),
     );
-    const games = [...rowNamesToRows].map(([gameName, rows]) => {
+    const games = Array.from(rowNamesToRows, ([gameName, rows]) => {
       const roms = rows.map(
         (row) =>
           new ROM({
             name: row.name,
-            size: Number.parseInt(
-              row.size !== undefined && row.size.length > 0 ? row.size : '0',
-              10,
+            size: Math.trunc(
+              Number(row.size !== undefined && row.size.length > 0 ? row.size : '0'),
             ),
             crc32: row.crc,
             md5: row.md5,

@@ -433,7 +433,7 @@ export default class CandidateGenerator extends Module {
     const archivesWithEveryRom = [...inputArchivesToRoms]
       .filter(([inputArchive, roms]) => {
         if (
-          [...roms].map((rom) => rom.hashCode()).join(',') ===
+          Array.from(roms, (rom) => rom.hashCode()).join(',') ===
           gameRoms.map((rom) => rom.hashCode()).join(',')
         ) {
           return true;

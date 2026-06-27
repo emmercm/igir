@@ -456,7 +456,7 @@ export default class FileCache {
         });
       }
     }
-    return [...fillByteToRomPaddingProps.values()].map((props) => new ROMPadding(props));
+    return Array.from(fillByteToRomPaddingProps.values(), (props) => new ROMPadding(props));
   }
 
   async getOrComputeTzValidation(zip: Zip, forceRecompute = false): Promise<ValidationResultValue> {

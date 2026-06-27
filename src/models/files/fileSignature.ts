@@ -596,11 +596,7 @@ export default class FileSignature {
     if (callback) {
       callback(0, this.MAX_HEADER_LENGTH_BYTES);
     }
-    const fileHeader = await this.readHeaderBuffer(
-      readable,
-      0,
-      this.MAX_HEADER_LENGTH_BYTES,
-    );
+    const fileHeader = await this.readHeaderBuffer(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
     if (callback) {
       callback(fileHeader.length, fileHeader.length);
     }
@@ -609,13 +605,12 @@ export default class FileSignature {
       const signatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
         if (signaturePiece.value === undefined) {
           return signaturePiece.match(fileHeader);
-        } else {
-          const signatureValue = fileHeader.subarray(
-            signaturePiece.offset ?? 0,
-            (signaturePiece.offset ?? 0) + signaturePiece.value.length,
-          );
-          return signatureValue.equals(signaturePiece.value);
         }
+        const signatureValue = fileHeader.subarray(
+          signaturePiece.offset ?? 0,
+          (signaturePiece.offset ?? 0) + signaturePiece.value.length,
+        );
+        return signatureValue.equals(signaturePiece.value);
       });
       if (signatureMatch) {
         return romSignature;

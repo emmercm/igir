@@ -72,7 +72,8 @@ export default class DATGameInferrer extends Module {
     );
 
     const dats = await Promise.all(
-      [...inputPathsToRomFiles].map(
+      Array.from(
+        inputPathsToRomFiles,
         async ([inputPath, datRomFiles]) => await this.createDAT(inputPath, datRomFiles),
       ),
     );
@@ -204,7 +205,7 @@ export default class DATGameInferrer extends Module {
       return map;
     }, new Map<string, File[]>());
     return new Map(
-      [...crc32Map].map(([key, romFiles]) => {
+      Array.from(crc32Map, ([key, romFiles]) => {
         const checksums: ChecksumProps = {};
         for (const romFile of romFiles) {
           checksums.crc32 = romFile.getCrc32() ?? checksums.crc32;
@@ -259,7 +260,7 @@ export default class DATGameInferrer extends Module {
         return map;
       }, new Map<string, ArchiveEntry<Archive>[]>());
 
-    const results = [...archivePathsToArchiveEntries.values()].map((archiveEntries) => {
+    const results = Array.from(archivePathsToArchiveEntries.values(), (archiveEntries) => {
       const gameName = DATGameInferrer.getGameName(archiveEntries[0]);
       return [gameName, archiveEntries] satisfies [string, ArchiveEntry<Archive>[]];
     });

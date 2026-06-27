@@ -58,7 +58,7 @@ export default class Dir2DatCreator extends Module {
       }
       return map;
     }, new Map<Game, WriteCandidate[]>());
-    const gamesFromCandidates = [...gamesToCandidates].map(([game, candidates]) => {
+    const gamesFromCandidates = Array.from(gamesToCandidates, ([game, candidates]) => {
       const roms = candidates
         .at(0)
         ?.getRomsWithFiles()

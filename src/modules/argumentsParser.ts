@@ -63,9 +63,9 @@ export default class ArgumentsParser {
     // Look for --help/-h with a numerical value
     for (let i = 0; i < argv.length; i += 1) {
       if (argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h') {
-        const helpFlagVal = Number.parseInt(argv[i + 1], 10);
+        const helpFlagVal = Math.trunc(Number(argv[i + 1]));
         if (!Number.isNaN(helpFlagVal)) {
-          return Number.parseInt(argv[i + 1], 10);
+          return helpFlagVal;
         }
       }
     }

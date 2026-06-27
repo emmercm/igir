@@ -571,14 +571,7 @@ export default class VcdiffPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await this.applyPatch(
-          patchFile,
-          sourceFile,
-          targetFile,
-          header,
-          copyCache,
-          callback,
-        );
+        await this.applyPatch(patchFile, sourceFile, targetFile, header, copyCache, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();
