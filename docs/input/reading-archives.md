@@ -9,7 +9,7 @@ Igir supports most common archive formats:
 | Extension                                                        | Contains file CRC32s | Igir can extract without a third-party binary | Igir can checksum without temporary files |
 |------------------------------------------------------------------|----------------------|-----------------------------------------------|-------------------------------------------|
 | `.7z`                                                            | ✅                    | ✅                                             | ❌                                         |
-| `.chd`                                                           | ❌ SHA1               | ❌ Uses bundled `chdman`<sup>1</sup>           | ⚠️ SHA1 only for hard drive images        |
+| `.chd`                                                           | ❌ SHA1               | ✅                                             | ✅                                         |
 | `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ Uses bundled `maxcso`                       | ⚠️ CRC32 only                             |
 | `.gcz`                                                           | ❌                    | ❌ Uses bundled `dolphin-tool`                 | ⚠️ CRC32, MD5, and SHA1 only              |
 | `.gz`, `.gzip`                                                   | ✅                    | ✅                                             | ✅                                         |
@@ -19,10 +19,6 @@ Igir supports most common archive formats:
 | `.tar`                                                           | ❌                    | ✅                                             | ✅                                         |
 | `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅                                         |
 | `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                    | ✅                                             | ✅                                         |
-
-<small>
-<sup>1</sup> may require you to install SDL2 manually, see the [chdman-js README](https://github.com/emmercm/chdman-js#readme).
-</small>
 
 !!! note
 

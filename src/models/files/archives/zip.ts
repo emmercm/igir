@@ -14,6 +14,7 @@ import IgirException from '../../../exceptions/igirException.js';
 import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
 import type { ZipFormatValue } from '../../options.js';
 import { ZipFormat } from '../../options.js';
@@ -155,11 +156,6 @@ export default class Zip extends Archive {
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    if (start > 0) {
-      // Can't start the stream at an uncompressed offset
-      return await super.extractEntryToStream(entryPath, callback, start);
-    }
-
     // TODO(cemmer): hold a reference to the CentralDirectoryFileHeader so we don't have to parse
     const entries = await this.zipReader.centralDirectoryFileHeaders();
     const entry = entries.find(
@@ -178,6 +174,9 @@ export default class Zip extends Archive {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
         cause: error,
       });
+    }
+    if (start > 0) {
+      entryStream = entryStream.pipe(new SkipBytesTransform(start));
     }
 
     try {

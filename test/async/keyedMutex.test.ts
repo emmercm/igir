@@ -1,5 +1,3 @@
-import { describe, expect, it } from 'vitest';
-
 import KeyedMutex from '../../src/async/keyedMutex.js';
 
 describe('runExclusiveGlobally', () => {

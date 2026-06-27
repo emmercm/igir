@@ -172,11 +172,10 @@
         },
       },
 
-      // Update chdman, dolphin-tool, maxcso immediately
+      // Update dolphin-tool, maxcso immediately
       {
         groupName: null,
         matchPackageNames: [
-          'chdman',
           'dolphin-tool',
           'maxcso'
         ],

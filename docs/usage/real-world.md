@@ -94,13 +94,15 @@ npx --yes igir@latest move test clean report \
   --input-checksum-archives never \
   --output "./Redump" \
   --dir-dat-name \
+  --fix-extension always \
   --overwrite-invalid \
+  --merge-discs \
   --only-retail \
   --single \
   --prefer-language EN \
   --prefer-region USA,WORLD,EUR,JPN \
   --prefer-revision newer \
-  --reader-threads 4 \
+  --reader-threads 3 \
   -v
 
 # Dreamcast (because TOSEC catalogs GDEMU-compatible .gdi/.bin/.raw files and Redump catalogs .bin/.cue)
@@ -112,13 +114,14 @@ npx --yes igir@latest move test clean report \
   "${INPUTS[@]}" \
   --input-checksum-archives never \
   --output "./TOSEC/Sega Dreamcast" \
+  --fix-extension always \
   --overwrite-invalid \
   --only-retail \
   --single \
   --prefer-language EN \
   --prefer-region USA,WORLD,EUR,JPN \
   --prefer-revision newer \
-  --reader-threads 4 \
+  --reader-threads 3 \
   -v
 
 npx --yes igir@latest move zip test clean \
@@ -128,12 +131,13 @@ npx --yes igir@latest move zip test clean \
   --dat "./MAME*Rollback*.zip" \
   --input "./MAME" \
   "${INPUTS[@]}" \
-  --input-checksum-quick \
+  --input-checksum-max CRC32 \
   --input-checksum-archives never \
   --output "./MAME" \
   --dir-dat-name \
   --overwrite-invalid \
   --merge-roms merged \
+  --reader-threads 4 \
   -v
 ```
 

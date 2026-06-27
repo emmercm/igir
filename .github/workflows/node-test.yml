@@ -45,6 +45,8 @@ jobs:
               - '*'
             should-delete-prebuilds:
               - '.github/workflows/node-addon-prebuild.yml'
+              - '.gitmodules'
+              - 'packages/chdman/**'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'

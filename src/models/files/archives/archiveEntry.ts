@@ -3,6 +3,7 @@ import stream from 'node:stream';
 import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
 
 import { FsReadCallback } from '../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
@@ -248,10 +249,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     callback: (readable: stream.Readable) => T | Promise<T>,
     start = 0,
   ): Promise<T> {
-    // Don't extract to memory if we need to manipulate the stream start point
     if (start > 0) {
-      return await this.extractToTempFile(
-        async (tempFile) => await File.createStreamFromFile(tempFile, callback, start),
+      return await this.archive.extractEntryToStream(
+        this.getEntryPath(),
+        async (readable) => await callback(readable.pipe(new SkipBytesTransform(start))),
       );
     }
 
