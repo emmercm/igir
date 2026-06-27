@@ -204,12 +204,15 @@
       {
         // Group ESLint together so files can be fixed automatically
         matchPackageNames: [
+          // Base ESLint
           '/^@eslint//',
           'eslint',
-          '/^eslint-/',
-          '//eslint/',
+          // TypeScript ESLint
           'typescript-eslint',
           '/^@typescript-eslint//',
+          // Other plugins
+          '/^eslint-/',
+          '//eslint/',
         ],
         groupName: 'ESLint',
         // Only group non-major updates
@@ -218,7 +221,14 @@
       {
         // Hold back ESLint major updates, plugins such as eslint-plugin-unicorn usually need to
         // be updated first
-        matchPackageNames: ['/eslint/'],
+        matchPackageNames: [
+          // Base ESLint
+          '/^@eslint//',
+          'eslint',
+          // TypeScript ESLint
+          'typescript-eslint',
+          '/^@typescript-eslint//'
+        ],
         matchUpdateTypes: ['major'],
         minimumReleaseAge: '14 days',
       },
