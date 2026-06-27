@@ -38,7 +38,7 @@ describe('keys', () => {
       await cache.set(String(i), i);
     }
     expect(cache.keys()).toEqual(
-      new Set(Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx))),
+      new Set(Array.from({ length: TEST_CACHE_SIZE }, (_, idx) => String(idx))),
     );
   });
 });
@@ -85,7 +85,7 @@ describe('getOrCompute', () => {
     let computed = 0;
     const runnable = (key: string): number => {
       computed += 1;
-      return Number.parseInt(key, 10);
+      return Math.trunc(Number(key));
     };
 
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
@@ -104,7 +104,7 @@ describe('getOrCompute', () => {
     let computed = 0;
     const runnable = (key: string): number => {
       computed += 1;
-      return Number.parseInt(key, 10);
+      return Math.trunc(Number(key));
     };
 
     for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
@@ -201,7 +201,7 @@ describe('load', () => {
       await secondCache.load();
       expect(secondCache.size()).toEqual(TEST_CACHE_SIZE);
       expect(secondCache.keys()).toEqual(
-        new Set(Array.from({ length: TEST_CACHE_SIZE }).map((_, idx) => String(idx))),
+        new Set(Array.from({ length: TEST_CACHE_SIZE }, (_, idx) => String(idx))),
       );
       for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
         await expect(secondCache.get(String(i))).resolves.toEqual(i);
