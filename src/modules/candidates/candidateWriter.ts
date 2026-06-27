@@ -223,9 +223,9 @@ export default class CandidateWriter extends Module {
               `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file, the existing zip is correct`,
             );
             // If the output file didn't already exist, we'd write it; so consider the input file as used
-            inputToOutputZipEntries.forEach(([inputRomFile]) => {
+            for (const [inputRomFile] of inputToOutputZipEntries) {
               this.enqueueFileDeletion(candidate, inputRomFile);
-            });
+            }
             return;
           }
           if (!this.options.shouldWrite() && existingTest) {
@@ -289,9 +289,9 @@ export default class CandidateWriter extends Module {
       }
 
       if (written) {
-        inputToOutputZipEntries.forEach(([inputRomFile]) => {
+        for (const [inputRomFile] of inputToOutputZipEntries) {
           this.enqueueFileDeletion(candidate, inputRomFile);
-        });
+        }
       }
     } finally {
       childBar.delete();
@@ -348,7 +348,7 @@ export default class CandidateWriter extends Module {
       return `has ${IntlUtil.toLocaleString(actualEntriesByPath.size)} files, expected ${IntlUtil.toLocaleString(expectedEntriesByPath.size)}`;
     }
 
-    for (const [entryPath, expectedFile] of expectedEntriesByPath.entries()) {
+    for (const [entryPath, expectedFile] of expectedEntriesByPath) {
       // Check existence
       if (!actualEntriesByPath.has(entryPath)) {
         return `is missing the file ${entryPath}`;

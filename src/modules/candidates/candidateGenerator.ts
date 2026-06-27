@@ -414,25 +414,26 @@ export default class CandidateGenerator extends Module {
 
     // Group this Game's ROMs by the input Archives that contain them
     const inputArchivesToRoms = romsAndInputFiles.reduce((map, [rom, files]) => {
-      files
-        .filter((file) => file instanceof ArchiveEntry)
-        .map((archive): Archive => archive.getArchive())
-        .forEach((archive) => {
-          // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
-          //  optical media games that have the same track multiple times.
-          if (!map.has(archive)) {
-            map.set(archive, new Set());
-          }
-          map.get(archive)?.add(rom);
-        });
+      for (const file of files) {
+        if (!(file instanceof ArchiveEntry)) {
+          continue;
+        }
+        const archive: Archive = file.getArchive();
+        // We need to filter out duplicate ROMs because of Games that contain duplicate ROMs, e.g.
+        //  optical media games that have the same track multiple times.
+        if (!map.has(archive)) {
+          map.set(archive, new Set());
+        }
+        map.get(archive)?.add(rom);
+      }
       return map;
     }, new Map<Archive, Set<ROM>>());
 
     // Filter to the Archives that contain every ROM in this Game
-    const archivesWithEveryRom = [...inputArchivesToRoms.entries()]
+    const archivesWithEveryRom = [...inputArchivesToRoms]
       .filter(([inputArchive, roms]) => {
         if (
-          [...roms].map((rom) => rom.hashCode()).join(',') ===
+          Array.from(roms, (rom) => rom.hashCode()).join(',') ===
           gameRoms.map((rom) => rom.hashCode()).join(',')
         ) {
           return true;
@@ -441,8 +442,8 @@ export default class CandidateGenerator extends Module {
         // file is accurate
         return (
           inputArchive instanceof ChdBinCue &&
-          !gameRoms.some(
-            (rom) => this.options.shouldZipRom(rom) || this.options.shouldExtractRom(rom),
+          gameRoms.every(
+            (rom) => !(this.options.shouldZipRom(rom) || this.options.shouldExtractRom(rom)),
           ) &&
           CandidateGenerator.onlyCueFilesMissingFromChd(game, [...roms])
         );
@@ -908,9 +909,9 @@ export default class CandidateGenerator extends Module {
     }
 
     let message = `${dat.getName()}: ${game.getName()}: found ${IntlUtil.toLocaleString(foundRomsWithFiles.length)} file${foundRomsWithFiles.length === 1 ? '' : 's'}, missing ${IntlUtil.toLocaleString(missingRoms.length)} file${missingRoms.length === 1 ? '' : 's'}:`;
-    missingRoms.forEach((rom) => {
+    for (const rom of missingRoms) {
       message += `\n  ${rom.getName()}`;
-    });
+    }
     this.prefixedLogger.trace(message);
   }
 
@@ -936,7 +937,7 @@ export default class CandidateGenerator extends Module {
       .filter((outputPath, idx, outputPaths) => outputPaths.indexOf(outputPath) !== idx)
       // Only return one copy of duplicate output paths
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     if (duplicateOutputPaths.length === 0) {
       // There are no duplicate non-archive output file paths
       return false;
@@ -954,9 +955,9 @@ export default class CandidateGenerator extends Module {
       if (conflictedInputFiles.length > 1) {
         hasConflict = true;
         let message = `${dat.getName()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
-        conflictedInputFiles.forEach((conflictedInputFile) => {
+        for (const conflictedInputFile of conflictedInputFiles) {
           message += `\n  ${conflictedInputFile}`;
-        });
+        }
         this.prefixedLogger.warn(message);
       }
     }

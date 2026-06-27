@@ -41,7 +41,7 @@ export default class NinjaPatch extends Patch {
    * Parse a NINJA (.rup) patch file and return a {@link NinjaPatch}.
    */
   static patchFrom(file: File): NinjaPatch {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     return new NinjaPatch(file, crcBefore);
   }
 
@@ -58,7 +58,7 @@ export default class NinjaPatch extends Patch {
       if (!header.equals(NinjaPatch.FILE_SIGNATURE)) {
         throw new IgirException(`NINJA patch header is invalid: ${this.getFile().toString()}`);
       }
-      const version = Number.parseInt((await patchFile.readNext(1)).toString(), 10);
+      const version = Math.trunc(Number((await patchFile.readNext(1)).toString()));
       if (version !== 2) {
         throw new IgirException(`NINJA v${version} isn't supported: ${this.getFile().toString()}`);
       }

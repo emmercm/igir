@@ -52,12 +52,12 @@ async function runOutputCleaner(
       ).clean([tempInputDir], writtenRomFilesToExclude)
     )
       .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
 
     const after = await FsUtil.walk(tempInputDir, WalkMode.FILES);
     const remainingPaths = after
       .map((pathLike) => pathLike.replace(tempInputDir + path.sep, ''))
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
 
     const movedPaths =
       optionsProps.cleanBackup === undefined
@@ -77,7 +77,7 @@ async function runOutputCleaner(
 it('should delete nothing if nothing written', async () => {
   const existingFiles = (await FsUtil.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
   const { remainingPaths } = await runOutputCleaner({}, [], []);
   expect(remainingPaths).toEqual(existingFiles);
 });
@@ -85,7 +85,7 @@ it('should delete nothing if nothing written', async () => {
 it('should delete nothing if no excess files', async () => {
   const existingFiles = (await FsUtil.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
   const { remainingPaths } = await runOutputCleaner({}, [], existingFiles);
   expect(remainingPaths).toEqual(existingFiles);
 });
@@ -157,7 +157,7 @@ it('should move everything if all unmatched and nothing excluded', async () => {
 it('should delete nothing if all unmatched but doing a dry run', async () => {
   const existingFiles = (await FsUtil.walk(ROM_FIXTURES_DIR, WalkMode.FILES))
     .map((filePath) => filePath.replace(/^test[\\/]fixtures[\\/]roms[\\/]/, ''))
-    .toSorted();
+    .toSorted((a, b) => a.localeCompare(b));
   const { remainingPaths } = await runOutputCleaner(
     {
       cleanDryRun: true,
@@ -193,7 +193,9 @@ it('should delete hard links', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted();
+    const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted((a, b) =>
+      a.localeCompare(b),
+    );
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,
@@ -231,7 +233,9 @@ it('should delete symlinks', async () => {
       new ProgressBarFake(),
     ).clean([linksDir], [await File.fileOf({ filePath: tempLinkOne })]);
 
-    const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted();
+    const remainingPaths = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted((a, b) =>
+      a.localeCompare(b),
+    );
     expect(remainingPaths).toEqual([
       // Original files were preserved
       tempFileOne,

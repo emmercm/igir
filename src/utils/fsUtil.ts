@@ -14,6 +14,7 @@ import type { FsReadCallback } from '../streams/fsReadTransform.js';
 import FsReadTransform from '../streams/fsReadTransform.js';
 
 // Monkey-patch 'fs' to help prevent Windows EMFILE and other errors
+// eslint-disable-next-line unicorn/no-top-level-side-effects
 gracefulFs.gracefulify(fs);
 
 export const MoveResult = {
@@ -607,7 +608,7 @@ export default class FsUtil {
     const k = process.platform === 'darwin' ? 1000 : 1024;
     const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(k));
     const bytesDivided = bytes / k ** i;
-    if (Number.isInteger(bytesDivided)) {
+    if (Number.isSafeInteger(bytesDivided)) {
       return `${bytesDivided}${this.SIZE_READABLE_SUFFIXES[i]}${i > 0 && k === 1024 ? 'i' : ''}B`;
     }
     let fractionDigits = 1;
@@ -750,7 +751,7 @@ export default class FsUtil {
 
     if (walkMode === WalkMode.FILES) {
       const files = entries
-        .filter((_entry, idx) => !entryIsDirectory[idx])
+        .filter((_entry, idx) => entryIsDirectory.at(idx) === false)
         .map((entry) => path.join(pathLike.toString(), entry.name));
       if (callback) {
         callback(files.length);

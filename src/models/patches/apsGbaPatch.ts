@@ -16,11 +16,11 @@ export default class APSGBAPatch extends Patch {
    * Parse a GBA-format .aps patch file and return an {@link APSGBAPatch}.
    */
   static async patchFrom(file: File): Promise<APSGBAPatch> {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
 
     await file.extractToTempIOFile('r', async (patchFile) => {
-      patchFile.seek(APSGBAPatch.FILE_SIGNATURE.length);
+      patchFile.seek(this.FILE_SIGNATURE.length);
       patchFile.skipNext(4); // original file size
       targetSize = (await patchFile.readNext(4)).readUInt32LE();
     });
@@ -68,7 +68,7 @@ export default class APSGBAPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await APSGBAPatch.applyPatch(patchFile, sourceFile, targetFile, callback);
+        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();

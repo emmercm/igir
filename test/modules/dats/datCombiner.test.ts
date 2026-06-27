@@ -39,8 +39,8 @@ test.each([[1], [10], [100]])('should combine with any number of DATs: %s', (dat
     combinedDat
       .getGames()
       .map((game) => game.getName())
-      .toSorted(),
-  ).toEqual([...expectedGameNames].toSorted());
+      .toSorted((a, b) => a.localeCompare(b)),
+  ).toEqual([...expectedGameNames].toSorted((a, b) => a.localeCompare(b)));
 });
 
 test('should not be MAME when no source DAT is MAME', () => {
@@ -67,6 +67,6 @@ test('should be MAME when any source DAT is MAME', () => {
     combinedDat
       .getGames()
       .map((game) => game.getName())
-      .toSorted(),
+      .toSorted((a, b) => a.localeCompare(b)),
   ).toEqual(['Logiqx Game', 'MAME Machine']);
 });

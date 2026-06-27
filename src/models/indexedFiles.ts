@@ -58,7 +58,7 @@ export default class IndexedFiles {
     const sha256PaddedMap = new Map<string, File[]>();
 
     // Build the maps
-    files.forEach((file) => {
+    for (const file of files) {
       const crc32WithSize = `${file.getCrc32()}|${file.getSize()}`;
       if (crc32RawMap.has(crc32WithSize)) {
         crc32RawMap.get(crc32WithSize)?.push(file);
@@ -166,7 +166,7 @@ export default class IndexedFiles {
           }
         }
       }
-    });
+    }
 
     const crc32Map = this.combineMaps(crc32RawMap, crc32WithoutHeaderMap, crc32PaddedMap);
     const md5Map = this.combineMaps(md5RawMap, md5WithoutHeaderMap, md5PaddedMap);
@@ -181,18 +181,20 @@ export default class IndexedFiles {
     padded: ChecksumsToFiles,
   ): ChecksumsToFiles {
     const result = new Map(withHeaders);
-    [...withoutHeaders.entries()]
+    for (const [checksum, files] of withoutHeaders) {
       // Prefer "raw" files as they exist on disk, without any header manipulation
-      .filter(([checksum]) => !result.has(checksum))
-      .forEach(([checksum, files]) => {
-        result.set(checksum, files);
-      });
-    [...padded.entries()]
+      if (result.has(checksum)) {
+        continue;
+      }
+      result.set(checksum, files);
+    }
+    for (const [checksum, files] of padded) {
       // Prefer "raw" files as they exist on disk, without any padding manipulation
-      .filter(([checksum]) => !result.has(checksum))
-      .forEach(([checksum, files]) => {
-        result.set(checksum, files);
-      });
+      if (result.has(checksum)) {
+        continue;
+      }
+      result.set(checksum, files);
+    }
     return result;
   }
 

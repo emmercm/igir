@@ -184,9 +184,11 @@ export default class Gzip extends Archive {
     } catch (error) {
       gunzip.destroy();
       source.destroy();
-      await pipelinePromise.catch(() => {
+      try {
+        await pipelinePromise;
+      } catch {
         /* ignored */
-      });
+      }
       throw error;
     }
   }

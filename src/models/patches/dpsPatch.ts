@@ -16,7 +16,7 @@ export default class DPSPatch extends Patch {
    * Parse a .dps patch file and return a {@link DPSPatch}.
    */
   static patchFrom(file: File): DPSPatch {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     return new DPSPatch(file, crcBefore);
   }
 
@@ -59,7 +59,7 @@ export default class DPSPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await DPSPatch.applyPatch(patchFile, sourceFile, targetFile, callback);
+        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();

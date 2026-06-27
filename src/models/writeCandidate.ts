@@ -82,7 +82,7 @@ export default class WriteCandidate {
     let hashCode = this.game.hashCode();
     hashCode += `|${this.romsWithFiles
       .map((romWithFiles) => romWithFiles.hashCode())
-      .toSorted()
+      .toSorted((a, b) => a.localeCompare(b))
       .join(',')}`;
     return hashCode;
   }

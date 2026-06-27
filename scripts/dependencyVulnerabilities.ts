@@ -60,7 +60,9 @@ for (const vulnerability of Object.values(auditReport.vulnerabilities)) {
 
   for (const nodePath of vulnerability.nodes) {
     const pkgEntry = packageLock.packages[nodePath];
-    if (!pkgEntry) continue;
+    if (!pkgEntry) {
+      continue;
+    }
 
     const key = `${vulnerability.name}@${pkgEntry.version}`;
 

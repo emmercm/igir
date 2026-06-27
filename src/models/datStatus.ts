@@ -69,7 +69,7 @@ export default class DATStatus {
     }, new Map<string, WriteCandidate[]>());
 
     // Un-patched ROMs
-    dat.getGames().forEach((game: Game) => {
+    for (const game of dat.getGames()) {
       DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
 
       const expectedCount = DATStatus.getExpectedFileCount(game, options);
@@ -80,17 +80,20 @@ export default class DATStatus {
         if (gameCandidate && gameCandidate.getRomsWithFiles().length !== expectedCount) {
           // The found ReleaseCandidate is incomplete
           DATStatus.pushValueIntoMap(this.incompleteRomTypesToCandidates, game, gameCandidate);
-          return;
+          continue;
         }
 
         // The found ReleaseCandidate is complete
         DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
-        return;
+        continue;
       }
-    });
+    }
 
     // Patched ROMs
-    for (const candidate of candidates.filter((candidate) => candidate.isPatched())) {
+    for (const candidate of candidates) {
+      if (!candidate.isPatched()) {
+        continue;
+      }
       const game = candidate.getGame();
       DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
       DATStatus.append(this.foundRomTypesToCandidates, ROMType.PATCHED, candidate);
@@ -107,15 +110,15 @@ export default class DATStatus {
   }
 
   private static pushValueIntoMap<T>(map: Map<ROMTypeValue, T[]>, game: Game, value: T): void {
-    DATStatus.append(map, ROMType.GAME, value);
+    this.append(map, ROMType.GAME, value);
     if (game.getIsBios()) {
-      DATStatus.append(map, ROMType.BIOS, value);
+      this.append(map, ROMType.BIOS, value);
     }
     if (game.getIsDevice()) {
-      DATStatus.append(map, ROMType.DEVICE, value);
+      this.append(map, ROMType.DEVICE, value);
     }
     if (game.isRetail()) {
-      DATStatus.append(map, ROMType.RETAIL, value);
+      this.append(map, ROMType.RETAIL, value);
     }
   }
 
@@ -137,8 +140,7 @@ export default class DATStatus {
       ...this.incompleteRomTypesToCandidates.values(),
     ]
       .flat()
-      .filter((candidate) => candidate !== undefined)
-      .flatMap((candidate) => candidate.getRomsWithFiles())
+      .flatMap((candidate) => (candidate === undefined ? [] : candidate.getRomsWithFiles()))
       .map((romWithFiles) => romWithFiles.getInputFile());
   }
 
@@ -163,12 +165,11 @@ export default class DATStatus {
       })
       .map((type) => {
         const found = this.foundRomTypesToCandidates.get(type) ?? [];
-        const all = this.allRomTypesToGames.get(type) ?? [];
-
         if (!options.usingDats()) {
           return `${IntlUtil.toLocaleString(found.length)} ${type}`;
         }
 
+        const all = this.allRomTypesToGames.get(type) ?? [];
         const percentage = (found.length / all.length) * 100;
         let color: ChalkInstance;
         if (percentage >= 100) {
@@ -336,11 +337,14 @@ export default class DATStatus {
     options: Options,
     romTypesToValues: Map<ROMTypeValue, T[]>,
   ): T[] {
-    return DATStatus.getAllowedTypes(options)
-      .flatMap((type) => romTypesToValues.get(type))
-      .filter((value) => value !== undefined)
-      .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+    return (
+      this.getAllowedTypes(options)
+        .flatMap((type) => romTypesToValues.get(type))
+        .filter((value) => value !== undefined)
+        .reduce(ArrayUtil.reduceUnique(), [])
+        // eslint-disable-next-line unicorn/require-array-sort-compare
+        .toSorted()
+    );
   }
 
   private static getAllowedTypes(options: Options): ROMTypeValue[] {

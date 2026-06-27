@@ -109,10 +109,9 @@ export default {
     };
   },
 
-  checksumBitmaskString(checksumBitmask: number): string {
-    return Object.values(ChecksumBitmask)
+  checksumBitmaskString: (checksumBitmask: number): string =>
+    Object.values(ChecksumBitmask)
       .filter((bitmask) => bitmask > 0 && (checksumBitmask & bitmask) > 0)
       .map((bitmask) => ChecksumBitmaskInverted[bitmask])
-      .join(', ');
-  },
+      .join(', '),
 };

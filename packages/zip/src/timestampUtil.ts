@@ -47,7 +47,7 @@ export default {
   },
 
   /**
-   * Parse the Info-ZIP UNIX (0x5855, "UX") or PKWARE UNIX (0x000d) extra field and return the
+   * Parse the Info-ZIP Unix (0x5855, "UX") or PKWARE Unix (0x000d) extra field and return the
    * accessed and modified times. Both formats begin with an accessed time and a modified time
    * stored as 32-bit unsigned Unix epoch seconds (UTC) with 1-second resolution.
    * @see https://libzip.org/specifications/appnote_iz.txt

@@ -396,9 +396,8 @@ describe.skipIf(process.platform === 'win32')('isExecutable', () => {
     await FsUtil.touch(tempFile);
     try {
       // Remove the executable bit
-      await import('node:fs').then(async (fs) => {
-        await fs.promises.chmod(tempFile, 0o644);
-      });
+      const fs = await import('node:fs');
+      await fs.promises.chmod(tempFile, 0o644);
       await expect(FsUtil.isExecutable(tempFile)).resolves.toEqual(false);
     } finally {
       await FsUtil.rm(tempFile);
@@ -410,9 +409,8 @@ describe.skipIf(process.platform === 'win32')('isExecutable', () => {
     await FsUtil.touch(tempFile);
     try {
       // Set the executable bit
-      await import('node:fs').then(async (fs) => {
-        await fs.promises.chmod(tempFile, 0o755);
-      });
+      const fs = await import('node:fs');
+      await fs.promises.chmod(tempFile, 0o755);
       await expect(FsUtil.isExecutable(tempFile)).resolves.toEqual(true);
     } finally {
       await FsUtil.rm(tempFile);

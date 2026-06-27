@@ -76,7 +76,9 @@ test.each([
       }),
     ).main();
 
-    const writtenFiles = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted();
+    const writtenFiles = (await FsUtil.walk(tempDir, WalkMode.FILES)).toSorted((a, b) =>
+      a.localeCompare(b),
+    );
     const writtenFilesHashed = await Promise.all(
       writtenFiles.map(async (filePath) => {
         const checksums = await FileChecksums.hashFile(filePath, ChecksumBitmask.CRC32);

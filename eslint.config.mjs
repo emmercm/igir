@@ -133,6 +133,7 @@ export default eslintConfig.defineConfig([
       },
       sourceType: 'module',
       globals: {
+        ...globals.builtin,
         ...eslintPluginVitest.environments.env.globals,
       },
     },
@@ -217,24 +218,29 @@ export default eslintConfig.defineConfig([
         },
       ],
       // Style and clarity preference differences
-      'unicorn/import-style': 'off',
-      'unicorn/no-array-for-each': 'off',
+      'unicorn/consistent-class-member-order': 'off',
+      'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
+      'unicorn/import-style': 'off', // mostly overridden by noNodeSubpathImports.mjs
+      'unicorn/max-nested-calls': 'off',
       'unicorn/no-array-reduce': 'off',
       'unicorn/no-await-expression-member': 'off',
+      'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
       'unicorn/no-hex-escape': 'off',
+      'unicorn/no-unreadable-new-expression': 'off',
       'unicorn/no-useless-undefined': 'off',
       'unicorn/prefer-string-raw': 'off',
       'unicorn/prefer-switch': 'off',
       'unicorn/prefer-ternary': 'off',
-      'unicorn/prevent-abbreviations': 'off',
-      // Too many false positives 😡
-      'unicorn/consistent-function-scoping': ['error', { checkArrowFunctions: false }],
-      'unicorn/no-array-callback-reference': 'off',
-      'unicorn/no-array-method-this-argument': 'off',
-      'unicorn/prefer-https': 'off', // TODO(cemmer): turn back on when comments can be excluded
       'unicorn/prefer-type-error': 'off',
+      'unicorn/prevent-abbreviations': 'off',
+      // Overly broad rules with too many false positives 😡
+      'unicorn/no-unsafe-string-replacement': 'off', // doesn't curly braces in regex search
+      'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context
+      'unicorn/prefer-https': 'off', // comments can't be excluded
+      'unicorn/prefer-iterator-to-array': 'off', // ArrayIterator#toArray() doesn't exist
+      'unicorn/prefer-minimal-ternary': 'off', // lots of false positives, hurts readability
 
-      // ***** eslint:recommended *****
+      // ***** ESLint:recommended *****
       // Referencing ASCII characters <32 is entirely legitimate
       'no-control-regex': 'off',
     },
@@ -292,7 +298,7 @@ export default eslintConfig.defineConfig([
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          /*** @eslint/js defaults ***/
+          /*** @ESLint/js defaults ***/
           vars: 'all',
           caughtErrors: 'all',
           reportUsedIgnorePattern: false,

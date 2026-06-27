@@ -35,14 +35,13 @@ function buildDpsPatch(
       buf.writeUInt32LE(record.inputOffset, 5);
       buf.writeUInt32LE(record.inputLength, 9);
       return buf;
-    } else {
-      const buf = Buffer.alloc(9 + record.data.length);
-      buf.writeUInt8(1, 0);
-      buf.writeUInt32LE(record.outputOffset, 1);
-      buf.writeUInt32LE(record.data.length, 5);
-      record.data.copy(buf, 9);
-      return buf;
     }
+    const buf = Buffer.alloc(9 + record.data.length);
+    buf.writeUInt8(1, 0);
+    buf.writeUInt32LE(record.outputOffset, 1);
+    buf.writeUInt32LE(record.data.length, 5);
+    record.data.copy(buf, 9);
+    return buf;
   });
 
   return Buffer.concat([header, ...recordBuffers]);

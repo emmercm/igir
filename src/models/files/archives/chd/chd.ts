@@ -79,14 +79,13 @@ export default abstract class Chd extends Archive {
     // Parse the entry path for any extra start/stop parameters
     const [trackSizeAndPregap, trackOffset] = (sizeAndOffset ?? '').split('@');
     const [trackSize, pregapSizeString, postgapSizeString] = trackSizeAndPregap.split('+');
-    const pregapSize = pregapSizeString === undefined ? 0 : Number.parseInt(pregapSizeString, 10);
-    const postgapSize =
-      postgapSizeString === undefined ? 0 : Number.parseInt(postgapSizeString, 10);
-    const streamStart = Number.parseInt(trackOffset ?? '0', 10);
+    const pregapSize = pregapSizeString === undefined ? 0 : Math.trunc(Number(pregapSizeString));
+    const postgapSize = postgapSizeString === undefined ? 0 : Math.trunc(Number(postgapSizeString));
+    const streamStart = Math.trunc(Number(trackOffset ?? '0'));
     const streamEnd =
       !trackSize || Number.isNaN(Number(trackSize))
         ? undefined
-        : Number.parseInt(trackOffset ?? '0', 10) + Number.parseInt(trackSize, 10) - 1;
+        : Math.trunc(Number(trackOffset ?? '0')) + Math.trunc(Number(trackSize)) - 1;
 
     try {
       return await File.createStreamFromFile(

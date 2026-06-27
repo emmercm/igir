@@ -68,7 +68,7 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     const duplicateCsv = await DATStatus.filesToCsv(duplicateFilePaths, GameStatus.DUPLICATE);
 
     const unusedFilePaths = scannedRomFiles
@@ -78,7 +78,7 @@ export default class ReportGenerator extends Module {
       )
       .map((inputFile) => inputFile.getFilePath())
       .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted();
+      .toSorted((a, b) => a.localeCompare(b));
     const unusedCsv = await DATStatus.filesToCsv(unusedFilePaths, GameStatus.UNUSED);
 
     const cleanedCsv = await DATStatus.filesToCsv(cleanedOutputFiles, GameStatus.DELETED);

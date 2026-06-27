@@ -36,8 +36,9 @@ export default {
    * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce(ArrayUtil.reduceChunk(3), []);
    * </code>
    */
-  reduceChunk<T>(limit: number): (previous: T[][], current: T, idx: number, array: T[]) => T[][] {
-    return (previous: T[][], _current: T, idx: number, array: T[]): T[][] => {
+  reduceChunk:
+    <T>(limit: number): ((previous: T[][], current: T, idx: number, array: T[]) => T[][]) =>
+    (previous: T[][], _current: T, idx: number, array: T[]): T[][] => {
       if (idx === 0) {
         if (limit <= 0) {
           return [array];
@@ -52,8 +53,7 @@ export default {
       }
 
       return previous;
-    };
-  },
+    },
 
   /**
    * Reduce elements in an array to only unique values. Usage:
@@ -62,8 +62,9 @@ export default {
    * [1, 2, 3, 1, 1, 3].reduce(ArrayUtil.reduceUnique(), []);
    * </code>
    */
-  reduceUnique<T>(): (previous: T[], current: T, idx: number, array: T[]) => T[] {
-    return (previous: T[], _current: T, idx: number, array: T[]): T[] => {
+  reduceUnique:
+    <T>(): ((previous: T[], current: T, idx: number, array: T[]) => T[]) =>
+    (previous: T[], _current: T, idx: number, array: T[]): T[] => {
       if (array.length <= 1) {
         // Arrays that are empty or only have one element are already unique
         return array;
@@ -73,6 +74,5 @@ export default {
         return [...new Set(array)];
       }
       return previous;
-    };
-  },
+    },
 };

@@ -4,9 +4,7 @@ import { Memoize } from 'typescript-memoize';
 
 import type { FsReadCallback } from '../../streams/fsReadTransform.js';
 
-type SignaturePiece = {
-  offset?: number;
-} & (
+type SignaturePiece = (
   | {
       // Static values
       value: Buffer;
@@ -19,7 +17,9 @@ type SignaturePiece = {
       length: number;
       match: (buffer: Buffer) => boolean;
     }
-);
+) & {
+  offset?: number;
+};
 
 const CanBeTrimmed = {
   NO: 0,
@@ -90,7 +90,7 @@ export default class FileSignature {
     // ********** GENERAL **********
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
-    elf: new FileSignature('.elf', [{ value: Buffer.from('\x7FELF') }]),
+    elf: new FileSignature('.elf', [{ value: Buffer.from('\u{7F}ELF') }]),
 
     // ********** ARCHIVES **********
 
@@ -120,21 +120,23 @@ export default class FileSignature {
     oar: new FileSignature('.oar', [{ value: Buffer.from('OAR') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
-    rar1: new FileSignature('.rar', [{ value: Buffer.from('Rar!\x1A\x07\x00') }]), // v1.50+
-    rar5: new FileSignature('.rar', [{ value: Buffer.from('Rar!\x1A\x07\x01\x00') }]), // v5.00+
+    rar1: new FileSignature('.rar', [{ value: Buffer.from('Rar!\u{1A}\u{7}\u{0}') }]), // v1.50+
+    rar5: new FileSignature('.rar', [{ value: Buffer.from('Rar!\u{1A}\u{7}\u{1}\u{0}') }]), // v5.00+
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     rs: new FileSignature('.rs', [{ value: Buffer.from('RSVKDATA') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
-    tar1: new FileSignature('.tar', [{ offset: 257, value: Buffer.from('ustar\x0000') }]),
-    tar2: new FileSignature('.tar', [{ offset: 257, value: Buffer.from('ustar\x20\x20\x00') }]),
+    tar1: new FileSignature('.tar', [{ offset: 257, value: Buffer.from('ustar\u{0}00') }]),
+    tar2: new FileSignature('.tar', [
+      { offset: 257, value: Buffer.from('ustar\u{20}\u{20}\u{0}') },
+    ]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     xar: new FileSignature('.xar', [{ value: Buffer.from('xar!') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
-    xz: new FileSignature('.xz', [{ value: Buffer.from('\xFD7zXZ\x00') }]),
+    xz: new FileSignature('.xz', [{ value: Buffer.from('\u{FD}7zXZ\u{0}') }]),
     // .tar.xz has the same file signature
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -143,8 +145,8 @@ export default class FileSignature {
     // .tar.z has the same file signature
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
-    zip: new FileSignature('.zip', [{ value: Buffer.from('PK\x03\x04') }]),
-    zip_empty: new FileSignature('.zip', [{ value: Buffer.from('PK\x05\x06') }]), // empty archive
+    zip: new FileSignature('.zip', [{ value: Buffer.from('PK\u{3}\u{4}') }]),
+    zip_empty: new FileSignature('.zip', [{ value: Buffer.from('PK\u{5}\u{6}') }]), // empty archive
     // .zipx has the same file signature?
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
@@ -152,7 +154,7 @@ export default class FileSignature {
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
     // Note: this file might be some other .z## number, it just ISN'T the final zip file
-    z01: new FileSignature('.z01', [{ value: Buffer.from('PK\x07\x08') }]),
+    z01: new FileSignature('.z01', [{ value: Buffer.from('PK\u{7}\u{8}') }]),
 
     // ********** ROMs - GENERAL **********
 
@@ -173,14 +175,14 @@ export default class FileSignature {
 
     // Apple
     // @see https://applesaucefdc.com/a2r/
-    a2r: new FileSignature('.a2r', [{ value: Buffer.from('A2R3\xFF\x0A\x0D\x0A') }]),
+    a2r: new FileSignature('.a2r', [{ value: Buffer.from('A2R3\u{FF}\u{A}\u{D}\u{A}') }]),
     // @see https://www.kryoflux.com/download/kryoflux_stream_protocol_rev1.1.pdf
     kryoflux_raw: new FileSignature('.raw', [
-      { value: Buffer.from('\x0D\x04') }, // start of KFInfo block
+      { value: Buffer.from('\u{D}\u{4}') }, // start of KFInfo block
       { offset: 0x4, value: Buffer.from('host_date=') }, // typical first info
     ]),
     // @see https://applesaucefdc.com/woz/reference2/
-    woz: new FileSignature('.woz', [{ value: Buffer.from('WOZ2\xFF\x0A\x0D\x0A') }]),
+    woz: new FileSignature('.woz', [{ value: Buffer.from('WOZ2\u{FF}\u{A}\u{D}\u{A}') }]),
 
     // Atari - 7800
     a78: new FileSignature('.a78', [
@@ -196,11 +198,11 @@ export default class FileSignature {
     // Atari - Lynx
     // @see https://web.mit.edu/freebsd/head/contrib/file/magic/Magdir/console
     bll_bs93: new FileSignature('.bll', [
-      { value: Buffer.from('\x80\x08') },
+      { value: Buffer.from('\u{80}\u{8}') },
       { offset: 0x6, value: Buffer.from('BS93') },
     ]),
     bll_lynx: new FileSignature('.bll', [
-      { value: Buffer.from('\x80\x08') },
+      { value: Buffer.from('\u{80}\u{8}') },
       { offset: 0x6, value: Buffer.from('LYNX') },
     ]),
     lnx: new FileSignature('.lnx', [{ value: Buffer.from('LYNX') }]),
@@ -215,12 +217,12 @@ export default class FileSignature {
     // @see https://vice-emu.sourceforge.io/vice_17.html#SEC400
     g64: new FileSignature('.g64', [{ value: Buffer.from('GCR-1541') }]),
     // @see https://vice-emu.sourceforge.io/vice_17.html#SEC433
-    p00: new FileSignature('.p00', [{ value: Buffer.from('C64File\x00') }]),
+    p00: new FileSignature('.p00', [{ value: Buffer.from('C64File\u{0}') }]),
     // @see https://vice-emu.sourceforge.io/vice_17.html#SEC404
     p64: new FileSignature('.p64', [{ value: Buffer.from('P64-1541') }]),
     // @see https://vice-emu.sourceforge.io/vice_17.html#SEC396
     t64: new FileSignature('.t64', [
-      { value: Buffer.from('C64S tape image file'.padEnd(32, '\x00')) },
+      { value: Buffer.from('C64S tape image file'.padEnd(32, '\u{0}')) },
     ]),
     // @see https://vice-emu.sourceforge.io/vice_17.html#SEC395
     tap_v0_v1: new FileSignature('.tap', [{ value: Buffer.from('C64-TAPE-RAW') }]),
@@ -261,7 +263,7 @@ export default class FileSignature {
     ndd: new FileSignature('.ndd', [{ value: Buffer.from('E848D31610', 'hex') }]),
 
     // Nintendo - Famicom Disk System
-    fds_hvc: new FileSignature('.fds', [{ value: Buffer.from('\x01*NINTENDO-HVC*') }]),
+    fds_hvc: new FileSignature('.fds', [{ value: Buffer.from('\u{1}*NINTENDO-HVC*') }]),
     fds: new FileSignature('.fds', [{ value: Buffer.from('FDS') }]),
 
     // Nintendo - Game & Watch
@@ -274,9 +276,9 @@ export default class FileSignature {
     // @see https://wiki.gbatemp.net/wiki/NKit/NKitFormat
     nkit_iso: new FileSignature('.nkit.iso', [{ offset: 0x2_00, value: Buffer.from('NKIT') }]),
     // @see https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md
-    rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\x01') }]),
+    rvz: new FileSignature('.rvz', [{ value: Buffer.from('RVZ\u{1}') }]),
     // TODO(cemmer): .tgc
-    wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\x01') }]),
+    wia: new FileSignature('.wia', [{ value: Buffer.from('WIA\u{1}') }]),
 
     // Nintendo - Game Boy
     // @see https://gbdev.io/pandocs/The_Cartridge_Header.html
@@ -365,7 +367,7 @@ export default class FileSignature {
     // Nintendo - Nintendo Entertainment System
     // @see https://www.nesdev.org/wiki/INES
     // @see https://www.nesdev.org/wiki/NES_2.0
-    nes: new FileSignature('.nes', [{ value: Buffer.from('NES\x1A') }]),
+    nes: new FileSignature('.nes', [{ value: Buffer.from('NES\u{1A}') }]),
 
     // Nintendo - Pokemon Mini
     // @see https://www.pokemon-mini.net/documentation/cartridge/
@@ -374,7 +376,7 @@ export default class FileSignature {
       {
         offset: 0x21_bc,
         value: Buffer.from(
-          '2P\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+          '2P\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}',
         ),
       },
     ]),
@@ -390,7 +392,7 @@ export default class FileSignature {
     sfc: new FileSignature('.sfc', [superNintendoDynamicPiece(0)]),
     // @see https://file-extension.net/seeker/file_extension_smc
     // @see https://wiki.superfamicom.org/game-doctor
-    smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\x00\x01ME DOCTOR SF 3') }]), // Game Doctor SF3?
+    smc_gd3_1: new FileSignature('.smc', [{ value: Buffer.from('\u{0}\u{1}ME DOCTOR SF 3') }]), // Game Doctor SF3?
     smc_gd3_2: new FileSignature('.smc', [{ value: Buffer.from('GAME DOCTOR SF 3') }]), // Game Doctor SF3/SF6/SF7
 
     // Nintendo - Switch
@@ -419,30 +421,30 @@ export default class FileSignature {
 
     // Nintendo - Wii
     // @see http://wiibrew.org/wiki/CCF_archive
-    ccf: new FileSignature('.ccf', [{ value: Buffer.from('CCF\x00') }]),
+    ccf: new FileSignature('.ccf', [{ value: Buffer.from('CCF\u{0}') }]),
     // @see http://wiibrew.org/wiki/VFF
     vff: new FileSignature('.vff', [{ value: Buffer.from('VFF ') }]),
     // @see http://wiibrew.org/wiki/WAD_files
     wad_installable_ib: new FileSignature('.wad', [
-      { value: Buffer.from('\x00\x00\x00\x20') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0}\u{20}') }, // header size
       { offset: 0x04, value: Buffer.from('ib') },
-      { offset: 0x06, value: Buffer.from('\x00\x00') }, // WAD version
-      { offset: 0x0c, value: Buffer.from('\x00\x00\x00\x00') }, // reserved
+      { offset: 0x06, value: Buffer.from('\u{0}\u{0}') }, // WAD version
+      { offset: 0x0c, value: Buffer.from('\u{0}\u{0}\u{0}\u{0}') }, // reserved
     ]),
     wad_installable_is: new FileSignature('.wad', [
-      { value: Buffer.from('\x00\x00\x00\x20') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0}\u{20}') }, // header size
       { offset: 0x04, value: Buffer.from('Is') },
-      { offset: 0x06, value: Buffer.from('\x00\x00') }, // WAD version
-      { offset: 0x0c, value: Buffer.from('\x00\x00\x00\x00') }, // reserved
+      { offset: 0x06, value: Buffer.from('\u{0}\u{0}') }, // WAD version
+      { offset: 0x0c, value: Buffer.from('\u{0}\u{0}\u{0}\u{0}') }, // reserved
     ]),
     wad_backup: new FileSignature('.wad', [
-      { value: Buffer.from('\x00\x00\x00\x70') }, // header size
+      { value: Buffer.from('\u{0}\u{0}\u{0}\u{70}') }, // header size
       { offset: 0x04, value: Buffer.from('Bk') },
-      { offset: 0x06, value: Buffer.from('\x00\x01') }, // WAD version
-      { offset: 0x6e, value: Buffer.from('\x00\x00') }, // reserved
+      { offset: 0x06, value: Buffer.from('\u{0}\u{1}') }, // WAD version
+      { offset: 0x6e, value: Buffer.from('\u{0}\u{0}') }, // reserved
     ]),
     // @see https://wit.wiimm.de/info/wdf.html
-    wdf: new FileSignature('.wdf', [{ value: Buffer.from('WII\x01DISC') }]),
+    wdf: new FileSignature('.wdf', [{ value: Buffer.from('WII\u{1}DISC') }]),
 
     // Nintendo - Wii U
     // @see https://gbatemp.net/threads/the-different-wiiu-games-formats-and-how-to-convert-them.449212/post-6845070
@@ -451,7 +453,7 @@ export default class FileSignature {
     wud: new FileSignature('.wud', [{ value: Buffer.from('WUP-') }]),
     // TODO(cemmer): .wup
     // @see https://github.com/cemu-project/Cemu/blob/7522c8470ee27d50a68ba662ae721b69018f3a8f/src/Cafe/Filesystem/WUD/wud.h#L25-L26
-    wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\x2E\xD0\x99\x10') }]),
+    wux: new FileSignature('.wux', [{ value: Buffer.from('WUX0\u{2E}\u{D0}\u{99}\u{10}') }]),
 
     // Sega - 32X
     // @see https://github.com/jcfieldsdev/genesis-rom-utility/blob/31826bca66c8c6c467c37c1b711943eb5464e7e8/genesis_rom.chm
@@ -495,7 +497,7 @@ export default class FileSignature {
 
     // Sony - PlayStation Portable
     // @see https://www.psdevwiki.com/ps3/Eboot.PBP
-    pbp: new FileSignature('.pbp', [{ value: Buffer.from('\x00PBP\x00\x00\x01\x00') }]),
+    pbp: new FileSignature('.pbp', [{ value: Buffer.from('\u{0}PBP\u{0}\u{0}\u{1}\u{0}') }]),
   };
 
   static readonly SIGNATURES = Object.values(FileSignature.SIGNATURES_UNSORTED).toSorted((a, b) => {
@@ -594,11 +596,7 @@ export default class FileSignature {
     if (callback) {
       callback(0, this.MAX_HEADER_LENGTH_BYTES);
     }
-    const fileHeader = await FileSignature.readHeaderBuffer(
-      readable,
-      0,
-      this.MAX_HEADER_LENGTH_BYTES,
-    );
+    const fileHeader = await this.readHeaderBuffer(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
     if (callback) {
       callback(fileHeader.length, fileHeader.length);
     }
@@ -607,13 +605,12 @@ export default class FileSignature {
       const signatureMatch = romSignature.signaturePieces.every((signaturePiece) => {
         if (signaturePiece.value === undefined) {
           return signaturePiece.match(fileHeader);
-        } else {
-          const signatureValue = fileHeader.subarray(
-            signaturePiece.offset ?? 0,
-            (signaturePiece.offset ?? 0) + signaturePiece.value.length,
-          );
-          return signatureValue.equals(signaturePiece.value);
         }
+        const signatureValue = fileHeader.subarray(
+          signaturePiece.offset ?? 0,
+          (signaturePiece.offset ?? 0) + signaturePiece.value.length,
+        );
+        return signatureValue.equals(signaturePiece.value);
       });
       if (signatureMatch) {
         return romSignature;

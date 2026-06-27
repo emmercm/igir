@@ -87,7 +87,7 @@ function toYaml(value: YamlValue, indent: number): string {
     if (value.size === 0) {
       return `${pad}{}`;
     }
-    return [...value.entries()]
+    return [...value]
       .map(([key, child]) => {
         if (child instanceof Map || Array.isArray(child)) {
           const isEmpty = child instanceof Map ? child.size === 0 : child.length === 0;
@@ -182,7 +182,7 @@ function describeExtraFields(
   extraFields: Map<number, Buffer<ArrayBuffer>>,
 ): Map<string, YamlValue> {
   return ordered(
-    [...extraFields.entries()]
+    [...extraFields]
       .toSorted((a, b) => a[0] - b[0])
       .map(([headerId, bytes]) => [
         `0x${headerId.toString(16).padStart(4, '0')}`,
