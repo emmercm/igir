@@ -68,11 +68,7 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
         }
         const checksumComplement = buffer.readUInt16LE(offset + 0x2c);
         const checksum = buffer.readUInt16LE(offset + 0x2e);
-        if (checksum === 0 || (checksumComplement ^ checksum) !== 0xff_ff) {
-          return false;
-        }
-
-        return true;
+        return !(checksum === 0 || (checksumComplement ^ checksum) !== 0xff_ff);
       });
     },
   };

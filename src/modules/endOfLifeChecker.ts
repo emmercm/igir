@@ -37,25 +37,27 @@ export default class EndOfLifeChecker {
    */
   check(nodejsVersion: string, now = new Date()): void {
     for (const [majorVersion, endOfLifeDate] of EndOfLifeChecker.END_OF_SECURITY_SUPPORT_DATES) {
-      if (semver.satisfies(nodejsVersion, `^${majorVersion}`)) {
-        if (now > endOfLifeDate) {
-          // We are past the EOL of a known version, warn and return
-          logger.warn(
-            `Node.js v${majorVersion} reached end-of-life on ${endOfLifeDate.toDateString()}, you should update to an actively maintained LTS version`,
-          );
-          return;
-        }
-
-        if (majorVersion % 2 === 1) {
-          // We are within the support period of a non-LTS version, warn and return
-          logger.warn(
-            `Node.js v${majorVersion} has a very short support window (ending on ${endOfLifeDate.toDateString()}), you should consider using an LTS version`,
-          );
-          return;
-        }
-
-        break;
+      if (!semver.satisfies(nodejsVersion, `^${majorVersion}`)) {
+        continue;
       }
+
+      if (now > endOfLifeDate) {
+        // We are past the EOL of a known version, warn and return
+        logger.warn(
+          `Node.js v${majorVersion} reached end-of-life on ${endOfLifeDate.toDateString()}, you should update to an actively maintained LTS version`,
+        );
+        return;
+      }
+
+      if (majorVersion % 2 === 1) {
+        // We are within the support period of a non-LTS version, warn and return
+        logger.warn(
+          `Node.js v${majorVersion} has a very short support window (ending on ${endOfLifeDate.toDateString()}), you should consider using an LTS version`,
+        );
+        return;
+      }
+
+      break;
     }
 
     const coercedVersion = semver.coerce(nodejsVersion);

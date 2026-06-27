@@ -4,10 +4,7 @@ export default {
   async fromReadable(readable: Readable): Promise<Buffer> {
     readable.resume();
 
-    const chunks: Buffer[] = [];
-    for await (const chunk of readable as AsyncIterable<Buffer>) {
-      chunks.push(chunk);
-    }
+    const chunks: Buffer[] = await Array.fromAsync(readable as AsyncIterable<Buffer>);
     return Buffer.concat(chunks);
   },
 };

@@ -567,10 +567,8 @@ export default class DATScanner extends Scanner {
     }
 
     const datDescriptionRegexExclude = this.options.getDatDescriptionRegexExclude();
-    if (datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription))) {
-      return true;
-    }
-
-    return false;
+    return Boolean(
+      datDescription && datDescriptionRegexExclude?.some((regex) => regex.test(datDescription)),
+    );
   }
 }

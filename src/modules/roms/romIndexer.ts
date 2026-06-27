@@ -69,18 +69,17 @@ export default class ROMIndexer extends Module {
         // ********** Preferences that are user-controlled **********
 
         // Prefer either archives or un-archived/plain files
+        let fileOneArchive;
+        let fileTwoArchive;
         if (this.options.getPreferFiletype() === PreferFiletype.ARCHIVE) {
-          const fileOneArchive = fileOne instanceof ArchiveEntry ? 0 : 1;
-          const fileTwoArchive = fileTwo instanceof ArchiveEntry ? 0 : 1;
-          if (fileOneArchive !== fileTwoArchive) {
-            return fileOneArchive - fileTwoArchive;
-          }
+          fileOneArchive = fileOne instanceof ArchiveEntry ? 0 : 1;
+          fileTwoArchive = fileTwo instanceof ArchiveEntry ? 0 : 1;
         } else {
-          const fileOneArchive = fileOne instanceof ArchiveEntry ? 1 : 0;
-          const fileTwoArchive = fileTwo instanceof ArchiveEntry ? 1 : 0;
-          if (fileOneArchive !== fileTwoArchive) {
-            return fileOneArchive - fileTwoArchive;
-          }
+          fileOneArchive = fileOne instanceof ArchiveEntry ? 1 : 0;
+          fileTwoArchive = fileTwo instanceof ArchiveEntry ? 1 : 0;
+        }
+        if (fileOneArchive !== fileTwoArchive) {
+          return fileOneArchive - fileTwoArchive;
         }
 
         // Then, prefer files whose filename matches the preferred regex

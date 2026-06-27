@@ -62,11 +62,13 @@ export default class ArgumentsParser {
   private static getHelpWidth(argv: string[]): number {
     // Look for --help/-h with a numerical value
     for (let i = 0; i < argv.length; i += 1) {
-      if (argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h') {
-        const helpFlagVal = Math.trunc(Number(argv[i + 1]));
-        if (!Number.isNaN(helpFlagVal)) {
-          return helpFlagVal;
-        }
+      if (!(argv[i].toLowerCase() === '--help' || argv[i].toLowerCase() === '-h')) {
+        continue;
+      }
+
+      const helpFlagVal = Math.trunc(Number(argv[i + 1]));
+      if (!Number.isNaN(helpFlagVal)) {
+        return helpFlagVal;
       }
     }
 
