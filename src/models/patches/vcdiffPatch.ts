@@ -155,7 +155,7 @@ class VcdiffHeader {
    */
   static async fromIOFile(patchFile: IOFile): Promise<VcdiffHeader> {
     const header = await patchFile.readNext(3);
-    if (!header.equals(VcdiffHeader.FILE_SIGNATURE)) {
+    if (!header.equals(this.FILE_SIGNATURE)) {
       await patchFile.close();
       throw new IgirException(
         `Vcdiff patch header is invalid: ${patchFile.getPathLike().toString()}`,
@@ -184,7 +184,7 @@ class VcdiffHeader {
       }
     }
 
-    const codeTable = VcdiffHeader.DEFAULT_CODE_TABLE;
+    const codeTable = this.DEFAULT_CODE_TABLE;
     if (hdrIndicator & VcdiffHdrIndicator.CODETABLE) {
       const codeTableLength = await Patch.readVcdiffUintFromFile(patchFile);
       if (codeTableLength) {
@@ -529,7 +529,7 @@ export default class VcdiffPatch extends Patch {
    * Parse a .vcdiff/.xdelta patch file and return a {@link VcdiffPatch}.
    */
   static patchFrom(file: File): VcdiffPatch {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     return new VcdiffPatch(file, crcBefore);
   }
 
@@ -571,7 +571,7 @@ export default class VcdiffPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await VcdiffPatch.applyPatch(
+        await this.applyPatch(
           patchFile,
           sourceFile,
           targetFile,

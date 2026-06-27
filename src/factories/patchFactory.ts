@@ -70,7 +70,7 @@ export default class PatchFactory {
     .reduce((max, fileSignature) => Math.max(max, fileSignature.length), 0);
 
   static getSupportedExtensions(): string[] {
-    return Object.values(PatchFactory.PATCH_PARSERS)
+    return Object.values(this.PATCH_PARSERS)
       .flatMap((parser) => parser.extensions)
       .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted((a, b) => a.localeCompare(b));
@@ -117,7 +117,7 @@ export default class PatchFactory {
    */
   static async patchFromFileContents(file: File): Promise<Patch | undefined> {
     const fileHeader = await file.createReadStream(
-      async (readable) => await PatchFactory.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
+      async (readable) => await this.readHeaderHex(readable, this.MAX_HEADER_LENGTH_BYTES),
     );
 
     const parsers = Object.values(this.PATCH_PARSERS);

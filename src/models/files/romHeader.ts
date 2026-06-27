@@ -125,7 +125,7 @@ export default class ROMHeader {
    * undefined if no known header matches.
    */
   static async headerFromFileStream(readable: stream.Readable): Promise<ROMHeader | undefined> {
-    const fileHeader = await ROMHeader.readHeaderHex(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
+    const fileHeader = await this.readHeaderHex(readable, 0, this.MAX_HEADER_LENGTH_BYTES);
 
     const headers = Object.values(this.HEADERS);
     for (const header of headers) {

@@ -150,7 +150,7 @@ export default class OutputFactory {
 
     // Replace all {token}s in the output path
     output = FsUtil.makeLegal(
-      OutputFactory.replaceTokensInOutputPath(
+      this.replaceTokensInOutputPath(
         options,
         output,
         dat,
@@ -230,7 +230,7 @@ export default class OutputFactory {
     result = this.replaceOutputTokens(result, options, outputRomFilename);
     result = this.replaceConsoleTokens(result, options, dat, outputRomFilename);
 
-    const leftoverTokens = result.match(OutputFactory.LEFTOVER_TOKEN_REGEX);
+    const leftoverTokens = result.match(this.LEFTOVER_TOKEN_REGEX);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
       throw new TokenReplacementException(
         `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')}`,
@@ -330,7 +330,7 @@ export default class OutputFactory {
       const tokensMap = new Map(
         Object.entries(tokens).filter((entry): entry is [string, string] => entry[1] !== undefined),
       );
-      for (const [primary, alias] of Object.entries(OutputFactory.TOKEN_ALIASES)) {
+      for (const [primary, alias] of Object.entries(this.TOKEN_ALIASES)) {
         const primaryValue = tokensMap.get(primary);
         if (primaryValue !== undefined && !tokensMap.has(alias)) {
           tokensMap.set(alias, primaryValue);
@@ -368,10 +368,10 @@ export default class OutputFactory {
       return input;
     }
 
-    const outputTokensFile = OutputFactory.loadTokensFile(options.getOutputConsoleTokens());
+    const outputTokensFile = this.loadTokensFile(options.getOutputConsoleTokens());
     const outputTokens =
-      OutputFactory.getConsoleTokensForDatName(outputTokensFile, dat?.getName() ?? '') ??
-      OutputFactory.getConsoleTokensForFilename(outputTokensFile, outputRomFilename);
+      this.getConsoleTokensForDatName(outputTokensFile, dat?.getName() ?? '') ??
+      this.getConsoleTokensForFilename(outputTokensFile, outputRomFilename);
     if (!outputTokens) {
       return input;
     }

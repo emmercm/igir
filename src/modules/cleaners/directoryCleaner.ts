@@ -188,7 +188,7 @@ export default class DirectoryCleaner extends Module {
         await async.mapLimit(
           dirsToClean,
           Defaults.MAX_FS_THREADS,
-          async (dirToClean: string) => await DirectoryCleaner.getEmptyDirs(dirToClean),
+          async (dirToClean: string) => await this.getEmptyDirs(dirToClean),
         )
       )
         .flat()

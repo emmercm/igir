@@ -33,11 +33,11 @@ export default class APSN64Patch extends Patch {
    */
   static async patchFrom(file: File): Promise<APSN64Patch> {
     let patchType: APSN64PatchTypeValue = APSN64PatchType.SIMPLE;
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     let targetSize = 0;
 
     await file.extractToTempIOFile('r', async (patchFile) => {
-      patchFile.seek(APSN64Patch.FILE_SIGNATURE.length);
+      patchFile.seek(this.FILE_SIGNATURE.length);
       patchType = (await patchFile.readNext(1)).readUInt8() as APSN64PatchTypeValue;
       patchFile.skipNext(1); // encoding method
       patchFile.skipNext(50); // description
@@ -99,7 +99,7 @@ export default class APSN64Patch extends Patch {
     const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
     try {
-      await APSN64Patch.applyPatch(patchFile, targetFile, callback);
+      await this.applyPatch(patchFile, targetFile, callback);
     } finally {
       await targetFile.close();
     }

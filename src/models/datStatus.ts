@@ -110,15 +110,15 @@ export default class DATStatus {
   }
 
   private static pushValueIntoMap<T>(map: Map<ROMTypeValue, T[]>, game: Game, value: T): void {
-    DATStatus.append(map, ROMType.GAME, value);
+    this.append(map, ROMType.GAME, value);
     if (game.getIsBios()) {
-      DATStatus.append(map, ROMType.BIOS, value);
+      this.append(map, ROMType.BIOS, value);
     }
     if (game.getIsDevice()) {
-      DATStatus.append(map, ROMType.DEVICE, value);
+      this.append(map, ROMType.DEVICE, value);
     }
     if (game.isRetail()) {
-      DATStatus.append(map, ROMType.RETAIL, value);
+      this.append(map, ROMType.RETAIL, value);
     }
   }
 

@@ -41,7 +41,7 @@ export default class NinjaPatch extends Patch {
    * Parse a NINJA (.rup) patch file and return a {@link NinjaPatch}.
    */
   static patchFrom(file: File): NinjaPatch {
-    const crcBefore = Patch.getCrcFromPath(file.getExtractedFilePath());
+    const crcBefore = super.getCrcFromPath(file.getExtractedFilePath());
     return new NinjaPatch(file, crcBefore);
   }
 

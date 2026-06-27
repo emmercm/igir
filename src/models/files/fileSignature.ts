@@ -596,7 +596,7 @@ export default class FileSignature {
     if (callback) {
       callback(0, this.MAX_HEADER_LENGTH_BYTES);
     }
-    const fileHeader = await FileSignature.readHeaderBuffer(
+    const fileHeader = await this.readHeaderBuffer(
       readable,
       0,
       this.MAX_HEADER_LENGTH_BYTES,

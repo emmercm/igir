@@ -674,7 +674,7 @@ export default class Options implements OptionsProps {
    * Construct a {@link Options} from a generic object, such as one from `yargs`.
    */
   static fromObject(obj: object): Options {
-    return plainToInstance(Options, obj, {
+    return plainToInstance(this, obj, {
       enableImplicitConversion: true,
     });
   }

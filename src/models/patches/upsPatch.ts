@@ -28,9 +28,9 @@ export default class UPSPatch extends Patch {
     let targetSize = 0;
 
     await file.extractToTempIOFile('r', async (patchFile) => {
-      patchFile.seek(UPSPatch.FILE_SIGNATURE.length);
-      await Patch.readUpsUint(patchFile); // source size
-      targetSize = await Patch.readUpsUint(patchFile);
+      patchFile.seek(this.FILE_SIGNATURE.length);
+      await super.readUpsUint(patchFile); // source size
+      targetSize = await super.readUpsUint(patchFile);
 
       patchFile.seek(patchFile.getSize() - 12);
 
@@ -98,7 +98,7 @@ export default class UPSPatch extends Patch {
       const targetFile = await IOFile.fileFrom(outputRomPath, 'r+');
 
       try {
-        await UPSPatch.applyPatch(patchFile, sourceFile, targetFile, callback);
+        await this.applyPatch(patchFile, sourceFile, targetFile, callback);
       } finally {
         await targetFile.close();
         await sourceFile.close();
@@ -113,7 +113,7 @@ export default class UPSPatch extends Patch {
     callback?: FsReadCallback,
   ): Promise<void> {
     while (patchFile.getPosition() < patchFile.getSize() - 12) {
-      const relativeOffset = await Patch.readUpsUint(patchFile);
+      const relativeOffset = await super.readUpsUint(patchFile);
       sourceFile.skipNext(relativeOffset);
       targetFile.skipNext(relativeOffset);
 
