@@ -5307,6 +5307,9 @@ describe('options', () => {
       argumentsParser.parse([...dummyCommandAndRequiredArgs, '--debug-log']).getDebugLog(),
     ).toMatch(/igir_[0-9]{4}-[0-9]{2}-[0-9]{2}/);
     expect(
+      argumentsParser.parse([...dummyCommandAndRequiredArgs, '--debug-log']).getDebugLog(),
+    ).not.toMatch(/[<>:"|?*]/);
+    expect(
       argumentsParser
         .parse([...dummyCommandAndRequiredArgs, '--debug-log', 'one.log'])
         .getDebugLog(),
