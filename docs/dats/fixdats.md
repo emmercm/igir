@@ -20,8 +20,7 @@ Example usage:
       --dat "Nintendo - Game Boy Advance.dat" ^
       --dat "Nintendo - Game Boy Color.dat" ^
       --input ROMs ^
-      --output ROMs-Sorted ^
-      --fixdat
+      --output ROMs-Sorted
     ```
 
 === ":fontawesome-brands-apple: macOS"
@@ -58,3 +57,99 @@ ROMs-Sorted/
 !!! info
 
     Fixdats are affected by [filter](../roms/filtering.md) & [1G1R](../roms/1g1r.md) options. This is because those options are applied to all DATs _before_ [ROM matching](../roms/matching.md) happens.
+
+## Without input files
+
+The `fixdat` command doesn't require the [`--input <path|glob>` option](../roms/scanning.md), which allows for some lightweight DAT creation functionality. Below are some examples of what you can achieve.
+
+!!! example
+
+    Generate a DAT of retail Nintendo 64 games that were only released in Japan (requires two steps):
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir fixdat ^
+          --dat "No-Intro*.zip" ^
+          --dat-name-regex "/Nintendo 64/i" ^
+          --single ^
+          --prefer-region USA,EUR,JPN ^
+          --only-retail ^
+          --fixdat-output N64-1G1R.dat
+
+        igir fixdat ^
+          --dat N64-1G1R.dat ^
+          --filter-region JPN ^
+          --fixdat-output N64-JPN.dat
+
+        del N64-1G1R.dat
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir fixdat \
+          --dat "No-Intro*.zip" \
+          --dat-name-regex "/Nintendo 64/i" \
+          --single \
+          --prefer-region USA,EUR,JPN \
+          --only-retail \
+          --fixdat-output N64-1G1R.dat
+
+        igir fixdat \
+          --dat N64-1G1R.dat \
+          --filter-region JPN \
+          --fixdat-output N64-JPN.dat
+
+        rm N64-1G1R.dat
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir fixdat \
+          --dat "No-Intro*.zip" \
+          --dat-name-regex "/Nintendo 64/i" \
+          --single \
+          --prefer-region USA,EUR,JPN \
+          --only-retail \
+          --fixdat-output N64-1G1R.dat
+
+        igir fixdat \
+          --dat N64-1G1R.dat \
+          --filter-region JPN \
+          --fixdat-output N64-JPN.dat
+
+        rm N64-1G1R.dat
+        ```
+
+!!! example
+
+    Generate a [split set](../usage/arcade.md#rom-set-merge-types) DAT of non-bootleg arcade games:
+
+    === ":fontawesome-brands-windows: Windows"
+
+        ```batch
+        igir fixdat ^
+          --dat "mame*.xml" ^
+          --merge-roms split ^
+          --only-retail
+        ```
+
+    === ":fontawesome-brands-apple: macOS"
+
+        ```shell
+        igir fixdat \
+          --dat "mame*.xml" \
+          --merge-roms split \
+          --only-retail
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```shell
+        igir fixdat \
+          --dat "mame*.xml" \
+          --merge-roms split \
+          --only-retail
+        ```
