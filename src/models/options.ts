@@ -1633,7 +1633,7 @@ export default class Options implements OptionsProps {
       }
     }
 
-    return debugLog;
+    return FsUtil.makeLegal(debugLog);
   }
 
   getHelp(): boolean {
