@@ -123,6 +123,7 @@ igir
 igir.exe
 !test/*.sh
 !packages/*
+!packages/*/scripts/*.sh
 
 # DATs
 *.dat
