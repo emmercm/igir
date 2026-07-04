@@ -295,9 +295,6 @@
         # RVZ/GCZ/WIA blobs (see each file's header comment).
         "stubs/directoryBlob.cpp",
         "stubs/logging.cpp",
-        # Individually-ported VolumeWii statics for Wii partition hashing/decryption/
-        # encryption (not a stub -- see the file's header comment).
-        "ported/volumeWii.cpp",
         # Dolphin DiscIO blob readers
         "<(dolphin)/Source/Core/DiscIO/Blob.cpp",
         "<(dolphin)/Source/Core/DiscIO/CISOBlob.cpp",
