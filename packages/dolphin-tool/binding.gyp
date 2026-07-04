@@ -296,6 +296,10 @@
         # RVZ/GCZ/WIA blobs (see each file's header comment).
         "stubs/directoryBlob.cpp",
         "stubs/logging.cpp",
+        # Inert definitions for symbols referenced only by the blob readers'
+        # write/conversion paths (never reached when reading); needed because a
+        # Windows DLL must resolve every referenced symbol.
+        "stubs/conversion.cpp",
         # Dolphin DiscIO blob readers
         "<(dolphin)/Source/Core/DiscIO/Blob.cpp",
         "<(dolphin)/Source/Core/DiscIO/CISOBlob.cpp",
