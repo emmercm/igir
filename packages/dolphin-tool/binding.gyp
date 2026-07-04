@@ -211,17 +211,25 @@
         }],
         ["OS=='win'", {
           # MSVC has no -iquote/-I distinction, so the fix above doesn't apply.
-          # Explicitly listing these paths under msvs_settings (rather than only
-          # relying on the target's "include_dirs" above) makes gyp's msvs
-          # generator place them ahead of Node's own bundled zconf.h include
-          # path in the generated AdditionalIncludeDirectories, which is what
-          # actually controls quoted-include resolution order for cl.exe.
-          # Unverified on real Windows CI as of this writing.
+          # Listing these under msvs_settings makes gyp's msvs generator place
+          # them ahead of Node's own bundled zconf.h/zlib.h include path in the
+          # generated AdditionalIncludeDirectories, so zlib-ng's own headers win
+          # quoted-include resolution for cl.exe.
+          #
+          # The leading "../" is required: unlike the target's "include_dirs"
+          # (which gyp rewrites via _FixPath so they resolve from the generated
+          # build/ directory), msvs_settings paths are emitted verbatim. Without
+          # "../" MSBuild resolves them relative to build/dolphin-tool.vcxproj,
+          # they don't exist, cl.exe silently skips them, and it falls back to
+          # Node's zconf.h -- which breaks because zbuild.h has already
+          # "#define z_size_t unsigned long" (ZLIB_COMPAT), turning Node's
+          # "typedef size_t z_size_t;" into "typedef size_t unsigned long;".
+          # This mirrors the -iquote"../" prefix used for mac/linux above.
           "msvs_settings": {
             "VCCLCompilerTool": {
               "AdditionalIncludeDirectories": [
-                "<(dolphin)/Externals/zlib-ng",
-                "<(dolphin)/Externals/zlib-ng/zlib-ng"
+                "../<(dolphin)/Externals/zlib-ng",
+                "../<(dolphin)/Externals/zlib-ng/zlib-ng"
               ]
             }
           }
