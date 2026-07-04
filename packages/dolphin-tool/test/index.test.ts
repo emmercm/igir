@@ -12,7 +12,8 @@ const EXPECTED_ISO_SHA1 = 'e3d1df9d19ecc7e8f71ac50aacb55e689f331f45';
 // A real Wii disc (unlike the GameCube fixtures below) stores its game partition
 // encrypted and hashed with a per-title AES key; WIA/RVZ containers store only the
 // decrypted, de-hashed partition data and must re-derive the original hash tree and
-// re-encrypt it on read (see stubs/volumeWii.cpp). These fixtures exercise that path.
+// re-encrypt it on read (see binding.cpp's ported VolumeWii region). These fixtures
+// exercise that path.
 //
 // The GCZ fixture's source disc image is zero-padded past its real content, while
 // WIA's junk-data reconstruction (Dolphin's LaggedFibonacciGenerator, unrelated to

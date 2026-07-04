@@ -91,14 +91,14 @@ await copyfiles(
     'packages/chdman/deps/mame/src/osd/modules/lib/**/*',
     'packages/chdman/deps/mame/src/osd/windows/**/*',
     'packages/chdman/deps/mame/{COPYING,LICENSE}*',
+    'packages/dolphin-tool/deps/dolphin/Externals/bzip2/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/fmt/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/liblzma/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/zstd/**/*',
     'packages/dolphin-tool/deps/dolphin/Source/Core/DiscIO/**/*',
     'packages/dolphin-tool/deps/dolphin/Source/Core/Common/**/*',
-    'packages/dolphin-tool/deps/dolphin/Externals/zstd/**/*',
-    'packages/dolphin-tool/deps/dolphin/Externals/bzip2/**/*',
-    'packages/dolphin-tool/deps/dolphin/Externals/liblzma/**/*',
-    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/**/*',
-    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/**/*',
-    'packages/dolphin-tool/deps/dolphin/Externals/fmt/**/*',
     'packages/dolphin-tool/deps/dolphin/LICENSES/**',
     'packages/dolphin-tool/deps/dolphin/{COPYING,LICENSE}*',
     'packages/zlib*/deps/**',
@@ -113,9 +113,11 @@ await copyfiles(
     'packages/*/deps/**/BUCK', // Buck
     'packages/*/deps/**/*.modulemap', // Clang
     'packages/*/deps/**/{CMakeLists.txt,*.cmake,*.cmakein,*.cmake.in}', // CMake
+    'packages/*/deps/**/{*.js,*.ts}', // JavaScript
     'packages/*/deps/**/{Makefile*,*.mak,*.mk}', // Make
     'packages/*/deps/**/*.pc.in', // pkg-config
-    'packages/*/deps/**/{*.sln,*.vcxproj}', // Visual Studio
+    'packages/*/deps/**/*.py', // Python
+    'packages/*/deps/**/{*.sln,*.vcxproj*,exports.props}', // Visual Studio
     'packages/*/deps/**/Package.swift',
     // chdman
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',

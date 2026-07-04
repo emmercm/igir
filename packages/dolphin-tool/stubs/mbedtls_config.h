@@ -1,12 +1,7 @@
-// Minimal mbedTLS configuration for the Dolphin native addon.
-//
-// Dolphin's DiscIO code (Common/Crypto/AES.cpp, Common/Crypto/SHA1.cpp) only
-// needs software AES-CBC and SHA-1 from mbedTLS. We deliberately do NOT enable
-// MBEDTLS_AESNI_C or MBEDTLS_PADLOCK_C, and we leave MBEDTLS_HAVE_ASM undefined,
-// so the library is built with its portable, scalar C backends only (global
-// no-SIMD constraint). This file is selected via -DMBEDTLS_CONFIG_FILE.
-//
-// mbedTLS submodule tag matches Dolphin tag 2606.
+// Minimal mbedTLS config (selected via -DMBEDTLS_CONFIG_FILE): only the software
+// AES-CBC and SHA-1 primitives Common/Crypto/{AES,SHA1}.cpp need. MBEDTLS_AESNI_C,
+// MBEDTLS_PADLOCK_C, and MBEDTLS_HAVE_ASM are deliberately left undefined so the
+// library builds with its portable scalar C backend only (global no-SIMD constraint).
 
 #ifndef DOLPHIN_ADDON_MBEDTLS_CONFIG_H
 #define DOLPHIN_ADDON_MBEDTLS_CONFIG_H

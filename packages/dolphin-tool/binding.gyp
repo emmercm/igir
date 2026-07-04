@@ -1,15 +1,14 @@
 # Dolphin native addon build definition.
 #
-# Required Dolphin Externals submodules (initialize before building):
-#   git -C deps/dolphin submodule update --init --depth 1 -- Externals/zstd
-#   git -C deps/dolphin submodule update --init --depth 1 -- Externals/zlib-ng
-#   git -C deps/dolphin submodule update --init --depth 1 -- Externals/bzip2
-#   git -C deps/dolphin submodule update --init --depth 1 -- Externals/mbedtls
-#   git -C deps/dolphin submodule update --init --depth 1 -- Externals/fmt
-# (Externals/liblzma is committed directly in the Dolphin tree, not a submodule.)
-#
 # Global no-SIMD constraint: every bundled compression / crypto library is built
 # with its portable scalar backend only (see per-target defines below).
+#
+# Static linking: every bundled dependency below (zstd, bzip2, lzma, zlibng, mbedtls)
+# is a "static_library" target, so gyp always links it directly into dolphin-tool's
+# .node rather than as a separate shared object. fmt is header-only (FMT_HEADER_ONLY),
+# so nothing to link there either. The remaining runtime is handled per-OS: Linux gets
+# -static-libstdc++/-static-libgcc and Windows gets /MT (see target_defaults and the
+# dolphin-tool target below); macOS's toolchain offers no static libc++ equivalent.
 {
   "variables": {
     "dolphin": "deps/dolphin"
@@ -287,11 +286,10 @@
         # Stubs for subsystems referenced but never reached when opening
         # RVZ/GCZ/WIA blobs (see each file's header comment).
         "stubs/directoryBlob.cpp",
-        # Real (individually-ported) VolumeWii statics needed for Wii partition
-        # hashing/decryption/encryption; see the file's header comment for why
-        # these are ported rather than the whole upstream VolumeWii.cpp being linked.
-        "stubs/volumeWii.cpp",
         "stubs/logging.cpp",
+        # Individually-ported VolumeWii statics for Wii partition hashing/decryption/
+        # encryption (not a stub -- see the file's header comment).
+        "ported/volumeWii.cpp",
         # Dolphin DiscIO blob readers
         "<(dolphin)/Source/Core/DiscIO/Blob.cpp",
         "<(dolphin)/Source/Core/DiscIO/CISOBlob.cpp",
@@ -330,6 +328,7 @@
         "<(dolphin)/Externals/mbedtls/include"
       ],
       "conditions": [
+        # Static linking
         ["OS=='linux'", {
           "ldflags": ["-static-libstdc++", "-static-libgcc"]
         }]
