@@ -213,6 +213,6 @@ igir.exe
 !docs/*
 
 # Always commit fixtures
-!packages/chdman/test/fixtures/**
+!packages/*/test/fixtures/**
 !packages/zip/test/**/*.zip
 !test/fixtures/**

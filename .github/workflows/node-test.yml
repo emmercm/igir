@@ -47,6 +47,7 @@ jobs:
               - '.github/workflows/node-addon-prebuild.yml'
               - '.gitmodules'
               - 'packages/chdman/**'
+              - 'packages/dolphin-tool/**'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'

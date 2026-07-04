@@ -8,3 +8,7 @@
 	path = packages/chdman/deps/mame
 	url = https://github.com/mamedev/mame.git
 	shallow = true
+[submodule "packages/dolphin/deps/dolphin"]
+	path = packages/dolphin-tool/deps/dolphin
+	url = https://github.com/dolphin-emu/dolphin.git
+	shallow = true

@@ -126,7 +126,7 @@ describe('multiple files', () => {
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted((a, b) => a.localeCompare(b));
-    expect(extensionsWithoutCrc32).toEqual(['.chd', '.tar.gz']);
+    expect(extensionsWithoutCrc32).toEqual(['.chd', '.gcz', '.rvz', '.tar.gz', '.wia']);
 
     const entriesWithMd5 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)
@@ -139,7 +139,7 @@ describe('multiple files', () => {
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted((a, b) => a.localeCompare(b));
-    expect(extensionsWithSha1).toEqual(['.chd', '.gcz', '.rvz', '.wia']);
+    expect(extensionsWithSha1).toEqual(['.chd']);
 
     const entriesWithSha256 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)

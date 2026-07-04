@@ -30,6 +30,7 @@ while (!fs.existsSync(path.join(modulesParentDir, 'node_modules'))) {
 
 for (let napiPackage of [
   path.join('packages', 'chdman'),
+  path.join('packages', 'dolphin-tool'),
   path.join('packages', 'zlib-1.1.3'),
   path.join('packages', 'zstd-1.5.5'),
 ]) {
