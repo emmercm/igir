@@ -65,7 +65,8 @@
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
         "AdditionalOptions": [
-          "/std:c++latest",
+          # The C++ standard is set per-target (see the dolphin-tool target
+          # below); the bundled C libraries don't take a C++ standard flag.
           # Dolphin uses C++ exceptions and RTTI
           "/EHsc"
         ]
@@ -322,20 +323,35 @@
       # FMT_HEADER_ONLY avoids a separate fmt compilation unit; only fmt::format
       # in error/log helper strings is used.
       "defines": ["FMT_HEADER_ONLY"],
-      # MSVC flags Dolphin's own build requires (deps/dolphin/CMakeLists.txt adds
-      # the same). Scoped to this target because only it compiles Dolphin's C++
-      # and the header-only fmt; the bundled C libraries neither need nor want
-      # these. gyp appends to the target_defaults AdditionalOptions above.
-      #   /utf-8            satisfies fmt/base.h's "Unicode support requires
-      #                     compiling with /utf-8" static_assert.
-      #   /Zc:preprocessor  selects the conforming preprocessor so __VA_OPT__
-      #                     (used by fmt and Dolphin's ChunkFile/SHA1 format
-      #                     macros) parses instead of erroring.
-      #   /Zc:__cplusplus   makes MSVC report the real __cplusplus value so
-      #                     Dolphin's C++23 feature detection works.
+      # MSVC settings for compiling Dolphin's C++ and the header-only fmt. Scoped
+      # to this target because only it is C++; the bundled C libraries don't take
+      # these. deps/dolphin/CMakeLists.txt sets the equivalents for Dolphin's own
+      # build.
+      #
+      # Standard: Dolphin targets C++23 everywhere (CMAKE_CXX_STANDARD 23), which
+      # is the -std=c++23 used for Linux/macOS above. MSVC has no stable /std:c++23,
+      # so C++23 is requested with /std:c++23preview (this is what enables
+      # _HAS_CXX23, without which StringUtil.h's std::to_underlying is undeclared).
+      #
+      # It has to go through AdditionalOptions with LanguageStandard forced to
+      # "Default": node-gyp's common.gypi sets <LanguageStandard>stdcpp20</LanguageStandard>,
+      # whose /std:c++20 is placed AFTER AdditionalOptions on the cl command line
+      # and so wins over any /std put there ("cl: warning D9025: overriding
+      # '/std:c++latest' with '/std:c++20'"). Forcing the property to "Default"
+      # emits no /std of its own, leaving /std:c++23preview as the only one.
+      #
+      #   /std:c++23preview  C++23, so _HAS_CXX23=1 and std::to_underlying exists.
+      #   /utf-8             satisfies fmt/base.h's "Unicode support requires
+      #                      compiling with /utf-8" static_assert.
+      #   /Zc:preprocessor   conforming preprocessor so __VA_OPT__ (used by fmt and
+      #                      Dolphin's ChunkFile/SHA1 format macros) parses.
+      #   /Zc:__cplusplus    report the real __cplusplus value for C++23 feature
+      #                      detection.
       "msvs_settings": {
         "VCCLCompilerTool": {
+          "LanguageStandard": "Default",
           "AdditionalOptions": [
+            "/std:c++23preview",
             "/utf-8",
             "/Zc:preprocessor",
             "/Zc:__cplusplus"
