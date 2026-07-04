@@ -9,6 +9,10 @@
 // Software crypto primitives actually used by DiscIO.
 #define MBEDTLS_AES_C
 #define MBEDTLS_CIPHER_MODE_CBC
+// OFB: Dolphin's Common/Crypto/AES.cpp references mbedtls_aes_crypt_ofb; a Windows
+// DLL must resolve it, so compile the OFB mode into aes.c (Linux/macOS tolerate it
+// as undefined).
+#define MBEDTLS_CIPHER_MODE_OFB
 #define MBEDTLS_SHA1_C
 
 // Error string helpers referenced by aes.c / platform glue.

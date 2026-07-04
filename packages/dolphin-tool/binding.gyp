@@ -107,6 +107,9 @@
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_compress_literals.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_compress_sequences.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_compress_superblock.c",
+        # Defines ZSTD_splitBlock, referenced by zstd_compress.c. A Windows DLL
+        # must resolve it; Linux/macOS tolerate it as undefined.
+        "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_preSplit.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_double_fast.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_fast.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_lazy.c",
@@ -140,7 +143,10 @@
       "type": "static_library",
       # HAVE_CONFIG_H pulls in Externals/liblzma/config.h, which enables only the
       # DELTA + LZMA1 + LZMA2 coders and scalar checks (no BCJ SIMD filters).
-      "defines": ["HAVE_CONFIG_H"],
+      # LZMA_API_STATIC stops lzma.h from marking the API __declspec(dllimport)
+      # on Windows (see lzma.h), which would otherwise make consumers reference
+      # __imp_lzma_* import stubs that don't exist when linking liblzma statically.
+      "defines": ["HAVE_CONFIG_H", "LZMA_API_STATIC"],
       "include_dirs": [
         "<(dolphin)/Externals/liblzma",
         "<(dolphin)/Externals/liblzma/api",
@@ -297,9 +303,13 @@
         "stubs/directoryBlob.cpp",
         "stubs/logging.cpp",
         # Inert definitions for symbols referenced only by the blob readers'
-        # write/conversion paths (never reached when reading); needed because a
-        # Windows DLL must resolve every referenced symbol.
-        "stubs/conversion.cpp",
+        # write/conversion paths (never reached when reading), one file per
+        # upstream translation unit; needed because a Windows DLL must resolve
+        # every referenced symbol.
+        "stubs/fileUtil.cpp",
+        "stubs/discUtils.cpp",
+        "stubs/volume.cpp",
+        "stubs/formats.cpp",
         # Dolphin DiscIO blob readers
         "<(dolphin)/Source/Core/DiscIO/Blob.cpp",
         "<(dolphin)/Source/Core/DiscIO/CISOBlob.cpp",
@@ -326,7 +336,10 @@
       "dependencies": ["zstd", "bzip2", "lzma", "zlibng", "mbedtls"],
       # FMT_HEADER_ONLY avoids a separate fmt compilation unit; only fmt::format
       # in error/log helper strings is used.
-      "defines": ["FMT_HEADER_ONLY"],
+      # LZMA_API_STATIC: WIACompression.cpp includes lzma.h; without it the API is
+      # __declspec(dllimport) on Windows and references nonexistent __imp_lzma_*
+      # import stubs (see the lzma target above).
+      "defines": ["FMT_HEADER_ONLY", "LZMA_API_STATIC"],
       # MSVC settings for compiling Dolphin's C++ and the header-only fmt. Scoped
       # to this target because only it is C++; the bundled C libraries don't take
       # these. deps/dolphin/CMakeLists.txt sets the equivalents for Dolphin's own
