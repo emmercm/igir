@@ -5,10 +5,6 @@
 
 #include "DiscIO/DirectoryBlob.h"
 
-namespace DiscIO
-{
-std::unique_ptr<DirectoryBlobReader> DirectoryBlobReader::Create(const std::string& dol_path)
-{
-  return nullptr;
-}
+namespace DiscIO {
+std::unique_ptr<DirectoryBlobReader> DirectoryBlobReader::Create(const std::string& dol_path) { return nullptr; }
 }  // namespace DiscIO

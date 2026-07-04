@@ -353,10 +353,14 @@ class DolphinReader : public ReaderBase<DolphinReader> {
 
 static std::string BlobFormatString(DiscIO::BlobType type) {
     switch (type) {
-        case DiscIO::BlobType::GCZ: return "GCZ";
-        case DiscIO::BlobType::WIA: return "WIA";
-        case DiscIO::BlobType::RVZ: return "RVZ";
-        default: return "UNKNOWN";
+        case DiscIO::BlobType::GCZ:
+            return "GCZ";
+        case DiscIO::BlobType::WIA:
+            return "WIA";
+        case DiscIO::BlobType::RVZ:
+            return "RVZ";
+        default:
+            return "UNKNOWN";
     }
 }
 

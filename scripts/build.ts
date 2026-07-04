@@ -1,6 +1,7 @@
 import child_process from 'node:child_process';
 import path from 'node:path';
 
+import type { BuildOptions } from 'esbuild';
 import esbuild from 'esbuild';
 import fg from 'fast-glob';
 
@@ -21,15 +22,26 @@ if (await FsUtil.exists(output)) {
 
 // Transpile the TypeScript
 logger.info(`Running 'esbuild' ...`);
-await esbuild.build({
-  entryPoints: await fg('!(.*|node_modules|scripts|test|*.config){,/**/}!(*.test).ts'),
+const buildOptions: BuildOptions = {
+  entryPoints: await fg('{,**/}!(*.test).ts', {
+    ignore: [
+      '.*/**',
+      'node_modules/**',
+      'packages/*/deps/**',
+      'scripts/**',
+      'test/**',
+      '*.config.*',
+    ],
+  }),
   outdir: path.join(output),
   platform: 'node',
   bundle: false,
   sourcemap: true,
   packages: 'external',
   format: 'esm',
-});
+};
+logger.info(JSON.stringify(buildOptions, undefined, 2));
+await esbuild.build(buildOptions);
 
 logger.info(`Copying additional files ...`);
 /**
@@ -103,21 +115,30 @@ await copyfiles(
     'packages/dolphin-tool/deps/dolphin/{COPYING,LICENSE}*',
     'packages/zlib*/deps/**',
     'packages/zstd*/deps/**',
-    'src/**/*.json',
+    'src/**/!(*.schema).json',
   ],
   [
-    'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
-    'packages/*/deps/**/*.{ico,pdf}',
+    'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|PORTING|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt,*.zlib}',
+    'packages/*/deps/**/*.{pdf,txt}',
+    'packages/*/deps/**/*.{css,js,html,xml,xsl}',
+    'packages/*/deps/**/*.{ico,jpg,svg}',
+    'packages/*/deps/**/*.{com,bat,sh}',
+    'packages/*/deps/**/*.empty',
     'packages/*/deps/**/appveyor.yml',
-    'packages/*/deps/**/configure',
     'packages/*/deps/**/BUCK', // Buck
     'packages/*/deps/**/*.modulemap', // Clang
     'packages/*/deps/**/{CMakeLists.txt,*.cmake,*.cmakein,*.cmake.in}', // CMake
-    'packages/*/deps/**/{*.js,*.ts}', // JavaScript
+    'packages/*/deps/**/{configure,configure.ac,configure.in,Makefile.am,Makefile.in,*.h.in,*.m4}', // configure/autoconf
+    'packages/*/deps/**/*.gradle', // Gradle
+    'packages/*/deps/**/*.{js,ts}', // JavaScript
     'packages/*/deps/**/{Makefile*,*.mak,*.mk}', // Make
+    'packages/*/deps/**/*.1{,.*}', // man page
+    'packages/*/deps/**/mkdocs*', // mkdocs
+    'packages/*/deps/**/{make_vms.com,*.mms}', // OpenVMS
     'packages/*/deps/**/*.pc.in', // pkg-config
     'packages/*/deps/**/*.py', // Python
-    'packages/*/deps/**/{*.sln,*.vcxproj*,exports.props}', // Visual Studio
+    'packages/*/deps/**/Vagrantfile', // Vagrant
+    'packages/*/deps/**/{*.dsp,*.dsw,*.rc,*.sln,*.vcxproj*,exports.props}', // Visual Studio
     'packages/*/deps/**/Package.swift',
     // chdman
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',

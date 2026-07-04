@@ -4,10 +4,7 @@
 
 #include "Common/Logging/Log.h"
 
-namespace Common::Log
-{
-void GenericLogFmtImpl(LogLevel level, LogType type, const char* file, int line,
-                       fmt::string_view format, const fmt::format_args& args)
-{
-}
+namespace Common::Log {
+void GenericLogFmtImpl(LogLevel level, LogType type, const char* file, int line, fmt::string_view format,
+                       const fmt::format_args& args) {}
 }  // namespace Common::Log
