@@ -22,7 +22,7 @@ export default defineConfig({
       (process.platform === 'linux' && process.arch === 'arm64' ? 2 : 1),
 
     // Don't run any compiled versions of the tests, if they exist
-    exclude: [...configDefaults.exclude, '.*/**', 'dist/**'],
+    exclude: [...configDefaults.exclude, '.*/**', 'dist/**', 'packages/*/deps/**'],
 
     coverage: {
       provider: 'v8',
