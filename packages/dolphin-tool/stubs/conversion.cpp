@@ -22,10 +22,14 @@
 #include <string>
 
 #include "Common/FileUtil.h"
+#include "Core/IOS/ES/Formats.h"
 #include "DiscIO/DiscUtils.h"
 #include "DiscIO/Volume.h"
-
-#include "Core/IOS/ES/Formats.h"
+// CreateDisc returns std::unique_ptr<VolumeDisc>; libstdc++ and MSVC need
+// VolumeDisc complete (not just the forward declaration in Volume.h) to
+// instantiate the deleter, even for a `return nullptr` (Apple libc++ defers
+// this, so a macOS-only build wouldn't catch it).
+#include "DiscIO/VolumeDisc.h"
 
 namespace File {
 bool Delete(const std::string& filename, IfAbsentBehavior behavior) { return false; }
