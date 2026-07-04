@@ -322,6 +322,26 @@
       # FMT_HEADER_ONLY avoids a separate fmt compilation unit; only fmt::format
       # in error/log helper strings is used.
       "defines": ["FMT_HEADER_ONLY"],
+      # MSVC flags Dolphin's own build requires (deps/dolphin/CMakeLists.txt adds
+      # the same). Scoped to this target because only it compiles Dolphin's C++
+      # and the header-only fmt; the bundled C libraries neither need nor want
+      # these. gyp appends to the target_defaults AdditionalOptions above.
+      #   /utf-8            satisfies fmt/base.h's "Unicode support requires
+      #                     compiling with /utf-8" static_assert.
+      #   /Zc:preprocessor  selects the conforming preprocessor so __VA_OPT__
+      #                     (used by fmt and Dolphin's ChunkFile/SHA1 format
+      #                     macros) parses instead of erroring.
+      #   /Zc:__cplusplus   makes MSVC report the real __cplusplus value so
+      #                     Dolphin's C++23 feature detection works.
+      "msvs_settings": {
+        "VCCLCompilerTool": {
+          "AdditionalOptions": [
+            "/utf-8",
+            "/Zc:preprocessor",
+            "/Zc:__cplusplus"
+          ]
+        }
+      },
       "include_dirs": [
         "<!(node -p \"require('node-addon-api').include_dir\")",
         "<(dolphin)/Source/Core",
