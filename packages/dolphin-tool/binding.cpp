@@ -379,7 +379,7 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
         return env.Null();
     }
 
-    Napi::Object out = Napi::Object::New(env);
+    const Napi::Object out = Napi::Object::New(env);
     out.Set("inputFile", inputPath);
     out.Set("format", BlobFormatString(blob->GetBlobType()));
     out.Set("decompressedSize", Napi::Number::New(env, static_cast<double>(blob->GetDataSize())));

@@ -9,6 +9,6 @@
 #include <optional>
 
 namespace DiscIO {
-std::optional<u64> GetFSTOffset(const Volume& volume, const Partition& partition) { return std::nullopt; }
-std::optional<u64> GetFSTSize(const Volume& volume, const Partition& partition) { return std::nullopt; }
+std::optional<u64> GetFSTOffset(const Volume&, const Partition&) { return std::nullopt; }
+std::optional<u64> GetFSTSize(const Volume&, const Partition&) { return std::nullopt; }
 }  // namespace DiscIO

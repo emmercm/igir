@@ -32,8 +32,14 @@
     ],
 
     "cflags_cc!": [
-      # Override Node.js' common.gypi
+      # Override Node.js' common.gypi. Node.js <=24 injects -std=gnu++17 while
+      # Node.js 26 injects -std=gnu++20; strip both so the appended -std=c++23
+      # below is the only C++ standard flag. If a gnu++NN flag survives it is
+      # ordered after ours and wins, silently downgrading the build to that
+      # standard and breaking Dolphin's C++23 usage (e.g. std::to_underlying in
+      # StringUtil.h).
       "-std=gnu++17",
+      "-std=gnu++20",
       # Dolphin uses C++ exceptions and RTTI
       "-fno-exceptions", "-fno-rtti"
     ],
