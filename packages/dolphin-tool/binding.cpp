@@ -4,6 +4,8 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <future>
 #include <memory>
@@ -187,6 +189,16 @@ void VolumeWii::DecryptBlockData(const u8* in, u8* out, Common::AES::Context* ae
 // clang-format on
 // ===== END ported region =====
 
+// TEMPORARY DIAGNOSTIC (revert before merge): crash-proof stderr markers used to
+// localize the compiled Bun/Windows worker-thread crash. Building the line with
+// std::to_string (no printf varargs) keeps clang-tidy happy; fflush after the
+// write pushes bytes to the OS before any subsequent native fault can lose them.
+static void cdiag(const std::string& msg) {
+    std::string const line = "DOLPHIN-CDIAG " + msg + "\n";
+    std::fputs(line.c_str(), stderr);
+    std::fflush(stderr);
+}
+
 // ---- shared pull-reader scaffolding ----
 
 // Runs a reader's Produce() on a worker thread so blocking/decompressing blob reads
@@ -290,6 +302,32 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     size_t const maxBytes = info[0].As<Napi::Number>().Uint32Value();
+
+    // TEMPORARY DIAGNOSTIC (revert before merge): when DOLPHIN_READ_SYNC is set in
+    // the environment, run Produce() directly on the V8 main thread instead of the
+    // AsyncWorker. This A/B tests whether the compiled Bun/Windows crash is specific
+    // to Bun's worker-thread environment (stack size / TLS / CRT-per-thread): if the
+    // read succeeds synchronously but crashes async, the worker thread is the cause.
+    static bool const syncRead = std::getenv("DOLPHIN_READ_SYNC") != nullptr;
+    if (syncRead) {
+        cdiag("Read: sync main-thread path");
+        std::vector<uint8_t> buf(maxBytes);
+        try {
+            size_t const n = static_cast<Derived*>(this)->Produce(buf.data(), buf.size());
+            if (n == 0) {
+                deferred.Resolve(env.Null());
+            } else {
+                deferred.Resolve(Napi::Buffer<uint8_t>::Copy(env, buf.data(), n));
+            }
+        } catch (const std::exception& e) {
+            deferred.Reject(Napi::Error::New(env, e.what()).Value());
+        } catch (...) {
+            deferred.Reject(Napi::Error::New(env, "unknown blob read error").Value());
+        }
+        return deferred.Promise();
+    }
+    cdiag("Read: async worker path");
+
     // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
     // if that allocation throws, reading_/Ref() must not be left dangling.
     auto* worker = new ReadWorker<Derived>(env, static_cast<Derived*>(this), maxBytes);
@@ -331,11 +369,15 @@ class DolphinReader : public ReaderBase<DolphinReader> {
 
     // Emit up to maxBytes of decompressed bytes starting at pos_. Runs on the worker thread.
     size_t Produce(uint8_t* out, size_t maxBytes) {
+        cdiag("Produce enter pos=" + std::to_string(pos_) + " total=" + std::to_string(total_) +
+              " max=" + std::to_string(maxBytes));
         if (pos_ >= total_) return 0;
         uint64_t const n = std::min<uint64_t>(maxBytes, total_ - pos_);
+        cdiag("Produce before blob->Read n=" + std::to_string(n));
         if (!blob_->Read(pos_, n, out)) {
             throw std::runtime_error("blob Read failed");
         }
+        cdiag("Produce after blob->Read n=" + std::to_string(n));
         pos_ += n;
         return static_cast<size_t>(n);
     }

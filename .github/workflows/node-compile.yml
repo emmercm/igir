@@ -185,7 +185,7 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'windows') }}
         shell: pwsh
         run: |
-          Set-PSDebug -Trace 1
+          # Set-PSDebug -Trace 1
           $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
           $NODE_ARCH=$(node --print 'process.arch')
           $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${{ runner.os }}-${NODE_ARCH}.zip"
