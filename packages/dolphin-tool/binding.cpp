@@ -204,7 +204,7 @@ static void cdiag(const std::string& msg) {
 // forces real cross-frame stack unwinding (needing this frame's registered unwind
 // info), as the real crash does — not a same-frame throw the optimizer could
 // special-case.
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #define DOLPHIN_NOINLINE __declspec(noinline)
 #else
 #define DOLPHIN_NOINLINE __attribute__((noinline))
