@@ -242,7 +242,7 @@ jobs:
             printf 'Linting %s: %s\n' "${pkg}" "${pkg_files[*]}"
             clang-tidy \
               --warnings-as-errors='*' \
-              # Dolphin's vendored 'fmt' changes its behavior when this is defined, so we undefine it
+              `# Dolphin's vendored 'fmt' changes its behavior when this is defined, so we undefine it` \
               --extra-arg=-U__clang_analyzer__ \
               -p "${pkg}/build/Release" \
               "${pkg_files[@]}"
