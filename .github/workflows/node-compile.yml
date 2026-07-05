@@ -196,6 +196,10 @@ jobs:
           npm run compile -- . igir.exe
           Remove-Item node_modules -Recurse -Force
           .\igir.exe --help
+          # TEMPORARY DIAGNOSTIC (revert with the binding.cpp/index.ts markers):
+          # run Dolphin blob reads on the main thread instead of the AsyncWorker to
+          # test whether the compiled Bun/Windows crash is worker-thread-specific.
+          $env:DOLPHIN_READ_SYNC = '1'
           .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
           .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
           Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
