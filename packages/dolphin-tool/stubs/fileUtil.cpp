@@ -8,5 +8,5 @@
 #include <string>
 
 namespace File {
-bool Delete(const std::string&, IfAbsentBehavior) { return false; }
+bool Delete(const std::string& /*filename*/, IfAbsentBehavior /*behavior*/) { return false; }
 }  // namespace File

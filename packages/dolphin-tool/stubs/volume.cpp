@@ -12,5 +12,5 @@
 #include "DiscIO/VolumeDisc.h"
 
 namespace DiscIO {
-std::unique_ptr<VolumeDisc> CreateDisc(const std::string&) { return nullptr; }
+std::unique_ptr<VolumeDisc> CreateDisc(const std::string& /*path*/) { return nullptr; }
 }  // namespace DiscIO

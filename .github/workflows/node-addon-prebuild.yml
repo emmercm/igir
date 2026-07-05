@@ -240,7 +240,12 @@ jobs:
             mapfile -t pkg_files < <(find "${pkg}" -type f \( -name '*.cpp' -o -name '*.cc' \) \
               -not -path '*/deps/*' -not -path '*/build/*' -not -path '*/addon*/*' | sort)
             printf 'Linting %s: %s\n' "${pkg}" "${pkg_files[*]}"
-            clang-tidy --warnings-as-errors='*' -p "${pkg}/build/Release" "${pkg_files[@]}"
+            clang-tidy \
+              --warnings-as-errors='*' \
+              # Dolphin's vendored 'fmt' changes its behavior when this is defined, so we undefine it
+              --extra-arg=-U__clang_analyzer__ \
+              -p "${pkg}/build/Release" \
+              "${pkg_files[@]}"
           done
 
   commit:
