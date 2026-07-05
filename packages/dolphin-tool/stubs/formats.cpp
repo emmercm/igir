@@ -9,7 +9,9 @@
 
 namespace IOS::ES {
 // These stub bodies ignore `this`, but the members are declared non-static in
-// Formats.h, so they cannot be made static (NOLINT the readability suggestion).
-bool TicketReader::IsValid() const { return false; }  // NOLINT(readability-convert-member-functions-to-static)
-std::array<u8, 16> TicketReader::GetTitleKey() const { return {}; }  // NOLINT(readability-convert-member-functions-to-static)
+// Formats.h, so they cannot be made static.
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+bool TicketReader::IsValid() const { return false; }
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::array<u8, 16> TicketReader::GetTitleKey() const { return {}; }
 }  // namespace IOS::ES
