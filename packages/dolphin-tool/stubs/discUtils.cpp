@@ -1,6 +1,5 @@
 // Stubs for DiscIO::GetFSTOffset/GetFSTSize, referenced only by WIABlob.cpp's
-// WIA/RVZ writing path, which this read-only addon never runs. Stubbed (rather
-// than left undefined) because a Windows DLL must resolve every referenced symbol.
+// WIA/RVZ writing path, which this read-only addon never runs.
 
 #include "DiscIO/DiscUtils.h"
 

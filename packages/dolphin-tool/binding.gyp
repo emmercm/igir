@@ -1,14 +1,3 @@
-# Dolphin native addon build definition.
-#
-# Global no-SIMD constraint: every bundled compression / crypto library is built
-# with its portable scalar backend only (see per-target defines below).
-#
-# Static linking: every bundled dependency below (zstd, bzip2, lzma, zlibng, mbedtls)
-# is a "static_library" target, so gyp always links it directly into dolphin-tool's
-# .node rather than as a separate shared object. fmt is header-only (FMT_HEADER_ONLY),
-# so nothing to link there either. The remaining runtime is handled per-OS: Linux gets
-# -static-libstdc++/-static-libgcc and Windows gets /MT (see target_defaults and the
-# dolphin-tool target below); macOS's toolchain offers no static libc++ equivalent.
 {
   "variables": {
     "dolphin": "deps/dolphin"
@@ -32,19 +21,13 @@
     ],
 
     "cflags_cc!": [
-      # Override Node.js' common.gypi, which injects -std=gnu++17 (<=24) or
-      # -std=gnu++20 (26). Strip both so the appended -std=c++23 is the only
-      # standard flag; a surviving gnu++NN is ordered after ours and would win,
-      # silently downgrading the build and breaking Dolphin's C++23 usage
-      # (e.g. std::to_underlying in StringUtil.h).
+      # Override Node.js' common.gypi
       "-std=gnu++17",
       "-std=gnu++20",
       # Dolphin uses C++ exceptions and RTTI
       "-fno-exceptions", "-fno-rtti"
     ],
     "cflags_cc": [
-      # Dolphin (tag 2606) requires C++23 (CMAKE_CXX_STANDARD 23; e.g.
-      # StringUtil.h uses std::to_underlying).
       "-std=c++23",
       # Dolphin uses C++ exceptions and RTTI
       "-fexceptions", "-frtti"
@@ -69,9 +52,7 @@
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
         "AdditionalOptions": [
-          # The C++ standard is set per-target (see the dolphin-tool target
-          # below); the bundled C libraries don't take a C++ standard flag.
-          # Dolphin uses C++ exceptions and RTTI
+          # MAME uses C++ exceptions and RTTI
           "/EHsc"
         ]
       },
@@ -111,8 +92,6 @@
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_compress_literals.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_compress_sequences.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_compress_superblock.c",
-        # Defines ZSTD_splitBlock, referenced by zstd_compress.c. A Windows DLL
-        # must resolve it; Linux/macOS tolerate it as undefined.
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_preSplit.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_double_fast.c",
         "<(dolphin)/Externals/zstd/zstd/lib/compress/zstd_fast.c",
@@ -301,23 +280,14 @@
       "target_name": "dolphin-tool",
       "sources": [
         "binding.cpp",
-        # Stubs for subsystems referenced but never reached when opening
-        # RVZ/GCZ/WIA blobs (see each file's header comment).
         "stubs/directoryBlob.cpp",
         "stubs/logging.cpp",
-        # Inert definitions for symbols referenced only by the blob readers'
-        # write/conversion paths (never reached when reading), one file per
-        # upstream translation unit; needed because a Windows DLL must resolve
-        # every referenced symbol.
         "stubs/fileUtil.cpp",
         "stubs/discUtils.cpp",
         "stubs/volume.cpp",
         "stubs/formats.cpp",
-        # Dolphin DiscIO blob readers
         "<(dolphin)/Source/Core/DiscIO/Blob.cpp",
         "<(dolphin)/Source/Core/DiscIO/CISOBlob.cpp",
-        # Compiled through a shim that forces the vendored zlib-ng <zlib.h> (see
-        # zlib-ng-compat/CompressedBlob.cpp) instead of Node's bundled copy.
         "zlib-ng-compat/CompressedBlob.cpp",
         "<(dolphin)/Source/Core/DiscIO/FileBlob.cpp",
         "<(dolphin)/Source/Core/DiscIO/NFSBlob.cpp",
@@ -328,36 +298,17 @@
         "<(dolphin)/Source/Core/DiscIO/WIACompression.cpp",
         "<(dolphin)/Source/Core/DiscIO/WiiEncryptionCache.cpp",
         "<(dolphin)/Source/Core/DiscIO/LaggedFibonacciGenerator.cpp",
-        # Dolphin Common support
         "<(dolphin)/Source/Core/Common/Crypto/AES.cpp",
         "<(dolphin)/Source/Core/Common/Crypto/SHA1.cpp",
         "<(dolphin)/Source/Core/Common/CommonFuncs.cpp",
         "<(dolphin)/Source/Core/Common/DirectIOFile.cpp",
         "<(dolphin)/Source/Core/Common/GenericCPUDetect.cpp",
-        # Compiled through a shim that forces the vendored zlib-ng <zlib.h> (see
-        # zlib-ng-compat/Hash.cpp) instead of Node's bundled copy.
         "zlib-ng-compat/Hash.cpp",
         "<(dolphin)/Source/Core/Common/MsgHandler.cpp",
         "<(dolphin)/Source/Core/Common/StringUtil.cpp"
       ],
       "dependencies": ["zstd", "bzip2", "lzma", "zlibng", "mbedtls"],
-      # FMT_HEADER_ONLY avoids a separate fmt compilation unit; only fmt::format
-      # in error/log helper strings is used.
-      # LZMA_API_STATIC: WIACompression.cpp includes lzma.h; without it the API is
-      # __declspec(dllimport) on Windows and references nonexistent __imp_lzma_*
-      # import stubs (see the lzma target above).
       "defines": ["FMT_HEADER_ONLY", "LZMA_API_STATIC"],
-      # MSVC settings for Dolphin's C++ and the header-only fmt. Scoped here
-      # because only this target is C++; the bundled C libraries don't take them.
-      #
-      # Dolphin targets C++23, but MSVC has no stable /std:c++23, so request
-      # /std:c++23preview (enables _HAS_CXX23, needed for StringUtil.h's
-      # std::to_underlying). node-gyp's common.gypi appends /std:c++20 after
-      # AdditionalOptions and would win, so LanguageStandard is forced to
-      # "Default" (emits no /std of its own).
-      #   /utf-8            satisfies fmt/base.h's Unicode /utf-8 static_assert.
-      #   /Zc:preprocessor  conforming preprocessor for __VA_OPT__ (fmt, ChunkFile/SHA1).
-      #   /Zc:__cplusplus   report the real __cplusplus for C++23 feature detection.
       "msvs_settings": {
         "VCCLCompilerTool": {
           "LanguageStandard": "Default",
@@ -380,19 +331,12 @@
         "<(dolphin)/Externals/mbedtls/include"
       ],
       "conditions": [
-        # zlib-ng is a static_library dependency, but its inflate/adler32 symbols
-        # collide with the zlib that Node exports from the host executable. The
-        # linker leaves the calls to resolve against the host (dynamic lookup on
-        # macOS, node.exe import on Windows) instead of pulling them from
-        # zlibng.a/.lib, so a Bun-compiled Windows binary faults (0xC06D007F) and
-        # even macOS/Linux silently use the host's zlib rather than the vendored
-        # copy. Force the whole zlib-ng archive into the link so its definitions win.
+        # Static linking
         ["OS=='mac'", {
           "xcode_settings": {
             "OTHER_LDFLAGS": ["-Wl,-force_load,<(PRODUCT_DIR)/zlibng.a"]
           }
         }],
-        # Static linking
         ["OS=='linux'", {
           "ldflags": [
             "-static-libstdc++", "-static-libgcc",

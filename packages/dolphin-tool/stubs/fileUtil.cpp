@@ -1,6 +1,5 @@
 // Stub for File::Delete, referenced only by CompressedBlob.cpp's ConvertToGCZ
-// (GCZ writing), which this read-only addon never runs. Stubbed because a
-// Windows DLL must resolve every referenced symbol.
+// (GCZ writing), which this read-only addon never runs.
 
 #include "Common/FileUtil.h"
 

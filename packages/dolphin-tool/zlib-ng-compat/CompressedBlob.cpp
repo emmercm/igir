@@ -2,7 +2,7 @@
 //
 // The upstream unit does `#include <zlib.h>`, but node-gyp lists Node's bundled
 // zlib headers ahead of our include_dirs for angle-bracket includes, with no
-// portable way to reorder. Compiling the upstream file *through this shim* fixes
+// portable way to reorder. Compiling the upstream file through this shim fixes
 // it without editing the Dolphin submodule: the quoted include below resolves
 // relative to THIS file, so the vendored zlib-ng <zlib.h> wins (for the build
 // and for clang-tidy). Predefining Node's ZLIB_H guard then makes the upstream

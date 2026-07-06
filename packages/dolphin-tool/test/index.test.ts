@@ -6,52 +6,43 @@ import dolphin, { ContainerFormat } from '../index.js';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 
-const EXPECTED_ISO_SIZE = 1_441_792;
-const EXPECTED_ISO_SHA1 = 'e3d1df9d19ecc7e8f71ac50aacb55e689f331f45';
+const GAMECUBE_ISO_SIZE = 1_441_792;
+const GAMECUBE_ISO_SHA1 = 'e3d1df9d19ecc7e8f71ac50aacb55e689f331f45';
 
-// A real Wii disc stores its game partition encrypted and hashed with a per-title
-// AES key; WIA/RVZ store only the decrypted, de-hashed data and must re-derive the
-// hash tree and re-encrypt on read (see binding.cpp's ported VolumeWii region).
-// These fixtures exercise that path.
-//
-// GCZ and WIA get separate checksums: the GCZ source image is zero-padded past its
-// real content, while WIA reconstructs Nintendo's junk-data pattern for that unused
-// space (LaggedFibonacciGenerator). GCZ has no Wii-specific logic, so its decoded
-// output legitimately differs past that point.
 const WII_DECOMPRESSED_SIZE = 4_699_979_776;
-const WII_GCZ_SHA1 = '85581927a3f7652b2d6d06b1b90a76109eb50ca8';
-const WII_WIA_SHA1 = 'a9ce9b2edcdbfb525631178c2ea12d32b4994ab6';
+const WII_GCZ_SHA1 = '85581927a3f7652b2d6d06b1b90a76109eb50ca8'; // zero-padded
+const WII_WIA_SHA1 = 'a9ce9b2edcdbfb525631178c2ea12d32b4994ab6'; // lagged fibonacci generator-padded
 
 const cases = [
   {
     format: ContainerFormat.GCZ,
     file: '240pSuite-GameCube-1.20.gcz',
-    size: EXPECTED_ISO_SIZE,
-    sha1: EXPECTED_ISO_SHA1,
+    size: GAMECUBE_ISO_SIZE,
+    sha1: GAMECUBE_ISO_SHA1,
   },
   {
     format: ContainerFormat.RVZ,
     file: '240pSuite-GameCube-1.20.bzip2.rvz',
-    size: EXPECTED_ISO_SIZE,
-    sha1: EXPECTED_ISO_SHA1,
+    size: GAMECUBE_ISO_SIZE,
+    sha1: GAMECUBE_ISO_SHA1,
   },
   {
     format: ContainerFormat.RVZ,
     file: '240pSuite-GameCube-1.20.lzma.rvz',
-    size: EXPECTED_ISO_SIZE,
-    sha1: EXPECTED_ISO_SHA1,
+    size: GAMECUBE_ISO_SIZE,
+    sha1: GAMECUBE_ISO_SHA1,
   },
   {
     format: ContainerFormat.RVZ,
     file: '240pSuite-GameCube-1.20.lzma2.rvz',
-    size: EXPECTED_ISO_SIZE,
-    sha1: EXPECTED_ISO_SHA1,
+    size: GAMECUBE_ISO_SIZE,
+    sha1: GAMECUBE_ISO_SHA1,
   },
   {
     format: ContainerFormat.RVZ,
     file: '240pSuite-GameCube-1.20.zstd.rvz',
-    size: EXPECTED_ISO_SIZE,
-    sha1: EXPECTED_ISO_SHA1,
+    size: GAMECUBE_ISO_SIZE,
+    sha1: GAMECUBE_ISO_SHA1,
   },
   {
     format: ContainerFormat.GCZ,

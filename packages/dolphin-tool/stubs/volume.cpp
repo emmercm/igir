@@ -1,6 +1,5 @@
 // Stub for DiscIO::CreateDisc, referenced only by WIABlob.cpp's WIA/RVZ writing
-// path, which this read-only addon never runs. Stubbed because a Windows DLL
-// must resolve every referenced symbol.
+// path, which this read-only addon never runs.
 
 #include "DiscIO/Volume.h"
 
