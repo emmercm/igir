@@ -194,6 +194,20 @@
     {
       "target_name": "zlibng",
       "type": "static_library",
+      # node-gyp's addon.gypi sets win_delay_load_hook=true in target_defaults,
+      # so it compiles src/win_delay_load_hook.cc (which defines
+      # __pfnDliNotifyHook2) into EVERY target, including this static library.
+      # That object is normally inert inside zlibng.lib -- the linker never pulls
+      # it because the final .node already defines the symbol. But the
+      # /WHOLEARCHIVE:zlibng.lib below (needed so zlib-ng's definitions win over
+      # Node's exported zlib) force-includes every object in the archive,
+      # dragging in this duplicate win_delay_load_hook.obj and colliding with the
+      # copy in dolphin-tool.node (LNK2005 __pfnDliNotifyHook2 already defined ->
+      # LNK1169). The delay-load hook is only meaningful in the final loadable
+      # module, never in a static lib, so disable it here.
+      "variables": {
+        "win_delay_load_hook": "false"
+      },
       # ZLIB_COMPAT: expose the classic zlib.h API (what CompressedBlob.cpp uses).
       # No arch feature macros are defined, so functable.c dispatches to the
       # portable scalar C implementations only (global no-SIMD constraint).
