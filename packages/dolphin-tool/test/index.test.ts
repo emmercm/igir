@@ -9,19 +9,15 @@ const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 const EXPECTED_ISO_SIZE = 1_441_792;
 const EXPECTED_ISO_SHA1 = 'e3d1df9d19ecc7e8f71ac50aacb55e689f331f45';
 
-// A real Wii disc (unlike the GameCube fixtures below) stores its game partition
-// encrypted and hashed with a per-title AES key; WIA/RVZ containers store only the
-// decrypted, de-hashed partition data and must re-derive the original hash tree and
-// re-encrypt it on read (see binding.cpp's ported VolumeWii region). These fixtures
-// exercise that path.
+// A real Wii disc stores its game partition encrypted and hashed with a per-title
+// AES key; WIA/RVZ store only the decrypted, de-hashed data and must re-derive the
+// hash tree and re-encrypt on read (see binding.cpp's ported VolumeWii region).
+// These fixtures exercise that path.
 //
-// The GCZ fixture's source disc image is zero-padded past its real content, while
-// WIA's junk-data reconstruction (Dolphin's LaggedFibonacciGenerator, unrelated to
-// the decrypt/hash port) correctly regenerates Nintendo's disc-mastering
-// pseudo-random pattern for that same unused space instead of storing zeros. GCZ
-// has no Wii-specific logic (it's a generic compressed raw-sector dump), so its
-// decoded output legitimately differs from WIA's past that point -- hence separate
-// expected checksums per format rather than one shared value.
+// GCZ and WIA get separate checksums: the GCZ source image is zero-padded past its
+// real content, while WIA reconstructs Nintendo's junk-data pattern for that unused
+// space (LaggedFibonacciGenerator). GCZ has no Wii-specific logic, so its decoded
+// output legitimately differs past that point.
 const WII_DECOMPRESSED_SIZE = 4_699_979_776;
 const WII_GCZ_SHA1 = '85581927a3f7652b2d6d06b1b90a76109eb50ca8';
 const WII_WIA_SHA1 = 'a9ce9b2edcdbfb525631178c2ea12d32b4994ab6';

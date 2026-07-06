@@ -1,8 +1,7 @@
-// zlib-ng vendoring shim — see the "sources" list in binding.gyp, and the sibling
-// CompressedBlob.cpp shim for the full rationale. Common/Hash.cpp does
-// `#include <zlib.h>` for adler32/crc32; compiling it through this shim forces the
-// vendored zlib-ng header (quoted include, resolved relative to this file) instead
-// of Node's bundled copy, and gates Node's out via its ZLIB_H guard.
+// zlib-ng vendoring shim — see the CompressedBlob.cpp shim for the full rationale.
+// Common/Hash.cpp does `#include <zlib.h>` for adler32/crc32; compiling it through
+// this shim forces the vendored zlib-ng header (quoted include, resolved relative
+// to this file) instead of Node's bundled copy, gating Node's out via its ZLIB_H guard.
 #define ZLIB_COMPAT
 #include "../deps/dolphin/Externals/zlib-ng/zlib.h"
 #ifndef ZLIB_H

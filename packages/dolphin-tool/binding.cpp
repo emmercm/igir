@@ -19,12 +19,11 @@
 #include "DiscIO/Blob.h"
 #include "DiscIO/VolumeWii.h"
 
-// The DiscIO::VolumeWii statics referenced by WIABlob.cpp and WiiEncryptionCache.cpp to
-// recompute/decrypt the Wii partition hash tree (H0/H1/H2) and re-encrypt partition data. The
-// rest of VolumeWii.cpp (banner rendering, filesystem browsing, generic volume glue) is
-// unneeded, so these four are ported individually instead of compiling the upstream .cpp file.
-// Method names are fixed by VolumeWii.h's declarations, so they aren't `port_`-prefixed like
-// other ported helpers in this project.
+// The DiscIO::VolumeWii statics that WIABlob.cpp and WiiEncryptionCache.cpp use to
+// recompute/decrypt the Wii partition hash tree (H0/H1/H2) and re-encrypt partition data.
+// The rest of VolumeWii.cpp (banner rendering, filesystem browsing, generic volume glue)
+// is unneeded, so these four are ported individually rather than compiling the upstream
+// .cpp. Names are fixed by VolumeWii.h, so they aren't `port_`-prefixed.
 
 // ===== BEGIN ported from Source/Core/DiscIO/VolumeWii.cpp, Dolphin submodule tag 2606 =====
 // Re-port when bumping the submodule: diff each function against its cited line range.
@@ -238,10 +237,10 @@ class ReadWorker : public Napi::AsyncWorker {
 //   size_t Produce(uint8_t* out, size_t maxBytes);  // worker thread; emits bytes
 //   void   Teardown();                               // main thread; releases handles
 //
-// Safety invariant: Produce (worker thread) never overlaps Teardown (main thread).
-// Teardown runs only from Close() when no read is in flight, or from FinishRead()
-// (called on the main thread once Execute() returns). reading_ rejects a second
-// concurrent read(); Ref()/Unref() keep the object alive across the async read.
+// Safety invariant: Produce (worker thread) never overlaps Teardown (main thread),
+// which runs only from Close() with no read in flight or from FinishRead() (main
+// thread, after Execute returns). reading_ rejects a concurrent read(); Ref()/Unref()
+// keep the object alive across the async read.
 template <typename Derived>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
