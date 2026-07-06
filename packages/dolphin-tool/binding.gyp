@@ -52,7 +52,7 @@
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
         "AdditionalOptions": [
-          # MAME uses C++ exceptions and RTTI
+          # Dolphin uses C++ exceptions and RTTI
           "/EHsc"
         ]
       },
