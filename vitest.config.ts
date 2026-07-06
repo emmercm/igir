@@ -21,7 +21,7 @@ export default defineConfig({
       // Ubuntu ARM frequently times out
       (process.platform === 'linux' && process.arch === 'arm64' ? 2 : 1),
 
-    // Don't run any compiled versions of the tests, if they exist
+    // Only run the committed test files
     exclude: [...configDefaults.exclude, '.*/**', 'dist/**', 'packages/*/deps/**'],
 
     coverage: {
