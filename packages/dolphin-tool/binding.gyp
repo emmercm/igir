@@ -204,10 +204,12 @@
       # dragging in this duplicate win_delay_load_hook.obj and colliding with the
       # copy in dolphin-tool.node (LNK2005 __pfnDliNotifyHook2 already defined ->
       # LNK1169). The delay-load hook is only meaningful in the final loadable
-      # module, never in a static lib, so disable it here.
-      "variables": {
-        "win_delay_load_hook": "false"
-      },
+      # module, never in a static lib, so disable it here. This must be a direct
+      # key of the target (not under "variables"): addon.gypi declares
+      # win_delay_load_hook as a direct target_defaults key and gates the source
+      # on the target_conditions variable _win_delay_load_hook, which gyp derives
+      # from the target's direct keys -- a "variables" entry would be ignored.
+      "win_delay_load_hook": "false",
       # ZLIB_COMPAT: expose the classic zlib.h API (what CompressedBlob.cpp uses).
       # No arch feature macros are defined, so functable.c dispatches to the
       # portable scalar C implementations only (global no-SIMD constraint).
