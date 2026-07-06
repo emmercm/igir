@@ -11,6 +11,13 @@
 // guard is ZLIB_H_, so it is not self-suppressed. ZLIB_COMPAT selects zlib-ng's
 // classic zlib API (inflate, adler32, ...), matching the statically-linked zlibng.
 #define ZLIB_COMPAT
+// Node defines ZLIB_DLL for addon builds on Windows (its bundled zlib is exported
+// from node.exe), which makes zlib-ng's <zlib.h> declare the API
+// __declspec(dllimport) — pulling inflate/adler32 from the host instead of our
+// statically-linked zlib-ng. That import is a delay-load fault under a Bun-compiled
+// binary (0xC06D007F / ERROR_PROC_NOT_FOUND). Undefine it so zlib-ng's zconf.h
+// falls back to plain `extern` and the calls bind to the vendored static library.
+#undef ZLIB_DLL
 #include "../deps/dolphin/Externals/zlib-ng/zlib.h"
 #ifndef ZLIB_H
 #define ZLIB_H
