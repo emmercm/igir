@@ -187,46 +187,6 @@ void VolumeWii::DecryptBlockData(const u8* in, u8* out, Common::AES::Context* ae
 // clang-format on
 // ===== END ported region =====
 
-// TEMPORARY DIAGNOSTIC (revert before merge): Windows-only fault-capture probe. All
-// of it lives under _MSC_VER so non-Windows builds (and the Linux clang-tidy pass)
-// never see these otherwise-unused helpers.
-#ifdef _MSC_VER
-#include <excpt.h>
-
-#include <cstdio>
-
-// Crash-proof stderr marker — fflush pushes the line to the OS before any
-// subsequent native fault can lose it.
-static void cdiag(const std::string& msg) {
-    std::string const line = "DOLPHIN-CDIAG " + msg + "\n";
-    std::fputs(line.c_str(), stderr);
-    std::fflush(stderr);
-}
-
-// TEMPORARY DIAGNOSTIC (revert before merge): format a Windows structured-exception
-// code (e.g. 0xC0000005 access violation, 0xC00000FD stack overflow, 0xC000001D
-// illegal instruction) as hex for reporting.
-static std::string SehCodeHex(unsigned long code) {
-    char buf[16];
-    std::snprintf(buf, sizeof(buf), "0x%08lX", code);
-    return std::string(buf);
-}
-
-// TEMPORARY DIAGNOSTIC (revert before merge): run the native blob read under a
-// Structured Exception Handler so a hardware fault inside it is captured as a code
-// instead of silently terminating the process. This function has no C++ locals
-// requiring unwinding, so using __try here is legal under /EHsc.
-static bool SehGuardedRead(DiscIO::BlobReader* blob, uint64_t offset, uint64_t size, uint8_t* out,
-                           unsigned long* sehCode) {
-    __try {
-        return blob->Read(offset, size, out);
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
-        *sehCode = GetExceptionCode();
-        return false;
-    }
-}
-#endif
-
 // ---- shared pull-reader scaffolding ----
 
 // Runs a reader's Produce() on a worker thread so blocking/decompressing blob reads
@@ -373,24 +333,9 @@ class DolphinReader : public ReaderBase<DolphinReader> {
     size_t Produce(uint8_t* out, size_t maxBytes) {
         if (pos_ >= total_) return 0;
         uint64_t const n = std::min<uint64_t>(maxBytes, total_ - pos_);
-#ifdef _MSC_VER
-        // TEMPORARY DIAGNOSTIC (revert before merge): capture a hardware fault
-        // inside the native read as a structured-exception code rather than a
-        // silent process kill.
-        unsigned long sehCode = 0;
-        bool const ok = SehGuardedRead(blob_.get(), pos_, n, out, &sehCode);
-        if (sehCode != 0) {
-            cdiag("blob->Read raised structured exception " + SehCodeHex(sehCode));
-            throw std::runtime_error("blob Read faulted (SEH)");
-        }
-        if (!ok) {
-            throw std::runtime_error("blob Read failed");
-        }
-#else
         if (!blob_->Read(pos_, n, out)) {
             throw std::runtime_error("blob Read failed");
         }
-#endif
         pos_ += n;
         return static_cast<size_t>(n);
     }
