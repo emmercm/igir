@@ -55,11 +55,41 @@ sha256() {
 }
 
 # manifest <dir> -> prints "<sha256>  <relative/path>" for every file, sorted by
-# path, so two identical trees produce identical, diff-able output.
+# path. Each line is a fixed 64-char digest, two spaces, then the path (which may
+# contain spaces), so a byte-identical manifest means byte-identical output.
 manifest() {
   ( cd "$1" && find . -type f | LC_ALL=C sort | while IFS= read -r file; do
       printf '%s  %s\n' "$(sha256 "${file}")" "${file}"
     done )
+}
+
+# compare_manifests <node-manifest> <binary-manifest> -> prints a human-readable,
+# categorized list of how the two output trees differ, so a CI failure names the
+# offending files instead of dumping raw diff markers:
+#   - MISSING from binary: the Node run produced a file the binary did not
+#   - EXTRA in binary:     the binary produced a file the Node run did not
+#   - CONTENT DIFFERS:     both produced the file, but the bytes differ
+# The digest is always the first 64 chars; the path starts at char 67 (after the
+# two-space separator), which preserves paths that themselves contain spaces.
+compare_manifests() {
+  awk '
+    NR == FNR { node_sha[substr($0, 67)] = substr($0, 1, 64); next }
+    {
+      path = substr($0, 67); sha = substr($0, 1, 64); binary_seen[path] = 1
+      if (!(path in node_sha)) {
+        printf "    EXTRA in binary (Node did not produce it):     %s\n", path
+      } else if (node_sha[path] != sha) {
+        printf "    CONTENT DIFFERS (Node %s… vs binary %s…):  %s\n", substr(node_sha[path], 1, 12), substr(sha, 1, 12), path
+      }
+    }
+    END {
+      for (path in node_sha) {
+        if (!(path in binary_seen)) {
+          printf "    MISSING from binary (only Node produced it):    %s\n", path
+        }
+      }
+    }
+  ' "$1" "$2" | LC_ALL=C sort
 }
 
 # --- Phase 1: Node (npm start), with node_modules present ---
@@ -88,12 +118,17 @@ for i in "${!COMMANDS[@]}"; do
   "${BIN}" "${args[@]}" --output "${out}"
 done
 
-# --- Phase 3: compare (process substitution must be unquoted) ---
+# --- Phase 3: compare ---
 echo "===== Parity: comparing output ====="
 status=0
 for i in "${!COMMANDS[@]}"; do
-  if ! diff <(manifest "${WORK}/node/${i}") <(manifest "${WORK}/bun/${i}"); then
-    echo "ERROR: output mismatch for '${COMMANDS[$i]}' (Node vs binary)" >&2
+  node_manifest="${WORK}/node-${i}.manifest"
+  binary_manifest="${WORK}/binary-${i}.manifest"
+  manifest "${WORK}/node/${i}" > "${node_manifest}"
+  manifest "${WORK}/bun/${i}" > "${binary_manifest}"
+  if ! cmp -s "${node_manifest}" "${binary_manifest}"; then
+    echo "ERROR: output mismatch for '${COMMANDS[$i]}' (Node vs binary):" >&2
+    compare_manifests "${node_manifest}" "${binary_manifest}" >&2
     status=1
   fi
 done
