@@ -364,7 +364,9 @@ class ReadWorker : public Napi::AsyncWorker {
             Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
                 env, owned->data(), n_,
                 [](Napi::Env /*unused*/, uint8_t* /*unused*/, std::vector<uint8_t>* v) { delete v; }, owned.get());
-            owned.release();  // ownership transferred to the Buffer's finalizer
+            // New() now owns the vector via its finalizer; release our pointer so ~unique_ptr
+            // doesn't free it too. The returned pointer is intentionally dropped.
+            owned.release();  // NOLINT(bugprone-unused-return-value)
             deferred_.Resolve(out);
         }
         reader_->FinishRead();  // last use of reader_: may release it
