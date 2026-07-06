@@ -372,7 +372,7 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
     }
     std::string const inputPath = info[0].As<Napi::String>();
 
-    // Header-only, fast enough to run synchronously on the main thread (like chdman info()).
+    // Header-only, fast enough to run synchronously on the main thread.
     std::unique_ptr<DiscIO::BlobReader> blob = DiscIO::CreateBlobReader(inputPath);
     if (!blob) {
         Napi::Error::New(env, "failed to open blob: " + inputPath).ThrowAsJavaScriptException();

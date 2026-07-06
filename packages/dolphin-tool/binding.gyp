@@ -32,12 +32,11 @@
     ],
 
     "cflags_cc!": [
-      # Override Node.js' common.gypi. Node.js <=24 injects -std=gnu++17 while
-      # Node.js 26 injects -std=gnu++20; strip both so the appended -std=c++23
-      # below is the only C++ standard flag. If a gnu++NN flag survives it is
-      # ordered after ours and wins, silently downgrading the build to that
-      # standard and breaking Dolphin's C++23 usage (e.g. std::to_underlying in
-      # StringUtil.h).
+      # Override Node.js' common.gypi, which injects -std=gnu++17 (<=24) or
+      # -std=gnu++20 (26). Strip both so the appended -std=c++23 is the only
+      # standard flag; a surviving gnu++NN is ordered after ours and would win,
+      # silently downgrading the build and breaking Dolphin's C++23 usage
+      # (e.g. std::to_underlying in StringUtil.h).
       "-std=gnu++17",
       "-std=gnu++20",
       # Dolphin uses C++ exceptions and RTTI
@@ -45,8 +44,7 @@
     ],
     "cflags_cc": [
       # Dolphin (tag 2606) requires C++23 (CMAKE_CXX_STANDARD 23; e.g.
-      # StringUtil.h uses std::to_underlying). This is the one deliberate
-      # departure from chdman's C++20 target_defaults.
+      # StringUtil.h uses std::to_underlying).
       "-std=c++23",
       # Dolphin uses C++ exceptions and RTTI
       "-fexceptions", "-frtti"
@@ -194,21 +192,13 @@
     {
       "target_name": "zlibng",
       "type": "static_library",
-      # node-gyp's addon.gypi sets win_delay_load_hook=true in target_defaults,
-      # so it compiles src/win_delay_load_hook.cc (which defines
-      # __pfnDliNotifyHook2) into EVERY target, including this static library.
-      # That object is normally inert inside zlibng.lib -- the linker never pulls
-      # it because the final .node already defines the symbol. But the
-      # /WHOLEARCHIVE:zlibng.lib below (needed so zlib-ng's definitions win over
-      # Node's exported zlib) force-includes every object in the archive,
-      # dragging in this duplicate win_delay_load_hook.obj and colliding with the
-      # copy in dolphin-tool.node (LNK2005 __pfnDliNotifyHook2 already defined ->
-      # LNK1169). The delay-load hook is only meaningful in the final loadable
-      # module, never in a static lib, so disable it here. This must be a direct
-      # key of the target (not under "variables"): addon.gypi declares
-      # win_delay_load_hook as a direct target_defaults key and gates the source
-      # on the target_conditions variable _win_delay_load_hook, which gyp derives
-      # from the target's direct keys -- a "variables" entry would be ignored.
+      # node-gyp compiles win_delay_load_hook.cc (defining __pfnDliNotifyHook2)
+      # into every target. It's normally inert inside this .lib, but the
+      # /WHOLEARCHIVE:zlibng.lib below force-includes it, colliding with the copy
+      # in the final .node (LNK2005 -> LNK1169). The hook is only meaningful in
+      # the loadable module, so disable it here. Must be a direct target key: gyp
+      # gates the source on a target_conditions var derived from direct keys, so
+      # a "variables" entry would be ignored.
       "win_delay_load_hook": "false",
       # ZLIB_COMPAT: expose the classic zlib.h API (what CompressedBlob.cpp uses).
       # No arch feature macros are defined, so functable.c dispatches to the
@@ -239,21 +229,14 @@
           ]
         }],
         ["OS=='win'", {
-          # MSVC has no -iquote/-I distinction, so the fix above doesn't apply.
-          # Listing these under msvs_settings makes gyp's msvs generator place
-          # them ahead of Node's own bundled zconf.h/zlib.h include path in the
-          # generated AdditionalIncludeDirectories, so zlib-ng's own headers win
-          # quoted-include resolution for cl.exe.
-          #
-          # The leading "../" is required: unlike the target's "include_dirs"
-          # (which gyp rewrites via _FixPath so they resolve from the generated
-          # build/ directory), msvs_settings paths are emitted verbatim. Without
-          # "../" MSBuild resolves them relative to build/dolphin-tool.vcxproj,
-          # they don't exist, cl.exe silently skips them, and it falls back to
-          # Node's zconf.h -- which breaks because zbuild.h has already
-          # "#define z_size_t unsigned long" (ZLIB_COMPAT), turning Node's
-          # "typedef size_t z_size_t;" into "typedef size_t unsigned long;".
-          # This mirrors the -iquote"../" prefix used for mac/linux above.
+          # MSVC has no -iquote, so list these in AdditionalIncludeDirectories,
+          # which gyp places ahead of Node's bundled zconf.h/zlib.h so zlib-ng's
+          # headers win quoted-include resolution. The leading "../" is required:
+          # gyp emits msvs_settings paths verbatim (unlike "include_dirs", which
+          # it rewrites to resolve from build/), so without it MSBuild resolves
+          # them relative to build/dolphin-tool.vcxproj, they don't exist, and
+          # cl.exe falls back to Node's zconf.h -- breaking ZLIB_COMPAT's
+          # z_size_t redefinition.
           "msvs_settings": {
             "VCCLCompilerTool": {
               "AdditionalIncludeDirectories": [
@@ -300,11 +283,9 @@
       "target_name": "mbedtls",
       "type": "static_library",
       # Custom config selects software AES-CBC + SHA-1 only; MBEDTLS_AESNI_C and
-      # MBEDTLS_PADLOCK_C are intentionally left undefined (global no-SIMD).
-      # Bare filename (found via the "stubs" include_dir below) rather than an
-      # absolute <(module_root_dir) path, since an absolute path here would
-      # need to survive being embedded in a compiler /D define even when the
-      # checkout path contains spaces.
+      # MBEDTLS_PADLOCK_C are left undefined (global no-SIMD). Bare filename
+      # (found via the "stubs" include_dir below) avoids embedding an absolute
+      # path in a /D define, which would break when the checkout path has spaces.
       "defines": ["MBEDTLS_CONFIG_FILE=\"mbedtls_config.h\""],
       "include_dirs": ["<(dolphin)/Externals/mbedtls/include", "stubs"],
       "sources": [
@@ -366,30 +347,17 @@
       # __declspec(dllimport) on Windows and references nonexistent __imp_lzma_*
       # import stubs (see the lzma target above).
       "defines": ["FMT_HEADER_ONLY", "LZMA_API_STATIC"],
-      # MSVC settings for compiling Dolphin's C++ and the header-only fmt. Scoped
-      # to this target because only it is C++; the bundled C libraries don't take
-      # these. deps/dolphin/CMakeLists.txt sets the equivalents for Dolphin's own
-      # build.
+      # MSVC settings for Dolphin's C++ and the header-only fmt. Scoped here
+      # because only this target is C++; the bundled C libraries don't take them.
       #
-      # Standard: Dolphin targets C++23 everywhere (CMAKE_CXX_STANDARD 23), which
-      # is the -std=c++23 used for Linux/macOS above. MSVC has no stable /std:c++23,
-      # so C++23 is requested with /std:c++23preview (this is what enables
-      # _HAS_CXX23, without which StringUtil.h's std::to_underlying is undeclared).
-      #
-      # It has to go through AdditionalOptions with LanguageStandard forced to
-      # "Default": node-gyp's common.gypi sets <LanguageStandard>stdcpp20</LanguageStandard>,
-      # whose /std:c++20 is placed AFTER AdditionalOptions on the cl command line
-      # and so wins over any /std put there ("cl: warning D9025: overriding
-      # '/std:c++latest' with '/std:c++20'"). Forcing the property to "Default"
-      # emits no /std of its own, leaving /std:c++23preview as the only one.
-      #
-      #   /std:c++23preview  C++23, so _HAS_CXX23=1 and std::to_underlying exists.
-      #   /utf-8             satisfies fmt/base.h's "Unicode support requires
-      #                      compiling with /utf-8" static_assert.
-      #   /Zc:preprocessor   conforming preprocessor so __VA_OPT__ (used by fmt and
-      #                      Dolphin's ChunkFile/SHA1 format macros) parses.
-      #   /Zc:__cplusplus    report the real __cplusplus value for C++23 feature
-      #                      detection.
+      # Dolphin targets C++23, but MSVC has no stable /std:c++23, so request
+      # /std:c++23preview (enables _HAS_CXX23, needed for StringUtil.h's
+      # std::to_underlying). node-gyp's common.gypi appends /std:c++20 after
+      # AdditionalOptions and would win, so LanguageStandard is forced to
+      # "Default" (emits no /std of its own).
+      #   /utf-8            satisfies fmt/base.h's Unicode /utf-8 static_assert.
+      #   /Zc:preprocessor  conforming preprocessor for __VA_OPT__ (fmt, ChunkFile/SHA1).
+      #   /Zc:__cplusplus   report the real __cplusplus for C++23 feature detection.
       "msvs_settings": {
         "VCCLCompilerTool": {
           "LanguageStandard": "Default",
