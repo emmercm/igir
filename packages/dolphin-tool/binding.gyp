@@ -345,7 +345,14 @@
       # LZMA_API_STATIC: WIACompression.cpp includes lzma.h; without it the API is
       # __declspec(dllimport) on Windows and references nonexistent __imp_lzma_*
       # import stubs (see the lzma target above).
-      "defines": ["FMT_HEADER_ONLY", "LZMA_API_STATIC"],
+      # ZLIB_COMPAT: CompressedBlob.cpp and Hash.cpp include <zlib.h> and call the
+      # classic zlib API (inflate, adler32); this makes zlib-ng's compat header
+      # declare those names. Paired with the Windows AdditionalIncludeDirectories
+      # below, it makes those calls bind to the statically-linked zlib-ng instead of
+      # being __declspec(dllimport)'d from the host's zlib.h. Node exports zlib so
+      # the import silently resolved under node.exe, but a Bun-compiled binary does
+      # not, faulting with delay-load error 0xC06D007F (ERROR_PROC_NOT_FOUND).
+      "defines": ["FMT_HEADER_ONLY", "LZMA_API_STATIC", "ZLIB_COMPAT"],
       # MSVC settings for compiling Dolphin's C++ and the header-only fmt. Scoped
       # to this target because only it is C++; the bundled C libraries don't take
       # these. deps/dolphin/CMakeLists.txt sets the equivalents for Dolphin's own
@@ -373,6 +380,16 @@
       "msvs_settings": {
         "VCCLCompilerTool": {
           "LanguageStandard": "Default",
+          # Force zlib-ng's own <zlib.h>/<zconf.h> (in Externals/zlib-ng) ahead of
+          # Node's bundled zlib headers, which the MSVS generator otherwise lists
+          # first. Without this, CompressedBlob.cpp/Hash.cpp get Node's zlib.h whose
+          # API is __declspec(dllimport), turning inflate/adler32 into host imports
+          # rather than calls into the statically-linked zlib-ng. The leading "../"
+          # is required because msvs_settings paths are emitted verbatim relative to
+          # the generated build/ dir (mirrors the zlibng target above).
+          "AdditionalIncludeDirectories": [
+            "../<(dolphin)/Externals/zlib-ng"
+          ],
           "AdditionalOptions": [
             "/std:c++23preview",
             "/utf-8",
@@ -392,9 +409,33 @@
         "<(dolphin)/Externals/mbedtls/include"
       ],
       "conditions": [
+        # CompressedBlob.cpp and Hash.cpp #include <zlib.h>. node-gyp lists Node's
+        # own bundled zlib headers ahead of our include_dirs for angle-bracket
+        # includes, and the Make/Xcode generators expose no way to reorder that
+        # (only MSVC's AdditionalIncludeDirectories above can, which is why Windows
+        # needs no equivalent here). So on macOS/Linux we force-include zlib-ng's own
+        # <zlib.h> and predefine Node's ZLIB_H include guard: every zlib declaration
+        # then comes from the vendored zlib-ng, and the later `#include <zlib.h>`
+        # resolves to an already-guarded-out (empty) Node header. zlib-ng's zlib.h
+        # uses a distinct guard (ZLIB_H_) so it is not self-suppressed, and defines
+        # no bare short macros (only Z_NULL), so force-including it into every
+        # translation unit in this target is safe. The leading "../" resolves the
+        # path from the generated build/ directory.
+        ["OS=='mac'", {
+          "xcode_settings": {
+            "OTHER_CPLUSPLUSFLAGS": [
+              "-include", "../<(dolphin)/Externals/zlib-ng/zlib.h",
+              "-DZLIB_H"
+            ]
+          }
+        }],
         # Static linking
         ["OS=='linux'", {
-          "ldflags": ["-static-libstdc++", "-static-libgcc"]
+          "ldflags": ["-static-libstdc++", "-static-libgcc"],
+          "cflags_cc": [
+            "-include", "../<(dolphin)/Externals/zlib-ng/zlib.h",
+            "-DZLIB_H"
+          ]
         }]
       ]
     }
