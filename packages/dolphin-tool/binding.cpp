@@ -223,8 +223,7 @@ class ReadWorker : public Napi::AsyncWorker {
             owned->resize(n_);  // shrink-only: never reallocates, keeps data() stable
             Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
                 env, owned->data(), n_,
-                [](Napi::Env /*unused*/, uint8_t* /*unused*/, std::vector<uint8_t>* v) { delete v; },
-                owned.get());
+                [](Napi::Env /*unused*/, uint8_t* /*unused*/, std::vector<uint8_t>* v) { delete v; }, owned.get());
             owned.release();  // ownership transferred to the Buffer's finalizer
             deferred_.Resolve(out);
         }
