@@ -396,9 +396,31 @@
         "<(dolphin)/Externals/mbedtls/include"
       ],
       "conditions": [
+        # zlib-ng is a static_library dependency, but its inflate/adler32 symbols
+        # collide with the zlib that Node exports from the host executable. The
+        # linker leaves the calls to resolve against the host (dynamic lookup on
+        # macOS, node.exe import on Windows) instead of pulling them from
+        # zlibng.a/.lib, so a Bun-compiled Windows binary faults (0xC06D007F) and
+        # even macOS/Linux silently use the host's zlib rather than the vendored
+        # copy. Force the whole zlib-ng archive into the link so its definitions win.
+        ["OS=='mac'", {
+          "xcode_settings": {
+            "OTHER_LDFLAGS": ["-Wl,-force_load,<(PRODUCT_DIR)/zlibng.a"]
+          }
+        }],
         # Static linking
         ["OS=='linux'", {
-          "ldflags": ["-static-libstdc++", "-static-libgcc"]
+          "ldflags": [
+            "-static-libstdc++", "-static-libgcc",
+            "-Wl,--whole-archive", "<(PRODUCT_DIR)/zlibng.a", "-Wl,--no-whole-archive"
+          ]
+        }],
+        ["OS=='win'", {
+          "msvs_settings": {
+            "VCLinkerTool": {
+              "AdditionalOptions": ["/WHOLEARCHIVE:zlibng.lib"]
+            }
+          }
         }]
       ]
     }
