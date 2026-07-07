@@ -1,16 +1,16 @@
 {
-  "version": "5.3.0",
+  "version": "5.3.1",
   "description": "🕹 A zero-setup ROM collection manager that sorts, filters, extracts or archives, patches, and reports on collections of any size on any OS.",
   "homepage": "https://igir.io/",
   "license": "GPL-3.0-or-later",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/emmercm/igir/releases/download/v5.3.0/igir-5.3.0-Windows-x64.zip",
-      "hash": "162bbc3ec3c60e810ee625b3fda4392e09f07bb0ecd7f9fbdc0a8b25037746fe"
+      "url": "https://github.com/emmercm/igir/releases/download/v5.3.1/igir-5.3.1-Windows-x64.zip",
+      "hash": "b10c11960c7b0a3617255d78460a61c95b126d5c02f88c2a621538af80465991"
     },
     "arm64": {
-      "url": "https://github.com/emmercm/igir/releases/download/v5.3.0/igir-5.3.0-Windows-arm64.zip",
-      "hash": "835e15e6d5db7ab76610ba6f98db88231791465cf54f82b19e58402c561e1407"
+      "url": "https://github.com/emmercm/igir/releases/download/v5.3.1/igir-5.3.1-Windows-arm64.zip",
+      "hash": "e019a56a703372274a846564cbf5d343e8f1e676bc9fb54f5e2f778dc2a81d69"
     }
   },
   "bin": "igir.exe",
