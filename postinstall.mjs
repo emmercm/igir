@@ -19,6 +19,8 @@ import nodeGypBuild from 'node-gyp-build';
  * meant for public reuse.
  */
 
+const throwOnBuildFailure = process.argv.includes('--throw-on-build-failure');
+
 let modulesParentDir = path.dirname(url.fileURLToPath(import.meta.url));
 while (!fs.existsSync(path.join(modulesParentDir, 'node_modules'))) {
   const nextParentDir = path.dirname(modulesParentDir);
@@ -80,7 +82,13 @@ for (let napiPackage of [
           .join('\n'),
       ),
     );
-    proc.on('close', resolve);
+    proc.on('close', (code) => {
+      if (code !== 0 && throwOnBuildFailure) {
+        reject(new Error(`${napiPackage}: native build exited with code ${code}`));
+      } else {
+        resolve();
+      }
+    });
     proc.on('error', reject);
   });
 
