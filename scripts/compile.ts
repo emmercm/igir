@@ -78,7 +78,7 @@ const bunBuildConfig = {
           // remembers the syntactic kind so the emission step below knows
           // whether to add a `with { type: ... }` attribute and whether to use
           // `import * as` (for ESM) or a default import (for native/JSON).
-          type ImportKind = 'native' | 'json' | 'esm';
+          type ImportKind = 'native' | 'json' | 'esm' | 'file';
           const imports = new Map<string, { id: string; kind: ImportKind }>();
           const allocate = (specifier: string, kind: ImportKind): string => {
             let entry = imports.get(specifier);
@@ -147,6 +147,16 @@ const bunBuildConfig = {
             (_match, specifier: string) => allocate(specifier, 'json'),
           );
 
+          // Rewrite `require.resolve('...wasm')` into a Bun `type: "file"` import so the
+          // referenced `.wasm` asset is embedded into the executable and the identifier
+          // resolves to its embedded path at runtime (readable via `fs`). Emscripten-based
+          // dependencies (e.g. node-unrar-js) locate their `.wasm` relative to `__dirname`,
+          // which doesn't exist inside the compiled binary, so the path must be embedded.
+          source = source.replaceAll(
+            /require\.resolve\(\s*[`'"]([^`'"]+\.wasm)[`'"]\s*\)/g,
+            (_match, specifier: string) => allocate(specifier, 'file'),
+          );
+
           // Nothing rewritten: hand the source back unchanged so other plugins
           // (and Bun's default loader) see the file as it was on disk.
           if (imports.size === 0) {
@@ -163,6 +173,7 @@ const bunBuildConfig = {
             native: ' with { type: "native" }',
             json: ' with { type: "json" }',
             esm: '',
+            file: ' with { type: "file" }',
           };
           const importLines = [...imports].map(([specifier, { id, kind }]) =>
             kind === 'esm'
