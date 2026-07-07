@@ -86,7 +86,7 @@ await copyfiles(
     'packages/chdman/deps/mame/3rdparty/flac/include/share/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/**/{COPYING,LICENSE}*',
-    'packages/chdman/deps/mame/3rdparty/lzma/C/**/*',
+    'packages/chdman/deps/mame/3rdparty/lzma/C/{7zTypes,Alloc,Compiler,CpuArch,LzFind,LzHash,LzmaDec,LzmaEnc,Precomp}.{c,h}',
     'packages/chdman/deps/mame/3rdparty/lzma/**/{COPYING,LICENSE}*',
     'packages/chdman/deps/mame/3rdparty/utf8proc/utf8proc.h',
     'packages/chdman/deps/mame/3rdparty/utf8proc/**/{COPYING,LICENSE}*',
@@ -151,6 +151,7 @@ await copyfiles(
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/metadata*.c',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/ogg*.c',
+    'packages/chdman/deps/mame/3rdparty/flac/include/share/grabbag/**',
     // dolphin-tool
     'packages/dolphin-tool/deps/dolphin/Externals/bzip2/bzip2/!(blocksort|bzlib|compress|crctable|decompress|huffman|randtable).c', // only these 7 .c compile
     'packages/dolphin-tool/deps/dolphin/Externals/bzip2/bzip2/{sample*,words*}',
@@ -172,6 +173,7 @@ await copyfiles(
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/qnx/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/test/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/watcom/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/win32/**',
     // zstd
     'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/build/**',
     'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/contrib/**',
