@@ -111,6 +111,7 @@ await copyfiles(
     'packages/dolphin-tool/deps/dolphin/Externals/zstd/**/*',
     'packages/dolphin-tool/deps/dolphin/Source/Core/DiscIO/**/*',
     'packages/dolphin-tool/deps/dolphin/Source/Core/Common/**/*',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/**/*.h',
     'packages/dolphin-tool/deps/dolphin/LICENSES/**',
     'packages/dolphin-tool/deps/dolphin/{COPYING,LICENSE}*',
     'packages/zlib*/deps/**',
@@ -119,7 +120,7 @@ await copyfiles(
   ],
   [
     'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|PORTING|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt,*.zlib}',
-    'packages/*/deps/**/*.{pdf,txt}',
+    'packages/*/deps/**/*.pdf',
     'packages/*/deps/**/*.{css,js,html,xml,xsl}',
     'packages/*/deps/**/*.{ico,jpg,svg}',
     'packages/*/deps/**/*.{com,bat,sh}',
@@ -144,6 +145,13 @@ await copyfiles(
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/metadata*.c',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/ogg*.c',
+    // dolphin-tool
+    'packages/dolphin-tool/deps/dolphin/Externals/bzip2/bzip2/!(blocksort|bzlib|compress|crctable|decompress|huffman|randtable).c', // only these 7 .c compile
+    'packages/dolphin-tool/deps/dolphin/Externals/bzip2/bzip2/{sample*,words*}',
+    'packages/dolphin-tool/deps/dolphin/Externals/fmt/fmt/{doc,src,support,test}/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/library/!(aes|sha1|platform|platform_util|error).c',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/{3rdparty,scripts}/**',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Common/{GL,Assembler}/**',
     // zlib
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/amiga/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/contrib/**',
