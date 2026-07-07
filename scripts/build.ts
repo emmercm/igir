@@ -86,7 +86,7 @@ await copyfiles(
     'packages/chdman/deps/mame/3rdparty/flac/include/share/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/**/{COPYING,LICENSE}*',
-    'packages/chdman/deps/mame/3rdparty/lzma/C/{7zTypes,Alloc,Compiler,CpuArch,LzFind,LzHash,LzmaDec,LzmaEnc,Precomp}.{c,h}',
+    'packages/chdman/deps/mame/3rdparty/lzma/C/{7zTypes,7zWindows,Alloc,Compiler,CpuArch,LzFind,LzHash,LzmaDec,LzmaEnc,Precomp}.{c,h}',
     'packages/chdman/deps/mame/3rdparty/lzma/**/{COPYING,LICENSE}*',
     'packages/chdman/deps/mame/3rdparty/utf8proc/utf8proc.h',
     'packages/chdman/deps/mame/3rdparty/utf8proc/**/{COPYING,LICENSE}*',
