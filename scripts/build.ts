@@ -1,4 +1,5 @@
 import child_process from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 import type { BuildOptions } from 'esbuild';
@@ -66,15 +67,47 @@ async function copyfiles(
     .flat()
     .filter((inputFile) => !excludeFiles.has(inputFile));
 
+  // Exclude executables
+  const executableFiles = new Set(
+    (
+      await Promise.all(
+        inputFiles
+          .filter((inputFile) => !inputFile.endsWith('.node'))
+          .map(async (inputFile) => {
+            const handle = await fs.promises.open(inputFile, 'r');
+            try {
+              const { bytesRead, buffer } = await handle.read(Buffer.alloc(4), 0, 4, 0);
+              const magic = bytesRead >= 4 ? buffer.readUInt32BE(0) : 0;
+              const isExecutable =
+                magic === 0x7f_45_4c_46 || // ELF
+                magic === 0xfe_ed_fa_ce || // Mach-O 32-bit
+                magic === 0xfe_ed_fa_cf || // Mach-O 64-bit
+                magic === 0xce_fa_ed_fe || // Mach-O 32-bit, byte-swapped
+                magic === 0xcf_fa_ed_fe || // Mach-O 64-bit, byte-swapped
+                magic === 0xca_fe_ba_be || // Mach-O universal
+                magic === 0xca_fe_ba_bf || // Mach-O universal, 64-bit
+                (buffer[0] === 0x4d && buffer[1] === 0x5a) || // PE / DOS "MZ"
+                (buffer[0] === 0x23 && buffer[1] === 0x21); // script shebang "#!"
+              return isExecutable ? inputFile : undefined;
+            } finally {
+              await handle.close();
+            }
+          }),
+      )
+    ).filter((inputFile) => inputFile !== undefined),
+  );
+
   await Promise.all(
-    inputFiles.map(async (inputFile) => {
-      const outputPath = path.join(outputDirectory, inputFile);
-      const outputDir = path.dirname(outputPath);
-      if (!(await FsUtil.exists(outputDir))) {
-        await FsUtil.mkdir(outputDir, { recursive: true });
-      }
-      await FsUtil.copyFile(inputFile, path.join(outputDirectory, inputFile));
-    }),
+    inputFiles
+      .filter((inputFile) => !executableFiles.has(inputFile))
+      .map(async (inputFile) => {
+        const outputPath = path.join(outputDirectory, inputFile);
+        const outputDir = path.dirname(outputPath);
+        if (!(await FsUtil.exists(outputDir))) {
+          await FsUtil.mkdir(outputDir, { recursive: true });
+        }
+        await FsUtil.copyFile(inputFile, path.join(outputDirectory, inputFile));
+      }),
   );
 }
 await copyfiles(
@@ -128,11 +161,12 @@ await copyfiles(
     'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|PORTING|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt,*.zlib}',
     'packages/*/deps/**/*.pdf',
     'packages/*/deps/**/*.{css,js,html,xml,xsl}',
-    'packages/*/deps/**/*.{ico,jpg,svg}',
-    'packages/*/deps/**/*.{com,bat,sh}',
+    'packages/*/deps/**/*.{ico,jpeg,jpg,png,svg}',
+    'packages/*/deps/**/*.{com,bat,pl,py,sh}',
     'packages/*/deps/**/*.empty',
     'packages/*/deps/**/appveyor.yml',
     'packages/*/deps/**/BUCK', // Buck
+    'packages/*/deps/**/*.map', // C++ debug
     'packages/*/deps/**/*.modulemap', // Clang
     'packages/*/deps/**/{CMakeLists.txt,*.cmake,*.cmakein,*.cmake.in}', // CMake
     'packages/*/deps/**/{configure,configure.ac,configure.in,Makefile.am,Makefile.in,*.h.in,*.m4}', // configure/autoconf
@@ -145,7 +179,7 @@ await copyfiles(
     'packages/*/deps/**/*.pc.in', // pkg-config
     'packages/*/deps/**/*.py', // Python
     'packages/*/deps/**/Vagrantfile', // Vagrant
-    'packages/*/deps/**/{*.dsp,*.dsw,*.rc,*.sln,*.vcxproj*,exports.props}', // Visual Studio
+    'packages/*/deps/**/{*.def,*.dnt,*.dsp,*.dsw,*.rc,*.sln,*.vcxproj*,exports.props}', // Visual Studio
     'packages/*/deps/**/Package.swift',
     // chdman
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',
@@ -167,6 +201,7 @@ await copyfiles(
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/doc/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/examples/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/msdos/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/nt/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/old/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/os2/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/os400/**',
