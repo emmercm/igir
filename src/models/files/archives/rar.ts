@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import module from 'node:module';
 import path from 'node:path';
 
 import async from 'async';
@@ -14,11 +16,32 @@ import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
+// Resolve node-unrar-js' WASM file path now, not lazily
+const require = module.createRequire(import.meta.url);
+const UNRAR_WASM_PATH = require.resolve('node-unrar-js/dist/js/unrar.wasm');
+
 /**
  * A RAR archive.
  */
 export default class Rar extends Archive {
   private static readonly EXTRACT_MUTEX = new Mutex();
+
+  private static wasmBinary?: ArrayBuffer;
+
+  /**
+   * Read node-unrar-js's WebAssembly binary once and cache it so it can be passed
+   * explicitly to every extractor (see {@link UNRAR_WASM_PATH}).
+   */
+  private static async getWasmBinary(): Promise<ArrayBuffer> {
+    if (this.wasmBinary !== undefined) {
+      return this.wasmBinary;
+    }
+
+    const buffer = await fs.promises.readFile(UNRAR_WASM_PATH);
+    this.wasmBinary = new ArrayBuffer(buffer.byteLength);
+    new Uint8Array(this.wasmBinary).set(buffer);
+    return this.wasmBinary;
+  }
 
   /**
    * Construct a new {@link Rar} archive for the given file path.
@@ -55,6 +78,7 @@ export default class Rar extends Archive {
     shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<this>[]> {
     const rar = await createExtractorFromFile({
+      wasmBinary: await Rar.getWasmBinary(),
       filepath: this.getFilePath(),
     });
     const fileHeaders = [...rar.getFileList().fileHeaders].filter(
@@ -130,6 +154,7 @@ export default class Rar extends Archive {
      */
     await Rar.EXTRACT_MUTEX.runExclusive(async () => {
       const rar = await createExtractorFromFile({
+        wasmBinary: await Rar.getWasmBinary(),
         filepath: this.getFilePath(),
         targetPath: path.dirname(extractedFilePath),
         filenameTransform: () => path.basename(extractedFilePath),
