@@ -70,7 +70,7 @@ jobs:
             go_arch: arm64
 
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       # Setup and install
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -141,13 +141,10 @@ jobs:
             curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}"
             export PATH="${HOME}/.bun/bin:$PATH"
 
-            # Compile the executable and test it before compressing it
+            # Compile the executable, then verify Node-vs-binary output parity
             npm ci --foreground-scripts
             npm run compile -- . igir
-            rm -rf node_modules
-            ./igir --help
-            ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
-            ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
+            bash test/compileParityTest.sh igir
             tar cvf - igir | gzip --best > "${{ env.BIN_OUTPUT }}"
 
             {
@@ -167,13 +164,10 @@ jobs:
           BIN_OUTPUT="igir-${NPM_PKG_VERSION}-${{ runner.os }}-${NODE_ARCH}.tar.gz"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" >> "${GITHUB_ENV}"
 
-          # Package the executable and test it before compressing it
+          # Package the executable, then verify Node-vs-binary output parity
           npm ci --foreground-scripts
           npm run compile -- . igir
-          rm -rf node_modules
-          ./igir --help
-          ./igir copy extract test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-extract
-          ./igir copy zip test clean report --dat test/fixtures/dats --input test/fixtures/roms --patch test/fixtures/patches --output e2e-zip
+          bash test/compileParityTest.sh igir
           tar cvf - igir | gzip --best > "${BIN_OUTPUT}"
 
           {
@@ -191,13 +185,10 @@ jobs:
           $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${{ runner.os }}-${NODE_ARCH}.zip"
           echo "BIN_OUTPUT=${BIN_OUTPUT}" | Out-File -FilePath $env:GITHUB_ENV -Append # no need for -Encoding utf8
 
-          # Package the executable and test it before compressing it
+          # Package the executable, then verify Node-vs-binary output parity
           npm ci --foreground-scripts
           npm run compile -- . igir.exe
-          Remove-Item node_modules -Recurse -Force
-          .\igir.exe --help
-          .\igir.exe copy extract test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-extract
-          .\igir.exe copy zip test clean report --dat test\fixtures\dats --input test\fixtures\roms --patch test\fixtures\patches --output e2e-zip
+          bash test/compileParityTest.sh ./igir.exe
           Compress-Archive -Path igir.exe -DestinationPath "${BIN_OUTPUT}" -CompressionLevel Optimal -Force
 
           echo "``````text" >> "${env:GITHUB_STEP_SUMMARY}"
