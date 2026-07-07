@@ -80,7 +80,7 @@ async function copyfiles(
 await copyfiles(
   [
     'packages/*/addon-*/**', // prebuilds
-    'packages/*/{,!(deps)/**/}*.cpp', // non-vendored .cpp files
+    'packages/*/{,!(deps)/**/}*.{cpp,h}', // non-vendored C++ files
     'packages/*/binding.gyp',
     'packages/chdman/deps/mame/3rdparty/flac/include/FLAC/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/include/share/**/*',
