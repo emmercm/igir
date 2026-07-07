@@ -58,7 +58,7 @@ jobs:
           # docker manifest inspect node:<version> | jq '.manifests[].platform'
           - os: ubuntu-latest
             docker_arch: linux/amd64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             docker_arch: linux/arm64/v8
 
           - os: macos-15-intel
