@@ -160,6 +160,7 @@ jobs:
             set -euo pipefail
             set -x
             uname -a
+            cat /proc/cpuinfo
 
             find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
