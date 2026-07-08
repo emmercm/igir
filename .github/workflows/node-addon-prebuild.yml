@@ -97,6 +97,8 @@ jobs:
             docker_arch: linux/amd64
           - os: ubuntu-24.04-arm
             docker_arch: linux/arm64/v8
+          - os: ubuntu-24.04-arm
+            docker_arch: linux/arm/v7
           - os: macos-15-intel
           - os: macos-latest
           - os: windows-latest
