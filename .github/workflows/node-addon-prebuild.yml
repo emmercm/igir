@@ -196,7 +196,6 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         name: Validate Linux addon dependencies
         run: |
-          set -x
           allowed_needed='^(ld-linux.*|ld-musl.*|libc|libm|libmvec|libdl|libpthread|librt|libgcc_s|libatomic|libstdc\+\+)\.so'
           validation_failures=0
           while IFS= read -r -d '' addon; do
@@ -217,7 +216,6 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'macos') }}
         name: Validate macOS addon dependencies
         run: |
-          set -x
           validation_failures=0
           while IFS= read -r -d '' addon; do
             echo "==> ${addon}"
@@ -236,7 +234,6 @@ jobs:
         name: Validate Windows addon dependencies
         shell: bash
         run: |
-          set -x
           dumpbin="$(command -v dumpbin || true)"
           if [ -z "${dumpbin}" ]; then
             vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
