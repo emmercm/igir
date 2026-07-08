@@ -1,10 +1,16 @@
 [submodule "packages/zlib-1.1.3/deps/zlib"]
 	path = packages/zlib-1.1.3/deps/zlib
 	url = https://github.com/madler/zlib.git
+	shallow = true
 [submodule "packages/zstd-1.5.5/deps/zstd"]
 	path = packages/zstd-1.5.5/deps/zstd
 	url = https://github.com/facebook/zstd.git
+	shallow = true
 [submodule "packages/chdman/deps/mame"]
 	path = packages/chdman/deps/mame
 	url = https://github.com/mamedev/mame.git
+	shallow = true
+[submodule "packages/dolphin/deps/dolphin"]
+	path = packages/dolphin-tool/deps/dolphin
+	url = https://github.com/dolphin-emu/dolphin.git
 	shallow = true

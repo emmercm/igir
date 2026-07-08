@@ -66,6 +66,7 @@ jobs:
               - '.github/workflows/node-addon-prebuild.yml'
               - '.gitmodules'
               - 'packages/chdman/**'
+              - 'packages/dolphin-tool/**'
               - 'packages/zlib*/**'
               - 'packages/zstd*/**'
               - 'package*.json'
@@ -158,7 +159,7 @@ jobs:
             set -x
             uname -a
 
-            find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+            find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
               rm -rf addon* prebuilds*
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
@@ -176,7 +177,7 @@ jobs:
         run: |
           set -x
           node --print 'process'
-          find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+          find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
             rm -rf addon* prebuilds*
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
@@ -239,7 +240,12 @@ jobs:
             mapfile -t pkg_files < <(find "${pkg}" -type f \( -name '*.cpp' -o -name '*.cc' \) \
               -not -path '*/deps/*' -not -path '*/build/*' -not -path '*/addon*/*' | sort)
             printf 'Linting %s: %s\n' "${pkg}" "${pkg_files[*]}"
-            clang-tidy --warnings-as-errors='*' -p "${pkg}/build/Release" "${pkg_files[@]}"
+            clang-tidy \
+              --warnings-as-errors='*' \
+              `# Dolphin's vendored 'fmt' changes its behavior when this is defined, so we undefine it` \
+              --extra-arg=-U__clang_analyzer__ \
+              -p "${pkg}/build/Release" \
+              "${pkg_files[@]}"
           done
 
   commit:

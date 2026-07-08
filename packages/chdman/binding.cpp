@@ -355,7 +355,19 @@ class ReadWorker : public Napi::AsyncWorker {
         if (n_ == 0) {
             deferred_.Resolve(env.Null());
         } else {
-            deferred_.Resolve(Napi::Buffer<uint8_t>::Copy(env, buf_.data(), n_));
+            // Give JS the worker's own buffer as the Buffer's backing store: move buf_ onto
+            // the heap and expose its data() to New(), freed by the finalizer once JS is
+            // done. unique_ptr owns it until New() succeeds, so a throw here can't leak. The
+            // bytes are independent of reader_/blob, so the teardown invariant is untouched.
+            auto owned = std::make_unique<std::vector<uint8_t>>(std::move(buf_));
+            owned->resize(n_);  // shrink-only: never reallocates, keeps data() stable
+            Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
+                env, owned->data(), n_,
+                [](Napi::Env /*unused*/, uint8_t* /*unused*/, std::vector<uint8_t>* v) { delete v; }, owned.get());
+            // New() now owns the vector via its finalizer; release our pointer so ~unique_ptr
+            // doesn't free it too. The returned pointer is intentionally dropped.
+            owned.release();  // NOLINT(bugprone-unused-return-value)
+            deferred_.Resolve(out);
         }
         reader_->FinishRead();  // last use of reader_: may release it
     }

@@ -17,12 +17,12 @@ export default defineConfig({
     testTimeout:
       60_000 *
       // macOS is consistently the fastest, with p99 test time <10sec
-      (process.platform === 'darwin' ? 0.5 : 1) *
+      (process.platform === 'darwin' && process.arch !== 'x64' ? 0.5 : 1) *
       // Ubuntu ARM frequently times out
       (process.platform === 'linux' && process.arch === 'arm64' ? 2 : 1),
 
-    // Don't run any compiled versions of the tests, if they exist
-    exclude: [...configDefaults.exclude, '.*/**', 'dist/**'],
+    // Only run the committed test files
+    exclude: [...configDefaults.exclude, '.*/**', 'dist/**', 'packages/*/deps/**'],
 
     coverage: {
       provider: 'v8',

@@ -123,6 +123,7 @@ igir
 igir.exe
 !test/*.sh
 !packages/*
+!packages/*/scripts/*.sh
 
 # DATs
 *.dat
@@ -213,6 +214,6 @@ igir.exe
 !docs/*
 
 # Always commit fixtures
-!packages/chdman/test/fixtures/**
+!packages/*/test/fixtures/**
 !packages/zip/test/**/*.zip
 !test/fixtures/**

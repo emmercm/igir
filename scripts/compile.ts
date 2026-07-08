@@ -44,9 +44,6 @@ const bunBuildConfig = {
   entrypoints: [
     'index.ts',
     ...(await fg(
-      `node_modules/@emmercm/dolphin-tool-${argv.platform}-${argv.arch}/dist/{DolphinTool.exe,dolphin-tool,*.dylib}`,
-    )),
-    ...(await fg(
       `node_modules/@emmercm/maxcso-${argv.platform}-${argv.arch}/dist/{maxcso*,*.dylib}`,
     )),
   ],

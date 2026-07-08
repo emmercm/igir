@@ -1,6 +1,8 @@
 import child_process from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
+import type { BuildOptions } from 'esbuild';
 import esbuild from 'esbuild';
 import fg from 'fast-glob';
 
@@ -21,15 +23,26 @@ if (await FsUtil.exists(output)) {
 
 // Transpile the TypeScript
 logger.info(`Running 'esbuild' ...`);
-await esbuild.build({
-  entryPoints: await fg('!(.*|node_modules|scripts|test|*.config){,/**/}!(*.test).ts'),
+const buildOptions: BuildOptions = {
+  entryPoints: await fg('{,**/}!(*.test).ts', {
+    ignore: [
+      '.*/**',
+      'node_modules/**',
+      'packages/*/deps/**',
+      'scripts/**',
+      'test/**',
+      '*.config.*',
+    ],
+  }),
   outdir: path.join(output),
   platform: 'node',
   bundle: false,
   sourcemap: true,
   packages: 'external',
   format: 'esm',
-});
+};
+logger.info(JSON.stringify(buildOptions, undefined, 2));
+await esbuild.build(buildOptions);
 
 logger.info(`Copying additional files ...`);
 /**
@@ -54,27 +67,59 @@ async function copyfiles(
     .flat()
     .filter((inputFile) => !excludeFiles.has(inputFile));
 
+  // Exclude executables
+  const executableFiles = new Set(
+    (
+      await Promise.all(
+        inputFiles
+          .filter((inputFile) => !inputFile.endsWith('.node'))
+          .map(async (inputFile) => {
+            const handle = await fs.promises.open(inputFile, 'r');
+            try {
+              const { bytesRead, buffer } = await handle.read(Buffer.alloc(4), 0, 4, 0);
+              const magic = bytesRead >= 4 ? buffer.readUInt32BE(0) : 0;
+              const isExecutable =
+                magic === 0x7f_45_4c_46 || // ELF
+                magic === 0xfe_ed_fa_ce || // Mach-O 32-bit
+                magic === 0xfe_ed_fa_cf || // Mach-O 64-bit
+                magic === 0xce_fa_ed_fe || // Mach-O 32-bit, byte-swapped
+                magic === 0xcf_fa_ed_fe || // Mach-O 64-bit, byte-swapped
+                magic === 0xca_fe_ba_be || // Mach-O universal
+                magic === 0xca_fe_ba_bf || // Mach-O universal, 64-bit
+                (buffer[0] === 0x4d && buffer[1] === 0x5a) || // PE / DOS "MZ"
+                (buffer[0] === 0x23 && buffer[1] === 0x21); // script shebang "#!"
+              return isExecutable ? inputFile : undefined;
+            } finally {
+              await handle.close();
+            }
+          }),
+      )
+    ).filter((inputFile) => inputFile !== undefined),
+  );
+
   await Promise.all(
-    inputFiles.map(async (inputFile) => {
-      const outputPath = path.join(outputDirectory, inputFile);
-      const outputDir = path.dirname(outputPath);
-      if (!(await FsUtil.exists(outputDir))) {
-        await FsUtil.mkdir(outputDir, { recursive: true });
-      }
-      await FsUtil.copyFile(inputFile, path.join(outputDirectory, inputFile));
-    }),
+    inputFiles
+      .filter((inputFile) => !executableFiles.has(inputFile))
+      .map(async (inputFile) => {
+        const outputPath = path.join(outputDirectory, inputFile);
+        const outputDir = path.dirname(outputPath);
+        if (!(await FsUtil.exists(outputDir))) {
+          await FsUtil.mkdir(outputDir, { recursive: true });
+        }
+        await FsUtil.copyFile(inputFile, path.join(outputDirectory, inputFile));
+      }),
   );
 }
 await copyfiles(
   [
     'packages/*/addon-*/**', // prebuilds
-    'packages/*/{,!(deps)/**/}*.cpp', // non-vendored .cpp files
+    'packages/*/{,!(deps)/**/}*.{cpp,h}', // non-vendored C++ files
     'packages/*/binding.gyp',
     'packages/chdman/deps/mame/3rdparty/flac/include/FLAC/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/include/share/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/**/{COPYING,LICENSE}*',
-    'packages/chdman/deps/mame/3rdparty/lzma/C/**/*',
+    'packages/chdman/deps/mame/3rdparty/lzma/C/{7zTypes,7zWindows,Alloc,Compiler,CpuArch,LzFind,LzHash,LzmaDec,LzmaEnc,Precomp}.{c,h}',
     'packages/chdman/deps/mame/3rdparty/lzma/**/{COPYING,LICENSE}*',
     'packages/chdman/deps/mame/3rdparty/utf8proc/utf8proc.h',
     'packages/chdman/deps/mame/3rdparty/utf8proc/**/{COPYING,LICENSE}*',
@@ -91,50 +136,98 @@ await copyfiles(
     'packages/chdman/deps/mame/src/osd/modules/lib/**/*',
     'packages/chdman/deps/mame/src/osd/windows/**/*',
     'packages/chdman/deps/mame/{COPYING,LICENSE}*',
+    'packages/dolphin-tool/deps/dolphin/Externals/bzip2/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/fmt/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/liblzma/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/**/*',
+    'packages/dolphin-tool/deps/dolphin/Externals/zstd/**/*',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/DiscIO/**/*',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Common/**/*',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/CoreTiming.h',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/CPUThreadConfigCallback.h',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/HW/SystemTimers.h',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/IOS/Device.h',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/IOS/IOS.h',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/IOS/IOSC.h',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Core/IOS/ES/Formats.h',
+    'packages/dolphin-tool/deps/dolphin/LICENSES/**',
+    'packages/dolphin-tool/deps/dolphin/{COPYING,LICENSE}*',
     'packages/zlib*/deps/**',
     'packages/zstd*/deps/**',
-    'src/**/*.json',
+    'src/**/!(*.schema).json',
   ],
   [
-    'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt}',
-    'packages/*/deps/**/*.{ico,pdf}',
+    'packages/*/deps/**/(AUTHORS|BUILDING|CHANGELOG|CHANGES|CODE_OF_CONDUCT|CONTRIBUTING|FAQ|GOVERNANCE|HISTORY|INDEX|PORTING|README|RELEASE|RELEASE-NOTES|SECURITY|TESTING|TROUBLESHOOTING){,*.md,*.markdown,*.txt,*.zlib}',
+    'packages/*/deps/**/*.pdf',
+    'packages/*/deps/**/*.{css,js,html,xml,xsl}',
+    'packages/*/deps/**/*.{ico,jpeg,jpg,png,svg}',
+    'packages/*/deps/**/*.{com,bat,pl,py,sh}',
+    'packages/*/deps/**/*.empty',
     'packages/*/deps/**/appveyor.yml',
-    'packages/*/deps/**/configure',
     'packages/*/deps/**/BUCK', // Buck
+    'packages/*/deps/**/*.map', // C++ debug
     'packages/*/deps/**/*.modulemap', // Clang
     'packages/*/deps/**/{CMakeLists.txt,*.cmake,*.cmakein,*.cmake.in}', // CMake
+    'packages/*/deps/**/{configure,configure.ac,configure.in,Makefile.am,Makefile.in,*.h.in,*.m4}', // configure/autoconf
+    'packages/*/deps/**/*.gradle', // Gradle
+    'packages/*/deps/**/*.{js,ts}', // JavaScript
     'packages/*/deps/**/{Makefile*,*.mak,*.mk}', // Make
+    'packages/*/deps/**/*.1{,.*}', // man page
+    'packages/*/deps/**/mkdocs*', // mkdocs
+    'packages/*/deps/**/{make_vms.com,*.mms}', // OpenVMS
     'packages/*/deps/**/*.pc.in', // pkg-config
-    'packages/*/deps/**/{*.sln,*.vcxproj}', // Visual Studio
+    'packages/*/deps/**/*.py', // Python
+    'packages/*/deps/**/Vagrantfile', // Vagrant
+    'packages/*/deps/**/{*.def,*.dnt,*.dsp,*.dsw,*.rc,*.sln,*.vcxproj*,exports.props}', // Visual Studio
     'packages/*/deps/**/Package.swift',
     // chdman
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/*intrin*.c',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/metadata*.c',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/ogg*.c',
+    'packages/chdman/deps/mame/3rdparty/flac/include/share/grabbag/**',
+    // dolphin-tool
+    'packages/dolphin-tool/deps/dolphin/Externals/bzip2/bzip2/!(blocksort|bzlib|compress|crctable|decompress|huffman|randtable).c', // only these 7 .c compile
+    'packages/dolphin-tool/deps/dolphin/Externals/bzip2/bzip2/{sample*,words*}',
+    'packages/dolphin-tool/deps/dolphin/Externals/fmt/fmt/{doc,src,support,test}/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/library/!(aes|sha1|platform|platform_util|error).c',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/3rdparty/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/include/psa/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/mbedtls/scripts/**',
+    'packages/dolphin-tool/deps/dolphin/Source/Core/Common/{GL,Assembler,Debug}/**',
     // zlib
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/amiga/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/contrib/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/doc/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/examples/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/msdos/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/nt/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/old/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/os2/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/os400/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/qnx/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/test/**',
     'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/watcom/**',
+    'packages/{zlib*/deps/zlib,chdman/deps/mame/3rdparty/zlib}/win32/**',
     // zstd
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/build/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/contrib/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/examples/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/doc/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/deprecated/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/dictBuilder/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/dll/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/lib/legacy/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/programs/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/tests/**',
-    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd}/zlibWrapper/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/build/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/contrib/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/examples/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/doc/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/lib/deprecated/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/lib/dictBuilder/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/lib/dll/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/lib/legacy/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/programs/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/tests/**',
+    'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/zlibWrapper/**',
+    // zlib-ng (dolphin)
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/arch/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/cmake/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/doc/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/test/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/tools/**',
+    'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/win32/**',
   ],
   output,
 );

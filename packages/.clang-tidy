@@ -14,6 +14,10 @@
 #     handle conversion, not object slicing.
 #   - bugprone-crtp-constructor-accessibility: Napi::ObjectWrap<T> requires a
 #     public constructor for the framework to call.
+#   - bugprone-macro-parentheses: node-gyp injects -DNODE_GYP_MODULE_NAME=<target>
+#     on the command line; a hyphenated target name (e.g. dolphin-tool) makes the
+#     macro body parse as subtraction. It is a generated define we cannot NOLINT
+#     or parenthesize, not a real defect.
 #   - clang-analyzer-optin.cplusplus.UninitializedObject: fires inside
 #     node-addon-api headers, not our code.
 #   - cppcoreguidelines-owning-memory: Napi::AsyncWorker self-deletes after Queue(),
@@ -32,6 +36,7 @@ Checks: >
   bugprone-*,
   -bugprone-easily-swappable-parameters,
   -bugprone-crtp-constructor-accessibility,
+  -bugprone-macro-parentheses,
   clang-analyzer-*,
   -clang-analyzer-optin.cplusplus.UninitializedObject,
   cppcoreguidelines-*,

@@ -59,7 +59,7 @@ jobs:
           # docker manifest inspect node:<version> | jq '.manifests[].platform'
           - os: ubuntu-latest
             docker_arch: linux/amd64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             docker_arch: linux/arm64/v8
 
           - os: macos-15-intel
@@ -180,7 +180,7 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'windows') }}
         shell: pwsh
         run: |
-          Set-PSDebug -Trace 1
+          # Set-PSDebug -Trace 1
           $NPM_PKG_VERSION=$(npm pkg get version).replace('"','')
           $NODE_ARCH=$(node --print 'process.arch')
           $BIN_OUTPUT="igir-$NPM_PKG_VERSION-${{ runner.os }}-${NODE_ARCH}.zip"
