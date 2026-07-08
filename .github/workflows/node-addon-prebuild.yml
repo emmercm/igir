@@ -105,9 +105,6 @@ jobs:
           - os: windows-11-arm
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # QEMU cross-builds
-    defaults:
-      run:
-        shell: bash
     steps:
       # Setup and install
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -130,14 +127,14 @@ jobs:
             ${{ runner.os }}-
 
       # Prebuild
-      - shell: bash
-        run: |
+      - run: |
           npm ci --ignore-scripts
 
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        name: Determine Linux Docker architecture
         run: |
           set -x
           echo "VERSIONS_NODE=$(node --print 'process.versions.node')" >> "${GITHUB_OUTPUT}"
@@ -146,8 +143,9 @@ jobs:
           DOCKER_ARCH=${DOCKER_ARCH/linux\//}
           DOCKER_ARCH=${DOCKER_ARCH//\//}
           echo "DOCKER_ARCH=${DOCKER_ARCH}" >> "${GITHUB_OUTPUT}"
-      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        id: build-docker
+      - id: build-docker
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        name: Build Linux addons
         uses: ./.github/actions/docker-run-action
         with:
           image: node:${{ steps.linux-vars.outputs.VERSIONS_NODE }}
@@ -174,8 +172,9 @@ jobs:
             npm ci --foreground-scripts
             npm run test:unit packages
 
-      - if: ${{ !startsWith(matrix.os, 'ubuntu') }}
-        id: build
+      - id: build
+        if: ${{ !startsWith(matrix.os, 'ubuntu') }}
+        name: Build ${{ runner.os }} addons
         run: |
           set -x
           node --print 'process'
@@ -191,6 +190,81 @@ jobs:
           rm -rf packages/*/build
           npm ci --foreground-scripts
           npm run test:unit packages
+
+      # Validate the prebuilt addons have no unexpected shared-library dependencies
+      - if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        name: Validate Linux addon dependencies
+        run: |
+          set -x
+          allowed_needed='^(ld-linux.*|ld-musl.*|libc|libm|libmvec|libdl|libpthread|librt|libgcc_s|libatomic|libstdc\+\+)\.so'
+          validation_failures=0
+          while IFS= read -r -d '' addon; do
+            echo "==> ${addon}"
+            needed="$(readelf -d "${addon}" | sed -n 's/.*NEEDED.*\[\(.*\)\]/\1/p')"
+            echo "${needed}" | sed 's/^/    NEEDED: /'
+            while IFS= read -r lib; do
+              [ -z "${lib}" ] && continue
+              if ! [[ "${lib}" =~ ${allowed_needed} ]]; then
+                echo "  FAIL: unexpected dynamic dependency: ${lib}"
+                validation_failures=$((validation_failures + 1))
+              fi
+            done <<< "${needed}"
+            glibc_max="$(readelf --dyn-syms -W "${addon}" | grep -oE 'GLIBC_[0-9]+(\.[0-9]+)+' | sort -uV | tail -n 1 || true)"
+            [ -n "${glibc_max}" ] && echo "  Requires (informational): ${glibc_max}"
+          done < <(find packages -type f -path '*/addon*/*.node' -print0)
+          [ "${validation_failures}" -eq 0 ] || { echo "Native addon validation FAILED with ${validation_failures} problem(s)."; exit 1; }
+      - if: ${{ startsWith(matrix.os, 'macos') }}
+        name: Validate macOS addon dependencies
+        run: |
+          set -x
+          validation_failures=0
+          while IFS= read -r -d '' addon; do
+            echo "==> ${addon}"
+            deps="$(otool -L "${addon}" | tail -n +2 | awk '{print $1}')"
+            echo "${deps}" | sed 's/^/    /'
+            while IFS= read -r dep; do
+              [ -z "${dep}" ] && continue
+              if ! [[ "${dep}" =~ ^/usr/lib/ || "${dep}" =~ ^/System/Library/Frameworks/ ]]; then
+                echo "  FAIL: unexpected linked dylib: ${dep}"
+                validation_failures=$((validation_failures + 1))
+              fi
+            done <<< "${deps}"
+          done < <(find packages -type f -path '*/addon*/*.node' -print0)
+          [ "${validation_failures}" -eq 0 ] || { echo "Native addon validation FAILED with ${validation_failures} problem(s)."; exit 1; }
+      - if: ${{ startsWith(matrix.os, 'windows') }}
+        name: Validate Windows addon dependencies
+        shell: bash
+        run: |
+          set -x
+          dumpbin="$(command -v dumpbin || true)"
+          if [ -z "${dumpbin}" ]; then
+            vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
+            if [ -x "${vswhere}" ]; then
+              install="$("${vswhere}" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath | tr -d '\r')"
+              [ -n "${install}" ] && dumpbin="$(find "${install}/VC/Tools/MSVC" -name dumpbin.exe -path '*Hostx64*' | sort | tail -n 1)"
+            fi
+          fi
+          allowed_dll='^(kernel32|kernelbase|ntdll|advapi32|user32|shell32|shlwapi|ole32|oleaut32|combase|rpcrt4|ws2_32|bcrypt|crypt32|secur32|userenv|version|winmm|gdi32|dbghelp|psapi|iphlpapi|msvcrt|ucrtbase|vcruntime140|vcruntime140_1|msvcp140|concrt140|node)\.(dll|exe)$'
+          validation_failures=0
+          while IFS= read -r -d '' addon; do
+            echo "==> ${addon}"
+            if [ -z "${dumpbin}" ]; then
+              echo "  WARNING: dumpbin not found; skipping dependency check for ${addon}"
+              continue
+            fi
+            deps="$("${dumpbin}" //dependents "${addon}" | grep -iE '\.dll$' | tr -d '[:space:]\r')"
+            echo "${deps}" | sed 's/^/    /'
+            while IFS= read -r dep; do
+              [ -z "${dep}" ] && continue
+              lower="$(echo "${dep}" | tr '[:upper:]' '[:lower:]')"
+              case "${lower}" in api-ms-win-* | ext-ms-win-*) continue ;; esac
+              if ! [[ "${lower}" =~ ${allowed_dll} ]]; then
+                echo "  FAIL: unexpected dependent DLL: ${dep}"
+                validation_failures=$((validation_failures + 1))
+              fi
+            done <<< "${deps}"
+          done < <(find packages -type f -path '*/addon*/*.node' -print0)
+          [ "${validation_failures}" -eq 0 ] || { echo "Native addon validation FAILED with ${validation_failures} problem(s)."; exit 1; }
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
