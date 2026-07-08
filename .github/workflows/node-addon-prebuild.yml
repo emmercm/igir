@@ -250,7 +250,7 @@ jobs:
               echo "  WARNING: dumpbin not found; skipping dependency check for ${addon}"
               continue
             fi
-            deps="$("${dumpbin}" //dependents "${addon}" | grep -iE '\.dll$' | tr -d '[:space:]\r')"
+            deps="$("${dumpbin}" //dependents "${addon}" | tr -d '\r' | grep -iE '\.dll$' | awk '{print $1}')"
             while IFS= read -r dep; do
               [ -z "${dep}" ] && continue
               echo "    ${dep}"
