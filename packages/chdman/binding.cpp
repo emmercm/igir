@@ -355,8 +355,8 @@ class ReadWorker : public Napi::AsyncWorker {
         if (n_ == 0) {
             deferred_.Resolve(env.Null());
         } else {
-            // Hand JS the worker's own buffer instead of copying it: move buf_ onto the heap
-            // and expose it as the Buffer's backing store, freed by the finalizer once JS is
+            // Give JS the worker's own buffer as the Buffer's backing store: move buf_ onto
+            // the heap and expose its data() to New(), freed by the finalizer once JS is
             // done. unique_ptr owns it until New() succeeds, so a throw here can't leak. The
             // bytes are independent of reader_/blob, so the teardown invariant is untouched.
             auto owned = std::make_unique<std::vector<uint8_t>>(std::move(buf_));

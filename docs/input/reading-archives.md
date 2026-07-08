@@ -11,13 +11,14 @@ Igir supports most common archive formats:
 | `.7z`                                                            | ✅                    | ✅                                             | ❌                                         |
 | `.chd`                                                           | ❌ SHA1               | ✅                                             | ✅                                         |
 | `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ Uses bundled `maxcso`                       | ⚠️ CRC32 only                             |
-| `.gcz`                                                           | ❌                    | ❌ Uses bundled `dolphin-tool`                 | ⚠️ CRC32, MD5, and SHA1 only              |
+| `.gcz` ([GameCube docs](../usage/console/gamecube.md))           | ❌                    | ✅                                             | ✅                                         |
 | `.gz`, `.gzip`                                                   | ✅                    | ✅                                             | ✅                                         |
 | `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                       | ✅                                         |
 | `.rar`                                                           | ✅                    | ✅                                             | ❌                                         |
-| `.rvz`, `.wia`                                                   | ❌                    | ❌ Uses bundled `dolphin-tool`                 | ⚠️ CRC32, MD5, and SHA1 only              |
+| `.rvz` (GameCube, Wii)                                           | ❌                    | ✅                                             | ✅                                         |
 | `.tar`                                                           | ❌                    | ✅                                             | ✅                                         |
 | `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅                                         |
+| `.wia` (Wii)                                                     | ❌                    | ✅                                             | ✅                                         |
 | `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                    | ✅                                             | ✅                                         |
 
 !!! note
