@@ -19,7 +19,7 @@ export default defineConfig({
       // macOS is consistently the fastest, with p99 test time <10sec
       (process.platform === 'darwin' && process.arch !== 'x64' ? 0.5 : 1) *
       // Ubuntu ARM frequently times out
-      (process.platform === 'linux' && process.arch === 'arm64' ? 2 : 1),
+      (process.platform === 'linux' && process.arch.startsWith('arm') ? 2 : 1),
 
     // Only run the committed test files
     exclude: [...configDefaults.exclude, '.*/**', 'dist/**', 'packages/*/deps/**'],
