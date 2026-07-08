@@ -412,7 +412,7 @@ export default class Terminal {
   }
 
   private hideCursor(): void {
-    if (!(this.stream instanceof tty.WriteStream && !this.cursorHidden)) {
+    if (!(this.stream instanceof tty.WriteStream) || this.cursorHidden) {
       return;
     }
 

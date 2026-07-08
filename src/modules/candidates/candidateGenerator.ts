@@ -467,7 +467,7 @@ export default class CandidateGenerator extends Module {
         }
 
         // If we're zipping, only consider zip archives that we might be able to raw-write
-        return !(this.options.shouldZip() && !(archive instanceof Zip));
+        return !this.options.shouldZip() || archive instanceof Zip;
       })
       .toSorted((a, b) => {
         // First, prefer the archive that isn't from the output directory
@@ -836,7 +836,7 @@ export default class CandidateGenerator extends Module {
 
     // If every matched input file is from the same archive, and we can raw-copy that entire
     // archive, then treat the file as "raw" so it can be copied/moved as-is
-    const shouldGenerateArchiveFile = await this.shouldGenerateArchiveFile(
+    const generateArchiveFilePreventionReason = await this.shouldGenerateArchiveFile(
       dat,
       game,
       foundRomsWithFiles,
@@ -844,7 +844,10 @@ export default class CandidateGenerator extends Module {
     return (
       await Promise.all(
         foundRomsWithFiles.map(async (romWithFiles) => {
-          if (shouldGenerateArchiveFile !== undefined && !(romWithFiles.getRom() instanceof Disk)) {
+          if (
+            generateArchiveFilePreventionReason !== undefined &&
+            !(romWithFiles.getRom() instanceof Disk)
+          ) {
             if (
               romWithFiles.getInputFile() instanceof ArchiveEntry &&
               this.options.shouldWrite() &&
@@ -853,7 +856,7 @@ export default class CandidateGenerator extends Module {
             ) {
               // We must be able to use the entire archive as-is if we're not extracting or zipping
               this.prefixedLogger.trace(
-                `${dat.getName()}: ${game.getName()}: ${romWithFiles.getRom().getName()}: can't raw-write archive: ${shouldGenerateArchiveFile}`,
+                `${dat.getName()}: ${game.getName()}: ${romWithFiles.getRom().getName()}: can't raw-write archive: ${generateArchiveFilePreventionReason}`,
               );
               return undefined;
             }

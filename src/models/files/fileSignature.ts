@@ -68,7 +68,7 @@ function superNintendoDynamicPiece(headerSize: number): SignaturePiece {
         }
         const checksumComplement = buffer.readUInt16LE(offset + 0x2c);
         const checksum = buffer.readUInt16LE(offset + 0x2e);
-        return !(checksum === 0 || (checksumComplement ^ checksum) !== 0xff_ff);
+        return checksum !== 0 && (checksumComplement ^ checksum) === 0xff_ff;
       });
     },
   };
@@ -543,6 +543,7 @@ export default class FileSignature {
   constructor(
     extension: string,
     fileSignatures: SignaturePiece[],
+    // eslint-disable-next-line unicorn/consistent-boolean-name
     canBeTrimmed: CanBeTrimmedValue = CanBeTrimmed.NO,
   ) {
     this.extension = extension;
