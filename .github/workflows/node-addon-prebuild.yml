@@ -175,6 +175,7 @@ jobs:
       - id: build
         if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         name: Build ${{ runner.os }} addons
+        shell: bash
         run: |
           set -x
           node --print 'process'
