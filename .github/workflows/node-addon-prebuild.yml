@@ -201,9 +201,9 @@ jobs:
           while IFS= read -r -d '' addon; do
             echo "==> ${addon}"
             needed="$(readelf -d "${addon}" | sed -n 's/.*NEEDED.*\[\(.*\)\]/\1/p')"
-            echo "${needed}" | sed 's/^/    NEEDED: /'
             while IFS= read -r lib; do
               [ -z "${lib}" ] && continue
+              echo "    NEEDED: ${lib}"
               if ! [[ "${lib}" =~ ${allowed_needed} ]]; then
                 echo "  FAIL: unexpected dynamic dependency: ${lib}"
                 validation_failures=$((validation_failures + 1))
@@ -221,9 +221,9 @@ jobs:
           while IFS= read -r -d '' addon; do
             echo "==> ${addon}"
             deps="$(otool -L "${addon}" | tail -n +2 | awk '{print $1}')"
-            echo "${deps}" | sed 's/^/    /'
             while IFS= read -r dep; do
               [ -z "${dep}" ] && continue
+              echo "    ${dep}"
               if ! [[ "${dep}" =~ ^/usr/lib/ || "${dep}" =~ ^/System/Library/Frameworks/ ]]; then
                 echo "  FAIL: unexpected linked dylib: ${dep}"
                 validation_failures=$((validation_failures + 1))
@@ -253,9 +253,9 @@ jobs:
               continue
             fi
             deps="$("${dumpbin}" //dependents "${addon}" | grep -iE '\.dll$' | tr -d '[:space:]\r')"
-            echo "${deps}" | sed 's/^/    /'
             while IFS= read -r dep; do
               [ -z "${dep}" ] && continue
+              echo "    ${dep}"
               lower="$(echo "${dep}" | tr '[:upper:]' '[:lower:]')"
               case "${lower}" in api-ms-win-* | ext-ms-win-*) continue ;; esac
               if ! [[ "${lower}" =~ ${allowed_dll} ]]; then
