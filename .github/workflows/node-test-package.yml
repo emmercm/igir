@@ -23,7 +23,8 @@ jobs:
       pull-requests: read # dorny/paths-filter
     runs-on: ubuntu-latest
     outputs:
-      changes: ${{ steps.filter.outputs.changes }}
+      source-changes: ${{ steps.filter.outputs.source-changes }}
+      package-changes: ${{ steps.filter.outputs.package-changes }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -32,17 +33,29 @@ jobs:
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         with:
           filters: |
-            changes:
+            source-changes:
               - '.github/workflows/node-test-package.yml'
               - 'packages/**'
               - 'scripts/build.ts'
               - 'src/**'
-              - '*'
+              - 'index.ts'
+              - 'package*.json'
+              - 'postinstall.mjs'
+              - 'tsconfig.json'
+            package-changes:
+              - '.github/workflows/node-test-package.yml'
+              - '.gitmodules'
+              - 'packages/**'
+              - 'scripts/build.ts'
+              - 'index.ts'
+              - 'package*.json'
+              - 'postinstall.mjs'
+              - 'tsconfig.json'
 
   pkg-pr-new:
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' }}
+    if: ${{ needs.path-filter.outputs.source-changes == 'true' }}
     permissions:
       contents: read # actions/checkout
     runs-on: ubuntu-latest
@@ -137,7 +150,7 @@ jobs:
     name: test-postinstall (${{ matrix.os }})
     needs:
       - path-filter
-    if: ${{ needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
+    if: ${{ needs.path-filter.outputs.package-changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action != 'closed' }}
     permissions:
       contents: read # actions/checkout
     strategy:
@@ -230,7 +243,7 @@ jobs:
     needs:
       - path-filter
     # TODO(cemmer): need pull_request_target to comment
-    if: ${{ github.event.pull_request.user.login == 'emmercm' && needs.path-filter.outputs.changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
+    if: ${{ github.event.pull_request.user.login == 'emmercm' && needs.path-filter.outputs.source-changes == 'true' && startsWith(github.event_name, 'pull_request') && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
     permissions:
       pull-requests: write # thollander/actions-comment-pull-request
     runs-on: ubuntu-latest

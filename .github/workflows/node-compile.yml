@@ -43,7 +43,10 @@ jobs:
               - 'scripts/build.ts'
               - 'scripts/compile.ts'
               - 'src/**'
-              - '*'
+              - '.bun-version'
+              - 'index.ts'
+              - 'package*.json'
+              - 'tsconfig.json'
 
   node-compile:
     name: node-compile (${{ matrix.os }}, ${{ matrix.docker_arch || matrix.go_arch || 'default' }})
