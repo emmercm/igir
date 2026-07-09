@@ -9,20 +9,97 @@ import ROMScanner from '../../../src/modules/roms/romScanner.js';
 import ProgressBarFake from '../../console/progressBarFake.js';
 
 test.each([
-  // One input path
-  [['test/fixtures/roms/**/*'], { roms: 28 }],
-  [['test/fixtures/roms/7z/*'], { '7z': 6 }],
-  [['test/fixtures/roms/chd/*'], { chd: 6 }],
-  [['test/fixtures/roms/cso/*'], { cso: 1 }],
-  [['test/fixtures/roms/discs/*'], { discs: 3 }],
-  [['test/fixtures/roms/gz/*'], { gz: 7 }],
-  [['test/fixtures/roms/headered/*'], { headered: 6 }],
-  [['test/fixtures/roms/headerless/*'], { headerless: 1 }],
-  [['test/fixtures/roms/nkit/*'], { nkit: 1 }],
-  [['test/fixtures/roms/rar/*'], { rar: 6 }],
-  [['test/fixtures/roms/raw/*'], { raw: 11 }],
-  [['test/fixtures/roms/tar/*'], { tar: 6 }],
-  [['test/fixtures/roms/zip/*'], { zip: 7 }],
+  [
+    ['test/fixtures/roms/**/*'],
+    {
+      roms: [
+        '2048',
+        '4096',
+        'best',
+        'CD-ROM',
+        'CD-ROM',
+        'CD-ROM',
+        'diagnostic_test_cartridge.a78',
+        'empty',
+        'fds_joypad_test.fds',
+        'fizzbuzz',
+        'foobar',
+        'fourfive',
+        'GameCube-240pSuite-1.19',
+        'GD-ROM',
+        'GD-ROM',
+        'headered',
+        'invalid',
+        'LCDTestROM.lnx',
+        'loremipsum',
+        'one',
+        'onetwothree',
+        'patchable',
+        'raw',
+        'speed_test_v51.sfc',
+        'three',
+        'two',
+        'UMD',
+        'unknown',
+      ],
+    },
+  ],
+  [
+    ['test/fixtures/roms/7z/*'],
+    { '7z': ['fizzbuzz', 'foobar', 'invalid', 'loremipsum', 'onetwothree', 'unknown'] },
+  ],
+  [['test/fixtures/roms/chd/*'], { chd: ['2048', '4096', 'CD-ROM', 'CD-ROM', 'GD-ROM', 'GD-ROM'] }],
+  [['test/fixtures/roms/cso/*'], { cso: ['UMD'] }],
+  [['test/fixtures/roms/discs/*'], { discs: ['CD-ROM', 'GD-ROM', 'UMD'] }],
+  [
+    ['test/fixtures/roms/gz/*'],
+    { gz: ['fizzbuzz', 'foobar', 'loremipsum', 'one', 'three', 'two', 'unknown'] },
+  ],
+  [
+    ['test/fixtures/roms/headered/*'],
+    {
+      headered: [
+        'allpads',
+        'color_test',
+        'diagnostic_test_cartridge.a78',
+        'fds_joypad_test.fds',
+        'LCDTestROM.lnx',
+        'speed_test_v51',
+      ],
+    },
+  ],
+  [['test/fixtures/roms/headerless/*'], { headerless: ['speed_test_v51.sfc'] }],
+  [['test/fixtures/roms/nkit/*'], { nkit: ['GameCube-240pSuite-1.19'] }],
+  [
+    ['test/fixtures/roms/rar/*'],
+    { rar: ['fizzbuzz', 'foobar', 'invalid', 'loremipsum', 'onetwothree', 'unknown'] },
+  ],
+  [
+    ['test/fixtures/roms/raw/*'],
+    {
+      raw: [
+        'empty',
+        'five',
+        'fizzbuzz',
+        'foobar',
+        'four',
+        'loremipsum',
+        'one',
+        'three',
+        'trimmed',
+        'two',
+        'unknown',
+      ],
+    },
+  ],
+  [
+    ['test/fixtures/roms/tar/*'],
+    { tar: ['fizzbuzz', 'foobar', 'invalid', 'loremipsum', 'onetwothree', 'unknown'] },
+  ],
+  [
+    ['test/fixtures/roms/zip/*'],
+    { zip: ['fizzbuzz', 'foobar', 'fourfive', 'invalid', 'loremipsum', 'onetwothree', 'unknown'] },
+  ],
   // Multiple input paths
   [
     [
@@ -31,9 +108,26 @@ test.each([
       'test/fixtures/roms/headerless/**/*',
     ],
     {
-      headered: 6,
-      patchable: 9,
-      headerless: 1,
+      headered: [
+        'allpads',
+        'color_test',
+        'diagnostic_test_cartridge.a78',
+        'fds_joypad_test.fds',
+        'LCDTestROM.lnx',
+        'speed_test_v51',
+      ],
+      patchable: [
+        '0F09A40',
+        '3708F2C',
+        '612644F',
+        '65D1206',
+        '92C85C9',
+        'before',
+        'best',
+        'C01173E',
+        'KDULVQN',
+      ],
+      headerless: ['speed_test_v51.sfc'],
     },
   ],
 ])('should infer DATs: %s', async (input, expected) => {
@@ -50,8 +144,14 @@ test.each([
   const dats = await new DATGameInferrer(options, new ProgressBarFake()).infer(romFiles);
 
   // Then
-  const datNameToGameCount = Object.fromEntries(
-    dats.map((dat) => [dat.getName(), dat.getGames().length]),
+  const datNameToGameNames = Object.fromEntries(
+    dats.map((dat) => [
+      dat.getName(),
+      dat
+        .getGames()
+        .map((game) => game.getName())
+        .toSorted((a, b) => a.localeCompare(b)),
+    ]),
   );
-  expect(datNameToGameCount).toEqual(expected);
+  expect(datNameToGameNames).toEqual(expected);
 });
