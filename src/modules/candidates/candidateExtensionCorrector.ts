@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import type { Semaphore } from 'async-mutex';
 
 import type ProgressBar from '../../console/progressBar.js';
@@ -88,6 +90,7 @@ export default class CandidateExtensionCorrector extends Module {
     return (
       this.options.getFixExtension() === FixExtension.ALWAYS ||
       (this.options.getFixExtension() === FixExtension.AUTO &&
+        !this.options.shouldDir2Dat() &&
         (!this.options.usingDats() || romWithFiles.getRom().getName().trim() === ''))
     );
   }
@@ -164,7 +167,7 @@ export default class CandidateExtensionCorrector extends Module {
     await this.readerSemaphore.runExclusive(async () => {
       this.progressBar.incrementInProgress();
       this.prefixedLogger.trace(
-        `${dat.getName()}: ${candidate.getName()}: correcting ROM extension for: ${romWithFiles
+        `${dat.getName()}: ${candidate.getName()}: determining correct ROM extension for: ${romWithFiles
           .getInputFile()
           .toString()}`,
       );
@@ -180,12 +183,12 @@ export default class CandidateExtensionCorrector extends Module {
         );
         if (correctedRomName === undefined) {
           this.prefixedLogger.trace(
-            `${dat.getName()}: ${candidate.getName()}: didn't correct ROM extension`,
+            `${dat.getName()}: ${candidate.getName()}: didn't find correct ROM extension`,
           );
-        } else {
+        } else if (correctedRomName !== correctedRom.getName()) {
           correctedRom = correctedRom.withName(correctedRomName);
           this.prefixedLogger.trace(
-            `${dat.getName()}: ${candidate.getName()}: corrected ROM extension to: ${correctedRomName}`,
+            `${dat.getName()}: ${candidate.getName()}: found correct ROM extension: ${path.posix.basename(correctedRomName)}`,
           );
         }
       } finally {
@@ -216,16 +219,28 @@ export default class CandidateExtensionCorrector extends Module {
       // Replace the file's existing extension (if any) with the one detected from its signature.
       // A strict extension regex is used rather than path.parse(), which would mistake a period
       // inside the filename for an extension and truncate everything after it.
-      return correctedRom.getName().replace(/\.[a-zA-Z0-9]+$/, '') + fileSignature.getExtension();
+      const extensionRegex = /\.[a-zA-Z0-9]+$/;
+      const oldExtension = extensionRegex.exec(correctedRom.getName())?.at(0);
+      let newExtension = fileSignature.getExtension();
+      // If the old extension was all uppercase, match that casing for the new extension
+      if (oldExtension !== undefined && /[A-Z]/.test(oldExtension) && !/[a-z]/.test(oldExtension)) {
+        newExtension = newExtension.toUpperCase();
+      }
+      return correctedRom.getName().replace(extensionRegex, '') + newExtension;
     }
 
-    // Strip the extension from files claiming to be an archive
-    const dotSplit = correctedRom.getName().split('.');
-    const archiveIndex = dotSplit.findIndex((_, idx) =>
-      FileFactory.isExtensionArchive(dotSplit.slice(0, idx + 1).join('.')),
-    );
-    if (archiveIndex !== -1) {
-      return dotSplit.slice(0, archiveIndex).join('.');
+    // Warn if we know the raw file doesn't have the correct extension, but we don't know what it should be
+    if (!(inputFile instanceof ArchiveEntry)) {
+      const dotSplit = correctedRom.getName().split('.');
+      const archiveIndex = dotSplit.findIndex((_, idx) =>
+        FileFactory.isExtensionArchive(dotSplit.slice(0, idx + 1).join('.')),
+      );
+      if (archiveIndex !== -1) {
+        const archiveExtension = dotSplit.slice(archiveIndex).join('.');
+        this.prefixedLogger.warn(
+          `${dat.getName()}: ${inputFile.toString()}: file is not a ${archiveExtension} archive, but the correct extension isn't known`,
+        );
+      }
     }
 
     return undefined;
