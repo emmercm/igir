@@ -11,8 +11,14 @@ import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
 import ROM from '../../../src/models/dats/rom.js';
+import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
-import Options, { FixExtension, FixExtensionInverted } from '../../../src/models/options.js';
+import Options, {
+  FixExtension,
+  FixExtensionInverted,
+  ZipFormat,
+} from '../../../src/models/options.js';
 import ROMWithFiles from '../../../src/models/romWithFiles.js';
 import WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateExtensionCorrector from '../../../src/modules/candidates/candidateExtensionCorrector.js';
@@ -195,6 +201,96 @@ it('should not truncate names with periods when correcting from file signature',
       ?.getRom()
       .getName();
     expect(correctedRomName).toEqual(`${gameName}.chd`);
+  } finally {
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+it('should match uppercase casing when correcting from file signature', async () => {
+  const options = new Options({
+    // No DAT has been provided, therefore all ROMs should be corrected
+    fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+  });
+  const dat = new LogiqxDAT({ header: new Header() });
+
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+  try {
+    // A CHD file given an incorrect, all-uppercase extension
+    const tempFile = path.join(tempDir, 'GAME.FOO');
+    await FsUtil.copyFile(path.join('test', 'fixtures', 'roms', 'chd', 'CD-ROM.chd'), tempFile);
+    const inputFile = await File.fileOf({ filePath: tempFile });
+
+    const rom = new ROM({ name: 'GAME.FOO', size: inputFile.getSize() });
+    const game = new Game({ name: 'game', roms: [rom] });
+    const outputFile = inputFile.withFilePath(path.join(tempDir, 'game.FOO'));
+    const candidates = [new WriteCandidate(game, [new ROMWithFiles(rom, inputFile, outputFile)])];
+
+    const correctedCandidates = await new CandidateExtensionCorrector(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+      new Semaphore(os.availableParallelism()),
+    ).correct(dat, candidates);
+
+    // The detected extension (.chd) is uppercased to match the old extension's casing
+    const correctedRomName = correctedCandidates
+      .at(0)
+      ?.getRomsWithFiles()
+      .at(0)
+      ?.getRom()
+      .getName();
+    expect(correctedRomName).toEqual('GAME.CHD');
+  } finally {
+    await FsUtil.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+it('should not strip archive extensions from files within archives', async () => {
+  const options = new Options({
+    // No DAT has been provided, therefore all ROMs should be corrected
+    fixExtension: FixExtensionInverted[FixExtension.AUTO].toLowerCase(),
+  });
+  const dat = new LogiqxDAT({ header: new Header() });
+
+  const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+  try {
+    const nestedFilePath = path.join(tempDir, 'nested.zip');
+    await FsUtil.writeFile(nestedFilePath, 'this is not really a zip file');
+    const nestedFile = await File.fileOf({ filePath: nestedFilePath });
+    const outerZip = new Zip(path.join(tempDir, 'outer.zip'));
+    await outerZip.createArchive(
+      [[nestedFile, await ArchiveEntry.entryOf({ archive: outerZip, entryPath: 'nested.zip' })]],
+      ZipFormat.TORRENTZIP,
+      1,
+    );
+
+    const inputFile = (await new FileFactory(new FileCache()).filesFrom(outerZip.getFilePath())).at(
+      0,
+    );
+    if (inputFile === undefined) {
+      throw new Error('failed to scan the nested archive entry');
+    }
+
+    // The inferred ROM name is the archive entry path, ending in an archive extension
+    const rom = new ROM({ name: inputFile.getExtractedFilePath(), size: inputFile.getSize() });
+    const game = new Game({ name: 'nested', roms: [rom] });
+    const outputFile = inputFile.withFilePath(path.join(tempDir, 'nested.zip'));
+    const candidates = [new WriteCandidate(game, [new ROMWithFiles(rom, inputFile, outputFile)])];
+
+    const correctedCandidates = await new CandidateExtensionCorrector(
+      options,
+      new ProgressBarFake(),
+      new FileFactory(new FileCache()),
+      new Semaphore(os.availableParallelism()),
+    ).correct(dat, candidates);
+
+    const correctedRomName = correctedCandidates
+      .at(0)
+      ?.getRomsWithFiles()
+      .at(0)
+      ?.getRom()
+      .getName();
+    expect(correctedRomName).toEqual('nested.zip');
   } finally {
     await FsUtil.rm(tempDir, { recursive: true, force: true });
   }

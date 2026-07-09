@@ -96,10 +96,6 @@ Once DATs have been generated from input files, they are processed the same as a
 
   If your input files are in some kind of standard naming convention (e.g. [No-Intro](https://wiki.no-intro.org/index.php?title=Naming_Convention), [Redump](https://datomatic.no-intro.org/stuff/The%20Official%20No-Intro%20Convention%20(20071030).pdf), [TOSEC](https://www.tosecdev.org/tosec-naming-convention), or [GoodTools](https://emulation.gametechwiki.com/index.php/GoodTools)) that contains region, language, or other tags, then [ROM filter](../roms/filtering.md) & [1G1R preference](../roms/1g1r.md) options can be applied.
 
-- **Filename extensions will be corrected by default.**
-
-    See [ROM Output Options](../output/options.md#fixing-rom-extensions) for more information.
-
 ## Alternative tools
 
 It is unlikely that any ROM tool, including Igir, will ever meet every person's exact DAT creation needs.
