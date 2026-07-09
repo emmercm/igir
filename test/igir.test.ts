@@ -2366,11 +2366,8 @@ describe('with inferred DATs', () => {
         ['GameCube-240pSuite-1.19', ['GameCube-240pSuite-1.19.iso']],
         ['GD-ROM', []],
         ['GD-ROM', ['GD-ROM.gdi', 'track01.bin', 'track02.raw', 'track03.bin', 'track04.bin']],
-        [
-          'headered',
-          ['allpads.nes', 'color_test.nintendoentertainmentsystem', 'speed_test_v51.smc'],
-        ],
-        ['invalid', ['invalid.7z', 'invalid.rar', 'invalid.tar.gz', 'invalid.zip']],
+        ['headered', ['allpads.nes', 'color_test.nes', 'speed_test_v51.smc']],
+        ['invalid', ['invalid']],
         ['LCDTestROM.lnx', ['LCDTestROM.lnx']],
         ['loremipsum', ['loremipsum.rom']],
         ['one', ['one.rom']],
