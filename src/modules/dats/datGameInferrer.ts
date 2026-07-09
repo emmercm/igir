@@ -91,7 +91,7 @@ export default class DATGameInferrer extends Module {
       this.inferArchiveEntries.bind(this),
       this.inferBinCueFiles.bind(this),
       this.inferGdiFiles.bind(this),
-      this.inferRawFiles.bind(this),
+      this.inferRawFiles.bind(this, inputPath),
     ];
     for (const inferFunction of inferFunctions) {
       // Infer the games and their files
@@ -378,7 +378,7 @@ export default class DATGameInferrer extends Module {
     return results;
   }
 
-  private inferRawFiles(romFiles: File[]): [string, File[]][] {
+  private inferRawFiles(inputPath: string, romFiles: File[]): [string, File[]][] {
     this.prefixedLogger.trace(
       `inferring games from raw files from ${IntlUtil.toLocaleString(romFiles.length)} file${romFiles.length === 1 ? '' : 's'}`,
     );
@@ -393,16 +393,20 @@ export default class DATGameInferrer extends Module {
     const results = romFiles
       .filter((file) => !(file instanceof ArchiveEntry))
       .reduce((map, file) => {
+        const dirname = path.dirname(file.getFilePath());
         let gameName: string;
         if (
+          // Group this file with other files in the same subdirectory if:
+          // ...this file is in a subdirectory of the input path
+          dirname !== inputPath &&
+          // ...and there are multiple subdirectories in the input path
           dirnamesToFileCounts.size > 1 &&
-          (dirnamesToFileCounts.get(path.dirname(file.getFilePath())) ?? 0) > 1
+          // ...and this file's subdirectory has multiple files
+          (dirnamesToFileCounts.get(dirname) ?? 0) > 1
         ) {
-          // There are multiple subdirectories in the input path,
-          // and the subdirectory this file is in has multiple ROMs,
-          // so assume ROMs belong to the same game
-          gameName = path.basename(path.dirname(file.getFilePath()));
+          gameName = path.basename(dirname);
         } else {
+          // Otherwise, get the game name from the file, ignoring its subdirectory
           gameName = DATGameInferrer.getGameName(file);
         }
 

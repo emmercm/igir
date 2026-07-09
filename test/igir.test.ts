@@ -1750,6 +1750,7 @@ describe('with inferred DATs', () => {
         [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'], // <disk> CD-ROM
         [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'], // <disk> CD-ROM
         ['diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+        ['empty.rom', '00000000'],
         ['fds_joypad_test.fds', '1e58456d'],
         ['fizzbuzz.nes', '370517b5'],
         ['foobar.lnx', 'b22c9747'],
@@ -1796,9 +1797,6 @@ describe('with inferred DATs', () => {
         [path.join('raw', 'trimmed.3ds'), 'e964a5b3'],
         [path.join('raw', 'two.rom'), '96170874'],
         [path.join('raw', 'unknown.rom'), '377a7727'],
-        [path.join('roms', 'empty.rom'), '00000000'],
-        [path.join('roms', 'foobar.lnx'), 'b22c9747'],
-        [path.join('roms', 'invalid'), 'df941cc9'],
         ['speed_test_v51.sfc', '8beffd94'],
         ['three.rom', 'ff46c5d8'],
         ['two.rom', '96170874'],
@@ -1916,6 +1914,7 @@ describe('with inferred DATs', () => {
         [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM (Track 3).bin`, 'a320af40'], // <disk> CD-ROM
         [`${path.join('CD-ROM', 'CD-ROM.chd')}|CD-ROM.cue`, 'xxxxxxxx'], // <disk> CD-ROM
         ['diagnostic_test_cartridge.a78.zip|diagnostic_test_cartridge.a78', 'f6cc9b1c'],
+        ['empty.zip|empty.rom', '00000000'],
         ['fds_joypad_test.fds.zip|fds_joypad_test.fds', '1e58456d'],
         ['fizzbuzz.zip|fizzbuzz.nes', '370517b5'],
         ['foobar.zip|foobar.lnx', 'b22c9747'],
@@ -1965,11 +1964,6 @@ describe('with inferred DATs', () => {
         ['raw.zip|trimmed.3ds', 'e964a5b3'],
         ['raw.zip|two.rom', '96170874'],
         ['raw.zip|unknown.rom', '377a7727'],
-        ['roms.zip|empty.rom', '00000000'],
-        ['roms.zip|foobar.lnx', 'b22c9747'],
-        ['roms.zip|invalid.7z', 'df941cc9'],
-        ['roms.zip|invalid.rar', 'df941cc9'],
-        ['roms.zip|invalid.zip', 'df941cc9'],
         ['three.zip|three.rom', 'ff46c5d8'],
         ['two.zip|two.rom', '96170874'],
         ['UMD.zip|UMD.iso', 'e90f7cf5'],
@@ -2051,6 +2045,7 @@ describe('with inferred DATs', () => {
           `diagnostic_test_cartridge.a78.7z|diagnostic_test_cartridge.a78 -> ${path.join('..', 'input', 'roms', 'headered', 'diagnostic_test_cartridge.a78.7z')}|diagnostic_test_cartridge.a78`,
           'f6cc9b1c',
         ],
+        [`empty.rom -> ${path.join('..', 'input', 'roms', 'empty.rom')}`, '00000000'],
         [
           `fds_joypad_test.fds.zip|fds_joypad_test.fds -> ${path.join('..', 'input', 'roms', 'headered', 'fds_joypad_test.fds.zip')}|fds_joypad_test.fds`,
           '1e58456d',
@@ -2237,18 +2232,6 @@ describe('with inferred DATs', () => {
           '377a7727',
         ],
         [
-          `${path.join('roms', 'empty.rom')} -> ${path.join('..', '..', 'input', 'roms', 'empty.rom')}`,
-          '00000000',
-        ],
-        [
-          `${path.join('roms', 'foobar.lnx')} -> ${path.join('..', '..', 'input', 'roms', 'foobar.lnx')}`,
-          'b22c9747',
-        ],
-        [
-          `${path.join('roms', 'invalid')} -> ${path.join('..', '..', 'input', 'roms', '7z', 'invalid.7z')}`,
-          'df941cc9',
-        ],
-        [
           `speed_test_v51.sfc.gz|speed_test_v51.sfc -> ${path.join('..', 'input', 'roms', 'headerless', 'speed_test_v51.sfc.gz')}|speed_test_v51.sfc`,
           '8beffd94',
         ],
@@ -2375,6 +2358,7 @@ describe('with inferred DATs', () => {
           ['CD-ROM (Track 1).bin', 'CD-ROM (Track 2).bin', 'CD-ROM (Track 3).bin', 'CD-ROM.cue'],
         ],
         ['diagnostic_test_cartridge.a78', ['diagnostic_test_cartridge.a78']],
+        ['empty', ['empty.rom']],
         ['fds_joypad_test.fds', ['fds_joypad_test.fds']],
         ['fizzbuzz', ['fizzbuzz.nes']],
         ['foobar', ['foobar.lnx']],
@@ -2417,7 +2401,6 @@ describe('with inferred DATs', () => {
             'unknown.rom',
           ],
         ],
-        ['roms', ['empty.rom', 'foobar.lnx', 'invalid']],
         ['speed_test_v51.sfc', ['speed_test_v51.sfc']],
         ['three', ['three.rom']],
         ['two', ['two.rom']],
