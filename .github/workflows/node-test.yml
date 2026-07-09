@@ -42,7 +42,12 @@ jobs:
               - 'src/**'
               - 'test/**'
               - '**/*.ts'
-              - '*'
+              - '.bun-version'
+              - 'bunfig.toml'
+              - 'index.ts'
+              - 'package*.json'
+              - 'tsconfig.json'
+              - 'vitest.config.json'
             should-delete-prebuilds:
               - '.github/workflows/node-addon-prebuild.yml'
               - '.gitmodules'
