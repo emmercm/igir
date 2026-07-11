@@ -37,7 +37,6 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
-          submodules: 'recursive'
           # auto-changelog needs a full fetch for tag info
           fetch-depth: 0
 
