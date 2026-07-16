@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 import Cache from '../../src/cache/cache.js';
 import Temp from '../../src/globals/temp.js';
@@ -237,6 +239,96 @@ describe('save', () => {
 
     try {
       await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+});
+
+describe('save and load', () => {
+  it('should round-trip values containing newlines, quotes, and backslashes', async () => {
+    // Records are newline-delimited, so any newlines inside a value must survive a save+load.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const values = new Map<string, string>([
+      ['newlines', 'line1\nline2\r\nline3\n'],
+      ['quotes', 'has "double" and \'single\' quotes'],
+      ['backslashes', 'c:\\path\\to\\file'],
+      ['looks-like-record', '["not","a","real","entry"]'],
+      ['empty', ''],
+    ]);
+
+    const firstCache = new Cache<string>({ filePath: tempFile });
+    for (const [key, value] of values) {
+      await firstCache.set(key, value);
+    }
+    await firstCache.save();
+
+    try {
+      const secondCache = new Cache<string>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(values.size);
+      for (const [key, value] of values) {
+        await expect(secondCache.get(key)).resolves.toEqual(value);
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should ignore a legacy single-object-format cache file', async () => {
+    // A cache file that is a single gzipped JSON object, rather than newline-delimited records,
+    // is not parseable as records. It is ignored gracefully — the cache simply rebuilds itself —
+    // instead of throwing.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const legacy = zlib.gzipSync(Buffer.from(JSON.stringify({ a: 1, b: 2, c: 3 }), 'utf8'));
+    await FsUtil.writeFile(tempFile, legacy);
+
+    try {
+      const cache = new Cache<number>({ filePath: tempFile });
+      await cache.load();
+      expect(cache.size()).toEqual(0);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should save each entry as its own newline-delimited record', async () => {
+    // The fix for large caches is to serialize one newline-delimited [key, value] record per
+    // entry and stream them, instead of building a single `JSON.stringify()` string of the whole
+    // cache (which throws `RangeError: Invalid string length` once it would exceed V8's ~512 MiB
+    // maximum string length). This asserts the on-disk format is one record per entry, so no
+    // single string is ever built from the entire cache.
+    const entryCount = 1000;
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const firstCache = new Cache<number>({ filePath: tempFile });
+    for (let i = 0; i < entryCount; i += 1) {
+      await firstCache.set(String(i), i);
+    }
+    await firstCache.save();
+
+    try {
+      // The file is gzipped newline-delimited JSON: one [key, value] array per line.
+      const lines = zlib
+        .gunzipSync(await fs.promises.readFile(tempFile))
+        .toString('utf8')
+        .split('\n')
+        .filter((line) => line.length > 0);
+      expect(lines).toHaveLength(entryCount);
+      for (const line of lines) {
+        const record = JSON.parse(line) as unknown;
+        expect(Array.isArray(record)).toEqual(true);
+        expect((record as unknown[]).length).toEqual(2);
+      }
+
+      // ...and it round-trips back into an equivalent cache.
+      const secondCache = new Cache<number>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(entryCount);
+      for (let i = 0; i < entryCount; i += 1) {
+        await expect(secondCache.get(String(i))).resolves.toEqual(i);
+      }
     } finally {
       await FsUtil.rm(tempFile, { force: true });
     }
