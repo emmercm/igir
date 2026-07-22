@@ -100,7 +100,7 @@ describe('openReader', () => {
   it.each(cases)(
     'should stream $format to the exact decoded ISO ($file)',
     async ({ file, size, sha1 }) => {
-      const readable = await dolphin.openReader({ inputFilename: path.join(FIXTURES, file) });
+      const readable = dolphin.openReader({ inputFilename: path.join(FIXTURES, file) });
       const hash = crypto.createHash('sha1');
       let total = 0;
       for await (const chunk of readable) {
@@ -113,7 +113,7 @@ describe('openReader', () => {
   );
 
   it('should not leak a handle when destroyed mid-stream', async () => {
-    const readable = await dolphin.openReader({
+    const readable = dolphin.openReader({
       inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.bzip2.rvz'),
     });
     await new Promise<void>((resolve) =>
@@ -128,7 +128,7 @@ describe('openReader', () => {
       }),
     );
     // A second independent reader must still open the same file (handle was released).
-    const again = await dolphin.openReader({
+    const again = dolphin.openReader({
       inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.bzip2.rvz'),
     });
     again.destroy();

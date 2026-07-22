@@ -86,7 +86,7 @@ export default class ChdRaw extends Chd {
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    let readable: stream.Readable = await chdman.openRawReader({
+    let readable: stream.Readable = chdman.openRawReader({
       inputFilename: this.getFilePath(),
     });
     // A non-zero start offset (e.g. a detected ROM header) must skip that many

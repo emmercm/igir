@@ -122,7 +122,7 @@ describe('openTrackReader', () => {
       cueName: expected.tocName,
     });
     for (const track of listing.tracks) {
-      const readable = await chdman.openTrackReader({
+      const readable = chdman.openTrackReader({
         inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
         mode: 'cuebin',
         trackIndex: track.index,
@@ -144,7 +144,7 @@ describe('openTrackReader', () => {
       gdiName: expected.tocName,
     });
     for (const track of listing.tracks) {
-      const readable = await chdman.openTrackReader({
+      const readable = chdman.openTrackReader({
         inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
         mode: 'gdi',
         trackIndex: track.index,
@@ -169,7 +169,7 @@ describe('openTrackReader', () => {
     // its own chd_file, so results must be independent of interleaving.
     const results = await Promise.all(
       listing.tracks.map(async (track) => {
-        const readable = await chdman.openTrackReader({
+        const readable = chdman.openTrackReader({
           inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
           mode: 'cuebin',
           trackIndex: track.index,
@@ -190,7 +190,7 @@ describe('openTrackReader', () => {
   });
 
   it('should release the CHD when the Readable is destroyed before EOF', async () => {
-    const readable = await chdman.openTrackReader({
+    const readable = chdman.openTrackReader({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       mode: 'cuebin',
       trackIndex: 0,
@@ -219,7 +219,7 @@ describe('openTrackReader', () => {
       binNamePattern: 'CD-ROM-large (Track %t).bin',
       cueName: 'CD-ROM-large.cue',
     });
-    const readable = await chdman.openTrackReader({
+    const readable = chdman.openTrackReader({
       inputFilename: path.join(FIXTURES, 'CD-ROM-large.chd'),
       mode: 'cuebin',
       trackIndex: 0,
@@ -248,7 +248,7 @@ describe('openTrackReader', () => {
 describe('openRawReader', () => {
   it('should stream a HARD_DISK CHD logical image with size == logicalSize', async () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') });
-    const readable = await chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
+    const readable = chdman.openRawReader({ inputFilename: path.join(FIXTURES, '2048.chd') });
     const got = await BufferUtil.fromReadable(readable);
     expect(got.length).toEqual(info.logicalSize);
     expect(sha1(got)).toEqual(info.dataSha1);
@@ -260,7 +260,7 @@ describe('openRawReader', () => {
     // owns its own chd_file, so all three must yield the identical logical image.
     const results = await Promise.all(
       [0, 1, 2].map(async () => {
-        const readable = await chdman.openRawReader({
+        const readable = chdman.openRawReader({
           inputFilename: path.join(FIXTURES, '2048.chd'),
         });
         return await BufferUtil.fromReadable(readable);

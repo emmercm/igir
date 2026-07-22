@@ -64,7 +64,7 @@ export default class ChdBinCue extends Chd {
     if (trackNumber === null) {
       throw new IgirException(`CHD entry not found: ${this.getFilePath()}|${entryPath}`);
     }
-    return await chdman.openTrackReader({
+    return chdman.openTrackReader({
       inputFilename: this.getFilePath(),
       mode: 'cuebin',
       trackIndex: Number(trackNumber[1]) - 1,
@@ -135,7 +135,7 @@ export default class ChdBinCue extends Chd {
       trackFiles,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (file: ChdListedFile): Promise<ArchiveEntry<this>> => {
-        const readable = await chdman.openTrackReader({
+        const readable = chdman.openTrackReader({
           inputFilename: this.getFilePath(),
           mode: 'cuebin',
           trackIndex: file.trackIndex,
