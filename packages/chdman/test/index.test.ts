@@ -231,17 +231,17 @@ describe('openTrackReader', () => {
     });
   });
 
-  it('should refuse to open a runaway GD-ROM cue/bin track reader', async () => {
+  it('should refuse to open a runaway GD-ROM cue/bin track reader', () => {
     // The same high-density-track frame underflow that blocks listCdBinCueTracks
     // (see that suite) must also be refused when opening a track reader directly,
     // rather than streaming a ~10 TB runaway.
-    await expect(
+    expect(() =>
       chdman.openTrackReader({
         inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
         mode: 'cuebin',
         trackIndex: 2,
       }),
-    ).rejects.toThrow(/cannot be extracted as cue\/bin/);
+    ).toThrow(/cannot be extracted as cue\/bin/);
   });
 });
 
