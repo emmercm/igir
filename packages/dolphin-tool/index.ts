@@ -101,8 +101,8 @@ export default {
   /**
    * Open a {@link stream.Readable} over the full decompressed ISO byte range.
    */
-  async openReader(options: OpenReaderOptions): Promise<stream.Readable> {
+  openReader(options: OpenReaderOptions): stream.Readable {
     const reader = binding.openReader(options.inputFilename);
-    return await Promise.resolve(readableFromReader(reader));
+    return readableFromReader(reader);
   },
 };

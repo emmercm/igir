@@ -69,7 +69,7 @@ export default abstract class Dolphin extends Archive {
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    let readable: stream.Readable = await dolphinTool.openReader({
+    let readable: stream.Readable = dolphinTool.openReader({
       inputFilename: this.getFilePath(),
     });
     // A non-zero start offset (e.g. a detected ROM header) must skip that many

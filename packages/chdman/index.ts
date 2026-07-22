@@ -197,18 +197,18 @@ export default {
    * Open a {@link stream.Readable} over a single CD-ROM (cue/bin) or GD-ROM (gdi) track,
    * yielding exactly the bytes chdman writes for that split-bin track.
    */
-  async openTrackReader(options: OpenTrackReaderOptions): Promise<stream.Readable> {
+  openTrackReader(options: OpenTrackReaderOptions): stream.Readable {
     const mode = options.mode === TrackReaderMode.GDI ? ChdmanMode.GDI : ChdmanMode.CUEBIN;
     const reader = binding.openTrackReader(options.inputFilename, mode, options.trackIndex);
-    return await Promise.resolve(readableFromReader(reader));
+    return readableFromReader(reader);
   },
 
   /**
    * Open a {@link stream.Readable} over the full logical byte range of a RAW, HARD_DISK, or
    * DVD CHD, yielding exactly the bytes chdman's extractRaw would write.
    */
-  async openRawReader(options: OpenRawReaderOptions): Promise<stream.Readable> {
+  openRawReader(options: OpenRawReaderOptions): stream.Readable {
     const reader = binding.openRawReader(options.inputFilename);
-    return await Promise.resolve(readableFromReader(reader));
+    return readableFromReader(reader);
   },
 };

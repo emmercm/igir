@@ -229,6 +229,7 @@ export default eslintConfig.defineConfig([
       'unicorn/no-hex-escape': 'off',
       'unicorn/no-unreadable-new-expression': 'off',
       'unicorn/no-useless-undefined': 'off',
+      'unicorn/prefer-simple-condition-first': 'off',
       'unicorn/prefer-string-raw': 'off',
       'unicorn/prefer-switch': 'off',
       'unicorn/prefer-ternary': 'off',
