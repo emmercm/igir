@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
+import string_decoder from 'node:string_decoder';
 import zlib from 'node:zlib';
 
 import { E_CANCELED, Mutex } from 'async-mutex';
@@ -262,26 +263,46 @@ export default class Cache<V> {
     }
 
     try {
-      const chunks: Buffer[] = [];
+      // Parse the cache file incrementally, one newline-delimited [key, value] record at a time.
+      // Never rebuild the whole file into a single string: on large collections the serialized
+      // cache can exceed V8's maximum string length and throw a `RangeError`.
+      const decoder = new string_decoder.StringDecoder('utf8');
+      const map = new Map<string, V>();
+      let buffer = '';
+      const readState = { hasData: false };
+      const ingestLine = (line: string): void => {
+        if (line.length === 0) {
+          return;
+        }
+        const entry = JSON.parse(line) as unknown;
+        if (Array.isArray(entry) && entry.length === 2) {
+          const [key, value] = entry as [string, V];
+          map.set(key, value);
+        }
+      };
       await stream.promises.pipeline(
         fs.createReadStream(this.filePath),
         zlib.createGunzip(),
         new stream.Writable({
           write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
-            chunks.push(chunk);
+            readState.hasData = true;
+            buffer += decoder.write(chunk);
+            let idx = buffer.indexOf('\n');
+            while (idx !== -1) {
+              ingestLine(buffer.slice(0, idx));
+              buffer = buffer.slice(idx + 1);
+              idx = buffer.indexOf('\n');
+            }
             cb();
           },
         }),
       );
-      if (chunks.length === 0) {
+      buffer += decoder.end();
+      ingestLine(buffer);
+      if (!readState.hasData) {
         return this;
       }
-      const keyValuesObject = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<
-        string,
-        V
-      >;
-      const keyValuesEntries = Object.entries(keyValuesObject);
-      this.keyValues = new Map(keyValuesEntries);
+      this.keyValues = map;
     } catch {
       /* ignored */
     }
@@ -324,8 +345,7 @@ export default class Cache<V> {
           return;
         }
 
-        const keyValuesObject = Object.fromEntries(this.keyValues);
-        const json = JSON.stringify(keyValuesObject);
+        const entries = [...this.keyValues];
         // Reset before I/O so mid-save changes re-set the flag
         this.hasChanged = false;
 
@@ -338,15 +358,24 @@ export default class Cache<V> {
         // Write to a temp file first
         const tempFile = await FsUtil.mktemp(this.filePath);
         try {
+          // Stream one newline-delimited [key, value] record at a time. This avoids serializing
+          // the entire cache into a single string, which can exceed V8's maximum string length
+          // and throw a `RangeError` on large collections.
           await stream.promises.pipeline(
-            stream.Readable.from([Buffer.from(json, 'utf8')]),
+            stream.Readable.from(
+              (function* (): Generator<Buffer> {
+                for (const entry of entries) {
+                  yield Buffer.from(`${JSON.stringify(entry)}\n`, 'utf8');
+                }
+              })(),
+            ),
             zlib.createGzip(),
             fs.createWriteStream(tempFile),
           );
 
           // Validate the file was written correctly
           const tempFileCache = await new Cache({ filePath: tempFile }).load();
-          if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
+          if (tempFileCache.size() !== entries.length) {
             // The written file is bad, don't use it
             await FsUtil.rm(tempFile, { force: true });
             this.hasChanged = true;
