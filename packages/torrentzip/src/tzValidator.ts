@@ -3,6 +3,7 @@ import zlib from 'node:zlib';
 import type { ZipReader } from '../../zip/index.js';
 import { CompressionMethod } from '../../zip/index.js';
 import CP437Encoder from './cp437Encoder.js';
+import tzFileNameComparator from './tzFileNameComparator.js';
 
 export const ValidationResult = {
   VALID_TORRENTZIP: 1,
@@ -113,11 +114,11 @@ export default {
     }
 
     // Validate filename sorting
-    const fileNamesLowerCase = centralDirectoryFileHeaders.map((fileHeader) =>
-      fileHeader.fileNameResolved().toLowerCase(),
+    const fileNames = centralDirectoryFileHeaders.map((fileHeader) =>
+      fileHeader.fileNameResolved(),
     );
-    const fileNamesLowerCaseSorted = fileNamesLowerCase.toSorted((a, b) => a.localeCompare(b));
-    if (fileNamesLowerCase.some((name, i) => name !== fileNamesLowerCaseSorted[i])) {
+    const fileNamesSorted = fileNames.toSorted(tzFileNameComparator);
+    if (fileNames.some((name, i) => name !== fileNamesSorted[i])) {
       return ValidationResult.INVALID;
     }
 
