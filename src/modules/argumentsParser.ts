@@ -431,9 +431,11 @@ export default class ArgumentsParser {
         requiresArg: true,
       })
       .middleware((middlewareArgv) => {
-        if (
-          !(middlewareArgv.output && middlewareArgv._.includes('clean') && middlewareArgv.input)
-        ) {
+        if (!(
+          middlewareArgv.output &&
+          middlewareArgv._.includes('clean') &&
+          middlewareArgv.input
+        )) {
           return;
         }
         const outputResolved = path.resolve(middlewareArgv.output as string);
