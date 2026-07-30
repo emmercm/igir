@@ -5,7 +5,11 @@ import stream from 'node:stream';
 
 import async from 'async';
 
-import { CompressionMethod, TZWriter } from '../../../../packages/torrentzip/index.js';
+import {
+  CompressionMethod,
+  tzFileNameComparator,
+  TZWriter,
+} from '../../../../packages/torrentzip/index.js';
 import type { CentralDirectoryFileHeader } from '../../../../packages/zip/index.js';
 import { ZipReader } from '../../../../packages/zip/index.js';
 import { logger } from '../../../console/logger.js';
@@ -220,18 +224,10 @@ export default class Zip extends Archive {
     compressorThreads: number,
     callback?: ProgressCallback,
   ): Promise<void> {
-    // TZWriter needs files to be sorted by lowercase
-    const inputToOutputSorted = inputToOutput.toSorted(([, outputA], [, outputB]) => {
-      const pathLowerA = outputA.getEntryPath().toLowerCase();
-      const pathLowerB = outputB.getEntryPath().toLowerCase();
-      if (pathLowerA < pathLowerB) {
-        return -1;
-      }
-      if (pathLowerA > pathLowerB) {
-        return 1;
-      }
-      return 0;
-    });
+    // TZWriter needs files to be sorted the same way TZValidator expects to find them
+    const inputToOutputSorted = inputToOutput.toSorted(([, outputA], [, outputB]) =>
+      tzFileNameComparator(outputA.getEntryPath(), outputB.getEntryPath()),
+    );
 
     let sizeWritten = 0;
     const sizeTotal = inputToOutputSorted.reduce((sum, [, output]) => sum + output.getSize(), 0);
