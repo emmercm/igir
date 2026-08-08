@@ -232,8 +232,12 @@ export default class OutputFactory {
 
     const leftoverTokens = result.match(this.LEFTOVER_TOKEN_REGEX);
     if (leftoverTokens !== null && leftoverTokens.length > 0) {
+      const consoleTokenNames = this.loadConsoleTokenNames(options.getOutputConsoleTokens());
+      const consoleHint = leftoverTokens.some((token) => consoleTokenNames.has(token.slice(1, -1)))
+        ? `, no console is known for the DAT "${dat.getName()}"`
+        : '';
       throw new TokenReplacementException(
-        `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')}`,
+        `failed to replace output token${leftoverTokens.length === 1 ? '' : 's'}: ${leftoverTokens.join(', ')}${consoleHint}`,
       );
     }
 
@@ -338,6 +342,15 @@ export default class OutputFactory {
       }
       return new ConsoleTokens(new RegExp(pattern, flags || undefined), extensions, tokensMap);
     });
+  }
+
+  @Memoize()
+  private static loadConsoleTokenNames(filePath: string | undefined): Set<string> {
+    return new Set(
+      this.loadTokensFile(filePath).flatMap((consoleTokens) => [
+        ...consoleTokens.getTokens().keys(),
+      ]),
+    );
   }
 
   private static getConsoleTokensForFilename(
