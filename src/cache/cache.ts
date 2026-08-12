@@ -95,7 +95,8 @@ export default class Cache<V> {
   async getOrCompute(
     key: string,
     runnable: (key: string) => V | Promise<V>,
-    shouldRecompute?: (value: V) => Promise<boolean>,
+    // eslint-disable-next-line unicorn/consistent-boolean-name
+    shouldRecompute?: (value: V) => boolean | Promise<boolean>,
   ): Promise<V> {
     const cached = this.getUnsafe(key);
     if (
@@ -170,7 +171,8 @@ export default class Cache<V> {
   async getOrComputeAnyKeys(
     keys: string[],
     runnable: () => V | Promise<V>,
-    shouldRecompute?: (value: V) => Promise<boolean>,
+    // eslint-disable-next-line unicorn/consistent-boolean-name
+    shouldRecompute?: (value: V) => boolean | Promise<boolean>,
   ): Promise<V | undefined> {
     if (keys.length === 0) {
       return undefined;
