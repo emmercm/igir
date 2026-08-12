@@ -43,7 +43,7 @@ const binding = ((): DolphinBinding => {
       `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
     ) as DolphinBinding;
   } catch {
-    /* ignored */
+    // ignored
   }
   return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
 })();

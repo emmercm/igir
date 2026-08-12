@@ -57,7 +57,7 @@ const zlib = ((): ZlibBinding => {
       `./addon-zlib-1.1.3/prebuilds/${os.platform()}-${os.arch()}/node.node`,
     ) as ZlibBinding;
   } catch {
-    /* ignored */
+    // ignored
   }
   return require('./addon-zlib-1.1.3/build/Release/zlib.node') as ZlibBinding;
 })();

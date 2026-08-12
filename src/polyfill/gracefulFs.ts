@@ -71,16 +71,16 @@
 
 import type fs from 'node:fs';
 
-/** Retry for up to 60 seconds before giving up. */
+// Retry for up to 60 seconds before giving up.
 const RETRY_TIMEOUT_MS = 60_000;
 
-/** Exponential backoff multiplier between retries. */
+// Exponential backoff multiplier between retries.
 const RETRY_BACKOFF_MULTIPLIER = 1.2;
 
-/** Minimum delay between retries. */
+// Minimum delay between retries.
 const RETRY_MIN_BACKOFF_MS = 10;
 
-/** Maximum delay between retries. */
+// Maximum delay between retries.
 const RETRY_MAX_BACKOFF_MS = 100;
 
 const TRANSIENT_ERRNO_CODES = new Set([
@@ -159,11 +159,11 @@ type AsyncFsMethod = (...args: unknown[]) => Promise<unknown>;
 type FsResultCallback = (err: NodeJS.ErrnoException | null, ...args: unknown[]) => void;
 
 interface RetryOptions {
-  /** Stop after this many attempts (default: retry for up to `RETRY_TIMEOUT_MS`). */
+  // Stop after this many attempts (default: retry for up to `RETRY_TIMEOUT_MS`).
   readonly maxAttempts?: number;
-  /** Add exponential backoff between retries (for non-queue sync blocking retries). */
+  // Add exponential backoff between retries (for non-queue sync blocking retries).
   readonly backoff?: boolean;
-  /** Use the shared retry queue instead of an immediate inline retry. */
+  // Use the shared retry queue instead of an immediate inline retry.
   readonly useQueue?: boolean;
 }
 
@@ -447,9 +447,7 @@ export default {
       maxAttempts: 10,
     }) as typeof fs.writeSync;
 
-    /*
-     * Everything below this did not exist in `graceful-fs` v4.2.11!
-     */
+    /* * Everything below this did not exist in `graceful-fs` v4.2.11! */
 
     fsToPatch.access = wrapCallbackMethod(fsToPatch.access as FsMethod) as typeof fs.access;
     fsToPatch.accessSync = wrapSyncMethod(fsToPatch.accessSync as FsMethod);

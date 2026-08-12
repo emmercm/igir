@@ -122,7 +122,7 @@ async function candidateWriter(
       readerSemaphore,
     ).scan(Object.values(ChecksumBitmask).reduce((accum: number, bitmask) => accum | bitmask, 0));
   } catch {
-    /* ignored */
+    // ignored
   }
   const romFilesWithHeaders = await new ROMHeaderProcessor(
     options,

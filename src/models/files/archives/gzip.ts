@@ -59,7 +59,7 @@ export default class Gzip extends Archive {
     try {
       return await new Tar(this.getFilePath()).getArchiveEntries(checksumBitmask, callback);
     } catch {
-      /* ignored */
+      // ignored
     }
 
     const gzipHeaderTrailer = await this.getHeaderTrailerInfo();
@@ -183,7 +183,7 @@ export default class Gzip extends Archive {
       try {
         await pipelinePromise;
       } catch {
-        /* ignored */
+        // ignored
       }
       throw error;
     }
