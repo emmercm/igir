@@ -28,12 +28,12 @@ export default class ZstdThreadedCompressTransform extends stream.Transform {
     // Set up cleanup handlers
     this.on('error', () => {
       this.cleanup(() => {
-        /* ignored */
+        // ignored
       });
     });
     this.on('close', () => {
       this.cleanup(() => {
-        /* ignored */
+        // ignored
       });
     });
   }

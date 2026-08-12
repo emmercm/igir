@@ -75,7 +75,7 @@ export default class ZlibCompressTransform extends stream.Transform {
     try {
       this.finalizeDeflater();
     } catch {
-      /* ignored */
+      // ignored
     }
   }
 

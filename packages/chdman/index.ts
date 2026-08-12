@@ -110,7 +110,7 @@ const binding = ((): ChdmanBinding => {
       `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
     ) as ChdmanBinding;
   } catch {
-    /* ignored */
+    // ignored
   }
   return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
 })();

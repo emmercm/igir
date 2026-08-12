@@ -40,7 +40,7 @@ for (let napiPackage of [
     await fs.promises.stat('dist');
     napiPackage = path.join('dist', napiPackage);
   } catch {
-    /* ignored */
+    // ignored
   }
 
   // Do nothing if `node-gyp-build` can find a prebuild or a full build
@@ -49,7 +49,7 @@ for (let napiPackage of [
     nodeGypBuild(addonDirectory);
     continue;
   } catch {
-    /* ignored */
+    // ignored
   }
 
   process.stdout.write(`\n${napiPackage}: building from source ...\n\n`);

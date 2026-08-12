@@ -234,6 +234,7 @@ export default eslintConfig.defineConfig([
       'unicorn/prefer-switch': 'off',
       'unicorn/prefer-ternary': 'off',
       'unicorn/prefer-type-error': 'off',
+      'unicorn/single-line-block-comment-style': ['error', 'single-line'],
       // Overly broad rules with too many false positives 😡
       'unicorn/no-unsafe-string-replacement': 'off', // doesn't curly braces in regex search
       'unicorn/prefer-await': 'off', // doesn't check if the call site is in an async context
@@ -299,11 +300,11 @@ export default eslintConfig.defineConfig([
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          /*** @ESLint/js defaults ***/
+          // ***** @ESLint/js defaults *****
           vars: 'all',
           caughtErrors: 'all',
           reportUsedIgnorePattern: false,
-          /*** Overrides ***/
+          // ***** Overrides *****
           args: 'all',
           argsIgnorePattern: '^_',
           // Allow the use of destructuring to remove keys from an object

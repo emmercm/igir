@@ -175,7 +175,7 @@ const zstd = ((): ZstdBinding => {
       `./addon-zstd-1.5.5/prebuilds/${os.platform()}-${os.arch()}/node.node`,
     ) as ZstdBinding;
   } catch {
-    /* ignored */
+    // ignored
   }
   return require('./addon-zstd-1.5.5/build/Release/binding.node') as ZstdBinding;
 })();
