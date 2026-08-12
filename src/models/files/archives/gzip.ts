@@ -128,7 +128,7 @@ export default class Gzip extends Archive {
       }
 
       const trailer = await file.readAt(file.getSize() - 8, 8);
-      const crc32 = trailer.readUInt32LE().toString(16).toLowerCase();
+      const crc32 = trailer.readUInt32LE().toString(16).toLowerCase().padStart(8, '0');
       const size = trailer.readUInt32LE(4);
 
       return { fname, crc32, size };

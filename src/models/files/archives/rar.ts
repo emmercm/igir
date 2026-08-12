@@ -97,7 +97,7 @@ export default class Rar extends Archive {
       fileHeaders,
       Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
       async (fileHeader: FileHeader): Promise<ArchiveEntry<this>> => {
-        const fileHeaderCrc32 = fileHeader.crc.toString(16);
+        const fileHeaderCrc32 = fileHeader.crc.toString(16).toLowerCase().padStart(8, '0');
 
         // Calculate checksums from the file's bytes if needed
         let checksums: ChecksumProps = {};
