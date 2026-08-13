@@ -35,7 +35,7 @@ export default class MovedROMDeleter extends Module {
   async delete(
     indexedRoms: IndexedFiles,
     movedWriteCandidates: WriteCandidate[],
-    writtenFilesToExclude: File[],
+    writtenFilePathsToExclude: string[],
   ): Promise<string[]> {
     if (!this.options.shouldMove()) {
       // We shouldn't cause any change to the output directory
@@ -107,7 +107,7 @@ export default class MovedROMDeleter extends Module {
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
-      writtenFilesToExclude,
+      writtenFilePathsToExclude,
     );
     this.prefixedLogger.trace(
       `filtered to ${IntlUtil.toLocaleString(filePathsToDelete.length)} non-output files`,
@@ -244,9 +244,9 @@ export default class MovedROMDeleter extends Module {
    */
   private static filterOutWrittenFiles(
     movedRoms: string[],
-    writtenFilesToExclude: File[],
+    writtenFilePathsToExclude: string[],
   ): string[] {
-    const writtenFilePaths = new Set(writtenFilesToExclude.map((file) => file.getFilePath()));
+    const writtenFilePaths = new Set(writtenFilePathsToExclude);
 
     return movedRoms.filter((filePath) => !writtenFilePaths.has(filePath));
   }

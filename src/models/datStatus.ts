@@ -6,7 +6,6 @@ import ArrayUtil from '../utils/arrayUtil.js';
 import IntlUtil from '../utils/intlUtil.js';
 import type DAT from './dats/dat.js';
 import type Game from './dats/game.js';
-import type File from './files/file.js';
 import type Options from './options.js';
 import type WriteCandidate from './writeCandidate.js';
 
@@ -40,23 +39,69 @@ const GameStatusInverted = Object.fromEntries(
 ) as Record<GameStatusValue, GameStatusKey>;
 
 /**
+ * The subset of a {@link WriteCandidate} that {@link DATStatus} needs to remember. Holding onto
+ * this instead of the {@link WriteCandidate} lets the candidate—and everything it references, such
+ * as its {@link Game} and its input and output {@link File}s—be garbage collected as soon as the
+ * DAT has been processed.
+ */
+interface CandidateSummary {
+  readonly isPatched: boolean;
+  readonly romsWithFilesCount: number;
+  readonly inputFilePaths: string[];
+  readonly inputFileHashCodes: string[];
+  readonly outputFilePaths: string[];
+}
+
+/**
+ * The subset of a {@link Game} that {@link DATStatus} needs to remember. See
+ * {@link CandidateSummary} for why the {@link Game} itself isn't retained.
+ */
+interface GameSummary {
+  readonly name: string;
+  readonly romCount: number;
+  readonly diskCount: number;
+  readonly isBios: boolean;
+  readonly isDevice: boolean;
+  readonly isRetail: boolean;
+  readonly isUnlicensed: boolean;
+  readonly isDebug: boolean;
+  readonly isDemo: boolean;
+  readonly isBeta: boolean;
+  readonly isSample: boolean;
+  readonly isPrototype: boolean;
+  readonly isProgram: boolean;
+  readonly isAftermarket: boolean;
+  readonly isHomebrew: boolean;
+  readonly isBad: boolean;
+}
+
+/**
+ * One {@link Game} in a {@link DAT}, plus the {@link WriteCandidate} that was generated for it (if
+ * any). Patched candidates get their own entry, marked with {@link isPatchedEntry}.
+ */
+interface GameEntry {
+  readonly game: GameSummary;
+  readonly candidate?: CandidateSummary;
+  readonly isFound: boolean;
+  readonly isIncomplete: boolean;
+  readonly isPatchedEntry: boolean;
+}
+
+/**
  * Parse and hold information about every {@link Game} in a {@link DAT}, as well as which
  * {@link Game}s were found (had a {@link WriteCandidate} created for it).
+ *
+ * One of these is retained for every DAT processed, for the entire life of the run, so it
+ * deliberately holds only plain summaries of the games and candidates rather than the objects
+ * themselves.
  */
 export default class DATStatus {
-  private readonly dat: DAT;
+  private readonly datName: string;
 
-  private readonly allRomTypesToGames = new Map<ROMTypeValue, Game[]>();
-
-  private readonly foundRomTypesToCandidates = new Map<
-    ROMTypeValue,
-    (WriteCandidate | undefined)[]
-  >();
-
-  private readonly incompleteRomTypesToCandidates = new Map<ROMTypeValue, WriteCandidate[]>();
+  private readonly entries: GameEntry[] = [];
 
   constructor(options: Options, dat: DAT, candidates: WriteCandidate[]) {
-    this.dat = dat;
+    this.datName = dat.getName();
 
     const indexedCandidates = candidates.reduce((map, candidate) => {
       const key = candidate.getGame().hashCode();
@@ -70,22 +115,35 @@ export default class DATStatus {
 
     // Un-patched ROMs
     for (const game of dat.getGames()) {
-      DATStatus.pushValueIntoMap(this.allRomTypesToGames, game, game);
+      const gameSummary = DATStatus.summarizeGame(game);
 
-      const expectedCount = DATStatus.getExpectedFileCount(game, options);
+      const expectedCount = DATStatus.getExpectedFileCount(gameSummary, options);
       const gameCandidates = indexedCandidates.get(game.hashCode());
-      if (gameCandidates !== undefined || expectedCount === 0) {
-        const gameCandidate = gameCandidates?.at(0);
-
-        if (gameCandidate && gameCandidate.getRomsWithFiles().length !== expectedCount) {
-          // The found ReleaseCandidate is incomplete
-          DATStatus.pushValueIntoMap(this.incompleteRomTypesToCandidates, game, gameCandidate);
-          continue;
-        }
-
-        // The found ReleaseCandidate is complete
-        DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
+      if (gameCandidates === undefined && expectedCount !== 0) {
+        // The Game is missing
+        this.entries.push({
+          game: gameSummary,
+          isFound: false,
+          isIncomplete: false,
+          isPatchedEntry: false,
+        });
+        continue;
       }
+
+      const gameCandidate = gameCandidates?.at(0);
+      const candidateSummary =
+        gameCandidate === undefined ? undefined : DATStatus.summarizeCandidate(gameCandidate);
+
+      // The found ReleaseCandidate may be incomplete
+      const isIncomplete =
+        candidateSummary !== undefined && candidateSummary.romsWithFilesCount !== expectedCount;
+      this.entries.push({
+        game: gameSummary,
+        candidate: candidateSummary,
+        isFound: !isIncomplete,
+        isIncomplete,
+        isPatchedEntry: false,
+      });
     }
 
     // Patched ROMs
@@ -93,10 +151,52 @@ export default class DATStatus {
       if (!candidate.isPatched()) {
         continue;
       }
-      const game = candidate.getGame();
-      DATStatus.append(this.allRomTypesToGames, ROMType.PATCHED, game);
-      DATStatus.append(this.foundRomTypesToCandidates, ROMType.PATCHED, candidate);
+      this.entries.push({
+        game: DATStatus.summarizeGame(candidate.getGame()),
+        candidate: DATStatus.summarizeCandidate(candidate),
+        isFound: true,
+        isIncomplete: false,
+        isPatchedEntry: true,
+      });
     }
+  }
+
+  private static summarizeGame(game: Game): GameSummary {
+    return {
+      name: game.getName(),
+      romCount: game.getRoms().length,
+      diskCount: game.getDisks().length,
+      isBios: game.getIsBios(),
+      isDevice: game.getIsDevice(),
+      isRetail: game.isRetail(),
+      isUnlicensed: game.isUnlicensed(),
+      isDebug: game.isDebug(),
+      isDemo: game.isDemo(),
+      isBeta: game.isBeta(),
+      isSample: game.isSample(),
+      isPrototype: game.isPrototype(),
+      isProgram: game.isProgram(),
+      isAftermarket: game.isAftermarket(),
+      isHomebrew: game.isHomebrew(),
+      isBad: game.isBad(),
+    };
+  }
+
+  private static summarizeCandidate(candidate: WriteCandidate): CandidateSummary {
+    const romsWithFiles = candidate.getRomsWithFiles();
+    return {
+      isPatched: candidate.isPatched(),
+      romsWithFilesCount: romsWithFiles.length,
+      inputFilePaths: romsWithFiles.map((romWithFiles) =>
+        romWithFiles.getInputFile().getFilePath(),
+      ),
+      inputFileHashCodes: romsWithFiles.map((romWithFiles) =>
+        romWithFiles.getInputFile().hashCode(),
+      ),
+      outputFilePaths: romsWithFiles.map((romWithFiles) =>
+        romWithFiles.getOutputFile().getFilePath(),
+      ),
+    };
   }
 
   /**
@@ -104,53 +204,67 @@ export default class DATStatus {
    * {@link Game} to be considered FOUND, taking into account options that exclude
    * certain file types (e.g. `--exclude-disks`).
    */
-  private static getExpectedFileCount(game: Game, options: Options): number {
-    return game.getRoms().length + (options.getExcludeDisks() ? 0 : game.getDisks().length);
+  private static getExpectedFileCount(game: GameSummary, options: Options): number {
+    return game.romCount + (options.getExcludeDisks() ? 0 : game.diskCount);
   }
 
-  private static pushValueIntoMap<T>(map: Map<ROMTypeValue, T[]>, game: Game, value: T): void {
-    this.append(map, ROMType.GAME, value);
-    if (game.getIsBios()) {
-      this.append(map, ROMType.BIOS, value);
+  private static entryHasType(entry: GameEntry, romType: ROMTypeValue): boolean {
+    if (entry.isPatchedEntry) {
+      return romType === ROMType.PATCHED;
     }
-    if (game.getIsDevice()) {
-      this.append(map, ROMType.DEVICE, value);
-    }
-    if (game.isRetail()) {
-      this.append(map, ROMType.RETAIL, value);
-    }
-  }
-
-  private static append<T>(map: Map<ROMTypeValue, T[]>, romType: ROMTypeValue, value: T): void {
-    if (map.has(romType)) {
-      map.get(romType)?.push(value);
-    } else {
-      map.set(romType, [value]);
+    switch (romType) {
+      case ROMType.GAME: {
+        return true;
+      }
+      case ROMType.BIOS: {
+        return entry.game.isBios;
+      }
+      case ROMType.DEVICE: {
+        return entry.game.isDevice;
+      }
+      case ROMType.RETAIL: {
+        return entry.game.isRetail;
+      }
+      case ROMType.PATCHED: {
+        return false;
+      }
     }
   }
 
   getDATName(): string {
-    return this.dat.getName();
+    return this.datName;
   }
 
-  getInputFiles(): File[] {
-    return [
-      ...this.foundRomTypesToCandidates.values(),
-      ...this.incompleteRomTypesToCandidates.values(),
-    ]
-      .flat()
-      .flatMap((candidate) => (candidate === undefined ? [] : candidate.getRomsWithFiles()))
-      .map((romWithFiles) => romWithFiles.getInputFile());
+  /**
+   * Return the path of every input {@link File} that was matched to a {@link Game}.
+   */
+  getInputFilePaths(): string[] {
+    return this.matchedCandidates().flatMap((candidate) => candidate.inputFilePaths);
+  }
+
+  /**
+   * Return the hash code of every input {@link File} that was matched to a {@link Game}.
+   */
+  getInputFileHashCodes(): string[] {
+    return this.matchedCandidates().flatMap((candidate) => candidate.inputFileHashCodes);
+  }
+
+  private matchedCandidates(): CandidateSummary[] {
+    return this.entries
+      .filter((entry) => entry.isFound || entry.isIncomplete)
+      .map((entry) => entry.candidate)
+      .filter((candidate) => candidate !== undefined);
   }
 
   /**
    * If any {@link Game} in the entire {@link DAT} was found in the input files.
    */
   anyGamesFound(options: Options): boolean {
-    return DATStatus.getAllowedTypes(options).reduce((result, romType) => {
-      const foundCandidates = this.foundRomTypesToCandidates.get(romType)?.length ?? 0;
-      return result || foundCandidates > 0;
-    }, false);
+    const allowedTypes = DATStatus.getAllowedTypes(options);
+    return this.entries.some(
+      (entry) =>
+        entry.isFound && allowedTypes.some((romType) => DATStatus.entryHasType(entry, romType)),
+    );
   }
 
   /**
@@ -158,18 +272,17 @@ export default class DATStatus {
    */
   toConsole(options: Options): string {
     return `${DATStatus.getAllowedTypes(options)
-      .filter((type) => {
-        const games = this.allRomTypesToGames.get(type);
-        return games !== undefined && games.length > 0;
-      })
       .map((type) => {
-        const found = this.foundRomTypesToCandidates.get(type) ?? [];
+        const typeEntries = this.entries.filter((entry) => DATStatus.entryHasType(entry, type));
+        if (typeEntries.length === 0) {
+          return '';
+        }
+        const foundCount = typeEntries.filter((entry) => entry.isFound).length;
         if (!options.usingDats()) {
-          return `${IntlUtil.toLocaleString(found.length)} ${type}`;
+          return `${IntlUtil.toLocaleString(foundCount)} ${type}`;
         }
 
-        const all = this.allRomTypesToGames.get(type) ?? [];
-        const percentage = (found.length / all.length) * 100;
+        const percentage = (foundCount / typeEntries.length) * 100;
         let color: ChalkInstance;
         if (percentage >= 100) {
           color = chalk.rgb(0, 166, 0); // macOS terminal green
@@ -187,10 +300,10 @@ export default class DATStatus {
 
         // Patched ROMs are always found===all
         if (type === ROMType.PATCHED) {
-          return `${color(IntlUtil.toLocaleString(all.length))} ${type}`;
+          return `${color(IntlUtil.toLocaleString(typeEntries.length))} ${type}`;
         }
 
-        return `${color(IntlUtil.toLocaleString(found.length))}/${IntlUtil.toLocaleString(all.length)} ${type}`;
+        return `${color(IntlUtil.toLocaleString(foundCount))}/${IntlUtil.toLocaleString(typeEntries.length)} ${type}`;
       })
       .filter((string_) => string_.length > 0)
       .join(', ')} ${options.shouldWrite() ? 'written' : 'found'}`;
@@ -200,64 +313,49 @@ export default class DATStatus {
    * Return the file contents of a CSV with status information for every {@link Game}.
    */
   async toCsv(options: Options): Promise<string> {
-    const foundCandidates = DATStatus.getValuesForAllowedTypes(
-      options,
-      this.foundRomTypesToCandidates,
-    );
+    const allowedTypes = DATStatus.getAllowedTypes(options);
 
-    const incompleteCandidates = DATStatus.getValuesForAllowedTypes(
-      options,
-      this.incompleteRomTypesToCandidates,
-    );
-
-    const rows = DATStatus.getValuesForAllowedTypes(options, this.allRomTypesToGames)
-      .reduce(ArrayUtil.reduceUnique(), [])
-      .toSorted((a, b) => a.getName().localeCompare(b.getName()))
-      .map((game) => {
+    const rows = this.entries
+      .filter((entry) => allowedTypes.some((romType) => DATStatus.entryHasType(entry, romType)))
+      .toSorted((a, b) => a.game.name.localeCompare(b.game.name))
+      .map((entry) => {
         let status: GameStatusValue = GameStatus.MISSING;
-
-        const incompleteCandidate = incompleteCandidates.find((candidate) =>
-          candidate.getGame().equals(game),
-        );
-        if (incompleteCandidate) {
+        if (entry.isIncomplete) {
           status = GameStatus.INCOMPLETE;
         }
-
-        const foundCandidate = foundCandidates.find((candidate) =>
-          candidate?.getGame().equals(game),
-        );
-        if (foundCandidate !== undefined || DATStatus.getExpectedFileCount(game, options) === 0) {
+        if (
+          (entry.isFound && entry.candidate !== undefined) ||
+          DATStatus.getExpectedFileCount(entry.game, options) === 0
+        ) {
           status = GameStatus.FOUND;
         }
 
-        const filePaths = [
-          ...(incompleteCandidate ? incompleteCandidate.getRomsWithFiles() : []),
-          ...(foundCandidate ? foundCandidate.getRomsWithFiles() : []),
-        ]
-          .map((romWithFiles) =>
-            options.shouldWrite() ? romWithFiles.getOutputFile() : romWithFiles.getInputFile(),
-          )
-          .map((file) => file.getFilePath())
-          .reduce(ArrayUtil.reduceUnique(), []);
+        const filePaths = (
+          entry.candidate === undefined
+            ? []
+            : options.shouldWrite()
+              ? entry.candidate.outputFilePaths
+              : entry.candidate.inputFilePaths
+        ).reduce(ArrayUtil.reduceUnique(), []);
 
         return DATStatus.buildCsvRow(
           this.getDATName(),
-          game.getName(),
+          entry.game.name,
           status,
           filePaths,
-          foundCandidate?.isPatched() ?? false,
-          game.getIsBios(),
-          game.isRetail(),
-          game.isUnlicensed(),
-          game.isDebug(),
-          game.isDemo(),
-          game.isBeta(),
-          game.isSample(),
-          game.isPrototype(),
-          game.isProgram(),
-          game.isAftermarket(),
-          game.isHomebrew(),
-          game.isBad(),
+          entry.candidate?.isPatched ?? false,
+          entry.game.isBios,
+          entry.game.isRetail,
+          entry.game.isUnlicensed,
+          entry.game.isDebug,
+          entry.game.isDemo,
+          entry.game.isBeta,
+          entry.game.isSample,
+          entry.game.isPrototype,
+          entry.game.isProgram,
+          entry.game.isAftermarket,
+          entry.game.isHomebrew,
+          entry.game.isBad,
         );
       });
     return await writeToString(rows, {
@@ -330,20 +428,6 @@ export default class DATStatus {
       String(isHomebrew),
       String(isBad),
     ];
-  }
-
-  private static getValuesForAllowedTypes<T>(
-    options: Options,
-    romTypesToValues: Map<ROMTypeValue, T[]>,
-  ): T[] {
-    return (
-      this.getAllowedTypes(options)
-        .flatMap((type) => romTypesToValues.get(type))
-        .filter((value) => value !== undefined)
-        .reduce(ArrayUtil.reduceUnique(), [])
-        // eslint-disable-next-line unicorn/require-array-sort-compare
-        .toSorted()
-    );
   }
 
   private static getAllowedTypes(options: Options): ROMTypeValue[] {

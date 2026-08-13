@@ -517,7 +517,7 @@ it("should not delete files that weren't moved", async () => {
     const deletedPaths = await new MovedROMDeleter(options, new ProgressBarFake()).delete(
       IndexedFiles.fromFiles([inputFile]),
       [movedWriteCandidate],
-      [inputFile],
+      [inputFile.getFilePath()],
     );
 
     // Then - the file should NOT have been deleted because it's a written output

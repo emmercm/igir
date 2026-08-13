@@ -53,12 +53,10 @@ export default class ReportGenerator extends Module {
       });
 
     const usedFilePaths = new Set(
-      datStatuses
-        .flatMap((datStatus) => datStatus.getInputFiles())
-        .map((file) => file.getFilePath()),
+      datStatuses.flatMap((datStatus) => datStatus.getInputFilePaths()),
     );
     const usedHashes = new Set(
-      datStatuses.flatMap((datStatus) => datStatus.getInputFiles()).map((file) => file.hashCode()),
+      datStatuses.flatMap((datStatus) => datStatus.getInputFileHashCodes()),
     );
 
     const duplicateFilePaths = scannedRomFiles

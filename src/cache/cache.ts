@@ -291,6 +291,24 @@ export default class Cache<V> {
     return this;
   }
 
+  /**
+   * Decompress a gzipped file, returning the number of decompressed bytes without buffering them.
+   */
+  private static async gunzippedByteLength(filePath: string): Promise<number> {
+    let byteLength = 0;
+    await stream.promises.pipeline(
+      fs.createReadStream(filePath),
+      zlib.createGunzip(),
+      new stream.Writable({
+        write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
+          byteLength += chunk.length;
+          cb();
+        },
+      }),
+    );
+    return byteLength;
+  }
+
   private saveWithTimeout(): void {
     this.hasChanged = true;
     if (
@@ -326,8 +344,6 @@ export default class Cache<V> {
           return;
         }
 
-        const keyValuesObject = Object.fromEntries(this.keyValues);
-        const json = JSON.stringify(keyValuesObject);
         // Reset before I/O so mid-save changes re-set the flag
         this.hasChanged = false;
 
@@ -340,15 +356,34 @@ export default class Cache<V> {
         // Write to a temp file first
         const tempFile = await FsUtil.mktemp(this.filePath);
         try {
+          // NOTE(cemmer): the JSON is generated one entry at a time rather than with a single
+          //  JSON.stringify() of the entire cache. Large collections can produce hundreds of
+          //  megabytes of JSON, and materializing all of it (plus an Object copy of the Map, plus
+          //  a Buffer copy of the string) can push an already-large heap over its limit. It also
+          //  means the cache can grow past the ~512MiB maximum string length.
+          let uncompressedBytes = 0;
           await stream.promises.pipeline(
-            stream.Readable.from([Buffer.from(json, 'utf8')]),
+            stream.Readable.from(
+              (function* (keyValues): Generator<string> {
+                let isFirst = true;
+                yield '{';
+                for (const [key, value] of keyValues) {
+                  const entry = `${isFirst ? '' : ','}${JSON.stringify(key)}:${JSON.stringify(value)}`;
+                  uncompressedBytes += Buffer.byteLength(entry, 'utf8');
+                  isFirst = false;
+                  yield entry;
+                }
+                yield '}';
+              })(this.keyValues),
+            ),
             zlib.createGzip(),
             fs.createWriteStream(tempFile),
           );
+          uncompressedBytes += 2; // the enclosing braces
 
-          // Validate the file was written correctly
-          const tempFileCache = await new Cache({ filePath: tempFile }).load();
-          if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
+          // Validate the file was written correctly. Decompressing verifies the gzip stream's
+          // checksum, and the byte count verifies it wasn't truncated.
+          if ((await Cache.gunzippedByteLength(tempFile)) !== uncompressedBytes) {
             // The written file is bad, don't use it
             await FsUtil.rm(tempFile, { force: true });
             this.hasChanged = true;

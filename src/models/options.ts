@@ -16,7 +16,6 @@ import FsUtil, { FsWalkCallback, WalkMode, WalkModeValue } from '../utils/fsUtil
 import URLUtil from '../utils/urlUtil.js';
 import Disk from './dats/disk.js';
 import ROM from './dats/rom.js';
-import File from './files/file.js';
 import {
   ChecksumBitmask,
   ChecksumBitmaskKey,
@@ -1196,11 +1195,11 @@ export default class Options implements OptionsProps {
    */
   async scanOutputFilesWithoutCleanExclusions(
     outputDirs: string[],
-    writtenFiles: File[],
+    writtenFilePaths: string[],
     walkCallback?: FsWalkCallback,
   ): Promise<string[]> {
     // Written files that shouldn't be cleaned
-    const writtenFilesNormalized = new Set(writtenFiles.map((file) => file.getFilePath()));
+    const writtenFilesNormalized = new Set(writtenFilePaths);
 
     // Files excluded from cleaning
     const cleanExcludedFilesNormalized = new Set(await this.scanCleanExcludeFiles());
