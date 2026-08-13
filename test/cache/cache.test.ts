@@ -241,6 +241,92 @@ describe('save', () => {
       await FsUtil.rm(tempFile, { force: true });
     }
   });
+
+  it('should save a cache of one key', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const cache = new Cache<number>({ filePath: tempFile });
+    await cache.set('only', 1);
+    await cache.save();
+
+    try {
+      const loaded = await new Cache<number>({ filePath: tempFile }).load();
+      expect(loaded.size()).toEqual(1);
+      await expect(loaded.get('only')).resolves.toEqual(1);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should save a cache that had every key deleted', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const cache = new Cache<number>({ filePath: tempFile });
+    await cache.set('key', 1);
+    await cache.delete('key');
+    await cache.save();
+
+    try {
+      // The file has to have been written, otherwise loading it would trivially be empty
+      await expect(FsUtil.exists(tempFile)).resolves.toEqual(true);
+
+      const loaded = await new Cache<number>({ filePath: tempFile }).load();
+      expect(loaded.size()).toEqual(0);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should round-trip keys and values that need JSON escaping', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const keyValues = new Map<string, { value: string }>([
+      ['quotes"and\\backslashes', { value: 'a "quoted" \\ value' }],
+      ['new\nlines\tand\ttabs', { value: 'line one\nline two' }],
+      ['unicode: 🕹 マリオ', { value: 'émulation 🎮' }],
+      ['comma,and:colon', { value: '{"not":"json"}' }],
+    ]);
+
+    const cache = new Cache<{ value: string }>({ filePath: tempFile });
+    for (const [key, value] of keyValues) {
+      await cache.set(key, value);
+    }
+    await cache.save();
+
+    try {
+      const loaded = await new Cache<{ value: string }>({ filePath: tempFile }).load();
+      expect(loaded.size()).toEqual(keyValues.size);
+      for (const [key, value] of keyValues) {
+        await expect(loaded.get(key)).resolves.toEqual(value);
+      }
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should overwrite a previously saved cache', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const cache = new Cache<number>({ filePath: tempFile });
+    for (let i = 0; i < TEST_CACHE_SIZE; i += 1) {
+      await cache.set(String(i), i);
+    }
+    await cache.save();
+
+    await cache.delete(/^[0-9]$/);
+    await cache.set('added', -1);
+    await cache.save();
+
+    try {
+      const loaded = await new Cache<number>({ filePath: tempFile }).load();
+      expect(loaded.size()).toEqual(TEST_CACHE_SIZE - 10 + 1);
+      await expect(loaded.get('0')).resolves.toBeUndefined();
+      await expect(loaded.get('added')).resolves.toEqual(-1);
+      await expect(loaded.get(String(TEST_CACHE_SIZE - 1))).resolves.toEqual(TEST_CACHE_SIZE - 1);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
 });
 
 describe('getOrComputeAllKeys', () => {
