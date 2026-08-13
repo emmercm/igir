@@ -356,30 +356,39 @@ export default class Cache<V> {
         // Write to a temp file first
         const tempFile = await FsUtil.mktemp(this.filePath);
         try {
-          // NOTE(cemmer): the JSON is generated one entry at a time rather than with a single
-          //  JSON.stringify() of the entire cache. Large collections can produce hundreds of
-          //  megabytes of JSON, and materializing all of it (plus an Object copy of the Map, plus
-          //  a Buffer copy of the string) can push an already-large heap over its limit. It also
-          //  means the cache can grow past the ~512MiB maximum string length.
+          // The JSON is generated one entry at a time rather than with a single JSON.stringify()
+          // of the entire cache. Large collections can produce hundreds of megabytes of JSON, and
+          // materializing all of it (plus an Object copy of the Map, plus a Buffer copy of the
+          // string) can push an already-large heap over its limit. It also means the cache can
+          // grow past the ~512MiB maximum string length.
           let uncompressedBytes = 0;
+          const countedChunk = (chunk: string): string => {
+            uncompressedBytes += Buffer.byteLength(chunk, 'utf8');
+            return chunk;
+          };
           await stream.promises.pipeline(
             stream.Readable.from(
               (function* (keyValues): Generator<string> {
                 let isFirst = true;
-                yield '{';
+                yield countedChunk('{');
                 for (const [key, value] of keyValues) {
-                  const entry = `${isFirst ? '' : ','}${JSON.stringify(key)}:${JSON.stringify(value)}`;
-                  uncompressedBytes += Buffer.byteLength(entry, 'utf8');
+                  // JSON.stringify() is typed as returning a string, but it returns undefined for
+                  // undefined and non-serializable values
+                  const valueJson = JSON.stringify(value) as string | undefined;
+                  if (valueJson === undefined) {
+                    // JSON.stringify() of an object omits keys with undefined values, and emitting
+                    // "key":undefined here would produce a file that can't be parsed back
+                    continue;
+                  }
+                  yield countedChunk(`${isFirst ? '' : ','}${JSON.stringify(key)}:${valueJson}`);
                   isFirst = false;
-                  yield entry;
                 }
-                yield '}';
+                yield countedChunk('}');
               })(this.keyValues),
             ),
             zlib.createGzip(),
             fs.createWriteStream(tempFile),
           );
-          uncompressedBytes += 2; // the enclosing braces
 
           // Validate the file was written correctly. Decompressing verifies the gzip stream's
           // checksum, and the byte count verifies it wasn't truncated.

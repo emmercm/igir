@@ -277,6 +277,26 @@ describe('save', () => {
     }
   });
 
+  it('should omit undefined values, like JSON.stringify() does', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const cache = new Cache<number | undefined>({ filePath: tempFile });
+    await cache.set('defined', 1);
+    await cache.set('undefined', undefined);
+    await cache.set('alsoDefined', 2);
+    await cache.save();
+
+    try {
+      // The file has to be parseable, and the undefined value simply absent
+      const loaded = await new Cache<number | undefined>({ filePath: tempFile }).load();
+      expect(loaded.keys()).toEqual(new Set(['defined', 'alsoDefined']));
+      await expect(loaded.get('defined')).resolves.toEqual(1);
+      await expect(loaded.get('alsoDefined')).resolves.toEqual(2);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
   it('should round-trip keys and values that need JSON escaping', async () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
 

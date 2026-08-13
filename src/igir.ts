@@ -163,10 +163,9 @@ export default class Igir {
       datProcessProgressBar.delete();
     }
 
-    // NOTE(cemmer): these accumulate for every DAT processed and are only released when this
-    //  method returns, so they intentionally hold file paths rather than {@link File}s—retaining
-    //  the objects would keep every candidate, game, and archive of every DAT alive for the
-    //  entire run.
+    // These accumulate for every DAT processed and are only released when this method returns,
+    // so they intentionally hold file paths rather than {@link File}s—retaining the objects would
+    // keep every candidate, game, and archive of every DAT alive for the entire run.
     const movedCandidates: WriteCandidate[] = [];
     const writtenOutputFilePaths = new Set<string>();
     const filePathsToExcludeFromCleaning = new Set<string>();
