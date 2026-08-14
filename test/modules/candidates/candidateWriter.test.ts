@@ -2,6 +2,7 @@ import type { Stats } from 'node:fs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 import async from 'async';
 
@@ -100,6 +101,7 @@ async function candidateWriter(
   inputGlob: string,
   patchGlob: string | undefined,
   outputTemp: string,
+  writerFileCache: FileCache = new FileCache(),
 ): Promise<CandidateWriterResults> {
   const options = new Options({
     ...optionsProps,
@@ -185,10 +187,23 @@ async function candidateWriter(
   return await new CandidateWriter(
     options,
     new ProgressBarFake(),
-    new FileFactory(new FileCache()),
+    new FileFactory(writerFileCache),
     writerSemaphore,
     new FileMoveMutex(),
   ).write(dat, candidates);
+}
+
+/**
+ * Save {@link fileCache} to a temp file and return the keys it persisted.
+ */
+async function savedCacheKeys(fileCache: FileCache, cacheFilePath: string): Promise<string[]> {
+  await fileCache.save();
+  if (!(await FsUtil.exists(cacheFilePath))) {
+    // Nothing was cached, so nothing was saved
+    return [];
+  }
+  const gunzipped = zlib.gunzipSync(await FsUtil.readFile(cacheFilePath));
+  return Object.keys(JSON.parse(gunzipped.toString('utf8')) as Record<string, unknown>);
 }
 
 it('should not do anything if there are no candidates', async () => {
@@ -2137,6 +2152,85 @@ describe('link', () => {
         await expect(FsUtil.exists(outputPathResolved)).resolves.toEqual(true);
         expect(outputPathResolved.startsWith(inputTemp)).toEqual(true);
       }
+    });
+  });
+});
+
+describe('file cache', () => {
+  test.each([['copy'], ['move']])(
+    'should cache the checksums of raw written files: %s',
+    async (command) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Given
+        const options = new Options({ commands: [command] });
+        const fileCache = new FileCache();
+        const cacheFilePath = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+        await fileCache.loadFile(cacheFilePath);
+
+        // When
+        await candidateWriter(options, inputTemp, 'raw/*', undefined, outputTemp, fileCache);
+
+        // Then every written file's checksums were cached, so they won't need to be recalculated
+        const outputFiles = await walkAndStat(outputTemp);
+        expect(outputFiles.length).toBeGreaterThan(0);
+        const cacheKeys = await savedCacheKeys(fileCache, cacheFilePath);
+        for (const [outputFile] of outputFiles) {
+          const outputFilePath = path.resolve(outputTemp, outputFile);
+          expect(cacheKeys.some((key) => key.includes(`|${outputFilePath}|`))).toEqual(true);
+        }
+      });
+    },
+  );
+
+  test.each([['copy'], ['move']])(
+    'should cache the entries of written zips: %s',
+    async (command) => {
+      await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+        // Given
+        const options = new Options({ commands: [command, 'zip'] });
+        const fileCache = new FileCache();
+        const cacheFilePath = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+        await fileCache.loadFile(cacheFilePath);
+
+        // When
+        await candidateWriter(options, inputTemp, 'raw/*', undefined, outputTemp, fileCache);
+
+        // Then every written zip's entries were cached, so they won't need to be re-read
+        const outputFiles = await walkAndStat(outputTemp);
+        expect(outputFiles.length).toBeGreaterThan(0);
+        const cacheKeys = await savedCacheKeys(fileCache, cacheFilePath);
+        for (const [outputFile] of outputFiles) {
+          const outputFilePath = path.resolve(outputTemp, outputFile);
+          expect(cacheKeys.some((key) => key.includes(`|${outputFilePath}|Zip|`))).toEqual(true);
+        }
+      });
+    },
+  );
+
+  it('should not cache the checksums of files that had their header removed', async () => {
+    await copyFixturesToTemp(async (inputTemp, outputTemp) => {
+      // Given
+      const options = new Options({ commands: ['copy'], removeHeaders: [''] });
+      const fileCache = new FileCache();
+      const cacheFilePath = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+      await fileCache.loadFile(cacheFilePath);
+
+      // When
+      await candidateWriter(
+        options,
+        inputTemp,
+        'headered/allpads.nes',
+        undefined,
+        outputTemp,
+        fileCache,
+      );
+
+      // Then the written file's checksums differ from the input's, so they weren't cached
+      const outputFiles = await walkAndStat(outputTemp);
+      expect(outputFiles).toHaveLength(1);
+      const cacheKeys = await savedCacheKeys(fileCache, cacheFilePath);
+      const outputFilePath = path.resolve(outputTemp, outputFiles[0][0]);
+      expect(cacheKeys.some((key) => key.includes(`|${outputFilePath}|`))).toEqual(false);
     });
   });
 });

@@ -193,6 +193,49 @@ export default class FileCache {
     return await File.fileOfObject(filePath, cachedFile);
   }
 
+  /**
+   * Cache the already-known checksums of a file that was just written, so that subsequent runs
+   * don't need to read the file again to compute them.
+   *
+   * The caller is responsible for ensuring that {@link file} describes the bytes that were
+   * actually written to {@link filePath}, i.e. that the file wasn't transformed while being
+   * written.
+   */
+  async setFileChecksums(filePath: string, file: File): Promise<void> {
+    if (
+      file.getCrc32() === undefined &&
+      file.getMd5() === undefined &&
+      file.getSha1() === undefined &&
+      file.getSha256() === undefined
+    ) {
+      // We don't know any checksums, there's nothing worth caching
+      return;
+    }
+
+    const stats = await FsUtil.stat(filePath);
+    if (stats.size !== file.getSize()) {
+      // The file on disk isn't what we expected to write, don't cache incorrect checksums
+      this.prefixedLogger.trace(
+        `${filePath}: not caching checksums, real size ${stats.size} !== expected size ${file.getSize()}`,
+      );
+      return;
+    }
+
+    this.prefixedLogger.trace(`${filePath}: caching checksums of written file`);
+    await this.cache.set(this.getCacheKey(filePath, undefined, ValueType.FILE_CHECKSUMS), {
+      fileSize: stats.size,
+      modifiedTimeSec: stats.mtimeS,
+      value: {
+        filePath,
+        size: stats.size,
+        crc32: file.getCrc32(),
+        md5: file.getMd5(),
+        sha1: file.getSha1(),
+        sha256: file.getSha256(),
+      } satisfies FileProps,
+    });
+  }
+
   async getOrComputeArchiveChecksums<T extends Archive>(
     archive: T,
     checksumBitmask: number,
@@ -285,6 +328,43 @@ export default class FileCache {
     const cachedEntries = cachedValue.value as ArchiveEntryProps<T>[];
     return await Promise.all(
       cachedEntries.map(async (props) => await ArchiveEntry.entryOfObject(archive, props)),
+    );
+  }
+
+  /**
+   * Cache the already-known entries of an archive that was just written, so that subsequent runs
+   * don't need to decompress the archive again to compute them.
+   *
+   * The caller is responsible for ensuring that {@link entries} describes every entry that was
+   * actually written to {@link archive}.
+   */
+  async setArchiveChecksums<T extends Archive>(
+    archive: T,
+    entries: ArchiveEntry<T>[],
+  ): Promise<void> {
+    if (entries.length === 0) {
+      // Zero entries are treated as a cache miss, don't bother caching them
+      return;
+    }
+
+    const stats = await FsUtil.stat(archive.getFilePath());
+    if (stats.size === 0) {
+      // An empty file can't have entries
+      return;
+    }
+
+    this.prefixedLogger.trace(`${archive.getFilePath()}: caching entries of written archive`);
+    await this.cache.set(
+      this.getCacheKey(
+        archive.getFilePath(),
+        archive.constructor.name,
+        ValueType.ARCHIVE_CHECKSUMS,
+      ),
+      {
+        fileSize: stats.size,
+        modifiedTimeSec: stats.mtimeS,
+        value: entries.map((entry) => entry.toEntryProps()),
+      },
     );
   }
 

@@ -341,6 +341,25 @@ export default class FileFactory {
   }
 
   /**
+   * Cache the already-known checksums of a file that was just written to {@link filePath}, so
+   * that subsequent runs don't need to read the file again to compute them.
+   */
+  async cacheFileChecksums(filePath: string, file: File): Promise<void> {
+    await this.fileCache.setFileChecksums(filePath, file);
+  }
+
+  /**
+   * Cache the already-known entries of an archive that was just written, so that subsequent runs
+   * don't need to decompress the archive again to compute them.
+   */
+  async cacheArchiveChecksums<T extends Archive>(
+    archive: T,
+    entries: ArchiveEntry<T>[],
+  ): Promise<void> {
+    await this.fileCache.setArchiveChecksums(archive, entries);
+  }
+
+  /**
    * Return the TorrentZip validation result for a zip file, indicating whether its structure
    * conforms to the TorrentZip specification.
    */

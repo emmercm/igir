@@ -159,6 +159,18 @@ export default class CandidateWriter extends Module {
   }
 
   /**
+   * Returns true if the file's contents will be modified while it's being written, meaning the
+   * input file's checksums won't describe the bytes that end up in the output file.
+   */
+  private static isTransformedWhenWritten(inputRomFile: File): boolean {
+    return (
+      inputRomFile.getFileHeader() !== undefined ||
+      inputRomFile.getPatch() !== undefined ||
+      inputRomFile.getPaddings().length > 0
+    );
+  }
+
+  /**
    ***********************
    *
    *     Zip Writing     *
@@ -289,12 +301,46 @@ export default class CandidateWriter extends Module {
       }
 
       if (wasWritten) {
+        await this.cacheWrittenZip(dat, candidate, outputZip, inputToOutputZipEntries);
         for (const [inputRomFile] of inputToOutputZipEntries) {
           this.enqueueFileDeletion(candidate, inputRomFile);
         }
       }
     } finally {
       childBar.delete();
+    }
+  }
+
+  /**
+   * Cache the entries of a zip that was just written. We already know the checksums of every
+   * entry we wrote, so subsequent runs don't need to decompress the zip to know them.
+   */
+  private async cacheWrittenZip(
+    dat: DAT,
+    candidate: WriteCandidate,
+    outputZip: Zip,
+    inputToOutputZipEntries: [File, ArchiveEntry<Zip>][],
+  ): Promise<void> {
+    if (
+      inputToOutputZipEntries.some(([inputRomFile]) =>
+        CandidateWriter.isTransformedWhenWritten(inputRomFile),
+      )
+    ) {
+      // At least one entry's contents were modified while being written, we don't know the
+      // output's checksums
+      return;
+    }
+
+    try {
+      await this.fileFactory.cacheArchiveChecksums(
+        outputZip,
+        inputToOutputZipEntries.map(([, outputEntry]) => outputEntry),
+      );
+    } catch (error) {
+      // Caching is only an optimization, a failure here shouldn't fail the write
+      this.prefixedLogger.trace(
+        `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: failed to cache written zip's entries: ${error}`,
+      );
     }
   }
 
@@ -667,10 +713,37 @@ export default class CandidateWriter extends Module {
       }
 
       if (written) {
+        await this.cacheWrittenRaw(dat, candidate, inputRomFile, outputFilePath);
         this.enqueueFileDeletion(candidate, inputRomFile);
       }
     } finally {
       childBar.delete();
+    }
+  }
+
+  /**
+   * Cache the checksums of a raw file that was just written. Moving and copying files doesn't
+   * change their contents, so the input file's checksums are also the output file's checksums,
+   * and subsequent runs don't need to re-read the output file to know them.
+   */
+  private async cacheWrittenRaw(
+    dat: DAT,
+    candidate: WriteCandidate,
+    inputRomFile: File,
+    outputFilePath: string,
+  ): Promise<void> {
+    if (CandidateWriter.isTransformedWhenWritten(inputRomFile)) {
+      // The file's contents were modified while being written, we don't know the output's checksums
+      return;
+    }
+
+    try {
+      await this.fileFactory.cacheFileChecksums(outputFilePath, inputRomFile);
+    } catch (error) {
+      // Caching is only an optimization, a failure here shouldn't fail the write
+      this.prefixedLogger.trace(
+        `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: failed to cache written file's checksums: ${error}`,
+      );
     }
   }
 

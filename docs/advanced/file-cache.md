@@ -14,6 +14,21 @@ Igir caches the following file operations:
 
 The results are stored using the file's absolute path. Igir stores and checks if the file's size or modified timestamp has changed since the cached result was calculated, and if there's a mismatch, will recalculate the file operation.
 
+## Files that Igir writes
+
+Because results are stored by file path, a file that Igir [copies](../commands.md#copy) or [moves](../commands.md#move) to a new location wouldn't have a cached result at its new path, and would need to be read again on the next run.
+
+To avoid this, Igir caches what it already knows about every file it writes:
+
+- When copying or moving files, the output file has the same contents as the input file, so the input file's checksums are cached for the output file's path
+- When [writing zip files](../output/writing-archives.md), Igir already knows the checksums of every entry it wrote, so they're cached for the output zip's path
+
+This means a subsequent run that uses the output directory as an input directory won't need to re-read those files.
+
+Igir won't cache results for files whose contents it changed while writing them, because the input file's checksums no longer describe the output file. That includes [removing headers](../roms/headers.md), [applying patches](../roms/patching.md), and [restoring padding](../roms/trim-detection.md) to trimmed ROMs.
+
+Cached results for written files are only as trustworthy as the write that produced them. Use the [`test` command](../commands.md#test) if you want Igir to verify what it wrote before trusting it.
+
 ## File format
 
 The cache is a gzipped JSON file. You can explore the contents of it with commands such as:
