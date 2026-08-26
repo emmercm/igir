@@ -33,7 +33,7 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       release_id: ${{ steps.release-drafter.outputs.id }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
@@ -72,7 +72,7 @@ jobs:
       # Create/update the draft release
       - if: steps.check.outputs.changed == 'true'
         id: release-drafter
-        uses: release-drafter/release-drafter@eada3c96a64734dd381cfbda23511034e328ddb0 # v7.6.0
+        uses: release-drafter/release-drafter@34d80673e067bdc0c24568d3af899c216adcfaa9 # v7.7.0
         with:
           name: v${{ steps.check.outputs.version }}
           tag: v${{ steps.check.outputs.version }}
