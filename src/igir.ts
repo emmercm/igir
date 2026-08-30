@@ -507,7 +507,9 @@ export default class Igir {
     }
     return dats.some(
       (dat) =>
-        dat.isMame() &&
+        // MAME DATs catalog CHDs (and other files with archive-like extensions) by the checksums
+        // in their headers, not the checksums of their contents
+        !dat.isMame() &&
         dat.getGames().some((game) =>
           game.getRoms().some((rom) => {
             const isArchive = FileFactory.isExtensionArchive(rom.getName());
@@ -541,7 +543,7 @@ export default class Igir {
       readerSemaphore,
     ).scan(checksumBitmask, shouldChecksumArchives);
 
-    if (dats.some((dat) => !dat.isMame())) {
+    if (this.options.getInputChecksumQuick() && dats.some((dat) => !dat.isMame())) {
       const chds = rawRomFiles
         .filter((file) => file instanceof ArchiveEntry)
         .map((file) => file.getArchive())

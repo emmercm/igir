@@ -50,7 +50,7 @@ test('should not be MAME when no source DAT is MAME', () => {
   expect(combinedDat.isMame()).toEqual(false);
 });
 
-test('should be MAME when any source DAT is MAME', () => {
+test('should not be MAME when only some source DATs are MAME', () => {
   const dats: DAT[] = [
     new LogiqxDAT({
       header: new Header({ name: 'Logiqx' }),
@@ -62,11 +62,38 @@ test('should be MAME when any source DAT is MAME', () => {
   ];
   const combinedDat = new DATCombiner(new ProgressBarFake()).combine(dats);
 
-  expect(combinedDat.isMame()).toEqual(true);
+  expect(combinedDat.isMame()).toEqual(false);
   expect(
     combinedDat
       .getGames()
       .map((game) => game.getName())
       .toSorted((a, b) => a.localeCompare(b)),
   ).toEqual(['Logiqx Game', 'MAME Machine']);
+});
+
+test('should be MAME when every source DAT is MAME', () => {
+  const dats: DAT[] = [
+    new MameDAT({
+      machine: [new Game({ name: 'MAME Machine One' })],
+    }),
+    new MameDAT({
+      machine: [new Game({ name: 'MAME Machine Two' })],
+    }),
+  ];
+  const combinedDat = new DATCombiner(new ProgressBarFake()).combine(dats);
+
+  expect(combinedDat.isMame()).toEqual(true);
+  expect(
+    combinedDat
+      .getGames()
+      .map((game) => game.getName())
+      .toSorted((a, b) => a.localeCompare(b)),
+  ).toEqual(['MAME Machine One', 'MAME Machine Two']);
+});
+
+test('should not be MAME when there are no source DATs', () => {
+  const combinedDat = new DATCombiner(new ProgressBarFake()).combine([]);
+
+  expect(combinedDat.isMame()).toEqual(false);
+  expect(combinedDat.getGames()).toHaveLength(0);
 });

@@ -26,8 +26,9 @@ export default class DATCombiner extends Module {
       .filter(ArrayUtil.filterUniqueMapped((game) => game.hashCode()));
 
     // Preserve MAME provenance so that consumers relying on {@link DAT.isMame} (e.g. raw archive
-    // checksumming decisions) continue to treat the combined DAT as MAME-derived
-    const isMame = dats.some((dat) => dat.isMame());
+    // checksumming decisions) continue to treat the combined DAT as MAME-derived. Every source DAT
+    // has to be MAME, otherwise the non-MAME games would be treated with MAME assumptions.
+    const isMame = dats.length > 0 && dats.every((dat) => dat.isMame());
 
     const newDat = new LogiqxDAT({
       header: DATCombiner.generateHeader(dats),
