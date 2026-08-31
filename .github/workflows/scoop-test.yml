@@ -51,7 +51,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
-      - uses: ScoopInstaller/GithubActions@37a17b993c5ae4ae44fdc47379eb67010c800323 # 2.0.0
+      - uses: ScoopInstaller/GithubActions@5bceeda181721d9d10a18fdcc3ddca6f33467ae6 # v3.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
           THROW_ERROR: '1'
