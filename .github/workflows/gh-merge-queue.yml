@@ -45,6 +45,7 @@ jobs:
       - run: |
           set -x
           pr_search="sort:created-asc"
+          max_failing_checks=5
 
           # Wait for the merge state status to be updated
           while true; do
@@ -77,6 +78,15 @@ jobs:
 
           while IFS=$'\t' read -r number mergeable head_ref base_ref head_repo; do
             [[ -z "${number}" ]] && continue
+
+            # If a PR is failing many checks, then assume an update won't fix that;
+            #   move on to another PR with a higher chance of auto-merging
+            failing_checks="$(gh pr checks "${number}" --json bucket --jq '[.[] | select(.bucket=="fail")] | length' 2>/dev/null || true)"
+            [[ -z "${failing_checks}" ]] && failing_checks=0
+            if [[ "${failing_checks}" -gt "${max_failing_checks}" ]]; then
+              echo "PR #${number} has ${failing_checks} failing checks (more than ${max_failing_checks}), skipping"
+              continue
+            fi
 
             if [[ "${mergeable}" == "MERGEABLE" ]]; then
               echo "Updating PR #${number}"
