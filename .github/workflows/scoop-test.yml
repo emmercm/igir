@@ -69,6 +69,7 @@ jobs:
           {
             echo '## Scoop manifest formatting'
             echo ''
+            # shellcheck disable=SC2016,SC2028
             echo 'Run `scoop\apps\scoop\current\bin\formatjson.ps1 -Dir .\bucket` and commit the result:'
             echo ''
             echo '```diff'
