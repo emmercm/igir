@@ -34,7 +34,7 @@ jobs:
           filters: |
             should-test:
               - '.github/workflows/scoop-test.yml'
-              - 'bucket/**'
+              - 'bucket/*.json'
 
   # The manifest validation is architecture-agnostic, so only run it once
   scoop-validate:
@@ -51,10 +51,37 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
-      - uses: ScoopInstaller/GithubActions@37a17b993c5ae4ae44fdc47379eb67010c800323 # 2.0.0
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          THROW_ERROR: '1'
+
+      # Lint the bucket manifest(s)
+      - shell: pwsh
+        run: |
+          Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' -OutFile install.ps1
+          .\install.ps1 -RunAsAdmin
+          $env:PATH = "$env:USERPROFILE\scoop\shims;$env:PATH"
+
+          & "$env:USERPROFILE\scoop\apps\scoop\current\bin\formatjson.ps1" -Dir .\bucket
+      - shell: bash
+        run: |
+          if git diff --exit-code -- bucket/; then
+            exit 0
+          fi
+          {
+            echo '## Scoop manifest formatting'
+            echo ''
+            # shellcheck disable=SC2016,SC2028
+            echo 'Run `scoop\apps\scoop\current\bin\formatjson.ps1 -Dir .\bucket` and commit the result:'
+            echo ''
+            echo '```diff'
+            git diff --no-color -- bucket/
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "::error::Scoop manifests aren't formatted, see the job summary for the expected changes"
+          exit 1
+
+      # Gate on event name because otherwise the action will push on anything other than pull_request, issue_comment, and issues
+      - if: ${{ github.event_name == 'pull_request' }}
+        uses: ScoopInstaller/GithubActions@5bceeda181721d9d10a18fdcc3ddca6f33467ae6 # v3.0.0
 
   scoop-test:
     name: scoop-test (${{ matrix.os }})
