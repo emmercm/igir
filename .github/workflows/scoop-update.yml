@@ -78,7 +78,7 @@ jobs:
           ARM64_HASH="$(sha256sum "${TMP}/igir-${VERSION}-Windows-arm64.zip" | cut -d' ' -f1)"
 
           BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
-          jq \
+          jq --indent 4 \
             --arg version "${VERSION}" \
             --arg x64_url "${BASE}/igir-${VERSION}-Windows-x64.zip" \
             --arg x64_hash "${X64_HASH}" \
