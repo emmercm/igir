@@ -544,6 +544,16 @@ export default class File implements FileProps {
             return;
           }
 
+          if (res.statusCode === undefined || res.statusCode < 200 || res.statusCode >= 300) {
+            reject(
+              new IgirException(
+                `HTTP ${res.statusCode ?? '?'}${res.statusMessage === undefined || res.statusMessage === '' ? '' : ` ${res.statusMessage}`}`,
+              ),
+            );
+            res.destroy();
+            return;
+          }
+
           const writeStream = fs.createWriteStream(filePath);
           res.pipe(writeStream);
           writeStream.on('error', reject);
