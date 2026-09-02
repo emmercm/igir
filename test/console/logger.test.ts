@@ -96,6 +96,37 @@ describe('setLogFile', () => {
     }
   });
 
+  it('should not write blank lines within multi-line messages to the file', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    try {
+      const spy = new LoggerSpy(LogLevel.INFO);
+      spy.getLogger().openLogFile(tempFile);
+      spy.getLogger().info('first line\n\nsecond line\n');
+      const contents = (await fs.promises.readFile(tempFile)).toString();
+      expect(contents.split('\n').filter((line) => !line.trim())).toEqual(['']);
+      expect(contents).toContain('first line');
+      expect(contents).toContain('second line');
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should not write blank lines separating frozen progress bars to the file', async () => {
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
+    try {
+      const spy = new LoggerSpy(LogLevel.INFO);
+      spy.getLogger().openLogFile(tempFile);
+      spy.getLogger().printFrozenBar('frozen bar');
+      spy.getLogger().info('following message');
+      const contents = (await fs.promises.readFile(tempFile)).toString();
+      expect(contents.split('\n').filter((line) => !line.trim())).toEqual(['']);
+      expect(contents).toContain('frozen bar');
+      expect(contents).toContain('following message');
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
   it('should include timestamp and level prefix in file output', async () => {
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'logger'));
     try {

@@ -945,6 +945,56 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         }
       });
     });
+
+    it('should prefer the archive with every ROM for games that also have disks', async () => {
+      // Given two games that share a BIOS ROM, where only the second game has a disk, and where
+      // the first game's archive sorts alphabetically before the second's
+      const biosRom = new ROM({ name: 'bios.bin', size: 10, crc32: '11111111' });
+      const gameWithoutDisk = new Game({
+        name: 'aaa',
+        roms: [biosRom, new ROM({ name: 'aaa.bin', size: 30, crc32: 'aaaaaaaa' })],
+      });
+      const gameWithDisk = new Game({
+        name: 'zzz',
+        roms: [biosRom, new ROM({ name: 'zzz.bin', size: 40, crc32: 'bbbbbbbb' })],
+        disks: [new Disk({ name: 'zzz', sha1: '0'.repeat(40) })],
+      });
+      const dat = new LogiqxDAT({
+        header: new Header(),
+        games: [gameWithoutDisk, gameWithDisk],
+      });
+
+      // And every game's ROMs are in its own archive, with the disk alongside
+      const archiveWithoutDisk = new Zip('aaa.zip');
+      const archiveWithDisk = new Zip('zzz.zip');
+      const files = [
+        ...(await Promise.all(
+          gameWithoutDisk
+            .getRoms()
+            .map(async (rom) => await rom.toArchiveEntry(archiveWithoutDisk)),
+        )),
+        ...(await Promise.all(
+          gameWithDisk.getRoms().map(async (rom) => await rom.toArchiveEntry(archiveWithDisk)),
+        )),
+        await gameWithDisk.getDisks()[0].toFile(),
+      ];
+
+      // When
+      const candidates = await candidateGenerator(options, dat, files);
+
+      // Then the game with a disk isn't starved of its own archive by the game without one
+      expect(candidates.map((candidate) => candidate.getGame().getName())).toEqual(['aaa', 'zzz']);
+      const candidateWithDisk = candidates[1];
+      expect(candidateWithDisk.getRomsWithFiles()).toHaveLength(3);
+      for (const romWithFiles of candidateWithDisk.getRomsWithFiles()) {
+        const inputFile = romWithFiles.getInputFile();
+        expect(inputFile.getFilePath()).toEqual(
+          romWithFiles.getRom() instanceof Disk
+            ? path.resolve('zzz')
+            : archiveWithDisk.getFilePath(),
+        );
+      }
+    });
   });
 
   it('should group disc-merged games by their original game name', async () => {
