@@ -26,7 +26,11 @@ import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileCh
 import ROMHeader from '../../../src/models/files/romHeader.js';
 import ROMPadding from '../../../src/models/files/romPadding.js';
 import IndexedFiles from '../../../src/models/indexedFiles.js';
-import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/models/options.js';
+import Options, {
+  GameSubdirMode,
+  GameSubdirModeInverted,
+  ZipFormat,
+} from '../../../src/models/options.js';
 import type WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
@@ -1478,6 +1482,59 @@ describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
       expect(outputFile.getSize()).toEqual(paddedFileContents.length);
       expect(outputFile.getCrc32()).toEqual(paddedChecksums.crc32);
       expect(outputFile.getCrc32WithoutHeader()).toEqual(paddedChecksums.crc32);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('zip writing', () => {
+  const options = new Options({ commands: ['copy', 'zip'] });
+
+  it('should not raw-write an input zip that has excess entries', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      // Given a TorrentZip that holds every ROM a game wants, plus one it doesn't
+      const zip = new Zip(path.join(tempDir, 'Excess.zip'));
+      await zip.createArchive(
+        await Promise.all(
+          ['Three.rom', 'Four.rom', 'Five.rom'].map(
+            async (entryPath): Promise<[File, ArchiveEntry<Zip>]> => [
+              await File.fileOf({
+                filePath: path.join('test', 'fixtures', 'roms', 'raw', entryPath.toLowerCase()),
+              }),
+              await ArchiveEntry.entryOf({ archive: zip, entryPath }),
+            ],
+          ),
+        ),
+        ZipFormat.TORRENTZIP,
+        1,
+      );
+      const files = await new FileFactory(new FileCache()).filesFrom(zip.getFilePath());
+      const dat = new LogiqxDAT({
+        header: new Header(),
+        games: [
+          new Game({
+            name: 'Excess',
+            roms: [
+              new ROM({ name: 'Three.rom', size: 6, crc32: 'ff46c5d8' }),
+              new ROM({ name: 'Four.rom', size: 5, crc32: '1cf3ca74' }),
+            ],
+          }),
+        ],
+      });
+
+      // When
+      const candidates = await candidateGenerator(options, dat, files);
+
+      // Then the zip has to be rebuilt from the entries that were matched; writing it as-is would
+      // carry its excess 'Five.rom' entry into the output
+      expect(candidates).toHaveLength(1);
+      const romsWithFiles = candidates[0].getRomsWithFiles();
+      expect(romsWithFiles).toHaveLength(2);
+      for (const romWithFiles of romsWithFiles) {
+        expect(romWithFiles.getInputFile()).toBeInstanceOf(ArchiveEntry);
+      }
     } finally {
       await FsUtil.rm(tempDir, { recursive: true, force: true });
     }

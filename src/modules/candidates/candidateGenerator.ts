@@ -182,6 +182,7 @@ export default class CandidateGenerator extends Module {
       dat,
       game,
       foundRomsWithFiles,
+      indexedFiles,
     );
     if (foundRomsWithArchiveFiles.length < foundRomsWithFiles.length) {
       // Some input files were filtered out; it is expected that a message has already been logged
@@ -697,6 +698,7 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     game: Game,
     romsWithFiles: ROMWithFiles[],
+    indexedFiles: IndexedFiles,
   ): Promise<string | undefined> {
     // TODO(cemmer): this is an issue when raw-writing at the same time, it causes extraction
     if (this.options.shouldDir2Dat()) {
@@ -772,6 +774,11 @@ export default class CandidateGenerator extends Module {
       }
     }
 
+    if (this.hasExcessFiles(dat, game, romsWithFiles, indexedFiles)) {
+      // The existing archive can't have excess files, or they have to be explicitly allowed
+      return 'input archive has excess entries';
+    }
+
     if (
       romsWithFiles.length > 1 &&
       romsWithFiles
@@ -828,6 +835,7 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     game: Game,
     foundRomsWithFiles: ROMWithFiles[],
+    indexedFiles: IndexedFiles,
   ): Promise<ROMWithFiles[]> {
     if (foundRomsWithFiles.length === 0) {
       // There aren't any ROMs
@@ -840,6 +848,7 @@ export default class CandidateGenerator extends Module {
       dat,
       game,
       foundRomsWithFiles,
+      indexedFiles,
     );
     return (
       await Promise.all(
