@@ -162,6 +162,20 @@ describe('getOutputDirRoot', () => {
   });
 });
 
+describe('hasOutput', () => {
+  it('should be true when an output dir is given', () => {
+    expect(new Options({ commands: ['report'], output: 'out' }).hasOutput()).toEqual(true);
+  });
+
+  it('should be true for writing commands', () => {
+    expect(new Options({ commands: ['copy'], output: 'out' }).hasOutput()).toEqual(true);
+  });
+
+  it('should be false when no output dir is given', () => {
+    expect(new Options({ commands: ['report'] }).hasOutput()).toEqual(false);
+  });
+});
+
 describe('canRemoveHeader', () => {
   test.each(['.a78', '.lnx', '.nes', '.fds', '.smc'])(
     'should not remove header when option not provided: %s',

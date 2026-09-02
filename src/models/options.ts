@@ -1097,6 +1097,13 @@ export default class Options implements OptionsProps {
   }
 
   /**
+   * Was an output directory explicitly provided?
+   */
+  hasOutput(): boolean {
+    return this.output !== undefined;
+  }
+
+  /**
    * Get the "root" sub-path of the output dir, the sub-path up until the first replaceable token.
    */
   getOutputDirRoot(): string {

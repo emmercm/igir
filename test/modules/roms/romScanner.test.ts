@@ -500,6 +500,42 @@ describe('output directory scanning', () => {
     },
   );
 
+  it('should not scan the temp directory that non-writing commands default the output dir to', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      const inputDir = path.join(tempDir, 'input');
+      await FsUtil.mkdir(inputDir);
+
+      await FsUtil.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'fizzbuzz.nes'),
+        path.join(inputDir, 'fizzbuzz.nes'),
+      );
+      // A file igir itself put in the temp dir, such as a DAT downloaded from a URL
+      const downloadedDatPath = path.join(Temp.getTempDir(), 'downloaded.dat');
+      await FsUtil.copyFile(
+        path.join('test', 'fixtures', 'roms', 'raw', 'loremipsum.rom'),
+        downloadedDatPath,
+      );
+
+      try {
+        const files = await new ROMScanner(
+          // No output dir, so it defaults to the temp dir
+          new Options({ input: [inputDir], commands: ['report'] }),
+          new ProgressBarFake(),
+          new FileFactory(new FileCache()),
+          new MappableSemaphore(os.availableParallelism()),
+        ).scan();
+
+        expect(files.map((file) => file.getFilePath())).not.toContain(downloadedDatPath);
+        expect(files.every((file) => file.getCanBeCandidateInput())).toBe(true);
+      } finally {
+        await FsUtil.rm(downloadedDatPath, { force: true });
+      }
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true });
+    }
+  });
+
   it('should not add output files that are already in the input paths', async () => {
     const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
     try {

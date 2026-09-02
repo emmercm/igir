@@ -44,9 +44,8 @@ export default class ROMScanner extends Scanner {
     // Depending on some commands, we may want to scan the output directory
     const outputFilePathsSet = new Set<string>();
     if (
-      this.options.shouldPlaylist() ||
-      this.options.shouldClean() ||
-      this.options.shouldReport()
+      this.options.hasOutput() &&
+      (this.options.shouldPlaylist() || this.options.shouldClean() || this.options.shouldReport())
     ) {
       const inputFilePathsSet = new Set(inputFilePaths);
       const outputFilePaths = await this.options.scanOutputFilesWithoutCleanExclusions(
