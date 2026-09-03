@@ -45,12 +45,26 @@ jobs:
       - run: go install github.com/rhysd/actionlint/cmd/actionlint@latest
       - run: actionlint
 
+  zizmor:
+    permissions:
+      security-events: write # zizmorcore/zizmor-action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
+        with:
+          advanced-security: false
+          min-severity: medium
+
   # !!! This check should be required by GitHub !!!
   linter-status-check:
     needs:
       - renovate-lint
       - shellcheck
       - actionlint
+      - zizmor
     if: always()
     permissions: {}
     runs-on: ubuntu-latest
