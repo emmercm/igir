@@ -63,10 +63,8 @@ jobs:
           fi
           echo "$(echo "${candidate_prs}" | wc -l | awk '{print $1}') candidate PRs found"
 
-          # Attribute merge commits to the owner of `PERSONAL_ACCESS_TOKEN`, who is who pushes them
-          IFS=$'\t' read -r token_id token_login token_name < <(gh api user --jq '[.id, .login, (.name // .login)] | @tsv')
-          git config user.name "${token_name}"
-          git config user.email "${token_id}+${token_login}@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           while IFS=$'\t' read -r number head_ref base_ref head_repo; do
             [[ -z "${number}" ]] && continue
