@@ -43,7 +43,6 @@ jobs:
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
-          set -x
           pr_search="sort:created-asc"
           max_failing_checks=5
 
@@ -94,12 +93,12 @@ jobs:
               continue
             fi
 
-            if git merge --no-commit --no-ff "origin/${base_ref}"; then
-              # Let GitHub perform the update, so that the merge commit is attributed the same way
-              #   as the "Update branch" button, and so that forks without push access still work
-              git merge --abort
-              echo "PR #${number} is behind and merges cleanly, updating"
-              gh pr update-branch "${number}" && break
+            if git merge --no-edit "origin/${base_ref}"; then
+              echo "PR #${number} is behind and merges cleanly, pushing"
+              git push "${head_remote}" "HEAD:${head_ref}" && break
+              # Fall back to GitHub performing the update, e.g. for forks we can't push to
+              echo "Failed to push PR #${number}, asking GitHub to update the branch instead"
+              gh api --method PUT "repos/{owner}/{repo}/pulls/${number}/update-branch" && break
               continue
             fi
 
