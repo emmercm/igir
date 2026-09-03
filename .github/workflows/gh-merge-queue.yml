@@ -63,8 +63,10 @@ jobs:
           fi
           echo "$(echo "${candidate_prs}" | wc -l | awk '{print $1}') candidate PRs found"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Attribute merge commits to the owner of `PERSONAL_ACCESS_TOKEN`, who is who pushes them
+          IFS=$'\t' read -r token_id token_login token_name < <(gh api user --jq '[.id, .login, (.name // .login)] | @tsv')
+          git config user.name "${token_name}"
+          git config user.email "${token_id}+${token_login}@users.noreply.github.com"
 
           while IFS=$'\t' read -r number head_ref base_ref head_repo; do
             [[ -z "${number}" ]] && continue
@@ -84,21 +86,25 @@ jobs:
             #   `origin` for same-repo PRs). The base branch always lives in `origin`.
             head_remote="https://github.com/${head_repo}.git"
             echo "Test merging PR #${number} (${head_repo}:${head_ref} <- ${base_ref})"
-            git fetch origin "${base_ref}"
-            git fetch "${head_remote}" "${head_ref}"
-            git checkout -B "pr-${number}" FETCH_HEAD
+            git fetch --quiet origin "${base_ref}"
+            git fetch --quiet "${head_remote}" "${head_ref}"
+            git checkout --quiet -B "pr-${number}" FETCH_HEAD
 
             if git merge-base --is-ancestor "origin/${base_ref}" HEAD; then
               echo "PR #${number} is already up-to-date with '${base_ref}', skipping"
               continue
             fi
 
-            if git merge --no-edit "origin/${base_ref}"; then
+            # Match the commit message that GitHub's own "Update branch" button produces, rather
+            #   than one that mentions the local branch name above
+            merge_message="Merge branch '${base_ref}' into ${head_ref}"
+
+            if git merge --quiet --message "${merge_message}" "origin/${base_ref}"; then
               echo "PR #${number} is behind and merges cleanly, pushing"
-              git push "${head_remote}" "HEAD:${head_ref}" && break
+              git push --quiet "${head_remote}" "HEAD:${head_ref}" && break
               # Fall back to GitHub performing the update, e.g. for forks we can't push to
               echo "Failed to push PR #${number}, asking GitHub to update the branch instead"
-              gh api --method PUT "repos/{owner}/{repo}/pulls/${number}/update-branch" && break
+              gh api --silent --method PUT "repos/{owner}/{repo}/pulls/${number}/update-branch" && break
               continue
             fi
 
@@ -124,8 +130,9 @@ jobs:
               git checkout --ours -- "${file}"
               git add -- "${file}"
             done <<< "${conflicted}"
-            git commit --no-edit
-            git push "${head_remote}" "HEAD:${head_ref}" && break
+            # `--cleanup=strip` to drop the '# Conflicts:' comments that the merge left behind
+            git commit --quiet --no-edit --cleanup=strip
+            git push --quiet "${head_remote}" "HEAD:${head_ref}" && break
           done <<< "${candidate_prs}"
         env:
           # GitHub won't run workflows off of code commits+pushes from the `${{github.token}}` token
