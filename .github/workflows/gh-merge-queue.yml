@@ -43,59 +43,62 @@ jobs:
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
-          set -x
           pr_search="sort:created-asc"
-
-          # Wait for the merge state status to be updated
-          while true; do
-            pr_list="$(gh pr list --search "${pr_search}" --json number,mergeable --jq '.[] | [.number, .mergeable] | @csv')"
-            # No PRs found, so none can be in an 'UNKNOWN' state
-            [[ "${pr_list}" == "" ]] && break
-            # At least one PR is not in an 'UNKNOWN' state
-            echo "${pr_list}" | grep -v "UNKNOWN" && break
-            echo "$(echo "${pr_list}" | wc -l | awk '{print $1}') PRs in an 'UNKNOWN' mergeable state, waiting ..."
-            sleep 5
-          done
+          max_failing_checks=5
 
           echo "PRs found:"
           gh pr list --search "${pr_search}" --json number,title,mergeable,mergeStateStatus,autoMergeRequest | jq
 
-          # Eligible: auto-merge, non-draft PRs that are either mergeable+BEHIND, or CONFLICTING
-          eligible_prs="$(gh pr list --search "${pr_search}" --json number,isDraft,mergeable,mergeStateStatus,autoMergeRequest,headRefName,baseRefName,headRepository --jq '
+          # Candidates: auto-merge, non-draft PRs. Whether a PR is behind its base branch, and
+          #   whether it conflicts with it, are both determined locally below - GitHub's
+          #   `mergeable` field can sit in an 'UNKNOWN' state indefinitely, which would make
+          #   those PRs invisible to a query-based filter.
+          candidate_prs="$(gh pr list --search "${pr_search}" --json number,isDraft,autoMergeRequest,headRefName,baseRefName,headRepository --jq '
             .[]
             | select(.isDraft==false and .autoMergeRequest!=null)
-            | select((.mergeable=="MERGEABLE" and .mergeStateStatus=="BEHIND") or .mergeable=="CONFLICTING")
-            | [.number, .mergeable, .headRefName, .baseRefName, .headRepository.nameWithOwner] | @tsv')"
-          if [[ "${eligible_prs}" == "" ]]; then
-            echo "No eligible PRs found"
+            | [.number, .headRefName, .baseRefName, .headRepository.nameWithOwner] | @tsv')"
+          if [[ "${candidate_prs}" == "" ]]; then
+            echo "No candidate PRs found"
             exit 0
           fi
-          echo "$(echo "${eligible_prs}" | wc -l | awk '{print $1}') eligible PRs found"
+          echo "$(echo "${candidate_prs}" | wc -l | awk '{print $1}') candidate PRs found"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          while IFS=$'\t' read -r number mergeable head_ref base_ref head_repo; do
+          while IFS=$'\t' read -r number head_ref base_ref head_repo; do
             [[ -z "${number}" ]] && continue
 
-            if [[ "${mergeable}" == "MERGEABLE" ]]; then
-              echo "Updating PR #${number}"
-              gh pr update-branch "${number}" && break
+            # If a PR is failing many checks, then assume an update won't fix that;
+            #   move on to another PR with a higher chance of auto-merging
+            failing_checks="$(gh pr checks "${number}" --json bucket --jq '[.[] | select(.bucket=="fail")] | length' 2>/dev/null || true)"
+            [[ -z "${failing_checks}" ]] && failing_checks=0
+            if [[ "${failing_checks}" -gt "${max_failing_checks}" ]]; then
+              echo "PR #${number} has ${failing_checks} failing checks (more than ${max_failing_checks}), skipping"
               continue
             fi
 
-            # CONFLICTING: attempt a local merge of the base branch into the PR branch.
+            # Merge the base branch into the PR branch locally, to find out both whether the PR is
+            #   behind and whether it conflicts.
             # The head branch may live in a fork, so fetch/push its own repository (which equals
             #   `origin` for same-repo PRs). The base branch always lives in `origin`.
             head_remote="https://github.com/${head_repo}.git"
-            echo "Attempting to resolve conflicts in PR #${number} (${head_repo}:${head_ref} <- ${base_ref})"
+            echo "Test merging PR #${number} (${head_repo}:${head_ref} <- ${base_ref})"
             git fetch origin "${base_ref}"
             git fetch "${head_remote}" "${head_ref}"
             git checkout -B "pr-${number}" FETCH_HEAD
 
+            if git merge-base --is-ancestor "origin/${base_ref}" HEAD; then
+              echo "PR #${number} is already up-to-date with '${base_ref}', skipping"
+              continue
+            fi
+
             if git merge --no-edit "origin/${base_ref}"; then
-              echo "PR #${number} merged cleanly, pushing"
+              echo "PR #${number} is behind and merges cleanly, pushing"
               git push "${head_remote}" "HEAD:${head_ref}" && break
+              # Fall back to GitHub performing the update, e.g. for forks we can't push to
+              echo "Failed to push PR #${number}, asking GitHub to update the branch instead"
+              gh api --method PUT "repos/{owner}/{repo}/pulls/${number}/update-branch" && break
               continue
             fi
 
@@ -123,7 +126,7 @@ jobs:
             done <<< "${conflicted}"
             git commit --no-edit
             git push "${head_remote}" "HEAD:${head_ref}" && break
-          done <<< "${eligible_prs}"
+          done <<< "${candidate_prs}"
         env:
           # GitHub won't run workflows off of code commits+pushes from the `${{github.token}}` token
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}

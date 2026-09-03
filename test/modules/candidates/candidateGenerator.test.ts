@@ -26,7 +26,11 @@ import FileChecksums, { ChecksumBitmask } from '../../../src/models/files/fileCh
 import ROMHeader from '../../../src/models/files/romHeader.js';
 import ROMPadding from '../../../src/models/files/romPadding.js';
 import IndexedFiles from '../../../src/models/indexedFiles.js';
-import Options, { GameSubdirMode, GameSubdirModeInverted } from '../../../src/models/options.js';
+import Options, {
+  GameSubdirMode,
+  GameSubdirModeInverted,
+  ZipFormat,
+} from '../../../src/models/options.js';
 import type WriteCandidate from '../../../src/models/writeCandidate.js';
 import CandidateGenerator from '../../../src/modules/candidates/candidateGenerator.js';
 import DATDiscMerger from '../../../src/modules/dats/datDiscMerger.js';
@@ -941,6 +945,56 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         }
       });
     });
+
+    it('should prefer the archive with every ROM for games that also have disks', async () => {
+      // Given two games that share a BIOS ROM, where only the second game has a disk, and where
+      // the first game's archive sorts alphabetically before the second's
+      const biosRom = new ROM({ name: 'bios.bin', size: 10, crc32: '11111111' });
+      const gameWithoutDisk = new Game({
+        name: 'aaa',
+        roms: [biosRom, new ROM({ name: 'aaa.bin', size: 30, crc32: 'aaaaaaaa' })],
+      });
+      const gameWithDisk = new Game({
+        name: 'zzz',
+        roms: [biosRom, new ROM({ name: 'zzz.bin', size: 40, crc32: 'bbbbbbbb' })],
+        disks: [new Disk({ name: 'zzz', sha1: '0'.repeat(40) })],
+      });
+      const dat = new LogiqxDAT({
+        header: new Header(),
+        games: [gameWithoutDisk, gameWithDisk],
+      });
+
+      // And every game's ROMs are in its own archive, with the disk alongside
+      const archiveWithoutDisk = new Zip('aaa.zip');
+      const archiveWithDisk = new Zip('zzz.zip');
+      const files = [
+        ...(await Promise.all(
+          gameWithoutDisk
+            .getRoms()
+            .map(async (rom) => await rom.toArchiveEntry(archiveWithoutDisk)),
+        )),
+        ...(await Promise.all(
+          gameWithDisk.getRoms().map(async (rom) => await rom.toArchiveEntry(archiveWithDisk)),
+        )),
+        await gameWithDisk.getDisks()[0].toFile(),
+      ];
+
+      // When
+      const candidates = await candidateGenerator(options, dat, files);
+
+      // Then the game with a disk isn't starved of its own archive by the game without one
+      expect(candidates.map((candidate) => candidate.getGame().getName())).toEqual(['aaa', 'zzz']);
+      const candidateWithDisk = candidates[1];
+      expect(candidateWithDisk.getRomsWithFiles()).toHaveLength(3);
+      for (const romWithFiles of candidateWithDisk.getRomsWithFiles()) {
+        const inputFile = romWithFiles.getInputFile();
+        expect(inputFile.getFilePath()).toEqual(
+          romWithFiles.getRom() instanceof Disk
+            ? path.resolve('zzz')
+            : archiveWithDisk.getFilePath(),
+        );
+      }
+    });
   });
 
   it('should group disc-merged games by their original game name', async () => {
@@ -1478,6 +1532,59 @@ describe.each(['extract', 'zip'])('not raw writing: %s', (command) => {
       expect(outputFile.getSize()).toEqual(paddedFileContents.length);
       expect(outputFile.getCrc32()).toEqual(paddedChecksums.crc32);
       expect(outputFile.getCrc32WithoutHeader()).toEqual(paddedChecksums.crc32);
+    } finally {
+      await FsUtil.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('zip writing', () => {
+  const options = new Options({ commands: ['copy', 'zip'] });
+
+  it('should not raw-write an input zip that has excess entries', async () => {
+    const tempDir = await FsUtil.mkdtemp(Temp.getTempDir());
+    try {
+      // Given a TorrentZip that holds every ROM a game wants, plus one it doesn't
+      const zip = new Zip(path.join(tempDir, 'Excess.zip'));
+      await zip.createArchive(
+        await Promise.all(
+          ['Three.rom', 'Four.rom', 'Five.rom'].map(
+            async (entryPath): Promise<[File, ArchiveEntry<Zip>]> => [
+              await File.fileOf({
+                filePath: path.join('test', 'fixtures', 'roms', 'raw', entryPath.toLowerCase()),
+              }),
+              await ArchiveEntry.entryOf({ archive: zip, entryPath }),
+            ],
+          ),
+        ),
+        ZipFormat.TORRENTZIP,
+        1,
+      );
+      const files = await new FileFactory(new FileCache()).filesFrom(zip.getFilePath());
+      const dat = new LogiqxDAT({
+        header: new Header(),
+        games: [
+          new Game({
+            name: 'Excess',
+            roms: [
+              new ROM({ name: 'Three.rom', size: 6, crc32: 'ff46c5d8' }),
+              new ROM({ name: 'Four.rom', size: 5, crc32: '1cf3ca74' }),
+            ],
+          }),
+        ],
+      });
+
+      // When
+      const candidates = await candidateGenerator(options, dat, files);
+
+      // Then the zip has to be rebuilt from the entries that were matched; writing it as-is would
+      // carry its excess 'Five.rom' entry into the output
+      expect(candidates).toHaveLength(1);
+      const romsWithFiles = candidates[0].getRomsWithFiles();
+      expect(romsWithFiles).toHaveLength(2);
+      for (const romWithFiles of romsWithFiles) {
+        expect(romWithFiles.getInputFile()).toBeInstanceOf(ArchiveEntry);
+      }
     } finally {
       await FsUtil.rm(tempDir, { recursive: true, force: true });
     }

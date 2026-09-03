@@ -182,6 +182,7 @@ export default class CandidateGenerator extends Module {
       dat,
       game,
       foundRomsWithFiles,
+      indexedFiles,
     );
     if (foundRomsWithArchiveFiles.length < foundRomsWithFiles.length) {
       // Some input files were filtered out; it is expected that a message has already been logged
@@ -298,15 +299,24 @@ export default class CandidateGenerator extends Module {
       );
     }
 
+    // Disks are always their own file (e.g. a .chd), they're never stored inside a Game's archive,
+    // so requiring an archive to contain them would mean no archive ever contains "every ROM"
     const archiveWithEveryRom = this.findArchiveFileWithEveryRomForGame(
       dat,
       game,
-      gameRoms,
-      romsAndInputFiles,
+      gameRoms.filter((rom) => !(rom instanceof Disk)),
+      romsAndInputFiles.filter(([rom]) => !(rom instanceof Disk)),
       indexedFiles,
     );
     if (archiveWithEveryRom !== undefined) {
-      return archiveWithEveryRom;
+      return new Map([
+        ...archiveWithEveryRom,
+        // Resolve the disks that were held back above on their own, trusting that ROMIndexer
+        // applied any preferences we wanted
+        ...romsAndInputFiles
+          .filter(([rom, inputFiles]) => rom instanceof Disk && inputFiles.length > 0)
+          .map(([rom, inputFiles]): [ROM, File] => [rom, inputFiles[0]]),
+      ]);
     }
 
     return new Map(
@@ -376,8 +386,10 @@ export default class CandidateGenerator extends Module {
   }
 
   /**
-   * Find a single input {@link Archive} that contains every one of a {@link Game}'s {@link ROM}s, and
-   * return a map from each ROM to its matching entry within that archive. Preferring one archive for
+   * Find a single input {@link Archive} that contains every one of the given {@link ROM}s (the
+   * caller is expected to have excluded {@link Disk}s, which always live outside of a {@link Game}'s
+   * archive), and return a map from each ROM to its matching entry within that archive. Preferring
+   * one archive for
    * the whole game avoids output-path conflicts when raw-copying and avoids leaving archives partially
    * used when zipping. Returns `undefined` when extracting (the source archive doesn't matter) or when
    * no single archive holds every ROM, leaving the caller to fall back to per-ROM matching. ROMs with
@@ -697,6 +709,7 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     game: Game,
     romsWithFiles: ROMWithFiles[],
+    indexedFiles: IndexedFiles,
   ): Promise<string | undefined> {
     // TODO(cemmer): this is an issue when raw-writing at the same time, it causes extraction
     if (this.options.shouldDir2Dat()) {
@@ -709,8 +722,17 @@ export default class CandidateGenerator extends Module {
       return 'zipping all ROMs from a DAT together later';
     }
 
+    // Disks are always their own file (e.g. a .chd), they're never stored inside a Game's archive,
+    // so they can't have a say in whether that archive can be raw-copied
+    const nonDiskRomsWithFiles = romsWithFiles.filter(
+      (romWithFiles) => !(romWithFiles.getRom() instanceof Disk),
+    );
+    if (nonDiskRomsWithFiles.length === 0) {
+      return "game doesn't have any ROMs that could come from an archive";
+    }
+
     // Checks for all archive types, zips and otherwise
-    for (const romWithFiles of romsWithFiles) {
+    for (const romWithFiles of nonDiskRomsWithFiles) {
       const rom = romWithFiles.getRom();
       const inputFile = romWithFiles.getInputFile();
 
@@ -772,9 +794,14 @@ export default class CandidateGenerator extends Module {
       }
     }
 
+    if (this.hasExcessFiles(dat, game, nonDiskRomsWithFiles, indexedFiles)) {
+      // The existing archive can't have excess files, or they have to be explicitly allowed
+      return 'input archive has excess entries';
+    }
+
     if (
-      romsWithFiles.length > 1 &&
-      romsWithFiles
+      nonDiskRomsWithFiles.length > 1 &&
+      nonDiskRomsWithFiles
         .map((romWithFiles) => romWithFiles.getOutputFile().getFilePath())
         .reduce(ArrayUtil.reduceUnique(), []).length > 1 &&
       game instanceof MergedDiscGame
@@ -785,19 +812,21 @@ export default class CandidateGenerator extends Module {
     }
 
     if (
-      romsWithFiles.filter(
+      nonDiskRomsWithFiles.filter(
         ArrayUtil.filterUniqueMapped((romWithFiles) => romWithFiles.getInputFile().getFilePath()),
       ).length !== 1
     ) {
       // Every input file has to be coming from the same archive
       return 'input files are coming from different archives';
     }
-    const inputArchive = (romsWithFiles[0].getInputFile() as ArchiveEntry<Archive>).getArchive();
+    const inputArchive = (
+      nonDiskRomsWithFiles[0].getInputFile() as ArchiveEntry<Archive>
+    ).getArchive();
 
     // If we're allowed to re-zip archives, check if the zip file is a valid structured archive or not
     if (
       inputArchive instanceof Zip &&
-      romsWithFiles.every((romWithFiles) => this.options.shouldZipRom(romWithFiles.getRom()))
+      nonDiskRomsWithFiles.every((romWithFiles) => this.options.shouldZipRom(romWithFiles.getRom()))
     ) {
       const tzValidationResult = await this.fileFactory.tzValidationFrom(inputArchive);
       if (tzValidationResult === ValidationResult.INVALID) {
@@ -828,6 +857,7 @@ export default class CandidateGenerator extends Module {
     dat: DAT,
     game: Game,
     foundRomsWithFiles: ROMWithFiles[],
+    indexedFiles: IndexedFiles,
   ): Promise<ROMWithFiles[]> {
     if (foundRomsWithFiles.length === 0) {
       // There aren't any ROMs
@@ -840,6 +870,7 @@ export default class CandidateGenerator extends Module {
       dat,
       game,
       foundRomsWithFiles,
+      indexedFiles,
     );
     return (
       await Promise.all(

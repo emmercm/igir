@@ -345,17 +345,23 @@ export default class FsUtil {
   }
 
   /**
-   * @returns a new filepath with all illegal characters removed
+   * @returns a new filepath with all characters that are illegal on {@link platform} removed
    */
-  static makeLegal(filePath: string, pathSep = path.sep): string {
+  static makeLegal(filePath: string, platform: NodeJS.Platform = process.platform): string {
+    if (platform !== 'win32') {
+      // POSIX filesystems only reserve the path separator, so the only change needed is to
+      // normalize the path separators
+      return filePath.replaceAll(/[\\/]/g, '/');
+    }
+
     return (
       filePath
-        // Make the filename Windows legal
+        // Windows reserves the colon for drive letters and alternate data streams
         .replaceAll(':', ';')
-        // Make the filename everything else legal
-        .replaceAll(/[<>:"|?*]/g, '_')
+        // Make the filename Windows legal
+        .replaceAll(/[<>"|?*]/g, '_')
         // Normalize the path separators
-        .replaceAll(/[\\/]/g, pathSep)
+        .replaceAll(/[\\/]/g, '\\')
         // Revert the Windows drive letter
         .replace(/^([a-z]);\\/i, '$1:\\')
     );
