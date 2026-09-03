@@ -110,6 +110,7 @@ export default class Terminal {
       return;
     }
 
+    // @ts-expect-error @types/bun@1.4.0 erroneously reports `TS2345: Argument of type "SIGWINCH" is not assignable to parameter of type "memoryPressure"`
     process.off('SIGWINCH', this.sigwinchHandler);
     this.sigwinchHandler = undefined;
   }
