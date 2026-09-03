@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../static/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3794,17 +3794,17 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>Windows is fairly easy, MAME is officially compiled for Windows and downloads can be found on many mirror sites.</p>
-<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir [commands..] --dat <span class="s2">&quot;mame0258b_64bit.exe&quot;</span> --input <span class="p">&lt;</span>input&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>igir [commands..] --dat <span class="s2">"mame0258b_64bit.exe"</span> --input <span class="p">&lt;</span>input&gt;
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <p>MAME isn't officially compiled for macOS, you will have to use a third-party release such as <a href="https://sdlmame.lngn.net/">SDL MAME</a>.</p>
-<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span><span class="s2">&quot;mame0258-x86/mame&quot;</span><span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span><span class="s2">"mame0258-x86/mame"</span><span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <p>Most distros (Ubuntu, Debian, Fedora, etc.) have MAME in their package repositories, but some will require you to compile MAME yourself. If the <code>mame</code> executable is in your <code>$PATH</code>, you can specify its path like this:</p>
-<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>which<span class="w"> </span><span class="s2">&quot;mame&quot;</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>igir<span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span>--dat<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>which<span class="w"> </span><span class="s2">"mame"</span><span class="k">)</span><span class="s2">"</span><span class="w"> </span>--input<span class="w"> </span>&lt;input&gt;
 </span></code></pre></div>
 </div>
 </div>
@@ -3830,21 +3830,21 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>igir copy <span class="se">^</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="se"> </span> --dat <span class="s2">&quot;https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat&quot;</span> <span class="se">^</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="se"> </span> --dat <span class="s2">"https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat"</span> <span class="se">^</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="se"> </span> --input ROMs <span class="se">^</span>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="se"> </span> --output RetroArch-BIOS
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>igir<span class="w"> </span>copy<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">&quot;https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">"https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--input<span class="w"> </span>ROMs<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--output<span class="w"> </span>RetroArch-BIOS
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>igir<span class="w"> </span>copy<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">&quot;https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">"https://raw.githubusercontent.com/libretro/libretro-database/master/dat/System.dat"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--input<span class="w"> </span>ROMs<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--output<span class="w"> </span>RetroArch-BIOS
 </span></code></pre></div>
@@ -3859,21 +3859,21 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>igir copy <span class="se">^</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="se"> </span> --dat <span class="s2">&quot;https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive</span><span class="nv">%2</span><span class="s2">0Pack</span><span class="nv">%2</span><span class="s2">0SMDBs/NES2.0</span><span class="nv">%2</span><span class="s2">0SMDB.txt&quot;</span> <span class="se">^</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="se"> </span> --dat <span class="s2">"https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive</span><span class="nv">%2</span><span class="s2">0Pack</span><span class="nv">%2</span><span class="s2">0SMDBs/NES2.0</span><span class="nv">%2</span><span class="s2">0SMDB.txt"</span> <span class="se">^</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="se"> </span> --input ROMs <span class="se">^</span>
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="se"> </span> --output EverDrive-NES
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>igir<span class="w"> </span>copy<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">&quot;https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">"https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--input<span class="w"> </span>ROMs<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--output<span class="w"> </span>EverDrive-NES
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>igir<span class="w"> </span>copy<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">&quot;https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--dat<span class="w"> </span><span class="s2">"https://raw.githubusercontent.com/frederic-mahe/Hardware-Target-Game-Database/refs/heads/master/EverDrive%20Pack%20SMDBs/NES2.0%20SMDB.txt"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--input<span class="w"> </span>ROMs<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--output<span class="w"> </span>EverDrive-NES
 </span></code></pre></div>
@@ -3898,8 +3898,8 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>igir copy <span class="se">^</span>
 </span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="se"> </span> --dat DATs <span class="se">^</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="se"> </span> --dat-exclude <span class="s2">&quot;DATs\*Beta*&quot;</span> <span class="se">^</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="se"> </span> --dat-exclude <span class="s2">&quot;DATs\*Demo*&quot;</span> <span class="se">^</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="se"> </span> --dat-exclude <span class="s2">"DATs\*Beta*"</span> <span class="se">^</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="se"> </span> --dat-exclude <span class="s2">"DATs\*Demo*"</span> <span class="se">^</span>
 </span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="se"> </span> --input ROMs <span class="se">^</span>
 </span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="se"> </span> --output ROMs-Sorted
 </span></code></pre></div>
@@ -3907,8 +3907,8 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>igir<span class="w"> </span>copy<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--dat<span class="w"> </span>DATs<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">&quot;DATs/*Beta*&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">&quot;DATs/*Demo*&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">"DATs/*Beta*"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">"DATs/*Demo*"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>--input<span class="w"> </span>ROMs<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span>--output<span class="w"> </span>ROMs-Sorted
 </span></code></pre></div>
@@ -3916,8 +3916,8 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>igir<span class="w"> </span>copy<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--dat<span class="w"> </span>DATs<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">&quot;DATs/*Beta*&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">&quot;DATs/*Demo*&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">"DATs/*Beta*"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--dat-exclude<span class="w"> </span><span class="s2">"DATs/*Demo*"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>--input<span class="w"> </span>ROMs<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>--output<span class="w"> </span>ROMs-Sorted
 </span></code></pre></div>
@@ -4207,7 +4207,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

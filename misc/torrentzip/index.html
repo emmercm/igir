@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../static/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3945,7 +3945,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>| Local      |         Description        |  Offset |   Size  |        TorrentZip       |      RVZSTD      |
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>| file       |                            | (bytes) | (bytes) |                         |                  |
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>| header 1   +----------------------------+---------+---------+-------------------------+------------------+
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>|            | Local file header          | 0       | 4       | 0x04034b50 (&quot;PK♥♦&quot;)                        |
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>|            | Local file header          | 0       | 4       | 0x04034b50 ("PK♥♦")                        |
 </span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>|            | signature                  |         |         |                                            |
 </span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>|            +----------------------------+---------+---------+-------------------------+------------------+
 </span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>|            | Version needed             | 4       | 2       | 45 if a Zip64 extra     | 20 if the        |
@@ -3967,7 +3967,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>|            +----------------------------+---------+---------+-------------------------+------------------+
 </span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>|            | Last mod file date         | 12      | 2       | 8600 (Dec 24, 1996)     | 0 (Jan 1, 1980)  |
 </span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>|            +----------------------------+---------+---------+-------------------------+------------------+
-</span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>|            | CRC-32                     | 14      | 4       | The uncompressed file&#39;s CRC-32 checksum    |
+</span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>|            | CRC-32                     | 14      | 4       | The uncompressed file's CRC-32 checksum    |
 </span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>|            | Compressed size            | 18      | 4       | 0xFFFFFFFF if the compressed OR            |
 </span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>|            |                            |         |         | uncompressed size &gt;=0xFFFFFFFF,            |
@@ -3984,7 +3984,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-45"><a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>|            |                            |         |         | &lt;0xFFFFFFFF (compressed size and byte      |
 </span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>|            |                            |         |         | offset to this header are not              |
 </span><span id="__span-2-47"><a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>|            |                            |         |         | considered), otherwise 20 bytes +8 more    |
-</span><span id="__span-2-48"><a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a>|            |                            |         |         | bytes if this local file header&#39;s byte     |
+</span><span id="__span-2-48"><a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a>|            |                            |         |         | bytes if this local file header's byte     |
 </span><span id="__span-2-49"><a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a>|            |                            |         |         | offset is &gt;=0xFFFFFFFF                     |
 </span><span id="__span-2-50"><a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-51"><a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a>|            | File name                  | 30      | n       | The CP437 or UTF-8 encoded filename        |
@@ -3997,14 +3997,14 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-58"><a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a>|            | length   | record 1:       |         |         | -4 bytes for the header ID &amp; data          |
 </span><span id="__span-2-59"><a id="__codelineno-2-59" name="__codelineno-2-59" href="#__codelineno-2-59"></a>|            | above is | record size     |         |         | size fields)                               |
 </span><span id="__span-2-60"><a id="__codelineno-2-60" name="__codelineno-2-60" href="#__codelineno-2-60"></a>|            | &gt;0)      +-----------------+---------+---------+--------------------------------------------+
-</span><span id="__span-2-61"><a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a>|            |          | Zip64:          | 30+n+4  | 8       | The uncompressed file&#39;s size               |
+</span><span id="__span-2-61"><a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a>|            |          | Zip64:          | 30+n+4  | 8       | The uncompressed file's size               |
 </span><span id="__span-2-62"><a id="__codelineno-2-62" name="__codelineno-2-62" href="#__codelineno-2-62"></a>|            |          | uncompressed    |         |         | (always present)                           |
 </span><span id="__span-2-63"><a id="__codelineno-2-63" name="__codelineno-2-63" href="#__codelineno-2-63"></a>|            |          | file size       |         |         |                                            |
 </span><span id="__span-2-64"><a id="__codelineno-2-64" name="__codelineno-2-64" href="#__codelineno-2-64"></a>|            |          +-----------------+---------+---------+--------------------------------------------+
-</span><span id="__span-2-65"><a id="__codelineno-2-65" name="__codelineno-2-65" href="#__codelineno-2-65"></a>|            |          | Zip64: size of  | 30+n+12 | 8       | The compressed file&#39;s size                 |
+</span><span id="__span-2-65"><a id="__codelineno-2-65" name="__codelineno-2-65" href="#__codelineno-2-65"></a>|            |          | Zip64: size of  | 30+n+12 | 8       | The compressed file's size                 |
 </span><span id="__span-2-66"><a id="__codelineno-2-66" name="__codelineno-2-66" href="#__codelineno-2-66"></a>|            |          | compressed data |         |         | (always present)                           |
 </span><span id="__span-2-67"><a id="__codelineno-2-67" name="__codelineno-2-67" href="#__codelineno-2-67"></a>|            |          +-----------------+---------+---------+--------------------------------------------+
-</span><span id="__span-2-68"><a id="__codelineno-2-68" name="__codelineno-2-68" href="#__codelineno-2-68"></a>|            |          | Zip64: offset   | 30+n+20 | 0 or 8  | Present if this local file header&#39;s byte   |
+</span><span id="__span-2-68"><a id="__codelineno-2-68" name="__codelineno-2-68" href="#__codelineno-2-68"></a>|            |          | Zip64: offset   | 30+n+20 | 0 or 8  | Present if this local file header's byte   |
 </span><span id="__span-2-69"><a id="__codelineno-2-69" name="__codelineno-2-69" href="#__codelineno-2-69"></a>|            |          | of local header |         |         | offset is &gt;=0xFFFFFFFF, otherwise omitted  |
 </span><span id="__span-2-70"><a id="__codelineno-2-70" name="__codelineno-2-70" href="#__codelineno-2-70"></a>|            |          +-----------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-71"><a id="__codelineno-2-71" name="__codelineno-2-71" href="#__codelineno-2-71"></a>|            |          | Zip64: number   | *       | 0       | (not used / omitted)                       |
@@ -4016,7 +4016,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-77"><a id="__codelineno-2-77" name="__codelineno-2-77" href="#__codelineno-2-77"></a>+------------+----------+---------------------------+---------+--------------------------------------------+
 </span><span id="__span-2-78"><a id="__codelineno-2-78" name="__codelineno-2-78" href="#__codelineno-2-78"></a>| Encryption header 1                               | 0       | (not used / omitted)                       |
 </span><span id="__span-2-79"><a id="__codelineno-2-79" name="__codelineno-2-79" href="#__codelineno-2-79"></a>+---------------------------------------------------+---------+-------------------------+------------------+
-</span><span id="__span-2-80"><a id="__codelineno-2-80" name="__codelineno-2-80" href="#__codelineno-2-80"></a>| File data 1                                       | *       | File&#39;s contents         | File&#39;s contents  |
+</span><span id="__span-2-80"><a id="__codelineno-2-80" name="__codelineno-2-80" href="#__codelineno-2-80"></a>| File data 1                                       | *       | File's contents         | File's contents  |
 </span><span id="__span-2-81"><a id="__codelineno-2-81" name="__codelineno-2-81" href="#__codelineno-2-81"></a>|                                                   |         | compressed by zlib      | compressed by    |
 </span><span id="__span-2-82"><a id="__codelineno-2-82" name="__codelineno-2-82" href="#__codelineno-2-82"></a>|                                                   |         | v1.1.3 (Jul 9, 1998)    | zstd v1.5.5      |
 </span><span id="__span-2-83"><a id="__codelineno-2-83" name="__codelineno-2-83" href="#__codelineno-2-83"></a>|                                                   |         | at compression          | (Apr 2023)       |
@@ -4044,14 +4044,14 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-105"><a id="__codelineno-2-105" name="__codelineno-2-105" href="#__codelineno-2-105"></a>| Archive extra data record                         | 0       | (not used / omitted)                       |
 </span><span id="__span-2-106"><a id="__codelineno-2-106" name="__codelineno-2-106" href="#__codelineno-2-106"></a>+---------------------------------------------------+---------+--------------------------------------------+
 </span><span id="__span-2-107"><a id="__codelineno-2-107" name="__codelineno-2-107" href="#__codelineno-2-107"></a>|                                                                                                          |
-</span><span id="__span-2-108"><a id="__codelineno-2-108" name="__codelineno-2-108" href="#__codelineno-2-108"></a>|                                    Start of central directory (&quot;SOCD&quot;)                                   |
+</span><span id="__span-2-108"><a id="__codelineno-2-108" name="__codelineno-2-108" href="#__codelineno-2-108"></a>|                                    Start of central directory ("SOCD")                                   |
 </span><span id="__span-2-109"><a id="__codelineno-2-109" name="__codelineno-2-109" href="#__codelineno-2-109"></a>|                                                                                                          |
 </span><span id="__span-2-110"><a id="__codelineno-2-110" name="__codelineno-2-110" href="#__codelineno-2-110"></a>+------------+----------------------------+---------+---------+-------------------------+------------------+
 </span><span id="__span-2-111"><a id="__codelineno-2-111" name="__codelineno-2-111" href="#__codelineno-2-111"></a>| Central    |         Description        |  Offset |   Size  |        TorrentZip       |      RVZSTD      |
 </span><span id="__span-2-112"><a id="__codelineno-2-112" name="__codelineno-2-112" href="#__codelineno-2-112"></a>| directory  |                            | (bytes) | (bytes) |                         |                  |
 </span><span id="__span-2-113"><a id="__codelineno-2-113" name="__codelineno-2-113" href="#__codelineno-2-113"></a>| file       +----------------------------+---------+---------+-------------------------+------------------+
-</span><span id="__span-2-114"><a id="__codelineno-2-114" name="__codelineno-2-114" href="#__codelineno-2-114"></a>| header     | Central file               | 0       | 4       | 0x02014b50 (&quot;PK☺︎☻&quot;)                        |
-</span><span id="__span-2-115"><a id="__codelineno-2-115" name="__codelineno-2-115" href="#__codelineno-2-115"></a>| (&quot;CDFH&quot;) 1 | header signature           |         |         |                                            |
+</span><span id="__span-2-114"><a id="__codelineno-2-114" name="__codelineno-2-114" href="#__codelineno-2-114"></a>| header     | Central file               | 0       | 4       | 0x02014b50 ("PK☺︎☻")                        |
+</span><span id="__span-2-115"><a id="__codelineno-2-115" name="__codelineno-2-115" href="#__codelineno-2-115"></a>| ("CDFH") 1 | header signature           |         |         |                                            |
 </span><span id="__span-2-116"><a id="__codelineno-2-116" name="__codelineno-2-116" href="#__codelineno-2-116"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-117"><a id="__codelineno-2-117" name="__codelineno-2-117" href="#__codelineno-2-117"></a>|            | Version made by            | 4       | 2       | 0                                          |
 </span><span id="__span-2-118"><a id="__codelineno-2-118" name="__codelineno-2-118" href="#__codelineno-2-118"></a>|            +----------------------------+---------+---------+-------------------------+------------------+
@@ -4092,7 +4092,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-153"><a id="__codelineno-2-153" name="__codelineno-2-153" href="#__codelineno-2-153"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-154"><a id="__codelineno-2-154" name="__codelineno-2-154" href="#__codelineno-2-154"></a>|            | External file attributes   | 38      | 4       | 0                                          |
 </span><span id="__span-2-155"><a id="__codelineno-2-155" name="__codelineno-2-155" href="#__codelineno-2-155"></a>|            +----------------------------+---------+---------+--------------------------------------------+
-</span><span id="__span-2-156"><a id="__codelineno-2-156" name="__codelineno-2-156" href="#__codelineno-2-156"></a>|            | Relative offset of         | 42      | 4       | min(the local file header&#39;s byte offset,   |
+</span><span id="__span-2-156"><a id="__codelineno-2-156" name="__codelineno-2-156" href="#__codelineno-2-156"></a>|            | Relative offset of         | 42      | 4       | min(the local file header's byte offset,   |
 </span><span id="__span-2-157"><a id="__codelineno-2-157" name="__codelineno-2-157" href="#__codelineno-2-157"></a>|            | local header               |         |         | 0xFFFFFFFF)                                |
 </span><span id="__span-2-158"><a id="__codelineno-2-158" name="__codelineno-2-158" href="#__codelineno-2-158"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-159"><a id="__codelineno-2-159" name="__codelineno-2-159" href="#__codelineno-2-159"></a>|            | File name                  | 46      | n       | (same as local file header)                |
@@ -4112,7 +4112,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-173"><a id="__codelineno-2-173" name="__codelineno-2-173" href="#__codelineno-2-173"></a>|            |          | Zip64: size of  | *       | 0 or 8  | Present if compressed size                 |
 </span><span id="__span-2-174"><a id="__codelineno-2-174" name="__codelineno-2-174" href="#__codelineno-2-174"></a>|            |          | compressed data |         |         | is &gt;=0xFFFFFFFF                            |
 </span><span id="__span-2-175"><a id="__codelineno-2-175" name="__codelineno-2-175" href="#__codelineno-2-175"></a>|            |          +-----------------+---------+---------+--------------------------------------------+
-</span><span id="__span-2-176"><a id="__codelineno-2-176" name="__codelineno-2-176" href="#__codelineno-2-176"></a>|            |          | Zip64: offset   | *       | 0 or 8  | Present if the local file header&#39;s         |
+</span><span id="__span-2-176"><a id="__codelineno-2-176" name="__codelineno-2-176" href="#__codelineno-2-176"></a>|            |          | Zip64: offset   | *       | 0 or 8  | Present if the local file header's         |
 </span><span id="__span-2-177"><a id="__codelineno-2-177" name="__codelineno-2-177" href="#__codelineno-2-177"></a>|            |          | of local        |         |         | byte offset is &gt;=0xFFFFFFFF                |
 </span><span id="__span-2-178"><a id="__codelineno-2-178" name="__codelineno-2-178" href="#__codelineno-2-178"></a>|            |          | header          |         |         |                                            |
 </span><span id="__span-2-179"><a id="__codelineno-2-179" name="__codelineno-2-179" href="#__codelineno-2-179"></a>|            |          +-----------------+---------+---------+--------------------------------------------+
@@ -4132,14 +4132,14 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-193"><a id="__codelineno-2-193" name="__codelineno-2-193" href="#__codelineno-2-193"></a>| Central directory file header N                   | *       | (same format as above)                     |
 </span><span id="__span-2-194"><a id="__codelineno-2-194" name="__codelineno-2-194" href="#__codelineno-2-194"></a>+---------------------------------------------------+---------+--------------------------------------------+
 </span><span id="__span-2-195"><a id="__codelineno-2-195" name="__codelineno-2-195" href="#__codelineno-2-195"></a>|                                                                                                          |
-</span><span id="__span-2-196"><a id="__codelineno-2-196" name="__codelineno-2-196" href="#__codelineno-2-196"></a>|                                     End of central directory (&quot;EOCD&quot;)                                    |
+</span><span id="__span-2-196"><a id="__codelineno-2-196" name="__codelineno-2-196" href="#__codelineno-2-196"></a>|                                     End of central directory ("EOCD")                                    |
 </span><span id="__span-2-197"><a id="__codelineno-2-197" name="__codelineno-2-197" href="#__codelineno-2-197"></a>|                                                                                                          |
 </span><span id="__span-2-198"><a id="__codelineno-2-198" name="__codelineno-2-198" href="#__codelineno-2-198"></a>+------------+----------------------------+---------+---------+-------------------------+------------------+
 </span><span id="__span-2-199"><a id="__codelineno-2-199" name="__codelineno-2-199" href="#__codelineno-2-199"></a>| Zip64 end  |         Description        |  Offset |   Size  |        TorrentZip       |      RVZSTD      |
 </span><span id="__span-2-200"><a id="__codelineno-2-200" name="__codelineno-2-200" href="#__codelineno-2-200"></a>| of central |                            | (bytes) | (bytes) |                         |                  |
 </span><span id="__span-2-201"><a id="__codelineno-2-201" name="__codelineno-2-201" href="#__codelineno-2-201"></a>| directory  +----------------------------+---------+---------+-------------------------+------------------+
-</span><span id="__span-2-202"><a id="__codelineno-2-202" name="__codelineno-2-202" href="#__codelineno-2-202"></a>| record     | Zip64 end of central       | 0       | 4       | 0x06064b50 (&quot;PK♠︎♠︎&quot;)                        |
-</span><span id="__span-2-203"><a id="__codelineno-2-203" name="__codelineno-2-203" href="#__codelineno-2-203"></a>| (&quot;EOCD64&quot;) | dir signature              |         |         |                                            |
+</span><span id="__span-2-202"><a id="__codelineno-2-202" name="__codelineno-2-202" href="#__codelineno-2-202"></a>| record     | Zip64 end of central       | 0       | 4       | 0x06064b50 ("PK♠︎♠︎")                        |
+</span><span id="__span-2-203"><a id="__codelineno-2-203" name="__codelineno-2-203" href="#__codelineno-2-203"></a>| ("EOCD64") | dir signature              |         |         |                                            |
 </span><span id="__span-2-204"><a id="__codelineno-2-204" name="__codelineno-2-204" href="#__codelineno-2-204"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-205"><a id="__codelineno-2-205" name="__codelineno-2-205" href="#__codelineno-2-205"></a>| Present if | Size of Zip64 end of       | 4       | 8       | 44                                         |
 </span><span id="__span-2-206"><a id="__codelineno-2-206" name="__codelineno-2-206" href="#__codelineno-2-206"></a>| any true:  | central directory          |         |         |                                            |
@@ -4163,7 +4163,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-224"><a id="__codelineno-2-224" name="__codelineno-2-224" href="#__codelineno-2-224"></a>|   &gt;=0xFFFF | in the central directory   |         |         |                                            |
 </span><span id="__span-2-225"><a id="__codelineno-2-225" name="__codelineno-2-225" href="#__codelineno-2-225"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-226"><a id="__codelineno-2-226" name="__codelineno-2-226" href="#__codelineno-2-226"></a>|            | Size of the                | 40      | 8       | The sum of every central file directory    |
-</span><span id="__span-2-227"><a id="__codelineno-2-227" name="__codelineno-2-227" href="#__codelineno-2-227"></a>|            | central directory          |         |         | header&#39;s length                            |
+</span><span id="__span-2-227"><a id="__codelineno-2-227" name="__codelineno-2-227" href="#__codelineno-2-227"></a>|            | central directory          |         |         | header's length                            |
 </span><span id="__span-2-228"><a id="__codelineno-2-228" name="__codelineno-2-228" href="#__codelineno-2-228"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-229"><a id="__codelineno-2-229" name="__codelineno-2-229" href="#__codelineno-2-229"></a>|            | Offset of start of         | 48      | 8       | The byte offset to the start of the        |
 </span><span id="__span-2-230"><a id="__codelineno-2-230" name="__codelineno-2-230" href="#__codelineno-2-230"></a>|            | central directory          |         |         | central directory (the first central       |
@@ -4176,7 +4176,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-237"><a id="__codelineno-2-237" name="__codelineno-2-237" href="#__codelineno-2-237"></a>| Zip64 end  |         Description        |  Offset |   Size  |        TorrentZip       |      RVZSTD      |
 </span><span id="__span-2-238"><a id="__codelineno-2-238" name="__codelineno-2-238" href="#__codelineno-2-238"></a>| of central |                            | (bytes) | (bytes) |                         |                  |
 </span><span id="__span-2-239"><a id="__codelineno-2-239" name="__codelineno-2-239" href="#__codelineno-2-239"></a>| directory  +----------------------------+---------+---------+-------------------------+------------------+
-</span><span id="__span-2-240"><a id="__codelineno-2-240" name="__codelineno-2-240" href="#__codelineno-2-240"></a>| locator    | Zip64 end of central dir   | 0       | 4       | 0x07064b50 (&quot;PK♠︎•&quot;)                        |
+</span><span id="__span-2-240"><a id="__codelineno-2-240" name="__codelineno-2-240" href="#__codelineno-2-240"></a>| locator    | Zip64 end of central dir   | 0       | 4       | 0x07064b50 ("PK♠︎•")                        |
 </span><span id="__span-2-241"><a id="__codelineno-2-241" name="__codelineno-2-241" href="#__codelineno-2-241"></a>| (present   | locator signature          |         |         |                                            |
 </span><span id="__span-2-242"><a id="__codelineno-2-242" name="__codelineno-2-242" href="#__codelineno-2-242"></a>| if Zip64   +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-243"><a id="__codelineno-2-243" name="__codelineno-2-243" href="#__codelineno-2-243"></a>| EOCD is    | Number of the disk with    | 4       | 4       | 0                                          |
@@ -4193,7 +4193,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-254"><a id="__codelineno-2-254" name="__codelineno-2-254" href="#__codelineno-2-254"></a>| End of     |         Description        |  Offset |   Size  |        TorrentZip       |      RVZSTD      |
 </span><span id="__span-2-255"><a id="__codelineno-2-255" name="__codelineno-2-255" href="#__codelineno-2-255"></a>| central    |                            | (bytes) | (bytes) |                         |                  |
 </span><span id="__span-2-256"><a id="__codelineno-2-256" name="__codelineno-2-256" href="#__codelineno-2-256"></a>| directory  +----------------------------+---------+---------+-------------------------+------------------+
-</span><span id="__span-2-257"><a id="__codelineno-2-257" name="__codelineno-2-257" href="#__codelineno-2-257"></a>| record     | End of central dir         | 0       | 4       | 0x06054b50 (&quot;PK♣︎♠︎&quot;)                        |
+</span><span id="__span-2-257"><a id="__codelineno-2-257" name="__codelineno-2-257" href="#__codelineno-2-257"></a>| record     | End of central dir         | 0       | 4       | 0x06054b50 ("PK♣︎♠︎")                        |
 </span><span id="__span-2-258"><a id="__codelineno-2-258" name="__codelineno-2-258" href="#__codelineno-2-258"></a>|            | signature                  |         |         |                                            |
 </span><span id="__span-2-259"><a id="__codelineno-2-259" name="__codelineno-2-259" href="#__codelineno-2-259"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-260"><a id="__codelineno-2-260" name="__codelineno-2-260" href="#__codelineno-2-260"></a>|            | Number of this disk        | 4       | 2       | 0                                          |
@@ -4210,7 +4210,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-271"><a id="__codelineno-2-271" name="__codelineno-2-271" href="#__codelineno-2-271"></a>|            | in the central directory   |         |         | 0xFFFF)                                    |
 </span><span id="__span-2-272"><a id="__codelineno-2-272" name="__codelineno-2-272" href="#__codelineno-2-272"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-273"><a id="__codelineno-2-273" name="__codelineno-2-273" href="#__codelineno-2-273"></a>|            | Size of the                | 12      | 4       | min(the sum of every central file          |
-</span><span id="__span-2-274"><a id="__codelineno-2-274" name="__codelineno-2-274" href="#__codelineno-2-274"></a>|            | central directory          |         |         | directory header&#39;s length, 0xFFFFFFFF)     |
+</span><span id="__span-2-274"><a id="__codelineno-2-274" name="__codelineno-2-274" href="#__codelineno-2-274"></a>|            | central directory          |         |         | directory header's length, 0xFFFFFFFF)     |
 </span><span id="__span-2-275"><a id="__codelineno-2-275" name="__codelineno-2-275" href="#__codelineno-2-275"></a>|            +----------------------------+---------+---------+--------------------------------------------+
 </span><span id="__span-2-276"><a id="__codelineno-2-276" name="__codelineno-2-276" href="#__codelineno-2-276"></a>|            | Offset of start of         | 16      | 4       | min(the byte offset to the start of the    |
 </span><span id="__span-2-277"><a id="__codelineno-2-277" name="__codelineno-2-277" href="#__codelineno-2-277"></a>|            | central directory          |         |         | central directory, 0xFFFFFFFF)             |
@@ -4220,7 +4220,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
 </span><span id="__span-2-281"><a id="__codelineno-2-281" name="__codelineno-2-281" href="#__codelineno-2-281"></a>|            | Zip file comment           | 20      | 2       | 22                      | 15               |
 </span><span id="__span-2-282"><a id="__codelineno-2-282" name="__codelineno-2-282" href="#__codelineno-2-282"></a>|            | length (n)                 |         |         |                         |                  |
 </span><span id="__span-2-283"><a id="__codelineno-2-283" name="__codelineno-2-283" href="#__codelineno-2-283"></a>|            +----------------------------+---------+---------+-------------------------+------------------+
-</span><span id="__span-2-284"><a id="__codelineno-2-284" name="__codelineno-2-284" href="#__codelineno-2-284"></a>|            | Zip file comment           | 22      | n       | &quot;TORRENTZIPPED-{CRC32}&quot; | &quot;RVZSTD-{CRC32}&quot; |
+</span><span id="__span-2-284"><a id="__codelineno-2-284" name="__codelineno-2-284" href="#__codelineno-2-284"></a>|            | Zip file comment           | 22      | n       | "TORRENTZIPPED-{CRC32}" | "RVZSTD-{CRC32}" |
 </span><span id="__span-2-285"><a id="__codelineno-2-285" name="__codelineno-2-285" href="#__codelineno-2-285"></a>+------------+----------------------------+---------+---------+-------------------------+------------------+
 </span></code></pre></div>
 
@@ -4505,7 +4505,7 @@ been tested on 32bit, 64bit, Little-Endian and Big-Endian architectures.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

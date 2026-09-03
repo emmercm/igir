@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../static/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3834,7 +3834,7 @@
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">alias</span><span class="w"> </span><span class="nv">igir</span><span class="o">=</span><span class="s2">&quot;npx igir@latest&quot;</span>
+<div class="highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">alias</span><span class="w"> </span><span class="nv">igir</span><span class="o">=</span><span class="s2">"npx igir@latest"</span>
 </span></code></pre></div>
 </div>
 <div class="admonition tip">
@@ -3861,7 +3861,7 @@
 <div class="tabbed-block"></div>
 </div>
 </div>
-<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>npx<span class="w"> </span>--yes<span class="w"> </span><span class="s2">&quot;https://pkg.pr.new/igir@main&quot;</span><span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>npx<span class="w"> </span>--yes<span class="w"> </span><span class="s2">"https://pkg.pr.new/igir@main"</span><span class="w"> </span><span class="o">[</span>commands..<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </span></code></pre></div>
 </div>
 <h2 id="via-homebrew-macos-linux">Via Homebrew (macOS, Linux)</h2>
@@ -3947,26 +3947,26 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>docker run --interactive --tty --rm <span class="se">^</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="se"> </span> --volume <span class="s2">&quot;</span><span class="nv">%cd%</span><span class="s2">:\pwd&quot;</span> <span class="se">^</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="se"> </span> --workdir <span class="s2">&quot;/pwd&quot;</span> <span class="se">^</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="se"> </span> --volume <span class="s2">"</span><span class="nv">%cd%</span><span class="s2">:\pwd"</span> <span class="se">^</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="se"> </span> --workdir <span class="s2">"/pwd"</span> <span class="se">^</span>
 </span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="se"> </span> node:lts-alpine <span class="se">^</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="se"> </span> npx --yes igir@latest copy zip --dat <span class="s2">&quot;*.dat&quot;</span> --input ROMs --output ROMs-Sorted --dir-dat-name
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="se"> </span> npx --yes igir@latest copy zip --dat <span class="s2">"*.dat"</span> --input ROMs --output ROMs-Sorted --dir-dat-name
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--interactive<span class="w"> </span>--tty<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--volume<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">:/pwd&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--workdir<span class="w"> </span><span class="s2">&quot;/pwd&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--volume<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">:/pwd"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--workdir<span class="w"> </span><span class="s2">"/pwd"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>node:lts-alpine<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>npx<span class="w"> </span>--yes<span class="w"> </span>igir@latest<span class="w"> </span>copy<span class="w"> </span>zip<span class="w"> </span>--dat<span class="w"> </span><span class="s2">&quot;*.dat&quot;</span><span class="w"> </span>--input<span class="w"> </span>ROMs<span class="w"> </span>--output<span class="w"> </span>ROMs-Sorted<span class="w"> </span>--dir-dat-name
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>npx<span class="w"> </span>--yes<span class="w"> </span>igir@latest<span class="w"> </span>copy<span class="w"> </span>zip<span class="w"> </span>--dat<span class="w"> </span><span class="s2">"*.dat"</span><span class="w"> </span>--input<span class="w"> </span>ROMs<span class="w"> </span>--output<span class="w"> </span>ROMs-Sorted<span class="w"> </span>--dir-dat-name
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--interactive<span class="w"> </span>--tty<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--volume<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">:/pwd&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--workdir<span class="w"> </span><span class="s2">&quot;/pwd&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--volume<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">:/pwd"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--workdir<span class="w"> </span><span class="s2">"/pwd"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>node:lts-alpine<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>npx<span class="w"> </span>--yes<span class="w"> </span>igir@latest<span class="w"> </span>copy<span class="w"> </span>zip<span class="w"> </span>--dat<span class="w"> </span><span class="s2">&quot;*.dat&quot;</span><span class="w"> </span>--input<span class="w"> </span>ROMs<span class="w"> </span>--output<span class="w"> </span>ROMs-Sorted<span class="w"> </span>--dir-dat-name
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>npx<span class="w"> </span>--yes<span class="w"> </span>igir@latest<span class="w"> </span>copy<span class="w"> </span>zip<span class="w"> </span>--dat<span class="w"> </span><span class="s2">"*.dat"</span><span class="w"> </span>--input<span class="w"> </span>ROMs<span class="w"> </span>--output<span class="w"> </span>ROMs-Sorted<span class="w"> </span>--dir-dat-name
 </span></code></pre></div>
 </div>
 </div>
@@ -4257,7 +4257,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["search.suggest", "search.highlight", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.sections", "navigation.path", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.footer", "toc.follow", "toc.integrate", "content.action.edit", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
