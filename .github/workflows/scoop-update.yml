@@ -48,8 +48,8 @@ jobs:
             TAG="$(gh release view --json tagName --jq '.tagName')"
           fi
 
-          USER_EMAIL="${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
-          USER_NAME="$(gh api "/users/${GITHUB_ACTOR}" | jq .name -r)"
+          USER_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+          USER_NAME="github-actions[bot]"
 
           {
             echo "tag=${TAG}"
