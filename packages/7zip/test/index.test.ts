@@ -6,8 +6,6 @@ import path from 'node:path';
 import type stream from 'node:stream';
 import zlib from 'node:zlib';
 
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-
 import { extractEntry, listEntries, SevenZipFormat } from '../index.js';
 
 const FIXTURE_DIR = path.join('packages', '7zip', 'test', 'fixtures');
@@ -122,12 +120,61 @@ const SPANNED_ENTRIES = [
   { entryPath: 'second.bin', size: 40_000, crc32: '9812a804' },
 ];
 
-async function drain(readable: stream.Readable): Promise<Buffer> {
+/**
+ * Comfortably more than the addon's read-ahead bound, so the producer thread
+ * blocks on a full queue and the queue turns over many times, while staying
+ * small enough to build and drain quickly in CI.
+ */
+const LARGE_CONTENTS = crypto.randomBytes(8 * 1024 * 1024);
+
+/**
+ * Every chunk the stream emitted, in order. Kept separate from {@link drain}
+ * because the sizes are themselves a contract -- see the high-water mark tests.
+ */
+async function collectChunks(readable: stream.Readable): Promise<Buffer[]> {
   const chunks: Buffer[] = [];
   for await (const chunk of readable) {
     chunks.push(chunk as Buffer);
   }
-  return Buffer.concat(chunks);
+  return chunks;
+}
+
+async function drain(readable: stream.Readable): Promise<Buffer> {
+  return Buffer.concat(await collectChunks(readable));
+}
+
+/**
+ * Run `callback` against a temporary directory that is removed afterwards,
+ * however it finishes.
+ *
+ * Setup and teardown are per-test and scoped by this rather than by
+ * `beforeAll`/`afterAll` hooks. Vitest runs this suite shuffled, so anything two
+ * tests share is state whose contents at any given moment depend on an order
+ * that is deliberately not fixed; a helper that hands each test its own
+ * directory has no such ordering to reason about, and the cleanup cannot be
+ * skipped by a failure earlier in the file.
+ */
+async function withTempDir<T>(callback: (directory: string) => Promise<T> | T): Promise<T> {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'igir-7zip-'));
+  try {
+    return await callback(directory);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Run `callback` against a freshly written stored ZIP holding
+ * {@link LARGE_CONTENTS}. Stored entries need no encoder, so writing 8 MiB per
+ * test costs a memcpy and a file write -- cheaper than the extraction each of
+ * these tests then performs, and worth it to keep every test independent.
+ */
+async function withLargeArchive(callback: (archivePath: string) => Promise<void>): Promise<void> {
+  await withTempDir(async (directory) => {
+    const archivePath = path.join(directory, 'stored.zip');
+    writeStoredZip(archivePath, 'stored.bin', LARGE_CONTENTS);
+    await callback(archivePath);
+  });
 }
 
 // Node's crypto has no 'crc32' digest, but zlib.crc32() has been available
@@ -307,16 +354,13 @@ describe('listEntries', () => {
     // against the shipped one. If this ever regresses it takes the whole Vitest
     // worker down rather than failing an assertion -- that is the nature of the
     // bug, and a loud death is still a caught regression.
-    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'igir-7zip-span-'));
-    try {
+    await withTempDir(async (directory) => {
       const archive = path.join(directory, 'span.zip');
       writeStoredZip(archive, 'a.txt', Buffer.from('hello span mode'), { hasSpanMarker: true });
       const entries = await listEntries(archive, SevenZipFormat.ZIP);
       expect(entries.length).toBeGreaterThanOrEqual(1);
       expect(entries[0].entryPath).toEqual('a.txt');
-    } finally {
-      fs.rmSync(directory, { recursive: true, force: true });
-    }
+    });
   });
 
   test('it rejects a path it cannot open', async () => {
@@ -344,8 +388,7 @@ describe('listEntries', () => {
     // file and decided it is not one of these -- so all four share one message,
     // and asserting them together is what shows that none of them crashes,
     // hangs, or is mistaken for a readable archive.
-    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'igir-7zip-invalid-'));
-    try {
+    await withTempDir(async (directory) => {
       const garbage = path.join(directory, 'garbage.7z');
       fs.writeFileSync(garbage, crypto.randomBytes(4096));
       const empty = path.join(directory, 'empty.7z');
@@ -370,9 +413,24 @@ describe('listEntries', () => {
       await expect(listEntries(ZIP_FIXTURES[0], SevenZipFormat.SEVEN_ZIP)).rejects.toThrow(
         /is not a valid 7z archive/,
       );
-    } finally {
-      fs.rmSync(directory, { recursive: true, force: true });
-    }
+    });
+  });
+
+  test('it reports entry paths verbatim, separators included', async () => {
+    // The archive is the record of what it holds, and this one records a
+    // backslash-separated name -- as every archive written by a Windows tool
+    // does. Normalizing it here would misreport the archive's contents, and a
+    // caller who wanted the original could not get it back. A caller who wants
+    // a normalized form can produce one in a line, which is the asymmetry that
+    // decides this.
+    //
+    // The tolerance is on the input side instead; extractEntry() proves it.
+    await withTempDir(async (directory) => {
+      const archive = path.join(directory, 'backslash.zip');
+      writeStoredZip(archive, String.raw`dir\file.bin`, Buffer.from('windows-shaped name'));
+      const entries = await listEntries(archive, SevenZipFormat.ZIP);
+      expect(entries.map((entry) => entry.entryPath)).toEqual([String.raw`dir\file.bin`]);
+    });
   });
 });
 
@@ -422,59 +480,85 @@ describe('extractEntry', () => {
     expect(extracted.equals(fs.readFileSync(SPLIT_JOINED))).toEqual(true);
   });
 
-  test.each(SPANNED_ENTRIES)(
-    'it extracts $entryPath across the disks of a multi-disk zip',
-    async ({ entryPath, size, crc32 }) => {
-      // `first.bin` is larger than a disk, so its compressed bytes genuinely
-      // straddle a volume boundary; `second.bin` instead starts on a later disk,
-      // reached only by resolving its disk-number-start against the joined
-      // stream. Listing alone would pass either way, because the central
-      // directory lives entirely on the last disk.
-      const extracted = await drain(extractEntry(SPANNED_LAST_DISK, SevenZipFormat.ZIP, entryPath));
-      expect(extracted.length).toEqual(size);
-      expect(crc32Hex(extracted)).toEqual(crc32);
-    },
-  );
-
-  // Comfortably more than the addon's 1 MiB ring buffer, so the producer thread
-  // blocks and the buffer wraps many times over, while staying small enough to
-  // build and drain quickly in CI.
-  const LARGE_CONTENTS = crypto.randomBytes(8 * 1024 * 1024);
-  let tempDir: string;
-  let largeArchive: string;
-
-  beforeAll(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'igir-7zip-'));
-    largeArchive = path.join(tempDir, 'stored.zip');
-    writeStoredZip(largeArchive, 'stored.bin', LARGE_CONTENTS);
+  test('it extracts both entries across the disks of a multi-disk zip', async () => {
+    // Same archive, same call, and the two members exercise the two different
+    // pieces of arithmetic: `first.bin` is larger than a disk, so its
+    // compressed bytes genuinely straddle a volume boundary, while `second.bin`
+    // instead starts on a later disk, reached only by resolving its
+    // disk-number-start against the joined stream. Listing alone would pass
+    // either way, because the central directory lives entirely on the last disk.
+    const extracted = await Promise.all(
+      SPANNED_ENTRIES.map(
+        async ({ entryPath }) =>
+          await drain(extractEntry(SPANNED_LAST_DISK, SevenZipFormat.ZIP, entryPath)),
+      ),
+    );
+    expect(extracted.map((buffer) => buffer.length)).toEqual(
+      SPANNED_ENTRIES.map((entry) => entry.size),
+    );
+    expect(extracted.map((buffer) => crc32Hex(buffer))).toEqual(
+      SPANNED_ENTRIES.map((entry) => entry.crc32),
+    );
   });
 
-  afterAll(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
+  test('it drains an entry larger than the read-ahead bound byte-exactly', async () => {
+    await withLargeArchive(async (largeArchive) => {
+      const entries = await listEntries(largeArchive, SevenZipFormat.ZIP);
+      expect(entries.map((entry) => entry.size)).toEqual([LARGE_CONTENTS.length]);
+
+      const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin'));
+      expect(extracted.length).toEqual(LARGE_CONTENTS.length);
+      expect(crc32Hex(extracted)).toEqual(entries[0].crc32);
+      expect(extracted.equals(LARGE_CONTENTS)).toEqual(true);
+    });
   });
 
-  test('it drains an entry larger than the ring buffer byte-exactly', async () => {
-    const entries = await listEntries(largeArchive, SevenZipFormat.ZIP);
-    expect(entries.map((entry) => entry.size)).toEqual([LARGE_CONTENTS.length]);
+  test('it emits exactly the high-water mark until the entry runs out', async () => {
+    // The size is a promise rather than a ceiling. 7-Zip's decoders emit output
+    // at whatever size suits them -- a deflate block, an LZMA window -- so
+    // without the producer accumulating to a full chunk before publishing, a
+    // consumer sees whatever fell out of the decoder and a caller that sized its
+    // reads gets nothing of the sort.
+    //
+    // Both an explicit size and the default are checked here because they take
+    // different paths in index.ts: one is the caller's number, the other is
+    // whatever Node chose for the stream, which this package deliberately does
+    // not second-guess with a constant of its own.
+    await withLargeArchive(async (largeArchive) => {
+      const explicit = 128 * 1024;
+      const sized = await collectChunks(
+        extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin', explicit),
+      );
+      expect(new Set(sized.slice(0, -1).map((chunk) => chunk.length))).toEqual(new Set([explicit]));
+      expect(sized.at(-1)?.length).toEqual(LARGE_CONTENTS.length % explicit || explicit);
+      expect(Buffer.concat(sized).equals(LARGE_CONTENTS)).toEqual(true);
 
-    const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin'));
-    expect(extracted.length).toEqual(LARGE_CONTENTS.length);
-    expect(crc32Hex(extracted)).toEqual(entries[0].crc32);
-    expect(extracted.equals(LARGE_CONTENTS)).toEqual(true);
+      const readable = extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin');
+      const nodeDefault = readable.readableHighWaterMark;
+      const defaulted = await collectChunks(readable);
+      expect(new Set(defaulted.slice(0, -1).map((chunk) => chunk.length))).toEqual(
+        new Set([nodeDefault]),
+      );
+      expect(Buffer.concat(defaulted).equals(LARGE_CONTENTS)).toEqual(true);
+    });
   });
 
-  test('it closes promptly while the producer is blocked on a full buffer', async () => {
+  test('it closes promptly while the producer is blocked on a full queue', async () => {
     // This is the test the addon's Pump::Cancel() exists for. One read lets the
-    // producer race ahead until the 1 MiB ring buffer fills, at which point it
-    // is parked inside 7-Zip's Write() with nothing left to drain it. Tearing
-    // down joins that thread, so without an abort that wakes it the join never
-    // returns and this hangs until the suite times out.
-    const readable = extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin');
-    expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
+    // producer race ahead until the read-ahead bound is reached, at which point
+    // it is parked inside 7-Zip's Write() with nothing left to drain it.
+    //
+    // Nothing on this path waits for that thread -- teardown aborts it and drops
+    // its reference -- so what is asserted is that destroy() completes, and
+    // completes without needing the producer to have noticed anything yet.
+    await withLargeArchive(async (largeArchive) => {
+      const readable = extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin');
+      expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
 
-    readable.destroy();
-    await events.once(readable, 'close');
-    expect(readable.destroyed).toEqual(true);
+      readable.destroy();
+      await events.once(readable, 'close');
+      expect(readable.destroyed).toEqual(true);
+    });
   });
 
   test('it keeps serving new streams after earlier ones are abandoned', async () => {
@@ -484,14 +568,39 @@ describe('extractEntry', () => {
     // Vitest runs without --expose-gc so no finalizer is forced to run.
     // Reclamation is a leak invariant, and the task that owns those has to
     // prove it with a thread/handle count under a forced GC.
-    for (let i = 0; i < 8; i++) {
-      const abandoned = extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin');
-      const first = await abandoned[Symbol.asyncIterator]().next();
-      expect(first.done).toEqual(false);
-    }
+    await withLargeArchive(async (largeArchive) => {
+      for (let i = 0; i < 8; i++) {
+        const abandoned = extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin');
+        const first = await abandoned[Symbol.asyncIterator]().next();
+        expect(first.done).toEqual(false);
+      }
 
-    const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin'));
-    expect(extracted.length).toEqual(LARGE_CONTENTS.length);
+      const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin'));
+      expect(extracted.length).toEqual(LARGE_CONTENTS.length);
+    });
+  });
+
+  test('it accepts an entry path spelled with either separator', async () => {
+    // The archive records a backslash, and listEntries hands that back verbatim,
+    // so the round trip works on its own. What this pins down is the other half
+    // of the contract: a caller holding a path it built with `/` -- a POSIX
+    // caller, or one that normalized somewhere upstream -- still resolves to the
+    // same entry rather than being told the archive does not have it.
+    await withTempDir(async (directory) => {
+      const archive = path.join(directory, 'backslash.zip');
+      const contents = Buffer.from('either spelling');
+      writeStoredZip(archive, String.raw`dir\file.bin`, contents);
+
+      const extracted = await Promise.all(
+        [String.raw`dir\file.bin`, 'dir/file.bin'].map(
+          async (entryPath) => await drain(extractEntry(archive, SevenZipFormat.ZIP, entryPath)),
+        ),
+      );
+      expect(extracted.map((buffer) => buffer.toString())).toEqual([
+        contents.toString(),
+        contents.toString(),
+      ]);
+    });
   });
 
   test('it rejects an entry whose compressed data is corrupt', async () => {
@@ -502,49 +611,60 @@ describe('extractEntry', () => {
     // The damage is past the signature header, so the archive still lists --
     // every entry's name, size, and CRC32 are readable, and only the bytes are
     // gone. Listing succeeding is what makes the extraction assertion meaningful.
-    const corrupt = path.join(tempDir, 'corrupt.7z');
-    const whole = Buffer.from(fs.readFileSync(SEVEN_ZIP_FIXTURES[0]));
-    for (let i = 32; i < 48; i++) {
-      whole[i] ^= 0x5a;
-    }
-    fs.writeFileSync(corrupt, whole);
+    await withTempDir(async (directory) => {
+      const corrupt = path.join(directory, 'corrupt.7z');
+      const whole = Buffer.from(fs.readFileSync(SEVEN_ZIP_FIXTURES[0]));
+      for (let i = 32; i < 48; i++) {
+        whole[i] ^= 0x5a;
+      }
+      fs.writeFileSync(corrupt, whole);
 
-    const entries = await listEntries(corrupt, SevenZipFormat.SEVEN_ZIP);
-    expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
-    for (const entry of entries) {
-      await expect(
-        drain(extractEntry(corrupt, SevenZipFormat.SEVEN_ZIP, entry.entryPath)),
-      ).rejects.toThrow(/its compressed data is corrupt|it failed its CRC check/);
-    }
+      const entries = await listEntries(corrupt, SevenZipFormat.SEVEN_ZIP);
+      expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
+      for (const entry of entries) {
+        await expect(
+          drain(extractEntry(corrupt, SevenZipFormat.SEVEN_ZIP, entry.entryPath)),
+        ).rejects.toThrow(/its compressed data is corrupt|it failed its CRC check/);
+      }
+    });
   });
 
-  test('it rejects an entry compressed with a method it has no codec for', async () => {
-    // Method 77 is registered to nothing, here or upstream, so this is what any
-    // archive whose codec this build does not carry looks like from the outside.
-    // The entry lists normally -- a method number is metadata, and 7-Zip only
-    // goes looking for a decoder once extraction asks for the bytes.
-    const unsupported = path.join(tempDir, 'unsupported-method.zip');
-    writeStoredZip(unsupported, 'a.bin', Buffer.from('never decoded'), { method: 77 });
+  test('it rejects an entry it has no way to decode', async () => {
+    // Two archives that differ only in the one header field that makes them
+    // undecodable, listed and extracted the same way:
+    //
+    //   - Method 77 is registered to nothing, here or upstream, so it stands in
+    //     for any archive whose codec this build does not carry.
+    //   - The encrypted-bit entry has no decryptor to reach and no password to
+    //     supply, because this build is compiled with Z7_NO_CRYPTO.
+    //
+    // Both list normally in the same way, and for the same reason: a method
+    // number and an encryption flag are metadata, and 7-Zip only goes looking
+    // for a decoder once extraction asks for the bytes. A caller therefore
+    // learns about encryption up front -- that is what `isEncrypted` is for --
+    // and one that extracts anyway gets an error rather than the ciphertext.
+    await withTempDir(async (directory) => {
+      const unsupported = path.join(directory, 'unsupported-method.zip');
+      writeStoredZip(unsupported, 'a.bin', Buffer.from('never decoded'), { method: 77 });
+      const encrypted = path.join(directory, 'encrypted.zip');
+      writeStoredZip(encrypted, 'a.bin', Buffer.from('never decrypted'), { flags: 1 });
 
-    const entries = await listEntries(unsupported, SevenZipFormat.ZIP);
-    expect(entries.map((entry) => entry.entryPath)).toEqual(['a.bin']);
-    await expect(drain(extractEntry(unsupported, SevenZipFormat.ZIP, 'a.bin'))).rejects.toThrow(
-      /its compression method is not supported by this build/,
-    );
-  });
+      const [unsupportedEntries, encryptedEntries] = await Promise.all(
+        [unsupported, encrypted].map(
+          async (archive) => await listEntries(archive, SevenZipFormat.ZIP),
+        ),
+      );
+      expect(unsupportedEntries.map((entry) => entry.entryPath)).toEqual(['a.bin']);
+      expect(unsupportedEntries.map((entry) => entry.isEncrypted)).toEqual([false]);
+      expect(encryptedEntries.map((entry) => entry.entryPath)).toEqual(['a.bin']);
+      expect(encryptedEntries.map((entry) => entry.isEncrypted)).toEqual([true]);
 
-  test('it rejects an encrypted entry', async () => {
-    // This build is compiled with Z7_NO_CRYPTO, so there is no decryptor to
-    // reach and no password to supply. The addon reports the flag up front --
-    // that is what `isEncrypted` is for -- and a caller that extracts anyway
-    // gets an error rather than the ciphertext.
-    const encrypted = path.join(tempDir, 'encrypted.zip');
-    writeStoredZip(encrypted, 'a.bin', Buffer.from('never decrypted'), { flags: 1 });
-
-    const entries = await listEntries(encrypted, SevenZipFormat.ZIP);
-    expect(entries.map((entry) => entry.isEncrypted)).toEqual([true]);
-    await expect(drain(extractEntry(encrypted, SevenZipFormat.ZIP, 'a.bin'))).rejects.toThrow(
-      /it is encrypted, and encrypted entries are not supported/,
-    );
+      await expect(drain(extractEntry(unsupported, SevenZipFormat.ZIP, 'a.bin'))).rejects.toThrow(
+        /its compression method is not supported by this build/,
+      );
+      await expect(drain(extractEntry(encrypted, SevenZipFormat.ZIP, 'a.bin'))).rejects.toThrow(
+        /it is encrypted, and encrypted entries are not supported/,
+      );
+    });
   });
 });

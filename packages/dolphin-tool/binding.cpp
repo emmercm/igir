@@ -196,13 +196,22 @@ template <typename Reader>
 class ReadWorker : public Napi::AsyncWorker {
    public:
     ReadWorker(Napi::Env env, Reader* reader, size_t maxBytes)
-        : Napi::AsyncWorker(env), deferred_(Napi::Promise::Deferred::New(env)), reader_(reader), buf_(maxBytes) {}
+        : Napi::AsyncWorker(env),
+          deferred_(Napi::Promise::Deferred::New(env)),
+          reader_(reader),
+          // new[] rather than std::vector, deliberately: a vector would
+          // value-initialize every byte, and Produce() overwrites the only part
+          // of it anyone is ever shown. Zeroing a chunk per read just to memcpy
+          // over it is measurable on a multi-gigabyte image and buys nothing --
+          // n_ bounds what is exposed, and the bytes past it never leave here.
+          buf_(new uint8_t[maxBytes]),
+          cap_(maxBytes) {}
 
     Napi::Promise GetPromise() { return deferred_.Promise(); }
 
     void Execute() override {
         try {
-            n_ = reader_->Produce(buf_.data(), buf_.size());
+            n_ = reader_->Produce(buf_.get(), cap_);
         } catch (const std::exception& e) {
             SetError(e.what());
         } catch (...) {
@@ -215,19 +224,27 @@ class ReadWorker : public Napi::AsyncWorker {
         if (n_ == 0) {
             deferred_.Resolve(env.Null());
         } else {
-            // Give JS the worker's own buffer as the Buffer's backing store: move buf_ onto
-            // the heap and expose its data() to New(), freed by the finalizer once JS is
-            // done. unique_ptr owns it until New() succeeds, so a throw here can't leak. The
-            // bytes are independent of reader_/blob, so the teardown invariant is untouched.
-            auto owned = std::make_unique<std::vector<uint8_t>>(std::move(buf_));
-            owned->resize(n_);  // shrink-only: never reallocates, keeps data() stable
+            // Give JS the worker's own allocation as the Buffer's backing store
+            // rather than copying it: the finalizer frees it once JS is done.
+            // Only the first n_ bytes are exposed; the rest are uninitialized.
+            // `raw` is unowned between release() and a successful New(), which
+            // is what the failure path below cleans up.
+            uint8_t* raw = buf_.release();
             Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
-                env, owned->data(), n_,
-                [](Napi::Env /*unused*/, uint8_t* /*unused*/, std::vector<uint8_t>* v) { delete v; }, owned.get());
-            // New() now owns the vector via its finalizer; release our pointer so ~unique_ptr
-            // doesn't free it too. The returned pointer is intentionally dropped.
-            owned.release();  // NOLINT(bugprone-unused-return-value)
-            deferred_.Resolve(out);
+                env, raw, n_, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
+            if (out.IsEmpty()) {
+                // With C++ exceptions disabled a failed New() returns an empty
+                // value and leaves a JS exception pending. Reject rather than
+                // resolving with an empty value, which JavaScript would read as
+                // the end of the stream.
+                delete[] raw;
+                deferred_.Reject(env.IsExceptionPending()
+                                     ? env.GetAndClearPendingException().Value()
+                                     : Napi::Error::New(env, "failed to allocate the read result")
+                                           .Value());
+            } else {
+                deferred_.Resolve(out);
+            }
         }
         reader_->FinishRead();  // last use of reader_: may release it
     }
@@ -240,7 +257,8 @@ class ReadWorker : public Napi::AsyncWorker {
    private:
     Napi::Promise::Deferred deferred_;
     Reader* reader_;
-    std::vector<uint8_t> buf_;
+    std::unique_ptr<uint8_t[]> buf_;
+    size_t cap_ = 0;
     size_t n_ = 0;
 };
 

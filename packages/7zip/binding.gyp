@@ -206,9 +206,12 @@
       "dependencies": ["sevenzip", "guiddefs"],
       "sources": [
         "binding.cpp",
-        "src/archive.cpp",
-        "src/reader.cpp",
-        "src/ringBuffer.cpp",
+        "src/chunkQueue.cpp",
+        "src/entryReader.cpp",
+        "src/errors.cpp",
+        "src/lister.cpp",
+        "src/pump.cpp",
+        "src/sevenZip.cpp",
         # XzCrc64Init.cpp is nothing but a file-scope object whose constructor calls
         # Crc64GenerateTable(). It exports no symbol, so in the "sevenzip" static
         # library the linker never had a reason to pull the member in and the CRC64

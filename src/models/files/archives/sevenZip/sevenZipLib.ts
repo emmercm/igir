@@ -138,6 +138,7 @@ export default abstract class SevenZipLib extends Archive {
       // nothing inside the archive for that name to match. Name no entry at all
       // and the addon extracts that sole member.
       this.hasMeaningfulEntryPaths() ? entryPath : undefined,
+      Defaults.FILE_READING_CHUNK_SIZE,
     );
     const entryStream: Readable =
       start > 0 ? sourceStream.pipe(new SkipBytesTransform(start)) : sourceStream;

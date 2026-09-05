@@ -2,8 +2,6 @@ import module from 'node:module';
 import os from 'node:os';
 import stream from 'node:stream';
 
-import Defaults from '../../src/globals/defaults.js';
-
 const require = module.createRequire(import.meta.url);
 
 /**
@@ -64,7 +62,7 @@ interface SevenZipNativeEntry extends Omit<SevenZipEntry, 'crc32'> {
  * this file has to pair every `read()` with a `close()`.
  */
 interface NativeEntryReader {
-  read: (maxBytes: number) => Promise<Buffer | null>;
+  read: () => Promise<Buffer | null>;
   close: () => void;
 }
 
@@ -76,8 +74,12 @@ interface NativeEntryReader {
  * Entry *paths* go the other way, and deliberately. Resolving one to an index in
  * JavaScript means opening the archive to list it and then opening it again to
  * extract, whereas the addon resolves it inside the open it has to perform
- * regardless -- so an index is never part of this surface at all. `read()`'s
- * argument is likewise validated in C++ (clamped to the ring buffer), not here.
+ * regardless -- so an index is never part of this surface at all.
+ *
+ * `read()` takes no size: the chunk size is fixed when the reader is
+ * constructed, because it is the size the extraction thread fills to before
+ * publishing anything, and so has to be known before a byte is decoded. That is
+ * what makes every read but the last return exactly `chunkBytes`.
  *
  * Every path below names ONE file, even for a multi-volume archive: the addon's
  * open callback implements IArchiveOpenVolumeCallback, so 7-Zip finds the rest
@@ -90,6 +92,7 @@ interface SevenZipBinding {
     archivePath: string,
     formatIndex: number,
     entryPath: string | undefined,
+    chunkBytes: number,
   ) => NativeEntryReader;
 }
 
@@ -141,6 +144,12 @@ function formatIndex(format: SevenZipFormat): number {
  * `archivePath` is a single file even when the archive spans several volumes:
  * name the first one (`.7z.001`, `.z01`, `.001`) and 7-Zip discovers its
  * siblings in the same directory. Callers never enumerate or order volumes.
+ *
+ * `entryPath` is reported VERBATIM, exactly as the archive recorded it. An entry
+ * written on Windows comes back with backslash separators, because that is what
+ * the archive actually says; normalizing here would misreport its contents, and
+ * a caller who wants a normalized form can produce one but could not recover the
+ * original. Either spelling is accepted back by {@link extractEntry}.
  */
 export async function listEntries(
   archivePath: string,
@@ -156,9 +165,12 @@ export async function listEntries(
 /**
  * Open a {@link stream.Readable} over one entry's decompressed bytes.
  *
- * `entryPath` is matched with separators normalized, by the addon, against the
- * archive it opens to extract from -- naming an entry therefore costs nothing
- * beyond the extraction itself, and never a second pass over the archive.
+ * `entryPath` is matched against the archive the addon opens to extract from --
+ * naming an entry therefore costs nothing beyond the extraction itself, and
+ * never a second pass over the archive. Separators are compared normalized, so
+ * `dir/file.rom` and `dir\\file.rom` both find the same entry however the
+ * archive spelled it. That tolerance is on input only; see {@link listEntries}
+ * for what comes back out.
  *
  * Omit it for the formats that record no entry name -- `.Z`, `.bz2`, `.lzma`
  * and a split set all wrap exactly one nameless member, and {@link listEntries}
@@ -170,18 +182,34 @@ export async function listEntries(
  *
  * The native reader is released when the stream ends, errors, or is destroyed.
  * Callers must consume the stream to its end or call `destroy()`.
+ *
+ * `highWaterMark` sets the size of every chunk the stream emits but the last.
+ * Omit it to take Node's own default for a {@link stream.Readable}, which is
+ * what the addon is then told to use -- this package deliberately defines no
+ * default of its own, so a Node upgrade that retunes streams retunes this too.
+ * The size is a promise, not a ceiling: the extraction thread accumulates
+ * decompressed output and publishes a chunk only once it is full, so a consumer
+ * never sees a short read merely because a decoder happened to emit its output
+ * in small pieces. Only an entry's final chunk is short.
  */
 export function extractEntry(
   archivePath: string,
   format: SevenZipFormat,
   entryPath?: string,
+  highWaterMark?: number,
 ): stream.Readable {
   // Opening is deferred to the first read so that a failure to open surfaces as
   // an 'error' on the returned stream, which is where a caller is already
   // handling failures, rather than as a synchronous throw from this function.
+  //
+  // It also means the chunk size can be read off the stream itself rather than
+  // guessed: `readableHighWaterMark` is whatever the caller asked for, or Node's
+  // default when they asked for nothing. The addon is then producing exactly the
+  // amount the stream wants per read, with no constant defined here to drift out
+  // of step with Node's.
   let reader: NativeEntryReader | undefined;
-  const openOnce = (): NativeEntryReader => {
-    reader ??= new binding.EntryReader(archivePath, formatIndex(format), entryPath);
+  const openOnce = (chunkBytes: number): NativeEntryReader => {
+    reader ??= new binding.EntryReader(archivePath, formatIndex(format), entryPath, chunkBytes);
     return reader;
   };
 
@@ -197,7 +225,9 @@ export function extractEntry(
   };
 
   return new stream.Readable({
-    highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+    // `undefined` is not "no opinion" to every stream option, but it is to this
+    // one: Readable falls back to its own default, which is the point.
+    highWaterMark,
     async read(): Promise<void> {
       try {
         if (isClosed) {
@@ -205,7 +235,7 @@ export function extractEntry(
           this.push(null);
           return;
         }
-        const chunk = await openOnce().read(Defaults.FILE_READING_CHUNK_SIZE);
+        const chunk = await openOnce(this.readableHighWaterMark).read();
         if (chunk === null || chunk.length === 0) {
           closeOnce();
           // eslint-disable-next-line unicorn/no-null

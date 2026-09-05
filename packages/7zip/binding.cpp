@@ -9,8 +9,9 @@
 #include <string>
 #include <vector>
 
-#include "src/archive.h"
-#include "src/reader.h"
+#include "src/entryReader.h"
+#include "src/lister.h"
+#include "src/sevenZip.h"
 
 namespace {
 

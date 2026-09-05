@@ -3,6 +3,7 @@ import path from 'node:path';
 import stream from 'node:stream';
 
 import dolphinTool from '../../../../../packages/dolphin-tool/index.js';
+import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import FileChecksums from '../../fileChecksums.js';
@@ -71,6 +72,7 @@ export default abstract class Dolphin extends Archive {
   ): Promise<T> {
     let readable: stream.Readable = dolphinTool.openReader({
       inputFilename: this.getFilePath(),
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
     // A non-zero start offset (e.g. a detected ROM header) must skip that many
     // leading bytes of the forward-only stream.
