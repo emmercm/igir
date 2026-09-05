@@ -58,12 +58,34 @@ interface SevenZipNativeEntry extends Omit<SevenZipEntry, 'crc32'> {
 
 /**
  * The addon's pull reader. Module-private on purpose: callers get a
- * {@link stream.Readable} from {@link extractEntry} instead, so nothing outside
- * this file has to pair every `read()` with a `close()`.
+ * {@link stream.Readable} from {@link openEntryReader} instead, so nothing
+ * outside this file has to pair every `read()` with a `close()`.
  */
 interface NativeEntryReader {
   read: () => Promise<Buffer | null>;
   close: () => void;
+}
+
+export interface ListEntriesOptions {
+  inputFilename: string;
+  format: SevenZipFormat;
+}
+
+export interface OpenEntryReaderOptions {
+  inputFilename: string;
+  format: SevenZipFormat;
+  /**
+   * The entry to extract, or `undefined` for the formats that record no entry
+   * name. See {@link openEntryReader}.
+   */
+  entryPath?: string;
+  /**
+   * The `highWaterMark` of the returned stream, and so the size of every chunk
+   * the addon is asked to produce. Omit it to take Node's own default for a
+   * {@link stream.Readable} -- this package deliberately defines no default of
+   * its own, so a Node upgrade that retunes streams retunes this too.
+   */
+  highWaterMark?: number;
 }
 
 /**
@@ -139,77 +161,26 @@ function formatIndex(format: SevenZipFormat): number {
 }
 
 /**
- * List every entry in an archive.
+ * Wrap a native 7-Zip entry reader in a {@link stream.Readable}. The reader is
+ * closed when the stream ends, errors, or is destroyed. Callers must consume the
+ * stream to its end or call `destroy()` so the native reader is released.
  *
- * `archivePath` is a single file even when the archive spans several volumes:
- * name the first one (`.7z.001`, `.z01`, `.001`) and 7-Zip discovers its
- * siblings in the same directory. Callers never enumerate or order volumes.
- *
- * `entryPath` is reported VERBATIM, exactly as the archive recorded it. An entry
- * written on Windows comes back with backslash separators, because that is what
- * the archive actually says; normalizing here would misreport its contents, and
- * a caller who wants a normalized form can produce one but could not recover the
- * original. Either spelling is accepted back by {@link extractEntry}.
+ * Unlike the sibling addons' equivalents this takes a factory rather than an
+ * already-open reader, because this addon's reader is told its chunk size when
+ * it is constructed: that size is what the extraction thread fills to before
+ * publishing anything, so it has to be known before a byte is decoded. Deferring
+ * the open to the first read means the size can be read off the stream itself,
+ * with no constant defined here to drift out of step with Node's, and it puts a
+ * failure to open on the stream's 'error' -- where a caller is already handling
+ * failures -- rather than making it a synchronous throw.
  */
-export async function listEntries(
-  archivePath: string,
-  format: SevenZipFormat,
-): Promise<SevenZipEntry[]> {
-  const entries = await binding.listEntries(archivePath, formatIndex(format));
-  return entries.map((entry) => ({
-    ...entry,
-    crc32: entry.crc32?.toString(16).padStart(8, '0'),
-  }));
-}
-
-/**
- * Open a {@link stream.Readable} over one entry's decompressed bytes.
- *
- * `entryPath` is matched against the archive the addon opens to extract from --
- * naming an entry therefore costs nothing beyond the extraction itself, and
- * never a second pass over the archive. Separators are compared normalized, so
- * `dir/file.rom` and `dir\\file.rom` both find the same entry however the
- * archive spelled it. That tolerance is on input only; see {@link listEntries}
- * for what comes back out.
- *
- * Omit it for the formats that record no entry name -- `.Z`, `.bz2`, `.lzma`
- * and a split set all wrap exactly one nameless member, and {@link listEntries}
- * reports `entryPath: undefined` for it. An archive holding more than one entry
- * then rejects rather than picking one.
- *
- * Extraction runs on a dedicated thread behind a bounded buffer, so a slow
- * consumer applies back-pressure instead of buffering the whole entry.
- *
- * The native reader is released when the stream ends, errors, or is destroyed.
- * Callers must consume the stream to its end or call `destroy()`.
- *
- * `highWaterMark` sets the size of every chunk the stream emits but the last.
- * Omit it to take Node's own default for a {@link stream.Readable}, which is
- * what the addon is then told to use -- this package deliberately defines no
- * default of its own, so a Node upgrade that retunes streams retunes this too.
- * The size is a promise, not a ceiling: the extraction thread accumulates
- * decompressed output and publishes a chunk only once it is full, so a consumer
- * never sees a short read merely because a decoder happened to emit its output
- * in small pieces. Only an entry's final chunk is short.
- */
-export function extractEntry(
-  archivePath: string,
-  format: SevenZipFormat,
-  entryPath?: string,
+function readableFromReader(
+  openReader: (chunkBytes: number) => NativeEntryReader,
   highWaterMark?: number,
 ): stream.Readable {
-  // Opening is deferred to the first read so that a failure to open surfaces as
-  // an 'error' on the returned stream, which is where a caller is already
-  // handling failures, rather than as a synchronous throw from this function.
-  //
-  // It also means the chunk size can be read off the stream itself rather than
-  // guessed: `readableHighWaterMark` is whatever the caller asked for, or Node's
-  // default when they asked for nothing. The addon is then producing exactly the
-  // amount the stream wants per read, with no constant defined here to drift out
-  // of step with Node's.
   let reader: NativeEntryReader | undefined;
   const openOnce = (chunkBytes: number): NativeEntryReader => {
-    reader ??= new binding.EntryReader(archivePath, formatIndex(format), entryPath, chunkBytes);
+    reader ??= openReader(chunkBytes);
     return reader;
   };
 
@@ -220,7 +191,7 @@ export function extractEntry(
     }
     isClosed = true;
     // `reader` is undefined when the stream was destroyed before the first read,
-    // or when the constructor threw: either way nothing was opened to release.
+    // or when the factory threw: either way nothing was opened to release.
     reader?.close();
   };
 
@@ -235,6 +206,9 @@ export function extractEntry(
           this.push(null);
           return;
         }
+        // Read off the stream rather than the option, so that the addon is
+        // asked for exactly what the stream wants whether or not a caller named
+        // a size.
         const chunk = await openOnce(this.readableHighWaterMark).read();
         if (chunk === null || chunk.length === 0) {
           closeOnce();
@@ -263,3 +237,65 @@ export function extractEntry(
     },
   });
 }
+
+export default {
+  /**
+   * List every entry in an archive.
+   *
+   * `inputFilename` is a single file even when the archive spans several
+   * volumes: name the first one (`.7z.001`, `.z01`, `.001`) and 7-Zip discovers
+   * its siblings in the same directory. Callers never enumerate or order
+   * volumes.
+   *
+   * `entryPath` is reported VERBATIM, exactly as the archive recorded it. An
+   * entry written on Windows comes back with backslash separators, because that
+   * is what the archive actually says; normalizing here would misreport its
+   * contents, and a caller who wants a normalized form can produce one but could
+   * not recover the original. Either spelling is accepted back by
+   * {@link openEntryReader}.
+   */
+  async listEntries(options: ListEntriesOptions): Promise<SevenZipEntry[]> {
+    const entries = await binding.listEntries(options.inputFilename, formatIndex(options.format));
+    return entries.map((entry) => ({
+      ...entry,
+      crc32: entry.crc32?.toString(16).padStart(8, '0'),
+    }));
+  },
+
+  /**
+   * Open a {@link stream.Readable} over one entry's decompressed bytes.
+   *
+   * `entryPath` is matched against the archive the addon opens to extract from
+   * -- naming an entry therefore costs nothing beyond the extraction itself, and
+   * never a second pass over the archive. Separators are compared normalized, so
+   * `dir/file.rom` and `dir\\file.rom` both find the same entry however the
+   * archive spelled it. That tolerance is on input only; see {@link listEntries}
+   * for what comes back out.
+   *
+   * Omit it for the formats that record no entry name -- `.Z`, `.bz2`, `.lzma`
+   * and a split set all wrap exactly one nameless member, and {@link listEntries}
+   * reports `entryPath: undefined` for it. An archive holding more than one entry
+   * then rejects rather than picking one.
+   *
+   * Extraction runs on a dedicated thread behind a bounded buffer, so a slow
+   * consumer applies back-pressure instead of buffering the whole entry.
+   *
+   * `highWaterMark` sets the size of every chunk the stream emits but the last.
+   * The size is a promise, not a ceiling: the extraction thread accumulates
+   * decompressed output and publishes a chunk only once it is full, so a consumer
+   * never sees a short read merely because a decoder happened to emit its output
+   * in small pieces. Only an entry's final chunk is short.
+   */
+  openEntryReader(options: OpenEntryReaderOptions): stream.Readable {
+    return readableFromReader(
+      (chunkBytes) =>
+        new binding.EntryReader(
+          options.inputFilename,
+          formatIndex(options.format),
+          options.entryPath,
+          chunkBytes,
+        ),
+      options.highWaterMark,
+    );
+  },
+};

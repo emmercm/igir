@@ -19,7 +19,7 @@ namespace sevenzip {
 // separators included. An entry written on Windows comes back with backslashes.
 // Normalizing here would be a lie about the archive's contents, and callers that
 // want a normalized form can do it in one line; callers that want the truth
-// could not get it back. Passing either spelling to extractEntry() works
+// could not get it back. Passing either spelling to openEntryReader() works
 // regardless -- see FindEntryIndex() in sevenZip.h.
 //
 // The work happens on the libuv thread pool. Nothing there blocks on another

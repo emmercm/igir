@@ -6,7 +6,7 @@ import stream from 'node:stream';
 import async from 'async';
 
 import type { SevenZipEntry, SevenZipFormat } from '../../../../../packages/7zip/index.js';
-import { extractEntry, listEntries } from '../../../../../packages/7zip/index.js';
+import sevenZip from '../../../../../packages/7zip/index.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../../streams/fsReadTransform.js';
@@ -56,7 +56,10 @@ export default abstract class SevenZipLib extends Archive {
     // FileFactory.entriesFromArchive() turns that into a warning and falls back
     // to treating the path as a plain ROM. Swallowing it into an empty list
     // would instead drop the file from the scan entirely.
-    const entries = await listEntries(this.getFilePath(), this.getSevenZipFormat());
+    const entries = await sevenZip.listEntries({
+      inputFilename: this.getFilePath(),
+      format: this.getSevenZipFormat(),
+    });
     const fileEntries = entries.filter((entry) => !entry.isDirectory);
 
     if (callback) {
@@ -128,18 +131,18 @@ export default abstract class SevenZipLib extends Archive {
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    const sourceStream = extractEntry(
-      this.getFilePath(),
-      this.getSevenZipFormat(),
+    const sourceStream = sevenZip.openEntryReader({
+      inputFilename: this.getFilePath(),
+      format: this.getSevenZipFormat(),
       // The addon matches an entry path against the archive it opens to extract
       // from, so handing it the name directly costs no extra pass. Formats that
       // record no names are the exception: they hold exactly one entry, which
       // getArchiveEntries() named after the archive file itself, so there is
       // nothing inside the archive for that name to match. Name no entry at all
       // and the addon extracts that sole member.
-      this.hasMeaningfulEntryPaths() ? entryPath : undefined,
-      Defaults.FILE_READING_CHUNK_SIZE,
-    );
+      entryPath: this.hasMeaningfulEntryPaths() ? entryPath : undefined,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+    });
     const entryStream: Readable =
       start > 0 ? sourceStream.pipe(new SkipBytesTransform(start)) : sourceStream;
 
