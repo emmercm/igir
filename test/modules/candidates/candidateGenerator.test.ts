@@ -16,8 +16,10 @@ import Release from '../../../src/models/dats/release.js';
 import ROM from '../../../src/models/dats/rom.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ChdBinCue from '../../../src/models/files/archives/chd/chdBinCue.js';
+import Gzip from '../../../src/models/files/archives/gzip.js';
 import NkitIso from '../../../src/models/files/archives/nkitIso.js';
 import Rar from '../../../src/models/files/archives/rar.js';
+import Bzip2 from '../../../src/models/files/archives/sevenZip/bzip2.js';
 import SevenZip from '../../../src/models/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/models/files/archives/tar.js';
 import Zip from '../../../src/models/files/archives/zip.js';
@@ -723,6 +725,33 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
       // Then "game with no ROMs" and "game with two ROMs (parent)"
       expect(candidates).toHaveLength(2);
+    });
+  });
+
+  describe('meaningful entry paths', () => {
+    it('should prefer the archive with meaningful entry paths when both contain every ROM', async () => {
+      // Given two archives that each contain the game's only ROM, where the one WITHOUT meaningful
+      // entry paths sorts alphabetically first - so only the meaningful-entry-path preference can
+      // decide between them
+      const bzip2 = new Bzip2('a.bz2');
+      const gzip = new Gzip('z.gz');
+      const files = await Promise.all([
+        ArchiveEntry.entryOf({ archive: bzip2, entryPath: 'one.rom', size: 1, crc32: '12345678' }),
+        ArchiveEntry.entryOf({ archive: gzip, entryPath: 'one.rom', size: 1, crc32: '12345678' }),
+      ]);
+
+      // When
+      const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+      // Then the gzip is raw-written, because a .bz2 wraps a single nameless stream and its entry
+      // path is invented from the archive's filename rather than read from the archive
+      const oneRomCandidate = candidates.find(
+        (candidate) => candidate.getName() === gameWithOneRom.getName(),
+      );
+      expect(oneRomCandidate).toBeDefined();
+      expect(
+        oneRomCandidate?.getRomsWithFiles().map((rwf) => rwf.getInputFile().getFilePath()),
+      ).toEqual([path.resolve(gzip.getFilePath())]);
     });
   });
 

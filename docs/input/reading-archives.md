@@ -8,18 +8,24 @@ Igir supports most common archive formats:
 
 | Extension                                                        | Contains file CRC32s | Igir can extract without a third-party binary | Igir can checksum without temporary files |
 |------------------------------------------------------------------|----------------------|-----------------------------------------------|-------------------------------------------|
-| `.7z`                                                            | ✅                    | ✅                                             | ❌                                         |
-| `.chd`                                                           | ❌ SHA1               | ✅                                             | ✅                                         |
-| `.cso`, `.zso`, `.dax`                                           | ❌                    | ❌ Uses bundled `maxcso`                       | ⚠️ CRC32 only                             |
-| `.gcz` ([GameCube docs](../usage/console/gamecube.md))           | ❌                    | ✅                                             | ✅                                         |
-| `.gz`, `.gzip`                                                   | ✅                    | ✅                                             | ✅                                         |
-| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                    | ❌ no extraction support                       | ✅                                         |
-| `.rar`                                                           | ✅                    | ✅                                             | ❌                                         |
-| `.rvz` (GameCube, Wii)                                           | ❌                    | ✅                                             | ✅                                         |
-| `.tar`                                                           | ❌                    | ✅                                             | ✅                                         |
-| `.tar.gz`, `.tgz`                                                | ❌                    | ✅                                             | ✅                                         |
-| `.wia` (Wii)                                                     | ❌                    | ✅                                             | ✅                                         |
-| `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                    | ✅                                             | ✅                                         |
+| `.001` (split volumes)                                           | ❌                   | ✅                                            | ✅                                        |
+| `.7z`                                                            | ✅                   | ✅                                            | ✅                                        |
+| `.bz2`, `.bzip2`                                                 | ❌                   | ✅                                            | ✅                                        |
+| `.chd`                                                           | ❌ SHA1              | ✅                                            | ✅                                        |
+| `.cso`, `.zso`, `.dax`                                           | ❌                   | ❌ Uses bundled `maxcso`                      | ⚠️ CRC32 only                             |
+| `.gcz` ([GameCube docs](../usage/console/gamecube.md))           | ❌                   | ✅                                            | ✅                                        |
+| `.gz`, `.gzip`                                                   | ✅                   | ✅                                            | ✅                                        |
+| `.lzma`, `.lzma86`                                               | ❌                   | ✅                                            | ✅                                        |
+| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit)) | ✅                   | ❌ no extraction support                      | ✅                                        |
+| `.rar`                                                           | ✅                   | ✅                                            | ❌                                        |
+| `.rvz` (GameCube, Wii)                                           | ❌                   | ✅                                            | ✅                                        |
+| `.tar`                                                           | ❌                   | ✅                                            | ✅                                        |
+| `.tar.gz`, `.tgz`                                                | ❌                   | ✅                                            | ✅                                        |
+| `.wia` (Wii)                                                     | ❌                   | ✅                                            | ✅                                        |
+| `.zip`/`.zip64` (uncompressed, DEFLATE, and Zstandard)           | ✅                   | ✅                                            | ✅                                        |
+| `.zip.001`, `.z01` (spanned)                                     | ✅                   | ✅                                            | ✅                                        |
+| `.zipx`, `.zx01`                                                 | ✅                   | ✅                                            | ✅                                        |
+| `.Z`                                                             | ❌                   | ✅                                            | ✅                                        |
 
 !!! note
 

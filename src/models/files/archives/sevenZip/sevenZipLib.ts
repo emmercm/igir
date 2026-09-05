@@ -1,23 +1,33 @@
-// This must be imported before '7z-iterator'!
-import './lzmaNativeDisable.js';
-
+import fs from 'node:fs';
 import path from 'node:path';
+import type { Readable } from 'node:stream';
+import stream from 'node:stream';
 
-import type { Entry, SevenZipEntry } from '7z-iterator';
-import _7zIterator from '7z-iterator';
 import async from 'async';
 
+import type { SevenZipEntry, SevenZipFormat } from '../../../../../packages/7zip/index.js';
+import { extractEntry, listEntries } from '../../../../../packages/7zip/index.js';
 import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
-import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
+import FsReadTransform from '../../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
+import FsUtil from '../../../../utils/fsUtil.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
 /**
- * Base class for archive formats handled by the 7-Zip library (7z, Z, spanned ZIP, ZipX).
+ * Base class for archive formats handled by the bundled 7-Zip addon
+ * ({@link packages/7zip}): 7z, Z, spanned ZIP, and ZipX.
  */
 export default abstract class SevenZipLib extends Archive {
+  /**
+   * The 7-Zip handler to read this archive with. The addon takes no part in
+   * guessing a format from a file's contents or name, so each subclass names the
+   * one handler its extensions map to.
+   */
+  protected abstract getSevenZipFormat(): SevenZipFormat;
+
   /**
    * Returns true: 7-Zip-backed formats support extraction.
    */
@@ -25,92 +35,132 @@ export default abstract class SevenZipLib extends Archive {
     return true;
   }
 
+  /**
+   * The entry path to use for a format that records no name of its own. `.Z`
+   * wraps a single nameless stream, and the convention every tool follows is to
+   * name it after the archive with the extension removed, so `game.rom.Z` holds
+   * `game.rom`.
+   */
+  private nameFromArchive(): string {
+    return path.parse(this.getFilePath()).name;
+  }
+
+  private entryPathOf(entry: SevenZipEntry): string {
+    return entry.entryPath ?? this.nameFromArchive();
+  }
+
   async getArchiveEntries(
     checksumBitmask: number,
     callback?: FsReadCallback,
   ): Promise<ArchiveEntry<Archive>[]> {
-    const iterator = new _7zIterator(this.getFilePath());
-    try {
-      try {
-        for await (const entry of iterator) {
-          entry.destroy();
-        }
-      } catch (error) {
-        if ((error as Error & { code: string }).code === 'CORRUPT_HEADER') {
-          // This will happen for valid archives with no files
-          return [];
-        }
-        throw error;
-      }
-      const entriesIn7z = iterator.getStreamingOrder();
-      const fileEntries = entriesIn7z.filter((entry) => entry.type === 'file');
+    // A file that cannot be opened as this format throws, and is meant to:
+    // FileFactory.entriesFromArchive() turns that into a warning and falls back
+    // to treating the path as a plain ROM. Swallowing it into an empty list
+    // would instead drop the file from the scan entirely.
+    const entries = await listEntries(this.getFilePath(), this.getSevenZipFormat());
+    const fileEntries = entries.filter((entry) => !entry.isDirectory);
 
-      if (callback) {
-        callback(
-          0,
-          fileEntries.reduce((total, entry) => total + entry.size, 0),
-        );
-      }
-      let overallProgress = 0;
-
-      return await async.mapLimit(
-        fileEntries,
-        Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
-        async (entry: SevenZipEntry): Promise<ArchiveEntry<this>> => {
-          const archiveEntry = await ArchiveEntry.entryOf(
-            {
-              archive: this,
-              entryPath: entry.path,
-              size: entry.size,
-              crc32: entry._crc?.toString(16).toLowerCase().padStart(8, '0'),
-              // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
-            },
-            checksumBitmask,
-          );
-          overallProgress += entry.size;
-          if (callback) {
-            callback(overallProgress);
-          }
-          return archiveEntry;
-        },
+    if (callback) {
+      callback(
+        0,
+        // `.Z` records no size, so its contribution to the total is unknown
+        // until it has been read. Reporting it as 0 keeps the running progress
+        // monotonic; it just finishes ahead of the bar.
+        fileEntries.reduce((total, entry) => total + (entry.size ?? 0), 0),
       );
-    } finally {
-      iterator.destroy();
     }
+    let overallProgress = 0;
+
+    return await async.mapLimit(
+      fileEntries,
+      Defaults.ARCHIVE_ENTRY_SCANNER_THREADS_PER_ARCHIVE,
+      async (entry: SevenZipEntry): Promise<ArchiveEntry<this>> => {
+        const archiveEntry = await ArchiveEntry.entryOf(
+          {
+            archive: this,
+            entryPath: this.entryPathOf(entry),
+            // Both are left undefined rather than defaulted when the format
+            // records neither, which is the case for `.Z`. ArchiveEntry.entryOf()
+            // then derives them by reading the entry, instead of committing a
+            // size of 0 and an empty CRC32 to the cache.
+            size: entry.size,
+            crc32: entry.crc32,
+            // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
+          },
+          checksumBitmask,
+        );
+        overallProgress += entry.size ?? 0;
+        if (callback) {
+          callback(overallProgress);
+        }
+        return archiveEntry;
+      },
+    );
+  }
+
+  /**
+   * Resolve an entry path to the index the addon extracts by. Nameless formats
+   * are matched against the name derived from the archive's own filename, which
+   * is the same name {@link getArchiveEntries} reported.
+   */
+  private async resolveEntryIndex(entryPath: string): Promise<number> {
+    const entries = await listEntries(this.getFilePath(), this.getSevenZipFormat());
+    const wanted = entryPath.replaceAll('\\', '/');
+    const entry = entries.find(
+      (candidate) =>
+        !candidate.isDirectory && this.entryPathOf(candidate).replaceAll('\\', '/') === wanted,
+    );
+    if (entry === undefined) {
+      throw new IgirException(`failed to find archive entry '${entryPath}'`);
+    }
+    return entry.index;
   }
 
   /**
    * Extract the named entry from the archive to the given file path.
    */
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
-    const iterator = new _7zIterator(this.getFilePath());
-    try {
-      let foundEntry: Entry | undefined = undefined;
-      for await (const entry of iterator) {
-        if (entry.path.replaceAll('\\', '/') === entryPath.replaceAll('\\', '/')) {
-          foundEntry = entry;
-        } else {
-          entry.destroy();
-        }
-      }
-      if (foundEntry === undefined) {
-        throw new IgirException(`failed to find archive entry '${entryPath}'`);
-      }
+  async extractEntryToFile(
+    entryPath: string,
+    extractedFilePath: string,
+    callback?: FsReadCallback,
+  ): Promise<void> {
+    const extractedDir = path.dirname(extractedFilePath);
+    if (!(await FsUtil.exists(extractedDir))) {
+      await FsUtil.mkdir(extractedDir, { recursive: true });
+    }
 
-      const extractDir = await FsUtil.mktemp(path.join(extractedFilePath));
-      try {
-        await foundEntry.create(extractDir, {});
-        // 7z-iterator doesn't let you specify the exact file path
-        const extractedFiles = await FsUtil.walk(extractDir, WalkMode.FILES);
-        if (extractedFiles.length === 0) {
-          throw new IgirException(`failed to extract`);
-        }
-        await FsUtil.mv(extractedFiles[0], extractedFilePath);
-      } finally {
-        await FsUtil.rm(extractDir, { recursive: true, force: true });
+    await this.extractEntryToStream(entryPath, async (readable) => {
+      const writeStream = fs.createWriteStream(extractedFilePath);
+      if (callback) {
+        await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readable, writeStream);
       }
+    });
+  }
+
+  /**
+   * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
+   */
+  override async extractEntryToStream<T>(
+    entryPath: string,
+    callback: (readable: Readable) => Promise<T> | T,
+    start = 0,
+  ): Promise<T> {
+    const entryIndex = await this.resolveEntryIndex(entryPath);
+
+    const sourceStream = extractEntry(this.getFilePath(), this.getSevenZipFormat(), entryIndex);
+    const entryStream: Readable =
+      start > 0 ? sourceStream.pipe(new SkipBytesTransform(start)) : sourceStream;
+
+    try {
+      return await callback(entryStream);
     } finally {
-      iterator.destroy();
+      // Both, because pipe() does not propagate destroy() upstream, and it is
+      // the source that holds the addon's extraction thread. Leaving it running
+      // is what a callback that stops short of the end of the entry would do.
+      entryStream.destroy();
+      sourceStream.destroy();
     }
   }
 }

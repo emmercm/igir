@@ -14,3 +14,7 @@
 	path = packages/dolphin-tool/deps/dolphin
 	url = https://github.com/dolphin-emu/dolphin.git
 	shallow = true
+[submodule "packages/7zip/deps/7zip"]
+	path = packages/7zip/deps/7zip
+	url = https://github.com/ip7z/7zip.git
+	shallow = true

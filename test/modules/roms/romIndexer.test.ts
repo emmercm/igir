@@ -1,11 +1,21 @@
 import path from 'node:path';
 
+import type Archive from '../../../src/models/files/archives/archive.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ChdRaw from '../../../src/models/files/archives/chd/chdRaw.js';
 import Rvz from '../../../src/models/files/archives/dolphin/rvz.js';
+import Gzip from '../../../src/models/files/archives/gzip.js';
 import Cso from '../../../src/models/files/archives/maxcso/cso.js';
+import NkitIso from '../../../src/models/files/archives/nkitIso.js';
 import Rar from '../../../src/models/files/archives/rar.js';
+import Bzip2 from '../../../src/models/files/archives/sevenZip/bzip2.js';
+import Lzma from '../../../src/models/files/archives/sevenZip/lzma.js';
+import Lzma86 from '../../../src/models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../../../src/models/files/archives/sevenZip/sevenZip.js';
+import Split from '../../../src/models/files/archives/sevenZip/split.js';
+import Z from '../../../src/models/files/archives/sevenZip/z.js';
+import ZipSpanned from '../../../src/models/files/archives/sevenZip/zipSpanned.js';
+import ZipX from '../../../src/models/files/archives/sevenZip/zipX.js';
 import Tar from '../../../src/models/files/archives/tar.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
@@ -23,6 +33,10 @@ function createRomIndexer(props?: OptionsProps): ROMIndexer {
 
 function indexAndFind(files: File[], props?: OptionsProps): File[] {
   return createRomIndexer(props).index(files).findFiles(files[0]);
+}
+
+async function entryOf(archive: Archive): Promise<ArchiveEntry<Archive>> {
+  return await ArchiveEntry.entryOf({ archive, entryPath: 'rom.rom', size: SIZE, crc32: CRC });
 }
 
 describe('isOutputFile priority', () => {
@@ -169,6 +183,74 @@ describe('archiveEntryPriority (default sort)', () => {
     expect(sorted[4]).toBe(cso);
     expect(sorted[5]).toBe(rvz);
     expect(sorted[6]).toBe(chd);
+  });
+
+  it('should give every archive type a distinct priority', async () => {
+    // Archives with meaningful entry paths sort ahead of those without, and within each of those
+    // two groups the order follows FileFactory#archiveFromArchiveExtension
+    const expected = [
+      // Meaningful entry paths
+      new Zip('rom.zip'),
+      new Tar('rom.tar'),
+      new Rar('rom.rar'),
+      new Gzip('rom.gz'),
+      new SevenZip('rom.7z'),
+      new ZipSpanned('rom.zip.001'),
+      new ZipX('rom.zipx'),
+      // No meaningful entry paths
+      new Z('rom.z'),
+      new Bzip2('rom.bz2'),
+      new Lzma86('rom.lzma86'),
+      new Lzma('rom.lzma'),
+      new Split('rom.001'),
+      new Cso('rom.cso'),
+      new Rvz('rom.rvz'),
+      new ChdRaw('rom.chd'),
+      new NkitIso('rom.nkit.iso'),
+    ];
+    const entries = await Promise.all(expected.map(async (archive) => await entryOf(archive)));
+
+    // Index them in reverse, to prove the sort - not the input order - decides
+    const sorted = indexAndFind(entries.toReversed());
+
+    expect(sorted.map((file) => file.toString())).toEqual(entries.map((entry) => entry.toString()));
+  });
+});
+
+describe('meaningful entry path preference', () => {
+  it('should prefer a gzip over a bzip2, because bzip2 entry paths are invented', async () => {
+    // A .bz2 wraps a single nameless stream, so its entry path comes from the archive's filename
+    const bzip2 = await entryOf(new Bzip2('a.bz2'));
+    const gzip = await entryOf(new Gzip('z.gz'));
+
+    // Indexed with the bzip2 first, and its path sorts alphabetically first, so only the
+    // meaningful-entry-path preference can put the gzip ahead of it
+    const sorted = indexAndFind([bzip2, gzip]);
+
+    expect(sorted[0]).toBe(gzip);
+    expect(sorted[1]).toBe(bzip2);
+  });
+
+  it('should prefer a plain file over an archive without meaningful entry paths', async () => {
+    const bzip2 = await entryOf(new Bzip2('a.bz2'));
+    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
+
+    const sorted = indexAndFind([bzip2, plain]);
+
+    expect(sorted[0]).toBe(plain);
+    expect(sorted[1]).toBe(bzip2);
+  });
+
+  it('should not override the preferFiletype=archive preference', async () => {
+    // The user's preference is applied before this one, so an un-verifiable entry path is still
+    // preferred over a plain file when archives are explicitly asked for
+    const bzip2 = await entryOf(new Bzip2('a.bz2'));
+    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
+
+    const sorted = indexAndFind([plain, bzip2], { preferFiletype: 'archive' });
+
+    expect(sorted[0]).toBe(bzip2);
+    expect(sorted[1]).toBe(plain);
   });
 });
 
