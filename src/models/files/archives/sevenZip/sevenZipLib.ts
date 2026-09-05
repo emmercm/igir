@@ -135,8 +135,9 @@ export default abstract class SevenZipLib extends Archive {
       // from, so handing it the name directly costs no extra pass. Formats that
       // record no names are the exception: they hold exactly one entry, which
       // getArchiveEntries() named after the archive file itself, so there is
-      // nothing inside the archive for that name to match. Address it by index.
-      this.hasMeaningfulEntryPaths() ? entryPath : 0,
+      // nothing inside the archive for that name to match. Name no entry at all
+      // and the addon extracts that sole member.
+      this.hasMeaningfulEntryPaths() ? entryPath : undefined,
     );
     const entryStream: Readable =
       start > 0 ? sourceStream.pipe(new SkipBytesTransform(start)) : sourceStream;

@@ -319,7 +319,6 @@ std::string FindEntryErrorMessage(HRESULT hr, const std::string& entryPath) {
 namespace {
 
 struct Entry {
-    uint32_t index = 0;
     std::optional<std::string> entryPath;
     std::optional<uint64_t> size;
     std::optional<uint32_t> crc32;
@@ -375,7 +374,6 @@ class ListWorker : public Napi::AsyncWorker {
         entries_.reserve(count);
         for (UInt32 i = 0; i < count; i++) {
             Entry entry;
-            entry.index = i;
 
             NWindows::NCOM::CPropVariant pathProp;
             if (opened.archive->GetProperty(i, kpidPath, &pathProp) == S_OK &&
@@ -432,7 +430,6 @@ class ListWorker : public Napi::AsyncWorker {
         for (size_t i = 0; i < entries_.size(); i++) {
             const Entry& entry = entries_[i];
             Napi::Object object = Napi::Object::New(env);
-            object.Set("index", Napi::Number::New(env, entry.index));
             // Undefined rather than "" when the format records no name, for the
             // same reason as `size`: "" is a name an entry could really have.
             object.Set("entryPath",

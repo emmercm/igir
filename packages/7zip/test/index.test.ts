@@ -236,7 +236,6 @@ describe('listEntries', () => {
     'it lists the four entries in $label',
     async ({ format, archivePath }) => {
       const entries = await listEntries(archivePath, format);
-      expect(entries.map((entry) => entry.index)).toEqual([0, 1, 2, 3]);
       expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
       expect(entries.map((entry) => entry.size)).toEqual([1024, 2048, 3072, 4096]);
       // Compared as arrays rather than collapsed with every(), so a failure
@@ -257,7 +256,6 @@ describe('listEntries', () => {
     async ({ format, archivePath }) => {
       const entries = await listEntries(archivePath, format);
       expect(entries.length).toEqual(1);
-      expect(entries[0].index).toEqual(0);
       // None of these containers records the member's name, size, or CRC32, so
       // the addon has nothing to report for them. The decompressed bytes are
       // still exact; `extractEntry` proves that.
@@ -384,35 +382,32 @@ describe('extractEntry', () => {
     async ({ format, archivePath }) => {
       const entries = await listEntries(archivePath, format);
       for (const entry of entries) {
-        const extracted = await drain(extractEntry(archivePath, format, entry.index));
+        const extracted = await drain(extractEntry(archivePath, format, entry.entryPath));
         expect(extracted.length).toEqual(entry.size);
         expect(crc32Hex(extracted)).toEqual(entry.crc32);
       }
     },
   );
 
-  test('it accepts an entry path as well as an index', async () => {
-    const archivePath = SEVEN_ZIP_FIXTURES[0];
-    const byIndex = await drain(extractEntry(archivePath, SevenZipFormat.SEVEN_ZIP, 2));
-    const byPath = await drain(extractEntry(archivePath, SevenZipFormat.SEVEN_ZIP, '3kb'));
-    expect(byPath.length).toEqual(3072);
-    expect(byPath.equals(byIndex)).toEqual(true);
-  });
-
   test('it rejects an entry the archive does not have', async () => {
-    // Same archive, same call, two ways of naming an entry that isn't there.
+    // Same archive, same call, two ways of failing to name an entry that can be
+    // extracted. Naming nothing is how a nameless single-stream archive's only
+    // member is addressed, so against an archive holding four it is ambiguous
+    // rather than a shorthand for the first.
     await expect(
       drain(extractEntry(SEVEN_ZIP_FIXTURES[0], SevenZipFormat.SEVEN_ZIP, 'nope')),
     ).rejects.toThrow(/no entry named 'nope'/);
     await expect(
-      drain(extractEntry(SEVEN_ZIP_FIXTURES[0], SevenZipFormat.SEVEN_ZIP, 999)),
-    ).rejects.toThrow(/no entry at index 999; it has 4 entries/);
+      drain(extractEntry(SEVEN_ZIP_FIXTURES[0], SevenZipFormat.SEVEN_ZIP)),
+    ).rejects.toThrow(/no entry was named, and the archive holds 4 entries rather than one/);
   });
 
   test.each(SINGLE_STREAM_ARCHIVES)(
     'it extracts the stream of $label intact',
     async ({ format, archivePath }) => {
-      const extracted = await drain(extractEntry(archivePath, format, 0));
+      // No entry is named: these formats record no name to match against, and
+      // the addon extracts the one member the archive holds.
+      const extracted = await drain(extractEntry(archivePath, format));
       // listEntries() reports no size or CRC32 for these formats, so the
       // expectations are the payload's own, shared by every one of them.
       expect(extracted.length).toEqual(SINGLE_STREAM_SIZE);
@@ -421,19 +416,21 @@ describe('extractEntry', () => {
   );
 
   test('it joins a split set back into the original bytes', async () => {
-    const extracted = await drain(extractEntry(SPLIT_FIRST_VOLUME, SevenZipFormat.SPLIT, 0));
+    const extracted = await drain(
+      extractEntry(SPLIT_FIRST_VOLUME, SevenZipFormat.SPLIT, 'copy.7z'),
+    );
     expect(extracted.equals(fs.readFileSync(SPLIT_JOINED))).toEqual(true);
   });
 
-  test.each(SPANNED_ENTRIES.map((entry, index) => ({ ...entry, index })))(
+  test.each(SPANNED_ENTRIES)(
     'it extracts $entryPath across the disks of a multi-disk zip',
-    async ({ index, size, crc32 }) => {
+    async ({ entryPath, size, crc32 }) => {
       // `first.bin` is larger than a disk, so its compressed bytes genuinely
       // straddle a volume boundary; `second.bin` instead starts on a later disk,
       // reached only by resolving its disk-number-start against the joined
       // stream. Listing alone would pass either way, because the central
       // directory lives entirely on the last disk.
-      const extracted = await drain(extractEntry(SPANNED_LAST_DISK, SevenZipFormat.ZIP, index));
+      const extracted = await drain(extractEntry(SPANNED_LAST_DISK, SevenZipFormat.ZIP, entryPath));
       expect(extracted.length).toEqual(size);
       expect(crc32Hex(extracted)).toEqual(crc32);
     },
@@ -460,7 +457,7 @@ describe('extractEntry', () => {
     const entries = await listEntries(largeArchive, SevenZipFormat.ZIP);
     expect(entries.map((entry) => entry.size)).toEqual([LARGE_CONTENTS.length]);
 
-    const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 0));
+    const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin'));
     expect(extracted.length).toEqual(LARGE_CONTENTS.length);
     expect(crc32Hex(extracted)).toEqual(entries[0].crc32);
     expect(extracted.equals(LARGE_CONTENTS)).toEqual(true);
@@ -472,7 +469,7 @@ describe('extractEntry', () => {
     // is parked inside 7-Zip's Write() with nothing left to drain it. Tearing
     // down joins that thread, so without an abort that wakes it the join never
     // returns and this hangs until the suite times out.
-    const readable = extractEntry(largeArchive, SevenZipFormat.ZIP, 0);
+    const readable = extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin');
     expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
 
     readable.destroy();
@@ -488,12 +485,12 @@ describe('extractEntry', () => {
     // Reclamation is a leak invariant, and the task that owns those has to
     // prove it with a thread/handle count under a forced GC.
     for (let i = 0; i < 8; i++) {
-      const abandoned = extractEntry(largeArchive, SevenZipFormat.ZIP, 0);
+      const abandoned = extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin');
       const first = await abandoned[Symbol.asyncIterator]().next();
       expect(first.done).toEqual(false);
     }
 
-    const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 0));
+    const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 'stored.bin'));
     expect(extracted.length).toEqual(LARGE_CONTENTS.length);
   });
 
@@ -516,7 +513,7 @@ describe('extractEntry', () => {
     expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
     for (const entry of entries) {
       await expect(
-        drain(extractEntry(corrupt, SevenZipFormat.SEVEN_ZIP, entry.index)),
+        drain(extractEntry(corrupt, SevenZipFormat.SEVEN_ZIP, entry.entryPath)),
       ).rejects.toThrow(/its compressed data is corrupt|it failed its CRC check/);
     }
   });
@@ -531,7 +528,7 @@ describe('extractEntry', () => {
 
     const entries = await listEntries(unsupported, SevenZipFormat.ZIP);
     expect(entries.map((entry) => entry.entryPath)).toEqual(['a.bin']);
-    await expect(drain(extractEntry(unsupported, SevenZipFormat.ZIP, 0))).rejects.toThrow(
+    await expect(drain(extractEntry(unsupported, SevenZipFormat.ZIP, 'a.bin'))).rejects.toThrow(
       /its compression method is not supported by this build/,
     );
   });
@@ -546,7 +543,7 @@ describe('extractEntry', () => {
 
     const entries = await listEntries(encrypted, SevenZipFormat.ZIP);
     expect(entries.map((entry) => entry.isEncrypted)).toEqual([true]);
-    await expect(drain(extractEntry(encrypted, SevenZipFormat.ZIP, 0))).rejects.toThrow(
+    await expect(drain(extractEntry(encrypted, SevenZipFormat.ZIP, 'a.bin'))).rejects.toThrow(
       /it is encrypted, and encrypted entries are not supported/,
     );
   });

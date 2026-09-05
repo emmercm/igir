@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <atomic>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -27,11 +28,15 @@ class Pump {
    public:
     static constexpr size_t kBufferBytes = 1U << 20U;  // 1 MiB of back-pressure
 
-    // The entry is named EITHER by index (`entryPath` empty) or by path. A path
-    // is resolved against the archive this Pump opens for extraction anyway, so
-    // naming an entry by name costs one pass over the already-parsed item table
-    // -- never a second open, and never a round trip through JavaScript.
-    Pump(std::string path, uint32_t formatIndex, uint32_t entryIndex, std::string entryPath);
+    // `entryPath` is resolved against the archive this Pump opens for extraction
+    // anyway, so naming an entry by name costs one pass over the already-parsed
+    // item table -- never a second open, and never a round trip through
+    // JavaScript. Nothing outside this class ever sees an entry index.
+    //
+    // No path means the archive's only entry, which is how the formats that
+    // record no names (`.Z`, `.bz2`, `.lzma`, `.001`) are addressed. An archive
+    // holding more than one entry is then an error rather than a silent pick.
+    Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath);
 
     Pump(const Pump&) = delete;
     Pump& operator=(const Pump&) = delete;
@@ -68,16 +73,16 @@ class Pump {
 
     void SetError(std::string message);
 
-    // Resolves `entryIndex_`/`entryPath_` against an open archive, whichever
-    // the caller named the entry by. Reports its own failures through SetError().
+    // Resolves `entryPath_` -- or, when there is none, the archive's sole entry
+    // -- to the index 7-Zip extracts by. Reports its own failures through
+    // SetError().
     HRESULT ResolveEntryIndex(IInArchive& archive, UInt32* out);
 
     std::string EntryLabel() const;
 
     std::string path_;
     uint32_t formatIndex_;
-    uint32_t entryIndex_;
-    std::string entryPath_;
+    std::optional<std::string> entryPath_;
     RingBuffer buffer_{kBufferBytes};
     std::atomic<bool> abort_{false};
     std::mutex errorMutex_;
@@ -179,11 +184,8 @@ Z7_COM7F_IMF(ExtractCallback::SetOperationResult(Int32 opRes)) {
 
 }  // namespace
 
-Pump::Pump(std::string path, uint32_t formatIndex, uint32_t entryIndex, std::string entryPath)
-    : path_(std::move(path)),
-      formatIndex_(formatIndex),
-      entryIndex_(entryIndex),
-      entryPath_(std::move(entryPath)) {
+Pump::Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath)
+    : path_(std::move(path)), formatIndex_(formatIndex), entryPath_(std::move(entryPath)) {
     thread_ = std::thread([this]() { Run(); });
 }
 
@@ -259,24 +261,26 @@ std::string OperationResultMessage(Int32 opResult) {
 
 // Describes the entry for an error message, however the caller named it.
 std::string Pump::EntryLabel() const {
-    if (!entryPath_.empty()) {
-        return "the entry '" + entryPath_ + "'";
+    if (entryPath_.has_value()) {
+        return "the entry '" + *entryPath_ + "'";
     }
-    return "the entry at index " + std::to_string(entryIndex_);
+    return "the only entry";
 }
 
 HRESULT Pump::ResolveEntryIndex(IInArchive& archive, UInt32* out) {
-    if (!entryPath_.empty()) {
+    if (entryPath_.has_value()) {
         uint32_t found = 0;
-        HRESULT const hr = FindEntryIndex(archive, entryPath_, &found);
+        HRESULT const hr = FindEntryIndex(archive, *entryPath_, &found);
         if (hr != S_OK) {
-            SetError(FindEntryErrorMessage(hr, entryPath_));
+            SetError(FindEntryErrorMessage(hr, *entryPath_));
             return hr;
         }
         *out = found;
         return S_OK;
     }
 
+    // No path: the caller means the archive's only entry. Anything else is
+    // ambiguous, and picking one silently is how the wrong bytes get extracted.
     UInt32 count = 0;
     HRESULT const hr = archive.GetNumberOfItems(&count);
     if (hr != S_OK) {
@@ -284,12 +288,12 @@ HRESULT Pump::ResolveEntryIndex(IInArchive& archive, UInt32* out) {
                  HResultSuffix(hr));
         return hr;
     }
-    if (entryIndex_ >= count) {
-        SetError("the archive has no entry at index " + std::to_string(entryIndex_) + "; it has " +
-                 std::to_string(count) + " entries");
+    if (count != 1) {
+        SetError("no entry was named, and the archive holds " + std::to_string(count) +
+                 " entries rather than one");
         return E_INVALIDARG;
     }
-    *out = entryIndex_;
+    *out = 0;
     return S_OK;
 }
 
@@ -458,28 +462,30 @@ EntryReader::~EntryReader() = default;
 
 void EntryReader::Construct(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
-    // The entry is named by index or by path. A path is resolved inside the
-    // single archive open that extraction performs regardless, which is why
-    // index.ts can hand one straight through instead of listing the archive to
-    // turn it into a number first.
-    bool const hasEntry = info.Length() >= 3 && (info[2].IsNumber() || info[2].IsString());
-    if (!hasEntry || !info[0].IsString() || !info[1].IsNumber()) {
+    // An entry is named by path, or not named at all -- never by index. A path
+    // is resolved inside the single archive open that extraction performs
+    // regardless, which is why index.ts can hand one straight through instead of
+    // listing the archive to turn it into a number first.
+    bool const named = info.Length() >= 3 && info[2].IsString();
+    bool const unnamed = info.Length() < 3 || info[2].IsUndefined();
+    if (!info[0].IsString() || !info[1].IsNumber() || (!named && !unnamed)) {
         Napi::TypeError::New(
-            env, "expected (path: string, formatIndex: number, entry: number | string)")
+            env, "expected (path: string, formatIndex: number, entryPath?: string)")
             .ThrowAsJavaScriptException();
         return;
     }
-    uint32_t const entryIndex = info[2].IsNumber() ? info[2].As<Napi::Number>().Uint32Value() : 0;
-    std::string entryPath = info[2].IsString() ? info[2].As<Napi::String>().Utf8Value() : "";
-    if (info[2].IsString() && entryPath.empty()) {
-        // An empty path would otherwise be indistinguishable from "addressed by
-        // index" inside Pump, silently extracting entry 0.
-        Napi::TypeError::New(env, "entry path must not be empty").ThrowAsJavaScriptException();
-        return;
+    std::optional<std::string> entryPath;
+    if (named) {
+        entryPath = info[2].As<Napi::String>().Utf8Value();
+        if (entryPath->empty()) {
+            // An empty path would otherwise be indistinguishable from naming no
+            // entry at all, silently extracting a single-entry archive's member.
+            Napi::TypeError::New(env, "entry path must not be empty").ThrowAsJavaScriptException();
+            return;
+        }
     }
     pump_ = std::make_unique<Pump>(info[0].As<Napi::String>().Utf8Value(),
-                                   info[1].As<Napi::Number>().Uint32Value(), entryIndex,
-                                   std::move(entryPath));
+                                   info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath));
 }
 
 size_t EntryReader::Produce(uint8_t* out, size_t maxBytes) {

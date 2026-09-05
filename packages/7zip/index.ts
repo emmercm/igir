@@ -32,7 +32,6 @@ export const SevenZipFormat = {
 export type SevenZipFormat = (typeof SevenZipFormat)[keyof typeof SevenZipFormat];
 
 export interface SevenZipEntry {
-  index: number;
   /**
    * The entry's path within the archive, or `undefined` when the format records
    * no name -- `.Z`, `.bz2` and `.lzma` wrap one nameless stream, and callers
@@ -77,8 +76,8 @@ interface NativeEntryReader {
  * Entry *paths* go the other way, and deliberately. Resolving one to an index in
  * JavaScript means opening the archive to list it and then opening it again to
  * extract, whereas the addon resolves it inside the open it has to perform
- * regardless. `read()`'s argument is likewise validated in C++ (clamped to the
- * ring buffer), not here.
+ * regardless -- so an index is never part of this surface at all. `read()`'s
+ * argument is likewise validated in C++ (clamped to the ring buffer), not here.
  *
  * Every path below names ONE file, even for a multi-volume archive: the addon's
  * open callback implements IArchiveOpenVolumeCallback, so 7-Zip finds the rest
@@ -90,7 +89,7 @@ interface SevenZipBinding {
   EntryReader: new (
     archivePath: string,
     formatIndex: number,
-    entry: number | string,
+    entryPath: string | undefined,
   ) => NativeEntryReader;
 }
 
@@ -157,10 +156,14 @@ export async function listEntries(
 /**
  * Open a {@link stream.Readable} over one entry's decompressed bytes.
  *
- * `entry` is either an index from {@link listEntries} or an entry path. A path
- * is matched with separators normalized, by the addon, against the archive it
- * opens to extract from -- naming an entry by name therefore costs nothing
+ * `entryPath` is matched with separators normalized, by the addon, against the
+ * archive it opens to extract from -- naming an entry therefore costs nothing
  * beyond the extraction itself, and never a second pass over the archive.
+ *
+ * Omit it for the formats that record no entry name -- `.Z`, `.bz2`, `.lzma`
+ * and a split set all wrap exactly one nameless member, and {@link listEntries}
+ * reports `entryPath: undefined` for it. An archive holding more than one entry
+ * then rejects rather than picking one.
  *
  * Extraction runs on a dedicated thread behind a bounded buffer, so a slow
  * consumer applies back-pressure instead of buffering the whole entry.
@@ -171,14 +174,14 @@ export async function listEntries(
 export function extractEntry(
   archivePath: string,
   format: SevenZipFormat,
-  entry: number | string,
+  entryPath?: string,
 ): stream.Readable {
   // Opening is deferred to the first read so that a failure to open surfaces as
   // an 'error' on the returned stream, which is where a caller is already
   // handling failures, rather than as a synchronous throw from this function.
   let reader: NativeEntryReader | undefined;
   const openOnce = (): NativeEntryReader => {
-    reader ??= new binding.EntryReader(archivePath, formatIndex(format), entry);
+    reader ??= new binding.EntryReader(archivePath, formatIndex(format), entryPath);
     return reader;
   };
 
