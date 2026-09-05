@@ -199,7 +199,11 @@ jobs:
 
           # Runtime smoke test: executing the module runs its top-level require of
           # the freshly compiled addon, which fails loudly if the .node didn't link.
-          node "$(find . -path '*/dolphin-tool/index.js')"
+          node "$(find . -path '*/packages/7zip/index.js')"
+          node "$(find . -path '*/packages/chdman/index.js')"
+          node "$(find . -path '*/packages/dolphin-tool/index.js')"
+          node "$(find . -path '*/packages/zlib*/index.js')"
+          node "$(find . -path '*/packages/zstd*/index.js')"
 
   # !!! This check should be required by GitHub !!!
   test-package-status-check:

@@ -113,8 +113,20 @@ async function copyfiles(
 await copyfiles(
   [
     'packages/*/addon-*/**', // prebuilds
-    'packages/*/{,!(deps)/**/}*.{cpp,h}', // non-vendored C++ files
+    'packages/*/{,!(deps)/**/}*.{c,cpp,h}', // non-vendored C/C++ files
     'packages/*/binding.gyp',
+    'packages/7zip/deps/7zip/C/*',
+    'packages/7zip/deps/7zip/CPP/Common/*',
+    'packages/7zip/deps/7zip/CPP/Windows/*',
+    'packages/7zip/deps/7zip/CPP/7zip/*',
+    'packages/7zip/deps/7zip/CPP/7zip/Archive/*',
+    'packages/7zip/deps/7zip/CPP/7zip/Archive/7z/*',
+    'packages/7zip/deps/7zip/CPP/7zip/Archive/Common/*',
+    'packages/7zip/deps/7zip/CPP/7zip/Archive/Zip/*',
+    'packages/7zip/deps/7zip/CPP/7zip/Common/*',
+    'packages/7zip/deps/7zip/CPP/7zip/Compress/*',
+    'packages/7zip/deps/7zip/CPP/7zip/Crypto/*',
+    'packages/7zip/deps/7zip/DOC/{License,copying,lzma,unRarLicense}*',
     'packages/chdman/deps/mame/3rdparty/flac/include/FLAC/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/include/share/**/*',
     'packages/chdman/deps/mame/3rdparty/flac/src/libFLAC/**/*',

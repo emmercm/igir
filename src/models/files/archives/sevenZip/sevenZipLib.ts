@@ -7,7 +7,6 @@ import async from 'async';
 
 import type { SevenZipEntry, SevenZipFormat } from '../../../../../packages/7zip/index.js';
 import { extractEntry, listEntries } from '../../../../../packages/7zip/index.js';
-import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../../streams/fsReadTransform.js';
@@ -99,24 +98,6 @@ export default abstract class SevenZipLib extends Archive {
   }
 
   /**
-   * Resolve an entry path to the index the addon extracts by. Nameless formats
-   * are matched against the name derived from the archive's own filename, which
-   * is the same name {@link getArchiveEntries} reported.
-   */
-  private async resolveEntryIndex(entryPath: string): Promise<number> {
-    const entries = await listEntries(this.getFilePath(), this.getSevenZipFormat());
-    const wanted = entryPath.replaceAll('\\', '/');
-    const entry = entries.find(
-      (candidate) =>
-        !candidate.isDirectory && this.entryPathOf(candidate).replaceAll('\\', '/') === wanted,
-    );
-    if (entry === undefined) {
-      throw new IgirException(`failed to find archive entry '${entryPath}'`);
-    }
-    return entry.index;
-  }
-
-  /**
    * Extract the named entry from the archive to the given file path.
    */
   async extractEntryToFile(
@@ -147,9 +128,16 @@ export default abstract class SevenZipLib extends Archive {
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    const entryIndex = await this.resolveEntryIndex(entryPath);
-
-    const sourceStream = extractEntry(this.getFilePath(), this.getSevenZipFormat(), entryIndex);
+    const sourceStream = extractEntry(
+      this.getFilePath(),
+      this.getSevenZipFormat(),
+      // The addon matches an entry path against the archive it opens to extract
+      // from, so handing it the name directly costs no extra pass. Formats that
+      // record no names are the exception: they hold exactly one entry, which
+      // getArchiveEntries() named after the archive file itself, so there is
+      // nothing inside the archive for that name to match. Address it by index.
+      this.hasMeaningfulEntryPaths() ? entryPath : 0,
+    );
     const entryStream: Readable =
       start > 0 ? sourceStream.pipe(new SkipBytesTransform(start)) : sourceStream;
 

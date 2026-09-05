@@ -1,8 +1,5 @@
 #include <algorithm>
 #include <atomic>
-#include <condition_variable>
-#include <cstdio>
-#include <cstring>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -14,54 +11,15 @@
 #include "7zip/Archive/IArchive.h"
 #include "Common/MyCom.h"
 #include "archive.h"
+#include "ringBuffer.h"
 
 namespace sevenzip {
 
-// Neither of the two classes below appears in reader.h: nothing outside this
-// file drives them, so declaring them here keeps binding.cpp from parsing the
-// threading machinery at all.
-
-// A fixed-capacity byte queue with one producer (the extraction thread) and one
-// consumer (a libuv worker thread). Capacity never grows, so a slow consumer
-// applies back-pressure to 7-Zip instead of buffering an entire entry in memory.
-class RingBuffer {
-   public:
-    explicit RingBuffer(size_t capacity) : buffer_(capacity) {}
-
-    RingBuffer(const RingBuffer&) = delete;
-    RingBuffer& operator=(const RingBuffer&) = delete;
-    RingBuffer(RingBuffer&&) = delete;
-    RingBuffer& operator=(RingBuffer&&) = delete;
-    ~RingBuffer() = default;
-
-    // Blocks until every byte is queued. Returns false if Abort() was called,
-    // in which case nothing further should be written.
-    bool Write(const uint8_t* data, size_t length);
-
-    // Blocks until bytes are available, the producer finishes, or Abort() is
-    // called. Returns the number of bytes copied; 0 means end of stream, and is
-    // returned only once Finish() or Abort() has been called -- a short or empty
-    // result never stands in for EOF. `maxBytes` must be at least 1;
-    // std::invalid_argument is thrown otherwise, because a zero-length copy has
-    // no answer that is distinguishable from end of stream.
-    size_t Read(uint8_t* out, size_t maxBytes);
-
-    // The producer has written its last byte.
-    void Finish();
-
-    // Unblock both sides and refuse further writes.
-    void Abort();
-
-   private:
-    mutable std::mutex mutex_;
-    std::condition_variable notFull_;
-    std::condition_variable notEmpty_;
-    std::vector<uint8_t> buffer_;
-    size_t head_ = 0;   // next byte to read
-    size_t count_ = 0;  // bytes currently queued
-    bool finished_ = false;
-    bool aborted_ = false;
-};
+// Neither of the classes below appears in reader.h: nothing outside this file
+// drives them, so declaring them here keeps binding.cpp from parsing the
+// threading machinery at all. The ring buffer they share is the exception --
+// it is a plain data structure with no 7-Zip or N-API dependency, so it lives
+// in ringBuffer.h where it can be reasoned about on its own.
 
 // Runs 7-Zip's push-based Extract() on a dedicated thread and exposes its output
 // as a pull-based Read(). One Pump owns one archive, one entry, and one thread.
@@ -69,7 +27,11 @@ class Pump {
    public:
     static constexpr size_t kBufferBytes = 1U << 20U;  // 1 MiB of back-pressure
 
-    Pump(std::string path, uint32_t formatIndex, uint32_t entryIndex);
+    // The entry is named EITHER by index (`entryPath` empty) or by path. A path
+    // is resolved against the archive this Pump opens for extraction anyway, so
+    // naming an entry by name costs one pass over the already-parsed item table
+    // -- never a second open, and never a round trip through JavaScript.
+    Pump(std::string path, uint32_t formatIndex, uint32_t entryIndex, std::string entryPath);
 
     Pump(const Pump&) = delete;
     Pump& operator=(const Pump&) = delete;
@@ -106,79 +68,22 @@ class Pump {
 
     void SetError(std::string message);
 
+    // Resolves `entryIndex_`/`entryPath_` against an open archive, whichever
+    // the caller named the entry by. Reports its own failures through SetError().
+    HRESULT ResolveEntryIndex(IInArchive& archive, UInt32* out);
+
+    std::string EntryLabel() const;
+
     std::string path_;
     uint32_t formatIndex_;
     uint32_t entryIndex_;
+    std::string entryPath_;
     RingBuffer buffer_{kBufferBytes};
     std::atomic<bool> abort_{false};
     std::mutex errorMutex_;
     std::string error_;
     std::thread thread_;
 };
-
-bool RingBuffer::Write(const uint8_t* data, size_t length) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    size_t written = 0;
-    while (written < length) {
-        notFull_.wait(lock, [this]() { return aborted_ || count_ < buffer_.size(); });
-        if (aborted_) {
-            return false;
-        }
-        size_t const tail = (head_ + count_) % buffer_.size();
-        size_t const contiguous = std::min(buffer_.size() - tail, buffer_.size() - count_);
-        size_t const chunk = std::min(contiguous, length - written);
-        std::memcpy(buffer_.data() + tail, data + written, chunk);
-        count_ += chunk;
-        written += chunk;
-        notEmpty_.notify_one();
-    }
-    return true;
-}
-
-size_t RingBuffer::Read(uint8_t* out, size_t maxBytes) {
-    if (maxBytes == 0) {
-        // The loop below would copy nothing and return 0, which callers read as
-        // end of stream while bytes are still queued. Throwing instead makes a
-        // zero return value mean exactly one thing.
-        throw std::invalid_argument("maxBytes must be at least 1");
-    }
-    std::unique_lock<std::mutex> lock(mutex_);
-    notEmpty_.wait(lock, [this]() { return aborted_ || finished_ || count_ > 0; });
-    if (aborted_ || count_ == 0) {
-        // Aborted: whatever is still queued is discarded, so a consumer that
-        // closed mid-read observes end of stream rather than a partial chunk.
-        return 0;
-    }
-    size_t read = 0;
-    while (read < maxBytes && count_ > 0) {
-        size_t const contiguous = std::min(buffer_.size() - head_, count_);
-        size_t const chunk = std::min(contiguous, maxBytes - read);
-        std::memcpy(out + read, buffer_.data() + head_, chunk);
-        head_ = (head_ + chunk) % buffer_.size();
-        count_ -= chunk;
-        read += chunk;
-    }
-    notFull_.notify_one();
-    return read;
-}
-
-void RingBuffer::Finish() {
-    {
-        std::lock_guard<std::mutex> const lock(mutex_);
-        finished_ = true;
-    }
-    notEmpty_.notify_all();
-    notFull_.notify_all();
-}
-
-void RingBuffer::Abort() {
-    {
-        std::lock_guard<std::mutex> const lock(mutex_);
-        aborted_ = true;
-    }
-    notEmpty_.notify_all();
-    notFull_.notify_all();
-}
 
 namespace {
 
@@ -274,8 +179,11 @@ Z7_COM7F_IMF(ExtractCallback::SetOperationResult(Int32 opRes)) {
 
 }  // namespace
 
-Pump::Pump(std::string path, uint32_t formatIndex, uint32_t entryIndex)
-    : path_(std::move(path)), formatIndex_(formatIndex), entryIndex_(entryIndex) {
+Pump::Pump(std::string path, uint32_t formatIndex, uint32_t entryIndex, std::string entryPath)
+    : path_(std::move(path)),
+      formatIndex_(formatIndex),
+      entryIndex_(entryIndex),
+      entryPath_(std::move(entryPath)) {
     thread_ = std::thread([this]() { Run(); });
 }
 
@@ -313,38 +221,108 @@ void Pump::SetError(std::string message) {
     }
 }
 
+namespace {
+
+// "(HRESULT 0x800700xx)" -- only ever a suffix to a sentence a user can read.
+// Explains a non-kOK IArchiveExtractCallback::SetOperationResult() code. These
+// are the codes an unreadable entry actually produces -- an unsupported or
+// deliberately unlinked codec, a corrupt body, a truncated archive, an entry
+// that needs a password -- so collapsing them into one string threw away the
+// only part a user could act on.
+std::string OperationResultMessage(Int32 opResult) {
+    using namespace NArchive::NExtract::NOperationResult;  // NOLINT(google-build-using-namespace)
+    switch (opResult) {
+        case kUnsupportedMethod:
+            return "its compression method is not supported by this build";
+        case kDataError:
+            return "its compressed data is corrupt";
+        case kCRCError:
+            return "it failed its CRC check, so the archive is corrupt";
+        case kUnavailable:
+            return "the entry is unavailable";
+        case kUnexpectedEnd:
+            return "the archive ends before the entry does, so it is truncated";
+        case kDataAfterEnd:
+            return "there is unexpected data after the end of the archive";
+        case kIsNotArc:
+            return "the entry is not an archive";
+        case kHeadersError:
+            return "its headers are corrupt";
+        case kWrongPassword:
+            return "it is encrypted, and encrypted entries are not supported";
+        default:
+            return "it could not be decoded";
+    }
+}
+
+}  // namespace
+
+// Describes the entry for an error message, however the caller named it.
+std::string Pump::EntryLabel() const {
+    if (!entryPath_.empty()) {
+        return "the entry '" + entryPath_ + "'";
+    }
+    return "the entry at index " + std::to_string(entryIndex_);
+}
+
+HRESULT Pump::ResolveEntryIndex(IInArchive& archive, UInt32* out) {
+    if (!entryPath_.empty()) {
+        uint32_t found = 0;
+        HRESULT const hr = FindEntryIndex(archive, entryPath_, &found);
+        if (hr != S_OK) {
+            SetError(FindEntryErrorMessage(hr, entryPath_));
+            return hr;
+        }
+        *out = found;
+        return S_OK;
+    }
+
+    UInt32 count = 0;
+    HRESULT const hr = archive.GetNumberOfItems(&count);
+    if (hr != S_OK) {
+        SetError("could not read the archive's item count; it is likely corrupt" +
+                 HResultSuffix(hr));
+        return hr;
+    }
+    if (entryIndex_ >= count) {
+        SetError("the archive has no entry at index " + std::to_string(entryIndex_) + "; it has " +
+                 std::to_string(count) + " entries");
+        return E_INVALIDARG;
+    }
+    *out = entryIndex_;
+    return S_OK;
+}
+
 void Pump::Extract() {
     // Everything 7-Zip owns lives inside this scope so that it is destroyed --
     // and every file handle closed -- before the thread exits.
     OpenedArchive opened;
     HRESULT hr = OpenArchive(path_, formatIndex_, &opened);
     if (hr != S_OK) {
-        SetError(OpenErrorMessage(hr));
+        SetError(OpenErrorMessage(hr, path_, formatIndex_));
         return;
     }
 
-    UInt32 count = 0;
-    if (opened.archive->GetNumberOfItems(&count) != S_OK || entryIndex_ >= count) {
-        SetError("entry index out of range");
-        return;
+    UInt32 index = 0;
+    hr = ResolveEntryIndex(*opened.archive, &index);
+    if (hr != S_OK) {
+        return;  // ResolveEntryIndex() already reported why
     }
 
     // Held through the interface pointer because the class macro makes
     // AddRef()/Release() private on the concrete class; `raw` stays valid for
     // OpResult() because `callback` owns a reference.
-    auto* raw = new ExtractCallback(entryIndex_, buffer_, abort_);
+    auto* raw = new ExtractCallback(index, buffer_, abort_);
     CMyComPtr<IArchiveExtractCallback> const callback(raw);
-    UInt32 const index = entryIndex_;
     hr = opened.archive->Extract(&index, 1, 0 /* testMode */, callback);
     if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
         // The consumer closed early; not an error.
     } else if (hr != S_OK) {
-        char message[128];
-        std::snprintf(message, sizeof(message), "failed to extract entry (HRESULT 0x%08x)",
-                      static_cast<unsigned>(hr));
-        SetError(message);
+        SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" +
+                 HResultSuffix(hr));
     } else if (raw->OpResult() != NArchive::NExtract::NOperationResult::kOK) {
-        SetError("entry failed to extract (data error, CRC error, or unsupported method)");
+        SetError("failed to extract " + EntryLabel() + " from '" + path_ + "': " +
+                 OperationResultMessage(raw->OpResult()));
     }
 }
 
@@ -480,15 +458,28 @@ EntryReader::~EntryReader() = default;
 
 void EntryReader::Construct(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
-    if (info.Length() < 3 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
-        Napi::TypeError::New(env,
-                             "expected (path: string, formatIndex: number, entryIndex: number)")
+    // The entry is named by index or by path. A path is resolved inside the
+    // single archive open that extraction performs regardless, which is why
+    // index.ts can hand one straight through instead of listing the archive to
+    // turn it into a number first.
+    bool const hasEntry = info.Length() >= 3 && (info[2].IsNumber() || info[2].IsString());
+    if (!hasEntry || !info[0].IsString() || !info[1].IsNumber()) {
+        Napi::TypeError::New(
+            env, "expected (path: string, formatIndex: number, entry: number | string)")
             .ThrowAsJavaScriptException();
         return;
     }
+    uint32_t const entryIndex = info[2].IsNumber() ? info[2].As<Napi::Number>().Uint32Value() : 0;
+    std::string entryPath = info[2].IsString() ? info[2].As<Napi::String>().Utf8Value() : "";
+    if (info[2].IsString() && entryPath.empty()) {
+        // An empty path would otherwise be indistinguishable from "addressed by
+        // index" inside Pump, silently extracting entry 0.
+        Napi::TypeError::New(env, "entry path must not be empty").ThrowAsJavaScriptException();
+        return;
+    }
     pump_ = std::make_unique<Pump>(info[0].As<Napi::String>().Utf8Value(),
-                                   info[1].As<Napi::Number>().Uint32Value(),
-                                   info[2].As<Napi::Number>().Uint32Value());
+                                   info[1].As<Napi::Number>().Uint32Value(), entryIndex,
+                                   std::move(entryPath));
 }
 
 size_t EntryReader::Produce(uint8_t* out, size_t maxBytes) {
@@ -577,10 +568,10 @@ void EntryReader::StartRead(const Napi::CallbackInfo& info,
         deferred.Reject(Napi::TypeError::New(env, "expected (maxBytes: number)").Value());
         return;
     }
-    // index.ts rejects anything that is not an integer in [1, 2^32-1], so the
-    // only job here is to stay safe if that guard is ever bypassed: clamp to the
-    // ring buffer (a 4 GiB allocation would be a denial of service, and no single
-    // Read() can yield more than the buffer holds anyway) and refuse a request
+    // This is the ONLY validation of maxBytes: index.ts passes a constant and
+    // does not check it, so nothing upstream is guarding this. Clamp to the ring
+    // buffer -- a 4 GiB allocation would be a denial of service, and no single
+    // Read() can yield more than the buffer holds anyway -- and refuse a request
     // that rounds to zero, which would report end of stream with bytes still
     // buffered.
     size_t const maxBytes =

@@ -136,21 +136,37 @@ function crc32Hex(buffer: Buffer): string {
   return zlib.crc32(buffer).toString(16).padStart(8, '0');
 }
 
+interface StoredZipOptions {
+  /**
+   * Prefix the file with NSignature::kSpan, the four bytes `zip -s` writes at
+   * the front of a spanned archive. The file is otherwise a perfectly ordinary
+   * single-volume ZIP -- the marker alone is what puts 7-Zip's Zip handler onto
+   * its span-mode path.
+   */
+  hasSpanMarker?: boolean;
+  /**
+   * The compression method both headers declare. The payload is always written
+   * verbatim, so anything other than 0 (stored) describes bytes that are not
+   * what it claims -- which is the point: 7-Zip picks its decoder from this
+   * number, and a number no registered codec answers to is how an archive with
+   * a method this build cannot handle is produced without shipping one.
+   */
+  method?: number;
+  /** The general-purpose bit flag both headers declare; bit 0 means encrypted. */
+  flags?: number;
+}
+
 /**
  * Write a single-entry ZIP that stores its payload uncompressed (method 0).
  * Stored entries need no encoder, so a large archive can be produced here at
- * test time rather than committed as a binary fixture.
- *
- * With `hasSpanMarker`, the file is prefixed with NSignature::kSpan, the four bytes
- * `zip -s` writes at the front of a spanned archive. It is otherwise a perfectly
- * ordinary single-volume ZIP -- the marker alone is what puts 7-Zip's Zip
- * handler onto its span-mode path.
+ * test time rather than committed as a binary fixture -- and so can a
+ * deliberately broken one, by lying in the headers about what the payload is.
  */
 function writeStoredZip(
   filePath: string,
   entryName: string,
   contents: Buffer,
-  hasSpanMarker = false,
+  { hasSpanMarker = false, method = 0, flags = 0 }: StoredZipOptions = {},
 ): void {
   const name = Buffer.from(entryName, 'utf8');
   const crc = zlib.crc32(contents);
@@ -164,6 +180,8 @@ function writeStoredZip(
   const localHeader = Buffer.alloc(30);
   localHeader.writeUInt32LE(0x04_03_4b_50, 0); // local file header signature
   localHeader.writeUInt16LE(20, 4); // version needed to extract
+  localHeader.writeUInt16LE(flags, 6); // general purpose bit flag
+  localHeader.writeUInt16LE(method, 8); // compression method
   localHeader.writeUInt32LE(crc, 14);
   localHeader.writeUInt32LE(size, 18); // compressed size
   localHeader.writeUInt32LE(size, 22); // uncompressed size
@@ -173,6 +191,8 @@ function writeStoredZip(
   centralHeader.writeUInt32LE(0x02_01_4b_50, 0); // central directory signature
   centralHeader.writeUInt16LE(20, 4); // version made by
   centralHeader.writeUInt16LE(20, 6); // version needed to extract
+  centralHeader.writeUInt16LE(flags, 8); // general purpose bit flag
+  centralHeader.writeUInt16LE(method, 10); // compression method
   centralHeader.writeUInt32LE(crc, 16);
   centralHeader.writeUInt32LE(size, 20);
   centralHeader.writeUInt32LE(size, 24);
@@ -219,9 +239,16 @@ describe('listEntries', () => {
       expect(entries.map((entry) => entry.index)).toEqual([0, 1, 2, 3]);
       expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
       expect(entries.map((entry) => entry.size)).toEqual([1024, 2048, 3072, 4096]);
-      expect(entries.every((entry) => /^[\da-f]{8}$/.test(entry.crc32 ?? ''))).toEqual(true);
-      expect(entries.every((entry) => !entry.isDirectory)).toEqual(true);
-      expect(entries.every((entry) => !entry.isEncrypted)).toEqual(true);
+      // Compared as arrays rather than collapsed with every(), so a failure
+      // names the entry that disagreed instead of reporting `false !== true`.
+      expect(entries.map((entry) => /^[\da-f]{8}$/.test(entry.crc32 ?? ''))).toEqual([
+        true,
+        true,
+        true,
+        true,
+      ]);
+      expect(entries.map((entry) => entry.isDirectory)).toEqual([false, false, false, false]);
+      expect(entries.map((entry) => entry.isEncrypted)).toEqual([false, false, false, false]);
     },
   );
 
@@ -285,7 +312,7 @@ describe('listEntries', () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'igir-7zip-span-'));
     try {
       const archive = path.join(directory, 'span.zip');
-      writeStoredZip(archive, 'a.txt', Buffer.from('hello span mode'), true);
+      writeStoredZip(archive, 'a.txt', Buffer.from('hello span mode'), { hasSpanMarker: true });
       const entries = await listEntries(archive, SevenZipFormat.ZIP);
       expect(entries.length).toBeGreaterThanOrEqual(1);
       expect(entries[0].entryPath).toEqual('a.txt');
@@ -294,14 +321,60 @@ describe('listEntries', () => {
     }
   });
 
-  test('it rejects a missing file', async () => {
+  test('it rejects a path it cannot open', async () => {
+    // A missing file, an empty path, and a directory fail for three different
+    // reasons inside the addon, but all three are "the caller named something
+    // unopenable" and none needs its own fixture or setup.
     await expect(
       listEntries(path.join(FIXTURE_DIR, 'nope.7z'), SevenZipFormat.SEVEN_ZIP),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/could not read/);
+    await expect(listEntries('', SevenZipFormat.SEVEN_ZIP)).rejects.toThrow(
+      /path or format is invalid/,
+    );
+    // The reason is the operating system's own wording ("Is a directory"), so
+    // only the part the addon contributes -- that it was an open, of this
+    // format -- is asserted.
+    await expect(listEntries(FIXTURE_DIR, SevenZipFormat.SEVEN_ZIP)).rejects.toThrow(
+      /^failed to open .* as 7z \(.+\)$/,
+    );
   });
 
-  test('it rejects an empty path', async () => {
-    await expect(listEntries('', SevenZipFormat.SEVEN_ZIP)).rejects.toThrow();
+  test('it rejects a file that is not the archive it was opened as', async () => {
+    // Everything a caller can hand a handler that is not an archive of that
+    // format: noise, nothing at all, half of a real archive, and a real archive
+    // of a different format. 7-Zip answers all four with S_FALSE -- it read the
+    // file and decided it is not one of these -- so all four share one message,
+    // and asserting them together is what shows that none of them crashes,
+    // hangs, or is mistaken for a readable archive.
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'igir-7zip-invalid-'));
+    try {
+      const garbage = path.join(directory, 'garbage.7z');
+      fs.writeFileSync(garbage, crypto.randomBytes(4096));
+      const empty = path.join(directory, 'empty.7z');
+      fs.writeFileSync(empty, Buffer.alloc(0));
+      // Cut mid-archive: the signature and start-header survive, so the handler
+      // gets far enough to seek to metadata that is no longer there.
+      const truncated = path.join(directory, 'truncated.7z');
+      const whole = fs.readFileSync(SEVEN_ZIP_FIXTURES[0]);
+      fs.writeFileSync(truncated, whole.subarray(0, Math.floor(whole.length / 2)));
+
+      for (const archivePath of [garbage, empty, truncated]) {
+        await expect(listEntries(archivePath, SevenZipFormat.SEVEN_ZIP)).rejects.toThrow(
+          /is not a valid 7z archive/,
+        );
+      }
+      // A real, undamaged archive, opened as the wrong format. The addon never
+      // guesses a format, so this is a caller mistake it has to report rather
+      // than quietly correct.
+      await expect(listEntries(SEVEN_ZIP_FIXTURES[0], SevenZipFormat.ZIP)).rejects.toThrow(
+        /is not a valid zip archive/,
+      );
+      await expect(listEntries(ZIP_FIXTURES[0], SevenZipFormat.SEVEN_ZIP)).rejects.toThrow(
+        /is not a valid 7z archive/,
+      );
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
   });
 });
 
@@ -326,16 +399,14 @@ describe('extractEntry', () => {
     expect(byPath.equals(byIndex)).toEqual(true);
   });
 
-  test('it rejects an unknown entry path', async () => {
+  test('it rejects an entry the archive does not have', async () => {
+    // Same archive, same call, two ways of naming an entry that isn't there.
     await expect(
       drain(extractEntry(SEVEN_ZIP_FIXTURES[0], SevenZipFormat.SEVEN_ZIP, 'nope')),
-    ).rejects.toThrow(/no entry named nope/);
-  });
-
-  test('it rejects an out-of-range entry index', async () => {
+    ).rejects.toThrow(/no entry named 'nope'/);
     await expect(
       drain(extractEntry(SEVEN_ZIP_FIXTURES[0], SevenZipFormat.SEVEN_ZIP, 999)),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/no entry at index 999; it has 4 entries/);
   });
 
   test.each(SINGLE_STREAM_ARCHIVES)(
@@ -424,5 +495,59 @@ describe('extractEntry', () => {
 
     const extracted = await drain(extractEntry(largeArchive, SevenZipFormat.ZIP, 0));
     expect(extracted.length).toEqual(LARGE_CONTENTS.length);
+  });
+
+  test('it rejects an entry whose compressed data is corrupt', async () => {
+    // The failure mode that matters most to a caller: a stream that ends early
+    // and resolves looks exactly like a short file, so a checksum taken over it
+    // would be recorded as if it were the entry's own. It has to reject.
+    //
+    // The damage is past the signature header, so the archive still lists --
+    // every entry's name, size, and CRC32 are readable, and only the bytes are
+    // gone. Listing succeeding is what makes the extraction assertion meaningful.
+    const corrupt = path.join(tempDir, 'corrupt.7z');
+    const whole = Buffer.from(fs.readFileSync(SEVEN_ZIP_FIXTURES[0]));
+    for (let i = 32; i < 48; i++) {
+      whole[i] ^= 0x5a;
+    }
+    fs.writeFileSync(corrupt, whole);
+
+    const entries = await listEntries(corrupt, SevenZipFormat.SEVEN_ZIP);
+    expect(entries.map((entry) => entry.entryPath)).toEqual(['1kb', '2kb', '3kb', '4kb']);
+    for (const entry of entries) {
+      await expect(
+        drain(extractEntry(corrupt, SevenZipFormat.SEVEN_ZIP, entry.index)),
+      ).rejects.toThrow(/its compressed data is corrupt|it failed its CRC check/);
+    }
+  });
+
+  test('it rejects an entry compressed with a method it has no codec for', async () => {
+    // Method 77 is registered to nothing, here or upstream, so this is what any
+    // archive whose codec this build does not carry looks like from the outside.
+    // The entry lists normally -- a method number is metadata, and 7-Zip only
+    // goes looking for a decoder once extraction asks for the bytes.
+    const unsupported = path.join(tempDir, 'unsupported-method.zip');
+    writeStoredZip(unsupported, 'a.bin', Buffer.from('never decoded'), { method: 77 });
+
+    const entries = await listEntries(unsupported, SevenZipFormat.ZIP);
+    expect(entries.map((entry) => entry.entryPath)).toEqual(['a.bin']);
+    await expect(drain(extractEntry(unsupported, SevenZipFormat.ZIP, 0))).rejects.toThrow(
+      /its compression method is not supported by this build/,
+    );
+  });
+
+  test('it rejects an encrypted entry', async () => {
+    // This build is compiled with Z7_NO_CRYPTO, so there is no decryptor to
+    // reach and no password to supply. The addon reports the flag up front --
+    // that is what `isEncrypted` is for -- and a caller that extracts anyway
+    // gets an error rather than the ciphertext.
+    const encrypted = path.join(tempDir, 'encrypted.zip');
+    writeStoredZip(encrypted, 'a.bin', Buffer.from('never decrypted'), { flags: 1 });
+
+    const entries = await listEntries(encrypted, SevenZipFormat.ZIP);
+    expect(entries.map((entry) => entry.isEncrypted)).toEqual([true]);
+    await expect(drain(extractEntry(encrypted, SevenZipFormat.ZIP, 0))).rejects.toThrow(
+      /it is encrypted, and encrypted entries are not supported/,
+    );
   });
 });

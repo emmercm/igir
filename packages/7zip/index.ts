@@ -7,21 +7,24 @@ import Defaults from '../../src/globals/defaults.js';
 const require = module.createRequire(import.meta.url);
 
 /**
- * Every archive format the addon can read. These are 7-Zip's own handler names,
- * which is what makes them a closed set: the handlers are registered at build
- * time by the `*Register.cpp` units listed in binding.gyp, so this union is
- * exhaustive and is checked against the addon at load.
+ * Every archive format the addon can read. These are 7-Zip's own handler names
+ * lowercased -- upstream spells two of them `Z` and `Split`, and the lookup
+ * below is case-insensitive so that callers get one uniform convention.
+ *
+ * The set is closed: the handlers are registered at build time by the
+ * `*Register.cpp` units listed in binding.gyp, so this union is exhaustive and
+ * is checked against the addon at load.
  */
 export const SevenZipFormat = {
   SEVEN_ZIP: '7z',
   ZIP: 'zip',
-  Z: 'Z',
+  Z: 'z',
   /**
    * A byte-sliced file, named `.001`, `.01` or `.aa` and counting up. Listing
    * one yields a single entry: the slices joined back together. That entry is
    * usually itself an archive, which is then read with its own format.
    */
-  SPLIT: 'Split',
+  SPLIT: 'split',
   BZIP2: 'bzip2',
   LZMA: 'lzma',
   LZMA86: 'lzma86',
@@ -59,8 +62,7 @@ interface SevenZipNativeEntry extends Omit<SevenZipEntry, 'crc32'> {
 /**
  * The addon's pull reader. Module-private on purpose: callers get a
  * {@link stream.Readable} from {@link extractEntry} instead, so nothing outside
- * this file has to pair every `read()` with a `close()` or know that a zero-byte
- * read is not end of stream.
+ * this file has to pair every `read()` with a `close()`.
  */
 interface NativeEntryReader {
   read: (maxBytes: number) => Promise<Buffer | null>;
@@ -68,11 +70,15 @@ interface NativeEntryReader {
 }
 
 /**
- * The native surface. Everything the addon can be told in a number is told in a
- * number: formats are resolved to their registration index here rather than
- * matched by name in C++, and `read()`'s argument is validated here rather than
- * there. Both keep logic out of the addon, where it is more expensive to write,
- * test, and keep in step with a vendored 7-Zip upgrade.
+ * The native surface. Format *names* are resolved to their registration index
+ * here rather than matched by name in C++, which keeps the name table -- the
+ * part most likely to drift across a vendored 7-Zip upgrade -- in TypeScript.
+ *
+ * Entry *paths* go the other way, and deliberately. Resolving one to an index in
+ * JavaScript means opening the archive to list it and then opening it again to
+ * extract, whereas the addon resolves it inside the open it has to perform
+ * regardless. `read()`'s argument is likewise validated in C++ (clamped to the
+ * ring buffer), not here.
  *
  * Every path below names ONE file, even for a multi-volume archive: the addon's
  * open callback implements IArchiveOpenVolumeCallback, so 7-Zip finds the rest
@@ -84,7 +90,7 @@ interface SevenZipBinding {
   EntryReader: new (
     archivePath: string,
     formatIndex: number,
-    entryIndex: number,
+    entry: number | string,
   ) => NativeEntryReader;
 }
 
@@ -149,44 +155,15 @@ export async function listEntries(
 }
 
 /**
- * Compare two entry paths. 7-Zip reports separators as the source archive
- * recorded them, so a path that came from a Windows-built .zip uses backslashes;
- * normalizing here keeps that detail from reaching callers.
- */
-function areEntryPathsEqual(left: string, right: string): boolean {
-  return left.replaceAll('\\', '/') === right.replaceAll('\\', '/');
-}
-
-/**
- * Resolve the entry a caller named to the index the addon wants. A number is
- * taken as an index and passed through; a string is matched against entry paths.
- */
-async function resolveEntryIndex(
-  archivePath: string,
-  format: SevenZipFormat,
-  entry: number | string,
-): Promise<number> {
-  if (typeof entry === 'number') {
-    return entry;
-  }
-  const entries = await listEntries(archivePath, format);
-  const match = entries.find(
-    (candidate) =>
-      candidate.entryPath !== undefined && areEntryPathsEqual(candidate.entryPath, entry),
-  );
-  if (match === undefined) {
-    throw new Error(`no entry named ${entry} in ${archivePath}`);
-  }
-  return match.index;
-}
-
-/**
  * Open a {@link stream.Readable} over one entry's decompressed bytes.
  *
- * `entry` is either an index from {@link listEntries} or an entry path, which is
- * matched with separators normalized. Extraction runs on a dedicated thread
- * behind a bounded buffer, so a slow consumer applies back-pressure instead of
- * buffering the whole entry.
+ * `entry` is either an index from {@link listEntries} or an entry path. A path
+ * is matched with separators normalized, by the addon, against the archive it
+ * opens to extract from -- naming an entry by name therefore costs nothing
+ * beyond the extraction itself, and never a second pass over the archive.
+ *
+ * Extraction runs on a dedicated thread behind a bounded buffer, so a slow
+ * consumer applies back-pressure instead of buffering the whole entry.
  *
  * The native reader is released when the stream ends, errors, or is destroyed.
  * Callers must consume the stream to its end or call `destroy()`.
@@ -196,32 +173,24 @@ export function extractEntry(
   format: SevenZipFormat,
   entry: number | string,
 ): stream.Readable {
-  // Opening is deferred to the first read so that this stays synchronous even
-  // when `entry` is a path, which can only be resolved by listing the archive.
-  let readerPromise: Promise<NativeEntryReader> | undefined;
-  const openOnce = async (): Promise<NativeEntryReader> => {
-    readerPromise ??= (async (): Promise<NativeEntryReader> => {
-      const entryIndex = await resolveEntryIndex(archivePath, format, entry);
-      return new binding.EntryReader(archivePath, formatIndex(format), entryIndex);
-    })();
-    return await readerPromise;
+  // Opening is deferred to the first read so that a failure to open surfaces as
+  // an 'error' on the returned stream, which is where a caller is already
+  // handling failures, rather than as a synchronous throw from this function.
+  let reader: NativeEntryReader | undefined;
+  const openOnce = (): NativeEntryReader => {
+    reader ??= new binding.EntryReader(archivePath, formatIndex(format), entry);
+    return reader;
   };
 
   let isClosed = false;
-  const closeOnce = async (): Promise<void> => {
+  const closeOnce = (): void => {
     if (isClosed) {
       return;
     }
     isClosed = true;
-    if (readerPromise === undefined) {
-      // Destroyed before the first read: nothing was ever opened.
-      return;
-    }
-    try {
-      (await readerPromise).close();
-    } catch {
-      /* ignored: opening failed, so there is nothing to release */
-    }
+    // `reader` is undefined when the stream was destroyed before the first read,
+    // or when the constructor threw: either way nothing was opened to release.
+    reader?.close();
   };
 
   return new stream.Readable({
@@ -233,27 +202,31 @@ export function extractEntry(
           this.push(null);
           return;
         }
-        const reader = await openOnce();
-        const chunk = await reader.read(Defaults.FILE_READING_CHUNK_SIZE);
+        const chunk = await openOnce().read(Defaults.FILE_READING_CHUNK_SIZE);
         if (chunk === null || chunk.length === 0) {
-          await closeOnce();
+          closeOnce();
           // eslint-disable-next-line unicorn/no-null
           this.push(null);
         } else {
           this.push(chunk);
         }
       } catch (error) {
-        await closeOnce();
+        try {
+          closeOnce();
+        } catch {
+          /* ignored: reporting the original failure matters more */
+        }
         this.destroy(error instanceof Error ? error : new Error(String(error)));
       }
     },
     destroy(error, callback): void {
-      // closeOnce() swallows its own failures, so there is no rejection path
-      // here: releasing the reader is best-effort, and `error` is reported
-      // either way.
-      void closeOnce().then(() => {
-        callback(error);
-      });
+      try {
+        closeOnce();
+      } catch {
+        /* ignored: releasing the reader is best-effort, and `error` is
+           reported either way */
+      }
+      callback(error);
     },
   });
 }

@@ -65,6 +65,7 @@ jobs:
             changes:
               - '.github/workflows/node-addon-prebuild.yml'
               - '.gitmodules'
+              - 'packages/7zip/**'
               - 'packages/chdman/**'
               - 'packages/dolphin-tool/**'
               - 'packages/zlib*/**'
@@ -159,7 +160,7 @@ jobs:
             set -x
             uname -a
 
-            find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+            find packages -maxdepth 1 -type d \( -name "7zip*" -o -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
               rm -rf addon* prebuilds*
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
@@ -179,7 +180,7 @@ jobs:
         run: |
           set -x
           node --print 'process'
-          find packages -maxdepth 1 -type d \( -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
+          find packages -maxdepth 1 -type d \( -name "7zip*" -o -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
             rm -rf addon* prebuilds*
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
