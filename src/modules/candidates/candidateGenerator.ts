@@ -21,7 +21,7 @@ import File from '../../models/files/file.js';
 import ZeroSizeFile from '../../models/files/zeroSizeFile.js';
 import type IndexedFiles from '../../models/indexedFiles.js';
 import type Options from '../../models/options.js';
-import { ZipFormat } from '../../models/options.js';
+import { PreferFiletype, ZipFormat } from '../../models/options.js';
 import ROMWithFiles from '../../models/romWithFiles.js';
 import WriteCandidate from '../../models/writeCandidate.js';
 import type { OutputPath } from '../../modules/candidates/utils/outputFactory.js';
@@ -387,13 +387,14 @@ export default class CandidateGenerator extends Module {
 
   /**
    * Find a single input {@link Archive} that contains every one of the given {@link ROM}s (the
-   * caller is expected to have excluded {@link Disk}s, which always live outside of a {@link Game}'s
-   * archive), and return a map from each ROM to its matching entry within that archive. Preferring
-   * one archive for
-   * the whole game avoids output-path conflicts when raw-copying and avoids leaving archives partially
-   * used when zipping. Returns `undefined` when extracting (the source archive doesn't matter) or when
-   * no single archive holds every ROM, leaving the caller to fall back to per-ROM matching. ROMs with
-   * no matching entry are omitted from the returned map, so it is always a `Map<ROM, File>` of only
+   * caller is expected to have excluded {@link Disk}s, which always live outside of a
+   * {@link Game}'s archive), and return a map from each ROM to its matching entry within that
+   * archive. Preferring one archive for the whole game avoids output-path conflicts when
+   * raw-copying and avoids leaving archives partially used when zipping. Returns `undefined` when
+   * extracting (the source archive doesn't matter), when plain files are preferred and every ROM
+   * has one and we aren't zipping (the preference would otherwise be ignored), or when no single
+   * archive holds every ROM, leaving the caller to fall back to per-ROM matching. ROMs with no
+   * matching entry are omitted from the returned map, so it is always a `Map<ROM, File>` of only
    * resolved ROMs.
    */
   private findArchiveFileWithEveryRomForGame(
@@ -411,6 +412,29 @@ export default class CandidateGenerator extends Module {
       // We're extracting files, we don't particularly care where they come from, respect any
       // previous sorting
       return undefined;
+    }
+
+    const preferFiletype = this.options.getPreferFiletype();
+    if (
+      (preferFiletype === undefined || preferFiletype === PreferFiletype.PLAIN) &&
+      gameRoms.some((rom) => !this.options.shouldZipRom(rom))
+    ) {
+      // We're preferring non-archived files, and at least one ROM isn't being zipped. If we can
+      // find a non-archived match for every ROM then we shouldn't look for an archive that contains
+      // everything desired.
+      const romHashCodesWithPlainFile = new Set(
+        romsAndInputFiles
+          .filter(([, inputFiles]) =>
+            inputFiles.some((inputFile) => !(inputFile instanceof ArchiveEntry)),
+          )
+          .map(([rom]) => rom.hashCode()),
+      );
+      if (gameRoms.every((rom) => romHashCodesWithPlainFile.has(rom.hashCode()))) {
+        this.prefixedLogger.trace(
+          `${dat.getName()}: ${game.getName()}: not preferring an archive that contains every ROM, every ROM has a preferred plain input file`,
+        );
+        return undefined;
+      }
     }
 
     // Detect if there is one input archive that contains every ROM, and prefer to use its entries.

@@ -29,6 +29,8 @@ import IndexedFiles from '../../../src/models/indexedFiles.js';
 import Options, {
   GameSubdirMode,
   GameSubdirModeInverted,
+  PreferFiletype,
+  PreferFiletypeInverted,
   ZipFormat,
 } from '../../../src/models/options.js';
 import type WriteCandidate from '../../../src/models/writeCandidate.js';
@@ -204,14 +206,10 @@ describe.each(['zip', 'extract', 'raw'])('command: %s', (command) => {
       ]),
     ).toEqual([
       ['game with no ROMs', []],
-      // preferred the non-archive when extracting, otherwise are raw-copying
+      // prefer plain files unless we're zipping
       [
         'game with one ROM and multiple releases',
-        [
-          ...(command === 'zip' ? [`${path.resolve('one.zip')}|one.rom`] : []),
-          ...(command === 'extract' ? [path.resolve('1.rom')] : []),
-          ...(command === 'raw' ? [path.resolve('one.zip')] : []),
-        ],
+        [command === 'zip' ? `${path.resolve('one.zip')}|one.rom` : path.resolve('1.rom')],
       ],
     ]);
   });
@@ -819,7 +817,11 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       const files = [...rawFiles, ...archiveEntries];
 
       // When
-      const candidates = await candidateGenerator(options, dat, files);
+      const candidates = await candidateGenerator(
+        new Options({ ...options, preferFiletype: 'archive' }),
+        dat,
+        files,
+      );
 
       // Then the Archive isn't used for every input file
       expect(candidates).toHaveLength(1);
@@ -885,7 +887,11 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         const files = [...rawFiles, ...archiveEntries];
 
         // When
-        const candidates = await candidateGenerator(options, dat, files);
+        const candidates = await candidateGenerator(
+          new Options({ ...options, preferFiletype: 'archive' }),
+          dat,
+          files,
+        );
 
         // Then the Archive is used for every input file
         expect(candidates).toHaveLength(1);
@@ -903,6 +909,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
         const allowExcessOptions = new Options({
           ...options,
           allowExcessSets: true,
+          preferFiletype: 'archive',
         });
 
         // Given every file is present, both raw and archived, plus extra ArchiveEntries
@@ -993,6 +1000,101 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
             ? path.resolve('zzz')
             : archiveWithDisk.getFilePath(),
         );
+      }
+    });
+  });
+
+  describe('prefer filetype', () => {
+    const datGame = gameWithTwoRomsParent;
+    const dat = new LogiqxDAT({ header: new Header(), games: [datGame] });
+
+    it.each([
+      ...Object.values(PreferFiletype).map((value): [string | undefined, boolean] => [
+        PreferFiletypeInverted[value].toLowerCase(),
+        value === PreferFiletype.ARCHIVE,
+      ]),
+      [undefined, false],
+    ])(
+      'should respect the preferred filetype: %s',
+      async (preferFiletype, expectArchivePreferred) => {
+        // Given every ROM is present both raw and inside one archive
+        const archive = new Zip('archive.zip');
+        const files = [
+          ...(await Promise.all(datGame.getRoms().map(async (rom) => await rom.toFile()))),
+          ...(await Promise.all(
+            datGame.getRoms().map(async (rom) => await rom.toArchiveEntry(archive)),
+          )),
+        ];
+
+        // When
+        const candidates = await candidateGenerator(
+          new Options({ ...options, preferFiletype }),
+          dat,
+          files,
+        );
+
+        // Then the archive that contains every ROM is only used when archives are preferred
+        expect(candidates).toHaveLength(1);
+        const romsWithFiles = candidates[0].getRomsWithFiles();
+        expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+        const expectedFilePaths = expectArchivePreferred
+          ? datGame.getRoms().map(() => archive.getFilePath())
+          : datGame.getRoms().map((rom) => path.resolve(rom.getName()));
+        expect(
+          romsWithFiles.map((romWithFiles) => romWithFiles.getInputFile().getFilePath()),
+        ).toEqual(expectedFilePaths);
+      },
+    );
+
+    it('should prefer a zip containing every ROM when zipping', async () => {
+      // Given every ROM is present both raw and inside one zip
+      const archive = new Zip('archive.zip');
+      const files = [
+        ...(await Promise.all(datGame.getRoms().map(async (rom) => await rom.toFile()))),
+        ...(await Promise.all(
+          datGame.getRoms().map(async (rom) => await rom.toArchiveEntry(archive)),
+        )),
+      ];
+
+      // When we're zipping
+      const candidates = await candidateGenerator(
+        new Options({ ...options, commands: [command, 'zip'], preferFiletype: 'plain' }),
+        dat,
+        files,
+      );
+
+      // Then the zip is used, so that it might be raw-copied instead of recreated
+      expect(candidates).toHaveLength(1);
+      const romsWithFiles = candidates[0].getRomsWithFiles();
+      expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+      for (const romWithFiles of romsWithFiles) {
+        expect(romWithFiles.getInputFile().getFilePath()).toEqual(archive.getFilePath());
+      }
+    });
+
+    it('should prefer an archive containing every ROM when some ROM has no plain file', async () => {
+      // Given only the first ROM is present raw, but both are inside one archive
+      const archive = new Zip('archive.zip');
+      const files = [
+        await datGame.getRoms()[0].toFile(),
+        ...(await Promise.all(
+          datGame.getRoms().map(async (rom) => await rom.toArchiveEntry(archive)),
+        )),
+      ];
+
+      // When
+      const candidates = await candidateGenerator(
+        new Options({ ...options, preferFiletype: 'plain' }),
+        dat,
+        files,
+      );
+
+      // Then the archive is still used, because preferring plain files can't complete the game
+      expect(candidates).toHaveLength(1);
+      const romsWithFiles = candidates[0].getRomsWithFiles();
+      expect(romsWithFiles).toHaveLength(datGame.getRoms().length);
+      for (const romWithFiles of romsWithFiles) {
+        expect(romWithFiles.getInputFile().getFilePath()).toEqual(archive.getFilePath());
       }
     });
   });
