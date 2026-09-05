@@ -186,19 +186,16 @@ describe('archiveEntryPriority (default sort)', () => {
   });
 
   it('should give every archive type a distinct priority', async () => {
-    // Archives with meaningful entry paths sort ahead of those without, and within each of those
-    // two groups the order follows FileFactory#archiveFromArchiveExtension
+    // The order follows FileFactory#archiveFromArchiveExtension
     const expected = [
-      // Meaningful entry paths
       new Zip('rom.zip'),
       new Tar('rom.tar'),
       new Rar('rom.rar'),
       new Gzip('rom.gz'),
       new SevenZip('rom.7z'),
+      new Z('rom.z'),
       new ZipSpanned('rom.zip.001'),
       new ZipX('rom.zipx'),
-      // No meaningful entry paths
-      new Z('rom.z'),
       new Bzip2('rom.bz2'),
       new Lzma86('rom.lzma86'),
       new Lzma('rom.lzma'),
@@ -215,42 +212,17 @@ describe('archiveEntryPriority (default sort)', () => {
 
     expect(sorted.map((file) => file.toString())).toEqual(entries.map((entry) => entry.toString()));
   });
-});
 
-describe('meaningful entry path preference', () => {
-  it('should prefer a gzip over a bzip2, because bzip2 entry paths are invented', async () => {
-    // A .bz2 wraps a single nameless stream, so its entry path comes from the archive's filename
+  it('should prefer a gzip over a bzip2', async () => {
     const bzip2 = await entryOf(new Bzip2('a.bz2'));
     const gzip = await entryOf(new Gzip('z.gz'));
 
-    // Indexed with the bzip2 first, and its path sorts alphabetically first, so only the
-    // meaningful-entry-path preference can put the gzip ahead of it
+    // Indexed with the bzip2 first, and its path sorts alphabetically first, so only the archive
+    // type priority can put the gzip ahead of it
     const sorted = indexAndFind([bzip2, gzip]);
 
     expect(sorted[0]).toBe(gzip);
     expect(sorted[1]).toBe(bzip2);
-  });
-
-  it('should prefer a plain file over an archive without meaningful entry paths', async () => {
-    const bzip2 = await entryOf(new Bzip2('a.bz2'));
-    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
-
-    const sorted = indexAndFind([bzip2, plain]);
-
-    expect(sorted[0]).toBe(plain);
-    expect(sorted[1]).toBe(bzip2);
-  });
-
-  it('should not override the preferFiletype=archive preference', async () => {
-    // The user's preference is applied before this one, so an un-verifiable entry path is still
-    // preferred over a plain file when archives are explicitly asked for
-    const bzip2 = await entryOf(new Bzip2('a.bz2'));
-    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
-
-    const sorted = indexAndFind([plain, bzip2], { preferFiletype: 'archive' });
-
-    expect(sorted[0]).toBe(bzip2);
-    expect(sorted[1]).toBe(plain);
   });
 });
 
@@ -283,6 +255,27 @@ describe('preferFiletype', () => {
 
     expect(sorted[0]).toBeInstanceOf(ArchiveEntry);
     expect(sorted[1]).not.toBeInstanceOf(ArchiveEntry);
+  });
+
+  it('should prefer plain files by default, even over archives with invented entry paths', async () => {
+    // A .bz2 wraps a single nameless stream, so its entry path comes from the archive's filename
+    const bzip2 = await entryOf(new Bzip2('a.bz2'));
+    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
+
+    const sorted = indexAndFind([bzip2, plain]);
+
+    expect(sorted[0]).toBe(plain);
+    expect(sorted[1]).toBe(bzip2);
+  });
+
+  it('should prefer archives with invented entry paths when preferFiletype=archive', async () => {
+    const bzip2 = await entryOf(new Bzip2('a.bz2'));
+    const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
+
+    const sorted = indexAndFind([plain, bzip2], { preferFiletype: 'archive' });
+
+    expect(sorted[0]).toBe(bzip2);
+    expect(sorted[1]).toBe(plain);
   });
 });
 

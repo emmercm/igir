@@ -726,11 +726,10 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
     });
   });
 
-  describe('meaningful entry paths', () => {
-    it('should prefer the archive with meaningful entry paths when both contain every ROM', async () => {
-      // Given two archives that each contain the game's only ROM, where the one WITHOUT meaningful
-      // entry paths sorts alphabetically first - so only the meaningful-entry-path preference can
-      // decide between them
+  describe('archive type priority', () => {
+    it('should prefer the higher-priority archive type when both contain every ROM', async () => {
+      // Given two archives that each contain the game's only ROM, where the lower-priority one
+      // sorts alphabetically first - so only the archive type priority can decide between them
       const bzip2 = new Bzip2('a.bz2');
       const gzip = new Gzip('z.gz');
       const files = await Promise.all([
@@ -741,8 +740,7 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
       // When
       const candidates = await candidateGenerator(options, datWithFourGames, files);
 
-      // Then the gzip is raw-written, because a .bz2 wraps a single nameless stream and its entry
-      // path is invented from the archive's filename rather than read from the archive
+      // Then the gzip is raw-written, because gzip out-ranks bzip2 in the archive type priority
       const oneRomCandidate = candidates.find(
         (candidate) => candidate.getName() === gameWithOneRom.getName(),
       );
