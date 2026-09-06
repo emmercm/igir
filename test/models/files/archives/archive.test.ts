@@ -206,9 +206,11 @@ describe('extractEntryToFile', () => {
     expect(archives).toHaveLength(16);
 
     for (const archive of archives) {
+      const extractedFilePath = path.join(Temp.getTempDir(), 'INVALID PATH');
       await expect(
-        archive.extractEntryToFile({ entryPath: 'INVALID FILE' }, 'INVALID PATH'),
+        archive.extractEntryToFile({ entryPath: 'INVALID FILE' }, extractedFilePath),
       ).rejects.toThrow();
+      await expect(FsUtil.exists(extractedFilePath)).resolves.toEqual(false);
     }
   });
 });
