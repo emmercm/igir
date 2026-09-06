@@ -3,7 +3,8 @@ import stream from 'node:stream';
 import Defaults from '../globals/defaults.js';
 
 // A consumer that stops short of the end of a stream aborts the pipeline behind it. That is a
-// normal, expected outcome here — not a failure worth reporting to the caller.
+// normal, expected outcome here — not a failure worth reporting to the caller. Which code the
+// abort carries varies by Node.js version and by transform, so both have to be recognized.
 const ABANDONED_CODES = new Set(['ERR_STREAM_PREMATURE_CLOSE', 'ABORT_ERR']);
 
 export default {
@@ -37,10 +38,18 @@ export default {
       }
     }
 
+    // Catch failures on either stream
     // Use a resolve() instead of reject() so we can keep `NodeJS.ErrnoException` typed
     const piped = Promise.withResolvers<NodeJS.ErrnoException | null | undefined>();
     stream.pipeline(source, transform, (err) => {
       piped.resolve(err);
+    });
+
+    // Catch failures in the source's own destroy(), required for Node.js 22 stream.pipeline()
+    // Use a resolve() instead of reject() so we can keep `NodeJS.ErrnoException` typed
+    const sourceFinished = Promise.withResolvers<NodeJS.ErrnoException | null | undefined>();
+    const cleanupFinished = stream.finished(source, (err) => {
+      sourceFinished.resolve(err);
     });
 
     let result: T;
@@ -50,18 +59,19 @@ export default {
       transform.destroy();
       source.destroy();
       await piped.promise;
+      await sourceFinished.promise;
+      cleanupFinished();
       throw error;
     }
     transform.destroy();
     source.destroy();
 
-    const pipelineError = await piped.promise;
-    if (
-      pipelineError !== null &&
-      pipelineError !== undefined &&
-      !ABANDONED_CODES.has(pipelineError.code ?? '')
-    ) {
-      throw pipelineError;
+    const errors = [await piped.promise, await sourceFinished.promise];
+    cleanupFinished();
+    for (const error of errors) {
+      if (error !== null && error !== undefined && !ABANDONED_CODES.has(error.code ?? '')) {
+        throw error;
+      }
     }
     return result;
   },
@@ -174,8 +184,8 @@ export default {
 
   /**
    * Return a new readable stream that has had the specified transforms applied to it.
-   * This differs from {@link stream.pipeline} in that it returns a readable stream, NOT a writable
-   * stream.
+   * This differs from {@link stream.pipeline} in that it creates the destination stream and returns
+   * it, rather than requiring one to be supplied.
    */
   withTransforms(readable: stream.Readable, ...transforms: stream.Transform[]): stream.Readable {
     if (transforms.length === 0) {
