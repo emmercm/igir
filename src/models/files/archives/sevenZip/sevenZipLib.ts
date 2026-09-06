@@ -1,3 +1,4 @@
+import events from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Readable } from 'node:stream';
@@ -12,6 +13,7 @@ import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../../utils/fsUtil.js';
+import StreamUtil from '../../../../utils/streamUtil.js';
 import type { ArchiveEntryLocation } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -111,6 +113,16 @@ export default abstract class SevenZipLib extends Archive {
     }
 
     await this.extractEntryToStream(location, async (readable) => {
+      // The addon defers opening the archive until the stream is first read, so
+      // an entry path or index the archive doesn't have is reported here rather
+      // than by openEntryReader(). Wait for that to settle before creating the
+      // destination, so naming an entry that cannot be extracted leaves no file
+      // behind. events.once() rejects if 'error' arrives first, and a zero-byte
+      // entry still emits 'readable' ahead of 'end'. A failure after this point
+      // is a failure partway through an entry that does exist, and truncated
+      // output is the expected result of that.
+      await events.once(readable, 'readable');
+
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -135,17 +147,10 @@ export default abstract class SevenZipLib extends Archive {
       entryIndex,
       highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
-    const entryStream: Readable =
-      start > 0 ? sourceStream.pipe(new SkipBytesTransform(start)) : sourceStream;
-
-    try {
-      return await callback(entryStream);
-    } finally {
-      // Both, because pipe() does not propagate destroy() upstream, and it is
-      // the source that holds the addon's extraction thread. Leaving it running
-      // is what a callback that stops short of the end of the entry would do.
-      entryStream.destroy();
-      sourceStream.destroy();
-    }
+    return await StreamUtil.pipelineSafe(
+      sourceStream,
+      start > 0 ? new SkipBytesTransform(start) : undefined,
+      callback,
+    );
   }
 }

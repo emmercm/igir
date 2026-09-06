@@ -43,7 +43,7 @@ class Pump {
 
     // The largest chunk size a caller may ask for. Chunks are allocated up
     // front, so an unclamped value straight from JavaScript is an allocation the
-    // caller controls; this is generous for a stream high-water mark and far
+    // caller controls; this is generous for a stream high-watermark and far
     // short of a denial of service.
     static constexpr size_t kMaxChunkBytes = 1U << 24U;  // 16 MiB
 

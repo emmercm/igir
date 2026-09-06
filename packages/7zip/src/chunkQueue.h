@@ -40,7 +40,7 @@ struct Chunk {
 //
 // Chunks are handed out whole and full: the producer accumulates into a partial
 // chunk and only publishes it at exactly `chunkBytes`, so a consumer asking for
-// a high-water mark's worth of bytes gets exactly that, however small the writes
+// a high-watermark's worth of bytes gets exactly that, however small the writes
 // the decoder happens to make. Only the final chunk before Finish() is short.
 //
 // Nothing here knows about 7-Zip or N-API: this is a plain data structure, kept

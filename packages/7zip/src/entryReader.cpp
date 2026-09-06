@@ -75,7 +75,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     // The chunk size is fixed for the life of the reader rather than passed to
     // each read(), because it is what the producer fills to before publishing:
     // it has to be known before any byte is decoded. index.ts passes the
-    // stream's high-water mark, so every read returns exactly what the stream
+    // stream's high-watermark, so every read returns exactly what the stream
     // asked for. Pump::Start clamps it.
     size_t chunkBytes = Pump::kReadAheadBytes;
     if (info.Length() >= 5 && info[4].IsNumber()) {

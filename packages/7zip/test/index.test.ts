@@ -129,7 +129,7 @@ const LARGE_CONTENTS = crypto.randomBytes(8 * 1024 * 1024);
 
 /**
  * Every chunk the stream emitted, in order. Kept separate from {@link drain}
- * because the sizes are themselves a contract -- see the high-water mark tests.
+ * because the sizes are themselves a contract -- see the high-watermark tests.
  */
 async function collectChunks(readable: stream.Readable): Promise<Buffer[]> {
   const chunks: Buffer[] = [];
@@ -662,7 +662,7 @@ describe('openEntryReader', () => {
     });
   });
 
-  test('it emits exactly the high-water mark until the entry runs out', async () => {
+  test('it emits exactly the high-watermark until the entry runs out', async () => {
     // The size is a promise rather than a ceiling. 7-Zip's decoders emit output
     // at whatever size suits them -- a deflate block, an LZMA window -- so
     // without the producer accumulating to a full chunk before publishing, a
