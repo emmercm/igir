@@ -13,6 +13,7 @@ import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import type { ChecksumProps } from '../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../fileChecksums.js';
+import type { ArchiveEntryLocation } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -106,15 +107,18 @@ export default class Rar extends Archive {
           (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
         ) {
           let lastProgress = 0;
-          checksums = await this.extractEntryToStream(fileHeader.name, async (readable) => {
-            return await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
-              overallProgress = overallProgress - lastProgress + progress;
-              if (callback) {
-                callback(overallProgress);
-                lastProgress = progress;
-              }
-            });
-          });
+          checksums = await this.extractEntryToStream(
+            { entryPath: fileHeader.name },
+            async (readable) => {
+              return await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
+                overallProgress = overallProgress - lastProgress + progress;
+                if (callback) {
+                  callback(overallProgress);
+                  lastProgress = progress;
+                }
+              });
+            },
+          );
         }
         const { crc32, ...checksumsWithoutCrc } = checksums;
 
@@ -146,7 +150,10 @@ export default class Rar extends Archive {
   /**
    * Extract the named entry from the RAR archive to the given file path.
    */
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    { entryPath }: ArchiveEntryLocation,
+    extractedFilePath: string,
+  ): Promise<void> {
     /**
      * WARN(cemmer): {@link unrar.extract} seems to have issues with extracting files to different
      * directories at the same time, it will sometimes extract to the wrong directory. Try to

@@ -6,6 +6,7 @@ import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
+import type { ArchiveEntryLocation } from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import Chd from './chd.js';
 
@@ -82,7 +83,7 @@ export default class ChdRaw extends Chd {
    * resolve it.
    */
   override async extractEntryToStream<T>(
-    _entryPath: string,
+    _location: ArchiveEntryLocation,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {

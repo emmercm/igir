@@ -7,6 +7,7 @@ import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import type { ChecksumBitmaskValue, ChecksumProps } from '../../fileChecksums.js';
 import FileChecksums from '../../fileChecksums.js';
 import { ChecksumBitmask } from '../../fileChecksums.js';
+import type { ArchiveEntryLocation } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -59,7 +60,7 @@ export default abstract class Maxcso extends Archive {
       checksumBitmask & ~ChecksumBitmask.CRC32 ||
       (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
     ) {
-      checksums = await this.extractEntryToStream('', async (readable) => {
+      checksums = await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
         return await FileChecksums.hashStream(readable, checksumBitmask, callback);
       });
     }
@@ -88,7 +89,10 @@ export default abstract class Maxcso extends Archive {
   /**
    * Extract the disc image to the given path as an uncompressed ISO.
    */
-  async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    _location: ArchiveEntryLocation,
+    extractedFilePath: string,
+  ): Promise<void> {
     await maxcso.decompress({
       inputFilename: this.getFilePath(),
       outputFilename: extractedFilePath,
