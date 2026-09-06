@@ -7,6 +7,7 @@ import IgirException from '../../../exceptions/igirException.js';
 import IOFile from '../../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import FileChecksums, { ChecksumBitmask, type ChecksumProps } from '../fileChecksums.js';
+import type { ArchiveEntryLocation } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 import Tar from './tar.js';
@@ -73,7 +74,7 @@ export default class Gzip extends Archive {
       checksumBitmask & ~ChecksumBitmask.CRC32 ||
       (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
     ) {
-      checksums = await this.extractEntryToStream('', async (readable) => {
+      checksums = await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
         return await FileChecksums.hashStream(readable, checksumBitmask, callback);
       });
     }
@@ -140,7 +141,10 @@ export default class Gzip extends Archive {
   /**
    * Decompress the gzip file to the given path.
    */
-  async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    _location: ArchiveEntryLocation,
+    extractedFilePath: string,
+  ): Promise<void> {
     await stream.promises.pipeline(
       fs.createReadStream(this.getFilePath()),
       zlib.createGunzip(),
@@ -153,7 +157,7 @@ export default class Gzip extends Archive {
    * bytes.
    */
   override async extractEntryToStream<T>(
-    _entryPath: string,
+    _location: ArchiveEntryLocation,
     callback: (readable: stream.Readable) => Promise<T> | T,
   ): Promise<T> {
     const source = fs.createReadStream(this.getFilePath());

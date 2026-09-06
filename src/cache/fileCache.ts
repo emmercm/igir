@@ -45,7 +45,7 @@ interface CacheValue {
 
 const ValueType = {
   FILE_CHECKSUMS: 'F',
-  ARCHIVE_CHECKSUMS: 'A',
+  ARCHIVE_CHECKSUMS: 'A2',
   ROM_HEADER: 'H',
   FILE_SIGNATURE: 'S',
   ROM_PADDING: `P${ROMPadding.getKnownFillBytesCount()}`,

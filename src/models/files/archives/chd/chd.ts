@@ -6,6 +6,7 @@ import { Memoize } from 'typescript-memoize';
 import type { CHDInfo, TrackReaderModeValue } from '../../../../../packages/chdman/index.js';
 import chdman from '../../../../../packages/chdman/index.js';
 import FsReadTransform, { FsReadCallback } from '../../../../streams/fsReadTransform.js';
+import type { ArchiveEntryLocation } from '../archive.js';
 import Archive from '../archive.js';
 
 /**
@@ -55,11 +56,11 @@ export default abstract class Chd extends Archive {
    * Extract the named entry from the CHD to the given file path.
    */
   async extractEntryToFile(
-    entryPath: string,
+    location: ArchiveEntryLocation,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await this.extractEntryToStream(entryPath, async (readable) => {
+    await this.extractEntryToStream(location, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
