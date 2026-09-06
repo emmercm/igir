@@ -11,7 +11,7 @@ import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FsUtil, { WalkMode } from '../../../../utils/fsUtil.js';
-import Archive from '../archive.js';
+import Archive, { type ArchiveEntryLocation } from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
 /**
@@ -82,7 +82,10 @@ export default abstract class SevenZipLib extends Archive {
   /**
    * Extract the named entry from the archive to the given file path.
    */
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    { entryPath }: ArchiveEntryLocation,
+    extractedFilePath: string,
+  ): Promise<void> {
     const iterator = new _7zIterator(this.getFilePath());
     try {
       let foundEntry: Entry | undefined = undefined;
