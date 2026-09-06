@@ -54,7 +54,7 @@
     # Note -march=armv8-a does NOT prevent that on Apple clang (verified: the
     # flag is accepted and the SHA3 instructions are still emitted); -mcpu=generic
     # does. MSVC needs no equivalent: it targets the SSE2 baseline unless given an
-    # explicit /arch: above it. scripts/simd-audit.sh is the check on all of this.
+    # explicit /arch: above it.
     "conditions": [
       ["target_arch=='x64' or target_arch=='ia32'", {
         "cflags": ["-march=x86-64"],
@@ -180,9 +180,11 @@
         # stubs/ppmd8Enc.c. That stub is what makes the arrangement portable --
         # leaving the symbols undefined works only on macOS, where -dead_strip
         # removes the encoder; on Linux it links to a null call site, and on
-        # Windows it is an outright LNK2019. Reachability is still caught, by
-        # scripts/symbol-audit.sh's forbidden-reference phase rather than by the
-        # link. Do not add Ppmd8Enc.c to satisfy them.
+        # Windows it is an outright LNK2019. The trade-off is that the link no
+        # longer catches reachability: the stub satisfies the symbols on every
+        # platform, so nothing mechanical fails if a future change makes the
+        # encoder reachable -- see the note in stubs/ppmd8Enc.c. Do not add
+        # Ppmd8Enc.c to satisfy them.
         "<(z7)/CPP/7zip/Compress/PpmdZip.cpp",
         "<(z7)/CPP/7zip/Compress/BZip2Decoder.cpp", "<(z7)/CPP/7zip/Compress/BZip2Crc.cpp",
         "<(z7)/CPP/7zip/Compress/DeflateDecoder.cpp", "<(z7)/CPP/7zip/Compress/BitlDecoder.cpp",

@@ -98,6 +98,7 @@ it('should delete some if all unmatched and some excluded', async () => {
   );
   expect(remainingPaths).toEqual([
     path.join('7z', 'foobar.7z'),
+    path.join('bz2', 'foobar.bz2'),
     'foobar.lnx',
     path.join('gz', 'foobar.gz'),
     path.join('rar', 'foobar.rar'),

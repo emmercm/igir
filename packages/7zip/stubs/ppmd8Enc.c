@@ -36,12 +36,14 @@
    fail cleanly -- it would simply emit a truncated stream -- so reaching
    either one aborts instead.  Silent output corruption is the worse outcome.
 
-   These bodies are unreachable by construction, and scripts/symbol-audit.sh
-   keeps them that way: its forbidden-reference phase fails the build if any
-   object file other than this one references either symbol.  That check
-   replaces the older tripwire of leaving the symbols undefined, which only
-   fired on the toolchains where a missing symbol was fatal.  Do not add
-   C/Ppmd8Enc.c to satisfy them. */
+   These bodies are unreachable by construction: NPpmdZip::CEncoder is the
+   only caller, and nothing in a decode-only build constructs one.  Note that
+   nothing enforces this mechanically.  Defining the symbols here deliberately
+   gave up the one tripwire that existed -- an undefined symbol, which was
+   fatal only on the toolchains above -- in exchange for building the same way
+   everywhere.  The invariant is maintained by review, so if you add a code
+   path that can construct a CEncoder, these aborts are what you will hit at
+   runtime.  Do not add C/Ppmd8Enc.c to satisfy them. */
 
 #include "Precomp.h"
 

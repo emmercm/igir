@@ -552,24 +552,11 @@ describe('openEntryReader', () => {
     expect(crc32Hex(extracted)).toEqual(entries[0].crc32);
   });
 
-  test('it rejects an entry the archive does not have even when given a valid index', async () => {
-    // An index never names an entry on its own: the path is what is asked for,
-    // and no item carries it, so this fails exactly as it does without one.
-    await expect(
-      drain(
-        sevenZip.openEntryReader({
-          inputFilename: SEVEN_ZIP_FIXTURES[0],
-          format: SevenZipFormat.SEVEN_ZIP,
-          entryPath: 'nope',
-          entryIndex: 0,
-        }),
-      ),
-    ).rejects.toThrow(/no entry named 'nope'/);
-  });
-
   test('it rejects an entry the archive does not have', async () => {
-    // Same archive, same call, two ways of failing to name an entry that can be
-    // extracted. Naming nothing is how a nameless single-stream archive's only
+    // Same archive, same call, three ways of failing to name an entry that can
+    // be extracted. A valid index does not rescue an unmatched path: the path is
+    // what is asked for, and no item carries it, so it fails exactly as it does
+    // without one. Naming nothing is how a nameless single-stream archive's only
     // member is addressed, so against an archive holding four it is ambiguous
     // rather than a shorthand for the first.
     await expect(
@@ -578,6 +565,16 @@ describe('openEntryReader', () => {
           inputFilename: SEVEN_ZIP_FIXTURES[0],
           format: SevenZipFormat.SEVEN_ZIP,
           entryPath: 'nope',
+        }),
+      ),
+    ).rejects.toThrow(/no entry named 'nope'/);
+    await expect(
+      drain(
+        sevenZip.openEntryReader({
+          inputFilename: SEVEN_ZIP_FIXTURES[0],
+          format: SevenZipFormat.SEVEN_ZIP,
+          entryPath: 'nope',
+          entryIndex: 0,
         }),
       ),
     ).rejects.toThrow(/no entry named 'nope'/);

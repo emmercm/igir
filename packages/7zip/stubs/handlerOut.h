@@ -3,7 +3,7 @@
 // CPP/7zip/Archive/Common/HandlerOut.h omits CMultiMethodProps and CSingleMethodProps
 // entirely when Z7_EXTRACT_ONLY is defined -- their real SetProperty/SetProperties
 // bodies live in the write-path HandlerOut.cpp, which this decode-only addon does not
-// compile (see stubs/handlerOut.cpp for the analogous *.cpp-level stub). Most handlers
+// compile. Most handlers
 // (CPP/7zip/Archive/7z/7zHandler.h) correctly fall back to CCommonMethodProps under
 // Z7_EXTRACT_ONLY, but CPP/7zip/Archive/Zip/ZipCompressionMode.h does not: it
 // unconditionally derives CBaseProps from CMultiMethodProps, and ZipHandler.h holds a

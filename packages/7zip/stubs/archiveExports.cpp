@@ -1,5 +1,5 @@
 // ArchiveExports.cpp implements GetNumberOfFormats/GetHandlerProperty2 (used
-// directly by src/registry.cpp) and, via Common/RegisterArc.h, calls
+// directly by src/sevenZip.cpp) and, via Common/RegisterArc.h, calls
 // Z7_DEFINE_GUID(CLSID_CArchiveHandler, ...). That macro (see
 // Common/MyGuidDef.h) only produces a real definition (storage) for the GUID
 // when INITGUID is defined at the point of inclusion; otherwise it expands to
