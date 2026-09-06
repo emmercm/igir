@@ -2,94 +2,68 @@ import stream from 'node:stream';
 
 import Defaults from '../globals/defaults.js';
 
+// A consumer that stops short of the end of a stream aborts the pipeline behind it. That is a
+// normal, expected outcome here — not a failure worth reporting to the caller.
+const ABANDONED_CODES = new Set(['ERR_STREAM_PREMATURE_CLOSE', 'ABORT_ERR']);
+
 export default {
   /**
-   * Concatenate multiple readable streams into a single readable stream.
+   * Read `source` through an optional `transform`, invoke the callback with the resulting stream,
+   * and tear both streams down once the callback is finished with them.
+   *
+   * Use this instead of any of the standard library's own composition calls. Each of them exhibits
+   * at least one realistic failure mode:
+   *
+   * | Failure mode                                                           | `Readable.pipe()` | `stream.pipeline()` | `stream.promises.pipeline()` | `stream.compose()` |
+   * | ---------------------------------------------------------------------- | ----------------- | ------------------- | ---------------------------- | ------------------ |
+   * | Source error is catchable only by `process.on('uncaughtException')`    | yes               | no                  | no                           | no                 |
+   * | Source error leaves the destination neither ended nor errored          | yes               | no                  | no                           | no                 |
+   * | Source destroyed without an error leaves the destination open forever  | yes               | no                  | no                           | no                 |
+   * | Consumer stopping short leaves the source open                         | yes               | no                  | no                           | no                 |
+   * | Consumer stopping short is reported as an error, not as a normal end   | no                | yes                 | yes                          | yes                |
+   * | Consumer stopping short raises an uncaughtException/unhandledRejection | no                | no                  | yes                          | yes                |
    */
-  concat(...readables: stream.Readable[]): stream.Readable {
-    if (readables.length === 1) {
-      // Don't incur the overhead of any passthroughs
-      return readables[0];
+  async pipelineSafe<T>(
+    source: stream.Readable,
+    transform: stream.Transform | undefined,
+    callback: (readable: stream.Readable) => T | Promise<T>,
+  ): Promise<T> {
+    if (transform === undefined) {
+      // Nothing to compose, so there is no pipe to make safe
+      try {
+        return await callback(source);
+      } finally {
+        source.destroy();
+      }
     }
 
-    const out = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
-    let current = 0;
-    let activeStream: stream.Readable | undefined = undefined;
-    let isDestroyed = false;
+    // Use a resolve() instead of reject() so we can keep `NodeJS.ErrnoException` typed
+    const piped = Promise.withResolvers<NodeJS.ErrnoException | null | undefined>();
+    stream.pipeline(source, transform, (err) => {
+      piped.resolve(err);
+    });
 
-    /**
-     * Pipe the next input stream to the output stream.
-     */
-    function pipeNext(): void {
-      if (isDestroyed) {
-        return;
-      }
-
-      if (current >= readables.length) {
-        out.end();
-        return;
-      }
-
-      activeStream = readables[current++];
-      activeStream.pipe(out, { end: false });
-      activeStream.once('error', (err) => {
-        out.emit('error', err);
-      });
-      activeStream.once('end', pipeNext);
+    let result: T;
+    try {
+      result = await callback(transform);
+    } catch (error) {
+      transform.destroy();
+      source.destroy();
+      await piped.promise;
+      throw error;
     }
+    transform.destroy();
+    source.destroy();
 
-    // Allow the passthrough to be destroyed
-    out._destroy = (err: Error | null, callback: (error?: Error | null) => void): void => {
-      isDestroyed = true;
-      if (typeof activeStream?.destroy === 'function') {
-        activeStream.destroy(err ?? undefined);
-      }
-
-      for (let i = current; i < readables.length; i++) {
-        const readable = readables[i];
-        if (typeof readable.destroy === 'function') {
-          readable.destroy();
-        }
-      }
-
-      callback(err);
-    };
-
-    pipeNext();
-    return out;
-  },
-
-  /**
-   * Pad a readable stream to a specified length by appending a fill string.
-   */
-  padEnd(
-    readable: stream.Readable,
-    maxLength: number,
-    fillString: string | number,
-  ): stream.Readable {
-    const output = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
-    let readableBytesRead = 0;
-
-    readable.on('data', (chunk: Buffer) => {
-      readableBytesRead += chunk.length;
-      if (!output.write(chunk)) {
-        readable.pause();
-        output.once('drain', () => readable.resume());
-      }
-    });
-
-    readable.on('end', () => {
-      const remainingBytes = maxLength - readableBytesRead;
-      if (remainingBytes > 0) {
-        this.staticReadable(remainingBytes, fillString).pipe(output, { end: true });
-      } else {
-        output.end();
-      }
-    });
-
-    readable.on('error', (err) => output.destroy(err));
-
-    return output;
+    const pipelineError = await piped.promise;
+    if (
+      pipelineError !== null &&
+      pipelineError !== undefined &&
+      !ABANDONED_CODES.has(pipelineError.code ?? '')
+    ) {
+      throw pipelineError;
+    }
+    return result;
   },
 
   /**
@@ -106,19 +80,66 @@ export default {
     }
 
     const outputs: stream.Readable[] = [];
+    // The source is only destroyed once every output has been destroyed, otherwise one consumer
+    // finishing early would truncate every other consumer
+    let liveOutputs = count;
+    // The source is paused while any output is above its high watermark, otherwise the slowest
+    // consumer would cause the source to be buffered in memory without bound
+    let pausedOutputs = 0;
 
     for (let i = 0; i < count; i++) {
       const output = new stream.PassThrough({ highWaterMark: Defaults.FILE_READING_CHUNK_SIZE });
-      const onData = output.write.bind(output);
-      const onEnd = output.end.bind(output);
-      const onError = output.destroy.bind(output);
+      let isPaused = false;
+
+      /**
+       * Stop this output from holding the source paused, resuming the source if it was the last
+       * output to be waiting.
+       */
+      const releasePause = (): void => {
+        if (!isPaused) {
+          return;
+        }
+        isPaused = false;
+        pausedOutputs -= 1;
+        if (pausedOutputs === 0) {
+          readable.resume();
+        }
+      };
+
+      /**
+       * Write a chunk to this output, respecting its backpressure.
+       */
+      const onData = (chunk: Buffer): void => {
+        if (output.write(chunk) || isPaused) {
+          return;
+        }
+
+        isPaused = true;
+        pausedOutputs += 1;
+        readable.pause();
+        output.once('drain', releasePause);
+      };
       readable.on('data', onData);
-      readable.on('end', onEnd);
-      readable.on('error', onError);
+      const cleanupFinished = stream.finished(readable, (err) => {
+        if (err) {
+          output.destroy(err);
+        } else {
+          output.end();
+        }
+      });
+
       output._destroy = (err, callback): void => {
         readable.off('data', onData);
-        readable.off('end', onEnd);
-        readable.off('error', onError);
+        cleanupFinished();
+        // A destroyed output will never drain, so it can't be left holding the source paused
+        output.off('drain', releasePause);
+        releasePause();
+
+        liveOutputs -= 1;
+        if (liveOutputs === 0) {
+          readable.destroy();
+        }
+
         callback(err);
       };
       outputs.push(output);
