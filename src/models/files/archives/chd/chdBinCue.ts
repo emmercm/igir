@@ -8,6 +8,7 @@ import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
+import StreamUtil from '../../../../utils/streamUtil.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
@@ -81,17 +82,14 @@ export default class ChdBinCue extends Chd {
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    let readable = await this.streamFile(location);
+    const sourceStream = await this.streamFile(location);
     // A non-zero start offset (e.g. a detected ROM header) must skip that many
     // leading bytes of the forward-only stream.
-    if (start > 0) {
-      readable = readable.pipe(new SkipBytesTransform(start));
-    }
-    try {
-      return await callback(readable);
-    } finally {
-      readable.destroy();
-    }
+    return await StreamUtil.pipelineSafe(
+      sourceStream,
+      start > 0 ? new SkipBytesTransform(start) : undefined,
+      callback,
+    );
   }
 
   /**

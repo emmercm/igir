@@ -20,6 +20,7 @@ import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
+import StreamUtil from '../../../utils/streamUtil.js';
 import type { ZipFormatValue } from '../../options.js';
 import { ZipFormat } from '../../options.js';
 import type File from '../file.js';
@@ -172,23 +173,19 @@ export default class Zip extends Archive {
       throw new IgirException(`didn't find entry '${entryPath}'`);
     }
 
-    let entryStream: stream.Readable;
+    let sourceStream: stream.Readable;
     try {
-      entryStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
+      sourceStream = await entry.uncompressedStream(Defaults.FILE_READING_CHUNK_SIZE);
     } catch (error) {
       throw new Error(`failed to read '${this.getFilePath()}|${entryPath}': ${error}`, {
         cause: error,
       });
     }
-    if (start > 0) {
-      entryStream = entryStream.pipe(new SkipBytesTransform(start));
-    }
-
-    try {
-      return await callback(entryStream);
-    } finally {
-      entryStream.destroy();
-    }
+    return await StreamUtil.pipelineSafe(
+      sourceStream,
+      start > 0 ? new SkipBytesTransform(start) : undefined,
+      callback,
+    );
   }
 
   /**

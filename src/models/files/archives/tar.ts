@@ -68,57 +68,81 @@ export default class Tar extends Archive {
     const readStream = fs.createReadStream(this.getFilePath(), {
       highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
-    readStream.pipe(writeStream);
-
     // TODO(cemmer): callback() with the sum of uncompressed file sizes
     let overallProgress = 0;
 
-    // Note: entries are read sequentially, so entry streams need to be fully read or resumed
-    writeStream.on('entry', async (entry: tar.ReadEntry) => {
-      let lastProgress = 0;
-      const checksums = await FileChecksums.hashStream(
-        // NOTE(cemmer): minipass is 99% stream.Stream-compatible, and I don't want to introduce it
-        // and its types into the project just for this single line of code
-        entry as unknown as stream.Readable,
-        checksumBitmask,
-        (progress) => {
-          overallProgress = overallProgress - lastProgress + progress;
-          if (callback) {
-            callback(overallProgress);
-          }
-          lastProgress = progress;
-        },
-      );
-
-      archiveEntryPromises.push(
-        ArchiveEntry.entryOf(
-          {
-            archive: this,
-            entryPath: entry.path,
-            size: entry.size,
-            ...checksums,
-          },
-          checksumBitmask,
-        ),
-      );
-      // In case we didn't need to read the stream for hashes, resume the file reading
-      entry.resume();
-    });
-
+    // Constructed before the 'entry' listener below so that a failure reading any one entry can
+    // reject it, rather than the rejection having nowhere to go
+    let rejectParsed: (reason: unknown) => void;
     // Wait for the tar file to be closed
-    await new Promise<void>((resolve, reject) => {
+    const parsed = new Promise<void>((resolve, reject) => {
+      rejectParsed = reject;
       writeStream.on('end', resolve);
       readStream.on('error', reject);
       writeStream.on('error', reject);
     });
 
-    // NOTE(cemmer): for whatever promise hell reason, if we tell `tar` to be strict, the exception
-    //  it throws can't be caught by the caller of this function, so we do this
-    if (errorMessage) {
-      throw new Error(errorMessage);
-    }
+    // Note: entries are read sequentially, so entry streams need to be fully read or resumed
+    writeStream.on('entry', (entry: tar.ReadEntry) => {
+      // The promise is pushed rather than awaited in the listener: an async listener has nowhere
+      // to put a rejection, and throwing before entry.resume() below stalls the parser forever
+      const archiveEntryPromise = (async (): Promise<ArchiveEntry<this>> => {
+        let lastProgress = 0;
+        try {
+          const checksums = await FileChecksums.hashStream(
+            // NOTE(cemmer): minipass is 99% stream.Stream-compatible, and I don't want to
+            // introduce it and its types into the project just for this single line of code
+            entry as unknown as stream.Readable,
+            checksumBitmask,
+            (progress) => {
+              overallProgress = overallProgress - lastProgress + progress;
+              if (callback) {
+                callback(overallProgress);
+              }
+              lastProgress = progress;
+            },
+          );
 
-    return await Promise.all(archiveEntryPromises);
+          return await ArchiveEntry.entryOf(
+            {
+              archive: this,
+              entryPath: entry.path,
+              size: entry.size,
+              ...checksums,
+            },
+            checksumBitmask,
+          );
+        } finally {
+          // In case we didn't need to read the stream for hashes, resume the file reading
+          entry.resume();
+        }
+      })();
+      void archiveEntryPromise.catch(rejectParsed);
+      archiveEntryPromises.push(archiveEntryPromise);
+    });
+
+    readStream.pipe(writeStream);
+
+    try {
+      await parsed;
+
+      // Without `strict`, tar routes a recoverable problem to onwarn() above and never emits
+      // 'error', so `parsed` resolves as if the archive were fine. Throwing the collected message
+      // is what gets it to the caller.
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      return await Promise.all(archiveEntryPromises);
+    } catch (error) {
+      // abort() is what nerfs and destroys the parser's decompressor, whose zlib binding
+      // readStream.destroy() below leaves open because pipe() doesn't propagate destroy()
+      // downstream. It emits 'error', which the already-settled `parsed` above ignores.
+      writeStream.abort(error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    } finally {
+      readStream.destroy();
+    }
   }
 
   /**

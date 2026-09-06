@@ -5,6 +5,7 @@ import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-t
 import { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
+import StreamUtil from '../../../utils/streamUtil.js';
 import Patch from '../../patches/patch.js';
 import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumPropsWithSize } from '../fileChecksums.js';
@@ -253,7 +254,8 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     if (start > 0) {
       return await this.archive.extractEntryToStream(
         this,
-        async (readable) => await callback(readable.pipe(new SkipBytesTransform(start))),
+        async (readable) =>
+          await StreamUtil.pipelineSafe(readable, new SkipBytesTransform(start), callback),
       );
     }
 

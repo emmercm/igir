@@ -11,6 +11,7 @@ import Defaults from '../../globals/defaults.js';
 import Temp from '../../globals/temp.js';
 import IOFile from '../../models/files/ioFile.js';
 import FsReadTransform, { FsReadCallback } from '../../streams/fsReadTransform.js';
+import PadEndTransform from '../../streams/padEndTransform.js';
 import FsUtil from '../../utils/fsUtil.js';
 import StreamUtil from '../../utils/streamUtil.js';
 import URLUtil from '../../utils/urlUtil.js';
@@ -458,12 +459,11 @@ export default class File implements FileProps {
         ? callback
         : async (readable: stream.Readable): Promise<T> => {
             const padding = paddings[0];
-            const padded = StreamUtil.padEnd(
+            return await StreamUtil.pipelineSafe(
               readable,
-              padding.getPaddedSize(),
-              padding.getFillByte(),
+              new PadEndTransform(padding.getPaddedSize(), padding.getFillByte()),
+              callback,
             );
-            return await callback(padded);
           };
 
     // Simple case: create a read stream at an offset
@@ -554,13 +554,11 @@ export default class File implements FileProps {
             return;
           }
 
-          const writeStream = fs.createWriteStream(filePath);
-          res.pipe(writeStream);
-          writeStream.on('error', reject);
-          writeStream.on('finish', async () => {
-            writeStream.close();
-            resolve(await File.fileOf({ filePath }, this.getChecksumBitmask()));
-          });
+          stream.promises
+            .pipeline(res, fs.createWriteStream(filePath))
+            .then(async () => await File.fileOf({ filePath }, this.getChecksumBitmask()))
+            .then(resolve)
+            .catch(reject);
         },
       );
       req.on('error', reject).on('timeout', () => {

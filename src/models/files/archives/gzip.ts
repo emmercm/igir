@@ -6,6 +6,7 @@ import { logger } from '../../../console/logger.js';
 import IgirException from '../../../exceptions/igirException.js';
 import IOFile from '../../../models/files/ioFile.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
+import StreamUtil from '../../../utils/streamUtil.js';
 import FileChecksums, { ChecksumBitmask, type ChecksumProps } from '../fileChecksums.js';
 import type { ArchiveEntryLocation } from './archive.js';
 import Archive from './archive.js';
@@ -160,36 +161,10 @@ export default class Gzip extends Archive {
     _location: ArchiveEntryLocation,
     callback: (readable: stream.Readable) => Promise<T> | T,
   ): Promise<T> {
-    const source = fs.createReadStream(this.getFilePath());
-    const gunzip = zlib.createGunzip();
-    const pipelinePromise = stream.promises.pipeline(source, gunzip);
-
-    try {
-      const result = await callback(gunzip);
-
-      gunzip.destroy();
-      source.destroy();
-      try {
-        await pipelinePromise;
-      } catch (error) {
-        // The .destroy() calls above can cause ABORT_ERR on Node.js <24.15, or
-        // ERR_STREAM_PREMATURE_CLOSE on Node.js >=24.15
-        const code = (error as NodeJS.ErrnoException).code;
-        if (code !== 'ABORT_ERR' && code !== 'ERR_STREAM_PREMATURE_CLOSE') {
-          throw error;
-        }
-      }
-
-      return result;
-    } catch (error) {
-      gunzip.destroy();
-      source.destroy();
-      try {
-        await pipelinePromise;
-      } catch {
-        // ignored
-      }
-      throw error;
-    }
+    return await StreamUtil.pipelineSafe(
+      fs.createReadStream(this.getFilePath()),
+      zlib.createGunzip(),
+      callback,
+    );
   }
 }
