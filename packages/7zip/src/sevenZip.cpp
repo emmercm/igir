@@ -285,24 +285,28 @@ bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id) {
     return prop.vt == VT_BOOL && VARIANT_BOOLToBool(prop.boolVal);
 }
 
+std::string NormalizeEntryPath(std::string entryPath) {
+    std::replace(entryPath.begin(), entryPath.end(), '\\', '/');
+    return entryPath;
+}
+
+bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath) {
+    std::string candidate;
+    if (!GetStringProp(archive, index, kpidPath, &candidate)) {
+        // A format that records no name has nothing to match against.
+        return false;
+    }
+    return NormalizeEntryPath(std::move(candidate)) == normalizedPath;
+}
+
 HRESULT FindEntryIndex(IInArchive& archive, const std::string& entryPath, uint32_t* out) {
-    // 7-Zip reports separators as the source archive recorded them, so an entry
-    // from a Windows-built .zip carries backslashes. Normalize both sides, so a
-    // caller may spell the path either way -- see the note in sevenZip.h about
-    // this being an input-side tolerance only.
-    std::string wanted = entryPath;
-    std::replace(wanted.begin(), wanted.end(), '\\', '/');
+    // See the note in sevenZip.h: the separator tolerance is input-side only.
+    std::string const wanted = NormalizeEntryPath(entryPath);
 
     UInt32 count = 0;
     RINOK(archive.GetNumberOfItems(&count))
     for (UInt32 i = 0; i < count; i++) {
-        std::string candidate;
-        if (!GetStringProp(archive, i, kpidPath, &candidate)) {
-            // A format that records no name has nothing to match against.
-            continue;
-        }
-        std::replace(candidate.begin(), candidate.end(), '\\', '/');
-        if (candidate == wanted) {
+        if (EntryIndexMatches(archive, i, wanted)) {
             *out = i;
             return S_OK;
         }

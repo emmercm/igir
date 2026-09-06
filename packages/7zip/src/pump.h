@@ -53,7 +53,12 @@ class Pump {
     // `entryPath` is resolved against the archive this Pump opens for extraction
     // anyway, so naming an entry by name costs one pass over the already-parsed
     // item table -- never a second open, and never a round trip through
-    // JavaScript. Nothing outside this class ever sees an entry index.
+    // JavaScript.
+    //
+    // `entryIndex` is an optional hint: where a previous listing saw that entry.
+    // It is checked against `entryPath` (one property read) and used only when
+    // it still matches, so a stale one costs the scan it was meant to avoid and
+    // nothing else. It is never used on its own.
     //
     // No path means the archive's only entry, which is how the formats that
     // record no names (`.Z`, `.bz2`, `.lzma`, `.001`) are addressed. An archive
@@ -65,7 +70,8 @@ class Pump {
     // kPending could now proceed; `onExit` exactly once, on the producer thread,
     // as the last thing it does. Neither may throw.
     static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex,
-                                       std::optional<std::string> entryPath, size_t chunkBytes,
+                                       std::optional<std::string> entryPath,
+                                       std::optional<uint32_t> entryIndex, size_t chunkBytes,
                                        std::function<void()> onReady,
                                        std::function<void()> onExit);
 
@@ -88,7 +94,7 @@ class Pump {
 
    private:
     Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
-         size_t chunkBytes);
+         std::optional<uint32_t> entryIndex, size_t chunkBytes);
 
     // The producer thread's body. Nothing may escape it: an exception leaving a
     // std::thread's callable calls std::terminate(). It is not marked noexcept
@@ -111,6 +117,7 @@ class Pump {
     std::string path_;
     uint32_t formatIndex_;
     std::optional<std::string> entryPath_;
+    std::optional<uint32_t> entryIndex_;
     ChunkQueue queue_;
     std::atomic<bool> abort_{false};
     std::mutex errorMutex_;

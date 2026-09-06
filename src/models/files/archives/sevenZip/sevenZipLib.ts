@@ -12,6 +12,7 @@ import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../../utils/fsUtil.js';
+import type { ArchiveEntryLocation } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -81,13 +82,9 @@ export default abstract class SevenZipLib extends Archive {
           {
             archive: this,
             entryPath: this.entryPathOf(entry),
-            // Both are left undefined rather than defaulted when the format
-            // records neither, which is the case for `.Z`. ArchiveEntry.entryOf()
-            // then derives them by reading the entry, instead of committing a
-            // size of 0 and an empty CRC32 to the cache.
             size: entry.size,
             crc32: entry.crc32,
-            // If MD5, SHA1, or SHA256 is desired, this file will need to be extracted to calculate
+            entryIndex: entry.entryIndex,
           },
           checksumBitmask,
         );
@@ -104,7 +101,7 @@ export default abstract class SevenZipLib extends Archive {
    * Extract the named entry from the archive to the given file path.
    */
   async extractEntryToFile(
-    entryPath: string,
+    location: ArchiveEntryLocation,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
@@ -113,7 +110,7 @@ export default abstract class SevenZipLib extends Archive {
       await FsUtil.mkdir(extractedDir, { recursive: true });
     }
 
-    await this.extractEntryToStream(entryPath, async (readable) => {
+    await this.extractEntryToStream(location, async (readable) => {
       const writeStream = fs.createWriteStream(extractedFilePath);
       if (callback) {
         await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
@@ -127,20 +124,15 @@ export default abstract class SevenZipLib extends Archive {
    * Invoke the callback with a readable stream of the named entry's uncompressed bytes.
    */
   override async extractEntryToStream<T>(
-    entryPath: string,
+    { entryPath, entryIndex }: ArchiveEntryLocation,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
     const sourceStream = sevenZip.openEntryReader({
       inputFilename: this.getFilePath(),
       format: this.getSevenZipFormat(),
-      // The addon matches an entry path against the archive it opens to extract
-      // from, so handing it the name directly costs no extra pass. Formats that
-      // record no names are the exception: they hold exactly one entry, which
-      // getArchiveEntries() named after the archive file itself, so there is
-      // nothing inside the archive for that name to match. Name no entry at all
-      // and the addon extracts that sole member.
       entryPath: this.hasMeaningfulEntryPaths() ? entryPath : undefined,
+      entryIndex,
       highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
     const entryStream: Readable =

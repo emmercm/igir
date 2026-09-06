@@ -31,7 +31,8 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
    public:
     static Napi::Function GetClass(Napi::Env env);
 
-    // (path: string, formatIndex: number, entryPath?: string, chunkBytes?: number)
+    // (path: string, formatIndex: number, entryPath?: string, entryIndex?: number,
+    //  chunkBytes?: number)
     explicit EntryReader(const Napi::CallbackInfo& info);
     ~EntryReader() override;
 

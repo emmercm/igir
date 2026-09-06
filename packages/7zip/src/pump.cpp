@@ -111,18 +111,20 @@ size_t ReadAheadChunks(size_t chunkBytes) {
 }  // namespace
 
 Pump::Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
-           size_t chunkBytes)
+           std::optional<uint32_t> entryIndex, size_t chunkBytes)
     : path_(std::move(path)),
       formatIndex_(formatIndex),
       entryPath_(std::move(entryPath)),
+      entryIndex_(entryIndex),
       queue_(chunkBytes, ReadAheadChunks(chunkBytes)) {}
 
 std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex,
-                                  std::optional<std::string> entryPath, size_t chunkBytes,
+                                  std::optional<std::string> entryPath,
+                                  std::optional<uint32_t> entryIndex, size_t chunkBytes,
                                   std::function<void()> onReady, std::function<void()> onExit) {
     chunkBytes = std::clamp<size_t>(chunkBytes, 1, kMaxChunkBytes);
     std::shared_ptr<Pump> pump(
-        new Pump(std::move(path), formatIndex, std::move(entryPath), chunkBytes));
+        new Pump(std::move(path), formatIndex, std::move(entryPath), entryIndex, chunkBytes));
     pump->queue_.SetOnReady(std::move(onReady));
     pump->onExit_ = std::move(onExit);
 
@@ -165,6 +167,17 @@ std::string Pump::EntryLabel() const {
 
 HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
     if (entryPath_.has_value()) {
+        // A remembered index is verified, never trusted: one kpidPath read says
+        // whether the archive still holds that entry there. When it does, the
+        // scan below -- a property read per item -- is skipped entirely. When it
+        // does not, the archive was rewritten since the index was recorded, and
+        // the scan is exactly the right answer.
+        if (entryIndex_.has_value() &&
+            EntryIndexMatches(archive, *entryIndex_, NormalizeEntryPath(*entryPath_))) {
+            *out = *entryIndex_;
+            return S_OK;
+        }
+
         uint32_t found = 0;
         HRESULT const hr = FindEntryIndex(archive, *entryPath_, &found);
         if (hr != S_OK) {

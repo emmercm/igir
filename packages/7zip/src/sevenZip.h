@@ -71,6 +71,17 @@ bool GetUInt64Prop(IInArchive& archive, uint32_t index, PROPID id, uint64_t* out
 bool GetUInt32Prop(IInArchive& archive, uint32_t index, PROPID id, uint32_t* out);
 bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id);
 
+// Normalizes an entry path for comparison: 7-Zip reports separators as the
+// source archive recorded them, so an entry from a Windows-built .zip carries
+// backslashes. Both sides of every comparison go through this, which is what
+// lets a caller spell a path with either `/` or `\`.
+std::string NormalizeEntryPath(std::string entryPath);
+
+// True when the item at `index` carries `normalizedPath` (already normalized by
+// NormalizeEntryPath). One property read, no scan: this is what makes a caller's
+// remembered index worth checking before falling back to FindEntryIndex().
+bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath);
+
 // Resolves an entry path to the index 7-Zip extracts by, using the archive the
 // caller has ALREADY opened -- extraction has to open it regardless, so this
 // costs one pass over the in-memory item table and no second open.
@@ -80,9 +91,9 @@ bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id);
 // INPUT side only: the paths reported out of an archive (see lister.h) are
 // verbatim, exactly as the archive recorded them.
 //
-// Returns kEntryNotFound when nothing matches. This is the ONLY place a path is
-// matched against an entry -- JavaScript never lists an archive just to turn a
-// name into a number.
+// Returns kEntryNotFound when nothing matches. A caller that remembers an index
+// from a previous listing checks it with EntryIndexMatches() first and falls
+// back here; the fallback is what keeps a stale index from ever mattering.
 HRESULT FindEntryIndex(IInArchive& archive, const std::string& entryPath, uint32_t* out);
 
 }  // namespace sevenzip

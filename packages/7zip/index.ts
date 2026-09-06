@@ -31,6 +31,13 @@ export type SevenZipFormat = (typeof SevenZipFormat)[keyof typeof SevenZipFormat
 
 export interface SevenZipEntry {
   /**
+   * The entry's position in the archive's own item table -- the number 7-Zip
+   * itself uses to address it, not a position in this array. Pass it back to
+   * {@link openEntryReader} to skip the scan that finding an entry by path
+   * otherwise costs.
+   */
+  entryIndex: number;
+  /**
    * The entry's path within the archive, or `undefined` when the format records
    * no name -- `.Z`, `.bz2` and `.lzma` wrap one nameless stream, and callers
    * conventionally derive a name from the archive's own filename. Deliberately
@@ -80,6 +87,13 @@ export interface OpenEntryReaderOptions {
    */
   entryPath?: string;
   /**
+   * A hint: where the entry named by `entryPath` was last seen in the archive's
+   * item table, from {@link SevenZipEntry.entryIndex}. It is verified against
+   * `entryPath` before it is used and quietly ignored when it no longer matches,
+   * so a stale one costs nothing but the scan it was meant to avoid.
+   */
+  entryIndex?: number;
+  /**
    * The `highWaterMark` of the returned stream, and so the size of every chunk
    * the addon is asked to produce. Omit it to take Node's own default for a
    * {@link stream.Readable} -- this package deliberately defines no default of
@@ -96,7 +110,8 @@ export interface OpenEntryReaderOptions {
  * Entry *paths* go the other way, and deliberately. Resolving one to an index in
  * JavaScript means opening the archive to list it and then opening it again to
  * extract, whereas the addon resolves it inside the open it has to perform
- * regardless -- so an index is never part of this surface at all.
+ * regardless. An index may accompany a path, but only ever as a hint the addon
+ * verifies against that path; a path alone always resolves on its own.
  *
  * `read()` takes no size: the chunk size is fixed when the reader is
  * constructed, because it is the size the extraction thread fills to before
@@ -114,6 +129,7 @@ interface SevenZipBinding {
     archivePath: string,
     formatIndex: number,
     entryPath: string | undefined,
+    entryIndex: number | undefined,
     chunkBytes: number,
   ) => NativeEntryReader;
 }
@@ -272,6 +288,11 @@ export default {
    * archive spelled it. That tolerance is on input only; see {@link listEntries}
    * for what comes back out.
    *
+   * `entryIndex` is an optional hint from {@link listEntries}: the addon reads
+   * only that item's path and, if it is the one asked for, extracts it directly
+   * instead of scanning every item's path to find it. A wrong or stale index
+   * falls back to that scan, so it never changes which entry is extracted.
+   *
    * Omit it for the formats that record no entry name -- `.Z`, `.bz2`, `.lzma`
    * and a split set all wrap exactly one nameless member, and {@link listEntries}
    * reports `entryPath: undefined` for it. An archive holding more than one entry
@@ -293,6 +314,7 @@ export default {
           options.inputFilename,
           formatIndex(options.format),
           options.entryPath,
+          options.entryIndex,
           chunkBytes,
         ),
       options.highWaterMark,

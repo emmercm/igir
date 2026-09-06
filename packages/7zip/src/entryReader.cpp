@@ -1,3 +1,5 @@
+#include <cmath>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -30,17 +32,21 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
 
 void EntryReader::Construct(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
-    // An entry is named by path, or not named at all -- never by index. A path
-    // is resolved inside the single archive open that extraction performs
-    // regardless, which is why index.ts can hand one straight through instead of
-    // listing the archive to turn it into a number first.
+    // An entry is named by path, or not named at all. A path is resolved inside
+    // the single archive open that extraction performs regardless, which is why
+    // index.ts can hand one straight through instead of listing the archive to
+    // turn it into a number first. An index may accompany the path, but only as
+    // a hint the Pump verifies against it -- never as a way to name an entry.
     bool const named = info.Length() >= 3 && info[2].IsString();
     bool const unnamed = info.Length() < 3 || info[2].IsUndefined();
-    bool const sized = info.Length() < 4 || info[3].IsUndefined() || info[3].IsNumber();
-    if (!info[0].IsString() || !info[1].IsNumber() || (!named && !unnamed) || !sized) {
+    bool const hinted = info.Length() >= 4 && info[3].IsNumber();
+    bool const unhinted = info.Length() < 4 || info[3].IsUndefined();
+    bool const sized = info.Length() < 5 || info[4].IsUndefined() || info[4].IsNumber();
+    if (!info[0].IsString() || !info[1].IsNumber() || (!named && !unnamed) ||
+        (!hinted && !unhinted) || !sized) {
         Napi::TypeError::New(env,
                              "expected (path: string, formatIndex: number, entryPath?: string, "
-                             "chunkBytes?: number)")
+                             "entryIndex?: number, chunkBytes?: number)")
             .ThrowAsJavaScriptException();
         return;
     }
@@ -54,14 +60,26 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
             return;
         }
     }
+    // An out-of-range or non-integral hint is not an error: it simply cannot
+    // match any item, and the Pump falls back to the scan. Only a value that
+    // round-trips through uint32_t is worth carrying at all.
+    std::optional<uint32_t> entryIndex;
+    if (hinted) {
+        double const requested = info[3].As<Napi::Number>().DoubleValue();
+        if (requested >= 0 && requested <= UINT32_MAX &&
+            requested == std::floor(requested)) {
+            entryIndex = static_cast<uint32_t>(requested);
+        }
+    }
+
     // The chunk size is fixed for the life of the reader rather than passed to
     // each read(), because it is what the producer fills to before publishing:
     // it has to be known before any byte is decoded. index.ts passes the
     // stream's high-water mark, so every read returns exactly what the stream
     // asked for. Pump::Start clamps it.
     size_t chunkBytes = Pump::kReadAheadBytes;
-    if (info.Length() >= 4 && info[3].IsNumber()) {
-        double const requested = info[3].As<Napi::Number>().DoubleValue();
+    if (info.Length() >= 5 && info[4].IsNumber()) {
+        double const requested = info[4].As<Napi::Number>().DoubleValue();
         if (!(requested >= 1)) {
             // Catches 0, negatives and NaN alike. A zero-byte chunk would make
             // every read return an empty buffer that JavaScript cannot tell
@@ -70,7 +88,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
                 .ThrowAsJavaScriptException();
             return;
         }
-        chunkBytes = static_cast<size_t>(info[3].As<Napi::Number>().Uint32Value());
+        chunkBytes = static_cast<size_t>(info[4].As<Napi::Number>().Uint32Value());
     }
 
     // The bridge exists before the producer does, because the producer captures
@@ -96,7 +114,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     try {
         pump = Pump::Start(
             info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(),
-            std::move(entryPath), chunkBytes,
+            std::move(entryPath), entryIndex, chunkBytes,
             [bridge]() {
                 // Producer thread. NonBlockingCall never blocks and, with an
                 // unbounded queue, never fails for want of room; if it fails at

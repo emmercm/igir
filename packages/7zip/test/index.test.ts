@@ -204,71 +204,84 @@ interface StoredZipOptions {
 }
 
 /**
- * Write a single-entry ZIP that stores its payload uncompressed (method 0).
- * Stored entries need no encoder, so a large archive can be produced here at
- * test time rather than committed as a binary fixture -- and so can a
- * deliberately broken one, by lying in the headers about what the payload is.
+ * Write a ZIP that stores every payload uncompressed (method 0). Stored entries
+ * need no encoder, so a large archive can be produced here at test time rather
+ * than committed as a binary fixture -- and so can a deliberately broken one, by
+ * lying in the headers about what the payload is.
  */
-function writeStoredZip(
+function writeStoredZipEntries(
   filePath: string,
-  entryName: string,
-  contents: Buffer,
+  entries: { entryName: string; contents: Buffer }[],
   { hasSpanMarker = false, method = 0, flags = 0 }: StoredZipOptions = {},
 ): void {
-  const name = Buffer.from(entryName, 'utf8');
-  const crc = zlib.crc32(contents);
-  const size = contents.length;
-
   const prefix = Buffer.alloc(hasSpanMarker ? 4 : 0);
   if (hasSpanMarker) {
     prefix.writeUInt32LE(0x08_07_4b_50, 0); // NSignature::kSpan
   }
 
-  const localHeader = Buffer.alloc(30);
-  localHeader.writeUInt32LE(0x04_03_4b_50, 0); // local file header signature
-  localHeader.writeUInt16LE(20, 4); // version needed to extract
-  localHeader.writeUInt16LE(flags, 6); // general purpose bit flag
-  localHeader.writeUInt16LE(method, 8); // compression method
-  localHeader.writeUInt32LE(crc, 14);
-  localHeader.writeUInt32LE(size, 18); // compressed size
-  localHeader.writeUInt32LE(size, 22); // uncompressed size
-  localHeader.writeUInt16LE(name.length, 26);
+  const locals: Buffer[] = [];
+  const centrals: Buffer[] = [];
+  let offset = prefix.length;
+  for (const { entryName, contents } of entries) {
+    const name = Buffer.from(entryName, 'utf8');
+    const crc = zlib.crc32(contents);
+    const size = contents.length;
 
-  const centralHeader = Buffer.alloc(46);
-  centralHeader.writeUInt32LE(0x02_01_4b_50, 0); // central directory signature
-  centralHeader.writeUInt16LE(20, 4); // version made by
-  centralHeader.writeUInt16LE(20, 6); // version needed to extract
-  centralHeader.writeUInt16LE(flags, 8); // general purpose bit flag
-  centralHeader.writeUInt16LE(method, 10); // compression method
-  centralHeader.writeUInt32LE(crc, 16);
-  centralHeader.writeUInt32LE(size, 20);
-  centralHeader.writeUInt32LE(size, 24);
-  centralHeader.writeUInt16LE(name.length, 28);
-  centralHeader.writeUInt32LE(prefix.length, 42); // local header offset
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04_03_4b_50, 0); // local file header signature
+    localHeader.writeUInt16LE(20, 4); // version needed to extract
+    localHeader.writeUInt16LE(flags, 6); // general purpose bit flag
+    localHeader.writeUInt16LE(method, 8); // compression method
+    localHeader.writeUInt32LE(crc, 14);
+    localHeader.writeUInt32LE(size, 18); // compressed size
+    localHeader.writeUInt32LE(size, 22); // uncompressed size
+    localHeader.writeUInt16LE(name.length, 26);
 
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02_01_4b_50, 0); // central directory signature
+    centralHeader.writeUInt16LE(20, 4); // version made by
+    centralHeader.writeUInt16LE(20, 6); // version needed to extract
+    centralHeader.writeUInt16LE(flags, 8); // general purpose bit flag
+    centralHeader.writeUInt16LE(method, 10); // compression method
+    centralHeader.writeUInt32LE(crc, 16);
+    centralHeader.writeUInt32LE(size, 20);
+    centralHeader.writeUInt32LE(size, 24);
+    centralHeader.writeUInt16LE(name.length, 28);
+    centralHeader.writeUInt32LE(offset, 42); // local header offset
+
+    locals.push(localHeader, name, contents);
+    centrals.push(centralHeader, name);
+    offset += localHeader.length + name.length + size;
+  }
+
+  const centralSize = centrals.reduce((total, chunk) => total + chunk.length, 0);
   const endOfCentralDirectory = Buffer.alloc(22);
   endOfCentralDirectory.writeUInt32LE(0x06_05_4b_50, 0); // end of central directory signature
-  endOfCentralDirectory.writeUInt16LE(1, 8); // entries on this disk
-  endOfCentralDirectory.writeUInt16LE(1, 10); // entries total
-  endOfCentralDirectory.writeUInt32LE(centralHeader.length + name.length, 12);
-  endOfCentralDirectory.writeUInt32LE(prefix.length + localHeader.length + name.length + size, 16);
+  endOfCentralDirectory.writeUInt16LE(entries.length, 8); // entries on this disk
+  endOfCentralDirectory.writeUInt16LE(entries.length, 10); // entries total
+  endOfCentralDirectory.writeUInt32LE(centralSize, 12);
+  endOfCentralDirectory.writeUInt32LE(offset, 16);
 
   const handle = fs.openSync(filePath, 'w');
   try {
-    for (const chunk of [
-      prefix,
-      localHeader,
-      name,
-      contents,
-      centralHeader,
-      name,
-      endOfCentralDirectory,
-    ]) {
+    for (const chunk of [prefix, ...locals, ...centrals, endOfCentralDirectory]) {
       fs.writeSync(handle, chunk);
     }
   } finally {
     fs.closeSync(handle);
   }
+}
+
+/**
+ * {@link writeStoredZipEntries} for the common case of one entry.
+ */
+function writeStoredZip(
+  filePath: string,
+  entryName: string,
+  contents: Buffer,
+  options: StoredZipOptions = {},
+): void {
+  writeStoredZipEntries(filePath, [{ entryName, contents }], options);
 }
 
 describe('listEntries', () => {
@@ -295,6 +308,10 @@ describe('listEntries', () => {
       ]);
       expect(entries.map((entry) => entry.isDirectory)).toEqual([false, false, false, false]);
       expect(entries.map((entry) => entry.isEncrypted)).toEqual([false, false, false, false]);
+      // The archive's own item indices. They happen to match this array's
+      // positions here because no entry is filtered out, which is exactly why
+      // the directory case below is worth its own assertion.
+      expect(entries.map((entry) => entry.entryIndex)).toEqual([0, 1, 2, 3]);
     },
   );
 
@@ -313,6 +330,7 @@ describe('listEntries', () => {
       expect(entries[0].crc32).toBeUndefined();
       expect(entries[0].isDirectory).toEqual(false);
       expect(entries[0].isEncrypted).toEqual(false);
+      expect(entries[0].entryIndex).toEqual(0);
     },
   );
 
@@ -447,6 +465,27 @@ describe('listEntries', () => {
       expect(entries.map((entry) => entry.entryPath)).toEqual([String.raw`dir\file.bin`]);
     });
   });
+
+  test('it numbers directory entries alongside the files they contain', async () => {
+    // A directory entry is an item like any other, so the file that follows it
+    // is item 1 -- not item 0, which is what an index recovered from a filtered
+    // list would say. Callers do filter directories out, which is why the index
+    // has to come from the archive rather than from a position in an array.
+    await withTempDir(async (directory) => {
+      const archive = path.join(directory, 'withdir.zip');
+      writeStoredZipEntries(archive, [
+        { entryName: 'sub/', contents: Buffer.alloc(0) },
+        { entryName: 'sub/file.bin', contents: Buffer.from('inside a directory') },
+      ]);
+      const entries = await sevenZip.listEntries({
+        inputFilename: archive,
+        format: SevenZipFormat.ZIP,
+      });
+      const files = entries.filter((entry) => !entry.isDirectory);
+      expect(files.map((entry) => entry.entryPath)).toEqual(['sub/file.bin']);
+      expect(files.map((entry) => entry.entryIndex)).toEqual([1]);
+    });
+  });
 });
 
 describe('openEntryReader', () => {
@@ -467,6 +506,66 @@ describe('openEntryReader', () => {
       }
     },
   );
+
+  test.each(MULTI_ENTRY_ARCHIVES)(
+    'it extracts every entry of $label intact when given its index',
+    async ({ format, archivePath }) => {
+      // The fast path: the index is verified against the path and then used
+      // directly, so the same bytes have to come out as without it.
+      const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
+      for (const entry of entries) {
+        const extracted = await drain(
+          sevenZip.openEntryReader({
+            inputFilename: archivePath,
+            format,
+            entryPath: entry.entryPath,
+            entryIndex: entry.entryIndex,
+          }),
+        );
+        expect(extracted.length).toEqual(entry.size);
+        expect(crc32Hex(extracted)).toEqual(entry.crc32);
+      }
+    },
+  );
+
+  test.each([
+    { label: 'another entry', entryIndex: 3 },
+    { label: 'past the end of the archive', entryIndex: 4096 },
+    { label: 'not an integer', entryIndex: 1.5 },
+    { label: 'negative', entryIndex: -1 },
+  ])('it ignores an index pointing $label', async ({ entryIndex }) => {
+    // Every one of these fails the path check, so the scan runs and the entry
+    // named is the entry extracted. A wrong index can cost time, never bytes.
+    const entries = await sevenZip.listEntries({
+      inputFilename: SEVEN_ZIP_FIXTURES[0],
+      format: SevenZipFormat.SEVEN_ZIP,
+    });
+    const extracted = await drain(
+      sevenZip.openEntryReader({
+        inputFilename: SEVEN_ZIP_FIXTURES[0],
+        format: SevenZipFormat.SEVEN_ZIP,
+        entryPath: entries[0].entryPath,
+        entryIndex,
+      }),
+    );
+    expect(extracted.length).toEqual(entries[0].size);
+    expect(crc32Hex(extracted)).toEqual(entries[0].crc32);
+  });
+
+  test('it rejects an entry the archive does not have even when given a valid index', async () => {
+    // An index never names an entry on its own: the path is what is asked for,
+    // and no item carries it, so this fails exactly as it does without one.
+    await expect(
+      drain(
+        sevenZip.openEntryReader({
+          inputFilename: SEVEN_ZIP_FIXTURES[0],
+          format: SevenZipFormat.SEVEN_ZIP,
+          entryPath: 'nope',
+          entryIndex: 0,
+        }),
+      ),
+    ).rejects.toThrow(/no entry named 'nope'/);
+  });
 
   test('it rejects an entry the archive does not have', async () => {
     // Same archive, same call, two ways of failing to name an entry that can be

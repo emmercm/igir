@@ -13,6 +13,11 @@ namespace sevenzip {
 namespace {
 
 struct Entry {
+    // The archive's own item index, stored rather than recovered from this
+    // vector's position: entries are emitted in listing order today, but the
+    // number a caller passes back to EntryReader has to mean the archive's
+    // index no matter how this list is later filtered or ordered.
+    uint32_t index = 0;
     std::optional<std::string> entryPath;
     std::optional<uint64_t> size;
     std::optional<uint32_t> crc32;
@@ -64,6 +69,7 @@ class ListWorker : public Napi::AsyncWorker {
         // archive can actually produce.
         for (uint32_t i = 0; i < count; i++) {
             Entry entry;
+            entry.index = i;
 
             std::string entryPath;
             if (GetStringProp(*opened.archive, i, kpidPath, &entryPath)) {
@@ -104,6 +110,7 @@ class ListWorker : public Napi::AsyncWorker {
         for (size_t i = 0; i < entries_.size(); i++) {
             const Entry& entry = entries_[i];
             Napi::Object object = Napi::Object::New(env);
+            object.Set("entryIndex", Napi::Number::New(env, entry.index));
             // Undefined rather than "" when the format records no name, for the
             // same reason as `size`: "" is a name an entry could really have.
             object.Set("entryPath", entry.entryPath.has_value()
