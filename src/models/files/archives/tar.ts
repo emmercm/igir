@@ -9,6 +9,7 @@ import Defaults from '../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
 import FileChecksums from '../fileChecksums.js';
+import type { ArchiveEntryLocation } from './archive.js';
 import Archive from './archive.js';
 import ArchiveEntry from './archiveEntry.js';
 
@@ -123,7 +124,10 @@ export default class Tar extends Archive {
   /**
    * Extract the named entry from the tar archive to the given file path.
    */
-  async extractEntryToFile(entryPath: string, extractedFilePath: string): Promise<void> {
+  async extractEntryToFile(
+    { entryPath }: ArchiveEntryLocation,
+    extractedFilePath: string,
+  ): Promise<void> {
     await tar.extract(
       {
         file: this.getFilePath(),

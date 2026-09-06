@@ -7,6 +7,7 @@ import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import FileChecksums from '../../fileChecksums.js';
+import type { ArchiveEntryLocation } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
@@ -43,7 +44,7 @@ export default abstract class Dolphin extends Archive {
     // Compute every requested checksum in a single decompression pass. A decode error on a
     // corrupt block surfaces as a stream error, which is the integrity check.
     const checksums = await this.extractEntryToStream(
-      '',
+      { entryPath: '' },
       async (readable) => await FileChecksums.hashStream(readable, checksumBitmask, callback),
     );
 
@@ -66,7 +67,7 @@ export default abstract class Dolphin extends Archive {
    * entry path is not needed to resolve it.
    */
   override async extractEntryToStream<T>(
-    _entryPath: string,
+    _location: ArchiveEntryLocation,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
@@ -89,8 +90,11 @@ export default abstract class Dolphin extends Archive {
   /**
    * Extract the disc image to the given path as an uncompressed ISO.
    */
-  async extractEntryToFile(_entryPath: string, extractedFilePath: string): Promise<void> {
-    await this.extractEntryToStream('', async (readable) => {
+  async extractEntryToFile(
+    _location: ArchiveEntryLocation,
+    extractedFilePath: string,
+  ): Promise<void> {
+    await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
       await stream.promises.pipeline(readable, fs.createWriteStream(extractedFilePath));
     });
   }

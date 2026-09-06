@@ -11,6 +11,7 @@ import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
 import FileChecksums, { ChecksumBitmask } from '../../fileChecksums.js';
 import type Archive from '../archive.js';
+import type { ArchiveEntryLocation } from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 import type { ChdListedFile, ChdListing } from './chd.js';
 import Chd from './chd.js';
@@ -53,21 +54,22 @@ export default class ChdBinCue extends Chd {
   }
 
   /**
-   * Stream one entry: the .cue TOC text, or a .bin track resolved by its track number (the
-   * `(Track N)` produced by {@link getListing}'s pattern maps to chdman track index N - 1).
+   * Stream one entry: the TOC text, or the track the entry's index names.
    */
-  private async streamFile(entryPath: string): Promise<stream.Readable> {
+  private async streamFile({
+    entryPath,
+    entryIndex,
+  }: ArchiveEntryLocation): Promise<stream.Readable> {
     if (entryPath.toLowerCase().endsWith('.cue')) {
       return stream.Readable.from(Buffer.from((await this.getListing()).tocText));
     }
-    const trackNumber = /\(Track (\d+)\)\.bin$/i.exec(entryPath);
-    if (trackNumber === null) {
-      throw new IgirException(`CHD entry not found: ${this.getFilePath()}|${entryPath}`);
+    if (entryIndex === undefined) {
+      throw new IgirException(`CHD entry has no track index: ${this.getFilePath()}|${entryPath}`);
     }
     return chdman.openTrackReader({
       inputFilename: this.getFilePath(),
       mode: 'cuebin',
-      trackIndex: Number(trackNumber[1]) - 1,
+      trackIndex: entryIndex,
       highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
   }
@@ -76,11 +78,11 @@ export default class ChdBinCue extends Chd {
    * Open a stream for the named entry, skipping the first `start` bytes, and invoke the callback.
    */
   override async extractEntryToStream<T>(
-    entryPath: string,
+    location: ArchiveEntryLocation,
     callback: (readable: stream.Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
-    let readable = await this.streamFile(entryPath);
+    let readable = await this.streamFile(location);
     // A non-zero start offset (e.g. a detected ROM header) must skip that many
     // leading bytes of the forward-only stream.
     if (start > 0) {
@@ -151,7 +153,13 @@ export default class ChdBinCue extends Chd {
           lastProgress = progress;
         });
         return await ArchiveEntry.entryOf(
-          { archive: this, entryPath: file.filename, size: file.size, ...checksums },
+          {
+            archive: this,
+            entryPath: file.filename,
+            entryIndex: file.trackIndex,
+            size: file.size,
+            ...checksums,
+          },
           checksumBitmask,
         );
       },

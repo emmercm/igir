@@ -8,6 +8,18 @@ import File from '../file.js';
 import type ArchiveEntry from './archiveEntry.js';
 
 /**
+ * Where an entry lives inside its {@link Archive}: the path it was listed under, and optionally
+ * the position it was listed at.
+ */
+export interface ArchiveEntryLocation {
+  readonly entryPath: string;
+  /**
+   * The entry's position in the archive's own item table, as the archive itself orders it.
+   */
+  readonly entryIndex?: number;
+}
+
+/**
  * Base class for an archive file format, providing entry enumeration and extraction.
  */
 export default abstract class Archive {
@@ -40,7 +52,7 @@ export default abstract class Archive {
   ): Promise<ArchiveEntry<Archive>[]>;
 
   abstract extractEntryToFile(
-    entryPath: string,
+    location: ArchiveEntryLocation,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void>;
@@ -50,13 +62,13 @@ export default abstract class Archive {
    * path, then clean up the file.
    */
   async extractEntryToTempFile<T>(
-    entryPath: string,
+    location: ArchiveEntryLocation,
     callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
     const tempFile = await FsUtil.mktemp(
       path.join(
         Temp.getTempDir(),
-        FsUtil.makeLegal(path.basename(entryPath) || path.parse(this.getFilePath()).name),
+        FsUtil.makeLegal(path.basename(location.entryPath) || path.parse(this.getFilePath()).name),
       ),
     );
 
@@ -66,7 +78,7 @@ export default abstract class Archive {
     }
 
     try {
-      await this.extractEntryToFile(entryPath, tempFile);
+      await this.extractEntryToFile(location, tempFile);
       return await callback(tempFile);
     } finally {
       await FsUtil.rm(tempFile, { force: true });
@@ -78,12 +90,12 @@ export default abstract class Archive {
    * to a temp file and then create a stream by default.
    */
   async extractEntryToStream<T>(
-    entryPath: string,
+    location: ArchiveEntryLocation,
     callback: (readable: Readable) => Promise<T> | T,
     start = 0,
   ): Promise<T> {
     return await this.extractEntryToTempFile(
-      entryPath,
+      location,
       async (tempFile) => await File.createStreamFromFile(tempFile, callback, start),
     );
   }

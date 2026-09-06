@@ -10,11 +10,12 @@ import File, { FileProps } from '../file.js';
 import FileChecksums, { ChecksumBitmask, ChecksumPropsWithSize } from '../fileChecksums.js';
 import ROMHeader from '../romHeader.js';
 import ROMPadding from '../romPadding.js';
+import type { ArchiveEntryLocation } from './archive.js';
 import Archive from './archive.js';
 
-export interface ArchiveEntryProps<A extends Archive> extends Omit<FileProps, 'filePath'> {
+export interface ArchiveEntryProps<A extends Archive>
+  extends Omit<FileProps, 'filePath'>, ArchiveEntryLocation {
   readonly archive: A;
-  readonly entryPath: string;
 }
 
 /**
@@ -27,6 +28,9 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   @Expose()
   readonly entryPath: string;
 
+  @Expose()
+  readonly entryIndex?: number;
+
   protected constructor(archiveEntryProps: ArchiveEntryProps<A>) {
     super({
       ...archiveEntryProps,
@@ -34,6 +38,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     });
     this.archive = archiveEntryProps.archive;
     this.entryPath = archiveEntryProps.entryPath.replaceAll('\\', '/');
+    this.entryIndex = archiveEntryProps.entryIndex;
   }
 
   /**
@@ -78,7 +83,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
          */
         const headeredChecksums = await this.calculateEntryChecksums(
           archiveEntryProps.archive,
-          archiveEntryProps.entryPath,
+          archiveEntryProps,
           checksumBitmask,
         );
         finalSize ??= headeredChecksums.size;
@@ -90,7 +95,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       if (archiveEntryProps.fileHeader && checksumBitmask) {
         const headerlessChecksums = await this.calculateEntryChecksums(
           archiveEntryProps.archive,
-          archiveEntryProps.entryPath,
+          archiveEntryProps,
           checksumBitmask,
           archiveEntryProps.fileHeader,
         );
@@ -126,6 +131,7 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       patch: archiveEntryProps.patch,
       archive: archiveEntryProps.archive,
       entryPath: archiveEntryProps.entryPath,
+      entryIndex: archiveEntryProps.entryIndex,
     });
   }
 
@@ -184,6 +190,10 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     return this.entryPath;
   }
 
+  getEntryIndex(): number | undefined {
+    return this.entryIndex;
+  }
+
   /**
    * Extract this entry from its archive to the given file path.
    */
@@ -191,22 +201,17 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await ArchiveEntry.extractEntryToFile(
-      this.getArchive(),
-      this.getEntryPath(),
-      extractedFilePath,
-      callback,
-    );
+    await ArchiveEntry.extractEntryToFile(this.getArchive(), this, extractedFilePath, callback);
   }
 
   private static async calculateEntryChecksums(
     archive: Archive,
-    entryPath: string,
+    location: ArchiveEntryLocation,
     checksumBitmask: number,
     fileHeader?: ROMHeader,
   ): Promise<ChecksumPropsWithSize> {
     return await archive.extractEntryToStream(
-      entryPath,
+      location,
       async (readable) => await FileChecksums.hashStream(readable, checksumBitmask),
       fileHeader?.getDataOffsetBytes() ?? 0,
     );
@@ -214,11 +219,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
 
   private static async extractEntryToFile(
     archive: Archive,
-    entryPath: string,
+    location: ArchiveEntryLocation,
     extractedFilePath: string,
     callback?: FsReadCallback,
   ): Promise<void> {
-    await archive.extractEntryToFile(entryPath, extractedFilePath, callback);
+    await archive.extractEntryToFile(location, extractedFilePath, callback);
   }
 
   /**
@@ -226,19 +231,15 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
    * clean up the file.
    */
   override async extractToTempFile<T>(callback: (tempFile: string) => T | Promise<T>): Promise<T> {
-    return await ArchiveEntry.extractEntryToTempFile(
-      this.getArchive(),
-      this.getEntryPath(),
-      callback,
-    );
+    return await ArchiveEntry.extractEntryToTempFile(this.getArchive(), this, callback);
   }
 
   private static async extractEntryToTempFile<T>(
     archive: Archive,
-    entryPath: string,
+    location: ArchiveEntryLocation,
     callback: (tempFile: string) => T | Promise<T>,
   ): Promise<T> {
-    return await archive.extractEntryToTempFile(entryPath, callback);
+    return await archive.extractEntryToTempFile(location, callback);
   }
 
   /**
@@ -251,12 +252,12 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   ): Promise<T> {
     if (start > 0) {
       return await this.archive.extractEntryToStream(
-        this.getEntryPath(),
+        this,
         async (readable) => await callback(readable.pipe(new SkipBytesTransform(start))),
       );
     }
 
-    return await this.archive.extractEntryToStream(this.getEntryPath(), callback);
+    return await this.archive.extractEntryToStream(this, callback);
   }
 
   override withProps(props: ArchiveEntryProps<A>): ArchiveEntry<A> {
