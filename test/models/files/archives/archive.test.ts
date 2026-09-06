@@ -192,7 +192,9 @@ describe('extractEntryToFile', () => {
     expect(archives).toHaveLength(16);
 
     for (const archive of archives) {
-      await expect(archive.extractEntryToFile('INVALID FILE', 'INVALID PATH')).rejects.toThrow();
+      await expect(
+        archive.extractEntryToFile({ entryPath: 'INVALID FILE' }, 'INVALID PATH'),
+      ).rejects.toThrow();
     }
   });
 });
