@@ -6,9 +6,7 @@ import SevenZipLib from './sevenZipLib.js';
  * slice is ever named: 7-Zip derives the rest from its filename.
  *
  * This holds exactly one entry, the slices joined back together, named after the
- * slices with the number removed -- `game.bin.001` yields `game.bin`. When the
- * joined bytes are themselves an archive, that entry is the archive file, not
- * its contents: Igir does not read archives nested inside archives.
+ * slices with the number removed -- `game.bin.001` yields `game.bin`.
  */
 export default class Split extends SevenZipLib {
   /**

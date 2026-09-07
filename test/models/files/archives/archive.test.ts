@@ -66,8 +66,6 @@ describe('getArchiveEntries', () => {
   });
 
   test.each([
-    // `.bz2` records no name for the stream it wraps, so its entries are named after the
-    // archive's own filename and carry no extension until CandidateExtensionCorrector runs.
     // fizzbuzz
     ['./test/fixtures/roms/7z/fizzbuzz.7z', 'fizzbuzz.nes', '370517b5'],
     ['./test/fixtures/roms/bz2/fizzbuzz.bz2', 'fizzbuzz', '370517b5'],

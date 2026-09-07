@@ -127,7 +127,6 @@ describe('multiple files', () => {
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted((a, b) => a.localeCompare(b));
-    // `.bz2` records no CRC32 of its own, so a quick scan can't produce one without decompressing
     expect(extensionsWithoutCrc32).toEqual(['.bz2', '.chd', '.gcz', '.rvz', '.tar.gz', '.wia']);
 
     const entriesWithMd5 = scannedFiles

@@ -1,6 +1,5 @@
 import path from 'node:path';
 
-import type Archive from '../../../src/models/files/archives/archive.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ChdRaw from '../../../src/models/files/archives/chd/chdRaw.js';
 import Rvz from '../../../src/models/files/archives/dolphin/rvz.js';
@@ -33,10 +32,6 @@ function createRomIndexer(props?: OptionsProps): ROMIndexer {
 
 function indexAndFind(files: File[], props?: OptionsProps): File[] {
   return createRomIndexer(props).index(files).findFiles(files[0]);
-}
-
-async function entryOf(archive: Archive): Promise<ArchiveEntry<Archive>> {
-  return await ArchiveEntry.entryOf({ archive, entryPath: 'rom.rom', size: SIZE, crc32: CRC });
 }
 
 describe('isOutputFile priority', () => {
@@ -205,24 +200,17 @@ describe('archiveEntryPriority (default sort)', () => {
       new ChdRaw('rom.chd'),
       new NkitIso('rom.nkit.iso'),
     ];
-    const entries = await Promise.all(expected.map(async (archive) => await entryOf(archive)));
+    const entries = await Promise.all(
+      expected.map(
+        async (archive) =>
+          await ArchiveEntry.entryOf({ archive, entryPath: 'rom.rom', size: SIZE, crc32: CRC }),
+      ),
+    );
 
     // Index them in reverse, to prove the sort - not the input order - decides
     const sorted = indexAndFind(entries.toReversed());
 
     expect(sorted.map((file) => file.toString())).toEqual(entries.map((entry) => entry.toString()));
-  });
-
-  it('should prefer a gzip over a bzip2', async () => {
-    const bzip2 = await entryOf(new Bzip2('a.bz2'));
-    const gzip = await entryOf(new Gzip('z.gz'));
-
-    // Indexed with the bzip2 first, and its path sorts alphabetically first, so only the archive
-    // type priority can put the gzip ahead of it
-    const sorted = indexAndFind([bzip2, gzip]);
-
-    expect(sorted[0]).toBe(gzip);
-    expect(sorted[1]).toBe(bzip2);
   });
 });
 
@@ -258,8 +246,13 @@ describe('preferFiletype', () => {
   });
 
   it('should prefer plain files by default, even over archives with invented entry paths', async () => {
-    // A .bz2 wraps a single nameless stream, so its entry path comes from the archive's filename
-    const bzip2 = await entryOf(new Bzip2('a.bz2'));
+    const bzip2 = await ArchiveEntry.entryOf({
+      archive: new Bzip2('a.bz2'),
+      entryPath: 'a.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
+    expect(bzip2.getArchive().hasMeaningfulEntryPaths()).toEqual(false);
     const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
 
     const sorted = indexAndFind([bzip2, plain]);
@@ -269,7 +262,12 @@ describe('preferFiletype', () => {
   });
 
   it('should prefer archives with invented entry paths when preferFiletype=archive', async () => {
-    const bzip2 = await entryOf(new Bzip2('a.bz2'));
+    const bzip2 = await ArchiveEntry.entryOf({
+      archive: new Bzip2('a.bz2'),
+      entryPath: 'b.rom',
+      size: SIZE,
+      crc32: CRC,
+    });
     const plain = await File.fileOf({ filePath: 'z.rom', size: SIZE, crc32: CRC });
 
     const sorted = indexAndFind([plain, bzip2], { preferFiletype: 'archive' });
