@@ -68,10 +68,8 @@ export const TrackReaderMode = {
 } as const;
 export type TrackReaderModeValue = (typeof TrackReaderMode)[keyof typeof TrackReaderMode];
 
-export interface OpenTrackReaderOptions {
+export interface OpenReaderOptions {
   inputFilename: string;
-  mode: TrackReaderModeValue;
-  trackIndex: number;
   /**
    * The `highWaterMark` of the returned stream, and so the number of bytes
    * asked of the addon per read. Omit it to take Node's own default for a
@@ -81,15 +79,9 @@ export interface OpenTrackReaderOptions {
   highWaterMark?: number;
 }
 
-export interface OpenRawReaderOptions {
-  inputFilename: string;
-  /**
-   * The `highWaterMark` of the returned stream, and so the number of bytes
-   * asked of the addon per read. Omit it to take Node's own default for a
-   * {@link stream.Readable} -- this package deliberately defines no default of
-   * its own, so a Node upgrade that retunes streams retunes this too.
-   */
-  highWaterMark?: number;
+export interface OpenTrackReaderOptions extends OpenReaderOptions {
+  mode: TrackReaderModeValue;
+  trackIndex: number;
 }
 
 // The numeric track-listing/reading mode the native addon understands. Constrained to
@@ -143,14 +135,9 @@ function readableFromReader(reader: NativeTrackReader, highWaterMark?: number): 
     reader.close();
   };
   return new stream.Readable({
-    // `undefined` is not "no opinion" to every stream option, but it is to this
-    // one: Readable falls back to its own default, which is the point.
     highWaterMark,
     async read(): Promise<void> {
       try {
-        // Read off the stream rather than the option, so that the addon is
-        // asked for exactly what the stream wants whether or not a caller named
-        // a size.
         const chunk = await reader.read(this.readableHighWaterMark);
         if (chunk === null || chunk.length === 0) {
           closeOnce();
@@ -224,7 +211,7 @@ export default {
    * Open a {@link stream.Readable} over the full logical byte range of a RAW, HARD_DISK, or
    * DVD CHD, yielding exactly the bytes chdman's extractRaw would write.
    */
-  openRawReader(options: OpenRawReaderOptions): stream.Readable {
+  openRawReader(options: OpenReaderOptions): stream.Readable {
     const reader = binding.openRawReader(options.inputFilename);
     return readableFromReader(reader, options.highWaterMark);
   },

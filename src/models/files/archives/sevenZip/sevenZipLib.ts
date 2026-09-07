@@ -55,22 +55,16 @@ export default abstract class SevenZipLib extends Archive {
     checksumBitmask: number,
     callback?: FsReadCallback,
   ): Promise<ArchiveEntry<Archive>[]> {
-    // A file that cannot be opened as this format throws, and is meant to:
-    // FileFactory.entriesFromArchive() turns that into a warning and falls back
-    // to treating the path as a plain ROM. Swallowing it into an empty list
-    // would instead drop the file from the scan entirely.
     const entries = await sevenZip.listEntries({
       inputFilename: this.getFilePath(),
-      format: this.getSevenZipFormat(),
+      format: this.getSevenZipFormat(), // will cause this to throw if it's wrong
     });
     const fileEntries = entries.filter((entry) => !entry.isDirectory);
 
     if (callback) {
       callback(
         0,
-        // `.Z` records no size, so its contribution to the total is unknown
-        // until it has been read. Reporting it as 0 keeps the running progress
-        // monotonic; it just finishes ahead of the bar.
+        // Not every archive type has filesize metadata, so we have to default it
         fileEntries.reduce((total, entry) => total + (entry.size ?? 0), 0),
       );
     }
@@ -113,14 +107,8 @@ export default abstract class SevenZipLib extends Archive {
     }
 
     await this.extractEntryToStream(location, async (readable) => {
-      // The addon defers opening the archive until the stream is first read, so
-      // an entry path or index the archive doesn't have is reported here rather
-      // than by openEntryReader(). Wait for that to settle before creating the
-      // destination, so naming an entry that cannot be extracted leaves no file
-      // behind. events.once() rejects if 'error' arrives first, and a zero-byte
-      // entry still emits 'readable' ahead of 'end'. A failure after this point
-      // is a failure partway through an entry that does exist, and truncated
-      // output is the expected result of that.
+      // The addon defers opening the archive until the stream is first read, so cause it to open.
+      // We do this so any immediate issue with the input will throw before we create the output.
       await events.once(readable, 'readable');
 
       const writeStream = fs.createWriteStream(extractedFilePath);

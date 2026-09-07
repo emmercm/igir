@@ -67,14 +67,9 @@ function readableFromReader(reader: NativeReader, highWaterMark?: number): strea
     reader.close();
   };
   return new stream.Readable({
-    // `undefined` is not "no opinion" to every stream option, but it is to this
-    // one: Readable falls back to its own default, which is the point.
     highWaterMark,
     async read(): Promise<void> {
       try {
-        // Read off the stream rather than the option, so that the addon is
-        // asked for exactly what the stream wants whether or not a caller named
-        // a size.
         const chunk = await reader.read(this.readableHighWaterMark);
         if (chunk === null || chunk.length === 0) {
           closeOnce();
