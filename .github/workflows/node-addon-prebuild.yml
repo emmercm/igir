@@ -292,11 +292,11 @@ jobs:
         run: |
           npm ci --ignore-scripts
 
-          pipx install clang-format
-          clang-format --version
-
-          pipx install clang-tidy
-          clang-tidy --version
+          python3 -m venv "${RUNNER_TEMP}/clang"
+          "${RUNNER_TEMP}/clang/bin/pip" install --requirement packages/requirements.txt
+          echo "${RUNNER_TEMP}/clang/bin" >> "${GITHUB_PATH}"
+          "${RUNNER_TEMP}/clang/bin/clang-format" --version
+          "${RUNNER_TEMP}/clang/bin/clang-tidy" --version
 
       - name: clang-format
         run: |
