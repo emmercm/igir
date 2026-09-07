@@ -15,12 +15,14 @@ namespace sevenzip {
 // them, which is not the same as empty or zero -- a `.bz2` member really can be
 // zero bytes long, and only the caller can tell "empty" from "unknown".
 //
-// Entry paths are reported VERBATIM, exactly as the archive recorded them,
-// separators included. An entry written on Windows comes back with backslashes.
-// Normalizing here would be a lie about the archive's contents, and callers that
-// want a normalized form can do it in one line; callers that want the truth
-// could not get it back. Passing either spelling to openEntryReader() works
-// regardless -- see FindEntryIndex() in sevenZip.h.
+// Entry paths are reported with `/` separators on every platform. This is not a
+// cosmetic choice: several handlers rewrite `/` to the host's separator before
+// kpidPath can be read -- Zip's does, via NItemName::ReplaceToOsSlashes -- so
+// the same archive listed on Windows and on Linux would otherwise disagree about
+// its own contents. Normalizing is what makes a listed path portable, and what
+// makes it round-trip: the same string resolves back to the same entry through
+// openEntryReader(), which normalizes its input too. See FindEntryIndex() in
+// sevenZip.h.
 //
 // The work happens on a thread of its own, NOT on the libuv thread pool. A
 // listing holds its thread from the archive open through the last property

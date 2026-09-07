@@ -263,12 +263,12 @@ export default {
    * its siblings in the same directory. Callers never enumerate or order
    * volumes.
    *
-   * `entryPath` is reported VERBATIM, exactly as the archive recorded it. An
-   * entry written on Windows comes back with backslash separators, because that
-   * is what the archive actually says; normalizing here would misreport its
-   * contents, and a caller who wants a normalized form can produce one but could
-   * not recover the original. Either spelling is accepted back by
-   * {@link openEntryReader}.
+   * `entryPath` is reported with `/` separators on every platform, whatever the
+   * archive recorded. Reporting it verbatim is not on offer: 7-Zip's handlers
+   * rewrite separators to the host's before the addon can read them, so on
+   * Windows a recorded `/` and a recorded `\` are indistinguishable, and the
+   * same archive would otherwise list different paths on different platforms.
+   * Either spelling is accepted back by {@link openEntryReader}.
    */
   async listEntries(options: ListEntriesOptions): Promise<SevenZipEntry[]> {
     const entries = await binding.listEntries(options.inputFilename, formatIndex(options.format));
@@ -285,8 +285,8 @@ export default {
    * -- naming an entry therefore costs nothing beyond the extraction itself, and
    * never a second pass over the archive. Separators are compared normalized, so
    * `dir/file.rom` and `dir\\file.rom` both find the same entry however the
-   * archive spelled it. That tolerance is on input only; see {@link listEntries}
-   * for what comes back out.
+   * archive spelled it -- including the path {@link listEntries} reported, which
+   * is normalized the same way.
    *
    * `entryIndex` is an optional hint from {@link listEntries}: the addon reads
    * only that item's path and, if it is the one asked for, extracts it directly

@@ -139,7 +139,13 @@ void ListJob::List() {
         if (GetStringProp(*opened.archive, i, kpidPath, &entryPath)) {
             // An empty string stays an empty string: the format DID record a
             // name and that name is "". Only a missing kpidPath is undefined.
-            entry.entryPath = std::move(entryPath);
+            //
+            // Normalized rather than passed through, because kpidPath is not
+            // platform-independent: Zip's handler rewrites `/` to the host's
+            // separator on the way out, so the same archive would list
+            // `sub/file.bin` on Linux and `sub\file.bin` on Windows. See
+            // lister.h.
+            entry.entryPath = NormalizeEntryPath(std::move(entryPath));
         }
         uint64_t size = 0;
         if (GetUInt64Prop(*opened.archive, i, kpidSize, &size)) {

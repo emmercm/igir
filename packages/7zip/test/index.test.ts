@@ -6,7 +6,10 @@ import path from 'node:path';
 import type stream from 'node:stream';
 import zlib from 'node:zlib';
 
+import gracefulFs from '../../../src/polyfill/gracefulFs.js';
 import sevenZip, { SevenZipFormat } from '../index.js';
+
+gracefulFs.gracefulify(fs);
 
 const FIXTURE_DIR = path.join('packages', '7zip', 'test', 'fixtures');
 
@@ -431,12 +434,14 @@ describe('listEntries', () => {
     await expect(
       sevenZip.listEntries({ inputFilename: '', format: SevenZipFormat.SEVEN_ZIP }),
     ).rejects.toThrow(/path or format is invalid/);
-    // The reason is the operating system's own wording ("Is a directory"), so
-    // only the part the addon contributes -- that it was an open, of this
-    // format -- is asserted.
+    // A directory fails at a different point on each platform -- Windows will
+    // not open one at all, POSIX opens it and fails on the first read -- so the
+    // two get different messages, one the addon's own wording and one the
+    // operating system's ("Is a directory"). What both have to say, and all
+    // that is worth pinning down, is that a directory is what went wrong.
     await expect(
       sevenZip.listEntries({ inputFilename: FIXTURE_DIR, format: SevenZipFormat.SEVEN_ZIP }),
-    ).rejects.toThrow(/^failed to open .* as 7z \(.+\)$/);
+    ).rejects.toThrow(/directory/i);
   });
 
   test('it rejects a file that is not the archive it was opened as', async () => {
@@ -474,15 +479,15 @@ describe('listEntries', () => {
     });
   });
 
-  test('it reports entry paths verbatim, separators included', async () => {
-    // The archive is the record of what it holds, and this one records a
-    // backslash-separated name -- as every archive written by a Windows tool
-    // does. Normalizing it here would misreport the archive's contents, and a
-    // caller who wanted the original could not get it back. A caller who wants
-    // a normalized form can produce one in a line, which is the asymmetry that
-    // decides this.
-    //
-    // The tolerance is on the input side instead; openEntryReader() proves it.
+  test('it reports entry paths with forward slashes whatever the archive recorded', async () => {
+    // This archive records a backslash-separated name, as archives written by
+    // older Windows tools do. Reporting it verbatim is not an option that
+    // exists: 7-Zip's zip handler rewrites separators to the host's before
+    // kpidPath can be read, so on Windows a recorded `/` and a recorded `\`
+    // arrive indistinguishable. Given that, the choice is between a path that
+    // means the same thing everywhere and one that does not, and the addon
+    // normalizes. openEntryReader() normalizes its input the same way, so a
+    // listed path still resolves back to the entry it names.
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'backslash.zip');
       writeStoredZip(archive, String.raw`dir\file.bin`, Buffer.from('windows-shaped name'));
@@ -490,7 +495,7 @@ describe('listEntries', () => {
         inputFilename: archive,
         format: SevenZipFormat.ZIP,
       });
-      expect(entries.map((entry) => entry.entryPath)).toEqual([String.raw`dir\file.bin`]);
+      expect(entries.map((entry) => entry.entryPath)).toEqual(['dir/file.bin']);
     });
   });
 
@@ -752,20 +757,22 @@ describe('openEntryReader', () => {
   });
 
   test('it keeps serving new streams after earlier ones are abandoned', async () => {
-    // Nothing here destroys the abandoned streams. This asserts only that
-    // walking away mid-entry does not wedge the addon for the streams that
-    // follow -- it does NOT prove the finalizer reclaims anything, because
-    // Vitest runs without --expose-gc so no finalizer is forced to run.
-    // Reclamation is a leak invariant, and the task that owns those has to
-    // prove it with a thread/handle count under a forced GC.
+    // Nothing destroys the abandoned streams while anything is being asserted.
+    // This asserts only that walking away mid-entry does not wedge the addon for
+    // the streams that follow -- it does NOT prove the finalizer reclaims
+    // anything, because Vitest runs without --expose-gc so no finalizer is
+    // forced to run. Reclamation is a leak invariant, and the task that owns
+    // those has to prove it with a thread/handle count under a forced GC.
     await withLargeArchive(async (largeArchive) => {
+      const abandoned: stream.Readable[] = [];
       for (let i = 0; i < 8; i++) {
-        const abandoned = sevenZip.openEntryReader({
+        const readable = sevenZip.openEntryReader({
           inputFilename: largeArchive,
           format: SevenZipFormat.ZIP,
           entryPath: 'stored.bin',
         });
-        const first = await abandoned[Symbol.asyncIterator]().next();
+        abandoned.push(readable);
+        const first = await readable[Symbol.asyncIterator]().next();
         expect(first.done).toEqual(false);
       }
 
@@ -777,15 +784,27 @@ describe('openEntryReader', () => {
         }),
       );
       expect(extracted.length).toEqual(LARGE_CONTENTS.length);
+
+      // Only now, with every assertion behind us: each of these is parked on a
+      // full queue with nobody draining it, so its producer thread holds the
+      // archive open until something tells it to stop, and Windows will not let
+      // withLargeArchive remove the directory underneath an open handle.
+      await Promise.all(
+        abandoned.map(async (readable) => {
+          readable.destroy();
+          await events.once(readable, 'close');
+        }),
+      );
     });
   });
 
   test('it accepts an entry path spelled with either separator', async () => {
-    // The archive records a backslash, and listEntries hands that back verbatim,
+    // The archive records a backslash and listEntries reports a forward slash,
     // so the round trip works on its own. What this pins down is the other half
-    // of the contract: a caller holding a path it built with `/` -- a POSIX
-    // caller, or one that normalized somewhere upstream -- still resolves to the
-    // same entry rather than being told the archive does not have it.
+    // of the contract: a caller holding the name as the archive spelled it --
+    // read out of the archive by another tool, or carried over from an older
+    // listing -- still resolves to the same entry rather than being told the
+    // archive does not have it.
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'backslash.zip');
       const contents = Buffer.from('either spelling');

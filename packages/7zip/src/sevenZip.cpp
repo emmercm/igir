@@ -368,6 +368,15 @@ std::string NormalizeEntryPath(std::string entryPath) {
 }
 
 bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath) {
+    // Bounds-checked before anything is read with it. The index reaches here
+    // straight from the caller, and 7-Zip's handlers index their item tables
+    // with an unchecked operator[] -- so an out-of-range value is not a lookup
+    // that fails, it is a read of whatever happens to sit past the end.
+    UInt32 count = 0;
+    if (archive.GetNumberOfItems(&count) != S_OK || index >= count) {
+        return false;
+    }
+
     std::string candidate;
     if (!GetStringProp(archive, index, kpidPath, &candidate)) {
         // A format that records no name has nothing to match against.

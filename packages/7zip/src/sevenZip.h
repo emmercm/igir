@@ -81,15 +81,17 @@ bool GetUInt64Prop(IInArchive& archive, uint32_t index, PROPID id, uint64_t* out
 bool GetUInt32Prop(IInArchive& archive, uint32_t index, PROPID id, uint32_t* out);
 bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id);
 
-// Normalizes an entry path for comparison: 7-Zip reports separators as the
-// source archive recorded them, so an entry from a Windows-built .zip carries
-// backslashes. Both sides of every comparison go through this, which is what
-// lets a caller spell a path with either `/` or `\`.
+// Normalizes an entry path to `/` separators. Separators reach us in two
+// spellings for two different reasons: an archive built on Windows can record
+// backslashes, and some handlers (Zip among them) rewrite `/` to the host's
+// separator before kpidPath is ever read. Every path this addon reports and
+// every path it is given goes through this, so the two spellings are one path.
 std::string NormalizeEntryPath(std::string entryPath);
 
 // True when the item at `index` carries `normalizedPath` (already normalized by
-// NormalizeEntryPath). One property read, no scan: this is what makes a caller's
-// remembered index worth checking before falling back to FindEntryIndex().
+// NormalizeEntryPath). One item-count read and one property read, no scan: this
+// is what makes a caller's remembered index worth checking before falling back
+// to FindEntryIndex(). An out-of-range index is false, not undefined behavior.
 bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath);
 
 // Resolves an entry path to the index 7-Zip extracts by, using the archive the
@@ -97,9 +99,9 @@ bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& n
 // costs one pass over the in-memory item table and no second open.
 //
 // Separators are compared normalized, so a caller may spell a path with either
-// `/` or `\` whatever the archive recorded. Note that this tolerance is on the
-// INPUT side only: the paths reported out of an archive (see lister.h) are
-// verbatim, exactly as the archive recorded them.
+// `/` or `\` whatever the archive recorded -- and the paths reported out of an
+// archive (see lister.h) are normalized the same way, so a listed path always
+// resolves back to the entry it came from.
 //
 // Returns kEntryNotFound when nothing matches. A caller that remembers an index
 // from a previous listing checks it with EntryIndexMatches() first and falls
