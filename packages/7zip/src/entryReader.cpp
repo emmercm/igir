@@ -91,21 +91,11 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     }
 
     // The bridge exists before the producer does, because the producer captures
-    // it. Its ThreadSafeFunction is created with a thread count of 1 -- that one
-    // is the producer, and the producer's onExit releases it -- and immediately
-    // unreferenced, so an addon holding a reader open does not by itself keep
-    // the process alive. A parked read re-references it for exactly as long as
-    // it is parked.
+    // it. Its function is unreferenced, so an addon holding a reader open does
+    // not by itself keep the process alive; a parked read re-references it for
+    // exactly as long as it is parked.
     auto bridge = std::make_shared<Bridge>();
-    bridge->tsfn = Napi::ThreadSafeFunction::New(
-        env,
-        // A no-op JS callback. Every call carries its own lambda, so this is
-        // never invoked; N-API simply wants a function to associate the
-        // resource with.
-        Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}), "sevenzip::EntryReader",
-        0,  // unbounded queue: NonBlockingCall must never fail for lack of room
-        1);
-    bridge->tsfn.Unref(env);
+    bridge->tsfn = TsfnHandle::Create(env, "sevenzip::EntryReader", false);
     bridge->reader = this;
 
     std::shared_ptr<Pump> pump;
@@ -114,11 +104,10 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
             info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
             entryIndex, chunkBytes, Registry(env),
             [bridge]() {
-                // Producer thread. NonBlockingCall never blocks and, with an
-                // unbounded queue, never fails for want of room; if it fails at
-                // all the environment is going away, and there is no reader left
-                // to notify.
-                bridge->tsfn.NonBlockingCall([bridge](Napi::Env env, Napi::Function /*unused*/) {
+                // Producer thread. Call() never blocks; if the environment has
+                // already gone away it does nothing, which is right -- there is
+                // no reader left to notify and no loop to notify it on.
+                bridge->tsfn->Call([bridge](Napi::Env env) {
                     // Event loop thread. Nothing may escape into N-API's C ABI.
                     try {
                         if (bridge->reader != nullptr) {
@@ -134,13 +123,13 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
                 // Producer thread, exactly once, as its last act. This is the
                 // matching release for the thread count of 1 above, and the only
                 // thing that frees the ThreadSafeFunction.
-                bridge->tsfn.Release();
+                bridge->tsfn->Release();
             });
     } catch (...) {
         // Nothing was started, so nothing will ever call onExit. Release the
         // thread count this constructor took out, or the function -- and the
         // environment reference behind it -- leaks.
-        bridge->tsfn.Release();
+        bridge->tsfn->Release();
         throw;
     }
 
@@ -261,7 +250,7 @@ void EntryReader::StartRead(const Napi::CallbackInfo& info, const Napi::Promise:
     pending_ = deferred;
     *settled = true;
     Ref();
-    bridge_->tsfn.Ref(env);
+    bridge_->tsfn->Ref(env);
 }
 
 void EntryReader::OnProducerReady(Napi::Env env) {
@@ -283,7 +272,7 @@ void EntryReader::OnProducerReady(Napi::Env env) {
 
 void EntryReader::ReleasePending(Napi::Env env) {
     pending_.reset();
-    bridge_->tsfn.Unref(env);
+    bridge_->tsfn->Unref(env);
     // Last statement, and the last use of `this` on this path: it can drop the
     // final reference to the object.
     Unref();
@@ -319,7 +308,6 @@ void EntryReader::Shutdown(Napi::Env env) {
     // settled here rather than left to the producer, which may take a while to
     // notice the abort and whose notification we have just stopped listening
     // for.
-    pending_.reset();
     pending->Resolve(env.Null());
     ReleasePending(env);  // last use of `this`: can drop the final reference
 }

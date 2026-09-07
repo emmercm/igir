@@ -1,9 +1,9 @@
 #include "lister.h"
 
 #include <atomic>
+#include <exception>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
@@ -13,6 +13,7 @@
 #include "addon.h"
 #include "errors.h"
 #include "sevenZip.h"
+#include "tsfnHandle.h"
 
 namespace sevenzip {
 
@@ -71,14 +72,7 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
         // between reads -- because a listing's promise is pending from start to
         // finish, and letting the process exit with it unsettled would be a
         // behavior change from the AsyncWorker this replaces.
-        tsfn_ = Napi::ThreadSafeFunction::New(env,
-                                              // A no-op JS callback: every call carries its own lambda, so this
-                                              // is never invoked. N-API only wants a function to associate the
-                                              // async resource with.
-                                              Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}),
-                                              "sevenzip::ListEntries",
-                                              0,  // unbounded queue: NonBlockingCall must never fail for lack of room
-                                              1);
+        tsfn_ = TsfnHandle::Create(env, "sevenzip::ListEntries", true);
     }
 
     // The thread body. Nothing may escape it: an exception leaving a
@@ -94,7 +88,7 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
 
     void Emit(Napi::Env env);
 
-    Napi::ThreadSafeFunction tsfn_;
+    std::shared_ptr<TsfnHandle> tsfn_;
     Napi::Promise::Deferred deferred_;
     std::string path_;
     uint32_t formatIndex_;
@@ -194,10 +188,9 @@ void ListJob::Settle() {
     // Keeps this object alive until the callback has run, whether or not the
     // caller still holds a reference.
     std::shared_ptr<ListJob> const self = shared_from_this();
-    // NonBlockingCall never blocks and, with an unbounded queue, never fails
-    // for want of room. If it fails at all the environment is going away, in
-    // which case nothing is waiting on the promise any more.
-    tsfn_.NonBlockingCall([self](Napi::Env env, Napi::Function /*unused*/) {
+    // Call() never blocks. If the environment has already gone away it does
+    // nothing, which is right: there is nothing left waiting on the promise.
+    tsfn_->Call([self](Napi::Env env) {
         // Event loop thread. Nothing may escape into N-API's C ABI: this is
         // called through a C function pointer, and with
         // NAPI_DISABLE_CPP_EXCEPTIONS an escaping exception aborts the process.
@@ -267,23 +260,34 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
             }
         });
         if (job->token_ == JobRegistry::kInvalidToken) {
-            job->tsfn_.Release();
+            job->tsfn_->Release();
             deferred.Reject(Napi::Error::New(env, "the 7-Zip addon is shutting down").Value());
             return deferred.Promise();
         }
     }
 
     try {
-        std::thread([job]() {
+        // Captured as its own non-const copy so that it can be released below;
+        // capturing the const `job` by copy would make the lambda's member const
+        // too, `mutable` or not.
+        std::thread([job = std::shared_ptr<ListJob>(job)]() mutable {
             job->Run();
             // Released before unregistering, because the release is one of the
             // things teardown is waiting to see happen.
-            job->tsfn_.Release();
-            // Dead last: teardown reads this as "the thread is done" and is
-            // then free to let the environment finish going away, so nothing
-            // may be ordered after it.
-            if (job->registry_) {
-                job->registry_->Unregister(job->token_);
+            job->tsfn_->Release();
+            // Copied out before the reference is dropped, because dropping it
+            // may be what destroys the ListJob they are read from.
+            std::shared_ptr<JobRegistry> const registry = job->registry_;
+            JobRegistry::Token const token = job->token_;
+            // Released before unregistering for the same reason as the release
+            // above: letting the captured shared_ptr fall out of scope on its
+            // own would order ~ListJob after the Unregister() below, and
+            // teardown reads that call as "the thread is done".
+            job.reset();
+            // Dead last: teardown is then free to let the environment finish
+            // going away, so nothing may be ordered after it.
+            if (registry) {
+                registry->Unregister(token);
             }
         }).detach();
     } catch (...) {
@@ -294,7 +298,7 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
         if (job->registry_) {
             job->registry_->Unregister(job->token_);
         }
-        job->tsfn_.Release();
+        job->tsfn_->Release();
         deferred.Reject(Napi::Error::New(env, "failed to start listing the archive").Value());
     }
     return deferred.Promise();

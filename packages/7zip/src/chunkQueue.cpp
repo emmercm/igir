@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <new>
 #include <utility>
 
 namespace sevenzip {
@@ -24,7 +25,42 @@ void ChunkQueue::FlushReady(std::unique_lock<std::mutex>& lock) {
     lock.lock();
 }
 
-bool ChunkQueue::Write(const uint8_t* data, size_t length) {
+bool ChunkQueue::OutOfMemory() const noexcept { return outOfMemory_.load(std::memory_order_relaxed); }
+
+void ChunkQueue::MarkOutOfMemory() noexcept {
+    outOfMemory_.store(true, std::memory_order_relaxed);
+    try {
+        std::unique_lock<std::mutex> lock(mutex_);
+        // Stopping the producer is the same thing Abort() does, and for the
+        // same reason: nothing more can be published. What is already queued is
+        // deliberately NOT discarded -- the bytes that were decoded before the
+        // allocation failed are still good, and this is the same contract a
+        // mid-entry extraction failure follows.
+        aborted_ = true;
+        notFull_.notify_all();
+        FlushReady(lock);
+    } catch (...) {  // NOLINT(bugprone-empty-catch)
+        // Same reasoning as Abort(): this is reached from a noexcept boundary
+        // and there is nowhere left to report a failure to lock or to notify.
+        // The flag above is already set, which is the part the consumer needs.
+    }
+}
+
+bool ChunkQueue::Write(const uint8_t* data, size_t length) noexcept {
+    try {
+        return WriteOrThrow(data, length);
+    } catch (...) {
+        // Reached when publishing a chunk allocates and cannot: the deque node
+        // in ready_, the ThreadSafeFunction call FlushReady() ends up making,
+        // or the condition variable's own wait. The chunk buffer itself is
+        // allocated nothrow below and reports through the same path, so all of
+        // them arrive here.
+        MarkOutOfMemory();
+        return false;
+    }
+}
+
+bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
     std::unique_lock<std::mutex> lock(mutex_);
     size_t written = 0;
     while (written < length) {
@@ -35,7 +71,17 @@ bool ChunkQueue::Write(const uint8_t* data, size_t length) {
             // Default-initialized on purpose: only the bytes memcpy'd below
             // are ever reported, so pre-zeroing them would be work no one
             // reads. See the note on Chunk.
-            partial_.data.reset(new uint8_t[chunkBytes_]);
+            //
+            // Nothrow because the caller cannot afford a std::bad_alloc (see
+            // the note on Write()), and because this is by far the largest
+            // allocation the addon makes -- up to kMaxChunkBytes per chunk --
+            // so on a 32-bit build it is the one most likely to fail.
+            partial_.data.reset(new (std::nothrow) uint8_t[chunkBytes_]);
+            if (!partial_.data) {
+                lock.unlock();
+                MarkOutOfMemory();
+                return false;
+            }
             partial_.length = 0;
         }
         size_t const room = chunkBytes_ - partial_.length;

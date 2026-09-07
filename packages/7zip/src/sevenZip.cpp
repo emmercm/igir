@@ -32,6 +32,11 @@ namespace sevenzip {
 // from here.
 // NOLINTBEGIN(modernize-use-noexcept)
 
+// PROPVARIANT is a tagged union whose `vt` field is the tag, so reading the
+// member that `vt` names is the only way its API can be used at all. Every
+// cppcoreguidelines-pro-type-union-access suppression below is that, and each
+// one is guarded by a `vt` check on the line above it.
+
 namespace {
 
 // A once_flag is mutable by definition, and this one guards a process-wide
@@ -96,19 +101,13 @@ const std::vector<Format>& Formats() {
                 continue;
             }
             // kClassID is a raw 16-byte GUID carried in a BSTR.
-            // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
-            // the member it names is the only way the property API can be used.
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
             if (::SysStringByteLen(clsProp.bstrVal) != sizeof(GUID)) {
                 continue;
             }
             Format format;
-            // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
-            // the member it names is the only way the property API can be used.
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
             format.name = ToUtf8(nameProp.bstrVal);
-            // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
-            // the member it names is the only way the property API can be used.
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
             memcpy(&format.classId, clsProp.bstrVal, sizeof(GUID));
             out.push_back(std::move(format));
@@ -148,14 +147,17 @@ namespace {
 // 7-Zip's own wide-string type.
 CMyComPtr<IInStream> OpenFile(const UString& path) {
     // 7-Zip's COM classes declare AddRef/Release private (Z7_COM_UNKNOWN_IMP),
-    // so the owning pointer has to be typed as the interface, not the class.
-    // The reference count starts at 0, and CMyComPtr's constructor AddRef()s it.
+    // so the owning pointer has to be typed as the interface, not the class --
+    // which means Open() has to be called through the raw pointer, before
+    // ownership is handed over. The reference count starts at 0, so until
+    // CMyComPtr's constructor AddRef()s it below, nothing else can be holding
+    // this and deleting it directly is the whole of the cleanup.
     auto* file = new CInFileStream;
-    CMyComPtr<IInStream> const stream(file);
     if (!file->Open(us2fs(path))) {
+        delete file;
         return {};
     }
-    return stream;
+    return {file};
 }
 
 // A callback that reports no progress and resolves an archive's sibling volumes.
@@ -223,9 +225,20 @@ Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
     // call is commented out at SplitHandler.cpp:189-195), and answering an
     // unrecognized PROPID with an empty variant is how upstream's own callbacks
     // report "not available".
-    if (propID == kpidName) {
-        prop = name_;
+    try {
+        if (propID == kpidName) {
+            // Copies the name into a BSTR, so it allocates -- and this method
+            // carries upstream's `throw()` (IDecl.h:47), which C++17 makes a
+            // synonym for noexcept. Letting a std::bad_alloc or 7-Zip's own
+            // kMemException out of here would call std::terminate() instead of
+            // failing the open.
+            prop = name_;
+        }
+    } catch (...) {
+        return E_OUTOFMEMORY;
     }
+    // Nothrow: Detach() moves the variant's bytes into `value` and leaves this
+    // one empty.
     prop.Detach(value);
     return S_OK;
 }
@@ -242,11 +255,24 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
     // A missing volume is not an error: it is how a handler learns it has
     // reached the end of the set. SplitHandler.cpp:217-221 and ZipIn's
     // ReadVols2() both stop on S_FALSE and open what they already have.
-    CMyComPtr<IInStream> stream = OpenFile(dirPrefix_ + name);
-    if (!stream) {
-        return S_FALSE;
+    //
+    // Building the path and constructing the CInFileStream both allocate, and
+    // this method carries upstream's `throw()` (IDecl.h:47) -- noexcept under
+    // C++17 -- so an escaping std::bad_alloc would call std::terminate() rather
+    // than fail the open. E_OUTOFMEMORY rather than S_FALSE deliberately:
+    // S_FALSE means "no such volume", which a handler takes as the end of the
+    // set, and would turn running out of memory into a silently short archive.
+    try {
+        // Initialized from the call rather than assigned to afterwards, so that
+        // the stream is only ever owned by one pointer.
+        CMyComPtr<IInStream> stream = OpenFile(dirPrefix_ + name);
+        if (!stream) {
+            return S_FALSE;
+        }
+        *inStream = stream.Detach();
+    } catch (...) {
+        return E_OUTOFMEMORY;
     }
-    *inStream = stream.Detach();
     return S_OK;
 }
 
@@ -291,8 +317,6 @@ bool GetStringProp(IInArchive& archive, uint32_t index, PROPID id, std::string* 
     if (archive.GetProperty(index, id, &prop) != S_OK || prop.vt != VT_BSTR) {
         return false;
     }
-    // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
-    // the member it names is the only way the property API can be used.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     *out = ToUtf8(prop.bstrVal);
     return true;
@@ -324,8 +348,6 @@ bool GetUInt32Prop(IInArchive& archive, uint32_t index, PROPID id, uint32_t* out
     if (archive.GetProperty(index, id, &prop) != S_OK || prop.vt != VT_UI4) {
         return false;
     }
-    // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
-    // the member it names is the only way the property API can be used.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     *out = prop.ulVal;
     return true;
@@ -336,8 +358,6 @@ bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id) {
     if (archive.GetProperty(index, id, &prop) != S_OK) {
         return false;
     }
-    // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
-    // the member it names is the only way the property API can be used.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     return prop.vt == VT_BOOL && VARIANT_BOOLToBool(prop.boolVal);
 }

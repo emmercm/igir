@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "pump.h"
+#include "tsfnHandle.h"
 
 namespace sevenzip {
 
@@ -63,7 +64,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // garbage collected; the reader holds it to keep the ThreadSafeFunction
     // alive until the producer has released it.
     struct Bridge {
-        Napi::ThreadSafeFunction tsfn;
+        std::shared_ptr<TsfnHandle> tsfn;
         // Touched only on the event loop thread: set at construction, cleared by
         // ~EntryReader, and read by the ThreadSafeFunction callback -- all three
         // on that one thread, so a reader that is gone is simply seen as null

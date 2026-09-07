@@ -120,6 +120,12 @@ class Pump {
 
     std::string EntryLabel() const;
 
+    // The message both sides report when the queue could not allocate. Two
+    // threads reach for it -- the producer as it unwinds, the consumer if it
+    // gets to the end of the stream first -- so it lives here rather than being
+    // spelled out twice.
+    std::string OutOfMemoryMessage() const;
+
     std::string path_;
     uint32_t formatIndex_;
     std::optional<std::string> entryPath_;

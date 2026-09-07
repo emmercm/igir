@@ -85,7 +85,11 @@ Z7_COM7F_IMF(QueueOutStream::Write(const void* data, UInt32 size, UInt32* proces
         return E_ABORT;
     }
     if (!queue_.Write(static_cast<const uint8_t*>(data), size)) {
-        return E_ABORT;
+        // Write() stops for two different reasons and they are not the same
+        // failure: the consumer closing is a normal end of stream, whereas
+        // failing to allocate has to reach the caller as an error rather than
+        // as an entry that quietly stopped early.
+        return queue_.OutOfMemory() ? E_OUTOFMEMORY : E_ABORT;
     }
     if (processedSize != nullptr) {
         *processedSize = size;
@@ -190,7 +194,7 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
     // returns. Undoing the registration matters as much as not calling onExit:
     // a token left behind is a thread teardown would wait forever for.
     try {
-        std::thread([pump]() {
+        std::thread([pump]() mutable {
             pump->Run();
             try {
                 pump->onExit_();
@@ -202,12 +206,22 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
                 // Run() guards itself the same way; this is the one step
                 // outside it.
             }
-            // Dead last, after onExit_ and after everything else this thread
-            // will ever touch. Teardown treats this as "the thread is done" and
-            // is then free to let the environment finish going away, so any
-            // work ordered after it could run against freed state.
-            if (pump->registry_) {
-                pump->registry_->Unregister(pump->token_);
+            // Copied out before the reference is dropped, because dropping it
+            // may be what destroys the Pump they are read from.
+            std::shared_ptr<JobRegistry> const registry = pump->registry_;
+            JobRegistry::Token const token = pump->token_;
+            // Released BEFORE unregistering, not after. When this is the last
+            // reference, ~Pump runs here -- and it destroys the ChunkQueue,
+            // whose ready callback holds the EntryReader's bridge and that
+            // bridge's ThreadSafeFunction. Letting the captured shared_ptr fall
+            // out of scope on its own would order all of that AFTER the
+            // Unregister() below, which is the one thing that must not happen:
+            // teardown reads Unregister() as "the thread is done" and is then
+            // free to finish tearing the environment down.
+            pump.reset();
+            // Dead last, after everything else this thread will ever touch.
+            if (registry) {
+                registry->Unregister(token);
             }
         }).detach();
     } catch (...) {
@@ -237,6 +251,10 @@ std::string Pump::EntryLabel() const {
         return "the entry '" + *entryPath_ + "'";
     }
     return "the only entry";
+}
+
+std::string Pump::OutOfMemoryMessage() const {
+    return "ran out of memory buffering " + EntryLabel() + " from '" + path_ + "'";
 }
 
 HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
@@ -305,7 +323,14 @@ void Pump::Extract() {
     auto* raw = new ExtractCallback(index, queue_, abort_);
     CMyComPtr<IArchiveExtractCallback> const callback(raw);
     hr = opened.archive->Extract(&index, 1, 0 /* testMode */, callback);
-    if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
+    if (queue_.OutOfMemory()) {
+        // Checked first, and regardless of what Extract() returned. A handler
+        // is free to translate the E_OUTOFMEMORY from the sink into an
+        // operation result, or into S_OK for a codec that treats a short write
+        // as the end of its output -- and reporting that as a successful
+        // extraction would hand the caller a silently truncated entry.
+        SetError(OutOfMemoryMessage());
+    } else if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
         // The consumer closed early; not an error.
     } else if (hr != S_OK) {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" + HResultSuffix(hr));
@@ -344,6 +369,15 @@ ChunkQueue::Status Pump::TryRead(Chunk* out) {
         // failure part-way through an entry still delivers the bytes that were
         // decoded before it.
         std::scoped_lock const lock(errorMutex_);
+        if (error_.empty() && queue_.OutOfMemory()) {
+            // Extract() records the same message, but only once it has unwound
+            // -- and the queue stops handing out chunks the instant the
+            // allocation fails, so the consumer routinely gets here first. In
+            // that window `error_` is still empty and the end of the queue is
+            // indistinguishable from a complete entry, which is exactly the
+            // silent truncation this whole path exists to prevent.
+            error_ = OutOfMemoryMessage();
+        }
         if (!error_.empty()) {
             throw std::runtime_error(error_);
         }

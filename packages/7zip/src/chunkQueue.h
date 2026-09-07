@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -66,8 +67,22 @@ class ChunkQueue {
     ~ChunkQueue() = default;
 
     // Producer. Blocks while the queue is full. Returns false once Abort() has
-    // been called, after which nothing further should be written.
-    bool Write(const uint8_t* data, size_t length);
+    // been called, or once an allocation has failed, after which nothing
+    // further should be written; OutOfMemory() tells the two apart.
+    //
+    // noexcept is load-bearing, not decoration. The only caller is 7-Zip's
+    // ISequentialOutStream::Write, whose signature carries upstream's `throw()`
+    // (deps/7zip/CPP/7zip/IDecl.h:47) -- which C++17 makes a synonym for
+    // noexcept. A std::bad_alloc from the chunk allocation below would
+    // therefore not unwind into an error a caller could see; it would call
+    // std::terminate() and take the whole process down with no diagnostic. So
+    // every allocating step in here is either nothrow or caught, and running
+    // out of memory becomes a rejected read instead.
+    bool Write(const uint8_t* data, size_t length) noexcept;
+
+    // Whether Write() stopped because an allocation failed rather than because
+    // the consumer aborted. Set once and never cleared. Safe from any thread.
+    [[nodiscard]] bool OutOfMemory() const noexcept;
 
     // Producer. Publishes any partial chunk and marks the end of the stream.
     void Finish();
@@ -100,6 +115,16 @@ class ChunkQueue {
     // reason the class does not deadlock: see the note in Write().
     void FlushReady(std::unique_lock<std::mutex>& lock);
 
+    // The body of Write(), which is allowed to throw so that the ordinary
+    // allocating operations in it can be written normally. Write() is the
+    // noexcept wrapper that turns anything escaping this into OutOfMemory().
+    bool WriteOrThrow(const uint8_t* data, size_t length);
+
+    // Records that the producer ran out of memory and stops it, waking a
+    // consumer that is parked on the ready callback. Called with the lock NOT
+    // held.
+    void MarkOutOfMemory() noexcept;
+
     const size_t chunkBytes_;
     const size_t maxChunks_;
 
@@ -112,6 +137,13 @@ class ChunkQueue {
     Chunk partial_;
     bool finished_ = false;
     bool aborted_ = false;
+    // Set by a Write() that could not allocate. It rides alongside aborted_
+    // rather than replacing it -- the producer has to stop either way -- and
+    // exists only so the consumer can report a failure instead of a stream that
+    // silently ends early. Atomic rather than guarded by mutex_ so that the
+    // consumer can read it without ordering itself against a producer that may
+    // be parked inside this queue.
+    std::atomic<bool> outOfMemory_{false};
     // Set by a TryTake() that returned kPending, cleared by whoever fires the
     // callback. Guarded by mutex_ so that the check-and-arm on the consumer side
     // cannot interleave with the publish-and-fire on the producer side.
