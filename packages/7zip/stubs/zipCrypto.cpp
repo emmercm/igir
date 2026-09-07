@@ -15,31 +15,24 @@
 
 #include "7zip/Crypto/ZipCrypto.h"
 
-namespace NCrypto {
-namespace NZip {
+namespace NCrypto::NZip {
 
-Z7_COM7F_IMF(CCipher::CryptoSetPassword(const Byte * /* data */, UInt32 /* size */))
-{
-  return E_NOTIMPL;
-}
+// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
+// specification, and every method defined here overrides one the vendored
+// header declares -- so nothing in this file can be spelled `noexcept`, nor
+// made static, without changing the upstream declarations it exists to match.
+// NOLINTBEGIN(modernize-use-noexcept,readability-convert-member-functions-to-static)
 
-Z7_COM7F_IMF(CCipher::Init())
-{
-  return E_NOTIMPL;
-}
+Z7_COM7F_IMF(CCipher::CryptoSetPassword(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }
 
-Z7_COM7F_IMF2(UInt32, CDecoder::Filter(Byte * /* data */, UInt32 /* size */))
-{
-  return 0;
-}
+Z7_COM7F_IMF(CCipher::Init()) { return E_NOTIMPL; }
 
-HRESULT CDecoder::ReadHeader(ISequentialInStream * /* inStream */)
-{
-  return E_NOTIMPL;
-}
+Z7_COM7F_IMF2(UInt32, CDecoder::Filter(Byte* /* data */, UInt32 /* size */)) { return 0; }
 
-void CDecoder::Init_BeforeDecode()
-{
-}
+HRESULT CDecoder::ReadHeader(ISequentialInStream* /* inStream */) { return E_NOTIMPL; }
 
-}}
+void CDecoder::Init_BeforeDecode() {}
+
+// NOLINTEND(modernize-use-noexcept,readability-convert-member-functions-to-static)
+
+}  // namespace NCrypto::NZip

@@ -1,3 +1,5 @@
+#include "lister.h"
+
 #include <atomic>
 #include <memory>
 #include <optional>
@@ -7,7 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include "lister.h"
 #include "7zip/PropID.h"
 #include "addon.h"
 #include "errors.h"
@@ -63,23 +64,21 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
     void Cancel() noexcept { abort_.store(true, std::memory_order_relaxed); }
 
    private:
-    ListJob(Napi::Env env, Napi::Promise::Deferred deferred, std::string path,
-            uint32_t formatIndex)
-        : deferred_(std::move(deferred)), path_(std::move(path)), formatIndex_(formatIndex) {
+    ListJob(Napi::Env env, Napi::Promise::Deferred deferred, std::string path, uint32_t formatIndex)
+        : deferred_(deferred), path_(std::move(path)), formatIndex_(formatIndex) {
         // Thread count of 1: the listing thread, released as its last act. It
         // stays referenced -- unlike EntryReader's, which is unreferenced
         // between reads -- because a listing's promise is pending from start to
         // finish, and letting the process exit with it unsettled would be a
         // behavior change from the AsyncWorker this replaces.
-        tsfn_ = Napi::ThreadSafeFunction::New(
-            env,
-            // A no-op JS callback: every call carries its own lambda, so this
-            // is never invoked. N-API only wants a function to associate the
-            // async resource with.
-            Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}),
-            "sevenzip::ListEntries",
-            0,  // unbounded queue: NonBlockingCall must never fail for lack of room
-            1);
+        tsfn_ = Napi::ThreadSafeFunction::New(env,
+                                              // A no-op JS callback: every call carries its own lambda, so this
+                                              // is never invoked. N-API only wants a function to associate the
+                                              // async resource with.
+                                              Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}),
+                                              "sevenzip::ListEntries",
+                                              0,  // unbounded queue: NonBlockingCall must never fail for lack of room
+                                              1);
     }
 
     // The thread body. Nothing may escape it: an exception leaving a
@@ -206,8 +205,7 @@ void ListJob::Settle() {
             self->Emit(env);
         } catch (...) {
             try {
-                self->deferred_.Reject(
-                    Napi::Error::New(env, "failed to build the entry list").Value());
+                self->deferred_.Reject(Napi::Error::New(env, "failed to build the entry list").Value());
             } catch (...) {  // NOLINT(bugprone-empty-catch)
                 // Rejecting allocates too. Nothing further can be done, and
                 // aborting the process over it would be worse than a promise
@@ -223,29 +221,26 @@ void ListJob::Emit(Napi::Env env) {
         return;
     }
 
-    Napi::Array out = Napi::Array::New(env, entries_.size());
+    Napi::Array const out = Napi::Array::New(env, entries_.size());
     for (size_t i = 0; i < entries_.size(); i++) {
         const Entry& entry = entries_[i];
-        Napi::Object object = Napi::Object::New(env);
+        Napi::Object const object = Napi::Object::New(env);
         object.Set("entryIndex", Napi::Number::New(env, entry.index));
         // Undefined rather than "" when the format records no name, for the
         // same reason as `size`: "" is a name an entry could really have.
-        object.Set("entryPath", entry.entryPath.has_value()
-                                    ? Napi::Value(Napi::String::New(env, *entry.entryPath))
-                                    : env.Undefined());
+        object.Set("entryPath", entry.entryPath.has_value() ? Napi::Value(Napi::String::New(env, *entry.entryPath))
+                                                            : env.Undefined());
         // Left undefined rather than 0 when the format records no size:
         // 0 is a real length, and .Z/.bz2/.lzma members genuinely can be
         // empty. Only the caller can tell "empty" from "unknown".
-        object.Set("size",
-                   entry.size.has_value()
-                       ? Napi::Value(Napi::Number::New(env, static_cast<double>(*entry.size)))
-                       : env.Undefined());
+        object.Set("size", entry.size.has_value()
+                               ? Napi::Value(Napi::Number::New(env, static_cast<double>(*entry.size)))
+                               : env.Undefined());
         // Handed to JS as a number and formatted as 8 lowercase hex chars
         // in index.ts. Presentation is cheaper to write, test and change in
         // TypeScript than in C++.
-        object.Set("crc32", entry.crc32.has_value()
-                                ? Napi::Value(Napi::Number::New(env, *entry.crc32))
-                                : env.Undefined());
+        object.Set("crc32",
+                   entry.crc32.has_value() ? Napi::Value(Napi::Number::New(env, *entry.crc32)) : env.Undefined());
         object.Set("isDirectory", Napi::Boolean::New(env, entry.isDirectory));
         object.Set("isEncrypted", Napi::Boolean::New(env, entry.isEncrypted));
         out.Set(static_cast<uint32_t>(i), object);
@@ -257,7 +252,7 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
     // Creating the ThreadSafeFunction happens in the constructor, so from here
     // on there is a thread count of 1 outstanding that something must release.
-    std::shared_ptr<ListJob> job(new ListJob(env, deferred, std::move(path), formatIndex));
+    std::shared_ptr<ListJob> const job(new ListJob(env, deferred, std::move(path), formatIndex));
 
     job->registry_ = Registry(env);
     if (job->registry_) {
@@ -273,8 +268,7 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
         });
         if (job->token_ == JobRegistry::kInvalidToken) {
             job->tsfn_.Release();
-            deferred.Reject(
-                Napi::Error::New(env, "the 7-Zip addon is shutting down").Value());
+            deferred.Reject(Napi::Error::New(env, "the 7-Zip addon is shutting down").Value());
             return deferred.Promise();
         }
     }
@@ -301,8 +295,7 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
             job->registry_->Unregister(job->token_);
         }
         job->tsfn_.Release();
-        deferred.Reject(
-            Napi::Error::New(env, "failed to start listing the archive").Value());
+        deferred.Reject(Napi::Error::New(env, "failed to start listing the archive").Value());
     }
     return deferred.Promise();
 }

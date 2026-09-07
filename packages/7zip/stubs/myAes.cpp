@@ -36,9 +36,7 @@ extern "C" {
 
 // Only the address of this function is ever taken (by CAesCtrCoder's inline
 // constructor); Filter() below never calls through _setKeyFunc.
-void Z7_FASTCALL Aes_SetKey_Enc(UInt32 * /* aes */, const Byte * /* key */, unsigned /* keySize */)
-{
-}
+void Z7_FASTCALL Aes_SetKey_Enc(UInt32* /* aes */, const Byte* /* key */, unsigned /* keySize */) {}
 
 // Only the address of this variable is ever taken; never dereferenced/called.
 AES_CODE_FUNC g_AesCtr_Code = nullptr;
@@ -47,42 +45,33 @@ AES_CODE_FUNC g_AesCtr_Code = nullptr;
 
 namespace NCrypto {
 
+// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
+// specification, and every method defined here overrides one the vendored
+// header declares -- so nothing in this file can be spelled `noexcept`, nor
+// made static, without changing the upstream declarations it exists to match.
+// NOLINTBEGIN(modernize-use-noexcept)
+
 CAesCoder::CAesCoder(unsigned keySize)
-  : _keyIsSet(false)
-  , _keySize(keySize)
-  , _ctrPos(0)
-  , _codeFunc(nullptr)
-  , _setKeyFunc(nullptr)
-  , _aes(AES_NUM_IVMRK_WORDS * 4 + AES_BLOCK_SIZE * 2)
-{
-  memset(_iv, 0, AES_BLOCK_SIZE);
-}
+    : _keyIsSet(false),
+      _keySize(keySize),
+      _ctrPos(0),
+      _codeFunc(nullptr),
+      _setKeyFunc(nullptr),
+      _aes((AES_NUM_IVMRK_WORDS * 4) + (AES_BLOCK_SIZE * 2)),
+      _iv{} {}
 
-Z7_COM7F_IMF(CAesCoder::Init())
-{
-  return E_NOTIMPL;
-}
+Z7_COM7F_IMF(CAesCoder::Init()) { return E_NOTIMPL; }
 
-Z7_COM7F_IMF2(UInt32, CAesCoder::Filter(Byte * /* data */, UInt32 /* size */))
-{
-  return 0;
-}
+Z7_COM7F_IMF2(UInt32, CAesCoder::Filter(Byte* /* data */, UInt32 /* size */)) { return 0; }
 
-Z7_COM7F_IMF(CAesCoder::SetKey(const Byte * /* data */, UInt32 /* size */))
-{
-  return E_NOTIMPL;
-}
+Z7_COM7F_IMF(CAesCoder::SetKey(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }
 
-Z7_COM7F_IMF(CAesCoder::SetInitVector(const Byte * /* data */, UInt32 /* size */))
-{
-  return E_NOTIMPL;
-}
+Z7_COM7F_IMF(CAesCoder::SetInitVector(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }
 
 #ifndef Z7_SFX
-Z7_COM7F_IMF2(UInt32, CAesCtrCoder::Filter(Byte * /* data */, UInt32 /* size */))
-{
-  return 0;
-}
+Z7_COM7F_IMF2(UInt32, CAesCtrCoder::Filter(Byte* /* data */, UInt32 /* size */)) { return 0; }
 #endif
 
-}
+// NOLINTEND(modernize-use-noexcept)
+
+}  // namespace NCrypto

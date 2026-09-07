@@ -23,38 +23,29 @@
 
 #include "7zip/Crypto/WzAes.h"
 
-namespace NCrypto {
-namespace NWzAes {
+namespace NCrypto::NWzAes {
 
-Z7_COM7F_IMF(CBaseCoder::CryptoSetPassword(const Byte * /* data */, UInt32 /* size */))
-{
-  return E_NOTIMPL;
+// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
+// specification, and every method defined here overrides one the vendored
+// header declares -- so nothing in this file can be spelled `noexcept`, nor
+// made static, without changing the upstream declarations it exists to match.
+// NOLINTBEGIN(modernize-use-noexcept,readability-convert-member-functions-to-static)
+
+Z7_COM7F_IMF(CBaseCoder::CryptoSetPassword(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }
+
+Z7_COM7F_IMF(CBaseCoder::Init()) { return E_NOTIMPL; }
+
+Z7_COM7F_IMF2(UInt32, CDecoder::Filter(Byte* /* data */, UInt32 /* size */)) { return 0; }
+
+HRESULT CDecoder::ReadHeader(ISequentialInStream* /* inStream */) { return E_NOTIMPL; }
+
+bool CDecoder::Init_and_CheckPassword() { return false; }
+
+HRESULT CDecoder::CheckMac(ISequentialInStream* /* inStream */, bool& isOK) {
+    isOK = false;
+    return E_NOTIMPL;
 }
 
-Z7_COM7F_IMF(CBaseCoder::Init())
-{
-  return E_NOTIMPL;
-}
+// NOLINTEND(modernize-use-noexcept,readability-convert-member-functions-to-static)
 
-Z7_COM7F_IMF2(UInt32, CDecoder::Filter(Byte * /* data */, UInt32 /* size */))
-{
-  return 0;
-}
-
-HRESULT CDecoder::ReadHeader(ISequentialInStream * /* inStream */)
-{
-  return E_NOTIMPL;
-}
-
-bool CDecoder::Init_and_CheckPassword()
-{
-  return false;
-}
-
-HRESULT CDecoder::CheckMac(ISequentialInStream * /* inStream */, bool &isOK)
-{
-  isOK = false;
-  return E_NOTIMPL;
-}
-
-}}
+}  // namespace NCrypto::NWzAes

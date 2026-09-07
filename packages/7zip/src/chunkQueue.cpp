@@ -1,8 +1,8 @@
+#include "chunkQueue.h"
+
 #include <algorithm>
 #include <cstring>
 #include <utility>
-
-#include "chunkQueue.h"
 
 namespace sevenzip {
 
@@ -105,7 +105,7 @@ ChunkQueue::Status ChunkQueue::TryTake(Chunk* out) {
     bool notifyProducer = false;
     Status status = Status::kEnd;
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         if (!ready_.empty()) {
             *out = std::move(ready_.front());
             ready_.pop_front();

@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "Common/MyWindows.h"
 #include "7zip/Archive/IArchive.h"
 #include "Common/MyCom.h"
+#include "Common/MyWindows.h"
 
 // The vendored-7-Zip layer: opening archives, enumerating handlers, and reading
 // item properties. Nothing here knows about N-API, promises, or threads, so it

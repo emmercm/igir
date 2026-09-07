@@ -1,12 +1,12 @@
+#include "jobRegistry.h"
+
 #include <utility>
 #include <vector>
-
-#include "jobRegistry.h"
 
 namespace sevenzip {
 
 JobRegistry::Token JobRegistry::Register(std::function<void()> cancel) {
-    std::lock_guard<std::mutex> const lock(mutex_);
+    std::scoped_lock const lock(mutex_);
     if (draining_) {
         return kInvalidToken;
     }
@@ -23,7 +23,7 @@ void JobRegistry::Unregister(Token token) noexcept {
     // because it only ever captures a weak_ptr and an integer -- nothing whose
     // destructor could reach back into this registry.
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         jobs_.erase(token);
         if (!jobs_.empty() || !draining_) {
             return;
@@ -38,14 +38,23 @@ void JobRegistry::Unregister(Token token) noexcept {
 void JobRegistry::DrainAndWait() noexcept {
     std::vector<std::function<void()>> cancels;
     {
-        std::lock_guard<std::mutex> const lock(mutex_);
+        std::scoped_lock const lock(mutex_);
         // Set BEFORE the snapshot is taken. That ordering is what makes the
         // snapshot complete: from here on Register() refuses, so no job can
         // slip in between copying the list and waiting on it.
         draining_ = true;
-        cancels.reserve(jobs_.size());
-        for (const auto& entry : jobs_) {
-            cancels.push_back(entry.second);
+        try {
+            cancels.reserve(jobs_.size());
+            for (const auto& entry : jobs_) {
+                cancels.push_back(entry.second);
+            }
+        } catch (...) {
+            // Copying the callbacks allocates, and this function is noexcept
+            // because it runs from a teardown hook. Failing here costs the
+            // early cancel, not the guarantee: the wait below still returns
+            // only once every registered job has unregistered, so the jobs run
+            // to completion instead of being cut short.
+            cancels.clear();
         }
     }
 
@@ -72,8 +81,15 @@ void JobRegistry::DrainAndWait() noexcept {
         }
     }
 
-    std::unique_lock<std::mutex> lock(mutex_);
-    empty_.wait(lock, [this]() { return jobs_.empty(); });
+    try {
+        std::unique_lock<std::mutex> lock(mutex_);
+        empty_.wait(lock, [this]() { return jobs_.empty(); });
+    } catch (...) {  // NOLINT(bugprone-empty-catch)
+        // std::unique_lock and condition_variable::wait throw only when the
+        // underlying OS primitive fails, which a teardown hook cannot recover
+        // from -- and letting it escape a noexcept function calls
+        // std::terminate() instead of merely exiting untidily.
+    }
 }
 
 }  // namespace sevenzip

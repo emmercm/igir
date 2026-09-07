@@ -33,27 +33,32 @@
 
 #include "7zip/Compress/BZip2Encoder.h"
 
-namespace NCompress {
-namespace NBZip2 {
+namespace NCompress::NBZip2 {
 
-void CThreadInfo::Free()
-{
+// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
+// specification, and every method defined here overrides one the vendored
+// header declares -- so nothing in this file can be spelled `noexcept`, nor
+// made static, without changing the upstream declarations it exists to match.
+// NOLINTBEGIN(modernize-use-noexcept)
+
+void CThreadInfo::Free() {}
+
+// Not `= default`: NumBlocks is a plain field of the upstream class, and the
+// real encoder is what would otherwise set it. Nothing here reads it, but
+// leaving it indeterminate would make the value visible to Bz2Handler.
+CEncoder::CEncoder() { NumBlocks = 0; }
+
+Z7_COM7F_IMF(CEncoder::Code(ISequentialInStream* /* inStream */, ISequentialOutStream* /* outStream */,
+                            const UInt64* /* inSize */, const UInt64* /* outSize */,
+                            ICompressProgressInfo* /* progress */)) {
+    return E_NOTIMPL;
 }
 
-CEncoder::CEncoder()
-{
+Z7_COM7F_IMF(CEncoder::SetCoderProperties(const PROPID* /* propIDs */, const PROPVARIANT* /* coderProps */,
+                                          UInt32 /* numProps */)) {
+    return E_NOTIMPL;
 }
 
-Z7_COM7F_IMF(CEncoder::Code(ISequentialInStream * /* inStream */, ISequentialOutStream * /* outStream */,
-    const UInt64 * /* inSize */, const UInt64 * /* outSize */, ICompressProgressInfo * /* progress */))
-{
-  return E_NOTIMPL;
-}
+// NOLINTEND(modernize-use-noexcept)
 
-Z7_COM7F_IMF(CEncoder::SetCoderProperties(const PROPID * /* propIDs */,
-    const PROPVARIANT * /* coderProps */, UInt32 /* numProps */))
-{
-  return E_NOTIMPL;
-}
-
-}}
+}  // namespace NCompress::NBZip2

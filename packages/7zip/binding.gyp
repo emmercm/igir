@@ -125,11 +125,24 @@
       # linux/arm/v7 prebuild leg (see .github/workflows/node-addon-prebuild.yml).
       # Pin the same way as the other architectures so this leg gets a baseline
       # too, instead of compiling with whatever -march the toolchain defaults to.
+      #
+      # The "+fp" is required, not cosmetic. That leg builds in the armhf node
+      # image, whose GCC is configured -mfloat-abi=hard with -mfpu=auto, and
+      # "auto" resolves through -march: a bare -march=armv7-a names a profile
+      # with no FPU at all, so the hard-float ABI it is still being asked for has
+      # no registers to pass floats in and the compile dies before it starts with
+      # "cc1: error: '-mfloat-abi=hard': selected architecture lacks an FPU".
+      # armv7-a+fp is exactly that toolchain'"'"'s own default -march (verified with
+      # gcc -Q --help=target in the image), i.e. the armhf baseline: VFPv3-D16
+      # scalar floating point and nothing more. Notably it does NOT pull in
+      # "+simd" (NEON), so it still pins the baseline this block exists to pin --
+      # -mfpu=vfpv3-d16 alongside a bare -march=armv7-a would be an equivalent
+      # spelling.
       ["target_arch=='arm'", {
-        "cflags": ["-march=armv7-a"],
+        "cflags": ["-march=armv7-a+fp"],
         "xcode_settings": {
-          "OTHER_CFLAGS": ["-march=armv7-a"],
-          "OTHER_CPLUSPLUSFLAGS": ["-march=armv7-a"]
+          "OTHER_CFLAGS": ["-march=armv7-a+fp"],
+          "OTHER_CPLUSPLUSFLAGS": ["-march=armv7-a+fp"]
         }
       }]
     ]

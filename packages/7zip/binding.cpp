@@ -38,12 +38,10 @@ Napi::Value FormatsImpl(Napi::Env env) {
 Napi::Value ListEntriesImpl(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     if (info.Length() < 2 || !info[0].IsString() || !info[1].IsNumber()) {
-        Napi::TypeError::New(env, "expected (path: string, formatIndex: number)")
-            .ThrowAsJavaScriptException();
+        Napi::TypeError::New(env, "expected (path: string, formatIndex: number)").ThrowAsJavaScriptException();
         return env.Undefined();
     }
-    return sevenzip::ListEntries(env, info[0].As<Napi::String>().Utf8Value(),
-                                 info[1].As<Napi::Number>().Uint32Value());
+    return sevenzip::ListEntries(env, info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value());
 }
 
 Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
@@ -52,8 +50,7 @@ Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
         return ListEntriesImpl(info);
     } catch (...) {
         // Copying the path allocates, as does queueing the worker.
-        Napi::Error::New(env, "failed to start listing the archive")
-            .ThrowAsJavaScriptException();
+        Napi::Error::New(env, "failed to start listing the archive").ThrowAsJavaScriptException();
         return env.Undefined();
     }
 }
@@ -75,8 +72,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     } catch (...) {
         // A throw here would abort at `require()` time with no diagnostic at
         // all; a thrown JavaScript error at least names the addon.
-        Napi::Error::New(env, "failed to initialize the 7-Zip addon")
-            .ThrowAsJavaScriptException();
+        Napi::Error::New(env, "failed to initialize the 7-Zip addon").ThrowAsJavaScriptException();
         return exports;
     }
 }

@@ -27,24 +27,26 @@
 
 #include "7zip/Archive/Zip/ZipHandler.h"
 
-namespace NArchive {
-namespace NZip {
+namespace NArchive::NZip {
 
-Z7_COM7F_IMF(CHandler::UpdateItems(ISequentialOutStream * /* outStream */, UInt32 /* numItems */,
-    IArchiveUpdateCallback * /* updateCallback */))
-{
-  return E_NOTIMPL;
+// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
+// specification, and every method defined here overrides one the vendored
+// header declares -- so nothing in this file can be spelled `noexcept`, nor
+// made static, without changing the upstream declarations it exists to match.
+// NOLINTBEGIN(modernize-use-noexcept)
+
+Z7_COM7F_IMF(CHandler::UpdateItems(ISequentialOutStream* /* outStream */, UInt32 /* numItems */,
+                                   IArchiveUpdateCallback* /* updateCallback */)) {
+    return E_NOTIMPL;
 }
 
-Z7_COM7F_IMF(CHandler::GetFileTimeType(UInt32 * /* type */))
-{
-  return E_NOTIMPL;
+Z7_COM7F_IMF(CHandler::GetFileTimeType(UInt32* /* type */)) { return E_NOTIMPL; }
+
+Z7_COM7F_IMF(CHandler::SetProperties(const wchar_t* const* /* names */, const PROPVARIANT* /* values */,
+                                     UInt32 /* numProps */)) {
+    return E_NOTIMPL;
 }
 
-Z7_COM7F_IMF(CHandler::SetProperties(const wchar_t * const * /* names */, const PROPVARIANT * /* values */,
-    UInt32 /* numProps */))
-{
-  return E_NOTIMPL;
-}
+// NOLINTEND(modernize-use-noexcept)
 
-}}
+}  // namespace NArchive::NZip

@@ -17,10 +17,21 @@
 // contract for a property this handler declines -- never called here since this addon
 // never invokes ISetProperties on its own handlers.
 //
-// Force-included (see binding.gyp's "-include") ahead of every 7-Zip Archive C++
-// source, so it is visible by the time ZipCompressionMode.h needs it. Because the real
-// HandlerOut.h always omits these classes under Z7_EXTRACT_ONLY, there is no
-// redefinition.
+// Force-included (see binding.gyp's "-include" / "/FIhandlerOut.h") ahead of every
+// 7-Zip Archive C++ source, so it is visible by the time ZipCompressionMode.h needs it.
+// Because the real HandlerOut.h always omits these classes under Z7_EXTRACT_ONLY, there
+// is no redefinition.
+//
+// The __cplusplus guard below is load-bearing on Windows. gyp's cflags_cc keeps the
+// GCC/Clang "-include" off the C sources, but msvs_settings has no C-versus-C++ split:
+// VCCLCompilerTool's AdditionalOptions apply to every translation unit in the target,
+// so /FIhandlerOut.h also lands on the "sevenzip" target's C files (C/7zCrcOpt.c and
+// friends). Without the guard, those C compilations pull in Common0.h and the C++
+// standard library and fail with a cascade of syntax errors (STL1003: "Unexpected
+// compiler, expected C++ compiler"). Guarding here rather than trying to split the
+// MSVC flags keeps one mechanism for all three toolchains.
+
+#ifdef __cplusplus
 
 #include "7zip/Archive/Common/HandlerOut.h"
 
@@ -69,3 +80,5 @@ public:
 }  // namespace NArchive
 
 #endif  // Z7_EXTRACT_ONLY
+
+#endif  // __cplusplus

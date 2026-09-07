@@ -76,11 +76,9 @@ class Pump {
     // cancel it and wait for it; see jobRegistry.h. Throws std::runtime_error
     // if the registry is already draining, which means the environment is going
     // away and there would be nothing left to wait for a new thread.
-    static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex,
-                                       std::optional<std::string> entryPath,
+    static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
                                        std::optional<uint32_t> entryIndex, size_t chunkBytes,
-                                       std::shared_ptr<JobRegistry> registry,
-                                       std::function<void()> onReady,
+                                       std::shared_ptr<JobRegistry> registry, std::function<void()> onReady,
                                        std::function<void()> onExit);
 
     Pump(const Pump&) = delete;

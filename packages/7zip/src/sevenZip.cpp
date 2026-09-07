@@ -1,3 +1,5 @@
+#include "sevenZip.h"
+
 #include <algorithm>
 #include <atomic>
 #include <cctype>
@@ -6,15 +8,14 @@
 #include <string>
 #include <utility>
 
-#include "sevenZip.h"
-#include "7zip/Archive/IArchive.h"
-#include "7zip/PropID.h"
-#include "Common/UTFConvert.h"
-#include "Windows/PropVariant.h"
 #include "7zCrc.h"
+#include "7zip/Archive/IArchive.h"
 #include "7zip/Common/FileStreams.h"
+#include "7zip/PropID.h"
 #include "Common/StringConvert.h"
+#include "Common/UTFConvert.h"
 #include "Common/Wildcard.h"
+#include "Windows/PropVariant.h"
 #include "Windows/PropVariantConv.h"
 
 // Declared in deps/7zip/CPP/7zip/Archive/ArchiveExports.cpp, compiled through
@@ -29,7 +30,9 @@ namespace {
 
 std::once_flag g_initOnce;
 
-std::string ToUtf8(const BSTR bstr) {
+std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
+                                       // a typedef for a pointer, and this is
+                                       // 7-Zip's own spelling of the parameter.
     if (bstr == nullptr) {
         return {};
     }
@@ -76,13 +79,11 @@ const std::vector<Format>& Formats() {
         out.reserve(count);
         for (UInt32 i = 0; i < count; i++) {
             NWindows::NCOM::CPropVariant nameProp;
-            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kName, &nameProp) != S_OK ||
-                nameProp.vt != VT_BSTR) {
+            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kName, &nameProp) != S_OK || nameProp.vt != VT_BSTR) {
                 continue;
             }
             NWindows::NCOM::CPropVariant clsProp;
-            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kClassID, &clsProp) != S_OK ||
-                clsProp.vt != VT_BSTR) {
+            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kClassID, &clsProp) != S_OK || clsProp.vt != VT_BSTR) {
                 continue;
             }
             // kClassID is a raw 16-byte GUID carried in a BSTR.
@@ -117,8 +118,7 @@ std::string FormatLabel(uint32_t formatIndex) {
         return "format #" + std::to_string(formatIndex);
     }
     std::string name = formats[formatIndex].name;
-    std::transform(name.begin(), name.end(), name.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::ranges::transform(name, name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return name;
 }
 
@@ -132,8 +132,8 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
     // 7-Zip's COM classes declare AddRef/Release private (Z7_COM_UNKNOWN_IMP),
     // so the owning pointer has to be typed as the interface, not the class.
     // The reference count starts at 0, and CMyComPtr's constructor AddRef()s it.
-    CInFileStream* file = new CInFileStream;
-    CMyComPtr<IInStream> stream(file);
+    auto* file = new CInFileStream;
+    CMyComPtr<IInStream> const stream(file);
     if (!file->Open(us2fs(path))) {
         return {};
     }
@@ -162,6 +162,11 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 //     ReadVols() dereferences Callback (ZipIn.cpp:2337) with no null check.
 //     Passing nullptr therefore SIGSEGVs on such archives; passing this takes
 //     the real spanned-zip path instead.
+// clang-format off: the macro opens a class body clang-format cannot see, so it
+// reads everything below as file scope and unindents it.
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces): the
+// diagnostics below are about the code this macro expands to, not about anything
+// written here.
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
     UString name_;
@@ -171,14 +176,15 @@ Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallbac
     const std::atomic<bool>* abort_ = nullptr;
 
    public:
-    // `path` is the volume the caller named. Split into the directory to resolve
-    // sibling volumes against and the file name to report as kpidName.
+    // `path` is the volume the caller named. Split into the directory to
+    // resolve sibling volumes against and the file name to report as kpidName.
     OpenCallback(const UString& path, const std::atomic<bool>* abort) : abort_(abort) {
         SplitPathToParts_2(path, dirPrefix_, name_);
     }
 
-    bool Aborted() const { return abort_ != nullptr && abort_->load(std::memory_order_relaxed); }
+    [[nodiscard]] bool Aborted() const { return abort_ != nullptr && abort_->load(std::memory_order_relaxed); }
 };
+// clang-format on
 
 Z7_COM7F_IMF(OpenCallback::SetTotal(const UInt64* /*files*/, const UInt64* /*bytes*/)) {
     return Aborted() ? E_ABORT : S_OK;
@@ -226,16 +232,15 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
 
 }  // namespace
 
-HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out,
-                    const std::atomic<bool>* abort) {
+HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out, const std::atomic<bool>* abort) {
     const std::vector<Format>& formats = Formats();
     if (path.empty() || formatIndex >= formats.size()) {
         return E_INVALIDARG;
     }
-    GUID clsid = formats[formatIndex].classId;
+    GUID const clsid = formats[formatIndex].classId;
 
     UString const widePath = GetUnicodeString(path.c_str(), CP_UTF8);
-    CMyComPtr<IInStream> stream = OpenFile(widePath);
+    CMyComPtr<IInStream> const stream = OpenFile(widePath);
     if (!stream) {
         return kVolumeOpenFailed;
     }
@@ -305,7 +310,7 @@ bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id) {
 }
 
 std::string NormalizeEntryPath(std::string entryPath) {
-    std::replace(entryPath.begin(), entryPath.end(), '\\', '/');
+    std::ranges::replace(entryPath, '\\', '/');
     return entryPath;
 }
 

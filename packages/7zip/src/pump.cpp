@@ -1,10 +1,12 @@
+#include "pump.h"
+
 #include <algorithm>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
 
-#include "pump.h"
 #include "7zip/Archive/IArchive.h"
 #include "Common/MyCom.h"
 #include "errors.h"
@@ -30,6 +32,8 @@ namespace {
 // queue is full, which is what keeps memory bounded; it returns E_ABORT once the
 // consumer has closed, which unwinds Extract() promptly. This thread is the only
 // one in the process that is ever allowed to block on the consumer.
+// clang-format off: the macro opens a class body clang-format cannot see, so it
+// reads everything below as file scope and unindents it.
 Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
    public:
     QueueOutStream(ChunkQueue& queue, std::atomic<bool>& abort) : queue_(queue), abort_(abort) {}
@@ -38,18 +42,20 @@ Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
     ChunkQueue& queue_;
     std::atomic<bool>& abort_;
 };
+// clang-format on
 
 // Extraction driver. GetStream() hands 7-Zip the sink for the one entry we want
 // and nullptr for anything else. SetCompleted() is the second abort check: for a
 // solid 7z folder whose target entry is last, no Write() happens for a long
 // time, so without this an abort would not be observed until decoding finished.
+// clang-format off: see above.
 Z7_CLASS_IMP_COM_1(ExtractCallback, IArchiveExtractCallback)
     Z7_IFACE_COM7_IMP(IProgress)
    public:
     ExtractCallback(UInt32 entryIndex, ChunkQueue& queue, std::atomic<bool>& abort)
         : entryIndex_(entryIndex), queue_(queue), abort_(abort) {}
 
-    Int32 OpResult() const { return opResult_; }
+    [[nodiscard]] Int32 OpResult() const { return opResult_; }
 
    private:
     UInt32 entryIndex_;
@@ -57,6 +63,7 @@ Z7_CLASS_IMP_COM_1(ExtractCallback, IArchiveExtractCallback)
     std::atomic<bool>& abort_;
     Int32 opResult_ = NArchive::NExtract::NOperationResult::kOK;
 };
+// clang-format on
 
 Z7_COM7F_IMF(QueueOutStream::Write(const void* data, UInt32 size, UInt32* processedSize)) {
     if (processedSize != nullptr) {
@@ -82,8 +89,7 @@ Z7_COM7F_IMF(ExtractCallback::SetCompleted(const UInt64* /*completeValue*/)) {
 }
 
 // IArchiveExtractCallback
-Z7_COM7F_IMF(ExtractCallback::GetStream(UInt32 index, ISequentialOutStream** outStream,
-                                        Int32 askExtractMode)) {
+Z7_COM7F_IMF(ExtractCallback::GetStream(UInt32 index, ISequentialOutStream** outStream, Int32 askExtractMode)) {
     *outStream = nullptr;
     if (askExtractMode != NArchive::NExtract::NAskMode::kExtract || index != entryIndex_) {
         return S_OK;  // skip: 7-Zip decodes past it without materializing bytes
@@ -91,7 +97,15 @@ Z7_COM7F_IMF(ExtractCallback::GetStream(UInt32 index, ISequentialOutStream** out
     if (abort_.load(std::memory_order_relaxed)) {
         return E_ABORT;
     }
-    CMyComPtr<ISequentialOutStream> sink(new QueueOutStream(queue_, abort_));
+    // Nothrow: this function carries 7-Zip's `throw()` specification, so a
+    // std::bad_alloc escaping it would call std::terminate() rather than
+    // surface as a failed extraction. QueueOutStream's constructor only binds
+    // two references, so allocation is the only thing here that can fail.
+    auto* stream = new (std::nothrow) QueueOutStream(queue_, abort_);
+    if (stream == nullptr) {
+        return E_OUTOFMEMORY;
+    }
+    CMyComPtr<ISequentialOutStream> sink(stream);
     *outStream = sink.Detach();
     return S_OK;
 }
@@ -118,17 +132,16 @@ Pump::Pump(std::string path, uint32_t formatIndex, std::optional<std::string> en
       entryIndex_(entryIndex),
       queue_(chunkBytes, ReadAheadChunks(chunkBytes), std::move(onReady)) {}
 
-std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex,
-                                  std::optional<std::string> entryPath,
+std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
                                   std::optional<uint32_t> entryIndex, size_t chunkBytes,
-                                  std::shared_ptr<JobRegistry> registry,
-                                  std::function<void()> onReady, std::function<void()> onExit) {
+                                  std::shared_ptr<JobRegistry> registry, std::function<void()> onReady,
+                                  std::function<void()> onExit) {
     chunkBytes = std::clamp<size_t>(chunkBytes, 1, kMaxChunkBytes);
     // `onReady` goes through the constructor because ChunkQueue holds it as a
     // const member: it is read outside the lock on every publishing path, which
     // is sound only because nothing can reassign it once the producer is running.
-    std::shared_ptr<Pump> pump(new Pump(std::move(path), formatIndex, std::move(entryPath),
-                                        entryIndex, chunkBytes, std::move(onReady)));
+    std::shared_ptr<Pump> pump(
+        new Pump(std::move(path), formatIndex, std::move(entryPath), entryIndex, chunkBytes, std::move(onReady)));
     pump->onExit_ = std::move(onExit);
     pump->registry_ = std::move(registry);
 
@@ -200,7 +213,7 @@ void Pump::Cancel() noexcept {
 }
 
 void Pump::SetError(std::string message) {
-    std::lock_guard<std::mutex> const lock(errorMutex_);
+    std::scoped_lock const lock(errorMutex_);
     if (error_.empty()) {
         error_ = std::move(message);
     }
@@ -221,8 +234,7 @@ HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
         // scan below -- a property read per item -- is skipped entirely. When it
         // does not, the archive was rewritten since the index was recorded, and
         // the scan is exactly the right answer.
-        if (entryIndex_.has_value() &&
-            EntryIndexMatches(archive, *entryIndex_, NormalizeEntryPath(*entryPath_))) {
+        if (entryIndex_.has_value() && EntryIndexMatches(archive, *entryIndex_, NormalizeEntryPath(*entryPath_))) {
             *out = *entryIndex_;
             return S_OK;
         }
@@ -242,13 +254,11 @@ HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
     UInt32 count = 0;
     HRESULT const hr = archive.GetNumberOfItems(&count);
     if (hr != S_OK) {
-        SetError("could not read the archive's item count; it is likely corrupt" +
-                 HResultSuffix(hr));
+        SetError("could not read the archive's item count; it is likely corrupt" + HResultSuffix(hr));
         return hr;
     }
     if (count != 1) {
-        SetError("no entry was named, and the archive holds " + std::to_string(count) +
-                 " entries rather than one");
+        SetError("no entry was named, and the archive holds " + std::to_string(count) + " entries rather than one");
         return E_INVALIDARG;
     }
     *out = 0;
@@ -286,8 +296,7 @@ void Pump::Extract() {
     if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
         // The consumer closed early; not an error.
     } else if (hr != S_OK) {
-        SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" +
-                 HResultSuffix(hr));
+        SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" + HResultSuffix(hr));
     } else if (raw->OpResult() != NArchive::NExtract::NOperationResult::kOK) {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ +
                  "': " + OperationResultMessage(raw->OpResult()));
@@ -322,7 +331,7 @@ ChunkQueue::Status Pump::TryRead(Chunk* out) {
         // Only at the end, and only once there is nothing left to hand over: a
         // failure part-way through an entry still delivers the bytes that were
         // decoded before it.
-        std::lock_guard<std::mutex> const lock(errorMutex_);
+        std::scoped_lock const lock(errorMutex_);
         if (!error_.empty()) {
             throw std::runtime_error(error_);
         }

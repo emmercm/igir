@@ -1,8 +1,8 @@
+#include "addon.h"
+
 #include <memory>
 #include <thread>
 #include <utility>
-
-#include "addon.h"
 
 namespace sevenzip {
 
@@ -61,8 +61,7 @@ void InitAddonData(Napi::Env env) {
     // not drain at teardown -- but it is exactly the condition this exists to
     // prevent, so it is reported rather than swallowed.
     if (napi_add_async_cleanup_hook(env, DrainOnCleanup, data, &handle) != napi_ok) {
-        Napi::Error::New(env, "failed to install the 7-Zip addon's cleanup hook")
-            .ThrowAsJavaScriptException();
+        Napi::Error::New(env, "failed to install the 7-Zip addon's cleanup hook").ThrowAsJavaScriptException();
     }
 }
 

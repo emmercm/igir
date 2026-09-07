@@ -1,8 +1,9 @@
+#include "errors.h"
+
 #include <cstdio>
 #include <string>
 #include <system_error>
 
-#include "errors.h"
 #include "7zip/Archive/IArchive.h"
 #include "sevenZip.h"
 
@@ -40,8 +41,7 @@ std::string OpenErrorMessage(HRESULT hr, const std::string& path, uint32_t forma
         // corrupt, and simply-the-wrong-format archives all land here, and 7-Zip
         // gives us no way to tell them apart -- so say what we actually know
         // rather than printing S_FALSE as if it were an error code.
-        return where + " is not a valid " + format +
-               " archive (it may be corrupt, truncated, or a different format)";
+        return where + " is not a valid " + format + " archive (it may be corrupt, truncated, or a different format)";
     }
     if (hr == E_INVALIDARG) {
         return "cannot open " + where + " as " + format + ": the path or format is invalid";

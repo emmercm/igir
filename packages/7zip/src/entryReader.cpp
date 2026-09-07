@@ -1,3 +1,5 @@
+#include "entryReader.h"
+
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -5,7 +7,6 @@
 #include <string>
 #include <utility>
 
-#include "entryReader.h"
 #include "addon.h"
 #include "chunkQueue.h"
 
@@ -43,8 +44,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     bool const hinted = info.Length() >= 4 && info[3].IsNumber();
     bool const unhinted = info.Length() < 4 || info[3].IsUndefined();
     bool const sized = info.Length() < 5 || info[4].IsUndefined() || info[4].IsNumber();
-    if (!info[0].IsString() || !info[1].IsNumber() || (!named && !unnamed) ||
-        (!hinted && !unhinted) || !sized) {
+    if (!info[0].IsString() || !info[1].IsNumber() || (!named && !unnamed) || (!hinted && !unhinted) || !sized) {
         Napi::TypeError::New(env,
                              "expected (path: string, formatIndex: number, entryPath?: string, "
                              "entryIndex?: number, chunkBytes?: number)")
@@ -67,8 +67,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     std::optional<uint32_t> entryIndex;
     if (hinted) {
         double const requested = info[3].As<Napi::Number>().DoubleValue();
-        if (requested >= 0 && requested <= UINT32_MAX &&
-            requested == std::floor(requested)) {
+        if (requested >= 0 && requested <= UINT32_MAX && requested == std::floor(requested)) {
             entryIndex = static_cast<uint32_t>(requested);
         }
     }
@@ -85,8 +84,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
             // Catches 0, negatives and NaN alike. A zero-byte chunk would make
             // every read return an empty buffer that JavaScript cannot tell
             // apart from progress.
-            Napi::TypeError::New(env, "chunkBytes must be at least 1")
-                .ThrowAsJavaScriptException();
+            Napi::TypeError::New(env, "chunkBytes must be at least 1").ThrowAsJavaScriptException();
             return;
         }
         chunkBytes = static_cast<size_t>(info[4].As<Napi::Number>().Uint32Value());
@@ -104,8 +102,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
         // A no-op JS callback. Every call carries its own lambda, so this is
         // never invoked; N-API simply wants a function to associate the
         // resource with.
-        Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}),
-        "sevenzip::EntryReader",
+        Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}), "sevenzip::EntryReader",
         0,  // unbounded queue: NonBlockingCall must never fail for lack of room
         1);
     bridge->tsfn.Unref(env);
@@ -114,8 +111,8 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     std::shared_ptr<Pump> pump;
     try {
         pump = Pump::Start(
-            info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(),
-            std::move(entryPath), entryIndex, chunkBytes, Registry(env),
+            info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
+            entryIndex, chunkBytes, Registry(env),
             [bridge]() {
                 // Producer thread. NonBlockingCall never blocks and, with an
                 // unbounded queue, never fails for want of room; if it fails at
@@ -168,8 +165,7 @@ EntryReader::~EntryReader() {
     pump_.reset();
 }
 
-bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred,
-                            bool* settled) {
+bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled) {
     Chunk chunk;
     ChunkQueue::Status status = ChunkQueue::Status::kEnd;
     try {
@@ -199,17 +195,16 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
     // the finalizer frees it. `raw` is unowned between release() and a
     // successful New(), which is why the failure path below deletes it.
     uint8_t* raw = chunk.data.release();
-    Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
-        env, raw, chunk.length, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
+    Napi::Buffer<uint8_t> const out =
+        Napi::Buffer<uint8_t>::New(env, raw, chunk.length, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
     *settled = true;
     if (out.IsEmpty()) {
         // With C++ exceptions disabled, a failed New() returns an empty value
         // and leaves a JS exception pending. Reject rather than resolving with
         // an empty value, which JavaScript would read as the end of the entry.
         delete[] raw;
-        deferred.Reject(env.IsExceptionPending()
-                            ? env.GetAndClearPendingException().Value()
-                            : Napi::Error::New(env, "failed to allocate the read result").Value());
+        deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
+                                                 : Napi::Error::New(env, "failed to allocate the read result").Value());
     } else {
         deferred.Resolve(out);
     }
@@ -233,8 +228,7 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
     return deferred.Promise();
 }
 
-void EntryReader::StartRead(const Napi::CallbackInfo& info,
-                            const Napi::Promise::Deferred& deferred, bool* settled) {
+void EntryReader::StartRead(const Napi::CallbackInfo& info, const Napi::Promise::Deferred& deferred, bool* settled) {
     Napi::Env const env = info.Env();
     if (closed_) {
         *settled = true;
@@ -309,7 +303,11 @@ void EntryReader::Shutdown(Napi::Env env) {
     if (pump_) {
         pump_->Cancel();
     }
-    std::optional<Napi::Promise::Deferred> const pending = std::move(pending_);
+    // Copied, then cleared: Napi::Promise::Deferred is trivially copyable, so
+    // moving out of the optional would leave `pending_` engaged and this
+    // promise reachable a second time.
+    std::optional<Napi::Promise::Deferred> const pending = pending_;
+    pending_.reset();
     // Drops this side's reference to the producer without waiting for it. The
     // producer holds the other one and unwinds on its own time.
     pump_.reset();

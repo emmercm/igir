@@ -77,8 +77,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     void Construct(const Napi::CallbackInfo& info);
     // Sets *settled once the deferred has been settled or parked, so Read()'s
     // catch cannot settle it a second time.
-    void StartRead(const Napi::CallbackInfo& info, const Napi::Promise::Deferred& deferred,
-                   bool* settled);
+    void StartRead(const Napi::CallbackInfo& info, const Napi::Promise::Deferred& deferred, bool* settled);
     void Shutdown(Napi::Env env);
 
     // Settles `deferred` from one non-blocking read of the pump. Returns false,
