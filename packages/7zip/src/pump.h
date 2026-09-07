@@ -10,6 +10,7 @@
 #include <string>
 
 #include "chunkQueue.h"
+#include "jobRegistry.h"
 #include "sevenZip.h"
 
 namespace sevenzip {
@@ -69,9 +70,16 @@ class Pump {
     // `onReady` is called on the producer thread when a TryRead() that returned
     // kPending could now proceed; `onExit` exactly once, on the producer thread,
     // as the last thing it does. Neither may throw.
+    //
+    // `registry` is the environment's live-job registry. The Pump registers
+    // itself for the lifetime of its thread so that environment teardown can
+    // cancel it and wait for it; see jobRegistry.h. Throws std::runtime_error
+    // if the registry is already draining, which means the environment is going
+    // away and there would be nothing left to wait for a new thread.
     static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex,
                                        std::optional<std::string> entryPath,
                                        std::optional<uint32_t> entryIndex, size_t chunkBytes,
+                                       std::shared_ptr<JobRegistry> registry,
                                        std::function<void()> onReady,
                                        std::function<void()> onExit);
 
@@ -123,6 +131,10 @@ class Pump {
     std::mutex errorMutex_;
     std::string error_;
     std::function<void()> onExit_;
+    // Held so the thread can unregister itself as it exits, and so the registry
+    // outlives the Pump whatever order teardown happens in.
+    std::shared_ptr<JobRegistry> registry_;
+    JobRegistry::Token token_ = JobRegistry::kInvalidToken;
 };
 
 }  // namespace sevenzip

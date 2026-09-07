@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "src/addon.h"
 #include "src/entryReader.h"
 #include "src/lister.h"
 #include "src/sevenZip.h"
@@ -59,6 +60,9 @@ Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
 
 Napi::Object InitImpl(Napi::Env env, Napi::Object exports) {
     sevenzip::EnsureInitialized();
+    // Before anything can start a thread: both listing and extraction register
+    // with the registry this creates, and refuse to start without one.
+    sevenzip::InitAddonData(env);
     exports.Set("formats", FormatsImpl(env));
     exports.Set("listEntries", Napi::Function::New(env, ListEntriesJs));
     exports.Set("EntryReader", sevenzip::EntryReader::GetClass(env));

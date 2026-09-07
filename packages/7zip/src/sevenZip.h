@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -59,7 +60,16 @@ constexpr HRESULT kEntryNotFound = static_cast<HRESULT>(0x80070490L);
 // `path` names ONE file even for a multi-volume archive: pass the first volume
 // (`.7z.001`, `.z01`, `.001`) and the handler discovers its siblings through the
 // open callback. Callers never enumerate or order volumes themselves.
-HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out);
+//
+// `abort` is optional. When given, the open is interruptible: the handler's
+// progress callback returns E_ABORT once the flag is set, and Open() unwinds
+// with that. This matters because opening is not always the quick part -- a
+// large solid .7z has a compressed header that is decoded here, and a spanned
+// set opens every volume -- so without it a cancel issued during the open would
+// not be observed until the whole header had been read. Callers that cannot be
+// cancelled pass nullptr.
+HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out,
+                    const std::atomic<bool>* abort = nullptr);
 
 // Reads one item property, returning false when the archive does not carry it in
 // the expected type. These are the only places a PROPVARIANT is unpacked, so no

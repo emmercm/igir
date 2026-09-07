@@ -121,6 +121,7 @@ Pump::Pump(std::string path, uint32_t formatIndex, std::optional<std::string> en
 std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex,
                                   std::optional<std::string> entryPath,
                                   std::optional<uint32_t> entryIndex, size_t chunkBytes,
+                                  std::shared_ptr<JobRegistry> registry,
                                   std::function<void()> onReady, std::function<void()> onExit) {
     chunkBytes = std::clamp<size_t>(chunkBytes, 1, kMaxChunkBytes);
     // `onReady` goes through the constructor because ChunkQueue holds it as a
@@ -129,6 +130,27 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex,
     std::shared_ptr<Pump> pump(new Pump(std::move(path), formatIndex, std::move(entryPath),
                                         entryIndex, chunkBytes, std::move(onReady)));
     pump->onExit_ = std::move(onExit);
+    pump->registry_ = std::move(registry);
+
+    // Registered BEFORE the thread starts, so there is no window in which a
+    // running producer is invisible to teardown. The callback captures weakly:
+    // teardown may reach for it at any moment, including after this Pump's last
+    // reference has been dropped, and locking a dead weak_ptr is the no-op that
+    // makes that safe (see JobRegistry::Register).
+    if (pump->registry_) {
+        std::weak_ptr<Pump> const weak = pump;
+        pump->token_ = pump->registry_->Register([weak]() noexcept {
+            if (std::shared_ptr<Pump> const alive = weak.lock()) {
+                alive->Cancel();
+            }
+        });
+        if (pump->token_ == JobRegistry::kInvalidToken) {
+            // The environment is tearing down. Starting now would leave a thread
+            // nothing is waiting for, which is the exact failure this registry
+            // exists to prevent.
+            throw std::runtime_error("the 7-Zip addon is shutting down");
+        }
+    }
 
     // The producer holds a strong reference for exactly as long as it runs, so
     // the consumer is free to drop its own at any moment -- which is the point:
@@ -136,22 +158,39 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex,
     // reference is this one, ~Pump runs on the producer thread after Run() has
     // returned, touching only members no one else can still reach.
     //
-    // If std::thread's constructor throws, `pump` is destroyed here and nothing
-    // was started; Start() propagates and the caller has no Pump. onExit is
-    // therefore NOT called on that path, which is why the caller allocates its
-    // side of the bridge only after Start() returns.
-    std::thread([pump]() {
-        pump->Run();
-        try {
-            pump->onExit_();
-        } catch (...) {  // NOLINT(bugprone-empty-catch)
-            // Documented as non-throwing, and today it is only a
-            // ThreadSafeFunction::Release() that returns a status rather than
-            // throwing -- but nothing enforces that, and an exception escaping
-            // a std::thread's callable calls std::terminate(). Run() guards
-            // itself the same way; this is the one step outside it.
+    // If std::thread's constructor throws, the registration above is undone and
+    // `pump` is destroyed here, so nothing was started; Start() propagates and
+    // the caller has no Pump. onExit is therefore NOT called on that path, which
+    // is why the caller allocates its side of the bridge only after Start()
+    // returns. Undoing the registration matters as much as not calling onExit:
+    // a token left behind is a thread teardown would wait forever for.
+    try {
+        std::thread([pump]() {
+            pump->Run();
+            try {
+                pump->onExit_();
+            } catch (...) {  // NOLINT(bugprone-empty-catch)
+                // Documented as non-throwing, and today it is only a
+                // ThreadSafeFunction::Release() that returns a status rather
+                // than throwing -- but nothing enforces that, and an exception
+                // escaping a std::thread's callable calls std::terminate().
+                // Run() guards itself the same way; this is the one step
+                // outside it.
+            }
+            // Dead last, after onExit_ and after everything else this thread
+            // will ever touch. Teardown treats this as "the thread is done" and
+            // is then free to let the environment finish going away, so any
+            // work ordered after it could run against freed state.
+            if (pump->registry_) {
+                pump->registry_->Unregister(pump->token_);
+            }
+        }).detach();
+    } catch (...) {
+        if (pump->registry_) {
+            pump->registry_->Unregister(pump->token_);
         }
-    }).detach();
+        throw;
+    }
     return pump;
 }
 
@@ -220,8 +259,14 @@ void Pump::Extract() {
     // Everything 7-Zip owns lives inside this scope so that it is destroyed --
     // and every file handle closed -- before the thread exits.
     OpenedArchive opened;
-    HRESULT hr = OpenArchive(path_, formatIndex_, &opened);
+    // Passing abort_ makes the open itself interruptible. A large solid .7z
+    // decodes its header here, so a close() during that phase used to go
+    // unobserved until the whole header had been read.
+    HRESULT hr = OpenArchive(path_, formatIndex_, &opened, &abort_);
     if (hr != S_OK) {
+        if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
+            return;  // the consumer closed during the open; not an error
+        }
         SetError(OpenErrorMessage(hr, path_, formatIndex_));
         return;
     }

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <cstring>
 #include <mutex>
@@ -164,19 +165,29 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
     UString name_;
+    // Borrowed, not owned. It lives in the Pump or ListJob driving this open,
+    // which outlives the open by construction -- the open runs inside one of
+    // that object's own methods. Null when the caller cannot be cancelled.
+    const std::atomic<bool>* abort_ = nullptr;
 
    public:
     // `path` is the volume the caller named. Split into the directory to resolve
     // sibling volumes against and the file name to report as kpidName.
-    explicit OpenCallback(const UString& path) { SplitPathToParts_2(path, dirPrefix_, name_); }
+    OpenCallback(const UString& path, const std::atomic<bool>* abort) : abort_(abort) {
+        SplitPathToParts_2(path, dirPrefix_, name_);
+    }
+
+    bool Aborted() const { return abort_ != nullptr && abort_->load(std::memory_order_relaxed); }
 };
 
 Z7_COM7F_IMF(OpenCallback::SetTotal(const UInt64* /*files*/, const UInt64* /*bytes*/)) {
-    return S_OK;
+    return Aborted() ? E_ABORT : S_OK;
 }
 
+// The only place an in-progress open can be interrupted. The handlers call this
+// as they work through the header; returning anything but S_OK unwinds Open().
 Z7_COM7F_IMF(OpenCallback::SetCompleted(const UInt64* /*files*/, const UInt64* /*bytes*/)) {
-    return S_OK;
+    return Aborted() ? E_ABORT : S_OK;
 }
 
 Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
@@ -195,6 +206,13 @@ Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
 
 Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream)) {
     *inStream = nullptr;
+    // Checked here too: a spanned set opens one file per volume, and a handler
+    // that never reports progress would otherwise walk all of them after a
+    // cancel. Returning S_FALSE rather than E_ABORT would be wrong -- that means
+    // "no such volume", which the handlers take as a normal end of the set.
+    if (Aborted()) {
+        return E_ABORT;
+    }
     // A missing volume is not an error: it is how a handler learns it has
     // reached the end of the set. SplitHandler.cpp:217-221 and ZipIn's
     // ReadVols2() both stop on S_FALSE and open what they already have.
@@ -208,7 +226,8 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
 
 }  // namespace
 
-HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out) {
+HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out,
+                    const std::atomic<bool>* abort) {
     const std::vector<Format>& formats = Formats();
     if (path.empty() || formatIndex >= formats.size()) {
         return E_INVALIDARG;
@@ -230,7 +249,7 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
     // handler pulls the rest through this callback's GetStream(), and each one
     // it takes is owned by the handler -- so `out->stream` below is the first
     // volume's handle alone, and closing the archive still releases them all.
-    CMyComPtr<IArchiveOpenCallback> const openCallback(new OpenCallback(widePath));
+    CMyComPtr<IArchiveOpenCallback> const openCallback(new OpenCallback(widePath, abort));
     RINOK(archive->Open(stream, nullptr, openCallback))
 
     out->archive = archive;

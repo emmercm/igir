@@ -22,8 +22,17 @@ namespace sevenzip {
 // could not get it back. Passing either spelling to openEntryReader() works
 // regardless -- see FindEntryIndex() in sevenZip.h.
 //
-// The work happens on the libuv thread pool. Nothing there blocks on another
-// thread: it opens the archive, walks its item table, and returns.
+// The work happens on a thread of its own, NOT on the libuv thread pool. A
+// listing holds its thread from the archive open through the last property
+// read, which for a large solid .7z includes decoding a compressed header --
+// far longer than the short, one-syscall tasks the pool's four default threads
+// are sized for. Several concurrent listings could otherwise occupy the whole
+// pool and stall every unrelated fs, dns and zlib operation in the process.
+// See the note on ListJob in lister.cpp.
+//
+// Nothing on that thread blocks on another thread: it opens the archive, walks
+// its item table, and returns. The listing is cancelled and waited for if the
+// environment is torn down while it runs; see jobRegistry.h.
 Napi::Value ListEntries(Napi::Env env, std::string path, uint32_t formatIndex);
 
 }  // namespace sevenzip

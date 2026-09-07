@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "entryReader.h"
+#include "addon.h"
 #include "chunkQueue.h"
 
 namespace sevenzip {
@@ -114,7 +115,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     try {
         pump = Pump::Start(
             info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(),
-            std::move(entryPath), entryIndex, chunkBytes,
+            std::move(entryPath), entryIndex, chunkBytes, Registry(env),
             [bridge]() {
                 // Producer thread. NonBlockingCall never blocks and, with an
                 // unbounded queue, never fails for want of room; if it fails at

@@ -260,9 +260,11 @@
       "dependencies": ["sevenzip", "guiddefs"],
       "sources": [
         "binding.cpp",
+        "src/addon.cpp",
         "src/chunkQueue.cpp",
         "src/entryReader.cpp",
         "src/errors.cpp",
+        "src/jobRegistry.cpp",
         "src/lister.cpp",
         "src/pump.cpp",
         "src/sevenZip.cpp",
