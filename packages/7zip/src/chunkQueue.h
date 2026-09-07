@@ -50,19 +50,20 @@ class ChunkQueue {
     // `chunkBytes` is the size of every published chunk but the last, and
     // `maxChunks` how many may sit queued before Write() blocks. Both must be at
     // least 1.
-    ChunkQueue(size_t chunkBytes, size_t maxChunks);
+    //
+    // `onReady` is fired -- on whichever thread published the chunk, with the
+    // lock dropped -- when a TryTake() that returned kPending could now make
+    // progress. It is taken here rather than through a setter so that it is
+    // immutable for the object's lifetime: every producer path reads it outside
+    // the lock, which is only sound because nothing can ever reassign it. It
+    // must not throw, and is called exactly once per kPending.
+    ChunkQueue(size_t chunkBytes, size_t maxChunks, std::function<void()> onReady);
 
     ChunkQueue(const ChunkQueue&) = delete;
     ChunkQueue& operator=(const ChunkQueue&) = delete;
     ChunkQueue(ChunkQueue&&) = delete;
     ChunkQueue& operator=(ChunkQueue&&) = delete;
     ~ChunkQueue() = default;
-
-    // Installs the callback fired -- on the producer's thread, outside the lock
-    // -- when a TryTake() that returned kPending could now make progress. Must
-    // be set before the producer starts, and is never called again after the
-    // one kPending it answers.
-    void SetOnReady(std::function<void()> onReady);
 
     // Producer. Blocks while the queue is full. Returns false once Abort() has
     // been called, after which nothing further should be written.
@@ -89,6 +90,16 @@ class ChunkQueue {
     Status TryTake(Chunk* out);
 
    private:
+    // Fires `onReady_` if a TryTake() armed it, dropping `lock` for the call --
+    // the callback ends up in N-API, and holding a mutex across a foreign call
+    // is how deadlocks are built -- and re-acquiring it before returning. The
+    // caller must therefore re-check any state it cached across the call.
+    //
+    // Every path that publishes a chunk, or that stops publishing for good,
+    // calls this BEFORE it can block or return. That ordering is the whole
+    // reason the class does not deadlock: see the note in Write().
+    void FlushReady(std::unique_lock<std::mutex>& lock);
+
     const size_t chunkBytes_;
     const size_t maxChunks_;
 
@@ -105,7 +116,9 @@ class ChunkQueue {
     // callback. Guarded by mutex_ so that the check-and-arm on the consumer side
     // cannot interleave with the publish-and-fire on the producer side.
     bool waiting_ = false;
-    std::function<void()> onReady_;
+    // Immutable after construction, which is what makes it safe to call with
+    // the lock dropped from either thread.
+    const std::function<void()> onReady_;
 };
 
 }  // namespace sevenzip

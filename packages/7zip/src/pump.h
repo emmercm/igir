@@ -94,7 +94,7 @@ class Pump {
 
    private:
     Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
-         std::optional<uint32_t> entryIndex, size_t chunkBytes);
+         std::optional<uint32_t> entryIndex, size_t chunkBytes, std::function<void()> onReady);
 
     // The producer thread's body. Nothing may escape it: an exception leaving a
     // std::thread's callable calls std::terminate(). It is not marked noexcept

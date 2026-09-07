@@ -28,13 +28,35 @@
     # GCC_SYMBOLS_PRIVATE_EXTERN already does on macOS; the N-API entry points
     # are exported by NAPI_MODULE's own visibility attribute, not by defaulting
     # the whole object to public.
-    "cflags": ["-ffunction-sections", "-fdata-sections", "-fvisibility=hidden"],
+    #
+    # -flto and -fno-semantic-interposition are the speed half, matching what
+    # packages/chdman and packages/dolphin-tool already use. Interposition in
+    # particular is pure loss here: nothing outside this addon may replace one of
+    # its symbols, so the indirection GCC emits to allow it buys nothing.
+    #
+    # Deliberately NOT here: -O3. node-gyp's own common.gypi already puts it in
+    # every Release build's cflags, so repeating it (as packages/zlib-1.1.3 does)
+    # would only be a second spelling of the same flag. The macOS counterpart is
+    # not redundant and IS set below -- see GCC_OPTIMIZATION_LEVEL.
+    "cflags": ["-ffunction-sections", "-fdata-sections", "-fvisibility=hidden",
+               "-fno-semantic-interposition", "-flto"],
     "cflags_cc+": ["-fvisibility-inlines-hidden"],
-    "ldflags": ["-Wl,--gc-sections"],
+    # --exclude-libs,ALL keeps the two static libraries' symbols out of the
+    # shared object's dynamic table. That is what lets --gc-sections above
+    # actually collect them: a symbol in the dynamic table is a GC root, and
+    # -fvisibility=hidden only covers the code compiled here, not what arrives
+    # through libsevenzip.a.
+    "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto"],
     "xcode_settings": {
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
       "OTHER_CPLUSPLUSFLAGS": ["-std=c++20", "-fexceptions", "-frtti", "-include", "handlerOut.h"],
+      # gyp defaults this to "s" (-Os) when it is unset, so unlike the -O3 in
+      # cflags this one is load-bearing: without it the macOS build is optimized
+      # for size. packages/zlib-1.1.3 sets it for the same reason.
+      "GCC_OPTIMIZATION_LEVEL": "3",
+      "LLVM_LTO": "YES",
       "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
+      "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
       "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
       "DEAD_CODE_STRIPPING": "YES"
     },
@@ -43,8 +65,22 @@
       # --gc-sections pair above, and carry the same caveat: a size optimization,
       # not a correctness mechanism. /OPT:REF in particular runs only after symbol
       # resolution has already succeeded, so it can never substitute for a stub.
-      "VCCLCompilerTool": {"ExceptionHandling": 1, "RuntimeTypeInfo": "true", "EnableFunctionLevelLinking": "true", "AdditionalOptions": ["/std:c++20", "/FIhandlerOut.h"]},
-      "VCLinkerTool": {"OptimizeReferences": 2, "EnableCOMDATFolding": 2, "AdditionalOptions/": [["exclude", "lldltojobs"]]}
+      # WholeProgramOptimization (/GL) plus LinkTimeCodeGeneration (/LTCG) on
+      # both the librarian and the linker is MSVC's LTO, the counterpart to
+      # -flto above; /GL objects have to be archived and linked with /LTCG or
+      # they are rejected.
+      #
+      # Deliberately NOT here: Optimization, FavorSizeOrSpeed and
+      # EnableIntrinsicFunctions. node-gyp's common.gypi Release config already
+      # sets them to /Ox, /Ot and /Oi -- copying packages/zlib-1.1.3's values
+      # would DOWNGRADE this build, since its Optimization 2 is /O2 and its
+      # FavorSizeOrSpeed 2 is /Os, favoring size over speed.
+      "VCCLCompilerTool": {"ExceptionHandling": 1, "RuntimeTypeInfo": "true", "EnableFunctionLevelLinking": "true", "WholeProgramOptimization": "true", "AdditionalOptions": ["/std:c++20", "/FIhandlerOut.h"]},
+      "VCLibrarianTool": {"AdditionalOptions": ["/LTCG"]},
+      # OptimizeReferences 2 is already /OPT:REF, so no /OPT:REF is added to
+      # AdditionalOptions here; /Brepro, /deterministic and /DEBUG:NONE are for
+      # reproducible, debug-info-free prebuilds rather than for speed.
+      "VCLinkerTool": {"OptimizeReferences": 2, "EnableCOMDATFolding": 2, "LinkTimeCodeGeneration": "1", "AdditionalOptions": ["/Brepro", "/deterministic", "/DEBUG:NONE"], "AdditionalOptions/": [["exclude", "lldltojobs"]]}
     },
     # Pin the instruction set to each platform's mandatory ABI floor -- SSE2 on
     # x86-64, NEON on AArch64 -- so the compiler cannot auto-vectorize into an
@@ -56,11 +92,27 @@
     # does. MSVC needs no equivalent: it targets the SSE2 baseline unless given an
     # explicit /arch: above it.
     "conditions": [
-      ["target_arch=='x64' or target_arch=='ia32'", {
+      ["target_arch=='x64'", {
         "cflags": ["-march=x86-64"],
         "xcode_settings": {
           "OTHER_CFLAGS": ["-march=x86-64"],
           "OTHER_CPLUSPLUSFLAGS": ["-march=x86-64"]
+        }
+      }],
+      # ia32 must NOT share the x64 baseline: -march=x86-64 names a 64-bit CPU
+      # and GCC and Clang both reject it outright when targeting 32-bit x86
+      # ("bad value for -march= switch"), so this leg previously could not
+      # compile at all. i686 plus an explicit SSE2 floor is the 32-bit
+      # equivalent of what -march=x86-64 pins on the other leg -- SSE2 is
+      # optional on i686, but Node's own ia32 builds require it -- and
+      # -mfpmath=sse keeps the compiler off x87 for scalar float work.
+      # There is no ia32 prebuild leg (see .github/workflows/node-addon-prebuild.yml),
+      # so this path exists only for building from source on 32-bit x86.
+      ["target_arch=='ia32'", {
+        "cflags": ["-march=i686", "-msse2", "-mfpmath=sse"],
+        "xcode_settings": {
+          "OTHER_CFLAGS": ["-march=i686", "-msse2", "-mfpmath=sse"],
+          "OTHER_CPLUSPLUSFLAGS": ["-march=i686", "-msse2", "-mfpmath=sse"]
         }
       }],
       ["target_arch=='arm64'", {

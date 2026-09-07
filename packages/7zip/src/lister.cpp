@@ -27,13 +27,15 @@ struct Entry {
 
 class ListWorker : public Napi::AsyncWorker {
    public:
-    ListWorker(Napi::Env env, std::string path, uint32_t formatIndex)
+    // The deferred is created by the caller rather than here, so that a
+    // ListEntries() whose Queue() fails still has something to reject: at that
+    // point neither OnOK nor OnError will ever run.
+    ListWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::string path,
+               uint32_t formatIndex)
         : Napi::AsyncWorker(env),
-          deferred_(Napi::Promise::Deferred::New(env)),
+          deferred_(std::move(deferred)),
           path_(std::move(path)),
           formatIndex_(formatIndex) {}
-
-    Napi::Promise GetPromise() { return deferred_.Promise(); }
 
     void Execute() override {
         // Nothing may escape this boundary: N-API is built here with
@@ -148,11 +150,22 @@ class ListWorker : public Napi::AsyncWorker {
 }  // namespace
 
 Napi::Value ListEntries(Napi::Env env, std::string path, uint32_t formatIndex) {
+    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
     // Allocate before any state changes; N-API deletes the worker after OnOK/OnError.
-    auto* worker = new ListWorker(env, std::move(path), formatIndex);
-    Napi::Promise promise = worker->GetPromise();
+    auto* worker = new ListWorker(env, deferred, std::move(path), formatIndex);
     worker->Queue();
-    return promise;
+    if (env.IsExceptionPending()) {
+        // N-API is built here with NAPI_DISABLE_CPP_EXCEPTIONS, so a failing
+        // Queue() does not throw -- it leaves a pending JavaScript exception and
+        // returns (napi.h's NAPI_THROW_IF_FAILED_VOID). Neither OnOK nor OnError
+        // will run, so nothing else would ever delete the worker or settle the
+        // promise, and a caller awaiting it would wait forever. Deleting an
+        // un-queued AsyncWorker is what releases the napi_async_work its
+        // constructor created.
+        delete worker;
+        deferred.Reject(env.GetAndClearPendingException().Value());
+    }
+    return deferred.Promise();
 }
 
 }  // namespace sevenzip

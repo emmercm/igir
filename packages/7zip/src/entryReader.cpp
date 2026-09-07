@@ -148,6 +148,7 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
 
     bridge_ = std::move(bridge);
     pump_ = std::move(pump);
+    constructed_ = true;
 }
 
 EntryReader::~EntryReader() {
@@ -244,9 +245,12 @@ void EntryReader::StartRead(const Napi::CallbackInfo& info,
         deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
         return;
     }
-    if (!pump_) {
+    if (!constructed_ || !pump_) {
+        // Construct() reported a TypeError and returned without starting
+        // anything. Resolving with null here would tell a caller the entry was
+        // empty, which is a different -- and silently wrong -- answer.
         *settled = true;
-        deferred.Resolve(env.Null());
+        deferred.Reject(Napi::Error::New(env, "the entry reader was never opened").Value());
         return;
     }
 

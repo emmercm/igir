@@ -97,6 +97,12 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // The one outstanding read, if it could not be answered immediately. Also
     // the "a read is in flight" flag -- there is only ever one.
     std::optional<Napi::Promise::Deferred> pending_;
+    // False until Construct() has run to completion. Its argument-validation
+    // paths report a TypeError and return, leaving no Pump and no bridge; a
+    // JavaScript caller that held on to the half-built object anyway must be
+    // told the reader was never opened, not handed the empty read that a null
+    // Pump would otherwise look like.
+    bool constructed_ = false;
     bool closed_ = false;
 };
 

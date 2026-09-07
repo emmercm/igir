@@ -111,21 +111,23 @@ size_t ReadAheadChunks(size_t chunkBytes) {
 }  // namespace
 
 Pump::Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
-           std::optional<uint32_t> entryIndex, size_t chunkBytes)
+           std::optional<uint32_t> entryIndex, size_t chunkBytes, std::function<void()> onReady)
     : path_(std::move(path)),
       formatIndex_(formatIndex),
       entryPath_(std::move(entryPath)),
       entryIndex_(entryIndex),
-      queue_(chunkBytes, ReadAheadChunks(chunkBytes)) {}
+      queue_(chunkBytes, ReadAheadChunks(chunkBytes), std::move(onReady)) {}
 
 std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex,
                                   std::optional<std::string> entryPath,
                                   std::optional<uint32_t> entryIndex, size_t chunkBytes,
                                   std::function<void()> onReady, std::function<void()> onExit) {
     chunkBytes = std::clamp<size_t>(chunkBytes, 1, kMaxChunkBytes);
-    std::shared_ptr<Pump> pump(
-        new Pump(std::move(path), formatIndex, std::move(entryPath), entryIndex, chunkBytes));
-    pump->queue_.SetOnReady(std::move(onReady));
+    // `onReady` goes through the constructor because ChunkQueue holds it as a
+    // const member: it is read outside the lock on every publishing path, which
+    // is sound only because nothing can reassign it once the producer is running.
+    std::shared_ptr<Pump> pump(new Pump(std::move(path), formatIndex, std::move(entryPath),
+                                        entryIndex, chunkBytes, std::move(onReady)));
     pump->onExit_ = std::move(onExit);
 
     // The producer holds a strong reference for exactly as long as it runs, so
@@ -140,7 +142,15 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex,
     // side of the bridge only after Start() returns.
     std::thread([pump]() {
         pump->Run();
-        pump->onExit_();
+        try {
+            pump->onExit_();
+        } catch (...) {  // NOLINT(bugprone-empty-catch)
+            // Documented as non-throwing, and today it is only a
+            // ThreadSafeFunction::Release() that returns a status rather than
+            // throwing -- but nothing enforces that, and an exception escaping
+            // a std::thread's callable calls std::terminate(). Run() guards
+            // itself the same way; this is the one step outside it.
+        }
     }).detach();
     return pump;
 }
