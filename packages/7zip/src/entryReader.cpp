@@ -195,8 +195,8 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
     // the finalizer frees it. `raw` is unowned between release() and a
     // successful New(), which is why the failure path below deletes it.
     uint8_t* raw = chunk.data.release();
-    Napi::Buffer<uint8_t> const out =
-        Napi::Buffer<uint8_t>::New(env, raw, chunk.length, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
+    Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
+        env, raw, chunk.length, [](Napi::Env /*unused*/, const uint8_t* data) { delete[] data; });
     *settled = true;
     if (out.IsEmpty()) {
         // With C++ exceptions disabled, a failed New() returns an empty value

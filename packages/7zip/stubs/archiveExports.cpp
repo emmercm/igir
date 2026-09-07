@@ -19,4 +19,5 @@
 // instance is this one, with INITGUID active.
 
 #define INITGUID
+// NOLINTNEXTLINE(bugprone-suspicious-include): including the .cpp is the point.
 #include "7zip/Archive/ArchiveExports.cpp"

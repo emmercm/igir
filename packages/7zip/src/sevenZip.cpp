@@ -26,8 +26,17 @@ STDAPI CreateArchiver(const GUID* clsid, const GUID* iid, void** outObject);
 
 namespace sevenzip {
 
+// Z7_COM7F_IMF and friends expand to 7-Zip's own `throw()` specification on
+// every COM method below. It comes from the vendored interface declarations
+// these definitions have to match, so none of them can be respelled `noexcept`
+// from here.
+// NOLINTBEGIN(modernize-use-noexcept)
+
 namespace {
 
+// A once_flag is mutable by definition, and this one guards a process-wide
+// initialization that 7-Zip only lets us perform once.
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::once_flag g_initOnce;
 
 std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
@@ -87,11 +96,20 @@ const std::vector<Format>& Formats() {
                 continue;
             }
             // kClassID is a raw 16-byte GUID carried in a BSTR.
+            // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
+            // the member it names is the only way the property API can be used.
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
             if (::SysStringByteLen(clsProp.bstrVal) != sizeof(GUID)) {
                 continue;
             }
             Format format;
+            // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
+            // the member it names is the only way the property API can be used.
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
             format.name = ToUtf8(nameProp.bstrVal);
+            // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
+            // the member it names is the only way the property API can be used.
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
             memcpy(&format.classId, clsProp.bstrVal, sizeof(GUID));
             out.push_back(std::move(format));
         }
@@ -164,9 +182,11 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 //     the real spanned-zip path instead.
 // clang-format off: the macro opens a class body clang-format cannot see, so it
 // reads everything below as file scope and unindents it.
-// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces): the
-// diagnostics below are about the code this macro expands to, not about anything
-// written here.
+// The macro expands to the class head, the QueryInterface/AddRef/Release
+// implementations and the interface method declarations at once; the
+// diagnostics below are about that generated code, not about anything written
+// here.
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
     UString name_;
@@ -246,6 +266,10 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
     }
 
     CMyComPtr<IInArchive> archive;
+    // CreateArchiver takes the out-parameter as void**, which is how every
+    // COM factory in the vendored tree is declared; there is no way to reach
+    // it without the cast.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     RINOK(CreateArchiver(&clsid, &IID_IInArchive, reinterpret_cast<void**>(&archive)))
     if (!archive) {
         return E_FAIL;
@@ -267,6 +291,9 @@ bool GetStringProp(IInArchive& archive, uint32_t index, PROPID id, std::string* 
     if (archive.GetProperty(index, id, &prop) != S_OK || prop.vt != VT_BSTR) {
         return false;
     }
+    // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
+    // the member it names is the only way the property API can be used.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     *out = ToUtf8(prop.bstrVal);
     return true;
 }
@@ -297,6 +324,9 @@ bool GetUInt32Prop(IInArchive& archive, uint32_t index, PROPID id, uint32_t* out
     if (archive.GetProperty(index, id, &prop) != S_OK || prop.vt != VT_UI4) {
         return false;
     }
+    // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
+    // the member it names is the only way the property API can be used.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     *out = prop.ulVal;
     return true;
 }
@@ -306,6 +336,9 @@ bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id) {
     if (archive.GetProperty(index, id, &prop) != S_OK) {
         return false;
     }
+    // PROPVARIANT is a tagged union, and `vt` -- checked above -- is the tag. Reading
+    // the member it names is the only way the property API can be used.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     return prop.vt == VT_BOOL && VARIANT_BOOLToBool(prop.boolVal);
 }
 
@@ -337,5 +370,7 @@ HRESULT FindEntryIndex(IInArchive& archive, const std::string& entryPath, uint32
     }
     return kEntryNotFound;
 }
+
+// NOLINTEND(modernize-use-noexcept)
 
 }  // namespace sevenzip

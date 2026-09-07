@@ -46,7 +46,7 @@ void CThreadInfo::Free() {}
 // Not `= default`: NumBlocks is a plain field of the upstream class, and the
 // real encoder is what would otherwise set it. Nothing here reads it, but
 // leaving it indeterminate would make the value visible to Bz2Handler.
-CEncoder::CEncoder() { NumBlocks = 0; }
+CEncoder::CEncoder() : NumBlocks(0) {}
 
 Z7_COM7F_IMF(CEncoder::Code(ISequentialInStream* /* inStream */, ISequentialOutStream* /* outStream */,
                             const UInt64* /* inSize */, const UInt64* /* outSize */,

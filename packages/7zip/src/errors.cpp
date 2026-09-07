@@ -1,7 +1,7 @@
 #include "errors.h"
 
-#include <cstdio>
 #include <string>
+#include <string_view>
 #include <system_error>
 
 #include "7zip/Archive/IArchive.h"
@@ -24,9 +24,16 @@ std::string HResultSuffix(HRESULT hr) {
         // required to be thread-safe.
         return " (" + std::system_category().message(static_cast<int>(value & 0xffffU)) + ")";
     }
-    char buffer[32];
-    std::snprintf(buffer, sizeof(buffer), " (HRESULT 0x%08x)", value);
-    return buffer;
+    // Formatted by hand rather than with snprintf, which would need a C array
+    // and a vararg call, or with std::format, which not every toolchain this
+    // addon is prebuilt on provides yet.
+    static constexpr std::string_view kHexDigits = "0123456789abcdef";
+    std::string out = " (HRESULT 0x";
+    for (int shift = 28; shift >= 0; shift -= 4) {
+        out += kHexDigits[(value >> shift) & 0xfU];
+    }
+    out += ")";
+    return out;
 }
 
 std::string OpenErrorMessage(HRESULT hr, const std::string& path, uint32_t formatIndex) {

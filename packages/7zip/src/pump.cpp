@@ -13,6 +13,12 @@
 
 namespace sevenzip {
 
+// Z7_COM7F_IMF and friends expand to 7-Zip's own `throw()` specification on
+// every COM method below. It comes from the vendored interface declarations
+// these definitions have to match, so none of them can be respelled `noexcept`
+// from here.
+// NOLINTBEGIN(modernize-use-noexcept)
+
 namespace {
 
 // Both callback classes below are declared with upstream's own class macro, so
@@ -34,6 +40,11 @@ namespace {
 // one in the process that is ever allowed to block on the consumer.
 // clang-format off: the macro opens a class body clang-format cannot see, so it
 // reads everything below as file scope and unindents it.
+// The macro expands to the class head, the QueryInterface/AddRef/Release
+// implementations and the interface method declarations at once; the
+// diagnostics below are about that generated code, not about anything written
+// here.
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
    public:
     QueueOutStream(ChunkQueue& queue, std::atomic<bool>& abort) : queue_(queue), abort_(abort) {}
@@ -49,6 +60,7 @@ Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
 // solid 7z folder whose target entry is last, no Write() happens for a long
 // time, so without this an abort would not be observed until decoding finished.
 // clang-format off: see above.
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_1(ExtractCallback, IArchiveExtractCallback)
     Z7_IFACE_COM7_IMP(IProgress)
    public:
@@ -338,5 +350,7 @@ ChunkQueue::Status Pump::TryRead(Chunk* out) {
     }
     return status;
 }
+
+// NOLINTEND(modernize-use-noexcept)
 
 }  // namespace sevenzip
