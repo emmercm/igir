@@ -230,8 +230,11 @@ class ReadWorker : public Napi::AsyncWorker {
             // `raw` is unowned between release() and a successful New(), which
             // is what the failure path below cleans up.
             uint8_t* raw = buf_.release();
-            Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
-                env, raw, n_, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
+            // The finalizer takes ownership of the bytes, and its signature is the one
+            // Napi::Buffer::New requires; a pointer-to-const would not match it.
+            Napi::Buffer<uint8_t> const out =
+                // NOLINTNEXTLINE(readability-non-const-parameter)
+                Napi::Buffer<uint8_t>::New(env, raw, n_, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
             if (out.IsEmpty()) {
                 // With C++ exceptions disabled a failed New() returns an empty
                 // value and leaves a JS exception pending. Reject rather than
@@ -240,8 +243,7 @@ class ReadWorker : public Napi::AsyncWorker {
                 delete[] raw;
                 deferred_.Reject(env.IsExceptionPending()
                                      ? env.GetAndClearPendingException().Value()
-                                     : Napi::Error::New(env, "failed to allocate the read result")
-                                           .Value());
+                                     : Napi::Error::New(env, "failed to allocate the read result").Value());
             } else {
                 deferred_.Resolve(out);
             }
@@ -257,6 +259,9 @@ class ReadWorker : public Napi::AsyncWorker {
    private:
     Napi::Promise::Deferred deferred_;
     Reader* reader_;
+    // A runtime-sized owning buffer, which is exactly what unique_ptr<T[]> is
+    // for; std::array would need the size at compile time.
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
     std::unique_ptr<uint8_t[]> buf_;
     size_t cap_ = 0;
     size_t n_ = 0;
