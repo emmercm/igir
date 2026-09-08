@@ -156,25 +156,31 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
         new Pump(std::move(path), formatIndex, std::move(entryPath), entryIndex, chunkBytes, std::move(onReady)));
     pump->onExit_ = std::move(onExit);
     pump->registry_ = std::move(registry);
+    if (!pump->registry_) {
+        // Only reachable once the environment's instance data is gone, which is
+        // teardown. Treated exactly like a refused registration below rather
+        // than as licence to run unregistered: a producer no one can cancel and
+        // no one waits for is the failure the registry exists to prevent, and
+        // it is worse here than a rejected read.
+        throw std::runtime_error("the 7-Zip addon is shutting down");
+    }
 
     // Registered BEFORE the thread starts, so there is no window in which a
     // running producer is invisible to teardown. The callback captures weakly:
     // teardown may reach for it at any moment, including after this Pump's last
     // reference has been dropped, and locking a dead weak_ptr is the no-op that
     // makes that safe (see JobRegistry::Register).
-    if (pump->registry_) {
-        std::weak_ptr<Pump> const weak = pump;
-        pump->token_ = pump->registry_->Register([weak]() noexcept {
-            if (std::shared_ptr<Pump> const alive = weak.lock()) {
-                alive->Cancel();
-            }
-        });
-        if (pump->token_ == JobRegistry::kInvalidToken) {
-            // The environment is tearing down. Starting now would leave a thread
-            // nothing is waiting for, which is the exact failure this registry
-            // exists to prevent.
-            throw std::runtime_error("the 7-Zip addon is shutting down");
+    std::weak_ptr<Pump> const weak = pump;
+    pump->token_ = pump->registry_->Register([weak]() noexcept {
+        if (std::shared_ptr<Pump> const alive = weak.lock()) {
+            alive->Cancel();
         }
+    });
+    if (pump->token_ == JobRegistry::kInvalidToken) {
+        // The environment is tearing down. Starting now would leave a thread
+        // nothing is waiting for, which is the exact failure this registry
+        // exists to prevent.
+        throw std::runtime_error("the 7-Zip addon is shutting down");
     }
 
     // The producer holds a strong reference for exactly as long as it runs, so

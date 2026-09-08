@@ -28,6 +28,21 @@ std::shared_ptr<TsfnHandle> TsfnHandle::Create(Napi::Env env, const char* name, 
                                           handle->alive_ = false;
                                       });
 
+    // Reached with the function still null whenever N-API refuses to create it:
+    // an allocation failure, or a JavaScript exception already pending on entry
+    // to napi_create_threadsafe_function's NAPI_PREAMBLE. With C++ exceptions
+    // disabled that is reported by returning an empty ThreadSafeFunction and
+    // leaving an error pending, never by throwing, so it has to be checked
+    // here -- every napi_*_threadsafe_function begins with a CHECK_NOT_NULL
+    // that aborts the process rather than returning a status, so marking this
+    // alive would turn a recoverable failure into a crash at the first Call(),
+    // Release(), Ref() or Unref(). Nothing was created, so there is nothing to
+    // release and nothing for the caller to give back: `handle` dies here, and
+    // N-API has already destroyed the finalizer's copy of it.
+    if (static_cast<napi_threadsafe_function>(handle->tsfn_) == nullptr) {
+        return nullptr;
+    }
+
     handle->alive_ = true;
     if (!referenced) {
         handle->tsfn_.Unref(env);

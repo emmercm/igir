@@ -32,10 +32,21 @@
     # its symbols, so the indirection GCC emits to allow it buys nothing.
     #
     # Deliberately NOT here: -O3. node-gyp's own common.gypi already puts it in
-    # every Release build's cflags. The macOS counterpart is not redundant and IS
-    # set below -- see GCC_OPTIMIZATION_LEVEL.
+    # every Release build's cflags, and its Release configuration sets the macOS
+    # counterpart too -- see GCC_OPTIMIZATION_LEVEL below.
     "cflags": ["-ffunction-sections", "-fdata-sections", "-fvisibility=hidden",
                "-fno-semantic-interposition", "-flto"],
+    # node-gyp's common.gypi adds -fno-omit-frame-pointer to every non-macOS,
+    # non-Windows Release build. On x86-64 that permanently reserves a
+    # general-purpose register, which is felt in exactly the tight LZMA, Deflate
+    # and PPMd decode loops this addon spends its time in. Taken back here: the
+    # cost is frame-pointer-unwindable stacks in `perf` and in crash reports
+    # from prebuilds, which is a debugging convenience rather than a correctness
+    # property -- nothing in this addon walks its own stack, and node-gyp does
+    # not add the flag on macOS or Windows, so those two already build without
+    # it. Verified against the generated makefiles: with this line the flag is
+    # absent from CFLAGS_Release, without it it is present.
+    "cflags!": ["-fno-omit-frame-pointer"],
     "cflags_cc+": ["-fvisibility-inlines-hidden"],
     # --exclude-libs,ALL keeps the two static libraries' symbols out of the
     # shared object's dynamic table. That is what lets --gc-sections above
@@ -46,9 +57,21 @@
     "xcode_settings": {
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
       "OTHER_CPLUSPLUSFLAGS": ["-std=c++20", "-fexceptions", "-frtti", "-include", "handlerOut.h"],
-      # gyp defaults this to "s" (-Os) when it is unset, so unlike the -O3 in
-      # cflags this one is load-bearing: without it the macOS build is optimized
-      # for size.
+      # The macOS counterpart to the -ffunction-sections/-fdata-sections in
+      # cflags above, which gyp's mac generator ignores entirely: on this
+      # platform only xcode_settings is read. OTHER_CFLAGS rather than
+      # OTHER_CPLUSPLUSFLAGS because Xcode applies it to C and C++ both, and
+      # these have to reach the vendored C as well. DEAD_CODE_STRIPPING below is
+      # what consumes them, though ld64's -dead_strip already works at atom
+      # granularity, so this is a small improvement rather than the enabling
+      # half it is on ELF.
+      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"],
+      # Redundant: node-gyp's common.gypi already sets this to "3" in its
+      # Release configuration, exactly as it does the -O3 deliberately left out
+      # of cflags above. Kept anyway, because gyp's own default when the setting
+      # is absent is "s" (-Os), and this one line is all that stands between the
+      # macOS build and being optimized for size if that ever stops being set
+      # upstream.
       "GCC_OPTIMIZATION_LEVEL": "3",
       "LLVM_LTO": "YES",
       "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",

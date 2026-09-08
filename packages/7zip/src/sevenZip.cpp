@@ -150,8 +150,24 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
     // ownership is handed over. The reference count starts at 0, so until
     // CMyComPtr's constructor AddRef()s it below, nothing else can be holding
     // this and deleting it directly is the whole of the cleanup.
+    //
+    // The conversion is hoisted above the `new` rather than written inline in
+    // the Open() call, which is what makes that cleanup sufficient: on POSIX
+    // us2fs() is a real allocating conversion that throws CNewException (on
+    // Windows it is a macro that expands to its argument), and called inline it
+    // would run while `file` was still raw-owned, leaking the stream and the
+    // file handle behind it. Nothing left between the new and the delete can
+    // throw -- CInFileStream::Open() is a Close() and an ::open()/CreateFileW()
+    // with no allocation on either platform.
+    //
+    // Taking ownership immediately after the new, and letting a local CMyComPtr
+    // do this instead, would be the more obviously correct shape. It is not used
+    // because clang-analyzer models the returned copy as elided while still
+    // running the local's destructor, and so reports a use-after-free -- at a
+    // line inside MyCom.h, which cannot be annotated from a vendored file.
+    FString const filePath = us2fs(path);
     auto* file = new CInFileStream;
-    if (!file->Open(us2fs(path))) {
+    if (!file->Open(filePath)) {
         delete file;
         return {};
     }

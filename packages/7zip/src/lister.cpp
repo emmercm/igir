@@ -4,6 +4,7 @@
 #include <exception>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
@@ -64,6 +65,14 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
         // Referenced, because the promise is pending from start to finish and
         // the process must not exit leaving it unsettled.
         tsfn_ = TsfnHandle::Create(env, "sevenzip::ListEntries", true);
+        if (!tsfn_) {
+            // Thrown from the constructor rather than reported from Start(), so
+            // that a ListJob never exists with a null function for the rest of
+            // this class to have to check for. N-API has already left an error
+            // pending and no thread count was taken out, so `new` unwinding
+            // here leaves nothing behind.
+            throw std::runtime_error("could not create the archive listing's callback");
+        }
     }
 
     // The thread body. Nothing may escape it: an exception leaving a
@@ -236,6 +245,10 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
     // on there is a thread count of 1 outstanding that something must release.
     std::shared_ptr<ListJob> const job(new ListJob(env, deferred, std::move(path), formatIndex));
 
+    // A null registry means the environment's instance data is already gone,
+    // i.e. teardown. Treated exactly like a refused registration rather than as
+    // licence to run unregistered: a listing thread no one can cancel and no
+    // one waits for is the failure the registry exists to prevent.
     job->registry_ = Registry(env);
     if (job->registry_) {
         // Registered before the thread starts, so no running listing is ever
@@ -248,11 +261,13 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
                 alive->Cancel();
             }
         });
-        if (job->token_ == JobRegistry::kInvalidToken) {
-            job->tsfn_->Release();
-            deferred.Reject(Napi::Error::New(env, "the 7-Zip addon is shutting down").Value());
-            return deferred.Promise();
-        }
+    }
+    if (job->token_ == JobRegistry::kInvalidToken) {
+        // Gives back the thread count the constructor took out; without it the
+        // function, and the environment reference behind it, would leak.
+        job->tsfn_->Release();
+        deferred.Reject(Napi::Error::New(env, "the 7-Zip addon is shutting down").Value());
+        return deferred.Promise();
     }
 
     try {

@@ -32,6 +32,10 @@ class TsfnHandle {
     // `referenced` false unreferences it immediately, so that merely holding
     // one open does not by itself keep the process alive; callers that do have
     // something outstanding on the loop take that back with Ref().
+    //
+    // Returns nullptr if N-API refused to create the function, with a
+    // JavaScript exception already pending. Nothing is outstanding on that
+    // path: there is no thread count to give back and no Release() to make.
     static std::shared_ptr<TsfnHandle> Create(Napi::Env env, const char* name, bool referenced);
 
     TsfnHandle(const TsfnHandle&) = delete;

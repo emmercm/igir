@@ -44,6 +44,12 @@ struct OpenedArchive {
 // Returned when the archive could not be opened for reading.
 // This is the numeric value of HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), spelled
 // out because 7-Zip's POSIX shim (Common/MyWindows.h) defines neither of those.
+//
+// On Windows that is also errors.h's kSystemFacility, so this and a genuine
+// Win32 error are indistinguishable by facility there. It costs nothing today:
+// every caller matches this sentinel by value before reaching HResultSuffix(),
+// and "the file may be missing, unreadable, or a directory" is what the
+// system's own text for ERROR_FILE_NOT_FOUND would have said anyway.
 constexpr HRESULT kVolumeOpenFailed = static_cast<HRESULT>(0x80070002L);
 
 // Returned by FindEntryIndex() when no entry carries the requested path.

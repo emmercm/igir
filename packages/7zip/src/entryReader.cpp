@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -92,6 +93,13 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
     // exactly as long as it is parked.
     auto bridge = std::make_shared<Bridge>();
     bridge->tsfn = TsfnHandle::Create(env, "sevenzip::EntryReader", false);
+    if (!bridge->tsfn) {
+        // N-API refused the function and has already left an error pending.
+        // Nothing was started and no thread count was taken out, so there is
+        // nothing to unwind; the constructor's catch turns this into the
+        // reader's own message.
+        throw std::runtime_error("could not create the entry reader's callback");
+    }
     bridge->reader = this;
 
     std::shared_ptr<Pump> pump;
