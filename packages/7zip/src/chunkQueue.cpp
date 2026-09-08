@@ -70,12 +70,11 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
         if (!partial_.data) {
             // Default-initialized on purpose: only the bytes memcpy'd below
             // are ever reported, so pre-zeroing them would be work no one
-            // reads. See the note on Chunk.
+            // reads.
             //
-            // Nothrow because the caller cannot afford a std::bad_alloc (see
-            // the note on Write()), and because this is by far the largest
-            // allocation the addon makes -- up to kMaxChunkBytes per chunk --
-            // so on a 32-bit build it is the one most likely to fail.
+            // Nothrow because this is by far the largest allocation the addon
+            // makes, so on a 32-bit build it is the one most likely to fail --
+            // and Write() must not let a std::bad_alloc escape.
             partial_.data.reset(new (std::nothrow) uint8_t[chunkBytes_]);
             if (!partial_.data) {
                 lock.unlock();
@@ -104,11 +103,9 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
         // holding its notification back until Write() returns deadlocks the two
         // against each other the moment one call publishes maxChunks_ chunks:
         // the producer waits for room that only the consumer can make, and the
-        // consumer waits for the callback the producer is still holding. One
-        // decoder call really can be that large -- CDecoder::CodeSpec writes up
-        // to _outStep (1 MiB) per call and ZstdDecoder writes up to its window
-        // -- while ReadAheadChunks() sizes this queue at about 1 MiB whatever
-        // the chunk size, so there is no margin to rely on.
+        // consumer waits for the callback the producer is still holding. A
+        // single call really can carry that many chunks: decoders emit up to a
+        // megabyte at a time, which is about what this queue holds in total.
         //
         // FlushReady() drops the lock, so nothing cached across it survives:
         // the loop re-checks aborted_ from the top.

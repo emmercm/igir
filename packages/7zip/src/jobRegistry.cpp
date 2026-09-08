@@ -58,10 +58,10 @@ void JobRegistry::DrainAndWait() noexcept {
         }
     }
 
-    // Called with the lock dropped. Each one reaches into a Pump or a ListJob
-    // and takes that object's own mutexes; holding this registry's mutex across
-    // that is how a lock-order inversion gets built, and the jobs unregister
-    // through this same mutex as they exit.
+    // Called with the lock dropped. Each one reaches into a job and takes that
+    // job's own mutexes; holding this registry's mutex across that is how a
+    // lock-order inversion gets built, and the jobs unregister through this
+    // same mutex as they exit.
     //
     // A job that finished between the snapshot and here has already dropped its
     // last shared_ptr, so the weak_ptr inside the callback fails to lock and the

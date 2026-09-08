@@ -1,35 +1,22 @@
 #pragma once
 
-// CPP/7zip/Archive/Common/HandlerOut.h omits CMultiMethodProps and CSingleMethodProps
-// entirely when Z7_EXTRACT_ONLY is defined -- their real SetProperty/SetProperties
-// bodies live in the write-path HandlerOut.cpp, which this decode-only addon does not
-// compile. Most handlers
-// (CPP/7zip/Archive/7z/7zHandler.h) correctly fall back to CCommonMethodProps under
-// Z7_EXTRACT_ONLY, but CPP/7zip/Archive/Zip/ZipCompressionMode.h does not: it
-// unconditionally derives CBaseProps from CMultiMethodProps, and ZipHandler.h holds a
-// CBaseProps _props member that is default-constructed and Init()'d on every archive
-// open -- so the type must exist, and Init() must run correctly, even though nothing
-// in a decode-only build ever calls SetProperty/SetProperties on it.
+// CMultiMethodProps and CSingleMethodProps, which upstream's HandlerOut.h omits
+// entirely under Z7_EXTRACT_ONLY because their real bodies live in the write
+// path this decode-only addon does not compile. Most handlers fall back to
+// CCommonMethodProps in that case, but the Zip handler does not: it derives its
+// CBaseProps from CMultiMethodProps unconditionally and default-constructs one
+// on every archive open, so the type has to exist and Init() has to be correct
+// even though SetProperty/SetProperties are never called. Those return
+// E_NOTIMPL; Init() matches the field initialization upstream performs.
 //
-// This header supplies real (but non-encoding) definitions: field initialization only,
-// matching the *behavior* of upstream's HandlerOut.cpp Init()/InitMulti()/InitSingle().
-// SetProperty(s) return E_NOTIMPL, matching real ISetProperties::SetProperties'
-// contract for a property this handler declines -- never called here since this addon
-// never invokes ISetProperties on its own handlers.
+// Force-included ahead of every 7-Zip Archive source, so it is in place by the
+// time the Zip handler needs it. There is no redefinition, since upstream
+// always omits these classes under Z7_EXTRACT_ONLY.
 //
-// Force-included (see binding.gyp's "-include" / "/FIhandlerOut.h") ahead of every
-// 7-Zip Archive C++ source, so it is visible by the time ZipCompressionMode.h needs it.
-// Because the real HandlerOut.h always omits these classes under Z7_EXTRACT_ONLY, there
-// is no redefinition.
-//
-// The __cplusplus guard below is load-bearing on Windows. gyp's cflags_cc keeps the
-// GCC/Clang "-include" off the C sources, but msvs_settings has no C-versus-C++ split:
-// VCCLCompilerTool's AdditionalOptions apply to every translation unit in the target,
-// so /FIhandlerOut.h also lands on the "sevenzip" target's C files (C/7zCrcOpt.c and
-// friends). Without the guard, those C compilations pull in Common0.h and the C++
-// standard library and fail with a cascade of syntax errors (STL1003: "Unexpected
-// compiler, expected C++ compiler"). Guarding here rather than trying to split the
-// MSVC flags keeps one mechanism for all three toolchains.
+// The __cplusplus guard is load-bearing on Windows: MSVC's forced-include flag
+// has no C-versus-C++ split, so this header also lands on the target's C
+// sources, which would otherwise pull in the C++ standard library and fail to
+// compile. Guarding here keeps one mechanism for all three toolchains.
 
 #ifdef __cplusplus
 

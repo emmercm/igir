@@ -25,25 +25,20 @@ namespace {
 // the base list, QueryInterface/AddRef/Release, and every method signature come
 // from the vendored headers instead of being transcribed here. A signature
 // change in a future 7-Zip drop then becomes a compile error rather than
-// something to spot by eye. See deps/7zip/CPP/Common/MyCom.h and the same idiom
-// in deps/7zip/CPP/7zip/UI/Common/ArchiveExtractCallback.cpp.
+// something to spot by eye.
 //
-// The addon is built with Z7_ST (see binding.gyp), which makes the macro-supplied
-// Z7_COM_ADDREF_RELEASE a plain non-atomic ++/-- (MyCom.h:379-385). That is safe
-// only because every reference to these objects is created, copied and released
-// on the producer thread alone. Dropping Z7_ST -- or handing one of these objects
-// to another thread -- would introduce a reference-count race.
+// The addon is built single-threaded, which makes the macro-supplied AddRef and
+// Release plain non-atomic ++/--. That is safe only because every reference to
+// these objects is created, copied and released on the producer thread alone;
+// handing one of these objects to another thread would race the count.
 
 // The sink 7-Zip writes decompressed bytes into. Every Write() blocks while the
 // queue is full, which is what keeps memory bounded; it returns E_ABORT once the
 // consumer has closed, which unwinds Extract() promptly. This thread is the only
 // one in the process that is ever allowed to block on the consumer.
 // clang-format off: the macro opens a class body clang-format cannot see, so it
-// reads everything below as file scope and unindents it.
-// The macro expands to the class head, the QueryInterface/AddRef/Release
-// implementations and the interface method declarations at once; the
-// diagnostics below are about that generated code, not about anything written
-// here.
+// reads everything below as file scope and unindents it. The NOLINT is about
+// the code the macro generates, not about anything written here.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
    public:
@@ -133,7 +128,8 @@ Z7_COM7F_IMF(ExtractCallback::SetOperationResult(Int32 opRes)) {
     return S_OK;
 }
 
-// How many chunks may sit queued, for a given chunk size. See kReadAheadBytes.
+// How many chunks may sit queued, for a given chunk size: enough to cover the
+// read-ahead bound, and never fewer than two.
 size_t ReadAheadChunks(size_t chunkBytes) {
     return std::max<size_t>(2, (Pump::kReadAheadBytes + chunkBytes - 1) / chunkBytes);
 }
@@ -300,8 +296,8 @@ void Pump::Extract() {
     // and every file handle closed -- before the thread exits.
     OpenedArchive opened;
     // Passing abort_ makes the open itself interruptible. A large solid .7z
-    // decodes its header here, so a close() during that phase used to go
-    // unobserved until the whole header had been read.
+    // decodes its header here, which is long enough that a close() during it
+    // would otherwise go unobserved until the whole header had been read.
     HRESULT hr = OpenArchive(path_, formatIndex_, &opened, &abort_);
     if (hr != S_OK) {
         if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {

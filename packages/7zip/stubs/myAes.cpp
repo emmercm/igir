@@ -1,27 +1,17 @@
-// Stub implementation of NCrypto::CAesCoder (Crypto/MyAes.h), the AES primitive
-// that CPP/7zip/Crypto/WzAes.h's CBaseCoder constructor unconditionally
-// instantiates via `new CAesCtrCoder(32)` -- CAesCtrCoder derives from
-// CAesCoder, and NCrypto::NWzAes::CDecoder (a real, non-pointer member of
-// ZipHandler.cpp's CHandler) constructs one every time a Zip archive is opened.
-// That construction cannot be avoided (the ctor is inline in the upstream
-// header), so CAesCoder's own out-of-line members must exist and link, even
-// though this decode-only, no-crypto addon never lets any AES code run.
+// Inert stand-ins for NCrypto::CAesCoder, the AES primitive. The WinZip AES
+// coder's constructor is inline in the vendored header and unconditionally does
+// `new CAesCtrCoder(32)`, and the Zip handler holds one of those by value, so
+// every Zip open constructs it -- CAesCoder's out-of-line members must link
+// even though this no-crypto addon never lets any AES code run.
 //
-// This does NOT link C/Aes.c or CPP/7zip/Crypto/MyAes.cpp: every method here is
-// a real (but inert) override that never touches key material or calls the
-// real Aes_SetKey_Enc/g_Aes*_Code primitives. CAesCtrCoder's own inline
-// constructor (CPP/7zip/Crypto/MyAes.h) assigns `_setKeyFunc = Aes_SetKey_Enc;
-// _codeFunc = g_AesCtr_Code;` -- those are only address-of assignments (never
-// invoked, since Filter() below always returns 0 before reaching _codeFunc), so
-// the two symbols below are trivial stand-ins, not real AES.
+// Nothing here touches key material or reaches a real AES primitive. The two
+// C-linkage symbols below exist only because CAesCtrCoder's inline constructor
+// takes their addresses; Filter() returns 0 before either could be used.
 //
-// CAesCbcEncoder is excluded under Z7_EXTRACT_ONLY already (see MyAes.h). This
-// addon never constructs CAesCbcDecoder either (NCrypto::NZipStrong::CDecoder
-// keeps `_cbcDecoder` null forever -- see stubs/zipStrong.cpp), so
-// Aes_SetKey_Dec/g_AesCbc_Decode/g_AesCbc_Encode/AesGenTables/AesCbc_Init are
-// never referenced and are intentionally NOT defined here. If a future change
-// makes the linker ask for one of those, that is a sign real crypto is being
-// pulled in somewhere it should not be -- do not add C/Aes.c to satisfy it.
+// Aes_SetKey_Dec, g_AesCbc_*, AesGenTables and AesCbc_Init are deliberately NOT
+// defined: nothing constructs a CBC decoder. If the linker ever asks for one of
+// them, real crypto is being pulled in somewhere it should not be -- do not add
+// C/Aes.c to satisfy it.
 
 #include "7zip/Crypto/MyAes.h"
 
@@ -45,10 +35,8 @@ AES_CODE_FUNC g_AesCtr_Code = nullptr;
 
 namespace NCrypto {
 
-// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
-// specification, and every method defined here overrides one the vendored
-// header declares -- so nothing in this file can be spelled `noexcept`, nor
-// made static, without changing the upstream declarations it exists to match.
+// The Z7_COM7F_* macros expand to 7-Zip's `throw()` specification, which comes
+// from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept)
 
 CAesCoder::CAesCoder(unsigned keySize)

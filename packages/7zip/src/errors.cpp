@@ -12,16 +12,14 @@ namespace sevenzip {
 std::string HResultSuffix(HRESULT hr) {
     const auto value = static_cast<unsigned>(hr);
     if ((value & 0xffff0000U) == kErrnoFacility) {
-        // Away from Windows, 7-Zip packs errno into its own HRESULT facility
-        // (C/7zTypes.h), so the low half is a code the C library can name. This
-        // is where an unreadable file, a directory, or a permissions problem
-        // ends up, and "Is a directory" beats "HRESULT 0x88000015".
+        // The low half is an errno, so the C library can name it: an unreadable
+        // file, a directory, or a permissions problem ends up here, and "Is a
+        // directory" beats "HRESULT 0x88000015".
         //
         // std::system_category() rather than std::strerror(): strerror may
-        // return a pointer into a shared static buffer, and this is reached
-        // from the producer thread and the libuv pool at the same time.
-        // system_category().message() returns an owned std::string and is
-        // required to be thread-safe.
+        // return a pointer into a shared static buffer, and several extraction
+        // and listing threads can be here at once. message() returns an owned
+        // std::string and is required to be thread-safe.
         return " (" + std::system_category().message(static_cast<int>(value & 0xffffU)) + ")";
     }
     // Formatted by hand rather than with snprintf, which would need a C array

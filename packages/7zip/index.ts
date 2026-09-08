@@ -9,9 +9,8 @@ const require = module.createRequire(import.meta.url);
  * lowercased -- upstream spells two of them `Z` and `Split`, and the lookup
  * below is case-insensitive so that callers get one uniform convention.
  *
- * The set is closed: the handlers are registered at build time by the
- * `*Register.cpp` units listed in binding.gyp, so this union is exhaustive and
- * is checked against the addon at load.
+ * The set is closed: the addon's handlers are fixed at build time, so this union
+ * is exhaustive and is checked against the addon at load.
  */
 export const SevenZipFormat = {
   SEVEN_ZIP: '7z',
@@ -118,9 +117,8 @@ export interface OpenEntryReaderOptions {
  * publishing anything, and so has to be known before a byte is decoded. That is
  * what makes every read but the last return exactly `chunkBytes`.
  *
- * Every path below names ONE file, even for a multi-volume archive: the addon's
- * open callback implements IArchiveOpenVolumeCallback, so 7-Zip finds the rest
- * of the set itself.
+ * Every path below names ONE file, even for a multi-volume archive: the addon
+ * discovers the rest of the set itself.
  */
 interface SevenZipBinding {
   formats: string[];
@@ -181,14 +179,12 @@ function formatIndex(format: SevenZipFormat): number {
  * closed when the stream ends, errors, or is destroyed. Callers must consume the
  * stream to its end or call `destroy()` so the native reader is released.
  *
- * Unlike the sibling addons' equivalents this takes a factory rather than an
- * already-open reader, because this addon's reader is told its chunk size when
- * it is constructed: that size is what the extraction thread fills to before
- * publishing anything, so it has to be known before a byte is decoded. Deferring
- * the open to the first read means the size can be read off the stream itself,
- * with no constant defined here to drift out of step with Node's, and it puts a
- * failure to open on the stream's 'error' -- where a caller is already handling
- * failures -- rather than making it a synchronous throw.
+ * A factory rather than an already-open reader, because the reader is told its
+ * chunk size when it is constructed. Deferring the open to the first read means
+ * that size can be read off the stream itself, with no constant defined here to
+ * drift out of step with Node's, and it puts a failure to open on the stream's
+ * 'error' -- where a caller is already handling failures -- rather than making
+ * it a synchronous throw.
  */
 function readableFromReader(
   openReader: (chunkBytes: number) => NativeEntryReader,

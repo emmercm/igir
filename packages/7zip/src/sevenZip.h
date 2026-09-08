@@ -11,9 +11,7 @@
 
 // The vendored-7-Zip layer: opening archives, enumerating handlers, and reading
 // item properties. Nothing here knows about N-API, promises, or threads, so it
-// can be reasoned about as ordinary 7-Zip client code. The N-API surface that
-// drives it lives in lister.h and entryReader.h; the strings it fails with live
-// in errors.h.
+// can be reasoned about as ordinary 7-Zip client code.
 namespace sevenzip {
 
 // Performs 7-Zip's one-time global setup (CRC tables). Idempotent, and safe to
@@ -21,19 +19,18 @@ namespace sevenzip {
 void EnsureInitialized();
 
 // The kName property of every registered archive handler, in registration order.
-// index.ts turns this list into the name -> index map it passes back here, so no
-// name matching happens in C++.
+// Callers address a handler by its position here, so no name matching happens in
+// C++.
 //
 // The handler set is fixed at build time, so the names and their class IDs are
 // read from the registry once, on the first call, and every later lookup is a
-// vector index. Nothing re-enumerates the handlers per archive.
+// vector index.
 std::vector<std::string> FormatNames();
 
-// The handler name index.ts asked for, for use in error messages. Lowercased to
-// match the names index.ts exposes -- upstream spells two of them `Z` and
-// `Split`, and a user should not see one spelling in the API and another in an
-// error. Falls back to the raw index, which is all there is to say about an
-// out-of-range one.
+// The name of the handler at `formatIndex`, for use in error messages.
+// Lowercased, because upstream spells two of them `Z` and `Split` and a user
+// should not see one spelling in the API and another in an error. Falls back to
+// the raw index, which is all there is to say about an out-of-range one.
 std::string FormatLabel(uint32_t formatIndex);
 
 // An open, read-only archive plus the stream holding the first volume's file
@@ -99,9 +96,7 @@ bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& n
 // costs one pass over the in-memory item table and no second open.
 //
 // Separators are compared normalized, so a caller may spell a path with either
-// `/` or `\` whatever the archive recorded -- and the paths reported out of an
-// archive (see lister.h) are normalized the same way, so a listed path always
-// resolves back to the entry it came from.
+// `/` or `\` whatever the archive recorded.
 //
 // Returns kEntryNotFound when nothing matches. A caller that remembers an index
 // from a previous listing checks it with EntryIndexMatches() first and falls

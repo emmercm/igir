@@ -21,9 +21,8 @@ namespace {
 
 struct Entry {
     // The archive's own item index, stored rather than recovered from this
-    // vector's position: entries are emitted in listing order today, but the
-    // number a caller passes back to EntryReader has to mean the archive's
-    // index no matter how this list is later filtered or ordered.
+    // vector's position, so that it stays correct however the list is later
+    // filtered or ordered.
     uint32_t index = 0;
     std::optional<std::string> entryPath;
     std::optional<uint64_t> size;
@@ -32,21 +31,15 @@ struct Entry {
     bool isEncrypted = false;
 };
 
-// One listing, on its own thread.
+// One listing, on a dedicated thread rather than on the libuv thread pool. A
+// listing holds its thread from the archive open through the last property
+// read, and for a large solid .7z the open alone decodes a compressed header --
+// far longer than the short tasks the pool's four default threads are sized
+// for, and long enough that concurrent listings would stall every unrelated fs,
+// dns and zlib operation in the process.
 //
-// This used to be a Napi::AsyncWorker, which put it on the libuv thread pool.
-// The pool defaults to four threads and is shared with every fs call, every
-// dns.lookup and every zlib stream in the process, and it is sized on the
-// assumption that its tasks are short -- one syscall, then release. A listing
-// is not short: it holds its thread from the archive open through the last
-// property read, and for a large solid .7z the open alone decodes a compressed
-// header. Igir scans several archives at once, so listings could occupy the
-// entire pool and stall unrelated filesystem work process-wide.
-//
-// A dedicated thread costs one ThreadSafeFunction per listing and makes this
-// class responsible for its own lifetime, which is the same trade Pump already
-// makes for extraction. Extraction was never on the pool; this makes listing
-// consistent with it.
+// The price is one ThreadSafeFunction per listing, and that this class owns its
+// own lifetime.
 class ListJob : public std::enable_shared_from_this<ListJob> {
    public:
     // Starts the listing. On success the returned promise settles when the
@@ -67,11 +60,9 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
    private:
     ListJob(Napi::Env env, Napi::Promise::Deferred deferred, std::string path, uint32_t formatIndex)
         : deferred_(deferred), path_(std::move(path)), formatIndex_(formatIndex) {
-        // Thread count of 1: the listing thread, released as its last act. It
-        // stays referenced -- unlike EntryReader's, which is unreferenced
-        // between reads -- because a listing's promise is pending from start to
-        // finish, and letting the process exit with it unsettled would be a
-        // behavior change from the AsyncWorker this replaces.
+        // Thread count of 1: the listing thread, released as its last act.
+        // Referenced, because the promise is pending from start to finish and
+        // the process must not exit leaving it unsettled.
         tsfn_ = TsfnHandle::Create(env, "sevenzip::ListEntries", true);
     }
 
@@ -120,13 +111,11 @@ void ListJob::List() {
     }
     // Deliberately NOT entries_.reserve(count): `count` comes out of an
     // untrusted header, and a corrupt archive claiming 4 billion items would
-    // otherwise ask for ~200 GB before a single property is read. Growing the
-    // vector costs an amortized reallocation and is bounded by what the archive
-    // can actually produce.
+    // otherwise ask for ~200 GB before a single property is read. Growing costs
+    // an amortized reallocation, bounded by what the archive can produce.
     for (uint32_t i = 0; i < count; i++) {
-        // Checked per item rather than per batch: the count is attacker-
-        // controlled, so this loop is the one place a listing can run long
-        // after the open has succeeded.
+        // Checked per item, because an untrusted count makes this loop the one
+        // place a listing can run long after the open has succeeded.
         if (abort_.load(std::memory_order_relaxed)) {
             error_ = "the archive listing was cancelled";
             return;
@@ -138,13 +127,12 @@ void ListJob::List() {
         std::string entryPath;
         if (GetStringProp(*opened.archive, i, kpidPath, &entryPath)) {
             // An empty string stays an empty string: the format DID record a
-            // name and that name is "". Only a missing kpidPath is undefined.
+            // name, and that name is "". Only a missing kpidPath is undefined.
             //
-            // Normalized rather than passed through, because kpidPath is not
-            // platform-independent: Zip's handler rewrites `/` to the host's
-            // separator on the way out, so the same archive would list
-            // `sub/file.bin` on Linux and `sub\file.bin` on Windows. See
-            // lister.h.
+            // Normalized rather than passed through, because some handlers
+            // rewrite `/` to the host's separator on the way out -- so the same
+            // archive would otherwise list `sub/file.bin` on Linux and
+            // `sub\file.bin` on Windows.
             entry.entryPath = NormalizeEntryPath(std::move(entryPath));
         }
         uint64_t size = 0;
@@ -170,10 +158,8 @@ void ListJob::Run() {
         } catch (const std::exception& e) {
             error_ = e.what();
         } catch (...) {
-            // Several vendored calls throw by design --
-            // ConvertUnicodeToUTF8() throws when its two length-calculation
-            // passes disagree, and any allocation can throw 7-Zip's
-            // kMemException -- and archives are untrusted input.
+            // Several vendored calls throw non-std exceptions by design, and
+            // archives are untrusted input.
             error_ = "failed to list the archive's entries";
         }
     } catch (...) {  // NOLINT(bugprone-empty-catch)
@@ -225,19 +211,16 @@ void ListJob::Emit(Napi::Env env) {
         const Entry& entry = entries_[i];
         Napi::Object const object = Napi::Object::New(env);
         object.Set("entryIndex", Napi::Number::New(env, entry.index));
-        // Undefined rather than "" when the format records no name, for the
-        // same reason as `size`: "" is a name an entry could really have.
+        // Undefined rather than "" when the format records no name: "" is a
+        // name an entry could really have.
         object.Set("entryPath", entry.entryPath.has_value() ? Napi::Value(Napi::String::New(env, *entry.entryPath))
                                                             : env.Undefined());
-        // Left undefined rather than 0 when the format records no size:
-        // 0 is a real length, and .Z/.bz2/.lzma members genuinely can be
-        // empty. Only the caller can tell "empty" from "unknown".
+        // Undefined rather than 0 when the format records no size: 0 is a real
+        // length, and a single-stream member genuinely can be empty.
         object.Set("size", entry.size.has_value()
                                ? Napi::Value(Napi::Number::New(env, static_cast<double>(*entry.size)))
                                : env.Undefined());
-        // Handed to JS as a number and formatted as 8 lowercase hex chars
-        // in index.ts. Presentation is cheaper to write, test and change in
-        // TypeScript than in C++.
+        // A number, left for JavaScript to format as hex.
         object.Set("crc32",
                    entry.crc32.has_value() ? Napi::Value(Napi::Number::New(env, *entry.crc32)) : env.Undefined());
         object.Set("isDirectory", Napi::Boolean::New(env, entry.isDirectory));
@@ -278,17 +261,16 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
         // too, `mutable` or not.
         std::thread([job = std::shared_ptr<ListJob>(job)]() mutable {
             job->Run();
-            // Released before unregistering, because the release is one of the
-            // things teardown is waiting to see happen.
+            // Before unregistering, because giving back the thread count is one
+            // of the things teardown is waiting to see happen.
             job->tsfn_->Release();
             // Copied out before the reference is dropped, because dropping it
             // may be what destroys the ListJob they are read from.
             std::shared_ptr<JobRegistry> const registry = job->registry_;
             JobRegistry::Token const token = job->token_;
-            // Released before unregistering for the same reason as the release
-            // above: letting the captured shared_ptr fall out of scope on its
-            // own would order ~ListJob after the Unregister() below, and
-            // teardown reads that call as "the thread is done".
+            // Also before unregistering: letting the captured shared_ptr fall
+            // out of scope on its own would order ~ListJob after the
+            // Unregister() below, which teardown reads as "the thread is done".
             job.reset();
             // Dead last: teardown is then free to let the environment finish
             // going away, so nothing may be ordered after it.

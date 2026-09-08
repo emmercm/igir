@@ -1,38 +1,24 @@
-// Stub implementation of the write-path methods NArchive::NZip::CHandler declares
-// by implementing IOutArchive and ISetProperties.
+// Inert stand-ins for the write-path methods the Zip handler declares by
+// implementing IOutArchive and ISetProperties. It implements them
+// unconditionally rather than behind Z7_EXTRACT_ONLY, and their real bodies
+// live in the archive-writing source this decode-only addon does not compile --
+// so without a definition somewhere the handler's vtable is incomplete and the
+// addon fails to load.
 //
-// Unlike CPP/7zip/Archive/7z/7zHandler.h (which guards its IOutArchive/ISetProperties
-// base classes behind `#ifndef Z7_EXTRACT_ONLY`), ZipHandler.h (deps/7zip/CPP/7zip/
-// Archive/Zip/ZipHandler.h) implements them unconditionally -- CHandler always
-// inherits IOutArchive and ISetProperties, regardless of Z7_EXTRACT_ONLY. Their real
-// bodies (UpdateItems, GetFileTimeType, SetProperties) live in
-// CPP/7zip/Archive/Zip/ZipUpdate.cpp, the archive-writing implementation, which this
-// decode-only addon intentionally does not compile (matches the "no code capable of
-// writing an archive is linked" constraint already applied to the Crypto/ stubs in
-// stubs/zipCrypto.cpp, stubs/wzAes.cpp, stubs/zipStrong.cpp). Without a definition
-// somewhere, CHandler's vtable is incomplete and the addon fails to dlopen.
+// SetCompressCodecsInfo is not stubbed: the handler defines it itself, and it
+// is a codec-info accessor decoding needs too. GetOutProperty is not stubbed
+// either -- it is private and non-virtual, so its absence never reaches the
+// linker, and an unresolved-symbol error for it would mean these stubs had
+// started calling into write-path helpers.
 //
-// SetCompressCodecsInfo (ISetCompressCodecsInfo, the other non-IInArchive interface
-// CHandler implements) is NOT stubbed here: ZipHandler.cpp itself already defines it
-// via the IMPL_ISetCompressCodecsInfo macro (see ZipHandler.cpp:1677) -- it is a
-// codec-info accessor needed by decode too, not a write-path method.
-//
-// CHandler::GetOutProperty (a private, non-virtual helper also declared only in
-// ZipHandler.h, real body in ZipUpdate.cpp) is deliberately NOT stubbed: nothing in
-// this stub's own bodies calls it, and it is not virtual, so its absence never
-// reaches the linker -- an unresolved-symbol error there would be a sign this file's
-// own stubs started calling into write-path helpers, which they must not do.
-//
-// Every method fails cleanly (E_NOTIMPL) and never touches an output stream.
+// Every method fails with E_NOTIMPL and never touches an output stream.
 
 #include "7zip/Archive/Zip/ZipHandler.h"
 
 namespace NArchive::NZip {
 
-// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
-// specification, and every method defined here overrides one the vendored
-// header declares -- so nothing in this file can be spelled `noexcept`, nor
-// made static, without changing the upstream declarations it exists to match.
+// The Z7_COM7F_* macros expand to 7-Zip's `throw()` specification, which comes
+// from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept)
 
 Z7_COM7F_IMF(CHandler::UpdateItems(ISequentialOutStream* /* outStream */, UInt32 /* numItems */,

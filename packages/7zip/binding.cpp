@@ -1,9 +1,3 @@
-// Every 7-Zip interface IID (IID_ICompressCoder, IID_IInArchive, etc.) needs
-// real storage (a definition, not just an `extern` declaration) exactly once
-// in the binary -- see stubs/guidDefs.cpp (built as its own "guiddefs" gyp
-// target, linked into this addon) for where that happens and why it has to
-// be a separate translation unit compiled before anything else in the build
-// processes these same interface headers with INITGUID inactive.
 #include <napi.h>
 
 #include <string>
@@ -16,16 +10,8 @@
 
 namespace {
 
-// Every function below is entered directly from JavaScript, where N-API is
-// built with NAPI_DISABLE_CPP_EXCEPTIONS: its wrapper is a bare
-// `return callback();`, so an escaping C++ exception aborts the process
-// instead of throwing into JavaScript. Each therefore does its work in a
-// helper called from inside one top-level catch-all, the same shape
-// ListWorker::Execute and EntryReader::Read already use.
-// The handler list is fixed at build time, so this is read once at load and
-// handed to index.ts as the `formats` property rather than a callable. index.ts
-// turns it into the name -> index map it passes back, and does not re-export it:
-// callers name a format from a union of string literals, never an index.
+// The handler list is fixed at build time, so it is read once at load and
+// exported as a plain `formats` property rather than as a callable.
 Napi::Value FormatsImpl(Napi::Env env) {
     std::vector<std::string> const names = sevenzip::FormatNames();
     Napi::Array out = Napi::Array::New(env, names.size());
@@ -44,12 +30,15 @@ Napi::Value ListEntriesImpl(const Napi::CallbackInfo& info) {
     return sevenzip::ListEntries(env, info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value());
 }
 
+// Entered from JavaScript, where N-API is built with NAPI_DISABLE_CPP_EXCEPTIONS
+// and the wrapper is a bare `return callback();` -- so an escaping C++ exception
+// aborts the process instead of throwing into JavaScript. The work goes in a
+// helper called from inside this one catch-all.
 Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     try {
         return ListEntriesImpl(info);
     } catch (...) {
-        // Copying the path allocates, as does queueing the worker.
         Napi::Error::New(env, "failed to start listing the archive").ThrowAsJavaScriptException();
         return env.Undefined();
     }

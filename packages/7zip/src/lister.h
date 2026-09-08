@@ -10,31 +10,19 @@ namespace sevenzip {
 // Resolves to an array of entry objects; rejects with an Error on failure.
 // `path` is copied, so the caller's JS value need not outlive it.
 //
-// Each entry object carries `entryPath`, `size`, `crc32`, `isDirectory` and
-// `isEncrypted`. The first three are `undefined` when the format does not record
-// them, which is not the same as empty or zero -- a `.bz2` member really can be
-// zero bytes long, and only the caller can tell "empty" from "unknown".
+// Each entry object carries `entryIndex`, `entryPath`, `size`, `crc32`,
+// `isDirectory` and `isEncrypted`. The path, size and CRC are `undefined` when
+// the format does not record them, which is not the same as empty or zero --
+// only the caller can tell "empty" from "unknown".
 //
-// Entry paths are reported with `/` separators on every platform. This is not a
-// cosmetic choice: several handlers rewrite `/` to the host's separator before
-// kpidPath can be read -- Zip's does, via NItemName::ReplaceToOsSlashes -- so
-// the same archive listed on Windows and on Linux would otherwise disagree about
-// its own contents. Normalizing is what makes a listed path portable, and what
-// makes it round-trip: the same string resolves back to the same entry through
-// openEntryReader(), which normalizes its input too. See FindEntryIndex() in
-// sevenZip.h.
+// Entry paths are reported with `/` separators on every platform, because some
+// handlers rewrite `/` to the host's separator before the path can be read and
+// the same archive would otherwise list differently on Windows and on Linux.
+// A reported path resolves back to the entry it came from.
 //
-// The work happens on a thread of its own, NOT on the libuv thread pool. A
-// listing holds its thread from the archive open through the last property
-// read, which for a large solid .7z includes decoding a compressed header --
-// far longer than the short, one-syscall tasks the pool's four default threads
-// are sized for. Several concurrent listings could otherwise occupy the whole
-// pool and stall every unrelated fs, dns and zlib operation in the process.
-// See the note on ListJob in lister.cpp.
-//
-// Nothing on that thread blocks on another thread: it opens the archive, walks
-// its item table, and returns. The listing is cancelled and waited for if the
-// environment is torn down while it runs; see jobRegistry.h.
+// The work happens on a dedicated thread that blocks on nothing: it opens the
+// archive, walks its item table, and returns. Environment teardown cancels the
+// listing and waits for it.
 Napi::Value ListEntries(Napi::Env env, std::string path, uint32_t formatIndex);
 
 }  // namespace sevenzip

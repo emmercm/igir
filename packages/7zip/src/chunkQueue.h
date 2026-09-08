@@ -26,26 +26,20 @@ struct Chunk {
 
 // A bounded queue of completed chunks with one producer and one consumer.
 //
-// This exists to bridge a pushing producer to a pulling consumer that must
-// never block. 7-Zip's Extract() pushes bytes at whatever size its decoder
-// happens to emit; a JavaScript stream pulls a fixed amount at a time, on the
-// event loop thread, where blocking would stall every other pending callback in
-// the process. So the asymmetry is deliberate and the two sides are not
-// symmetric operations:
+// It bridges a producer that pushes bytes at whatever size it happens to
+// produce them to a consumer that pulls a fixed amount and must never block, so
+// the two sides are deliberately asymmetric:
 //
 //   - Write() BLOCKS while the queue is full. That is the whole back-pressure
-//     mechanism: it bounds memory to roughly `chunkBytes * maxChunks`, and the
-//     producer is a thread of ours whose only job is to wait on the consumer.
+//     mechanism: it bounds memory to roughly `chunkBytes * maxChunks`.
 //   - TryTake() NEVER blocks. When nothing is ready it says so and arms the
 //     ready callback, so the consumer can go away and be told later.
 //
 // Chunks are handed out whole and full: the producer accumulates into a partial
-// chunk and only publishes it at exactly `chunkBytes`, so a consumer asking for
-// a high-watermark's worth of bytes gets exactly that, however small the writes
-// the decoder happens to make. Only the final chunk before Finish() is short.
+// chunk and publishes it only at exactly `chunkBytes`, however small the writes
+// into it were. Only the final chunk before Finish() is short.
 //
-// Nothing here knows about 7-Zip or N-API: this is a plain data structure, kept
-// in its own translation unit so it can be reasoned about on its own.
+// Nothing here knows about 7-Zip or N-API.
 class ChunkQueue {
    public:
     // `chunkBytes` is the size of every published chunk but the last, and
@@ -72,12 +66,10 @@ class ChunkQueue {
     //
     // noexcept is load-bearing, not decoration. The only caller is 7-Zip's
     // ISequentialOutStream::Write, whose signature carries upstream's `throw()`
-    // (deps/7zip/CPP/7zip/IDecl.h:47) -- which C++17 makes a synonym for
-    // noexcept. A std::bad_alloc from the chunk allocation below would
-    // therefore not unwind into an error a caller could see; it would call
-    // std::terminate() and take the whole process down with no diagnostic. So
-    // every allocating step in here is either nothrow or caught, and running
-    // out of memory becomes a rejected read instead.
+    // -- which C++17 makes a synonym for noexcept -- so an escaping
+    // std::bad_alloc would call std::terminate() rather than surface as an
+    // error. Every allocating step in here is therefore either nothrow or
+    // caught, and running out of memory becomes a rejected read instead.
     bool Write(const uint8_t* data, size_t length) noexcept;
 
     // Whether Write() stopped because an allocation failed rather than because
@@ -111,8 +103,8 @@ class ChunkQueue {
     // caller must therefore re-check any state it cached across the call.
     //
     // Every path that publishes a chunk, or that stops publishing for good,
-    // calls this BEFORE it can block or return. That ordering is the whole
-    // reason the class does not deadlock: see the note in Write().
+    // calls this BEFORE it can block or return; that ordering is what keeps the
+    // producer and a parked consumer from waiting on each other.
     void FlushReady(std::unique_lock<std::mutex>& lock);
 
     // The body of Write(), which is allowed to throw so that the ordinary

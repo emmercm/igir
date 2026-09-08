@@ -19,19 +19,15 @@ namespace sevenzip {
 // as a non-blocking pull. One Pump owns one archive, one entry, and one thread.
 //
 // The thread is never joined. Start() hands the producer a shared_ptr to the
-// Pump, so the object outlives the consumer's reference by exactly as long as
-// the thread needs it. That matters because the alternative -- joining in the
-// destructor -- meant the consumer waited for the decoder to notice the abort,
-// and a decoder skipping through a large solid .7z folder can go seconds
-// between the callbacks where it checks. Since the destructor is reached from
-// close() and from the garbage collector, both of which run on the event loop
-// thread, that wait was a stall of the entire process. Now teardown is: abort,
-// drop the pointer, return. The thread finishes unwinding on its own time and
-// releases the last reference wherever it happens to be.
+// Pump, so the object lives exactly as long as the thread still needs it and
+// teardown is only: abort, drop the pointer, return. The consumer never waits
+// for the decoder to notice the abort, which for a large solid .7z folder can
+// be seconds -- and it is the event loop thread, reaching the destructor from
+// close() or from the garbage collector.
 //
 // Nothing here includes <napi.h>. The two places this has to reach back into
 // N-API -- "a read that was waiting can now proceed" and "the producer has
-// exited" -- are std::functions supplied by entryReader.cpp.
+// exited" -- are std::functions the caller supplies.
 class Pump {
    public:
     // How much decompressed output may sit buffered ahead of the consumer. This
@@ -42,10 +38,10 @@ class Pump {
     // keeps the producer from stalling on every single read.
     static constexpr size_t kReadAheadBytes = 1U << 20U;  // 1 MiB
 
-    // The largest chunk size a caller may ask for. Chunks are allocated up
-    // front, so an unclamped value straight from JavaScript is an allocation the
-    // caller controls; this is generous for a stream high-watermark and far
-    // short of a denial of service.
+    // The largest chunk size a caller may ask for. Every queued chunk is
+    // allocated at this size, so an unclamped value straight from JavaScript
+    // would be an allocation the caller controls; this is generous for a stream
+    // high-watermark and far short of a denial of service.
     static constexpr size_t kMaxChunkBytes = 1U << 24U;  // 16 MiB
 
     // Creates the Pump and starts its thread. Throws std::system_error if the
@@ -73,9 +69,9 @@ class Pump {
     //
     // `registry` is the environment's live-job registry. The Pump registers
     // itself for the lifetime of its thread so that environment teardown can
-    // cancel it and wait for it; see jobRegistry.h. Throws std::runtime_error
-    // if the registry is already draining, which means the environment is going
-    // away and there would be nothing left to wait for a new thread.
+    // cancel it and wait for it. Throws std::runtime_error if the registry is
+    // already draining, which means the environment is going away and there
+    // would be nothing left to wait for a new thread.
     static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
                                        std::optional<uint32_t> entryIndex, size_t chunkBytes,
                                        std::shared_ptr<JobRegistry> registry, std::function<void()> onReady,

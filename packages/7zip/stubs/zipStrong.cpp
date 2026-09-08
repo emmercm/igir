@@ -1,34 +1,22 @@
-// Stub implementation of NCrypto::NZipStrong (PKWARE "strong encryption",
-// AES-CBC keyed via a master key), satisfying the out-of-line method
-// declarations in the real upstream Crypto/ZipStrong.h so that
-// CPP/7zip/Archive/Zip/ZipHandler.cpp -- which holds a real (non-pointer)
-// NCrypto::NZipStrong::CDecoder member -- links without pulling in
-// Crypto/ZipStrong.cpp. The global constraint for this addon is that no code
-// capable of writing an archive, and none of Crypto/, is linked (ZipStrong.cpp
-// has no separate encoder class of its own, but it does depend on real AES).
+// Inert stand-ins for NCrypto::NZipStrong (PKWARE "strong encryption"), so that
+// the Zip handler -- which holds a real, non-pointer CDecoder member -- links
+// without pulling in the upstream source, which depends on real AES. This addon
+// links no archive-writing code and nothing from Crypto/.
 //
-// The key property that keeps this stub small: CDecoder::_cbcDecoder is a
-// `CAesCbcDecoder *` (a pointer, not a value member). The real ZipStrong.cpp
-// lazily `new`s one inside Init_and_CheckPassword(). Our CDecoder constructor
-// below sets it to nullptr and no method here ever allocates one, so
-// CAesCbcDecoder's own vtable/constructor is never instantiated and
-// C/Aes.c-derived code stays out of this binary entirely (see stubs/myAes.cpp,
-// which stubs only the CAesCtrCoder path that CPP/7zip/Crypto/WzAes.h's
-// CBaseCoder constructor unconditionally requires -- unrelated to this file).
+// What keeps this stub small is that _cbcDecoder is a pointer rather than a
+// value member: the constructor below leaves it null and no method here ever
+// allocates one, so CAesCbcDecoder is never instantiated and no AES code
+// reaches the binary through this file.
 //
-// Every method fails cleanly (E_NOTIMPL / false / 0) and touches no password
-// or key state. Effect: an entry using PKWARE strong encryption reports as
-// encrypted but its bytes never decrypt -- matching this addon's design
-// (surface isEncrypted, never decrypt; igir never handles passwords).
+// Every method fails cleanly and touches no password or key state, so an entry
+// using strong encryption reports as encrypted and never decrypts.
 
 #include "7zip/Crypto/ZipStrong.h"
 
 namespace NCrypto::NZipStrong {
 
-// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
-// specification, and every method defined here overrides one the vendored
-// header declares -- so nothing in this file can be spelled `noexcept`, nor
-// made static, without changing the upstream declarations it exists to match.
+// The Z7_COM7F_* macros expand to 7-Zip's `throw()` specification, which comes
+// from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept,readability-convert-member-functions-to-static)
 
 void CKeyInfo::SetPassword(const Byte* /* data */, UInt32 /* size */) {}

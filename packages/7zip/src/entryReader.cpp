@@ -34,11 +34,9 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
 
 void EntryReader::Construct(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
-    // An entry is named by path, or not named at all. A path is resolved inside
-    // the single archive open that extraction performs regardless, which is why
-    // index.ts can hand one straight through instead of listing the archive to
-    // turn it into a number first. An index may accompany the path, but only as
-    // a hint the Pump verifies against it -- never as a way to name an entry.
+    // An entry is named by path, or not named at all. An index may accompany the
+    // path, but only as a hint the Pump verifies against it -- never as a way to
+    // name an entry.
     bool const named = info.Length() >= 3 && info[2].IsString();
     bool const unnamed = info.Length() < 3 || info[2].IsUndefined();
     bool const hinted = info.Length() >= 4 && info[3].IsNumber();
@@ -72,11 +70,9 @@ void EntryReader::Construct(const Napi::CallbackInfo& info) {
         }
     }
 
-    // The chunk size is fixed for the life of the reader rather than passed to
-    // each read(), because it is what the producer fills to before publishing:
-    // it has to be known before any byte is decoded. index.ts passes the
-    // stream's high-watermark, so every read returns exactly what the stream
-    // asked for. Pump::Start clamps it.
+    // Fixed for the life of the reader rather than passed to each read(),
+    // because it is what the producer fills a chunk to before publishing it: it
+    // has to be known before any byte is decoded.
     size_t chunkBytes = Pump::kReadAheadBytes;
     if (info.Length() >= 5 && info[4].IsNumber()) {
         double const requested = info[4].As<Napi::Number>().DoubleValue();
@@ -309,7 +305,7 @@ void EntryReader::Shutdown(Napi::Env env) {
     // notice the abort and whose notification we have just stopped listening
     // for.
     pending->Resolve(env.Null());
-    ReleasePending(env);  // last use of `this`: can drop the final reference
+    ReleasePending(env);
 }
 
 }  // namespace sevenzip

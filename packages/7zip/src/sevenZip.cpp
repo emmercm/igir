@@ -18,8 +18,8 @@
 #include "Windows/PropVariant.h"
 #include "Windows/PropVariantConv.h"
 
-// Declared in deps/7zip/CPP/7zip/Archive/ArchiveExports.cpp, compiled through
-// stubs/archiveExports.cpp.
+// 7-Zip's own archive factory exports, declared here because the vendored tree
+// ships no header for them.
 STDAPI GetNumberOfFormats(UInt32* numFormats);
 STDAPI GetHandlerProperty2(UInt32 formatIndex, PROPID propID, PROPVARIANT* value);
 STDAPI CreateArchiver(const GUID* clsid, const GUID* iid, void** outObject);
@@ -60,7 +60,7 @@ std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
 }  // namespace
 
 void EnsureInitialized() {
-    // 7zCrc.h:13 -- "Call CrcGenerateTable one time before other CRC functions".
+    // Upstream requires this once, before any other CRC function is called.
     std::call_once(g_initOnce, []() { CrcGenerateTable(); });
 }
 
@@ -74,11 +74,9 @@ struct Format {
     GUID classId{};
 };
 
-// The handler set is fixed at build time -- the *Register.cpp units listed in
-// binding.gyp register themselves from static initializers before main() -- so
-// this table is built once and read thereafter. It replaces a
-// GetNumberOfFormats() + GetHandlerProperty2() sweep that used to run on every
-// single OpenArchive() call.
+// The handler set is fixed at build time -- each compiled-in handler registers
+// itself from a static initializer before main() -- so this table is built once
+// and read thereafter, and no archive open re-enumerates the handlers.
 const std::vector<Format>& Formats() {
     // Function-local static: initialized on first use, and the C++ runtime makes
     // that thread-safe. Extraction opens archives from its own thread, so this
@@ -174,20 +172,14 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 // It is also mandatory for two of the registered handlers rather than merely
 // convenient:
 //
-//   - CHandler::Open2 (SplitHandler.cpp:126-133) queries for this interface and
-//     returns S_FALSE the moment the query fails, so without it the "Split"
-//     format cannot open anything at all.
-//   - CInArchive::Open (ZipIn.cpp) reaches ReadVols() for any .zip whose
-//     end-of-central-directory still carries its span-mode marker, and
-//     ReadVols() dereferences Callback (ZipIn.cpp:2337) with no null check.
-//     Passing nullptr therefore SIGSEGVs on such archives; passing this takes
-//     the real spanned-zip path instead.
+//   - the Split handler queries for this interface and refuses to open anything
+//     at all when the query fails.
+//   - the Zip handler dereferences the callback with no null check for any .zip
+//     whose end-of-central-directory still carries its span-mode marker, so
+//     passing nullptr would SIGSEGV on such archives.
 // clang-format off: the macro opens a class body clang-format cannot see, so it
-// reads everything below as file scope and unindents it.
-// The macro expands to the class head, the QueryInterface/AddRef/Release
-// implementations and the interface method declarations at once; the
-// diagnostics below are about that generated code, not about anything written
-// here.
+// reads everything below as file scope and unindents it. The NOLINT is about
+// the code the macro generates, not about anything written here.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
@@ -220,18 +212,15 @@ Z7_COM7F_IMF(OpenCallback::SetCompleted(const UInt64* /*files*/, const UInt64* /
 
 Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
     NWindows::NCOM::CPropVariant prop;
-    // kpidName is the only property the handlers ask for here. Notably kpidSize
-    // is not: SplitHandler reads it from the stream instead (its GetProperty
-    // call is commented out at SplitHandler.cpp:189-195), and answering an
+    // kpidName is the only property the handlers ask for here. Answering an
     // unrecognized PROPID with an empty variant is how upstream's own callbacks
     // report "not available".
     try {
         if (propID == kpidName) {
             // Copies the name into a BSTR, so it allocates -- and this method
-            // carries upstream's `throw()` (IDecl.h:47), which C++17 makes a
-            // synonym for noexcept. Letting a std::bad_alloc or 7-Zip's own
-            // kMemException out of here would call std::terminate() instead of
-            // failing the open.
+            // carries upstream's `throw()`, which C++17 makes a synonym for
+            // noexcept, so an escaping exception would call std::terminate()
+            // instead of failing the open.
             prop = name_;
         }
     } catch (...) {
@@ -252,16 +241,14 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
     if (Aborted()) {
         return E_ABORT;
     }
-    // A missing volume is not an error: it is how a handler learns it has
-    // reached the end of the set. SplitHandler.cpp:217-221 and ZipIn's
-    // ReadVols2() both stop on S_FALSE and open what they already have.
+    // A missing volume is not an error: S_FALSE is how a handler learns it has
+    // reached the end of the set, and it opens what it already has.
     //
     // Building the path and constructing the CInFileStream both allocate, and
-    // this method carries upstream's `throw()` (IDecl.h:47) -- noexcept under
-    // C++17 -- so an escaping std::bad_alloc would call std::terminate() rather
-    // than fail the open. E_OUTOFMEMORY rather than S_FALSE deliberately:
-    // S_FALSE means "no such volume", which a handler takes as the end of the
-    // set, and would turn running out of memory into a silently short archive.
+    // this method carries upstream's `throw()` -- noexcept under C++17 -- so an
+    // escaping std::bad_alloc would call std::terminate() rather than fail the
+    // open. E_OUTOFMEMORY rather than S_FALSE deliberately: S_FALSE would turn
+    // running out of memory into a silently short archive.
     try {
         // Initialized from the call rather than assigned to afterwards, so that
         // the stream is only ever owned by one pointer.
@@ -386,7 +373,8 @@ bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& n
 }
 
 HRESULT FindEntryIndex(IInArchive& archive, const std::string& entryPath, uint32_t* out) {
-    // See the note in sevenZip.h: the separator tolerance is input-side only.
+    // Both sides normalized, so `sub\\file.bin` and `sub/file.bin` name the same
+    // entry however the archive spells it.
     std::string const wanted = NormalizeEntryPath(entryPath);
 
     UInt32 count = 0;

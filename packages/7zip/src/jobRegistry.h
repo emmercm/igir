@@ -12,18 +12,15 @@ namespace sevenzip {
 // addon has something to cancel and something to wait on when its JavaScript
 // environment is torn down.
 //
-// Every long-running thread in this addon is detached, never joined: see the
-// note in pump.h for why joining on the event loop thread was not an option.
-// That is correct while the process is running, but it leaves one case
-// unhandled -- Node tearing the environment down while a decoder is still
-// mid-archive. The thread would then keep running against a freed env, a
-// ThreadSafeFunction that no longer exists, and eventually a dead process
-// image. This class is what closes that window: at teardown every live job is
-// cancelled and the teardown waits until each has actually finished.
+// Every long-running thread in this addon is detached, never joined, so that no
+// JavaScript caller ever waits for a decoder to notice it should stop. That
+// leaves one case unhandled: Node tearing the environment down while a decoder
+// is still mid-archive, after which the thread runs on against a freed env and
+// eventually a dead process image. This class closes that window -- at teardown
+// every live job is cancelled and the teardown waits until each has finished.
 //
-// Nothing here includes <napi.h>. The registry is deliberately ordinary C++ so
-// that Pump can use it without gaining a dependency on N-API; the glue that
-// binds one registry to one environment lives in addon.h.
+// Nothing here includes <napi.h>, so a job can register without gaining a
+// dependency on N-API.
 class JobRegistry {
    public:
     using Token = uint64_t;

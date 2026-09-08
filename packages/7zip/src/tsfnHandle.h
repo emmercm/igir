@@ -11,25 +11,19 @@ namespace sevenzip {
 // A ThreadSafeFunction that a thread outliving the environment can still touch.
 //
 // N-API's contract is that every thread using a ThreadSafeFunction holds a
-// reference and gives it back when it is done, and the two jobs here do exactly
-// that from their own thread. What the contract does not mention is that Node
-// destroys the function itself from an environment cleanup hook, with no regard
-// for how many references are still outstanding -- and that this addon's drain
-// hook cannot get in front of that. The drain is an *async* cleanup hook, which
-// suspends the end of teardown but not the rest of the hook chain, so the
-// function is freed while the drain is still waiting for the very thread that
-// owes it a Release(). That Release() then writes through a dangling pointer.
-// Under glibc it is an immediate abort() carrying no message at all, which is
-// why it surfaced only as a test worker vanishing mid-run.
+// reference and gives it back when it is done. What it does not say is that
+// Node destroys the function from an environment cleanup hook regardless of how
+// many references are still outstanding, so a worker thread that is still
+// unwinding can be left holding a Release() that would write through a dangling
+// pointer -- an abort() with no message under glibc.
 //
 // So the function is never touched except under `mutex_`, and its finalizer --
-// which N-API runs immediately before freeing it, whatever order the cleanup
-// hooks happened to come in -- takes that same mutex to clear `alive_`. Use and
-// destruction are then mutually exclusive: a thread either arrives while the
-// function is whole, or finds it gone and does nothing. Doing nothing is the
-// right answer rather than a leak, because Node has already reclaimed
-// everything the missing Release() would have, and there is no longer an event
-// loop for a queued call to run on.
+// which N-API runs immediately before freeing it -- takes that same mutex to
+// clear `alive_`. Use and destruction are then mutually exclusive: a thread
+// either arrives while the function is whole, or finds it gone and does
+// nothing. Doing nothing is right rather than a leak: Node has already
+// reclaimed everything the missing Release() would have, and there is no event
+// loop left for a queued call to run on.
 class TsfnHandle {
    public:
     // Creates the function with a thread count of 1, for whichever thread will

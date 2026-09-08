@@ -13,21 +13,14 @@ namespace sevenzip {
 // The JS-visible pull reader: `read()` resolves with the next chunk of an
 // entry's decompressed bytes, or `null` at the end.
 //
-// The one rule the whole class is built around is that NO thread ever waits on
-// another. The event loop thread must not, for the obvious reason. The libuv
-// pool threads must not either, and less obviously: they are a small, shared,
-// fixed-size resource, and every one of them parked waiting on a decoder is one
-// that fs, dns and every other consumer in the process cannot have. Four
-// concurrent reads on a four-thread pool would deadlock everything else.
-//
-// So there is no worker on the read path at all. A read is answered on the event
-// loop thread, synchronously, from a chunk the producer has already finished --
-// which is the steady state, since the producer runs ahead by up to
-// Pump::kReadAheadBytes. Only when the consumer has caught up does a read park:
-// its promise is held, and the producer wakes it through a ThreadSafeFunction
-// once the next chunk is ready. Exactly one thread in this design is ever
-// allowed to block, and it is the dedicated producer inside Pump, blocking on a
-// full queue -- which is not a stall but the back-pressure that bounds memory.
+// The rule the whole class is built around is that no thread it runs on ever
+// waits on another. A read is answered on the event loop thread, synchronously,
+// from a chunk the producer has already finished -- the steady state, since the
+// producer runs ahead by a bounded amount. Only when the consumer catches up
+// does a read park: its promise is held, and the producer wakes it through a
+// ThreadSafeFunction once the next chunk is ready. The one thread allowed to
+// block is the producer, on a full queue, which is back-pressure rather than a
+// stall.
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
    public:
     static Napi::Function GetClass(Napi::Env env);

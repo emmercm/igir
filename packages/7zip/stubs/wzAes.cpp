@@ -1,34 +1,22 @@
-// Stub implementation of NCrypto::NWzAes (WinZip AES, RFC2898/PBKDF2 + HMAC-SHA1),
-// satisfying the out-of-line method declarations in the real upstream
-// Crypto/WzAes.h so that CPP/7zip/Archive/Zip/ZipHandler.cpp -- which holds a
-// real (non-pointer) NCrypto::NWzAes::CDecoder member -- links without pulling
-// in Crypto/WzAes.cpp. That upstream .cpp also defines CEncoder (write-path),
-// and the global constraint for this addon is that no code capable of writing
-// an archive, and none of Crypto/, is linked.
+// Inert stand-ins for NCrypto::NWzAes (WinZip AES), so that the Zip handler --
+// which holds a real, non-pointer CDecoder member -- links without pulling in
+// the upstream source. That source also defines the write-path CEncoder, and
+// this addon links no archive-writing code and nothing from Crypto/.
 //
-// CBaseCoder's own constructor (inline in WzAes.h) unconditionally does
-// `_aesCoderSpec = new CAesCtrCoder(32);` -- that construction cannot be
-// avoided, so CAesCoder/CAesCtrCoder's own out-of-line members are stubbed
-// separately in stubs/myAes.cpp (see that file for why no real AES/C/Aes.c
-// code is pulled in by that). `Init2()` (declared protected in CBaseCoder) is
-// intentionally NOT defined here: nothing in this stub's own CDecoder methods
-// calls it, so it is never odr-used.
+// CBaseCoder's inline constructor unconditionally news a CAesCtrCoder, which is
+// stubbed separately in stubs/myAes.cpp. Init2() is not defined here because
+// nothing in this file calls it, so it is never odr-used; the same goes for
+// CEncoder's methods.
 //
-// Every method here fails cleanly (E_NOTIMPL / false / 0) and touches no
-// password or key state. Effect: an entry using WinZip AES reports as
-// encrypted but its bytes never decrypt -- matching this addon's design
-// (surface isEncrypted, never decrypt; igir never handles passwords).
-// CEncoder's methods are not defined here: nothing in this decode-only binary
-// ever constructs a CEncoder, so they are never odr-used.
+// Every method fails cleanly and touches no password or key state, so an entry
+// using WinZip AES reports as encrypted and never decrypts.
 
 #include "7zip/Crypto/WzAes.h"
 
 namespace NCrypto::NWzAes {
 
-// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
-// specification, and every method defined here overrides one the vendored
-// header declares -- so nothing in this file can be spelled `noexcept`, nor
-// made static, without changing the upstream declarations it exists to match.
+// The Z7_COM7F_* macros expand to 7-Zip's `throw()` specification, which comes
+// from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept,readability-convert-member-functions-to-static)
 
 Z7_COM7F_IMF(CBaseCoder::CryptoSetPassword(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }

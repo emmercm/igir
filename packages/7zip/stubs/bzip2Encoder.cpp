@@ -1,44 +1,26 @@
-// Stub implementation of NCompress::NBZip2::CEncoder (Compress/BZip2Encoder.h), the
-// BZip2 compressor that CPP/7zip/Archive/Bz2Handler.cpp instantiates in its
-// UpdateArchive() helper: `CMyComPtr2_Create<ICompressCoder, NCompress::NBZip2::CEncoder>`.
+// Inert stand-ins for NCompress::NBZip2::CEncoder, the BZip2 compressor. This
+// decode-only addon does not compile the real encoder, but it does compile the
+// bzip2 handler, whose write path is not guarded behind Z7_EXTRACT_ONLY -- so
+// the reference to CEncoder reaches the linker whether or not any archive is
+// ever written.
 //
-// Bz2Handler.cpp is compiled by this addon for its IInArchive half (it registers the
-// "bzip2" format), and unlike CPP/7zip/Archive/7z/7zHandler.cpp it does NOT guard its
-// write path behind Z7_EXTRACT_ONLY -- UpdateArchive(), GetFileTimeType() and
-// UpdateItems() are compiled unconditionally, so the reference to CEncoder's
-// constructor reaches the linker whether or not any archive is ever written. The real
-// bodies live in CPP/7zip/Compress/BZip2Encoder.cpp, the BZip2 compressor, which this
-// decode-only addon intentionally does not compile (same reasoning as
-// stubs/zipUpdate.cpp for the Zip write path and stubs/myAes.cpp for AES).
+// CThreadInfo::Free() is defined because CEncoder holds a CThreadInfo by value
+// and its inline destructor calls it; the empty body is correct, since nothing
+// here allocates the buffers it would release. Code() and SetCoderProperties()
+// are defined because the vtable is emitted alongside Code(), the first
+// non-inline virtual, so the class is otherwise not constructible. Both fail
+// with E_NOTIMPL without touching the output stream.
 //
-// Only CEncoder is stubbed. CThreadInfo::Free() is defined too, but not because
-// anything calls it deliberately: CEncoder holds a CThreadInfo by value under Z7_ST,
-// and CThreadInfo's inline destructor (BZip2Encoder.h) calls Free(). Without it the
-// implicit ~CEncoder() would reference a symbol that lives only in the real encoder.
-// Its body here is empty and correct: this file's CEncoder constructor never allocates
-// any of the buffers Free() would release, so there is nothing to release.
-//
-// Code() and SetCoderProperties() are defined rather than left out because CEncoder's
-// vtable is emitted alongside its key function -- Code(), the first non-inline virtual
-// declared -- so a definition must exist in this translation unit for the object to be
-// constructible at all. Both fail cleanly (E_NOTIMPL) and never touch the output
-// stream, so Bz2Handler's UpdateArchive() returns an error at its first RINOK instead
-// of jumping to address 0.
-//
-// CodeReal(), ReadRleBlock(), WriteBytes(), WriteByte() and Flush() are the encoder's
-// own non-virtual helpers, declared only in BZip2Encoder.h. They are deliberately NOT
-// stubbed: nothing in this file's bodies calls them, so their absence never reaches
-// the linker. An unresolved-symbol report for one of them would mean this stub had
-// started calling into real compression code, which it must not do.
+// The encoder's own non-virtual helpers are deliberately NOT stubbed: nothing
+// here calls them, so an unresolved-symbol report for one would mean this file
+// had started calling into real compression code.
 
 #include "7zip/Compress/BZip2Encoder.h"
 
 namespace NCompress::NBZip2 {
 
-// The Z7_COM7F_* macros below expand to 7-Zip's `throw()` exception
-// specification, and every method defined here overrides one the vendored
-// header declares -- so nothing in this file can be spelled `noexcept`, nor
-// made static, without changing the upstream declarations it exists to match.
+// The Z7_COM7F_* macros expand to 7-Zip's `throw()` specification, which comes
+// from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept)
 
 void CThreadInfo::Free() {}

@@ -7,8 +7,7 @@
 namespace sevenzip {
 
 std::shared_ptr<TsfnHandle> TsfnHandle::Create(Napi::Env env, const char* name, bool referenced) {
-    // Not make_shared: the constructor is private, and the only thing that
-    // would buy is one fewer allocation per job.
+    // Not make_shared: the constructor is private.
     std::shared_ptr<TsfnHandle> handle(new TsfnHandle());
 
     handle->tsfn_ =

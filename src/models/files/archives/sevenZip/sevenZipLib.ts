@@ -19,14 +19,13 @@ import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
 
 /**
- * Base class for archive formats handled by the bundled 7-Zip addon
- * ({@link packages/7zip}): 7z, Z, spanned ZIP, and ZipX.
+ * Base class for archive formats read through the bundled 7-Zip addon. Subclasses
+ * supply the handler to read with, and everything else is shared.
  */
 export default abstract class SevenZipLib extends Archive {
   /**
-   * The 7-Zip handler to read this archive with. The addon takes no part in
-   * guessing a format from a file's contents or name, so each subclass names the
-   * one handler its extensions map to.
+   * The 7-Zip handler to read this archive with. Nothing guesses a format from a
+   * file's contents or name, so each subclass names the one its extensions map to.
    */
   protected abstract getSevenZipFormat(): SevenZipFormat;
 
@@ -48,7 +47,7 @@ export default abstract class SevenZipLib extends Archive {
   ): Promise<ArchiveEntry<Archive>[]> {
     const entries = await sevenZip.listEntries({
       inputFilename: this.getFilePath(),
-      format: this.getSevenZipFormat(), // will cause this to throw if it's wrong
+      format: this.getSevenZipFormat(),
     });
     const fileEntries = entries.filter((entry) => !entry.isDirectory);
 
@@ -98,8 +97,7 @@ export default abstract class SevenZipLib extends Archive {
     }
 
     await this.extractEntryToStream(location, async (readable) => {
-      // The addon defers opening the archive until the stream is first read, so cause it to open.
-      // We do this so any immediate issue with the input will throw before we create the output.
+      // Wait for the first bytes, so that a bad input throws before the output file is created.
       await events.once(readable, 'readable');
 
       const writeStream = fs.createWriteStream(extractedFilePath);

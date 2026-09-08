@@ -181,7 +181,6 @@ describe('archiveEntryPriority (default sort)', () => {
   });
 
   it('should give every archive type a distinct priority', async () => {
-    // The order follows FileFactory#archiveFromArchiveExtension
     const expected = [
       new Zip('rom.zip'),
       new Tar('rom.tar'),
