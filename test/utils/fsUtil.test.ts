@@ -508,6 +508,36 @@ describe('isHardlink', () => {
   });
 });
 
+describe('isPathTraversal', () => {
+  test.each([
+    'Tetris (World).gb',
+    'Nintendo - Game Boy/Tetris (World).gb',
+    './Tetris (World).gb',
+    // Only whole segments count, these are all legal filenames
+    'Final Fantasy VII..disc1.bin',
+    '..hidden.rom',
+    'Game.../rom.bin',
+  ])('should return false for a path that stays within its parent: %s', (filePath) => {
+    expect(FsUtil.isPathTraversal(filePath)).toEqual(false);
+  });
+
+  test.each([
+    '..',
+    '../evil.rom',
+    '../../../../tmp/evil.rom',
+    'roms/../../evil.rom',
+    'roms/..',
+    '..\\evil.rom',
+    'roms\\..\\..\\evil.rom',
+    '/etc/passwd',
+    '//server/share/evil.rom',
+    'C:\\Windows\\evil.rom',
+    'c:/windows/evil.rom',
+  ])('should return true for a path that escapes its parent: %s', (filePath) => {
+    expect(FsUtil.isPathTraversal(filePath)).toEqual(true);
+  });
+});
+
 describe('isSamba', () => {
   test.each(['.', os.devNull, 'test', path.resolve('test')])(
     'should return false: %s',
