@@ -199,11 +199,13 @@ export default class OutputFactory {
     }
 
     if (options.getDirDatName() && dat.getName()) {
-      output = path.join(output, dat.getName());
+      // Don't allow DAT names to perform directory traversal
+      output = path.join(output, dat.getName().replaceAll(/[\\/]/g, '_'));
     }
     const datDescription = dat.getDescription();
     if (options.getDirDatDescription() && datDescription) {
-      output = path.join(output, datDescription);
+      // Don't allow DAT descriptions to perform directory traversal
+      output = path.join(output, datDescription.replaceAll(/[\\/]/g, '_'));
     }
 
     const dirLetter = this.getDirLetterParsed(options, romBasename, romBasenames);
