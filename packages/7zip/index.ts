@@ -140,7 +140,7 @@ const binding = ((): SevenZipBinding => {
   } catch {
     /* ignored, fall back to a local build */
   }
-  return require('./addon-7zip/build/Release/7zip.node') as SevenZipBinding;
+  return require('./addon-7zip/build/Release/binding.node') as SevenZipBinding;
 })();
 
 // The handler list is fixed at build time, so this is computed once. It is not
