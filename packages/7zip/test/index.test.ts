@@ -1,12 +1,13 @@
 import crypto from 'node:crypto';
 import events from 'node:events';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type stream from 'node:stream';
 import zlib from 'node:zlib';
 
+import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import sevenZip, { SevenZipFormat } from '../index.js';
 
 gracefulFs.gracefulify(fs);
@@ -187,11 +188,14 @@ async function drain(readable: stream.Readable): Promise<Buffer> {
  * skipped by a failure earlier in the file.
  */
 async function withTempDir<T>(callback: (directory: string) => Promise<T> | T): Promise<T> {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'igir-7zip-'));
+  if (!(await FsUtil.exists(Temp.getTempDir()))) {
+    await FsUtil.mkdir(Temp.getTempDir(), { recursive: true });
+  }
+  const directory = await FsUtil.mkdtemp(Temp.getTempDir());
   try {
     return await callback(directory);
   } finally {
-    fs.rmSync(directory, { recursive: true, force: true });
+    await FsUtil.rm(directory, { recursive: true, force: true });
   }
 }
 
@@ -204,7 +208,7 @@ async function withTempDir<T>(callback: (directory: string) => Promise<T> | T): 
 async function withLargeArchive(callback: (archivePath: string) => Promise<void>): Promise<void> {
   await withTempDir(async (directory) => {
     const archivePath = path.join(directory, 'stored.zip');
-    writeStoredZip(archivePath, 'stored.bin', LARGE_CONTENTS);
+    await writeStoredZip(archivePath, 'stored.bin', LARGE_CONTENTS);
     await callback(archivePath);
   });
 }
@@ -241,11 +245,11 @@ interface StoredZipOptions {
  * than committed as a binary fixture -- and so can a deliberately broken one, by
  * lying in the headers about what the payload is.
  */
-function writeStoredZipEntries(
+async function writeStoredZipEntries(
   filePath: string,
   entries: { entryName: string; contents: Buffer }[],
   { hasSpanMarker = false, method = 0, flags = 0 }: StoredZipOptions = {},
-): void {
+): Promise<void> {
   const prefix = Buffer.alloc(hasSpanMarker ? 4 : 0);
   if (hasSpanMarker) {
     prefix.writeUInt32LE(0x08_07_4b_50, 0); // NSignature::kSpan
@@ -294,26 +298,22 @@ function writeStoredZipEntries(
   endOfCentralDirectory.writeUInt32LE(centralSize, 12);
   endOfCentralDirectory.writeUInt32LE(offset, 16);
 
-  const handle = fs.openSync(filePath, 'w');
-  try {
-    for (const chunk of [prefix, ...locals, ...centrals, endOfCentralDirectory]) {
-      fs.writeSync(handle, chunk);
-    }
-  } finally {
-    fs.closeSync(handle);
-  }
+  await FsUtil.writeFile(
+    filePath,
+    Buffer.concat([prefix, ...locals, ...centrals, endOfCentralDirectory]),
+  );
 }
 
 /**
  * {@link writeStoredZipEntries} for the common case of one entry.
  */
-function writeStoredZip(
+async function writeStoredZip(
   filePath: string,
   entryName: string,
   contents: Buffer,
   options: StoredZipOptions = {},
-): void {
-  writeStoredZipEntries(filePath, [{ entryName, contents }], options);
+): Promise<void> {
+  await writeStoredZipEntries(filePath, [{ entryName, contents }], options);
 }
 
 describe('listEntries', () => {
@@ -377,7 +377,7 @@ describe('listEntries', () => {
     expect(entries.map((entry) => entry.entryPath)).toEqual(['copy.7z']);
     // One entry, whose size is every slice added together -- the joined archive,
     // not the four entries inside it.
-    expect(entries.map((entry) => entry.size)).toEqual([fs.statSync(SPLIT_JOINED).size]);
+    expect(entries.map((entry) => entry.size)).toEqual([await FsUtil.size(SPLIT_JOINED)]);
   });
 
   test('it finds the earlier disks of a multi-disk zip from the last alone', async () => {
@@ -411,7 +411,9 @@ describe('listEntries', () => {
     // bug, and a loud death is still a caught regression.
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'span.zip');
-      writeStoredZip(archive, 'a.txt', Buffer.from('hello span mode'), { hasSpanMarker: true });
+      await writeStoredZip(archive, 'a.txt', Buffer.from('hello span mode'), {
+        hasSpanMarker: true,
+      });
       const entries = await sevenZip.listEntries({
         inputFilename: archive,
         format: SevenZipFormat.ZIP,
@@ -453,14 +455,14 @@ describe('listEntries', () => {
     // hangs, or is mistaken for a readable archive.
     await withTempDir(async (directory) => {
       const garbage = path.join(directory, 'garbage.7z');
-      fs.writeFileSync(garbage, crypto.randomBytes(4096));
+      await FsUtil.writeFile(garbage, crypto.randomBytes(4096));
       const empty = path.join(directory, 'empty.7z');
-      fs.writeFileSync(empty, Buffer.alloc(0));
+      await FsUtil.writeFile(empty, Buffer.alloc(0));
       // Cut mid-archive: the signature and start-header survive, so the handler
       // gets far enough to seek to metadata that is no longer there.
       const truncated = path.join(directory, 'truncated.7z');
-      const whole = fs.readFileSync(SEVEN_ZIP_ARCHIVE);
-      fs.writeFileSync(truncated, whole.subarray(0, Math.floor(whole.length / 2)));
+      const whole = await FsUtil.readFile(SEVEN_ZIP_ARCHIVE);
+      await FsUtil.writeFile(truncated, whole.subarray(0, Math.floor(whole.length / 2)));
 
       for (const archivePath of [garbage, empty, truncated]) {
         await expect(
@@ -490,7 +492,7 @@ describe('listEntries', () => {
     // listed path still resolves back to the entry it names.
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'backslash.zip');
-      writeStoredZip(archive, String.raw`dir\file.bin`, Buffer.from('windows-shaped name'));
+      await writeStoredZip(archive, String.raw`dir\file.bin`, Buffer.from('windows-shaped name'));
       const entries = await sevenZip.listEntries({
         inputFilename: archive,
         format: SevenZipFormat.ZIP,
@@ -506,7 +508,7 @@ describe('listEntries', () => {
     // has to come from the archive rather than from a position in an array.
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'withdir.zip');
-      writeStoredZipEntries(archive, [
+      await writeStoredZipEntries(archive, [
         { entryName: 'sub/', contents: Buffer.alloc(0) },
         { entryName: 'sub/file.bin', contents: Buffer.from('inside a directory') },
       ]);
@@ -644,7 +646,7 @@ describe('openEntryReader', () => {
         entryPath: 'copy.7z',
       }),
     );
-    expect(extracted.equals(fs.readFileSync(SPLIT_JOINED))).toEqual(true);
+    expect(extracted.equals(await FsUtil.readFile(SPLIT_JOINED))).toEqual(true);
   });
 
   test('it extracts both entries across the disks of a multi-disk zip', async () => {
@@ -808,7 +810,7 @@ describe('openEntryReader', () => {
     await withTempDir(async (directory) => {
       const archive = path.join(directory, 'backslash.zip');
       const contents = Buffer.from('either spelling');
-      writeStoredZip(archive, String.raw`dir\file.bin`, contents);
+      await writeStoredZip(archive, String.raw`dir\file.bin`, contents);
 
       const extracted = await Promise.all(
         [String.raw`dir\file.bin`, 'dir/file.bin'].map(
@@ -839,11 +841,11 @@ describe('openEntryReader', () => {
     // gone. Listing succeeding is what makes the extraction assertion meaningful.
     await withTempDir(async (directory) => {
       const corrupt = path.join(directory, 'corrupt.7z');
-      const whole = Buffer.from(fs.readFileSync(SEVEN_ZIP_ARCHIVE));
+      const whole = Buffer.from(await FsUtil.readFile(SEVEN_ZIP_ARCHIVE));
       for (let i = 32; i < 48; i++) {
         whole[i] ^= 0x5a;
       }
-      fs.writeFileSync(corrupt, whole);
+      await FsUtil.writeFile(corrupt, whole);
 
       const entries = await sevenZip.listEntries({
         inputFilename: corrupt,
@@ -880,9 +882,9 @@ describe('openEntryReader', () => {
     // and one that extracts anyway gets an error rather than the ciphertext.
     await withTempDir(async (directory) => {
       const unsupported = path.join(directory, 'unsupported-method.zip');
-      writeStoredZip(unsupported, 'a.bin', Buffer.from('never decoded'), { method: 77 });
+      await writeStoredZip(unsupported, 'a.bin', Buffer.from('never decoded'), { method: 77 });
       const encrypted = path.join(directory, 'encrypted.zip');
-      writeStoredZip(encrypted, 'a.bin', Buffer.from('never decrypted'), { flags: 1 });
+      await writeStoredZip(encrypted, 'a.bin', Buffer.from('never decrypted'), { flags: 1 });
 
       const [unsupportedEntries, encryptedEntries] = await Promise.all(
         [unsupported, encrypted].map(

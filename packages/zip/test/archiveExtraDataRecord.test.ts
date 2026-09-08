@@ -26,7 +26,7 @@ async function withFile<T>(
   callback: (fileHandle: fs.promises.FileHandle) => Promise<T>,
 ): Promise<T> {
   const filePath = await FsUtil.mktemp(Temp.getTempDir());
-  await fs.promises.writeFile(filePath, bytes);
+  await FsUtil.writeFile(filePath, bytes);
   const fileHandle = await fs.promises.open(filePath, 'r');
   try {
     return await callback(fileHandle);
