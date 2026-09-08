@@ -37,18 +37,9 @@ export default abstract class SevenZipLib extends Archive {
     return true;
   }
 
-  /**
-   * The entry path to use for a format that records no name of its own. `.Z`
-   * wraps a single nameless stream, and the convention every tool follows is to
-   * name it after the archive with the extension removed, so `game.rom.Z` holds
-   * `game.rom`.
-   */
-  private nameFromArchive(): string {
-    return path.parse(this.getFilePath()).name;
-  }
-
   private entryPathOf(entry: SevenZipEntry): string {
-    return entry.entryPath ?? this.nameFromArchive();
+    // Not every archive type can provide meaningful entry paths; default to the archive's name
+    return entry.entryPath ?? path.parse(this.getFilePath()).name;
   }
 
   async getArchiveEntries(
