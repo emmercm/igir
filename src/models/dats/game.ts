@@ -2,7 +2,9 @@ import 'reflect-metadata';
 
 import { Expose, Transform, Type } from 'class-transformer';
 
+import IgirException from '../../exceptions/igirException.js';
 import ArrayUtil from '../../utils/arrayUtil.js';
+import FsUtil from '../../utils/fsUtil.js';
 import Disk from './disk.js';
 import Internationalization from './internationalization.js';
 import DeviceRef from './mame/deviceRef.js';
@@ -110,6 +112,10 @@ export interface GameProps {
 
   readonly genre?: string;
 
+  // ********** REDUMP FIELDS **********
+
+  // readonly serial?: string;
+
   // ********** IGIR FIELDS **********
 
   readonly dir2datSource?: string;
@@ -177,6 +183,12 @@ export default class Game implements GameProps {
   );
 
   @Expose()
+  @Transform(({ value }: { value: undefined | string }) => {
+    if (value !== undefined && FsUtil.isPathTraversal(value)) {
+      throw new IgirException(`game name is unsafe for directory traversal: ${value}`);
+    }
+    return value;
+  })
   readonly name: string;
 
   @Expose({ name: 'isbios' })
@@ -235,6 +247,9 @@ export default class Game implements GameProps {
   readonly language?: string;
 
   constructor(props?: GameProps) {
+    if (props?.name !== undefined && FsUtil.isPathTraversal(props.name)) {
+      throw new IgirException(`game name is unsafe for directory traversal: ${props.name}`);
+    }
     this.name = props?.name ?? '';
     this.isBios = props?.isBios ?? this.isBios;
     this.cloneOf = props?.cloneOf;

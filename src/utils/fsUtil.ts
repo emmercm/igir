@@ -345,6 +345,23 @@ export default class FsUtil {
   }
 
   /**
+   * @returns true if {@link filePath} would escape the directory that it's meant to be relative
+   * to, either because it's absolute or because it contains `..` path segments.
+   * https://security.snyk.io/research/zip-slip-vulnerability
+   */
+  static isPathTraversal(filePath: string): boolean {
+    const normalized = filePath.replaceAll('\\', '/');
+    return (
+      // Absolute POSIX paths, as well as Windows UNC paths
+      normalized.startsWith('/') ||
+      // Windows drive letters
+      /^[a-z]:/i.test(normalized) ||
+      // Note: only whole segments count, filenames such as "Final Fantasy VII..disc1.bin" are legal
+      normalized.split('/').includes('..')
+    );
+  }
+
+  /**
    * @returns a new filepath with all characters that are illegal on {@link platform} removed
    */
   static makeLegal(filePath: string, platform: NodeJS.Platform = process.platform): string {

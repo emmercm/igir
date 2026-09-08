@@ -1,5 +1,7 @@
 import { Expose, Transform } from 'class-transformer';
 
+import IgirException from '../../exceptions/igirException.js';
+import FsUtil from '../../utils/fsUtil.js';
 import Archive from '../files/archives/archive.js';
 import ArchiveEntry from '../files/archives/archiveEntry.js';
 import File from '../files/file.js';
@@ -35,6 +37,12 @@ export interface ROMProps extends ChecksumProps {
  */
 export default class ROM implements ROMProps {
   @Expose()
+  @Transform(({ value }: { value: undefined | string }) => {
+    if (value !== undefined && FsUtil.isPathTraversal(value)) {
+      throw new IgirException(`ROM name is unsafe for directory traversal: ${value}`);
+    }
+    return value;
+  })
   readonly name: string;
 
   @Expose()
@@ -83,6 +91,9 @@ export default class ROM implements ROMProps {
   readonly bios?: string;
 
   constructor(props?: ROMProps) {
+    if (props?.name !== undefined && FsUtil.isPathTraversal(props.name)) {
+      throw new IgirException(`ROM name is unsafe for directory traversal: ${props.name}`);
+    }
     this.name = props?.name ?? '';
     this.size = props?.size ?? 0;
     this.crc32 = props?.crc32?.toLowerCase().replace(/^0x/, '').padStart(8, '0');
