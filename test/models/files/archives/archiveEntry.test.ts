@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import MappableSemaphore from '../../../../src/async/mappableSemaphore.js';
 import FileCache from '../../../../src/cache/fileCache.js';
+import IgirException from '../../../../src/exceptions/igirException.js';
 import FileFactory from '../../../../src/factories/fileFactory.js';
 import Temp from '../../../../src/globals/temp.js';
 import ArchiveEntry from '../../../../src/models/files/archives/archiveEntry.js';
@@ -18,6 +19,38 @@ import ROMScanner from '../../../../src/modules/roms/romScanner.js';
 import bufferUtil from '../../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../../src/utils/fsUtil.js';
 import ProgressBarFake from '../../../console/progressBarFake.js';
+
+describe('constructor', () => {
+  test.each([
+    '..',
+    '../evil.rom',
+    '../../../../tmp/evil.rom',
+    'roms/../../evil.rom',
+    'roms/..',
+    '..\\evil.rom',
+    'roms\\..\\..\\evil.rom',
+    '/etc/passwd',
+    '//server/share/evil.rom',
+    'C:\\Windows\\evil.rom',
+    'c:/windows/evil.rom',
+  ])('should throw on an entry path that escapes the archive: %s', async (entryPath) => {
+    const archive = new Zip('/some/archive.zip');
+    await expect(ArchiveEntry.entryOf({ archive, entryPath })).rejects.toThrow(IgirException);
+  });
+
+  test.each([
+    'Tetris (World).gb',
+    'Nintendo - Game Boy/Tetris (World).gb',
+    './Tetris (World).gb',
+    // Only whole segments count, these are all legal filenames
+    'Final Fantasy VII..disc1.bin',
+    '..hidden.rom',
+    'Game.../rom.bin',
+  ])('should not throw on a legal entry path: %s', async (entryPath) => {
+    const archive = new Zip('/some/archive.zip');
+    await expect(ArchiveEntry.entryOf({ archive, entryPath })).resolves.toBeDefined();
+  });
+});
 
 describe('getEntryPath', () => {
   test.each(['something.rom', 'foo/bar.rom'])(

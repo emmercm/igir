@@ -1,7 +1,14 @@
 import stream from 'node:stream';
 
-import { Exclude, Expose, instanceToPlain, plainToClassFromExist } from 'class-transformer';
+import {
+  Exclude,
+  Expose,
+  instanceToPlain,
+  plainToClassFromExist,
+  Transform,
+} from 'class-transformer';
 
+import IgirException from '../../../exceptions/igirException.js';
 import { FsReadCallback } from '../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../streams/skipBytesTransform.js';
 import FsUtil from '../../../utils/fsUtil.js';
@@ -27,6 +34,12 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
   readonly archive: A;
 
   @Expose()
+  @Transform(({ value }: { value: undefined | string }) => {
+    if (value !== undefined && FsUtil.isPathTraversal(value)) {
+      throw new IgirException(`archive entry path is unsafe for directory traversal: ${value}`);
+    }
+    return value;
+  })
   readonly entryPath: string;
 
   @Expose()
@@ -38,6 +51,11 @@ export default class ArchiveEntry<A extends Archive> extends File implements Arc
       filePath: archiveEntryProps.archive.getFilePath(),
     });
     this.archive = archiveEntryProps.archive;
+    if (FsUtil.isPathTraversal(archiveEntryProps.entryPath)) {
+      throw new IgirException(
+        `archive entry path is unsafe for directory traversal: ${archiveEntryProps.entryPath}`,
+      );
+    }
     this.entryPath = archiveEntryProps.entryPath.replaceAll('\\', '/');
     this.entryIndex = archiveEntryProps.entryIndex;
   }
