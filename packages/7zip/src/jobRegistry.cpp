@@ -20,8 +20,8 @@ void JobRegistry::Unregister(Token token) noexcept {
         return;
     }
     // The erased std::function is destroyed inside the lock, which is safe
-    // because it only ever captures a weak_ptr and an integer -- nothing whose
-    // destructor could reach back into this registry.
+    // because it only ever captures a weak_ptr and an integer, nothing whose
+    // destructor could reach back into this registry
     {
         std::scoped_lock const lock(mutex_);
         jobs_.erase(token);
@@ -31,7 +31,7 @@ void JobRegistry::Unregister(Token token) noexcept {
     }
     // Only the last job out during a drain has to wake the waiter, and it does
     // so with the lock already dropped so that DrainAndWait() is not woken onto
-    // a mutex this thread still holds.
+    // a mutex this thread still holds
     empty_.notify_all();
 }
 
@@ -41,7 +41,7 @@ void JobRegistry::DrainAndWait() noexcept {
         std::scoped_lock const lock(mutex_);
         // Set before the snapshot is taken, which is what makes the snapshot
         // complete: from here on Register() refuses, so no job can slip in
-        // between copying the list and waiting on it.
+        // between copying the list and waiting on it
         draining_ = true;
         try {
             cancels.reserve(jobs_.size());
@@ -82,7 +82,7 @@ void JobRegistry::DrainAndWait() noexcept {
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // These throw only when the underlying OS primitive fails, which a
         // teardown hook cannot recover from, and letting it escape a noexcept
-        // function calls std::terminate().
+        // function calls std::terminate()
     }
 }
 

@@ -23,7 +23,7 @@ namespace {
 struct Entry {
     // The archive's own item index, stored rather than recovered from this
     // vector's position, so that it stays correct however the list is later
-    // filtered or ordered.
+    // filtered or ordered
     uint32_t index = 0;
     std::optional<std::string> entryPath;
     std::optional<uint64_t> size;
@@ -34,7 +34,7 @@ struct Entry {
 
 // One listing, on a dedicated thread rather than on the libuv thread pool. A
 // listing holds its thread from the archive open through the last property read,
-// and for a large solid .7z the open alone decodes a compressed header -- far
+// and for a large solid .7z the open alone decodes a compressed header, far
 // longer than the short tasks the pool's four default threads are sized for, so
 // concurrent listings would stall unrelated fs, dns and zlib work.
 //
@@ -79,10 +79,10 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
     // would turn such a throw into that same terminate(); it catches internally.
     void Run();
 
-    // The listing, which reports failure by throwing; Run() catches.
+    // The listing, which reports failure by throwing; Run() catches
     void List();
 
-    // Marshals the result back to the event loop and settles the promise.
+    // Marshals the result back to the event loop and settles the promise
     void Settle();
 
     void Emit(Napi::Env env);
@@ -101,7 +101,7 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
 void ListJob::List() {
     OpenedArchive opened;
     // The abort flag makes the open interruptible; without it a cancel during a
-    // large solid archive's header decode would not be seen until it finished.
+    // large solid archive's header decode would not be seen until it finished
     HRESULT const hr = OpenArchive(path_, formatIndex_, &opened, &abort_);
     if (hr != S_OK) {
         if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
@@ -123,7 +123,7 @@ void ListJob::List() {
     // an amortized reallocation, bounded by what the archive can produce.
     for (uint32_t i = 0; i < count; i++) {
         // Checked per item, because an untrusted count makes this loop the one
-        // place a listing can run long after the open has succeeded.
+        // place a listing can run long after the open has succeeded
         if (abort_.load(std::memory_order_relaxed)) {
             error_ = "the archive listing was cancelled";
             return;
@@ -156,7 +156,7 @@ void ListJob::List() {
         entries_.push_back(std::move(entry));
     }
     // `opened` is destroyed here: every file handle is released before the
-    // result reaches the event loop.
+    // result reaches the event loop
 }
 
 void ListJob::Run() {
@@ -167,7 +167,7 @@ void ListJob::Run() {
             error_ = e.what();
         } catch (...) {
             // Several vendored calls throw non-std exceptions by design, and
-            // archives are untrusted input.
+            // archives are untrusted input
             error_ = "failed to list the archive's entries";
         }
     } catch (...) {  // NOLINT(bugprone-empty-catch)
@@ -179,16 +179,16 @@ void ListJob::Run() {
         Settle();
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // Settle() only queues work; a failure means the environment is going
-        // away, and there is no promise left to settle.
+        // away, and there is no promise left to settle
     }
 }
 
 void ListJob::Settle() {
     // Keeps this object alive until the callback has run, whether or not the
-    // caller still holds a reference.
+    // caller still holds a reference
     std::shared_ptr<ListJob> const self = shared_from_this();
     // Call() never blocks, and does nothing once the environment has gone away:
-    // there is nothing left waiting on the promise.
+    // there is nothing left waiting on the promise
     tsfn_->Call([self](Napi::Env env) {
         // Event loop thread. Nothing may escape into N-API's C ABI: this is
         // called through a C function pointer, and with
@@ -218,15 +218,15 @@ void ListJob::Emit(Napi::Env env) {
         Napi::Object const object = Napi::Object::New(env);
         object.Set("entryIndex", Napi::Number::New(env, entry.index));
         // Undefined rather than "" when the format records no name: "" is a
-        // name an entry could really have.
+        // name an entry could really have
         object.Set("entryPath", entry.entryPath.has_value() ? Napi::Value(Napi::String::New(env, *entry.entryPath))
                                                             : env.Undefined());
         // Undefined rather than 0 when the format records no size: 0 is a real
-        // length, and a single-stream member genuinely can be empty.
+        // length, and a single-stream member genuinely can be empty
         object.Set("size", entry.size.has_value()
                                ? Napi::Value(Napi::Number::New(env, static_cast<double>(*entry.size)))
                                : env.Undefined());
-        // A number, left for JavaScript to format as hex.
+        // A number, left for JavaScript to format as hex
         object.Set("crc32",
                    entry.crc32.has_value() ? Napi::Value(Napi::Number::New(env, *entry.crc32)) : env.Undefined());
         object.Set("isDirectory", Napi::Boolean::New(env, entry.isDirectory));
@@ -239,7 +239,7 @@ void ListJob::Emit(Napi::Env env) {
 Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatIndex) {
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
     // Creating the ThreadSafeFunction happens in the constructor, so from here
-    // on there is a thread count of 1 outstanding that something must release.
+    // on there is a thread count of 1 outstanding that something must release
     std::shared_ptr<ListJob> const job(new ListJob(env, deferred, std::move(path), formatIndex));
 
     // A null registry means the environment's instance data is already gone,
@@ -260,7 +260,7 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
     }
     if (job->token_ == JobRegistry::kInvalidToken) {
         // Gives back the thread count the constructor took out; without it the
-        // function, and the environment reference behind it, would leak.
+        // function, and the environment reference behind it, would leak
         job->tsfn_->Release();
         deferred.Reject(Napi::Error::New(env, "the 7-Zip addon is shutting down").Value());
         return deferred.Promise();
@@ -269,22 +269,22 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
     try {
         // Captured as its own non-const copy so that it can be released below;
         // capturing the const `job` by copy would make the lambda's member const
-        // too, `mutable` or not.
+        // too, `mutable` or not
         std::thread([job = std::shared_ptr<ListJob>(job)]() mutable {
             job->Run();
             // Before unregistering, because giving back the thread count is one
-            // of the things teardown is waiting to see happen.
+            // of the things teardown is waiting to see happen
             job->tsfn_->Release();
             // Copied out before the reference is dropped, because dropping it
-            // may be what destroys the ListJob they are read from.
+            // may be what destroys the ListJob they are read from
             std::shared_ptr<JobRegistry> const registry = job->registry_;
             JobRegistry::Token const token = job->token_;
             // Also before unregistering: letting the captured shared_ptr fall
             // out of scope on its own would order ~ListJob after the
-            // Unregister() below, which teardown reads as "the thread is done".
+            // Unregister() below, which teardown reads as "the thread is done"
             job.reset();
             // Dead last: teardown is then free to let the environment finish
-            // going away, so nothing may be ordered after it.
+            // going away, so nothing may be ordered after it
             if (registry) {
                 registry->Unregister(token);
             }

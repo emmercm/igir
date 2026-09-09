@@ -16,9 +16,9 @@ namespace sevenzip {
 // one worker's teardown cancel another worker's live extractions.
 struct AddonData {
     // Shared rather than owned outright, so that a job holding a reference can
-    // still unregister after this environment's instance data is finalized --
-    // the order of that finalizer against the cleanup hook is not something to
-    // depend on.
+    // still unregister after this environment's instance data is finalized.
+    // The order of that finalizer against the cleanup hook is not something
+    // to depend on.
     std::shared_ptr<JobRegistry> registry;
 };
 

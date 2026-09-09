@@ -1,5 +1,5 @@
-// Inert stand-ins for NCrypto::NWzAes (WinZip AES), so that the Zip handler --
-// which holds a real, non-pointer CDecoder member -- links without pulling in
+// Inert stand-ins for NCrypto::NWzAes (WinZip AES), so that the Zip handler,
+// which holds a real, non-pointer CDecoder member, links without pulling in
 // the upstream source. That source also defines the write-path CEncoder, and
 // this addon links no archive-writing code and nothing from Crypto/.
 //

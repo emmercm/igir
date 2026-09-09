@@ -1,4 +1,4 @@
-/* swapBytesScalar.c -- compile upstream SwapBytes.c with its SIMD paths
+/* swapBytesScalar.c: compile upstream SwapBytes.c with its SIMD paths
    disabled.
 
    C/SwapBytes.c defines k_SwapBytes_Mode_MAX itself on x86, overriding the

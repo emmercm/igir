@@ -5,7 +5,7 @@
 
 #include "Common/MyWindows.h"
 
-// Turns 7-Zip's result codes into the sentences the addon fails with.
+// Turns 7-Zip's result codes into the sentences the addon fails with
 namespace sevenzip {
 
 // The high half of an HRESULT that 7-Zip built out of an operating system error
@@ -14,8 +14,8 @@ namespace sevenzip {
 //
 // The two platforms disagree on what that means, and matching only one of them
 // silently costs every message on the other. 7-Zip's POSIX shim invents a
-// facility of its own -- HRESULT_FROM_ERRNO in C/7zTypes.h is
-// 0x80000000 | (0x800 << 16) | errno -- while its Windows builds use the real
+// facility of its own (HRESULT_FROM_ERRNO in C/7zTypes.h is
+// 0x80000000 | (0x800 << 16) | errno), while its Windows builds use the real
 // HRESULT_FROM_WIN32, which is facility 7 over a Win32 error. std::system_category()
 // is errno on POSIX and the Win32 error domain on MSVC, so each half of this is
 // exactly the low word its own platform's category can name.

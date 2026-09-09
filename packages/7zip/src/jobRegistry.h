@@ -24,7 +24,7 @@ class JobRegistry {
    public:
     using Token = uint64_t;
 
-    // Never returned by a successful Register(); tokens start at 1.
+    // Never returned by a successful Register(); tokens start at 1
     static constexpr Token kInvalidToken = 0;
 
     JobRegistry() = default;
@@ -41,8 +41,8 @@ class JobRegistry {
     // would be left to wait for it. Callers treat that as a failure to start.
     //
     // `cancel` may be invoked from the teardown thread at any point until the
-    // matching Unregister() returns, so it must capture weakly -- a
-    // std::weak_ptr locked inside the callback -- rather than hold a raw
+    // matching Unregister() returns, so it must capture weakly (a
+    // std::weak_ptr locked inside the callback) rather than hold a raw
     // pointer to an object that could be destroyed in between. It must not
     // throw, and must only ask the job to stop: DrainAndWait() does the
     // waiting.

@@ -29,7 +29,7 @@ void DrainOnCleanup(napi_async_cleanup_hook_handle handle, void* arg) {
     try {
         // The registry keeps itself alive through this lambda's capture, so the
         // joiner remains valid no matter when the environment's instance data
-        // is finalized relative to this hook.
+        // is finalized relative to this hook
         std::thread([handle, registry = std::move(registry)]() {
             registry->DrainAndWait();
             // Signals that teardown may continue. Nothing may touch `registry`
@@ -51,13 +51,13 @@ void DrainOnCleanup(napi_async_cleanup_hook_handle handle, void* arg) {
 void InitAddonData(Napi::Env env) {
     auto* data = new AddonData();
     data->registry = std::make_shared<JobRegistry>();
-    // N-API deletes this at environment teardown.
+    // N-API deletes this at environment teardown
     env.SetInstanceData(data);
 
     napi_async_cleanup_hook_handle handle = nullptr;
-    // Not fatal on its own -- the addon works, it just would not drain at
-    // teardown -- but that is the condition this exists to prevent, so it is
-    // reported rather than swallowed.
+    // Not fatal on its own (the addon works, it just would not drain at
+    // teardown), but that is the condition this exists to prevent, so it is
+    // reported rather than swallowed
     if (napi_add_async_cleanup_hook(env, DrainOnCleanup, data, &handle) != napi_ok) {
         Napi::Error::New(env, "failed to install the 7-Zip addon's cleanup hook").ThrowAsJavaScriptException();
     }

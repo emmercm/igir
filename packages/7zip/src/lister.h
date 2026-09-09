@@ -12,7 +12,7 @@ namespace sevenzip {
 //
 // Each entry object carries `entryIndex`, `entryPath`, `size`, `crc32`,
 // `isDirectory` and `isEncrypted`. The path, size and CRC are `undefined` when
-// the format does not record them, which is not the same as empty or zero --
+// the format does not record them, which is not the same as empty or zero:
 // only the caller can tell "empty" from "unknown".
 //
 // Entry paths are reported with `/` separators on every platform, because some

@@ -1,13 +1,13 @@
 // Inert stand-ins for the write-path methods the Zip handler declares by
 // implementing IOutArchive and ISetProperties. It implements them
 // unconditionally rather than behind Z7_EXTRACT_ONLY, and their real bodies
-// live in the archive-writing source this decode-only addon does not compile --
+// live in the archive-writing source this decode-only addon does not compile,
 // so without a definition somewhere the handler's vtable is incomplete and the
 // addon fails to load.
 //
 // SetCompressCodecsInfo is not stubbed: the handler defines it itself, and it
 // is a codec-info accessor decoding needs too. GetOutProperty is not stubbed
-// either -- it is private and non-virtual, so its absence never reaches the
+// either: it is private and non-virtual, so its absence never reaches the
 // linker, and an unresolved-symbol error for it would mean these stubs had
 // started calling into write-path helpers.
 //

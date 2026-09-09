@@ -21,7 +21,7 @@ namespace sevenzip {
 // The thread is never joined. Start() hands the producer a shared_ptr to the
 // Pump, so the object lives as long as the thread needs it and teardown is only:
 // abort, drop the pointer, return. The consumer never waits for the decoder to
-// notice the abort, which for a large solid .7z folder can take seconds -- and
+// notice the abort, which for a large solid .7z folder can take seconds, and
 // the consumer is the event loop thread, reaching the destructor from close()
 // or from the garbage collector.
 //
@@ -101,14 +101,13 @@ class Pump {
     // throw into that same terminate().
     void Run();
 
-    // The extraction, which reports failure by throwing; Run() catches.
+    // The extraction, which reports failure by throwing; Run() catches
     void Extract();
 
     void SetError(std::string message);
 
-    // Resolves `entryPath_` -- or, when there is none, the archive's sole entry
-    // -- to the index 7-Zip extracts by. Reports its own failures through
-    // SetError().
+    // Resolves `entryPath_`, or the archive's sole entry when there is none, to
+    // the index 7-Zip extracts by. Reports its own failures through SetError().
     HRESULT ResolveEntryIndex(IInArchive& archive, uint32_t* out);
 
     std::string EntryLabel() const;
@@ -128,7 +127,7 @@ class Pump {
     std::string error_;
     std::function<void()> onExit_;
     // Held so the thread can unregister itself as it exits, and so the registry
-    // outlives the Pump whatever order teardown happens in.
+    // outlives the Pump whatever order teardown happens in
     std::shared_ptr<JobRegistry> registry_;
     JobRegistry::Token token_ = JobRegistry::kInvalidToken;
 };

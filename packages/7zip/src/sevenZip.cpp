@@ -19,7 +19,7 @@
 #include "Windows/PropVariantConv.h"
 
 // 7-Zip's own archive factory exports, declared here because the vendored tree
-// ships no header for them.
+// ships no header for them
 STDAPI GetNumberOfFormats(UInt32* numFormats);
 STDAPI GetHandlerProperty2(UInt32 formatIndex, PROPID propID, PROPVARIANT* value);
 STDAPI CreateArchiver(const GUID* clsid, const GUID* iid, void** outObject);
@@ -46,7 +46,7 @@ std::once_flag g_initOnce;
 
 std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
                                        // a typedef for a pointer, and this is
-                                       // 7-Zip's own spelling of the parameter.
+                                       // 7-Zip's own spelling of the parameter
     if (bstr == nullptr) {
         return {};
     }
@@ -60,7 +60,7 @@ std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
 }  // namespace
 
 void EnsureInitialized() {
-    // Upstream requires this once, before any other CRC function is called.
+    // Upstream requires this once, before any other CRC function is called
     std::call_once(g_initOnce, []() { CrcGenerateTable(); });
 }
 
@@ -74,9 +74,9 @@ struct Format {
     GUID classId{};
 };
 
-// The handler set is fixed at build time -- each compiled-in handler registers
-// itself from a static initializer before main() -- so this table is built once
-// and read thereafter, and no archive open re-enumerates the handlers.
+// The handler set is fixed at build time (each compiled-in handler registers
+// itself from a static initializer before main()), so this table is built once
+// and read thereafter, and no archive open re-enumerates the handlers
 const std::vector<Format>& Formats() {
     // Function-local static: initialized on first use, and the C++ runtime makes
     // that thread-safe. Extraction opens archives from its own thread, so this
@@ -176,7 +176,7 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 // start volume's name through GetProperty(kpidName), derives each successive
 // name from it, and requests them through GetStream(); this class only resolves
 // a bare name against the directory the archive was opened from. Volume
-// discovery -- naming schemes, ordering, how many there are -- stays inside the
+// discovery (naming schemes, ordering, how many there are) stays inside the
 // vendored handlers.
 //
 // It is also mandatory for two of the registered handlers:
@@ -194,8 +194,8 @@ Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallbac
     UString dirPrefix_;
     UString name_;
     // Borrowed, not owned. It lives in the Pump or ListJob driving this open,
-    // which outlives the open by construction -- the open runs inside one of
-    // that object's own methods. Null when the caller cannot be cancelled.
+    // which outlives the open by construction, since the open runs inside one
+    // of that object's own methods. Null when the caller cannot be cancelled.
     const std::atomic<bool>* abort_ = nullptr;
 
    public:
@@ -226,16 +226,16 @@ Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
     // report "not available".
     try {
         if (propID == kpidName) {
-            // Copies the name into a BSTR, so it allocates -- and this method
+            // Copies the name into a BSTR, so it allocates, and this method
             // carries upstream's `throw()`, noexcept under C++17, so an
-            // escaping exception would call std::terminate().
+            // escaping exception would call std::terminate()
             prop = name_;
         }
     } catch (...) {
         return E_OUTOFMEMORY;
     }
     // Nothrow: Detach() moves the variant's bytes into `value` and leaves this
-    // one empty.
+    // one empty
     prop.Detach(value);
     return S_OK;
 }
@@ -244,7 +244,7 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
     *inStream = nullptr;
     // Checked here too: a spanned set opens one file per volume, and a handler
     // that never reports progress would otherwise walk all of them after a
-    // cancel. S_FALSE would be wrong here -- it means "no such volume", which
+    // cancel. S_FALSE would be wrong here: it means "no such volume", which
     // handlers take as a normal end of the set.
     if (Aborted()) {
         return E_ABORT;
@@ -258,7 +258,7 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
     // would turn running out of memory into a silently short archive.
     try {
         // Initialized from the call rather than assigned to afterwards, so that
-        // the stream is only ever owned by one pointer.
+        // the stream is only ever owned by one pointer
         CMyComPtr<IInStream> stream = OpenFile(dirPrefix_ + name);
         if (!stream) {
             return S_FALSE;
@@ -295,7 +295,7 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
     }
     // Only the first volume is opened here. When the archive spans several, the
     // handler pulls the rest through this callback's GetStream(), and each one
-    // it takes is owned by the handler -- so `out->stream` below is the first
+    // it takes is owned by the handler, so `out->stream` below is the first
     // volume's handle alone, and closing the archive still releases them all.
     CMyComPtr<IArchiveOpenCallback> const openCallback(new OpenCallback(widePath, abort));
     RINOK(archive->Open(stream, nullptr, openCallback))
@@ -372,7 +372,7 @@ bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& n
 
     std::string candidate;
     if (!GetStringProp(archive, index, kpidPath, &candidate)) {
-        // A format that records no name has nothing to match against.
+        // A format that records no name has nothing to match against
         return false;
     }
     return NormalizeEntryPath(std::move(candidate)) == normalizedPath;
@@ -380,7 +380,7 @@ bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& n
 
 HRESULT FindEntryIndex(IInArchive& archive, const std::string& entryPath, uint32_t* out) {
     // Both sides normalized, so `sub\\file.bin` and `sub/file.bin` name the same
-    // entry however the archive spells it.
+    // entry however the archive spells it
     std::string const wanted = NormalizeEntryPath(entryPath);
 
     UInt32 count = 0;

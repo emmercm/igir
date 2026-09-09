@@ -80,7 +80,7 @@ Z7_COM7F_IMF(QueueOutStream::Write(const void* data, UInt32 size, UInt32* proces
     if (!queue_.Write(static_cast<const uint8_t*>(data), size)) {
         // The consumer closing is a normal end of stream, but failing to
         // allocate has to reach the caller as an error rather than as an entry
-        // that quietly stopped early.
+        // that quietly stopped early
         return queue_.OutOfMemory() ? E_OUTOFMEMORY : E_ABORT;
     }
     if (processedSize != nullptr) {
@@ -107,7 +107,7 @@ Z7_COM7F_IMF(ExtractCallback::GetStream(UInt32 index, ISequentialOutStream** out
     }
     // Nothrow: this function carries 7-Zip's `throw()` specification, so an
     // escaping std::bad_alloc would call std::terminate() rather than surface
-    // as a failed extraction.
+    // as a failed extraction
     auto* stream = new (std::nothrow) QueueOutStream(queue_, abort_);
     if (stream == nullptr) {
         return E_OUTOFMEMORY;
@@ -125,7 +125,7 @@ Z7_COM7F_IMF(ExtractCallback::SetOperationResult(Int32 opRes)) {
 }
 
 // How many chunks may sit queued, for a given chunk size: enough to cover the
-// read-ahead bound, and never fewer than two.
+// read-ahead bound, and never fewer than two
 size_t ReadAheadChunks(size_t chunkBytes) {
     return std::max<size_t>(2, (Pump::kReadAheadBytes + chunkBytes - 1) / chunkBytes);
 }
@@ -146,7 +146,7 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
                                   std::function<void()> onExit) {
     chunkBytes = std::clamp<size_t>(chunkBytes, 1, kMaxChunkBytes);
     // `onReady` goes through the constructor because ChunkQueue holds it as a
-    // const member.
+    // const member
     std::shared_ptr<Pump> pump(
         new Pump(std::move(path), formatIndex, std::move(entryPath), entryIndex, chunkBytes, std::move(onReady)));
     pump->onExit_ = std::move(onExit);
@@ -191,13 +191,13 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
             } catch (...) {  // NOLINT(bugprone-empty-catch)
                 // Documented as non-throwing, and today it is only a
                 // ThreadSafeFunction::Release() that returns a status rather
-                // than throwing -- but nothing enforces that, and an exception
+                // than throwing, but nothing enforces that, and an exception
                 // escaping a std::thread's callable calls std::terminate().
                 // Run() guards itself the same way; this is the one step
                 // outside it.
             }
             // Copied out before the reference is dropped, because dropping it
-            // may be what destroys the Pump they are read from.
+            // may be what destroys the Pump they are read from
             std::shared_ptr<JobRegistry> const registry = pump->registry_;
             JobRegistry::Token const token = pump->token_;
             // Released before unregistering, not after. When this is the last
@@ -207,7 +207,7 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
             // the Unregister() below, which teardown reads as "the thread is
             // done" before those objects are actually gone.
             pump.reset();
-            // Dead last, after everything else this thread will ever touch.
+            // Dead last, after everything else this thread will ever touch
             if (registry) {
                 registry->Unregister(token);
             }
@@ -233,7 +233,7 @@ void Pump::SetError(std::string message) {
     }
 }
 
-// Describes the entry for an error message, however the caller named it.
+// Describes the entry for an error message, however the caller named it
 std::string Pump::EntryLabel() const {
     if (entryPath_.has_value()) {
         return "the entry '" + *entryPath_ + "'";
@@ -283,8 +283,8 @@ HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
 }
 
 void Pump::Extract() {
-    // Everything 7-Zip owns lives inside this scope so that it is destroyed --
-    // and every file handle closed -- before the thread exits.
+    // Everything 7-Zip owns lives inside this scope so that it is destroyed,
+    // and every file handle closed, before the thread exits
     OpenedArchive opened;
     // Passing abort_ makes the open itself interruptible. A large solid .7z
     // decodes its header here, which is long enough that a close() during it
@@ -306,7 +306,7 @@ void Pump::Extract() {
 
     // Held through the interface pointer because the class macro makes
     // AddRef()/Release() private on the concrete class; `raw` stays valid for
-    // OpResult() because `callback` owns a reference.
+    // OpResult() because `callback` owns a reference
     auto* raw = new ExtractCallback(index, queue_, abort_);
     CMyComPtr<IArchiveExtractCallback> const callback(raw);
     hr = opened.archive->Extract(&index, 1, 0 /* testMode */, callback);
@@ -317,7 +317,7 @@ void Pump::Extract() {
         // that as success would hand the caller a truncated entry.
         SetError(OutOfMemoryMessage());
     } else if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
-        // The consumer closed early; not an error.
+        // The consumer closed early; not an error
     } else if (hr != S_OK) {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" + HResultSuffix(hr));
     } else if (raw->OpResult() != NArchive::NExtract::NOperationResult::kOK) {
@@ -342,7 +342,7 @@ void Pump::Run() {
     }
     try {
         // Always signal completion, on every path, so a waiting consumer cannot
-        // hang -- including when the error reporting above failed.
+        // hang, including when the error reporting above failed
         queue_.Finish();
     } catch (...) {  // NOLINT(bugprone-empty-catch)
     }
@@ -353,12 +353,12 @@ ChunkQueue::Status Pump::TryRead(Chunk* out) {
     if (status == ChunkQueue::Status::kEnd) {
         // Only at the end, and only once there is nothing left to hand over: a
         // failure part-way through an entry still delivers the bytes that were
-        // decoded before it.
+        // decoded before it
         std::scoped_lock const lock(errorMutex_);
         if (error_.empty() && queue_.OutOfMemory()) {
             // Extract() records the same message, but only once it has
             // unwound, and the queue stops handing out chunks the instant the
-            // allocation fails -- so the consumer routinely gets here first. In
+            // allocation fails, so the consumer routinely gets here first. In
             // that window `error_` is still empty and the end of the queue
             // would be indistinguishable from a complete entry.
             error_ = OutOfMemoryMessage();

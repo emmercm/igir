@@ -59,7 +59,7 @@ class ChunkQueue {
     //
     // noexcept is load-bearing. The only caller is 7-Zip's
     // ISequentialOutStream::Write, whose signature carries upstream's `throw()`
-    // -- a synonym for noexcept under C++17 -- so an escaping std::bad_alloc
+    // (a synonym for noexcept under C++17), so an escaping std::bad_alloc
     // would call std::terminate(). Every allocating step in here is therefore
     // nothrow or caught, and running out of memory becomes a rejected read.
     bool Write(const uint8_t* data, size_t length) noexcept;
@@ -84,14 +84,14 @@ class ChunkQueue {
         kEnd,
     };
 
-    // Consumer, and the reason this class exists: it never blocks.
+    // Consumer, and the reason this class exists: it never blocks
     Status TryTake(Chunk* out);
 
    private:
-    // Fires `onReady_` if a TryTake() armed it, dropping `lock` for the call --
-    // the callback ends up in N-API, and holding a mutex across a foreign call
-    // invites deadlock -- and re-acquiring it before returning. Callers must
-    // re-check any state they cached across the call.
+    // Fires `onReady_` if a TryTake() armed it, dropping `lock` for the call
+    // (the callback ends up in N-API, and holding a mutex across a foreign
+    // call invites deadlock) and re-acquiring it before returning. Callers
+    // must re-check any state they cached across the call.
     //
     // Every path that publishes a chunk, or stops publishing for good, calls
     // this before it can block or return, which is what keeps the producer and
@@ -116,12 +116,12 @@ class ChunkQueue {
     std::deque<Chunk> ready_;
     // The chunk being filled. Not visible to the consumer until it is full, or
     // until Finish() publishes what there is of it. It is deliberately outside
-    // the maxChunks_ bound -- one extra chunk of slack, not a queue slot.
+    // the maxChunks_ bound: one extra chunk of slack, not a queue slot.
     Chunk partial_;
     bool finished_ = false;
     bool aborted_ = false;
     // Set by a Write() that could not allocate. It rides alongside aborted_
-    // rather than replacing it -- the producer stops either way -- so that the
+    // rather than replacing it (the producer stops either way) so that the
     // consumer can report a failure instead of a stream that silently ends
     // early. Atomic so the consumer can read it without ordering itself against
     // a producer parked inside this queue.
@@ -131,7 +131,7 @@ class ChunkQueue {
     // cannot interleave with the publish-and-fire on the producer side.
     bool waiting_ = false;
     // Immutable after construction, which is what makes it safe to call with
-    // the lock dropped from either thread.
+    // the lock dropped from either thread
     const std::function<void()> onReady_;
 };
 

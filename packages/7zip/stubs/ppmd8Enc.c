@@ -1,7 +1,7 @@
 /* Stub implementations of Ppmd8_EncodeSymbol and Ppmd8_Flush_RangeEnc, the two
    range-encoder entry points NPpmdZip::CEncoder calls.
 
-   PpmdZip.cpp holds both CDecoder -- ZIP method 98, a live decode path -- and
+   PpmdZip.cpp holds both CDecoder (ZIP method 98, a live decode path) and
    CEncoder, with no Z7_EXTRACT_ONLY guard between them, so the encoder is
    compiled as dead code and its calls reach the linker even though nothing
    constructs one.
@@ -22,8 +22,8 @@
    whether a given linker's dead-code elimination fires.
 
    Both return void, so unlike the C++ stubs they cannot report E_NOTIMPL to a
-   caller -- CEncoder would simply emit a truncated stream -- so reaching either
-   one aborts instead.  Nothing enforces the invariant mechanically: if you add
+   caller: CEncoder would simply emit a truncated stream. Reaching either one
+   aborts instead.  Nothing enforces the invariant mechanically: if you add
    a code path that can construct a CEncoder, these aborts are what you will hit
    at runtime.  Do not add C/Ppmd8Enc.c to satisfy them. */
 

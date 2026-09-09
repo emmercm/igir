@@ -15,10 +15,10 @@ namespace sevenzip {
 // Node destroys the function from an environment cleanup hook regardless of how
 // many references are still outstanding, so a worker thread that is still
 // unwinding can be left holding a Release() that would write through a dangling
-// pointer -- an abort() with no message under glibc.
+// pointer, which is an abort() with no message under glibc.
 //
-// So the function is never touched except under `mutex_`, and its finalizer --
-// which N-API runs immediately before freeing it -- takes that same mutex to
+// So the function is never touched except under `mutex_`, and its finalizer
+// (which N-API runs immediately before freeing it) takes that same mutex to
 // clear `alive_`. Use and destruction are then mutually exclusive: a thread
 // either arrives while the function is whole, or finds it gone and does
 // nothing. Doing nothing is right rather than a leak: Node has already
@@ -46,7 +46,7 @@ class TsfnHandle {
 
     // Queues `callback` to run on the event loop thread. Callable from any
     // thread; never blocks, never throws, and does nothing once the function is
-    // gone -- there would be no loop left to run the callback on.
+    // gone, since there would be no loop left to run the callback on.
     void Call(std::function<void(Napi::Env)> callback) noexcept;
 
     // Gives back the thread count Create() took out. Callable from any thread,

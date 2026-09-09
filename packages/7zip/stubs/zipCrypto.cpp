@@ -1,6 +1,6 @@
 // Inert stand-ins for NCrypto::NZip (legacy PKWARE ZipCrypto), so that the Zip
-// handler -- which holds a real, non-pointer CDecoder member and calls into it
-// for every entry marked encrypted -- links without pulling in the upstream
+// handler, which holds a real, non-pointer CDecoder member and calls into it
+// for every entry marked encrypted, links without pulling in the upstream
 // source. That source also defines the write-path CEncoder, and this addon
 // links no archive-writing code and nothing from Crypto/.
 //

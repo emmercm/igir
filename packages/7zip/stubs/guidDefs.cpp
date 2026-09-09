@@ -1,6 +1,6 @@
 // Real storage for the 7-Zip interface IIDs this addon uses. The SDK's
 // DEFINE_GUID/Z7_DEFINE_GUID macros emit storage only where INITGUID is defined
-// as a header declares a GUID, and expand to a bare `extern` everywhere else --
+// as a header declares a GUID, and expand to a bare `extern` everywhere else,
 // so exactly one translation unit has to be compiled with it active.
 //
 // It has to be this file's own gyp target, with INITGUID as a -D flag rather

@@ -1,6 +1,6 @@
 // Inert stand-ins for NCompress::NBZip2::CEncoder, the BZip2 compressor. This
 // decode-only addon does not compile the real encoder, but it does compile the
-// bzip2 handler, whose write path is not guarded behind Z7_EXTRACT_ONLY -- so
+// bzip2 handler, whose write path is not guarded behind Z7_EXTRACT_ONLY, so
 // the reference to CEncoder reaches the linker whether or not any archive is
 // ever written.
 //

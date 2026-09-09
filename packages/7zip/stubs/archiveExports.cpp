@@ -9,5 +9,5 @@
 // The upstream file is included rather than copied so that it stays upstream.
 
 #define INITGUID
-// NOLINTNEXTLINE(bugprone-suspicious-include): including the .cpp is the point.
+// NOLINTNEXTLINE(bugprone-suspicious-include): including the .cpp is the point
 #include "7zip/Archive/ArchiveExports.cpp"

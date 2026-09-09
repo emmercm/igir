@@ -43,13 +43,13 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
             entryPath = info[2].As<Napi::String>().Utf8Value();
             if (entryPath->empty()) {
                 // An empty path would otherwise be indistinguishable from naming no
-                // entry at all, silently extracting a single-entry archive's member.
+                // entry at all, silently extracting a single-entry archive's member
                 Napi::TypeError::New(env, "entry path must not be empty").ThrowAsJavaScriptException();
                 return;
             }
         }
         // An out-of-range or non-integral hint is not an error: it cannot match
-        // any item, and the Pump falls back to the scan.
+        // any item, and the Pump falls back to the scan
         std::optional<uint32_t> entryIndex;
         if (hinted) {
             double const requested = info[3].As<Napi::Number>().DoubleValue();
@@ -60,7 +60,7 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
 
         // Fixed for the life of the reader rather than passed to each read(),
         // because the producer fills chunks to this size before publishing them
-        // and so must know it before any byte is decoded.
+        // and so must know it before any byte is decoded
         size_t chunkBytes = Pump::kReadAheadBytes;
         if (info.Length() >= 5 && info[4].IsNumber()) {
             double const requested = info[4].As<Napi::Number>().DoubleValue();
@@ -104,7 +104,7 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                             }
                         } catch (...) {  // NOLINT(bugprone-empty-catch)
                             // OnProducerReady handles its own failures; this only
-                            // stops a failure in that handling from aborting.
+                            // stops a failure in that handling from aborting
                         }
                     });
                 },
@@ -116,8 +116,8 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 });
         } catch (...) {
             // Nothing was started, so nothing will ever call onExit. Release
-            // the ThreadSafeFunction's initial use count here, or it -- and the
-            // environment reference behind it -- leaks.
+            // the ThreadSafeFunction's initial use count here, or it (and the
+            // environment reference behind it) leaks.
             bridge->tsfn->Release();
             throw;
         }
@@ -128,7 +128,7 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
     } catch (...) {
         // Reading the arguments allocates, creating the ThreadSafeFunction can
         // fail, and starting the Pump creates a std::thread, which throws
-        // std::system_error when the OS refuses.
+        // std::system_error when the OS refuses
         Napi::Error::New(info.Env(), "failed to open the entry for reading").ThrowAsJavaScriptException();
     }
 }
@@ -156,7 +156,7 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         status = pump_->TryRead(&chunk);
     } catch (const std::exception& e) {
         // The producer's own message, which names the archive, the entry and
-        // what went wrong with it.
+        // what went wrong with it
         *settled = true;
         deferred.Reject(Napi::Error::New(env, e.what()).Value());
         return true;
@@ -200,7 +200,7 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
     // A napi_deferred may be settled exactly once, and settling twice is
     // undefined behavior rather than an error, so the catch-all below has to
-    // know whether the body already got there.
+    // know whether the body already got there
     bool settled = false;
     try {
         if (closed_) {
@@ -212,12 +212,12 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
         } else if (!constructed_ || !pump_) {
             // The constructor reported a TypeError and returned without starting
             // anything. Resolving with null here would tell a caller the entry
-            // was empty, which is a different -- and silently wrong -- answer.
+            // was empty, which is a different answer, and a silently wrong one.
             settled = true;
             deferred.Reject(Napi::Error::New(env, "the entry reader was never opened").Value());
         } else if (!TrySettle(env, deferred, &settled)) {
-            // The producer has not caught up -- the uncommon case, since it
-            // runs ahead by a bounded amount. Park, holding both the object and
+            // The producer has not caught up, which is the uncommon case, since
+            // it runs ahead by a bounded amount. Park, holding both the object and
             // the event loop open until it wakes us; the read above has already
             // armed the callback that will.
             pending_ = deferred;
@@ -253,7 +253,7 @@ void EntryReader::ReleasePending(Napi::Env env) {
     pending_.reset();
     bridge_->tsfn->Unref(env);
     // Last statement, and the last use of `this` on this path: it can drop the
-    // final reference to the object.
+    // final reference to the object
     Unref();
 }
 
@@ -266,7 +266,7 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
         }
         // Copied, then cleared: Napi::Promise::Deferred is trivially copyable,
         // so moving out of the optional would leave `pending_` engaged and this
-        // promise reachable a second time.
+        // promise reachable a second time
         std::optional<Napi::Promise::Deferred> const pending = pending_;
         pending_.reset();
         // Drops this side's reference to the producer without waiting for it. The

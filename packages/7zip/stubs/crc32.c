@@ -1,4 +1,4 @@
-/* crc32.c -- compile upstream 7zCrc.c with its hardware-CRC32 path disabled.
+/* crc32.c: compile upstream 7zCrc.c with its hardware-CRC32 path disabled.
 
    C/7zCrc.c re-defines __ARM_FEATURE_CRC32 itself when it sees an ARM target
    and a new enough compiler, so a command-line -U cannot keep it off; the

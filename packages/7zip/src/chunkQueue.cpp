@@ -32,8 +32,8 @@ void ChunkQueue::MarkOutOfMemory() noexcept {
     try {
         std::unique_lock<std::mutex> lock(mutex_);
         // Stop the producer, as Abort() does: nothing more can be published.
-        // What is already queued is deliberately kept -- the bytes decoded
-        // before the allocation failed are still good.
+        // What is already queued is deliberately kept, because the bytes
+        // decoded before the allocation failed are still good.
         aborted_ = true;
         notFull_.notify_all();
         FlushReady(lock);
@@ -50,7 +50,7 @@ bool ChunkQueue::Write(const uint8_t* data, size_t length) noexcept {
     } catch (...) {
         // Reached when publishing a chunk allocates and cannot: the deque node
         // in ready_, the ThreadSafeFunction call FlushReady() ends up making,
-        // or the condition variable's own wait.
+        // or the condition variable's own wait
         MarkOutOfMemory();
         return false;
     }
@@ -66,7 +66,7 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
         if (!partial_.data) {
             // Nothrow because this is the largest allocation the addon makes,
             // so it is the one most likely to fail, and Write() must not let a
-            // std::bad_alloc escape.
+            // std::bad_alloc escape
             partial_.data.reset(new (std::nothrow) uint8_t[chunkBytes_]);
             if (!partial_.data) {
                 lock.unlock();
@@ -122,7 +122,7 @@ void ChunkQueue::Abort() noexcept {
         aborted_ = true;
         // Discard what is queued: a consumer that aborted mid-stream must
         // observe the end of the stream, not a few more chunks of data it
-        // has already been told it will not get.
+        // has already been told it will not get
         ready_.clear();
         partial_ = {};
         notFull_.notify_all();
@@ -145,7 +145,7 @@ ChunkQueue::Status ChunkQueue::TryTake(Chunk* out) {
             status = Status::kChunk;
         } else if (aborted_ || finished_) {
             // Finish() published the trailing partial chunk before setting
-            // finished_, so an empty queue here really is the end.
+            // finished_, so an empty queue here really is the end
             status = Status::kEnd;
         } else {
             waiting_ = true;

@@ -22,7 +22,7 @@ std::string HResultSuffix(HRESULT hr) {
     }
     // Formatted by hand rather than with snprintf, which would need a C array
     // and a vararg call, or std::format, which not every toolchain this addon
-    // is prebuilt on provides yet.
+    // is prebuilt on provides yet
     static constexpr std::string_view kHexDigits = "0123456789abcdef";
     std::string out = " (HRESULT 0x";
     for (int shift = 28; shift >= 0; shift -= 4) {

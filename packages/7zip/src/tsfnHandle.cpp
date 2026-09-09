@@ -7,7 +7,7 @@
 namespace sevenzip {
 
 std::shared_ptr<TsfnHandle> TsfnHandle::Create(Napi::Env env, const char* name, bool referenced) {
-    // Not make_shared: the constructor is private.
+    // Not make_shared: the constructor is private
     std::shared_ptr<TsfnHandle> handle(new TsfnHandle());
 
     handle->tsfn_ =
@@ -20,8 +20,8 @@ std::shared_ptr<TsfnHandle> TsfnHandle::Create(Napi::Env env, const char* name, 
                                       1,
                                       // Holding the handle by shared_ptr is what makes the mutex below safe
                                       // to lock: it keeps the object alive until N-API is finished with it,
-                                      // even if every other owner is gone. The cycle -- handle owns the
-                                      // function, the finalizer owns the handle -- is broken by this lambda
+                                      // even if every other owner is gone. The cycle (handle owns the
+                                      // function, the finalizer owns the handle) is broken by this lambda
                                       // being destroyed once it has run.
                                       [handle](Napi::Env /*env*/) {
                                           std::scoped_lock const lock(handle->mutex_);
@@ -69,7 +69,7 @@ void TsfnHandle::Release() noexcept {
     }
     // Cleared before the call, not after: giving back the last thread count is
     // what starts the function's destruction, so this is the moment it stops
-    // being ours to touch.
+    // being ours to touch
     alive_ = false;
     tsfn_.Release();
 }

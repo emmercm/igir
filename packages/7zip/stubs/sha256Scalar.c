@@ -1,4 +1,4 @@
-/* sha256Scalar.c -- compile upstream Sha256.c with its hardware-SHA path
+/* sha256Scalar.c: compile upstream Sha256.c with its hardware-SHA path
    disabled.
 
    C/Sha256.c's ARM ladder keys off __ARM_ARCH and the compiler version rather

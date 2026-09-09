@@ -31,8 +31,8 @@ std::vector<std::string> FormatNames();
 std::string FormatLabel(uint32_t formatIndex);
 
 // An open, read-only archive plus the stream holding the first volume's file
-// handle. Destroying this releases every handle -- any further volumes the
-// handler opened are owned by the archive. Nothing else needs to be closed.
+// handle. Destroying this releases every handle, since any further volumes
+// the handler opened are owned by the archive. Nothing else needs to be closed.
 struct OpenedArchive {
     CMyComPtr<IInArchive> archive;
     CMyComPtr<IInStream> stream;
@@ -62,8 +62,8 @@ constexpr HRESULT kEntryNotFound = static_cast<HRESULT>(0x80070490L);
 //
 // `abort` is optional. When given, the open is interruptible: the handler's
 // progress callback returns E_ABORT once the flag is set. Opening is not always
-// the quick part -- a large solid .7z decodes a compressed header here, and a
-// spanned set opens every volume -- so without it a cancel would not be observed
+// the quick part (a large solid .7z decodes a compressed header here, and a
+// spanned set opens every volume), so without it a cancel would not be observed
 // until the whole header had been read. Callers that cannot be cancelled pass
 // nullptr.
 HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out,
@@ -71,7 +71,7 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
 
 // Reads one item property, returning false when the archive does not carry it in
 // the expected type. These are the only places a PROPVARIANT is unpacked, so no
-// caller has to know 7-Zip's variant conventions -- or that
+// caller has to know 7-Zip's variant conventions, or that
 // ConvertPropVariantToUInt64() throws for a type it does not recognize, which
 // GetUInt64Prop() absorbs.
 bool GetStringProp(IInArchive& archive, uint32_t index, PROPID id, std::string* out);
@@ -92,7 +92,7 @@ std::string NormalizeEntryPath(std::string entryPath);
 bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath);
 
 // Resolves an entry path to the index 7-Zip extracts by, using an archive the
-// caller has already opened -- extraction opens it regardless, so this costs one
+// caller has already opened. Extraction opens it regardless, so this costs one
 // pass over the in-memory item table and no second open.
 //
 // Separators are compared normalized, so a caller may spell a path with either
