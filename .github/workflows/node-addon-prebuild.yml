@@ -326,6 +326,7 @@ jobs:
   commit:
     needs:
       - prebuild
+      - cpp-lint
     permissions:
       contents: read # actions/checkout
     runs-on: ubuntu-latest
