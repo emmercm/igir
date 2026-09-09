@@ -318,14 +318,16 @@ async function writeStoredZip(
 
 describe('listEntries', () => {
   test('it has fixtures to test', () => {
-    expect(MULTI_ENTRY_ARCHIVES.length).toEqual(21);
+    expect(MULTI_ENTRY_ARCHIVES.length).toEqual(31);
     expect(SINGLE_STREAM_ARCHIVES.length).toEqual(7);
-    expect(LARGE_ENTRY_ARCHIVES.length).toEqual(4);
+    expect(LARGE_ENTRY_ARCHIVES.length).toEqual(10);
   });
 
   test.each(
     MULTI_ENTRY_ARCHIVES.filter(({ label }) =>
-      /7z-(?:zstd-|bcj-|bcj2-|delta-)|-original\.zip$/.test(label),
+      /7z-(?:zstd-|bcj-|bcj2-|delta-|brotli-|lz4-|lz5-|lizard-|flzma2-)|-original\.zip$/.test(
+        label,
+      ),
     ),
   )('it preserves the existing four-file payload in $label', async ({ format, archivePath }) => {
     const original = await sevenZip.listEntries({

@@ -116,7 +116,7 @@ await copyfiles(
     'packages/*/{,!(deps)/**/}*.{c,cpp,h}', // non-vendored C/C++ files
     'packages/*/binding.gyp',
     'packages/7zip/deps/7-Zip-zstd/C/*',
-    'packages/7zip/deps/7-Zip-zstd/C/{zstd,hashes}/*',
+    'packages/7zip/deps/7-Zip-zstd/C/{zstd,hashes,brotli,lz4,lz5,lizard,zstdmt}/**/*',
     'packages/7zip/deps/7-Zip-zstd/CPP/Common/*',
     'packages/7zip/deps/7-Zip-zstd/CPP/Windows/*',
     'packages/7zip/deps/7-Zip-zstd/CPP/7zip/*',
