@@ -61,13 +61,17 @@ class TsfnHandle {
    private:
     TsfnHandle() = default;
 
+    using Callback = std::function<void(Napi::Env)>;
+    static void Dispatch(Napi::Env env, Napi::Function unused, TsfnHandle* context, Callback* callback);
+    using Function = Napi::TypedThreadSafeFunction<TsfnHandle, Callback, Dispatch>;
+
     std::mutex mutex_;
     // False before Create() has finished and after the function has been
     // released or destroyed. Guarded by mutex_ rather than atomic on purpose:
     // the check and the use that follows it have to be one indivisible step, or
     // the destruction this exists to exclude fits between them.
     bool alive_ = false;
-    Napi::ThreadSafeFunction tsfn_;
+    Function tsfn_;
 };
 
 }  // namespace sevenzip

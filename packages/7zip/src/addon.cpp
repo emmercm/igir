@@ -49,16 +49,20 @@ void DrainOnCleanup(napi_async_cleanup_hook_handle handle, void* arg) {
 }  // namespace
 
 void InitAddonData(Napi::Env env) {
-    auto* data = new AddonData();
+    auto data = std::make_unique<AddonData>();
     data->registry = std::make_shared<JobRegistry>();
     // N-API deletes this at environment teardown
-    env.SetInstanceData(data);
+    env.SetInstanceData(data.get());
+    if (env.IsExceptionPending()) {
+        return;
+    }
+    auto* ownedData = data.release();
 
     napi_async_cleanup_hook_handle handle = nullptr;
     // Not fatal on its own (the addon works, it just would not drain at
     // teardown), but that is the condition this exists to prevent, so it is
     // reported rather than swallowed
-    if (napi_add_async_cleanup_hook(env, DrainOnCleanup, data, &handle) != napi_ok) {
+    if (napi_add_async_cleanup_hook(env, DrainOnCleanup, ownedData, &handle) != napi_ok) {
         Napi::Error::New(env, "failed to install the 7-Zip addon's cleanup hook").ThrowAsJavaScriptException();
     }
 }

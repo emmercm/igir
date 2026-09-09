@@ -2,6 +2,7 @@
   "variables": {"z7": "deps/7-Zip-zstd"},
 
   "target_defaults": {
+    "defines": ["DYNAMIC_BMI2=0"],
     "cflags_cc!": [
       # Override Node.js' common.gypi
       "-std=gnu++17",
@@ -69,6 +70,17 @@
 
     # Pin instruction sets for various architectures
     "conditions": [
+      ["target_arch=='x64' or target_arch=='ia32'", {
+        "defines": ["XXH_VECTOR=1"], # SSE2, never auto-select AVX variants
+        "cflags": ["-mno-sse3", "-mno-ssse3", "-mno-sse4.1", "-mno-sse4.2",
+                   "-mno-avx", "-mno-avx2", "-mno-avx512f"],
+        "xcode_settings": {
+          "OTHER_CFLAGS": ["-mno-sse3", "-mno-ssse3", "-mno-sse4.1", "-mno-sse4.2",
+                           "-mno-avx", "-mno-avx2", "-mno-avx512f"],
+          "OTHER_CPLUSPLUSFLAGS": ["-mno-sse3", "-mno-ssse3", "-mno-sse4.1", "-mno-sse4.2",
+                                  "-mno-avx", "-mno-avx2", "-mno-avx512f"]
+        }
+      }],
       ["target_arch=='x64'", {
         "cflags": ["-march=x86-64"],
         "xcode_settings": {
@@ -84,13 +96,15 @@
         }
       }],
       ["target_arch=='arm64'", {
-        "cflags": ["-mcpu=generic"],
+        "defines": ["XXH_VECTOR=4"], # Baseline NEON, never SVE
+        "cflags": ["-mcpu=generic", "-march=armv8-a"],
         "xcode_settings": {
-          "OTHER_CFLAGS": ["-mcpu=generic"],
-          "OTHER_CPLUSPLUSFLAGS": ["-mcpu=generic"]
+          "OTHER_CFLAGS": ["-mcpu=generic", "-march=armv8-a"],
+          "OTHER_CPLUSPLUSFLAGS": ["-mcpu=generic", "-march=armv8-a"]
         }
       }],
       ["target_arch=='arm'", {
+        "defines": ["XXH_VECTOR=0"],
         "cflags": ["-march=armv7-a+fp"],
         "xcode_settings": {
           "OTHER_CFLAGS": ["-march=armv7-a+fp"],
@@ -290,10 +304,10 @@
         "<(z7)/CPP/7zip/Archive/ZHandler.cpp",
         "<(z7)/CPP/7zip/Archive/Zip/ZipRegister.cpp",
         "<(z7)/CPP/7zip/Compress/BZip2Register.cpp",
-        "<(z7)/CPP/7zip/Compress/BrotliRegister.cpp",
-        "<(z7)/CPP/7zip/Compress/Lz4Register.cpp",
-        "<(z7)/CPP/7zip/Compress/Lz5Register.cpp",
-        "<(z7)/CPP/7zip/Compress/LizardRegister.cpp",
+        "stubs/BrotliRegister.cpp",
+        "stubs/Lz4Register.cpp",
+        "stubs/Lz5Register.cpp",
+        "stubs/LizardRegister.cpp",
         "<(z7)/CPP/7zip/Compress/Bcj2Register.cpp",
         "<(z7)/CPP/7zip/Compress/BcjRegister.cpp",
         "<(z7)/CPP/7zip/Compress/BranchRegister.cpp",
@@ -335,7 +349,7 @@
       "defines": [
         "NAPI_VERSION=<(napi_build_version)",
         "NODE_ADDON_API_DISABLE_DEPRECATED",
-        "NAPI_DISABLE_CPP_EXCEPTIONS",
+        "NAPI_CPP_EXCEPTIONS",
         "Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0"
       ],
       "cflags": ["-U__ARM_FEATURE_CRC32", "-U__ARM_FEATURE_CRYPTO", "-U__ARM_FEATURE_SHA2",

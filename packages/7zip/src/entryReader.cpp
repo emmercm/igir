@@ -175,10 +175,9 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         return true;
     }
 
-    // Hand the chunk's storage straight to JavaScript rather than copying it;
-    // the finalizer frees it. `raw` is unowned between release() and a
-    // successful New(), which is why the failure path below deletes it.
-    uint8_t* raw = chunk.data.release();
+    // Retain ownership until both the wrapper allocation and N-API transfer
+    // succeed. Buffer::New can throw before calling napi_create_external_buffer.
+    uint8_t* raw = chunk.data.get();
     Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
         env, raw, chunk.length, [](Napi::Env /*unused*/, const uint8_t* data) { delete[] data; });
     *settled = true;
@@ -186,10 +185,10 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         // With C++ exceptions disabled, a failed New() returns an empty value
         // and leaves a JS exception pending. Resolving with that empty value
         // would read as the end of the entry, so reject instead.
-        delete[] raw;
         deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
                                                  : Napi::Error::New(env, "failed to allocate the read result").Value());
     } else {
+        chunk.data.release();
         deferred.Resolve(out);
     }
     return true;

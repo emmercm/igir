@@ -108,7 +108,13 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
 void ChunkQueue::Finish() {
     std::unique_lock<std::mutex> lock(mutex_);
     if (partial_.length > 0) {
-        ready_.push_back(std::move(partial_));
+        try {
+            ready_.push_back(std::move(partial_));
+        } catch (...) {
+            // Completion must still wake the consumer if publishing allocates
+            // and fails. TryRead reports the terminal allocation failure.
+            outOfMemory_.store(true, std::memory_order_relaxed);
+        }
     }
     partial_ = {};
     finished_ = true;

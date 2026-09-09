@@ -1,8 +1,11 @@
 import crypto from 'node:crypto';
 import events from 'node:events';
 import fs from 'node:fs';
+import module from 'node:module';
+import os from 'node:os';
 import path from 'node:path';
 import type stream from 'node:stream';
+import worker_threads from 'node:worker_threads';
 import zlib from 'node:zlib';
 
 import Temp from '../../../src/globals/temp.js';
@@ -13,6 +16,43 @@ import sevenZip, { SevenZipFormat } from '../index.js';
 gracefulFs.gracefulify(fs);
 
 const FIXTURE_DIR = path.join('packages', '7zip', 'test', 'fixtures');
+
+test('it can terminate workers with pending native reads and listings', async () => {
+  const require = module.createRequire(import.meta.url);
+  let bindingPath: string;
+  try {
+    bindingPath = require.resolve(
+      `../addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+    );
+  } catch {
+    bindingPath = require.resolve('../addon-7zip/build/Release/binding.node');
+  }
+  for (let i = 0; i < 20; i++) {
+    const worker = new worker_threads.Worker(
+      `const { parentPort, workerData } = require('node:worker_threads');
+       const binding = require(workerData.bindingPath);
+       const format = binding.formats.findIndex((name) => name.toLowerCase() === '7z');
+       const readers = Array.from({ length: 8 }, () =>
+         new binding.EntryReader(workerData.archivePath, format, '8mb', undefined, 4096));
+       for (const reader of readers) reader.read().catch(() => {});
+       for (let j = 0; j < 8; j++) binding.listEntries(workerData.archivePath, format).catch(() => {});
+       parentPort.postMessage('ready');
+       setInterval(() => {}, 1000);`,
+      {
+        eval: true,
+        workerData: {
+          bindingPath,
+          archivePath: path.resolve(FIXTURE_DIR, 'one-large-file/7z-lz4-level1-non-solid.7z'),
+        },
+      },
+    );
+    try {
+      await events.once(worker, 'message');
+    } finally {
+      await worker.terminate();
+    }
+  }
+}, 30_000);
 
 /**
  * The format each fixture's extension names. Fixtures are grouped on disk by

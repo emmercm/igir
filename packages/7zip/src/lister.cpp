@@ -50,7 +50,13 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
     ListJob& operator=(const ListJob&) = delete;
     ListJob(ListJob&&) = delete;
     ListJob& operator=(ListJob&&) = delete;
-    ~ListJob() = default;
+    ~ListJob() {
+        // Also covers registration/shared_ptr allocation failures before the
+        // worker starts. Release is idempotent after normal worker completion.
+        if (tsfn_) {
+            tsfn_->Release();
+        }
+    }
 
     // Asks the listing to stop. Returns immediately; the thread notices at its
     // next item, or inside the open through the abort flag handed to
@@ -190,9 +196,7 @@ void ListJob::Settle() {
     // Call() never blocks, and does nothing once the environment has gone away:
     // there is nothing left waiting on the promise
     tsfn_->Call([self](Napi::Env env) {
-        // Event loop thread. Nothing may escape into N-API's C ABI: this is
-        // called through a C function pointer, and with
-        // NAPI_DISABLE_CPP_EXCEPTIONS an escaping exception aborts the process.
+        // Event loop thread. Contain native/API failures at the callback boundary.
         try {
             self->Emit(env);
         } catch (...) {

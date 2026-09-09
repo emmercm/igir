@@ -1,7 +1,6 @@
 #include "jobRegistry.h"
 
 #include <utility>
-#include <vector>
 
 namespace sevenzip {
 
@@ -36,34 +35,30 @@ void JobRegistry::Unregister(Token token) noexcept {
 }
 
 void JobRegistry::DrainAndWait() noexcept {
-    std::vector<std::function<void()>> cancels;
-    {
-        std::scoped_lock const lock(mutex_);
-        // Set before the snapshot is taken, which is what makes the snapshot
-        // complete: from here on Register() refuses, so no job can slip in
-        // between copying the list and waiting on it
-        draining_ = true;
-        try {
-            cancels.reserve(jobs_.size());
-            for (const auto& entry : jobs_) {
-                cancels.push_back(entry.second);
+    Token previous = kInvalidToken;
+    // Move one callback at a time without allocating a snapshot. Keep entries
+    // registered until their workers exit; Unregister can run between moves.
+    for (;;) {
+        std::function<void()> cancel;
+        {
+            std::scoped_lock const lock(mutex_);
+            // Refuse new jobs before moving the first cancellation callback.
+            draining_ = true;
+            const auto next = jobs_.upper_bound(previous);
+            if (next == jobs_.end()) {
+                break;
             }
-        } catch (...) {
-            // Copying the callbacks allocates, and this runs from a teardown
-            // hook. Failing here costs the early cancel, not the wait below,
-            // so the jobs run to completion instead of being cut short.
-            cancels.clear();
+            previous = next->first;
+            cancel = std::move(next->second);
         }
-    }
 
-    // Called with the lock dropped. Each cancel takes its job's own mutexes,
-    // and jobs unregister through this registry's mutex as they exit, so
-    // holding both at once would invert the lock order.
-    //
-    // A job that finished between the snapshot and here has already dropped its
-    // last shared_ptr, so the weak_ptr inside the callback fails to lock and the
-    // call is a no-op.
-    for (const std::function<void()>& cancel : cancels) {
+        // Called with the lock dropped. Each cancel takes its job's own mutexes,
+        // and jobs unregister through this registry's mutex as they exit, so
+        // holding both at once would invert the lock order.
+        //
+        // A job that finished between moving the callback and here has dropped its
+        // last shared_ptr, so the weak_ptr inside the callback fails to lock and the
+        // call is a no-op.
         if (!cancel) {
             continue;
         }

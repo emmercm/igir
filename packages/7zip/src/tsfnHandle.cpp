@@ -10,23 +10,22 @@ std::shared_ptr<TsfnHandle> TsfnHandle::Create(Napi::Env env, const char* name, 
     // Not make_shared: the constructor is private
     std::shared_ptr<TsfnHandle> handle(new TsfnHandle());
 
-    handle->tsfn_ =
-        Napi::ThreadSafeFunction::New(env,
-                                      // A no-op JS callback. Every call carries its own lambda, so this is
-                                      // never invoked; N-API simply wants a function to associate the async
-                                      // resource with.
-                                      Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}), name,
-                                      0,  // unbounded queue: Call() must never fail for lack of room
-                                      1,
-                                      // Holding the handle by shared_ptr is what makes the mutex below safe
-                                      // to lock: it keeps the object alive until N-API is finished with it,
-                                      // even if every other owner is gone. The cycle (handle owns the
-                                      // function, the finalizer owns the handle) is broken by this lambda
-                                      // being destroyed once it has run.
-                                      [handle](Napi::Env /*env*/) {
-                                          std::scoped_lock const lock(handle->mutex_);
-                                          handle->alive_ = false;
-                                      });
+    handle->tsfn_ = Function::New(env,
+                                  // A no-op JS callback. Every call carries its own lambda, so this is
+                                  // never invoked; N-API simply wants a function to associate the async
+                                  // resource with.
+                                  Napi::Function::New(env, [](const Napi::CallbackInfo& /*info*/) {}), name,
+                                  0,  // unbounded queue: Call() must never fail for lack of room
+                                  1, handle.get(),
+                                  // Holding the handle by shared_ptr is what makes the mutex below safe
+                                  // to lock: it keeps the object alive until N-API is finished with it,
+                                  // even if every other owner is gone. The cycle (handle owns the
+                                  // function, the finalizer owns the handle) is broken by this lambda
+                                  // being destroyed once it has run.
+                                  [handle](Napi::Env /*env*/, void* /*data*/, TsfnHandle* /*context*/) {
+                                      std::scoped_lock const lock(handle->mutex_);
+                                      handle->alive_ = false;
+                                  });
 
     // The function is still null whenever N-API refuses to create it, which
     // with C++ exceptions disabled is reported by returning an empty
@@ -52,13 +51,24 @@ void TsfnHandle::Call(std::function<void(Napi::Env)> callback) noexcept {
         return;
     }
     try {
-        tsfn_.NonBlockingCall(
-            [callback = std::move(callback)](Napi::Env env, Napi::Function /*unused*/) { callback(env); });
+        auto owned = std::make_unique<Callback>(std::move(callback));
+        if (tsfn_.NonBlockingCall(owned.get()) == napi_ok) {
+            owned.release();
+        }
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // Queuing the call allocates, and the caller is a producer thread with
         // no way to report a failure. This is reached from noexcept contexts,
         // so rethrowing would abort the process over an undelivered
         // notification.
+    }
+}
+
+void TsfnHandle::Dispatch(Napi::Env env, Napi::Function /*unused*/, TsfnHandle* /*context*/, Callback* callback) {
+    // N-API also calls this with a null environment to discard queued work at
+    // teardown. Ownership must be released on that path too.
+    std::unique_ptr<Callback> owned(callback);
+    if (env != nullptr && owned) {
+        (*owned)(env);
     }
 }
 
