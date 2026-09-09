@@ -12,11 +12,10 @@ namespace {
 // teardown. Everything still decoding has to be stopped and waited for before
 // the environment goes away underneath it.
 //
-// The wait cannot happen inline: this is called on the JS thread, and blocking
-// it while a producer thread is still unwinding stalls whatever that producer
-// needs the loop for. napi_add_async_cleanup_hook exists exactly for this --
-// the teardown is suspended until napi_remove_async_cleanup_hook() is called,
-// which may be from another thread.
+// The wait cannot happen inline: this runs on the JS thread, and blocking it
+// while a producer is still unwinding stalls whatever that producer needs the
+// loop for. napi_add_async_cleanup_hook suspends teardown until
+// napi_remove_async_cleanup_hook() is called, possibly from another thread.
 void DrainOnCleanup(napi_async_cleanup_hook_handle handle, void* arg) {
     std::shared_ptr<JobRegistry> registry;
     if (arg != nullptr) {
@@ -38,11 +37,10 @@ void DrainOnCleanup(napi_async_cleanup_hook_handle handle, void* arg) {
             napi_remove_async_cleanup_hook(handle);
         }).detach();
     } catch (...) {
-        // The OS refused a thread while the process is shutting down. Draining
-        // on this thread blocks the loop, which is exactly what the async hook
-        // was avoiding -- but the alternative is to skip the drain entirely and
-        // let live threads outlive the environment, and a stall at exit is a
-        // great deal better than a use-after-free at exit.
+        // The OS refused a thread while the process is shutting down.
+        // Draining here blocks the loop, which the async hook was avoiding, but
+        // the alternative is letting live threads outlive the environment: a
+        // stall at exit beats a use-after-free at exit.
         static_cast<AddonData*>(arg)->registry->DrainAndWait();
         napi_remove_async_cleanup_hook(handle);
     }
@@ -57,9 +55,9 @@ void InitAddonData(Napi::Env env) {
     env.SetInstanceData(data);
 
     napi_async_cleanup_hook_handle handle = nullptr;
-    // A failure here is not fatal on its own -- the addon works, it just would
-    // not drain at teardown -- but it is exactly the condition this exists to
-    // prevent, so it is reported rather than swallowed.
+    // Not fatal on its own -- the addon works, it just would not drain at
+    // teardown -- but that is the condition this exists to prevent, so it is
+    // reported rather than swallowed.
     if (napi_add_async_cleanup_hook(env, DrainOnCleanup, data, &handle) != napi_ok) {
         Napi::Error::New(env, "failed to install the 7-Zip addon's cleanup hook").ThrowAsJavaScriptException();
     }

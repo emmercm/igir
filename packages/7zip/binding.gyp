@@ -2,113 +2,72 @@
   "variables": {"z7": "deps/7zip"},
 
   "target_defaults": {
-    # 7-Zip's own code (MyString.cpp, MyVector.h, etc.) throws on allocation
-    # failure/overflow; Node's common.gypi defaults to -fno-exceptions. Both the
-    # "sevenzip" static library and the "binding" target (which compiles several
-    # upstream *Register.cpp/handler TUs directly, see below) need real C++
-    # exceptions and RTTI to compile 7-Zip sources, even though N-API access
-    # itself stays NAPI_DISABLE_CPP_EXCEPTIONS.
-    "cflags_cc!": ["-std=gnu++17", "-fno-exceptions", "-fno-rtti"],
-    # -include handlerOut.h supplies two property classes that Z7_EXTRACT_ONLY omits
-    # from upstream but that the Zip and bzip2 handlers still require to compile. It
-    # is a bare filename found through the "stubs" include_dir, not an absolute path,
-    # because gyp's make generator does not shell-quote absolute paths and this repo's
-    # directory name contains a space. cflags_cc (not cflags) keeps it off C sources.
-    "cflags_cc": ["-std=c++20", "-fexceptions", "-frtti", "-include", "handlerOut.h"],
-    # Dead-code elimination, the GCC/Clang counterpart to xcode_settings'
-    # DEAD_CODE_STRIPPING below. This is a size optimization ONLY -- correctness
-    # must never depend on it, which is why every compressor this addon declines
-    # to link has a stub (see stubs/) instead of a symbol left undefined for the
-    # linker to garbage-collect. -fvisibility=hidden is the load-bearing half:
-    # --gc-sections treats any default-visibility symbol in a shared object as a
-    # GC root, so without it the section flags accomplish nothing for exactly the
-    # dead C++ classes worth dropping. It also matches what
-    # GCC_SYMBOLS_PRIVATE_EXTERN already does on macOS; the N-API entry points
-    # are exported by NAPI_MODULE's own visibility attribute, not by defaulting
-    # the whole object to public.
-    #
-    # -flto and -fno-semantic-interposition are the speed half. Interposition in
-    # particular is pure loss here: nothing outside this addon may replace one of
-    # its symbols, so the indirection GCC emits to allow it buys nothing.
-    #
-    # Deliberately NOT here: -O3. node-gyp's own common.gypi already puts it in
-    # every Release build's cflags, and its Release configuration sets the macOS
-    # counterpart too -- see GCC_OPTIMIZATION_LEVEL below.
-    "cflags": ["-ffunction-sections", "-fdata-sections", "-fvisibility=hidden",
-               "-fno-semantic-interposition", "-flto"],
-    # node-gyp's common.gypi adds -fno-omit-frame-pointer to every non-macOS,
-    # non-Windows Release build. On x86-64 that permanently reserves a
-    # general-purpose register, which is felt in exactly the tight LZMA, Deflate
-    # and PPMd decode loops this addon spends its time in. Taken back here: the
-    # cost is frame-pointer-unwindable stacks in `perf` and in crash reports
-    # from prebuilds, which is a debugging convenience rather than a correctness
-    # property -- nothing in this addon walks its own stack, and node-gyp does
-    # not add the flag on macOS or Windows, so those two already build without
-    # it. Verified against the generated makefiles: with this line the flag is
-    # absent from CFLAGS_Release, without it it is present.
+    "cflags_cc!": [
+      # Override Node.js' common.gypi
+      "-std=gnu++17",
+      # 7zip uses C++ exceptions and RTTI
+      "-fno-exceptions", "-fno-rtti"
+    ],
+    "cflags_cc": [
+      "-std=c++20",
+      # 7zip uses C++ exceptions and RTTI
+      "-fexceptions", "-frtti",
+      # Stubs
+      "-include", "handlerOut.h"
+    ],
+
+    # Build optimizations
+    "cflags": [
+      "-ffunction-sections", "-fdata-sections",
+      "-fvisibility=hidden",
+      "-fno-semantic-interposition",
+      "-flto"
+    ],
     "cflags!": ["-fno-omit-frame-pointer"],
     "cflags_cc+": ["-fvisibility-inlines-hidden"],
-    # --exclude-libs,ALL keeps the two static libraries' symbols out of the
-    # shared object's dynamic table. That is what lets --gc-sections above
-    # actually collect them: a symbol in the dynamic table is a GC root, and
-    # -fvisibility=hidden only covers the code compiled here, not what arrives
-    # through libsevenzip.a.
     "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto"],
+
     "xcode_settings": {
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
-      "OTHER_CPLUSPLUSFLAGS": ["-std=c++20", "-fexceptions", "-frtti", "-include", "handlerOut.h"],
-      # The macOS counterpart to the -ffunction-sections/-fdata-sections in
-      # cflags above, which gyp's mac generator ignores entirely: on this
-      # platform only xcode_settings is read. OTHER_CFLAGS rather than
-      # OTHER_CPLUSPLUSFLAGS because Xcode applies it to C and C++ both, and
-      # these have to reach the vendored C as well. DEAD_CODE_STRIPPING below is
-      # what consumes them, though ld64's -dead_strip already works at atom
-      # granularity, so this is a small improvement rather than the enabling
-      # half it is on ELF.
-      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"],
-      # Redundant: node-gyp's common.gypi already sets this to "3" in its
-      # Release configuration, exactly as it does the -O3 deliberately left out
-      # of cflags above. Kept anyway, because gyp's own default when the setting
-      # is absent is "s" (-Os), and this one line is all that stands between the
-      # macOS build and being optimized for size if that ever stops being set
-      # upstream.
-      "GCC_OPTIMIZATION_LEVEL": "3",
+      "OTHER_CPLUSPLUSFLAGS": [
+        "-std=c++20",
+        # 7zip uses C++ exceptions and RTTI
+        "-fexceptions", "-frtti",
+        # Stubs
+        "-include", "handlerOut.h"
+      ],
+      # Build optimizations
       "LLVM_LTO": "YES",
       "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
       "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
       "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
-      "DEAD_CODE_STRIPPING": "YES"
+      "DEAD_CODE_STRIPPING": "YES",
+      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"],
+      "GCC_OPTIMIZATION_LEVEL": "3"
     },
+
     "msvs_settings": {
-      # /Gy + /OPT:REF,ICF are the MSVC equivalent of the -ffunction-sections /
-      # --gc-sections pair above, and carry the same caveat: a size optimization,
-      # not a correctness mechanism. /OPT:REF in particular runs only after symbol
-      # resolution has already succeeded, so it can never substitute for a stub.
-      # WholeProgramOptimization (/GL) plus LinkTimeCodeGeneration (/LTCG) on
-      # both the librarian and the linker is MSVC's LTO, the counterpart to
-      # -flto above; /GL objects have to be archived and linked with /LTCG or
-      # they are rejected.
-      #
-      # Deliberately NOT here: Optimization, FavorSizeOrSpeed and
-      # EnableIntrinsicFunctions. node-gyp's common.gypi Release config already
-      # sets them to /Ox, /Ot and /Oi, which is stronger than the /O2 and /Os an
-      # explicit setting here would most likely spell.
-      "VCCLCompilerTool": {"ExceptionHandling": 1, "RuntimeTypeInfo": "true", "EnableFunctionLevelLinking": "true", "WholeProgramOptimization": "true", "AdditionalOptions": ["/std:c++20", "/FIhandlerOut.h"]},
-      "VCLibrarianTool": {"AdditionalOptions": ["/LTCG"]},
-      # OptimizeReferences 2 is already /OPT:REF, so no /OPT:REF is added to
-      # AdditionalOptions here; /Brepro, /deterministic and /DEBUG:NONE are for
-      # reproducible, debug-info-free prebuilds rather than for speed.
-      "VCLinkerTool": {"OptimizeReferences": 2, "EnableCOMDATFolding": 2, "LinkTimeCodeGeneration": "1", "AdditionalOptions": ["/Brepro", "/deterministic", "/DEBUG:NONE"], "AdditionalOptions/": [["exclude", "lldltojobs"]]}
+      "VCCLCompilerTool": {
+        "ExceptionHandling": 1,
+        "RuntimeTypeInfo": "true",
+        "EnableFunctionLevelLinking": "true",
+        "WholeProgramOptimization": "true",
+        "AdditionalOptions": ["/std:c++20", "/FIhandlerOut.h"]
+      },
+      "VCLibrarianTool": {
+        "AdditionalOptions": ["/LTCG"]
+      },
+      "VCLinkerTool": {
+        # Build optimizations
+        "OptimizeReferences": 2,
+        "EnableCOMDATFolding": 2,
+        "LinkTimeCodeGeneration": "1",
+        "AdditionalOptions": ["/Brepro", "/deterministic", "/DEBUG:NONE"],
+        "AdditionalOptions/": [["exclude", "lldltojobs"]]
+      }
     },
-    # Pin the instruction set to each platform's mandatory ABI floor -- SSE2 on
-    # x86-64, NEON on AArch64 -- so the compiler cannot auto-vectorize into an
-    # optional extension. Undefining feature macros is not sufficient on its own:
-    # clang targeting arm64-apple-darwin defaults to -mcpu=apple-m1, which enables
-    # FEAT_SHA3, and it will happily emit `bcax` for an ordinary scalar XOR loop.
-    # Note -march=armv8-a does NOT prevent that on Apple clang (verified: the
-    # flag is accepted and the SHA3 instructions are still emitted); -mcpu=generic
-    # does. MSVC needs no equivalent: it targets the SSE2 baseline unless given an
-    # explicit /arch: above it.
+
+    # Pin instruction sets for various architectures
     "conditions": [
       ["target_arch=='x64'", {
         "cflags": ["-march=x86-64"],
@@ -117,12 +76,6 @@
           "OTHER_CPLUSPLUSFLAGS": ["-march=x86-64"]
         }
       }],
-      # ia32 must NOT share the x64 baseline: -march=x86-64 names a 64-bit CPU,
-      # which GCC and Clang both reject outright when targeting 32-bit x86.
-      # i686 plus an explicit SSE2 floor is the 32-bit equivalent -- SSE2 is
-      # optional on i686, but Node's own ia32 builds require it -- and
-      # -mfpmath=sse keeps the compiler off x87 for scalar float work. There is
-      # no ia32 prebuild leg, so this path exists only for building from source.
       ["target_arch=='ia32'", {
         "cflags": ["-march=i686", "-msse2", "-mfpmath=sse"],
         "xcode_settings": {
@@ -137,21 +90,6 @@
           "OTHER_CPLUSPLUSFLAGS": ["-mcpu=generic"]
         }
       }],
-      # The linux/arm/v7 prebuild leg, pinned the same way as the other
-      # architectures instead of taking whatever -march the toolchain defaults to.
-      #
-      # The "+fp" is required, not cosmetic. That leg builds in the armhf node
-      # image, whose GCC is configured -mfloat-abi=hard with -mfpu=auto, and
-      # "auto" resolves through -march: a bare -march=armv7-a names a profile
-      # with no FPU at all, so the hard-float ABI it is still being asked for has
-      # no registers to pass floats in and the compile dies before it starts with
-      # "cc1: error: '-mfloat-abi=hard': selected architecture lacks an FPU".
-      # armv7-a+fp is exactly that toolchain's own default -march (verified with
-      # gcc -Q --help=target in the image), i.e. the armhf baseline: VFPv3-D16
-      # scalar floating point and nothing more. Notably it does NOT pull in
-      # "+simd" (NEON), so it still pins the baseline this block exists to pin --
-      # -mfpu=vfpv3-d16 alongside a bare -march=armv7-a would be an equivalent
-      # spelling.
       ["target_arch=='arm'", {
         "cflags": ["-march=armv7-a+fp"],
         "xcode_settings": {
@@ -177,94 +115,97 @@
                                           "-U__SSSE3__", "-U__SSE4_1__", "-U__SSE4_2__",
                                           "-U__AVX__", "-U__AVX2__", "-U__PCLMUL__"]},
       "sources": [
-        # <(z7)/C/7zCrc.c and <(z7)/C/SwapBytes.c are compiled through the thin
-        # wrappers stubs/crc32.c and stubs/swapBytesScalar.c, which disable those
-        # files' self-selected hardware paths before including them verbatim.
         "<(z7)/C/7zCrcOpt.c",
-        "<(z7)/C/Alloc.c", "<(z7)/C/Bcj2.c",
-        "<(z7)/C/Bra.c", "<(z7)/C/Bra86.c", "<(z7)/C/BraIA64.c", "<(z7)/C/CpuArch.c",
-        "<(z7)/C/Delta.c", "<(z7)/C/LzmaDec.c", "<(z7)/C/Lzma2Dec.c",
-        # Lzma2Decoder.cpp calls Lzma2DecMt_Create/Decode/Destroy unconditionally --
-        # they are the ST wrappers around Lzma2Dec when Z7_ST is defined. Without
-        # this file the addon still links (node addons resolve undefined symbols
-        # dynamically) but jumps to a null pointer the first time an LZMA2 entry
-        # is extracted.
+        "<(z7)/C/Alloc.c",
+        "<(z7)/C/Bcj2.c",
+        "<(z7)/C/Bra.c",
+        "<(z7)/C/Bra86.c",
+        "<(z7)/C/BraIA64.c",
+        "<(z7)/C/CpuArch.c",
+        "<(z7)/C/Delta.c",
+        "<(z7)/C/Lzma2Dec.c",
         "<(z7)/C/Lzma2DecMt.c",
+        "<(z7)/C/LzmaDec.c",
         "<(z7)/C/Ppmd7.c",
         "<(z7)/C/Ppmd7Dec.c",
-        # Ppmd8 is the ZIP flavor of PPMd (7z uses Ppmd7). Ppmd8Enc.c is
-        # deliberately absent, replaced by stubs/ppmd8Enc.c -- see the comment on
-        # PpmdZip.cpp below.
-        "<(z7)/C/Ppmd8.c", "<(z7)/C/Ppmd8Dec.c",
-        "stubs/ppmd8Enc.c",
-        "<(z7)/C/Sort.c", "<(z7)/C/Threads.c",
-        "<(z7)/C/Xz.c", "<(z7)/C/XzDec.c", "<(z7)/C/XzCrc64.c",
-        # XzCrc64.c dispatches to XzCrc64UpdateT12, which is name-pasted into
-        # existence by XzCrc64Opt.c (Z7_CRC64_NUM_TABLES_USE == 12). Unlike
-        # 7zCrcOpt.c's siblings this file is plain table-driven C with no
-        # hardware path, so it needs no wrapper. .xz streams whose check type is
-        # CRC64 -- the default xz check -- reach it.
-        "<(z7)/C/XzCrc64Opt.c",
-        # Xxh64.c is zstd's frame checksum (ZstdDec.c calls Xxh64State_Init and
-        # friends unconditionally). Plain C: its only conditional code path is an
-        # MSVC-x86-only inline-asm block, so it needs no wrapper either.
+        "<(z7)/C/Ppmd8.c",
+        "<(z7)/C/Ppmd8Dec.c",
+        "<(z7)/C/Sort.c",
+        "<(z7)/C/Threads.c",
         "<(z7)/C/Xxh64.c",
+        "<(z7)/C/Xz.c",
+        "<(z7)/C/XzCrc64.c",
+        "<(z7)/C/XzCrc64Opt.c",
+        "<(z7)/C/XzDec.c",
         "<(z7)/C/ZstdDec.c",
-        "stubs/crc32.c",
-        # <(z7)/C/Sha256.c is compiled through stubs/sha256Scalar.c for the same
-        # reason as the two wrappers above: it self-selects a __target__("sha2")
-        # implementation. .xz streams whose check type is SHA-256 reach it.
-        "stubs/sha256Scalar.c",
-        "stubs/swapBytesScalar.c",
-        "<(z7)/CPP/Common/MyString.cpp", "<(z7)/CPP/Common/MyVector.cpp",
-        "<(z7)/CPP/Common/MyWindows.cpp", "<(z7)/CPP/Common/NewHandler.cpp",
-        "<(z7)/CPP/Common/IntToString.cpp", "<(z7)/CPP/Common/StringConvert.cpp",
-        "<(z7)/CPP/Common/UTFConvert.cpp",
-        "<(z7)/CPP/Common/StringToInt.cpp",
-        "<(z7)/CPP/Common/Wildcard.cpp",
-        "<(z7)/CPP/Windows/FileIO.cpp", "<(z7)/CPP/Windows/FileFind.cpp",
-        "<(z7)/CPP/Windows/FileDir.cpp", "<(z7)/CPP/Windows/FileName.cpp",
-        "<(z7)/CPP/Windows/PropVariant.cpp", "<(z7)/CPP/Windows/PropVariantUtils.cpp",
-        "<(z7)/CPP/Windows/TimeUtils.cpp",
-        "<(z7)/CPP/Windows/System.cpp",
-        "<(z7)/CPP/7zip/Common/CreateCoder.cpp", "<(z7)/CPP/7zip/Common/FileStreams.cpp",
-        "<(z7)/CPP/7zip/Common/FilterCoder.cpp", "<(z7)/CPP/7zip/Common/InBuffer.cpp",
-        "<(z7)/CPP/7zip/Common/OutBuffer.cpp", "<(z7)/CPP/7zip/Common/LimitedStreams.cpp",
-        "<(z7)/CPP/7zip/Common/MethodProps.cpp", "<(z7)/CPP/7zip/Common/ProgressUtils.cpp",
-        "<(z7)/CPP/7zip/Common/PropId.cpp", "<(z7)/CPP/7zip/Common/StreamObjects.cpp",
-        "<(z7)/CPP/7zip/Common/StreamUtils.cpp", "<(z7)/CPP/7zip/Common/CWrappers.cpp",
-        "stubs/archiveExports.cpp",
+        "<(z7)/CPP/7zip/Archive/7z/7zDecode.cpp",
+        "<(z7)/CPP/7zip/Archive/7z/7zExtract.cpp",
+        "<(z7)/CPP/7zip/Archive/7z/7zHandler.cpp",
+        "<(z7)/CPP/7zip/Archive/7z/7zHeader.cpp",
+        "<(z7)/CPP/7zip/Archive/7z/7zIn.cpp",
+        "<(z7)/CPP/7zip/Archive/7z/7zProperties.cpp",
+        "<(z7)/CPP/7zip/Archive/7z/7zSpecStream.cpp",
         "<(z7)/CPP/7zip/Archive/Common/CoderMixer2.cpp",
         "<(z7)/CPP/7zip/Archive/Common/DummyOutStream.cpp",
         "<(z7)/CPP/7zip/Archive/Common/FindSignature.cpp",
         "<(z7)/CPP/7zip/Archive/Common/ItemNameUtils.cpp",
         "<(z7)/CPP/7zip/Archive/Common/MultiStream.cpp",
         "<(z7)/CPP/7zip/Archive/Common/OutStreamWithCRC.cpp",
-        "<(z7)/CPP/7zip/Archive/7z/7zIn.cpp", "<(z7)/CPP/7zip/Archive/7z/7zDecode.cpp",
-        "<(z7)/CPP/7zip/Archive/7z/7zExtract.cpp", "<(z7)/CPP/7zip/Archive/7z/7zHandler.cpp",
-        "<(z7)/CPP/7zip/Archive/7z/7zProperties.cpp", "<(z7)/CPP/7zip/Archive/7z/7zHeader.cpp",
-        "<(z7)/CPP/7zip/Archive/7z/7zSpecStream.cpp",
-        "<(z7)/CPP/7zip/Archive/Zip/ZipIn.cpp", "<(z7)/CPP/7zip/Archive/Zip/ZipItem.cpp",
         "<(z7)/CPP/7zip/Archive/Zip/ZipHandler.cpp",
-        "<(z7)/CPP/7zip/Compress/CopyCoder.cpp", "<(z7)/CPP/7zip/Compress/LzmaDecoder.cpp",
-        "<(z7)/CPP/7zip/Compress/Lzma2Decoder.cpp", "<(z7)/CPP/7zip/Compress/PpmdDecoder.cpp",
-        # PpmdZip.cpp holds both NPpmdZip::CDecoder (ZIP compression method 98, a
-        # legitimate decode path) and NPpmdZip::CEncoder, with no Z7_EXTRACT_ONLY
-        # guard between them. The encoder comes along as dead code, and
-        # C/Ppmd8Enc.c is left unlinked on purpose: its two entry points come from
-        # stubs/ppmd8Enc.c instead, which is what makes the arrangement build the
-        # same way on all three toolchains. The trade-off is that the link no
-        # longer catches reachability, so nothing mechanical fails if a future
-        # change makes the encoder reachable. Do not add Ppmd8Enc.c to satisfy it.
-        "<(z7)/CPP/7zip/Compress/PpmdZip.cpp",
-        "<(z7)/CPP/7zip/Compress/BZip2Decoder.cpp", "<(z7)/CPP/7zip/Compress/BZip2Crc.cpp",
-        "<(z7)/CPP/7zip/Compress/DeflateDecoder.cpp", "<(z7)/CPP/7zip/Compress/BitlDecoder.cpp",
-        "<(z7)/CPP/7zip/Compress/ZDecoder.cpp", "<(z7)/CPP/7zip/Compress/ShrinkDecoder.cpp",
-        "<(z7)/CPP/7zip/Compress/ImplodeDecoder.cpp", "<(z7)/CPP/7zip/Compress/LzOutWindow.cpp",
-        "<(z7)/CPP/7zip/Compress/Bcj2Coder.cpp", "<(z7)/CPP/7zip/Compress/BcjCoder.cpp",
+        "<(z7)/CPP/7zip/Archive/Zip/ZipIn.cpp",
+        "<(z7)/CPP/7zip/Archive/Zip/ZipItem.cpp",
+        "<(z7)/CPP/7zip/Common/CWrappers.cpp",
+        "<(z7)/CPP/7zip/Common/CreateCoder.cpp",
+        "<(z7)/CPP/7zip/Common/FileStreams.cpp",
+        "<(z7)/CPP/7zip/Common/FilterCoder.cpp",
+        "<(z7)/CPP/7zip/Common/InBuffer.cpp",
+        "<(z7)/CPP/7zip/Common/LimitedStreams.cpp",
+        "<(z7)/CPP/7zip/Common/MethodProps.cpp",
+        "<(z7)/CPP/7zip/Common/OutBuffer.cpp",
+        "<(z7)/CPP/7zip/Common/ProgressUtils.cpp",
+        "<(z7)/CPP/7zip/Common/PropId.cpp",
+        "<(z7)/CPP/7zip/Common/StreamObjects.cpp",
+        "<(z7)/CPP/7zip/Common/StreamUtils.cpp",
+        "<(z7)/CPP/7zip/Compress/BZip2Crc.cpp",
+        "<(z7)/CPP/7zip/Compress/BZip2Decoder.cpp",
+        "<(z7)/CPP/7zip/Compress/Bcj2Coder.cpp",
+        "<(z7)/CPP/7zip/Compress/BcjCoder.cpp",
+        "<(z7)/CPP/7zip/Compress/BitlDecoder.cpp",
         "<(z7)/CPP/7zip/Compress/BranchMisc.cpp",
+        "<(z7)/CPP/7zip/Compress/CopyCoder.cpp",
+        "<(z7)/CPP/7zip/Compress/DeflateDecoder.cpp",
+        "<(z7)/CPP/7zip/Compress/ImplodeDecoder.cpp",
+        "<(z7)/CPP/7zip/Compress/LzOutWindow.cpp",
+        "<(z7)/CPP/7zip/Compress/Lzma2Decoder.cpp",
+        "<(z7)/CPP/7zip/Compress/LzmaDecoder.cpp",
+        "<(z7)/CPP/7zip/Compress/PpmdDecoder.cpp",
+        "<(z7)/CPP/7zip/Compress/PpmdZip.cpp",
+        "<(z7)/CPP/7zip/Compress/ShrinkDecoder.cpp",
         "<(z7)/CPP/7zip/Compress/XzDecoder.cpp",
-        "<(z7)/CPP/7zip/Compress/ZstdDecoder.cpp"
+        "<(z7)/CPP/7zip/Compress/ZDecoder.cpp",
+        "<(z7)/CPP/7zip/Compress/ZstdDecoder.cpp",
+        "<(z7)/CPP/Common/IntToString.cpp",
+        "<(z7)/CPP/Common/MyString.cpp",
+        "<(z7)/CPP/Common/MyVector.cpp",
+        "<(z7)/CPP/Common/MyWindows.cpp",
+        "<(z7)/CPP/Common/NewHandler.cpp",
+        "<(z7)/CPP/Common/StringConvert.cpp",
+        "<(z7)/CPP/Common/StringToInt.cpp",
+        "<(z7)/CPP/Common/UTFConvert.cpp",
+        "<(z7)/CPP/Common/Wildcard.cpp",
+        "<(z7)/CPP/Windows/FileDir.cpp",
+        "<(z7)/CPP/Windows/FileFind.cpp",
+        "<(z7)/CPP/Windows/FileIO.cpp",
+        "<(z7)/CPP/Windows/FileName.cpp",
+        "<(z7)/CPP/Windows/PropVariant.cpp",
+        "<(z7)/CPP/Windows/PropVariantUtils.cpp",
+        "<(z7)/CPP/Windows/System.cpp",
+        "<(z7)/CPP/Windows/TimeUtils.cpp",
+        "stubs/archiveExports.cpp",
+        "stubs/crc32.c",
+        "stubs/ppmd8Enc.c",
+        "stubs/sha256Scalar.c",
+        "stubs/swapBytesScalar.c"
       ]
     },
     {
@@ -278,6 +219,25 @@
       "target_name": "binding",
       "dependencies": ["sevenzip", "guiddefs"],
       "sources": [
+        "<(z7)/CPP/7zip/Archive/7z/7zRegister.cpp",
+        "<(z7)/CPP/7zip/Archive/Bz2Handler.cpp",
+        "<(z7)/CPP/7zip/Archive/LzmaHandler.cpp",
+        "<(z7)/CPP/7zip/Archive/SplitHandler.cpp",
+        "<(z7)/CPP/7zip/Archive/ZHandler.cpp",
+        "<(z7)/CPP/7zip/Archive/Zip/ZipRegister.cpp",
+        "<(z7)/CPP/7zip/Compress/BZip2Register.cpp",
+        "<(z7)/CPP/7zip/Compress/Bcj2Register.cpp",
+        "<(z7)/CPP/7zip/Compress/BcjRegister.cpp",
+        "<(z7)/CPP/7zip/Compress/BranchRegister.cpp",
+        "<(z7)/CPP/7zip/Compress/ByteSwap.cpp",
+        "<(z7)/CPP/7zip/Compress/CopyRegister.cpp",
+        "<(z7)/CPP/7zip/Compress/Deflate64Register.cpp",
+        "<(z7)/CPP/7zip/Compress/DeflateRegister.cpp",
+        "<(z7)/CPP/7zip/Compress/DeltaFilter.cpp",
+        "<(z7)/CPP/7zip/Compress/Lzma2Register.cpp",
+        "<(z7)/CPP/7zip/Compress/LzmaRegister.cpp",
+        "<(z7)/CPP/7zip/Compress/PpmdRegister.cpp",
+        "<(z7)/CPP/Common/XzCrc64Init.cpp",
         "binding.cpp",
         "src/addon.cpp",
         "src/chunkQueue.cpp",
@@ -288,43 +248,20 @@
         "src/pump.cpp",
         "src/sevenZip.cpp",
         "src/tsfnHandle.cpp",
-        # XzCrc64Init.cpp is nothing but a file-scope object whose constructor calls
-        # Crc64GenerateTable(). It exports no symbol, so inside a static library the
-        # linker has no reason to pull the member in and the CRC64 table stays all
-        # zeros -- .xz streams whose check is CRC64, xz's own default, then decode
-        # correctly and fail the integrity check. It belongs here for the same
-        # reason the *Register.cpp units below do: only a directly compiled
-        # translation unit is guaranteed to contribute its static initializer.
-        "<(z7)/CPP/Common/XzCrc64Init.cpp",
-        "<(z7)/CPP/7zip/Archive/7z/7zRegister.cpp",
-        "<(z7)/CPP/7zip/Archive/Zip/ZipRegister.cpp",
-        "stubs/zipCrypto.cpp",
-        "stubs/wzAes.cpp",
-        "stubs/zipStrong.cpp",
-        "stubs/myAes.cpp",
-        "stubs/zipUpdate.cpp",
         "stubs/bzip2Encoder.cpp",
-        "<(z7)/CPP/7zip/Archive/ZHandler.cpp",
-        "<(z7)/CPP/7zip/Archive/SplitHandler.cpp",
-        "<(z7)/CPP/7zip/Archive/Bz2Handler.cpp",
-        # LzmaHandler.cpp registers two formats, "lzma" and "lzma86".
-        "<(z7)/CPP/7zip/Archive/LzmaHandler.cpp",
-        "<(z7)/CPP/7zip/Compress/CopyRegister.cpp",
-        "<(z7)/CPP/7zip/Compress/LzmaRegister.cpp",
-        "<(z7)/CPP/7zip/Compress/Lzma2Register.cpp",
-        "<(z7)/CPP/7zip/Compress/PpmdRegister.cpp",
-        "<(z7)/CPP/7zip/Compress/BZip2Register.cpp",
-        "<(z7)/CPP/7zip/Compress/DeflateRegister.cpp",
-        "<(z7)/CPP/7zip/Compress/Deflate64Register.cpp",
-        "<(z7)/CPP/7zip/Compress/DeltaFilter.cpp",
-        "<(z7)/CPP/7zip/Compress/BcjRegister.cpp",
-        "<(z7)/CPP/7zip/Compress/Bcj2Register.cpp",
-        "<(z7)/CPP/7zip/Compress/BranchRegister.cpp",
-        "<(z7)/CPP/7zip/Compress/ByteSwap.cpp"
+        "stubs/myAes.cpp",
+        "stubs/wzAes.cpp",
+        "stubs/zipCrypto.cpp",
+        "stubs/zipStrong.cpp",
+        "stubs/zipUpdate.cpp"
       ],
       "include_dirs": [
         "<!(node --print \"require('node-addon-api').include_dir\")",
-        "stubs", "<(z7)/C", "<(z7)/CPP", "<(z7)/CPP/myWindows", "<(z7)/CPP/include_windows"
+        "stubs",
+        "<(z7)/C",
+        "<(z7)/CPP",
+        "<(z7)/CPP/myWindows",
+        "<(z7)/CPP/include_windows"
       ],
       "defines": [
         "NAPI_VERSION=<(napi_build_version)",

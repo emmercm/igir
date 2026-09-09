@@ -24,9 +24,8 @@ Napi::Function EntryReader::GetClass(Napi::Env env) {
 EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<EntryReader>(info) {
     try {
         Napi::Env const env = info.Env();
-        // An entry is named by path, or not named at all. An index may accompany the
-        // path, but only as a hint the Pump verifies against it -- never as a way to
-        // name an entry.
+        // An entry is named by path, or not named at all. An index may accompany
+        // the path, but only as a hint the Pump verifies against it.
         bool const named = info.Length() >= 3 && info[2].IsString();
         bool const unnamed = info.Length() < 3 || info[2].IsUndefined();
         bool const hinted = info.Length() >= 4 && info[3].IsNumber();
@@ -49,9 +48,8 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 return;
             }
         }
-        // An out-of-range or non-integral hint is not an error: it simply cannot
-        // match any item, and the Pump falls back to the scan. Only a value that
-        // round-trips through uint32_t is worth carrying at all.
+        // An out-of-range or non-integral hint is not an error: it cannot match
+        // any item, and the Pump falls back to the scan.
         std::optional<uint32_t> entryIndex;
         if (hinted) {
             double const requested = info[3].As<Napi::Number>().DoubleValue();
@@ -61,32 +59,30 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
         }
 
         // Fixed for the life of the reader rather than passed to each read(),
-        // because it is what the producer fills a chunk to before publishing it: it
-        // has to be known before any byte is decoded.
+        // because the producer fills chunks to this size before publishing them
+        // and so must know it before any byte is decoded.
         size_t chunkBytes = Pump::kReadAheadBytes;
         if (info.Length() >= 5 && info[4].IsNumber()) {
             double const requested = info[4].As<Napi::Number>().DoubleValue();
             if (!(requested >= 1)) {
-                // Catches 0, negatives and NaN alike. A zero-byte chunk would make
-                // every read return an empty buffer that JavaScript cannot tell
-                // apart from progress.
+                // Catches 0, negatives and NaN alike. A zero-byte chunk would
+                // make every read return an empty buffer.
                 Napi::TypeError::New(env, "chunkBytes must be at least 1").ThrowAsJavaScriptException();
                 return;
             }
             chunkBytes = static_cast<size_t>(info[4].As<Napi::Number>().Uint32Value());
         }
 
-        // The bridge exists before the producer does, because the producer captures
-        // it. Its function is unreferenced, so an addon holding a reader open does
-        // not by itself keep the process alive; a parked read re-references it for
-        // exactly as long as it is parked.
+        // The bridge exists before the producer does, because the producer
+        // captures it. It is created unreferenced (the `false`), so holding a
+        // reader open does not by itself keep the process alive; a parked read
+        // re-references it for exactly as long as it is parked.
         auto bridge = std::make_shared<Bridge>();
         bridge->tsfn = TsfnHandle::Create(env, "sevenzip::EntryReader", false);
         if (!bridge->tsfn) {
             // N-API refused the function and has already left an error pending.
-            // Nothing was started and no thread count was taken out, so there is
-            // nothing to unwind; the constructor's catch turns this into the
-            // reader's own message.
+            // Nothing was started, so there is nothing to unwind; the
+            // constructor's catch turns this into the reader's own message.
             throw std::runtime_error("could not create the entry reader's callback");
         }
         bridge->reader = this;
@@ -97,9 +93,9 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
                 entryIndex, chunkBytes, Registry(env),
                 [bridge]() {
-                    // Producer thread. Call() never blocks; if the environment has
-                    // already gone away it does nothing, which is right -- there is
-                    // no reader left to notify and no loop to notify it on.
+                    // Producer thread. Call() never blocks, and does nothing once
+                    // the environment has gone away: there is no reader left to
+                    // notify and no loop to notify it on.
                     bridge->tsfn->Call([bridge](Napi::Env env) {
                         // Event loop thread. Nothing may escape into N-API's C ABI.
                         try {
@@ -107,20 +103,20 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                                 bridge->reader->OnProducerReady(env);
                             }
                         } catch (...) {  // NOLINT(bugprone-empty-catch)
-                            // OnProducerReady already contains its own handling; this
-                            // only stops a failure in that handling from aborting.
+                            // OnProducerReady handles its own failures; this only
+                            // stops a failure in that handling from aborting.
                         }
                     });
                 },
                 [bridge]() {
                     // Producer thread, exactly once, as its last act. This is the
-                    // matching release for the thread count of 1 above, and the only
-                    // thing that frees the ThreadSafeFunction.
+                    // release matching the producer's use of the bridge, and the
+                    // only thing that frees the ThreadSafeFunction.
                     bridge->tsfn->Release();
                 });
         } catch (...) {
-            // Nothing was started, so nothing will ever call onExit. Release the
-            // thread count this constructor took out, or the function -- and the
+            // Nothing was started, so nothing will ever call onExit. Release
+            // the ThreadSafeFunction's initial use count here, or it -- and the
             // environment reference behind it -- leaks.
             bridge->tsfn->Release();
             throw;
@@ -139,10 +135,10 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
 
 EntryReader::~EntryReader() {
     if (bridge_) {
-        // Both this and the callback that reads it run on the event loop thread,
-        // so from here on the producer's notifications find no reader and do
-        // nothing. The ThreadSafeFunction itself stays alive inside the bridge
-        // until the producer releases it.
+        // Both this and the callback that reads it run on the event loop
+        // thread, so from here on the producer's notifications find no reader.
+        // The ThreadSafeFunction stays alive inside the bridge until the
+        // producer releases it.
         bridge_->reader = nullptr;
     }
     if (pump_) {
@@ -179,7 +175,7 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
         return true;
     }
 
-    // Hand the chunk's storage straight to JavaScript rather than copying it:
+    // Hand the chunk's storage straight to JavaScript rather than copying it;
     // the finalizer frees it. `raw` is unowned between release() and a
     // successful New(), which is why the failure path below deletes it.
     uint8_t* raw = chunk.data.release();
@@ -188,8 +184,8 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
     *settled = true;
     if (out.IsEmpty()) {
         // With C++ exceptions disabled, a failed New() returns an empty value
-        // and leaves a JS exception pending. Reject rather than resolving with
-        // an empty value, which JavaScript would read as the end of the entry.
+        // and leaves a JS exception pending. Resolving with that empty value
+        // would read as the end of the entry, so reject instead.
         delete[] raw;
         deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
                                                  : Napi::Error::New(env, "failed to allocate the read result").Value());
@@ -220,11 +216,10 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
             settled = true;
             deferred.Reject(Napi::Error::New(env, "the entry reader was never opened").Value());
         } else if (!TrySettle(env, deferred, &settled)) {
-            // The producer has not caught up -- the uncommon case, since it runs
-            // ahead by a bounded amount and TrySettle answers from a finished
-            // chunk without a thread hop when it can. Park, and hold both the
-            // object and the event loop open until it wakes us; TryTake has
-            // already armed the callback that will.
+            // The producer has not caught up -- the uncommon case, since it
+            // runs ahead by a bounded amount. Park, holding both the object and
+            // the event loop open until it wakes us; the read above has already
+            // armed the callback that will.
             pending_ = deferred;
             settled = true;
             Ref();
@@ -247,9 +242,8 @@ void EntryReader::OnProducerReady(Napi::Env env) {
     Napi::Promise::Deferred const deferred = *pending_;
     bool settled = false;
     if (!TrySettle(env, deferred, &settled)) {
-        // Still nothing -- the chunk was taken by a read that ran in between, or
-        // the wake-up crossed with an abort. TryTake re-armed the callback, so
-        // stay parked.
+        // Still nothing: the wake-up crossed with an abort. The read above
+        // re-armed the callback, so stay parked.
         return;
     }
     ReleasePending(env);
@@ -270,8 +264,8 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
         if (pump_) {
             pump_->Cancel();
         }
-        // Copied, then cleared: Napi::Promise::Deferred is trivially copyable, so
-        // moving out of the optional would leave `pending_` engaged and this
+        // Copied, then cleared: Napi::Promise::Deferred is trivially copyable,
+        // so moving out of the optional would leave `pending_` engaged and this
         // promise reachable a second time.
         std::optional<Napi::Promise::Deferred> const pending = pending_;
         pending_.reset();
@@ -279,11 +273,10 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
         // producer holds the other one and unwinds on its own time.
         pump_.reset();
         if (pending.has_value()) {
-            // The caller asked for the rest of the entry and then said it did not
-            // want it. That is the end of the stream, not a failure -- and it has
-            // to be settled here rather than left to the producer, which may take
-            // a while to notice the abort and whose notification we have just
-            // stopped listening for.
+            // The caller asked for the rest of the entry and then said it did
+            // not want it: the end of the stream, not a failure. It has to be
+            // settled here rather than left to the producer, whose notification
+            // we have just stopped listening for.
             pending->Resolve(env.Null());
             ReleasePending(env);
         }

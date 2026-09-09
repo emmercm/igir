@@ -33,14 +33,13 @@ struct Entry {
 };
 
 // One listing, on a dedicated thread rather than on the libuv thread pool. A
-// listing holds its thread from the archive open through the last property
-// read, and for a large solid .7z the open alone decodes a compressed header --
-// far longer than the short tasks the pool's four default threads are sized
-// for, and long enough that concurrent listings would stall every unrelated fs,
-// dns and zlib operation in the process.
+// listing holds its thread from the archive open through the last property read,
+// and for a large solid .7z the open alone decodes a compressed header -- far
+// longer than the short tasks the pool's four default threads are sized for, so
+// concurrent listings would stall unrelated fs, dns and zlib work.
 //
-// The price is one ThreadSafeFunction per listing, and that this class owns its
-// own lifetime.
+// The price is one ThreadSafeFunction per listing, and this class owning its own
+// lifetime.
 class ListJob : public std::enable_shared_from_this<ListJob> {
    public:
     // Starts the listing. On success the returned promise settles when the
@@ -66,11 +65,11 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
         // the process must not exit leaving it unsettled.
         tsfn_ = TsfnHandle::Create(env, "sevenzip::ListEntries", true);
         if (!tsfn_) {
-            // Thrown from the constructor rather than reported from Start(), so
-            // that a ListJob never exists with a null function for the rest of
-            // this class to have to check for. N-API has already left an error
-            // pending and no thread count was taken out, so `new` unwinding
-            // here leaves nothing behind.
+            // Thrown from the constructor rather than reported from Start(),
+            // so a ListJob never exists with a null function the rest of this
+            // class would have to check for. N-API has already left an error
+            // pending and nothing was taken out, so unwinding here leaves
+            // nothing behind.
             throw std::runtime_error("could not create the archive listing's callback");
         }
     }
@@ -118,9 +117,9 @@ void ListJob::List() {
         error_ = "could not read the archive's item count; it is likely corrupt";
         return;
     }
-    // Deliberately NOT entries_.reserve(count): `count` comes out of an
+    // Deliberately not entries_.reserve(count): `count` comes out of an
     // untrusted header, and a corrupt archive claiming 4 billion items would
-    // otherwise ask for ~200 GB before a single property is read. Growing costs
+    // ask for ~200 GB before a single property is read. Growing instead costs
     // an amortized reallocation, bounded by what the archive can produce.
     for (uint32_t i = 0; i < count; i++) {
         // Checked per item, because an untrusted count makes this loop the one
@@ -135,13 +134,13 @@ void ListJob::List() {
 
         std::string entryPath;
         if (GetStringProp(*opened.archive, i, kpidPath, &entryPath)) {
-            // An empty string stays an empty string: the format DID record a
+            // An empty string stays an empty string: the format did record a
             // name, and that name is "". Only a missing kpidPath is undefined.
             //
             // Normalized rather than passed through, because some handlers
-            // rewrite `/` to the host's separator on the way out -- so the same
-            // archive would otherwise list `sub/file.bin` on Linux and
-            // `sub\file.bin` on Windows.
+            // rewrite `/` to the host's separator on the way out, so the same
+            // archive would list `sub/file.bin` on Linux and `sub\file.bin` on
+            // Windows.
             entry.entryPath = NormalizeEntryPath(std::move(entryPath));
         }
         uint64_t size = 0;
@@ -173,8 +172,7 @@ void ListJob::Run() {
         }
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // Assigning to error_ allocates, so the handlers above can throw in
-        // turn. There is nothing left to report it with, and escaping this
-        // thread's entry point would call std::terminate().
+        // turn. Escaping this thread's entry point would call std::terminate().
     }
 
     try {
@@ -189,8 +187,8 @@ void ListJob::Settle() {
     // Keeps this object alive until the callback has run, whether or not the
     // caller still holds a reference.
     std::shared_ptr<ListJob> const self = shared_from_this();
-    // Call() never blocks. If the environment has already gone away it does
-    // nothing, which is right: there is nothing left waiting on the promise.
+    // Call() never blocks, and does nothing once the environment has gone away:
+    // there is nothing left waiting on the promise.
     tsfn_->Call([self](Napi::Env env) {
         // Event loop thread. Nothing may escape into N-API's C ABI: this is
         // called through a C function pointer, and with
@@ -201,9 +199,8 @@ void ListJob::Settle() {
             try {
                 self->deferred_.Reject(Napi::Error::New(env, "failed to build the entry list").Value());
             } catch (...) {  // NOLINT(bugprone-empty-catch)
-                // Rejecting allocates too. Nothing further can be done, and
-                // aborting the process over it would be worse than a promise
-                // that never settles.
+                // Rejecting allocates too. Aborting the process over it would
+                // be worse than a promise that never settles.
             }
         }
     });
@@ -246,15 +243,14 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
     std::shared_ptr<ListJob> const job(new ListJob(env, deferred, std::move(path), formatIndex));
 
     // A null registry means the environment's instance data is already gone,
-    // i.e. teardown. Treated exactly like a refused registration rather than as
-    // licence to run unregistered: a listing thread no one can cancel and no
-    // one waits for is the failure the registry exists to prevent.
+    // i.e. teardown. Treated like the refused registration below rather than as
+    // licence to run unregistered.
     job->registry_ = Registry(env);
     if (job->registry_) {
-        // Registered before the thread starts, so no running listing is ever
-        // invisible to teardown. Captured weakly: teardown may reach for this
-        // after the job's last reference has gone, and locking a dead weak_ptr
-        // is the no-op that makes that safe.
+        // Registered before the thread starts, so no running listing is
+        // invisible to teardown. Captured weakly because teardown may reach for
+        // this after the job's last reference has gone; locking a dead weak_ptr
+        // is then a no-op.
         std::weak_ptr<ListJob> const weak = job;
         job->token_ = job->registry_->Register([weak]() noexcept {
             if (std::shared_ptr<ListJob> const alive = weak.lock()) {
@@ -295,9 +291,8 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
         }).detach();
     } catch (...) {
         // The OS refused a thread. Nothing was started, so this is the only
-        // place the registration and the ThreadSafeFunction's thread count can
-        // be given back -- and the promise is rejected here rather than left
-        // pending, since no thread will ever settle it.
+        // place the registration and the thread count can be given back, and
+        // the promise must be rejected here since no thread will settle it.
         if (job->registry_) {
             job->registry_->Unregister(job->token_);
         }

@@ -39,9 +39,9 @@ void JobRegistry::DrainAndWait() noexcept {
     std::vector<std::function<void()>> cancels;
     {
         std::scoped_lock const lock(mutex_);
-        // Set BEFORE the snapshot is taken. That ordering is what makes the
-        // snapshot complete: from here on Register() refuses, so no job can
-        // slip in between copying the list and waiting on it.
+        // Set before the snapshot is taken, which is what makes the snapshot
+        // complete: from here on Register() refuses, so no job can slip in
+        // between copying the list and waiting on it.
         draining_ = true;
         try {
             cancels.reserve(jobs_.size());
@@ -49,24 +49,20 @@ void JobRegistry::DrainAndWait() noexcept {
                 cancels.push_back(entry.second);
             }
         } catch (...) {
-            // Copying the callbacks allocates, and this function is noexcept
-            // because it runs from a teardown hook. Failing here costs the
-            // early cancel, not the guarantee: the wait below still returns
-            // only once every registered job has unregistered, so the jobs run
-            // to completion instead of being cut short.
+            // Copying the callbacks allocates, and this runs from a teardown
+            // hook. Failing here costs the early cancel, not the wait below,
+            // so the jobs run to completion instead of being cut short.
             cancels.clear();
         }
     }
 
-    // Called with the lock dropped. Each one reaches into a job and takes that
-    // job's own mutexes; holding this registry's mutex across that is how a
-    // lock-order inversion gets built, and the jobs unregister through this
-    // same mutex as they exit.
+    // Called with the lock dropped. Each cancel takes its job's own mutexes,
+    // and jobs unregister through this registry's mutex as they exit, so
+    // holding both at once would invert the lock order.
     //
     // A job that finished between the snapshot and here has already dropped its
     // last shared_ptr, so the weak_ptr inside the callback fails to lock and the
-    // call is a no-op. That is the whole reason cancel callbacks must capture
-    // weakly.
+    // call is a no-op.
     for (const std::function<void()>& cancel : cancels) {
         if (!cancel) {
             continue;
@@ -74,10 +70,9 @@ void JobRegistry::DrainAndWait() noexcept {
         try {
             cancel();
         } catch (...) {  // NOLINT(bugprone-empty-catch)
-            // Documented as non-throwing. There is nowhere to report this --
-            // teardown is already underway and there is no environment left to
-            // throw into -- and one job refusing to stop must not prevent the
-            // rest from being asked.
+            // Documented as non-throwing, and teardown is already underway
+            // with no environment left to throw into. One job refusing to stop
+            // must not prevent the rest from being asked.
         }
     }
 
@@ -85,10 +80,9 @@ void JobRegistry::DrainAndWait() noexcept {
         std::unique_lock<std::mutex> lock(mutex_);
         empty_.wait(lock, [this]() { return jobs_.empty(); });
     } catch (...) {  // NOLINT(bugprone-empty-catch)
-        // std::unique_lock and condition_variable::wait throw only when the
-        // underlying OS primitive fails, which a teardown hook cannot recover
-        // from -- and letting it escape a noexcept function calls
-        // std::terminate() instead of merely exiting untidily.
+        // These throw only when the underlying OS primitive fails, which a
+        // teardown hook cannot recover from, and letting it escape a noexcept
+        // function calls std::terminate().
     }
 }
 

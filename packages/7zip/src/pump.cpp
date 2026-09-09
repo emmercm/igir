@@ -22,15 +22,13 @@ namespace sevenzip {
 namespace {
 
 // Both callback classes below are declared with upstream's own class macro, so
-// the base list, QueryInterface/AddRef/Release, and every method signature come
-// from the vendored headers instead of being transcribed here. A signature
-// change in a future 7-Zip drop then becomes a compile error rather than
-// something to spot by eye.
+// their base list, QueryInterface/AddRef/Release, and method signatures come
+// from the vendored headers. A signature change in a future 7-Zip drop is then
+// a compile error rather than something to spot by eye.
 //
-// The addon is built single-threaded, which makes the macro-supplied AddRef and
-// Release plain non-atomic ++/--. That is safe only because every reference to
-// these objects is created, copied and released on the producer thread alone;
-// handing one of these objects to another thread would race the count.
+// The addon is built single-threaded, so the macro-supplied AddRef and Release
+// are non-atomic ++/--. That is safe only because every reference to these
+// objects is created, copied and released on the producer thread alone.
 
 // The sink 7-Zip writes decompressed bytes into. Every Write() blocks while the
 // queue is full, which is what keeps memory bounded; it returns E_ABORT once the
@@ -80,10 +78,9 @@ Z7_COM7F_IMF(QueueOutStream::Write(const void* data, UInt32 size, UInt32* proces
         return E_ABORT;
     }
     if (!queue_.Write(static_cast<const uint8_t*>(data), size)) {
-        // Write() stops for two different reasons and they are not the same
-        // failure: the consumer closing is a normal end of stream, whereas
-        // failing to allocate has to reach the caller as an error rather than
-        // as an entry that quietly stopped early.
+        // The consumer closing is a normal end of stream, but failing to
+        // allocate has to reach the caller as an error rather than as an entry
+        // that quietly stopped early.
         return queue_.OutOfMemory() ? E_OUTOFMEMORY : E_ABORT;
     }
     if (processedSize != nullptr) {
@@ -108,10 +105,9 @@ Z7_COM7F_IMF(ExtractCallback::GetStream(UInt32 index, ISequentialOutStream** out
     if (abort_.load(std::memory_order_relaxed)) {
         return E_ABORT;
     }
-    // Nothrow: this function carries 7-Zip's `throw()` specification, so a
-    // std::bad_alloc escaping it would call std::terminate() rather than
-    // surface as a failed extraction. QueueOutStream's constructor only binds
-    // two references, so allocation is the only thing here that can fail.
+    // Nothrow: this function carries 7-Zip's `throw()` specification, so an
+    // escaping std::bad_alloc would call std::terminate() rather than surface
+    // as a failed extraction.
     auto* stream = new (std::nothrow) QueueOutStream(queue_, abort_);
     if (stream == nullptr) {
         return E_OUTOFMEMORY;
@@ -150,26 +146,22 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
                                   std::function<void()> onExit) {
     chunkBytes = std::clamp<size_t>(chunkBytes, 1, kMaxChunkBytes);
     // `onReady` goes through the constructor because ChunkQueue holds it as a
-    // const member: it is read outside the lock on every publishing path, which
-    // is sound only because nothing can reassign it once the producer is running.
+    // const member.
     std::shared_ptr<Pump> pump(
         new Pump(std::move(path), formatIndex, std::move(entryPath), entryIndex, chunkBytes, std::move(onReady)));
     pump->onExit_ = std::move(onExit);
     pump->registry_ = std::move(registry);
     if (!pump->registry_) {
-        // Only reachable once the environment's instance data is gone, which is
-        // teardown. Treated exactly like a refused registration below rather
-        // than as licence to run unregistered: a producer no one can cancel and
-        // no one waits for is the failure the registry exists to prevent, and
-        // it is worse here than a rejected read.
+        // Only reachable once the environment's instance data is gone, which
+        // is teardown. Treated like the refused registration below rather than
+        // as licence to run unregistered.
         throw std::runtime_error("the 7-Zip addon is shutting down");
     }
 
-    // Registered BEFORE the thread starts, so there is no window in which a
-    // running producer is invisible to teardown. The callback captures weakly:
-    // teardown may reach for it at any moment, including after this Pump's last
-    // reference has been dropped, and locking a dead weak_ptr is the no-op that
-    // makes that safe (see JobRegistry::Register).
+    // Registered before the thread starts, so there is no window in which a
+    // running producer is invisible to teardown. The callback captures weakly
+    // because teardown may reach for it after this Pump's last reference has
+    // been dropped; locking a dead weak_ptr is then a no-op.
     std::weak_ptr<Pump> const weak = pump;
     pump->token_ = pump->registry_->Register([weak]() noexcept {
         if (std::shared_ptr<Pump> const alive = weak.lock()) {
@@ -178,23 +170,19 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
     });
     if (pump->token_ == JobRegistry::kInvalidToken) {
         // The environment is tearing down. Starting now would leave a thread
-        // nothing is waiting for, which is the exact failure this registry
-        // exists to prevent.
+        // nothing is waiting for.
         throw std::runtime_error("the 7-Zip addon is shutting down");
     }
 
-    // The producer holds a strong reference for exactly as long as it runs, so
-    // the consumer is free to drop its own at any moment -- which is the point:
-    // teardown never waits for a decoder to notice it should stop. If the last
-    // reference is this one, ~Pump runs on the producer thread after Run() has
-    // returned, touching only members no one else can still reach.
+    // The producer holds a strong reference for as long as it runs, so the
+    // consumer can drop its own at any moment without waiting for the decoder
+    // to notice. If the last reference is this one, ~Pump runs on the producer
+    // thread after Run() returns, touching only members no one else can reach.
     //
-    // If std::thread's constructor throws, the registration above is undone and
-    // `pump` is destroyed here, so nothing was started; Start() propagates and
-    // the caller has no Pump. onExit is therefore NOT called on that path, which
-    // is why the caller allocates its side of the bridge only after Start()
-    // returns. Undoing the registration matters as much as not calling onExit:
-    // a token left behind is a thread teardown would wait forever for.
+    // If std::thread's constructor throws, the registration is undone and
+    // `pump` is destroyed here, so nothing was started and onExit is never
+    // called. Undoing the registration matters as much: a token left behind is
+    // a thread teardown would wait forever for.
     try {
         std::thread([pump]() mutable {
             pump->Run();
@@ -212,14 +200,12 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
             // may be what destroys the Pump they are read from.
             std::shared_ptr<JobRegistry> const registry = pump->registry_;
             JobRegistry::Token const token = pump->token_;
-            // Released BEFORE unregistering, not after. When this is the last
-            // reference, ~Pump runs here -- and it destroys the ChunkQueue,
-            // whose ready callback holds the EntryReader's bridge and that
-            // bridge's ThreadSafeFunction. Letting the captured shared_ptr fall
-            // out of scope on its own would order all of that AFTER the
-            // Unregister() below, which is the one thing that must not happen:
-            // teardown reads Unregister() as "the thread is done" and is then
-            // free to finish tearing the environment down.
+            // Released before unregistering, not after. When this is the last
+            // reference, ~Pump runs here and destroys the ChunkQueue, whose
+            // ready callback holds a ThreadSafeFunction. Letting the captured
+            // shared_ptr fall out of scope on its own would order that after
+            // the Unregister() below, which teardown reads as "the thread is
+            // done" before those objects are actually gone.
             pump.reset();
             // Dead last, after everything else this thread will ever touch.
             if (registry) {
@@ -261,11 +247,10 @@ std::string Pump::OutOfMemoryMessage() const {
 
 HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
     if (entryPath_.has_value()) {
-        // A remembered index is verified, never trusted: one kpidPath read says
-        // whether the archive still holds that entry there. When it does, the
-        // scan below -- a property read per item -- is skipped entirely. When it
-        // does not, the archive was rewritten since the index was recorded, and
-        // the scan is exactly the right answer.
+        // A remembered index is verified, never trusted: one kpidPath read
+        // says whether the archive still holds that entry there, and skips the
+        // scan below when it does. When it does not, the archive was rewritten
+        // since the index was recorded and the scan is the right answer.
         if (entryIndex_.has_value() && EntryIndexMatches(archive, *entryIndex_, NormalizeEntryPath(*entryPath_))) {
             *out = *entryIndex_;
             return S_OK;
@@ -326,11 +311,10 @@ void Pump::Extract() {
     CMyComPtr<IArchiveExtractCallback> const callback(raw);
     hr = opened.archive->Extract(&index, 1, 0 /* testMode */, callback);
     if (queue_.OutOfMemory()) {
-        // Checked first, and regardless of what Extract() returned. A handler
-        // is free to translate the E_OUTOFMEMORY from the sink into an
-        // operation result, or into S_OK for a codec that treats a short write
-        // as the end of its output -- and reporting that as a successful
-        // extraction would hand the caller a silently truncated entry.
+        // Checked first, whatever Extract() returned: a handler may translate
+        // the sink's E_OUTOFMEMORY into an operation result, or into S_OK for a
+        // codec that reads a short write as the end of its output. Reporting
+        // that as success would hand the caller a truncated entry.
         SetError(OutOfMemoryMessage());
     } else if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
         // The consumer closed early; not an error.
@@ -353,8 +337,8 @@ void Pump::Run() {
         }
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // The handlers above allocate a std::string and lock a mutex, so they
-        // can throw in turn. There is no way left to report that, and escaping
-        // this thread's entry point would call std::terminate().
+        // can throw in turn. Escaping this thread's entry point would call
+        // std::terminate().
     }
     try {
         // Always signal completion, on every path, so a waiting consumer cannot
@@ -372,12 +356,11 @@ ChunkQueue::Status Pump::TryRead(Chunk* out) {
         // decoded before it.
         std::scoped_lock const lock(errorMutex_);
         if (error_.empty() && queue_.OutOfMemory()) {
-            // Extract() records the same message, but only once it has unwound
-            // -- and the queue stops handing out chunks the instant the
-            // allocation fails, so the consumer routinely gets here first. In
-            // that window `error_` is still empty and the end of the queue is
-            // indistinguishable from a complete entry, which is exactly the
-            // silent truncation this whole path exists to prevent.
+            // Extract() records the same message, but only once it has
+            // unwound, and the queue stops handing out chunks the instant the
+            // allocation fails -- so the consumer routinely gets here first. In
+            // that window `error_` is still empty and the end of the queue
+            // would be indistinguishable from a complete entry.
             error_ = OutOfMemoryMessage();
         }
         if (!error_.empty()) {

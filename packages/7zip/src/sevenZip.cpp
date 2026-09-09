@@ -145,26 +145,21 @@ namespace {
 // 7-Zip's own wide-string type.
 CMyComPtr<IInStream> OpenFile(const UString& path) {
     // 7-Zip's COM classes declare AddRef/Release private (Z7_COM_UNKNOWN_IMP),
-    // so the owning pointer has to be typed as the interface, not the class --
-    // which means Open() has to be called through the raw pointer, before
-    // ownership is handed over. The reference count starts at 0, so until
-    // CMyComPtr's constructor AddRef()s it below, nothing else can be holding
-    // this and deleting it directly is the whole of the cleanup.
+    // so the owning pointer has to be typed as the interface, not the class,
+    // and Open() has to be called through the raw pointer before ownership is
+    // handed over. The reference count starts at 0, so until CMyComPtr AddRef()s
+    // it below nothing else holds this and `delete` is the whole cleanup.
     //
     // The conversion is hoisted above the `new` rather than written inline in
     // the Open() call, which is what makes that cleanup sufficient: on POSIX
-    // us2fs() is a real allocating conversion that throws CNewException (on
-    // Windows it is a macro that expands to its argument), and called inline it
-    // would run while `file` was still raw-owned, leaking the stream and the
-    // file handle behind it. Nothing left between the new and the delete can
-    // throw -- CInFileStream::Open() is a Close() and an ::open()/CreateFileW()
-    // with no allocation on either platform.
+    // us2fs() allocates and throws CNewException, and called inline it would run
+    // while `file` was still raw-owned, leaking the stream and its file handle.
+    // Nothing left between the new and the delete can throw.
     //
-    // Taking ownership immediately after the new, and letting a local CMyComPtr
-    // do this instead, would be the more obviously correct shape. It is not used
-    // because clang-analyzer models the returned copy as elided while still
-    // running the local's destructor, and so reports a use-after-free -- at a
-    // line inside MyCom.h, which cannot be annotated from a vendored file.
+    // A local CMyComPtr taking ownership right after the new would be the more
+    // obviously correct shape, but clang-analyzer models the returned copy as
+    // elided while still running the local's destructor and reports a
+    // use-after-free inside MyCom.h, which a vendored file cannot annotate.
     FString const filePath = us2fs(path);
     auto* file = new CInFileStream;
     if (!file->Open(filePath)) {
@@ -176,17 +171,15 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 
 // A callback that reports no progress and resolves an archive's sibling volumes.
 //
-// Implementing IArchiveOpenVolumeCallback is what lets 7-Zip find a multi-volume
-// set by itself, given nothing but the first volume's path. The handler asks for
-// the start volume's file name through GetProperty(kpidName), derives each
-// successive name from it, and requests them through GetStream(); this class
-// only has to resolve a bare name against the directory the archive was opened
-// from. That keeps volume discovery -- naming schemes, ordering, how many
-// volumes there are -- inside the vendored handlers, which is where the format
-// knowledge already lives, instead of pushing it onto the caller.
+// Implementing IArchiveOpenVolumeCallback lets 7-Zip find a multi-volume set by
+// itself, given nothing but the first volume's path. The handler asks for the
+// start volume's name through GetProperty(kpidName), derives each successive
+// name from it, and requests them through GetStream(); this class only resolves
+// a bare name against the directory the archive was opened from. Volume
+// discovery -- naming schemes, ordering, how many there are -- stays inside the
+// vendored handlers.
 //
-// It is also mandatory for two of the registered handlers rather than merely
-// convenient:
+// It is also mandatory for two of the registered handlers:
 //
 //   - the Split handler queries for this interface and refuses to open anything
 //     at all when the query fails.
@@ -234,9 +227,8 @@ Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
     try {
         if (propID == kpidName) {
             // Copies the name into a BSTR, so it allocates -- and this method
-            // carries upstream's `throw()`, which C++17 makes a synonym for
-            // noexcept, so an escaping exception would call std::terminate()
-            // instead of failing the open.
+            // carries upstream's `throw()`, noexcept under C++17, so an
+            // escaping exception would call std::terminate().
             prop = name_;
         }
     } catch (...) {
@@ -252,8 +244,8 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
     *inStream = nullptr;
     // Checked here too: a spanned set opens one file per volume, and a handler
     // that never reports progress would otherwise walk all of them after a
-    // cancel. Returning S_FALSE rather than E_ABORT would be wrong -- that means
-    // "no such volume", which the handlers take as a normal end of the set.
+    // cancel. S_FALSE would be wrong here -- it means "no such volume", which
+    // handlers take as a normal end of the set.
     if (Aborted()) {
         return E_ABORT;
     }
@@ -261,10 +253,9 @@ Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream))
     // reached the end of the set, and it opens what it already has.
     //
     // Building the path and constructing the CInFileStream both allocate, and
-    // this method carries upstream's `throw()` -- noexcept under C++17 -- so an
-    // escaping std::bad_alloc would call std::terminate() rather than fail the
-    // open. E_OUTOFMEMORY rather than S_FALSE deliberately: S_FALSE would turn
-    // running out of memory into a silently short archive.
+    // this method carries upstream's `throw()`, so an escaping std::bad_alloc
+    // would call std::terminate(). E_OUTOFMEMORY rather than S_FALSE, which
+    // would turn running out of memory into a silently short archive.
     try {
         // Initialized from the call rather than assigned to afterwards, so that
         // the stream is only ever owned by one pointer.
@@ -295,9 +286,8 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
     }
 
     CMyComPtr<IInArchive> archive;
-    // CreateArchiver takes the out-parameter as void**, which is how every
-    // COM factory in the vendored tree is declared; there is no way to reach
-    // it without the cast.
+    // CreateArchiver takes its out-parameter as void**, like every COM factory
+    // in the vendored tree, so the cast is unavoidable.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     RINOK(CreateArchiver(&clsid, &IID_IInArchive, reinterpret_cast<void**>(&archive)))
     if (!archive) {
@@ -333,8 +323,8 @@ bool GetUInt64Prop(IInArchive& archive, uint32_t index, PROPID id, uint64_t* out
     UInt64 value = 0;
     // ConvertPropVariantToUInt64() throws for a variant type it does not
     // recognize. Every caller runs inside a boundary that must not let an
-    // exception escape, and a missing or odd property is not worth failing the
-    // whole operation over, so it is absorbed here rather than at each of them.
+    // exception escape, and an odd property is not worth failing over, so it is
+    // absorbed here rather than at each of them.
     try {
         if (!ConvertPropVariantToUInt64(prop, value)) {
             return false;
@@ -371,10 +361,10 @@ std::string NormalizeEntryPath(std::string entryPath) {
 }
 
 bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath) {
-    // Bounds-checked before anything is read with it. The index reaches here
-    // straight from the caller, and 7-Zip's handlers index their item tables
-    // with an unchecked operator[] -- so an out-of-range value is not a lookup
-    // that fails, it is a read of whatever happens to sit past the end.
+    // Bounds-checked before anything is read with it. The index comes straight
+    // from the caller, and 7-Zip's handlers index their item tables with an
+    // unchecked operator[], so an out-of-range value reads past the end rather
+    // than failing the lookup.
     UInt32 count = 0;
     if (archive.GetNumberOfItems(&count) != S_OK || index >= count) {
         return false;

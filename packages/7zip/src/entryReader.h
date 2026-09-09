@@ -13,14 +13,12 @@ namespace sevenzip {
 // The JS-visible pull reader: `read()` resolves with the next chunk of an
 // entry's decompressed bytes, or `null` at the end.
 //
-// The rule the whole class is built around is that no thread it runs on ever
-// waits on another. A read is answered on the event loop thread, synchronously,
-// from a chunk the producer has already finished -- the steady state, since the
-// producer runs ahead by a bounded amount. Only when the consumer catches up
-// does a read park: its promise is held, and the producer wakes it through a
-// ThreadSafeFunction once the next chunk is ready. The one thread allowed to
-// block is the producer, on a full queue, which is back-pressure rather than a
-// stall.
+// No thread this runs on ever waits on another. A read is answered on the event
+// loop thread, synchronously, from a chunk the producer has already finished --
+// the steady state, since the producer runs ahead by a bounded amount. Only when
+// the consumer catches up does a read park: its promise is held, and the
+// producer wakes it through a ThreadSafeFunction once the next chunk is ready.
+// The one thread allowed to block is the producer, on a full queue.
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
    public:
     static Napi::Function GetClass(Napi::Env env);
@@ -51,11 +49,10 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     void OnProducerReady(Napi::Env env);
 
    private:
-    // Shared between this object and the producer thread, so that each can
-    // outlive the other. The producer holds it because it must be able to say
-    // "a chunk is ready" and "I have exited" even if the reader has already been
-    // garbage collected; the reader holds it to keep the ThreadSafeFunction
-    // alive until the producer has released it.
+    // Shared between this object and the producer thread so that each can
+    // outlive the other. The producer needs it to report a ready chunk or its
+    // own exit even after the reader has been garbage collected; the reader
+    // needs it to keep the ThreadSafeFunction alive until the producer lets go.
     struct Bridge {
         std::shared_ptr<TsfnHandle> tsfn;
         // Touched only on the event loop thread: set at construction, cleared by
@@ -82,11 +79,10 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // The one outstanding read, if it could not be answered immediately. Also
     // the "a read is in flight" flag -- there is only ever one.
     std::optional<Napi::Promise::Deferred> pending_;
-    // False until the constructor has run to completion. Its argument-validation
-    // paths report a TypeError and return, leaving no Pump and no bridge; a
-    // JavaScript caller that held on to the half-built object anyway must be
-    // told the reader was never opened, not handed the empty read that a null
-    // Pump would otherwise look like.
+    // False until the constructor has run to completion. Its argument checks
+    // report a TypeError and return, leaving no Pump and no bridge; a caller
+    // that held on to the half-built object must be told the reader was never
+    // opened, not handed the empty read a null Pump would otherwise look like.
     bool constructed_ = false;
     bool closed_ = false;
 };

@@ -16,9 +16,9 @@ void ChunkQueue::FlushReady(std::unique_lock<std::mutex>& lock) {
     if (!onReady_ || !waiting_) {
         return;
     }
-    // Cleared before the call, not after: this is the "exactly once per
-    // kPending" half of the contract, and the consumer re-arms it from its next
-    // TryTake() if it still cannot make progress.
+    // Cleared before the call, not after, so the callback fires once for the
+    // kPending that armed it. A consumer that still cannot make progress
+    // re-arms it from its next TryTake().
     waiting_ = false;
     lock.unlock();
     onReady_();
@@ -31,18 +31,16 @@ void ChunkQueue::MarkOutOfMemory() noexcept {
     outOfMemory_.store(true, std::memory_order_relaxed);
     try {
         std::unique_lock<std::mutex> lock(mutex_);
-        // Stopping the producer is the same thing Abort() does, and for the
-        // same reason: nothing more can be published. What is already queued is
-        // deliberately NOT discarded -- the bytes that were decoded before the
-        // allocation failed are still good, and this is the same contract a
-        // mid-entry extraction failure follows.
+        // Stop the producer, as Abort() does: nothing more can be published.
+        // What is already queued is deliberately kept -- the bytes decoded
+        // before the allocation failed are still good.
         aborted_ = true;
         notFull_.notify_all();
         FlushReady(lock);
     } catch (...) {  // NOLINT(bugprone-empty-catch)
-        // Same reasoning as Abort(): this is reached from a noexcept boundary
-        // and there is nowhere left to report a failure to lock or to notify.
-        // The flag above is already set, which is the part the consumer needs.
+        // Reached from a noexcept boundary, with nowhere to report a failure
+        // to lock or notify. outOfMemory_ is already set, which is the part the
+        // consumer needs.
     }
 }
 
@@ -52,9 +50,7 @@ bool ChunkQueue::Write(const uint8_t* data, size_t length) noexcept {
     } catch (...) {
         // Reached when publishing a chunk allocates and cannot: the deque node
         // in ready_, the ThreadSafeFunction call FlushReady() ends up making,
-        // or the condition variable's own wait. The chunk buffer itself is
-        // allocated nothrow below and reports through the same path, so all of
-        // them arrive here.
+        // or the condition variable's own wait.
         MarkOutOfMemory();
         return false;
     }
@@ -68,13 +64,9 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
             return false;
         }
         if (!partial_.data) {
-            // Default-initialized on purpose: only the bytes memcpy'd below
-            // are ever reported, so pre-zeroing them would be work no one
-            // reads.
-            //
-            // Nothrow because this is by far the largest allocation the addon
-            // makes, so on a 32-bit build it is the one most likely to fail --
-            // and Write() must not let a std::bad_alloc escape.
+            // Nothrow because this is the largest allocation the addon makes,
+            // so it is the one most likely to fail, and Write() must not let a
+            // std::bad_alloc escape.
             partial_.data.reset(new (std::nothrow) uint8_t[chunkBytes_]);
             if (!partial_.data) {
                 lock.unlock();
@@ -98,17 +90,16 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
         }
         ready_.push_back(std::move(partial_));
         partial_ = {};
-        // Immediately, and before this loop can reach the wait above again. A
-        // parked consumer is the ONLY thing that can drain this queue, so
-        // holding its notification back until Write() returns deadlocks the two
-        // against each other the moment one call publishes maxChunks_ chunks:
-        // the producer waits for room that only the consumer can make, and the
-        // consumer waits for the callback the producer is still holding. A
-        // single call really can carry that many chunks: decoders emit up to a
-        // megabyte at a time, which is about what this queue holds in total.
+        // Notify before the loop can reach the wait above again. A parked
+        // consumer is the only thing that can drain this queue, so holding its
+        // notification back until Write() returns deadlocks the two the moment
+        // one call publishes maxChunks_ chunks: the producer waits for room
+        // only the consumer can make, and the consumer waits for the callback
+        // the producer is still holding. One call really can carry that many,
+        // since decoders emit up to a megabyte at a time.
         //
-        // FlushReady() drops the lock, so nothing cached across it survives:
-        // the loop re-checks aborted_ from the top.
+        // FlushReady() drops the lock, so the loop re-checks aborted_ from the
+        // top.
         FlushReady(lock);
     }
     return true;
@@ -137,10 +128,8 @@ void ChunkQueue::Abort() noexcept {
         notFull_.notify_all();
         FlushReady(lock);
     } catch (...) {  // NOLINT(bugprone-empty-catch)
-        // Locking a mutex can in principle fail, and this is reached from
-        // destructors and other paths that must not throw. There is nowhere to
-        // report it, and the producer's next Write() will find the queue in
-        // whatever state it is in.
+        // Locking can in principle fail, and this is reached from destructors
+        // and other paths that must not throw. There is nowhere to report it.
     }
 }
 

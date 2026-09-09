@@ -19,23 +19,22 @@ namespace sevenzip {
 // as a non-blocking pull. One Pump owns one archive, one entry, and one thread.
 //
 // The thread is never joined. Start() hands the producer a shared_ptr to the
-// Pump, so the object lives exactly as long as the thread still needs it and
-// teardown is only: abort, drop the pointer, return. The consumer never waits
-// for the decoder to notice the abort, which for a large solid .7z folder can
-// be seconds -- and it is the event loop thread, reaching the destructor from
-// close() or from the garbage collector.
+// Pump, so the object lives as long as the thread needs it and teardown is only:
+// abort, drop the pointer, return. The consumer never waits for the decoder to
+// notice the abort, which for a large solid .7z folder can take seconds -- and
+// the consumer is the event loop thread, reaching the destructor from close()
+// or from the garbage collector.
 //
-// Nothing here includes <napi.h>. The two places this has to reach back into
-// N-API -- "a read that was waiting can now proceed" and "the producer has
-// exited" -- are std::functions the caller supplies.
+// Nothing here includes <napi.h>: the two callbacks that reach back into N-API
+// are std::functions the caller supplies.
 class Pump {
    public:
     // How much decompressed output may sit buffered ahead of the consumer. This
     // is the back-pressure bound: past it the producer blocks in Write() until a
     // read drains a chunk, so a caller that stops reading a 40 GiB entry costs a
-    // megabyte, not 40 GiB. A chunk size larger than this still gets two chunks
-    // of slack, because one in flight and one being filled is the least that
-    // keeps the producer from stalling on every single read.
+    // megabyte, not 40 GiB. A chunk larger than this still gets a floor of two
+    // queued chunks, so the consumer can be handed one while the next is
+    // already waiting.
     static constexpr size_t kReadAheadBytes = 1U << 20U;  // 1 MiB
 
     // The largest chunk size a caller may ask for. Every queued chunk is
@@ -47,15 +46,13 @@ class Pump {
     // Creates the Pump and starts its thread. Throws std::system_error if the
     // OS refuses the thread, in which case nothing was started.
     //
-    // `entryPath` is resolved against the archive this Pump opens for extraction
-    // anyway, so naming an entry by name costs one pass over the already-parsed
-    // item table -- never a second open, and never a round trip through
-    // JavaScript.
+    // `entryPath` is resolved against the archive this Pump opens anyway, so
+    // naming an entry costs one pass over the already-parsed item table.
     //
     // `entryIndex` is an optional hint: where a previous listing saw that entry.
-    // It is checked against `entryPath` (one property read) and used only when
-    // it still matches, so a stale one costs the scan it was meant to avoid and
-    // nothing else. It is never used on its own.
+    // It is checked against `entryPath` and used only when it still matches, so
+    // a stale one costs the scan it was meant to avoid and nothing else. It is
+    // never used on its own.
     //
     // No path means the archive's only entry, which is how the formats that
     // record no names (`.Z`, `.bz2`, `.lzma`, `.001`) are addressed. An archive
@@ -70,8 +67,8 @@ class Pump {
     // `registry` is the environment's live-job registry. The Pump registers
     // itself for the lifetime of its thread so that environment teardown can
     // cancel it and wait for it. Throws std::runtime_error if the registry is
-    // already draining, which means the environment is going away and there
-    // would be nothing left to wait for a new thread.
+    // already draining, since nothing would then be left to wait for the new
+    // thread.
     static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
                                        std::optional<uint32_t> entryIndex, size_t chunkBytes,
                                        std::shared_ptr<JobRegistry> registry, std::function<void()> onReady,
@@ -99,9 +96,9 @@ class Pump {
          std::optional<uint32_t> entryIndex, size_t chunkBytes, std::function<void()> onReady);
 
     // The producer thread's body. Nothing may escape it: an exception leaving a
-    // std::thread's callable calls std::terminate(). It is not marked noexcept
-    // -- that would turn such a throw into the very terminate() we are avoiding;
-    // it catches everything internally instead.
+    // std::thread's callable calls std::terminate(). It catches everything
+    // internally rather than being marked noexcept, which would turn such a
+    // throw into that same terminate().
     void Run();
 
     // The extraction, which reports failure by throwing; Run() catches.
@@ -116,10 +113,9 @@ class Pump {
 
     std::string EntryLabel() const;
 
-    // The message both sides report when the queue could not allocate. Two
-    // threads reach for it -- the producer as it unwinds, the consumer if it
-    // gets to the end of the stream first -- so it lives here rather than being
-    // spelled out twice.
+    // The message reported when the queue could not allocate. Both the producer
+    // (as it unwinds) and the consumer (if it reaches the end of the stream
+    // first) can be the one to report it.
     std::string OutOfMemoryMessage() const;
 
     std::string path_;

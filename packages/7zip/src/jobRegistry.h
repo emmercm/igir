@@ -13,14 +13,13 @@ namespace sevenzip {
 // environment is torn down.
 //
 // Every long-running thread in this addon is detached, never joined, so that no
-// JavaScript caller ever waits for a decoder to notice it should stop. That
-// leaves one case unhandled: Node tearing the environment down while a decoder
-// is still mid-archive, after which the thread runs on against a freed env and
-// eventually a dead process image. This class closes that window -- at teardown
-// every live job is cancelled and the teardown waits until each has finished.
+// JavaScript caller waits for a decoder to notice it should stop. That leaves
+// one case unhandled: Node tearing the environment down while a decoder is still
+// mid-archive, after which the thread runs on against a freed env. At teardown
+// every live job is cancelled and waited for, which closes that window.
 //
-// Nothing here includes <napi.h>, so a job can register without gaining a
-// dependency on N-API.
+// Nothing here includes <napi.h>, so a job can register without depending on
+// N-API.
 class JobRegistry {
    public:
     using Token = uint64_t;
@@ -42,11 +41,11 @@ class JobRegistry {
     // would be left to wait for it. Callers treat that as a failure to start.
     //
     // `cancel` may be invoked from the teardown thread at any point until the
-    // matching Unregister() returns, so it must capture WEAKLY -- a
-    // std::weak_ptr to the job, locked inside the callback -- rather than hold
-    // a raw pointer to an object that could be destroyed in between. It must
-    // not throw, and it must not block waiting for the job to finish; it only
-    // asks the job to stop, and DrainAndWait() does the waiting.
+    // matching Unregister() returns, so it must capture weakly -- a
+    // std::weak_ptr locked inside the callback -- rather than hold a raw
+    // pointer to an object that could be destroyed in between. It must not
+    // throw, and must only ask the job to stop: DrainAndWait() does the
+    // waiting.
     Token Register(std::function<void()> cancel);
 
     // Removes a job. Must be the very last thing its thread does: once this

@@ -13,19 +13,16 @@ std::string HResultSuffix(HRESULT hr) {
     const auto value = static_cast<unsigned>(hr);
     if ((value & 0xffff0000U) == kSystemFacility) {
         // The low half is an operating system error code, so the platform can
-        // name it: an unreadable file, a directory, or a permissions problem
-        // ends up here, and "Is a directory" beats "HRESULT 0x88000015".
+        // name it: "Is a directory" beats "HRESULT 0x88000015".
         //
-        // std::system_category() rather than std::strerror(): it is the
-        // category matching kSystemFacility on both platforms, and strerror may
-        // return a pointer into a shared static buffer, where several
-        // extraction and listing threads can be at once. message() returns an
-        // owned std::string and is required to be thread-safe.
+        // std::system_category() rather than std::strerror(): it matches
+        // kSystemFacility on both platforms, and strerror may return a pointer
+        // into a shared static buffer that several threads can be in at once.
         return " (" + std::system_category().message(static_cast<int>(value & 0xffffU)) + ")";
     }
     // Formatted by hand rather than with snprintf, which would need a C array
-    // and a vararg call, or with std::format, which not every toolchain this
-    // addon is prebuilt on provides yet.
+    // and a vararg call, or std::format, which not every toolchain this addon
+    // is prebuilt on provides yet.
     static constexpr std::string_view kHexDigits = "0123456789abcdef";
     std::string out = " (HRESULT 0x";
     for (int shift = 28; shift >= 0; shift -= 4) {
@@ -42,11 +39,10 @@ std::string OpenErrorMessage(HRESULT hr, const std::string& path, uint32_t forma
         return "could not read " + where + " (the file may be missing, unreadable, or a directory)";
     }
     if (hr == S_FALSE) {
-        // By far the most common failure, and the one a user can act on: the
-        // handler read the file and decided it is not one of these. Truncated,
-        // corrupt, and simply-the-wrong-format archives all land here, and 7-Zip
-        // gives us no way to tell them apart -- so say what we actually know
-        // rather than printing S_FALSE as if it were an error code.
+        // The most common failure: the handler read the file and decided it is
+        // not one of these. Truncated, corrupt, and wrong-format archives all
+        // land here with no way to tell them apart, so say what is actually
+        // known rather than printing S_FALSE as if it were an error code.
         return where + " is not a valid " + format + " archive (it may be corrupt, truncated, or a different format)";
     }
     if (hr == E_INVALIDARG) {
