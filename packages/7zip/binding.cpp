@@ -12,7 +12,7 @@ namespace {
 
 // The handler list is fixed at build time, so it is read once at load and
 // exported as a plain `formats` property rather than as a callable.
-Napi::Value FormatsImpl(Napi::Env env) {
+Napi::Value FormatNamesArray(Napi::Env env) {
     std::vector<std::string> const names = sevenzip::FormatNames();
     Napi::Array out = Napi::Array::New(env, names.size());
     for (size_t i = 0; i < names.size(); i++) {
@@ -21,49 +21,40 @@ Napi::Value FormatsImpl(Napi::Env env) {
     return out;
 }
 
-Napi::Value ListEntriesImpl(const Napi::CallbackInfo& info) {
-    Napi::Env const env = info.Env();
-    if (info.Length() < 2 || !info[0].IsString() || !info[1].IsNumber()) {
-        Napi::TypeError::New(env, "expected (path: string, formatIndex: number)").ThrowAsJavaScriptException();
-        return env.Undefined();
-    }
-    return sevenzip::ListEntries(env, info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value());
-}
-
-// Entered from JavaScript, where N-API is built with NAPI_DISABLE_CPP_EXCEPTIONS
-// and the wrapper is a bare `return callback();` -- so an escaping C++ exception
-// aborts the process instead of throwing into JavaScript. The work goes in a
-// helper called from inside this one catch-all.
+// The catch-all is not optional: N-API is built here with
+// NAPI_DISABLE_CPP_EXCEPTIONS and its wrapper is a bare `return callback();`, so
+// an escaping C++ exception aborts the process instead of throwing into
+// JavaScript.
 Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     try {
-        return ListEntriesImpl(info);
+        if (info.Length() < 2 || !info[0].IsString() || !info[1].IsNumber()) {
+            Napi::TypeError::New(env, "expected (path: string, formatIndex: number)").ThrowAsJavaScriptException();
+            return env.Undefined();
+        }
+        return sevenzip::ListEntries(env, info[0].As<Napi::String>().Utf8Value(),
+                                     info[1].As<Napi::Number>().Uint32Value());
     } catch (...) {
         Napi::Error::New(env, "failed to start listing the archive").ThrowAsJavaScriptException();
         return env.Undefined();
     }
 }
 
-Napi::Object InitImpl(Napi::Env env, Napi::Object exports) {
-    sevenzip::EnsureInitialized();
-    // The registry this creates must exist before any export below can start a
-    // thread.
-    sevenzip::InitAddonData(env);
-    exports.Set("formats", FormatsImpl(env));
-    exports.Set("listEntries", Napi::Function::New(env, ListEntriesJs));
-    exports.Set("EntryReader", sevenzip::EntryReader::GetClass(env));
-    return exports;
-}
-
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
     try {
-        return InitImpl(env, exports);
+        sevenzip::EnsureInitialized();
+        // The registry this creates must exist before any export below can start
+        // a thread.
+        sevenzip::InitAddonData(env);
+        exports.Set("formats", FormatNamesArray(env));
+        exports.Set("listEntries", Napi::Function::New(env, ListEntriesJs));
+        exports.Set("EntryReader", sevenzip::EntryReader::GetClass(env));
     } catch (...) {
         // A throw here would abort at `require()` time with no diagnostic at
         // all; a thrown JavaScript error at least names the addon.
         Napi::Error::New(env, "failed to initialize the 7-Zip addon").ThrowAsJavaScriptException();
-        return exports;
     }
+    return exports;
 }
 
 }  // namespace

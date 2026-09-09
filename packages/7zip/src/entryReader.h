@@ -65,19 +65,11 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
         EntryReader* reader = nullptr;
     };
 
-    // The bodies of the entry points above. Each is called from inside exactly
-    // one try/catch, because N-API is built here with NAPI_DISABLE_CPP_EXCEPTIONS
-    // and an exception unwinding through V8's C ABI aborts the process.
-    void Construct(const Napi::CallbackInfo& info);
-    // Sets *settled once the deferred has been settled or parked, so Read()'s
-    // catch cannot settle it a second time.
-    void StartRead(const Napi::CallbackInfo& info, const Napi::Promise::Deferred& deferred, bool* settled);
-    void Shutdown(Napi::Env env);
-
     // Settles `deferred` from one non-blocking read of the pump. Returns false,
     // having settled nothing, when the producer has no chunk ready yet -- which
     // re-arms the ready callback, so a caller may simply park and be called
-    // again.
+    // again. Sets *settled once `deferred` has been settled, so a caller's
+    // catch-all cannot settle it a second time.
     bool TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled);
 
     // Releases the parked promise's hold on this object and the event loop.
@@ -90,7 +82,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // The one outstanding read, if it could not be answered immediately. Also
     // the "a read is in flight" flag -- there is only ever one.
     std::optional<Napi::Promise::Deferred> pending_;
-    // False until Construct() has run to completion. Its argument-validation
+    // False until the constructor has run to completion. Its argument-validation
     // paths report a TypeError and return, leaving no Pump and no bridge; a
     // JavaScript caller that held on to the half-built object anyway must be
     // told the reader was never opened, not handed the empty read that a null
