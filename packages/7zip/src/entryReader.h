@@ -5,8 +5,8 @@
 #include <memory>
 #include <optional>
 
+#include "asyncSignal.h"
 #include "pump.h"
-#include "tsfnHandle.h"
 
 namespace sevenzip {
 
@@ -17,7 +17,7 @@ namespace sevenzip {
 // loop thread, synchronously, from a chunk the producer has already finished.
 // That is the steady state, since the producer runs ahead by a bounded amount.
 // Only when the consumer catches up does a read park: its promise is held, and
-// the producer wakes it through a ThreadSafeFunction once the next chunk is
+// the producer wakes it through an AsyncSignal once the next chunk is
 // ready.
 // The one thread allowed to block is the producer, on a full queue.
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
@@ -44,7 +44,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // to notice.
     void Close(const Napi::CallbackInfo& info);
 
-    // Event loop thread, via the ThreadSafeFunction. Public only because the
+    // Event loop thread, via the AsyncSignal. Public only because the
     // callback that invokes it is a plain lambda held by the producer, which
     // cannot be a member. Not part of the JavaScript surface.
     void OnProducerReady(Napi::Env env);
@@ -53,11 +53,11 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // Shared between this object and the producer thread so that each can
     // outlive the other. The producer needs it to report a ready chunk or its
     // own exit even after the reader has been garbage collected; the reader
-    // needs it to keep the ThreadSafeFunction alive until the producer lets go.
+    // needs it to keep the AsyncSignal alive until the producer lets go.
     struct Bridge {
-        std::shared_ptr<TsfnHandle> tsfn;
+        std::shared_ptr<AsyncSignal> signal;
         // Touched only on the event loop thread: set at construction, cleared by
-        // ~EntryReader, and read by the ThreadSafeFunction callback, all three
+        // ~EntryReader, and read by the AsyncSignal callback, all three
         // on that one thread, so a reader that is gone is simply seen as null
         // rather than raced with
         EntryReader* reader = nullptr;
@@ -76,6 +76,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     void ReleasePending(Napi::Env env);
 
     std::shared_ptr<Pump> pump_;
+    Napi::ObjectReference readFailure_;
     std::shared_ptr<Bridge> bridge_;
     // The one outstanding read, if it could not be answered immediately. Also
     // the "a read is in flight" flag, since there is only ever one.

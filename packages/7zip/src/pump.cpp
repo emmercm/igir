@@ -190,8 +190,8 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
                 pump->onExit_();
             } catch (...) {  // NOLINT(bugprone-empty-catch)
                 // Documented as non-throwing, and today it is only a
-                // ThreadSafeFunction::Release() that returns a status rather
-                // than throwing, but nothing enforces that, and an exception
+                // AsyncSignal::Release() that is noexcept, but nothing
+                // enforces that on other callers, and an exception
                 // escaping a std::thread's callable calls std::terminate().
                 // Run() guards itself the same way; this is the one step
                 // outside it.
@@ -202,7 +202,7 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
             JobRegistry::Token const token = pump->token_;
             // Released before unregistering, not after. When this is the last
             // reference, ~Pump runs here and destroys the ChunkQueue, whose
-            // ready callback holds a ThreadSafeFunction. Letting the captured
+            // ready callback holds an AsyncSignal. Letting the captured
             // shared_ptr fall out of scope on its own would order that after
             // the Unregister() below, which teardown reads as "the thread is
             // done" before those objects are actually gone.

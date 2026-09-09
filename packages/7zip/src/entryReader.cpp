@@ -78,47 +78,28 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
         // reader open does not by itself keep the process alive; a parked read
         // re-references it for exactly as long as it is parked.
         auto bridge = std::make_shared<Bridge>();
-        bridge->tsfn = TsfnHandle::Create(env, "sevenzip::EntryReader", false);
-        if (!bridge->tsfn) {
-            // N-API refused the function and has already left an error pending.
-            // Nothing was started, so there is nothing to unwind; the
-            // constructor's catch turns this into the reader's own message.
-            throw std::runtime_error("could not create the entry reader's callback");
-        }
+        readFailure_ = Napi::Persistent(Napi::Error::New(env, "failed to allocate the read result").Value());
+        bridge->signal = AsyncSignal::Create(env, "sevenzip::EntryReader", false, [bridge](Napi::Env callbackEnv) {
+            if (callbackEnv != nullptr && bridge->reader != nullptr) {
+                bridge->reader->OnProducerReady(callbackEnv);
+            }
+            return false;
+        });
         bridge->reader = this;
 
         std::shared_ptr<Pump> pump;
         try {
             pump = Pump::Start(
                 info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
-                entryIndex, chunkBytes, Registry(env),
+                entryIndex, chunkBytes, Registry(env), [bridge]() { bridge->signal->Notify(); },
                 [bridge]() {
-                    // Producer thread. Call() never blocks, and does nothing once
-                    // the environment has gone away: there is no reader left to
-                    // notify and no loop to notify it on.
-                    bridge->tsfn->Call([bridge](Napi::Env env) {
-                        // Event loop thread. Nothing may escape into N-API's C ABI.
-                        try {
-                            if (bridge->reader != nullptr) {
-                                bridge->reader->OnProducerReady(env);
-                            }
-                        } catch (...) {  // NOLINT(bugprone-empty-catch)
-                            // OnProducerReady handles its own failures; this only
-                            // stops a failure in that handling from aborting
-                        }
-                    });
-                },
-                [bridge]() {
-                    // Producer thread, exactly once, as its last act. This is the
-                    // release matching the producer's use of the bridge, and the
-                    // only thing that frees the ThreadSafeFunction.
-                    bridge->tsfn->Release();
+                    // Producer thread, exactly once. Close the signal after
+                    // pending delivery; teardown may close it independently.
+                    bridge->signal->Release();
                 });
         } catch (...) {
-            // Nothing was started, so nothing will ever call onExit. Release
-            // the ThreadSafeFunction's initial use count here, or it (and the
-            // environment reference behind it) leaks.
-            bridge->tsfn->Release();
+            // Nothing started, so onExit will not run. Request signal closure.
+            bridge->signal->Release();
             throw;
         }
 
@@ -126,7 +107,7 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
         pump_ = std::move(pump);
         constructed_ = true;
     } catch (...) {
-        // Reading the arguments allocates, creating the ThreadSafeFunction can
+        // Reading the arguments allocates, creating the AsyncSignal can
         // fail, and starting the Pump creates a std::thread, which throws
         // std::system_error when the OS refuses
         Napi::Error::New(info.Env(), "failed to open the entry for reading").ThrowAsJavaScriptException();
@@ -137,7 +118,7 @@ EntryReader::~EntryReader() {
     if (bridge_) {
         // Both this and the callback that reads it run on the event loop
         // thread, so from here on the producer's notifications find no reader.
-        // The ThreadSafeFunction stays alive inside the bridge until the
+        // The AsyncSignal stays alive inside the bridge until the
         // producer releases it.
         bridge_->reader = nullptr;
     }
@@ -222,7 +203,7 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
             pending_ = deferred;
             settled = true;
             Ref();
-            bridge_->tsfn->Ref(env);
+            bridge_->signal->Ref(env);
         }
     } catch (...) {
         if (!settled) {
@@ -240,17 +221,28 @@ void EntryReader::OnProducerReady(Napi::Env env) {
     }
     Napi::Promise::Deferred const deferred = *pending_;
     bool settled = false;
-    if (!TrySettle(env, deferred, &settled)) {
-        // Still nothing: the wake-up crossed with an abort. The read above
-        // re-armed the callback, so stay parked.
-        return;
+    try {
+        if (!TrySettle(env, deferred, &settled)) {
+            return;
+        }
+    } catch (...) {
+        pump_->Cancel();
+        if (!settled) {
+            try {
+                // Created before the producer started: reporting a failed
+                // allocation does not need another error-object allocation.
+                deferred.Reject(readFailure_.Value());
+            } catch (...) {  // NOLINT(bugprone-empty-catch)
+                // Node can refuse JS operations during worker termination.
+            }
+        }
     }
     ReleasePending(env);
 }
 
 void EntryReader::ReleasePending(Napi::Env env) {
     pending_.reset();
-    bridge_->tsfn->Unref(env);
+    bridge_->signal->Unref(env);
     // Last statement, and the last use of `this` on this path: it can drop the
     // final reference to the object
     Unref();

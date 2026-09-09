@@ -1,6 +1,8 @@
 #include "lister.h"
 
 #include <atomic>
+#include <chrono>
+#include <deque>
 #include <exception>
 #include <memory>
 #include <optional>
@@ -8,13 +10,12 @@
 #include <string>
 #include <thread>
 #include <utility>
-#include <vector>
 
 #include "7zip/PropID.h"
 #include "addon.h"
+#include "asyncSignal.h"
 #include "errors.h"
 #include "sevenZip.h"
-#include "tsfnHandle.h"
 
 namespace sevenzip {
 
@@ -22,7 +23,7 @@ namespace {
 
 struct Entry {
     // The archive's own item index, stored rather than recovered from this
-    // vector's position, so that it stays correct however the list is later
+    // queue's position, so that it stays correct however the list is later
     // filtered or ordered
     uint32_t index = 0;
     std::optional<std::string> entryPath;
@@ -38,12 +39,12 @@ struct Entry {
 // longer than the short tasks the pool's four default threads are sized for, so
 // concurrent listings would stall unrelated fs, dns and zlib work.
 //
-// The price is one ThreadSafeFunction per listing, and this class owning its own
+// The price is one AsyncSignal per listing, and this class owning its own
 // lifetime.
-class ListJob : public std::enable_shared_from_this<ListJob> {
+class ListJob {
    public:
     // Starts the listing. On success the returned promise settles when the
-    // thread finishes; on failure to start, it is rejected before returning.
+    // result batches finish; on failure to start, it is rejected before returning.
     static Napi::Promise Start(Napi::Env env, std::string path, uint32_t formatIndex);
 
     ListJob(const ListJob&) = delete;
@@ -53,8 +54,8 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
     ~ListJob() {
         // Also covers registration/shared_ptr allocation failures before the
         // worker starts. Release is idempotent after normal worker completion.
-        if (tsfn_) {
-            tsfn_->Release();
+        if (signal_) {
+            signal_->Release();
         }
     }
 
@@ -65,20 +66,10 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
 
    private:
     ListJob(Napi::Env env, Napi::Promise::Deferred deferred, std::string path, uint32_t formatIndex)
-        : deferred_(deferred), path_(std::move(path)), formatIndex_(formatIndex) {
-        // Thread count of 1: the listing thread, released as its last act.
-        // Referenced, because the promise is pending from start to finish and
-        // the process must not exit leaving it unsettled.
-        tsfn_ = TsfnHandle::Create(env, "sevenzip::ListEntries", true);
-        if (!tsfn_) {
-            // Thrown from the constructor rather than reported from Start(),
-            // so a ListJob never exists with a null function the rest of this
-            // class would have to check for. N-API has already left an error
-            // pending and nothing was taken out, so unwinding here leaves
-            // nothing behind.
-            throw std::runtime_error("could not create the archive listing's callback");
-        }
-    }
+        : deferred_(deferred),
+          path_(std::move(path)),
+          formatIndex_(formatIndex),
+          failure_(Napi::Persistent(Napi::Error::New(env, "failed to build the entry list").Value())) {}
 
     // The thread body. Nothing may escape it: an exception leaving a
     // std::thread's callable calls std::terminate(). Not marked noexcept, which
@@ -89,16 +80,19 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
     void List();
 
     // Marshals the result back to the event loop and settles the promise
-    void Settle();
+    bool Emit(Napi::Env env);
 
-    void Emit(Napi::Env env);
-
-    std::shared_ptr<TsfnHandle> tsfn_;
+    std::shared_ptr<AsyncSignal> signal_;
     Napi::Promise::Deferred deferred_;
     std::string path_;
     uint32_t formatIndex_;
-    std::vector<Entry> entries_;
+    std::deque<Entry> entries_;
     std::string error_;
+    bool failed_ = false;
+    bool settled_ = false;
+    Napi::ObjectReference failure_;
+    Napi::ObjectReference result_;
+    uint32_t emitted_ = 0;
     std::atomic<bool> abort_{false};
     std::shared_ptr<JobRegistry> registry_;
     JobRegistry::Token token_ = JobRegistry::kInvalidToken;
@@ -179,46 +173,28 @@ void ListJob::Run() {
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // Assigning to error_ allocates, so the handlers above can throw in
         // turn. Escaping this thread's entry point would call std::terminate().
+        failed_ = true;
     }
-
-    try {
-        Settle();
-    } catch (...) {  // NOLINT(bugprone-empty-catch)
-        // Settle() only queues work; a failure means the environment is going
-        // away, and there is no promise left to settle
-    }
+    signal_->Notify();
 }
 
-void ListJob::Settle() {
-    // Keeps this object alive until the callback has run, whether or not the
-    // caller still holds a reference
-    std::shared_ptr<ListJob> const self = shared_from_this();
-    // Call() never blocks, and does nothing once the environment has gone away:
-    // there is nothing left waiting on the promise
-    tsfn_->Call([self](Napi::Env env) {
-        // Event loop thread. Contain native/API failures at the callback boundary.
-        try {
-            self->Emit(env);
-        } catch (...) {
-            try {
-                self->deferred_.Reject(Napi::Error::New(env, "failed to build the entry list").Value());
-            } catch (...) {  // NOLINT(bugprone-empty-catch)
-                // Rejecting allocates too. Aborting the process over it would
-                // be worse than a promise that never settles.
+bool ListJob::Emit(Napi::Env env) {
+    // Bound both JS object creation and disposal of native entries per turn.
+    // No up-front Array(count) allocation or final O(count) native destructor.
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2);
+    if (!result_ && !failed_ && error_.empty()) {
+        result_ = Napi::Persistent(Napi::Array::New(env).As<Napi::Object>());
+    }
+    for (size_t batch = 0; batch < 128 && !entries_.empty(); ++batch) {
+        if (failed_ || !error_.empty()) {
+            entries_.pop_front();
+            if (std::chrono::steady_clock::now() >= deadline) {
+                break;
             }
+            continue;
         }
-    });
-}
-
-void ListJob::Emit(Napi::Env env) {
-    if (!error_.empty()) {
-        deferred_.Reject(Napi::Error::New(env, error_).Value());
-        return;
-    }
-
-    Napi::Array const out = Napi::Array::New(env, entries_.size());
-    for (size_t i = 0; i < entries_.size(); i++) {
-        const Entry& entry = entries_[i];
+        Napi::Object const out = result_.Value();
+        const Entry& entry = entries_.front();
         Napi::Object const object = Napi::Object::New(env);
         object.Set("entryIndex", Napi::Number::New(env, entry.index));
         // Undefined rather than "" when the format records no name: "" is a
@@ -235,15 +211,33 @@ void ListJob::Emit(Napi::Env env) {
                    entry.crc32.has_value() ? Napi::Value(Napi::Number::New(env, *entry.crc32)) : env.Undefined());
         object.Set("isDirectory", Napi::Boolean::New(env, entry.isDirectory));
         object.Set("isEncrypted", Napi::Boolean::New(env, entry.isEncrypted));
-        out.Set(static_cast<uint32_t>(i), object);
+        out.Set(emitted_++, object);
+        entries_.pop_front();
+        if (std::chrono::steady_clock::now() >= deadline) {
+            break;
+        }
     }
-    deferred_.Resolve(out);
+    if (!entries_.empty()) {
+        return true;
+    }
+    if (failed_ || !error_.empty()) {
+        Napi::Value error = failure_.Value();
+        if (!error_.empty()) {
+            error = Napi::Error::New(env, error_).Value();
+        }
+        settled_ = true;
+        deferred_.Reject(error);
+    } else {
+        settled_ = true;
+        deferred_.Resolve(result_.Value());
+    }
+    result_.Reset();
+    return false;
 }
 
 Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatIndex) {
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
-    // Creating the ThreadSafeFunction happens in the constructor, so from here
-    // on there is a thread count of 1 outstanding that something must release
+    // Construct JS-owned state on the loop before registering the producer.
     std::shared_ptr<ListJob> const job(new ListJob(env, deferred, std::move(path), formatIndex));
 
     // A null registry means the environment's instance data is already gone,
@@ -263,22 +257,48 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
         });
     }
     if (job->token_ == JobRegistry::kInvalidToken) {
-        // Gives back the thread count the constructor took out; without it the
-        // function, and the environment reference behind it, would leak
-        job->tsfn_->Release();
         deferred.Reject(Napi::Error::New(env, "the 7-Zip addon is shutting down").Value());
         return deferred.Promise();
     }
 
     try {
+        // Installed before the producer starts: signaling never allocates a
+        // callback. The signal owns the job until its final loop-thread close.
+        job->signal_ = AsyncSignal::Create(env, "sevenzip::ListEntries", true, [job](Napi::Env callbackEnv) {
+            if (callbackEnv == nullptr) {
+                job->result_.Reset();
+                job->failure_.Reset();
+                return false;
+            }
+            try {
+                return job->Emit(callbackEnv);
+            } catch (...) {
+                if (job->settled_) {
+                    return false;
+                }
+                // Keep cleanup batched even when marshaling fails midway.
+                if (!job->failed_) {
+                    job->failed_ = true;
+                    job->error_.clear();
+                    return true;
+                }
+                try {
+                    job->settled_ = true;
+                    job->deferred_.Reject(job->failure_.Value());
+                } catch (...) {  // NOLINT(bugprone-empty-catch)
+                    // JS may no longer run during worker termination.
+                }
+                return false;
+            }
+        });
         // Captured as its own non-const copy so that it can be released below;
         // capturing the const `job` by copy would make the lambda's member const
         // too, `mutable` or not
         std::thread([job = std::shared_ptr<ListJob>(job)]() mutable {
             job->Run();
-            // Before unregistering, because giving back the thread count is one
-            // of the things teardown is waiting to see happen
-            job->tsfn_->Release();
+            // Request closure after queued batches drain. Teardown can also
+            // close the signal independently while cancelling the producer.
+            job->signal_->Release();
             // Copied out before the reference is dropped, because dropping it
             // may be what destroys the ListJob they are read from
             std::shared_ptr<JobRegistry> const registry = job->registry_;
@@ -294,13 +314,15 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
             }
         }).detach();
     } catch (...) {
-        // The OS refused a thread. Nothing was started, so this is the only
-        // place the registration and the thread count can be given back, and
+        // Signal initialization or thread creation failed. Nothing started,
+        // so this is the only place the registration can be given back, and
         // the promise must be rejected here since no thread will settle it.
         if (job->registry_) {
             job->registry_->Unregister(job->token_);
         }
-        job->tsfn_->Release();
+        if (job->signal_) {
+            job->signal_->Release();
+        }
         deferred.Reject(Napi::Error::New(env, "failed to start listing the archive").Value());
     }
     return deferred.Promise();

@@ -4,10 +4,10 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace sevenzip {
 
@@ -38,9 +38,9 @@ class ChunkQueue {
    public:
     // `chunkBytes` is the size of every published chunk but the last, and
     // `maxChunks` how many may sit queued before Write() blocks. Both are
-    // clamped to at least 1.
+    // clamped to at least 1; maxChunks is capped at 1024 to bound metadata.
     //
-    // `onReady` fires exactly once for each TryTake() that returned kPending,
+    // `onReady` fires for each TryTake() that returned kPending,
     // on whichever thread published the chunk, with the lock dropped. It must
     // not throw. Taking it here rather than through a setter keeps it immutable
     // for the object's lifetime, which is what makes it safe to call from
@@ -71,7 +71,7 @@ class ChunkQueue {
     // Producer. Publishes any partial chunk and marks the end of the stream.
     void Finish();
 
-    // Consumer. Unblocks the producer, discards what is queued, and makes every
+    // Consumer. Unblocks the producer, hides what is queued, and makes every
     // later TryTake() report kEnd. Safe to call at any time, from any thread.
     void Abort() noexcept;
 
@@ -113,13 +113,17 @@ class ChunkQueue {
 
     std::mutex mutex_;
     std::condition_variable notFull_;
-    std::deque<Chunk> ready_;
-    // The chunk being filled. Not visible to the consumer until it is full, or
+    // Allocated at construction. Publishing/taking a chunk only moves a
+    // pointer; neither operation grows/frees a container under the lock.
+    std::vector<Chunk> ready_;
+    size_t head_ = 0;
+    size_t count_ = 0;
+    // Producer-only, including during Abort. Not visible to the consumer until full, or
     // until Finish() publishes what there is of it. It is deliberately outside
     // the maxChunks_ bound: one extra chunk of slack, not a queue slot.
     Chunk partial_;
     bool finished_ = false;
-    bool aborted_ = false;
+    std::atomic<bool> aborted_{false};
     // Set by a Write() that could not allocate. It rides alongside aborted_
     // rather than replacing it (the producer stops either way) so that the
     // consumer can report a failure instead of a stream that silently ends

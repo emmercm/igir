@@ -1,5 +1,7 @@
 #include "addon.h"
 
+#include <uv.h>
+
 #include <memory>
 #include <thread>
 #include <utility>
@@ -8,6 +10,22 @@ namespace sevenzip {
 
 namespace {
 
+struct CleanupState {
+    std::shared_ptr<JobRegistry> registry;
+    uv_async_t signal{};
+    napi_async_cleanup_hook_handle hook = nullptr;
+};
+
+void CleanupClosed(uv_handle_t* handle) {
+    auto* state = static_cast<CleanupState*>(handle->data);
+    if (state->hook) {
+        napi_remove_async_cleanup_hook(state->hook);
+    }
+    delete state;
+}
+
+void DrainFinished(uv_async_t* handle) { uv_close(reinterpret_cast<uv_handle_t*>(handle), CleanupClosed); }
+
 // Runs when the environment is being torn down, on the thread doing the
 // teardown. Everything still decoding has to be stopped and waited for before
 // the environment goes away underneath it.
@@ -15,34 +33,25 @@ namespace {
 // The wait cannot happen inline: this runs on the JS thread, and blocking it
 // while a producer is still unwinding stalls whatever that producer needs the
 // loop for. napi_add_async_cleanup_hook suspends teardown until
-// napi_remove_async_cleanup_hook() is called, possibly from another thread.
-void DrainOnCleanup(napi_async_cleanup_hook_handle handle, void* arg) {
-    std::shared_ptr<JobRegistry> registry;
-    if (arg != nullptr) {
-        registry = static_cast<AddonData*>(arg)->registry;
-    }
-    if (!registry) {
-        napi_remove_async_cleanup_hook(handle);
-        return;
-    }
-
+// napi_remove_async_cleanup_hook() is called back on the event loop.
+void DrainOnCleanup(napi_async_cleanup_hook_handle /*handle*/, void* arg) {
+    auto* state = static_cast<CleanupState*>(arg);
+    uv_ref(reinterpret_cast<uv_handle_t*>(&state->signal));
     try {
-        // The registry keeps itself alive through this lambda's capture, so the
-        // joiner remains valid no matter when the environment's instance data
-        // is finalized relative to this hook
-        std::thread([handle, registry = std::move(registry)]() {
-            registry->DrainAndWait();
-            // Signals that teardown may continue. Nothing may touch `registry`
-            // after this, since the environment is free to finish going away.
-            napi_remove_async_cleanup_hook(handle);
+        // CleanupState outlives the thread through its uv handle. Completion
+        // must wake the loop; removing an N-API hook on this thread can leave
+        // Node asleep waiting for cleanup even though draining has finished.
+        std::thread([state]() {
+            state->registry->DrainAndWait();
+            uv_async_send(&state->signal);
         }).detach();
     } catch (...) {
         // The OS refused a thread while the process is shutting down.
         // Draining here blocks the loop, which the async hook was avoiding, but
         // the alternative is letting live threads outlive the environment: a
         // stall at exit beats a use-after-free at exit.
-        static_cast<AddonData*>(arg)->registry->DrainAndWait();
-        napi_remove_async_cleanup_hook(handle);
+        state->registry->DrainAndWait();
+        DrainFinished(&state->signal);
     }
 }
 
@@ -57,12 +66,18 @@ void InitAddonData(Napi::Env env) {
         return;
     }
     auto* ownedData = data.release();
-
-    napi_async_cleanup_hook_handle handle = nullptr;
-    // Not fatal on its own (the addon works, it just would not drain at
-    // teardown), but that is the condition this exists to prevent, so it is
-    // reported rather than swallowed
-    if (napi_add_async_cleanup_hook(env, DrainOnCleanup, ownedData, &handle) != napi_ok) {
+    auto cleanup = std::make_unique<CleanupState>();
+    cleanup->registry = ownedData->registry;
+    uv_loop_t* loop = nullptr;
+    if (napi_get_uv_event_loop(env, &loop) != napi_ok || uv_async_init(loop, &cleanup->signal, DrainFinished) != 0) {
+        Napi::Error::New(env, "failed to initialize the 7-Zip cleanup signal").ThrowAsJavaScriptException();
+        return;
+    }
+    cleanup->signal.data = cleanup.get();
+    uv_unref(reinterpret_cast<uv_handle_t*>(&cleanup->signal));
+    auto* state = cleanup.release();  // freed only after uv_close completes
+    if (napi_add_async_cleanup_hook(env, DrainOnCleanup, state, &state->hook) != napi_ok) {
+        uv_close(reinterpret_cast<uv_handle_t*>(&state->signal), CleanupClosed);
         Napi::Error::New(env, "failed to install the 7-Zip addon's cleanup hook").ThrowAsJavaScriptException();
     }
 }

@@ -9,7 +9,9 @@ namespace sevenzip {
 
 ChunkQueue::ChunkQueue(size_t chunkBytes, size_t maxChunks, std::function<void()> onReady)
     : chunkBytes_(std::max<size_t>(chunkBytes, 1)),
-      maxChunks_(std::max<size_t>(maxChunks, 1)),
+      // Bound metadata/initialization even for one-byte consumer chunks.
+      maxChunks_(std::clamp<size_t>(maxChunks, 1, 1024)),
+      ready_(maxChunks_ + 1),  // extra slot for Finish's trailing partial
       onReady_(std::move(onReady)) {}
 
 void ChunkQueue::FlushReady(std::unique_lock<std::mutex>& lock) {
@@ -48,16 +50,14 @@ bool ChunkQueue::Write(const uint8_t* data, size_t length) noexcept {
     try {
         return WriteOrThrow(data, length);
     } catch (...) {
-        // Reached when publishing a chunk allocates and cannot: the deque node
-        // in ready_, the ThreadSafeFunction call FlushReady() ends up making,
-        // or the condition variable's own wait
+        // The buffer allocation is nothrow. Still contain failures from the
+        // condition variable or other standard-library operations.
         MarkOutOfMemory();
         return false;
     }
 }
 
 bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
-    std::unique_lock<std::mutex> lock(mutex_);
     size_t written = 0;
     while (written < length) {
         if (aborted_) {
@@ -69,7 +69,6 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
             // std::bad_alloc escape
             partial_.data.reset(new (std::nothrow) uint8_t[chunkBytes_]);
             if (!partial_.data) {
-                lock.unlock();
                 MarkOutOfMemory();
                 return false;
             }
@@ -84,11 +83,15 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
         if (partial_.length < chunkBytes_) {
             continue;  // held back until it is full, so reads are never short
         }
-        notFull_.wait(lock, [this]() { return aborted_ || ready_.size() < maxChunks_; });
+        // partial_ belongs exclusively to the producer. All allocation and
+        // copying above runs without holding the consumer's mutex.
+        std::unique_lock<std::mutex> lock(mutex_);
+        notFull_.wait(lock, [this]() { return aborted_ || count_ < maxChunks_; });
         if (aborted_) {
             return false;
         }
-        ready_.push_back(std::move(partial_));
+        ready_[(head_ + count_) % ready_.size()] = std::move(partial_);
+        ++count_;
         partial_ = {};
         // Notify before the loop can reach the wait above again. A parked
         // consumer is the only thing that can drain this queue, so holding its
@@ -107,19 +110,25 @@ bool ChunkQueue::WriteOrThrow(const uint8_t* data, size_t length) {
 
 void ChunkQueue::Finish() {
     std::unique_lock<std::mutex> lock(mutex_);
-    if (partial_.length > 0) {
-        try {
-            ready_.push_back(std::move(partial_));
-        } catch (...) {
-            // Completion must still wake the consumer if publishing allocates
-            // and fails. TryRead reports the terminal allocation failure.
-            outOfMemory_.store(true, std::memory_order_relaxed);
-        }
+    if (!aborted_ && partial_.length > 0) {
+        ready_[(head_ + count_) % ready_.size()] = std::move(partial_);
+        ++count_;
     }
-    partial_ = {};
     finished_ = true;
     notFull_.notify_all();
     FlushReady(lock);
+    // Cancellation discards queued storage on the producer, outside the lock.
+    // OOM retains already-published bytes, followed by a rejected read.
+    while (aborted_ && !OutOfMemory() && count_ > 0) {
+        Chunk discard = std::move(ready_[head_]);
+        head_ = (head_ + 1) % ready_.size();
+        --count_;
+        lock.unlock();
+        discard = {};
+        lock.lock();
+    }
+    lock.unlock();
+    partial_ = {};
 }
 
 void ChunkQueue::Abort() noexcept {
@@ -129,8 +138,8 @@ void ChunkQueue::Abort() noexcept {
         // Discard what is queued: a consumer that aborted mid-stream must
         // observe the end of the stream, not a few more chunks of data it
         // has already been told it will not get
-        ready_.clear();
-        partial_ = {};
+        // The producer owns partial_, and frees queued storage in Finish().
+        // Do not free buffers or race the producer's memcpy on this thread.
         notFull_.notify_all();
         FlushReady(lock);
     } catch (...) {  // NOLINT(bugprone-empty-catch)
@@ -140,13 +149,25 @@ void ChunkQueue::Abort() noexcept {
 }
 
 ChunkQueue::Status ChunkQueue::TryTake(Chunk* out) {
+    Chunk taken;
     bool notifyProducer = false;
     Status status = Status::kEnd;
     {
-        std::scoped_lock const lock(mutex_);
-        if (!ready_.empty()) {
-            *out = std::move(ready_.front());
-            ready_.pop_front();
+        std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
+        if (!lock.owns_lock()) {
+            // Retry on a future loop turn instead of waiting for the producer.
+            // The signal is preallocated and coalesces repeated notifications.
+            if (onReady_) {
+                onReady_();
+            }
+            return Status::kPending;
+        }
+        if (aborted_ && !OutOfMemory()) {
+            status = Status::kEnd;
+        } else if (count_ > 0) {
+            taken = std::move(ready_[head_]);
+            head_ = (head_ + 1) % ready_.size();
+            --count_;
             notifyProducer = true;
             status = Status::kChunk;
         } else if (aborted_ || finished_) {
@@ -160,6 +181,9 @@ ChunkQueue::Status ChunkQueue::TryTake(Chunk* out) {
     }
     if (notifyProducer) {
         notFull_.notify_one();
+    }
+    if (status == Status::kChunk) {
+        *out = std::move(taken);
     }
     return status;
 }

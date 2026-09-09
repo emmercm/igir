@@ -330,7 +330,7 @@
         "src/lister.cpp",
         "src/pump.cpp",
         "src/sevenZip.cpp",
-        "src/tsfnHandle.cpp",
+        "src/asyncSignal.cpp",
         "stubs/bzip2Encoder.cpp",
         "stubs/myAes.cpp",
         "stubs/wzAes.cpp",
