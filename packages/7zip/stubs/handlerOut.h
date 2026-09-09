@@ -20,21 +20,6 @@
 
 #ifdef __cplusplus
 
-// HandlerOut.h pulls in Windows/System.h -> Common/MyWindows.h -> C/7zWindows.h,
-// which does a bare `#include <windows.h>`. Since this header is force-included
-// ahead of every source, that would otherwise be the first thing any
-// translation unit sees, dragging in the legacy <winsock.h> before anything
-// else gets a say. asyncSignal.h later includes <uv.h>, which needs
-// <winsock2.h>, and the two winsock headers cannot coexist -- MSVC fails with
-// redefinition errors (sockaddr, fd_set, etc.) inside <uv.h>. Pulling in
-// <winsock2.h> here first, before HandlerOut.h's chain reaches <windows.h>,
-// makes it win that race everywhere instead of only where a source happens to
-// include <uv.h> before any 7-Zip header.
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#endif  // _WIN32
-
 #include "7zip/Archive/Common/HandlerOut.h"
 
 #ifdef Z7_EXTRACT_ONLY
