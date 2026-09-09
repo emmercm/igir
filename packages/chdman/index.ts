@@ -73,8 +73,7 @@ export interface OpenReaderOptions {
   /**
    * The `highWaterMark` of the returned stream, and so the number of bytes
    * asked of the addon per read. Omit it to take Node's own default for a
-   * {@link stream.Readable} -- this package deliberately defines no default of
-   * its own, so a Node upgrade that retunes streams retunes this too.
+   * {@link stream.Readable}.
    */
   highWaterMark?: number;
 }

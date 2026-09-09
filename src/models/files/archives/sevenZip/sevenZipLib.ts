@@ -97,7 +97,8 @@ export default abstract class SevenZipLib extends Archive {
     }
 
     await this.extractEntryToStream(location, async (readable) => {
-      // Wait for the first bytes, so that a bad input throws before the output file is created.
+      // The addon defers opening the archive until the stream is first read, so cause it to open.
+      // We do this so any immediate issue with the input will throw before we create the output.
       await events.once(readable, 'readable');
 
       const writeStream = fs.createWriteStream(extractedFilePath);

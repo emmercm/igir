@@ -6,21 +6,12 @@ const require = module.createRequire(import.meta.url);
 
 /**
  * Every archive format the addon can read. These are 7-Zip's own handler names
- * lowercased -- upstream spells two of them `Z` and `Split`, and the lookup
- * below is case-insensitive so that callers get one uniform convention.
- *
- * The set is closed: the addon's handlers are fixed at build time, so this union
- * is exhaustive and is checked against the addon at load.
+ * lowercased.
  */
 export const SevenZipFormat = {
   SEVEN_ZIP: '7z',
   ZIP: 'zip',
   Z: 'z',
-  /**
-   * A byte-sliced file, named `.001`, `.01` or `.aa` and counting up. Listing
-   * one yields a single entry: the slices joined back together. That entry is
-   * usually itself an archive, which is then read with its own format.
-   */
   SPLIT: 'split',
   BZIP2: 'bzip2',
   LZMA: 'lzma',
@@ -31,22 +22,18 @@ export type SevenZipFormat = (typeof SevenZipFormat)[keyof typeof SevenZipFormat
 export interface SevenZipEntry {
   /**
    * The entry's position in the archive's own item table -- the number 7-Zip
-   * itself uses to address it, not a position in this array. Pass it back to
-   * {@link openEntryReader} to skip the scan that finding an entry by path
-   * otherwise costs.
+   * itself uses to address it, not a position in this array. Should be provided
+   * to {@link openEntryReader}.
    */
   entryIndex: number;
   /**
    * The entry's path within the archive, or `undefined` when the format records
-   * no name -- `.Z`, `.bz2` and `.lzma` wrap one nameless stream, and callers
-   * conventionally derive a name from the archive's own filename. Deliberately
-   * not `''`, which is a name an entry could really carry.
+   * no name.
    */
   entryPath: string | undefined;
   /**
    * The entry's uncompressed length, or `undefined` when the format does not
-   * record one -- `.Z`, `.bz2` and `.lzma` store no size in their headers. This
-   * is deliberately not `0`, which is a real length those formats can also hold.
+   * record one.
    */
   size: number | undefined;
   crc32: string | undefined;
@@ -63,9 +50,7 @@ interface SevenZipNativeEntry extends Omit<SevenZipEntry, 'crc32'> {
 }
 
 /**
- * The addon's pull reader. Module-private on purpose: callers get a
- * {@link stream.Readable} from {@link openEntryReader} instead, so nothing
- * outside this file has to pair every `read()` with a `close()`.
+ * The addon's pull reader.
  */
 interface NativeEntryReader {
   read: () => Promise<Buffer | null>;
@@ -86,40 +71,18 @@ export interface OpenEntryReaderOptions {
    */
   entryPath?: string;
   /**
-   * A hint: where the entry named by `entryPath` was last seen in the archive's
-   * item table, from {@link SevenZipEntry.entryIndex}. It is verified against
-   * `entryPath` before it is used and quietly ignored when it no longer matches,
-   * so a stale one costs nothing but the scan it was meant to avoid.
+   * The entry's position in the archive's own item table, which is what 7zip
+   * actually uses for extraction.
    */
   entryIndex?: number;
   /**
    * The `highWaterMark` of the returned stream, and so the size of every chunk
    * the addon is asked to produce. Omit it to take Node's own default for a
-   * {@link stream.Readable} -- this package deliberately defines no default of
-   * its own, so a Node upgrade that retunes streams retunes this too.
+   * {@link stream.Readable}.
    */
   highWaterMark?: number;
 }
 
-/**
- * The native surface. Format *names* are resolved to their registration index
- * here rather than matched by name in C++, which keeps the name table -- the
- * part most likely to drift across a vendored 7-Zip upgrade -- in TypeScript.
- *
- * Entry *paths* go the other way, and deliberately. Resolving one to an index in
- * JavaScript means opening the archive to list it and then opening it again to
- * extract, whereas the addon resolves it inside the open it has to perform
- * regardless. An index may accompany a path, but only ever as a hint the addon
- * verifies against that path; a path alone always resolves on its own.
- *
- * `read()` takes no size: the chunk size is fixed when the reader is
- * constructed, because it is the size the extraction thread fills to before
- * publishing anything, and so has to be known before a byte is decoded. That is
- * what makes every read but the last return exactly `chunkBytes`.
- *
- * Every path below names ONE file, even for a multi-volume archive: the addon
- * discovers the rest of the set itself.
- */
 interface SevenZipBinding {
   formats: string[];
   listEntries: (archivePath: string, formatIndex: number) => Promise<SevenZipNativeEntry[]>;
@@ -150,7 +113,7 @@ const FORMAT_INDICES = new Map(
 );
 
 // Fail at load, not at the first call, if a vendored 7-Zip upgrade renames or
-// drops a handler. Without this the union above could silently drift out of
+// drops a handler. Without this, the union above could silently drift out of
 // step with what the addon actually registered.
 const MISSING_FORMATS = Object.values(SevenZipFormat).filter(
   (format) => !FORMAT_INDICES.has(format.toLowerCase()),
@@ -178,13 +141,6 @@ function formatIndex(format: SevenZipFormat): number {
  * Wrap a native 7-Zip entry reader in a {@link stream.Readable}. The reader is
  * closed when the stream ends, errors, or is destroyed. Callers must consume the
  * stream to its end or call `destroy()` so the native reader is released.
- *
- * A factory rather than an already-open reader, because the reader is told its
- * chunk size when it is constructed. Deferring the open to the first read means
- * that size can be read off the stream itself, with no constant defined here to
- * drift out of step with Node's, and it puts a failure to open on the stream's
- * 'error' -- where a caller is already handling failures -- rather than making
- * it a synchronous throw.
  */
 function readableFromReader(
   openReader: (chunkBytes: number) => NativeEntryReader,
@@ -258,13 +214,6 @@ export default {
    * volumes: name the first one (`.7z.001`, `.z01`, `.001`) and 7-Zip discovers
    * its siblings in the same directory. Callers never enumerate or order
    * volumes.
-   *
-   * `entryPath` is reported with `/` separators on every platform, whatever the
-   * archive recorded. Reporting it verbatim is not on offer: 7-Zip's handlers
-   * rewrite separators to the host's before the addon can read them, so on
-   * Windows a recorded `/` and a recorded `\` are indistinguishable, and the
-   * same archive would otherwise list different paths on different platforms.
-   * Either spelling is accepted back by {@link openEntryReader}.
    */
   async listEntries(options: ListEntriesOptions): Promise<SevenZipEntry[]> {
     const entries = await binding.listEntries(options.inputFilename, formatIndex(options.format));
@@ -277,31 +226,12 @@ export default {
   /**
    * Open a {@link stream.Readable} over one entry's decompressed bytes.
    *
-   * `entryPath` is matched against the archive the addon opens to extract from
-   * -- naming an entry therefore costs nothing beyond the extraction itself, and
-   * never a second pass over the archive. Separators are compared normalized, so
-   * `dir/file.rom` and `dir\\file.rom` both find the same entry however the
-   * archive spelled it -- including the path {@link listEntries} reported, which
-   * is normalized the same way.
+   * `entryPath` is matched against the archive the addon opens to extract from.
    *
    * `entryIndex` is an optional hint from {@link listEntries}: the addon reads
    * only that item's path and, if it is the one asked for, extracts it directly
    * instead of scanning every item's path to find it. A wrong or stale index
    * falls back to that scan, so it never changes which entry is extracted.
-   *
-   * Omit it for the formats that record no entry name -- `.Z`, `.bz2`, `.lzma`
-   * and a split set all wrap exactly one nameless member, and {@link listEntries}
-   * reports `entryPath: undefined` for it. An archive holding more than one entry
-   * then rejects rather than picking one.
-   *
-   * Extraction runs on a dedicated thread behind a bounded buffer, so a slow
-   * consumer applies back-pressure instead of buffering the whole entry.
-   *
-   * `highWaterMark` sets the size of every chunk the stream emits but the last.
-   * The size is a promise, not a ceiling: the extraction thread accumulates
-   * decompressed output and publishes a chunk only once it is full, so a consumer
-   * never sees a short read merely because a decoder happened to emit its output
-   * in small pieces. Only an entry's final chunk is short.
    */
   openEntryReader(options: OpenEntryReaderOptions): stream.Readable {
     return readableFromReader(
