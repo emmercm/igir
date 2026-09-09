@@ -2,15 +2,15 @@
 
 // CMultiMethodProps and CSingleMethodProps, which upstream's HandlerOut.h omits
 // entirely under Z7_EXTRACT_ONLY because their real bodies live in the write
-// path this decode-only addon does not compile. Most handlers fall back to
-// CCommonMethodProps in that case, but the Zip handler does not: it derives its
-// CBaseProps from CMultiMethodProps unconditionally and default-constructs one
-// on every archive open, so the type has to exist and Init() has to be correct
-// even though SetProperty/SetProperties are never called. Those return
-// E_NOTIMPL; Init() matches the field initialization upstream performs.
+// path this decode-only addon does not compile. Two decode handlers still need
+// them: the Zip handler derives its CBaseProps from CMultiMethodProps, and the
+// bzip2 handler holds a CSingleMethodProps member, each default-constructed on
+// every archive open. So the types have to exist and Init() has to match the
+// field initialization upstream performs, even though SetProperty and
+// SetProperties are never called and return E_NOTIMPL.
 //
 // Force-included ahead of every 7-Zip Archive source, so it is in place by the
-// time the Zip handler needs it. There is no redefinition, since upstream
+// time those handlers need it. There is no redefinition, since upstream
 // always omits these classes under Z7_EXTRACT_ONLY.
 //
 // The __cplusplus guard is load-bearing on Windows: MSVC's forced-include flag

@@ -15,10 +15,10 @@ namespace sevenzip {
 // load this addon into several environments in one process: a global would let
 // one worker's teardown cancel another worker's live extractions.
 struct AddonData {
-    // Shared rather than owned outright. Each running job holds a reference of
-    // its own, so a job can always unregister safely even if the environment's
-    // instance data has already been finalized -- the relative order of that
-    // finalizer and the cleanup hook is not something to depend on.
+    // Shared rather than owned outright, so that a job holding a reference can
+    // still unregister after this environment's instance data is finalized --
+    // the order of that finalizer against the cleanup hook is not something to
+    // depend on.
     std::shared_ptr<JobRegistry> registry;
 };
 

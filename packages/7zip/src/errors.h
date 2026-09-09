@@ -5,8 +5,7 @@
 
 #include "Common/MyWindows.h"
 
-// Every string this addon fails with, kept together so that one failure always
-// gets one sentence. Pure functions from a result code to a message.
+// Turns 7-Zip's result codes into the sentences the addon fails with.
 namespace sevenzip {
 
 // The high half of an HRESULT that 7-Zip built out of an operating system error

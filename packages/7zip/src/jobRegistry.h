@@ -58,10 +58,9 @@ class JobRegistry {
     // After the first call the registry stays drained, so no later job can
     // start and be missed.
     //
-    // The wait is deliberately unbounded. A timeout here would trade a hang
+    // The wait is deliberately unbounded: a timeout here would trade a hang
     // that can be diagnosed from a stack trace for a use-after-free that
-    // cannot, and the cancel paths this depends on are the same ones close()
-    // already exercises on every reader.
+    // cannot.
     void DrainAndWait() noexcept;
 
    private:

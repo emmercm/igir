@@ -104,7 +104,7 @@ class Pump {
     // it catches everything internally instead.
     void Run();
 
-    // The extraction itself, so that Run() needs exactly one try/catch.
+    // The extraction, which reports failure by throwing; Run() catches.
     void Extract();
 
     void SetError(std::string message);

@@ -54,7 +54,7 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
     ~ListJob() = default;
 
     // Asks the listing to stop. Returns immediately; the thread notices at its
-    // next property read, or inside the open through the abort flag handed to
+    // next item, or inside the open through the abort flag handed to
     // OpenArchive(). Safe to call from any thread and more than once.
     void Cancel() noexcept { abort_.store(true, std::memory_order_relaxed); }
 
@@ -80,7 +80,7 @@ class ListJob : public std::enable_shared_from_this<ListJob> {
     // would turn such a throw into that same terminate(); it catches internally.
     void Run();
 
-    // The listing itself, so that Run() needs exactly one try/catch.
+    // The listing, which reports failure by throwing; Run() catches.
     void List();
 
     // Marshals the result back to the event loop and settles the promise.

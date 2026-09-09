@@ -154,7 +154,7 @@ export default class FileFactory {
    * Assuming we've already checked if the file path has a valid archive extension, assume that
    * archive extension is accurate and parse the archive.
    *
-   * This ordering should match {@link ROMScanner#archiveEntryPriority}
+   * This ordering should match {@link ROMIndexer#archiveEntryPriority}
    */
   async entriesFromArchive<A extends Archive>(
     archive: A,
@@ -256,7 +256,7 @@ export default class FileFactory {
    * Without knowing if the file is an archive or not, read its file signature, and if there is a
    * match then parse the archive.
    *
-   * This ordering should match {@link ROMScanner#archiveEntryPriority}
+   * This ordering should match {@link ROMIndexer#archiveEntryPriority}
    */
   private async entriesFromArchiveSignature(
     filePath: string,
