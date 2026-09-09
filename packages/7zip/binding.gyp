@@ -1,5 +1,5 @@
 {
-  "variables": {"z7": "deps/7zip"},
+  "variables": {"z7": "deps/7-Zip-zstd"},
 
   "target_defaults": {
     "cflags_cc!": [
@@ -105,7 +105,7 @@
       "target_name": "sevenzip",
       "type": "static_library",
       "defines": ["Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0",
-                  "Z7_ZIP_LZFSE_DISABLE"],
+                  "Z7_ZIP_LZFSE_DISABLE", "ZSTD_DISABLE_ASM"],
       "include_dirs": ["stubs", "<(z7)/C", "<(z7)/CPP", "<(z7)/CPP/myWindows", "<(z7)/CPP/include_windows"],
       "cflags": ["-U__ARM_FEATURE_CRC32", "-U__ARM_FEATURE_CRYPTO", "-U__ARM_FEATURE_SHA2",
                  "-U__AES__", "-U__SHA__", "-U__SSSE3__", "-U__SSE4_1__", "-U__SSE4_2__",
@@ -123,6 +123,7 @@
         "<(z7)/C/BraIA64.c",
         "<(z7)/C/CpuArch.c",
         "<(z7)/C/Delta.c",
+        "<(z7)/C/hashes/xxhash.c",
         "<(z7)/C/Lzma2Dec.c",
         "<(z7)/C/Lzma2DecMt.c",
         "<(z7)/C/LzmaDec.c",
@@ -137,7 +138,15 @@
         "<(z7)/C/XzCrc64.c",
         "<(z7)/C/XzCrc64Opt.c",
         "<(z7)/C/XzDec.c",
-        "<(z7)/C/ZstdDec.c",
+        "<(z7)/C/zstd/debug.c",
+        "<(z7)/C/zstd/entropy_common.c",
+        "<(z7)/C/zstd/error_private.c",
+        "<(z7)/C/zstd/fse_decompress.c",
+        "<(z7)/C/zstd/huf_decompress.c",
+        "<(z7)/C/zstd/zstd_common.c",
+        "<(z7)/C/zstd/zstd_ddict.c",
+        "<(z7)/C/zstd/zstd_decompress.c",
+        "<(z7)/C/zstd/zstd_decompress_block.c",
         "<(z7)/CPP/7zip/Archive/7z/7zDecode.cpp",
         "<(z7)/CPP/7zip/Archive/7z/7zExtract.cpp",
         "<(z7)/CPP/7zip/Archive/7z/7zHandler.cpp",
@@ -237,6 +246,7 @@
         "<(z7)/CPP/7zip/Compress/Lzma2Register.cpp",
         "<(z7)/CPP/7zip/Compress/LzmaRegister.cpp",
         "<(z7)/CPP/7zip/Compress/PpmdRegister.cpp",
+        "<(z7)/CPP/7zip/Compress/ZstdRegister.cpp",
         "<(z7)/CPP/Common/XzCrc64Init.cpp",
         "binding.cpp",
         "src/addon.cpp",

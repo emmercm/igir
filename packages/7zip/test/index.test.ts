@@ -28,6 +28,7 @@ const FORMATS_BY_EXTENSION = new Map<string, SevenZipFormat>([
   ['.Z', SevenZipFormat.Z],
   ['.bz2', SevenZipFormat.BZIP2],
   ['.lzma', SevenZipFormat.LZMA],
+  ['.lzma86', SevenZipFormat.LZMA86],
 ]);
 
 interface Fixture {
@@ -66,9 +67,8 @@ function fixtures(directory: string): Fixture[] {
  * emitting raw blocks. Nothing here compares bytes across archives -- each entry
  * is checked against the CRC32 its own archive records.
  *
- * The zips are zips rather than `.7z` because zstd is not a 7z method: 7-Zip
- * registers no codec for it, and its decoder is reachable only through the ZIP
- * handler's branch for compression method 93.
+ * Zstd fixtures cover both ZIP method 93 and 7-Zip-zstd's registered 7z codec,
+ * including solid archives where extracting a later entry decodes earlier ones.
  */
 const MULTI_ENTRY_ARCHIVES = fixtures('four-small-files');
 
@@ -84,9 +84,10 @@ const SINGLE_STREAM_SIZE = 4096;
 const SINGLE_STREAM_CRC32 = '266df1c3';
 
 /**
- * A 7z holding one 8 MiB entry. LZMA2 specifically: its decoder writes up to
+ * Each archive holds one 8 MiB entry. LZMA2's decoder writes up to
  * 1 MiB per call into the addon's output sink, which is what lets a single
- * decoder call fill the read-ahead queue outright.
+ * decoder call fill the read-ahead queue outright. Zstd exercises repeated
+ * smaller writes across many compressed blocks.
  *
  * The payload is compressible on purpose -- 8 MiB in, about 1.5 KiB committed,
  * unlike the keystream payloads every other fixture uses -- but its 251-byte
@@ -317,9 +318,22 @@ async function writeStoredZip(
 
 describe('listEntries', () => {
   test('it has fixtures to test', () => {
-    expect(MULTI_ENTRY_ARCHIVES.length).toEqual(12);
-    expect(SINGLE_STREAM_ARCHIVES.length).toEqual(5);
-    expect(LARGE_ENTRY_ARCHIVES.length).toEqual(1);
+    expect(MULTI_ENTRY_ARCHIVES.length).toEqual(21);
+    expect(SINGLE_STREAM_ARCHIVES.length).toEqual(7);
+    expect(LARGE_ENTRY_ARCHIVES.length).toEqual(4);
+  });
+
+  test.each(
+    MULTI_ENTRY_ARCHIVES.filter(({ label }) =>
+      /7z-(?:zstd-|bcj-|bcj2-|delta-)|-original\.zip$/.test(label),
+    ),
+  )('it preserves the existing four-file payload in $label', async ({ format, archivePath }) => {
+    const original = await sevenZip.listEntries({
+      inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
+      format: SevenZipFormat.SEVEN_ZIP,
+    });
+    const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
+    expect(entries).toEqual(original);
   });
 
   test.each(MULTI_ENTRY_ARCHIVES)(
@@ -350,13 +364,14 @@ describe('listEntries', () => {
     async ({ format, archivePath }) => {
       const entries = await sevenZip.listEntries({ inputFilename: archivePath, format });
       expect(entries.length).toEqual(1);
-      // None of these containers records the member's name, size, or CRC32, so
-      // the addon has nothing to report for them. The decompressed bytes are
-      // still exact; `openEntryReader` proves that.
+      // These fixtures record no name or CRC32. LZMA86 additionally records
+      // the uncompressed size in its header.
       expect(entries[0].entryPath).toBeUndefined();
       // Undefined, not 0: these formats record no length, and 0 is a real
       // length an empty member could legitimately have.
-      expect(entries[0].size).toBeUndefined();
+      expect(entries[0].size).toEqual(
+        format === SevenZipFormat.LZMA86 ? SINGLE_STREAM_SIZE : undefined,
+      );
       expect(entries[0].crc32).toBeUndefined();
       expect(entries[0].isDirectory).toEqual(false);
       expect(entries[0].isEncrypted).toEqual(false);
@@ -628,8 +643,8 @@ describe('openEntryReader', () => {
       const extracted = await drain(
         sevenZip.openEntryReader({ inputFilename: archivePath, format }),
       );
-      // listEntries() reports no size or CRC32 for these formats, so the
-      // expectations are the payload's own, shared by every one of them.
+      // The expected size and CRC32 belong to the original payload, shared by
+      // every fixture regardless of which metadata its container records.
       expect(extracted.length).toEqual(SINGLE_STREAM_SIZE);
       expect(crc32Hex(extracted)).toEqual(SINGLE_STREAM_CRC32);
     },
@@ -915,7 +930,7 @@ describe('openEntryReader', () => {
   });
 
   test.each(LARGE_ENTRY_ARCHIVES)(
-    'it drains $label, whose decoder fills the read-ahead queue in one call',
+    'it drains $label across the read-ahead queue',
     async ({ format, archivePath }) => {
       // A regression test for a deadlock in the addon's ChunkQueue, not a
       // throughput test.
