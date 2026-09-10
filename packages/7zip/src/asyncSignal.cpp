@@ -1,16 +1,18 @@
 #include "asyncSignal.h"
 
+#include <new>
 #include <stdexcept>
 #include <utility>
 
 namespace sevenzip {
 std::shared_ptr<AsyncSignal> AsyncSignal::Create(Napi::Env env, const char* name, bool referenced, Callback callback) {
     std::shared_ptr<AsyncSignal> signal(new AsyncSignal());
+    signal->self_ = signal;
     signal->callback_ = std::move(callback);
     auto context = std::make_unique<std::shared_ptr<AsyncSignal>>(signal);
     napi_value label = Napi::String::New(env, name);
-    if (napi_create_threadsafe_function(env, nullptr, nullptr, label, 1, 1, context.get(), Finalize, context.get(),
-                                        Dispatch, &signal->function_) != napi_ok) {
+    if (napi_create_threadsafe_function(env, nullptr, nullptr, label, 1, 1, context.get(), Finalize, nullptr, Dispatch,
+                                        &signal->function_) != napi_ok) {
         throw std::runtime_error("could not create the 7-Zip notification signal");
     }
     // NOLINTNEXTLINE(bugprone-unused-return-value): the N-API finalizer now owns the context.
@@ -21,10 +23,17 @@ std::shared_ptr<AsyncSignal> AsyncSignal::Create(Napi::Env env, const char* name
 
 void AsyncSignal::Schedule() {
     if (function_ == nullptr || queued_) return;
-    const napi_status status = napi_call_threadsafe_function(function_, nullptr, napi_tsfn_nonblocking);
-    if (status == napi_ok || status == napi_queue_full) {
+    const std::shared_ptr<AsyncSignal> self = self_.lock();
+    if (!self) return;
+    auto* delivery = new (std::nothrow) std::shared_ptr<AsyncSignal>(self);
+    if (delivery == nullptr) return;
+    const napi_status status = napi_call_threadsafe_function(function_, delivery, napi_tsfn_nonblocking);
+    if (status == napi_ok) {
         queued_ = true;
-    } else if (status == napi_closing) {
+        return;
+    }
+    delete delivery;
+    if (status == napi_closing) {
         // The runtime owns teardown now; further calls are forbidden.
         function_ = nullptr;
     }
@@ -42,11 +51,13 @@ void AsyncSignal::Release() noexcept {
     Schedule();
 }
 
-void AsyncSignal::Dispatch(napi_env env, napi_value /*function*/, void* context, void* /*data*/) {
-    // Copy shared ownership before touching the signal. N-API keeps the context
-    // allocation alive through every queued call, including the null-env calls
-    // it makes while closing a worker environment.
-    const std::shared_ptr<AsyncSignal> signal = *static_cast<std::shared_ptr<AsyncSignal>*>(context);
+void AsyncSignal::Dispatch(napi_env env, napi_value /*function*/, void* /*context*/, void* data) {
+    // A queued delivery owns the signal independently of finalization. Node can
+    // deliver a closing queue item with a null environment after invoking the
+    // thread-safe function's finalizer.
+    const std::unique_ptr<std::shared_ptr<AsyncSignal>> delivery(static_cast<std::shared_ptr<AsyncSignal>*>(data));
+    if (!delivery) return;
+    const std::shared_ptr<AsyncSignal>& signal = *delivery;
     bool pending = false;
     {
         std::scoped_lock const lock(signal->mutex_);
@@ -88,7 +99,7 @@ void AsyncSignal::Unref(Napi::Env env) noexcept {
 }
 void AsyncSignal::Finalize(napi_env /*env*/, void* data, void* /*hint*/) {
     const std::unique_ptr<std::shared_ptr<AsyncSignal>> context(static_cast<std::shared_ptr<AsyncSignal>*>(data));
-    const std::shared_ptr<AsyncSignal> signal = *context;
+    const std::shared_ptr<AsyncSignal>& signal = *context;
     {
         std::scoped_lock const lock(signal->mutex_);
         signal->function_ = nullptr;

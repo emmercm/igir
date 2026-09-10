@@ -43,5 +43,6 @@ class AsyncSignal {
     bool pending_ = false;
     bool released_ = false;
     Callback callback_;
+    std::weak_ptr<AsyncSignal> self_;
 };
 }  // namespace sevenzip
