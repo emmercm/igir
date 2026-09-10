@@ -57,7 +57,7 @@ Adam supports many different ROM formats in subfolders of `ROMS` on the second S
 
 !!! tip
 
-      Please note that sorting the supported Arcade machine releases (MAME, CPS, FBA) in a single pass is not supported by Igir at this time. Try the [Arcade docs](../arcade.md) docs for help with this.
+      FinalBurn Alpha DATs will sort into `ROMS/FBA`, but the MAME and CPS releases have no dedicated Adam folder that Igir can infer, so sorting them in the same pass is not supported at this time. Try the [Arcade docs](../arcade.md) docs for help with those.
 
 === ":fontawesome-brands-windows: Windows"
 

@@ -20,6 +20,27 @@ const dummyDat = new LogiqxDAT({ header: new Header() });
 const dummyGame = new Game({ name: 'Dummy Game' });
 const dummyRom = new ROM({ name: 'Dummy.rom', size: 0, crc32: '00000000' });
 
+/**
+ * Resolve an output path for a single console token. Every console token test varies exactly two
+ * inputs — the DAT's name and the ROM's filename — because those are the only two signals
+ * {@link OutputFactory} has to identify a console with.
+ */
+async function getConsolePath(
+  outputToken: string,
+  datName: string,
+  romFilename: string,
+): Promise<string> {
+  const options = new Options({ commands: ['copy'], output: outputToken });
+  const rom = new ROM({ name: romFilename, size: 0, crc32: '' });
+  return OutputFactory.getPath(
+    options,
+    new LogiqxDAT({ header: new Header({ name: datName }) }),
+    dummyGame,
+    rom,
+    await rom.toFile(),
+  ).format();
+}
+
 test.each(['test', 'report', 'zip', 'clean'])(
   'should equal input file for non-writing commands: %s',
   async (command) => {
@@ -214,640 +235,546 @@ describe('token replacement', () => {
     expect(outputPath.format()).toEqual(expectedPath);
   });
 
-  // Output Token {adam}
-  test.each([
-    ['game.a78', path.resolve('ROMS', 'A7800', 'game.a78')],
-    ['game.gb', path.resolve('ROMS', 'GB', 'game.gb')],
-    ['game.nes', path.resolve('ROMS', 'FC', 'game.nes')],
-  ])('should replace {adam} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'ROMS/{adam}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+  describe('console tokens', () => {
+    describe('matching by DAT name', () => {
+      // A DAT's name is the strongest console signal Igir has, and unlike the ROM's file
+      // extension it is available for every ROM in the DAT. These names all use a generic
+      // ".rom" extension that resolves to nothing, so only the DAT name can be doing the work.
+      test.each([
+        // These consoles define no unique file extensions at all, so a DAT name is the *only*
+        // way they can ever be resolved. If these regressed, the consoles would be unreachable.
+        ['Bit Corporation - Gamate', 'gamate'],
+        ['Emerson - Arcadia', 'arcadia'],
+        // These consoles do define unique extensions, but the DAT name must work on its own so
+        // that ROMs with a non-standard or corrected extension still land in the right folder.
+        ['Atari - 2600', 'atari2600'],
+        ['Nintendo - Game Boy', 'gb'],
+        ['Nintendo - Game Boy Advance', 'gba'],
+        ['Nintendo - Game Boy Color', 'gbc'],
+        ['Nintendo - Super Famicom', 'sfc'],
+        ['Nintendo - Nintendo 64', 'n64'],
+        ['Sega - Master System', 'mastersystem'],
+        ['Sony - PlayStation', 'psx'],
+      ])('should replace {es} for the DAT name: %s', async (datName, expectedDirName) => {
+        await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
+          path.resolve(expectedDirName, 'Dummy.rom'),
+        );
+      });
 
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.n64', 'game.bs', 'game.bin', 'game.rom'])(
-    'should throw on {adam} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'games/{adam}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {batocera}
-  test.each([
-    ['game.a78', path.resolve('roms', 'atari7800', 'game.a78')],
-    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
-    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
-  ])(
-    'should replace {batocera} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{batocera}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
-
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {batocera} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{batocera}' });
-
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {es}
-  test.each([
-    ['game.a78', path.resolve('roms', 'atari7800', 'game.a78')],
-    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
-    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
-  ])('should replace {es} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'roms/{es}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {es} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{es}' });
-
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {funkeyos}
-  test.each([
-    ['game.lnx', path.resolve('', 'Atari lynx', 'game.lnx')],
-    ['game.ws', path.resolve('', 'WonderSwan', 'game.ws')],
-    ['game.wsc', path.resolve('', 'WonderSwan', 'game.wsc')],
-    ['game.pce', path.resolve('', 'PCE-TurboGrafx', 'game.pce')],
-    ['game.fds', path.resolve('', 'NES', 'game.fds')],
-    ['game.gb', path.resolve('', 'Game Boy', 'game.gb')],
-    ['game.gba', path.resolve('', 'Game Boy Advance', 'game.gba')],
-    ['game.gbc', path.resolve('', 'Game Boy Color', 'game.gbc')],
-    ['game.nes', path.resolve('', 'NES', 'game.nes')],
-    ['game.nez', path.resolve('', 'NES', 'game.nez')],
-    ['game.min', path.resolve('', 'Pokemini', 'game.min')],
-    ['game.sfc', path.resolve('', 'SNES', 'game.sfc')],
-    ['game.smc', path.resolve('', 'SNES', 'game.smc')],
-    ['game.vb', path.resolve('', 'Virtualboy', 'game.vb')],
-    ['game.gg', path.resolve('', 'Game Gear', 'game.gg')],
-    ['game.sms', path.resolve('', 'Sega Master System', 'game.sms')],
-    ['game.gen', path.resolve('', 'Sega Genesis', 'game.gen')],
-    ['game.md', path.resolve('', 'Sega Genesis', 'game.md')],
-    ['game.mdx', path.resolve('', 'Sega Genesis', 'game.mdx')],
-    ['game.sgd', path.resolve('', 'Sega Genesis', 'game.sgd')],
-    ['game.smd', path.resolve('', 'Sega Genesis', 'game.smd')],
-    ['game.ngp', path.resolve('', 'Neo Geo Pocket', 'game.ngp')],
-    ['game.ngc', path.resolve('', 'Neo Geo Pocket', 'game.ngc')],
-  ])(
-    'should replace {funkeyos} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: '{funkeyos}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
-
-  test.each([
-    'game.bin',
-    'game.rom',
-    // satellaview is not supported by https://github.com/FunKey-Project/FunKey-OS/blob/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections/SNES/settings.conf
-    'game.bs',
-  ])('should throw on {funkeyos} for unknown extension: %s', async (outputRomFilename) => {
-    const options = new Options({ commands: ['copy'], output: '{funkeyos}' });
-
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    await expect(
-      (async (): Promise<unknown> =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-    ).rejects.toThrow(/failed to replace/);
-  });
-
-  // Output Token {rocknix}
-  test.each([
-    ['game.a78', path.resolve('roms', 'atari7800', 'game.a78')],
-    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
-    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
-  ])(
-    'should replace {rocknix} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{rocknix}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        rom,
-        await rom.toFile(),
-      );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
-
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {rocknix} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{rocknix}' });
-
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {jelos} (legacy alias for {rocknix})
-  test.each([
-    ['game.a78', path.resolve('roms', 'atari7800', 'game.a78')],
-    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
-    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
-  ])('should replace {jelos} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'roms/{jelos}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {jelos} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{jelos}' });
-
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  test.each([
-    ['game.a78', 'atari7800'],
-    ['game.gb', 'gb'],
-    ['game.nes', 'nes'],
-  ])(
-    'should resolve {jelos} and {rocknix} to the same value: %s',
-    async (outputRomFilename, expectedDir) => {
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-      const file = await rom.toFile();
-
-      const jelosPath = OutputFactory.getPath(
-        new Options({ commands: ['copy'], output: 'roms/{jelos}' }),
-        dummyDat,
-        dummyGame,
-        rom,
-        file,
-      );
-      const rocknixPath = OutputFactory.getPath(
-        new Options({ commands: ['copy'], output: 'roms/{rocknix}' }),
-        dummyDat,
-        dummyGame,
-        rom,
-        file,
+      // Arcade DATs are the motivating case for DAT-name matching: arcade ROMs are .zip files,
+      // and .zip is deliberately never a console extension (it would hijack every zipped console
+      // ROM), so extension matching can never resolve them. Before these entries existed, every
+      // arcade candidate was silently dropped with "failed to replace output token".
+      // See https://github.com/emmercm/igir/issues/2405
+      test.each([
+        // FinalBurn Neo's arcade DAT matches no console entry, so it falls through to the
+        // catch-all FBNeo entry. Each frontend has its own folder name and casing.
+        ['FinalBurn Neo - Arcade Games', '{batocera}', 'fbneo'],
+        ['FinalBurn Neo - Arcade Games', '{crossmix}', 'FBNEO'],
+        ['FinalBurn Neo - Arcade Games', '{es}', 'fbneo'],
+        ['FinalBurn Neo - Arcade Games', '{onion}', 'FBNEO'],
+        ['FinalBurn Neo - Arcade Games', '{retrodeck}', 'fbneo'],
+        ['FinalBurn Neo - Arcade Games', '{rocknix}', 'fbneo'],
+        ['FinalBurn Neo - Arcade Games', '{spruce}', 'FBNEO'],
+        // MAME DATs are named three different ways in the wild, and all three have to resolve:
+        // MAME's own ListXML falls back to the literal "MAME", the -listxml build attribute
+        // looks like "0.278 (mame0278)", and Pleasuredome names its DATs after the version.
+        ['MAME', '{batocera}', 'mame'],
+        ['0.278 (mame0278)', '{batocera}', 'mame'],
+        ['MAME 0.287 ROMs (merged)', '{batocera}', 'mame'],
+        ['MAME', '{crossmix}', 'MAME'],
+        ['MAME', '{es}', 'mame'],
+        ['MAME', '{mister}', 'mame'],
+        ['MAME', '{miyoocfw}', 'MAME'],
+        ['MAME', '{retrodeck}', 'mame'],
+        ['MAME', '{rocknix}', 'mame'],
+        // FinalBurn Alpha is a separate, older emulator with separate frontend folders, so it
+        // must not be conflated with FinalBurn Neo. Only two frontends ship an FBA folder.
+        ['FB Alpha v0.2.97.44', '{adam}', 'FBA'],
+        ['FinalBurn Alpha - Arcade Games', '{adam}', 'FBA'],
+        ['FinalBurn Alpha - Arcade Games', '{onion}', 'FBA2012'],
+      ])(
+        'should replace %s for the arcade DAT name: %s',
+        async (datName, outputToken, expectedDirName) => {
+          await expect(getConsolePath(outputToken, datName, 'Dummy.rom')).resolves.toEqual(
+            path.resolve(expectedDirName, 'Dummy.rom'),
+          );
+        },
       );
 
-      expect(jelosPath.format()).toEqual(path.resolve('roms', expectedDir, outputRomFilename));
-      expect(jelosPath.format()).toEqual(rocknixPath.format());
-    },
-  );
-
-  // Output Token {minui}
-  test.each([
-    ['game.pce', path.resolve('Roms', 'TurboGrafx-16 (PCE)', 'game.pce')],
-    ['game.fds', path.resolve('Roms', 'Famicom Disk System (FC)', 'game.fds')],
-    ['game.gb', path.resolve('Roms', 'Game Boy (GB)', 'game.gb')],
-    ['game.sgb', path.resolve('Roms', 'Game Boy (GB)', 'game.sgb')],
-    ['game.gba', path.resolve('Roms', 'Game Boy Advance (GBA)', 'game.gba')],
-    ['game.gbc', path.resolve('Roms', 'Game Boy Color (GBC)', 'game.gbc')],
-    ['game.nes', path.resolve('Roms', 'Nintendo Entertainment System (FC)', 'game.nes')],
-    ['game.nez', path.resolve('Roms', 'Nintendo Entertainment System (FC)', 'game.nez')],
-    ['game.min', path.resolve('Roms', 'Pokemon mini (PKM)', 'game.min')],
-    ['game.sfc', path.resolve('Roms', 'Super Nintendo Entertainment System (SFC)', 'game.sfc')],
-    ['game.smc', path.resolve('Roms', 'Super Nintendo Entertainment System (SFC)', 'game.smc')],
-    ['game.vb', path.resolve('Roms', 'Virtual Boy (VB)', 'game.vb')],
-    ['game.vboy', path.resolve('Roms', 'Virtual Boy (VB)', 'game.vboy')],
-    ['game.32x', path.resolve('Roms', 'Sega 32X (MD)', 'game.32x')],
-    ['game.gg', path.resolve('Roms', 'Sega Game Gear (GG)', 'game.gg')],
-    ['game.sms', path.resolve('Roms', 'Sega Master System (SMS)', 'game.sms')],
-    ['game.gen', path.resolve('Roms', 'Sega Genesis (MD)', 'game.gen')],
-    ['game.md', path.resolve('Roms', 'Sega Genesis (MD)', 'game.md')],
-    ['game.mdx', path.resolve('Roms', 'Sega Genesis (MD)', 'game.mdx')],
-    ['game.sgd', path.resolve('Roms', 'Sega Genesis (MD)', 'game.sgd')],
-    ['game.smd', path.resolve('Roms', 'Sega Genesis (MD)', 'game.smd')],
-    ['game.ngp', path.resolve('Roms', 'Neo Geo Pocket (NGPC)', 'game.ngp')],
-    ['game.ngc', path.resolve('Roms', 'Neo Geo Pocket Color (NGPC)', 'game.ngc')],
-  ])('should replace {minui} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'Roms/{minui}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.bin', 'game.rom', 'game.mgw'])(
-    'should throw on {minui} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{minui}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {mister}
-  test.each([
-    ['game.a78', path.resolve('games', 'Atari7800', 'game.a78')],
-    ['game.gb', path.resolve('games', 'Gameboy', 'game.gb')],
-    ['game.nes', path.resolve('games', 'NES', 'game.nes')],
-  ])('should replace {mister} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'games/{mister}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.bin', 'game.ngc', 'game.ngp', 'game.rom'])(
-    'should throw on {mister} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'games/{mister}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {miyoocfw}
-  test.each([
-    ['game.a26', path.resolve('roms', '2600', 'game.a26')],
-    ['game.lnx', path.resolve('roms', 'LYNX', 'game.lnx')],
-    ['game.ws', path.resolve('roms', 'WSWAN', 'game.ws')],
-    ['game.wsc', path.resolve('roms', 'WSWAN', 'game.wsc')], // TODO: check if this works
-    ['game.vec', path.resolve('roms', 'VECTREX', 'game.vec')],
-    ['game.pce', path.resolve('roms', 'PCE', 'game.pce')],
-    ['game.gb', path.resolve('roms', 'GB', 'game.gb')],
-    ['game.sgb', path.resolve('roms', 'GB', 'game.sgb')],
-    ['game.gbc', path.resolve('roms', 'GB', 'game.gbc')],
-    ['game.gba', path.resolve('roms', 'GBA', 'game.gba')],
-    ['game.nes', path.resolve('roms', 'NES', 'game.nes')],
-    ['game.fds', path.resolve('roms', 'NES', 'game.fds')],
-    ['game.sfc', path.resolve('roms', 'SNES', 'game.sfc')],
-    ['game.smc', path.resolve('roms', 'SNES', 'game.smc')],
-    ['game.min', path.resolve('roms', 'POKEMINI', 'game.min')],
-    ['game.gg', path.resolve('roms', 'SMS', 'game.gg')],
-    ['game.sms', path.resolve('roms', 'SMS', 'game.sms')],
-    ['game.gen', path.resolve('roms', 'SMD', 'game.gen')],
-    ['game.md', path.resolve('roms', 'SMD', 'game.md')],
-    ['game.smd', path.resolve('roms', 'SMD', 'game.smd')],
-  ])(
-    'should replace {miyoocfw} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{miyoocfw}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        rom,
-        await rom.toFile(),
+      // Word boundaries were added to many regexes to stop short tokens such as "GB", "ST", and
+      // "2600" from matching inside unrelated words. These cases guard the opposite failure
+      // mode: a boundary that is *too* strict and stops matching a real DAT name. No-Intro
+      // separates the manufacturer from the console with " - ", which a naive [ -] cannot span.
+      test.each([
+        ['Sord - M5', 'sord-m5'],
+        ['Sord M5', 'sord-m5'],
+      ])(
+        'should replace {romm} across a No-Intro separator: %s',
+        async (datName, expectedDirName) => {
+          await expect(getConsolePath('{romm}', datName, 'Dummy.rom')).resolves.toEqual(
+            path.resolve(expectedDirName, 'Dummy.rom'),
+          );
+        },
       );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
+    });
 
-  test.each([
-    'game.bin',
-    'game.rom',
-    // satellaview is not supported by https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info
-    'game.bs',
-  ])('should throw on {miyoocfw} for unknown extension: %s', async (outputRomFilename) => {
-    const options = new Options({ commands: ['copy'], output: 'roms/{miyoocfw}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    await expect(
-      (async (): Promise<unknown> =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-    ).rejects.toThrow(/failed to replace/);
-  });
-
-  // Output Token {onion}
-  test.each([
-    ['game.a78', path.resolve('Roms', 'SEVENTYEIGHTHUNDRED', 'game.a78')],
-    ['game.gb', path.resolve('Roms', 'GB', 'game.gb')],
-    ['game.nes', path.resolve('Roms', 'FC', 'game.nes')],
-  ])('should replace {onion} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'Roms/{onion}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {onion} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'Roms/{onion}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {pocket}
-  test.each([
-    ['game.a78', path.resolve('Assets', '7800', 'common', 'game.a78')],
-    ['game.gb', path.resolve('Assets', 'gb', 'common', 'game.gb')],
-    ['game.nes', path.resolve('Assets', 'nes', 'common', 'game.nes')],
-    ['game.sv', path.resolve('Assets', 'supervision', 'common', 'game.sv')],
-  ])('should replace {pocket} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.bin', 'game.ngp', 'game.rom'])(
-    'should throw on {pocket} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'Assets/{pocket}/common' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  test.each([
-    // No unique extensions defined
-    ['Bit Corporation - Gamate', path.resolve('gamate', 'Dummy.rom')],
-    ['Emerson - Arcadia', path.resolve('arcadia', 'Dummy.rom')],
-    // Unique extensions defined
-    ['Atari - 2600', path.resolve('atari2600', 'Dummy.rom')],
-    ['Nintendo - Game Boy', path.resolve('gb', 'Dummy.rom')],
-    ['Nintendo - Game Boy Advance', path.resolve('gba', 'Dummy.rom')],
-    ['Nintendo - Game Boy Color', path.resolve('gbc', 'Dummy.rom')],
-    // Testing priority
-    [
-      'Nintendo - Family Computer Disk System (FDS) (Parent-Clone)',
-      path.resolve('fds', 'Dummy.rom'),
-    ],
-    ['Nintendo - Famicom [T-En] Collection', path.resolve('famicom', 'Dummy.rom')],
-    [
-      'Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)',
-      path.resolve('nes', 'Dummy.rom'),
-    ],
-    [
-      'Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)',
-      path.resolve('nes', 'Dummy.rom'),
-    ],
-    ['Nintendo - Super Famicom [T-En] Collection', path.resolve('sfc', 'Dummy.rom')],
-    [
-      'Nintendo - Super Nintendo Entertainment System (Parent-Clone)',
-      path.resolve('snes', 'Dummy.rom'),
-    ],
-  ])('should replace {pocket} for known DAT name: %s', async (datName, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: '{es}' });
-
-    const outputPath = OutputFactory.getPath(
-      options,
-      new LogiqxDAT({ header: new Header({ name: datName }) }),
-      dummyGame,
-      dummyRom,
-      await dummyRom.toFile(),
-    );
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  // Output Token {retrodeck}
-  test.each([
-    ['game.a78', path.resolve('roms', 'atari7800', 'game.a78')],
-    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
-    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
-  ])(
-    'should replace {retrodeck} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{retrodeck}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        rom,
-        await rom.toFile(),
+    describe('matching by file extension', () => {
+      // When the DAT name matches no console — an unnamed DAT, a hand-rolled DAT, or a
+      // multi-console collection — Igir falls through to the ROM's file extension. Each
+      // frontend names its folders differently, so the mapping is asserted per token.
+      test.each([
+        // {adam}
+        ['{adam}', 'game.a78', 'A7800'],
+        ['{adam}', 'game.gb', 'GB'],
+        ['{adam}', 'game.nes', 'FC'],
+        // {batocera}
+        ['{batocera}', 'game.a78', 'atari7800'],
+        ['{batocera}', 'game.gb', 'gb'],
+        ['{batocera}', 'game.nes', 'nes'],
+        // {crossmix}
+        ['{crossmix}', 'game.a78', 'ATARI7800'],
+        ['{crossmix}', 'game.gb', 'GB'],
+        ['{crossmix}', 'game.nes', 'FC'],
+        // {es}
+        ['{es}', 'game.a78', 'atari7800'],
+        ['{es}', 'game.gb', 'gb'],
+        ['{es}', 'game.nes', 'nes'],
+        // {funkeyos}
+        ['{funkeyos}', 'game.lnx', 'Atari lynx'],
+        ['{funkeyos}', 'game.ws', 'WonderSwan'],
+        ['{funkeyos}', 'game.wsc', 'WonderSwan'],
+        ['{funkeyos}', 'game.pce', 'PCE-TurboGrafx'],
+        ['{funkeyos}', 'game.fds', 'NES'],
+        ['{funkeyos}', 'game.gb', 'Game Boy'],
+        ['{funkeyos}', 'game.gba', 'Game Boy Advance'],
+        ['{funkeyos}', 'game.gbc', 'Game Boy Color'],
+        ['{funkeyos}', 'game.nes', 'NES'],
+        ['{funkeyos}', 'game.nez', 'NES'],
+        ['{funkeyos}', 'game.min', 'Pokemini'],
+        ['{funkeyos}', 'game.sfc', 'SNES'],
+        ['{funkeyos}', 'game.smc', 'SNES'],
+        ['{funkeyos}', 'game.vb', 'Virtualboy'],
+        ['{funkeyos}', 'game.gg', 'Game Gear'],
+        ['{funkeyos}', 'game.sms', 'Sega Master System'],
+        ['{funkeyos}', 'game.gen', 'Sega Genesis'],
+        ['{funkeyos}', 'game.md', 'Sega Genesis'],
+        ['{funkeyos}', 'game.mdx', 'Sega Genesis'],
+        ['{funkeyos}', 'game.sgd', 'Sega Genesis'],
+        ['{funkeyos}', 'game.smd', 'Sega Genesis'],
+        ['{funkeyos}', 'game.ngp', 'Neo Geo Pocket'],
+        ['{funkeyos}', 'game.ngc', 'Neo Geo Pocket'],
+        // {minui}
+        ['{minui}', 'game.pce', 'TurboGrafx-16 (PCE)'],
+        ['{minui}', 'game.fds', 'Famicom Disk System (FC)'],
+        ['{minui}', 'game.gb', 'Game Boy (GB)'],
+        ['{minui}', 'game.sgb', 'Game Boy (GB)'],
+        ['{minui}', 'game.gba', 'Game Boy Advance (GBA)'],
+        ['{minui}', 'game.gbc', 'Game Boy Color (GBC)'],
+        ['{minui}', 'game.nes', 'Nintendo Entertainment System (FC)'],
+        ['{minui}', 'game.nez', 'Nintendo Entertainment System (FC)'],
+        ['{minui}', 'game.min', 'Pokemon mini (PKM)'],
+        ['{minui}', 'game.sfc', 'Super Nintendo Entertainment System (SFC)'],
+        ['{minui}', 'game.smc', 'Super Nintendo Entertainment System (SFC)'],
+        ['{minui}', 'game.vb', 'Virtual Boy (VB)'],
+        ['{minui}', 'game.vboy', 'Virtual Boy (VB)'],
+        ['{minui}', 'game.32x', 'Sega 32X (MD)'],
+        ['{minui}', 'game.gg', 'Sega Game Gear (GG)'],
+        ['{minui}', 'game.sms', 'Sega Master System (SMS)'],
+        ['{minui}', 'game.gen', 'Sega Genesis (MD)'],
+        ['{minui}', 'game.md', 'Sega Genesis (MD)'],
+        ['{minui}', 'game.mdx', 'Sega Genesis (MD)'],
+        ['{minui}', 'game.sgd', 'Sega Genesis (MD)'],
+        ['{minui}', 'game.smd', 'Sega Genesis (MD)'],
+        ['{minui}', 'game.ngp', 'Neo Geo Pocket (NGPC)'],
+        ['{minui}', 'game.ngc', 'Neo Geo Pocket Color (NGPC)'],
+        // {mister}
+        ['{mister}', 'game.a78', 'Atari7800'],
+        ['{mister}', 'game.gb', 'Gameboy'],
+        ['{mister}', 'game.nes', 'NES'],
+        // {miyoocfw}
+        ['{miyoocfw}', 'game.a26', '2600'],
+        ['{miyoocfw}', 'game.lnx', 'LYNX'],
+        ['{miyoocfw}', 'game.ws', 'WSWAN'],
+        ['{miyoocfw}', 'game.wsc', 'WSWAN'],
+        ['{miyoocfw}', 'game.vec', 'VECTREX'],
+        ['{miyoocfw}', 'game.pce', 'PCE'],
+        ['{miyoocfw}', 'game.gb', 'GB'],
+        ['{miyoocfw}', 'game.sgb', 'GB'],
+        ['{miyoocfw}', 'game.gbc', 'GB'],
+        ['{miyoocfw}', 'game.gba', 'GBA'],
+        ['{miyoocfw}', 'game.nes', 'NES'],
+        ['{miyoocfw}', 'game.fds', 'NES'],
+        ['{miyoocfw}', 'game.sfc', 'SNES'],
+        ['{miyoocfw}', 'game.smc', 'SNES'],
+        ['{miyoocfw}', 'game.min', 'POKEMINI'],
+        ['{miyoocfw}', 'game.gg', 'SMS'],
+        ['{miyoocfw}', 'game.sms', 'SMS'],
+        ['{miyoocfw}', 'game.gen', 'SMD'],
+        ['{miyoocfw}', 'game.md', 'SMD'],
+        ['{miyoocfw}', 'game.smd', 'SMD'],
+        // {onion}
+        ['{onion}', 'game.a78', 'SEVENTYEIGHTHUNDRED'],
+        ['{onion}', 'game.gb', 'GB'],
+        ['{onion}', 'game.nes', 'FC'],
+        // {pocket}
+        ['{pocket}', 'game.a78', '7800'],
+        ['{pocket}', 'game.gb', 'gb'],
+        ['{pocket}', 'game.nes', 'nes'],
+        ['{pocket}', 'game.sv', 'supervision'],
+        // {retrodeck}
+        ['{retrodeck}', 'game.a78', 'atari7800'],
+        ['{retrodeck}', 'game.gb', 'gb'],
+        ['{retrodeck}', 'game.nes', 'nes'],
+        // {rocknix}
+        ['{rocknix}', 'game.a78', 'atari7800'],
+        ['{rocknix}', 'game.gb', 'gb'],
+        ['{rocknix}', 'game.nes', 'nes'],
+        // {romm}
+        ['{romm}', 'game.d88', 'pc-8800-series'],
+        ['{romm}', 'game.gb', 'gb'],
+        ['{romm}', 'game.nes', 'nes'],
+        ['{romm}', 'game.pqa', 'palm-os'],
+        // {spruce}
+        ['{spruce}', 'game.a78', 'SEVENTYEIGHTHUNDRED'],
+        ['{spruce}', 'game.gb', 'GB'],
+        ['{spruce}', 'game.nes', 'FC'],
+        // {twmenu}
+        ['{twmenu}', 'game.a26', 'a26'],
+        ['{twmenu}', 'game.a52', 'a52'],
+        ['{twmenu}', 'game.a78', 'a78'],
+        ['{twmenu}', 'game.ws', 'ws'],
+        ['{twmenu}', 'game.wsc', 'ws'],
+        ['{twmenu}', 'game.col', 'col'],
+        ['{twmenu}', 'game.pce', 'tg16'],
+        ['{twmenu}', 'game.gb', 'gb'],
+        ['{twmenu}', 'game.sgb', 'gb'],
+        ['{twmenu}', 'game.gbc', 'gb'],
+        ['{twmenu}', 'game.gba', 'gba'],
+        ['{twmenu}', 'game.nds', 'nds'],
+        ['{twmenu}', 'game.nes', 'nes'],
+        ['{twmenu}', 'game.sfc', 'snes'],
+        ['{twmenu}', 'game.smc', 'snes'],
+        ['{twmenu}', 'game.gg', 'gg'],
+        ['{twmenu}', 'game.sms', 'sms'],
+        ['{twmenu}', 'game.gen', 'gen'],
+        ['{twmenu}', 'game.md', 'gen'],
+        ['{twmenu}', 'game.smd', 'gen'],
+        ['{twmenu}', 'game.sc', 'sg'],
+        ['{twmenu}', 'game.sg', 'sg'],
+        ['{twmenu}', 'game.ngp', 'ngp'],
+        ['{twmenu}', 'game.ngc', 'ngp'],
+      ])(
+        'should replace %s for the file extension: %s',
+        async (outputToken, romFilename, expectedDirName) => {
+          await expect(getConsolePath(outputToken, '', romFilename)).resolves.toEqual(
+            path.resolve(expectedDirName, romFilename),
+          );
+        },
       );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
 
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {retrodeck} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{retrodeck}' });
-
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {romm}
-  test.each([
-    ['game.d88', path.resolve('roms', 'pc-8800-series', 'game.d88')],
-    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
-    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
-    ['game.pqa', path.resolve('roms', 'palm-os', 'game.pqa')],
-  ])('should replace {romm} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'roms/{romm}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
-
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {romm} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{romm}' });
-
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
-
-  // Output Token {crossmix}
-  test.each([
-    ['game.a78', path.resolve('Roms', 'ATARI7800', 'game.a78')],
-    ['game.gb', path.resolve('Roms', 'GB', 'game.gb')],
-    ['game.nes', path.resolve('Roms', 'FC', 'game.nes')],
-  ])(
-    'should replace {crossmix} for known extension: %s',
-    async (outputRomFilename, expectedPath) => {
-      const options = new Options({ commands: ['copy'], output: 'Roms/{crossmix}' });
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
-
-      const outputPath = OutputFactory.getPath(
-        options,
-        dummyDat,
-        dummyGame,
-        rom,
-        await rom.toFile(),
+      // An unrecognized DAT name must not short-circuit extension matching. This is the common
+      // case for the many DATs that aren't named after a single console.
+      test.each([
+        ['game.gb', 'gb'],
+        ['game.gbc', 'gbc'],
+        ['game.nes', 'nes'],
+      ])(
+        'should fall through an unrecognized DAT name to the file extension: %s',
+        async (romFilename, expectedDirName) => {
+          await expect(
+            getConsolePath('{es}', 'Some Unknown Collection', romFilename),
+          ).resolves.toEqual(path.resolve(expectedDirName, romFilename));
+        },
       );
-      expect(outputPath.format()).toEqual(expectedPath);
-    },
-  );
+    });
 
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {crossmix} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{crossmix}' });
+    describe('precedence between the DAT name and the file extension', () => {
+      // The DAT name is checked first and, when it matches, the file extension is never
+      // consulted. This matters most for arcade romsets, whose archives contain files with
+      // extensions that collide with console ROMs — without this ordering, a MAME romset would
+      // be scattered across a dozen console folders.
+      test.each([
+        ['MAME', 'game.nes', 'mame'],
+        ['FinalBurn Neo - Arcade Games', 'game.gb', 'fbneo'],
+        // The DAT name is also the more specific of the two signals: a Game Boy Color DAT can
+        // legitimately contain files with a ".gb" extension, and they belong in the GBC folder.
+        ['Nintendo - Game Boy Color', 'game.gb', 'gbc'],
+      ])(
+        'should prefer the DAT name over the file extension: %s',
+        async (datName, romFilename, expectedDirName) => {
+          await expect(getConsolePath('{es}', datName, romFilename)).resolves.toEqual(
+            path.resolve(expectedDirName, romFilename),
+          );
+        },
+      );
+    });
 
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+    describe('specificity', () => {
+      // Console entries are matched with findLast(), so when several regexes match the same DAT
+      // name the *last* entry in consoleTokens.json wins. That makes the file's ordering
+      // load-bearing: every specific console has to be listed after the broader console whose
+      // name it contains. These cases pin that ordering in place — each pair is a name where
+      // the broader entry also matches, and the broader entry must lose.
+      test.each([
+        // "Game Boy" is a prefix of both successors
+        ['Nintendo - Game Boy', 'gb'],
+        ['Nintendo - Game Boy Color', 'gbc'],
+        ['Nintendo - Game Boy Advance', 'gba'],
+        // "Famicom" appears inside the Famicom Disk System's full name, and "Nintendo
+        // Entertainment System" inside the Super Nintendo's. These are the real No-Intro DAT
+        // names, parenthetical suffixes and all, since those suffixes are what regexes trip on.
+        ['Nintendo - Famicom [T-En] Collection', 'famicom'],
+        ['Nintendo - Family Computer Disk System (FDS) (Parent-Clone)', 'fds'],
+        ['Nintendo - Nintendo Entertainment System (Headered) (Parent-Clone)', 'nes'],
+        ['Nintendo - Nintendo Entertainment System (Headerless) (Parent-Clone)', 'nes'],
+        ['Nintendo - Super Famicom [T-En] Collection', 'sfc'],
+        ['Nintendo - Super Nintendo Entertainment System (Parent-Clone)', 'snes'],
+        // "Neo Geo" is a prefix of three unrelated hardware families
+        ['SNK - Neo Geo', 'neogeo'],
+        ['SNK - Neo Geo CD', 'neogeocd'],
+        ['SNK - Neo Geo Pocket', 'ngp'],
+        ['SNK - Neo Geo Pocket Color', 'ngpc'],
+        // MSX generations nest inside each other, and the "+" in MSX2+ has to stay escaped:
+        // an unescaped "+" makes /MSX2+/ match plain "MSX2" and hijack it via findLast().
+        ['Microsoft - MSX', 'msx'],
+        ['Microsoft - MSX2', 'msx2'],
+        ['Microsoft - MSX TurboR', 'msxturbor'],
+        // PlayStation numbering, where the bare name matches every successor
+        ['Sony - PlayStation', 'psx'],
+        ['Sony - PlayStation 2', 'ps2'],
+        ['Sony - PlayStation 3', 'ps3'],
+        ['Sony - PlayStation Portable', 'psp'],
+        ['Sony - PlayStation Vita', 'psvita'],
+        // Single-letter suffixes are easy to lose to a greedy earlier entry
+        ['Nintendo - Wii', 'wii'],
+        ['Nintendo - Wii U', 'wiiu'],
+        ['Microsoft - Xbox', 'xbox'],
+        ['Microsoft - Xbox 360', 'xbox360'],
+        ['Nintendo - Nintendo 64', 'n64'],
+        ['Nintendo - Nintendo 64DD', 'n64dd'],
+        // NEC's naming is the messiest: SuperGrafx and the CD add-ons all contain "PC Engine"
+        // or "TurboGrafx", and FBNeo spells SuperGrafx "SuprGrafx"
+        ['NEC - PC Engine', 'pcengine'],
+        ['NEC - PC Engine CD', 'pcenginecd'],
+        ['NEC - PC Engine SuperGrafx', 'supergrafx'],
+        ['NEC - TurboGrafx-16', 'tg16'],
+        ['NEC - TurboGrafx CD', 'tg-cd'],
+        // Amiga's CD-based variants
+        ['Commodore - Amiga', 'amiga'],
+        ['Commodore - Amiga CD32', 'amigacd32'],
+        ['Commodore - Amiga CDTV', 'cdtv'],
+        // Atari's CD add-on
+        ['Atari - Jaguar', 'atarijaguar'],
+        ['Atari - Jaguar CD', 'atarijaguarcd'],
+      ])(
+        'should prefer the more specific console for the DAT name: %s',
+        async (datName, expectedDirName) => {
+          await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
+            path.resolve(expectedDirName, 'Dummy.rom'),
+          );
+        },
+      );
 
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
+      // The MSX2+ folder differs from MSX2 only for some frontends; Batocera is one of them, so
+      // it's the token that can actually prove the escaped "+" is doing its job.
+      test.each([
+        ['Microsoft - MSX2', 'msx2'],
+        ['Microsoft - MSX2+', 'msx2+'],
+      ])('should distinguish {batocera} MSX2 from MSX2+: %s', async (datName, expectedDirName) => {
+        await expect(getConsolePath('{batocera}', datName, 'Dummy.rom')).resolves.toEqual(
+          path.resolve(expectedDirName, 'Dummy.rom'),
+        );
+      });
 
-  // Output Token {spruce}
-  test.each([
-    ['game.a78', path.resolve('Roms', 'SEVENTYEIGHTHUNDRED', 'game.a78')],
-    ['game.gb', path.resolve('Roms', 'GB', 'game.gb')],
-    ['game.nes', path.resolve('Roms', 'FC', 'game.nes')],
-  ])('should replace {spruce} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'Roms/{spruce}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+      // The arcade entries are deliberately placed *first* in consoleTokens.json. Their regexes
+      // are broad ("FinalBurn Neo" matches every FBNeo DAT), so being first means findLast()
+      // lets any console-specific entry override them. That keeps the arcade regexes simple
+      // while ensuring FBNeo's eighteen console DATs still sort by console, not into "fbneo".
+      test.each([
+        ['FinalBurn Neo - Neo Geo Games', 'neogeo'],
+        ['FinalBurn Neo - Neo Geo Pocket Games', 'ngp'],
+        ['FinalBurn Neo - NES Games', 'nes'],
+        ['FinalBurn Neo - FDS Games', 'fds'],
+        ['FinalBurn Neo - SNES Games', 'snes'],
+        ['FinalBurn Neo - Master System Games', 'mastersystem'],
+        ['FinalBurn Neo - Game Gear Games', 'gamegear'],
+        ['FinalBurn Neo - ColecoVision Games', 'colecovision'],
+        ['FinalBurn Neo - ZX Spectrum Games', 'zxspectrum'],
+        ['FinalBurn Neo - Sega SG-1000 Games', 'sg-1000'],
+        ['FinalBurn Neo - Fairchild Channel F Games', 'channelf'],
+        ['FinalBurn Neo - Astrocade Home Computer Games', 'astrocde'],
+        ['FinalBurn Neo - MSX 1 Games', 'msx'],
+        // FBNeo spells several consoles differently from No-Intro/Redump, and each of these
+        // spellings previously matched nothing and fell through to the arcade folder
+        ['FinalBurn Neo - Megadrive Games', 'megadrivejp'],
+        ['FinalBurn Neo - PC-Engine Games', 'pcengine'],
+        ['FinalBurn Neo - SuprGrafx Games', 'supergrafx'],
+        ['FinalBurn Neo - TurboGrafx 16 Games', 'tg16'],
+      ])(
+        'should prefer the console over the arcade fallback: %s',
+        async (datName, expectedDirName) => {
+          await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
+            path.resolve(expectedDirName, 'Dummy.rom'),
+          );
+        },
+      );
+    });
 
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
+    describe('token aliases', () => {
+      // JELOS was renamed ROCKNIX, so {jelos} is kept as an alias that's filled in at load time
+      // from the {rocknix} value. It has to resolve identically for every match path, otherwise
+      // users on the old token would silently get different — or no — output directories.
+      test.each([
+        // Matched by file extension
+        ['', 'game.a78', 'atari7800'],
+        ['', 'game.gb', 'gb'],
+        ['', 'game.nes', 'nes'],
+        // Matched by DAT name, including the arcade entries added most recently
+        ['Nintendo - Game Boy Color', 'Dummy.rom', 'gbc'],
+        ['MAME', 'Dummy.rom', 'mame'],
+        ['FinalBurn Neo - Arcade Games', 'Dummy.rom', 'fbneo'],
+      ])(
+        'should resolve {jelos} and {rocknix} to the same value: %s %s',
+        async (datName, romFilename, expectedDirName) => {
+          const jelosPath = await getConsolePath('{jelos}', datName, romFilename);
+          const rocknixPath = await getConsolePath('{rocknix}', datName, romFilename);
 
-  test.each(['game.bin', 'game.rom'])(
-    'should throw on {spruce} for unknown extension: %s',
-    async (outputRomFilename) => {
-      const options = new Options({ commands: ['copy'], output: 'roms/{spruce}' });
+          expect(jelosPath).toEqual(path.resolve(expectedDirName, romFilename));
+          expect(jelosPath).toEqual(rocknixPath);
+        },
+      );
+    });
 
-      const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+    describe('known gaps', () => {
+      // A token that can't be resolved is left in the path, and the leftover-token guard throws
+      // rather than writing a file to a literal "{es}" directory. CandidateGenerator catches
+      // this and drops the candidate, so these are the paths where ROMs go missing.
 
-      await expect(
-        (async (): Promise<unknown> =>
-          OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-      ).rejects.toThrow(/failed to replace/);
-    },
-  );
+      // Extensions that no console claims. Some are genuinely ambiguous containers (.bin,
+      // .rom); the rest are formats the frontend's own documentation says it doesn't support.
+      test.each([
+        ['{adam}', 'game.n64'],
+        ['{adam}', 'game.bs'],
+        ['{adam}', 'game.bin'],
+        ['{adam}', 'game.rom'],
+        ['{batocera}', 'game.bin'],
+        ['{batocera}', 'game.rom'],
+        ['{crossmix}', 'game.bin'],
+        ['{crossmix}', 'game.rom'],
+        ['{es}', 'game.bin'],
+        ['{es}', 'game.rom'],
+        ['{funkeyos}', 'game.bin'],
+        ['{funkeyos}', 'game.rom'],
+        // satellaview is not supported by https://github.com/FunKey-Project/FunKey-OS/blob/master/FunKey/board/funkey/rootfs-overlay/usr/games/collections/SNES/settings.conf
+        ['{funkeyos}', 'game.bs'],
+        ['{minui}', 'game.bin'],
+        ['{minui}', 'game.rom'],
+        ['{minui}', 'game.mgw'],
+        ['{mister}', 'game.bin'],
+        ['{mister}', 'game.rom'],
+        // MiSTer has no Neo Geo Pocket core
+        ['{mister}', 'game.ngc'],
+        ['{mister}', 'game.ngp'],
+        ['{miyoocfw}', 'game.bin'],
+        ['{miyoocfw}', 'game.rom'],
+        // satellaview is not supported by https://github.com/TriForceX/MiyooCFW/wiki/Emulator-Info
+        ['{miyoocfw}', 'game.bs'],
+        ['{onion}', 'game.bin'],
+        ['{onion}', 'game.rom'],
+        ['{pocket}', 'game.bin'],
+        ['{pocket}', 'game.rom'],
+        // openFPGA has no Neo Geo Pocket core
+        ['{pocket}', 'game.ngp'],
+        ['{retrodeck}', 'game.bin'],
+        ['{retrodeck}', 'game.rom'],
+        ['{rocknix}', 'game.bin'],
+        ['{rocknix}', 'game.rom'],
+        ['{romm}', 'game.bin'],
+        ['{romm}', 'game.rom'],
+        ['{spruce}', 'game.bin'],
+        ['{spruce}', 'game.rom'],
+        ['{twmenu}', 'game.bin'],
+        ['{twmenu}', 'game.rom'],
+        // satellaview is not supported by https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms/snes
+        ['{twmenu}', 'game.bs'],
+      ])(
+        'should throw on %s for an unknown file extension: %s',
+        async (outputToken, romFilename) => {
+          await expect(getConsolePath(outputToken, '', romFilename)).rejects.toThrow(
+            /failed to replace/,
+          );
+        },
+      );
 
-  // Output Token {twmenu}
-  test.each([
-    ['game.a26', path.resolve('roms', 'a26', 'game.a26')],
-    ['game.a52', path.resolve('roms', 'a52', 'game.a52')],
-    ['game.a78', path.resolve('roms', 'a78', 'game.a78')],
-    ['game.ws', path.resolve('roms', 'ws', 'game.ws')],
-    ['game.wsc', path.resolve('roms', 'ws', 'game.wsc')],
-    ['game.col', path.resolve('roms', 'col', 'game.col')],
-    ['game.pce', path.resolve('roms', 'tg16', 'game.pce')],
-    ['game.gb', path.resolve('roms', 'gb', 'game.gb')],
-    ['game.sgb', path.resolve('roms', 'gb', 'game.sgb')],
-    ['game.gbc', path.resolve('roms', 'gb', 'game.gbc')],
-    ['game.gba', path.resolve('roms', 'gba', 'game.gba')],
-    ['game.nds', path.resolve('roms', 'nds', 'game.nds')],
-    ['game.nes', path.resolve('roms', 'nes', 'game.nes')],
-    ['game.sfc', path.resolve('roms', 'snes', 'game.sfc')],
-    ['game.smc', path.resolve('roms', 'snes', 'game.smc')],
-    ['game.gg', path.resolve('roms', 'gg', 'game.gg')],
-    ['game.sms', path.resolve('roms', 'sms', 'game.sms')],
-    ['game.gen', path.resolve('roms', 'gen', 'game.gen')],
-    ['game.md', path.resolve('roms', 'gen', 'game.md')],
-    ['game.smd', path.resolve('roms', 'gen', 'game.smd')],
-    ['game.sc', path.resolve('roms', 'sg', 'game.sc')],
-    ['game.sg', path.resolve('roms', 'sg', 'game.sg')],
-    ['game.ngp', path.resolve('roms', 'ngp', 'game.ngp')],
-    ['game.ngc', path.resolve('roms', 'ngp', 'game.ngc')],
-  ])('should replace {twmenu} for known extension: %s', async (outputRomFilename, expectedPath) => {
-    const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+      // A console can match while the requested frontend still has no folder for it. Matching
+      // by DAT name is *not* re-tried against the file extension in that case, by design — the
+      // DAT name is the more reliable signal, and falling back would put ROMs in a folder for
+      // the wrong console rather than failing loudly.
+      test.each([
+        // These frontends document no arcade support at all
+        ['FinalBurn Neo - Arcade Games', '{funkeyos}'],
+        ['FinalBurn Neo - Arcade Games', '{minui}'],
+        ['FinalBurn Neo - Arcade Games', '{twmenu}'],
+        // The Analogue Pocket has no fixed arcade folder; each openFPGA core uses its own
+        // Assets/<coreID>/common/ directory and needs an MRA-converted .rom, not a romset
+        ['FinalBurn Neo - Arcade Games', '{pocket}'],
+        // RomM has an "arcade" platform but no FBNeo or MAME slug, and Igir deliberately does
+        // not map an emulator-specific DAT onto a frontend's generic "arcade" folder
+        ['FinalBurn Neo - Arcade Games', '{romm}'],
+        ['MAME', '{romm}'],
+        // MiSTer has a MAME folder but no concept of FBNeo
+        ['FinalBurn Neo - Arcade Games', '{mister}'],
+        // These frontends only ship version-pinned MAME folders (MAME2000, MAME2003PLUS, …), so
+        // there's no folder a generic MAME DAT can be sorted into
+        ['MAME', '{adam}'],
+        ['MAME', '{onion}'],
+        ['MAME', '{spruce}'],
+        // Only Adam and Onion ship a FinalBurn Alpha folder; everyone else moved to FBNeo
+        ['FB Alpha v0.2.97.44', '{batocera}'],
+        ['FB Alpha v0.2.97.44', '{es}'],
+      ])('should throw on %s for a console with no folder: %s', async (datName, outputToken) => {
+        await expect(getConsolePath(outputToken, datName, 'Dummy.rom')).rejects.toThrow(
+          /failed to replace/,
+        );
+      });
 
-    const outputPath = OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile());
-    expect(outputPath.format()).toEqual(expectedPath);
-  });
+      // Consoles with no entry in consoleTokens.json at all. Nothing in the DAT name or the
+      // file extension can resolve these, so they're a standing to-do rather than a bug.
+      test.each([['Nokia - N-Gage'], ['Some Unknown Console']])(
+        'should throw when no console is known for the DAT name: %s',
+        async (datName) => {
+          await expect(getConsolePath('{es}', datName, 'Dummy.rom')).rejects.toThrow(
+            /failed to replace/,
+          );
+        },
+      );
 
-  test.each([
-    'game.bin',
-    'game.rom',
-    // satellaview is not supported by https://github.com/DS-Homebrew/TWiLightMenu/tree/master/7zfile/roms/snes
-    'game.bs',
-  ])('should throw on {twmenu} for unknown extension: %s', async (outputRomFilename) => {
-    const options = new Options({ commands: ['copy'], output: 'roms/{twmenu}' });
-    const rom = new ROM({ name: outputRomFilename, size: 0, crc32: '' });
+      // Issue #2405 was filed because this failure was invisible: the message named only the
+      // token, at a log level users don't see. The DAT name and a pointer to the escape hatch
+      // have to stay in the message so an unmatched console is self-diagnosing.
+      it('should name the DAT when no console matches', async () => {
+        await expect(
+          getConsolePath('{batocera}', 'Some Unknown Console', 'Dummy.rom'),
+        ).rejects.toThrow(/no console is known for the DAT "Some Unknown Console"/);
+      });
 
-    await expect(
-      (async (): Promise<unknown> =>
-        OutputFactory.getPath(options, dummyDat, dummyGame, rom, await rom.toFile()))(),
-    ).rejects.toThrow(/failed to replace/);
+      // Known ordering gap: the "Mega Drive" entry is listed *after* both 32X entries, so
+      // findLast() gives 32X DATs the Mega Drive folder whenever the name also says "Mega
+      // Drive". A bare "32X" resolves correctly, which is what makes this an ordering problem
+      // rather than a missing console. Fixing it means moving the 32X entries after Mega Drive.
+      test.each([
+        ['Sega - 32X', 'sega32x'],
+        ['Sega - Mega Drive 32X', 'megadrivejp'],
+      ])(
+        'should mis-sort 32X DATs that also name the Mega Drive: %s',
+        async (datName, expectedDirName) => {
+          await expect(getConsolePath('{es}', datName, 'Dummy.rom')).resolves.toEqual(
+            path.resolve(expectedDirName, 'Dummy.rom'),
+          );
+        },
+      );
+    });
   });
 });
 
