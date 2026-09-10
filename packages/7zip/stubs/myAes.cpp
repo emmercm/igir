@@ -13,7 +13,15 @@
 // them, real crypto is being pulled in somewhere it should not be: do not add
 // C/Aes.c to satisfy it.
 
+// These upstream fields are intentionally unused by the inert crypto methods.
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-private-field"
+#endif
 #include "7zip/Crypto/MyAes.h"
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 // C/Aes.h declares Aes_SetKey_Enc and g_AesCtr_Code inside an EXTERN_C_BEGIN/
 // EXTERN_C_END block at global scope (it is a plain C header, not aware of the

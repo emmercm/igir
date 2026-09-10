@@ -264,8 +264,8 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
     }
 
     try {
-        // Installed before the producer starts: signaling never allocates a
-        // callback. The signal owns the job until its final loop-thread close.
+        // Installed before the producer starts. Notifications coalesce in the
+        // runtime queue; the signal owns the job until its loop-thread finalizer.
         job->signal_ = AsyncSignal::Create(env, "sevenzip::ListEntries", true, [job](Napi::Env callbackEnv) {
             if (callbackEnv == nullptr) {
                 job->result_.Reset();

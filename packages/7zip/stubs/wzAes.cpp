@@ -11,7 +11,15 @@
 // Every method fails cleanly and touches no password or key state, so an entry
 // using WinZip AES reports as encrypted and never decrypts.
 
+// These upstream fields are intentionally unused by the inert crypto methods.
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-private-field"
+#endif
 #include "7zip/Crypto/WzAes.h"
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 namespace NCrypto::NWzAes {
 

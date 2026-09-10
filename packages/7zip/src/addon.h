@@ -22,7 +22,7 @@ struct AddonData {
     std::shared_ptr<JobRegistry> registry;
 };
 
-/** Creates this environment's AddonData and installs its asynchronous cleanup hook. */
+/** Creates this environment's AddonData and installs its worker-draining cleanup hook. */
 void InitAddonData(Napi::Env env);
 
 /** Returns this environment's job registry, or null after environment state has gone away. */

@@ -128,6 +128,15 @@
     {
       "target_name": "sevenzip",
       "type": "static_library",
+      "conditions": [
+        ["OS=='win'", {
+          "sources": ["<(z7)/C/zstdmt/zstd-mt_threading.c"]
+        }],
+        # ARM Apple Clang uses the reverse-bits instruction, not the table.
+        ["OS=='mac' and target_arch=='arm64'", {
+          "sources!": ["<(z7)/CPP/7zip/Compress/BitlDecoder.cpp"]
+        }]
+      ],
       "defines": ["Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0",
                   "Z7_ZIP_LZFSE_DISABLE", "ZSTD_DISABLE_ASM"],
       "include_dirs": [
@@ -185,11 +194,9 @@
         "<(z7)/C/zstdmt/lz5-mt_decompress.c",
         "<(z7)/C/zstdmt/lizard-mt_common.c",
         "<(z7)/C/zstdmt/lizard-mt_decompress.c",
-        "<(z7)/C/zstdmt/zstd-mt_threading.c",
         "<(z7)/C/Bcj2.c",
         "<(z7)/C/Bra.c",
         "<(z7)/C/Bra86.c",
-        "<(z7)/C/BraIA64.c",
         "<(z7)/C/CpuArch.c",
         "<(z7)/C/Delta.c",
         "<(z7)/C/hashes/xxhash.c",
@@ -223,7 +230,6 @@
         "<(z7)/CPP/7zip/Archive/7z/7zHeader.cpp",
         "<(z7)/CPP/7zip/Archive/7z/7zIn.cpp",
         "<(z7)/CPP/7zip/Archive/7z/7zProperties.cpp",
-        "<(z7)/CPP/7zip/Archive/7z/7zSpecStream.cpp",
         "<(z7)/CPP/7zip/Archive/Common/CoderMixer2.cpp",
         "<(z7)/CPP/7zip/Archive/Common/DummyOutStream.cpp",
         "<(z7)/CPP/7zip/Archive/Common/FindSignature.cpp",
@@ -269,9 +275,7 @@
         "<(z7)/CPP/7zip/Compress/ZstdDecoder.cpp",
         "<(z7)/CPP/Common/IntToString.cpp",
         "<(z7)/CPP/Common/MyString.cpp",
-        "<(z7)/CPP/Common/MyVector.cpp",
         "<(z7)/CPP/Common/MyWindows.cpp",
-        "<(z7)/CPP/Common/NewHandler.cpp",
         "<(z7)/CPP/Common/StringConvert.cpp",
         "<(z7)/CPP/Common/StringToInt.cpp",
         "<(z7)/CPP/Common/UTFConvert.cpp",

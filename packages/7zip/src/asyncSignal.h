@@ -1,83 +1,52 @@
 #pragma once
-
 #include <napi.h>
-#include <uv.h>
 
 #include <functional>
 #include <memory>
 #include <mutex>
 
 namespace sevenzip {
-
-/**
- * Preallocated, coalescing communication from a worker to the JavaScript loop.
- * Notify never allocates or enqueues a callback; only the loop thread touches
- * N-API or closes the libuv handle.
- */
+/** Coalesces worker notifications through a nonblocking Node-API thread-safe function. */
 class AsyncSignal {
    public:
-    /** Callback invoked on the loop; true schedules another turn, and a null environment denotes final cleanup. */
+    /** Returns true for another delivery; a null environment requests final cleanup. */
     using Callback = std::function<bool(Napi::Env)>;
-
-    /** Creates and initializes a signal on `env`'s loop, optionally keeping that loop alive. */
+    /** Creates the runtime notification queue and optionally keeps the loop alive. */
     static std::shared_ptr<AsyncSignal> Create(Napi::Env env, const char* name, bool referenced, Callback callback);
-
-    /** Releases any N-API resources left after libuv has closed the handle. */
-    ~AsyncSignal();
-
-    /** Signals are bound to one libuv handle and therefore cannot be copied. */
+    /** Destroys storage after the runtime finalizer releases self-ownership. */
+    ~AsyncSignal() = default;
+    /** Signals own unique runtime queues and cannot be copied. */
     AsyncSignal(const AsyncSignal&) = delete;
-
-    /** Signals are bound to one libuv handle and therefore cannot be copy-assigned. */
+    /** Signals own unique runtime queues and cannot be copy-assigned. */
     AsyncSignal& operator=(const AsyncSignal&) = delete;
-
-    /** Marks work pending and wakes the event loop without allocation or blocking. */
+    /** Coalesces pending work without waiting for JavaScript delivery. */
     void Notify() noexcept;
-
-    /** Marks the producer done; pending notifications and continuations drain before close. */
+    /** Marks producer completion; pending delivery drains before releasing the queue. */
     void Release() noexcept;
-
-    /** Keeps the event loop alive while JavaScript has a pending read; loop thread only. */
+    /** Keeps the loop alive for a pending read; loop thread only. */
     void Ref(Napi::Env env) noexcept;
-
-    /** Removes the temporary event-loop reference held for a pending read; loop thread only. */
+    /** Removes a pending read's loop reference; loop thread only. */
     void Unref(Napi::Env env) noexcept;
 
    private:
-    /** Constructs inert storage; Create performs all fallible initialization. */
+    /** Constructs inert state before Create performs fallible initialization. */
     AsyncSignal() = default;
-
-    /** Handles a libuv wakeup and enters JavaScript through the registered async context. */
-    static void Dispatch(uv_async_t* handle);
-
-    /** Runs the user callback inside Node's callback scope and records whether another turn is needed. */
-    static napi_value Invoke(napi_env env, napi_callback_info info);
-
-    /** Begins loop-thread closure when the JavaScript environment starts teardown. */
-    static void Cleanup(napi_async_cleanup_hook_handle hook, void* data);
-
-    /** Disposes N-API state and breaks self-ownership after libuv finishes closing. */
-    static void Closed(uv_handle_t* handle);
-
-    /** Idempotently marks the signal closed and asks libuv to close its handle. */
-    void Close();
-
-    /** Deletes references, the async context, and the cleanup hook exactly once. */
-    void Dispose();
-
+    /** Queues at most one delivery; requires mutex_ to protect queue ownership. */
+    void Schedule();
+    /** Delivers work in the runtime callback scope and drains continuations. */
+    static void Dispatch(napi_env env, napi_value function, void* context, void* data);
+    /** Stops notifications before environment destruction. */
+    static void Cleanup(void* data);
+    /** Clears JavaScript state and breaks self-ownership after queue destruction. */
+    static void Finalize(napi_env env, void* data, void* hint);
     napi_env env_ = nullptr;
-    napi_ref function_ = nullptr;
-    napi_ref resource_ = nullptr;
-    napi_async_context context_ = nullptr;
-    napi_async_cleanup_hook_handle cleanup_ = nullptr;
-    uv_async_t async_{};
+    napi_threadsafe_function function_ = nullptr;
     std::mutex mutex_;
-    bool closing_ = false;
+    bool queued_ = false;
     bool pending_ = false;
     bool released_ = false;
+    bool cleanupInstalled_ = false;
     Callback callback_;
-    // Broken in Closed, never before libuv has finished with async_.
     std::shared_ptr<AsyncSignal> keepAlive_;
 };
-
 }  // namespace sevenzip
