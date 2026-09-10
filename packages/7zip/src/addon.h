@@ -8,12 +8,12 @@
 
 namespace sevenzip {
 
-// Per-environment addon state, and the teardown hook that drains it.
-//
-// This is the only place N-API and JobRegistry meet. The registry is held per
-// environment rather than in a process-global, because `worker_threads` can
-// load this addon into several environments in one process: a global would let
-// one worker's teardown cancel another worker's live extractions.
+/**
+ * Owns the job registry for one N-API environment until finalization.
+ *
+ * Keeping the registry per environment prevents teardown of one worker thread
+ * from cancelling another worker's live extractions.
+ */
 struct AddonData {
     // Shared rather than owned outright, so that a job holding a reference can
     // still unregister after this environment's instance data is finalized.
@@ -22,11 +22,10 @@ struct AddonData {
     std::shared_ptr<JobRegistry> registry;
 };
 
-// Creates this environment's AddonData and installs the async cleanup hook.
-// Called once, from the addon's Init.
+/** Creates this environment's AddonData and installs its asynchronous cleanup hook. */
 void InitAddonData(Napi::Env env);
 
-// This environment's job registry. Never null once InitAddonData() has run.
+/** Returns this environment's job registry, or null after environment state has gone away. */
 std::shared_ptr<JobRegistry> Registry(Napi::Env env);
 
 }  // namespace sevenzip

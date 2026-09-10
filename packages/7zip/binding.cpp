@@ -10,8 +10,7 @@
 
 namespace {
 
-// The handler list is fixed at build time, so it is read once at load and
-// exported as a plain `formats` property rather than as a callable
+/** Builds the immutable JavaScript array containing every compiled archive-handler name. */
 Napi::Value FormatNamesArray(Napi::Env env) {
     std::vector<std::string> const names = sevenzip::FormatNames();
     Napi::Array out = Napi::Array::New(env, names.size());
@@ -21,10 +20,7 @@ Napi::Value FormatNamesArray(Napi::Env env) {
     return out;
 }
 
-// The catch-all is not optional: N-API is built here with
-// NAPI_DISABLE_CPP_EXCEPTIONS and its wrapper is a bare `return callback();`, so
-// an escaping C++ exception aborts the process instead of throwing into
-// JavaScript
+/** Validates JavaScript listing arguments and starts the asynchronous native listing job. */
 Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     try {
@@ -40,6 +36,7 @@ Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
     }
 }
 
+/** Initializes 7-Zip, per-environment state, and every JavaScript export for this addon. */
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
     try {
         sevenzip::EnsureInitialized();

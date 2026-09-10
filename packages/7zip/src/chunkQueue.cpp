@@ -153,7 +153,7 @@ ChunkQueue::Status ChunkQueue::TryTake(Chunk* out) {
     bool notifyProducer = false;
     Status status = Status::kEnd;
     {
-        std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
+        const std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
         if (!lock.owns_lock()) {
             // Retry on a future loop turn instead of waiting for the producer.
             // The signal is preallocated and coalesces repeated notifications.
@@ -162,9 +162,7 @@ ChunkQueue::Status ChunkQueue::TryTake(Chunk* out) {
             }
             return Status::kPending;
         }
-        if (aborted_ && !OutOfMemory()) {
-            status = Status::kEnd;
-        } else if (count_ > 0) {
+        if (count_ > 0 && (!aborted_ || OutOfMemory())) {
             taken = std::move(ready_[head_]);
             head_ = (head_ + 1) % ready_.size();
             --count_;

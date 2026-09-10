@@ -19,16 +19,22 @@ namespace NCrypto::NWzAes {
 // from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept,readability-convert-member-functions-to-static)
 
+/** Rejects WinZip AES passwords without retaining their bytes. */
 Z7_COM7F_IMF(CBaseCoder::CryptoSetPassword(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }
 
+/** Rejects WinZip AES initialization because cryptography is excluded. */
 Z7_COM7F_IMF(CBaseCoder::Init()) { return E_NOTIMPL; }
 
+/** Produces no decrypted bytes for unsupported WinZip AES entries. */
 Z7_COM7F_IMF2(UInt32, CDecoder::Filter(Byte* /* data */, UInt32 /* size */)) { return 0; }
 
+/** Rejects parsing the WinZip AES header because no decoder is linked. */
 HRESULT CDecoder::ReadHeader(ISequentialInStream* /* inStream */) { return E_NOTIMPL; }
 
+/** Reports that no password can be validated by the inert decoder. */
 bool CDecoder::Init_and_CheckPassword() { return false; }
 
+/** Marks authentication unsuccessful and rejects reading a WinZip AES MAC. */
 HRESULT CDecoder::CheckMac(ISequentialInStream* /* inStream */, bool& isOK) {
     isOK = false;
     return E_NOTIMPL;

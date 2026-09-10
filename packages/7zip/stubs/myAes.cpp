@@ -26,6 +26,7 @@ extern "C" {
 
 // Only the address of this function is ever taken (by CAesCtrCoder's inline
 // constructor); Filter() below never calls through _setKeyFunc
+/** Satisfies an address-only AES key-schedule reference; no caller executes it in this build. */
 void Z7_FASTCALL Aes_SetKey_Enc(UInt32* /* aes */, const Byte* /* key */, unsigned /* keySize */) {}
 
 // Only the address of this variable is ever taken; never dereferenced/called
@@ -39,6 +40,7 @@ namespace NCrypto {
 // from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept)
 
+/** Initializes inert AES coder storage without installing any cryptographic functions. */
 CAesCoder::CAesCoder(unsigned keySize)
     : _keyIsSet(false),
       _keySize(keySize),
@@ -48,15 +50,20 @@ CAesCoder::CAesCoder(unsigned keySize)
       _aes((AES_NUM_IVMRK_WORDS * 4) + (AES_BLOCK_SIZE * 2)),
       _iv{} {}
 
+/** Rejects AES initialization because cryptography is excluded from the addon. */
 Z7_COM7F_IMF(CAesCoder::Init()) { return E_NOTIMPL; }
 
+/** Produces no output because encrypted entries are unsupported. */
 Z7_COM7F_IMF2(UInt32, CAesCoder::Filter(Byte* /* data */, UInt32 /* size */)) { return 0; }
 
+/** Rejects AES key installation without retaining key material. */
 Z7_COM7F_IMF(CAesCoder::SetKey(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }
 
+/** Rejects AES initialization-vector installation without retaining input data. */
 Z7_COM7F_IMF(CAesCoder::SetInitVector(const Byte* /* data */, UInt32 /* size */)) { return E_NOTIMPL; }
 
 #ifndef Z7_SFX
+/** Produces no CTR output because the backing AES implementation is intentionally absent. */
 Z7_COM7F_IMF2(UInt32, CAesCtrCoder::Filter(Byte* /* data */, UInt32 /* size */)) { return 0; }
 #endif
 

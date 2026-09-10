@@ -9,32 +9,60 @@
 
 namespace sevenzip {
 
-// A preallocated, coalescing wakeup: Notify never allocates or enqueues a
-// callback. Only the loop thread touches N-API or closes the uv handle.
+/**
+ * Preallocated, coalescing communication from a worker to the JavaScript loop.
+ * Notify never allocates or enqueues a callback; only the loop thread touches
+ * N-API or closes the libuv handle.
+ */
 class AsyncSignal {
    public:
-    // The callback returns true to request another turn (not another call in
-    // the same turn). A null env is the final, loop-thread cleanup callback.
+    /** Callback invoked on the loop; true schedules another turn, and a null environment denotes final cleanup. */
     using Callback = std::function<bool(Napi::Env)>;
+
+    /** Creates and initializes a signal on `env`'s loop, optionally keeping that loop alive. */
     static std::shared_ptr<AsyncSignal> Create(Napi::Env env, const char* name, bool referenced, Callback callback);
+
+    /** Releases any N-API resources left after libuv has closed the handle. */
     ~AsyncSignal();
+
+    /** Signals are bound to one libuv handle and therefore cannot be copied. */
     AsyncSignal(const AsyncSignal&) = delete;
+
+    /** Signals are bound to one libuv handle and therefore cannot be copy-assigned. */
     AsyncSignal& operator=(const AsyncSignal&) = delete;
 
+    /** Marks work pending and wakes the event loop without allocation or blocking. */
     void Notify() noexcept;
-    // Producer is done. Pending notifications/continuations drain before close.
+
+    /** Marks the producer done; pending notifications and continuations drain before close. */
     void Release() noexcept;
-    // Loop thread only.
+
+    /** Keeps the event loop alive while JavaScript has a pending read; loop thread only. */
     void Ref(Napi::Env env) noexcept;
+
+    /** Removes the temporary event-loop reference held for a pending read; loop thread only. */
     void Unref(Napi::Env env) noexcept;
 
    private:
+    /** Constructs inert storage; Create performs all fallible initialization. */
     AsyncSignal() = default;
+
+    /** Handles a libuv wakeup and enters JavaScript through the registered async context. */
     static void Dispatch(uv_async_t* handle);
+
+    /** Runs the user callback inside Node's callback scope and records whether another turn is needed. */
     static napi_value Invoke(napi_env env, napi_callback_info info);
+
+    /** Begins loop-thread closure when the JavaScript environment starts teardown. */
     static void Cleanup(napi_async_cleanup_hook_handle hook, void* data);
+
+    /** Disposes N-API state and breaks self-ownership after libuv finishes closing. */
     static void Closed(uv_handle_t* handle);
+
+    /** Idempotently marks the signal closed and asks libuv to close its handle. */
     void Close();
+
+    /** Deletes references, the async context, and the cleanup hook exactly once. */
     void Dispose();
 
     napi_env env_ = nullptr;

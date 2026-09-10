@@ -23,19 +23,23 @@ namespace NCompress::NBZip2 {
 // from the vendored declarations these definitions have to match.
 // NOLINTBEGIN(modernize-use-noexcept)
 
+/** Performs no cleanup because the decode-only stub never allocates encoder thread state. */
 void CThreadInfo::Free() {}
 
 // Not `= default`: NumBlocks is a plain field of the upstream class, and the
 // real encoder is what would otherwise set it. Nothing here reads it, but
 // leaving it indeterminate would make the value visible to Bz2Handler.
+/** Initializes the only otherwise-indeterminate public encoder field without constructing encoder state. */
 CEncoder::CEncoder() : NumBlocks(0) {}
 
+/** Rejects every attempt to encode BZip2 data in this extraction-only build. */
 Z7_COM7F_IMF(CEncoder::Code(ISequentialInStream* /* inStream */, ISequentialOutStream* /* outStream */,
                             const UInt64* /* inSize */, const UInt64* /* outSize */,
                             ICompressProgressInfo* /* progress */)) {
     return E_NOTIMPL;
 }
 
+/** Rejects encoder-property configuration because no BZip2 encoder is linked. */
 Z7_COM7F_IMF(CEncoder::SetCoderProperties(const PROPID* /* propIDs */, const PROPVARIANT* /* coderProps */,
                                           UInt32 /* numProps */)) {
     return E_NOTIMPL;

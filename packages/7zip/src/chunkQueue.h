@@ -11,70 +11,65 @@
 
 namespace sevenzip {
 
-// One completed unit of decompressed output, owning its storage.
-//
-// The storage is `new uint8_t[n]` rather than a std::vector so that it is
-// default-initialized: the producer overwrites every byte it reports, and
-// zero-filling a megabyte only to memcpy over it is waste. Only the first
-// `length` bytes are written; the rest are uninitialized and must not be read.
+/**
+ * Owns one completed region of decompressed output and its initialized length.
+ *
+ * Array storage avoids zero-filling bytes that the producer immediately
+ * overwrites. Only the first `length` bytes are initialized and may be read.
+ */
 struct Chunk {
     std::unique_ptr<uint8_t[]> data;
     size_t length = 0;
 };
 
-// A bounded queue of completed chunks with one producer and one consumer.
-//
-// The producer pushes bytes at whatever size it happens to produce them; the
-// consumer must never block. So the two sides are deliberately asymmetric:
-//
-//   - Write() BLOCKS while the queue is full. That is the back-pressure
-//     mechanism: it bounds memory to roughly `chunkBytes * maxChunks`.
-//   - TryTake() NEVER blocks. When nothing is ready it says so and arms the
-//     ready callback, so the consumer can go away and be told later.
-//
-// Chunks are published whole and full, however small the writes into them were.
-// Only the final chunk before Finish() is short.
+/**
+ * Connects one blocking decoder producer to one nonblocking event-loop consumer.
+ *
+ * Write blocks when the bounded queue is full, limiting memory to roughly
+ * `chunkBytes * maxChunks`. TryTake never blocks; it arms `onReady` when empty.
+ * Chunks are published full except for the final chunk before Finish.
+ */
 class ChunkQueue {
    public:
-    // `chunkBytes` is the size of every published chunk but the last, and
-    // `maxChunks` how many may sit queued before Write() blocks. Both are
-    // clamped to at least 1; maxChunks is capped at 1024 to bound metadata.
-    //
-    // `onReady` fires for each TryTake() that returned kPending,
-    // on whichever thread published the chunk, with the lock dropped. It must
-    // not throw. Taking it here rather than through a setter keeps it immutable
-    // for the object's lifetime, which is what makes it safe to call from
-    // either thread outside the lock.
+    /**
+     * Preallocates the bounded ring and installs its immutable wakeup callback.
+     *
+     * Sizes are clamped to at least one, and `maxChunks` to at most 1024.
+     * `onReady` fires without the lock, on the thread that makes a pending read
+     * ready, and must not throw.
+     */
     ChunkQueue(size_t chunkBytes, size_t maxChunks, std::function<void()> onReady);
 
+    /** A queue owns synchronization primitives and cannot be copied. */
     ChunkQueue(const ChunkQueue&) = delete;
+    /** A queue owns synchronization primitives and cannot be copy-assigned. */
     ChunkQueue& operator=(const ChunkQueue&) = delete;
+    /** A queue owns synchronization primitives and cannot be moved. */
     ChunkQueue(ChunkQueue&&) = delete;
+    /** A queue owns synchronization primitives and cannot be move-assigned. */
     ChunkQueue& operator=(ChunkQueue&&) = delete;
+    /** Releases all buffered chunks after producer and consumer ownership has ended. */
     ~ChunkQueue() = default;
 
-    // Producer. Blocks while the queue is full. Returns false once Abort() has
-    // been called, or once an allocation has failed, after which nothing
-    // further should be written; OutOfMemory() tells the two apart.
-    //
-    // noexcept is load-bearing. The only caller is 7-Zip's
-    // ISequentialOutStream::Write, whose signature carries upstream's `throw()`
-    // (a synonym for noexcept under C++17), so an escaping std::bad_alloc
-    // would call std::terminate(). Every allocating step in here is therefore
-    // nothrow or caught, and running out of memory becomes a rejected read.
+    /**
+     * Copies producer bytes into fixed chunks, blocking for bounded backpressure.
+     *
+     * Returns false after cancellation or allocation failure. The noexcept
+     * boundary matches 7-Zip's callback and translates every allocation or
+     * library exception instead of allowing std::terminate.
+     */
     bool Write(const uint8_t* data, size_t length) noexcept;
 
-    // Whether Write() stopped because an allocation failed rather than because
-    // the consumer aborted. Set once and never cleared. Safe from any thread.
+    /** Reports from any thread whether Write stopped because allocation failed; once set, it remains set. */
     [[nodiscard]] bool OutOfMemory() const noexcept;
 
-    // Producer. Publishes any partial chunk and marks the end of the stream.
+    /** Publishes the producer's trailing partial chunk and marks successful completion. */
     void Finish();
 
-    // Consumer. Unblocks the producer, hides what is queued, and makes every
-    // later TryTake() report kEnd. Safe to call at any time, from any thread.
+    /** Stops and unblocks the producer and makes later reads report end-of-stream; safe from any thread. */
     void Abort() noexcept;
 
+    /** Result of one nonblocking consumer attempt. */
     enum class Status {
         // `out` holds a chunk. Full, unless the producer has finished.
         kChunk,
@@ -84,28 +79,22 @@ class ChunkQueue {
         kEnd,
     };
 
-    // Consumer, and the reason this class exists: it never blocks
+    /** Moves one ready chunk into `out`, or arms notification and returns immediately. */
     Status TryTake(Chunk* out);
 
    private:
-    // Fires `onReady_` if a TryTake() armed it, dropping `lock` for the call
-    // (the callback ends up in N-API, and holding a mutex across a foreign
-    // call invites deadlock) and re-acquiring it before returning. Callers
-    // must re-check any state they cached across the call.
-    //
-    // Every path that publishes a chunk, or stops publishing for good, calls
-    // this before it can block or return, which is what keeps the producer and
-    // a parked consumer from waiting on each other.
+    /**
+     * Fires an armed wakeup with the mutex released, then reacquires it.
+     *
+     * Avoiding a foreign callback under the mutex prevents deadlock. Callers
+     * must recheck cached state after return.
+     */
     void FlushReady(std::unique_lock<std::mutex>& lock);
 
-    // The body of Write(), which is allowed to throw so that the ordinary
-    // allocating operations in it can be written normally. Write() is the
-    // noexcept wrapper that turns anything escaping this into OutOfMemory().
+    /** Implements producer writes with ordinary throwing operations for Write's noexcept wrapper. */
     bool WriteOrThrow(const uint8_t* data, size_t length);
 
-    // Records that the producer ran out of memory and stops it, waking a
-    // consumer that is parked on the ready callback. Called with the lock NOT
-    // held.
+    /** Records terminal allocation failure without the lock held, releases backpressure, and wakes the consumer. */
     void MarkOutOfMemory() noexcept;
 
     const size_t chunkBytes_;

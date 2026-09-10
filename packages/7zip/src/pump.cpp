@@ -38,8 +38,10 @@ namespace {
 // reads everything below as file scope and unindents it. The NOLINT is about
 // the code the macro generates, not about anything written here.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
+/** Adapts 7-Zip's push output stream to the Pump's bounded chunk queue. */
 Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
    public:
+    /** Borrows queue and cancellation state owned by the Pump driving extraction. */
     QueueOutStream(ChunkQueue& queue, std::atomic<bool>& abort) : queue_(queue), abort_(abort) {}
 
    private:
@@ -54,12 +56,15 @@ Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
 // time, so without this an abort would not be observed until decoding finished.
 // clang-format off: see above.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
+/** Selects one archive item, supplies its output stream, and captures 7-Zip's operation result. */
 Z7_CLASS_IMP_COM_1(ExtractCallback, IArchiveExtractCallback)
     Z7_IFACE_COM7_IMP(IProgress)
    public:
+    /** Stores the selected item and borrows the Pump's queue and cancellation flag. */
     ExtractCallback(UInt32 entryIndex, ChunkQueue& queue, std::atomic<bool>& abort)
         : entryIndex_(entryIndex), queue_(queue), abort_(abort) {}
 
+    /** Returns the extraction result most recently reported by 7-Zip. */
     [[nodiscard]] Int32 OpResult() const { return opResult_; }
 
    private:
@@ -70,6 +75,7 @@ Z7_CLASS_IMP_COM_1(ExtractCallback, IArchiveExtractCallback)
 };
 // clang-format on
 
+/** Copies decoder output into the bounded queue and maps cancellation or allocation failure to HRESULT. */
 Z7_COM7F_IMF(QueueOutStream::Write(const void* data, UInt32 size, UInt32* processedSize)) {
     if (processedSize != nullptr) {
         *processedSize = 0;
@@ -90,13 +96,16 @@ Z7_COM7F_IMF(QueueOutStream::Write(const void* data, UInt32 size, UInt32* proces
 }
 
 // IProgress
+/** Accepts 7-Zip's total-progress announcement; the pull API does not expose it. */
 Z7_COM7F_IMF(ExtractCallback::SetTotal(UInt64 /*total*/)) { return S_OK; }
 
+/** Interrupts extraction at 7-Zip progress points when the consumer has cancelled. */
 Z7_COM7F_IMF(ExtractCallback::SetCompleted(const UInt64* /*completeValue*/)) {
     return abort_.load(std::memory_order_relaxed) ? E_ABORT : S_OK;
 }
 
 // IArchiveExtractCallback
+/** Supplies a queue-backed stream only for the selected item in extraction mode. */
 Z7_COM7F_IMF(ExtractCallback::GetStream(UInt32 index, ISequentialOutStream** outStream, Int32 askExtractMode)) {
     *outStream = nullptr;
     if (askExtractMode != NArchive::NExtract::NAskMode::kExtract || index != entryIndex_) {
@@ -117,8 +126,10 @@ Z7_COM7F_IMF(ExtractCallback::GetStream(UInt32 index, ISequentialOutStream** out
     return S_OK;
 }
 
+/** Accepts 7-Zip's operation-preparation notification without additional state. */
 Z7_COM7F_IMF(ExtractCallback::PrepareOperation(Int32 /*askExtractMode*/)) { return S_OK; }
 
+/** Stores the selected item's final operation result for Pump error translation. */
 Z7_COM7F_IMF(ExtractCallback::SetOperationResult(Int32 opRes)) {
     opResult_ = opRes;
     return S_OK;
@@ -126,6 +137,7 @@ Z7_COM7F_IMF(ExtractCallback::SetOperationResult(Int32 opRes)) {
 
 // How many chunks may sit queued, for a given chunk size: enough to cover the
 // read-ahead bound, and never fewer than two
+/** Calculates a bounded queue depth that covers the target read-ahead byte budget. */
 size_t ReadAheadChunks(size_t chunkBytes) {
     return std::max<size_t>(2, (Pump::kReadAheadBytes + chunkBytes - 1) / chunkBytes);
 }

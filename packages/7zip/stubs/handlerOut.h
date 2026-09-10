@@ -26,13 +26,15 @@
 
 namespace NArchive {
 
+/** Supplies the archive handlers with the decode-relevant multi-method state. */
 class CMultiMethodProps : public CCommonMethodProps {
-public:
+   public:
     UInt32 _crcSize;
     CObjectVector<COneMethodInfo> _methods;
     COneMethodInfo _filterMethod;
     bool _autoFilter;
 
+    /** Restores the same default property state as the upstream write-capable class. */
     void Init() {
         InitCommon();
         _crcSize = 4;
@@ -41,25 +43,27 @@ public:
         _filterMethod.Clear();
     }
 
+    /** Constructs the property container with upstream-compatible defaults. */
     CMultiMethodProps() { Init(); }
 
-    HRESULT SetProperty(const wchar_t* /* name */, const PROPVARIANT& /* value */) {
-        return E_NOTIMPL;
-    }
+    /** Rejects write-only property configuration in this extract-only build. */
+    HRESULT SetProperty(const wchar_t* /* name */, const PROPVARIANT& /* value */) { return E_NOTIMPL; }
 };
 
+/** Supplies the archive handlers with the decode-relevant single-method state. */
 class CSingleMethodProps : public COneMethodInfo, public CCommonMethodProps {
-public:
+   public:
+    /** Restores the common property defaults used by upstream handlers. */
     void Init() { InitCommon(); }
 
+    /** Constructs the property container with upstream-compatible defaults. */
     CSingleMethodProps() { Init(); }
 
-    HRESULT SetProperty(const wchar_t* /* name */, const PROPVARIANT& /* value */) {
-        return E_NOTIMPL;
-    }
+    /** Rejects write-only property configuration in this extract-only build. */
+    HRESULT SetProperty(const wchar_t* /* name */, const PROPVARIANT& /* value */) { return E_NOTIMPL; }
 
-    HRESULT SetProperties(const wchar_t* const* /* names */, const PROPVARIANT* /* values */,
-                           UInt32 /* numProps */) {
+    /** Rejects batches of write-only properties in this extract-only build. */
+    HRESULT SetProperties(const wchar_t* const* /* names */, const PROPVARIANT* /* values */, UInt32 /* numProps */) {
         return E_NOTIMPL;
     }
 };

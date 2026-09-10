@@ -10,50 +10,49 @@
 
 namespace sevenzip {
 
-// The JS-visible pull reader: `read()` resolves with the next chunk of an
-// entry's decompressed bytes, or `null` at the end.
-//
-// No thread this runs on ever waits on another. A read is answered on the event
-// loop thread, synchronously, from a chunk the producer has already finished.
-// That is the steady state, since the producer runs ahead by a bounded amount.
-// Only when the consumer catches up does a read park: its promise is held, and
-// the producer wakes it through an AsyncSignal once the next chunk is
-// ready.
-// The one thread allowed to block is the producer, on a full queue.
+/**
+ * Exposes one archive entry as a pull-based JavaScript reader backed by a decoder thread.
+ *
+ * Reads consume completed chunks without blocking the event loop. A read parks
+ * only after catching the bounded producer, which wakes it through AsyncSignal;
+ * only the producer may block, when the queue is full.
+ */
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
    public:
+    /** Defines the JavaScript EntryReader class and its read and close methods. */
     static Napi::Function GetClass(Napi::Env env);
 
-    // (path: string, formatIndex: number, entryPath?: string, entryIndex?: number,
-    //  chunkBytes?: number)
+    /** Validates `(path, formatIndex, entryPath?, entryIndex?, chunkBytes?)` and starts the decoder pump. */
     explicit EntryReader(const Napi::CallbackInfo& info);
+    /** Detaches callbacks and cancels any decoder still running without blocking the loop. */
     ~EntryReader() override;
 
+    /** Reader identity and its JavaScript wrapper cannot be copied. */
     EntryReader(const EntryReader&) = delete;
+    /** Reader identity and its JavaScript wrapper cannot be copy-assigned. */
     EntryReader& operator=(const EntryReader&) = delete;
+    /** Reader identity and its JavaScript wrapper cannot be moved. */
     EntryReader(EntryReader&&) = delete;
+    /** Reader identity and its JavaScript wrapper cannot be move-assigned. */
     EntryReader& operator=(EntryReader&&) = delete;
 
-    // Resolves with a Buffer of exactly `chunkBytes`, a shorter Buffer for the
-    // last chunk of the entry, or null at the end of it. Rejects if the producer
-    // failed, if a read is already outstanding, or after close().
+    /**
+     * Returns a promise for a full decompressed chunk, a shorter final chunk,
+     * or null at end-of-stream; rejects native failure, concurrent reads, and reads after close.
+     */
     Napi::Value Read(const Napi::CallbackInfo& info);
 
-    // Abandons the rest of the entry. Idempotent. Returns immediately: it tells
-    // the producer to stop and drops the reference to it, but never waits for it
-    // to notice.
+    /** Idempotently cancels without waiting, settles a parked read with end-of-stream, and releases references. */
     void Close(const Napi::CallbackInfo& info);
 
-    // Event loop thread, via the AsyncSignal. Public only because the
-    // callback that invokes it is a plain lambda held by the producer, which
-    // cannot be a member. Not part of the JavaScript surface.
+    /** Retries a parked read on the event loop; public for the native callback, not the JavaScript surface. */
     void OnProducerReady(Napi::Env env);
 
    private:
-    // Shared between this object and the producer thread so that each can
-    // outlive the other. The producer needs it to report a ready chunk or its
-    // own exit even after the reader has been garbage collected; the reader
-    // needs it to keep the AsyncSignal alive until the producer lets go.
+    /**
+     * Lets the reader and producer outlive one another through a shared signal
+     * while keeping the JavaScript wrapper pointer confined to the loop thread.
+     */
     struct Bridge {
         std::shared_ptr<AsyncSignal> signal;
         // Touched only on the event loop thread: set at construction, cleared by
@@ -63,16 +62,14 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
         EntryReader* reader = nullptr;
     };
 
-    // Settles `deferred` from one non-blocking read of the pump. Returns false,
-    // having settled nothing, when the producer has no chunk ready yet. That
-    // re-arms the ready callback, so a caller may simply park and be called
-    // again. Sets *settled once `deferred` has been settled, so a caller's
-    // catch-all cannot settle it a second time.
+    /**
+     * Attempts one nonblocking pump read and settles `deferred` when possible.
+     * Returns false and rearms notification while pending; sets `settled` to
+     * prevent callers from settling the promise twice.
+     */
     bool TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled);
 
-    // Releases the parked promise's hold on this object and the event loop.
-    // Must be the last thing a settling path does: it can drop the final
-    // reference to `this`.
+    /** Releases a parked read's object and loop references; must be last because it may destroy `this`. */
     void ReleasePending(Napi::Env env);
 
     std::shared_ptr<Pump> pump_;

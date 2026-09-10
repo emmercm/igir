@@ -21,6 +21,7 @@ namespace sevenzip {
 
 namespace {
 
+/** Native snapshot of the six archive-item properties exposed to JavaScript. */
 struct Entry {
     // The archive's own item index, stored rather than recovered from this
     // queue's position, so that it stays correct however the list is later
@@ -41,16 +42,23 @@ struct Entry {
 //
 // The price is one AsyncSignal per listing, and this class owning its own
 // lifetime.
+/** Owns one detached archive-listing worker and incrementally marshals its result on the event loop. */
 class ListJob {
    public:
     // Starts the listing. On success the returned promise settles when the
     // result batches finish; on failure to start, it is rejected before returning.
+    /** Creates, registers, and starts a listing job, returning its pending promise. */
     static Napi::Promise Start(Napi::Env env, std::string path, uint32_t formatIndex);
 
+    /** Listing jobs own a unique worker and signal and therefore cannot be copied. */
     ListJob(const ListJob&) = delete;
+    /** Listing jobs own a unique worker and signal and therefore cannot be copy-assigned. */
     ListJob& operator=(const ListJob&) = delete;
+    /** Listing jobs own stable addresses captured by callbacks and therefore cannot be moved. */
     ListJob(ListJob&&) = delete;
+    /** Listing jobs own stable addresses captured by callbacks and therefore cannot be move-assigned. */
     ListJob& operator=(ListJob&&) = delete;
+    /** Requests idempotent signal closure on every construction or worker-exit path. */
     ~ListJob() {
         // Also covers registration/shared_ptr allocation failures before the
         // worker starts. Release is idempotent after normal worker completion.
@@ -62,9 +70,11 @@ class ListJob {
     // Asks the listing to stop. Returns immediately; the thread notices at its
     // next item, or inside the open through the abort flag handed to
     // OpenArchive(). Safe to call from any thread and more than once.
+    /** Sets the cancellation flag read while opening and enumerating the archive. */
     void Cancel() noexcept { abort_.store(true, std::memory_order_relaxed); }
 
    private:
+    /** Stores immutable inputs and preallocates the fallback JavaScript error object. */
     ListJob(Napi::Env env, Napi::Promise::Deferred deferred, std::string path, uint32_t formatIndex)
         : deferred_(deferred),
           path_(std::move(path)),
@@ -74,12 +84,15 @@ class ListJob {
     // The thread body. Nothing may escape it: an exception leaving a
     // std::thread's callable calls std::terminate(). Not marked noexcept, which
     // would turn such a throw into that same terminate(); it catches internally.
+    /** Contains all worker exceptions, records terminal state, and notifies the event loop. */
     void Run();
 
     // The listing, which reports failure by throwing; Run() catches
+    /** Opens the archive and copies its item properties into native entry records. */
     void List();
 
     // Marshals the result back to the event loop and settles the promise
+    /** Marshals a time- and count-bounded entry batch; true requests another event-loop turn. */
     bool Emit(Napi::Env env);
 
     std::shared_ptr<AsyncSignal> signal_;

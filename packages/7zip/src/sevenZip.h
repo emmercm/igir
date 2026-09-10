@@ -16,23 +16,27 @@ namespace sevenzip {
 
 // Performs 7-Zip's one-time global setup (CRC tables). Idempotent, and safe to
 // call from any thread.
+/** Runs 7-Zip's process-wide CRC-table initialization exactly once. */
 void EnsureInitialized();
 
 // The kName property of every registered archive handler, in registration order.
 // Callers address a handler by its position here, so no name matching happens in
 // C++. The handler set is fixed at build time, so the names and class IDs are
 // read once on the first call and every later lookup is a vector index.
+/** Returns registered archive-handler names in the same order used by the numeric API. */
 std::vector<std::string> FormatNames();
 
 // The name of the handler at `formatIndex`, for use in error messages.
 // Lowercased, because upstream spells two of them `Z` and `Split` and a user
 // should not see one spelling in the API and another in an error. Falls back to
 // the raw index, which is all there is to say about an out-of-range one.
+/** Returns a lowercase handler label, falling back to the numeric index when it is invalid. */
 std::string FormatLabel(uint32_t formatIndex);
 
 // An open, read-only archive plus the stream holding the first volume's file
 // handle. Destroying this releases every handle, since any further volumes
 // the handler opened are owned by the archive. Nothing else needs to be closed.
+/** Owns an opened archive and the first-volume stream whose file handle backs it. */
 struct OpenedArchive {
     CMyComPtr<IInArchive> archive;
     CMyComPtr<IInStream> stream;
@@ -66,6 +70,7 @@ constexpr HRESULT kEntryNotFound = static_cast<HRESULT>(0x80070490L);
 // spanned set opens every volume), so without it a cancel would not be observed
 // until the whole header had been read. Callers that cannot be cancelled pass
 // nullptr.
+/** Opens one archive, supplies cancellable multi-volume callbacks, and transfers owned interfaces to `out`. */
 HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out,
                     const std::atomic<bool>* abort = nullptr);
 
@@ -74,21 +79,27 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
 // caller has to know 7-Zip's variant conventions, or that
 // ConvertPropVariantToUInt64() throws for a type it does not recognize, which
 // GetUInt64Prop() absorbs.
+/** Reads a BSTR item property into UTF-8, returning false for missing, failed, or mismatched values. */
 bool GetStringProp(IInArchive& archive, uint32_t index, PROPID id, std::string* out);
+/** Reads an integer-like item property as 64 bits while containing conversion exceptions. */
 bool GetUInt64Prop(IInArchive& archive, uint32_t index, PROPID id, uint64_t* out);
+/** Reads an exact 32-bit unsigned item property. */
 bool GetUInt32Prop(IInArchive& archive, uint32_t index, PROPID id, uint32_t* out);
+/** Reads a Boolean item property, treating missing or mismatched values as false. */
 bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id);
 
 // Normalizes an entry path to `/` separators. Separators reach us in two
 // spellings: an archive built on Windows can record backslashes, and some
 // handlers rewrite `/` to the host's separator before kpidPath is read. Every
 // path this addon reports or is given goes through this.
+/** Normalizes archive entry separators to forward slashes without otherwise changing the path. */
 std::string NormalizeEntryPath(std::string entryPath);
 
 // True when the item at `index` carries `normalizedPath` (already normalized by
 // NormalizeEntryPath). One item-count read and one property read, no scan, which
 // is what makes a remembered index worth checking before falling back to
 // FindEntryIndex(). An out-of-range index is false, not undefined behavior.
+/** Bounds-checks an item index and compares its normalized stored path with the requested path. */
 bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath);
 
 // Resolves an entry path to the index 7-Zip extracts by, using an archive the
@@ -100,6 +111,7 @@ bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& n
 //
 // Returns kEntryNotFound when nothing matches, which is the fallback that keeps
 // a caller's stale remembered index from mattering.
+/** Scans an opened archive for a normalized entry path and returns its extraction index. */
 HRESULT FindEntryIndex(IInArchive& archive, const std::string& entryPath, uint32_t* out);
 
 }  // namespace sevenzip

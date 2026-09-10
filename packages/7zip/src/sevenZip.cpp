@@ -44,6 +44,7 @@ namespace {
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::once_flag g_initOnce;
 
+/** Converts a nullable 7-Zip BSTR property to an owning UTF-8 string. */
 std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
                                        // a typedef for a pointer, and this is
                                        // 7-Zip's own spelling of the parameter
@@ -69,6 +70,7 @@ namespace {
 // One registered archive handler. Both fields come from the same
 // GetHandlerProperty2() sweep, so a handler whose name or class ID could not be
 // read is dropped rather than half-populated.
+/** Pairs one registered archive handler's display name with its COM class identifier. */
 struct Format {
     std::string name;
     GUID classId{};
@@ -77,6 +79,7 @@ struct Format {
 // The handler set is fixed at build time (each compiled-in handler registers
 // itself from a static initializer before main()), so this table is built once
 // and read thereafter, and no archive open re-enumerates the handlers
+/** Lazily enumerates valid compiled-in handlers once and returns the immutable process-wide table. */
 const std::vector<Format>& Formats() {
     // Function-local static: initialized on first use, and the C++ runtime makes
     // that thread-safe. Extraction opens archives from its own thread, so this
@@ -143,6 +146,7 @@ namespace {
 // be opened; the CInFileStream's destructor closes the handle. Takes a UString
 // because its other caller, OpenCallback::GetStream, is handed volume names in
 // 7-Zip's own wide-string type.
+/** Opens a path as an owned seekable 7-Zip input stream, returning null on ordinary open failure. */
 CMyComPtr<IInStream> OpenFile(const UString& path) {
     // 7-Zip's COM classes declare AddRef/Release private (Z7_COM_UNKNOWN_IMP),
     // so the owning pointer has to be typed as the interface, not the class,
@@ -190,6 +194,7 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 // reads everything below as file scope and unindents it. The NOLINT is about
 // the code the macro generates, not about anything written here.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
+/** Provides cancellable open progress and resolves sibling volumes relative to the first volume's directory. */
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
     UString name_;
@@ -201,24 +206,27 @@ Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallbac
    public:
     // `path` is the volume the caller named. Split into the directory to
     // resolve sibling volumes against and the file name to report as kpidName.
+    /** Splits the named first volume into the directory and basename 7-Zip expects from its callback. */
     OpenCallback(const UString& path, const std::atomic<bool>* abort) : abort_(abort) {
         SplitPathToParts_2(path, dirPrefix_, name_);
     }
 
+    /** Reads the optional borrowed cancellation flag without imposing synchronization beyond cancellation itself. */
     [[nodiscard]] bool Aborted() const { return abort_ != nullptr && abort_->load(std::memory_order_relaxed); }
 };
 // clang-format on
 
+/** Accepts 7-Zip's open total unless the owning job has already been cancelled. */
 Z7_COM7F_IMF(OpenCallback::SetTotal(const UInt64* /*files*/, const UInt64* /*bytes*/)) {
     return Aborted() ? E_ABORT : S_OK;
 }
 
-// The only place an in-progress open can be interrupted. The handlers call this
-// as they work through the header; returning anything but S_OK unwinds Open().
+/** Interrupts an in-progress archive open when its owner has requested cancellation. */
 Z7_COM7F_IMF(OpenCallback::SetCompleted(const UInt64* /*files*/, const UInt64* /*bytes*/)) {
     return Aborted() ? E_ABORT : S_OK;
 }
 
+/** Supplies the first volume's basename through kpidName and reports other properties unavailable. */
 Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
     NWindows::NCOM::CPropVariant prop;
     // kpidName is the only property the handlers ask for here. Answering an
@@ -240,6 +248,7 @@ Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
     return S_OK;
 }
 
+/** Opens a requested sibling volume under the original archive directory. */
 Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream)) {
     *inStream = nullptr;
     // Checked here too: a spanned set opens one file per volume, and a handler

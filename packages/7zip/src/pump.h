@@ -27,6 +27,7 @@ namespace sevenzip {
 //
 // Nothing here includes <napi.h>: the two callbacks that reach back into N-API
 // are std::functions the caller supplies.
+/** Runs 7-Zip extraction on a dedicated producer thread and exposes bounded, nonblocking reads. */
 class Pump {
    public:
     // How much decompressed output may sit buffered ahead of the consumer. This
@@ -69,29 +70,38 @@ class Pump {
     // cancel it and wait for it. Throws std::runtime_error if the registry is
     // already draining, since nothing would then be left to wait for the new
     // thread.
+    /** Constructs, registers, and starts a self-owning decoder pump. */
     static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
                                        std::optional<uint32_t> entryIndex, size_t chunkBytes,
                                        std::shared_ptr<JobRegistry> registry, std::function<void()> onReady,
                                        std::function<void()> onExit);
 
+    /** Pump state belongs to one producer/consumer pair and cannot be copied. */
     Pump(const Pump&) = delete;
+    /** Pump state belongs to one producer/consumer pair and cannot be copy-assigned. */
     Pump& operator=(const Pump&) = delete;
+    /** Pump state contains synchronization primitives and cannot be moved. */
     Pump(Pump&&) = delete;
+    /** Pump state contains synchronization primitives and cannot be move-assigned. */
     Pump& operator=(Pump&&) = delete;
+    /** Releases pump storage after its detached producer and consumer have both let go. */
     ~Pump() = default;
 
     // Takes the next chunk of decompressed output without ever blocking.
     // kPending means `onReady` will fire; kEnd means the entry is done. Throws
     // std::runtime_error carrying the producer's failure, if it had one, on the
     // kEnd that follows it.
+    /** Takes one available chunk without blocking and translates terminal producer errors. */
     ChunkQueue::Status TryRead(Chunk* out);
 
     // Tells the producer to stop. Returns immediately: it does not wait for the
     // producer to notice, and it does not join. Every later TryRead() reports
     // kEnd. Safe to call more than once, and from a destructor.
+    /** Sets the shared abort flag and releases any producer blocked by queue backpressure. */
     void Cancel() noexcept;
 
    private:
+    /** Stores immutable extraction arguments and constructs the bounded output queue. */
     Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
          std::optional<uint32_t> entryIndex, size_t chunkBytes, std::function<void()> onReady);
 
@@ -99,22 +109,28 @@ class Pump {
     // std::thread's callable calls std::terminate(). It catches everything
     // internally rather than being marked noexcept, which would turn such a
     // throw into that same terminate().
+    /** Contains every exception from extraction and always marks the output queue finished. */
     void Run();
 
     // The extraction, which reports failure by throwing; Run() catches
+    /** Opens the archive, resolves the requested item, and drives 7-Zip's push extraction API. */
     void Extract();
 
+    /** Records the first producer error for delivery when the consumer reaches terminal state. */
     void SetError(std::string message);
 
     // Resolves `entryPath_`, or the archive's sole entry when there is none, to
     // the index 7-Zip extracts by. Reports its own failures through SetError().
+    /** Resolves a named entry, validated hint, or sole unnamed entry to an archive item index. */
     HRESULT ResolveEntryIndex(IInArchive& archive, uint32_t* out);
 
+    /** Describes the requested entry consistently in native error messages. */
     std::string EntryLabel() const;
 
     // The message reported when the queue could not allocate. Both the producer
     // (as it unwinds) and the consumer (if it reaches the end of the stream
     // first) can be the one to report it.
+    /** Builds the terminal message used when buffering decompressed output fails. */
     std::string OutOfMemoryMessage() const;
 
     std::string path_;

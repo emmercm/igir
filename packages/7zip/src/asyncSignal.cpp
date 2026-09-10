@@ -27,6 +27,7 @@ std::shared_ptr<AsyncSignal> AsyncSignal::Create(Napi::Env env, const char* name
     signal->async_.data = signal.get();
     signal->keepAlive_ = signal;
     if (!referenced) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): libuv documents this upcast for handle APIs.
         uv_unref(reinterpret_cast<uv_handle_t*>(&signal->async_));
     }
     return signal;
@@ -77,7 +78,7 @@ napi_value AsyncSignal::Invoke(napi_env env, napi_callback_info info) {
 
 void AsyncSignal::Dispatch(uv_async_t* handle) {
     auto* signal = static_cast<AsyncSignal*>(handle->data);
-    bool pending;
+    bool pending = false;
     {
         std::scoped_lock const lock(signal->mutex_);
         pending = signal->pending_;
@@ -97,7 +98,7 @@ void AsyncSignal::Dispatch(uv_async_t* handle) {
             napi_close_handle_scope(signal->env_, scope);
         }
     }
-    bool close;
+    bool close = false;
     {
         std::scoped_lock const lock(signal->mutex_);
         close = signal->released_ && !signal->pending_;
@@ -113,6 +114,7 @@ void AsyncSignal::Dispatch(uv_async_t* handle) {
 void AsyncSignal::Ref(Napi::Env /*env*/) noexcept {
     std::scoped_lock const lock(mutex_);
     if (!closing_) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): libuv documents this upcast for handle APIs.
         uv_ref(reinterpret_cast<uv_handle_t*>(&async_));
     }
 }
@@ -120,6 +122,7 @@ void AsyncSignal::Ref(Napi::Env /*env*/) noexcept {
 void AsyncSignal::Unref(Napi::Env /*env*/) noexcept {
     std::scoped_lock const lock(mutex_);
     if (!closing_) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): libuv documents this upcast for handle APIs.
         uv_unref(reinterpret_cast<uv_handle_t*>(&async_));
     }
 }
@@ -135,6 +138,7 @@ void AsyncSignal::Close() {
             return;
         }
         closing_ = true;
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): libuv documents this upcast for handle APIs.
         uv_close(reinterpret_cast<uv_handle_t*>(&async_), Closed);
     }
     // No producer can touch the handle after closing_ is set. Clear JS-owned

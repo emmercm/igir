@@ -27,20 +27,24 @@ constexpr unsigned kSystemFacility = 0x88000000U;
 
 // "(Is a directory)", or "(HRESULT 0x8000ffff)" when the code names nothing the
 // operating system can describe. Only ever a suffix, never a sentence on its own.
+/** Formats a platform-aware operating-system or hexadecimal HRESULT suffix. */
 std::string HResultSuffix(HRESULT hr);
 
 // The message for a failing archive open. `hr` must not be S_OK; `path` and
 // `formatIndex` name the archive so the message can say which file and which
 // format failed.
+/** Converts a failed archive-open result into a user-facing message with path and format context. */
 std::string OpenErrorMessage(HRESULT hr, const std::string& path, uint32_t formatIndex);
 
 // The message for a failing entry lookup. `hr` must not be S_OK.
+/** Converts a failed item lookup into a message naming the requested entry. */
 std::string FindEntryErrorMessage(HRESULT hr, const std::string& entryPath);
 
 // Explains a non-kOK extraction operation result. These distinguish an
 // unsupported codec, a corrupt body, a truncated archive and an encrypted
 // entry, which is the only part of a failure a user can act on. Phrased as a
 // clause, to be appended after "failed to extract X from Y: ".
+/** Converts 7-Zip's extraction operation result into an actionable failure clause. */
 std::string OperationResultMessage(int32_t opResult);
 
 }  // namespace sevenzip
