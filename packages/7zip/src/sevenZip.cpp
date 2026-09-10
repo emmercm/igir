@@ -175,7 +175,6 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 // clang-format off: the macro opens a class body clang-format cannot see, so it
 // reads everything below as file scope and unindents it. The NOLINT is about
 // the code the macro generates, not about anything written here.
-// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 /**
  * Provides cancellable open progress and resolves handler-derived sibling
  * volume names relative to the first volume's directory.
@@ -183,6 +182,7 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
  * The callback is mandatory: Split refuses to open without it, while Zip can
  * dereference a missing callback for archives retaining a span marker.
  */
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
     UString name_;

@@ -12,7 +12,7 @@ namespace {
 
 /** Owns the registry and loop wakeup used while asynchronous environment cleanup is pending. */
 struct CleanupState {
-    std::shared_ptr<JobRegistry> registry{};
+    std::shared_ptr<JobRegistry> registry;
     uv_async_t signal{};
     napi_async_cleanup_hook_handle hook = nullptr;
 };

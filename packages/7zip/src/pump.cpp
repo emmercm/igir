@@ -33,11 +33,11 @@ namespace {
 // clang-format off: the macro opens a class body clang-format cannot see, so it
 // reads everything below as file scope and unindents it. The NOLINT is about
 // the code the macro generates, not about anything written here.
-// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 /**
  * Adapts 7-Zip's push output to the bounded queue, blocking only the producer
  * when full and returning E_ABORT after the consumer closes.
  */
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
    public:
     /** Borrows queue and cancellation state owned by the Pump driving extraction. */
@@ -50,11 +50,11 @@ Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
 // clang-format on
 
 // clang-format off: see above.
-// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 /**
  * Selects one item, supplies only its output stream, captures its result, and
  * checks cancellation during progress when a solid archive produces no output for a long time.
  */
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
 Z7_CLASS_IMP_COM_1(ExtractCallback, IArchiveExtractCallback)
     Z7_IFACE_COM7_IMP(IProgress)
    public:
