@@ -53,7 +53,7 @@
         "RuntimeTypeInfo": "true",
         "EnableFunctionLevelLinking": "true",
         "WholeProgramOptimization": "true",
-        "AdditionalOptions": ["/std:c++20", "/FIhandlerOut.h"]
+        "AdditionalOptions": ["/std:c++20", "/EHsc", "/FIhandlerOut.h"]
       },
       "VCLibrarianTool": {
         "AdditionalOptions": ["/LTCG"]
@@ -71,10 +71,7 @@
     # Pin instruction sets for various architectures
     "conditions": [
       ["OS=='win'", {
-        # Keep Windows.h from including legacy winsock.h before Node/libuv's
-        # winsock2.h without suppressing OLE types such as PROPVARIANT and BSTR.
-        # This addon and the selected 7-Zip code use no Winsock APIs.
-        "defines": ["_WINSOCKAPI_", "NOMINMAX"]
+        "defines": ["NOMINMAX"]
       }],
       ["target_arch=='x64' or target_arch=='ia32'", {
         "defines": ["XXH_VECTOR=1"], # SSE2, never auto-select AVX variants
@@ -208,6 +205,7 @@
         "<(z7)/C/zstd/error_private.c",
         "<(z7)/C/zstd/fse_decompress.c",
         "<(z7)/C/zstd/huf_decompress.c",
+        "<(z7)/C/zstd/hist.c",
         "<(z7)/C/zstd/zstd_common.c",
         "<(z7)/C/zstd/zstd_ddict.c",
         "<(z7)/C/zstd/zstd_decompress.c",

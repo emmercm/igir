@@ -20,6 +20,13 @@
 
 #ifdef __cplusplus
 
+#ifdef _WIN32
+// Must precede Windows.h so its legacy winsock.h is skipped when Node/libuv
+// later includes winsock2.h. Unlike WIN32_LEAN_AND_MEAN, this preserves the OLE
+// declarations used by 7-Zip's PROPVARIANT wrappers.
+#include <winsock2.h>
+#endif
+
 #include "7zip/Archive/Common/HandlerOut.h"
 
 #ifdef Z7_EXTRACT_ONLY
