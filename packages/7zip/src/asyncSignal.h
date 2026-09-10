@@ -35,18 +35,13 @@ class AsyncSignal {
     void Schedule();
     /** Delivers work in the runtime callback scope and drains continuations. */
     static void Dispatch(napi_env env, napi_value function, void* context, void* data);
-    /** Stops notifications before environment destruction. */
-    static void Cleanup(void* data);
     /** Clears JavaScript state and breaks self-ownership after queue destruction. */
     static void Finalize(napi_env env, void* data, void* hint);
-    napi_env env_ = nullptr;
     napi_threadsafe_function function_ = nullptr;
     std::mutex mutex_;
     bool queued_ = false;
     bool pending_ = false;
     bool released_ = false;
-    bool cleanupInstalled_ = false;
     Callback callback_;
-    std::shared_ptr<AsyncSignal> keepAlive_;
 };
 }  // namespace sevenzip

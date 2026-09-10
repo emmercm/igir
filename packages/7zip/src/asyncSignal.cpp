@@ -6,19 +6,15 @@
 namespace sevenzip {
 std::shared_ptr<AsyncSignal> AsyncSignal::Create(Napi::Env env, const char* name, bool referenced, Callback callback) {
     std::shared_ptr<AsyncSignal> signal(new AsyncSignal());
-    signal->env_ = env;
     signal->callback_ = std::move(callback);
+    auto context = std::make_unique<std::shared_ptr<AsyncSignal>>(signal);
     napi_value label = Napi::String::New(env, name);
-    if (napi_create_threadsafe_function(env, nullptr, nullptr, label, 1, 1, signal.get(), Finalize, signal.get(),
+    if (napi_create_threadsafe_function(env, nullptr, nullptr, label, 1, 1, context.get(), Finalize, context.get(),
                                         Dispatch, &signal->function_) != napi_ok) {
         throw std::runtime_error("could not create the 7-Zip notification signal");
     }
-    signal->keepAlive_ = signal;
-    if (napi_add_env_cleanup_hook(env, Cleanup, signal.get()) != napi_ok) {
-        Cleanup(signal.get());
-        throw std::runtime_error("could not install the 7-Zip signal cleanup hook");
-    }
-    signal->cleanupInstalled_ = true;
+    // NOLINTNEXTLINE(bugprone-unused-return-value): the N-API finalizer now owns the context.
+    context.release();
     if (!referenced) signal->Unref(env);
     return signal;
 }
@@ -47,7 +43,10 @@ void AsyncSignal::Release() noexcept {
 }
 
 void AsyncSignal::Dispatch(napi_env env, napi_value /*function*/, void* context, void* /*data*/) {
-    auto* signal = static_cast<AsyncSignal*>(context);
+    // Copy shared ownership before touching the signal. N-API keeps the context
+    // allocation alive through every queued call, including the null-env calls
+    // it makes while closing a worker environment.
+    const std::shared_ptr<AsyncSignal> signal = *static_cast<std::shared_ptr<AsyncSignal>*>(context);
     bool pending = false;
     {
         std::scoped_lock const lock(signal->mutex_);
@@ -63,13 +62,20 @@ void AsyncSignal::Dispatch(napi_env env, napi_value /*function*/, void* context,
             // Callers translate failures; never unwind across the C ABI.
         }
     }
-    std::scoped_lock const lock(signal->mutex_);
-    signal->pending_ = signal->pending_ || again;
-    if (signal->pending_) {
-        signal->Schedule();
-    } else if (signal->released_ && signal->function_ != nullptr) {
-        napi_release_threadsafe_function(std::exchange(signal->function_, nullptr), napi_tsfn_release);
+    napi_threadsafe_function release = nullptr;
+    {
+        std::scoped_lock const lock(signal->mutex_);
+        signal->pending_ = signal->pending_ || again;
+        if (signal->pending_) {
+            signal->Schedule();
+        } else if (signal->released_ && signal->function_ != nullptr) {
+            release = std::exchange(signal->function_, nullptr);
+        }
     }
+    // Releasing the final producer can synchronously start finalization on
+    // some runtimes. The finalizer locks mutex_, so release only after the
+    // dispatch lock has been destroyed.
+    if (release != nullptr) napi_release_threadsafe_function(release, napi_tsfn_release);
 }
 
 void AsyncSignal::Ref(Napi::Env env) noexcept {
@@ -80,26 +86,17 @@ void AsyncSignal::Unref(Napi::Env env) noexcept {
     std::scoped_lock const lock(mutex_);
     if (function_ != nullptr) napi_unref_threadsafe_function(env, function_);
 }
-void AsyncSignal::Cleanup(void* data) {
-    auto* signal = static_cast<AsyncSignal*>(data);
-    std::scoped_lock const lock(signal->mutex_);
-    signal->cleanupInstalled_ = false;
-    if (signal->function_ != nullptr) {
-        napi_release_threadsafe_function(std::exchange(signal->function_, nullptr), napi_tsfn_abort);
-    }
-}
 void AsyncSignal::Finalize(napi_env /*env*/, void* data, void* /*hint*/) {
-    auto* signal = static_cast<AsyncSignal*>(data);
+    const std::unique_ptr<std::shared_ptr<AsyncSignal>> context(static_cast<std::shared_ptr<AsyncSignal>*>(data));
+    const std::shared_ptr<AsyncSignal> signal = *context;
     {
         std::scoped_lock const lock(signal->mutex_);
         signal->function_ = nullptr;
     }
-    if (signal->cleanupInstalled_) napi_remove_env_cleanup_hook(signal->env_, Cleanup, signal);
     try {
         signal->callback_(Napi::Env(nullptr));
     } catch (...) {  // NOLINT(bugprone-empty-catch)
     }
     signal->callback_ = {};
-    signal->keepAlive_.reset();
 }
 }  // namespace sevenzip
