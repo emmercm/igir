@@ -7,7 +7,14 @@
 // same GUIDs and collide at link time.
 //
 // The upstream file is included rather than copied so that it stays upstream.
+// Windows file helpers also expect the executable to provide g_IsNT. Node only
+// runs on NT-family Windows, so this shim supplies the process-global as true.
 
 #define INITGUID
 // NOLINTNEXTLINE(bugprone-suspicious-include): including the .cpp is the point
 #include "7zip/Archive/ArchiveExports.cpp"
+
+#ifdef _WIN32
+/** Reports the only Windows platform family supported by Node.js. */
+bool g_IsNT = true;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+#endif

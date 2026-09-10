@@ -21,12 +21,11 @@
     "cflags": [
       "-ffunction-sections", "-fdata-sections",
       "-fvisibility=hidden",
-      "-fno-semantic-interposition",
-      "-flto"
+      "-fno-semantic-interposition"
     ],
     "cflags!": ["-fno-omit-frame-pointer"],
     "cflags_cc+": ["-fvisibility-inlines-hidden"],
-    "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto"],
+    "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL"],
 
     "xcode_settings": {
       "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
@@ -63,7 +62,7 @@
         "OptimizeReferences": 2,
         "EnableCOMDATFolding": 2,
         "LinkTimeCodeGeneration": "1",
-        "AdditionalOptions": ["/Brepro", "/deterministic", "/DEBUG:NONE"],
+        "AdditionalOptions": ["/Brepro", "/DEBUG:NONE"],
         "AdditionalOptions/": [["exclude", "lldltojobs"]]
       }
     },
@@ -72,6 +71,14 @@
     "conditions": [
       ["OS=='win'", {
         "defines": ["NOMINMAX"]
+      }],
+      ["OS=='linux'", {
+        "cflags": ["-flto=auto"],
+        "ldflags": ["-flto=auto"]
+      }],
+      ["OS=='mac'", {
+        "cflags": ["-flto"],
+        "ldflags": ["-flto"]
       }],
       ["target_arch=='x64' or target_arch=='ia32'", {
         "defines": ["XXH_VECTOR=1"], # SSE2, never auto-select AVX variants
@@ -287,6 +294,10 @@
     {
       "target_name": "guiddefs",
       "type": "static_library",
+      # INITGUID makes every forced-included 7-Zip interface header emit IID
+      # storage. Keep node-gyp's module-only delay-load hook out of this helper
+      # library so it cannot emit a duplicate copy of every IID.
+      "win_delay_load_hook": "false",
       "defines": ["Z7_ST", "Z7_NO_CRYPTO", "Z7_EXTRACT_ONLY", "k_SwapBytes_Mode_MAX=0", "INITGUID"],
       "include_dirs": [
         "stubs",
