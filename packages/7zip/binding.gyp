@@ -70,6 +70,11 @@
 
     # Pin instruction sets for various architectures
     "conditions": [
+      ["OS=='win'", {
+        # Keep Windows.h from including legacy winsock.h before Node/libuv's
+        # winsock2.h. This addon and the selected 7-Zip code use no Winsock APIs.
+        "defines": ["WIN32_LEAN_AND_MEAN", "NOMINMAX"]
+      }],
       ["target_arch=='x64' or target_arch=='ia32'", {
         "defines": ["XXH_VECTOR=1"], # SSE2, never auto-select AVX variants
         "cflags": ["-mno-sse3", "-mno-ssse3", "-mno-sse4.1", "-mno-sse4.2",
