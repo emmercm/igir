@@ -128,6 +128,19 @@
     {
       "target_name": "sevenzip",
       "type": "static_library",
+      # Avoid optimizer-sensitive behavior observed in the legacy LZ5/Lizard
+      # frame decoders in Windows builds produced from Node 26 headers. Keep
+      # ordinary /Ox optimization, but compile the vendored archive library as
+      # normal native objects. The addon bridge below remains eligible for /GL
+      # and /LTCG.
+      "msvs_settings": {
+        "VCCLCompilerTool": {
+          "WholeProgramOptimization": "false"
+        },
+        "VCLibrarianTool": {
+          "AdditionalOptions!": ["/LTCG"]
+        }
+      },
       "conditions": [
         ["OS=='win'", {
           "sources": ["<(z7)/C/zstdmt/zstd-mt_threading.c"]
@@ -255,8 +268,8 @@
         "<(z7)/CPP/7zip/Compress/BZip2Decoder.cpp",
         "<(z7)/CPP/7zip/Compress/BrotliDecoder.cpp",
         "<(z7)/CPP/7zip/Compress/Lz4Decoder.cpp",
-        "<(z7)/CPP/7zip/Compress/Lz5Decoder.cpp",
-        "<(z7)/CPP/7zip/Compress/LizardDecoder.cpp",
+        "stubs/Lz5Decoder.cpp",
+        "stubs/LizardDecoder.cpp",
         "<(z7)/CPP/7zip/Compress/Bcj2Coder.cpp",
         "<(z7)/CPP/7zip/Compress/BcjCoder.cpp",
         "<(z7)/CPP/7zip/Compress/BitlDecoder.cpp",
@@ -343,6 +356,7 @@
         "binding.cpp",
         "src/addon.cpp",
         "src/chunkQueue.cpp",
+        "src/codecError.cpp",
         "src/entryReader.cpp",
         "src/errors.cpp",
         "src/jobRegistry.cpp",

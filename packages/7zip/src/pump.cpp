@@ -9,6 +9,7 @@
 
 #include "7zip/Archive/IArchive.h"
 #include "Common/MyCom.h"
+#include "codecError.h"
 #include "errors.h"
 
 namespace sevenzip {
@@ -291,6 +292,9 @@ HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
 }
 
 void Pump::Extract() {
+    // Codec adapters use producer-thread-local storage, so a prior extraction
+    // on a reused native thread can never lend its diagnostic to this one.
+    ClearCodecError();
     // Everything 7-Zip owns lives inside this scope so that it is destroyed,
     // and every file handle closed, before the thread exits
     OpenedArchive opened;
@@ -327,7 +331,9 @@ void Pump::Extract() {
     } else if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
         // The consumer closed early; not an error
     } else if (hr != S_OK) {
-        SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" + HResultSuffix(hr));
+        std::string const codecError = TakeCodecError();
+        SetError("failed to extract " + EntryLabel() + " from '" + path_ + "'" +
+                 (codecError.empty() ? HResultSuffix(hr) : ": " + codecError + HResultSuffix(hr)));
     } else if (raw->OpResult() != NArchive::NExtract::NOperationResult::kOK) {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ +
                  "': " + OperationResultMessage(raw->OpResult()));

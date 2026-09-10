@@ -919,6 +919,47 @@ describe('openEntryReader', () => {
     });
   });
 
+  test.each([
+    {
+      codec: 'LZ5',
+      fixture: '7z-lz5-level1-non-solid.7z',
+      frameMagic: Buffer.from([0x05, 0x22, 0x4d, 0x18]),
+    },
+    {
+      codec: 'Lizard',
+      fixture: '7z-lizard-level10-non-solid.7z',
+      frameMagic: Buffer.from([0x06, 0x22, 0x4d, 0x18]),
+    },
+  ])('it preserves the $codec decoder error category', async ({ codec, fixture, frameMagic }) => {
+    await withTempDir(async (directory) => {
+      const archive = await FsUtil.readFile(path.join(FIXTURE_DIR, 'four-small-files', fixture));
+      const frameOffset = archive.indexOf(frameMagic);
+      expect(frameOffset).toBeGreaterThanOrEqual(0);
+
+      // These incompressible fixtures store `1kb` as one raw frame block. Flip
+      // its inner content-checksum byte, leaving the 7z headers intact so the
+      // codec itself—not archive opening—reports the failure.
+      const frameHeaderSize = 15;
+      const blockHeaderOffset = frameOffset + frameHeaderSize;
+      const blockSize = archive.readUInt32LE(blockHeaderOffset) & 0x7f_ff_ff_ff;
+      const checksumOffset = blockHeaderOffset + 4 + blockSize + 4;
+      expect(checksumOffset).toBeLessThan(archive.length);
+      archive[checksumOffset] ^= 1;
+
+      const corrupt = path.join(directory, fixture);
+      await FsUtil.writeFile(corrupt, archive);
+      await expect(
+        drain(
+          sevenZip.openEntryReader({
+            inputFilename: corrupt,
+            format: SevenZipFormat.SEVEN_ZIP,
+            entryPath: '1kb',
+          }),
+        ),
+      ).rejects.toThrow(new RegExp(`${codec} frame decoder reported an error`));
+    });
+  });
+
   test('it rejects an entry it has no way to decode', async () => {
     // Two archives that differ only in the one header field that makes them
     // undecodable, listed and extracted the same way:
