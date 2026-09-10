@@ -15,19 +15,13 @@
 
 namespace sevenzip {
 
-// Runs 7-Zip's push-based Extract() on a dedicated thread and exposes its output
-// as a non-blocking pull. One Pump owns one archive, one entry, and one thread.
-//
-// The thread is never joined. Start() hands the producer a shared_ptr to the
-// Pump, so the object lives as long as the thread needs it and teardown is only:
-// abort, drop the pointer, return. The consumer never waits for the decoder to
-// notice the abort, which for a large solid .7z folder can take seconds, and
-// the consumer is the event loop thread, reaching the destructor from close()
-// or from the garbage collector.
-//
-// Nothing here includes <napi.h>: the two callbacks that reach back into N-API
-// are std::functions the caller supplies.
-/** Runs 7-Zip extraction on a dedicated producer thread and exposes bounded, nonblocking reads. */
+/**
+ * Runs 7-Zip's push extraction on a self-owning producer thread and exposes bounded, nonblocking reads.
+ *
+ * One pump owns one archive and entry. JavaScript cancellation only signals and
+ * drops its reference; the detached producer retains the pump while unwinding,
+ * so the event loop never joins it. N-API interaction is supplied by callbacks.
+ */
 class Pump {
    public:
     // How much decompressed output may sit buffered ahead of the consumer. This
@@ -44,33 +38,15 @@ class Pump {
     // high-watermark and far short of a denial of service.
     static constexpr size_t kMaxChunkBytes = 1U << 24U;  // 16 MiB
 
-    // Creates the Pump and starts its thread. Throws std::system_error if the
-    // OS refuses the thread, in which case nothing was started.
-    //
-    // `entryPath` is resolved against the archive this Pump opens anyway, so
-    // naming an entry costs one pass over the already-parsed item table.
-    //
-    // `entryIndex` is an optional hint: where a previous listing saw that entry.
-    // It is checked against `entryPath` and used only when it still matches, so
-    // a stale one costs the scan it was meant to avoid and nothing else. It is
-    // never used on its own.
-    //
-    // No path means the archive's only entry, which is how the formats that
-    // record no names (`.Z`, `.bz2`, `.lzma`, `.001`) are addressed. An archive
-    // holding more than one entry is then an error rather than a silent pick.
-    //
-    // `chunkBytes` is the size of every chunk TryRead() returns but the last.
-    //
-    // `onReady` is called on the producer thread when a TryRead() that returned
-    // kPending could now proceed; `onExit` exactly once, on the producer thread,
-    // as the last thing it does. Neither may throw.
-    //
-    // `registry` is the environment's live-job registry. The Pump registers
-    // itself for the lifetime of its thread so that environment teardown can
-    // cancel it and wait for it. Throws std::runtime_error if the registry is
-    // already draining, since nothing would then be left to wait for the new
-    // thread.
-    /** Constructs, registers, and starts a self-owning decoder pump. */
+    /**
+     * Constructs, registers, and starts a self-owning decoder pump.
+     *
+     * A validated `entryIndex` hints the scan for `entryPath`; without a path,
+     * the archive must contain exactly one item. `chunkBytes` controls every
+     * returned chunk except the last. Producer-thread callbacks `onReady` and
+     * `onExit` must not throw. Startup throws if thread creation fails or the
+     * environment registry is already draining, without leaving a live worker.
+     */
     static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
                                        std::optional<uint32_t> entryIndex, size_t chunkBytes,
                                        std::shared_ptr<JobRegistry> registry, std::function<void()> onReady,
@@ -87,17 +63,10 @@ class Pump {
     /** Releases pump storage after its detached producer and consumer have both let go. */
     ~Pump() = default;
 
-    // Takes the next chunk of decompressed output without ever blocking.
-    // kPending means `onReady` will fire; kEnd means the entry is done. Throws
-    // std::runtime_error carrying the producer's failure, if it had one, on the
-    // kEnd that follows it.
-    /** Takes one available chunk without blocking and translates terminal producer errors. */
+    /** Takes one chunk without blocking; pending arms `onReady`, and terminal producer failure throws at end. */
     ChunkQueue::Status TryRead(Chunk* out);
 
-    // Tells the producer to stop. Returns immediately: it does not wait for the
-    // producer to notice, and it does not join. Every later TryRead() reports
-    // kEnd. Safe to call more than once, and from a destructor.
-    /** Sets the shared abort flag and releases any producer blocked by queue backpressure. */
+    /** Idempotently signals abort, releases queue backpressure, and returns without joining the producer. */
     void Cancel() noexcept;
 
    private:
@@ -105,32 +74,22 @@ class Pump {
     Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
          std::optional<uint32_t> entryIndex, size_t chunkBytes, std::function<void()> onReady);
 
-    // The producer thread's body. Nothing may escape it: an exception leaving a
-    // std::thread's callable calls std::terminate(). It catches everything
-    // internally rather than being marked noexcept, which would turn such a
-    // throw into that same terminate().
-    /** Contains every exception from extraction and always marks the output queue finished. */
+    /** Contains every extraction exception to prevent thread termination and always finishes the output queue. */
     void Run();
 
-    // The extraction, which reports failure by throwing; Run() catches
-    /** Opens the archive, resolves the requested item, and drives 7-Zip's push extraction API. */
+    /** Opens the archive, resolves the item, and drives 7-Zip extraction, reporting failure by throwing to Run. */
     void Extract();
 
     /** Records the first producer error for delivery when the consumer reaches terminal state. */
     void SetError(std::string message);
 
-    // Resolves `entryPath_`, or the archive's sole entry when there is none, to
-    // the index 7-Zip extracts by. Reports its own failures through SetError().
-    /** Resolves a named entry, validated hint, or sole unnamed entry to an archive item index. */
+    /** Resolves a named entry, validated hint, or sole unnamed entry and reports failures through SetError. */
     HRESULT ResolveEntryIndex(IInArchive& archive, uint32_t* out);
 
     /** Describes the requested entry consistently in native error messages. */
     std::string EntryLabel() const;
 
-    // The message reported when the queue could not allocate. Both the producer
-    // (as it unwinds) and the consumer (if it reaches the end of the stream
-    // first) can be the one to report it.
-    /** Builds the terminal message used when buffering decompressed output fails. */
+    /** Builds the allocation-failure message usable by either the unwinding producer or terminating consumer. */
     std::string OutOfMemoryMessage() const;
 
     std::string path_;

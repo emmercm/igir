@@ -22,11 +22,10 @@ namespace NCrypto::NZipStrong {
 /** Discards strong-encryption password bytes because cryptography is excluded. */
 void CKeyInfo::SetPassword(const Byte* /* data */, UInt32 /* size */) {}
 
-// Every field is zeroed even though no method here ever reads one: the
-// upstream class leaves them to be filled in by the real ReadHeader(), which
-// this file replaces with E_NOTIMPL, so without this they would stay
-// indeterminate for the lifetime of every CHandler that opens a zip
-/** Zero-initializes inert decoder state and leaves the absent CBC decoder null. */
+/**
+ * Zero-initializes state that upstream's real ReadHeader normally fills and
+ * leaves the absent CBC decoder null, avoiding indeterminate fields in each Zip handler.
+ */
 CDecoder::CDecoder() : _cbcDecoder(nullptr), _key{}, _ivSize(0), _iv{}, _remSize(0) {}
 
 /** Rejects strong-encryption passwords without retaining their bytes. */

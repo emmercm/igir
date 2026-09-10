@@ -26,10 +26,10 @@ namespace NCompress::NBZip2 {
 /** Performs no cleanup because the decode-only stub never allocates encoder thread state. */
 void CThreadInfo::Free() {}
 
-// Not `= default`: NumBlocks is a plain field of the upstream class, and the
-// real encoder is what would otherwise set it. Nothing here reads it, but
-// leaving it indeterminate would make the value visible to Bz2Handler.
-/** Initializes the only otherwise-indeterminate public encoder field without constructing encoder state. */
+/**
+ * Initializes the public NumBlocks field normally set by the real encoder,
+ * avoiding an indeterminate value visible to Bz2Handler without constructing encoder state.
+ */
 CEncoder::CEncoder() : NumBlocks(0) {}
 
 /** Rejects every attempt to encode BZip2 data in this extraction-only build. */

@@ -30,15 +30,14 @@ namespace {
 // are non-atomic ++/--. That is safe only because every reference to these
 // objects is created, copied and released on the producer thread alone.
 
-// The sink 7-Zip writes decompressed bytes into. Every Write() blocks while the
-// queue is full, which is what keeps memory bounded; it returns E_ABORT once the
-// consumer has closed, which unwinds Extract() promptly. This thread is the only
-// one in the process that is ever allowed to block on the consumer.
 // clang-format off: the macro opens a class body clang-format cannot see, so it
 // reads everything below as file scope and unindents it. The NOLINT is about
 // the code the macro generates, not about anything written here.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
-/** Adapts 7-Zip's push output stream to the Pump's bounded chunk queue. */
+/**
+ * Adapts 7-Zip's push output to the bounded queue, blocking only the producer
+ * when full and returning E_ABORT after the consumer closes.
+ */
 Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
    public:
     /** Borrows queue and cancellation state owned by the Pump driving extraction. */
@@ -50,13 +49,12 @@ Z7_CLASS_IMP_COM_1(QueueOutStream, ISequentialOutStream)
 };
 // clang-format on
 
-// Extraction driver. GetStream() hands 7-Zip the sink for the one entry we want
-// and nullptr for anything else. SetCompleted() is the second abort check: for a
-// solid 7z folder whose target entry is last, no Write() happens for a long
-// time, so without this an abort would not be observed until decoding finished.
 // clang-format off: see above.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
-/** Selects one archive item, supplies its output stream, and captures 7-Zip's operation result. */
+/**
+ * Selects one item, supplies only its output stream, captures its result, and
+ * checks cancellation during progress when a solid archive produces no output for a long time.
+ */
 Z7_CLASS_IMP_COM_1(ExtractCallback, IArchiveExtractCallback)
     Z7_IFACE_COM7_IMP(IProgress)
    public:
@@ -135,9 +133,7 @@ Z7_COM7F_IMF(ExtractCallback::SetOperationResult(Int32 opRes)) {
     return S_OK;
 }
 
-// How many chunks may sit queued, for a given chunk size: enough to cover the
-// read-ahead bound, and never fewer than two
-/** Calculates a bounded queue depth that covers the target read-ahead byte budget. */
+/** Calculates enough queued chunks to cover the read-ahead byte budget, with a minimum of two. */
 size_t ReadAheadChunks(size_t chunkBytes) {
     return std::max<size_t>(2, (Pump::kReadAheadBytes + chunkBytes - 1) / chunkBytes);
 }

@@ -19,10 +19,8 @@ std::atomic<bool> allocationEntered{false};
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 }  // namespace
 
-// These allocation overrides provide deterministic failure and pause injection
-// for the standalone concurrency test.
 // NOLINTBEGIN(cppcoreguidelines-init-variables,cppcoreguidelines-no-malloc,misc-unused-parameters,readability-inconsistent-declaration-parameter-name,readability-named-parameter)
-/** Allocates storage while honoring the test's scalar-allocation failure switch. */
+/** Overrides scalar allocation to provide deterministic failure injection for the standalone test. */
 void* operator new(std::size_t size) {
     if (failAllocation) {
         throw std::bad_alloc();

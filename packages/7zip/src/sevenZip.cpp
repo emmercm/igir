@@ -67,19 +67,19 @@ void EnsureInitialized() {
 
 namespace {
 
-// One registered archive handler. Both fields come from the same
-// GetHandlerProperty2() sweep, so a handler whose name or class ID could not be
-// read is dropped rather than half-populated.
-/** Pairs one registered archive handler's display name with its COM class identifier. */
+/**
+ * Pairs one handler's display name with its COM class ID from the same property
+ * sweep, so an unreadable field causes the whole handler to be omitted.
+ */
 struct Format {
     std::string name;
     GUID classId{};
 };
 
-// The handler set is fixed at build time (each compiled-in handler registers
-// itself from a static initializer before main()), so this table is built once
-// and read thereafter, and no archive open re-enumerates the handlers
-/** Lazily enumerates valid compiled-in handlers once and returns the immutable process-wide table. */
+/**
+ * Lazily enumerates the fixed, statically registered handler set once and
+ * returns the immutable table without re-enumerating on archive opens.
+ */
 const std::vector<Format>& Formats() {
     // Function-local static: initialized on first use, and the C++ runtime makes
     // that thread-safe. Extraction opens archives from its own thread, so this
@@ -142,11 +142,10 @@ std::string FormatLabel(uint32_t formatIndex) {
 
 namespace {
 
-// Opens one file as a seekable IInStream. Returns nullptr when the file cannot
-// be opened; the CInFileStream's destructor closes the handle. Takes a UString
-// because its other caller, OpenCallback::GetStream, is handed volume names in
-// 7-Zip's own wide-string type.
-/** Opens a path as an owned seekable 7-Zip input stream, returning null on ordinary open failure. */
+/**
+ * Opens a 7-Zip UString path as an owned seekable stream whose destructor closes
+ * its handle, returning null for an ordinary open failure.
+ */
 CMyComPtr<IInStream> OpenFile(const UString& path) {
     // 7-Zip's COM classes declare AddRef/Release private (Z7_COM_UNKNOWN_IMP),
     // so the owning pointer has to be typed as the interface, not the class,
@@ -173,28 +172,17 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
     return {file};
 }
 
-// A callback that reports no progress and resolves an archive's sibling volumes.
-//
-// Implementing IArchiveOpenVolumeCallback lets 7-Zip find a multi-volume set by
-// itself, given nothing but the first volume's path. The handler asks for the
-// start volume's name through GetProperty(kpidName), derives each successive
-// name from it, and requests them through GetStream(); this class only resolves
-// a bare name against the directory the archive was opened from. Volume
-// discovery (naming schemes, ordering, how many there are) stays inside the
-// vendored handlers.
-//
-// It is also mandatory for two of the registered handlers:
-//
-//   - the Split handler queries for this interface and refuses to open anything
-//     at all when the query fails.
-//   - the Zip handler dereferences the callback with no null check for any .zip
-//     whose end-of-central-directory still carries its span-mode marker, so
-//     passing nullptr would SIGSEGV on such archives.
 // clang-format off: the macro opens a class body clang-format cannot see, so it
 // reads everything below as file scope and unindents it. The NOLINT is about
 // the code the macro generates, not about anything written here.
 // NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
-/** Provides cancellable open progress and resolves sibling volumes relative to the first volume's directory. */
+/**
+ * Provides cancellable open progress and resolves handler-derived sibling
+ * volume names relative to the first volume's directory.
+ *
+ * The callback is mandatory: Split refuses to open without it, while Zip can
+ * dereference a missing callback for archives retaining a span marker.
+ */
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
     UString name_;
@@ -204,9 +192,7 @@ Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallbac
     const std::atomic<bool>* abort_ = nullptr;
 
    public:
-    // `path` is the volume the caller named. Split into the directory to
-    // resolve sibling volumes against and the file name to report as kpidName.
-    /** Splits the named first volume into the directory and basename 7-Zip expects from its callback. */
+    /** Splits the named first volume into the sibling-resolution directory and kpidName basename. */
     OpenCallback(const UString& path, const std::atomic<bool>* abort) : abort_(abort) {
         SplitPathToParts_2(path, dirPrefix_, name_);
     }

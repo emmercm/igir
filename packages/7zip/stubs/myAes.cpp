@@ -24,9 +24,7 @@
 // in Crypto/MyAes.h references.
 extern "C" {
 
-// Only the address of this function is ever taken (by CAesCtrCoder's inline
-// constructor); Filter() below never calls through _setKeyFunc
-/** Satisfies an address-only AES key-schedule reference; no caller executes it in this build. */
+/** Satisfies CAesCtrCoder's address-only AES key-schedule reference; Filter never invokes it in this build. */
 void Z7_FASTCALL Aes_SetKey_Enc(UInt32* /* aes */, const Byte* /* key */, unsigned /* keySize */) {}
 
 // Only the address of this variable is ever taken; never dereferenced/called

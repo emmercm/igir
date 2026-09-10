@@ -38,10 +38,9 @@ void DrainFinished(uv_async_t* handle) {
  * removed, preventing workers from outliving their N-API environment.
  *
  * Runs when the environment is being torn down, on the thread doing teardown.
-//
-// The wait cannot happen inline: this runs on the JS thread, and blocking it
-// while a producer is still unwinding stalls whatever that producer needs the
-// loop for. napi_add_async_cleanup_hook suspends teardown until
+ * The wait cannot happen inline: this runs on the JS thread, and blocking it
+ * while a producer is still unwinding stalls whatever that producer needs the
+ * loop for. napi_add_async_cleanup_hook suspends teardown until
  * napi_remove_async_cleanup_hook() is called back on the event loop.
  */
 void DrainOnCleanup(napi_async_cleanup_hook_handle /*handle*/, void* arg) {

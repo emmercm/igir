@@ -34,20 +34,17 @@ struct Entry {
     bool isEncrypted = false;
 };
 
-// One listing, on a dedicated thread rather than on the libuv thread pool. A
-// listing holds its thread from the archive open through the last property read,
-// and for a large solid .7z the open alone decodes a compressed header, far
-// longer than the short tasks the pool's four default threads are sized for, so
-// concurrent listings would stall unrelated fs, dns and zlib work.
-//
-// The price is one AsyncSignal per listing, and this class owning its own
-// lifetime.
-/** Owns one detached archive-listing worker and incrementally marshals its result on the event loop. */
+/**
+ * Owns one detached listing worker and incrementally marshals results on the event loop.
+ *
+ * A dedicated thread prevents expensive solid-header decoding from occupying
+ * libuv's small pool and stalling unrelated filesystem, DNS, or zlib work. The
+ * job self-owns and uses one AsyncSignal for delivery.
+ */
 class ListJob {
    public:
-    // Starts the listing. On success the returned promise settles when the
-    // result batches finish; on failure to start, it is rejected before returning.
-    /** Creates, registers, and starts a listing job, returning its pending promise. */
+    /** Creates, registers, and starts a job; its promise rejects immediately on startup failure or settles after
+     * batches. */
     static Napi::Promise Start(Napi::Env env, std::string path, uint32_t formatIndex);
 
     /** Listing jobs own a unique worker and signal and therefore cannot be copied. */
@@ -67,10 +64,7 @@ class ListJob {
         }
     }
 
-    // Asks the listing to stop. Returns immediately; the thread notices at its
-    // next item, or inside the open through the abort flag handed to
-    // OpenArchive(). Safe to call from any thread and more than once.
-    /** Sets the cancellation flag read while opening and enumerating the archive. */
+    /** Idempotently requests cancellation from any thread, observed while opening or before the next item. */
     void Cancel() noexcept { abort_.store(true, std::memory_order_relaxed); }
 
    private:
@@ -81,18 +75,13 @@ class ListJob {
           formatIndex_(formatIndex),
           failure_(Napi::Persistent(Napi::Error::New(env, "failed to build the entry list").Value())) {}
 
-    // The thread body. Nothing may escape it: an exception leaving a
-    // std::thread's callable calls std::terminate(). Not marked noexcept, which
-    // would turn such a throw into that same terminate(); it catches internally.
-    /** Contains all worker exceptions, records terminal state, and notifies the event loop. */
+    /** Contains all worker exceptions to prevent std::terminate, records terminal state, and notifies the loop. */
     void Run();
 
-    // The listing, which reports failure by throwing; Run() catches
-    /** Opens the archive and copies its item properties into native entry records. */
+    /** Opens the archive and copies item properties into native records, reporting failure by throwing to Run. */
     void List();
 
-    // Marshals the result back to the event loop and settles the promise
-    /** Marshals a time- and count-bounded entry batch; true requests another event-loop turn. */
+    /** Marshals and settles a time- and count-bounded entry batch; true requests another loop turn. */
     bool Emit(Napi::Env env);
 
     std::shared_ptr<AsyncSignal> signal_;
