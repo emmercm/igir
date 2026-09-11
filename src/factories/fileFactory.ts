@@ -18,7 +18,11 @@ import Dax from '../models/files/archives/maxcso/dax.js';
 import Zso from '../models/files/archives/maxcso/zso.js';
 import NkitIso from '../models/files/archives/nkitIso.js';
 import Rar from '../models/files/archives/rar.js';
+import Bzip2 from '../models/files/archives/sevenZip/bzip2.js';
+import Lzma from '../models/files/archives/sevenZip/lzma.js';
+import Lzma86 from '../models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../models/files/archives/sevenZip/sevenZip.js';
+import Split from '../models/files/archives/sevenZip/split.js';
 import Z from '../models/files/archives/sevenZip/z.js';
 import ZipSpanned from '../models/files/archives/sevenZip/zipSpanned.js';
 import ZipX from '../models/files/archives/sevenZip/zipX.js';
@@ -150,7 +154,7 @@ export default class FileFactory {
    * Assuming we've already checked if the file path has a valid archive extension, assume that
    * archive extension is accurate and parse the archive.
    *
-   * This ordering should match {@link ROMScanner#archiveEntryPriority}
+   * This ordering should match {@link ROMIndexer#archiveEntryPriority}
    */
   async entriesFromArchive<A extends Archive>(
     archive: A,
@@ -205,6 +209,18 @@ export default class FileFactory {
     if (ZipX.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new ZipX(filePath)];
     }
+    if (Bzip2.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Bzip2(filePath)];
+    }
+    if (Lzma86.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Lzma86(filePath)];
+    }
+    if (Lzma.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Lzma(filePath)];
+    }
+    if (Split.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
+      return [new Split(filePath)];
+    }
     if (Cso.getExtensions().some((ext) => fileExt.toLowerCase().endsWith(ext))) {
       return [new Cso(filePath)];
     }
@@ -240,7 +256,7 @@ export default class FileFactory {
    * Without knowing if the file is an archive or not, read its file signature, and if there is a
    * match then parse the archive.
    *
-   * This ordering should match {@link ROMScanner#archiveEntryPriority}
+   * This ordering should match {@link ROMIndexer#archiveEntryPriority}
    */
   private async entriesFromArchiveSignature(
     filePath: string,
@@ -304,6 +320,10 @@ export default class FileFactory {
       ...Z.getExtensions(),
       ...ZipSpanned.getExtensions(),
       ...ZipX.getExtensions(),
+      ...Bzip2.getExtensions(),
+      ...Lzma.getExtensions(),
+      ...Lzma86.getExtensions(),
+      ...Split.getExtensions(),
       // Compressed images
       ...Cso.getExtensions(),
       ...Dax.getExtensions(),

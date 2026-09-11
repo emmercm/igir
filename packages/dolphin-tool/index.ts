@@ -2,8 +2,6 @@ import module from 'node:module';
 import os from 'node:os';
 import stream from 'node:stream';
 
-import Defaults from '../../src/globals/defaults.js';
-
 const require = module.createRequire(import.meta.url);
 
 export const ContainerFormat = {
@@ -25,6 +23,12 @@ export interface InfoOptions {
 
 export interface OpenReaderOptions {
   inputFilename: string;
+  /**
+   * The `highWaterMark` of the returned stream, and so the number of bytes
+   * asked of the addon per read. Omit it to take Node's own default for a
+   * {@link stream.Readable}.
+   */
+  highWaterMark?: number;
 }
 
 interface NativeReader {
@@ -52,7 +56,7 @@ const binding = ((): DolphinBinding => {
  * Wrap a native Dolphin reader in a {@link stream.Readable}. The reader is closed
  * when the stream ends, errors, or is destroyed.
  */
-function readableFromReader(reader: NativeReader): stream.Readable {
+function readableFromReader(reader: NativeReader, highWaterMark?: number): stream.Readable {
   let isClosed = false;
   const closeOnce = (): void => {
     if (isClosed) {
@@ -62,10 +66,10 @@ function readableFromReader(reader: NativeReader): stream.Readable {
     reader.close();
   };
   return new stream.Readable({
-    highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+    highWaterMark,
     async read(): Promise<void> {
       try {
-        const chunk = await reader.read(Defaults.FILE_READING_CHUNK_SIZE);
+        const chunk = await reader.read(this.readableHighWaterMark);
         if (chunk === null || chunk.length === 0) {
           closeOnce();
           // eslint-disable-next-line unicorn/no-null
@@ -103,6 +107,6 @@ export default {
    */
   openReader(options: OpenReaderOptions): stream.Readable {
     const reader = binding.openReader(options.inputFilename);
-    return readableFromReader(reader);
+    return readableFromReader(reader, options.highWaterMark);
   },
 };

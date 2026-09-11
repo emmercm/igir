@@ -3,9 +3,18 @@ import { ProgressBarSymbol } from '../../console/progressBar.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
 import Chd from '../../models/files/archives/chd/chd.js';
 import Dolphin from '../../models/files/archives/dolphin/dolphin.js';
+import Gzip from '../../models/files/archives/gzip.js';
 import Maxcso from '../../models/files/archives/maxcso/maxcso.js';
+import NkitIso from '../../models/files/archives/nkitIso.js';
 import Rar from '../../models/files/archives/rar.js';
+import Bzip2 from '../../models/files/archives/sevenZip/bzip2.js';
+import Lzma from '../../models/files/archives/sevenZip/lzma.js';
+import Lzma86 from '../../models/files/archives/sevenZip/lzma86.js';
 import SevenZip from '../../models/files/archives/sevenZip/sevenZip.js';
+import Split from '../../models/files/archives/sevenZip/split.js';
+import Z from '../../models/files/archives/sevenZip/z.js';
+import ZipSpanned from '../../models/files/archives/sevenZip/zipSpanned.js';
+import ZipX from '../../models/files/archives/sevenZip/zipX.js';
 import Tar from '../../models/files/archives/tar.js';
 import Zip from '../../models/files/archives/zip.js';
 import type File from '../../models/files/file.js';
@@ -144,17 +153,44 @@ export default class ROMIndexer extends Module {
     if (file.getArchive() instanceof Rar) {
       return 3;
     }
-    if (file.getArchive() instanceof SevenZip) {
+    if (file.getArchive() instanceof Gzip) {
       return 4;
     }
-    if (file.getArchive() instanceof Maxcso) {
+    if (file.getArchive() instanceof SevenZip) {
       return 5;
     }
-    if (file.getArchive() instanceof Dolphin) {
+    if (file.getArchive() instanceof Z) {
       return 6;
     }
-    if (file.getArchive() instanceof Chd) {
+    if (file.getArchive() instanceof ZipSpanned) {
       return 7;
+    }
+    if (file.getArchive() instanceof ZipX) {
+      return 8;
+    }
+    if (file.getArchive() instanceof Bzip2) {
+      return 9;
+    }
+    if (file.getArchive() instanceof Lzma86) {
+      return 10;
+    }
+    if (file.getArchive() instanceof Lzma) {
+      return 11;
+    }
+    if (file.getArchive() instanceof Split) {
+      return 12;
+    }
+    if (file.getArchive() instanceof Maxcso) {
+      return 13;
+    }
+    if (file.getArchive() instanceof Dolphin) {
+      return 14;
+    }
+    if (file.getArchive() instanceof Chd) {
+      return 15;
+    }
+    if (file.getArchive() instanceof NkitIso) {
+      return 16;
     }
     return 99;
   }

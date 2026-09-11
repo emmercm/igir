@@ -94,7 +94,14 @@ export default class FileSignature {
     '7z': new FileSignature('.7z', [{ value: Buffer.from('377ABCAF271C', 'hex') }]),
 
     // @see https://en.wikipedia.org/wiki/List_of_file_signatures
-    bz2: new FileSignature('.bz2', [{ value: Buffer.from('BZh') }]),
+    bz2: new FileSignature('.bz2', [
+      { value: Buffer.from('BZh') },
+      { offset: 4, value: Buffer.from('314159265359', 'hex') }, // BCD of pi
+    ]),
+    bz2_empty: new FileSignature('.bz2', [
+      { value: Buffer.from('BZh') },
+      { offset: 4, value: Buffer.from('177245385090', 'hex') }, // BCD of sqrt(pi)
+    ]),
 
     // @see https://docs.fileformat.com/compression/gz/
     gz: new FileSignature('.gz', [{ value: Buffer.from('1F8B08', 'hex') }]), // deflate

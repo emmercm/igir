@@ -72,6 +72,7 @@ export default class ChdGdi extends Chd {
       inputFilename: this.getFilePath(),
       mode: 'gdi',
       trackIndex: entryIndex,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
   }
 
@@ -138,6 +139,7 @@ export default class ChdGdi extends Chd {
           inputFilename: this.getFilePath(),
           mode: 'gdi',
           trackIndex: file.trackIndex,
+          highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
         });
         let lastProgress = 0;
         const checksums = await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {

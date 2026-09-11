@@ -2,6 +2,7 @@ import path from 'node:path';
 import type stream from 'node:stream';
 
 import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
+import Defaults from '../../../../globals/defaults.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
 import StreamUtil from '../../../../utils/streamUtil.js';
 import type { ChecksumBitmaskValue } from '../../fileChecksums.js';
@@ -90,6 +91,7 @@ export default class ChdRaw extends Chd {
   ): Promise<T> {
     const sourceStream: stream.Readable = chdman.openRawReader({
       inputFilename: this.getFilePath(),
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
     // A non-zero start offset (e.g. a detected ROM header) must skip that many
     // leading bytes of the forward-only stream.

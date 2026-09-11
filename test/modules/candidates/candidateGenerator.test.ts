@@ -16,8 +16,10 @@ import Release from '../../../src/models/dats/release.js';
 import ROM from '../../../src/models/dats/rom.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
 import ChdBinCue from '../../../src/models/files/archives/chd/chdBinCue.js';
+import Gzip from '../../../src/models/files/archives/gzip.js';
 import NkitIso from '../../../src/models/files/archives/nkitIso.js';
 import Rar from '../../../src/models/files/archives/rar.js';
+import Bzip2 from '../../../src/models/files/archives/sevenZip/bzip2.js';
 import SevenZip from '../../../src/models/files/archives/sevenZip/sevenZip.js';
 import Tar from '../../../src/models/files/archives/tar.js';
 import Zip from '../../../src/models/files/archives/zip.js';
@@ -721,6 +723,31 @@ describe.each(['copy', 'move'])('raw writing: %s', (command) => {
 
       // Then "game with no ROMs" and "game with two ROMs (parent)"
       expect(candidates).toHaveLength(2);
+    });
+  });
+
+  describe('archive type priority', () => {
+    it('should prefer the higher-priority archive type when both contain every ROM', async () => {
+      // Given two archives that each contain the game's only ROM, where the lower-priority one
+      // sorts alphabetically first - so only the archive type priority can decide between them
+      const bzip2 = new Bzip2('a.bz2');
+      const gzip = new Gzip('z.gz');
+      const files = await Promise.all([
+        ArchiveEntry.entryOf({ archive: bzip2, entryPath: 'one.rom', size: 1, crc32: '12345678' }),
+        ArchiveEntry.entryOf({ archive: gzip, entryPath: 'one.rom', size: 1, crc32: '12345678' }),
+      ]);
+
+      // When
+      const candidates = await candidateGenerator(options, datWithFourGames, files);
+
+      // Then the gzip is raw-written, because gzip out-ranks bzip2 in the archive type priority
+      const oneRomCandidate = candidates.find(
+        (candidate) => candidate.getName() === gameWithOneRom.getName(),
+      );
+      expect(oneRomCandidate).toBeDefined();
+      expect(
+        oneRomCandidate?.getRomsWithFiles().map((rwf) => rwf.getInputFile().getFilePath()),
+      ).toEqual([path.resolve(gzip.getFilePath())]);
     });
   });
 

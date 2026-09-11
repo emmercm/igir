@@ -2,8 +2,6 @@ import module from 'node:module';
 import os from 'node:os';
 import stream from 'node:stream';
 
-import Defaults from '../../src/globals/defaults.js';
-
 const require = module.createRequire(import.meta.url);
 
 export const CHDType = {
@@ -70,14 +68,19 @@ export const TrackReaderMode = {
 } as const;
 export type TrackReaderModeValue = (typeof TrackReaderMode)[keyof typeof TrackReaderMode];
 
-export interface OpenTrackReaderOptions {
+export interface OpenReaderOptions {
   inputFilename: string;
-  mode: TrackReaderModeValue;
-  trackIndex: number;
+  /**
+   * The `highWaterMark` of the returned stream, and so the number of bytes
+   * asked of the addon per read. Omit it to take Node's own default for a
+   * {@link stream.Readable}.
+   */
+  highWaterMark?: number;
 }
 
-export interface OpenRawReaderOptions {
-  inputFilename: string;
+export interface OpenTrackReaderOptions extends OpenReaderOptions {
+  mode: TrackReaderModeValue;
+  trackIndex: number;
 }
 
 // The numeric track-listing/reading mode the native addon understands. Constrained to
@@ -120,7 +123,7 @@ const binding = ((): ChdmanBinding => {
  * stream ends, errors, or is destroyed. Callers must consume the stream to its end or
  * call `destroy()` so the native reader is released.
  */
-function readableFromReader(reader: NativeTrackReader): stream.Readable {
+function readableFromReader(reader: NativeTrackReader, highWaterMark?: number): stream.Readable {
   let isClosed = false;
   const closeOnce = (): void => {
     if (isClosed) {
@@ -131,10 +134,10 @@ function readableFromReader(reader: NativeTrackReader): stream.Readable {
     reader.close();
   };
   return new stream.Readable({
-    highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+    highWaterMark,
     async read(): Promise<void> {
       try {
-        const chunk = await reader.read(Defaults.FILE_READING_CHUNK_SIZE);
+        const chunk = await reader.read(this.readableHighWaterMark);
         if (chunk === null || chunk.length === 0) {
           closeOnce();
           // eslint-disable-next-line unicorn/no-null
@@ -200,15 +203,15 @@ export default {
   openTrackReader(options: OpenTrackReaderOptions): stream.Readable {
     const mode = options.mode === TrackReaderMode.GDI ? ChdmanMode.GDI : ChdmanMode.CUEBIN;
     const reader = binding.openTrackReader(options.inputFilename, mode, options.trackIndex);
-    return readableFromReader(reader);
+    return readableFromReader(reader, options.highWaterMark);
   },
 
   /**
    * Open a {@link stream.Readable} over the full logical byte range of a RAW, HARD_DISK, or
    * DVD CHD, yielding exactly the bytes chdman's extractRaw would write.
    */
-  openRawReader(options: OpenRawReaderOptions): stream.Readable {
+  openRawReader(options: OpenReaderOptions): stream.Readable {
     const reader = binding.openRawReader(options.inputFilename);
-    return readableFromReader(reader);
+    return readableFromReader(reader, options.highWaterMark);
   },
 };

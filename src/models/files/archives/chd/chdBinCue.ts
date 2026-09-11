@@ -71,6 +71,7 @@ export default class ChdBinCue extends Chd {
       inputFilename: this.getFilePath(),
       mode: 'cuebin',
       trackIndex: entryIndex,
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
     });
   }
 
@@ -139,6 +140,7 @@ export default class ChdBinCue extends Chd {
           inputFilename: this.getFilePath(),
           mode: 'cuebin',
           trackIndex: file.trackIndex,
+          highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
         });
         let lastProgress = 0;
         const checksums = await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {

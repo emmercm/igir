@@ -1,0 +1,394 @@
+#include "sevenZip.h"
+
+#include <algorithm>
+#include <atomic>
+#include <cctype>
+#include <cstring>
+#include <mutex>
+#include <string>
+#include <utility>
+
+#include "7zCrc.h"
+#include "7zip/Archive/IArchive.h"
+#include "7zip/Common/FileStreams.h"
+#include "7zip/PropID.h"
+#include "Common/StringConvert.h"
+#include "Common/UTFConvert.h"
+#include "Common/Wildcard.h"
+#include "Windows/PropVariant.h"
+#include "Windows/PropVariantConv.h"
+
+// 7-Zip's own archive factory exports, declared here because the vendored tree
+// ships no header for them
+STDAPI GetNumberOfFormats(UInt32* numFormats);
+STDAPI GetHandlerProperty2(UInt32 formatIndex, PROPID propID, PROPVARIANT* value);
+STDAPI CreateArchiver(const GUID* clsid, const GUID* iid, void** outObject);
+
+namespace sevenzip {
+
+// Z7_COM7F_IMF and friends expand to 7-Zip's own `throw()` specification on
+// every COM method below. It comes from the vendored interface declarations
+// these definitions have to match, so none of them can be respelled `noexcept`
+// from here.
+// NOLINTBEGIN(modernize-use-noexcept)
+
+// PROPVARIANT is a tagged union whose `vt` field is the tag, so reading the
+// member that `vt` names is the only way its API can be used at all. Every
+// cppcoreguidelines-pro-type-union-access suppression below is that, and each
+// one is guarded by a `vt` check on the line above it.
+
+namespace {
+
+// A once_flag is mutable by definition, and this one guards a process-wide
+// initialization that 7-Zip only lets us perform once.
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+std::once_flag g_initOnce;
+
+/** Converts a nullable 7-Zip BSTR property to an owning UTF-8 string. */
+std::string ToUtf8(const BSTR bstr) {  // NOLINT(misc-misplaced-const): BSTR is
+                                       // a typedef for a pointer, and this is
+                                       // 7-Zip's own spelling of the parameter
+    if (bstr == nullptr) {
+        return {};
+    }
+    UString wide;
+    wide = bstr;
+    AString narrow;
+    ConvertUnicodeToUTF8(wide, narrow);
+    return {narrow.Ptr(), static_cast<size_t>(narrow.Len())};
+}
+
+}  // namespace
+
+void EnsureInitialized() {
+    // Upstream requires this once, before any other CRC function is called
+    std::call_once(g_initOnce, []() { CrcGenerateTable(); });
+}
+
+namespace {
+
+/**
+ * Pairs one handler's display name with its COM class ID from the same property
+ * sweep, so an unreadable field causes the whole handler to be omitted.
+ */
+struct Format {
+    std::string name;
+    GUID classId{};
+};
+
+/**
+ * Lazily enumerates the fixed, statically registered handler set once and
+ * returns the immutable table without re-enumerating on archive opens.
+ */
+const std::vector<Format>& Formats() {
+    // Function-local static: initialized on first use, and the C++ runtime makes
+    // that thread-safe. Extraction opens archives from its own thread, so this
+    // is genuinely reachable from more than one.
+    static const std::vector<Format> formats = []() {
+        EnsureInitialized();
+        std::vector<Format> out;
+        UInt32 count = 0;
+        if (GetNumberOfFormats(&count) != S_OK) {
+            return out;
+        }
+        out.reserve(count);
+        for (UInt32 i = 0; i < count; i++) {
+            NWindows::NCOM::CPropVariant nameProp;
+            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kName, &nameProp) != S_OK || nameProp.vt != VT_BSTR) {
+                continue;
+            }
+            NWindows::NCOM::CPropVariant clsProp;
+            if (GetHandlerProperty2(i, NArchive::NHandlerPropID::kClassID, &clsProp) != S_OK || clsProp.vt != VT_BSTR) {
+                continue;
+            }
+            // kClassID is a raw 16-byte GUID carried in a BSTR.
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
+            if (::SysStringByteLen(clsProp.bstrVal) != sizeof(GUID)) {
+                continue;
+            }
+            Format format;
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
+            format.name = ToUtf8(nameProp.bstrVal);
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
+            memcpy(&format.classId, clsProp.bstrVal, sizeof(GUID));
+            out.push_back(std::move(format));
+        }
+        return out;
+    }();
+    return formats;
+}
+
+}  // namespace
+
+std::vector<std::string> FormatNames() {
+    const std::vector<Format>& formats = Formats();
+    std::vector<std::string> names;
+    names.reserve(formats.size());
+    for (const Format& format : formats) {
+        names.push_back(format.name);
+    }
+    return names;
+}
+
+std::string FormatLabel(uint32_t formatIndex) {
+    const std::vector<Format>& formats = Formats();
+    if (formatIndex >= formats.size()) {
+        return "format #" + std::to_string(formatIndex);
+    }
+    std::string name = formats[formatIndex].name;
+    std::ranges::transform(name, name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return name;
+}
+
+namespace {
+
+/**
+ * Opens a 7-Zip UString path as an owned seekable stream whose destructor closes
+ * its handle, returning null for an ordinary open failure.
+ */
+CMyComPtr<IInStream> OpenFile(const UString& path) {
+    // 7-Zip's COM classes declare AddRef/Release private (Z7_COM_UNKNOWN_IMP),
+    // so the owning pointer has to be typed as the interface, not the class,
+    // and Open() has to be called through the raw pointer before ownership is
+    // handed over. The reference count starts at 0, so until CMyComPtr AddRef()s
+    // it below nothing else holds this and `delete` is the whole cleanup.
+    //
+    // The conversion is hoisted above the `new` rather than written inline in
+    // the Open() call, which is what makes that cleanup sufficient: on POSIX
+    // us2fs() allocates and throws CNewException, and called inline it would run
+    // while `file` was still raw-owned, leaking the stream and its file handle.
+    // Nothing left between the new and the delete can throw.
+    //
+    // A local CMyComPtr taking ownership right after the new would be the more
+    // obviously correct shape, but clang-analyzer models the returned copy as
+    // elided while still running the local's destructor and reports a
+    // use-after-free inside MyCom.h, which a vendored file cannot annotate.
+    FString const filePath = us2fs(path);
+    auto* file = new CInFileStream;
+    if (!file->Open(filePath)) {
+        delete file;
+        return {};
+    }
+    return {file};
+}
+
+// clang-format off: the macro opens a class body clang-format cannot see, so it
+// reads everything below as file scope and unindents it. The NOLINT is about
+// the code the macro generates, not about anything written here.
+/**
+ * Provides cancellable open progress and resolves handler-derived sibling
+ * volume names relative to the first volume's directory.
+ *
+ * The callback is mandatory: Split refuses to open without it, while Zip can
+ * dereference a missing callback for archives retaining a span marker.
+ */
+// NOLINTNEXTLINE(misc-const-correctness,readability-inconsistent-ifelse-braces)
+Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
+    UString dirPrefix_;
+    UString name_;
+    // Borrowed, not owned. It lives in the Pump or ListJob driving this open,
+    // which outlives the open by construction, since the open runs inside one
+    // of that object's own methods. Null when the caller cannot be cancelled.
+    const std::atomic<bool>* abort_ = nullptr;
+
+   public:
+    /** Splits the named first volume into the sibling-resolution directory and kpidName basename. */
+    OpenCallback(const UString& path, const std::atomic<bool>* abort) : abort_(abort) {
+        SplitPathToParts_2(path, dirPrefix_, name_);
+    }
+
+    /** Reads the optional borrowed cancellation flag without imposing synchronization beyond cancellation itself. */
+    [[nodiscard]] bool Aborted() const { return abort_ != nullptr && abort_->load(std::memory_order_relaxed); }
+};
+// clang-format on
+
+/** Accepts 7-Zip's open total unless the owning job has already been cancelled. */
+Z7_COM7F_IMF(OpenCallback::SetTotal(const UInt64* /*files*/, const UInt64* /*bytes*/)) {
+    return Aborted() ? E_ABORT : S_OK;
+}
+
+/** Interrupts an in-progress archive open when its owner has requested cancellation. */
+Z7_COM7F_IMF(OpenCallback::SetCompleted(const UInt64* /*files*/, const UInt64* /*bytes*/)) {
+    return Aborted() ? E_ABORT : S_OK;
+}
+
+/** Supplies the first volume's basename through kpidName and reports other properties unavailable. */
+Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
+    NWindows::NCOM::CPropVariant prop;
+    // kpidName is the only property the handlers ask for here. Answering an
+    // unrecognized PROPID with an empty variant is how upstream's own callbacks
+    // report "not available".
+    try {
+        if (propID == kpidName) {
+            // Copies the name into a BSTR, so it allocates, and this method
+            // carries upstream's `throw()`, noexcept under C++17, so an
+            // escaping exception would call std::terminate()
+            prop = name_;
+        }
+    } catch (...) {
+        return E_OUTOFMEMORY;
+    }
+    // Nothrow: Detach() moves the variant's bytes into `value` and leaves this
+    // one empty
+    prop.Detach(value);
+    return S_OK;
+}
+
+/** Opens a requested sibling volume under the original archive directory. */
+Z7_COM7F_IMF(OpenCallback::GetStream(const wchar_t* name, IInStream** inStream)) {
+    *inStream = nullptr;
+    // Checked here too: a spanned set opens one file per volume, and a handler
+    // that never reports progress would otherwise walk all of them after a
+    // cancel. S_FALSE would be wrong here: it means "no such volume", which
+    // handlers take as a normal end of the set.
+    if (Aborted()) {
+        return E_ABORT;
+    }
+    // A missing volume is not an error: S_FALSE is how a handler learns it has
+    // reached the end of the set, and it opens what it already has.
+    //
+    // Building the path and constructing the CInFileStream both allocate, and
+    // this method carries upstream's `throw()`, so an escaping std::bad_alloc
+    // would call std::terminate(). E_OUTOFMEMORY rather than S_FALSE, which
+    // would turn running out of memory into a silently short archive.
+    try {
+        // Initialized from the call rather than assigned to afterwards, so that
+        // the stream is only ever owned by one pointer
+        CMyComPtr<IInStream> stream = OpenFile(dirPrefix_ + name);
+        if (!stream) {
+            return S_FALSE;
+        }
+        *inStream = stream.Detach();
+    } catch (...) {
+        return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
+}  // namespace
+
+HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive* out, const std::atomic<bool>* abort) {
+    const std::vector<Format>& formats = Formats();
+    if (path.empty() || formatIndex >= formats.size()) {
+        return E_INVALIDARG;
+    }
+    GUID const clsid = formats[formatIndex].classId;
+
+    UString const widePath = GetUnicodeString(path.c_str(), CP_UTF8);
+    CMyComPtr<IInStream> const stream = OpenFile(widePath);
+    if (!stream) {
+        return kVolumeOpenFailed;
+    }
+
+    CMyComPtr<IInArchive> archive;
+    // CreateArchiver takes its out-parameter as void**, like every COM factory
+    // in the vendored tree, so the cast is unavoidable.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    RINOK(CreateArchiver(&clsid, &IID_IInArchive, reinterpret_cast<void**>(&archive)))
+    if (!archive) {
+        return E_FAIL;
+    }
+    // Only the first volume is opened here. When the archive spans several, the
+    // handler pulls the rest through this callback's GetStream(), and each one
+    // it takes is owned by the handler, so `out->stream` below is the first
+    // volume's handle alone, and closing the archive still releases them all.
+    CMyComPtr<IArchiveOpenCallback> const openCallback(new OpenCallback(widePath, abort));
+    RINOK(archive->Open(stream, nullptr, openCallback))
+
+    out->archive = archive;
+    out->stream = stream;
+    return S_OK;
+}
+
+bool GetStringProp(IInArchive& archive, uint32_t index, PROPID id, std::string* out) {
+    NWindows::NCOM::CPropVariant prop;
+    if (archive.GetProperty(index, id, &prop) != S_OK || prop.vt != VT_BSTR) {
+        return false;
+    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
+    *out = ToUtf8(prop.bstrVal);
+    return true;
+}
+
+bool GetUInt64Prop(IInArchive& archive, uint32_t index, PROPID id, uint64_t* out) {
+    NWindows::NCOM::CPropVariant prop;
+    if (archive.GetProperty(index, id, &prop) != S_OK) {
+        return false;
+    }
+    UInt64 value = 0;
+    // ConvertPropVariantToUInt64() throws for a variant type it does not
+    // recognize. Every caller runs inside a boundary that must not let an
+    // exception escape, and an odd property is not worth failing over, so it is
+    // absorbed here rather than at each of them.
+    try {
+        if (!ConvertPropVariantToUInt64(prop, value)) {
+            return false;
+        }
+    } catch (...) {
+        return false;
+    }
+    *out = value;
+    return true;
+}
+
+bool GetUInt32Prop(IInArchive& archive, uint32_t index, PROPID id, uint32_t* out) {
+    NWindows::NCOM::CPropVariant prop;
+    if (archive.GetProperty(index, id, &prop) != S_OK || prop.vt != VT_UI4) {
+        return false;
+    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
+    *out = prop.ulVal;
+    return true;
+}
+
+bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id) {
+    NWindows::NCOM::CPropVariant prop;
+    if (archive.GetProperty(index, id, &prop) != S_OK) {
+        return false;
+    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
+    return prop.vt == VT_BOOL && VARIANT_BOOLToBool(prop.boolVal);
+}
+
+std::string NormalizeEntryPath(std::string entryPath) {
+    std::ranges::replace(entryPath, '\\', '/');
+    return entryPath;
+}
+
+bool EntryIndexMatches(IInArchive& archive, uint32_t index, const std::string& normalizedPath) {
+    // Bounds-checked before anything is read with it. The index comes straight
+    // from the caller, and 7-Zip's handlers index their item tables with an
+    // unchecked operator[], so an out-of-range value reads past the end rather
+    // than failing the lookup.
+    UInt32 count = 0;
+    if (archive.GetNumberOfItems(&count) != S_OK || index >= count) {
+        return false;
+    }
+
+    std::string candidate;
+    if (!GetStringProp(archive, index, kpidPath, &candidate)) {
+        // A format that records no name has nothing to match against
+        return false;
+    }
+    return NormalizeEntryPath(std::move(candidate)) == normalizedPath;
+}
+
+HRESULT FindEntryIndex(IInArchive& archive, const std::string& entryPath, uint32_t* out) {
+    // Both sides normalized, so `sub\\file.bin` and `sub/file.bin` name the same
+    // entry however the archive spells it
+    std::string const wanted = NormalizeEntryPath(entryPath);
+
+    UInt32 count = 0;
+    RINOK(archive.GetNumberOfItems(&count))
+    for (UInt32 i = 0; i < count; i++) {
+        if (EntryIndexMatches(archive, i, wanted)) {
+            *out = i;
+            return S_OK;
+        }
+    }
+    return kEntryNotFound;
+}
+
+// NOLINTEND(modernize-use-noexcept)
+
+}  // namespace sevenzip

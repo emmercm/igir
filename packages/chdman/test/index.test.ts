@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import BufferUtil from '../../../src/utils/bufferUtil.js';
+import FsUtil from '../../../src/utils/fsUtil.js';
 import chdman, { CHDType } from '../index.js';
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
@@ -27,21 +28,23 @@ interface ExpectedTrackListing {
  * file is the expected TOC, and every other file is an expected extracted track (sorted by
  * name to match the order tracks are listed in).
  */
-const generateExpectedTrackListing = (directory: string): ExpectedTrackListing => {
+const generateExpectedTrackListing = async (directory: string): Promise<ExpectedTrackListing> => {
   const root = path.join(FIXTURES, 'expected', directory);
   const entries = fs.readdirSync(root).filter((name) => !name.startsWith('.'));
   const tocName = entries.find((name) => name.endsWith('.cue') || name.endsWith('.gdi'));
   if (tocName === undefined) {
     throw new Error(`no .cue/.gdi TOC file in expected/${directory}`);
   }
-  const tocText = fs.readFileSync(path.join(root, tocName)).toString();
-  const tracks = entries
-    .filter((name) => name !== tocName)
-    .toSorted((a, b) => a.localeCompare(b))
-    .map((name) => {
-      const bytes = fs.readFileSync(path.join(root, name));
-      return { name, size: bytes.length, sha1: sha1(bytes), bytes };
-    });
+  const tocText = (await FsUtil.readFile(path.join(root, tocName))).toString();
+  const tracks = await Promise.all(
+    entries
+      .filter((name) => name !== tocName)
+      .toSorted((a, b) => a.localeCompare(b))
+      .map(async (name) => {
+        const bytes = await FsUtil.readFile(path.join(root, name));
+        return { name, size: bytes.length, sha1: sha1(bytes), bytes };
+      }),
+  );
   return { tocName, tocText, tracks };
 };
 
@@ -67,7 +70,7 @@ describe('info', () => {
 
 describe('listCdBinCueTracks', () => {
   it('should list CD-ROM cue/bin tracks with parity TOC text and sizes', async () => {
-    const expected = generateExpectedTrackListing('cd-rom.cuebin');
+    const expected = await generateExpectedTrackListing('cd-rom.cuebin');
     const result = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
@@ -98,7 +101,7 @@ describe('listCdBinCueTracks', () => {
 
 describe('listGdRomTracks', () => {
   it('should list GD-ROM gdi tracks with parity TOC text and sizes', async () => {
-    const expected = generateExpectedTrackListing('gd-rom.gdi');
+    const expected = await generateExpectedTrackListing('gd-rom.gdi');
     const result = await chdman.listGdRomTracks({
       inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
       trackBaseName: 'track',
@@ -115,7 +118,7 @@ describe('listGdRomTracks', () => {
 
 describe('openTrackReader', () => {
   it('should stream CD-ROM cue/bin tracks byte-identically to the expected tracks', async () => {
-    const expected = generateExpectedTrackListing('cd-rom.cuebin');
+    const expected = await generateExpectedTrackListing('cd-rom.cuebin');
     const listing = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
@@ -137,7 +140,7 @@ describe('openTrackReader', () => {
   });
 
   it('should stream GD-ROM gdi tracks byte-identically to the expected tracks', async () => {
-    const expected = generateExpectedTrackListing('gd-rom.gdi');
+    const expected = await generateExpectedTrackListing('gd-rom.gdi');
     const listing = await chdman.listGdRomTracks({
       inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
       trackBaseName: 'track',
@@ -159,7 +162,7 @@ describe('openTrackReader', () => {
   });
 
   it('should stream multiple independent readers in parallel byte-identically', async () => {
-    const expected = generateExpectedTrackListing('cd-rom.cuebin');
+    const expected = await generateExpectedTrackListing('cd-rom.cuebin');
     const listing = await chdman.listCdBinCueTracks({
       inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
       binNamePattern: 'CD-ROM (Track %t).bin',
