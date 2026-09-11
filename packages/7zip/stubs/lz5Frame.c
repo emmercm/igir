@@ -1,9 +1,11 @@
-/*
- * Compile the unmodified legacy frame implementation without MSVC
- * optimization. Windows x64 builds produced through Node 26 misdecode the
- * smallest raw frame with optimized code, while compressed frames and builds
- * produced through Node 22 are unaffected. Inline XXH32 in this translation
- * unit so its raw-block checksum path receives the same targeted treatment.
+/**
+ * Compiles the vendored LZ5 frame decoder with a targeted MSVC workaround.
+ *
+ * Optimized Windows x64 builds produced with Node.js 26 misdecode small raw
+ * LZ5 frames. Keep optimization disabled only for this legacy frame
+ * implementation and inline its XXH32 implementation so the checksum path is
+ * compiled with the same setting. Other compilers and all other 7-Zip code
+ * retain the project's normal optimization settings.
  */
 #ifdef _MSC_VER
 #define XXH_INLINE_ALL
