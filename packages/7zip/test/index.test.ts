@@ -956,7 +956,7 @@ describe('openEntryReader', () => {
             entryPath: '1kb',
           }),
         ),
-      ).rejects.toThrow(new RegExp(`${codec} frame decoder reported an error`));
+      ).rejects.toThrow(/ERROR_contentChecksum_invalid/);
     });
   });
 

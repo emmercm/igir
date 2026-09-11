@@ -1,5 +1,8 @@
 #include "../src/codecError.h"
+#include "lizard/lizard_frame.h"
 #include "zstdmt/lizard-mt.h"
+
+#include <mutex>
 
 namespace {
 
@@ -19,7 +22,7 @@ const char* LizardErrorMessage(size_t result) noexcept {
         case LIZARDMT_error_compressionParameter_unsupported:
             return "Lizard decoder received an unsupported parameter";
         case LIZARDMT_error_compression_library:
-            return "Lizard frame decoder reported an error (frame header, size, compressed data, or checksum)";
+            return LizardF_getErrorName(lizardmt_errcode);
         case LIZARDMT_error_canceled:
             return "Lizard decoding was cancelled";
         default:
@@ -27,8 +30,16 @@ const char* LizardErrorMessage(size_t result) noexcept {
     }
 }
 
-/** Calls the vendored decoder while retaining its MT error category for the addon's producer thread. */
+/** Serializes Lizard calls that write the vendored library's process-global frame error code. */
+std::mutex& LizardMutex() noexcept {
+    static std::mutex mutex;
+    return mutex;
+}
+
+/** Calls the vendored decoder while retaining its exact error for the addon's producer thread. */
 size_t DecompressWithDiagnostics(LIZARDMT_DCtx* context, LIZARDMT_RdWr_t* callbacks) {
+    std::scoped_lock const lock(LizardMutex());
+    lizardmt_errcode = 0;
     size_t const result = LIZARDMT_decompressDCtx(context, callbacks);
     if (LIZARDMT_isError(result) != 0U) {
         sevenzip::SetCodecError(LizardErrorMessage(result));

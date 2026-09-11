@@ -128,19 +128,6 @@
     {
       "target_name": "sevenzip",
       "type": "static_library",
-      # Avoid optimizer-sensitive behavior observed in the legacy LZ5/Lizard
-      # frame decoders in Windows builds produced from Node 26 headers. Keep
-      # ordinary /Ox optimization, but compile the vendored archive library as
-      # normal native objects. The addon bridge below remains eligible for /GL
-      # and /LTCG.
-      "msvs_settings": {
-        "VCCLCompilerTool": {
-          "WholeProgramOptimization": "false"
-        },
-        "VCLibrarianTool": {
-          "AdditionalOptions!": ["/LTCG"]
-        }
-      },
       "conditions": [
         ["OS=='win'", {
           "sources": ["<(z7)/C/zstdmt/zstd-mt_threading.c"]
@@ -192,12 +179,12 @@
         "<(z7)/C/lizard/liz_huf_decompress.c",
         "<(z7)/C/lizard/lizard_compress.c",
         "<(z7)/C/lizard/lizard_decompress.c",
-        "<(z7)/C/lizard/lizard_frame.c",
+        "stubs/lizardFrame.c",
         "<(z7)/C/lz4/lz4.c",
         "<(z7)/C/lz4/lz4frame.c",
         "<(z7)/C/lz4/lz4hc.c",
         "<(z7)/C/lz5/lz5.c",
-        "<(z7)/C/lz5/lz5frame.c",
+        "stubs/lz5Frame.c",
         "<(z7)/C/lz5/lz5hc.c",
         "<(z7)/C/zstdmt/brotli-mt_common.c",
         "<(z7)/C/zstdmt/brotli-mt_decompress.c",
