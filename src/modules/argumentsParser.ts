@@ -118,7 +118,7 @@ export default class ArgumentsParser {
       ['playlist', 'Create playlist files for multi-disc games'],
       [
         'test',
-        'Test ROMs for accuracy: written files when used with a write command, otherwise the input files',
+        'Test ROMs for accuracy after writing them, or test input files if no write command is given',
       ],
       ['dir2dat', 'Generate a DAT from all input files'],
       ['fixdat', 'Generate a fixdat of any missing games for every DAT processed (requires --dat)'],
