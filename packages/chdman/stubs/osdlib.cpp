@@ -10,7 +10,7 @@
 // by osdsync.cpp); every other function those files define (clipboard, process
 // control, etc.) is unreferenced. Compiling this in their place keeps the .node
 // self-contained (libSystem/glibc only). Windows keeps osdlib_win32.cpp, which
-// only uses always-present system DLLs (MAME 0.288, submodule tag mame0288).
+// only uses always-present system DLLs (MAME 0.289, submodule tag mame0289).
 
 #include <cstdlib>
 
