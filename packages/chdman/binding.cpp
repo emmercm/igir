@@ -15,7 +15,7 @@
 #include "path.h"
 #include "strformat.h"
 
-// ===== BEGIN ported from deps/mame/src/tools/chdman.cpp @ MAME 0.288 (submodule tag mame0288) =====
+// ===== BEGIN ported from deps/mame/src/tools/chdman.cpp @ MAME 0.289 (submodule tag mame0289) =====
 // Re-port when bumping the MAME submodule: diff each sub-block against the cited
 // line range. Helpers are `port_`-prefixed to avoid name clashes.
 //
@@ -31,13 +31,13 @@ enum {
   MODE_GDI = 2,
 };
 
-// chdman.cpp: msf_string_from_frames (verbatim, line 1072).
+// chdman.cpp: msf_string_from_frames (verbatim, line 1076).
 static std::string port_msf_string_from_frames(uint32_t frames) {
   return util::string_format("%02d:%02d:%02d", frames / (75 * 60), (frames / 75) % 60, frames % 75);
 }
 
 // chdman's do_extract_cd writes `frames - padframes + splitframes` data frames
-// per split bin (chdman.cpp line 2968). Callers must first confirm the track does
+// per split bin (chdman.cpp line 2972). Callers must first confirm the track does
 // not underflow via cuebin_underflow_error().
 static uint32_t port_actual_frames(const cdrom_file::track_info& t) {
   return static_cast<uint32_t>(int64_t(t.frames) + int64_t(t.splitframes) - int64_t(t.padframes));
@@ -46,7 +46,7 @@ static uint32_t port_actual_frames(const cdrom_file::track_info& t) {
 // Some GD-ROM CHDs cannot be expressed as cue/bin: their high-density track has
 // padframes exceeding frames+splitframes, so chdman's uint32 frame formula above
 // underflows to ~4.29e9 frames (~10 TB) and extraction would run far past chdman's
-// total_bytes (chdman.cpp line 2734) -- i.e. past 100% of the disc. The chdman CLI
+// total_bytes (chdman.cpp line 2738) -- i.e. past 100% of the disc. The chdman CLI
 // relied on a progress watchdog to abort that runaway; we instead detect the
 // underflow up front so callers (e.g. ChdBinCue) fall back to gdi/raw.
 //
@@ -64,7 +64,7 @@ static std::string cuebin_underflow_error(const cdrom_file::track_info& t, int t
          std::to_string(t.frames) + " + splitframes " + std::to_string(t.splitframes) + ")";
 }
 
-// chdman.cpp output_track_metadata 1527-1586, MODE_GDI + MODE_CUEBIN only,
+// chdman.cpp output_track_metadata 1531-1590, MODE_GDI + MODE_CUEBIN only,
 // writing to std::ostream& via util::stream_format(out, ...).
 static void port_output_track_metadata(int mode, std::ostream& out, int tracknum,
     const cdrom_file::track_info& info, const std::string& filename,
@@ -125,7 +125,7 @@ static void port_output_track_metadata(int mode, std::ostream& out, int tracknum
   }
 }
 
-// chdman.cpp 2848-2912, GD-ROM Redump TOC adjustment, mutating toc in place.
+// chdman.cpp 2852-2916, GD-ROM Redump TOC adjustment, mutating toc in place.
 static void apply_gdrom_cuebin_toc_adjustment(cdrom_file::toc& toc) {
   // TOSEC GDI-based CHDs have the padframes field set to non-0 where the pregaps
   // for the next track would be
@@ -179,7 +179,7 @@ static void apply_gdrom_cuebin_toc_adjustment(cdrom_file::toc& toc) {
   }
 }
 
-// chdman.cpp 2744-2804, %t templating for one track (always split-bin).
+// chdman.cpp 2748-2808, %t templating for one track (always split-bin).
 static std::string FormatTrackName(const std::string& pattern, int tracknum) {
   const std::regex variables_regex("(%*)(%([+-]?\\d+)?([a-zA-Z]))");
   std::string::const_iterator name_itr = pattern.begin();
@@ -787,7 +787,7 @@ size_t TrackReader::Produce(uint8_t* out, size_t maxBytes) {
             const cdrom_file::track_info& st = toc_.tracks[trk];
             frameBuf_.assign(st.datasize, 0);
             // read_data's bool result is intentionally ignored, matching chdman's
-            // do_extract_cd (chdman.cpp line 2987): on a read miss the pre-zeroed
+            // do_extract_cd (chdman.cpp line 2991): on a read miss the pre-zeroed
             // buffer is emitted as silence rather than erroring, for byte parity.
             cdrom_->read_data(cdrom_->get_track_start_phys(trk) + frameofs, frameBuf_.data(), st.trktype, true);
             // for CDRWin and GDI audio tracks must be reversed; for GDI with CHD

@@ -24,11 +24,12 @@
       ["OS=='linux'", {
         "cflags": [
           "-ffunction-sections", "-fdata-sections",
-          "-fvisibility=hidden", "-fvisibility-inlines-hidden",
+          "-fvisibility=hidden",
           "-fno-semantic-interposition",
-          "-flto"
+          "-flto=auto"
         ],
-        "ldflags": ["-Wl,--gc-sections", "-flto"]
+        "cflags_cc": ["-fvisibility-inlines-hidden"],
+        "ldflags": ["-Wl,--gc-sections", "-flto=auto"]
       }]
     ],
 
@@ -65,10 +66,7 @@
         "AdditionalOptions": [
           "/std:c++20",
           # MAME uses C++ exceptions and RTTI
-          "/EHsc",
-          "/D__DATE__=0",
-          "/D__TIME__=0",
-          "/D__TIMESTAMP__=0"
+          "/EHsc"
         ]
       },
       "VCLinkerTool": {
@@ -76,7 +74,6 @@
         "OptimizeReferences": "2",
         "AdditionalOptions": [
           "/Brepro",
-          "/deterministic",
           "/DEBUG:NONE"
         ]
       }
@@ -143,6 +140,8 @@
     {
       "target_name": "flac",
       "type": "static_library",
+      # Node supplies =1, while FLAC's compat.h uses an empty definition.
+      "defines!": ["__STDC_FORMAT_MACROS"],
       "defines": [
         # Pull MAME's bundled libFLAC config.h (PACKAGE_VERSION + CPU detection).
         "HAVE_CONFIG_H",
