@@ -4,7 +4,7 @@ A recreation of MAME's chdman tool.
 
 ## License
 
-MAME is distributed under GPL-2.0+. The full license as of [v0.288](https://github.com/mamedev/mame/blob/30e741a6a853d15fbbf8939d83e82b8412d0ec9c/COPYING) is:
+MAME is distributed under GPL-2.0+. The full license as of [v0.289](https://github.com/mamedev/mame/blob/f34f02505e32c1993c6a782b6814232cbfc74e36/COPYING) is:
 
 ```text
 MAME is a registered trademark of Gregory Ember.  Other trademarks are
@@ -268,7 +268,7 @@ Copyright (c) 2006 and later Cockos Incorporated
 Copyright (c) 1999 D. J. Bernstein
 
 zlib data compression library
-Copyright (C) 1995-2023 Jean-loup Gailly and Mark Adler
+Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler
 
 This software is provided 'as-is', without any express or implied
 warranty.  In no event will the authors be held liable for any damages
