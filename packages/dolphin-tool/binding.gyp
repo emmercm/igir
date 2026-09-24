@@ -12,11 +12,12 @@
       ["OS=='linux'", {
         "cflags": [
           "-ffunction-sections", "-fdata-sections",
-          "-fvisibility=hidden", "-fvisibility-inlines-hidden",
+          "-fvisibility=hidden",
           "-fno-semantic-interposition",
-          "-flto"
+          "-flto=auto"
         ],
-        "ldflags": ["-Wl,--gc-sections", "-flto"]
+        "cflags_cc": ["-fvisibility-inlines-hidden"],
+        "ldflags": ["-Wl,--gc-sections", "-flto=auto"]
       }]
     ],
 
@@ -61,7 +62,6 @@
         "OptimizeReferences": "2",
         "AdditionalOptions": [
           "/Brepro",
-          "/deterministic",
           "/DEBUG:NONE"
         ]
       }
@@ -312,6 +312,7 @@
       "msvs_settings": {
         "VCCLCompilerTool": {
           "LanguageStandard": "Default",
+          "AdditionalOptions!": ["-std:c++20", "/std:c++20"],
           "AdditionalOptions": [
             "/std:c++23preview",
             "/utf-8",
