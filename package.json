@@ -129,7 +129,7 @@
     "eslint-plugin-jsdoc": "64.3.6",
     "eslint-plugin-prettier": "5.5.6",
     "eslint-plugin-simple-import-sort": "14.0.0",
-    "eslint-plugin-unicorn": "74.0.0",
+    "eslint-plugin-unicorn": "75.0.0",
     "globals": "17.11.0",
     "prebuildify": "6.0.1",
     "prettier": "3.9.6",
