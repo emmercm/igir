@@ -191,6 +191,9 @@ export default eslintConfig.defineConfig([
       // ***** Operands *****
       eqeqeq: 'error',
 
+      // ***** Control Structures *****
+      curly: ['error', 'all'],
+
       // ***** Conditionals *****
 
       // ***** Loops *****

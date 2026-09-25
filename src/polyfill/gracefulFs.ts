@@ -119,7 +119,9 @@ class RetryQueue {
   }
 
   private scheduleProcess(): void {
-    if (this.timer !== undefined) return;
+    if (this.timer !== undefined) {
+      return;
+    }
     // Compute backoff from the longest-waiting entry to avoid over-scheduling
     const maxRetries = this.entries.reduce((max, e) => Math.max(max, e.retryCount), 0);
     const delay = Math.min(
@@ -135,7 +137,9 @@ class RetryQueue {
 
   private process(): void {
     const entry = this.entries.shift();
-    if (entry === undefined) return;
+    if (entry === undefined) {
+      return;
+    }
 
     entry.retryCount++;
     if (Date.now() - entry.startTime >= RETRY_TIMEOUT_MS) {

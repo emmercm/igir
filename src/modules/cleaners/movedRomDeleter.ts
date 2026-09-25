@@ -35,7 +35,7 @@ export default class MovedROMDeleter extends Module {
   async delete(
     indexedRoms: IndexedFiles,
     movedWriteCandidates: WriteCandidate[],
-    writtenFilesToExclude: File[],
+    writtenFilePathsToExclude: string[],
   ): Promise<string[]> {
     if (!this.options.shouldMove()) {
       // We shouldn't cause any change to the output directory
@@ -52,8 +52,9 @@ export default class MovedROMDeleter extends Module {
     // Get a count of all unique input file paths
     const inputFiles = new Set<string>();
     for (const candidate of movedWriteCandidates) {
-      for (const romWithFiles of candidate.getRomsWithFiles())
+      for (const romWithFiles of candidate.getRomsWithFiles()) {
         inputFiles.add(romWithFiles.getInputFile().getFilePath());
+      }
     }
     this.progressBar.resetProgress(inputFiles.size);
     this.prefixedLogger.trace(
@@ -93,7 +94,9 @@ export default class MovedROMDeleter extends Module {
           );
         }
 
-        for (const duplicate of possibleDuplicates) movedRoms.add(duplicate);
+        for (const duplicate of possibleDuplicates) {
+          movedRoms.add(duplicate);
+        }
       }
     }
     this.prefixedLogger.trace(
@@ -107,7 +110,7 @@ export default class MovedROMDeleter extends Module {
 
     const filePathsToDelete = MovedROMDeleter.filterOutWrittenFiles(
       fullyConsumedFiles,
-      writtenFilesToExclude,
+      writtenFilePathsToExclude,
     );
     this.prefixedLogger.trace(
       `filtered to ${IntlUtil.toLocaleString(filePathsToDelete.length)} non-output files`,
@@ -244,9 +247,9 @@ export default class MovedROMDeleter extends Module {
    */
   private static filterOutWrittenFiles(
     movedRoms: string[],
-    writtenFilesToExclude: File[],
+    writtenFilePathsToExclude: string[],
   ): string[] {
-    const writtenFilePaths = new Set(writtenFilesToExclude.map((file) => file.getFilePath()));
+    const writtenFilePaths = new Set(writtenFilePathsToExclude);
 
     return movedRoms.filter((filePath) => !writtenFilePaths.has(filePath));
   }

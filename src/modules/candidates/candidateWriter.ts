@@ -35,7 +35,7 @@ export interface CandidateWriterResults {
  */
 export default class CandidateWriter extends Module {
   // Keep track of written files, to warn on conflicts
-  private static readonly OUTPUT_PATHS_WRITTEN = new Map<string, DAT>();
+  private static readonly OUTPUT_PATHS_WRITTEN = new Map<string, string>();
 
   private readonly options: Options;
   private readonly fileFactory: FileFactory;
@@ -200,7 +200,7 @@ export default class CandidateWriter extends Module {
         ) {
           if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputZip.getFilePath())) {
             this.prefixedLogger.warn(
-              `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())?.getName()}'`,
+              `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: not overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())}'`,
             );
           } else {
             this.prefixedLogger.debug(
@@ -241,7 +241,7 @@ export default class CandidateWriter extends Module {
           CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputZip.getFilePath())
         ) {
           this.prefixedLogger.warn(
-            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())?.getName()}'`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputZip.getFilePath())}'`,
           );
         }
       }
@@ -249,7 +249,7 @@ export default class CandidateWriter extends Module {
         return;
       }
 
-      CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputZip.getFilePath(), dat);
+      CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputZip.getFilePath(), dat.getName());
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
       let wasWritten = false;
@@ -577,7 +577,7 @@ export default class CandidateWriter extends Module {
         ) {
           if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputFilePath)) {
             this.prefixedLogger.warn(
-              `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)?.getName()}'`,
+              `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)}'`,
             );
           } else {
             this.prefixedLogger.debug(
@@ -616,7 +616,7 @@ export default class CandidateWriter extends Module {
           CandidateWriter.OUTPUT_PATHS_WRITTEN.has(outputFilePath)
         ) {
           this.prefixedLogger.warn(
-            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)?.getName()}'`,
+            `${dat.getName()}: ${candidate.getName()}: ${outputFilePath}: overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(outputFilePath)}'`,
           );
         }
       }
@@ -624,7 +624,7 @@ export default class CandidateWriter extends Module {
         return;
       }
 
-      CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputFilePath, dat);
+      CandidateWriter.OUTPUT_PATHS_WRITTEN.set(outputFilePath, dat.getName());
 
       this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
       let written: MoveResultValue | undefined;
@@ -908,7 +908,7 @@ export default class CandidateWriter extends Module {
       ) {
         if (CandidateWriter.OUTPUT_PATHS_WRITTEN.has(linkPath)) {
           this.prefixedLogger.warn(
-            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)?.getName()}'`,
+            `${dat.getName()}: ${candidate.getName()}: ${linkPath}: not overwriting existing file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)}'`,
           );
         } else {
           this.prefixedLogger.debug(
@@ -946,7 +946,7 @@ export default class CandidateWriter extends Module {
 
       if (this.options.shouldWrite() && CandidateWriter.OUTPUT_PATHS_WRITTEN.has(linkPath)) {
         this.prefixedLogger.warn(
-          `${dat.getName()}: ${candidate.getName()}: ${linkPath}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)?.getName()}'`,
+          `${dat.getName()}: ${candidate.getName()}: ${linkPath}: overwriting existing zip file already written by '${CandidateWriter.OUTPUT_PATHS_WRITTEN.get(linkPath)}'`,
         );
       }
     }
@@ -954,7 +954,7 @@ export default class CandidateWriter extends Module {
       return;
     }
 
-    CandidateWriter.OUTPUT_PATHS_WRITTEN.set(linkPath, dat);
+    CandidateWriter.OUTPUT_PATHS_WRITTEN.set(linkPath, dat.getName());
 
     this.progressBar.setSymbol(ProgressBarSymbol.WRITING);
     for (let i = 0; i <= this.options.getWriteRetry(); i += 1) {
