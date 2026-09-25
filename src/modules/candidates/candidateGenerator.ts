@@ -809,6 +809,7 @@ export default class CandidateGenerator extends Module {
         return "input archive is being zipped and it isn't already a zip";
       }
 
+      // eslint-disable-next-line unicorn/prefer-continue
       if (rom.getName().trim() !== '' && inputFile.getArchive().hasMeaningfulEntryPaths()) {
         const outputPath = OutputFactory.getPath(this.options, dat, game, rom, inputFile);
         if (outputPath.entryPath !== inputFile.getExtractedFilePath()) {
@@ -970,21 +971,22 @@ export default class CandidateGenerator extends Module {
 
     // Warn if the only reason we're missing files is that we don't know if we can rewrite .cue
     // files extracted from CHDs with the right contents such that it matches a DAT perfectly
-    if (missingRoms.every((rom) => rom.getName().toLowerCase().endsWith('.cue'))) {
-      const chdInputFile = foundRomsWithFiles
-        .map((romWithFiles) => romWithFiles.getInputFile())
-        .find(
-          (inputFile): inputFile is ArchiveEntry<ChdBinCue> =>
-            inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof ChdBinCue,
-        );
-      const missingCueRom = missingRoms.find(
-        (rom) => this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom),
+    if (missingRoms.some((rom) => !rom.getName().toLowerCase().endsWith('.cue'))) {
+      return;
+    }
+    const chdInputFile = foundRomsWithFiles
+      .map((romWithFiles) => romWithFiles.getInputFile())
+      .find(
+        (inputFile): inputFile is ArchiveEntry<ChdBinCue> =>
+          inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof ChdBinCue,
       );
-      if (chdInputFile !== undefined && missingCueRom !== undefined) {
-        this.prefixedLogger.trace(
-          `${dat.getName()}: ${game.getName()}: cannot extract .cue sheets from CHDs because Igir doesn't know how to rewrite the track filenames accurately: ${chdInputFile.getArchive().getFilePath()}`,
-        );
-      }
+    const missingCueRom = missingRoms.find(
+      (rom) => this.options.shouldExtractRom(rom) || this.options.shouldZipRom(rom),
+    );
+    if (chdInputFile !== undefined && missingCueRom !== undefined) {
+      this.prefixedLogger.trace(
+        `${dat.getName()}: ${game.getName()}: cannot extract .cue sheets from CHDs because Igir doesn't know how to rewrite the track filenames accurately: ${chdInputFile.getArchive().getFilePath()}`,
+      );
     }
   }
 
@@ -1025,14 +1027,15 @@ export default class CandidateGenerator extends Module {
         .filter((romWithFiles) => romWithFiles.getOutputFile().getFilePath() === duplicateOutput)
         .map((romWithFiles) => romWithFiles.getInputFile().toString())
         .reduce(ArrayUtil.reduceUnique(), []);
-      if (conflictedInputFiles.length > 1) {
-        hasConflict = true;
-        let message = `${dat.getName()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
-        for (const conflictedInputFile of conflictedInputFiles) {
-          message += `\n  ${conflictedInputFile}`;
-        }
-        this.prefixedLogger.warn(message);
+      if (conflictedInputFiles.length <= 1) {
+        continue;
       }
+      hasConflict = true;
+      let message = `${dat.getName()}: no single archive contains all necessary files, cannot ${this.options.writeString()} these different input files to: ${duplicateOutput}:`;
+      for (const conflictedInputFile of conflictedInputFiles) {
+        message += `\n  ${conflictedInputFile}`;
+      }
+      this.prefixedLogger.warn(message);
     }
     return hasConflict;
   }

@@ -95,11 +95,13 @@ export default class FileFactory {
           CacheMode.RESPECT_CACHED_VALUE,
           callback,
         );
-        if (result !== undefined) {
-          wasAnyParsed = true;
-          for (const entry of result) {
-            entries.push(entry);
-          }
+        if (result === undefined) {
+          continue;
+        }
+
+        wasAnyParsed = true;
+        for (const entry of result) {
+          entries.push(entry);
         }
       }
       if (!wasAnyParsed) {
@@ -291,11 +293,12 @@ export default class FileFactory {
         CacheMode.RESPECT_CACHED_VALUE,
         callback,
       );
-      if (result !== undefined) {
-        wasAnyParsed = true;
-        for (const entry of result) {
-          entries.push(entry);
-        }
+      if (result === undefined) {
+        continue;
+      }
+      wasAnyParsed = true;
+      for (const entry of result) {
+        entries.push(entry);
       }
     }
     if (!wasAnyParsed) {

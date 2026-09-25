@@ -27,22 +27,23 @@ export default class UpdateChecker {
     } catch {
       return;
     }
-
-    if (npmVersion && semver.lt(Package.VERSION, npmVersion)) {
-      let message = `An update is available, get v${npmVersion}`;
-      const color = chalk.white;
-      if (await UpdateChecker.isHomebrew()) {
-        message += ` via Homebrew: ${color(`brew upgrade ${Package.NAME}`)}`;
-      } else if (process.versions.bun) {
-        const gitHubUrl = `https://github.com/emmercm/${Package.NAME}/releases/latest`;
-        message += ` on GitHub: ${color(terminalLink(gitHubUrl, gitHubUrl, { fallback: false }))}`;
-      } else if (process.env.npm_command === 'exec') {
-        message += ` via npx: ${color(`npx ${Package.NAME}@latest`)}`;
-      } else {
-        message += ` via npm: ${color(`npm update ${Package.NAME}`)}`;
-      }
-      logger.notice(message);
+    if (!npmVersion || !semver.lt(Package.VERSION, npmVersion)) {
+      return;
     }
+
+    let message = `An update is available, get v${npmVersion}`;
+    const color = chalk.white;
+    if (await UpdateChecker.isHomebrew()) {
+      message += ` via Homebrew: ${color(`brew upgrade ${Package.NAME}`)}`;
+    } else if (process.versions.bun) {
+      const gitHubUrl = `https://github.com/emmercm/${Package.NAME}/releases/latest`;
+      message += ` on GitHub: ${color(terminalLink(gitHubUrl, gitHubUrl, { fallback: false }))}`;
+    } else if (process.env.npm_command === 'exec') {
+      message += ` via npx: ${color(`npx ${Package.NAME}@latest`)}`;
+    } else {
+      message += ` via npm: ${color(`npm update ${Package.NAME}`)}`;
+    }
+    logger.notice(message);
   }
 
   private static async getVersion(packageName: string): Promise<string> {

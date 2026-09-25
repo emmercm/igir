@@ -112,10 +112,11 @@ export default class Rar extends Archive {
             async (readable) => {
               return await FileChecksums.hashStream(readable, checksumBitmask, (progress) => {
                 overallProgress = overallProgress - lastProgress + progress;
-                if (callback) {
-                  callback(overallProgress);
-                  lastProgress = progress;
+                if (!callback) {
+                  return;
                 }
+                callback(overallProgress);
+                lastProgress = progress;
               });
             },
           );
