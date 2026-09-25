@@ -10,8 +10,11 @@ import Temp from '../../../src/globals/temp.js';
 import Game from '../../../src/models/dats/game.js';
 import Header from '../../../src/models/dats/logiqx/header.js';
 import LogiqxDAT from '../../../src/models/dats/logiqx/logiqxDat.js';
+import MergedDiscGame from '../../../src/models/dats/mergedDiscGame.js';
 import ROM from '../../../src/models/dats/rom.js';
 import ArchiveEntry from '../../../src/models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../../src/models/files/archives/archiveFile.js';
+import ChdBinCue from '../../../src/models/files/archives/chd/chdBinCue.js';
 import Zip from '../../../src/models/files/archives/zip.js';
 import File from '../../../src/models/files/file.js';
 import Options, {
@@ -294,6 +297,54 @@ it('should not strip archive extensions from files within archives', async () =>
   } finally {
     await FsUtil.rm(tempDir, { recursive: true, force: true });
   }
+});
+
+it('should not correct ROMs whose input files are raw-copied whole archives', async () => {
+  const options = new Options({
+    commands: ['copy'],
+    fixExtension: FixExtensionInverted[FixExtension.ALWAYS].toLowerCase(),
+  });
+  const dat = new LogiqxDAT({ header: new Header() });
+
+  // Redump-style discs, whose ROMs are a .cue and a .bin, but whose input files are CHDs.
+  // Correcting the ROM names would stop them from matching the MergedDiscGame's sub-games.
+  const subGames = [1, 2].map(
+    (disc) =>
+      new Game({
+        name: `Game (USA) (Disc ${disc})`,
+        roms: [
+          new ROM({ name: `Game (USA) (Disc ${disc}).cue`, size: 82, crc32: `${disc}1111111` }),
+          new ROM({ name: `Game (USA) (Disc ${disc}).bin`, size: 47_040, crc32: `${disc}2222222` }),
+        ],
+      }),
+  );
+  const game = new MergedDiscGame({ name: 'Game (USA)', subGames });
+
+  const romsWithFiles = await Promise.all(
+    subGames.map(async (subGame) => {
+      const inputFile = new ArchiveFile(
+        await ArchiveEntry.entryOf({
+          archive: new ChdBinCue(`${subGame.getName()}.chd`),
+          entryPath: `${subGame.getName()}.cue`,
+          size: 0,
+          crc32: '',
+        }),
+      );
+      return subGame
+        .getRoms()
+        .map((rom) => new ROMWithFiles(rom, inputFile, inputFile.withFilePath(rom.getName())));
+    }),
+  );
+  const candidates = [new WriteCandidate(game, romsWithFiles.flat())];
+
+  const correctedCandidates = await new CandidateExtensionCorrector(
+    options,
+    new ProgressBarFake(),
+    new FileFactory(new FileCache()),
+    new Semaphore(os.availableParallelism()),
+  ).correct(dat, candidates);
+
+  expect(correctedCandidates).toBe(candidates);
 });
 
 it('should correct ROMs with missing filenames', async () => {
