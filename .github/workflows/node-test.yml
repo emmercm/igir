@@ -136,7 +136,7 @@ jobs:
       - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
         shell: bash
         run: |
-          rm -rf packages/*/addon* packages/*/prebuilds*
+          rm -rf packages/*/addon-* packages/*/prebuilds*
       - run: npm install --foreground-scripts
 
       # Test the source files
