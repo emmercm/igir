@@ -8,6 +8,7 @@ import FileFactory from '../../factories/fileFactory.js';
 import type DAT from '../../models/dats/dat.js';
 import type ROM from '../../models/dats/rom.js';
 import ArchiveEntry from '../../models/files/archives/archiveEntry.js';
+import ArchiveFile from '../../models/files/archives/archiveFile.js';
 import Chd from '../../models/files/archives/chd/chd.js';
 import type File from '../../models/files/file.js';
 import type FileSignature from '../../models/files/fileSignature.js';
@@ -73,7 +74,15 @@ export default class CandidateExtensionCorrector extends Module {
   }
 
   private romNeedsCorrecting(romWithFiles: ROMWithFiles): boolean {
-    if (romWithFiles.getInputFile() instanceof ZeroSizeFile) {
+    const inputFile = romWithFiles.getInputFile();
+    if (inputFile instanceof ZeroSizeFile) {
+      return false;
+    }
+
+    if (inputFile instanceof ArchiveFile) {
+      // Whole archives are raw-copied, and OutputFactory always takes their output extension from
+      // the input file, so a corrected ROM name would never be used. Renaming the ROM anyway would
+      // break anything that matches ROMs by name, such as the sub-games of a MergedDiscGame.
       return false;
     }
 
@@ -81,7 +90,6 @@ export default class CandidateExtensionCorrector extends Module {
       return true;
     }
 
-    const inputFile = romWithFiles.getInputFile();
     if (inputFile instanceof ArchiveEntry && inputFile.getArchive() instanceof Chd) {
       // Files within CHDs never need extension correction
       return false;
