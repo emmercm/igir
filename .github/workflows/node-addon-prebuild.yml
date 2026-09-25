@@ -10,18 +10,10 @@ on:
     branches-ignore:
       - 'main'
   workflow_dispatch:
-    inputs:
-      ref:
-        description: 'Git branch'
-        required: true
-        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  ref: ${{ inputs.ref || github.ref }}
 
 jobs:
   # Perform some `on.push.branches-ignore` here so that the 'prebuild-status-check' job can still run
@@ -32,27 +24,10 @@ jobs:
     outputs:
       should-prebuild: ${{ steps.branch-gate.outputs.should-prebuild }}
     steps:
-      # Attestations record `github.sha` as the source commit, but jobs build `env.ref`. If this
-      #   workflow is dispatched from 'main' for another branch, that branch's binaries would be
-      #   attested as built from main's HEAD. Every PR branched from or updated with 'main' after
-      #   that point has main's HEAD as an ancestor, so node-addon-provenance.yml would accept
-      #   those binaries in any of them. Fail before anything is built.
-      - name: Ensure the ref is the workflow's branch
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        env:
-          REF: ${{ env.ref }}
-        run: |
-          set -x
-          if [[ "refs/heads/${REF#refs/heads/}" != "${GITHUB_REF}" ]]; then
-            echo "::error::The 'ref' input '${REF}' isn't the branch this workflow is running from (${GITHUB_REF}). Run the workflow from the same branch as the 'ref' input."
-            exit 1
-          fi
       - id: branch-gate
-        env:
-          REF: ${{ env.ref }}
         run: |
           set -x
-          branch="${REF#refs/heads/}"
+          branch="${GITHUB_REF#refs/heads/}"
           # Don't prebuild on version bump branches (e.g. 'emmercm/1.2.3')
           if [[ "${branch}" =~ /[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "should-prebuild=false" >> "${GITHUB_OUTPUT}"
@@ -71,7 +46,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ env.ref }}
+          ref: ${{ github.ref }}
       # Prebuild if any relevant source file has changed
       - id: change-filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -125,7 +100,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ env.ref }}
+          ref: ${{ github.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
@@ -299,7 +274,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ env.ref }}
+          ref: ${{ github.ref }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - name: Install dependencies
@@ -351,7 +326,7 @@ jobs:
         with:
           # zizmor: ignore[artipacked] The persisted credentials are required for the
           #   subsequent `git push` that commits the prebuilds back to the branch.
-          ref: ${{ env.ref }}
+          ref: ${{ github.ref }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
