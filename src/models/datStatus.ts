@@ -74,18 +74,19 @@ export default class DATStatus {
 
       const expectedCount = DATStatus.getExpectedFileCount(game, options);
       const gameCandidates = indexedCandidates.get(game.hashCode());
-      if (gameCandidates !== undefined || expectedCount === 0) {
-        const gameCandidate = gameCandidates?.at(0);
-
-        if (gameCandidate && gameCandidate.getRomsWithFiles().length !== expectedCount) {
-          // The found ReleaseCandidate is incomplete
-          DATStatus.pushValueIntoMap(this.incompleteRomTypesToCandidates, game, gameCandidate);
-          continue;
-        }
-
-        // The found ReleaseCandidate is complete
-        DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
+      if (gameCandidates === undefined && expectedCount !== 0) {
+        continue;
       }
+      const gameCandidate = gameCandidates?.at(0);
+
+      if (gameCandidate && gameCandidate.getRomsWithFiles().length !== expectedCount) {
+        // The found ReleaseCandidate is incomplete
+        DATStatus.pushValueIntoMap(this.incompleteRomTypesToCandidates, game, gameCandidate);
+        continue;
+      }
+
+      // The found ReleaseCandidate is complete
+      DATStatus.pushValueIntoMap(this.foundRomTypesToCandidates, game, gameCandidate);
     }
 
     // Patched ROMs

@@ -227,8 +227,10 @@ export default eslintConfig.defineConfig([
       'unicorn/no-await-expression-member': 'off',
       'unicorn/no-break-in-nested-loop': 'off', // unicorn/no-duplicate-loops + unicorn/prefer-continue encourage this
       'unicorn/no-hex-escape': 'off',
+      'unicorn/no-immediate-mutation': 'off', // TODO(cemmer): checkConditionals:true with v76
       'unicorn/no-unreadable-new-expression': 'off',
       'unicorn/no-useless-undefined': 'off',
+      'unicorn/prefer-combined-guards': 'off',
       'unicorn/prefer-simple-condition-first': 'off',
       'unicorn/prefer-string-raw': 'off',
       'unicorn/prefer-switch': 'off',

@@ -266,25 +266,26 @@ export default class CandidateWriter extends Module {
           // Successfully written, unknown if valid
           break;
         }
-        if (wasWritten && this.options.shouldTest()) {
-          const writtenTest = await this.testZipContents(
-            dat,
-            candidate,
-            outputZip.getFilePath(),
-            inputToOutputZipEntries.map((entry) => entry[1]),
-            childBar,
-          );
-          if (!writtenTest) {
-            // Successfully validated
-            break;
-          }
-          const message = `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
-          if (i < this.options.getWriteRetry()) {
-            this.prefixedLogger.warn(`${message}, retrying`);
-          } else {
-            this.prefixedLogger.error(message);
-            return; // final error, do not continue
-          }
+        if (!wasWritten || !this.options.shouldTest()) {
+          continue;
+        }
+        const writtenTest = await this.testZipContents(
+          dat,
+          candidate,
+          outputZip.getFilePath(),
+          inputToOutputZipEntries.map((entry) => entry[1]),
+          childBar,
+        );
+        if (!writtenTest) {
+          // Successfully validated
+          break;
+        }
+        const message = `${dat.getName()}: ${candidate.getName()}: ${outputZip.getFilePath()}: written zip ${writtenTest}`;
+        if (i < this.options.getWriteRetry()) {
+          this.prefixedLogger.warn(`${message}, retrying`);
+        } else {
+          this.prefixedLogger.error(message);
+          return; // final error, do not continue
         }
       }
 
@@ -963,29 +964,30 @@ export default class CandidateWriter extends Module {
         // Successfully written, unknown if valid
         break;
       }
-      if (wasWritten && this.options.shouldTest()) {
-        let writtenTest;
-        if (this.options.getLinkMode() === LinkMode.SYMLINK) {
-          writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
-        } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
-          writtenTest = await CandidateWriter.testWrittenHardlink(
-            linkPath,
-            inputRomFile.getFilePath(),
-          );
-        } else {
-          writtenTest = await this.testWrittenRaw(dat, candidate, linkPath, outputRomFile);
-        }
-        if (!writtenTest) {
-          // Successfully validated
-          break;
-        }
-        const message = `${dat.getName()}: ${candidate.getName()} ${linkPath}: written link ${writtenTest}`;
-        if (i < this.options.getWriteRetry()) {
-          this.prefixedLogger.warn(`${message}, retrying`);
-        } else {
-          this.prefixedLogger.error(message);
-          return; // final error, do not continue
-        }
+      if (!wasWritten || !this.options.shouldTest()) {
+        continue;
+      }
+      let writtenTest;
+      if (this.options.getLinkMode() === LinkMode.SYMLINK) {
+        writtenTest = await CandidateWriter.testWrittenSymlink(linkPath, targetPath);
+      } else if (this.options.getLinkMode() === LinkMode.HARDLINK) {
+        writtenTest = await CandidateWriter.testWrittenHardlink(
+          linkPath,
+          inputRomFile.getFilePath(),
+        );
+      } else {
+        writtenTest = await this.testWrittenRaw(dat, candidate, linkPath, outputRomFile);
+      }
+      if (!writtenTest) {
+        // Successfully validated
+        break;
+      }
+      const message = `${dat.getName()}: ${candidate.getName()} ${linkPath}: written link ${writtenTest}`;
+      if (i < this.options.getWriteRetry()) {
+        this.prefixedLogger.warn(`${message}, retrying`);
+      } else {
+        this.prefixedLogger.error(message);
+        return; // final error, do not continue
       }
     }
   }

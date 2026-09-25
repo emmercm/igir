@@ -112,10 +112,9 @@ export default class PPFPatch extends Patch {
       while (!patchFile.isEOF()) {
         await this.applyPatchBlock(patchFile, targetFile, header);
 
-        if (callback !== undefined) {
-          const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-          callback(Math.floor(progressPercentage * targetFile.getSize()));
-        }
+        callback?.(
+          Math.floor((patchFile.getPosition() / patchFile.getSize()) * targetFile.getSize()),
+        );
       }
     } finally {
       await targetFile.close();
