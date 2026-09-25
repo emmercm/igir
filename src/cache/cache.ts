@@ -344,14 +344,17 @@ export default class Cache<V> {
             fs.createWriteStream(tempFile),
           );
 
-          // Validate the file was written correctly
-          const tempFileCache = await new Cache({ filePath: tempFile }).load();
-          if (tempFileCache.size() !== Object.keys(keyValuesObject).length) {
-            // The written file is bad, don't use it
-            await FsUtil.rm(tempFile, { force: true });
-            this.hasChanged = true;
-            return;
-          }
+          // Validate the file was written correctly; gunzip will throw if the archive is missing
+          // its trailer (file is truncated) or if the CRC32 doesn't match (which shouldn't happen)
+          await stream.promises.pipeline(
+            fs.createReadStream(tempFile),
+            zlib.createGunzip(),
+            new stream.Writable({
+              write: (_chunk, _enc, cb): void => {
+                cb();
+              },
+            }),
+          );
 
           // Overwrite the real file with the temp file
           await FsUtil.mv(tempFile, this.filePath);
