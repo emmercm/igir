@@ -1,5 +1,6 @@
 #include <napi.h>
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,7 @@ Napi::Value ListEntriesJs(const Napi::CallbackInfo& info) {
 
 /** Initializes 7-Zip, per-environment state, and every JavaScript export for this addon. */
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
+    std::cout << "hello world\n";
     try {
         sevenzip::EnsureInitialized();
         // The registry this creates must exist before any export below can start
