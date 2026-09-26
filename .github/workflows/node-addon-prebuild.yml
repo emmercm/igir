@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
       # Prebuild if any relevant source file has changed
       - id: change-filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
@@ -274,7 +274,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - name: Install dependencies
@@ -326,7 +326,9 @@ jobs:
         with:
           # zizmor: ignore[artipacked] The persisted credentials are required for the
           #   subsequent `git push` that commits the prebuilds back to the branch.
-          ref: ${{ github.ref }}
+          # Check out the commit that triggered this run, which is the source commit in the
+          #   attestation, so that the prebuilds are committed directly on top of it
+          ref: ${{ github.sha }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
@@ -358,7 +360,9 @@ jobs:
           git config user.name "${USER_NAME}"
 
           git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}" || exit 0
-          git push
+          # HEAD is detached; if the branch has moved since this run was triggered, the push is
+          #   rejected as a non-fast-forward instead of committing prebuilds for stale source
+          git push origin "HEAD:${GITHUB_REF}"
 
   # !!! This check should be required by GitHub !!!
   prebuild-status-check:
