@@ -62,36 +62,49 @@ jobs:
               continue
             fi
 
-            # Only the certificate's fields are trustworthy, the attestation's predicate can be
-            #   controlled by the workflow that created it
-            if ! source_digests="$(gh attestation verify "${blob}" \
+            # One line per attestation. Only the certificate's fields are trustworthy, the
+            #   attestation's predicate can be controlled by the workflow that created it
+            if ! attestations="$(gh attestation verify "${blob}" \
               --repo "${REPO}" \
               --signer-workflow "${REPO}/.github/workflows/node-addon-prebuild.yml" \
               --deny-self-hosted-runners \
               --limit 1000 \
               --format json \
-              --jq '.[].verificationResult.signature.certificate.sourceRepositoryDigest')"; then
+              --jq '.[].verificationResult | [
+                .signature.certificate.sourceRepositoryDigest,
+                .signature.certificate.sourceRepositoryRef,
+                .signature.certificate.githubWorkflowTrigger,
+                .signature.certificate.buildSignerDigest,
+                .signature.certificate.runInvocationURI,
+                .verifiedTimestamps[0].timestamp
+              ] | @tsv')"; then
                 printf 'FAIL %q: no valid signature from node-addon-prebuild.yml\n' "${path}"
                 failed=true
                 continue
             fi
 
             is_ancestor=false
-            while IFS= read -r digest; do
-              [[ "${digest}" =~ ^[0-9a-f]{40}$ ]] || continue
-              if git -C "${repo_dir}" merge-base --is-ancestor "${digest}" "${HEAD_SHA}" 2>/dev/null; then
+            while IFS=$'\t' read -r source_digest source_ref trigger signer_digest run_uri signed_at; do
+              [[ "${source_digest}" =~ ^[0-9a-f]{40}$ ]] || continue
+              if git -C "${repo_dir}" merge-base --is-ancestor "${source_digest}" "${HEAD_SHA}" 2>/dev/null; then
                 is_ancestor=true
                 break
               fi
-            done <<< "${source_digests}"
+            done <<< "${attestations}"
 
             if [[ "${is_ancestor}" != "true" ]]; then
-              printf 'FAIL %q: signed from %s, none of which are in this pull request'\''s history\n' "${path}" "$(echo "${source_digests}" | paste -sd ' ' -)"
+              printf 'FAIL %q: signed from %s, none of which are in this pull request'\''s history\n' "${path}" "$(cut -f1 <<< "${attestations}" | paste -sd ' ' -)"
               failed=true
               continue
             fi
 
             printf 'PASS %q\n' "${path}"
+            printf '  sha256:   %s\n' "$(sha256sum "${blob}" | cut -d ' ' -f1)"
+            printf '  source:   %s (%s)\n' "${source_digest}" "${source_ref}"
+            printf '  workflow: %s (%s)\n' "${signer_digest}" "${trigger}"
+            printf '  run:      %s\n' "${run_uri}"
+            printf '  signed:   %s\n' "${signed_at}"
+            printf '  attestations: %d\n' "$(grep -c '' <<< "${attestations}")"
           done <<< "${paths}"
 
           if [[ "${failed}" == "true" ]]; then
