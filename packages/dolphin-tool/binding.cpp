@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <cstring>
 #include <future>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -437,7 +436,6 @@ static Napi::Value OpenReader(const Napi::CallbackInfo& info) {
 }
 
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
-    std::cout << "hello world\n";
     Napi::Function const cls = DolphinReader::GetClass(env);
     env.SetInstanceData(new Addon{.dolphinReader = Napi::Persistent(cls)});
     exports.Set("info", Napi::Function::New(env, Info));

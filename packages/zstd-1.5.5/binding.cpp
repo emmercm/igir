@@ -1,7 +1,6 @@
 #include <napi.h>
 
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -529,7 +528,6 @@ Napi::FunctionReference Decompressor::constructor;
  */
 
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
-    std::cout << "hello world\n";
     ThreadedCompressor::Init(env, exports);
     Decompressor::Init(env, exports);
     exports.Set("compressNonThreaded", Napi::Function::New(env, CompressNonThreaded));

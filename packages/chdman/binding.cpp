@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -890,7 +889,6 @@ static Napi::Value OpenRawReader(const Napi::CallbackInfo& info) {
 }
 
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
-    std::cout << "hello world\n";
     Napi::Function const trackReaderClass = TrackReader::GetClass(env);
     Napi::Function const rawReaderClass = RawReader::GetClass(env);
     env.SetInstanceData(

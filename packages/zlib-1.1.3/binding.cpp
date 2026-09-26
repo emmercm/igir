@@ -1,6 +1,5 @@
 #include <napi.h>
 
-#include <iostream>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -337,7 +336,6 @@ Napi::Value Deflater::Dispose(const Napi::CallbackInfo& info) {
 }
 
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
-    std::cout << "hello world\n";
     Deflater::Init(env, exports);
     exports.Set("getZlibVersion", Napi::Function::New(env, GetZlibVersion));
 
