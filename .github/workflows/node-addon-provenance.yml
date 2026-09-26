@@ -1,0 +1,136 @@
+name: Node.js Native Addons Provenance
+
+on:
+  # zizmor: ignore[dangerous-triggers] This workflow must use `pull_request_target` so that it
+  #   always runs the base branch's version of itself, which a pull request can't edit or skip.
+  #   `pull_request_target` is safe because the workflow has no secrets, no code is checked out,
+  #   and nothing from the pull request is ever executed; its files are only read as data.
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize  # PR's branch was edited (i.e. new commits)
+      - edited  # PR's base branch changed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Every prebuild that a pull request adds or modifies must have been signed by the
+  #   node-addon-prebuild.yml workflow in this repository, built from the parent of the commit
+  #   that last changed it. Prebuilds from forks, local builds, or other branches are rejected.
+  verify:
+    permissions:
+      contents: read # git fetch
+      attestations: read # gh attestation verify
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # Fetch the full commit history (for merge bases and each prebuild's last commit) but no file
+          #   contents; blobs are lazily fetched only for the prebuilds being verified. Nothing is
+          #   checked out.
+          repo_dir="${RUNNER_TEMP}/repo.git"
+          git init --quiet --bare "${repo_dir}"
+          git -C "${repo_dir}" remote add origin "https://github.com/${REPO}.git"
+          git -C "${repo_dir}" fetch --quiet --no-tags --filter=blob:none origin "${BASE_SHA}" "${HEAD_SHA}"
+
+          blob="${RUNNER_TEMP}/blob"
+
+          # Every prebuild that changed, one per line. `-z` can't be used because variables can't
+          #   hold NUL bytes; instead, git wraps any path with a newline or other unusual character
+          #   in double quotes, which then fails as "not a blob" below.
+          paths="$(git -C "${repo_dir}" -c core.quotePath=true diff --no-renames --diff-filter=d --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'packages/*/addon-*/**')"
+          if [[ -z "${paths}" ]]; then
+            echo "No prebuilds were added or modified"
+            exit 0
+          fi
+
+          failed=false
+          while IFS= read -r path; do
+            # Fails for trees, submodules, and missing paths
+            if ! git -C "${repo_dir}" cat-file blob "${HEAD_SHA}:${path}" > "${blob}"; then
+              printf 'FAIL %q: not a blob\n' "${path}"
+              failed=true
+              continue
+            fi
+
+            # One line per attestation. Only the certificate's fields are trustworthy, the
+            #   attestation's predicate can be controlled by the workflow that created it
+            if ! attestations="$(gh attestation verify "${blob}" \
+              --repo "${REPO}" \
+              --signer-workflow "${REPO}/.github/workflows/node-addon-prebuild.yml" \
+              --deny-self-hosted-runners \
+              --limit 1000 \
+              --format json \
+              --jq '.[].verificationResult | [
+                .signature.certificate.sourceRepositoryDigest,
+                .signature.certificate.sourceRepositoryRef,
+                .signature.certificate.githubWorkflowTrigger,
+                .signature.certificate.buildSignerDigest,
+                .signature.certificate.runInvocationURI,
+                .verifiedTimestamps[0].timestamp
+              ] | @tsv')"; then
+                printf 'FAIL %q: no valid signature from node-addon-prebuild.yml\n' "${path}"
+                failed=true
+                continue
+            fi
+
+            # The commit that last changed the prebuild must be node-addon-prebuild.yml's commit,
+            #   made directly on top of the source that the prebuild was built from. Merge commits
+            #   are rejected, they could combine a prebuild with source it wasn't built from.
+            last_commit="$(git -C "${repo_dir}" --literal-pathspecs log -1 --format='%H %P' "${HEAD_SHA}" -- "${path}")"
+            read -r prebuild_commit prebuild_parent other_parents <<< "${last_commit}"
+            if [[ -n "${other_parents}" ]]; then
+              printf 'FAIL %q: last changed by merge commit %s\n' "${path}" "${prebuild_commit}"
+              failed=true
+              continue
+            fi
+
+            is_signed=false
+            while IFS=$'\t' read -r source_digest source_ref trigger signer_digest run_uri signed_at; do
+              if [[ "${source_digest}" == "${prebuild_parent}" ]]; then
+                is_signed=true
+                break
+              fi
+            done <<< "${attestations}"
+
+            if [[ "${is_signed}" != "true" ]]; then
+              printf 'FAIL %q: last changed by %s, but was built from %s, not its parent %s\n' "${path}" "${prebuild_commit}" "$(cut -f1 <<< "${attestations}" | paste -sd ' ' -)" "${prebuild_parent}"
+              failed=true
+              continue
+            fi
+
+            printf 'PASS %q\n' "${path}"
+            printf '  file sha256:   %s\n' "$(sha256sum "${blob}" | cut -d ' ' -f1)"
+            printf '  committed in:  %s\n' "${prebuild_commit}"
+            printf '  built from:    %s (its parent, on %s, triggered by %s)\n' "${prebuild_parent}" "${source_ref}" "${trigger}"
+            printf '  workflow from: %s\n' "${signer_digest}"
+            printf '  run:           %s\n' "${run_uri}"
+            printf '  signed at:     %s\n' "${signed_at}"
+            printf '  attestations:  %d\n' "$(grep -c '' <<< "${attestations}")"
+          done <<< "${paths}"
+
+          if [[ "${failed}" == "true" ]]; then
+            echo "::error::Prebuilds may only be committed by the node-addon-prebuild.yml workflow; re-run it with workflow_dispatch from this pull request's branch."
+            exit 1
+          fi
+
+  # !!! This check should be required by GitHub !!!
+  prebuild-provenance-status-check:
+    needs:
+      - verify
+    if: always()
+    permissions: {}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        with:
+          jobs: ${{ toJSON(needs) }}

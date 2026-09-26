@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read and write
 
-name: Node Native Addons Prebuild
+name: Node.js Native Addons Prebuild
 
 on:
   # Note: dorny/paths-filter can't use 'pull_request' with the 'base' option
@@ -10,18 +10,10 @@ on:
     branches-ignore:
       - 'main'
   workflow_dispatch:
-    inputs:
-      ref:
-        description: 'Git branch'
-        required: true
-        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  ref: ${{ inputs.ref || github.ref }}
 
 jobs:
   # Perform some `on.push.branches-ignore` here so that the 'prebuild-status-check' job can still run
@@ -33,11 +25,9 @@ jobs:
       should-prebuild: ${{ steps.branch-gate.outputs.should-prebuild }}
     steps:
       - id: branch-gate
-        env:
-          REF: ${{ env.ref }}
         run: |
           set -x
-          branch="${REF#refs/heads/}"
+          branch="${GITHUB_REF#refs/heads/}"
           # Don't prebuild on version bump branches (e.g. 'emmercm/1.2.3')
           if [[ "${branch}" =~ /[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "should-prebuild=false" >> "${GITHUB_OUTPUT}"
@@ -56,7 +46,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ env.ref }}
+          ref: ${{ github.sha }}
       # Prebuild if any relevant source file has changed
       - id: change-filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -78,8 +68,7 @@ jobs:
           base: ${{ github.ref }}
           filters: |
             changes:
-              - 'packages/*/addon*/**'
-              - 'packages/*/prebuilds*/**'
+              - 'packages/*/addon-*/**'
 
   prebuild:
     name: prebuildify (${{ matrix.os }}, ${{ matrix.docker_arch || 'default' }})
@@ -111,7 +100,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ env.ref }}
+          ref: ${{ github.sha }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
@@ -162,11 +151,11 @@ jobs:
 
             find packages -maxdepth 1 -type d \( -name "7zip*" -o -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
               cd "${dir}"
-              rm -rf addon* prebuilds*
+              rm -rf addon-*
               ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
               cd ../..
             done
-            find packages/*/addon* -type f -print0 | xargs -0 ls -al
+            find packages/*/addon-* -type f -print0 | xargs -0 ls -al
 
             # Test the build
             rm -rf packages/*/build
@@ -182,11 +171,11 @@ jobs:
           node --print 'process'
           find packages -maxdepth 1 -type d \( -name "7zip*" -o -name "chdman*" -o -name "dolphin-tool*" -o -name "zlib*" -o -name "zstd*" \) | while IFS= read -r dir; do
             cd "${dir}"
-            rm -rf addon* prebuilds*
+            rm -rf addon-*
             ../../node_modules/.bin/prebuildify --target "$(node --print 'process.versions.node')" --napi --strip --out "addon-$(basename "$(pwd)")"
             cd ../..
           done
-          find packages/*/addon* -type f -print0 | xargs -0 ls -al
+          find packages/*/addon-* -type f -print0 | xargs -0 ls -al
 
           # Test the build
           rm -rf packages/*/build
@@ -212,7 +201,7 @@ jobs:
             done <<< "${needed}"
             glibc_max="$(readelf --dyn-syms -W "${addon}" | grep -oE 'GLIBC_[0-9]+(\.[0-9]+)+' | sort -uV | tail -n 1 || true)"
             [ -n "${glibc_max}" ] && echo "  Requires (informational): ${glibc_max}"
-          done < <(find packages -type f -path '*/addon*/*.node' -print0)
+          done < <(find packages -type f -path '*/addon-*/*.node' -print0)
           [ "${validation_failures}" -eq 0 ] || { echo "Native addon validation FAILED with ${validation_failures} problem(s)."; exit 1; }
       - if: ${{ startsWith(matrix.os, 'macos') }}
         name: Validate macOS addon dependencies
@@ -229,7 +218,7 @@ jobs:
                 validation_failures=$((validation_failures + 1))
               fi
             done <<< "${deps}"
-          done < <(find packages -type f -path '*/addon*/*.node' -print0)
+          done < <(find packages -type f -path '*/addon-*/*.node' -print0)
           [ "${validation_failures}" -eq 0 ] || { echo "Native addon validation FAILED with ${validation_failures} problem(s)."; exit 1; }
       - if: ${{ startsWith(matrix.os, 'windows') }}
         name: Validate Windows addon dependencies
@@ -262,13 +251,13 @@ jobs:
                 validation_failures=$((validation_failures + 1))
               fi
             done <<< "${deps}"
-          done < <(find packages -type f -path '*/addon*/*.node' -print0)
+          done < <(find packages -type f -path '*/addon-*/*.node' -print0)
           [ "${validation_failures}" -eq 0 ] || { echo "Native addon validation FAILED with ${validation_failures} problem(s)."; exit 1; }
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: prebuild-${{ matrix.os }}-${{ steps.linux-vars.outputs.DOCKER_ARCH }}
-          path: packages/*/addon*/
+          path: packages/*/addon-*/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -285,7 +274,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ env.ref }}
+          ref: ${{ github.sha }}
           submodules: 'recursive'
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - name: Install dependencies
@@ -302,7 +291,7 @@ jobs:
         run: |
           set -x
           mapfile -t cpp_files < <(find packages -type f \( -name '*.cpp' -o -name '*.cc' \) \
-            -not -path '*/deps/*' -not -path '*/build/*' -not -path '*/addon*/*' | sort)
+            -not -path '*/deps/*' -not -path '*/build/*' -not -path '*/addon-*/*' | sort)
           printf 'Checking: %s\n' "${cpp_files[@]}"
           clang-format --dry-run --Werror "${cpp_files[@]}"
 
@@ -313,7 +302,7 @@ jobs:
             pkg=$(dirname "${gyp}")
             ( cd "${pkg}" && ../../node_modules/.bin/node-gyp configure -- -f compile_commands_json )
             mapfile -t pkg_files < <(find "${pkg}" -type f \( -name '*.cpp' -o -name '*.cc' \) \
-              -not -path '*/deps/*' -not -path '*/build/*' -not -path '*/addon*/*' | sort)
+              -not -path '*/deps/*' -not -path '*/build/*' -not -path '*/addon-*/*' | sort)
             printf 'Linting %s: %s\n' "${pkg}" "${pkg_files[*]}"
             clang-tidy \
               --warnings-as-errors='*' \
@@ -329,28 +318,36 @@ jobs:
       - cpp-lint
     permissions:
       contents: read # actions/checkout
+      id-token: write # actions/attest-build-provenance
+      attestations: write # actions/attest-build-provenance
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # zizmor: ignore[artipacked] The persisted credentials are required for the
           #   subsequent `git push` that commits the prebuilds back to the branch.
-          ref: ${{ env.ref }}
+          # Check out the commit that triggered this run, which is the source commit in the
+          #   attestation, so that the prebuilds are committed directly on top of it
+          ref: ${{ github.sha }}
           # Token needed to trigger Actions on push
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       - run: |
           set -x
-          find packages/*/addon* -type f -print0 | xargs -0 ls -al
-          rm -rf packages/*/addon*/ packages/*/prebuilds*/
-          find packages/*/addon* -type f -print0 | xargs -0 ls -al
+          find packages/*/addon-* -type f -print0 | xargs -0 ls -al
+          rm -rf packages/*/addon-*/
+          find packages/*/addon-* -type f -print0 | xargs -0 ls -al
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: packages/
           merge-multiple: true
+      # Sign the prebuilds so that node-addon-provenance.yml can verify they were built by this workflow
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: 'packages/*/addon-*/**'
       - id: bump-and-commit
         run: |
           set -x
-          find packages/*/addon* -type f -print0 | xargs -0 ls -al
+          find packages/*/addon-* -type f -print0 | xargs -0 ls -al
           git add --all packages
           git status
 
@@ -363,7 +360,9 @@ jobs:
           git config user.name "${USER_NAME}"
 
           git commit -m "prebuilds @ https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}" || exit 0
-          git push
+          # HEAD is detached; if the branch has moved since this run was triggered, the push is
+          #   rejected as a non-fast-forward instead of committing prebuilds for stale source
+          git push origin "HEAD:${GITHUB_REF}"
 
   # !!! This check should be required by GitHub !!!
   prebuild-status-check:
