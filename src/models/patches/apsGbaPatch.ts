@@ -95,10 +95,11 @@ export default class APSGBAPatch extends Patch {
       }
       await targetFile.writeAt(targetData, offset);
 
-      if (callback !== undefined) {
-        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      if (callback === undefined) {
+        continue;
       }
+      const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+      callback(Math.floor(progressPercentage * targetFile.getSize()));
     }
   }
 }

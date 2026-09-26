@@ -152,10 +152,11 @@ export default class BPSPatch extends Patch {
         throw new IgirException(`BPS action ${action} isn't supported`);
       }
 
-      if (callback !== undefined) {
-        const progressPercentage = patchFile.getPosition() / patchFile.getSize();
-        callback(Math.floor(progressPercentage * targetFile.getSize()));
+      if (callback === undefined) {
+        continue;
       }
+      const progressPercentage = patchFile.getPosition() / patchFile.getSize();
+      callback(Math.floor(progressPercentage * targetFile.getSize()));
     }
   }
 }
