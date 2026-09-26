@@ -1,4 +1,4 @@
-name: Node Native Addons Provenance
+name: Node.js Native Addons Provenance
 
 on:
   # zizmor: ignore[dangerous-triggers] This workflow must use `pull_request_target` so that it

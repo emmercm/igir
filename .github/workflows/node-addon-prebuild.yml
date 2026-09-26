@@ -2,7 +2,7 @@
 #   Contents: read and write
 #   Pull Requests: read and write
 
-name: Node Native Addons Prebuild
+name: Node.js Native Addons Prebuild
 
 on:
   # Note: dorny/paths-filter can't use 'pull_request' with the 'base' option
