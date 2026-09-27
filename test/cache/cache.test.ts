@@ -276,10 +276,9 @@ describe('save and load', () => {
     }
   });
 
-  it('should ignore a legacy single-object-format cache file', async () => {
-    // A cache file that is a single gzipped JSON object, rather than newline-delimited records,
-    // is not parseable as records. It is ignored gracefully — the cache simply rebuilds itself —
-    // instead of throwing.
+  it('should load a legacy single-object-format cache file', async () => {
+    // Older versions wrote the whole map as one gzipped JSON object rather than newline-delimited
+    // records. Those files must still load, so an upgrade doesn't discard a warm cache.
     const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
     const legacy = zlib.gzipSync(Buffer.from(JSON.stringify({ a: 1, b: 2, c: 3 }), 'utf8'));
     await FsUtil.writeFile(tempFile, legacy);
@@ -287,7 +286,62 @@ describe('save and load', () => {
     try {
       const cache = new Cache<number>({ filePath: tempFile });
       await cache.load();
-      expect(cache.size()).toEqual(0);
+      expect(cache.size()).toEqual(3);
+      await expect(cache.get('a')).resolves.toEqual(1);
+      await expect(cache.get('b')).resolves.toEqual(2);
+      await expect(cache.get('c')).resolves.toEqual(3);
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should load a legacy file whose values contain newlines', async () => {
+    // Detection keys off the leading `{`. A value containing a newline must not be mistaken for the
+    // newline-delimited format.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const values = { 'line\nbreak': 'value\nwith\nnewlines', quoted: 'a "b" c' };
+    const legacy = zlib.gzipSync(Buffer.from(JSON.stringify(values), 'utf8'));
+    await FsUtil.writeFile(tempFile, legacy);
+
+    try {
+      const cache = new Cache<string>({ filePath: tempFile });
+      await cache.load();
+      expect(cache.size()).toEqual(2);
+      await expect(cache.get('line\nbreak')).resolves.toEqual('value\nwith\nnewlines');
+      await expect(cache.get('quoted')).resolves.toEqual('a "b" c');
+    } finally {
+      await FsUtil.rm(tempFile, { force: true });
+    }
+  });
+
+  it('should write a cache whose serialized size exceeds one batch', async () => {
+    // Records are flushed in batches of ~1 MiB of serialized text, so this crosses a batch boundary
+    // several times over. Batching must not merge records or lose the boundary between batches.
+    const entryCount = 5000;
+    const value = 'x'.repeat(500);
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+
+    const firstCache = new Cache<string>({ filePath: tempFile });
+    for (let i = 0; i < entryCount; i += 1) {
+      await firstCache.set(String(i), value);
+    }
+    await firstCache.save();
+
+    try {
+      const serialized = zlib.gunzipSync(await fs.promises.readFile(tempFile)).toString('utf8');
+      expect(serialized.length).toBeGreaterThan(1024 * 1024);
+      const lines = serialized.split('\n').filter((line) => line.length > 0);
+      expect(lines).toHaveLength(entryCount);
+      for (const line of lines) {
+        expect(Array.isArray(JSON.parse(line))).toEqual(true);
+      }
+
+      const secondCache = new Cache<string>({ filePath: tempFile });
+      await secondCache.load();
+      expect(secondCache.size()).toEqual(entryCount);
+      for (let i = 0; i < entryCount; i += 1) {
+        await expect(secondCache.get(String(i))).resolves.toEqual(value);
+      }
     } finally {
       await FsUtil.rm(tempFile, { force: true });
     }

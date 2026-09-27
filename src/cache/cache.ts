@@ -20,6 +20,10 @@ export interface CacheProps {
  * A cache of an unbounded size.
  */
 export default class Cache<V> {
+  // Serialized records are flushed once a batch reaches this many characters: large enough to
+  // amortize the per-chunk overhead, far below V8's maximum string length.
+  private static readonly BATCH_LENGTH = 1024 * 1024;
+
   private keyValues = new Map<string, V>();
 
   private readonly keyedMutex = new KeyedMutex(1000);
@@ -269,16 +273,25 @@ export default class Cache<V> {
       const decoder = new string_decoder.StringDecoder('utf8');
       const map = new Map<string, V>();
       let buffer = '';
-      const readState = { hasData: false };
+      // Older versions wrote the whole map as one JSON object. Such a file is still read whole: the
+      // old writer had to materialize that string to produce it, so reading it back the same way
+      // cannot exceed a limit the file was written under. Detecting it up front keeps the newline
+      // splitting, which is quadratic over one long line, off those files entirely.
+      const readState: { hasData: boolean; format: 'unknown' | 'legacy' | 'records' } = {
+        hasData: false,
+        format: 'unknown',
+      };
+      const legacy: string[] = [];
       const ingestLine = (line: string): void => {
         if (line.length === 0) {
           return;
         }
         const entry = JSON.parse(line) as unknown;
-        if (Array.isArray(entry) && entry.length === 2) {
-          const [key, value] = entry as [string, V];
-          map.set(key, value);
+        if (!Array.isArray(entry) || entry.length !== 2) {
+          return;
         }
+        const [key, value] = entry as [string, V];
+        map.set(key, value);
       };
       await stream.promises.pipeline(
         fs.createReadStream(this.filePath),
@@ -286,7 +299,24 @@ export default class Cache<V> {
         new stream.Writable({
           write(chunk: Buffer, _enc: BufferEncoding, cb: () => void): void {
             readState.hasData = true;
-            buffer += decoder.write(chunk);
+            const text = decoder.write(chunk);
+            if (readState.format === 'unknown') {
+              buffer += text;
+              const trimmed = buffer.trimStart();
+              if (trimmed.length === 0) {
+                cb();
+                return;
+              }
+              readState.format = trimmed.startsWith('{') ? 'legacy' : 'records';
+            } else if (readState.format === 'records') {
+              buffer += text;
+            }
+            if (readState.format === 'legacy') {
+              legacy.push(buffer);
+              buffer = '';
+              cb();
+              return;
+            }
             let idx = buffer.indexOf('\n');
             while (idx !== -1) {
               ingestLine(buffer.slice(0, idx));
@@ -297,12 +327,17 @@ export default class Cache<V> {
           },
         }),
       );
-      buffer += decoder.end();
-      ingestLine(buffer);
       if (!readState.hasData) {
         return this;
       }
-      this.keyValues = map;
+      buffer += decoder.end();
+      if (readState.format === 'legacy') {
+        legacy.push(buffer);
+        this.keyValues = new Map(Object.entries(JSON.parse(legacy.join('')) as Record<string, V>));
+      } else {
+        ingestLine(buffer);
+        this.keyValues = map;
+      }
     } catch {
       // ignored
     }
@@ -358,14 +393,25 @@ export default class Cache<V> {
         // Write to a temp file first
         const tempFile = await FsUtil.mktemp(this.filePath);
         try {
-          // Stream one newline-delimited [key, value] record at a time. This avoids serializing
-          // the entire cache into a single string, which can exceed V8's maximum string length
-          // and throw a `RangeError` on large collections.
+          // Stream newline-delimited [key, value] records. This avoids serializing the entire cache
+          // into a single string, which can exceed V8's maximum string length and throw a
+          // `RangeError` on large collections. Records are emitted in batches rather than one chunk
+          // per entry: a `Buffer.from()` per entry costs more than the serialization it wraps, and
+          // V8 joins the accumulated string with ropes, so only a batch is ever flattened.
           await stream.promises.pipeline(
             stream.Readable.from(
-              (function* (): Generator<Buffer> {
+              (function* (): Generator<string> {
+                let batch = '';
                 for (const entry of entries) {
-                  yield Buffer.from(`${JSON.stringify(entry)}\n`, 'utf8');
+                  batch += `${JSON.stringify(entry)}\n`;
+                  if (batch.length < Cache.BATCH_LENGTH) {
+                    continue;
+                  }
+                  yield batch;
+                  batch = '';
+                }
+                if (batch.length > 0) {
+                  yield batch;
                 }
               })(),
             ),
