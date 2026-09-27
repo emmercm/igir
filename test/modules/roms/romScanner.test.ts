@@ -127,7 +127,16 @@ describe('multiple files', () => {
       .map((file) => file.getArchive().getExtension())
       .reduce(ArrayUtil.reduceUnique(), [])
       .toSorted((a, b) => a.localeCompare(b));
-    expect(extensionsWithoutCrc32).toEqual(['.bz2', '.chd', '.gcz', '.rvz', '.tar.gz', '.wia']);
+    expect(extensionsWithoutCrc32).toEqual([
+      '.bz2',
+      '.chd',
+      '.cso',
+      '.gcz',
+      '.rvz',
+      '.tar.gz',
+      '.wia',
+      '.zso',
+    ]);
 
     const entriesWithMd5 = scannedFiles
       .filter((file) => file instanceof ArchiveEntry)

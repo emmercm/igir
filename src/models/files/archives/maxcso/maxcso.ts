@@ -1,12 +1,13 @@
+import fs from 'node:fs';
 import path from 'node:path';
+import stream from 'node:stream';
 
-import maxcso, { MaxcsoBinaryPreference } from 'maxcso';
-
-import { logger } from '../../../../console/logger.js';
-import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
-import type { ChecksumBitmaskValue, ChecksumProps } from '../../fileChecksums.js';
+import maxcso from '../../../../../packages/maxcso/index.js';
+import Defaults from '../../../../globals/defaults.js';
+import FsReadTransform, { type FsReadCallback } from '../../../../streams/fsReadTransform.js';
+import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';
+import StreamUtil from '../../../../utils/streamUtil.js';
 import FileChecksums from '../../fileChecksums.js';
-import { ChecksumBitmask } from '../../fileChecksums.js';
 import type { ArchiveEntryLocation } from '../archive.js';
 import Archive from '../archive.js';
 import ArchiveEntry from '../archiveEntry.js';
@@ -30,60 +31,62 @@ export default abstract class Maxcso extends Archive {
     return false;
   }
 
+  /**
+   * List the single ISO the disc image holds, computing every requested checksum in one
+   * decompression pass.
+   */
   async getArchiveEntries(
-    checksumBitmask: ChecksumBitmaskValue,
+    checksumBitmask: number,
     callback?: FsReadCallback,
-    shouldForceChecksumCalculation = false,
   ): Promise<ArchiveEntry<Archive>[]> {
     const entryPath = `${path.parse(this.getFilePath()).name}.iso`;
-    const size = (await maxcso.header(this.getFilePath())).uncompressedSize;
 
+    const info = await maxcso.info({ inputFilename: this.getFilePath() });
     if (callback) {
-      callback(0, Number(size));
+      callback(0, info.uncompressedSize);
     }
 
-    // Read the CRC32 from maxcso if needed
-    let uncompressedCrc32: string | undefined;
-    if (
-      !shouldForceChecksumCalculation &&
-      (checksumBitmask === ChecksumBitmask.NONE || checksumBitmask & ChecksumBitmask.CRC32)
-    ) {
-      uncompressedCrc32 = await maxcso.uncompressedCrc32({
-        inputFilename: this.getFilePath(),
-        binaryPreference: MaxcsoBinaryPreference.PREFER_PATH_BINARY,
-      });
-    }
-
-    // Calculate checksums from the file's bytes if needed
-    let checksums: ChecksumProps = {};
-    if (
-      checksumBitmask & ~ChecksumBitmask.CRC32 ||
-      (shouldForceChecksumCalculation && checksumBitmask & ChecksumBitmask.CRC32)
-    ) {
-      checksums = await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
-        return await FileChecksums.hashStream(readable, checksumBitmask, callback);
-      });
-    }
-    const { crc32, ...checksumsWithoutCrc } = checksums;
-
-    if (crc32 !== undefined && crc32 !== uncompressedCrc32) {
-      logger.warn(
-        `${this.getFilePath()}: archive is invalid, maxcso returned the CRC32 ${uncompressedCrc32} but it should be ${crc32}`,
-      );
-    }
+    // Compute every requested checksum in a single decompression pass. A decode error on a
+    // corrupt block surfaces as a stream error, which is the integrity check.
+    const checksums = await this.extractEntryToStream(
+      { entryPath: '' },
+      async (readable) => await FileChecksums.hashStream(readable, checksumBitmask, callback),
+    );
 
     return [
       await ArchiveEntry.entryOf(
         {
           archive: this,
           entryPath,
-          size: Number(size),
-          crc32: crc32 ?? uncompressedCrc32,
-          ...checksumsWithoutCrc,
+          size: info.uncompressedSize,
+          ...checksums,
         },
         checksumBitmask,
       ),
     ];
+  }
+
+  /**
+   * Open a stream over the disc image's decompressed ISO bytes, skipping the first `start`
+   * bytes, and invoke the callback. A maxcso disc image exposes a single logical ISO, so the
+   * entry path is not needed to resolve it.
+   */
+  override async extractEntryToStream<T>(
+    _location: ArchiveEntryLocation,
+    callback: (readable: stream.Readable) => Promise<T> | T,
+    start = 0,
+  ): Promise<T> {
+    const sourceStream: stream.Readable = maxcso.openReader({
+      inputFilename: this.getFilePath(),
+      highWaterMark: Defaults.FILE_READING_CHUNK_SIZE,
+    });
+    // A non-zero start offset (e.g. a detected ROM header) must skip that many
+    // leading bytes of the forward-only stream.
+    return await StreamUtil.pipelineSafe(
+      sourceStream,
+      start > 0 ? new SkipBytesTransform(start) : undefined,
+      callback,
+    );
   }
 
   /**
@@ -92,11 +95,15 @@ export default abstract class Maxcso extends Archive {
   async extractEntryToFile(
     _location: ArchiveEntryLocation,
     extractedFilePath: string,
+    callback?: FsReadCallback,
   ): Promise<void> {
-    await maxcso.decompress({
-      inputFilename: this.getFilePath(),
-      outputFilename: extractedFilePath,
-      binaryPreference: MaxcsoBinaryPreference.PREFER_PATH_BINARY,
+    await this.extractEntryToStream({ entryPath: '' }, async (readable) => {
+      const writeStream = fs.createWriteStream(extractedFilePath);
+      if (callback) {
+        await stream.promises.pipeline(readable, new FsReadTransform(callback), writeStream);
+      } else {
+        await stream.promises.pipeline(readable, writeStream);
+      }
     });
   }
 }

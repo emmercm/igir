@@ -113,6 +113,7 @@ Heap.*.md
 dist/
 /package
 packages/*/build/**
+packages/*/addon-*/build/**
 packages/*/package-lock.json
 ./prebuilds/
 site/
@@ -197,6 +198,7 @@ igir.exe
 *.sqlite
 *.torrent
 *.txt
+!requirements.txt
 *.wav
 *.xml
 
