@@ -33,7 +33,9 @@
 
       "conditions": [
         ["OS=='mac'", {
-          "defines+": ["TARGET_OS_MAC=0", "Byte=unsigned char"]
+          # Modern Apple Clang defines TARGET_OS_MAC. The legacy zconf.h then
+          # expects Byte from classic Mac headers; supply only that missing type.
+          "defines+": ["Byte=unsigned char"]
         }]
       ],
 
@@ -52,9 +54,6 @@
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
           "AdditionalOptions": [
-            "/D__DATE__=0",
-            "/D__TIME__=0",
-            "/D__TIMESTAMP__=0",
             "/Zc:wchar_t",
             "/EHsc",
             "/Gm-"
@@ -63,7 +62,6 @@
         "VCLinkerTool": {
           "AdditionalOptions": [
             "/Brepro",
-            "/deterministic",
             "/NOLOGO",
             "/OPT:REF",
             "/DEBUG:NONE"

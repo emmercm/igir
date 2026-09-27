@@ -11,9 +11,39 @@ import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import maxcso, { MaxcsoFormat } from '../index.js';
-import fixturePayload, { PAYLOAD_SIZE } from './fixturePayload.js';
 
 gracefulFs.gracefulify(fs);
+
+/**
+ * The size of the ISO every maxcso fixture holds: sector-aligned (2 KiB), but a multiple of
+ * neither 16 KiB nor 256 KiB, so the last block of those fixtures is short.
+ */
+const PAYLOAD_SIZE = 602 * 1024;
+
+/**
+ * Build the ISO every maxcso fixture holds. `scripts/generateFixtures.ts` builds the same ISO, and
+ * any drift between the two fails the decompression tests.
+ *
+ * - Every byte is `position % 251`, so a torn, reordered, or shifted block changes the output.
+ * - 64 KiB–96 KiB is an xorshift keystream, which doesn't compress, so maxcso has to store those
+ *   blocks.
+ * - 128 KiB–144 KiB is all zeros.
+ */
+function fixturePayload(): Buffer {
+  const payload = Buffer.alloc(PAYLOAD_SIZE);
+  for (let i = 0; i < payload.length; i++) {
+    payload[i] = i % 251;
+  }
+  let state = 0x9e_37_79_b9;
+  for (let i = 64 * 1024; i < 96 * 1024; i++) {
+    state = (state ^ (state << 13)) >>> 0;
+    state = (state ^ (state >>> 17)) >>> 0;
+    state = (state ^ (state << 5)) >>> 0;
+    payload[i] = state & 0xff;
+  }
+  payload.fill(0, 128 * 1024, 144 * 1024);
+  return payload;
+}
 
 const FIXTURE_DIR = path.join('packages', 'maxcso', 'test', 'fixtures');
 const DAX_FRAME_SIZE = 8192;

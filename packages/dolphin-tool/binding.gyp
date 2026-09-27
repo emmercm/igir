@@ -308,7 +308,14 @@
         "<(dolphin)/Source/Core/Common/StringUtil.cpp"
       ],
       "dependencies": ["zstd", "bzip2", "lzma", "zlibng", "mbedtls"],
-      "defines": ["FMT_HEADER_ONLY", "LZMA_API_STATIC"],
+      "defines": [
+        "FMT_HEADER_ONLY",
+        "LZMA_API_STATIC",
+        # A read worker can finish while its worker thread's environment is being torn
+        # down, when JS can no longer run. Without this, node-addon-api aborts the process
+        # instead of dropping the result nobody can receive.
+        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS"
+      ],
       "msvs_settings": {
         "VCCLCompilerTool": {
           "LanguageStandard": "Default",

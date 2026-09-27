@@ -11,7 +11,11 @@
       "defines": [
         "NAPI_VERSION=<(napi_build_version)",
         "NODE_ADDON_API_DISABLE_DEPRECATED",
-        "NAPI_DISABLE_CPP_EXCEPTIONS"
+        "NAPI_DISABLE_CPP_EXCEPTIONS",
+        # A compress or decompress worker can finish while its worker thread's environment is
+        # being torn down, when JS can no longer run. Without this, node-addon-api aborts the
+        # process instead of dropping the result nobody can receive.
+        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS"
       ],
       "cflags": ["-fvisibility=hidden"],
       "cflags_cc": ["-fvisibility=hidden"],
@@ -26,17 +30,9 @@
         "DEAD_CODE_STRIPPING": "YES"
       },
       "msvs_settings": {
-        "VCCLCompilerTool": {
-          "AdditionalOptions": [
-            "/D__DATE__=0",
-            "/D__TIME__=0",
-            "/D__TIMESTAMP__=0"
-          ]
-        },
         "VCLinkerTool": {
           "AdditionalOptions": [
             "/Brepro",
-            "/deterministic",
             "/NOLOGO",
             "/OPT:REF",
             "/DEBUG:NONE"
@@ -85,7 +81,7 @@
         "ldflags": ["-Wl,--trace"]
       },
       "defines": [
-        "ZSTD_STATIC_LINKING_ONLY",
+        "ZSTD_STATIC_LINKING_ONLY=",
         "ZSTD_MULTITHREAD",
         "ZSTD_NO_TRACE",
         "ZSTDLIB_VISIBLE=",
