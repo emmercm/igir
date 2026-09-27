@@ -5,6 +5,11 @@
     "maxcso_sanitize%": "false"
   },
   "target_defaults": {
+    # Node's common.gypi defines _HAS_EXCEPTIONS=0 on Windows, which puts MSVC's STL in a
+    # no-exceptions mode at odds with /EHsc: std::exception keeps a borrowed message pointer
+    # instead of a copy, so a std::runtime_error built from a temporary string reports freed
+    # memory. Removing the define restores MSVC's default of 1.
+    "defines!": ["_HAS_EXCEPTIONS=0"],
     "conditions": [
       ["OS=='win'", {
         "defines": ["NOMINMAX", "UNICODE", "_UNICODE", "WIN32_LEAN_AND_MEAN", "_CRT_SECURE_NO_WARNINGS"]
