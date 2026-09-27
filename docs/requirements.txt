@@ -1,11 +1,11 @@
 mkdocs-material==9.7.7
 
 # https://github.com/mkdocs/mkdocs/issues/4032
-click==8.4.2
+click==8.5.0
 
 mkdocs-exclude-search==0.6.7
 mkdocs-git-committers-plugin-2==2.5.0
-mkdocs-git-revision-date-localized-plugin==1.5.3
+mkdocs-git-revision-date-localized-plugin==1.6.0
 mkdocs-htmlproofer-plugin==1.5.0
 mkdocs-redirects==1.2.3
 mkdocs-unused-files==0.2.0
@@ -17,4 +17,4 @@ mdx-truly-sane-lists==1.3
 #   (sudo rm /usr/local/lib/libcairo.2.dylib || true) && sudo ln -s /opt/homebrew/Cellar/cairo/*/lib/libcairo.2.dylib /usr/local/lib/
 # Linux: sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
 Pillow==12.3.0
-CairoSVG==2.9.0
+CairoSVG==2.9.1
