@@ -550,17 +550,18 @@ class Container {
 
 // ---- shared pull-reader scaffolding ----
 
-// Runs a reader's Produce() on a worker thread so blocking/decompressing blob reads
-// never run on the V8 main thread. Each Reader must expose:
-//   size_t Produce(uint8_t* out, size_t maxBytes);  // worker thread
-//   void   FinishRead();                             // main thread, post-Execute
-template <typename Reader>
+// Runs a Source's Produce() on a worker thread so blocking/decompressing blob reads
+// never run on the V8 main thread, then tells the Reader the read is done. They must expose:
+//   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
+//   void   Reader::FinishRead();                             // main thread, post-Execute
+template <typename Reader, typename Source>
 class ReadWorker : public Napi::AsyncWorker {
    public:
-    ReadWorker(Napi::Env env, Reader* reader, size_t maxBytes)
+    ReadWorker(Napi::Env env, std::shared_ptr<Reader*> reader, std::shared_ptr<Source> source, size_t maxBytes)
         : Napi::AsyncWorker(env),
           deferred_(Napi::Promise::Deferred::New(env)),
-          reader_(reader),
+          reader_(std::move(reader)),
+          source_(std::move(source)),
           // new[] rather than std::vector, deliberately: a vector would
           // value-initialize every byte, and Produce() overwrites the only part
           // of it anyone is ever shown. Zeroing a chunk per read just to memcpy
@@ -573,7 +574,7 @@ class ReadWorker : public Napi::AsyncWorker {
 
     void Execute() override {
         try {
-            n_ = reader_->Produce(buf_.get(), cap_);
+            n_ = source_->Produce(buf_.get(), cap_);
         } catch (const std::exception& e) {
             SetError(e.what());
         } catch (...) {
@@ -610,17 +611,29 @@ class ReadWorker : public Napi::AsyncWorker {
                 deferred_.Resolve(out);
             }
         }
-        reader_->FinishRead();  // last use of reader_: may release it
+        FinishRead();
     }
 
     void OnError(const Napi::Error& e) override {
         deferred_.Reject(e.Value());
-        reader_->FinishRead();  // last use of reader_: may release it
+        FinishRead();
     }
 
    private:
+    // Tell the reader the read is done, if it still exists. An environment tearing down, such as a
+    // terminated Worker's, finalizes every object before it runs the callbacks of reads still in
+    // flight, so the reader can be destroyed while it holds a Ref().
+    void FinishRead() {
+        if (*reader_ != nullptr) {
+            (*reader_)->FinishRead();  // may release the reader
+        }
+    }
+
     Napi::Promise::Deferred deferred_;
-    Reader* reader_;
+    // Cleared by the reader's destructor
+    std::shared_ptr<Reader*> reader_;
+    // Keeps the file open until this worker is destroyed, even if the reader is closed or destroyed first
+    std::shared_ptr<Source> source_;
     // A runtime-sized owning buffer, which is exactly what unique_ptr<T[]> is
     // for; std::array would need the size at compile time.
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
@@ -630,53 +643,54 @@ class ReadWorker : public Napi::AsyncWorker {
 };
 
 // CRTP base for the async pull-reader lifecycle used by MaxcsoReader. Each Derived
-// supplies:
-//   size_t Produce(uint8_t* out, size_t maxBytes);  // worker thread; emits bytes
-//   void   Teardown();                               // main thread; releases handles
+// constructor stores the Source it reads from in source_.
 //
-// Safety invariant: Produce (worker thread) never overlaps Teardown (main thread),
-// which runs only from Close() with no read in flight or from FinishRead() (main
-// thread, after Execute returns). reading_ rejects a concurrent read(); Ref()/Unref()
-// keep the object alive across the async read.
-template <typename Derived>
+// Safety invariant: the reader and the read worker in flight each hold the Source, so it is
+// freed on the main thread only once neither does. Produce (worker thread) never runs on a
+// freed Source, even if the reader is closed or destroyed mid-read. reading_ rejects a
+// concurrent read(); Ref()/Unref() keep the object alive across the async read.
+template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
-    explicit ReaderBase(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Derived>(info) {}
+    explicit ReaderBase(const Napi::CallbackInfo& info)
+        : Napi::ObjectWrap<Derived>(info), self_(std::make_shared<ReaderBase*>(this)) {}
+
+    ~ReaderBase() override { *self_ = nullptr; }
+
+    ReaderBase(const ReaderBase&) = delete;
+    ReaderBase& operator=(const ReaderBase&) = delete;
+    ReaderBase(ReaderBase&&) = delete;
+    ReaderBase& operator=(ReaderBase&&) = delete;
 
     Napi::Value Read(const Napi::CallbackInfo& info);
 
-    // Deterministically release the file handle. If a read worker is in flight,
-    // the teardown is deferred to FinishRead() so the worker thread is never
-    // reading the file while the main thread frees it.
-    void Close(const Napi::CallbackInfo& /*unused*/) {
-        closed_ = true;
-        if (!reading_) {
-            static_cast<Derived*>(this)->Teardown();
-        }
-    }
+    // Release this reader's hold on the file. A read worker in flight holds it too, so the
+    // file closes once the worker thread is done with it.
+    void Close(const Napi::CallbackInfo& /*unused*/) { source_.reset(); }
 
-    // Called on the main thread by the read worker once Produce has fully completed
-    // (Execute has returned), so touching the file here is safe
+    // Mark the read as done. Called on the main thread by the read worker after Execute has returned.
     void FinishRead() {
         reading_ = false;
-        if (closed_) {
-            static_cast<Derived*>(this)->Teardown();
-        }
         this->Unref();  // balances the Ref() taken in Read(); may allow GC of this object
     }
 
    protected:
-    bool closed_ = false;
+    // Empty after Close(), and after a constructor that threw, whose object JavaScript never receives
+    std::shared_ptr<Source> source_;
+
+   private:
+    // Shared with every read worker so they know whether this reader still exists
+    std::shared_ptr<ReaderBase*> self_;
     bool reading_ = false;
 };
 
-// Defined out-of-line because it constructs a ReadWorker<Derived>, whose full
+// Defined out-of-line because it constructs a ReadWorker, whose full
 // definition must precede this. Shared by every ReaderBase subclass.
-template <typename Derived>
-Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
+template <typename Derived, typename Source>
+Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
-    if (closed_) {
+    if (!source_) {
         deferred.Reject(Napi::Error::New(env, "read after close").Value());
         return deferred.Promise();
     }
@@ -698,9 +712,9 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
     auto const maxBytes = static_cast<size_t>(requested);
     // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
     // if that allocation throws, reading_/Ref() must not be left dangling
-    ReadWorker<Derived>* worker = nullptr;
+    ReadWorker<ReaderBase, Source>* worker = nullptr;
     try {
-        worker = new ReadWorker<Derived>(env, static_cast<Derived*>(this), maxBytes);
+        worker = new ReadWorker<ReaderBase, Source>(env, self_, source_, maxBytes);
     } catch (const std::bad_alloc&) {
         deferred.Reject(Napi::Error::New(env, "failed to allocate the read buffer").Value());
         return deferred.Promise();
@@ -725,31 +739,12 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
 
 // ---- maxcso reader ----
 
-// A pull reader over a container's decompressed ISO bytes. The file is opened and parsed lazily by
-// the first read's worker, so no filesystem I/O runs on the main thread. Each reader owns its own
-// file handle, decompressor, and buffers, so concurrent readers are independent.
-class MaxcsoReader : public ReaderBase<MaxcsoReader> {
+// A container's decompressed ISO bytes. The file is opened and parsed lazily by the first read's
+// worker, so no filesystem I/O runs on the main thread. Each source owns its own file handle,
+// decompressor, and buffers, so concurrent readers are independent.
+class MaxcsoSource {
    public:
-    static Napi::Function GetClass(Napi::Env env) {
-        return DefineClass(env, "MaxcsoReader",
-                           {
-                               InstanceMethod("read", &MaxcsoReader::Read),
-                               InstanceMethod("close", &MaxcsoReader::Close),
-                           });
-    }
-
-    explicit MaxcsoReader(const Napi::CallbackInfo& info) : ReaderBase<MaxcsoReader>(info) {
-        Napi::Env const env = info.Env();
-        if (info.Length() < 1 || !info[0].IsString()) {
-            Napi::TypeError::New(env, "MaxcsoReader(inputFilename) required").ThrowAsJavaScriptException();
-            return;
-        }
-        try {
-            path_ = ToPath(info[0].As<Napi::String>());
-        } catch (const std::exception& e) {
-            Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
-        }
-    }
+    explicit MaxcsoSource(PathString path) : path_(std::move(path)) {}
 
     // Emit up to maxBytes of decompressed bytes. Runs on the worker thread. What the container
     // returns that doesn't fit stays in pending_, which the next read drains first.
@@ -775,16 +770,35 @@ class MaxcsoReader : public ReaderBase<MaxcsoReader> {
     }
 
    private:
-    friend class ReaderBase<MaxcsoReader>;
-    void Teardown() {  // idempotent
-        pending_ = {};
-        container_.reset();
-    }
-
     PathString path_;
     std::unique_ptr<Container> container_;
     // Points into container_'s buffers
     std::span<const uint8_t> pending_;
+};
+
+// A pull reader over a MaxcsoSource
+class MaxcsoReader : public ReaderBase<MaxcsoReader, MaxcsoSource> {
+   public:
+    static Napi::Function GetClass(Napi::Env env) {
+        return DefineClass(env, "MaxcsoReader",
+                           {
+                               InstanceMethod("read", &MaxcsoReader::Read),
+                               InstanceMethod("close", &MaxcsoReader::Close),
+                           });
+    }
+
+    explicit MaxcsoReader(const Napi::CallbackInfo& info) : ReaderBase<MaxcsoReader, MaxcsoSource>(info) {
+        Napi::Env const env = info.Env();
+        if (info.Length() < 1 || !info[0].IsString()) {
+            Napi::TypeError::New(env, "MaxcsoReader(inputFilename) required").ThrowAsJavaScriptException();
+            return;
+        }
+        try {
+            source_ = std::make_shared<MaxcsoSource>(ToPath(info[0].As<Napi::String>()));
+        } catch (const std::exception& e) {
+            Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+        }
+    }
 };
 
 // ---- maxcso info ----
