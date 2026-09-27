@@ -6,24 +6,28 @@ Igir supports scanning the contents of archives for ROMs, DATs, and ROM patches.
 
 Igir supports most common archive formats:
 
-| Extension                                                                                                                          | Contains file CRC32s | Igir can extract without a third-party binary | Igir can checksum without temporary files |
-|------------------------------------------------------------------------------------------------------------------------------------|----------------------|-----------------------------------------------|-------------------------------------------|
-| `.7z`, `.7z.001` (Brotli, BZip2, copy, DEFLATE, DEFLATE64, Lizard, LZ4, LZ5, LZMA, LZMA2, PPMD, and Zstd) + (BCJ, BCJ2, and Delta) | ✅                   | ✅                                            | ✅                                        |
-| `.bz2`/`.bzip2`                                                                                                                    | ❌                   | ✅                                            | ✅                                        |
-| `.chd` (v1-5)                                                                                                                      | ❌ SHA1              | ✅                                            | ✅                                        |
-| `.cso`, `.zso`, `.dax`                                                                                                             | ❌                   | ❌ Uses bundled `maxcso`                      | ⚠️ CRC32 only                             |
-| `.gcz` ([GameCube docs](../usage/console/gamecube.md))                                                                             | ❌                   | ✅                                            | ✅                                        |
-| `.gz`/`.gzip`                                                                                                                      | ✅                   | ✅                                            | ✅                                        |
-| `.lzma`, `.lzma86`                                                                                                                 | ❌                   | ✅                                            | ✅                                        |
-| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit))                                                                   | ✅                   | ❌ no extraction support                      | ✅                                        |
-| `.rar`                                                                                                                             | ✅                   | ✅                                            | ❌                                        |
-| `.rvz` (GameCube, Wii)                                                                                                             | ❌                   | ✅                                            | ✅                                        |
-| `.tar`                                                                                                                             | ❌                   | ✅                                            | ✅                                        |
-| `.tar.gz`/`.tgz`                                                                                                                   | ❌                   | ✅                                            | ✅                                        |
-| `.wia` (Wii)                                                                                                                       | ❌                   | ✅                                            | ✅                                        |
-| `.zip`, `.zip.001`, `.z01`, `.zip64` (DEFLATE, store, and Zstd)                                                                    | ✅                   | ✅                                            | ✅                                        |
-| `.zipx`, `.zx01`                                                                                                                   | ✅                   | ✅                                            | ✅                                        |
-| `.Z`                                                                                                                               | ❌                   | ✅                                            | ✅                                        |
+| Extension                                                                                                                          | Contains file CRC32s | Igir can checksum without temporary files |
+|------------------------------------------------------------------------------------------------------------------------------------|----------------------|-------------------------------------------|
+| `.7z`, `.7z.001` (Brotli, BZip2, copy, DEFLATE, DEFLATE64, Lizard, LZ4, LZ5, LZMA, LZMA2, PPMD, and Zstd) + (BCJ, BCJ2, and Delta) | ✅                   | ✅                                        |
+| `.bz2`/`.bzip2`                                                                                                                    | ❌                   | ✅                                        |
+| `.chd` (v1-5)                                                                                                                      | ❌ SHA1              | ✅                                        |
+| `.cso` (v1, v2), `.zso`, `.dax`                                                                                                    | ❌                   | ✅                                        |
+| `.gcz` ([GameCube docs](../usage/console/gamecube.md))                                                                             | ❌                   | ✅                                        |
+| `.gz`/`.gzip`                                                                                                                      | ✅                   | ✅                                        |
+| `.lzma`, `.lzma86`                                                                                                                 | ❌                   | ✅                                        |
+| `.nkit.iso` ([GameCube docs](../usage/console/gamecube.md#nkit))                                                                   | ✅                   | ✅                                        |
+| `.rar`                                                                                                                             | ✅                   | ❌                                        |
+| `.rvz` (GameCube, Wii)                                                                                                             | ❌                   | ✅                                        |
+| `.tar`                                                                                                                             | ❌                   | ✅                                        |
+| `.tar.gz`/`.tgz`                                                                                                                   | ❌                   | ✅                                        |
+| `.wia` (Wii)                                                                                                                       | ❌                   | ✅                                        |
+| `.zip`, `.zip.001`, `.z01`, `.zip64` (DEFLATE, store, and Zstd)                                                                    | ✅                   | ✅                                        |
+| `.zipx`, `.zx01`                                                                                                                   | ✅                   | ✅                                        |
+| `.Z`                                                                                                                               | ❌                   | ✅                                        |
+
+!!! success
+
+    Unlike many ROM managers, Igir does _not_ require the use of any additional executables to read and extract archives. This includes `7za`, `chdman`, `dolphin-tool`, `maxcso`, or anything else.
 
 !!! note
 

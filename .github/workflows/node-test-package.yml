@@ -202,6 +202,7 @@ jobs:
           node "$(find . -path '*/packages/7zip/index.js')"
           node "$(find . -path '*/packages/chdman/index.js')"
           node "$(find . -path '*/packages/dolphin-tool/index.js')"
+          node "$(find . -path '*/packages/maxcso/index.js')"
           node "$(find . -path '*/packages/zlib*/index.js')"
           node "$(find . -path '*/packages/zstd*/index.js')"
 
