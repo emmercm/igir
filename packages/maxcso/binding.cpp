@@ -1,10 +1,3 @@
-// Read-only Node-API bindings for maxcso's CSO (v1, v2), ZSO, and DAX disc images.
-//
-// Only maxcso's format headers and bundled codecs are reused. Upstream's Input class shares a
-// global BufferPool and waits on libuv threadpool work from inside the threadpool, which
-// deadlocks Node once enough readers run at once, so its parsing and decoding rules (src/input.cpp)
-// are reimplemented here.
-
 #include <napi.h>
 
 #include <algorithm>
@@ -66,7 +59,7 @@ class File {
 
     [[nodiscard]] uint64_t Size() const;
 
-    // Read exactly out.size() bytes starting at `offset`, or throw.
+    // Read exactly out.size() bytes starting at `offset`, or throw
     void ReadAt(uint64_t offset, std::span<std::byte> out) const {
         std::span<std::byte> rest = out;
         uint64_t position = offset;
@@ -268,7 +261,7 @@ static const char* CodecName(Codec codec) {
     }
 }
 
-// The index entry that covers an uncompressed position, as upstream Input::ReadSector finds it.
+// The index entry that covers an uncompressed position, as upstream Input::ReadSector finds it
 struct Block {
     uint64_t entry = 0;
     // How far into the entry the position is, which upstream calls the offset
@@ -443,7 +436,7 @@ class Container {
         return uint64_t{index_[static_cast<size_t>(entry)] & ~maxcso::CSO_INDEX_UNCOMPRESSED} << shift_;
     }
 
-    // Where the entry covering `pos` is and how it's encoded, by the rules of upstream ReadSector.
+    // Where the entry covering `pos` is and how it's encoded, by the rules of upstream ReadSector
     [[nodiscard]] Block Locate(uint64_t pos) const {
         uint64_t const entry = pos >> blockShift_;
         auto const skip = static_cast<uint32_t>(pos & (blockSize_ - 1));
@@ -470,7 +463,7 @@ class Container {
     }
 
     // Upstream reads an entry through a cacheSize_-byte buffer and fails when it gets fewer bytes
-    // than the entry's length.
+    // than the entry's length
     void CheckRead(uint64_t entry, uint64_t offset, uint32_t length) const {
         if (length > cacheSize_) {
             throw std::runtime_error("block " + std::to_string(entry) + " is longer than " +
@@ -485,7 +478,7 @@ class Container {
         throw std::runtime_error("block " + std::to_string(entry) + " has too few bytes for its sectors");
     }
 
-    // Upstream emits one sector per call from a stored entry, starting `skip` bytes into it.
+    // Upstream emits one sector per call from a stored entry, starting `skip` bytes into it
     std::span<const uint8_t> NextStored(const Block& block) {
         uint64_t const offset = block.offset + block.skip;
         uint32_t const length = block.length - block.skip;
@@ -505,14 +498,14 @@ class Container {
     }
 
     // Whether upstream's call for the sector `run` bytes on would read the same entry, `run` bytes
-    // further in.
+    // further in
     [[nodiscard]] bool Continues(const Block& block, uint32_t run) const {
         uint64_t const pos = pos_ + run;
         return (pos >> blockShift_) == block.entry && (pos & (blockSize_ - 1)) == block.skip + run;
     }
 
     // Upstream decodes the whole entry, drops what's past the end of the image, and emits sectors
-    // from `skip` bytes in until the decoded bytes run out.
+    // from `skip` bytes in until the decoded bytes run out
     std::span<const uint8_t> NextCompressed(const Block& block) {
         CheckRead(block.entry, block.offset, block.length);
         std::span<uint8_t> const in = std::span(scratch_).first(block.length);
@@ -600,7 +593,7 @@ class ReadWorker : public Napi::AsyncWorker {
             // is what the failure path below cleans up.
             uint8_t* raw = buf_.release();
             // The finalizer takes ownership of the bytes, and its signature is the one
-            // Napi::Buffer::New requires; a pointer-to-const would not match it.
+            // Napi::Buffer::New requires; a pointer-to-const would not match it
             Napi::Buffer<uint8_t> const out =
                 // NOLINTNEXTLINE(readability-non-const-parameter)
                 Napi::Buffer<uint8_t>::New(env, raw, n_, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
@@ -663,7 +656,7 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     }
 
     // Called on the main thread by the read worker once Produce has fully completed
-    // (Execute has returned), so touching the file here is safe.
+    // (Execute has returned), so touching the file here is safe
     void FinishRead() {
         reading_ = false;
         if (closed_) {
@@ -688,7 +681,7 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     if (reading_) {
-        // Only one read worker may touch this reader's mutable state at a time.
+        // Only one read worker may touch this reader's mutable state at a time
         deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
         return deferred.Promise();
     }
@@ -704,7 +697,7 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
     }
     auto const maxBytes = static_cast<size_t>(requested);
     // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
-    // if that allocation throws, reading_/Ref() must not be left dangling.
+    // if that allocation throws, reading_/Ref() must not be left dangling
     ReadWorker<Derived>* worker = nullptr;
     try {
         worker = new ReadWorker<Derived>(env, static_cast<Derived*>(this), maxBytes);
@@ -796,7 +789,7 @@ class MaxcsoReader : public ReaderBase<MaxcsoReader> {
 
 // ---- maxcso info ----
 
-// Opens and validates a container on a worker thread and resolves its header information.
+// Opens and validates a container on a worker thread and resolves its header information
 class InfoWorker : public Napi::AsyncWorker {
    public:
     InfoWorker(Napi::Env env, PathString path)

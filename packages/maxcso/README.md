@@ -1,8 +1,6 @@
 # maxcso Node-API Bindings
 
-Read-only Node-API bindings for [maxcso](https://github.com/unknownbrackets/maxcso)'s CSO (v1, v2),
-ZSO, and DAX compressed disc images. The addon reuses maxcso's format headers and its bundled
-decompressors, and exposes each image as a stream of its uncompressed ISO bytes.
+Node-API bindings for [maxcso](https://github.com/unknownbrackets/maxcso).
 
 ## Licenses
 

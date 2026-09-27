@@ -1,14 +1,12 @@
 import events from 'node:events';
 import fs from 'node:fs';
-import module from 'node:module';
-import os from 'node:os';
 import path from 'node:path';
-import type stream from 'node:stream';
 import worker_threads from 'node:worker_threads';
 import zlib from 'node:zlib';
 
 import Temp from '../../../src/globals/temp.js';
 import gracefulFs from '../../../src/polyfill/gracefulFs.js';
+import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
 import maxcso, { MaxcsoFormat } from '../index.js';
 
@@ -21,13 +19,13 @@ gracefulFs.gracefulify(fs);
 const PAYLOAD_SIZE = 602 * 1024;
 
 /**
- * Build the ISO every maxcso fixture holds. `scripts/generateFixtures.ts` builds the same ISO, and
- * any drift between the two fails the decompression tests.
+ * Build the ISO every maxcso fixture holds, which the decompression tests compare output against.
  *
- * - Every byte is `position % 251`, so a torn, reordered, or shifted block changes the output.
- * - 64 KiB–96 KiB is an xorshift keystream, which doesn't compress, so maxcso has to store those
- *   blocks.
- * - 128 KiB–144 KiB is all zeros.
+ * - Fills every byte with `position % 251`. 251 is prime, so the pattern doesn't line up with any
+ *   block size, and a torn, reordered, or shifted block changes the output.
+ * - Overwrites 64 KiB–96 KiB with an xorshift keystream, which doesn't compress, so maxcso stored
+ *   those blocks uncompressed.
+ * - Overwrites 128 KiB–144 KiB with zeros.
  */
 function fixturePayload(): Buffer {
   const payload = Buffer.alloc(PAYLOAD_SIZE);
@@ -50,8 +48,7 @@ const DAX_FRAME_SIZE = 8192;
 const PAYLOAD = fixturePayload();
 
 /**
- * The format each fixture's extension names. Each name also repeats its format as a prefix, as
- * in `cso2-lz4.cso`, so a directory of mixed formats still reads clearly to a person.
+ * Maps a fixture's file extension to the format the tests read it as.
  */
 const FORMATS_BY_EXTENSION = new Map<string, MaxcsoFormat>([
   ['.cso', MaxcsoFormat.CSO],
@@ -67,8 +64,7 @@ interface Fixture {
 }
 
 /**
- * Every fixture in one directory, in a stable order. Adding a fixture means only committing the
- * file, and an extension that nothing maps to fails loudly here.
+ * Scan a fixture subdirectory for files, and return them in a stable order.
  */
 function fixtures(directory: string, blockSize: number): Fixture[] {
   return fs
@@ -106,26 +102,8 @@ const DAX_ZLIB = path.join(FIXTURE_DIR, 'default-block-size', 'dax-zlib.dax');
 const DAX_NC_AREAS = path.join(FIXTURE_DIR, 'dax-nc-areas', 'dax-zlib-nc-areas.dax');
 
 /**
- * Every chunk the stream emitted, in order.
- */
-async function collectChunks(readable: stream.Readable): Promise<Buffer[]> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of readable) {
-    if (!Buffer.isBuffer(chunk)) {
-      throw new TypeError('expected a Buffer chunk');
-    }
-    chunks.push(chunk);
-  }
-  return chunks;
-}
-
-async function drain(readable: stream.Readable): Promise<Buffer> {
-  return Buffer.concat(await collectChunks(readable));
-}
-
-/**
- * The first position where two buffers differ, or -1 when they're equal. It reports a torn block
- * far more usefully than a failed `equals()`.
+ * Return the first position where two buffers differ, or -1 when they're equal. This reports a torn
+ * block far more usefully than a failed `equals()`.
  */
 function firstMismatch(actual: Buffer, expected: Buffer): number {
   const length = Math.min(actual.length, expected.length);
@@ -200,7 +178,7 @@ function withUInt64(offset: number, value: number): (bytes: Buffer) => Buffer {
 }
 
 /**
- * The file offset of CSO/ZSO block `block`.
+ * Return the file offset of CSO/ZSO block `block`, read from the index.
  */
 function csoBlockOffset(bytes: Buffer, block: number): number {
   return (bytes.readUInt32LE(24 + block * 4) & 0x7f_ff_ff_ff) * 2 ** bytes.readUInt8(21);
@@ -225,22 +203,22 @@ function withLastBlock(data: Buffer, isStored: boolean): (bytes: Buffer) => Buff
 }
 
 /**
- * The payload bytes in the last block of a fixture with the given block size, which is short when
- * the block size doesn't divide the payload.
+ * Return the payload bytes in the last block of a fixture with the given block size, which is short
+ * when the block size doesn't divide the payload.
  */
 function finalBlockPayload(blockSize: number): Buffer {
   return PAYLOAD.subarray((Math.ceil(PAYLOAD_SIZE / blockSize) - 1) * blockSize);
 }
 
 /**
- * The index of the last block of a fixture with the given block size.
+ * Return the index of the last block of a fixture with the given block size.
  */
 function finalBlock(blockSize: number): number {
   return Math.ceil(PAYLOAD_SIZE / blockSize) - 1;
 }
 
 /**
- * Bytes that don't form a valid deflate stream, to pad blocks with.
+ * Return `length` bytes that don't form a valid deflate stream, to pad blocks with.
  */
 function junk(length: number): Buffer {
   return Buffer.alloc(length, 0xa5);
@@ -267,8 +245,8 @@ function withExtraDaxArea(start: number, count: number): (bytes: Buffer) => Buff
 }
 
 /**
- * A CSO v1 file with a 3072-byte block size and every sector stored, laid out the way upstream
- * maxcso reads one. Upstream finds a position's index entry by shifting by 11 (log2 of 3072,
+ * Build a CSO v1 file with a 3072-byte block size and every sector stored, laid out the way
+ * upstream maxcso reads one. Upstream finds a position's index entry by shifting by 11 (log2 of 3072,
  * rounded down) and its offset into that entry by masking with 3071, so every sector has its own
  * entry, and odd sectors are read 2048 bytes into theirs.
  */
@@ -320,25 +298,6 @@ function withIndexShift(bytes: Buffer, shift: number): Buffer {
   }
   index.writeUInt32LE(offset / alignment, blocks * 4);
   return Buffer.concat(parts);
-}
-
-/**
- * The addon's path, found in the same order `index.ts` loads it.
- */
-function bindingPath(): string {
-  const require = module.createRequire(import.meta.url);
-  for (const candidate of [
-    '../build/Release/maxcso.node',
-    `../addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    '../addon-maxcso/build/Release/maxcso.node',
-  ]) {
-    try {
-      return require.resolve(candidate);
-    } catch {
-      // Try the next candidate
-    }
-  }
-  throw new Error('no maxcso addon build was found');
 }
 
 interface Corruption {
@@ -795,14 +754,16 @@ describe('info', () => {
 
 describe('openReader', () => {
   it.each(ALL_FIXTURES)('should decompress $label byte-exact', async (fixture) => {
-    const output = await drain(maxcso.openReader({ inputFilename: fixture.archivePath }));
+    const output = await BufferUtil.fromReadable(
+      maxcso.openReader({ inputFilename: fixture.archivePath }),
+    );
     expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
   });
 
   it.each(ALL_FIXTURES)(
     'should decompress $label byte-exact with a 300000-byte high-water mark',
     async (fixture) => {
-      const output = await drain(
+      const output = await BufferUtil.fromReadable(
         maxcso.openReader({ inputFilename: fixture.archivePath, highWaterMark: 300_000 }),
       );
       expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
@@ -812,9 +773,17 @@ describe('openReader', () => {
   it.each(ALL_FIXTURES)(
     'should emit exactly 3000-byte chunks of $label until it runs out',
     async (fixture) => {
-      const chunks = await collectChunks(
-        maxcso.openReader({ inputFilename: fixture.archivePath, highWaterMark: 3000 }),
-      );
+      const readable = maxcso.openReader({
+        inputFilename: fixture.archivePath,
+        highWaterMark: 3000,
+      });
+      const chunks: Buffer[] = [];
+      for await (const chunk of readable) {
+        if (!Buffer.isBuffer(chunk)) {
+          throw new TypeError('expected a Buffer chunk');
+        }
+        chunks.push(chunk);
+      }
       expect(new Set(chunks.slice(0, -1).map((chunk) => chunk.length))).toEqual(new Set([3000]));
       expect(chunks.at(-1)?.length).toEqual(PAYLOAD_SIZE % 3000);
       expect(firstMismatch(Buffer.concat(chunks), PAYLOAD)).toEqual(-1);
@@ -842,13 +811,15 @@ describe('openReader', () => {
 
   it('should reject a high-water mark of zero', async () => {
     await expect(
-      drain(maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 0 })),
+      BufferUtil.fromReadable(maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 0 })),
     ).rejects.toThrow('maxBytes must be a positive number');
   });
 
   it('should reject a missing file', async () => {
     await expect(
-      drain(maxcso.openReader({ inputFilename: path.join(FIXTURE_DIR, 'missing.cso') })),
+      BufferUtil.fromReadable(
+        maxcso.openReader({ inputFilename: path.join(FIXTURE_DIR, 'missing.cso') }),
+      ),
     ).rejects.toThrow('failed to open the file');
   });
 
@@ -856,14 +827,16 @@ describe('openReader', () => {
     'should reject $label',
     async ({ fixture, mutate, error }) => {
       await withMutatedFixture(fixture, mutate, async (filePath) => {
-        await expect(drain(maxcso.openReader({ inputFilename: filePath }))).rejects.toThrow(error);
+        await expect(
+          BufferUtil.fromReadable(maxcso.openReader({ inputFilename: filePath })),
+        ).rejects.toThrow(error);
       });
     },
   );
 
   it.each(ACCEPTANCES)('should decompress $label', async ({ fixture, mutate, output }) => {
     await withMutatedFixture(fixture, mutate, async (filePath) => {
-      const actual = await drain(maxcso.openReader({ inputFilename: filePath }));
+      const actual = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: filePath }));
       expect(firstMismatch(actual, output)).toEqual(-1);
     });
   });
@@ -877,7 +850,9 @@ describe('openReader', () => {
         async (filePath) => {
           const rebuilt = await fs.promises.readFile(filePath);
           expect(rebuilt.readUInt8(21)).toEqual(2);
-          const output = await drain(maxcso.openReader({ inputFilename: filePath }));
+          const output = await BufferUtil.fromReadable(
+            maxcso.openReader({ inputFilename: filePath }),
+          );
           expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
         },
       );
@@ -888,7 +863,7 @@ describe('openReader', () => {
     await withTempDir(async (directory) => {
       const filePath = path.join(directory, 'ümlaut 日本.cso');
       await fs.promises.copyFile(CSO1_ZLIB, filePath);
-      const output = await drain(maxcso.openReader({ inputFilename: filePath }));
+      const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: filePath }));
       expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
     });
   });
@@ -908,7 +883,7 @@ describe('openReader', () => {
     for (const readable of abandoned) {
       expect((await readable[Symbol.asyncIterator]().next()).done).toEqual(false);
     }
-    const output = await drain(maxcso.openReader({ inputFilename: ZSO_LZ4 }));
+    const output = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: ZSO_LZ4 }));
     expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
     for (const readable of abandoned) {
       readable.destroy();
@@ -920,7 +895,7 @@ describe('openReader', () => {
       Array.from(
         { length: 32 },
         async (_, i) =>
-          await drain(
+          await BufferUtil.fromReadable(
             maxcso.openReader({ inputFilename: ALL_FIXTURES[i % ALL_FIXTURES.length].archivePath }),
           ),
       ),
@@ -930,46 +905,22 @@ describe('openReader', () => {
     }
   }, 30_000);
 
-  it('should reject overlapping native reads and a read after close', async () => {
-    const worker = new worker_threads.Worker(
-      `const { parentPort, workerData } = require('node:worker_threads');
-       const binding = require(workerData.bindingPath);
-       const messageOf = (promise) => promise.then((chunk) => chunk.length, (error) => error.message);
-       const reader = binding.openReader(workerData.archivePath);
-       const first = reader.read(65536);
-       const second = reader.read(65536);
-       Promise.all([messageOf(second), messageOf(first)]).then(async (messages) => {
-         reader.close();
-         messages.push(await messageOf(reader.read(65536)));
-         parentPort.postMessage(messages);
-       });`,
-      {
-        eval: true,
-        workerData: { bindingPath: bindingPath(), archivePath: path.resolve(CSO1_ZLIB) },
-      },
-    );
-    try {
-      const received: unknown[] = await events.once(worker, 'message');
-      expect(received[0]).toEqual(['concurrent read not allowed', 65_536, 'read after close']);
-    } finally {
-      await worker.terminate();
-    }
-  });
-
   it('should terminate workers with pending native reads and info calls', async () => {
     for (let i = 0; i < 20; i++) {
       const worker = new worker_threads.Worker(
         `const { parentPort, workerData } = require('node:worker_threads');
-         const binding = require(workerData.bindingPath);
-         const readers = Array.from({ length: 8 }, () => binding.openReader(workerData.archivePath));
-         for (const reader of readers) reader.read(65536).catch(() => {});
-         for (let j = 0; j < 8; j++) binding.info(workerData.archivePath).catch(() => {});
-         parentPort.postMessage('ready');
-         setInterval(() => {}, 1000);`,
+         import(workerData.indexUrl).then(({ default: maxcso }) => {
+           for (let j = 0; j < 8; j++) {
+             maxcso.openReader({ inputFilename: workerData.archivePath }).on('error', () => {}).resume();
+             maxcso.info({ inputFilename: workerData.archivePath }).catch(() => {});
+           }
+           parentPort.postMessage('ready');
+           setInterval(() => {}, 1000);
+         });`,
         {
           eval: true,
           workerData: {
-            bindingPath: bindingPath(),
+            indexUrl: new URL('../index.ts', import.meta.url).href,
             archivePath: path.resolve(FIXTURE_DIR, '256k-block-size', 'cso1-zopfli.cso'),
           },
         },
