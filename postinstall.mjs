@@ -34,6 +34,7 @@ for (let napiPackage of [
   path.join('packages', '7zip'),
   path.join('packages', 'chdman'),
   path.join('packages', 'dolphin-tool'),
+  path.join('packages', 'maxcso'),
   path.join('packages', 'zlib-1.1.3'),
   path.join('packages', 'zstd-1.5.5'),
 ]) {

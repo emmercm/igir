@@ -5,7 +5,6 @@ import fs from 'node:fs';
 import module from 'node:module';
 import path from 'node:path';
 
-import fg from 'fast-glob';
 import yargs from 'yargs';
 
 import Timer from '../src/async/timer.js';
@@ -41,12 +40,7 @@ if (await FsUtil.exists(output)) {
 
 logger.info("Bundling with 'bun build --compile' ...");
 const bunBuildConfig = {
-  entrypoints: [
-    'index.ts',
-    ...(await fg(
-      `node_modules/@emmercm/maxcso-${argv.platform}-${argv.arch}/dist/{maxcso*,*.dylib}`,
-    )),
-  ],
+  entrypoints: ['index.ts'],
   compile: {
     outfile: output,
     target:
