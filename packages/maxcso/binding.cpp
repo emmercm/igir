@@ -550,16 +550,74 @@ class Container {
 
 // ---- shared pull-reader scaffolding ----
 
+// Reject a promise with JavaScript's pending exception, or else a new error from create, returning
+// whether JavaScript could receive it
+static bool Reject(napi_env env, napi_deferred deferred, const std::string& message,
+                   decltype(&napi_create_error) create = napi_create_error) {
+    bool pending = false;
+    napi_value error = nullptr;
+    if (napi_is_exception_pending(env, &pending) == napi_ok && pending) {
+        if (napi_get_and_clear_last_exception(env, &error) != napi_ok) {
+            return false;
+        }
+    } else {
+        napi_value text = nullptr;
+        if (napi_create_string_utf8(env, message.data(), message.size(), &text) != napi_ok ||
+            create(env, nullptr, text, &error) != napi_ok) {
+            return false;
+        }
+    }
+    return napi_reject_deferred(env, deferred, error) == napi_ok;
+}
+
+// Runs Derived's Execute() on the thread pool, then its Complete() on the main thread unless the
+// environment cancelled the task. Uses the N-API C functions rather than Napi::AsyncWorker: with C++
+// exceptions disabled, node-addon-api aborts the process when a call fails, and every call can fail
+// once a terminated Worker's environment can no longer run JavaScript.
+template <typename Derived>
+class AsyncTask {
+   public:
+    // Queue a task on the thread pool, returning whether it was queued
+    static bool Queue(napi_env env, std::unique_ptr<Derived> task) {
+        napi_value name = nullptr;
+        if (napi_create_string_utf8(env, "maxcso", NAPI_AUTO_LENGTH, &name) != napi_ok ||
+            napi_create_async_work(env, nullptr, name, Run, Finish, task.get(), &task->work_) != napi_ok) {
+            return false;
+        }
+        if (napi_queue_async_work(env, task->work_) != napi_ok) {
+            napi_delete_async_work(env, task->work_);
+            return false;
+        }
+        task.release();  // freed by Finish()
+        return true;
+    }
+
+   private:
+    static void Run(napi_env /*env*/, void* data) { static_cast<Derived*>(data)->Execute(); }
+
+    static void Finish(napi_env env, napi_status status, void* data) {
+        std::unique_ptr<Derived> const task(static_cast<Derived*>(data));
+        napi_delete_async_work(env, task->work_);
+        napi_handle_scope scope = nullptr;
+        if (status == napi_cancelled || napi_open_handle_scope(env, &scope) != napi_ok) {
+            return;
+        }
+        task->Complete(env);
+        napi_close_handle_scope(env, scope);
+    }
+
+    napi_async_work work_ = nullptr;
+};
+
 // Runs a Source's Produce() on a worker thread so blocking/decompressing blob reads
 // never run on the V8 main thread, then tells the Reader the read is done. They must expose:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
 //   void   Reader::FinishRead();                             // main thread, post-Execute
 template <typename Reader, typename Source>
-class ReadWorker : public Napi::AsyncWorker {
+class ReadWorker : public AsyncTask<ReadWorker<Reader, Source>> {
    public:
-    ReadWorker(Napi::Env env, std::shared_ptr<Reader*> reader, std::shared_ptr<Source> source, size_t maxBytes)
-        : Napi::AsyncWorker(env),
-          deferred_(Napi::Promise::Deferred::New(env)),
+    ReadWorker(napi_deferred deferred, std::shared_ptr<Reader*> reader, std::shared_ptr<Source> source, size_t maxBytes)
+        : deferred_(deferred),
           reader_(std::move(reader)),
           source_(std::move(source)),
           // new[] rather than std::vector, deliberately: a vector would
@@ -570,66 +628,57 @@ class ReadWorker : public Napi::AsyncWorker {
           buf_(new uint8_t[maxBytes]),
           cap_(maxBytes) {}
 
-    Napi::Promise GetPromise() { return deferred_.Promise(); }
-
-    void Execute() override {
+    // Read from the source on the thread pool
+    void Execute() {
         try {
             n_ = source_->Produce(buf_.get(), cap_);
         } catch (const std::exception& e) {
-            SetError(e.what());
+            error_ = e.what();
         } catch (...) {
-            SetError("unknown blob read error");
+            error_ = "unknown blob read error";
         }
     }
 
-    void OnOK() override {
-        Napi::Env const env = Env();
-        if (n_ == 0) {
-            deferred_.Resolve(env.Null());
-        } else {
-            // Give JS the worker's own allocation as the Buffer's backing store
-            // rather than copying it: the finalizer frees it once JS is done.
-            // Only the first n_ bytes are exposed; the rest are uninitialized.
-            // `raw` is unowned between release() and a successful New(), which
-            // is what the failure path below cleans up.
-            uint8_t* raw = buf_.release();
-            // The finalizer takes ownership of the bytes, and its signature is the one
-            // Napi::Buffer::New requires; a pointer-to-const would not match it
-            Napi::Buffer<uint8_t> const out =
-                // NOLINTNEXTLINE(readability-non-const-parameter)
-                Napi::Buffer<uint8_t>::New(env, raw, n_, [](Napi::Env /*unused*/, uint8_t* data) { delete[] data; });
-            if (out.IsEmpty()) {
-                // With C++ exceptions disabled a failed New() returns an empty
-                // value and leaves a JS exception pending. Reject rather than
-                // resolving with an empty value, which JavaScript would read as
-                // the end of the stream.
-                delete[] raw;
-                deferred_.Reject(env.IsExceptionPending()
-                                     ? env.GetAndClearPendingException().Value()
-                                     : Napi::Error::New(env, "failed to allocate the read result").Value());
-            } else {
-                deferred_.Resolve(out);
-            }
-        }
-        FinishRead();
-    }
-
-    void OnError(const Napi::Error& e) override {
-        deferred_.Reject(e.Value());
-        FinishRead();
-    }
-
-   private:
-    // Tell the reader the read is done, if it still exists. An environment tearing down, such as a
-    // terminated Worker's, finalizes every object before it runs the callbacks of reads still in
-    // flight, so the reader can be destroyed while it holds a Ref().
-    void FinishRead() {
-        if (*reader_ != nullptr) {
+    // Settle the read's promise and tell the reader the read is done, unless the reader was
+    // destroyed or JavaScript can't run. The reader holds a Ref() while it reads, so only an
+    // environment tearing down, such as a terminated Worker's, destroys it first: that finalizes
+    // every object before it runs the callbacks of reads still in flight, and nothing is left to
+    // receive their results.
+    void Complete(napi_env env) {
+        if (*reader_ != nullptr && Settle(env)) {
             (*reader_)->FinishRead();  // may release the reader
         }
     }
 
-    Napi::Promise::Deferred deferred_;
+   private:
+    // Resolve or reject the read's promise, returning whether JavaScript could receive it
+    bool Settle(napi_env env) {
+        if (!error_.empty()) {
+            return Reject(env, deferred_, error_);
+        }
+        napi_value result = nullptr;
+        if (n_ == 0) {
+            return napi_get_null(env, &result) == napi_ok && napi_resolve_deferred(env, deferred_, result) == napi_ok;
+        }
+        // Give JS the worker's own allocation as the Buffer's backing store
+        // rather than copying it: the finalizer frees it once JS is done.
+        // Only the first n_ bytes are exposed; the rest are uninitialized.
+        // `raw` is unowned between release() and a successful creation, which
+        // is what the failure path below cleans up.
+        uint8_t* raw = buf_.release();
+        if (napi_create_external_buffer(
+                env, n_, raw,
+                [](napi_env /*env*/, void* data, void* /*hint*/) { delete[] static_cast<uint8_t*>(data); }, nullptr,
+                &result) != napi_ok) {
+            // Reject rather than resolving with no value, which JavaScript would read as the end of
+            // the stream
+            delete[] raw;
+            return Reject(env, deferred_, "failed to allocate the read result");
+        }
+        return napi_resolve_deferred(env, deferred_, result) == napi_ok;
+    }
+
+    napi_deferred deferred_;
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
     // Keeps the file open until this worker is destroyed, even if the reader is closed or destroyed first
@@ -640,6 +689,7 @@ class ReadWorker : public Napi::AsyncWorker {
     std::unique_ptr<uint8_t[]> buf_;
     size_t cap_ = 0;
     size_t n_ = 0;
+    std::string error_;  // Empty on success
 };
 
 // CRTP base for the async pull-reader lifecycle used by MaxcsoReader. Each Derived
@@ -662,16 +712,24 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     ReaderBase(ReaderBase&&) = delete;
     ReaderBase& operator=(ReaderBase&&) = delete;
 
-    Napi::Value Read(const Napi::CallbackInfo& info);
+    // read(maxBytes): resolve up to maxBytes bytes, or null at the end
+    static napi_value Read(napi_env env, napi_callback_info info);
 
     // Release this reader's hold on the file. A read worker in flight holds it too, so the
     // file closes once the worker thread is done with it.
-    void Close(const Napi::CallbackInfo& /*unused*/) { source_.reset(); }
+    static napi_value Close(napi_env env, napi_callback_info info);
+
+    // Describe a method that N-API calls directly. node-addon-api's instance methods abort the
+    // process when they can't unwrap the reader, which JavaScript can still call after a terminated
+    // Worker's environment has finalized it.
+    static Napi::ClassPropertyDescriptor<Derived> RawMethod(const char* name, napi_callback callback) {
+        return napi_property_descriptor{.utf8name = name, .method = callback, .attributes = napi_default};
+    }
 
     // Mark the read as done. Called on the main thread by the read worker after Execute has returned.
     void FinishRead() {
         reading_ = false;
-        this->Unref();  // balances the Ref() taken in Read(); may allow GC of this object
+        this->Unref();  // balances the Ref() taken in StartRead(); may allow GC of this object
     }
 
    protected:
@@ -679,62 +737,96 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     std::shared_ptr<Source> source_;
 
    private:
+    // Start a read of up to maxBytes bytes that settles deferred
+    void StartRead(napi_env env, napi_deferred deferred, napi_value maxBytes);
+
     // Shared with every read worker so they know whether this reader still exists
     std::shared_ptr<ReaderBase*> self_;
     bool reading_ = false;
 };
 
+// Uses the N-API C functions rather than node-addon-api's, which abort the process when a call
+// fails: JavaScript can still call these while a terminated Worker's environment tears down, after
+// it has finalized every reader
+template <typename Derived, typename Source>
+napi_value ReaderBase<Derived, Source>::Read(napi_env env, napi_callback_info info) {
+    napi_deferred deferred = nullptr;
+    napi_value promise = nullptr;
+    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
+        return nullptr;
+    }
+    size_t argc = 1;
+    napi_value maxBytes = nullptr;
+    napi_value self = nullptr;
+    void* reader = nullptr;
+    if (napi_get_cb_info(env, info, &argc, &maxBytes, &self, nullptr) != napi_ok ||
+        napi_unwrap(env, self, &reader) != napi_ok) {
+        Reject(env, deferred, "read after finalization");
+        return promise;
+    }
+    ReaderBase* const base = static_cast<Derived*>(reader);
+    base->StartRead(env, deferred, maxBytes);
+    return promise;
+}
+
+template <typename Derived, typename Source>
+napi_value ReaderBase<Derived, Source>::Close(napi_env env, napi_callback_info info) {
+    napi_value self = nullptr;
+    void* reader = nullptr;
+    if (napi_get_cb_info(env, info, nullptr, nullptr, &self, nullptr) == napi_ok &&
+        napi_unwrap(env, self, &reader) == napi_ok) {
+        ReaderBase* const base = static_cast<Derived*>(reader);
+        base->source_.reset();
+    }
+    return nullptr;
+}
+
 // Defined out-of-line because it constructs a ReadWorker, whose full
 // definition must precede this. Shared by every ReaderBase subclass.
 template <typename Derived, typename Source>
-Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
-    Napi::Env const env = info.Env();
-    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+void ReaderBase<Derived, Source>::StartRead(napi_env env, napi_deferred deferred, napi_value maxBytes) {
     if (!source_) {
-        deferred.Reject(Napi::Error::New(env, "read after close").Value());
-        return deferred.Promise();
+        Reject(env, deferred, "read after close");
+        return;
     }
     if (reading_) {
         // Only one read worker may touch this reader's mutable state at a time
-        deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
-        return deferred.Promise();
+        Reject(env, deferred, "concurrent read not allowed");
+        return;
     }
-    double const requested = info.Length() < 1 || !info[0].IsNumber() ? 0 : info[0].As<Napi::Number>().DoubleValue();
+    double requested = 0;
+    napi_valuetype type = napi_undefined;
+    if (napi_typeof(env, maxBytes, &type) != napi_ok || type != napi_number ||
+        napi_get_value_double(env, maxBytes, &requested) != napi_ok) {
+        requested = 0;
+    }
     // Bounded so the static_cast<size_t> below is defined, and to Number.MAX_SAFE_INTEGER, past
     // which JavaScript cannot request an exact byte count
     constexpr double kMaxRequestBytes =
         std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
     bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
     if (!valid) {
-        deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
-        return deferred.Promise();
+        Reject(env, deferred, "maxBytes must be a positive number", napi_create_type_error);
+        return;
     }
-    auto const maxBytes = static_cast<size_t>(requested);
-    // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
+    auto const count = static_cast<size_t>(requested);
+    // Allocate the worker (and its count-byte buffer) BEFORE mutating reader state:
     // if that allocation throws, reading_/Ref() must not be left dangling
-    ReadWorker<ReaderBase, Source>* worker = nullptr;
+    std::unique_ptr<ReadWorker<ReaderBase, Source>> worker;
     try {
-        worker = new ReadWorker<ReaderBase, Source>(env, self_, source_, maxBytes);
+        worker = std::make_unique<ReadWorker<ReaderBase, Source>>(deferred, self_, source_, count);
     } catch (const std::bad_alloc&) {
-        deferred.Reject(Napi::Error::New(env, "failed to allocate the read buffer").Value());
-        return deferred.Promise();
+        Reject(env, deferred, "failed to allocate the read buffer");
+        return;
     }
-    Napi::Promise promise = worker->GetPromise();
-    // Queue() reports failure only as a pending exception, so none may be pending before it
-    if (!env.IsExceptionPending()) {
-        worker->Queue();
+    if (!ReadWorker<ReaderBase, Source>::Queue(env, std::move(worker))) {
+        // The worker will never run, so reader state must not be left marked as reading
+        Reject(env, deferred, "failed to queue the read");
+        return;
     }
-    if (env.IsExceptionPending()) {
-        // The worker was never queued, so it will never run or free itself, and reader state must
-        // not be left marked as reading
-        delete worker;
-        deferred.Reject(env.GetAndClearPendingException().Value());
-        return deferred.Promise();
-    }
-    // OnOK/OnError run later on this same thread, so setting these after Queue() is not a race
+    // Complete() runs later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its file) alive while the worker thread reads
-    return promise;
 }
 
 // ---- maxcso reader ----
@@ -782,8 +874,8 @@ class MaxcsoReader : public ReaderBase<MaxcsoReader, MaxcsoSource> {
     static Napi::Function GetClass(Napi::Env env) {
         return DefineClass(env, "MaxcsoReader",
                            {
-                               InstanceMethod("read", &MaxcsoReader::Read),
-                               InstanceMethod("close", &MaxcsoReader::Close),
+                               RawMethod("read", &MaxcsoReader::Read),
+                               RawMethod("close", &MaxcsoReader::Close),
                            });
     }
 
@@ -803,62 +895,78 @@ class MaxcsoReader : public ReaderBase<MaxcsoReader, MaxcsoSource> {
 
 // ---- maxcso info ----
 
-// Opens and validates a container on a worker thread and resolves its header information
-class InfoWorker : public Napi::AsyncWorker {
+// Opens and validates a container on the thread pool and resolves its header information
+class InfoWorker : public AsyncTask<InfoWorker> {
    public:
-    InfoWorker(Napi::Env env, PathString path)
-        : Napi::AsyncWorker(env), deferred_(Napi::Promise::Deferred::New(env)), path_(std::move(path)) {}
+    InfoWorker(napi_deferred deferred, PathString path) : deferred_(deferred), path_(std::move(path)) {}
 
-    Napi::Promise GetPromise() { return deferred_.Promise(); }
-
-    void Execute() override {
+    // Open and validate the container on the thread pool
+    void Execute() {
         try {
             Container const container(path_);
             format_ = container.FormatName();
             size_ = container.Size();
             blockSize_ = container.BlockSize();
         } catch (const std::exception& e) {
-            SetError(e.what());
+            error_ = e.what();
         } catch (...) {
-            SetError("unknown maxcso info error");
+            error_ = "unknown maxcso info error";
         }
     }
 
-    void OnOK() override {
-        Napi::Env const env = Env();
-        Napi::Object const out = Napi::Object::New(env);
-        out.Set("format", format_);
-        out.Set("uncompressedSize", Napi::Number::New(env, static_cast<double>(size_)));
-        out.Set("blockSize", Napi::Number::New(env, static_cast<double>(blockSize_)));
-        deferred_.Resolve(out);
+    // Resolve or reject the info call's promise
+    void Complete(napi_env env) {
+        if (!error_.empty()) {
+            Reject(env, deferred_, error_);
+            return;
+        }
+        napi_value out = nullptr;
+        napi_value format = nullptr;
+        napi_value size = nullptr;
+        napi_value blockSize = nullptr;
+        if (napi_create_object(env, &out) != napi_ok ||
+            napi_create_string_utf8(env, format_.data(), format_.size(), &format) != napi_ok ||
+            napi_create_double(env, static_cast<double>(size_), &size) != napi_ok ||
+            napi_create_double(env, static_cast<double>(blockSize_), &blockSize) != napi_ok ||
+            napi_set_named_property(env, out, "format", format) != napi_ok ||
+            napi_set_named_property(env, out, "uncompressedSize", size) != napi_ok ||
+            napi_set_named_property(env, out, "blockSize", blockSize) != napi_ok ||
+            napi_resolve_deferred(env, deferred_, out) != napi_ok) {
+            Reject(env, deferred_, "failed to create the info result");
+        }
     }
 
-    void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
-
    private:
-    Napi::Promise::Deferred deferred_;
+    napi_deferred deferred_;
     PathString path_;
     std::string format_;
     uint64_t size_ = 0;
     uint32_t blockSize_ = 0;
+    std::string error_;  // Empty on success
 };
 
 static Napi::Value Info(const Napi::CallbackInfo& info) {
+    // Uses the N-API C functions rather than node-addon-api's, which abort the process when a call
+    // fails: JavaScript can still call this while a terminated Worker's environment tears down
     Napi::Env const env = info.Env();
-    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
-    if (info.Length() < 1 || !info[0].IsString()) {
-        deferred.Reject(Napi::TypeError::New(env, "inputFilename (string) required").Value());
-        return deferred.Promise();
+    napi_deferred deferred = nullptr;
+    napi_value promise = nullptr;
+    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
+        return {};
+    }
+    napi_valuetype type = napi_undefined;
+    if (info.Length() < 1 || napi_typeof(env, info[0], &type) != napi_ok || type != napi_string) {
+        Reject(env, deferred, "inputFilename (string) required", napi_create_type_error);
+        return {env, promise};
     }
     try {
-        auto* worker = new InfoWorker(env, ToPath(info[0].As<Napi::String>()));
-        Napi::Promise promise = worker->GetPromise();
-        worker->Queue();
-        return promise;
+        if (!InfoWorker::Queue(env, std::make_unique<InfoWorker>(deferred, ToPath(info[0].As<Napi::String>())))) {
+            Reject(env, deferred, "failed to queue the info call");
+        }
     } catch (const std::exception& e) {
-        deferred.Reject(Napi::Error::New(env, e.what()).Value());
-        return deferred.Promise();
+        Reject(env, deferred, e.what());
     }
+    return {env, promise};
 }
 
 // ---- addon init ----

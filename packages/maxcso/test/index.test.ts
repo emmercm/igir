@@ -910,8 +910,11 @@ describe('openReader', () => {
       const worker = new worker_threads.Worker(
         `const { parentPort, workerData } = require('node:worker_threads');
          import(workerData.indexUrl).then(({ default: maxcso }) => {
-           for (let j = 0; j < 8; j++) {
-             maxcso.openReader({ inputFilename: workerData.archivePath }).on('error', () => {}).resume();
+           for (let j = 0; j < 32; j++) {
+             maxcso
+               .openReader({ inputFilename: workerData.archivePath, highWaterMark: 2048 })
+               .on('error', () => {})
+               .resume();
              maxcso.info({ inputFilename: workerData.archivePath }).catch(() => {});
            }
            parentPort.postMessage('ready');
@@ -921,12 +924,14 @@ describe('openReader', () => {
           eval: true,
           workerData: {
             indexUrl: new URL('../index.ts', import.meta.url).href,
-            archivePath: path.resolve(FIXTURE_DIR, '256k-block-size', 'cso1-zopfli.cso'),
+            archivePath: path.resolve(FIXTURE_DIR, 'default-block-size', 'cso1-zlib.cso'),
           },
         },
       );
       try {
         await events.once(worker, 'message');
+        // Vary when the worker terminates relative to its reads
+        await new Promise((resolve) => setTimeout(resolve, i % 5));
       } finally {
         await worker.terminate();
       }
