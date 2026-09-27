@@ -44,20 +44,18 @@ interface DolphinBinding {
 const binding = ((): DolphinBinding => {
   try {
     // Try to load the development build
-    return require(`./build/Release/dolphin-tool.node`) as DolphinBinding;
+    return require('./build/Release/dolphin-tool.node') as DolphinBinding;
   } catch {
-    /* ignored */
+    try {
+      // Try to load the prebuild
+      return require(
+        `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as DolphinBinding;
+    } catch {
+      // Try to load the postinstall build
+      return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
+    }
   }
-  try {
-    // Try to load the prebuild
-    return require(
-      `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    ) as DolphinBinding;
-  } catch {
-    /* ignored */
-  }
-  // Try to load the postinstall build
-  return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
 })();
 
 /**

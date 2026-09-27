@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
+import events from 'node:events';
 import path from 'node:path';
 import stream from 'node:stream';
+import worker_threads from 'node:worker_threads';
 
 import dolphin, { ContainerFormat } from '../index.js';
 
@@ -134,4 +136,44 @@ describe('openReader', () => {
     again.destroy();
     expect(again).toBeInstanceOf(stream.Readable);
   });
+
+  it('should reject a high-water mark of zero instead of ending early', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: 0,
+    });
+    await expect(readable.toArray()).rejects.toThrow('maxBytes must be a positive number');
+  });
+
+  it('should terminate workers with pending native reads', async () => {
+    for (let i = 0; i < 20; i++) {
+      const worker = new worker_threads.Worker(
+        `const { parentPort, workerData } = require('node:worker_threads');
+         import(workerData.indexUrl).then(({ default: dolphin }) => {
+           for (let j = 0; j < 32; j++) {
+             dolphin
+               .openReader({ inputFilename: workerData.imagePath, highWaterMark: 2048 })
+               .on('error', () => {})
+               .resume();
+           }
+           parentPort.postMessage('ready');
+           setInterval(() => {}, 1000);
+         });`,
+        {
+          eval: true,
+          workerData: {
+            indexUrl: new URL('../index.ts', import.meta.url).href,
+            imagePath: path.join(FIXTURES, '240pSuite-GameCube-1.20.zstd.rvz'),
+          },
+        },
+      );
+      try {
+        await events.once(worker, 'message');
+        // Vary when the worker terminates relative to its reads
+        await new Promise((resolve) => setTimeout(resolve, i % 5));
+      } finally {
+        await worker.terminate();
+      }
+    }
+  }, 30_000);
 });

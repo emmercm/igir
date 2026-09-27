@@ -44,38 +44,21 @@ interface MaxcsoBinding {
   openReader: (inputFilename: string) => NativeReader;
 }
 
-/**
- * Whether a loaded addon exports the functions this module calls.
- */
-function isBinding(value: unknown): value is MaxcsoBinding {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'info' in value &&
-    typeof value.info === 'function' &&
-    'openReader' in value &&
-    typeof value.openReader === 'function'
-  );
-}
-
 const binding = ((): MaxcsoBinding => {
-  let loaded: unknown;
   try {
     // Try to load the development build
-    loaded = require('./build/Release/maxcso.node');
+    return require('./build/Release/maxcso.node') as MaxcsoBinding;
   } catch {
     try {
       // Try to load the prebuild
-      loaded = require(`./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`);
+      return require(
+        `./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as MaxcsoBinding;
     } catch {
       // Try to load the postinstall build
-      loaded = require('./addon-maxcso/build/Release/maxcso.node');
+      return require('./addon-maxcso/build/Release/maxcso.node') as MaxcsoBinding;
     }
   }
-  if (!isBinding(loaded)) {
-    throw new Error('the maxcso addon does not export info() and openReader()');
-  }
-  return loaded;
 })();
 
 /**

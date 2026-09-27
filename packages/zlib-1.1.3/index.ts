@@ -53,12 +53,18 @@ export type ZlibCompressionLevelValue =
 
 const zlib = ((): ZlibBinding => {
   try {
-    return require(
-      `./addon-zlib-1.1.3/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    ) as ZlibBinding;
+    // Try to load the development build
+    return require('./build/Release/zlib.node') as ZlibBinding;
   } catch {
-    // ignored
+    try {
+      // Try to load the prebuild
+      return require(
+        `./addon-zlib-1.1.3/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as ZlibBinding;
+    } catch {
+      // Try to load the postinstall build
+      return require('./addon-zlib-1.1.3/build/Release/zlib.node') as ZlibBinding;
+    }
   }
-  return require('./addon-zlib-1.1.3/build/Release/zlib.node') as ZlibBinding;
 })();
 export default zlib;

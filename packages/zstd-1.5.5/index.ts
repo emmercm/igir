@@ -171,13 +171,19 @@ export class ZstdDecompressStream extends stream.Transform {
 
 const zstd = ((): ZstdBinding => {
   try {
-    return require(
-      `./addon-zstd-1.5.5/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    ) as ZstdBinding;
+    // Try to load the development build
+    return require('./build/Release/binding.node') as ZstdBinding;
   } catch {
-    // ignored
+    try {
+      // Try to load the prebuild
+      return require(
+        `./addon-zstd-1.5.5/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as ZstdBinding;
+    } catch {
+      // Try to load the postinstall build
+      return require('./addon-zstd-1.5.5/build/Release/binding.node') as ZstdBinding;
+    }
   }
-  return require('./addon-zstd-1.5.5/build/Release/binding.node') as ZstdBinding;
 })();
 export default {
   ...zstd,

@@ -2,6 +2,11 @@
   "variables": {"z7": "deps/7-Zip-zstd"},
 
   "target_defaults": {
+    # Node's common.gypi defines _HAS_EXCEPTIONS=0 on Windows, which puts MSVC's STL in a
+    # no-exceptions mode at odds with /EHsc: std::exception keeps a borrowed message pointer
+    # instead of a copy, so a std::runtime_error built from a temporary string reports freed
+    # memory. Removing the define restores MSVC's default of 1.
+    "defines!": ["_HAS_EXCEPTIONS=0"],
     "defines": ["DYNAMIC_BMI2=0"],
     "cflags_cc!": [
       # Override Node.js' common.gypi

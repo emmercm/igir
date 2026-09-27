@@ -98,20 +98,18 @@ interface SevenZipBinding {
 const binding = ((): SevenZipBinding => {
   try {
     // Try to load the development build
-    return require(`./build/Release/binding.node`) as SevenZipBinding;
+    return require('./build/Release/binding.node') as SevenZipBinding;
   } catch {
-    /* ignored */
+    try {
+      // Try to load the prebuild
+      return require(
+        `./addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as SevenZipBinding;
+    } catch {
+      // Try to load the postinstall build
+      return require('./addon-7zip/build/Release/binding.node') as SevenZipBinding;
+    }
   }
-  try {
-    // Try to load the prebuild
-    return require(
-      `./addon-7zip/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    ) as SevenZipBinding;
-  } catch {
-    /* ignored */
-  }
-  // Try to load the postinstall build
-  return require('./addon-7zip/build/Release/binding.node') as SevenZipBinding;
 })();
 
 // The handler list is fixed at build time, so this is computed once. It is not

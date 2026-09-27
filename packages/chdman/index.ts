@@ -110,20 +110,18 @@ interface ChdmanBinding {
 const binding = ((): ChdmanBinding => {
   try {
     // Try to load the development build
-    return require(`./build/Release/chdman.node`) as ChdmanBinding;
+    return require('./build/Release/chdman.node') as ChdmanBinding;
   } catch {
-    /* ignored */
+    try {
+      // Try to load the prebuild
+      return require(
+        `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as ChdmanBinding;
+    } catch {
+      // Try to load the postinstall build
+      return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
+    }
   }
-  try {
-    // Try to load the prebuild
-    return require(
-      `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    ) as ChdmanBinding;
-  } catch {
-    /* ignored */
-  }
-  // Try to load the postinstall build
-  return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
 })();
 
 /**

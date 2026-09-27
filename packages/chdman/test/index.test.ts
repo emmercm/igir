@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
+import events from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import worker_threads from 'node:worker_threads';
 
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
@@ -274,4 +276,46 @@ describe('openRawReader', () => {
       expect(sha1(bytes)).toEqual(info.dataSha1);
     }
   });
+
+  it('should reject a high-water mark of zero instead of ending early', async () => {
+    const readable = chdman.openRawReader({
+      inputFilename: path.join(FIXTURES, '2048.chd'),
+      highWaterMark: 0,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(
+      'maxBytes must be a positive number',
+    );
+  });
+
+  it('should terminate workers with pending native reads', async () => {
+    for (let i = 0; i < 20; i++) {
+      const worker = new worker_threads.Worker(
+        `const { parentPort, workerData } = require('node:worker_threads');
+         import(workerData.indexUrl).then(({ default: chdman }) => {
+           for (let j = 0; j < 32; j++) {
+             chdman
+               .openRawReader({ inputFilename: workerData.chdPath, highWaterMark: 2448 })
+               .on('error', () => {})
+               .resume();
+           }
+           parentPort.postMessage('ready');
+           setInterval(() => {}, 1000);
+         });`,
+        {
+          eval: true,
+          workerData: {
+            indexUrl: new URL('../index.ts', import.meta.url).href,
+            chdPath: path.join(FIXTURES, 'GD-ROM.chd'),
+          },
+        },
+      );
+      try {
+        await events.once(worker, 'message');
+        // Vary when the worker terminates relative to its reads
+        await new Promise((resolve) => setTimeout(resolve, i % 5));
+      } finally {
+        await worker.terminate();
+      }
+    }
+  }, 30_000);
 });

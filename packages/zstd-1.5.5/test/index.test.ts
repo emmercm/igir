@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
+import events from 'node:events';
 import stream from 'node:stream';
+import worker_threads from 'node:worker_threads';
 
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import zstd, { type ZstdThreadedCompressorInstance } from '../index.js';
@@ -116,6 +118,44 @@ describe('ThreadedCompressor', () => {
     );
   });
 
+  it('should round-trip chunks compressed without awaiting each other', async () => {
+    const parts = Array.from({ length: 8 }, () => crypto.randomBytes(ONE_MIB));
+    const compressor = new zstd.ThreadedCompressor({ level: 3, threads: 2 });
+    const outputs = await Promise.all([
+      ...parts.map(async (part) => await compressor.compressChunk(part)),
+      compressor.end(),
+    ]);
+
+    expect(await decompress(Buffer.concat(outputs))).toEqual(Buffer.concat(parts));
+  });
+
+  it('should terminate workers with pending compressions', async () => {
+    for (let i = 0; i < 20; i++) {
+      const worker = new worker_threads.Worker(
+        `const crypto = require('node:crypto');
+         const { parentPort, workerData } = require('node:worker_threads');
+         import(workerData.indexUrl).then(({ default: zstd }) => {
+           for (let j = 0; j < 8; j++) {
+             const compressor = new zstd.ThreadedCompressor({ level: 19, threads: 2 });
+             compressor.compressChunk(crypto.randomBytes(1024 * 1024)).catch(() => {});
+             compressor.end().catch(() => {});
+           }
+           parentPort.postMessage('ready');
+           setInterval(() => {}, 1000);
+         });`,
+        {
+          eval: true,
+          workerData: { indexUrl: new URL('../index.ts', import.meta.url).href },
+        },
+      );
+      try {
+        await events.once(worker, 'message');
+      } finally {
+        await worker.terminate();
+      }
+    }
+  }, 30_000);
+
   it('should throw when compressing after the stream has been ended', async () => {
     const compressor = new zstd.ThreadedCompressor(3);
     await compressor.compressChunk(Buffer.from('foo'));
@@ -165,6 +205,52 @@ describe('Decompressor', () => {
       ),
     ).toEqual(inputs);
   });
+
+  it('should decompress chunks without awaiting each other', async () => {
+    const input = crypto.randomBytes(8 * ONE_MIB);
+    const compressed = zstd.compressNonThreaded(input, 3);
+    const decompressor = new zstd.Decompressor();
+    const chunkSize = Math.ceil(compressed.length / 8);
+    const outputs = await Promise.all([
+      ...Array.from(
+        { length: 8 },
+        async (_, index) =>
+          await decompressor.decompressChunk(
+            compressed.subarray(index * chunkSize, (index + 1) * chunkSize),
+          ),
+      ),
+      decompressor.end(),
+    ]);
+
+    expect(Buffer.concat(outputs)).toEqual(input);
+  });
+
+  it('should terminate workers with pending decompressions', async () => {
+    const compressed = zstd.compressNonThreaded(crypto.randomBytes(4 * ONE_MIB), 3);
+    for (let i = 0; i < 20; i++) {
+      const worker = new worker_threads.Worker(
+        `const { parentPort, workerData } = require('node:worker_threads');
+         import(workerData.indexUrl).then(({ default: zstd }) => {
+           for (let j = 0; j < 8; j++) {
+             const decompressor = new zstd.Decompressor();
+             decompressor.decompressChunk(workerData.compressed).catch(() => {});
+             decompressor.end().catch(() => {});
+           }
+           parentPort.postMessage('ready');
+           setInterval(() => {}, 1000);
+         });`,
+        {
+          eval: true,
+          workerData: { indexUrl: new URL('../index.ts', import.meta.url).href, compressed },
+        },
+      );
+      try {
+        await events.once(worker, 'message');
+      } finally {
+        await worker.terminate();
+      }
+    }
+  }, 30_000);
 
   it('should throw when decompressing after the stream has been ended', async () => {
     const decompressor = new zstd.Decompressor();

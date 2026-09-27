@@ -2,6 +2,46 @@
   "variables": {
     "openssl_fips": ""
   },
+  "target_defaults": {
+    # Node's common.gypi defines _HAS_EXCEPTIONS=0 on Windows, which puts MSVC's STL in a
+    # no-exceptions mode at odds with /EHsc: std::exception keeps a borrowed message pointer
+    # instead of a copy, so a std::runtime_error built from a temporary string reports freed
+    # memory. Removing the define restores MSVC's default of 1.
+    "defines!": ["_HAS_EXCEPTIONS=0"],
+    # Build optimizations
+    "cflags": [
+      "-ffunction-sections", "-fdata-sections",
+      "-fno-semantic-interposition"
+    ],
+    "cflags!": ["-fno-omit-frame-pointer"],
+    "cflags_cc": ["-fvisibility-inlines-hidden"],
+    "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL"],
+    "conditions": [
+      ["OS=='linux'", {
+        "cflags": ["-flto=auto"],
+        "ldflags": ["-flto=auto"]
+      }]
+    ],
+    "xcode_settings": {
+      "LLVM_LTO": "YES",
+      "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
+      "DEAD_CODE_STRIPPING": "YES",
+      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
+    },
+    "msvs_settings": {
+      "VCCLCompilerTool": {
+        "EnableFunctionLevelLinking": "true",
+        "WholeProgramOptimization": "true"
+      },
+      "VCLibrarianTool": {
+        "AdditionalOptions": ["/LTCG"]
+      },
+      "VCLinkerTool": {
+        "EnableCOMDATFolding": "2",
+        "LinkTimeCodeGeneration": "1"
+      }
+    }
+  },
   "targets": [
     {
       "target_name": "binding",
@@ -11,7 +51,11 @@
       "defines": [
         "NAPI_VERSION=<(napi_build_version)",
         "NODE_ADDON_API_DISABLE_DEPRECATED",
-        "NAPI_DISABLE_CPP_EXCEPTIONS"
+        "NAPI_DISABLE_CPP_EXCEPTIONS",
+        # A compress or decompress worker can finish while its worker thread's environment is
+        # being torn down, when JS can no longer run. Without this, node-addon-api aborts the
+        # process instead of dropping the result nobody can receive.
+        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS"
       ],
       "cflags": ["-fvisibility=hidden"],
       "cflags_cc": ["-fvisibility=hidden"],
@@ -26,17 +70,9 @@
         "DEAD_CODE_STRIPPING": "YES"
       },
       "msvs_settings": {
-        "VCCLCompilerTool": {
-          "AdditionalOptions": [
-            "/D__DATE__=0",
-            "/D__TIME__=0",
-            "/D__TIMESTAMP__=0"
-          ]
-        },
         "VCLinkerTool": {
           "AdditionalOptions": [
             "/Brepro",
-            "/deterministic",
             "/NOLOGO",
             "/OPT:REF",
             "/DEBUG:NONE"
@@ -85,7 +121,7 @@
         "ldflags": ["-Wl,--trace"]
       },
       "defines": [
-        "ZSTD_STATIC_LINKING_ONLY",
+        "ZSTD_STATIC_LINKING_ONLY=",
         "ZSTD_MULTITHREAD",
         "ZSTD_NO_TRACE",
         "ZSTDLIB_VISIBLE=",
