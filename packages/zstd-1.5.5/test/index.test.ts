@@ -53,9 +53,9 @@ describe('ThreadedCompressor', () => {
   });
 
   test.each(roundTripInputs)('should round-trip different inputs: %s', async (_name, input) => {
-    expect(await decompress(await compressWith(new zstd.ThreadedCompressor(3), input))).toEqual(
-      input,
-    );
+    expect(
+      (await decompress(await compressWith(new zstd.ThreadedCompressor(3), input))).equals(input),
+    ).toEqual(true);
   });
 
   test.each(Array.from({ length: 22 }, (_, index) => index + 1))(
@@ -126,7 +126,7 @@ describe('ThreadedCompressor', () => {
       compressor.end(),
     ]);
 
-    expect(await decompress(Buffer.concat(outputs))).toEqual(Buffer.concat(parts));
+    expect((await decompress(Buffer.concat(outputs))).equals(Buffer.concat(parts))).toEqual(true);
   });
 
   it('should terminate workers with pending compressions', async () => {
@@ -181,7 +181,7 @@ describe('Decompressor', () => {
   test.each(roundTripInputs)(
     'should round-trip output from compressNonThreaded: %s',
     async (_name, input) => {
-      expect(await decompress(zstd.compressNonThreaded(input, 3))).toEqual(input);
+      expect((await decompress(zstd.compressNonThreaded(input, 3))).equals(input)).toEqual(true);
     },
   );
 
@@ -222,7 +222,7 @@ describe('Decompressor', () => {
       decompressor.end(),
     ]);
 
-    expect(Buffer.concat(outputs)).toEqual(input);
+    expect(Buffer.concat(outputs).equals(input)).toEqual(true);
   });
 
   it('should terminate workers with pending decompressions', async () => {
@@ -264,7 +264,7 @@ describe('Decompressor', () => {
 
 describe('compressNonThreaded', () => {
   test.each(roundTripInputs)('should round-trip: %s', async (_name, input) => {
-    expect(await decompress(zstd.compressNonThreaded(input, 3))).toEqual(input);
+    expect((await decompress(zstd.compressNonThreaded(input, 3))).equals(input)).toEqual(true);
   });
 
   it('should produce output equivalent to the threaded compressor', async () => {
@@ -288,12 +288,14 @@ describe('compressNonThreaded', () => {
 describe('ZstdDecompressStream', () => {
   it.each(roundTripInputs)('should round-trip through a pipeline: %s', async (_name, input) => {
     expect(
-      await BufferUtil.fromReadable(
-        stream.Readable.from([zstd.compressNonThreaded(input, 3)]).pipe(
-          new zstd.DecompressStream(),
-        ),
-      ),
-    ).toEqual(input);
+      (
+        await BufferUtil.fromReadable(
+          stream.Readable.from([zstd.compressNonThreaded(input, 3)]).pipe(
+            new zstd.DecompressStream(),
+          ),
+        )
+      ).equals(input),
+    ).toEqual(true);
   });
 
   it('should round-trip a frame split across multiple stream chunks', async () => {

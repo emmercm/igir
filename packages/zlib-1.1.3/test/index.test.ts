@@ -43,8 +43,10 @@ describe('Deflater', () => {
   ])('should round-trip: %s', (_name, input) => {
     const deflater = new zlib.Deflater(ZlibCompressionLevel.Z_BEST_COMPRESSION);
     expect(
-      nodeZlib.inflateRawSync(Buffer.concat([deflater.compressChunk(input), deflater.end()])),
-    ).toEqual(input);
+      nodeZlib
+        .inflateRawSync(Buffer.concat([deflater.compressChunk(input), deflater.end()]))
+        .equals(input),
+    ).toEqual(true);
   });
 
   test.each(Object.entries(ZlibCompressionLevel))(
