@@ -341,7 +341,7 @@ jobs:
           path: packages/
           merge-multiple: true
       # Sign the prebuilds so that node-addon-provenance.yml can verify they were built by this workflow
-      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: 'packages/*/addon-*/**'
       - id: bump-and-commit
