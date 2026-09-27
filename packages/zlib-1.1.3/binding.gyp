@@ -27,37 +27,21 @@
         "deps/zlib"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      # Build optimizations
-      "cflags": [
-        "-O3",
-        "-ffunction-sections", "-fdata-sections",
-        "-fvisibility=hidden",
-        "-fno-semantic-interposition"
-      ],
-      "cflags!": ["-fno-omit-frame-pointer"],
-      "cflags_cc": ["-std=c++17", "-fvisibility=hidden", "-fvisibility-inlines-hidden"],
-      "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL"],
+      "cflags": ["-O3", "-fvisibility=hidden"],
+      "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
+      "ldflags": ["-Wl,--exclude-libs,ALL"],
 
       "conditions": [
-        ["OS=='linux'", {
-          "cflags": ["-flto=auto"],
-          "ldflags": ["-flto=auto"]
-        }],
         ["OS=='mac'", {
-          # Modern Apple Clang defines TARGET_OS_MAC. The legacy zconf.h then
-          # expects Byte from classic Mac headers; supply only that missing type.
-          "defines+": ["Byte=unsigned char"]
+          "defines+": ["TARGET_OS_MAC=0", "Byte=unsigned char"]
         }]
       ],
 
       "xcode_settings": {
         "GCC_OPTIMIZATION_LEVEL": "3",
-        "LLVM_LTO": "YES",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
-        "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
-        "DEAD_CODE_STRIPPING": "YES",
-        "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
+        "DEAD_CODE_STRIPPING": "YES"
       },
 
       "msvs_settings": {
@@ -68,16 +52,18 @@
           "EnableFunctionLevelLinking": "true",
           "WholeProgramOptimization": "true",
           "AdditionalOptions": [
+            "/D__DATE__=0",
+            "/D__TIME__=0",
+            "/D__TIMESTAMP__=0",
             "/Zc:wchar_t",
             "/EHsc",
             "/Gm-"
           ]
         },
         "VCLinkerTool": {
-          "EnableCOMDATFolding": "2",
-          "LinkTimeCodeGeneration": "1",
           "AdditionalOptions": [
             "/Brepro",
+            "/deterministic",
             "/NOLOGO",
             "/OPT:REF",
             "/DEBUG:NONE"

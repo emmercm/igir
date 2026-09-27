@@ -274,14 +274,4 @@ describe('openRawReader', () => {
       expect(sha1(bytes)).toEqual(info.dataSha1);
     }
   });
-
-  it('should reject a high-water mark of zero instead of ending early', async () => {
-    const readable = chdman.openRawReader({
-      inputFilename: path.join(FIXTURES, '2048.chd'),
-      highWaterMark: 0,
-    });
-    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(
-      'maxBytes must be a positive number',
-    );
-  });
 });

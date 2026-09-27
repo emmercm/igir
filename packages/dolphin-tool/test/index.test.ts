@@ -134,12 +134,4 @@ describe('openReader', () => {
     again.destroy();
     expect(again).toBeInstanceOf(stream.Readable);
   });
-
-  it('should reject a high-water mark of zero instead of ending early', async () => {
-    const readable = dolphin.openReader({
-      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
-      highWaterMark: 0,
-    });
-    await expect(readable.toArray()).rejects.toThrow('maxBytes must be a positive number');
-  });
 });

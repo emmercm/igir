@@ -17,10 +17,9 @@
           "-flto=auto"
         ],
         "cflags_cc": ["-fvisibility-inlines-hidden"],
-        "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
+        "ldflags": ["-Wl,--gc-sections", "-flto=auto"]
       }]
     ],
-    "cflags!": ["-fno-omit-frame-pointer"],
 
     "cflags_cc!": [
       # Override Node.js' common.gypi
@@ -53,27 +52,17 @@
       "VCCLCompilerTool": {
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
-        "WholeProgramOptimization": "true",
         "AdditionalOptions": [
           # Dolphin uses C++ exceptions and RTTI
           "/EHsc"
         ]
       },
-      "VCLibrarianTool": {
-        "AdditionalOptions": ["/LTCG"]
-      },
       "VCLinkerTool": {
         # Build optimizations
         "OptimizeReferences": "2",
-        "EnableCOMDATFolding": "2",
-        "LinkTimeCodeGeneration": "1",
         "AdditionalOptions": [
           "/Brepro",
           "/DEBUG:NONE"
-        ],
-        # Node.js v26.3.0 Windows started adding "/opt:lldltojobs=<lto_jobs>" which MSVC throws LNK1117 on
-        "AdditionalOptions/": [
-          ["exclude", "lldltojobs"]
         ]
       }
     }
@@ -319,14 +308,7 @@
         "<(dolphin)/Source/Core/Common/StringUtil.cpp"
       ],
       "dependencies": ["zstd", "bzip2", "lzma", "zlibng", "mbedtls"],
-      "defines": [
-        "FMT_HEADER_ONLY",
-        "LZMA_API_STATIC",
-        # A read worker can finish while its worker thread's environment is being torn
-        # down, when JS can no longer run. Without this, node-addon-api aborts the process
-        # instead of dropping the result nobody can receive.
-        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS"
-      ],
+      "defines": ["FMT_HEADER_ONLY", "LZMA_API_STATIC"],
       "msvs_settings": {
         "VCCLCompilerTool": {
           "LanguageStandard": "Default",

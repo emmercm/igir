@@ -2,9 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
-#include <limits>
 #include <memory>
-#include <new>
 #include <optional>
 #include <ostream>
 #include <regex>
@@ -467,40 +465,14 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
         deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
         return deferred.Promise();
     }
-    // A zero-byte read would resolve null, which JavaScript reads as the end of the stream
-    double const requested = info.Length() < 1 || !info[0].IsNumber() ? 0 : info[0].As<Napi::Number>().DoubleValue();
-    // Bounded so the static_cast<size_t> below is defined, and to Number.MAX_SAFE_INTEGER, past
-    // which JavaScript cannot request an exact byte count
-    constexpr double kMaxRequestBytes =
-        std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
-    bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
-    if (!valid) {
-        deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
-        return deferred.Promise();
-    }
-    auto const maxBytes = static_cast<size_t>(requested);
+    size_t const maxBytes = info[0].As<Napi::Number>().Uint32Value();
     // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
     // if that allocation throws, reading_/Ref() must not be left dangling.
-    ReadWorker<Derived>* worker = nullptr;
-    try {
-        worker = new ReadWorker<Derived>(env, static_cast<Derived*>(this), maxBytes);
-    } catch (const std::bad_alloc&) {
-        deferred.Reject(Napi::Error::New(env, "failed to allocate the read buffer").Value());
-        return deferred.Promise();
-    }
+    auto* worker = new ReadWorker<Derived>(env, static_cast<Derived*>(this), maxBytes);
     Napi::Promise promise = worker->GetPromise();
-    try {
-        worker->Queue();
-    } catch (const Napi::Error& e) {
-        // The worker was never queued, so it will never run or free itself, and reader
-        // state must not be left marked as reading
-        delete worker;
-        deferred.Reject(e.Value());
-        return deferred.Promise();
-    }
-    // OnOK/OnError run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its CHD) alive while the worker thread reads
+    worker->Queue();
     return promise;
 }
 
@@ -872,10 +844,8 @@ class RawReader : public ReaderBase<RawReader> {
     // Emit up to maxBytes of this CHD's logical bytes starting at pos_.
     size_t Produce(uint8_t* out, size_t maxBytes) {
         if (pos_ >= total_) return 0;
-        // Clamped to 32 bits because MAME's chd_file::read_bytes() takes a uint32_t length. A
-        // short read is allowed, and the next read continues from pos_.
-        auto const n =
-            static_cast<uint32_t>(std::min<uint64_t>({maxBytes, total_ - pos_, std::numeric_limits<uint32_t>::max()}));
+        // maxBytes comes from Read's Uint32Value(), so the clamped result always fits in uint32_t.
+        uint32_t const n = static_cast<uint32_t>(std::min<uint64_t>(maxBytes, total_ - pos_));
         std::error_condition const err = chd_.read_bytes(pos_, out, n);
         if (err) throw std::runtime_error("CHD read_bytes failed: " + err.message());
         pos_ += n;

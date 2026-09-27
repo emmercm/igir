@@ -29,10 +29,9 @@
           "-flto=auto"
         ],
         "cflags_cc": ["-fvisibility-inlines-hidden"],
-        "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
+        "ldflags": ["-Wl,--gc-sections", "-flto=auto"]
       }]
     ],
-    "cflags!": ["-fno-omit-frame-pointer"],
 
     "cflags_cc!": [
       # Override Node.js' common.gypi
@@ -64,28 +63,18 @@
       "VCCLCompilerTool": {
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
-        "WholeProgramOptimization": "true",
         "AdditionalOptions": [
           "/std:c++20",
           # MAME uses C++ exceptions and RTTI
           "/EHsc"
         ]
       },
-      "VCLibrarianTool": {
-        "AdditionalOptions": ["/LTCG"]
-      },
       "VCLinkerTool": {
         # Build optimizations
         "OptimizeReferences": "2",
-        "EnableCOMDATFolding": "2",
-        "LinkTimeCodeGeneration": "1",
         "AdditionalOptions": [
           "/Brepro",
           "/DEBUG:NONE"
-        ],
-        # Node.js v26.3.0 Windows started adding "/opt:lldltojobs=<lto_jobs>" which MSVC throws LNK1117 on
-        "AdditionalOptions/": [
-          ["exclude", "lldltojobs"]
         ]
       }
     }
@@ -314,12 +303,6 @@
       "dependencies": [
         "mame_utils", "mame_ocore",
         "zlib", "zstd", "flac", "lzma7z"
-      ],
-      "defines": [
-        # A read worker can finish while its worker thread's environment is being torn
-        # down, when JS can no longer run. Without this, node-addon-api aborts the process
-        # instead of dropping the result nobody can receive.
-        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS"
       ],
       "include_dirs": [
         "<!(node -p \"require('node-addon-api').include_dir\")",
