@@ -2,6 +2,41 @@
   "variables": {
     "openssl_fips": ""
   },
+  "target_defaults": {
+    # Build optimizations
+    "cflags": [
+      "-ffunction-sections", "-fdata-sections",
+      "-fno-semantic-interposition"
+    ],
+    "cflags!": ["-fno-omit-frame-pointer"],
+    "cflags_cc": ["-fvisibility-inlines-hidden"],
+    "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL"],
+    "conditions": [
+      ["OS=='linux'", {
+        "cflags": ["-flto=auto"],
+        "ldflags": ["-flto=auto"]
+      }]
+    ],
+    "xcode_settings": {
+      "LLVM_LTO": "YES",
+      "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
+      "DEAD_CODE_STRIPPING": "YES",
+      "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
+    },
+    "msvs_settings": {
+      "VCCLCompilerTool": {
+        "EnableFunctionLevelLinking": "true",
+        "WholeProgramOptimization": "true"
+      },
+      "VCLibrarianTool": {
+        "AdditionalOptions": ["/LTCG"]
+      },
+      "VCLinkerTool": {
+        "EnableCOMDATFolding": "2",
+        "LinkTimeCodeGeneration": "1"
+      }
+    }
+  },
   "targets": [
     {
       "target_name": "binding",

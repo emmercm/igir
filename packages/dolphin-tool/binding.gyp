@@ -17,9 +17,10 @@
           "-flto=auto"
         ],
         "cflags_cc": ["-fvisibility-inlines-hidden"],
-        "ldflags": ["-Wl,--gc-sections", "-flto=auto"]
+        "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL", "-flto=auto"]
       }]
     ],
+    "cflags!": ["-fno-omit-frame-pointer"],
 
     "cflags_cc!": [
       # Override Node.js' common.gypi
@@ -52,17 +53,27 @@
       "VCCLCompilerTool": {
         "RuntimeLibrary": "0",
         "EnableFunctionLevelLinking": "true",
+        "WholeProgramOptimization": "true",
         "AdditionalOptions": [
           # Dolphin uses C++ exceptions and RTTI
           "/EHsc"
         ]
       },
+      "VCLibrarianTool": {
+        "AdditionalOptions": ["/LTCG"]
+      },
       "VCLinkerTool": {
         # Build optimizations
         "OptimizeReferences": "2",
+        "EnableCOMDATFolding": "2",
+        "LinkTimeCodeGeneration": "1",
         "AdditionalOptions": [
           "/Brepro",
           "/DEBUG:NONE"
+        ],
+        # Node.js v26.3.0 Windows started adding "/opt:lldltojobs=<lto_jobs>" which MSVC throws LNK1117 on
+        "AdditionalOptions/": [
+          ["exclude", "lldltojobs"]
         ]
       }
     }

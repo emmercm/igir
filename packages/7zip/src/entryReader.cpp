@@ -1,5 +1,6 @@
 #include "entryReader.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -70,7 +71,8 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 Napi::TypeError::New(env, "chunkBytes must be at least 1").ThrowAsJavaScriptException();
                 return;
             }
-            chunkBytes = static_cast<size_t>(info[4].As<Napi::Number>().Uint32Value());
+            // Clamped to kMaxChunkBytes, the largest chunk the Pump allocates (see pump.h)
+            chunkBytes = static_cast<size_t>(std::min(requested, static_cast<double>(Pump::kMaxChunkBytes)));
         }
 
         // The bridge exists before the producer does, because the producer

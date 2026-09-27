@@ -27,11 +27,22 @@
         "deps/zlib"
       ],
       "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
-      "cflags": ["-O3", "-fvisibility=hidden"],
-      "cflags_cc": ["-std=c++17", "-fvisibility=hidden"],
-      "ldflags": ["-Wl,--exclude-libs,ALL"],
+      # Build optimizations
+      "cflags": [
+        "-O3",
+        "-ffunction-sections", "-fdata-sections",
+        "-fvisibility=hidden",
+        "-fno-semantic-interposition"
+      ],
+      "cflags!": ["-fno-omit-frame-pointer"],
+      "cflags_cc": ["-std=c++17", "-fvisibility=hidden", "-fvisibility-inlines-hidden"],
+      "ldflags": ["-Wl,--gc-sections", "-Wl,--exclude-libs,ALL"],
 
       "conditions": [
+        ["OS=='linux'", {
+          "cflags": ["-flto=auto"],
+          "ldflags": ["-flto=auto"]
+        }],
         ["OS=='mac'", {
           # Modern Apple Clang defines TARGET_OS_MAC. The legacy zconf.h then
           # expects Byte from classic Mac headers; supply only that missing type.
@@ -41,9 +52,12 @@
 
       "xcode_settings": {
         "GCC_OPTIMIZATION_LEVEL": "3",
+        "LLVM_LTO": "YES",
         "GCC_SYMBOLS_PRIVATE_EXTERN": "YES",
+        "GCC_INLINES_ARE_PRIVATE_EXTERN": "YES",
         "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
-        "DEAD_CODE_STRIPPING": "YES"
+        "DEAD_CODE_STRIPPING": "YES",
+        "OTHER_CFLAGS": ["-ffunction-sections", "-fdata-sections"]
       },
 
       "msvs_settings": {
@@ -60,6 +74,8 @@
           ]
         },
         "VCLinkerTool": {
+          "EnableCOMDATFolding": "2",
+          "LinkTimeCodeGeneration": "1",
           "AdditionalOptions": [
             "/Brepro",
             "/NOLOGO",

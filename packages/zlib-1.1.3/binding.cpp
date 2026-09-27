@@ -1,5 +1,6 @@
 #include <napi.h>
 
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <vector>
@@ -205,14 +206,23 @@ Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
         return Napi::Buffer<uint8_t>::New(env, 0);
     }
 
+    // Limited to 32 bits because this vendored zlib's avail_in is a uInt. Input cannot be clamped
+    // without silently dropping some of it, so a larger Buffer is rejected instead.
+    if (input.Length() > std::numeric_limits<uInt>::max()) {
+        Napi::RangeError::New(env, "Input buffer is too large").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
     // Set up input
     stream_.next_in = input.Data();
-    stream_.avail_in = input.Length();
+    stream_.avail_in = static_cast<uInt>(input.Length());
 
     // Pre-allocate output vector with estimated capacity
-    // For most data, deflate will reduce size, but for worst case we use input length
+    // For most data, deflate will reduce size, but for worst case we use input length. The
+    // reservation is only a hint, so the doubling is skipped when it cannot be represented.
     output_.clear();
-    output_.reserve(flush == Z_FINISH ? input.Length() * 2 : input.Length());
+    output_.reserve(flush == Z_FINISH && input.Length() <= std::numeric_limits<size_t>::max() / 2 ? input.Length() * 2
+                                                                                                  : input.Length());
 
     // Process until all input is consumed and output is generated
     do {

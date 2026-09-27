@@ -10,9 +10,9 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <exception>
 #include <limits>
@@ -30,6 +30,13 @@
 #include "deps/maxcso/src/dax.h"
 #include "deps/maxcso/zlib/zlib.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 static_assert(sizeof(maxcso::CSOHeader) == 24, "CSOHeader must match the on-disk layout");
 static_assert(sizeof(maxcso::DAXHeader) == 32, "DAXHeader must match the on-disk layout");
 static_assert(sizeof(maxcso::DAXNCArea) == 8, "DAXNCArea must match the on-disk layout");
@@ -38,60 +45,140 @@ static_assert(std::endian::native == std::endian::little, "only little-endian ta
 
 // ---- file I/O ----
 
+// A read-only file on a raw OS handle, like Dolphin's DirectIOFile, rather than stdio. The handle
+// is never inherited by a spawned child process: CreateFileW handles are non-inheritable without
+// SECURITY_ATTRIBUTES, and O_CLOEXEC closes the descriptor on exec. Reads are positioned, so there
+// is no shared seek state or stdio buffer.
+class File {
+   public:
 #ifdef _WIN32
-using PathString = std::wstring;
-static PathString ToPath(const Napi::String& value) {
-    std::u16string const utf16 = value.Utf16Value();
-    return {utf16.begin(), utf16.end()};
-}
-static FILE* OpenFile(const PathString& path) { return _wfopen(path.c_str(), L"rb"); }
-static int SeekTo(FILE* file, uint64_t offset) { return _fseeki64(file, static_cast<int64_t>(offset), SEEK_SET); }
-static int SeekToEnd(FILE* file) { return _fseeki64(file, 0, SEEK_END); }
-static int64_t TellOf(FILE* file) { return _ftelli64(file); }
+    using PathString = std::wstring;
 #else
-using PathString = std::string;
-static PathString ToPath(const Napi::String& value) { return value.Utf8Value(); }
-static FILE* OpenFile(const PathString& path) { return std::fopen(path.c_str(), "rb"); }
-static int SeekTo(FILE* file, uint64_t offset) { return fseeko(file, static_cast<off_t>(offset), SEEK_SET); }
-static int SeekToEnd(FILE* file) { return fseeko(file, 0, SEEK_END); }
-static int64_t TellOf(FILE* file) { return ftello(file); }
+    using PathString = std::string;
 #endif
 
-struct FileCloser {
-    void operator()(FILE* file) const { static_cast<void>(std::fclose(file)); }
-};
-using FilePtr = std::unique_ptr<FILE, FileCloser>;
+    explicit File(const PathString& path) : handle_(Open(path)) {}
+    ~File() { Close(handle_); }
+    File(const File&) = delete;
+    File& operator=(const File&) = delete;
+    File(File&&) = delete;
+    File& operator=(File&&) = delete;
 
-struct DecompressorFreer {
-    void operator()(libdeflate_decompressor* decompressor) const { libdeflate_free_decompressor(decompressor); }
-};
-using DecompressorPtr = std::unique_ptr<libdeflate_decompressor, DecompressorFreer>;
+    [[nodiscard]] uint64_t Size() const;
 
-static FilePtr OpenOrThrow(const PathString& path) {
-    FilePtr file(OpenFile(path));
-    if (!file) {
-        throw std::runtime_error("failed to open the file");
+    // Read exactly out.size() bytes starting at `offset`, or throw.
+    void ReadAt(uint64_t offset, std::span<std::byte> out) const {
+        std::span<std::byte> rest = out;
+        uint64_t position = offset;
+        while (!rest.empty()) {
+            size_t const got = ReadSome(position, rest);
+            if (got == 0) {
+                throw std::runtime_error("failed to read " + std::to_string(out.size()) + " bytes at offset " +
+                                         std::to_string(offset));
+            }
+            rest = rest.subspan(got);
+            position += got;
+        }
     }
-    return file;
-}
 
-static uint64_t FileSize(FILE* file) {
-    int64_t const size = SeekToEnd(file) == 0 ? TellOf(file) : -1;
+   private:
+    // Caps each OS read, not the total: ReadFile takes a 32-bit length and macOS rejects a pread
+    // longer than INT_MAX, so ReadAt() issues as many reads as a larger span needs
+    static constexpr size_t kMaxReadBytes = size_t{1} << 30U;
+
+#ifdef _WIN32
+    using Handle = HANDLE;
+
+    static Handle Open(const PathString& path) {
+        Handle const handle =
+            CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (handle == INVALID_HANDLE_VALUE) {
+            throw std::runtime_error("failed to open the file");
+        }
+        return handle;
+    }
+
+    static void Close(Handle handle) { static_cast<void>(CloseHandle(handle)); }
+
+    // Returns the bytes read, or 0 on an error or the end of the file
+    [[nodiscard]] size_t ReadSome(uint64_t offset, std::span<std::byte> out) const {
+        OVERLAPPED overlapped{};
+        overlapped.Offset = static_cast<DWORD>(offset);
+        overlapped.OffsetHigh = static_cast<DWORD>(offset >> 32U);
+        auto const request = static_cast<DWORD>(std::min(out.size(), kMaxReadBytes));
+        DWORD got = 0;
+        return ReadFile(handle_, out.data(), request, &got, &overlapped) == 0 ? 0 : size_t{got};
+    }
+#else
+    using Handle = int;
+
+    static Handle Open(const PathString& path) {
+        Handle handle = -1;
+        do {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg): open() is variadic for its mode
+            handle = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+        } while (handle < 0 && errno == EINTR);
+        if (handle < 0) {
+            throw std::runtime_error("failed to open the file");
+        }
+        return handle;
+    }
+
+    // Not retried on EINTR: the descriptor is released either way
+    static void Close(Handle handle) { static_cast<void>(close(handle)); }
+
+    // Returns the bytes read, or 0 on an error or the end of the file
+    [[nodiscard]] size_t ReadSome(uint64_t offset, std::span<std::byte> out) const {
+        if (offset > static_cast<uint64_t>(std::numeric_limits<off_t>::max())) {
+            return 0;
+        }
+        ssize_t got = -1;
+        do {
+            got = pread(handle_, out.data(), std::min(out.size(), kMaxReadBytes), static_cast<off_t>(offset));
+        } while (got < 0 && errno == EINTR);
+        return got < 0 ? 0 : static_cast<size_t>(got);
+    }
+#endif
+
+    Handle handle_;
+};
+
+#ifdef _WIN32
+uint64_t File::Size() const {
+    LARGE_INTEGER size{};
+    if (GetFileSizeEx(handle_, &size) == 0 || size.QuadPart < 0) {
+        throw std::runtime_error("failed to determine the file size");
+    }
+    return static_cast<uint64_t>(size.QuadPart);
+}
+#else
+uint64_t File::Size() const {
+    // lseek() rather than fstat(), so block devices report their size too. Reads are positioned,
+    // so moving the offset is harmless.
+    off_t const size = lseek(handle_, 0, SEEK_END);
     if (size < 0) {
         throw std::runtime_error("failed to determine the file size");
     }
     return static_cast<uint64_t>(size);
 }
+#endif
 
-static void ReadAt(FILE* file, uint64_t offset, std::span<std::byte> out) {
-    if (out.empty()) {
-        return;
-    }
-    if (SeekTo(file, offset) != 0 || std::fread(out.data(), 1, out.size(), file) != out.size()) {
-        throw std::runtime_error("failed to read " + std::to_string(out.size()) + " bytes at offset " +
-                                 std::to_string(offset));
-    }
+using PathString = File::PathString;
+
+#ifdef _WIN32
+static PathString ToPath(const Napi::String& value) {
+    std::u16string const utf16 = value.Utf16Value();
+    return {utf16.begin(), utf16.end()};
 }
+#else
+static PathString ToPath(const Napi::String& value) { return value.Utf8Value(); }
+#endif
+
+struct DecompressorFreer {
+    void operator()(libdeflate_decompressor* decompressor) const { libdeflate_free_decompressor(decompressor); }
+};
+using DecompressorPtr = std::unique_ptr<libdeflate_decompressor, DecompressorFreer>;
 
 static DecompressorPtr NewDecompressor() {
     DecompressorPtr decompressor(libdeflate_alloc_decompressor());
@@ -198,7 +285,7 @@ struct Block {
 class Container {
    public:
     explicit Container(const PathString& path)
-        : file_(OpenOrThrow(path)), fileSize_(FileSize(file_.get())), decompressor_(NewDecompressor()) {
+        : file_(path), fileSize_(file_.Size()), decompressor_(NewDecompressor()) {
         if (fileSize_ < kHeaderBytes) {
             throw std::runtime_error("file is too small to be a CSO, ZSO, or DAX file");
         }
@@ -251,7 +338,7 @@ class Container {
     [[nodiscard]] T ReadHeader() const {
         T header{};
         std::span<std::byte> const bytes = std::as_writable_bytes(std::span(&header, 1));
-        ReadAt(file_.get(), 0, bytes.first(std::min<size_t>(bytes.size(), kHeaderBytes)));
+        file_.ReadAt(0, bytes.first(std::min<size_t>(bytes.size(), kHeaderBytes)));
         return header;
     }
 
@@ -276,8 +363,7 @@ class Container {
         // Upstream shifts by the block size's log2, rounded down, instead of dividing by it
         blockShift_ = static_cast<uint32_t>(std::bit_width(blockSize)) - 1;
         uint64_t const entries = ((size + blockSize - 1) >> blockShift_) + 1;
-        // Upstream truncates a larger index's length to 32 bits and then reads past what it loaded,
-        // and a 32-bit size_t would truncate it the same way here
+        // A CSO format limit, not an OS one: upstream holds the index's sector count in a uint32_t
         if (entries > std::numeric_limits<uint32_t>::max()) {
             throw std::runtime_error("CSO index has too many entries");
         }
@@ -285,7 +371,7 @@ class Container {
             throw std::runtime_error("CSO index does not fit in the file");
         }
         index_.resize(static_cast<size_t>(entries));
-        ReadAt(file_.get(), kCsoIndexOffset, std::as_writable_bytes(std::span(index_)));
+        file_.ReadAt(kCsoIndexOffset, std::as_writable_bytes(std::span(index_)));
 
         size_ = size;
         blockSize_ = blockSize;
@@ -307,6 +393,10 @@ class Container {
         uint64_t const size = header.uncompressed_size;
         CheckAligned(size);
         uint64_t const frames = (size + maxcso::DAX_FRAME_SIZE - 1) >> maxcso::DAX_FRAME_SHIFT;
+        // A DAX format limit, not an OS one: upstream holds the frame count in a uint32_t
+        if (frames > std::numeric_limits<uint32_t>::max()) {
+            throw std::runtime_error("DAX frame table has too many frames");
+        }
         // Upstream holds the NC area count in an int, so a larger count is negative and reads none
         uint64_t areas = header.version >= 1 ? header.nc_areas : 0U;
         if (areas > static_cast<uint64_t>(std::numeric_limits<int32_t>::max())) {
@@ -324,9 +414,9 @@ class Container {
         index_.resize(static_cast<size_t>(frames));
         daxSizes_.resize(static_cast<size_t>(frames));
         std::vector<maxcso::DAXNCArea> ncAreas(static_cast<size_t>(areas));
-        ReadAt(file_.get(), kDaxIndexOffset, std::as_writable_bytes(std::span(index_)));
-        ReadAt(file_.get(), kDaxIndexOffset + (frames * 4), std::as_writable_bytes(std::span(daxSizes_)));
-        ReadAt(file_.get(), kDaxIndexOffset + (frames * 6), std::as_writable_bytes(std::span(ncAreas)));
+        file_.ReadAt(kDaxIndexOffset, std::as_writable_bytes(std::span(index_)));
+        file_.ReadAt(kDaxIndexOffset + (frames * 4), std::as_writable_bytes(std::span(daxSizes_)));
+        file_.ReadAt(kDaxIndexOffset + (frames * 6), std::as_writable_bytes(std::span(ncAreas)));
 
         daxStored_.assign(static_cast<size_t>(frames), 0);
         for (size_t i = 0; i < ncAreas.size(); ++i) {
@@ -409,7 +499,7 @@ class Container {
             ThrowTooFew(block.entry);
         }
         std::span<uint8_t> const out = std::span(scratch_).first(run);
-        ReadAt(file_.get(), offset, std::as_writable_bytes(out));
+        file_.ReadAt(offset, std::as_writable_bytes(out));
         pos_ += run;
         return out;
     }
@@ -426,7 +516,7 @@ class Container {
     std::span<const uint8_t> NextCompressed(const Block& block) {
         CheckRead(block.entry, block.offset, block.length);
         std::span<uint8_t> const in = std::span(scratch_).first(block.length);
-        ReadAt(file_.get(), block.offset, std::as_writable_bytes(in));
+        file_.ReadAt(block.offset, std::as_writable_bytes(in));
         size_t const produced = block.codec == Codec::kLz4
                                     ? DecodeLz4(in, decoded_)
                                     : DecodeDeflate(decompressor_.get(), in, decoded_, block.codec == Codec::kZlib);
@@ -448,7 +538,7 @@ class Container {
         return std::span(decoded_).subspan(block.skip, static_cast<size_t>(end - block.skip));
     }
 
-    FilePtr file_;
+    File file_;
     uint64_t fileSize_ = 0;
     DecompressorPtr decompressor_;
     Format format_ = Format::kCso1;
@@ -603,7 +693,11 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     double const requested = info.Length() < 1 || !info[0].IsNumber() ? 0 : info[0].As<Napi::Number>().DoubleValue();
-    bool const valid = requested >= 1 && requested <= 4294967295.0;
+    // Bounded so the static_cast<size_t> below is defined, and to Number.MAX_SAFE_INTEGER, past
+    // which JavaScript cannot request an exact byte count
+    constexpr double kMaxRequestBytes =
+        std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
+    bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
     if (!valid) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
         return deferred.Promise();
@@ -619,9 +713,20 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     Napi::Promise promise = worker->GetPromise();
+    // Queue() reports failure only as a pending exception, so none may be pending before it
+    if (!env.IsExceptionPending()) {
+        worker->Queue();
+    }
+    if (env.IsExceptionPending()) {
+        // The worker was never queued, so it will never run or free itself, and reader state must
+        // not be left marked as reading
+        delete worker;
+        deferred.Reject(env.GetAndClearPendingException().Value());
+        return deferred.Promise();
+    }
+    // OnOK/OnError run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its file) alive while the worker thread reads
-    worker->Queue();
     return promise;
 }
 

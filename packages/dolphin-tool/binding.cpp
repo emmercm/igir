@@ -6,7 +6,9 @@
 #include <cstdint>
 #include <cstring>
 #include <future>
+#include <limits>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -323,14 +325,40 @@ Napi::Value ReaderBase<Derived>::Read(const Napi::CallbackInfo& info) {
         deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
         return deferred.Promise();
     }
-    size_t const maxBytes = info[0].As<Napi::Number>().Uint32Value();
+    // A zero-byte read would resolve null, which JavaScript reads as the end of the stream
+    double const requested = info.Length() < 1 || !info[0].IsNumber() ? 0 : info[0].As<Napi::Number>().DoubleValue();
+    // Bounded so the static_cast<size_t> below is defined, and to Number.MAX_SAFE_INTEGER, past
+    // which JavaScript cannot request an exact byte count
+    constexpr double kMaxRequestBytes =
+        std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
+    bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
+    if (!valid) {
+        deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
+        return deferred.Promise();
+    }
+    auto const maxBytes = static_cast<size_t>(requested);
     // Allocate the worker (and its maxBytes buffer) BEFORE mutating reader state:
     // if that allocation throws, reading_/Ref() must not be left dangling.
-    auto* worker = new ReadWorker<Derived>(env, static_cast<Derived*>(this), maxBytes);
+    ReadWorker<Derived>* worker = nullptr;
+    try {
+        worker = new ReadWorker<Derived>(env, static_cast<Derived*>(this), maxBytes);
+    } catch (const std::bad_alloc&) {
+        deferred.Reject(Napi::Error::New(env, "failed to allocate the read buffer").Value());
+        return deferred.Promise();
+    }
     Napi::Promise promise = worker->GetPromise();
+    try {
+        worker->Queue();
+    } catch (const Napi::Error& e) {
+        // The worker was never queued, so it will never run or free itself, and reader
+        // state must not be left marked as reading
+        delete worker;
+        deferred.Reject(e.Value());
+        return deferred.Promise();
+    }
+    // OnOK/OnError run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its blob) alive while the worker thread reads
-    worker->Queue();
     return promise;
 }
 

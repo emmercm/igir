@@ -31,7 +31,10 @@ class CompressPromiseWorker : public Napi::AsyncWorker {
         // Preallocate the result buffer to minimize reallocations during runtime
         size_t outSize = 0;
         if (!input_.empty()) {
-            outSize = ZSTD_compressBound(input_.size());
+            // The bound is an error code, not a size, for input past ZSTD_MAX_INPUT_SIZE; the
+            // reservation is only a hint, so skip it then
+            size_t const bound = ZSTD_compressBound(input_.size());
+            outSize = ZSTD_isError(bound) ? 0 : bound;
         } else if (endOp == ZSTD_e_end) {
             outSize = ZSTD_CStreamOutSize();
         }
@@ -353,7 +356,12 @@ static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
         return env.Undefined();
     }
 
+    // The bound is an error code, not a size, for input past ZSTD_MAX_INPUT_SIZE
     size_t const bound = ZSTD_compressBound(inputBuffer.Length());
+    if (ZSTD_isError(bound)) {
+        Napi::RangeError::New(env, "Input buffer is too large").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
     std::vector<uint8_t> compressed(bound);
 
     size_t const compressedSize =
