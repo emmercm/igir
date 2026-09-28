@@ -182,8 +182,8 @@ jobs:
           rm -rf packages/*/addon-* packages/*/prebuilds*
       - run: npm install --foreground-scripts
 
-      # Have Windows Error Reporting write a full dump whenever node.exe crashes, including the
-      # fail-fast that abort() raises
+      # Capture node.exe crashes: attach cdb to the test run when it's installed, otherwise install
+      # ProcDump as the postmortem debugger; Windows Error Reporting local dumps stay as a backstop
       - shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "${env:DUMP_DIR}" | Out-Null
@@ -195,19 +195,63 @@ jobs:
           Set-ItemProperty -Path $localDumps -Name DumpFolder -Type ExpandString -Value "${env:DUMP_DIR}"
           Set-ItemProperty -Path $localDumps -Name DumpType -Type DWord -Value 2
           Set-ItemProperty -Path $localDumps -Name DumpCount -Type DWord -Value 5
+          Set-Service -Name WerSvc -StartupType Manual -ErrorAction Continue
+          Start-Service -Name WerSvc -ErrorAction Continue
+          Get-Service -Name WerSvc | Format-List Name, Status, StartType
 
-      # Run the maxcso tests until one crashes
+          $nodeVersion = node --print process.versions.node
+          $nodePdbDir = Join-Path "${env:RUNNER_TEMP}" 'node-pdb'
+          Invoke-WebRequest -Uri "https://nodejs.org/download/release/v${nodeVersion}/win-arm64/node_pdb.zip" -OutFile "${nodePdbDir}.zip"
+          Expand-Archive -Path "${nodePdbDir}.zip" -DestinationPath $nodePdbDir -Force
+          "NODE_PDB_DIR=${nodePdbDir}" >> "${env:GITHUB_ENV}"
+
+          $cdbs = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers" -Recurse -Filter cdb.exe -ErrorAction SilentlyContinue
+          $cdbs | ForEach-Object { Write-Output "Found $($_.FullName)" }
+          $cdb = $cdbs | Where-Object { $_.FullName -match '\\arm64\\' } | Select-Object -First 1
+          if ($cdb) {
+            "CDB=$($cdb.FullName)" >> "${env:GITHUB_ENV}"
+          } else {
+            Write-Output "No arm64 cdb.exe is installed, installing ProcDump as the postmortem debugger"
+            $procdumpDir = Join-Path "${env:RUNNER_TEMP}" 'procdump'
+            Invoke-WebRequest -Uri 'https://download.sysinternals.com/files/Procdump.zip' -OutFile "${procdumpDir}.zip"
+            Expand-Archive -Path "${procdumpDir}.zip" -DestinationPath $procdumpDir -Force
+            & "${procdumpDir}\procdump64a.exe" -accepteula -ma -i "${env:DUMP_DIR}"
+          }
+
+      # Run the maxcso tests until one crashes, under cdb (following child processes) when it's
+      # installed so the fail-fast prints every thread's stack as it happens
       - id: repro
         shell: pwsh
         run: |
+          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
+          $dumpPath = "${env:DUMP_DIR}\node.dmp" -replace '\\', '/'
+          $onFailFast = ".echo FAIL-FAST; .ecxr; kn 50; ~*kn 50; .dump /ma /u ${dumpPath}; g"
+          $cdbScript = Join-Path "${env:RUNNER_TEMP}" 'cdb-commands.txt'
+          @(
+            # V8 and libuv can raise first-chance access violations they handle themselves
+            'sxd av'
+            'sxn ibp'
+            'sxn ld'
+            'sxn ud'
+            "sxe -c `"${onFailFast}`" -c2 `"${onFailFast}`" c0000409"
+            'g'
+          ) | Set-Content -Path $cdbScript
+          $nodeExe = node --print process.execPath
+
           $attempts = 40
           for ($attempt = 1; $attempt -le $attempts; $attempt++) {
             Write-Output "::group::Attempt ${attempt}"
-            npx vitest run packages/maxcso/test/index.test.ts
+            if ($env:CDB) {
+              & "${env:CDB}" -g -G -o -y $symbolPath -cf $cdbScript $nodeExe node_modules\vitest\vitest.mjs run packages/maxcso/test/index.test.ts 2>&1 |
+                Tee-Object -Variable output
+            } else {
+              npx vitest run packages/maxcso/test/index.test.ts 2>&1 | Tee-Object -Variable output
+            }
             $exitCode = $LASTEXITCODE
             Write-Output "::endgroup::"
-            if ($exitCode -ne 0) {
-              Write-Output "Attempt ${attempt} exited with code ${exitCode}"
+            $dumps = Get-ChildItem -Path "${env:DUMP_DIR}" -Filter *.dmp -ErrorAction SilentlyContinue
+            if ($exitCode -ne 0 -or $dumps -or ($output -match 'FAIL-FAST|exited unexpectedly|Test Files.*failed')) {
+              Write-Output "Attempt ${attempt} failed with exit code ${exitCode}"
               exit 1
             }
           }
@@ -222,23 +266,16 @@ jobs:
             Write-Output "No crash dumps were written"
             exit 0
           }
-          $nodeVersion = node --print process.versions.node
-          $nodePdbDir = Join-Path "${env:RUNNER_TEMP}" 'node-pdb'
-          Invoke-WebRequest -Uri "https://nodejs.org/download/release/v${nodeVersion}/win-arm64/node_pdb.zip" -OutFile "${nodePdbDir}.zip"
-          Expand-Archive -Path "${nodePdbDir}.zip" -DestinationPath $nodePdbDir -Force
           Copy-Item -Path packages\maxcso\build\Release\*.pdb -Destination "${env:DUMP_DIR}"
-          Copy-Item -Path "${nodePdbDir}\*.pdb" -Destination "${env:DUMP_DIR}" -ErrorAction SilentlyContinue
-          $cdb = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers" -Recurse -Filter cdb.exe -ErrorAction SilentlyContinue |
-            Sort-Object { $_.FullName -notmatch '\\arm64\\' } |
-            Select-Object -First 1
-          if (-not $cdb) {
-            Write-Output "cdb.exe isn't installed, download the crash-dumps artifact to symbolize it"
+          Copy-Item -Path "${env:NODE_PDB_DIR}\*.pdb" -Destination "${env:DUMP_DIR}" -ErrorAction SilentlyContinue
+          if (-not $env:CDB) {
+            Write-Output "No arm64 cdb.exe is installed, download the crash-dumps artifact to symbolize it"
             exit 0
           }
-          $symbolPath = "${nodePdbDir};$(Resolve-Path packages\maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
+          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
           foreach ($dump in $dumps) {
             Write-Output "::group::$($dump.Name)"
-            & $cdb.FullName -z $dump.FullName -y $symbolPath -c '.ecxr; kn 50; !analyze -v; ~*kn 50; q'
+            & "${env:CDB}" -z $dump.FullName -y $symbolPath -c '.ecxr; kn 50; !analyze -v; ~*kn 50; q'
             Write-Output "::endgroup::"
           }
       - if: ${{ always() }}
