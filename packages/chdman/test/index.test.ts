@@ -315,6 +315,14 @@ describe('openRawReader', () => {
     );
   });
 
+  it('should reject a high-water mark too large to allocate', async () => {
+    const readable = chdman.openRawReader({
+      inputFilename: path.join(FIXTURES, '2048.chd'),
+      highWaterMark: Number.MAX_SAFE_INTEGER,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(RangeError);
+  });
+
   it('should terminate workers with pending native reads', async () => {
     for (let i = 0; i < 20; i++) {
       const worker = new worker_threads.Worker(

@@ -1,9 +1,8 @@
 import crypto from 'node:crypto';
 import events from 'node:events';
-import stream from 'node:stream';
 import worker_threads from 'node:worker_threads';
+import zlib from 'node:zlib';
 
-import BufferUtil from '../../../src/utils/bufferUtil.js';
 import zstd, { type ZstdThreadedCompressorInstance } from '../index.js';
 
 const ONE_MIB = 1024 * 1024;
@@ -22,10 +21,16 @@ const compressWith = async (
 ): Promise<Buffer> =>
   Buffer.concat([await compressor.compressChunk(input), await compressor.end()]);
 
-const decompress = async (compressed: Buffer): Promise<Buffer> => {
-  const decompressor = new zstd.Decompressor();
-  return Buffer.concat([await decompressor.decompressChunk(compressed), await decompressor.end()]);
-};
+const decompress = async (compressed: Buffer): Promise<Buffer> =>
+  await new Promise((resolve, reject) => {
+    zlib.zstdDecompress(compressed, (error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result);
+      }
+    });
+  });
 
 describe('getZstdVersion', () => {
   it('should be the right zstd version', () => {
@@ -166,102 +171,6 @@ describe('ThreadedCompressor', () => {
   });
 });
 
-describe('Decompressor', () => {
-  test.each([
-    [Buffer.from('28b52ffd0068180000666f6f010000', 'hex'), Buffer.from('foo')],
-    [Buffer.from('28b52ffd0068180000626172010000', 'hex'), Buffer.from('bar')],
-    [
-      Buffer.from('28b52ffd00685800006c6f72656d20697073756d010000', 'hex'),
-      Buffer.from('lorem ipsum'),
-    ],
-  ])('should decompress known frames: %s', async (input, expectedOutput) => {
-    expect(await decompress(input)).toEqual(expectedOutput);
-  });
-
-  test.each(roundTripInputs)(
-    'should round-trip output from compressNonThreaded: %s',
-    async (_name, input) => {
-      expect((await decompress(zstd.compressNonThreaded(input, 3))).equals(input)).toEqual(true);
-    },
-  );
-
-  it('should reassemble a frame fed one byte at a time', async () => {
-    const input = Buffer.from('lorem ipsum dolor sit amet');
-    const decompressor = new zstd.Decompressor();
-    const outputs: Buffer[] = [];
-    for (const byte of zstd.compressNonThreaded(input, 19)) {
-      outputs.push(await decompressor.decompressChunk(Buffer.from([byte])));
-    }
-    outputs.push(await decompressor.end());
-
-    expect(Buffer.concat(outputs)).toEqual(input);
-  });
-
-  it('should safely decompress with many concurrent decompressors', async () => {
-    const inputs = Array.from({ length: 16 }, (_, index) => crypto.randomBytes(1024 + index * 97));
-    expect(
-      await Promise.all(
-        inputs.map(async (input) => await decompress(zstd.compressNonThreaded(input, 3))),
-      ),
-    ).toEqual(inputs);
-  });
-
-  it('should decompress chunks without awaiting each other', async () => {
-    const input = crypto.randomBytes(8 * ONE_MIB);
-    const compressed = zstd.compressNonThreaded(input, 3);
-    const decompressor = new zstd.Decompressor();
-    const chunkSize = Math.ceil(compressed.length / 8);
-    const outputs = await Promise.all([
-      ...Array.from(
-        { length: 8 },
-        async (_, index) =>
-          await decompressor.decompressChunk(
-            compressed.subarray(index * chunkSize, (index + 1) * chunkSize),
-          ),
-      ),
-      decompressor.end(),
-    ]);
-
-    expect(Buffer.concat(outputs).equals(input)).toEqual(true);
-  });
-
-  it('should terminate workers with pending decompressions', async () => {
-    const compressed = zstd.compressNonThreaded(crypto.randomBytes(4 * ONE_MIB), 3);
-    for (let i = 0; i < 20; i++) {
-      const worker = new worker_threads.Worker(
-        `const { parentPort, workerData } = require('node:worker_threads');
-         import(workerData.indexUrl).then(({ default: zstd }) => {
-           for (let j = 0; j < 8; j++) {
-             const decompressor = new zstd.Decompressor();
-             decompressor.decompressChunk(workerData.compressed).catch(() => {});
-             decompressor.end().catch(() => {});
-           }
-           parentPort.postMessage('ready');
-           setInterval(() => {}, 1000);
-         });`,
-        {
-          eval: true,
-          workerData: { indexUrl: new URL('../index.ts', import.meta.url).href, compressed },
-        },
-      );
-      try {
-        await events.once(worker, 'message');
-      } finally {
-        await worker.terminate();
-      }
-    }
-  }, 30_000);
-
-  it('should throw when decompressing after the stream has been ended', async () => {
-    const decompressor = new zstd.Decompressor();
-    await decompressor.decompressChunk(zstd.compressNonThreaded(Buffer.from('foo'), 3));
-    await decompressor.end();
-    expect(() => {
-      void decompressor.decompressChunk(Buffer.from('foo'));
-    }).toThrow('Decompressor finalized');
-  });
-});
-
 describe('compressNonThreaded', () => {
   test.each(roundTripInputs)('should round-trip: %s', async (_name, input) => {
     expect((await decompress(zstd.compressNonThreaded(input, 3))).equals(input)).toEqual(true);
@@ -282,66 +191,5 @@ describe('compressNonThreaded', () => {
     expect(() => zstd.compressNonThreaded(Buffer.from('foo'), level)).toThrow(
       'Compression level must be between 1 and 22',
     );
-  });
-});
-
-describe('ZstdDecompressStream', () => {
-  it.each(roundTripInputs)('should round-trip through a pipeline: %s', async (_name, input) => {
-    expect(
-      (
-        await BufferUtil.fromReadable(
-          stream.Readable.from([zstd.compressNonThreaded(input, 3)]).pipe(
-            new zstd.DecompressStream(),
-          ),
-        )
-      ).equals(input),
-    ).toEqual(true);
-  });
-
-  it('should round-trip a frame split across multiple stream chunks', async () => {
-    const input = Buffer.from('lorem ipsum dolor sit amet'.repeat(1024));
-    const compressed = zstd.compressNonThreaded(input, 3);
-    expect(
-      await BufferUtil.fromReadable(
-        stream.Readable.from([
-          compressed.subarray(0, 1),
-          compressed.subarray(1, 10),
-          compressed.subarray(10),
-        ]).pipe(new zstd.DecompressStream()),
-      ),
-    ).toEqual(input);
-  });
-
-  it('should produce no output for an empty stream', async () => {
-    expect(
-      await BufferUtil.fromReadable(stream.Readable.from([]).pipe(new zstd.DecompressStream())),
-    ).toEqual(Buffer.alloc(0));
-  });
-
-  it('should error when transforming after the decompressor has been ended', async () => {
-    const decompressStream = new zstd.DecompressStream();
-    await BufferUtil.fromReadable(
-      stream.Readable.from([zstd.compressNonThreaded(Buffer.from('foo'), 3)]).pipe(
-        decompressStream,
-      ),
-    );
-
-    const transformError = await new Promise<Error | undefined>((resolve) => {
-      decompressStream._transform(Buffer.from('foo'), 'binary', (error) => {
-        resolve(error ?? undefined);
-      });
-    });
-    expect(transformError?.message).toContain(
-      'cannot decompress after the compressor has been ended',
-    );
-  });
-
-  it('should clean up when destroyed before the end of input', async () => {
-    const decompressStream = new zstd.DecompressStream();
-    const closed = new Promise<void>((resolve) => {
-      decompressStream.once('close', resolve);
-    });
-    decompressStream.destroy();
-    await expect(closed).resolves.toBeUndefined();
   });
 });

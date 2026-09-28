@@ -550,6 +550,19 @@ class Container {
 
 // ---- shared pull-reader scaffolding ----
 
+// Create and queue a worker, which deletes itself once OnOK() or OnError() has run. A worker that
+// cannot be created or queued throws a Napi::Error instead, having been freed.
+template <typename Worker, typename... Args>
+static void QueueWorker(Args&&... args) {
+    auto* const worker = new Worker(std::forward<Args>(args)...);
+    try {
+        worker->Queue();
+    } catch (...) {
+        delete worker;
+        throw;
+    }
+}
+
 // Runs a Source's Produce() on a worker thread so blocking/decompressing blob reads
 // never run on the V8 main thread, then tells the Reader the read is done. They must expose:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
@@ -565,7 +578,7 @@ class ReadWorker : public Napi::AsyncWorker {
     ReadWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::shared_ptr<Reader*> reader,
                std::shared_ptr<Source> source, const Napi::Buffer<uint8_t>& buffer)
         : Napi::AsyncWorker(env),
-          deferred_(std::move(deferred)),
+          deferred_(deferred),
           reader_(std::move(reader)),
           source_(std::move(source)),
           buffer_(Napi::Persistent(buffer)),
@@ -694,15 +707,13 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
         return deferred.Promise();
     }
-    Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
-    if (buffer.IsEmpty()) {
-        // With C++ exceptions disabled a failed New() returns an empty value and leaves a JS
-        // exception pending
-        deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
-                                                 : Napi::Error::New(env, "failed to allocate the read buffer").Value());
+    try {
+        Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
+        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, buffer);
+    } catch (const Napi::Error& e) {
+        deferred.Reject(e.Value());
         return deferred.Promise();
     }
-    (new ReadWorker<ReaderBase, Source>(env, deferred, self_, source_, buffer))->Queue();
     // OnOK()/OnError() run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its file) alive while the worker thread reads
@@ -779,7 +790,7 @@ class MaxcsoReader : public ReaderBase<MaxcsoReader, MaxcsoSource> {
 class InfoWorker : public Napi::AsyncWorker {
    public:
     InfoWorker(Napi::Env env, Napi::Promise::Deferred deferred, PathString path)
-        : Napi::AsyncWorker(env), deferred_(std::move(deferred)), path_(std::move(path)) {}
+        : Napi::AsyncWorker(env), deferred_(deferred), path_(std::move(path)) {}
 
     void Execute() override {
         try {
@@ -796,7 +807,7 @@ class InfoWorker : public Napi::AsyncWorker {
 
     void OnOK() override {
         Napi::Env const env = Env();
-        Napi::Object out = Napi::Object::New(env);
+        Napi::Object const out = Napi::Object::New(env);
         out.Set("format", format_);
         out.Set("uncompressedSize", static_cast<double>(size_));
         out.Set("blockSize", blockSize_);
@@ -820,7 +831,11 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
         deferred.Reject(Napi::TypeError::New(env, "inputFilename (string) required").Value());
         return deferred.Promise();
     }
-    (new InfoWorker(env, deferred, ToPath(info[0].As<Napi::String>())))->Queue();
+    try {
+        QueueWorker<InfoWorker>(env, deferred, ToPath(info[0].As<Napi::String>()));
+    } catch (const Napi::Error& e) {
+        deferred.Reject(e.Value());
+    }
     return deferred.Promise();
 }
 

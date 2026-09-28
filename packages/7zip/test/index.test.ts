@@ -828,6 +828,19 @@ describe('openEntryReader', () => {
     });
   });
 
+  it('should reject a high-water mark too large to allocate', async () => {
+    await expect(
+      collectChunks(
+        sevenZip.openEntryReader({
+          inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
+          format: SevenZipFormat.SEVEN_ZIP,
+          entryPath: '1kb',
+          highWaterMark: Number.MAX_SAFE_INTEGER,
+        }),
+      ),
+    ).rejects.toThrow('failed to start a read');
+  });
+
   it('should close promptly while the producer is blocked waiting for a buffer', async () => {
     await withLargeArchive(async (largeArchive) => {
       const readable = sevenZip.openEntryReader({

@@ -205,7 +205,7 @@ class ReadWorker : public Napi::AsyncWorker {
     ReadWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::shared_ptr<Reader*> reader,
                std::shared_ptr<Source> source, const Napi::Buffer<uint8_t>& buffer)
         : Napi::AsyncWorker(env),
-          deferred_(std::move(deferred)),
+          deferred_(deferred),
           reader_(std::move(reader)),
           source_(std::move(source)),
           buffer_(Napi::Persistent(buffer)),

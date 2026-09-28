@@ -24,12 +24,6 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // highWaterMark of a Node.js byte stream
     static constexpr size_t kDefaultChunkBytes = 1U << 16U;  // 64 KiB
 
-    // The largest chunk size a caller may ask for. Every read allocates a buffer
-    // of this size, so an unclamped value straight from JavaScript would be an
-    // allocation the caller controls; this is generous for a stream
-    // high-watermark and far short of a denial of service.
-    static constexpr size_t kMaxChunkBytes = 1U << 24U;  // 16 MiB
-
     /** Defines the JavaScript EntryReader class and its read and close methods. */
     static Napi::Function GetClass(Napi::Env env);
 

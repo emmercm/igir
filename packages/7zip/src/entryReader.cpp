@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -70,7 +71,11 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 Napi::TypeError::New(env, "chunkBytes must be at least 1").ThrowAsJavaScriptException();
                 return;
             }
-            chunkBytes = static_cast<size_t>(std::min(requested, static_cast<double>(kMaxChunkBytes)));
+            // Bounded only so the static_cast<size_t> below is defined. A chunk
+            // too large to allocate fails its read instead.
+            constexpr double kMaxChunkBytes =
+                std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
+            chunkBytes = static_cast<size_t>(std::min(requested, kMaxChunkBytes));
         }
 
         // The bridge exists before the producer does, because the producer
@@ -126,9 +131,10 @@ EntryReader::~EntryReader() {
     if (pump_) {
         pump_->Cancel();
     }
-    // Only after Cancel(), which guarantees the producer has stopped writing
-    // into it
-    lent_.Reset();
+    // `lent_` is released by its own destructor after this body, so only
+    // after Cancel(), which guarantees the producer has stopped writing into
+    // it; unlike Reset(), that cannot throw.
+    //
     // Drops this side's reference. If the producer is still running it holds the
     // other one and will finish unwinding on its own; nothing here waits.
     pump_.reset();
