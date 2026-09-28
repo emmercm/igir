@@ -102,7 +102,7 @@
     "trash": "10.1.1",
     "typescript-memoize": "1.1.1",
     "which": "7.0.0",
-    "wrap-ansi": "10.0.1",
+    "wrap-ansi": "10.0.2",
     "xml2js": "0.6.2",
     "yargs": "18.2.0"
   },
