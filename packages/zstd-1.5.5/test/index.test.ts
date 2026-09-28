@@ -134,10 +134,16 @@ describe('ThreadedCompressor', () => {
     expect((await decompress(Buffer.concat(outputs))).equals(Buffer.concat(parts))).toEqual(true);
   });
 
-  it('should terminate workers with pending compressions', async () => {
-    for (let i = 0; i < 20; i++) {
-      const worker = new worker_threads.Worker(
-        `const crypto = require('node:crypto');
+  // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
+  // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
+  // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
+  // to be fixed by https://github.com/oven-sh/bun/pull/40249
+  it.skipIf(process.versions.bun)(
+    'should terminate workers with pending compressions',
+    async () => {
+      for (let i = 0; i < 20; i++) {
+        const worker = new worker_threads.Worker(
+          `const crypto = require('node:crypto');
          const { parentPort, workerData } = require('node:worker_threads');
          import(workerData.indexUrl).then(({ default: zstd }) => {
            for (let j = 0; j < 8; j++) {
@@ -148,18 +154,20 @@ describe('ThreadedCompressor', () => {
            parentPort.postMessage('ready');
            setInterval(() => {}, 1000);
          });`,
-        {
-          eval: true,
-          workerData: { indexUrl: new URL('../index.ts', import.meta.url).href },
-        },
-      );
-      try {
-        await events.once(worker, 'message');
-      } finally {
-        await worker.terminate();
+          {
+            eval: true,
+            workerData: { indexUrl: new URL('../index.ts', import.meta.url).href },
+          },
+        );
+        try {
+          await events.once(worker, 'message');
+        } finally {
+          await worker.terminate();
+        }
       }
-    }
-  }, 30_000);
+    },
+    30_000,
+  );
 
   it('should throw when compressing after the stream has been ended', async () => {
     const compressor = new zstd.ThreadedCompressor(3);

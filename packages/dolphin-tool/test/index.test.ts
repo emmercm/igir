@@ -188,10 +188,16 @@ describe('openReader', () => {
     await expect(readable.toArray()).rejects.toThrow('maxBytes is too large');
   });
 
-  it('should terminate workers with pending native reads', async () => {
-    for (let i = 0; i < 20; i++) {
-      const worker = new worker_threads.Worker(
-        `const { parentPort, workerData } = require('node:worker_threads');
+  // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
+  // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
+  // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
+  // to be fixed by https://github.com/oven-sh/bun/pull/40249
+  it.skipIf(process.versions.bun)(
+    'should terminate workers with pending native reads',
+    async () => {
+      for (let i = 0; i < 20; i++) {
+        const worker = new worker_threads.Worker(
+          `const { parentPort, workerData } = require('node:worker_threads');
          import(workerData.indexUrl).then(({ default: dolphin }) => {
            for (let j = 0; j < 32; j++) {
              dolphin
@@ -202,21 +208,23 @@ describe('openReader', () => {
            parentPort.postMessage('ready');
            setInterval(() => {}, 1000);
          });`,
-        {
-          eval: true,
-          workerData: {
-            indexUrl: new URL('../index.ts', import.meta.url).href,
-            imagePath: path.join(FIXTURES, '240pSuite-GameCube-1.20.zstd.rvz'),
+          {
+            eval: true,
+            workerData: {
+              indexUrl: new URL('../index.ts', import.meta.url).href,
+              imagePath: path.join(FIXTURES, '240pSuite-GameCube-1.20.zstd.rvz'),
+            },
           },
-        },
-      );
-      try {
-        await events.once(worker, 'message');
-        // Vary when the worker terminates relative to its reads
-        await new Promise((resolve) => setTimeout(resolve, i % 5));
-      } finally {
-        await worker.terminate();
+        );
+        try {
+          await events.once(worker, 'message');
+          // Vary when the worker terminates relative to its reads
+          await new Promise((resolve) => setTimeout(resolve, i % 5));
+        } finally {
+          await worker.terminate();
+        }
       }
-    }
-  }, 30_000);
+    },
+    30_000,
+  );
 });
