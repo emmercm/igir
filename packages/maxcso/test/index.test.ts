@@ -902,7 +902,8 @@ describe('openReader', () => {
       blockSize: 2048,
     },
     {
-      label: 'a DAX frame size past the first frame size window that is longer than the 32 KiB read buffer',
+      label:
+        'a DAX frame size past the first frame size window that is longer than the 32 KiB read buffer',
       fixture: DAX_ZLIB,
       mutate: withUInt16(32 + 76 * 4 + 75 * 2, 40_000),
       block: 75,
