@@ -19,14 +19,18 @@ void InitAddonData(Napi::Env env) {
     auto data = std::make_unique<AddonData>();
     data->registry = std::make_shared<JobRegistry>();
     auto cleanup = std::make_unique<std::shared_ptr<JobRegistry>>(data->registry);
+
     env.SetInstanceData(data.get());
     if (env.IsExceptionPending()) return;
+
     // NOLINTNEXTLINE(bugprone-unused-return-value): instance data now owns the allocation.
     data.release();
+
     if (napi_add_env_cleanup_hook(env, DrainOnCleanup, cleanup.get()) != napi_ok) {
         Napi::Error::New(env, "failed to install the 7-Zip addon's cleanup hook").ThrowAsJavaScriptException();
         return;
     }
+
     // NOLINTNEXTLINE(bugprone-unused-return-value): the cleanup hook now owns the allocation.
     cleanup.release();
 }

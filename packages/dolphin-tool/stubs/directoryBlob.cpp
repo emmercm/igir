@@ -6,5 +6,6 @@
 #include "DiscIO/DirectoryBlob.h"
 
 namespace DiscIO {
+// Always returns nullptr: no path is treated as an extracted disc directory
 std::unique_ptr<DirectoryBlobReader> DirectoryBlobReader::Create(const std::string& /*dol_path*/) { return nullptr; }
 }  // namespace DiscIO

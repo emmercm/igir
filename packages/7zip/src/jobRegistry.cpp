@@ -36,12 +36,14 @@ void JobRegistry::Unregister(Token token) noexcept {
 
 void JobRegistry::DrainAndWait() noexcept {
     Token previous = kInvalidToken;
+
     // Move one callback at a time without allocating a snapshot. Keep entries
     // registered until their workers exit; Unregister can run between moves.
     for (;;) {
         std::function<void()> cancel;
         {
             std::scoped_lock const lock(mutex_);
+
             // Refuse new jobs before moving the first cancellation callback.
             draining_ = true;
             const auto next = jobs_.upper_bound(previous);

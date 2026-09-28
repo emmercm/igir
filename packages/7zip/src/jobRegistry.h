@@ -24,14 +24,19 @@ class JobRegistry {
 
     /** Creates an accepting registry with no live jobs. */
     JobRegistry() = default;
+
     /** Destroys a registry only after its owner has drained all registered jobs. */
     ~JobRegistry() = default;
+
     /** Registry identity and synchronization state cannot be copied. */
     JobRegistry(const JobRegistry&) = delete;
+
     /** Registry identity and synchronization state cannot be copy-assigned. */
     JobRegistry& operator=(const JobRegistry&) = delete;
+
     /** Registry identity and synchronization state cannot be moved. */
     JobRegistry(JobRegistry&&) = delete;
+
     /** Registry identity and synchronization state cannot be move-assigned. */
     JobRegistry& operator=(JobRegistry&&) = delete;
 

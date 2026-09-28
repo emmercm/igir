@@ -34,6 +34,7 @@
 
 #include "Ppmd8.h"
 
+/* Report which encoder entry point was reached, then abort. */
 static void Ppmd8Enc_Unreachable(const char *name)
 {
   fprintf(stderr,
@@ -44,12 +45,14 @@ static void Ppmd8Enc_Unreachable(const char *name)
   abort();
 }
 
+/* Stands in for the range encoder's final flush; aborts if called. */
 void Ppmd8_Flush_RangeEnc(CPpmd8 *p)
 {
   UNUSED_VAR(p)
   Ppmd8Enc_Unreachable("Ppmd8_Flush_RangeEnc");
 }
 
+/* Stands in for encoding one symbol; aborts if called. */
 void Ppmd8_EncodeSymbol(CPpmd8 *p, int symbol)
 {
   UNUSED_VAR(p)

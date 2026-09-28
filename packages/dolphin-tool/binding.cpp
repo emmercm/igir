@@ -26,14 +26,14 @@
 // is unneeded, so these four are ported individually rather than compiling the upstream
 // .cpp. Names are fixed by VolumeWii.h, so they aren't `port_`-prefixed.
 
-// ===== BEGIN ported from Source/Core/DiscIO/VolumeWii.cpp, Dolphin submodule tag 2606 =====
+// ===== BEGIN ported from Source/Core/DiscIO/VolumeWii.cpp, Dolphin submodule tag 2609 =====
 // Re-port when bumping the submodule: diff each function against its cited line range.
 // clang-format off
 // NOLINTBEGIN
 
 namespace DiscIO
 {
-// VolumeWii.cpp lines 508-571.
+// VolumeWii.cpp lines 509-572.
 bool VolumeWii::HashGroup(const std::array<u8, BLOCK_DATA_SIZE> in[BLOCKS_PER_GROUP],
                           HashBlock out[BLOCKS_PER_GROUP],
                           const std::function<bool(size_t block)>& read_function)
@@ -105,7 +105,7 @@ bool VolumeWii::HashGroup(const std::array<u8, BLOCK_DATA_SIZE> in[BLOCKS_PER_GR
   return success;
 }
 
-// VolumeWii.cpp lines 579-641.
+// VolumeWii.cpp lines 580-642.
 bool VolumeWii::EncryptGroup(
     u64 offset, u64 partition_data_offset, u64 partition_data_decrypted_size,
     const std::array<u8, AES_KEY_SIZE>& key, BlobReader* blob,
@@ -170,13 +170,13 @@ bool VolumeWii::EncryptGroup(
   return true;
 }
 
-// VolumeWii.cpp lines 643-646.
+// VolumeWii.cpp lines 644-647.
 void VolumeWii::DecryptBlockHashes(const u8* in, HashBlock* out, Common::AES::Context* aes_context)
 {
   aes_context->CryptIvZero(in, reinterpret_cast<u8*>(out), sizeof(HashBlock));
 }
 
-// VolumeWii.cpp lines 648-651.
+// VolumeWii.cpp lines 649-652.
 void VolumeWii::DecryptBlockData(const u8* in, u8* out, Common::AES::Context* aes_context)
 {
   aes_context->Crypt(&in[0x3d0], &in[sizeof(HashBlock)], out, BLOCK_DATA_SIZE);
@@ -207,10 +207,10 @@ static void QueueWorker(Args&&... args) {
     }
 }
 
-// Runs a Source's Produce() on a worker thread so blocking/decompressing blob reads
-// never run on the V8 main thread, then tells the Reader the read is done. They must expose:
+// Runs one read() on the thread pool: fills a Buffer from a Source's Produce(), then tells the
+// Reader the read is done and settles the read's promise. Source and Reader must provide:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
-//   void   Reader::FinishRead();                             // main thread, post-Execute
+//   void   Reader::FinishRead();                             // main thread, after Execute()
 template <typename Reader, typename Source>
 class ReadWorker : public Napi::AsyncWorker {
    public:
@@ -229,6 +229,7 @@ class ReadWorker : public Napi::AsyncWorker {
           data_(buffer.Data()),
           cap_(buffer.Length()) {}
 
+    // Fill the Buffer from the Source. Runs on the worker thread.
     void Execute() override {
         try {
             n_ = source_->Produce(data_, cap_);
@@ -239,7 +240,10 @@ class ReadWorker : public Napi::AsyncWorker {
         }
     }
 
+    // Resolve with the bytes read: the whole Buffer, a view of its filled start, or null at the end
     void OnOK() override {
+        // First, so that resolving can't throw past it and leave the reader Ref()'d and reading
+        NotifyReader();
         Napi::Env const env = Env();
         Napi::Buffer<uint8_t> const buffer = buffer_.Value();
         if (n_ == 0) {
@@ -254,12 +258,12 @@ class ReadWorker : public Napi::AsyncWorker {
                     .As<Napi::Function>()
                     .Call(buffer, {Napi::Number::New(env, 0), Napi::Number::New(env, static_cast<double>(n_))}));
         }
-        NotifyReader();
     }
 
+    // Reject with the error Execute() set
     void OnError(const Napi::Error& e) override {
-        deferred_.Reject(e.Value());
         NotifyReader();
+        deferred_.Reject(e.Value());
     }
 
    private:
@@ -272,10 +276,13 @@ class ReadWorker : public Napi::AsyncWorker {
     }
 
     Napi::Promise::Deferred deferred_;
+
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
+
     // Keeps the blob open until this worker is destroyed, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
+
     // The Buffer that Execute() fills, and its memory
     Napi::Reference<Napi::Buffer<uint8_t>> buffer_;
     uint8_t* data_;
@@ -283,19 +290,20 @@ class ReadWorker : public Napi::AsyncWorker {
     size_t n_ = 0;
 };
 
-// CRTP base for the async pull-reader lifecycle used by DolphinReader. Each Derived
-// constructor stores the Source it reads from in source_.
+// CRTP base for the JavaScript pull reader DolphinReader, which reads a Source on the thread pool,
+// one read at a time. Each Derived constructor stores the Source it reads from in source_.
 //
 // Safety invariant: the reader and the read worker in flight each hold the Source, so it is
-// freed on the main thread only once neither does. Produce (worker thread) never runs on a
-// freed Source, even if the reader is closed or destroyed mid-read. reading_ rejects a
-// concurrent read(); Ref()/Unref() keep the object alive across the async read.
+// freed on the main thread only once neither does. Produce() never runs on a freed Source,
+// even if the reader is closed or destroyed mid-read.
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
+    // Construct without a Source, which the Derived constructor then sets
     explicit ReaderBase(const Napi::CallbackInfo& info)
         : Napi::ObjectWrap<Derived>(info), self_(std::make_shared<ReaderBase*>(this)) {}
 
+    // Tell any read worker still in flight that this reader no longer exists
     ~ReaderBase() override { *self_ = nullptr; }
 
     ReaderBase(const ReaderBase&) = delete;
@@ -303,7 +311,8 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     ReaderBase(ReaderBase&&) = delete;
     ReaderBase& operator=(ReaderBase&&) = delete;
 
-    // read(maxBytes): resolve up to maxBytes bytes, or null at the end
+    // read(maxBytes): resolve up to maxBytes bytes, or null at the end. Rejects a read after
+    // close() or while another read is in flight.
     Napi::Value Read(const Napi::CallbackInfo& info);
 
     // Release this reader's hold on the blob. A read worker in flight holds it too, so the
@@ -326,8 +335,6 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     bool reading_ = false;
 };
 
-// Defined out-of-line because it constructs a ReadWorker, whose full
-// definition must precede this. Shared by every ReaderBase subclass.
 template <typename Derived, typename Source>
 Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
@@ -342,6 +349,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     double const requested = info[0].IsNumber() ? info[0].As<Napi::Number>().DoubleValue() : 0;
+
     // Also catches NaN, which fails every comparison
     if (!(requested >= 1)) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
@@ -360,7 +368,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     }
     // OnOK()/OnError() run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
-    this->Ref();  // keep this object (and its blob) alive while the worker thread reads
+    this->Ref();  // keep this object from being collected while the worker thread reads
     return deferred.Promise();
 }
 
@@ -370,6 +378,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
 // concurrent readers are independent.
 class DolphinSource {
    public:
+    // Take ownership of an opened blob
     explicit DolphinSource(std::unique_ptr<DiscIO::BlobReader> blob)
         : blob_(std::move(blob)), total_(blob_->GetDataSize()) {}
 
@@ -393,6 +402,7 @@ class DolphinSource {
 // A pull reader over a DolphinSource
 class DolphinReader : public ReaderBase<DolphinReader, DolphinSource> {
    public:
+    // Define the JavaScript class, with its read() and close() methods
     static Napi::Function GetClass(Napi::Env env) {
         return DefineClass(env, "DolphinReader",
                            {
@@ -401,6 +411,7 @@ class DolphinReader : public ReaderBase<DolphinReader, DolphinSource> {
                            });
     }
 
+    // new DolphinReader(inputFilename): open the blob, throwing to JavaScript on failure
     explicit DolphinReader(const Napi::CallbackInfo& info) : ReaderBase<DolphinReader, DolphinSource>(info) {
         Napi::Env const env = info.Env();
         if (info.Length() < 1 || !info[0].IsString()) {
@@ -419,6 +430,7 @@ class DolphinReader : public ReaderBase<DolphinReader, DolphinSource> {
 
 // ---- Dolphin info ----
 
+// The format name index.ts reports for a blob type, or "UNKNOWN" for any other type
 static std::string BlobFormatString(DiscIO::BlobType type) {
     switch (type) {
         case DiscIO::BlobType::GCZ:
@@ -432,6 +444,7 @@ static std::string BlobFormatString(DiscIO::BlobType type) {
     }
 }
 
+// info(inputFilename): resolve a blob's format and decompressed size
 static Napi::Value Info(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     if (info.Length() < 1 || !info[0].IsString()) {
@@ -440,7 +453,9 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
     }
     std::string const inputPath = info[0].As<Napi::String>();
 
-    // Header-only, fast enough to run synchronously on the main thread.
+    // Runs synchronously on the main thread. Opening reads more than the header: a GCZ's block
+    // pointer and hash tables, and a WIA/RVZ's partition, raw data, and group tables, the last two
+    // of which may be compressed.
     std::unique_ptr<DiscIO::BlobReader> blob = DiscIO::CreateBlobReader(inputPath);
     if (!blob) {
         Napi::Error::New(env, "failed to open blob: " + inputPath).ThrowAsJavaScriptException();
@@ -459,16 +474,20 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
 
 // ---- addon init ----
 
+// Holds the class constructors for every ObjectWrap type registered by this addon. Stored as the
+// addon's instance data so factories can retrieve them without a global.
 struct Addon {
     Napi::FunctionReference dolphinReader;
 };
 
+// openReader(inputFilename): construct a DolphinReader from the stored class constructor
 static Napi::Value OpenReader(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     Napi::Function const ctor = env.GetInstanceData<Addon>()->dolphinReader.Value();
     return ctor.New({info[0]});
 }
 
+// Register the reader class as instance data and export the addon's functions
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     Napi::Function const cls = DolphinReader::GetClass(env);
     env.SetInstanceData(new Addon{.dolphinReader = Napi::Persistent(cls)});
@@ -476,4 +495,5 @@ static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     exports.Set("openReader", Napi::Function::New(env, OpenReader));
     return exports;
 }
+
 NODE_API_MODULE(NODE_GYP_MODULE_NAME, InitAll)

@@ -101,8 +101,9 @@ function readableFromReader(reader: NativeReader, highWaterMark?: number): strea
 
 export default {
   /**
-   * Return header information about a CSO, ZSO, or DAX file. The file is opened, and its whole
-   * index validated, on a worker thread.
+   * Return header information about a CSO, ZSO, or DAX file. The file is opened, and its header
+   * checked, on a worker thread. Its blocks aren't read, so a file that fails to decompress can
+   * still return information.
    */
   async info(options: InfoOptions): Promise<MaxcsoInfo> {
     const raw = await binding.info(options.inputFilename);

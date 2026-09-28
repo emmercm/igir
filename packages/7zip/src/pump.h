@@ -38,20 +38,26 @@ class Pump {
 
     /** Pump state belongs to one producer/consumer pair and cannot be copied. */
     Pump(const Pump&) = delete;
+
     /** Pump state belongs to one producer/consumer pair and cannot be copy-assigned. */
     Pump& operator=(const Pump&) = delete;
+
     /** Pump state contains synchronization primitives and cannot be moved. */
     Pump(Pump&&) = delete;
+
     /** Pump state contains synchronization primitives and cannot be move-assigned. */
     Pump& operator=(Pump&&) = delete;
+
     /** Releases pump storage after its detached producer and consumer have both let go. */
     ~Pump() = default;
 
     /** Lends the producer `capacity` bytes at `data` to fill; see OutputSlot::Lend. */
     void Lend(uint8_t* data, size_t capacity);
 
-    /** Takes back the lent buffer without blocking; pending arms `onReady`, and terminal producer failure throws at
-     * end. */
+    /**
+     * Takes back the lent buffer without blocking. A pending result arms `onReady`, and a
+     * terminal producer failure throws once the output is exhausted.
+     */
     OutputSlot::Status TryRead(size_t* length);
 
     /**
@@ -93,6 +99,7 @@ class Pump {
     std::mutex errorMutex_;
     std::string error_;
     std::function<void()> onExit_;
+
     // Held so the thread can unregister itself as it exits, and so the registry
     // outlives the Pump whatever order teardown happens in
     std::shared_ptr<JobRegistry> registry_;

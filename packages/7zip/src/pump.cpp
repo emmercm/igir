@@ -155,7 +155,7 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
     if (!pump->registry_) {
         // Only reachable once the environment's instance data is gone, which
         // is teardown. Treated like the refused registration below rather than
-        // as licence to run unregistered.
+        // as license to run unregistered.
         throw std::runtime_error("the 7-Zip addon is shutting down");
     }
 
@@ -190,17 +190,19 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
             try {
                 pump->onExit_();
             } catch (...) {  // NOLINT(bugprone-empty-catch)
-                // Documented as non-throwing, and today it is only a
-                // AsyncSignal::Release() that is noexcept, but nothing
+                // Documented as non-throwing, and the only caller passes
+                // AsyncSignal::Release(), which is noexcept, but nothing
                 // enforces that on other callers, and an exception
                 // escaping a std::thread's callable calls std::terminate().
                 // Run() guards itself the same way; this is the one step
                 // outside it.
             }
+
             // Copied out before the reference is dropped, because dropping it
             // may be what destroys the Pump they are read from
             std::shared_ptr<JobRegistry> const registry = pump->registry_;
             JobRegistry::Token const token = pump->token_;
+
             // Released before unregistering, not after. When this is the last
             // reference, ~Pump runs here and destroys the OutputSlot, whose
             // ready callback holds an AsyncSignal. Letting the captured
@@ -208,6 +210,7 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
             // the Unregister() below, which teardown reads as "the thread is
             // done" before those objects are actually gone.
             pump.reset();
+
             // Dead last, after everything else this thread will ever touch
             if (registry) {
                 registry->Unregister(token);
@@ -236,7 +239,6 @@ void Pump::SetError(std::string message) {
     }
 }
 
-// Describes the entry for an error message, however the caller named it
 std::string Pump::EntryLabel() const {
     if (entryPath_.has_value()) {
         return "the entry '" + *entryPath_ + "'";
@@ -289,6 +291,7 @@ void Pump::Extract() {
     // Everything 7-Zip owns lives inside this scope so that it is destroyed,
     // and every file handle closed, before the thread exits
     OpenedArchive opened;
+
     // Passing abort_ makes the open itself interruptible. A large solid .7z
     // decodes its header here, which is long enough that a close() during it
     // would otherwise go unobserved until the whole header had been read.

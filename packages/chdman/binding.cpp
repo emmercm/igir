@@ -51,9 +51,8 @@ static uint32_t port_actual_frames(const cdrom_file::track_info& t) {
 // Some GD-ROM CHDs cannot be expressed as cue/bin: their high-density track has
 // padframes exceeding frames+splitframes, so chdman's uint32 frame formula above
 // underflows to ~4.29e9 frames (~10 TB) and extraction would run far past chdman's
-// total_bytes (chdman.cpp line 2738) -- i.e. past 100% of the disc. The chdman CLI
-// relied on a progress watchdog to abort that runaway; we instead detect the
-// underflow up front so callers (e.g. ChdBinCue) fall back to gdi/raw.
+// total_bytes (chdman.cpp line 2738) -- i.e. past 100% of the disc. The underflow
+// is detected up front instead, so callers (e.g. ChdBinCue) fall back to gdi/raw.
 //
 // Returns the reason `t` cannot be extracted as cue/bin, or an empty string if it
 // is safe. Returning the message (rather than throwing) keeps it off the C++
@@ -232,7 +231,7 @@ struct TrackOut {
 
 // Build the TOC text and per-track listing for a CHD, mirroring chdman's
 // do_extract_cd (2638-3021) but writing to memory instead of files. For MODE_GDI
-// the TOC text is normalized to igir's historical ChdGdi output (quote-stripped,
+// the TOC text is normalized to the .gdi form ChdGdi expects (quote-stripped,
 // CRLF line endings) after assembly.
 static bool BuildListing(const std::string& inputPath, int mode,
                          const std::string& binPatternOrBase, const std::string& /*tocName*/,
@@ -307,8 +306,8 @@ static bool BuildListing(const std::string& inputPath, int mode,
 
   if (mode == MODE_GDI) {
     // chdman emits gdi lines like `1 0 4 2352 "track01.bin" 0` with quotes and
-    // LF. igir's historical ChdGdi output is quote-stripped, CRLF, no empty
-    // lines, with a trailing CRLF. Normalize to match.
+    // LF. ChdGdi expects them quote-stripped, CRLF, no empty lines, with a
+    // trailing CRLF. Normalize to match.
     std::string normalized;
     std::istringstream lines(text);
     std::string line;
@@ -350,11 +349,10 @@ static void QueueWorker(Args&&... args) {
     }
 }
 
-// Drives a Source's Produce() on a worker thread so the (blocking, possibly
-// decompressing) CHD reads never run on the V8 main thread, then tells the Reader
-// the read is done. One template covers all reader types; they must expose
+// Runs one read() on the thread pool: fills a Buffer from a Source's Produce(), then tells the
+// Reader the read is done and settles the read's promise. Source and Reader must provide:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
-//   void   Reader::FinishRead();                             // main thread, post-Execute
+//   void   Reader::FinishRead();                             // main thread, after Execute()
 template <typename Reader, typename Source>
 class ReadWorker : public Napi::AsyncWorker {
    public:
@@ -373,6 +371,7 @@ class ReadWorker : public Napi::AsyncWorker {
           data_(buffer.Data()),
           cap_(buffer.Length()) {}
 
+    // Fill the Buffer from the Source. Runs on the worker thread.
     void Execute() override {
         try {
             n_ = source_->Produce(data_, cap_);
@@ -383,7 +382,10 @@ class ReadWorker : public Napi::AsyncWorker {
         }
     }
 
+    // Resolve with the bytes read: the whole Buffer, a view of its filled start, or null at the end
     void OnOK() override {
+        // First, so that resolving can't throw past it and leave the reader Ref()'d and reading
+        NotifyReader();
         Napi::Env const env = Env();
         Napi::Buffer<uint8_t> const buffer = buffer_.Value();
         if (n_ == 0) {
@@ -398,12 +400,12 @@ class ReadWorker : public Napi::AsyncWorker {
                     .As<Napi::Function>()
                     .Call(buffer, {Napi::Number::New(env, 0), Napi::Number::New(env, static_cast<double>(n_))}));
         }
-        NotifyReader();
     }
 
+    // Reject with the error Execute() set
     void OnError(const Napi::Error& e) override {
-        deferred_.Reject(e.Value());
         NotifyReader();
+        deferred_.Reject(e.Value());
     }
 
    private:
@@ -416,10 +418,13 @@ class ReadWorker : public Napi::AsyncWorker {
     }
 
     Napi::Promise::Deferred deferred_;
+
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
+
     // Keeps the CHD open until this worker is destroyed, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
+
     // The Buffer that Execute() fills, and its memory
     Napi::Reference<Napi::Buffer<uint8_t>> buffer_;
     uint8_t* data_;
@@ -427,22 +432,21 @@ class ReadWorker : public Napi::AsyncWorker {
     size_t n_ = 0;
 };
 
-// CRTP base implementing the single audited copy of the async pull-reader
-// lifecycle shared by TrackReader and RawReader. Each Derived constructor stores
-// the Source it reads from in source_.
+// CRTP base for the JavaScript pull readers TrackReader and RawReader, which read a Source on
+// the thread pool, one read at a time. Each Derived constructor stores the Source it reads from
+// in source_.
 //
-// Safety invariant: the reader and the read worker in flight each hold the Source,
-// so it is freed on the main thread only once neither does. Produce (worker
-// thread) never runs on a freed Source, even if the reader is closed or destroyed
-// mid-read. The reading_ flag rejects a second concurrent read(). Ref()/Unref()
-// keep the object alive across the async read and always balance, on both the OK
-// and error paths, so a destroyed stream cannot leak.
+// Safety invariant: the reader and the read worker in flight each hold the Source, so it is
+// freed on the main thread only once neither does. Produce() never runs on a freed Source,
+// even if the reader is closed or destroyed mid-read.
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
+    // Construct without a Source, which the Derived constructor then sets
     explicit ReaderBase(const Napi::CallbackInfo& info)
         : Napi::ObjectWrap<Derived>(info), self_(std::make_shared<ReaderBase*>(this)) {}
 
+    // Tell any read worker still in flight that this reader no longer exists
     ~ReaderBase() override { *self_ = nullptr; }
 
     ReaderBase(const ReaderBase&) = delete;
@@ -450,7 +454,8 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     ReaderBase(ReaderBase&&) = delete;
     ReaderBase& operator=(ReaderBase&&) = delete;
 
-    // read(maxBytes): resolve up to maxBytes bytes, or null at the end
+    // read(maxBytes): resolve up to maxBytes bytes, or null at the end. Rejects a read after
+    // close() or while another read is in flight.
     Napi::Value Read(const Napi::CallbackInfo& info);
 
     // Release this reader's hold on the CHD. A read worker in flight holds it too, so the
@@ -473,8 +478,6 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     bool reading_ = false;
 };
 
-// Defined out-of-line because it constructs a ReadWorker, whose full
-// definition must precede this. Shared by every ReaderBase subclass.
 template <typename Derived, typename Source>
 Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
@@ -489,6 +492,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     double const requested = info[0].IsNumber() ? info[0].As<Napi::Number>().DoubleValue() : 0;
+
     // Also catches NaN, which fails every comparison
     if (!(requested >= 1)) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
@@ -507,7 +511,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     }
     // OnOK()/OnError() run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
-    this->Ref();  // keep this object (and its CHD) alive while the worker thread reads
+    this->Ref();  // keep this object from being collected while the worker thread reads
     return deferred.Promise();
 }
 
@@ -525,6 +529,7 @@ static std::string ChdTypeString(chd_file& chd) {
     return "RAW";
 }
 
+// The four-character codec name chdman prints for a codec, or "none" for an unknown one
 static std::string CompressionString(chd_codec_type codec) {
     switch (codec) {
         case CHD_CODEC_ZLIB:
@@ -577,8 +582,8 @@ struct ChdInfo {
     std::optional<std::string> dataSha1;
 };
 
-// The single place that knows the JS-visible key names and value encodings. Keep
-// this adjacent to ChdInfo so the struct and its marshalling can be audited together.
+// Convert a ChdInfo to the JavaScript CHDInfo object. The single place that knows the JS-visible
+// key names and value encodings; kept adjacent to ChdInfo so the two can be audited together.
 static Napi::Object ChdInfoToObject(Napi::Env env, const ChdInfo& info) {
     Napi::Object out = Napi::Object::New(env);
     out.Set("inputFile", info.inputFile);
@@ -602,6 +607,7 @@ static Napi::Object ChdInfoToObject(Napi::Env env, const ChdInfo& info) {
     return out;
 }
 
+// info(inputFilename): resolve a CHD's header information and hashes as a CHDInfo
 static Napi::Value Info(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     if (info.Length() < 1 || !info[0].IsString()) {
@@ -611,8 +617,9 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
     std::string const inputPath = info[0].As<Napi::String>();
 
     chd_file chd;
-    // NOTE: this reads only the CHD header and runs synchronously on the V8 main
-    // thread; it is fast enough that no AsyncWorker is needed.
+
+    // Runs synchronously on the main thread. Opening reads the header and the hunk map, which a
+    // compressed v5 CHD stores compressed, so the map is decompressed here too.
     std::error_condition const err = chd.open(inputPath, false, nullptr);
     if (err) {
         Napi::Error::New(env, "failed to open CHD: " + err.message()).ThrowAsJavaScriptException();
@@ -635,6 +642,7 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
     }
 
     uint64_t filesize = 0;
+
     // Best-effort: file size is metadata only, so leave it at 0 on a length() error.
     if (chd.file().length(filesize)) {
         filesize = 0;
@@ -759,6 +767,7 @@ class TrackSource {
     int trackIndex_ = 0;
     uint32_t chdVersion_ = 0;
     chd_file chd_;
+
     // Declared after chd_, which it points to, so it is destroyed first
     std::unique_ptr<cdrom_file> cdrom_;
     cdrom_file::toc toc_{};
@@ -771,6 +780,7 @@ class TrackSource {
 size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
     size_t written = 0;
     const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
+
     // frame_ is bumped when a frame is loaded, so the final frame's bytes can still be
     // buffered after frame_ reaches actualframes_. Keep draining frameBuf_ on leftover
     // bytes too, else a read(maxBytes) boundary mid-frame would drop that tail.
@@ -789,6 +799,7 @@ size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
                 frameofs = static_cast<int>(frame_) - static_cast<int>(t.splitframes);
             }
             const cdrom_file::track_info& st = toc_.tracks[trk];
+
             // A whole frame that fits is read straight into `out`, and only one that doesn't
             // goes through frameBuf_
             bool const direct = maxBytes - written >= st.datasize;
@@ -798,10 +809,12 @@ size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
                 frame = frameBuf_.data();
             }
             std::memset(frame, 0, st.datasize);
+
             // read_data's bool result is intentionally ignored, matching chdman's
             // do_extract_cd (chdman.cpp line 2991): on a read miss the pre-zeroed
             // buffer is emitted as silence rather than erroring, for byte parity.
             cdrom_->read_data(cdrom_->get_track_start_phys(trk) + frameofs, frame, st.trktype, true);
+
             // for CDRWin and GDI audio tracks must be reversed; for GDI with CHD
             // version < 5 the source CHD audio tracks are already reversed
             const bool swap = ((mode_ == MODE_GDI && chdVersion_ > 4) || mode_ == MODE_CUEBIN) &&
@@ -832,6 +845,7 @@ size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
 // A pull reader over a TrackSource
 class TrackReader : public ReaderBase<TrackReader, TrackSource> {
    public:
+    // Define the JavaScript class, with its read() and close() methods
     static Napi::Function GetClass(Napi::Env env) {
         return DefineClass(env, "TrackReader",
                            {
@@ -840,6 +854,7 @@ class TrackReader : public ReaderBase<TrackReader, TrackSource> {
                            });
     }
 
+    // new TrackReader(inputFilename, mode, trackIndex): open the track, throwing to JavaScript on failure
     explicit TrackReader(const Napi::CallbackInfo& info) : ReaderBase<TrackReader, TrackSource>(info) {
         Napi::Env const env = info.Env();
         if (info.Length() < 3 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
@@ -867,6 +882,7 @@ class TrackReader : public ReaderBase<TrackReader, TrackSource> {
 // same bytes chdman's extractRaw would produce.
 class RawSource {
    public:
+    // Open the CHD, throwing on failure
     explicit RawSource(const std::string& input) {
         std::error_condition const err = chd_.open(input, false, nullptr);
         if (err) {
@@ -878,6 +894,7 @@ class RawSource {
     // Emit up to maxBytes of this CHD's logical bytes starting at pos_.
     size_t Produce(uint8_t* out, size_t maxBytes) {
         if (pos_ >= total_) return 0;
+
         // Clamped to 32 bits because MAME's chd_file::read_bytes() takes a uint32_t length. A
         // short read is allowed, and the next read continues from pos_.
         auto const n =
@@ -897,6 +914,7 @@ class RawSource {
 // A pull reader over a RawSource
 class RawReader : public ReaderBase<RawReader, RawSource> {
    public:
+    // Define the JavaScript class, with its read() and close() methods
     static Napi::Function GetClass(Napi::Env env) {
         return DefineClass(env, "RawReader",
                            {
@@ -905,6 +923,7 @@ class RawReader : public ReaderBase<RawReader, RawSource> {
                            });
     }
 
+    // new RawReader(inputFilename): open the CHD, throwing to JavaScript on failure
     explicit RawReader(const Napi::CallbackInfo& info) : ReaderBase<RawReader, RawSource>(info) {
         Napi::Env const env = info.Env();
         if (info.Length() < 1 || !info[0].IsString()) {
@@ -943,6 +962,7 @@ static Napi::Value OpenRawReader(const Napi::CallbackInfo& info) {
     return ctor.New({info[0]});
 }
 
+// Register the reader classes as instance data and export the addon's functions
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     Napi::Function const trackReaderClass = TrackReader::GetClass(env);
     Napi::Function const rawReaderClass = RawReader::GetClass(env);

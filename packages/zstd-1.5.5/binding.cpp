@@ -20,6 +20,7 @@
  *                       |_|
  */
 
+// getZstdVersion(): the linked zstd's version string
 static Napi::String GetZstdVersion(const Napi::CallbackInfo& info) {
     return Napi::String::New(info.Env(), ZSTD_versionString());
 }
@@ -57,6 +58,7 @@ struct CompressOp {  // NOLINT(cppcoreguidelines-pro-type-member-init)
     Napi::Promise::Deferred deferred;
     std::vector<uint8_t> input;
     bool end = false;
+
     // Keeps the context alive until this operation is done, even if end() or the compressor's
     // destruction released the compressor's hold on it
     std::shared_ptr<ZSTD_CCtx> cctx;
@@ -146,6 +148,7 @@ class CompressWorker : public Napi::AsyncWorker {
     CompressWorker(Napi::Env env, std::shared_ptr<ThreadedCompressor*> compressor, CompressOp op)
         : Napi::AsyncWorker(env), compressor_(std::move(compressor)), op_(std::move(op)) {}
 
+    // Compress the operation's input. Runs on the worker thread.
     void Execute() override {
         std::string const error = Compress(op_.cctx.get(), op_.input, op_.end, result_);
         if (!error.empty()) {
@@ -153,11 +156,13 @@ class CompressWorker : public Napi::AsyncWorker {
         }
     }
 
+    // Resolve with the compressed bytes
     void OnOK() override {
         op_.deferred.Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
         NotifyCompressor();
     }
 
+    // Reject with the error Execute() set
     void OnError(const Napi::Error& e) override {
         op_.deferred.Reject(e.Value());
         NotifyCompressor();
@@ -171,18 +176,25 @@ class CompressWorker : public Napi::AsyncWorker {
 
     // Cleared by the compressor's destructor
     std::shared_ptr<ThreadedCompressor*> compressor_;
+
     CompressOp op_;
     UninitBytes result_;
 };
 
-// A streaming context is stateful, so operations run one at a time, in the order they were
-// called. Each operation holds the context, so it is freed on the main thread only once neither
-// the compressor nor any operation does. Ref()/Unref() keep the object alive while operations run.
+// A JavaScript streaming zstd compressor whose operations run on the thread pool. A streaming
+// context is stateful, so operations run one at a time, in the order they were called. Each
+// operation holds the context, so it is freed on the main thread only once neither the compressor
+// nor any operation does.
 class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
    public:
+    // Define the JavaScript class and add it to exports
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
+
+    // new ThreadedCompressor(level | {level, threads}): create the context, throwing to JavaScript
+    // for an invalid option or a context that can't be created or configured
     explicit ThreadedCompressor(const Napi::CallbackInfo& info);
 
+    // Tell any worker still in flight that this compressor no longer exists
     ~ThreadedCompressor() override { *self_ = nullptr; }
 
     ThreadedCompressor(const ThreadedCompressor&) = delete;
@@ -202,7 +214,11 @@ class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
     }
 
    private:
+    // compressChunk(chunk): resolve with the compressed bytes zstd produces for a copy of chunk
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
+
+    // end(): resolve with the frame's remaining compressed bytes, or an empty Buffer if end() was
+    // already called
     Napi::Value End(const Napi::CallbackInfo& info);
 
     // Queue an operation on the context, to run once every operation before it is done. end()
@@ -214,8 +230,10 @@ class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
 
     // Empty after end(), and after a constructor that threw, whose object JavaScript never receives
     std::shared_ptr<ZSTD_CCtx> cctx_;
+
     // Shared with every worker so they know whether this compressor still exists
     std::shared_ptr<ThreadedCompressor*> self_;
+
     std::deque<CompressOp> pending_;
     bool running_ = false;
 };
@@ -269,7 +287,7 @@ ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info)
             }
         }
     } else if (info.Length() > 0 && info[0].IsNumber()) {
-        // Legacy mode: just accept compression level
+        // A bare number is the compression level
         compressionLevel = info[0].As<Napi::Number>().Int32Value();
 
         // Validate compression level
@@ -371,7 +389,8 @@ void ThreadedCompressor::RunNext() {
     }
 }
 
-// Synchronous non-threaded compression
+// compressNonThreaded(input, compressionLevel): compress input into one frame, synchronously on
+// the main thread
 static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
 
@@ -417,6 +436,7 @@ static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
  * |_____|_| |_|_|\__|
  */
 
+// Export the ThreadedCompressor class, compressNonThreaded(), and getZstdVersion()
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     ThreadedCompressor::Init(env, exports);
     exports.Set("compressNonThreaded", Napi::Function::New(env, CompressNonThreaded));

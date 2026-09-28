@@ -23,6 +23,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     // The chunk size when the caller names none, matching the default
     // highWaterMark of a Node.js byte stream
     static constexpr size_t kDefaultChunkBytes = 1U << 16U;  // 64 KiB
+
     // The largest chunk size. Each read allocates a buffer of the chunk size, and Node.js 22
     // aborts the process when it cannot allocate one instead of throwing. This bound is far past
     // any useful chunk size, and small enough to allocate on 32-bit targets.
@@ -33,15 +34,19 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
 
     /** Validates `(path, formatIndex, entryPath?, entryIndex?, chunkBytes?)` and starts the decoder pump. */
     explicit EntryReader(const Napi::CallbackInfo& info);
+
     /** Detaches callbacks and cancels any decoder still running without blocking the loop. */
     ~EntryReader() override;
 
     /** Reader identity and its JavaScript wrapper cannot be copied. */
     EntryReader(const EntryReader&) = delete;
+
     /** Reader identity and its JavaScript wrapper cannot be copy-assigned. */
     EntryReader& operator=(const EntryReader&) = delete;
+
     /** Reader identity and its JavaScript wrapper cannot be moved. */
     EntryReader(EntryReader&&) = delete;
+
     /** Reader identity and its JavaScript wrapper cannot be move-assigned. */
     EntryReader& operator=(EntryReader&&) = delete;
 
@@ -64,6 +69,7 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
      */
     struct Bridge {
         std::shared_ptr<AsyncSignal> signal;
+
         // Touched only on the event loop thread: set at construction, cleared by
         // ~EntryReader, and read by the AsyncSignal callback, all three
         // on that one thread, so a reader that is gone is simply seen as null
@@ -83,15 +89,18 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
 
     std::shared_ptr<Pump> pump_;
     size_t chunkBytes_ = kDefaultChunkBytes;
+
     // The buffer lent to the producer for the read in flight, held so that V8
     // cannot collect it while the producer is writing into it. Released only
     // once the slot has handed it back, or after the Pump is cancelled.
     Napi::Reference<Napi::Buffer<uint8_t>> lent_;
     Napi::ObjectReference readFailure_;
     std::shared_ptr<Bridge> bridge_;
+
     // The one outstanding read, if it could not be answered immediately. Also
     // the "a read is in flight" flag, since there is only ever one.
     std::optional<Napi::Promise::Deferred> pending_;
+
     // False until the constructor has run to completion. Its argument checks
     // report a TypeError and return, leaving no Pump and no bridge; a caller
     // that held on to the half-built object must be told the reader was never

@@ -186,6 +186,7 @@ CMyComPtr<IInStream> OpenFile(const UString& path) {
 Z7_CLASS_IMP_COM_2(OpenCallback, IArchiveOpenCallback, IArchiveOpenVolumeCallback)
     UString dirPrefix_;
     UString name_;
+
     // Borrowed, not owned. It lives in the Pump or ListJob driving this open,
     // which outlives the open by construction, since the open runs inside one
     // of that object's own methods. Null when the caller cannot be cancelled.
@@ -215,6 +216,7 @@ Z7_COM7F_IMF(OpenCallback::SetCompleted(const UInt64* /*files*/, const UInt64* /
 /** Supplies the first volume's basename through kpidName and reports other properties unavailable. */
 Z7_COM7F_IMF(OpenCallback::GetProperty(PROPID propID, PROPVARIANT* value)) {
     NWindows::NCOM::CPropVariant prop;
+
     // kpidName is the only property the handlers ask for here. Answering an
     // unrecognized PROPID with an empty variant is how upstream's own callbacks
     // report "not available".
@@ -281,6 +283,7 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
     }
 
     CMyComPtr<IInArchive> archive;
+
     // CreateArchiver takes its out-parameter as void**, like every COM factory
     // in the vendored tree, so the cast is unavoidable.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -316,6 +319,7 @@ bool GetUInt64Prop(IInArchive& archive, uint32_t index, PROPID id, uint64_t* out
         return false;
     }
     UInt64 value = 0;
+
     // ConvertPropVariantToUInt64() throws for a variant type it does not
     // recognize. Every caller runs inside a boundary that must not let an
     // exception escape, and an odd property is not worth failing over, so it is

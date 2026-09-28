@@ -87,6 +87,7 @@ void OutputSlot::Abort() noexcept {
     try {
         std::unique_lock<std::mutex> lock(mutex_);
         aborted_ = true;
+
         // Forgotten here, while holding the lock the producer copies under, so
         // the caller may free the memory as soon as this returns
         data_ = nullptr;

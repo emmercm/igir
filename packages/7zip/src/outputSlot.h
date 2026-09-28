@@ -30,12 +30,16 @@ class OutputSlot {
 
     /** A slot owns synchronization primitives and cannot be copied. */
     OutputSlot(const OutputSlot&) = delete;
+
     /** A slot owns synchronization primitives and cannot be copy-assigned. */
     OutputSlot& operator=(const OutputSlot&) = delete;
+
     /** A slot owns synchronization primitives and cannot be moved. */
     OutputSlot(OutputSlot&&) = delete;
+
     /** A slot owns synchronization primitives and cannot be move-assigned. */
     OutputSlot& operator=(OutputSlot&&) = delete;
+
     /** Forgets any lent buffer without touching it. */
     ~OutputSlot() = default;
 
@@ -98,6 +102,7 @@ class OutputSlot {
 
     std::mutex mutex_;
     std::condition_variable lent_;
+
     // The buffer the consumer has lent, or null. The producer copies into it
     // only while holding mutex_, which is what lets Abort() promise that it is
     // no longer being written once it returns.
@@ -106,14 +111,17 @@ class OutputSlot {
     size_t length_ = 0;
     bool finished_ = false;
     bool aborted_ = false;
+
     // Set by a Write() that could not wait for a buffer. It rides alongside
     // aborted_ so that the consumer can report a failure instead of a stream
     // that silently ends early.
     std::atomic<bool> failed_{false};
+
     // Set by a TryTake() that returned kPending, cleared by whoever fires the
     // callback. Guarded by mutex_ so that the check-and-arm on the consumer side
     // cannot interleave with the publish-and-fire on the producer side.
     bool waiting_ = false;
+
     // Immutable after construction, which is what makes it safe to call with
     // the lock dropped from either thread
     const std::function<void()> onReady_;

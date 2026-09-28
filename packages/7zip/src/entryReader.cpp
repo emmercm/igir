@@ -24,6 +24,7 @@ Napi::Function EntryReader::GetClass(Napi::Env env) {
 EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<EntryReader>(info) {
     try {
         Napi::Env const env = info.Env();
+
         // An entry is named by path, or not named at all. An index may accompany
         // the path, but only as a hint the Pump verifies against it.
         bool const named = info.Length() >= 3 && info[2].IsString();
@@ -126,16 +127,18 @@ EntryReader::~EntryReader() {
         // producer releases it.
         bridge_->reader = nullptr;
     }
+
     if (pump_) {
         pump_->Cancel();
     }
-    // `lent_` is released by its own destructor after this body, so only
-    // after Cancel(), which guarantees the producer has stopped writing into
-    // it; unlike Reset(), that cannot throw.
-    //
+
     // Drops this side's reference. If the producer is still running it holds the
     // other one and will finish unwinding on its own; nothing here waits.
     pump_.reset();
+
+    // `lent_` is released by its own destructor after this body, so only
+    // after Cancel(), which guarantees the producer has stopped writing into
+    // it; unlike Reset(), its destructor cannot throw.
 }
 
 bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled) {
@@ -188,6 +191,7 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
 Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+
     // A napi_deferred may be settled exactly once, and settling twice is
     // undefined behavior rather than an error, so the catch-all below has to
     // know whether the body already got there
@@ -272,6 +276,7 @@ void EntryReader::OnProducerReady(Napi::Env env) {
 void EntryReader::ReleasePending(Napi::Env env) {
     pending_.reset();
     bridge_->signal->Unref(env);
+
     // Last statement, and the last use of `this` on this path: it can drop the
     // final reference to the object
     Unref();
@@ -285,11 +290,13 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
             pump_->Cancel();
         }
         lent_.Reset();
+
         // Copied, then cleared: Napi::Promise::Deferred is trivially copyable,
         // so moving out of the optional would leave `pending_` engaged and this
         // promise reachable a second time
         std::optional<Napi::Promise::Deferred> const pending = pending_;
         pending_.reset();
+
         // Drops this side's reference to the producer without waiting for it. The
         // producer holds the other one and unwinds on its own time.
         pump_.reset();

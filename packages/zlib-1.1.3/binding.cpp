@@ -10,7 +10,7 @@
 
 #include "deps/zlib/zlib.h"
 
-// Memory level constants from zlib
+// zlib's default memory level, which zutil.h defines but zlib.h doesn't export
 #ifndef DEF_MEM_LEVEL
 #if MAX_MEM_LEVEL >= 8
 #define DEF_MEM_LEVEL 8
@@ -44,10 +44,12 @@ struct DefaultInitAllocator : std::allocator<T> {
     }
 };
 
+// getZlibVersion(): the linked zlib's version string
 static Napi::String GetZlibVersion(const Napi::CallbackInfo& info) {
     return Napi::String::New(info.Env(), zlibVersion());
 }
 
+// A zlib return code's name and description, for error messages
 static std::string ZlibErrorToString(int ret) {
     switch (ret) {
         case Z_OK:
@@ -69,11 +71,19 @@ static std::string ZlibErrorToString(int ret) {
     }
 }
 
+// A JavaScript raw deflate stream, compressing synchronously on the main thread
 class Deflater : public Napi::ObjectWrap<Deflater> {
    public:
+    // Define the JavaScript class and add it to exports
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
+
+    // new Deflater(level | {level, memLevel, chunkSize}): start a raw deflate stream, throwing to
+    // JavaScript for an invalid option
     Deflater(const Napi::CallbackInfo& info);
+
+    // End the stream, if end() or dispose() hasn't
     ~Deflater() override;
+
     Deflater(const Deflater&) = delete;
     Deflater& operator=(const Deflater&) = delete;
     Deflater(Deflater&&) = delete;
@@ -83,8 +93,8 @@ class Deflater : public Napi::ObjectWrap<Deflater> {
     z_stream stream_{};
     bool initialized_ = false;
 
-    // Added chunk size as a member for consistency
-    size_t chunkSize_ = 16384;  // 16KB default chunk size (better than 1KB)
+    // The output space each deflate() call is given
+    size_t chunkSize_ = 16384;  // 16 KiB
 
     // Accumulation buffer, which deflate writes to directly; cleared at start of each call
     std::vector<uint8_t, DefaultInitAllocator<uint8_t>> output_;
@@ -94,19 +104,24 @@ class Deflater : public Napi::ObjectWrap<Deflater> {
     // stream is the same as one deflated through a fixed buffer of that size.
     int DeflateInto(int flush);
 
+    // compressChunk(chunk, flush): return the compressed bytes deflate produces for chunk
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
+
+    // end(): finish the stream and return its remaining compressed bytes, or an empty Buffer if
+    // the stream has already ended
     Napi::Value End(const Napi::CallbackInfo& info);
+
+    // dispose(): end the stream without finishing it
     Napi::Value Dispose(const Napi::CallbackInfo& info);
 };
 
 Napi::Object Deflater::Init(Napi::Env env, Napi::Object exports) {
-    Napi::Function const func =
-        DefineClass(env, "Deflater",
-                    {
-                        InstanceMethod("compressChunk", &Deflater::CompressChunk),
-                        InstanceMethod("end", &Deflater::End),
-                        InstanceMethod("dispose", &Deflater::Dispose),  // New method for resource cleanup
-                    });
+    Napi::Function const func = DefineClass(env, "Deflater",
+                                            {
+                                                InstanceMethod("compressChunk", &Deflater::CompressChunk),
+                                                InstanceMethod("end", &Deflater::End),
+                                                InstanceMethod("dispose", &Deflater::Dispose),
+                                            });
 
     exports.Set("Deflater", func);
     return exports;
@@ -357,6 +372,7 @@ Napi::Value Deflater::Dispose(const Napi::CallbackInfo& info) {
     return env.Undefined();
 }
 
+// Export the Deflater class, getZlibVersion(), and the flush mode constants
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     Deflater::Init(env, exports);
     exports.Set("getZlibVersion", Napi::Function::New(env, GetZlibVersion));

@@ -34,6 +34,7 @@
 static_assert(sizeof(maxcso::CSOHeader) == 24, "CSOHeader must match the on-disk layout");
 static_assert(sizeof(maxcso::DAXHeader) == 32, "DAXHeader must match the on-disk layout");
 static_assert(sizeof(maxcso::DAXNCArea) == 8, "DAXNCArea must match the on-disk layout");
+
 // Headers and index tables are read straight into native integers
 static_assert(std::endian::native == std::endian::little, "only little-endian targets are supported");
 
@@ -79,13 +80,18 @@ class File {
     using PathString = std::string;
 #endif
 
+    // Open the file for reading, or throw
     explicit File(const PathString& path) : handle_(Open(path)) {}
+
+    // Close the handle
     ~File() { Close(handle_); }
+
     File(const File&) = delete;
     File& operator=(const File&) = delete;
     File(File&&) = delete;
     File& operator=(File&&) = delete;
 
+    // The file's size in bytes, or throw
     [[nodiscard]] uint64_t Size() const;
 
     // Read exactly out.size() bytes starting at `offset`, or throw
@@ -111,6 +117,7 @@ class File {
 #ifdef _WIN32
     using Handle = HANDLE;
 
+    // Open `path` read-only, or throw
     static Handle Open(const PathString& path) {
         Handle const handle =
             CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
@@ -121,6 +128,7 @@ class File {
         return handle;
     }
 
+    // Close the handle, ignoring errors, since the handle is released either way
     static void Close(Handle handle) { static_cast<void>(CloseHandle(handle)); }
 
     // Returns the bytes read, or 0 on an error or the end of the file
@@ -135,6 +143,7 @@ class File {
 #else
     using Handle = int;
 
+    // Open `path` read-only, or throw
     static Handle Open(const PathString& path) {
         Handle handle = -1;
         do {
@@ -147,7 +156,8 @@ class File {
         return handle;
     }
 
-    // Not retried on EINTR: the descriptor is released either way
+    // Close the descriptor, ignoring errors. Not retried on EINTR: the descriptor is released
+    // either way.
     static void Close(Handle handle) { static_cast<void>(close(handle)); }
 
     // Returns the bytes read, or 0 on an error or the end of the file
@@ -188,6 +198,7 @@ uint64_t File::Size() const {
 
 using PathString = File::PathString;
 
+// Convert a JavaScript string to a path that File can open
 #ifdef _WIN32
 static PathString ToPath(const Napi::String& value) {
     std::u16string const utf16 = value.Utf16Value();
@@ -197,11 +208,13 @@ static PathString ToPath(const Napi::String& value) {
 static PathString ToPath(const Napi::String& value) { return value.Utf8Value(); }
 #endif
 
+// Frees a libdeflate decompressor, for DecompressorPtr
 struct DecompressorFreer {
     void operator()(libdeflate_decompressor* decompressor) const { libdeflate_free_decompressor(decompressor); }
 };
 using DecompressorPtr = std::unique_ptr<libdeflate_decompressor, DecompressorFreer>;
 
+// Allocate a libdeflate decompressor, or throw std::bad_alloc
 static DecompressorPtr NewDecompressor() {
     DecompressorPtr decompressor(libdeflate_alloc_decompressor());
     if (!decompressor) {
@@ -220,6 +233,7 @@ constexpr uint32_t kMinCacheSize = 32768;
 constexpr uint64_t kCsoIndexOffset = sizeof(maxcso::CSOHeader);
 constexpr uint64_t kDaxIndexOffset = sizeof(maxcso::DAXHeader);
 
+// Throw unless an uncompressed size is a whole number of sectors, as upstream requires
 static void CheckAligned(uint64_t size) {
     if (size % kSectorSize != 0) {
         throw std::runtime_error("uncompressed size " + std::to_string(size) + " is not a multiple of 2048");
@@ -230,6 +244,7 @@ static void CheckAligned(uint64_t size) {
 // alignment, so decoding stops at the output size instead of requiring the input to end there.
 static size_t DecodeLz4(std::span<const uint8_t> in, std::span<uint8_t> out) {
     int const size = static_cast<int>(out.size());
+
     // LZ4's API takes char pointers; uint8_t and char are both byte types, so this only renames them.
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     const char* const src = reinterpret_cast<const char*>(in.data());
@@ -276,9 +291,13 @@ static size_t DecodeDeflate(libdeflate_decompressor* decompressor, std::span<con
 
 // ---- container ----
 
+// How an index entry's bytes are encoded
 enum class Codec : uint8_t { kStored, kDeflate, kLz4, kZlib };
+
+// Which container format a file is
 enum class Format : uint8_t { kCso1, kCso2, kZso, kDax };
 
+// The codec's name, for error messages
 static const char* CodecName(Codec codec) {
     switch (codec) {
         case Codec::kLz4:
@@ -293,12 +312,22 @@ static const char* CodecName(Codec codec) {
 // The index entry that covers an uncompressed position, as upstream Input::ReadSector finds it
 struct Block {
     uint64_t entry = 0;
+
     // How far into the entry the position is, which upstream calls the offset
     uint32_t skip = 0;
     uint64_t offset = 0;
+
     // Upstream holds the entry length in an unsigned int, so it wraps
     uint32_t length = 0;
     Codec codec = Codec::kStored;
+};
+
+// What a Container is opened for
+enum class Open : uint8_t {
+    // Only the header information: the checks upstream makes while opening run, but the index
+    // isn't read and nothing is allocated for decoding, so Next() may not be called
+    kHeader,
+    kRead
 };
 
 // An opened CSO, ZSO, or DAX file, decoded as upstream maxcso's Input class decodes it. Upstream's
@@ -306,34 +335,42 @@ struct Block {
 // that would be memory-unsafe or undefined in upstream; each one says why.
 class Container {
    public:
-    explicit Container(const PathString& path)
-        : file_(path), fileSize_(file_.Size()), decompressor_(NewDecompressor()) {
+    // Open and parse `path`, reading its index and allocating its buffers for Open::kRead, or throw
+    Container(const PathString& path, Open open) : file_(path), fileSize_(file_.Size()) {
         if (fileSize_ < kHeaderBytes) {
             throw std::runtime_error("file is too small to be a CSO, ZSO, or DAX file");
         }
         auto const magic = ReadHeader<std::array<char, 4>>();
         if (std::memcmp(magic.data(), maxcso::DAX_MAGIC, magic.size()) == 0) {
-            ParseDax();
+            ParseDax(open);
         } else if (std::memcmp(magic.data(), maxcso::CSO_MAGIC, magic.size()) == 0) {
-            ParseCso(false);
+            ParseCso(false, open);
         } else if (std::memcmp(magic.data(), maxcso::ZSO_MAGIC, magic.size()) == 0) {
-            ParseCso(true);
+            ParseCso(true, open);
         } else {
             throw std::runtime_error("not a CSO, ZSO, or DAX file (unrecognized magic)");
+        }
+        if (open == Open::kHeader) {
+            return;
         }
         // Upstream Input::SetupCache
         cacheSize_ = blockSize_;
         while (cacheSize_ < kMinCacheSize) {
             cacheSize_ <<= 1U;
         }
+        decompressor_ = NewDecompressor();
         scratch_.resize(cacheSize_);
         decoded_.resize(blockSize_);
     }
 
+    // The uncompressed image's size in bytes
     [[nodiscard]] uint64_t Size() const { return size_; }
+
+    // The size of the uncompressed data each index entry covers
     [[nodiscard]] uint32_t BlockSize() const { return blockSize_; }
 
-    [[nodiscard]] std::string FormatName() const {
+    // The format's name, as index.ts reports it
+    [[nodiscard]] const char* FormatName() const {
         switch (format_) {
             case Format::kDax:
                 return "DAX";
@@ -357,6 +394,7 @@ class Container {
     }
 
    private:
+    // Read the file's first header bytes into a T, leaving any of T past them zeroed
     template <typename T>
     [[nodiscard]] T ReadHeader() const {
         T header{};
@@ -365,8 +403,10 @@ class Container {
         return header;
     }
 
-    void ParseCso(bool zso) {
+    // Parse a CSO or ZSO header, and read its index for Open::kRead
+    void ParseCso(bool zso, Open open) {
         auto const header = ReadHeader<maxcso::CSOHeader>();
+
         // Copy the packed fields out before using them. Like upstream, header_size is ignored.
         uint64_t const size = header.uncompressed_size;
         uint32_t const blockSize = header.sector_size;
@@ -378,6 +418,7 @@ class Container {
             throw std::runtime_error("block size " + std::to_string(blockSize) + " is not from 2048 to 262144");
         }
         CheckAligned(size);
+
         // Upstream adds blockSize - 1 to the size as a signed 64-bit integer, which overflows for sizes
         // above INT64_MAX - (blockSize - 1)
         if (size > static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) - (blockSize - 1)) {
@@ -386,6 +427,7 @@ class Container {
         // Upstream shifts by the block size's log2, rounded down, instead of dividing by it
         blockShift_ = static_cast<uint32_t>(std::bit_width(blockSize)) - 1;
         uint64_t const entries = ((size + blockSize - 1) >> blockShift_) + 1;
+
         // A CSO format limit, not an OS one: upstream holds the index's sector count in a uint32_t
         if (entries > std::numeric_limits<uint32_t>::max()) {
             throw std::runtime_error("CSO index has too many entries");
@@ -393,8 +435,10 @@ class Container {
         if (entries > (fileSize_ - kCsoIndexOffset) / sizeof(uint32_t)) {
             throw std::runtime_error("CSO index does not fit in the file");
         }
-        index_.resize(static_cast<size_t>(entries));
-        file_.ReadAt(kCsoIndexOffset, std::as_writable_bytes(std::span(index_)));
+        if (open == Open::kRead) {
+            index_.resize(static_cast<size_t>(entries));
+            file_.ReadAt(kCsoIndexOffset, std::as_writable_bytes(std::span(index_)));
+        }
 
         size_ = size;
         blockSize_ = blockSize;
@@ -408,7 +452,8 @@ class Container {
         }
     }
 
-    void ParseDax() {
+    // Parse a DAX header and its NC areas, and read its frame table for Open::kRead
+    void ParseDax(Open open) {
         auto const header = ReadHeader<maxcso::DAXHeader>();
         if (header.version > 1) {
             throw std::runtime_error("unsupported DAX version " + std::to_string(header.version));
@@ -416,6 +461,7 @@ class Container {
         uint64_t const size = header.uncompressed_size;
         CheckAligned(size);
         uint64_t const frames = (size + maxcso::DAX_FRAME_SIZE - 1) >> maxcso::DAX_FRAME_SHIFT;
+
         // A DAX format limit, not an OS one: upstream holds the frame count in a uint32_t
         if (frames > std::numeric_limits<uint32_t>::max()) {
             throw std::runtime_error("DAX frame table has too many frames");
@@ -434,30 +480,40 @@ class Container {
         blockSize_ = maxcso::DAX_FRAME_SIZE;
         blockShift_ = maxcso::DAX_FRAME_SHIFT;
         format_ = Format::kDax;
-        index_.resize(static_cast<size_t>(frames));
-        daxSizes_.resize(static_cast<size_t>(frames));
+
+        // Read even for Open::kHeader, because an out-of-range area fails the open
         UninitVector<maxcso::DAXNCArea> ncAreas(static_cast<size_t>(areas));
-        file_.ReadAt(kDaxIndexOffset, std::as_writable_bytes(std::span(index_)));
-        file_.ReadAt(kDaxIndexOffset + (frames * 4), std::as_writable_bytes(std::span(daxSizes_)));
         file_.ReadAt(kDaxIndexOffset + (frames * 6), std::as_writable_bytes(std::span(ncAreas)));
-
-        daxStored_.assign(static_cast<size_t>(frames), 0);
         for (size_t i = 0; i < ncAreas.size(); ++i) {
-            MarkDaxArea(i, ncAreas[i]);
+            CheckDaxArea(i, ncAreas[i], frames);
         }
-    }
-
-    void MarkDaxArea(size_t i, const maxcso::DAXNCArea& area) {
-        if (area.count == 0) {
+        if (open == Open::kHeader) {
             return;
         }
-        // Upstream marks the area's frames without a range check, which writes out of bounds
-        if (area.start >= daxStored_.size() || area.count > daxStored_.size() - area.start) {
-            throw std::runtime_error("DAX NC area " + std::to_string(i) + " is out of range");
+
+        index_.resize(static_cast<size_t>(frames));
+        daxSizes_.resize(static_cast<size_t>(frames));
+        file_.ReadAt(kDaxIndexOffset, std::as_writable_bytes(std::span(index_)));
+        file_.ReadAt(kDaxIndexOffset + (frames * 4), std::as_writable_bytes(std::span(daxSizes_)));
+        daxStored_.assign(static_cast<size_t>(frames), 0);
+        for (const maxcso::DAXNCArea& area : ncAreas) {
+            // An empty area may start anywhere, even past the last frame
+            if (area.count == 0) {
+                continue;
+            }
+            std::ranges::fill(std::span(daxStored_).subspan(area.start, area.count), uint8_t{1});
         }
-        std::ranges::fill(std::span(daxStored_).subspan(area.start, area.count), uint8_t{1});
     }
 
+    // Throw unless the NC area lies within the frame table. Upstream marks the area's frames
+    // without a range check, which writes out of bounds.
+    static void CheckDaxArea(size_t i, const maxcso::DAXNCArea& area, uint64_t frames) {
+        if (area.count != 0 && (area.start >= frames || area.count > frames - area.start)) {
+            throw std::runtime_error("DAX NC area " + std::to_string(i) + " is out of range");
+        }
+    }
+
+    // Where a CSO or ZSO index entry's data starts in the file
     [[nodiscard]] uint64_t Position(uint64_t entry) const {
         // Upstream shifts a 64-bit integer by this, which is undefined from 64
         if (shift_ >= 64) {
@@ -492,8 +548,8 @@ class Container {
         return {.entry = entry, .skip = skip, .offset = offset, .length = length, .codec = codec};
     }
 
-    // Upstream reads an entry through a cacheSize_-byte buffer and fails when it gets fewer bytes
-    // than the entry's length
+    // Throw unless an entry can be read in full. Upstream reads an entry through a
+    // cacheSize_-byte buffer and fails when it gets fewer bytes than the entry's length.
     void CheckRead(uint64_t entry, uint64_t offset, uint32_t length) const {
         if (length > cacheSize_) {
             throw std::runtime_error("block " + std::to_string(entry) + " is longer than " +
@@ -504,11 +560,13 @@ class Container {
         }
     }
 
+    // Throw for an entry that doesn't hold enough bytes for the sectors upstream would emit from it
     [[noreturn]] static void ThrowTooFew(uint64_t entry) {
         throw std::runtime_error("block " + std::to_string(entry) + " has too few bytes for its sectors");
     }
 
-    // Upstream emits one sector per call from a stored entry, starting `skip` bytes into it
+    // Next() for a stored entry. Upstream emits one sector per call from a stored entry,
+    // starting `skip` bytes into it.
     std::span<const uint8_t> NextStored(const Block& block, std::span<uint8_t> dest) {
         uint64_t const offset = block.offset + block.skip;
         uint32_t const length = block.length - block.skip;
@@ -534,12 +592,13 @@ class Container {
         return (pos >> blockShift_) == block.entry && (pos & (blockSize_ - 1)) == block.skip + run;
     }
 
-    // Upstream decodes the whole entry, drops what's past the end of the image, and emits sectors
-    // from `skip` bytes in until the decoded bytes run out
+    // Next() for a compressed entry. Upstream decodes the whole entry, drops what's past the end
+    // of the image, and emits sectors from `skip` bytes in until the decoded bytes run out.
     std::span<const uint8_t> NextCompressed(const Block& block, std::span<uint8_t> dest) {
         CheckRead(block.entry, block.offset, block.length);
         std::span<uint8_t> const in = std::span(scratch_).first(block.length);
         file_.ReadAt(block.offset, std::as_writable_bytes(in));
+
         // Decoded straight into `dest` when the sectors start the entry and a whole block fits. The
         // decoder gets exactly a block of space either way, so it behaves the same.
         std::span<uint8_t> const decoded =
@@ -567,7 +626,6 @@ class Container {
 
     File file_;
     uint64_t fileSize_ = 0;
-    DecompressorPtr decompressor_;
     Format format_ = Format::kCso1;
     uint64_t size_ = 0;
     uint32_t blockSize_ = 0;
@@ -575,10 +633,14 @@ class Container {
     uint32_t shift_ = 0;
     uint32_t cacheSize_ = 0;
     uint64_t pos_ = 0;
-    // Uninitialized until read from the file
+
+    // Every member from here on is empty for Open::kHeader. index_ and daxSizes_ are
+    // uninitialized until read from the file.
     UninitVector<uint32_t> index_;
     UninitVector<uint16_t> daxSizes_;
     std::vector<uint8_t> daxStored_;
+    DecompressorPtr decompressor_;
+
     // Only ever read after being written
     UninitVector<uint8_t> scratch_;
     UninitVector<uint8_t> decoded_;
@@ -604,10 +666,10 @@ static void QueueWorker(Args&&... args) {
     }
 }
 
-// Runs a Source's Produce() on a worker thread so blocking/decompressing blob reads
-// never run on the V8 main thread, then tells the Reader the read is done. They must expose:
+// Runs one read() on the thread pool: fills a Buffer from a Source's Produce(), then tells the
+// Reader the read is done and settles the read's promise. Source and Reader must provide:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
-//   void   Reader::FinishRead();                             // main thread, post-Execute
+//   void   Reader::FinishRead();                             // main thread, after Execute()
 template <typename Reader, typename Source>
 class ReadWorker : public Napi::AsyncWorker {
    public:
@@ -626,17 +688,21 @@ class ReadWorker : public Napi::AsyncWorker {
           data_(buffer.Data()),
           cap_(buffer.Length()) {}
 
+    // Fill the Buffer from the Source. Runs on the worker thread.
     void Execute() override {
         try {
             n_ = source_->Produce(data_, cap_);
         } catch (const std::exception& e) {
             SetError(e.what());
         } catch (...) {
-            SetError("unknown blob read error");
+            SetError("unknown maxcso read error");
         }
     }
 
+    // Resolve with the bytes read: the whole Buffer, a view of its filled start, or null at the end
     void OnOK() override {
+        // First, so that resolving can't throw past it and leave the reader Ref()'d and reading
+        NotifyReader();
         Napi::Env const env = Env();
         Napi::Buffer<uint8_t> const buffer = buffer_.Value();
         if (n_ == 0) {
@@ -651,12 +717,12 @@ class ReadWorker : public Napi::AsyncWorker {
                     .As<Napi::Function>()
                     .Call(buffer, {Napi::Number::New(env, 0), Napi::Number::New(env, static_cast<double>(n_))}));
         }
-        NotifyReader();
     }
 
+    // Reject with the error Execute() set
     void OnError(const Napi::Error& e) override {
-        deferred_.Reject(e.Value());
         NotifyReader();
+        deferred_.Reject(e.Value());
     }
 
    private:
@@ -669,10 +735,13 @@ class ReadWorker : public Napi::AsyncWorker {
     }
 
     Napi::Promise::Deferred deferred_;
+
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
+
     // Keeps the file open until this worker is destroyed, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
+
     // The Buffer that Execute() fills, and its memory
     Napi::Reference<Napi::Buffer<uint8_t>> buffer_;
     uint8_t* data_;
@@ -680,19 +749,20 @@ class ReadWorker : public Napi::AsyncWorker {
     size_t n_ = 0;
 };
 
-// CRTP base for the async pull-reader lifecycle used by MaxcsoReader. Each Derived
-// constructor stores the Source it reads from in source_.
+// CRTP base for the JavaScript pull reader MaxcsoReader, which reads a Source on the thread pool,
+// one read at a time. Each Derived constructor stores the Source it reads from in source_.
 //
 // Safety invariant: the reader and the read worker in flight each hold the Source, so it is
-// freed on the main thread only once neither does. Produce (worker thread) never runs on a
-// freed Source, even if the reader is closed or destroyed mid-read. reading_ rejects a
-// concurrent read(); Ref()/Unref() keep the object alive across the async read.
+// freed on the main thread only once neither does. Produce() never runs on a freed Source,
+// even if the reader is closed or destroyed mid-read.
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
+    // Construct without a Source, which the Derived constructor then sets
     explicit ReaderBase(const Napi::CallbackInfo& info)
         : Napi::ObjectWrap<Derived>(info), self_(std::make_shared<ReaderBase*>(this)) {}
 
+    // Tell any read worker still in flight that this reader no longer exists
     ~ReaderBase() override { *self_ = nullptr; }
 
     ReaderBase(const ReaderBase&) = delete;
@@ -700,7 +770,8 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     ReaderBase(ReaderBase&&) = delete;
     ReaderBase& operator=(ReaderBase&&) = delete;
 
-    // read(maxBytes): resolve up to maxBytes bytes, or null at the end
+    // read(maxBytes): resolve up to maxBytes bytes, or null at the end. Rejects a read after
+    // close() or while another read is in flight.
     Napi::Value Read(const Napi::CallbackInfo& info);
 
     // Release this reader's hold on the file. A read worker in flight holds it too, so the
@@ -723,8 +794,6 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     bool reading_ = false;
 };
 
-// Defined out-of-line because it constructs a ReadWorker, whose full
-// definition must precede this. Shared by every ReaderBase subclass.
 template <typename Derived, typename Source>
 Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
@@ -739,6 +808,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     double const requested = info[0].IsNumber() ? info[0].As<Napi::Number>().DoubleValue() : 0;
+
     // Also catches NaN, which fails every comparison
     if (!(requested >= 1)) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
@@ -757,7 +827,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     }
     // OnOK()/OnError() run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
-    this->Ref();  // keep this object (and its file) alive while the worker thread reads
+    this->Ref();  // keep this object from being collected while the worker thread reads
     return deferred.Promise();
 }
 
@@ -768,6 +838,7 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
 // decompressor, and buffers, so concurrent readers are independent.
 class MaxcsoSource {
    public:
+    // Remember the path; the file isn't opened until the first Produce()
     explicit MaxcsoSource(PathString path) : path_(std::move(path)) {}
 
     // Emit up to maxBytes of decompressed bytes. Runs on the worker thread. The container writes
@@ -775,7 +846,7 @@ class MaxcsoSource {
     // in pending_, which the next read drains first.
     size_t Produce(uint8_t* out, size_t maxBytes) {
         if (!container_) {
-            container_ = std::make_unique<Container>(path_);
+            container_ = std::make_unique<Container>(path_, Open::kRead);
         }
         std::span<uint8_t> const dest(out, maxBytes);
         size_t written = 0;
@@ -804,6 +875,7 @@ class MaxcsoSource {
    private:
     PathString path_;
     std::unique_ptr<Container> container_;
+
     // Points into container_'s buffers
     std::span<const uint8_t> pending_;
 };
@@ -811,6 +883,7 @@ class MaxcsoSource {
 // A pull reader over a MaxcsoSource
 class MaxcsoReader : public ReaderBase<MaxcsoReader, MaxcsoSource> {
    public:
+    // Define the JavaScript class, with its read() and close() methods
     static Napi::Function GetClass(Napi::Env env) {
         return DefineClass(env, "MaxcsoReader",
                            {
@@ -819,6 +892,8 @@ class MaxcsoReader : public ReaderBase<MaxcsoReader, MaxcsoSource> {
                            });
     }
 
+    // new MaxcsoReader(inputFilename): throws to JavaScript for a missing filename; the file is
+    // opened by the first read()
     explicit MaxcsoReader(const Napi::CallbackInfo& info) : ReaderBase<MaxcsoReader, MaxcsoSource>(info) {
         Napi::Env const env = info.Env();
         if (info.Length() < 1 || !info[0].IsString()) {
@@ -835,15 +910,18 @@ class MaxcsoReader : public ReaderBase<MaxcsoReader, MaxcsoSource> {
 
 // ---- maxcso info ----
 
-// Opens and validates a container on the thread pool and resolves its header information
+// Opens a container on the thread pool, making the checks upstream makes while opening, and
+// resolves its header information
 class InfoWorker : public Napi::AsyncWorker {
    public:
     InfoWorker(Napi::Env env, Napi::Promise::Deferred deferred, PathString path)
         : Napi::AsyncWorker(env), deferred_(deferred), path_(std::move(path)) {}
 
+    // Open the container for Open::kHeader and keep its header information. Runs on the worker
+    // thread.
     void Execute() override {
         try {
-            Container const container(path_);
+            Container const container(path_, Open::kHeader);
             format_ = container.FormatName();
             size_ = container.Size();
             blockSize_ = container.BlockSize();
@@ -854,6 +932,7 @@ class InfoWorker : public Napi::AsyncWorker {
         }
     }
 
+    // Resolve with the header information
     void OnOK() override {
         Napi::Env const env = Env();
         Napi::Object const out = Napi::Object::New(env);
@@ -863,16 +942,18 @@ class InfoWorker : public Napi::AsyncWorker {
         deferred_.Resolve(out);
     }
 
+    // Reject with the error Execute() set
     void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
 
    private:
     Napi::Promise::Deferred deferred_;
     PathString path_;
-    std::string format_;
+    const char* format_ = "";
     uint64_t size_ = 0;
     uint32_t blockSize_ = 0;
 };
 
+// info(inputFilename): resolve a container's format, uncompressed size, and block size
 static Napi::Value Info(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
@@ -890,16 +971,20 @@ static Napi::Value Info(const Napi::CallbackInfo& info) {
 
 // ---- addon init ----
 
+// Holds the class constructors for every ObjectWrap type registered by this addon. Stored as the
+// addon's instance data so factories can retrieve them without a global.
 struct Addon {
     Napi::FunctionReference maxcsoReader;
 };
 
+// openReader(inputFilename): construct a MaxcsoReader from the stored class constructor
 static Napi::Value OpenReader(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     Napi::Function const ctor = env.GetInstanceData<Addon>()->maxcsoReader.Value();
     return ctor.New({info[0]});
 }
 
+// Register the reader class as instance data and export the addon's functions
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     Napi::Function const cls = MaxcsoReader::GetClass(env);
     env.SetInstanceData(new Addon{.maxcsoReader = Napi::Persistent(cls)});
@@ -907,4 +992,5 @@ static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     exports.Set("openReader", Napi::Function::New(env, OpenReader));
     return exports;
 }
+
 NODE_API_MODULE(NODE_GYP_MODULE_NAME, InitAll)
