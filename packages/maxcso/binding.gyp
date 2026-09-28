@@ -148,7 +148,7 @@
       "sources": ["binding.cpp"],
       "dependencies": ["lz4", "libdeflate", "zlib_adler"],
       "defines": [
-        "NAPI_DISABLE_CPP_EXCEPTIONS",
+        "NAPI_CPP_EXCEPTIONS",
         # A read or info worker can finish while its worker thread's environment is being torn
         # down, when JS can no longer run. Without this, node-addon-api aborts the process
         # instead of dropping the result nobody can receive.

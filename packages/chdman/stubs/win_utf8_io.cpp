@@ -10,6 +10,7 @@
 
 extern "C" {
 
+// Unreachable; returns nullptr, as a failed fopen() would
 FILE* fopen_utf8(const char* filename, const char* mode) {
     (void)filename;
     (void)mode;

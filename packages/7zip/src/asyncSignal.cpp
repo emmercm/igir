@@ -83,6 +83,7 @@ void AsyncSignal::Dispatch(napi_env env, napi_value /*function*/, void* /*contex
             release = std::exchange(signal->function_, nullptr);
         }
     }
+
     // Releasing the final producer can synchronously start finalization on
     // some runtimes. The finalizer locks mutex_, so release only after the
     // dispatch lock has been destroyed.
@@ -93,10 +94,12 @@ void AsyncSignal::Ref(Napi::Env env) noexcept {
     std::scoped_lock const lock(mutex_);
     if (function_ != nullptr) napi_ref_threadsafe_function(env, function_);
 }
+
 void AsyncSignal::Unref(Napi::Env env) noexcept {
     std::scoped_lock const lock(mutex_);
     if (function_ != nullptr) napi_unref_threadsafe_function(env, function_);
 }
+
 void AsyncSignal::Finalize(napi_env /*env*/, void* data, void* /*hint*/) {
     const std::unique_ptr<std::shared_ptr<AsyncSignal>> context(static_cast<std::shared_ptr<AsyncSignal>*>(data));
     const std::shared_ptr<AsyncSignal>& signal = *context;

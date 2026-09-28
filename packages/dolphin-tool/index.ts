@@ -26,7 +26,8 @@ export interface OpenReaderOptions {
   /**
    * The `highWaterMark` of the returned stream, and so the number of bytes
    * asked of the addon per read. Omit it to take Node's own default for a
-   * {@link stream.Readable}.
+   * {@link stream.Readable}. At most 64 MiB, since every read allocates a
+   * buffer of this size.
    */
   highWaterMark?: number;
 }
@@ -44,20 +45,18 @@ interface DolphinBinding {
 const binding = ((): DolphinBinding => {
   try {
     // Try to load the development build
-    return require(`./build/Release/dolphin-tool.node`) as DolphinBinding;
+    return require('./build/Release/dolphin-tool.node') as DolphinBinding;
   } catch {
-    /* ignored */
+    try {
+      // Try to load the prebuild
+      return require(
+        `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as DolphinBinding;
+    } catch {
+      // Try to load the postinstall build
+      return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
+    }
   }
-  try {
-    // Try to load the prebuild
-    return require(
-      `./addon-dolphin-tool/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    ) as DolphinBinding;
-  } catch {
-    /* ignored */
-  }
-  // Try to load the postinstall build
-  return require('./addon-dolphin-tool/build/Release/dolphin-tool.node') as DolphinBinding;
 })();
 
 /**

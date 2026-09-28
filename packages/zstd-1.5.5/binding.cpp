@@ -1,8 +1,10 @@
 #include <napi.h>
 
-#include <cstring>
+#include <deque>
 #include <memory>
-#include <mutex>
+#include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "deps/zstd/lib/zstd.h"
@@ -18,158 +20,229 @@
  *                       |_|
  */
 
-// Promise-based worker for compression operations
-class CompressPromiseWorker : public Napi::AsyncWorker {
-   public:
-    CompressPromiseWorker(const std::shared_ptr<Napi::Promise::Deferred>& deferred, std::vector<uint8_t> input,
-                          ZSTD_CCtx* cctx, ZSTD_EndDirective endOp)
-        : Napi::AsyncWorker(deferred->Env()),
-          deferred_(deferred),
-          input_(std::move(input)),
-          cctx_(cctx),
-          endOp_(endOp) {
-        // Preallocate the result buffer to minimize reallocations during runtime
-        size_t outSize = 0;
-        if (!input_.empty()) {
-            outSize = ZSTD_compressBound(input_.size());
-        } else if (endOp == ZSTD_e_end) {
-            outSize = ZSTD_CStreamOutSize();
-        }
-        result_.reserve(outSize);
-    }
-
-    ~CompressPromiseWorker() override = default;
-    CompressPromiseWorker(const CompressPromiseWorker&) = delete;
-    CompressPromiseWorker& operator=(const CompressPromiseWorker&) = delete;
-    CompressPromiseWorker(CompressPromiseWorker&&) = delete;
-    CompressPromiseWorker& operator=(CompressPromiseWorker&&) = delete;
-
-    void Execute() override {
-        // Check if context is valid
-        if (!cctx_) {
-            SetError("Compression context is no longer valid");
-            return;
-        }
-
-        // Setup input buffer
-        ZSTD_inBuffer inBuff = {.src = input_.data(), .size = input_.size(), .pos = 0};
-
-        // Use a fixed output buffer size that's efficient for zstd
-        const size_t outBuffSize = ZSTD_CStreamOutSize();
-        std::vector<uint8_t> outBuffer(outBuffSize);
-
-        // Process based on the end directive
-        if (endOp_ == ZSTD_e_end) {
-            // First flush any pending data
-            bool flushFinished = false;
-            while (!flushFinished) {
-                ZSTD_outBuffer outBuff = {.dst = outBuffer.data(), .size = outBuffer.size(), .pos = 0};
-
-                size_t const flushRemaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_flush);
-
-                if (ZSTD_isError(flushRemaining)) {
-                    SetError(std::string("Flush error: ") + ZSTD_getErrorName(flushRemaining));
-                    return;
-                }
-
-                if (outBuff.pos > 0) {
-                    size_t const currentSize = result_.size();
-                    result_.resize(currentSize + outBuff.pos);
-                    std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
-                }
-
-                // Flush is complete when remaining is 0
-                flushFinished = (flushRemaining == 0);
-            }
-
-            // Now do the end operation
-            bool endFinished = false;
-            while (!endFinished) {
-                ZSTD_outBuffer outBuff = {.dst = outBuffer.data(), .size = outBuffer.size(), .pos = 0};
-                size_t const endRemaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, ZSTD_e_end);
-                if (ZSTD_isError(endRemaining)) {
-                    SetError(std::string("End error: ") + ZSTD_getErrorName(endRemaining));
-                    return;
-                }
-                if (outBuff.pos > 0) {
-                    size_t const currentSize = result_.size();
-                    result_.resize(currentSize + outBuff.pos);
-                    std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
-                }
-                endFinished = (endRemaining == 0);
-            }
-            if (cctx_) {
-                ZSTD_freeCCtx(cctx_);
-                cctx_ = nullptr;
-            }
-        } else {
-            // Regular compression operation
-            while (inBuff.pos < inBuff.size) {
-                ZSTD_outBuffer outBuff = {.dst = outBuffer.data(), .size = outBuffer.size(), .pos = 0};
-
-                size_t const remaining = ZSTD_compressStream2(cctx_, &outBuff, &inBuff, endOp_);
-
-                if (ZSTD_isError(remaining)) {
-                    SetError(std::string("Compression error: ") + ZSTD_getErrorName(remaining));
-                    return;
-                }
-
-                if (outBuff.pos > 0) {
-                    size_t const currentSize = result_.size();
-                    result_.resize(currentSize + outBuff.pos);
-                    std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
-                }
-            }
-        }
-    }
-
-    void OnOK() override {
-        Napi::HandleScope const scope(Env());
-        deferred_->Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
-    }
-
-    void OnError(const Napi::Error& e) override {
-        Napi::HandleScope const scope(Env());
-        deferred_->Reject(e.Value());
-    }
-
-   private:
-    std::shared_ptr<Napi::Promise::Deferred> deferred_;
-    std::vector<uint8_t> input_;
-    ZSTD_CCtx* cctx_;
-    ZSTD_EndDirective endOp_;
-    std::vector<uint8_t> result_;
-};
-
+// getZstdVersion(): the linked zstd's version string
 static Napi::String GetZstdVersion(const Napi::CallbackInfo& info) {
     return Napi::String::New(info.Env(), ZSTD_versionString());
 }
 
+// A std::allocator that default-initializes elements instead of value-initializing them, so that
+// sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
+// that is written before it is read.
+template <typename T>
+struct DefaultInitAllocator : std::allocator<T> {
+    template <typename U>
+    struct rebind {
+        using other = DefaultInitAllocator<U>;
+    };
+
+    DefaultInitAllocator() = default;
+    template <typename U>
+    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions): allocators must convert implicitly
+    DefaultInitAllocator(const DefaultInitAllocator<U>& /*unused*/) noexcept {}
+
+    template <typename U>
+    void construct(U* ptr) noexcept(std::is_nothrow_default_constructible_v<U>) {
+        ::new (static_cast<void*>(ptr)) U;
+    }
+    template <typename U, typename... Args>
+    void construct(U* ptr, Args&&... args) {
+        ::new (static_cast<void*>(ptr)) U(std::forward<Args>(args)...);
+    }
+};
+
+using UninitBytes = std::vector<uint8_t, DefaultInitAllocator<uint8_t>>;
+
+// One compressChunk() or end() call. `deferred` has no default member initializer because Deferred
+// has no default constructor, constructing one creating a promise; Enqueue() always sets it.
+struct CompressOp {  // NOLINT(cppcoreguidelines-pro-type-member-init)
+    Napi::Promise::Deferred deferred;
+    std::vector<uint8_t> input;
+    bool end = false;
+
+    // Keeps the context alive until this operation is done, even if end() or the compressor's
+    // destruction released the compressor's hold on it
+    std::shared_ptr<ZSTD_CCtx> cctx;
+};
+
+// Run one ZSTD_compressStream2() call that writes straight onto the end of result. It is given
+// exactly ZSTD_CStreamOutSize() bytes of output space every time, which zstd's output can depend
+// on, so the frame is the same as one compressed through a fixed buffer of that size.
+static size_t CompressInto(ZSTD_CCtx* cctx, ZSTD_inBuffer& inBuff, ZSTD_EndDirective op, UninitBytes& result) {
+    size_t const start = result.size();
+    result.resize(start + ZSTD_CStreamOutSize());
+    ZSTD_outBuffer outBuff = {.dst = result.data() + start, .size = ZSTD_CStreamOutSize(), .pos = 0};
+    size_t const remaining = ZSTD_compressStream2(cctx, &outBuff, &inBuff, op);
+    result.resize(start + outBuff.pos);
+    return remaining;
+}
+
+// Compress input, then end the frame if end, returning an error message or an empty string
+static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, bool end, UninitBytes& result) {
+    // Preallocate the result buffer to minimize reallocations during runtime. Each call needs a
+    // full ZSTD_CStreamOutSize() of room past what it has written so far.
+    if (!input.empty()) {
+        // The bound is an error code, not a size, for input past ZSTD_MAX_INPUT_SIZE; the
+        // reservation is only a hint, so skip it then
+        size_t const bound = ZSTD_compressBound(input.size());
+        result.reserve((ZSTD_isError(bound) ? 0 : bound) + ZSTD_CStreamOutSize());
+    } else if (end) {
+        result.reserve(ZSTD_CStreamOutSize());
+    }
+
+    // Setup input buffer
+    ZSTD_inBuffer inBuff = {.src = input.data(), .size = input.size(), .pos = 0};
+
+    // Regular compression operation
+    while (inBuff.pos < inBuff.size) {
+        size_t const remaining = CompressInto(cctx, inBuff, ZSTD_e_continue, result);
+        if (ZSTD_isError(remaining)) {
+            return std::string("Compression error: ") + ZSTD_getErrorName(remaining);
+        }
+    }
+
+    if (!end) {
+        return {};
+    }
+
+    // First flush any pending data
+    bool flushFinished = false;
+    while (!flushFinished) {
+        size_t const flushRemaining = CompressInto(cctx, inBuff, ZSTD_e_flush, result);
+        if (ZSTD_isError(flushRemaining)) {
+            return std::string("Flush error: ") + ZSTD_getErrorName(flushRemaining);
+        }
+        // Flush is complete when remaining is 0
+        flushFinished = (flushRemaining == 0);
+    }
+
+    // Now do the end operation
+    bool endFinished = false;
+    while (!endFinished) {
+        size_t const endRemaining = CompressInto(cctx, inBuff, ZSTD_e_end, result);
+        if (ZSTD_isError(endRemaining)) {
+            return std::string("End error: ") + ZSTD_getErrorName(endRemaining);
+        }
+        endFinished = (endRemaining == 0);
+    }
+    return {};
+}
+
+// Create and queue a worker, which deletes itself once OnOK() or OnError() has run. A worker that
+// cannot be created or queued throws a Napi::Error instead, having been freed.
+template <typename Worker, typename... Args>
+static void QueueWorker(Args&&... args) {
+    auto* const worker = new Worker(std::forward<Args>(args)...);
+    try {
+        worker->Queue();
+    } catch (...) {
+        delete worker;
+        throw;
+    }
+}
+
+class ThreadedCompressor;
+
+// Runs one CompressOp on the thread pool, then tells the compressor the operation is done
+class CompressWorker : public Napi::AsyncWorker {
+   public:
+    CompressWorker(Napi::Env env, std::shared_ptr<ThreadedCompressor*> compressor, CompressOp op)
+        : Napi::AsyncWorker(env), compressor_(std::move(compressor)), op_(std::move(op)) {}
+
+    // Compress the operation's input. Runs on the worker thread.
+    void Execute() override {
+        std::string const error = Compress(op_.cctx.get(), op_.input, op_.end, result_);
+        if (!error.empty()) {
+            SetError(error);
+        }
+    }
+
+    // Resolve with the compressed bytes
+    void OnOK() override {
+        op_.deferred.Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
+        NotifyCompressor();
+    }
+
+    // Reject with the error Execute() set
+    void OnError(const Napi::Error& e) override {
+        op_.deferred.Reject(e.Value());
+        NotifyCompressor();
+    }
+
+   private:
+    // Tell the compressor the operation is done, unless it was destroyed. The compressor holds a
+    // Ref() while operations run, so only an environment tearing down, such as a terminated
+    // Worker's, destroys it first.
+    void NotifyCompressor();
+
+    // Cleared by the compressor's destructor
+    std::shared_ptr<ThreadedCompressor*> compressor_;
+
+    CompressOp op_;
+    UninitBytes result_;
+};
+
+// A JavaScript streaming zstd compressor whose operations run on the thread pool. A streaming
+// context is stateful, so operations run one at a time, in the order they were called. Each
+// operation holds the context, so it is freed on the main thread only once neither the compressor
+// nor any operation does.
 class ThreadedCompressor : public Napi::ObjectWrap<ThreadedCompressor> {
    public:
+    // Define the JavaScript class and add it to exports
     static Napi::Object Init(Napi::Env env, Napi::Object exports);
-    ThreadedCompressor(const Napi::CallbackInfo& info);
-    ~ThreadedCompressor() override;
+
+    // new ThreadedCompressor(level | {level, threads}): create the context, throwing to JavaScript
+    // for an invalid option or a context that can't be created or configured
+    explicit ThreadedCompressor(const Napi::CallbackInfo& info);
+
+    // Tell any worker still in flight that this compressor no longer exists
+    ~ThreadedCompressor() override { *self_ = nullptr; }
+
     ThreadedCompressor(const ThreadedCompressor&) = delete;
     ThreadedCompressor& operator=(const ThreadedCompressor&) = delete;
     ThreadedCompressor(ThreadedCompressor&&) = delete;
     ThreadedCompressor& operator=(ThreadedCompressor&&) = delete;
 
-   private:
-    static Napi::FunctionReference constructor;
+    // Start the next pending operation, or release this object if there is none. Called on the
+    // main thread by the operation's worker after its promise is settled.
+    void FinishOp() {
+        if (pending_.empty()) {
+            running_ = false;
+            this->Unref();  // balances the Ref() taken in Enqueue(); may allow GC of this object
+            return;
+        }
+        RunNext();
+    }
 
-    // Promise-based methods
+   private:
+    // compressChunk(chunk): resolve with the compressed bytes zstd produces for a copy of chunk
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
+
+    // end(): resolve with the frame's remaining compressed bytes, or an empty Buffer if end() was
+    // already called
     Napi::Value End(const Napi::CallbackInfo& info);
 
-    // Thread safety
-    std::mutex mutex_;
-    ZSTD_CCtx* cctx_{nullptr};
-    bool finalized_{false};
-    size_t outBufferSize_;
+    // Queue an operation on the context, to run once every operation before it is done. end()
+    // releases this compressor's hold on the context, so the operation holding it last frees it.
+    Napi::Value Enqueue(Napi::Env env, std::vector<uint8_t>&& input, bool end);
+
+    // Queue the oldest pending operation
+    void RunNext();
+
+    // Empty after end(), and after a constructor that threw, whose object JavaScript never receives
+    std::shared_ptr<ZSTD_CCtx> cctx_;
+
+    // Shared with every worker so they know whether this compressor still exists
+    std::shared_ptr<ThreadedCompressor*> self_;
+
+    std::deque<CompressOp> pending_;
+    bool running_ = false;
 };
 
-Napi::FunctionReference ThreadedCompressor::constructor;
+void CompressWorker::NotifyCompressor() {
+    if (*compressor_ != nullptr) {
+        (*compressor_)->FinishOp();  // may release the compressor
+    }
+}
 
 Napi::Object ThreadedCompressor::Init(Napi::Env env, Napi::Object exports) {
     // Define the class and its promise-based methods
@@ -179,16 +252,13 @@ Napi::Object ThreadedCompressor::Init(Napi::Env env, Napi::Object exports) {
                                                 InstanceMethod("end", &ThreadedCompressor::End),
                                             });
 
-    // Set the constructor as a static reference for future use
-    constructor = Napi::Persistent(func);
-    constructor.SuppressDestruct();
-
     // Expose the class to JavaScript/Node.js
     exports.Set("ThreadedCompressor", func);
     return exports;
 }
 
-ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info) : Napi::ObjectWrap<ThreadedCompressor>(info) {
+ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info)
+    : Napi::ObjectWrap<ThreadedCompressor>(info), self_(std::make_shared<ThreadedCompressor*>(this)) {
     Napi::Env const env = info.Env();
     int compressionLevel = 3;  // Default compression level
     int threadCount = 0;       // Default non-multi-threaded mode
@@ -217,7 +287,7 @@ ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info) : Napi::O
             }
         }
     } else if (info.Length() > 0 && info[0].IsNumber()) {
-        // Legacy mode: just accept compression level
+        // A bare number is the compression level
         compressionLevel = info[0].As<Napi::Number>().Int32Value();
 
         // Validate compression level
@@ -228,17 +298,15 @@ ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info) : Napi::O
     }
 
     // Create the compression context
-    cctx_ = ZSTD_createCCtx();
-    if (!cctx_) {
+    std::shared_ptr<ZSTD_CCtx> cctx(ZSTD_createCCtx(), ZSTD_freeCCtx);
+    if (!cctx) {
         Napi::Error::New(env, "Failed to create ZSTD_CCtx").ThrowAsJavaScriptException();
         return;
     }
 
     // Set compression level with error checking
-    size_t result = ZSTD_CCtx_setParameter(cctx_, ZSTD_c_compressionLevel, compressionLevel);
+    size_t result = ZSTD_CCtx_setParameter(cctx.get(), ZSTD_c_compressionLevel, compressionLevel);
     if (ZSTD_isError(result)) {
-        ZSTD_freeCCtx(cctx_);
-        cctx_ = nullptr;
         Napi::Error::New(env, std::string("Failed to set compression level: ") + ZSTD_getErrorName(result))
             .ThrowAsJavaScriptException();
         return;
@@ -246,37 +314,21 @@ ThreadedCompressor::ThreadedCompressor(const Napi::CallbackInfo& info) : Napi::O
 
     // Set thread count if specified (for multithreaded compression)
     if (threadCount > 0) {
-        result = ZSTD_CCtx_setParameter(cctx_, ZSTD_c_nbWorkers, threadCount);
+        result = ZSTD_CCtx_setParameter(cctx.get(), ZSTD_c_nbWorkers, threadCount);
         if (ZSTD_isError(result)) {
-            ZSTD_freeCCtx(cctx_);
-            cctx_ = nullptr;
             Napi::Error::New(env, std::string("Failed to set worker threads: ") + ZSTD_getErrorName(result))
                 .ThrowAsJavaScriptException();
             return;
         }
     }
 
-    outBufferSize_ = ZSTD_CStreamOutSize();
-}
-
-ThreadedCompressor::~ThreadedCompressor() {
-    std::scoped_lock const lock(mutex_);
-
-    if (cctx_) {
-        ZSTD_freeCCtx(cctx_);
-        cctx_ = nullptr;
-    }
-
-    finalized_ = true;
+    cctx_ = std::move(cctx);
 }
 
 Napi::Value ThreadedCompressor::CompressChunk(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
 
-    // Lock to ensure thread safety
-    std::scoped_lock const lock(mutex_);
-
-    if (finalized_ || !cctx_) {
+    if (!cctx_) {
         Napi::Error::New(env, "Compressor has been finalized").ThrowAsJavaScriptException();
         return env.Undefined();
     }
@@ -286,57 +338,59 @@ Napi::Value ThreadedCompressor::CompressChunk(const Napi::CallbackInfo& info) {
         return env.Undefined();
     }
 
-    auto const inputBuffer = info[0].As<Napi::Buffer<uint8_t>>();
-
-    // Create a deferred promise
-    auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
-
     // Copy the data to avoid issues with buffer being modified
-    std::vector<uint8_t> dataCopy;
-    dataCopy.reserve(inputBuffer.Length());  // Pre-allocate to avoid resizing
-    dataCopy.assign(inputBuffer.Data(), inputBuffer.Data() + inputBuffer.Length());
-
-    // Create and schedule the promise worker
-    auto* worker = new CompressPromiseWorker(deferred, std::move(dataCopy), cctx_, ZSTD_e_continue);
-    worker->Queue();
-
-    return deferred->Promise();
+    auto const inputBuffer = info[0].As<Napi::Buffer<uint8_t>>();
+    return Enqueue(env, std::vector<uint8_t>(inputBuffer.Data(), inputBuffer.Data() + inputBuffer.Length()), false);
 }
 
 Napi::Value ThreadedCompressor::End(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
 
-    // Lock to ensure thread safety
-    std::scoped_lock const lock(mutex_);
-
-    if (finalized_ || !cctx_) {
+    if (!cctx_) {
         // Already finalized, return resolved promise with empty buffer
-        auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
-        deferred->Resolve(Napi::Buffer<uint8_t>::New(env, 0));
-        return deferred->Promise();
+        Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+        deferred.Resolve(Napi::Buffer<uint8_t>::New(env, 0));
+        return deferred.Promise();
     }
 
-    // Create a deferred promise
-    auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
-
-    // Create empty vector for end operation
-    std::vector<uint8_t> emptyData;
-
-    // Store the context locally so worker can use it
-    ZSTD_CCtx* ctx_for_worker = cctx_;
-    cctx_ = nullptr;  // Clear our pointer to avoid double-free
-
-    // Mark as finalized to prevent further operations
-    finalized_ = true;
-
-    // Create and schedule the promise worker
-    auto* worker = new CompressPromiseWorker(deferred, std::move(emptyData), ctx_for_worker, ZSTD_e_end);
-    worker->Queue();
-
-    return deferred->Promise();
+    return Enqueue(env, {}, true);
 }
 
-// Synchronous non-threaded compression
+Napi::Value ThreadedCompressor::Enqueue(Napi::Env env, std::vector<uint8_t>&& input, bool end) {
+    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+    Napi::Promise const promise = deferred.Promise();
+    pending_.push_back({.deferred = deferred, .input = std::move(input), .end = end, .cctx = cctx_});
+    if (end) {
+        cctx_.reset();
+    }
+    if (!running_) {
+        running_ = true;
+        this->Ref();  // keep this object alive while operations run
+        RunNext();
+    }
+    return promise;
+}
+
+void ThreadedCompressor::RunNext() {
+    CompressOp op = std::move(pending_.front());
+    pending_.pop_front();
+    Napi::Promise::Deferred const deferred = op.deferred;
+    try {
+        QueueWorker<CompressWorker>(this->Env(), self_, std::move(op));
+    } catch (const Napi::Error& e) {
+        // Later operations would skip this one's input, so fail them too
+        deferred.Reject(e.Value());
+        for (CompressOp const& skipped : pending_) {
+            skipped.deferred.Reject(e.Value());
+        }
+        pending_.clear();
+        running_ = false;
+        this->Unref();  // balances the Ref() taken in Enqueue(); may allow GC of this object
+    }
+}
+
+// compressNonThreaded(input, compressionLevel): compress input into one frame, synchronously on
+// the main thread
 static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
 
@@ -353,8 +407,13 @@ static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
         return env.Undefined();
     }
 
+    // The bound is an error code, not a size, for input past ZSTD_MAX_INPUT_SIZE
     size_t const bound = ZSTD_compressBound(inputBuffer.Length());
-    std::vector<uint8_t> compressed(bound);
+    if (ZSTD_isError(bound)) {
+        Napi::RangeError::New(env, "Input buffer is too large").ThrowAsJavaScriptException();
+        return env.Undefined();
+    }
+    UninitBytes compressed(bound);
 
     size_t const compressedSize =
         ZSTD_compress(compressed.data(), compressed.size(), inputBuffer.Data(), inputBuffer.Length(), compressionLevel);
@@ -369,156 +428,6 @@ static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
 }
 
 /*
- *  _____
- * |  __ \
- * | |  | | ___  ___ ___  _ __ ___  _ __  _ __ ___  ___ ___  ___  _ __
- * | |  | |/ _ \/ __/ _ \| '_ ` _ \| '_ \| '__/ _ \/ __/ __|/ _ \| '__|
- * | |__| |  __/ (_| (_) | | | | | | |_) | | |  __/\__ \__ \ (_) | |
- * |_____/ \___|\___\___/|_| |_| |_| .__/|_|  \___||___/___/\___/|_|
- *                                 | |
- *                                 |_|
- */
-
-// Updated Decompress Worker to handle finalization
-class DecompressPromiseWorker : public Napi::AsyncWorker {
-   public:
-    DecompressPromiseWorker(const std::shared_ptr<Napi::Promise::Deferred>& deferred, std::vector<uint8_t> input,
-                            ZSTD_DCtx* dctx, bool isEnd = false)
-        : Napi::AsyncWorker(deferred->Env()),
-          deferred_(deferred),
-          input_(std::move(input)),
-          dctx_(dctx),
-          isEnd_(isEnd) {}
-
-    void Execute() override {
-        if (!dctx_) {
-            SetError("Decompression context is invalid");
-            return;
-        }
-
-        // If this is just an 'end' call with no data, we check for truncation
-        if (isEnd_ && input_.empty()) {
-            // ZSTD_decompressStream returns 0 when a frame is completely decoded.
-            // If the context isn't at a frame boundary, it might be truncated.
-            // However, we'll focus on cleanup for this implementation.
-            ZSTD_freeDCtx(dctx_);
-            return;
-        }
-
-        ZSTD_inBuffer inBuff = {.src = input_.data(), .size = input_.size(), .pos = 0};
-        const size_t outBuffSize = ZSTD_DStreamOutSize();
-        std::vector<uint8_t> tempBuffer(outBuffSize);
-
-        while (inBuff.pos < inBuff.size) {
-            ZSTD_outBuffer outBuff = {.dst = tempBuffer.data(), .size = tempBuffer.size(), .pos = 0};
-            size_t const ret = ZSTD_decompressStream(dctx_, &outBuff, &inBuff);
-
-            if (ZSTD_isError(ret)) {
-                SetError(std::string("Decompression error: ") + ZSTD_getErrorName(ret));
-                return;
-            }
-
-            if (outBuff.pos > 0) {
-                size_t const currentSize = result_.size();
-                result_.resize(currentSize + outBuff.pos);
-                std::memcpy(result_.data() + currentSize, outBuff.dst, outBuff.pos);
-            }
-        }
-
-        if (isEnd_) {
-            ZSTD_freeDCtx(dctx_);
-        }
-    }
-
-    void OnOK() override {
-        Napi::HandleScope const scope(Env());
-        deferred_->Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
-    }
-
-    void OnError(const Napi::Error& e) override {
-        Napi::HandleScope const scope(Env());
-        deferred_->Reject(e.Value());
-    }
-
-   private:
-    std::shared_ptr<Napi::Promise::Deferred> deferred_;
-    std::vector<uint8_t> input_;
-    ZSTD_DCtx* dctx_;
-    std::vector<uint8_t> result_;
-    bool isEnd_;
-};
-
-class Decompressor : public Napi::ObjectWrap<Decompressor> {
-   public:
-    static Napi::Object Init(Napi::Env env, Napi::Object exports) {
-        Napi::Function const func = DefineClass(env, "Decompressor",
-                                                {
-                                                    InstanceMethod("decompressChunk", &Decompressor::DecompressChunk),
-                                                    InstanceMethod("end", &Decompressor::End),  // Added End
-                                                });
-        constructor = Napi::Persistent(func);
-        constructor.SuppressDestruct();
-        exports.Set("Decompressor", func);
-        return exports;
-    }
-
-    Decompressor(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Decompressor>(info), dctx_(ZSTD_createDCtx()) {}
-
-    ~Decompressor() override {
-        std::scoped_lock const lock(mutex_);
-        if (dctx_) ZSTD_freeDCtx(dctx_);
-    }
-    Decompressor(const Decompressor&) = delete;
-    Decompressor& operator=(const Decompressor&) = delete;
-    Decompressor(Decompressor&&) = delete;
-    Decompressor& operator=(Decompressor&&) = delete;
-
-    Napi::Value DecompressChunk(const Napi::CallbackInfo& info) {
-        std::scoped_lock const lock(mutex_);
-        Napi::Env const env = info.Env();
-
-        if (finalized_ || !dctx_) {
-            Napi::Error::New(env, "Decompressor finalized").ThrowAsJavaScriptException();
-            return env.Undefined();
-        }
-
-        auto inputBuffer = info[0].As<Napi::Buffer<uint8_t>>();
-        auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
-        std::vector<uint8_t> dataCopy(inputBuffer.Data(), inputBuffer.Data() + inputBuffer.Length());
-
-        (new DecompressPromiseWorker(deferred, std::move(dataCopy), dctx_))->Queue();
-        return deferred->Promise();
-    }
-
-    Napi::Value End(const Napi::CallbackInfo& info) {
-        std::scoped_lock const lock(mutex_);
-        Napi::Env const env = info.Env();
-
-        auto deferred = std::make_shared<Napi::Promise::Deferred>(env);
-
-        if (finalized_ || !dctx_) {
-            deferred->Resolve(Napi::Buffer<uint8_t>::New(env, 0));
-            return deferred->Promise();
-        }
-
-        ZSTD_DCtx* ctx_to_free = dctx_;
-        dctx_ = nullptr;  // Hand off ownership to the worker
-        finalized_ = true;
-
-        (new DecompressPromiseWorker(deferred, {}, ctx_to_free, true))->Queue();
-        return deferred->Promise();
-    }
-
-   private:
-    static Napi::FunctionReference constructor;
-    std::mutex mutex_;
-    ZSTD_DCtx* dctx_{nullptr};
-    bool finalized_{false};
-};
-
-Napi::FunctionReference Decompressor::constructor;
-
-/*
  *  _____       _ _
  * |_   _|     (_) |
  *   | |  _ __  _| |_
@@ -527,9 +436,9 @@ Napi::FunctionReference Decompressor::constructor;
  * |_____|_| |_|_|\__|
  */
 
+// Export the ThreadedCompressor class, compressNonThreaded(), and getZstdVersion()
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     ThreadedCompressor::Init(env, exports);
-    Decompressor::Init(env, exports);
     exports.Set("compressNonThreaded", Napi::Function::New(env, CompressNonThreaded));
     exports.Set("getZstdVersion", Napi::Function::New(env, GetZstdVersion));
     return exports;

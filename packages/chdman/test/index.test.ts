@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
+import events from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import worker_threads from 'node:worker_threads';
 
 import BufferUtil from '../../../src/utils/bufferUtil.js';
 import FsUtil from '../../../src/utils/fsUtil.js';
@@ -246,6 +248,28 @@ describe('openTrackReader', () => {
       }),
     ).toThrow(/cannot be extracted as cue\/bin/);
   });
+
+  it('should throw a RangeError for a track index the CHD does not have', () => {
+    const open = (): void => {
+      chdman.openTrackReader({
+        inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
+        mode: 'cuebin',
+        trackIndex: 99,
+      });
+    };
+    expect(open).toThrow(RangeError);
+    expect(open).toThrow('track index out of range');
+  });
+
+  it('should throw on a missing file', () => {
+    expect(() =>
+      chdman.openTrackReader({
+        inputFilename: path.join(FIXTURES, 'missing.chd'),
+        mode: 'cuebin',
+        trackIndex: 0,
+      }),
+    ).toThrow('failed to open CHD');
+  });
 });
 
 describe('openRawReader', () => {
@@ -274,4 +298,76 @@ describe('openRawReader', () => {
       expect(sha1(bytes)).toEqual(info.dataSha1);
     }
   });
+
+  it('should throw on a missing file', () => {
+    expect(() =>
+      chdman.openRawReader({ inputFilename: path.join(FIXTURES, 'missing.chd') }),
+    ).toThrow('failed to open CHD');
+  });
+
+  it('should reject a high-water mark of zero instead of ending early', async () => {
+    const readable = chdman.openRawReader({
+      inputFilename: path.join(FIXTURES, '2048.chd'),
+      highWaterMark: 0,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(
+      'maxBytes must be a positive number',
+    );
+  });
+
+  it('should reject a high-water mark past 64 MiB', async () => {
+    const readable = chdman.openRawReader({
+      inputFilename: path.join(FIXTURES, '2048.chd'),
+      highWaterMark: 64 * 1024 * 1024 + 1,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow('maxBytes is too large');
+  });
+
+  it('should reject a high-water mark past the largest request', async () => {
+    const readable = chdman.openRawReader({
+      inputFilename: path.join(FIXTURES, '2048.chd'),
+      highWaterMark: Number.MAX_SAFE_INTEGER * 2,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow('maxBytes is too large');
+  });
+
+  // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
+  // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
+  // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
+  // to be fixed by https://github.com/oven-sh/bun/pull/40249
+  it.skipIf(process.versions.bun)(
+    'should terminate workers with pending native reads',
+    async () => {
+      for (let i = 0; i < 20; i++) {
+        const worker = new worker_threads.Worker(
+          `const { parentPort, workerData } = require('node:worker_threads');
+         import(workerData.indexUrl).then(({ default: chdman }) => {
+           for (let j = 0; j < 32; j++) {
+             chdman
+               .openRawReader({ inputFilename: workerData.chdPath, highWaterMark: 2448 })
+               .on('error', () => {})
+               .resume();
+           }
+           parentPort.postMessage('ready');
+           setInterval(() => {}, 1000);
+         });`,
+          {
+            eval: true,
+            workerData: {
+              indexUrl: new URL('../index.ts', import.meta.url).href,
+              chdPath: path.join(FIXTURES, 'GD-ROM.chd'),
+            },
+          },
+        );
+        try {
+          await events.once(worker, 'message');
+          // Vary when the worker terminates relative to its reads
+          await new Promise((resolve) => setTimeout(resolve, i % 5));
+        } finally {
+          await worker.terminate();
+        }
+      }
+    },
+    30_000,
+  );
 });

@@ -43,22 +43,28 @@ struct Entry {
  */
 class ListJob {
    public:
-    /** Creates, registers, and starts a job; its promise rejects immediately on startup failure or settles after
-     * batches. */
+    /**
+     * Creates, registers, and starts a job. Its promise rejects immediately on a startup failure,
+     * and otherwise settles once every entry has been marshaled, batch by batch.
+     */
     static Napi::Promise Start(Napi::Env env, std::string path, uint32_t formatIndex);
 
     /** Listing jobs own a unique worker and signal and therefore cannot be copied. */
     ListJob(const ListJob&) = delete;
+
     /** Listing jobs own a unique worker and signal and therefore cannot be copy-assigned. */
     ListJob& operator=(const ListJob&) = delete;
+
     /** Listing jobs own stable addresses captured by callbacks and therefore cannot be moved. */
     ListJob(ListJob&&) = delete;
+
     /** Listing jobs own stable addresses captured by callbacks and therefore cannot be move-assigned. */
     ListJob& operator=(ListJob&&) = delete;
+
     /** Requests idempotent signal closure on every construction or worker-exit path. */
     ~ListJob() {
-        // Also covers registration/shared_ptr allocation failures before the
-        // worker starts. Release is idempotent after normal worker completion.
+        // Release is idempotent, so this is harmless after the worker or a
+        // failed start has already released, and it covers any path that hasn't
         if (signal_) {
             signal_->Release();
         }
@@ -102,6 +108,7 @@ class ListJob {
 
 void ListJob::List() {
     OpenedArchive opened;
+
     // The abort flag makes the open interruptible; without it a cancel during a
     // large solid archive's header decode would not be seen until it finished
     HRESULT const hr = OpenArchive(path_, formatIndex_, &opened, &abort_);
@@ -119,10 +126,10 @@ void ListJob::List() {
         error_ = "could not read the archive's item count; it is likely corrupt";
         return;
     }
-    // Deliberately not entries_.reserve(count): `count` comes out of an
-    // untrusted header, and a corrupt archive claiming 4 billion items would
-    // ask for ~200 GB before a single property is read. Growing instead costs
-    // an amortized reallocation, bounded by what the archive can produce.
+    // entries_ grows as items are read rather than being sized from `count`:
+    // `count` comes out of an untrusted header, and a corrupt archive claiming
+    // 4 billion items would otherwise ask for ~200 GB before a single property
+    // is read.
     for (uint32_t i = 0; i < count; i++) {
         // Checked per item, because an untrusted count makes this loop the one
         // place a listing can run long after the open has succeeded
@@ -199,15 +206,18 @@ bool ListJob::Emit(Napi::Env env) {
         const Entry& entry = entries_.front();
         Napi::Object const object = Napi::Object::New(env);
         object.Set("entryIndex", Napi::Number::New(env, entry.index));
+
         // Undefined rather than "" when the format records no name: "" is a
         // name an entry could really have
         object.Set("entryPath", entry.entryPath.has_value() ? Napi::Value(Napi::String::New(env, *entry.entryPath))
                                                             : env.Undefined());
+
         // Undefined rather than 0 when the format records no size: 0 is a real
         // length, and a single-stream member genuinely can be empty
         object.Set("size", entry.size.has_value()
                                ? Napi::Value(Napi::Number::New(env, static_cast<double>(*entry.size)))
                                : env.Undefined());
+
         // A number, left for JavaScript to format as hex
         object.Set("crc32",
                    entry.crc32.has_value() ? Napi::Value(Napi::Number::New(env, *entry.crc32)) : env.Undefined());
@@ -239,12 +249,13 @@ bool ListJob::Emit(Napi::Env env) {
 
 Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatIndex) {
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+
     // Construct JS-owned state on the loop before registering the producer.
     std::shared_ptr<ListJob> const job(new ListJob(env, deferred, std::move(path), formatIndex));
 
     // A null registry means the environment's instance data is already gone,
     // i.e. teardown. Treated like the refused registration below rather than as
-    // licence to run unregistered.
+    // license to run unregistered.
     job->registry_ = Registry(env);
     if (job->registry_) {
         // Registered before the thread starts, so no running listing is
@@ -293,22 +304,27 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
                 return false;
             }
         });
+
         // Captured as its own non-const copy so that it can be released below;
         // capturing the const `job` by copy would make the lambda's member const
         // too, `mutable` or not
         std::thread([job = std::shared_ptr<ListJob>(job)]() mutable {
             job->Run();
+
             // Request closure after queued batches drain. Teardown can also
             // close the signal independently while cancelling the producer.
             job->signal_->Release();
+
             // Copied out before the reference is dropped, because dropping it
             // may be what destroys the ListJob they are read from
             std::shared_ptr<JobRegistry> const registry = job->registry_;
             JobRegistry::Token const token = job->token_;
+
             // Also before unregistering: letting the captured shared_ptr fall
             // out of scope on its own would order ~ListJob after the
             // Unregister() below, which teardown reads as "the thread is done"
             job.reset();
+
             // Dead last: teardown is then free to let the environment finish
             // going away, so nothing may be ordered after it
             if (registry) {

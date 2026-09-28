@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
+import events from 'node:events';
 import path from 'node:path';
 import stream from 'node:stream';
+import worker_threads from 'node:worker_threads';
 
 import dolphin, { ContainerFormat } from '../index.js';
 
@@ -112,6 +114,33 @@ describe('openReader', () => {
     },
   );
 
+  it('should keep every chunk intact after later reads, including a short final chunk', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: 100_000,
+    });
+    const chunks: Buffer[] = [];
+    for await (const chunk of readable) {
+      if (!Buffer.isBuffer(chunk)) {
+        throw new TypeError('expected a Buffer chunk');
+      }
+      chunks.push(chunk);
+    }
+    expect(new Set(chunks.slice(0, -1).map((chunk) => chunk.length))).toEqual(new Set([100_000]));
+    expect(chunks.at(-1)?.length).toEqual(GAMECUBE_ISO_SIZE % 100_000);
+    expect(crypto.createHash('sha1').update(Buffer.concat(chunks)).digest('hex')).toEqual(
+      GAMECUBE_ISO_SHA1,
+    );
+  });
+
+  it('should throw on a missing file', () => {
+    expect(() =>
+      dolphin.openReader({
+        inputFilename: `${path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz')}.missing`,
+      }),
+    ).toThrow('failed to open blob');
+  });
+
   it('should not leak a handle when destroyed mid-stream', async () => {
     const readable = dolphin.openReader({
       inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.bzip2.rvz'),
@@ -134,4 +163,68 @@ describe('openReader', () => {
     again.destroy();
     expect(again).toBeInstanceOf(stream.Readable);
   });
+
+  it('should reject a high-water mark of zero instead of ending early', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: 0,
+    });
+    await expect(readable.toArray()).rejects.toThrow('maxBytes must be a positive number');
+  });
+
+  it('should reject a high-water mark past 64 MiB', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: 64 * 1024 * 1024 + 1,
+    });
+    await expect(readable.toArray()).rejects.toThrow('maxBytes is too large');
+  });
+
+  it('should reject a high-water mark past the largest request', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: Number.MAX_SAFE_INTEGER * 2,
+    });
+    await expect(readable.toArray()).rejects.toThrow('maxBytes is too large');
+  });
+
+  // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
+  // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
+  // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
+  // to be fixed by https://github.com/oven-sh/bun/pull/40249
+  it.skipIf(process.versions.bun)(
+    'should terminate workers with pending native reads',
+    async () => {
+      for (let i = 0; i < 20; i++) {
+        const worker = new worker_threads.Worker(
+          `const { parentPort, workerData } = require('node:worker_threads');
+         import(workerData.indexUrl).then(({ default: dolphin }) => {
+           for (let j = 0; j < 32; j++) {
+             dolphin
+               .openReader({ inputFilename: workerData.imagePath, highWaterMark: 2048 })
+               .on('error', () => {})
+               .resume();
+           }
+           parentPort.postMessage('ready');
+           setInterval(() => {}, 1000);
+         });`,
+          {
+            eval: true,
+            workerData: {
+              indexUrl: new URL('../index.ts', import.meta.url).href,
+              imagePath: path.join(FIXTURES, '240pSuite-GameCube-1.20.zstd.rvz'),
+            },
+          },
+        );
+        try {
+          await events.once(worker, 'message');
+          // Vary when the worker terminates relative to its reads
+          await new Promise((resolve) => setTimeout(resolve, i % 5));
+        } finally {
+          await worker.terminate();
+        }
+      }
+    },
+    30_000,
+  );
 });

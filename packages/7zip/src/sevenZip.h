@@ -61,10 +61,13 @@ HRESULT OpenArchive(const std::string& path, uint32_t formatIndex, OpenedArchive
 
 /** Reads a BSTR item property into UTF-8, returning false for missing, failed, or mismatched values. */
 bool GetStringProp(IInArchive& archive, uint32_t index, PROPID id, std::string* out);
+
 /** Reads an integer-like PROPVARIANT as 64 bits, returning false and containing conversion exceptions. */
 bool GetUInt64Prop(IInArchive& archive, uint32_t index, PROPID id, uint64_t* out);
-/** Reads an exact 32-bit unsigned item property. */
+
+/** Reads an exact 32-bit unsigned item property, returning false for missing, failed, or non-VT_UI4 values. */
 bool GetUInt32Prop(IInArchive& archive, uint32_t index, PROPID id, uint32_t* out);
+
 /** Reads a Boolean item property, treating missing or mismatched values as false. */
 bool GetBoolProp(IInArchive& archive, uint32_t index, PROPID id);
 

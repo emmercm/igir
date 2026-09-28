@@ -102,6 +102,21 @@ const DAX_ZLIB = path.join(FIXTURE_DIR, 'default-block-size', 'dax-zlib.dax');
 const DAX_NC_AREAS = path.join(FIXTURE_DIR, 'dax-nc-areas', 'dax-zlib-nc-areas.dax');
 
 /**
+ * A high-water mark that isn't a multiple of any block size. The reader reads its index this many
+ * bytes at a time, 37 CSO entries or 75 DAX frame sizes, which is fewer than the 2 KiB and 16 KiB
+ * block size fixtures and the DAX fixtures have, so reading them moves through the index.
+ */
+const SMALL_HIGH_WATER_MARK = 150;
+
+/**
+ * High-water marks to read unusual files with: one that reads less than a block from the file at a
+ * time, and one that reads more. At 300,000 bytes, a reader holds its read buffer, output chunk,
+ * and a block of decoded bytes, each at most 300,000 bytes, and index windows no larger than those
+ * files' few-KiB indexes. That's under 1 MiB, and the tests read one file at a time.
+ */
+const HIGH_WATER_MARKS = [SMALL_HIGH_WATER_MARK, 300_000];
+
+/**
  * Return the first position where two buffers differ, or -1 when they're equal. This reports a torn
  * block far more usefully than a failed `equals()`.
  */
@@ -771,6 +786,19 @@ describe('openReader', () => {
   );
 
   it.each(ALL_FIXTURES)(
+    `should decompress $label byte-exact with a ${SMALL_HIGH_WATER_MARK}-byte high-water mark`,
+    async (fixture) => {
+      const output = await BufferUtil.fromReadable(
+        maxcso.openReader({
+          inputFilename: fixture.archivePath,
+          highWaterMark: SMALL_HIGH_WATER_MARK,
+        }),
+      );
+      expect(firstMismatch(output, PAYLOAD)).toEqual(-1);
+    },
+  );
+
+  it.each(ALL_FIXTURES)(
     'should emit exactly 3000-byte chunks of $label until it runs out',
     async (fixture) => {
       const readable = maxcso.openReader({
@@ -815,6 +843,22 @@ describe('openReader', () => {
     ).rejects.toThrow('maxBytes must be a positive number');
   });
 
+  it('should reject a high-water mark past 64 MiB', async () => {
+    await expect(
+      BufferUtil.fromReadable(
+        maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 64 * 1024 * 1024 + 1 }),
+      ),
+    ).rejects.toThrow('maxBytes is too large');
+  });
+
+  it('should reject a high-water mark past the largest request', async () => {
+    await expect(
+      BufferUtil.fromReadable(
+        maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: Number.MAX_SAFE_INTEGER * 2 }),
+      ),
+    ).rejects.toThrow('maxBytes is too large');
+  });
+
   it('should reject a missing file', async () => {
     await expect(
       BufferUtil.fromReadable(
@@ -834,12 +878,89 @@ describe('openReader', () => {
     },
   );
 
+  it.each(
+    DECODE_CORRUPTIONS.flatMap((corruption) =>
+      HIGH_WATER_MARKS.map((highWaterMark) => ({ ...corruption, highWaterMark })),
+    ),
+  )(
+    'should reject $label with a $highWaterMark-byte high-water mark',
+    async ({ fixture, mutate, error, highWaterMark }) => {
+      await withMutatedFixture(fixture, mutate, async (filePath) => {
+        await expect(
+          BufferUtil.fromReadable(maxcso.openReader({ inputFilename: filePath, highWaterMark })),
+        ).rejects.toThrow(error);
+      });
+    },
+  );
+
+  it.each([
+    {
+      label: 'a non-monotonic CSO index entry past the first index window',
+      fixture: CSO1_ZLIB,
+      mutate: withUInt32(24 + 201 * 4, 0),
+      block: 200,
+      blockSize: 2048,
+    },
+    {
+      label:
+        'a DAX frame size past the first frame size window that is longer than the 32 KiB read buffer',
+      fixture: DAX_ZLIB,
+      mutate: withUInt16(32 + 76 * 4 + 75 * 2, 40_000),
+      block: 75,
+      blockSize: DAX_FRAME_SIZE,
+    },
+  ])(
+    'should emit every whole chunk before $label, then reject',
+    async ({ fixture, mutate, block, blockSize }) => {
+      await withMutatedFixture(fixture, mutate, async (filePath) => {
+        const readable = maxcso.openReader({
+          inputFilename: filePath,
+          highWaterMark: SMALL_HIGH_WATER_MARK,
+        });
+        const chunks: Buffer[] = [];
+        await expect(
+          (async (): Promise<void> => {
+            for await (const chunk of readable) {
+              if (!Buffer.isBuffer(chunk)) {
+                throw new TypeError('expected a Buffer chunk');
+              }
+              chunks.push(chunk);
+            }
+          })(),
+        ).rejects.toThrow(`block ${block} is longer than 32768 bytes`);
+
+        // The chunk that reaches the bad block is never emitted
+        const output = Buffer.concat(chunks);
+        expect(output.length).toEqual(
+          Math.floor((block * blockSize) / SMALL_HIGH_WATER_MARK) * SMALL_HIGH_WATER_MARK,
+        );
+        expect(firstMismatch(output, PAYLOAD.subarray(0, output.length))).toEqual(-1);
+      });
+    },
+  );
+
   it.each(ACCEPTANCES)('should decompress $label', async ({ fixture, mutate, output }) => {
     await withMutatedFixture(fixture, mutate, async (filePath) => {
       const actual = await BufferUtil.fromReadable(maxcso.openReader({ inputFilename: filePath }));
       expect(firstMismatch(actual, output)).toEqual(-1);
     });
   });
+
+  it.each(
+    ACCEPTANCES.flatMap((acceptance) =>
+      HIGH_WATER_MARKS.map((highWaterMark) => ({ ...acceptance, highWaterMark })),
+    ),
+  )(
+    'should decompress $label with a $highWaterMark-byte high-water mark',
+    async ({ fixture, mutate, output, highWaterMark }) => {
+      await withMutatedFixture(fixture, mutate, async (filePath) => {
+        const actual = await BufferUtil.fromReadable(
+          maxcso.openReader({ inputFilename: filePath, highWaterMark }),
+        );
+        expect(firstMismatch(actual, output)).toEqual(-1);
+      });
+    },
+  );
 
   it.each([CSO1_ZLIB, ZSO_LZ4])(
     'should decompress %s rebuilt with a shifted, padded index',
@@ -905,10 +1026,16 @@ describe('openReader', () => {
     }
   }, 30_000);
 
-  it('should terminate workers with pending native reads and info calls', async () => {
-    for (let i = 0; i < 20; i++) {
-      const worker = new worker_threads.Worker(
-        `const { parentPort, workerData } = require('node:worker_threads');
+  // TODO(cemmer): Bun, unlike Node.js, reports a terminating Worker's termination as a pending
+  // N-API exception, which node-addon-api cannot clear, so it aborts the process instead of
+  // dropping the error. igir never terminates a Worker, so only this test is affected. Expected
+  // to be fixed by https://github.com/oven-sh/bun/pull/40249
+  it.skipIf(process.versions.bun)(
+    'should terminate workers with pending native reads and info calls',
+    async () => {
+      for (let i = 0; i < 20; i++) {
+        const worker = new worker_threads.Worker(
+          `const { parentPort, workerData } = require('node:worker_threads');
          import(workerData.indexUrl).then(({ default: maxcso }) => {
            for (let j = 0; j < 32; j++) {
              maxcso
@@ -920,21 +1047,23 @@ describe('openReader', () => {
            parentPort.postMessage('ready');
            setInterval(() => {}, 1000);
          });`,
-        {
-          eval: true,
-          workerData: {
-            indexUrl: new URL('../index.ts', import.meta.url).href,
-            archivePath: path.resolve(FIXTURE_DIR, 'default-block-size', 'cso1-zlib.cso'),
+          {
+            eval: true,
+            workerData: {
+              indexUrl: new URL('../index.ts', import.meta.url).href,
+              archivePath: path.resolve(FIXTURE_DIR, 'default-block-size', 'cso1-zlib.cso'),
+            },
           },
-        },
-      );
-      try {
-        await events.once(worker, 'message');
-        // Vary when the worker terminates relative to its reads
-        await new Promise((resolve) => setTimeout(resolve, i % 5));
-      } finally {
-        await worker.terminate();
+        );
+        try {
+          await events.once(worker, 'message');
+          // Vary when the worker terminates relative to its reads
+          await new Promise((resolve) => setTimeout(resolve, i % 5));
+        } finally {
+          await worker.terminate();
+        }
       }
-    }
-  }, 30_000);
+    },
+    30_000,
+  );
 });

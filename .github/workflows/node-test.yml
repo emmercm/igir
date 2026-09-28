@@ -148,6 +148,148 @@ jobs:
       # Test the source files
       - run: npm run test:unit
 
+  # TODO(cemmer): temporary, remove once the Windows ARM64 maxcso crash's call site is known.
+  # Vitest's maxcso test process intermittently aborts (exit code 0xC0000409) after libuv's
+  # "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c", which only
+  # Windows' libuv asserts. Capture a crash dump to find which uv_async_send() races a uv_close().
+  maxcso-crash-dump:
+    needs:
+      - path-filter
+    if: ${{ needs.path-filter.outputs.should-test == 'true' }}
+    permissions:
+      contents: read # actions/checkout
+    runs-on: windows-11-arm
+    timeout-minutes: 45
+    env:
+      JOBS: max # node-gyp: compile using all available CPUs
+      DUMP_DIR: ${{ github.workspace }}\crash-dumps
+    steps:
+      # Setup and install, building every addon from source like node-unit did when it crashed
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.ref }}
+          submodules: recursive
+      - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
+      - id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
+      - run: npm ci --ignore-scripts
+      - shell: bash
+        run: |
+          rm -rf packages/*/addon-* packages/*/prebuilds*
+      - run: npm install --foreground-scripts
+
+      # Capture node.exe crashes: attach cdb to the test run when it's installed, otherwise install
+      # ProcDump as the postmortem debugger; Windows Error Reporting local dumps stay as a backstop
+      - shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${env:DUMP_DIR}" | Out-Null
+          $wer = 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting'
+          Set-ItemProperty -Path $wer -Name Disabled -Type DWord -Value 0
+          Set-ItemProperty -Path $wer -Name DontShowUI -Type DWord -Value 1
+          $localDumps = "$wer\LocalDumps\node.exe"
+          New-Item -Force -Path $localDumps | Out-Null
+          Set-ItemProperty -Path $localDumps -Name DumpFolder -Type ExpandString -Value "${env:DUMP_DIR}"
+          Set-ItemProperty -Path $localDumps -Name DumpType -Type DWord -Value 2
+          Set-ItemProperty -Path $localDumps -Name DumpCount -Type DWord -Value 5
+          Set-Service -Name WerSvc -StartupType Manual -ErrorAction Continue
+          Start-Service -Name WerSvc -ErrorAction Continue
+          Get-Service -Name WerSvc | Format-List Name, Status, StartType
+
+          $nodeVersion = node --print process.versions.node
+          $nodePdbDir = Join-Path "${env:RUNNER_TEMP}" 'node-pdb'
+          Invoke-WebRequest -Uri "https://nodejs.org/download/release/v${nodeVersion}/win-arm64/node_pdb.zip" -OutFile "${nodePdbDir}.zip"
+          Expand-Archive -Path "${nodePdbDir}.zip" -DestinationPath $nodePdbDir -Force
+          "NODE_PDB_DIR=${nodePdbDir}" >> "${env:GITHUB_ENV}"
+
+          $cdbs = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers" -Recurse -Filter cdb.exe -ErrorAction SilentlyContinue
+          $cdbs | ForEach-Object { Write-Output "Found $($_.FullName)" }
+          $cdb = $cdbs | Where-Object { $_.FullName -match '\\arm64\\' } | Select-Object -First 1
+          if ($cdb) {
+            "CDB=$($cdb.FullName)" >> "${env:GITHUB_ENV}"
+          } else {
+            Write-Output "No arm64 cdb.exe is installed, installing ProcDump as the postmortem debugger"
+            $procdumpDir = Join-Path "${env:RUNNER_TEMP}" 'procdump'
+            Invoke-WebRequest -Uri 'https://download.sysinternals.com/files/Procdump.zip' -OutFile "${procdumpDir}.zip"
+            Expand-Archive -Path "${procdumpDir}.zip" -DestinationPath $procdumpDir -Force
+            & "${procdumpDir}\procdump64a.exe" -accepteula -ma -i "${env:DUMP_DIR}"
+          }
+
+      # Run the maxcso tests until one crashes, under cdb (following child processes) when it's
+      # installed so the fail-fast prints every thread's stack as it happens
+      - id: repro
+        shell: pwsh
+        run: |
+          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\addon-maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
+          $dumpPath = "${env:DUMP_DIR}\node.dmp" -replace '\\', '/'
+          $onFailFast = ".echo FAIL-FAST; .ecxr; kn 50; ~*kn 50; .dump /ma /u ${dumpPath}; g"
+          $cdbScript = Join-Path "${env:RUNNER_TEMP}" 'cdb-commands.txt'
+          @(
+            # V8 and libuv can raise first-chance access violations they handle themselves
+            'sxd av'
+            'sxn ibp'
+            'sxn ld'
+            'sxn ud'
+            "sxe -c `"${onFailFast}`" -c2 `"${onFailFast}`" c0000409"
+            'g'
+          ) | Set-Content -Path $cdbScript
+          $nodeExe = node --print process.execPath
+
+          $attempts = 40
+          for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+            Write-Output "::group::Attempt ${attempt}"
+            if ($env:CDB) {
+              & "${env:CDB}" -g -G -o -y $symbolPath -cf $cdbScript $nodeExe node_modules\vitest\vitest.mjs run packages/maxcso/test/index.test.ts 2>&1 |
+                Tee-Object -Variable output
+            } else {
+              npx vitest run packages/maxcso/test/index.test.ts 2>&1 | Tee-Object -Variable output
+            }
+            $exitCode = $LASTEXITCODE
+            Write-Output "::endgroup::"
+            $dumps = Get-ChildItem -Path "${env:DUMP_DIR}" -Filter *.dmp -ErrorAction SilentlyContinue
+            if ($exitCode -ne 0 -or $dumps -or ($output -match 'FAIL-FAST|exited unexpectedly|Test Files.*failed')) {
+              Write-Output "Attempt ${attempt} failed with exit code ${exitCode}"
+              exit 1
+            }
+          }
+          Write-Output "No crash in ${attempts} attempts"
+
+      # Print every thread's stack from each dump, symbolized with Node's and maxcso's PDBs
+      - if: ${{ always() }}
+        shell: pwsh
+        run: |
+          $dumps = Get-ChildItem -Path "${env:DUMP_DIR}" -Filter *.dmp -ErrorAction SilentlyContinue
+          if (-not $dumps) {
+            Write-Output "No crash dumps were written"
+            exit 0
+          }
+          Copy-Item -Path packages\maxcso\addon-maxcso\build\Release\*.pdb -Destination "${env:DUMP_DIR}"
+          Copy-Item -Path "${env:NODE_PDB_DIR}\*.pdb" -Destination "${env:DUMP_DIR}" -ErrorAction SilentlyContinue
+          if (-not $env:CDB) {
+            Write-Output "No arm64 cdb.exe is installed, download the crash-dumps artifact to symbolize it"
+            exit 0
+          }
+          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\addon-maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
+          foreach ($dump in $dumps) {
+            Write-Output "::group::$($dump.Name)"
+            & "${env:CDB}" -z $dump.FullName -y $symbolPath -c '.ecxr; kn 50; !analyze -v; ~*kn 50; q'
+            Write-Output "::endgroup::"
+          }
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: maxcso-crash-dumps
+          path: ${{ env.DUMP_DIR }}
+          if-no-files-found: ignore
+
   bun-unit:
     needs:
       - path-filter

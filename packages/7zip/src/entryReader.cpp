@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "addon.h"
-#include "chunkQueue.h"
+#include "outputSlot.h"
 
 namespace sevenzip {
 
@@ -24,6 +24,7 @@ Napi::Function EntryReader::GetClass(Napi::Env env) {
 EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<EntryReader>(info) {
     try {
         Napi::Env const env = info.Env();
+
         // An entry is named by path, or not named at all. An index may accompany
         // the path, but only as a hint the Pump verifies against it.
         bool const named = info.Length() >= 3 && info[2].IsString();
@@ -59,9 +60,8 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
         }
 
         // Fixed for the life of the reader rather than passed to each read(),
-        // because the producer fills chunks to this size before publishing them
-        // and so must know it before any byte is decoded
-        size_t chunkBytes = Pump::kReadAheadBytes;
+        // so that every chunk but the last is the same size
+        size_t chunkBytes = kDefaultChunkBytes;
         if (info.Length() >= 5 && info[4].IsNumber()) {
             double const requested = info[4].As<Napi::Number>().DoubleValue();
             if (!(requested >= 1)) {
@@ -70,7 +70,11 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
                 Napi::TypeError::New(env, "chunkBytes must be at least 1").ThrowAsJavaScriptException();
                 return;
             }
-            chunkBytes = static_cast<size_t>(info[4].As<Napi::Number>().Uint32Value());
+            if (requested > static_cast<double>(kMaxChunkBytes)) {
+                Napi::RangeError::New(env, "chunkBytes is too large").ThrowAsJavaScriptException();
+                return;
+            }
+            chunkBytes = static_cast<size_t>(requested);
         }
 
         // The bridge exists before the producer does, because the producer
@@ -91,7 +95,7 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
         try {
             pump = Pump::Start(
                 info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
-                entryIndex, chunkBytes, Registry(env), [bridge]() { bridge->signal->Notify(); },
+                entryIndex, Registry(env), [bridge]() { bridge->signal->Notify(); },
                 [bridge]() {
                     // Producer thread, exactly once. Close the signal after
                     // pending delivery; teardown may close it independently.
@@ -105,6 +109,7 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
 
         bridge_ = std::move(bridge);
         pump_ = std::move(pump);
+        chunkBytes_ = chunkBytes;
         constructed_ = true;
     } catch (...) {
         // Reading the arguments allocates, creating the AsyncSignal can
@@ -122,55 +127,63 @@ EntryReader::~EntryReader() {
         // producer releases it.
         bridge_->reader = nullptr;
     }
+
     if (pump_) {
         pump_->Cancel();
     }
+
     // Drops this side's reference. If the producer is still running it holds the
     // other one and will finish unwinding on its own; nothing here waits.
     pump_.reset();
+
+    // `lent_` is released by its own destructor after this body, so only
+    // after Cancel(), which guarantees the producer has stopped writing into
+    // it; unlike Reset(), its destructor cannot throw.
 }
 
 bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferred, bool* settled) {
-    Chunk chunk;
-    ChunkQueue::Status status = ChunkQueue::Status::kEnd;
+    size_t length = 0;
+    OutputSlot::Status status = OutputSlot::Status::kEnd;
     try {
-        status = pump_->TryRead(&chunk);
+        status = pump_->TryRead(&length);
     } catch (const std::exception& e) {
         // The producer's own message, which names the archive, the entry and
-        // what went wrong with it
+        // what went wrong with it. It only throws at the end, so nothing is
+        // lent any more.
+        lent_.Reset();
         *settled = true;
         deferred.Reject(Napi::Error::New(env, e.what()).Value());
         return true;
     } catch (...) {
+        lent_.Reset();
         *settled = true;
         deferred.Reject(Napi::Error::New(env, "unknown 7-Zip read error").Value());
         return true;
     }
 
-    if (status == ChunkQueue::Status::kPending) {
+    if (status == OutputSlot::Status::kPending) {
         return false;
     }
-    if (status == ChunkQueue::Status::kEnd) {
+    if (status == OutputSlot::Status::kEnd) {
+        lent_.Reset();
         *settled = true;
         deferred.Resolve(env.Null());
         return true;
     }
 
-    // Retain ownership until both the wrapper allocation and N-API transfer
-    // succeed. Buffer::New can throw before calling napi_create_external_buffer.
-    uint8_t* raw = chunk.data.get();
-    Napi::Buffer<uint8_t> const out = Napi::Buffer<uint8_t>::New(
-        env, raw, chunk.length, [](Napi::Env /*unused*/, const uint8_t* data) { delete[] data; });
+    // The slot has handed the buffer back, so the producer is done with it
+    Napi::Buffer<uint8_t> const buffer = lent_.Value();
+    lent_.Reset();
     *settled = true;
-    if (out.IsEmpty()) {
-        // With C++ exceptions disabled, a failed New() returns an empty value
-        // and leaves a JS exception pending. Resolving with that empty value
-        // would read as the end of the entry, so reject instead.
-        deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
-                                                 : Napi::Error::New(env, "failed to allocate the read result").Value());
+    if (length == buffer.Length()) {
+        deferred.Resolve(buffer);
     } else {
-        chunk.data.release();
-        deferred.Resolve(out);
+        // Only the final chunk comes back short. A view rather than a copy, at
+        // the cost of pinning the unused tail until the view is collected.
+        deferred.Resolve(
+            buffer.Get("subarray")
+                .As<Napi::Function>()
+                .Call(buffer, {Napi::Number::New(env, 0), Napi::Number::New(env, static_cast<double>(length))}));
     }
     return true;
 }
@@ -178,10 +191,12 @@ bool EntryReader::TrySettle(Napi::Env env, const Napi::Promise::Deferred& deferr
 Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+
     // A napi_deferred may be settled exactly once, and settling twice is
     // undefined behavior rather than an error, so the catch-all below has to
     // know whether the body already got there
     bool settled = false;
+    bool parked = false;
     try {
         if (closed_) {
             settled = true;
@@ -195,17 +210,34 @@ Napi::Value EntryReader::Read(const Napi::CallbackInfo& info) {
             // was empty, which is a different answer, and a silently wrong one.
             settled = true;
             deferred.Reject(Napi::Error::New(env, "the entry reader was never opened").Value());
-        } else if (!TrySettle(env, deferred, &settled)) {
-            // The producer has not caught up, which is the uncommon case, since
-            // it runs ahead by a bounded amount. Park, holding both the object and
-            // the event loop open until it wakes us; the read above has already
-            // armed the callback that will.
+        } else {
+            // Referenced before it is lent, so that V8 cannot collect it while
+            // the producer holds its address
+            Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, chunkBytes_);
+            lent_ = Napi::Persistent(buffer);
+            pump_->Lend(buffer.Data(), buffer.Length());
+            if (!TrySettle(env, deferred, &settled)) {
+                // The producer has not filled the buffer yet, which is the
+                // common case, since it only starts once the buffer is lent.
+                // Park, holding both the object and the event loop open until it
+                // wakes us; the read above has already armed the callback that
+                // will.
+                parked = true;
+            }
+        }
+        if (parked) {
             pending_ = deferred;
             settled = true;
             Ref();
             bridge_->signal->Ref(env);
         }
     } catch (...) {
+        if (!parked) {
+            // Nothing is lent: allocating, referencing and lending all fail
+            // before the producer learns the address, and a settled read has
+            // already had its buffer handed back
+            lent_.Reset();
+        }
         if (!settled) {
             deferred.Reject(Napi::Error::New(env, "failed to start a read").Value());
         }
@@ -227,6 +259,7 @@ void EntryReader::OnProducerReady(Napi::Env env) {
         }
     } catch (...) {
         pump_->Cancel();
+        lent_.Reset();
         if (!settled) {
             try {
                 // Created before the producer started: reporting a failed
@@ -243,6 +276,7 @@ void EntryReader::OnProducerReady(Napi::Env env) {
 void EntryReader::ReleasePending(Napi::Env env) {
     pending_.reset();
     bridge_->signal->Unref(env);
+
     // Last statement, and the last use of `this` on this path: it can drop the
     // final reference to the object
     Unref();
@@ -255,11 +289,14 @@ void EntryReader::Close(const Napi::CallbackInfo& info) {
         if (pump_) {
             pump_->Cancel();
         }
+        lent_.Reset();
+
         // Copied, then cleared: Napi::Promise::Deferred is trivially copyable,
         // so moving out of the optional would leave `pending_` engaged and this
         // promise reachable a second time
         std::optional<Napi::Promise::Deferred> const pending = pending_;
         pending_.reset();
+
         // Drops this side's reference to the producer without waiting for it. The
         // producer holds the other one and unwinds on its own time.
         pump_.reset();

@@ -73,7 +73,8 @@ export interface OpenReaderOptions {
   /**
    * The `highWaterMark` of the returned stream, and so the number of bytes
    * asked of the addon per read. Omit it to take Node's own default for a
-   * {@link stream.Readable}.
+   * {@link stream.Readable}. At most 64 MiB, since every read allocates a
+   * buffer of this size.
    */
   highWaterMark?: number;
 }
@@ -110,20 +111,18 @@ interface ChdmanBinding {
 const binding = ((): ChdmanBinding => {
   try {
     // Try to load the development build
-    return require(`./build/Release/chdman.node`) as ChdmanBinding;
+    return require('./build/Release/chdman.node') as ChdmanBinding;
   } catch {
-    /* ignored */
+    try {
+      // Try to load the prebuild
+      return require(
+        `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as ChdmanBinding;
+    } catch {
+      // Try to load the postinstall build
+      return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
+    }
   }
-  try {
-    // Try to load the prebuild
-    return require(
-      `./addon-chdman/prebuilds/${os.platform()}-${os.arch()}/node.node`,
-    ) as ChdmanBinding;
-  } catch {
-    /* ignored */
-  }
-  // Try to load the postinstall build
-  return require('./addon-chdman/build/Release/chdman.node') as ChdmanBinding;
 })();
 
 /**

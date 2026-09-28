@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import worker_threads from 'node:worker_threads';
 import nodeZlib from 'node:zlib';
 
 import zlib, { ZlibCompressionLevel } from '../index.js';
@@ -42,8 +43,10 @@ describe('Deflater', () => {
   ])('should round-trip: %s', (_name, input) => {
     const deflater = new zlib.Deflater(ZlibCompressionLevel.Z_BEST_COMPRESSION);
     expect(
-      nodeZlib.inflateRawSync(Buffer.concat([deflater.compressChunk(input), deflater.end()])),
-    ).toEqual(input);
+      nodeZlib
+        .inflateRawSync(Buffer.concat([deflater.compressChunk(input), deflater.end()]))
+        .equals(input),
+    ).toEqual(true);
   });
 
   test.each(Object.entries(ZlibCompressionLevel))(
@@ -116,6 +119,33 @@ describe('Deflater', () => {
     expect(() => deflater.compressChunk(Buffer.from('bar'))).toThrow('Deflater has been finalized');
     expect(deflater.end()).toEqual(Buffer.alloc(0));
   });
+
+  it('should load in consecutive workers', async () => {
+    for (let i = 0; i < 20; i++) {
+      const worker = new worker_threads.Worker(
+        `const { parentPort, workerData } = require('node:worker_threads');
+         import(workerData.indexUrl).then(({ default: zlib }) => {
+           const deflater = new zlib.Deflater();
+           parentPort.postMessage(
+             Buffer.concat([deflater.compressChunk(Buffer.from('foo')), deflater.end()]).toString('hex'),
+           );
+           setInterval(() => {}, 1000);
+         });`,
+        {
+          eval: true,
+          workerData: { indexUrl: new URL('../index.ts', import.meta.url).href },
+        },
+      );
+      try {
+        const compressed = await new Promise<unknown>((resolve) => {
+          worker.once('message', resolve);
+        });
+        expect(compressed).toEqual('4bcbcf0700');
+      } finally {
+        await worker.terminate();
+      }
+    }
+  }, 30_000);
 
   it('should throw when compressing after the stream has been ended', () => {
     const deflater = new zlib.Deflater();

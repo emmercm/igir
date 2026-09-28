@@ -126,7 +126,7 @@ const SINGLE_STREAM_CRC32 = '266df1c3';
 /**
  * Each archive holds one 8 MiB entry. LZMA2's decoder writes up to
  * 1 MiB per call into the addon's output sink, which is what lets a single
- * decoder call fill the read-ahead queue outright. Zstd exercises repeated
+ * decoder call fill many lent buffers in a row. Zstd exercises repeated
  * smaller writes across many compressed blocks.
  *
  * The payload is compressible on purpose -- 8 MiB in, about 1.5 KiB committed,
@@ -208,9 +208,9 @@ const SPANNED_ENTRIES = [
 ];
 
 /**
- * Comfortably more than the addon's read-ahead bound, so the producer thread
- * blocks on a full queue and the queue turns over many times, while staying
- * small enough to build and drain quickly in CI.
+ * Many times the stream's read-ahead, so the producer thread blocks waiting for
+ * a buffer and is handed a new one many times over, while staying small enough
+ * to build and drain quickly in CI.
  */
 const LARGE_CONTENTS = crypto.randomBytes(8 * 1024 * 1024);
 
@@ -778,7 +778,7 @@ describe('openEntryReader', () => {
     );
   });
 
-  it('should drain an entry larger than the read-ahead bound byte-exactly', async () => {
+  it('should drain an entry many times the read-ahead byte-exactly', async () => {
     await withLargeArchive(async (largeArchive) => {
       const entries = await sevenZip.listEntries({
         inputFilename: largeArchive,
@@ -828,7 +828,20 @@ describe('openEntryReader', () => {
     });
   });
 
-  it('should close promptly while the producer is blocked on a full queue', async () => {
+  it('should reject a high-water mark past 64 MiB', async () => {
+    await expect(
+      collectChunks(
+        sevenZip.openEntryReader({
+          inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
+          format: SevenZipFormat.SEVEN_ZIP,
+          entryPath: '1kb',
+          highWaterMark: 64 * 1024 * 1024 + 1,
+        }),
+      ),
+    ).rejects.toThrow('chunkBytes is too large');
+  });
+
+  it('should close promptly while the producer is blocked waiting for a buffer', async () => {
     await withLargeArchive(async (largeArchive) => {
       const readable = sevenZip.openEntryReader({
         inputFilename: largeArchive,
@@ -1096,18 +1109,18 @@ describe('openEntryReader', () => {
   });
 
   it.each(LARGE_ENTRY_ARCHIVES)(
-    'should drain $label across the read-ahead queue',
+    'should drain $label across many lent buffers',
     async ({ format, archivePath }) => {
-      // A regression test for a deadlock in the addon's ChunkQueue, not a
+      // A regression test for a deadlock in the addon's output slot, not a
       // throughput test.
       //
-      // LZMA2's decoder writes up to 1 MiB into the output sink per call, and
-      // the queue's read-ahead bound is also about 1 MiB, so a single decoder
-      // call can push the queue from empty to completely full. The producer
-      // then parks in Write() waiting for room, and a consumer that had already
-      // been told there was nothing to read parks waiting to be woken. If that
-      // wake-up were sent only once Write() returned -- which on this path it
-      // never does -- the two threads would wait on each other forever.
+      // LZMA2's decoder writes up to 1 MiB into the output sink per call, far
+      // more than one lent buffer holds, so a single decoder call fills a
+      // buffer and then parks in Write() waiting for the next, while a
+      // consumer that had already been told there was nothing to read parks
+      // waiting to be woken. If that wake-up were sent only once Write()
+      // returned -- which on this path it never does -- the two threads would
+      // wait on each other forever.
       //
       // The archive is small but the entry is not, so the assertion that
       // matters is simply that this resolves at all. The explicit timeout is
@@ -1120,7 +1133,7 @@ describe('openEntryReader', () => {
         }),
       );
       expect(extracted.length).toEqual(LARGE_ENTRY_SIZE);
-      // Position-dependent, so a torn or reordered queue shows up here rather
+      // Position-dependent, so a torn or reordered buffer shows up here rather
       // than passing on length alone.
       expect(
         extracted.equals(Buffer.from(Array.from({ length: LARGE_ENTRY_SIZE }, (_, i) => i % 251))),

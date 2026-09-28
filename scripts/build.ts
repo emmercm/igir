@@ -242,6 +242,7 @@ await copyfiles(
     'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/programs/**',
     'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/tests/**',
     'packages/{zstd*/deps/zstd,chdman/deps/mame/3rdparty/zstd,dolphin-tool/deps/dolphin/Externals/zstd/zstd}/zlibWrapper/**',
+    'packages/zstd*/deps/zstd/lib/decompress/**',
     // zlib-ng (dolphin)
     'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/arch/**',
     'packages/dolphin-tool/deps/dolphin/Externals/zlib-ng/zlib-ng/cmake/**',

@@ -27,7 +27,8 @@ export interface OpenReaderOptions {
   /**
    * The `highWaterMark` of the returned stream, and so the number of bytes
    * asked of the addon per read. Omit it to take Node's own default for a
-   * {@link stream.Readable}.
+   * {@link stream.Readable}. At most 64 MiB, since every read allocates a
+   * buffer of this size.
    */
   highWaterMark?: number;
 }
@@ -44,38 +45,21 @@ interface MaxcsoBinding {
   openReader: (inputFilename: string) => NativeReader;
 }
 
-/**
- * Whether a loaded addon exports the functions this module calls.
- */
-function isBinding(value: unknown): value is MaxcsoBinding {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'info' in value &&
-    typeof value.info === 'function' &&
-    'openReader' in value &&
-    typeof value.openReader === 'function'
-  );
-}
-
 const binding = ((): MaxcsoBinding => {
-  let loaded: unknown;
   try {
     // Try to load the development build
-    loaded = require('./build/Release/maxcso.node');
+    return require('./build/Release/maxcso.node') as MaxcsoBinding;
   } catch {
     try {
       // Try to load the prebuild
-      loaded = require(`./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`);
+      return require(
+        `./addon-maxcso/prebuilds/${os.platform()}-${os.arch()}/node.node`,
+      ) as MaxcsoBinding;
     } catch {
       // Try to load the postinstall build
-      loaded = require('./addon-maxcso/build/Release/maxcso.node');
+      return require('./addon-maxcso/build/Release/maxcso.node') as MaxcsoBinding;
     }
   }
-  if (!isBinding(loaded)) {
-    throw new Error('the maxcso addon does not export info() and openReader()');
-  }
-  return loaded;
 })();
 
 /**
@@ -117,8 +101,9 @@ function readableFromReader(reader: NativeReader, highWaterMark?: number): strea
 
 export default {
   /**
-   * Return header information about a CSO, ZSO, or DAX file. The file is opened, and its whole
-   * index validated, on a worker thread.
+   * Return header information about a CSO, ZSO, or DAX file. The file is opened, and its header
+   * checked, on a worker thread. Its blocks aren't read, so a file that fails to decompress can
+   * still return information.
    */
   async info(options: InfoOptions): Promise<MaxcsoInfo> {
     const raw = await binding.info(options.inputFilename);
