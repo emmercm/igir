@@ -196,6 +196,82 @@ uint64_t File::Size() const {
 }
 #endif
 
+// A table of fixed-size entries in a file, read one window of entries at a time rather than all at
+// once, so its memory doesn't grow with the file. Reads are expected to move forward through it.
+template <typename T>
+class TableWindow {
+   public:
+    TableWindow() = default;
+
+    // `count` entries starting at `offset` in the file, read up to `bytes` bytes at a time
+    TableWindow(uint64_t offset, uint64_t count, size_t bytes)
+        : offset_(offset),
+          count_(count),
+          entries_(static_cast<size_t>(std::min<uint64_t>(count, std::max<size_t>(bytes / sizeof(T), 1)))) {}
+
+    // Entry `i`, or throw when it's past the end of the table. A window starting at `i` is read when
+    // `i` isn't in the current one.
+    [[nodiscard]] T At(const File& file, uint64_t i) {
+        if (i >= count_) {
+            throw std::runtime_error("entry " + std::to_string(i) + " is past the end of a " + std::to_string(count_) +
+                                     "-entry table");
+        }
+        if (i < first_ || i - first_ >= loaded_) {
+            loaded_ = 0;
+            auto const count = static_cast<size_t>(std::min<uint64_t>(entries_.size(), count_ - i));
+            file.ReadAt(offset_ + (i * sizeof(T)), std::as_writable_bytes(std::span(entries_).first(count)));
+            first_ = i;
+            loaded_ = count;
+        }
+        return entries_[static_cast<size_t>(i - first_)];
+    }
+
+   private:
+    uint64_t offset_ = 0;
+    uint64_t count_ = 0;
+    uint64_t first_ = 0;
+    size_t loaded_ = 0;
+
+    // Only ever read after being written
+    UninitVector<T> entries_;
+};
+
+// A buffer that reads a file a whole buffer at a time, so that the many small reads of a forward
+// scan become a few large ones
+class ReadAhead {
+   public:
+    ReadAhead() = default;
+
+    // A buffer of `size` bytes
+    explicit ReadAhead(size_t size) : buffer_(size) {}
+
+    // The `length` bytes at `offset` in a file of `fileSize` bytes, valid until the next call, or
+    // throw when they don't lie within the file or don't fit in the buffer. When they aren't all in
+    // the buffer, it's refilled from `offset`.
+    [[nodiscard]] std::span<const uint8_t> Fetch(const File& file, uint64_t fileSize, uint64_t offset, size_t length) {
+        if (length > buffer_.size() || offset > fileSize || length > fileSize - offset) {
+            throw std::runtime_error("cannot buffer " + std::to_string(length) + " bytes at offset " +
+                                     std::to_string(offset) + " with a " + std::to_string(buffer_.size()) +
+                                     "-byte buffer");
+        }
+        if (offset < start_ || offset - start_ > loaded_ || length > loaded_ - (offset - start_)) {
+            loaded_ = 0;
+            auto const size = static_cast<size_t>(std::min<uint64_t>(buffer_.size(), fileSize - offset));
+            file.ReadAt(offset, std::as_writable_bytes(std::span(buffer_).first(size)));
+            start_ = offset;
+            loaded_ = size;
+        }
+        return std::span<const uint8_t>(buffer_).subspan(static_cast<size_t>(offset - start_), length);
+    }
+
+   private:
+    uint64_t start_ = 0;
+    size_t loaded_ = 0;
+
+    // Only ever read after being written
+    UninitVector<uint8_t> buffer_;
+};
+
 using PathString = File::PathString;
 
 // Convert a JavaScript string to a path that File can open
@@ -335,18 +411,19 @@ enum class Open : uint8_t {
 // that would be memory-unsafe or undefined in upstream; each one says why.
 class Container {
    public:
-    // Open and parse `path`, reading its index and allocating its buffers for Open::kRead, or throw
-    Container(const PathString& path, Open open) : file_(path), fileSize_(file_.Size()) {
+    // Open and parse `path`, or throw. For Open::kRead, the index and the entries' data are read
+    // from the file `readBytes` bytes at a time, though never less than a whole entry's data.
+    Container(const PathString& path, Open open, size_t readBytes) : file_(path), fileSize_(file_.Size()) {
         if (fileSize_ < kHeaderBytes) {
             throw std::runtime_error("file is too small to be a CSO, ZSO, or DAX file");
         }
         auto const magic = ReadHeader<std::array<char, 4>>();
         if (std::memcmp(magic.data(), maxcso::DAX_MAGIC, magic.size()) == 0) {
-            ParseDax(open);
+            ParseDax(open, readBytes);
         } else if (std::memcmp(magic.data(), maxcso::CSO_MAGIC, magic.size()) == 0) {
-            ParseCso(false, open);
+            ParseCso(false, open, readBytes);
         } else if (std::memcmp(magic.data(), maxcso::ZSO_MAGIC, magic.size()) == 0) {
-            ParseCso(true, open);
+            ParseCso(true, open, readBytes);
         } else {
             throw std::runtime_error("not a CSO, ZSO, or DAX file (unrecognized magic)");
         }
@@ -359,7 +436,11 @@ class Container {
             cacheSize_ <<= 1U;
         }
         decompressor_ = NewDecompressor();
-        scratch_.resize(cacheSize_);
+
+        // CheckRead() bounds every entry's data by both cacheSize_ and the file's size, so a
+        // buffer of at least the smaller of the two holds any entry
+        data_ =
+            ReadAhead(static_cast<size_t>(std::min<uint64_t>(std::max<uint64_t>(readBytes, cacheSize_), fileSize_)));
         decoded_.resize(blockSize_);
     }
 
@@ -383,14 +464,15 @@ class Container {
 
     // Run upstream Input::ReadSector from the current position, including the calls it would make
     // next for the same index entry, and return the sectors they emit. It's empty at the end of the
-    // image. The sectors are written to the start of `dest` when it can hold them, and otherwise to
-    // this container's buffers, valid until the next call.
+    // image. Decoded sectors are written to the start of `dest` when it can hold a whole block.
+    // Otherwise, and for stored sectors, they're in this container's buffers, valid until the next
+    // call.
     std::span<const uint8_t> Next(std::span<uint8_t> dest) {
         if (pos_ >= size_) {
             return {};
         }
         Block const block = Locate(pos_);
-        return block.codec == Codec::kStored ? NextStored(block, dest) : NextCompressed(block, dest);
+        return block.codec == Codec::kStored ? NextStored(block) : NextCompressed(block, dest);
     }
 
    private:
@@ -403,8 +485,8 @@ class Container {
         return header;
     }
 
-    // Parse a CSO or ZSO header, and read its index for Open::kRead
-    void ParseCso(bool zso, Open open) {
+    // Parse a CSO or ZSO header, and set up its index for Open::kRead
+    void ParseCso(bool zso, Open open, size_t readBytes) {
         auto const header = ReadHeader<maxcso::CSOHeader>();
 
         // Copy the packed fields out before using them. Like upstream, header_size is ignored.
@@ -436,8 +518,7 @@ class Container {
             throw std::runtime_error("CSO index does not fit in the file");
         }
         if (open == Open::kRead) {
-            index_.resize(static_cast<size_t>(entries));
-            file_.ReadAt(kCsoIndexOffset, std::as_writable_bytes(std::span(index_)));
+            index_ = TableWindow<uint32_t>(kCsoIndexOffset, entries, readBytes);
         }
 
         size_ = size;
@@ -452,8 +533,8 @@ class Container {
         }
     }
 
-    // Parse a DAX header and its NC areas, and read its frame table for Open::kRead
-    void ParseDax(Open open) {
+    // Parse a DAX header and its NC areas, and set up its frame table for Open::kRead
+    void ParseDax(Open open, size_t readBytes) {
         auto const header = ReadHeader<maxcso::DAXHeader>();
         if (header.version > 1) {
             throw std::runtime_error("unsupported DAX version " + std::to_string(header.version));
@@ -491,10 +572,8 @@ class Container {
             return;
         }
 
-        index_.resize(static_cast<size_t>(frames));
-        daxSizes_.resize(static_cast<size_t>(frames));
-        file_.ReadAt(kDaxIndexOffset, std::as_writable_bytes(std::span(index_)));
-        file_.ReadAt(kDaxIndexOffset + (frames * 4), std::as_writable_bytes(std::span(daxSizes_)));
+        index_ = TableWindow<uint32_t>(kDaxIndexOffset, frames, readBytes);
+        daxSizes_ = TableWindow<uint16_t>(kDaxIndexOffset + (frames * 4), frames, readBytes);
         daxStored_.assign(static_cast<size_t>(frames), 0);
         for (const maxcso::DAXNCArea& area : ncAreas) {
             // An empty area may start anywhere, even past the last frame
@@ -513,30 +592,30 @@ class Container {
         }
     }
 
-    // Where a CSO or ZSO index entry's data starts in the file
-    [[nodiscard]] uint64_t Position(uint64_t entry) const {
+    // Where a CSO or ZSO index entry with the value `value` has its data start in the file
+    [[nodiscard]] uint64_t Position(uint32_t value) const {
         // Upstream shifts a 64-bit integer by this, which is undefined from 64
         if (shift_ >= 64) {
             throw std::runtime_error("index shift " + std::to_string(shift_) + " is 64 or more");
         }
-        return uint64_t{index_[static_cast<size_t>(entry)] & ~maxcso::CSO_INDEX_UNCOMPRESSED} << shift_;
+        return uint64_t{value & ~maxcso::CSO_INDEX_UNCOMPRESSED} << shift_;
     }
 
     // Where the entry covering `pos` is and how it's encoded, by the rules of upstream ReadSector
-    [[nodiscard]] Block Locate(uint64_t pos) const {
+    [[nodiscard]] Block Locate(uint64_t pos) {
         uint64_t const entry = pos >> blockShift_;
         auto const skip = static_cast<uint32_t>(pos & (blockSize_ - 1));
-        auto const i = static_cast<size_t>(entry);
         if (format_ == Format::kDax) {
             return {.entry = entry,
                     .skip = skip,
-                    .offset = index_[i],
-                    .length = daxSizes_[i],
-                    .codec = daxStored_[i] != 0 ? Codec::kStored : Codec::kZlib};
+                    .offset = index_.At(file_, entry),
+                    .length = daxSizes_.At(file_, entry),
+                    .codec = daxStored_[static_cast<size_t>(entry)] != 0 ? Codec::kStored : Codec::kZlib};
         }
-        uint64_t const offset = Position(entry);
-        auto const length = static_cast<uint32_t>(Position(entry + 1) - offset);
-        bool const flagged = (index_[i] & maxcso::CSO_INDEX_UNCOMPRESSED) != 0;
+        uint32_t const value = index_.At(file_, entry);
+        uint64_t const offset = Position(value);
+        auto const length = static_cast<uint32_t>(Position(index_.At(file_, entry + 1)) - offset);
+        bool const flagged = (value & maxcso::CSO_INDEX_UNCOMPRESSED) != 0;
         Codec codec = Codec::kDeflate;
         if (format_ == Format::kCso2 && length >= blockSize_) {
             codec = Codec::kStored;
@@ -567,7 +646,7 @@ class Container {
 
     // Next() for a stored entry. Upstream emits one sector per call from a stored entry,
     // starting `skip` bytes into it.
-    std::span<const uint8_t> NextStored(const Block& block, std::span<uint8_t> dest) {
+    std::span<const uint8_t> NextStored(const Block& block) {
         uint64_t const offset = block.offset + block.skip;
         uint32_t const length = block.length - block.skip;
         CheckRead(block.entry, offset, length);
@@ -579,8 +658,7 @@ class Container {
             // Upstream would fill the rest of the sector from stale memory
             ThrowTooFew(block.entry);
         }
-        std::span<uint8_t> const out = run <= dest.size() ? dest.first(run) : std::span(scratch_).first(run);
-        file_.ReadAt(offset, std::as_writable_bytes(out));
+        std::span<const uint8_t> const out = data_.Fetch(file_, fileSize_, offset, run);
         pos_ += run;
         return out;
     }
@@ -596,8 +674,7 @@ class Container {
     // of the image, and emits sectors from `skip` bytes in until the decoded bytes run out.
     std::span<const uint8_t> NextCompressed(const Block& block, std::span<uint8_t> dest) {
         CheckRead(block.entry, block.offset, block.length);
-        std::span<uint8_t> const in = std::span(scratch_).first(block.length);
-        file_.ReadAt(block.offset, std::as_writable_bytes(in));
+        std::span<const uint8_t> const in = data_.Fetch(file_, fileSize_, block.offset, block.length);
 
         // Decoded straight into `dest` when the sectors start the entry and a whole block fits. The
         // decoder gets exactly a block of space either way, so it behaves the same.
@@ -634,15 +711,14 @@ class Container {
     uint32_t cacheSize_ = 0;
     uint64_t pos_ = 0;
 
-    // Every member from here on is empty for Open::kHeader. index_ and daxSizes_ are
-    // uninitialized until read from the file.
-    UninitVector<uint32_t> index_;
-    UninitVector<uint16_t> daxSizes_;
+    // Every member from here on is empty for Open::kHeader
+    TableWindow<uint32_t> index_;
+    TableWindow<uint16_t> daxSizes_;
     std::vector<uint8_t> daxStored_;
     DecompressorPtr decompressor_;
+    ReadAhead data_;
 
     // Only ever read after being written
-    UninitVector<uint8_t> scratch_;
     UninitVector<uint8_t> decoded_;
 };
 
@@ -846,7 +922,9 @@ class MaxcsoSource {
     // in pending_, which the next read drains first.
     size_t Produce(uint8_t* out, size_t maxBytes) {
         if (!container_) {
-            container_ = std::make_unique<Container>(path_, Open::kRead);
+            // The first read's size, which is the stream's highWaterMark, sets how much the
+            // container reads from the file at a time for the rest of the stream
+            container_ = std::make_unique<Container>(path_, Open::kRead, maxBytes);
         }
         std::span<uint8_t> const dest(out, maxBytes);
         size_t written = 0;
@@ -921,7 +999,7 @@ class InfoWorker : public Napi::AsyncWorker {
     // thread.
     void Execute() override {
         try {
-            Container const container(path_, Open::kHeader);
+            Container const container(path_, Open::kHeader, 0);
             format_ = container.FormatName();
             size_ = container.Size();
             blockSize_ = container.BlockSize();
