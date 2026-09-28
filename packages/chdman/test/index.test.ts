@@ -315,12 +315,12 @@ describe('openRawReader', () => {
     );
   });
 
-  it('should reject a high-water mark too large to allocate', async () => {
+  it('should reject a high-water mark past 64 MiB', async () => {
     const readable = chdman.openRawReader({
       inputFilename: path.join(FIXTURES, '2048.chd'),
-      highWaterMark: Number.MAX_SAFE_INTEGER,
+      highWaterMark: 64 * 1024 * 1024 + 1,
     });
-    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(RangeError);
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow('maxBytes is too large');
   });
 
   it('should reject a high-water mark past the largest request', async () => {

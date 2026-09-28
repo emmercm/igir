@@ -73,7 +73,8 @@ export interface OpenReaderOptions {
   /**
    * The `highWaterMark` of the returned stream, and so the number of bytes
    * asked of the addon per read. Omit it to take Node's own default for a
-   * {@link stream.Readable}.
+   * {@link stream.Readable}. At most 64 MiB, since every read allocates a
+   * buffer of this size.
    */
   highWaterMark?: number;
 }

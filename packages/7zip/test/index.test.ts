@@ -828,17 +828,17 @@ describe('openEntryReader', () => {
     });
   });
 
-  it('should reject a high-water mark too large to allocate', async () => {
+  it('should reject a high-water mark past 64 MiB', async () => {
     await expect(
       collectChunks(
         sevenZip.openEntryReader({
           inputFilename: path.join(FIXTURE_DIR, 'four-small-files', '7z-copy.7z'),
           format: SevenZipFormat.SEVEN_ZIP,
           entryPath: '1kb',
-          highWaterMark: Number.MAX_SAFE_INTEGER,
+          highWaterMark: 64 * 1024 * 1024 + 1,
         }),
       ),
-    ).rejects.toThrow('failed to start a read');
+    ).rejects.toThrow('chunkBytes is too large');
   });
 
   it('should close promptly while the producer is blocked waiting for a buffer', async () => {

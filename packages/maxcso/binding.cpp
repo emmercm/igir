@@ -586,6 +586,11 @@ class Container {
 
 // ---- shared pull-reader scaffolding ----
 
+// The most one read() may request. Each read allocates a buffer of the requested size, and Node.js
+// 22 aborts the process when it cannot allocate one instead of throwing. This bound is far past
+// any useful read size, and small enough to allocate on 32-bit targets.
+constexpr size_t kMaxRequestBytes = 64U << 20U;  // 64 MiB
+
 // Create and queue a worker, which deletes itself once OnOK() or OnError() has run. A worker that
 // cannot be created or queued throws a Napi::Error instead, having been freed.
 template <typename Worker, typename... Args>
@@ -734,18 +739,12 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
         return deferred.Promise();
     }
     double const requested = info[0].IsNumber() ? info[0].As<Napi::Number>().DoubleValue() : 0;
-    // Bounded so the static_cast<size_t> below is defined, and to Number.MAX_SAFE_INTEGER, past
-    // which JavaScript cannot request an exact byte count
-    constexpr double kMaxRequestBytes =
-        std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
     // Also catches NaN, which fails every comparison
     if (!(requested >= 1)) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
         return deferred.Promise();
     }
-    if (requested > kMaxRequestBytes) {
-        // Too large to allocate, and reported as a failed allocation would be. On 32-bit targets
-        // that is anything past SIZE_MAX, far below Number.MAX_SAFE_INTEGER.
+    if (requested > static_cast<double>(kMaxRequestBytes)) {
         deferred.Reject(Napi::RangeError::New(env, "maxBytes is too large").Value());
         return deferred.Promise();
     }

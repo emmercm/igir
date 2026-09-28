@@ -815,12 +815,12 @@ describe('openReader', () => {
     ).rejects.toThrow('maxBytes must be a positive number');
   });
 
-  it('should reject a high-water mark too large to allocate', async () => {
+  it('should reject a high-water mark past 64 MiB', async () => {
     await expect(
       BufferUtil.fromReadable(
-        maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: Number.MAX_SAFE_INTEGER }),
+        maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: 64 * 1024 * 1024 + 1 }),
       ),
-    ).rejects.toThrow(RangeError);
+    ).rejects.toThrow('maxBytes is too large');
   });
 
   it('should reject a high-water mark past the largest request', async () => {
