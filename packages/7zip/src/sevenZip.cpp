@@ -82,7 +82,7 @@ struct Format {
  */
 const std::vector<Format>& Formats() {
     // Function-local static: initialized on first use, and the C++ runtime makes
-    // that thread-safe. Extraction opens archives from its own thread, so this
+    // that thread-safe. Archives are opened from libuv pool threads, so this
     // is genuinely reachable from more than one.
     static const std::vector<Format> formats = []() {
         EnsureInitialized();

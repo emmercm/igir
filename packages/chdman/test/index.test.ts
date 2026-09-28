@@ -68,6 +68,28 @@ describe('info', () => {
     const info = await chdman.info({ inputFilename: path.join(FIXTURES, 'GD-ROM.chd') });
     expect(info.type).toEqual(CHDType.GD_ROM);
   });
+
+  it('should reject on a missing file', async () => {
+    await expect(
+      chdman.info({ inputFilename: path.join(FIXTURES, 'missing.chd') }),
+    ).rejects.toThrow('failed to open CHD');
+  });
+
+  it('should reject on a file that is not a CHD', async () => {
+    await expect(chdman.info({ inputFilename: import.meta.filename })).rejects.toThrow(
+      'failed to open CHD',
+    );
+  });
+
+  it('should read many CHD headers concurrently', async () => {
+    const infos = await Promise.all(
+      Array.from(
+        { length: 16 },
+        async () => await chdman.info({ inputFilename: path.join(FIXTURES, '2048.chd') }),
+      ),
+    );
+    expect(new Set(infos.map((info) => info.sha1)).size).toEqual(1);
+  });
 });
 
 describe('listCdBinCueTracks', () => {
@@ -99,6 +121,16 @@ describe('listCdBinCueTracks', () => {
       }),
     ).rejects.toThrow(/cannot be extracted as cue\/bin/);
   });
+
+  it('should reject on a missing file', async () => {
+    await expect(
+      chdman.listCdBinCueTracks({
+        inputFilename: path.join(FIXTURES, 'missing.chd'),
+        binNamePattern: 'missing (Track %t).bin',
+        cueName: 'missing.cue',
+      }),
+    ).rejects.toThrow('failed to open CHD');
+  });
 });
 
 describe('listGdRomTracks', () => {
@@ -115,6 +147,16 @@ describe('listGdRomTracks', () => {
         .toSorted((a, b) => a.filename.localeCompare(b.filename))
         .map((track) => ({ name: track.filename, size: track.size })),
     ).toEqual(expected.tracks.map((track) => ({ name: track.name, size: track.size })));
+  });
+
+  it('should reject on a missing file', async () => {
+    await expect(
+      chdman.listGdRomTracks({
+        inputFilename: path.join(FIXTURES, 'missing.chd'),
+        trackBaseName: 'track',
+        gdiName: 'missing.gdi',
+      }),
+    ).rejects.toThrow('failed to open CHD');
   });
 });
 
@@ -236,39 +278,68 @@ describe('openTrackReader', () => {
     });
   });
 
-  it('should refuse to open a runaway GD-ROM cue/bin track reader', () => {
+  it('should refuse to open a runaway GD-ROM cue/bin track reader', async () => {
     // The same high-density-track frame underflow that blocks listCdBinCueTracks
     // (see that suite) must also be refused when opening a track reader directly,
-    // rather than streaming a ~10 TB runaway.
-    expect(() =>
-      chdman.openTrackReader({
-        inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
-        mode: 'cuebin',
-        trackIndex: 2,
-      }),
-    ).toThrow(/cannot be extracted as cue\/bin/);
+    // rather than streaming a ~10 TB runaway. The track is opened by the first read,
+    // so the refusal surfaces through the stream.
+    const readable = chdman.openTrackReader({
+      inputFilename: path.join(FIXTURES, 'GD-ROM.chd'),
+      mode: 'cuebin',
+      trackIndex: 2,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(
+      /cannot be extracted as cue\/bin/,
+    );
   });
 
-  it('should throw a RangeError for a track index the CHD does not have', () => {
-    const open = (): void => {
-      chdman.openTrackReader({
-        inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
-        mode: 'cuebin',
-        trackIndex: 99,
+  it('should reject with a RangeError for a track index the CHD does not have', async () => {
+    const readable = chdman.openTrackReader({
+      inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
+      mode: 'cuebin',
+      trackIndex: 99,
+    });
+    const read = BufferUtil.fromReadable(readable);
+    await expect(read).rejects.toThrow(RangeError);
+    await expect(read).rejects.toThrow('track index out of range');
+  });
+
+  it('should reject with a RangeError for a negative track index', async () => {
+    const readable = chdman.openTrackReader({
+      inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
+      mode: 'cuebin',
+      trackIndex: -1,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow(RangeError);
+  });
+
+  it('should reject on a missing file', async () => {
+    const readable = chdman.openTrackReader({
+      inputFilename: path.join(FIXTURES, 'missing.chd'),
+      mode: 'cuebin',
+      trackIndex: 0,
+    });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow('failed to open CHD');
+  });
+
+  it('should close cleanly when destroyed mid-stream', async () => {
+    const readable = chdman.openTrackReader({
+      inputFilename: path.join(FIXTURES, 'CD-ROM-large.chd'),
+      mode: 'cuebin',
+      trackIndex: 0,
+      highWaterMark: 2352,
+    });
+    await new Promise<void>((resolve, reject) => {
+      readable.once('data', () => {
+        readable.destroy();
+        resolve();
       });
-    };
-    expect(open).toThrow(RangeError);
-    expect(open).toThrow('track index out of range');
-  });
-
-  it('should throw on a missing file', () => {
-    expect(() =>
-      chdman.openTrackReader({
-        inputFilename: path.join(FIXTURES, 'missing.chd'),
-        mode: 'cuebin',
-        trackIndex: 0,
-      }),
-    ).toThrow('failed to open CHD');
+      readable.once('error', reject);
+    });
+    await new Promise<void>((resolve) => {
+      readable.once('close', resolve);
+    });
+    expect(readable.destroyed).toEqual(true);
   });
 });
 
@@ -299,10 +370,14 @@ describe('openRawReader', () => {
     }
   });
 
-  it('should throw on a missing file', () => {
-    expect(() =>
-      chdman.openRawReader({ inputFilename: path.join(FIXTURES, 'missing.chd') }),
-    ).toThrow('failed to open CHD');
+  it('should reject on a missing file', async () => {
+    const readable = chdman.openRawReader({ inputFilename: path.join(FIXTURES, 'missing.chd') });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow('failed to open CHD');
+  });
+
+  it('should reject on a file that is not a CHD', async () => {
+    const readable = chdman.openRawReader({ inputFilename: import.meta.filename });
+    await expect(BufferUtil.fromReadable(readable)).rejects.toThrow('failed to open CHD');
   });
 
   it('should reject a high-water mark of zero instead of ending early', async () => {

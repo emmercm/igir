@@ -10,6 +10,7 @@
 
 #include "addon.h"
 #include "outputSlot.h"
+#include "poolTask.h"
 
 namespace sevenzip {
 
@@ -93,16 +94,25 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
 
         std::shared_ptr<Pump> pump;
         try {
-            pump = Pump::Start(
+            pump = Pump::Create(
                 info[0].As<Napi::String>().Utf8Value(), info[1].As<Napi::Number>().Uint32Value(), std::move(entryPath),
                 entryIndex, Registry(env), [bridge]() { bridge->signal->Notify(); },
                 [bridge]() {
-                    // Producer thread, exactly once. Close the signal after
-                    // pending delivery; teardown may close it independently.
+                    // Pool or producer thread, exactly once. Close the signal
+                    // after pending delivery; teardown may close it independently.
                     bridge->signal->Release();
                 });
+
+            // The archive is opened and the entry found on the pool, never on
+            // this thread. Reads that arrive first simply park until the
+            // producer lends its first chunk, or the open fails.
+            PoolTask::Queue(
+                env, "sevenzip::EntryReader", [pump]() mutable { Pump::Run(std::move(pump)); },
+                [pump]() mutable { Pump::Abandon(std::move(pump)); });
         } catch (...) {
-            // Nothing started, so onExit will not run. Request signal closure.
+            // Either nothing was created, so onExit will never run, or the
+            // task was abandoned, which already ran it. Release() is
+            // idempotent, so request signal closure either way.
             bridge->signal->Release();
             throw;
         }
@@ -113,8 +123,7 @@ EntryReader::EntryReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Entr
         constructed_ = true;
     } catch (...) {
         // Reading the arguments allocates, creating the AsyncSignal can
-        // fail, and starting the Pump creates a std::thread, which throws
-        // std::system_error when the OS refuses
+        // fail, and queueing the pool task can fail
         Napi::Error::New(info.Env(), "failed to open the entry for reading").ThrowAsJavaScriptException();
     }
 }

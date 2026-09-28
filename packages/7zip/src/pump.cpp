@@ -28,7 +28,10 @@ namespace {
 //
 // The addon is built single-threaded, so the macro-supplied AddRef and Release
 // are non-atomic ++/--. That is safe only because every reference to these
-// objects is created, copied and released on the producer thread alone.
+// objects is created, copied and released on the producer thread alone. The
+// archive itself is opened on a pool thread and handed to the producer thread,
+// but only once the pool thread is done with it, so its references are never
+// touched from two threads at once either.
 
 // clang-format off: the macro opens a class body clang-format cannot see, so it
 // reads everything below as file scope and unindents it. The NOLINT is about
@@ -143,9 +146,9 @@ Pump::Pump(std::string path, uint32_t formatIndex, std::optional<std::string> en
       entryIndex_(entryIndex),
       slot_(std::move(onReady)) {}
 
-std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
-                                  std::optional<uint32_t> entryIndex, std::shared_ptr<JobRegistry> registry,
-                                  std::function<void()> onReady, std::function<void()> onExit) {
+std::shared_ptr<Pump> Pump::Create(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
+                                   std::optional<uint32_t> entryIndex, std::shared_ptr<JobRegistry> registry,
+                                   std::function<void()> onReady, std::function<void()> onExit) {
     // `onReady` goes through the constructor because OutputSlot holds it as a
     // const member
     std::shared_ptr<Pump> pump(
@@ -159,10 +162,10 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
         throw std::runtime_error("the 7-Zip addon is shutting down");
     }
 
-    // Registered before the thread starts, so there is no window in which a
-    // running producer is invisible to teardown. The callback captures weakly
-    // because teardown may reach for it after this Pump's last reference has
-    // been dropped; locking a dead weak_ptr is then a no-op.
+    // Registered before anything runs, so there is no window in which an open
+    // or a running producer is invisible to teardown. The callback captures
+    // weakly because teardown may reach for it after this Pump's last reference
+    // has been dropped; locking a dead weak_ptr is then a no-op.
     std::weak_ptr<Pump> const weak = pump;
     pump->token_ = pump->registry_->Register([weak]() noexcept {
         if (std::shared_ptr<Pump> const alive = weak.lock()) {
@@ -170,59 +173,120 @@ std::shared_ptr<Pump> Pump::Start(std::string path, uint32_t formatIndex, std::o
         }
     });
     if (pump->token_ == JobRegistry::kInvalidToken) {
-        // The environment is tearing down. Starting now would leave a thread
+        // The environment is tearing down. Opening now would leave work
         // nothing is waiting for.
         throw std::runtime_error("the 7-Zip addon is shutting down");
     }
-
-    // The producer holds a strong reference for as long as it runs, so the
-    // consumer can drop its own at any moment without waiting for the decoder
-    // to notice. If the last reference is this one, ~Pump runs on the producer
-    // thread after Run() returns, touching only members no one else can reach.
-    //
-    // If std::thread's constructor throws, the registration is undone and
-    // `pump` is destroyed here, so nothing was started and onExit is never
-    // called. Undoing the registration matters as much: a token left behind is
-    // a thread teardown would wait forever for.
-    try {
-        std::thread([pump]() mutable {
-            pump->Run();
-            try {
-                pump->onExit_();
-            } catch (...) {  // NOLINT(bugprone-empty-catch)
-                // Documented as non-throwing, and the only caller passes
-                // AsyncSignal::Release(), which is noexcept, but nothing
-                // enforces that on other callers, and an exception
-                // escaping a std::thread's callable calls std::terminate().
-                // Run() guards itself the same way; this is the one step
-                // outside it.
-            }
-
-            // Copied out before the reference is dropped, because dropping it
-            // may be what destroys the Pump they are read from
-            std::shared_ptr<JobRegistry> const registry = pump->registry_;
-            JobRegistry::Token const token = pump->token_;
-
-            // Released before unregistering, not after. When this is the last
-            // reference, ~Pump runs here and destroys the OutputSlot, whose
-            // ready callback holds an AsyncSignal. Letting the captured
-            // shared_ptr fall out of scope on its own would order that after
-            // the Unregister() below, which teardown reads as "the thread is
-            // done" before those objects are actually gone.
-            pump.reset();
-
-            // Dead last, after everything else this thread will ever touch
-            if (registry) {
-                registry->Unregister(token);
-            }
-        }).detach();
-    } catch (...) {
-        if (pump->registry_) {
-            pump->registry_->Unregister(pump->token_);
-        }
-        throw;
-    }
     return pump;
+}
+
+void Pump::Run(std::shared_ptr<Pump> pump) noexcept {
+    bool ready = false;
+    try {
+        ready = pump->Open();
+    } catch (...) {
+        pump->SetCurrentError();
+    }
+
+    if (ready) {
+        // The producer holds a strong reference for as long as it runs, so the
+        // consumer can drop its own at any moment without waiting for the
+        // decoder to notice. If the last reference is this one, ~Pump runs on
+        // the producer thread after it finishes, touching only members no one
+        // else can reach.
+        try {
+            std::thread([pump]() mutable {
+                try {
+                    pump->Extract();
+                } catch (...) {
+                    pump->SetCurrentError();
+                }
+                pump->Finish();
+                Exit(std::move(pump));
+            }).detach();
+            return;
+        } catch (...) {
+            // std::thread throws std::system_error when the OS refuses. The
+            // thread's copy of `pump` is gone, and this one ends the pump below.
+            try {
+                pump->SetError("failed to start extracting " + pump->EntryLabel() + " from '" + pump->path_ + "'");
+            } catch (...) {  // NOLINT(bugprone-empty-catch)
+            }
+        }
+    }
+
+    // Nothing to extract: the open failed or was cancelled. The archive, if it
+    // was opened, closes here on this pool thread.
+    pump->Finish();
+    Exit(std::move(pump));
+}
+
+void Pump::Abandon(std::shared_ptr<Pump> pump) noexcept {
+    try {
+        pump->SetError("the archive was never opened");
+    } catch (...) {  // NOLINT(bugprone-empty-catch)
+    }
+    pump->Finish();
+    Exit(std::move(pump));
+}
+
+void Pump::Exit(std::shared_ptr<Pump> pump) noexcept {
+    try {
+        pump->onExit_();
+    } catch (...) {  // NOLINT(bugprone-empty-catch)
+        // Documented as non-throwing, and the only caller passes
+        // AsyncSignal::Release(), which is noexcept, but nothing enforces that
+        // on other callers, and an exception escaping a std::thread's callable
+        // calls std::terminate().
+    }
+
+    // Copied out before the reference is dropped, because dropping it may be
+    // what destroys the Pump they are read from
+    std::shared_ptr<JobRegistry> const registry = pump->registry_;
+    JobRegistry::Token const token = pump->token_;
+
+    // Released before unregistering, not after. When this is the last
+    // reference, ~Pump runs here and destroys the OutputSlot, whose ready
+    // callback holds an AsyncSignal. Letting the shared_ptr fall out of scope
+    // on its own would order that after the Unregister() below, which teardown
+    // reads as "the pump is done" before those objects are actually gone.
+    pump.reset();
+
+    // Dead last, after everything else this thread will ever touch
+    if (registry) {
+        registry->Unregister(token);
+    }
+}
+
+void Pump::Finish() noexcept {
+    // Closed before the slot finishes, so that every file handle is released
+    // before the consumer learns the entry has ended
+    opened_.archive.Release();
+    opened_.stream.Release();
+    try {
+        // Always signal completion, on every path, so a waiting consumer cannot
+        // hang, including when the error reporting failed
+        slot_.Finish();
+    } catch (...) {  // NOLINT(bugprone-empty-catch)
+    }
+}
+
+void Pump::SetCurrentError() noexcept {
+    try {
+        try {
+            throw;
+        } catch (const std::exception& e) {
+            SetError(e.what());
+        } catch (...) {
+            // Several vendored calls throw non-std exceptions by design, and
+            // archives are untrusted input
+            SetError("unknown 7-Zip error");
+        }
+    } catch (...) {  // NOLINT(bugprone-empty-catch)
+        // The handlers above allocate a std::string and lock a mutex, so they
+        // can throw in turn. Escaping a thread's entry point, or the noexcept
+        // Run(), would call std::terminate().
+    }
 }
 
 void Pump::Cancel() noexcept {
@@ -287,35 +351,38 @@ HRESULT Pump::ResolveEntryIndex(IInArchive& archive, uint32_t* out) {
     return S_OK;
 }
 
-void Pump::Extract() {
-    // Everything 7-Zip owns lives inside this scope so that it is destroyed,
-    // and every file handle closed, before the thread exits
-    OpenedArchive opened;
-
+bool Pump::Open() {
     // Passing abort_ makes the open itself interruptible. A large solid .7z
     // decodes its header here, which is long enough that a close() during it
     // would otherwise go unobserved until the whole header had been read.
-    HRESULT hr = OpenArchive(path_, formatIndex_, &opened, &abort_);
+    HRESULT const hr = OpenArchive(path_, formatIndex_, &opened_, &abort_);
     if (hr != S_OK) {
         if (hr == E_ABORT || abort_.load(std::memory_order_relaxed)) {
-            return;  // the consumer closed during the open; not an error
+            return false;  // the consumer closed during the open; not an error
         }
         SetError(OpenErrorMessage(hr, path_, formatIndex_));
-        return;
+        return false;
     }
 
-    uint32_t index = 0;
-    hr = ResolveEntryIndex(*opened.archive, &index);
-    if (hr != S_OK) {
-        return;  // ResolveEntryIndex() already reported why
-    }
+    // ResolveEntryIndex() reports why when it fails
+    return ResolveEntryIndex(*opened_.archive, &resolvedIndex_) == S_OK &&
+           !abort_.load(std::memory_order_relaxed);
+}
+
+void Pump::Extract() {
+    // Taken over from Open() so that everything 7-Zip owns is destroyed, and
+    // every file handle closed, before this thread finishes the slot
+    OpenedArchive opened;
+    opened.archive.Attach(opened_.archive.Detach());
+    opened.stream.Attach(opened_.stream.Detach());
+    uint32_t index = resolvedIndex_;
 
     // Held through the interface pointer because the class macro makes
     // AddRef()/Release() private on the concrete class; `raw` stays valid for
     // OpResult() because `callback` owns a reference
     auto* raw = new ExtractCallback(index, slot_, abort_);
     CMyComPtr<IArchiveExtractCallback> const callback(raw);
-    hr = opened.archive->Extract(&index, 1, 0 /* testMode */, callback);
+    HRESULT const hr = opened.archive->Extract(&index, 1, 0 /* testMode */, callback);
     if (slot_.Failed()) {
         // Checked first, whatever Extract() returned: a handler may translate
         // the sink's E_FAIL into an operation result, or into S_OK for a codec
@@ -329,28 +396,6 @@ void Pump::Extract() {
     } else if (raw->OpResult() != NArchive::NExtract::NOperationResult::kOK) {
         SetError("failed to extract " + EntryLabel() + " from '" + path_ +
                  "': " + OperationResultMessage(raw->OpResult()));
-    }
-}
-
-void Pump::Run() {
-    try {
-        try {
-            Extract();
-        } catch (const std::exception& e) {
-            SetError(e.what());
-        } catch (...) {
-            SetError("unknown 7-Zip error");
-        }
-    } catch (...) {  // NOLINT(bugprone-empty-catch)
-        // The handlers above allocate a std::string and lock a mutex, so they
-        // can throw in turn. Escaping this thread's entry point would call
-        // std::terminate().
-    }
-    try {
-        // Always signal completion, on every path, so a waiting consumer cannot
-        // hang, including when the error reporting above failed
-        slot_.Finish();
-    } catch (...) {  // NOLINT(bugprone-empty-catch)
     }
 }
 

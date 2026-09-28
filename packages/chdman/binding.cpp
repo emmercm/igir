@@ -349,6 +349,24 @@ static void QueueWorker(Args&&... args) {
     }
 }
 
+// Drops a Source's last reference on the thread pool, so that its CHD closes there, as Node.js'
+// own fs.close() does. A read worker in flight may hold the other reference, in which case it
+// drops the last one at the end of its own Execute(), also on the thread pool.
+template <typename Source>
+class CloseWorker : public Napi::AsyncWorker {
+   public:
+    CloseWorker(Napi::Env env, std::shared_ptr<Source> source) : Napi::AsyncWorker(env), source_(std::move(source)) {}
+
+    // Release the Source. Runs on the worker thread.
+    void Execute() override { source_.reset(); }
+
+    // Nothing to settle: close() does not report its outcome
+    void OnOK() override {}
+
+   private:
+    std::shared_ptr<Source> source_;
+};
+
 // Runs one read() on the thread pool: fills a Buffer from a Source's Produce(), then tells the
 // Reader the read is done and settles the read's promise. Source and Reader must provide:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
@@ -375,11 +393,19 @@ class ReadWorker : public Napi::AsyncWorker {
     void Execute() override {
         try {
             n_ = source_->Produce(data_, cap_);
+        } catch (const std::out_of_range& e) {
+            // A track index the CHD doesn't have, found when the first read opens it
+            rangeError_ = true;
+            SetError(e.what());
         } catch (const std::exception& e) {
             SetError(e.what());
         } catch (...) {
             SetError("unknown CHD read error");
         }
+
+        // If the reader was closed mid-read, this is the last reference, and the CHD closes here
+        // on the thread pool rather than when this worker is destroyed on the main thread
+        source_.reset();
     }
 
     // Resolve with the bytes read: the whole Buffer, a view of its filled start, or null at the end
@@ -405,7 +431,11 @@ class ReadWorker : public Napi::AsyncWorker {
     // Reject with the error Execute() set
     void OnError(const Napi::Error& e) override {
         NotifyReader();
-        deferred_.Reject(e.Value());
+        if (rangeError_) {
+            deferred_.Reject(Napi::RangeError::New(Env(), e.Message()).Value());
+        } else {
+            deferred_.Reject(e.Value());
+        }
     }
 
    private:
@@ -422,7 +452,7 @@ class ReadWorker : public Napi::AsyncWorker {
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
 
-    // Keeps the CHD open until this worker is destroyed, even if the reader is closed or destroyed first
+    // Keeps the CHD open until Execute() is done with it, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
 
     // The Buffer that Execute() fills, and its memory
@@ -430,6 +460,9 @@ class ReadWorker : public Napi::AsyncWorker {
     uint8_t* data_;
     size_t cap_;
     size_t n_ = 0;
+
+    // Whether Execute() failed with std::out_of_range, which rejects with a RangeError
+    bool rangeError_ = false;
 };
 
 // CRTP base for the JavaScript pull readers TrackReader and RawReader, which read a Source on
@@ -437,8 +470,10 @@ class ReadWorker : public Napi::AsyncWorker {
 // in source_.
 //
 // Safety invariant: the reader and the read worker in flight each hold the Source, so it is
-// freed on the main thread only once neither does. Produce() never runs on a freed Source,
-// even if the reader is closed or destroyed mid-read.
+// freed only once neither does. Produce() never runs on a freed Source, even if the reader is
+// closed or destroyed mid-read. close() and the read worker both drop their references on the
+// thread pool; only a reader garbage collected without close() frees its Source on the main
+// thread, as Node.js does for a FileHandle that was never closed.
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
@@ -458,9 +493,22 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     // close() or while another read is in flight.
     Napi::Value Read(const Napi::CallbackInfo& info);
 
-    // Release this reader's hold on the CHD. A read worker in flight holds it too, so the
-    // CHD closes once the worker thread is done with it.
-    void Close(const Napi::CallbackInfo& /*unused*/) { source_.reset(); }
+    // Release this reader's hold on the CHD, on the thread pool. A read worker in flight holds
+    // it too, so the CHD closes once the worker thread is done with it.
+    void Close(const Napi::CallbackInfo& info) {
+        if (!source_) {
+            return;
+        }
+        // Moved out first, so that the worker's reference is never the last one while this
+        // reader's is still being dropped here on the main thread
+        std::shared_ptr<Source> source = std::move(source_);
+        try {
+            QueueWorker<CloseWorker<Source>>(info.Env(), std::move(source));
+        } catch (...) {  // NOLINT(bugprone-empty-catch)
+            // The worker could not be created or queued, so the CHD closes here instead, on the
+            // main thread, when `source` goes out of scope
+        }
+    }
 
     // Mark the read as done. Called on the main thread by the read worker after Execute has returned.
     void FinishRead() {
@@ -607,112 +655,172 @@ static Napi::Object ChdInfoToObject(Napi::Env env, const ChdInfo& info) {
     return out;
 }
 
+// Opens a CHD on the thread pool and gathers its header information and hashes
+class InfoWorker : public Napi::AsyncWorker {
+   public:
+    InfoWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::string path)
+        : Napi::AsyncWorker(env), deferred_(deferred), path_(std::move(path)) {}
+
+    // Open the CHD and gather its ChdInfo. Runs on the worker thread.
+    void Execute() override {
+        try {
+            chd_file chd;
+
+            // Opening reads the header and the hunk map, which a compressed v5 CHD stores
+            // compressed, so the map is decompressed here too
+            std::error_condition const err = chd.open(path_, false, nullptr);
+            if (err) {
+                SetError("failed to open CHD: " + err.message());
+                return;
+            }
+
+            data_.inputFile = path_;
+            data_.type = ChdTypeString(chd);
+            data_.fileVersion = chd.version();
+            data_.logicalSize = chd.logical_bytes();
+            data_.hunkSize = chd.hunk_bytes();
+            data_.totalHunks = chd.hunk_count();
+            data_.unitSize = chd.unit_bytes();
+            data_.totalUnits = chd.unit_count();
+
+            for (int i = 0; i < 4; i++) {
+                chd_codec_type const c = chd.compression(i);
+                if (c != CHD_CODEC_NONE) data_.compression.push_back(CompressionString(c));
+            }
+
+            uint64_t filesize = 0;
+
+            // Best-effort: file size is metadata only, so leave it at 0 on a length() error.
+            if (chd.file().length(filesize)) {
+                filesize = 0;
+            }
+            data_.chdSize = filesize;
+
+            util::sha1_t const sha1 = chd.sha1();
+            if (sha1 != util::sha1_t::null) {
+                data_.sha1 = sha1.as_string();
+            }
+            util::sha1_t const rawSha1 = chd.raw_sha1();
+            if (rawSha1 != util::sha1_t::null) {
+                data_.dataSha1 = rawSha1.as_string();
+            }
+
+            chd.close();
+        } catch (const std::exception& e) {
+            SetError(e.what());
+        } catch (...) {
+            SetError("unknown CHD info error");
+        }
+    }
+
+    // Resolve with the CHDInfo
+    void OnOK() override { deferred_.Resolve(ChdInfoToObject(Env(), data_)); }
+
+    // Reject with the error Execute() set
+    void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
+
+   private:
+    Napi::Promise::Deferred deferred_;
+    std::string path_;
+    ChdInfo data_;
+};
+
 // info(inputFilename): resolve a CHD's header information and hashes as a CHDInfo
 static Napi::Value Info(const Napi::CallbackInfo& info) {
     Napi::Env const env = info.Env();
-    if (info.Length() < 1 || !info[0].IsString()) {
-        Napi::TypeError::New(env, "inputFilename (string) required").ThrowAsJavaScriptException();
-        return env.Null();
-    }
-    std::string const inputPath = info[0].As<Napi::String>();
-
-    chd_file chd;
-
-    // Runs synchronously on the main thread. Opening reads the header and the hunk map, which a
-    // compressed v5 CHD stores compressed, so the map is decompressed here too.
-    std::error_condition const err = chd.open(inputPath, false, nullptr);
-    if (err) {
-        Napi::Error::New(env, "failed to open CHD: " + err.message()).ThrowAsJavaScriptException();
-        return env.Null();
-    }
-
-    ChdInfo data;
-    data.inputFile = inputPath;
-    data.type = ChdTypeString(chd);
-    data.fileVersion = chd.version();
-    data.logicalSize = chd.logical_bytes();
-    data.hunkSize = chd.hunk_bytes();
-    data.totalHunks = chd.hunk_count();
-    data.unitSize = chd.unit_bytes();
-    data.totalUnits = chd.unit_count();
-
-    for (int i = 0; i < 4; i++) {
-        chd_codec_type const c = chd.compression(i);
-        if (c != CHD_CODEC_NONE) data.compression.push_back(CompressionString(c));
-    }
-
-    uint64_t filesize = 0;
-
-    // Best-effort: file size is metadata only, so leave it at 0 on a length() error.
-    if (chd.file().length(filesize)) {
-        filesize = 0;
-    }
-    data.chdSize = filesize;
-
-    util::sha1_t const sha1 = chd.sha1();
-    if (sha1 != util::sha1_t::null) {
-        data.sha1 = sha1.as_string();
-    }
-    util::sha1_t const rawSha1 = chd.raw_sha1();
-    if (rawSha1 != util::sha1_t::null) {
-        data.dataSha1 = rawSha1.as_string();
-    }
-
-    chd.close();
-
-    Napi::Object const out = ChdInfoToObject(env, data);
-
     Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
-    deferred.Resolve(out);
+    if (info.Length() < 1 || !info[0].IsString()) {
+        deferred.Reject(Napi::TypeError::New(env, "inputFilename (string) required").Value());
+        return deferred.Promise();
+    }
+    try {
+        QueueWorker<InfoWorker>(env, deferred, info[0].As<Napi::String>().Utf8Value());
+    } catch (const Napi::Error& e) {
+        deferred.Reject(e.Value());
+    }
     return deferred.Promise();
 }
 
 // ---- chdman list tracks ----
 
-// List the tracks of a CD-ROM/GD-ROM CHD: returns the in-memory TOC text plus a
-// per-track descriptor (index, output filename, type string, data-only size).
-static Napi::Value ListTracks(const Napi::CallbackInfo& info) {
-    Napi::Env const env = info.Env();
-    if (info.Length() < 4 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsString() || !info[3].IsString()) {
-        Napi::TypeError::New(env, "listTracks(inputFilename, mode, binPatternOrBase, tocName) required")
-            .ThrowAsJavaScriptException();
-        return env.Null();
-    }
-    std::string const inputPath = info[0].As<Napi::String>();
-    int const mode = info[1].As<Napi::Number>().Int32Value();
-    std::string const binArg = info[2].As<Napi::String>();
-    std::string const tocName = info[3].As<Napi::String>();
+// Builds a CD-ROM/GD-ROM CHD's track listing on the thread pool
+class ListTracksWorker : public Napi::AsyncWorker {
+   public:
+    ListTracksWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::string path, int mode, std::string binArg,
+                     std::string tocName)
+        : Napi::AsyncWorker(env),
+          deferred_(deferred),
+          path_(std::move(path)),
+          mode_(mode),
+          binArg_(std::move(binArg)),
+          tocName_(std::move(tocName)) {}
 
-    // No serialization needed: BuildListing uses its own chd_file/cdrom_file and
-    // touches no shared state.
-    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
-    try {
-        std::string tocText;
-        std::vector<TrackOut> tracks;
-        std::string error;
-        if (!BuildListing(inputPath, mode, binArg, tocName, tocText, tracks, error)) {
-            deferred.Reject(Napi::Error::New(env, error).Value());
-            return deferred.Promise();
+    // Open the CHD and build its listing. Runs on the worker thread.
+    void Execute() override {
+        try {
+            std::string error;
+            if (!BuildListing(path_, mode_, binArg_, tocName_, tocText_, tracks_, error)) {
+                SetError(error);
+            }
+        } catch (const std::error_condition& e) {
+            SetError(e.message());
+        } catch (const std::exception& e) {
+            SetError(e.what());
+        } catch (...) {
+            SetError("unknown error listing CHD tracks");
         }
+    }
+
+    // Resolve with the TOC text and a descriptor for every track
+    void OnOK() override {
+        Napi::Env const env = Env();
         Napi::Object const out = Napi::Object::New(env);
-        out.Set("tocText", tocText);
-        Napi::Array const arr = Napi::Array::New(env, tracks.size());
-        for (uint32_t i = 0; i < tracks.size(); i++) {
+        out.Set("tocText", tocText_);
+        Napi::Array const arr = Napi::Array::New(env, tracks_.size());
+        for (uint32_t i = 0; i < tracks_.size(); i++) {
             Napi::Object const t = Napi::Object::New(env);
-            t.Set("index", Napi::Number::New(env, static_cast<double>(tracks[i].index)));
-            t.Set("filename", tracks[i].filename);
-            t.Set("type", tracks[i].type);
-            t.Set("size", Napi::Number::New(env, static_cast<double>(tracks[i].size)));
+            t.Set("index", Napi::Number::New(env, static_cast<double>(tracks_[i].index)));
+            t.Set("filename", tracks_[i].filename);
+            t.Set("type", tracks_[i].type);
+            t.Set("size", Napi::Number::New(env, static_cast<double>(tracks_[i].size)));
             arr.Set(i, t);
         }
         out.Set("tracks", arr);
-        deferred.Resolve(out);
-    } catch (const std::error_condition& e) {
-        deferred.Reject(Napi::Error::New(env, e.message()).Value());
-    } catch (const std::exception& e) {
-        deferred.Reject(Napi::Error::New(env, e.what()).Value());
-    } catch (...) {
-        deferred.Reject(Napi::Error::New(env, "unknown error listing CHD tracks").Value());
+        deferred_.Resolve(out);
+    }
+
+    // Reject with the error Execute() set
+    void OnError(const Napi::Error& e) override { deferred_.Reject(e.Value()); }
+
+   private:
+    Napi::Promise::Deferred deferred_;
+    std::string path_;
+    int mode_;
+    std::string binArg_;
+    std::string tocName_;
+    std::string tocText_;
+    std::vector<TrackOut> tracks_;
+};
+
+// List the tracks of a CD-ROM/GD-ROM CHD: resolves the in-memory TOC text plus a
+// per-track descriptor (index, output filename, type string, data-only size).
+static Napi::Value ListTracks(const Napi::CallbackInfo& info) {
+    Napi::Env const env = info.Env();
+    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+    if (info.Length() < 4 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsString() || !info[3].IsString()) {
+        deferred.Reject(
+            Napi::TypeError::New(env, "listTracks(inputFilename, mode, binPatternOrBase, tocName) required").Value());
+        return deferred.Promise();
+    }
+
+    // No serialization needed: BuildListing uses its own chd_file/cdrom_file and
+    // touches no shared state.
+    try {
+        QueueWorker<ListTracksWorker>(env, deferred, info[0].As<Napi::String>().Utf8Value(),
+                                      info[1].As<Napi::Number>().Int32Value(), info[2].As<Napi::String>().Utf8Value(),
+                                      info[3].As<Napi::String>().Utf8Value());
+    } catch (const Napi::Error& e) {
+        deferred.Reject(e.Value());
     }
     return deferred.Promise();
 }
@@ -725,11 +833,23 @@ static Napi::Value ListTracks(const Napi::CallbackInfo& info) {
 // split-bin track: the DATA FRAMES ONLY. Virtual pregap/postgap are cue/gdi
 // commands, never bytes; data-in-file pregaps are pulled from the previous track
 // via splitframes.
+//
+// The CHD is opened lazily by the first read's worker, so no filesystem I/O runs on the main thread.
 class TrackSource {
    public:
-    // Open the track, throwing std::out_of_range for a track index the CHD doesn't have
-    TrackSource(const std::string& input, int mode, int trackIndex) : mode_(mode), trackIndex_(trackIndex) {
-        std::error_condition const err = chd_.open(input, false, nullptr);
+    // Remember the track; the CHD isn't opened until the first Produce()
+    TrackSource(std::string input, int mode, int trackIndex)
+        : input_(std::move(input)), mode_(mode), trackIndex_(trackIndex) {}
+
+    // Emit up to maxBytes of this track's DATA-FRAME bytes (no pregap/postgap
+    // silence). Mirrors do_extract_cd's per-frame read/byte-swap/splitframes pull.
+    size_t Produce(uint8_t* out, size_t maxBytes);
+
+   private:
+    // Open the track, throwing std::out_of_range for a track index the CHD doesn't have. Runs on
+    // the worker thread.
+    void Open() {
+        std::error_condition const err = chd_.open(input_, false, nullptr);
         if (err) {
             throw std::runtime_error("failed to open CHD: " + err.message());
         }
@@ -756,13 +876,11 @@ class TrackSource {
             throw std::runtime_error(underflow);
         }
         actualframes_ = port_actual_frames(t);
+        opened_ = true;
     }
 
-    // Emit up to maxBytes of this track's DATA-FRAME bytes (no pregap/postgap
-    // silence). Mirrors do_extract_cd's per-frame read/byte-swap/splitframes pull.
-    size_t Produce(uint8_t* out, size_t maxBytes);
-
-   private:
+    std::string input_;
+    bool opened_ = false;
     int mode_ = MODE_CUEBIN;
     int trackIndex_ = 0;
     uint32_t chdVersion_ = 0;
@@ -778,6 +896,9 @@ class TrackSource {
 };
 
 size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
+    if (!opened_) {
+        Open();
+    }
     size_t written = 0;
     const cdrom_file::track_info& t = toc_.tracks[trackIndex_];
 
@@ -854,7 +975,9 @@ class TrackReader : public ReaderBase<TrackReader, TrackSource> {
                            });
     }
 
-    // new TrackReader(inputFilename, mode, trackIndex): open the track, throwing to JavaScript on failure
+    // new TrackReader(inputFilename, mode, trackIndex): throws to JavaScript for bad arguments; the
+    // track is opened by the first read(), which rejects with a RangeError for a track index the
+    // CHD doesn't have
     explicit TrackReader(const Napi::CallbackInfo& info) : ReaderBase<TrackReader, TrackSource>(info) {
         Napi::Env const env = info.Env();
         if (info.Length() < 3 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
@@ -867,8 +990,6 @@ class TrackReader : public ReaderBase<TrackReader, TrackSource> {
         int const trackIndex = info[2].As<Napi::Number>().Int32Value();
         try {
             source_ = std::make_shared<TrackSource>(inputPath, mode, trackIndex);
-        } catch (const std::out_of_range& e) {
-            Napi::RangeError::New(env, e.what()).ThrowAsJavaScriptException();
         } catch (const std::exception& e) {
             Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
         }
@@ -879,20 +1000,23 @@ class TrackReader : public ReaderBase<TrackReader, TrackSource> {
 
 // The full logical byte range of a RAW, HARD_DISK, or DVD CHD. Owns its own
 // chd_file and emits exactly the bytes chd_file::read_bytes would write, i.e. the
-// same bytes chdman's extractRaw would produce.
+// same bytes chdman's extractRaw would produce. The CHD is opened lazily by the first read's
+// worker, so no filesystem I/O runs on the main thread.
 class RawSource {
    public:
-    // Open the CHD, throwing on failure
-    explicit RawSource(const std::string& input) {
-        std::error_condition const err = chd_.open(input, false, nullptr);
-        if (err) {
-            throw std::runtime_error("failed to open CHD: " + err.message());
-        }
-        total_ = chd_.logical_bytes();
-    }
+    // Remember the path; the CHD isn't opened until the first Produce()
+    explicit RawSource(std::string input) : input_(std::move(input)) {}
 
-    // Emit up to maxBytes of this CHD's logical bytes starting at pos_.
+    // Emit up to maxBytes of this CHD's logical bytes starting at pos_. Runs on the worker thread.
     size_t Produce(uint8_t* out, size_t maxBytes) {
+        if (!opened_) {
+            std::error_condition const err = chd_.open(input_, false, nullptr);
+            if (err) {
+                throw std::runtime_error("failed to open CHD: " + err.message());
+            }
+            total_ = chd_.logical_bytes();
+            opened_ = true;
+        }
         if (pos_ >= total_) return 0;
 
         // Clamped to 32 bits because MAME's chd_file::read_bytes() takes a uint32_t length. A
@@ -906,6 +1030,8 @@ class RawSource {
     }
 
    private:
+    std::string input_;
+    bool opened_ = false;
     chd_file chd_;
     uint64_t total_ = 0;
     uint64_t pos_ = 0;
@@ -923,7 +1049,8 @@ class RawReader : public ReaderBase<RawReader, RawSource> {
                            });
     }
 
-    // new RawReader(inputFilename): open the CHD, throwing to JavaScript on failure
+    // new RawReader(inputFilename): throws to JavaScript for a missing filename; the CHD is
+    // opened by the first read()
     explicit RawReader(const Napi::CallbackInfo& info) : ReaderBase<RawReader, RawSource>(info) {
         Napi::Env const env = info.Env();
         if (info.Length() < 1 || !info[0].IsString()) {
@@ -931,7 +1058,7 @@ class RawReader : public ReaderBase<RawReader, RawSource> {
             return;
         }
         try {
-            source_ = std::make_shared<RawSource>(info[0].As<Napi::String>());
+            source_ = std::make_shared<RawSource>(info[0].As<Napi::String>().Utf8Value());
         } catch (const std::exception& e) {
             Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
         }

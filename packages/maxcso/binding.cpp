@@ -742,6 +742,24 @@ static void QueueWorker(Args&&... args) {
     }
 }
 
+// Drops a Source's last reference on the thread pool, so that its file closes there, as Node.js'
+// own fs.close() does. A read worker in flight may hold the other reference, in which case it
+// drops the last one at the end of its own Execute(), also on the thread pool.
+template <typename Source>
+class CloseWorker : public Napi::AsyncWorker {
+   public:
+    CloseWorker(Napi::Env env, std::shared_ptr<Source> source) : Napi::AsyncWorker(env), source_(std::move(source)) {}
+
+    // Release the Source. Runs on the worker thread.
+    void Execute() override { source_.reset(); }
+
+    // Nothing to settle: close() does not report its outcome
+    void OnOK() override {}
+
+   private:
+    std::shared_ptr<Source> source_;
+};
+
 // Runs one read() on the thread pool: fills a Buffer from a Source's Produce(), then tells the
 // Reader the read is done and settles the read's promise. Source and Reader must provide:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
@@ -773,6 +791,10 @@ class ReadWorker : public Napi::AsyncWorker {
         } catch (...) {
             SetError("unknown maxcso read error");
         }
+
+        // If the reader was closed mid-read, this is the last reference, and the file closes here
+        // on the thread pool rather than when this worker is destroyed on the main thread
+        source_.reset();
     }
 
     // Resolve with the bytes read: the whole Buffer, a view of its filled start, or null at the end
@@ -815,7 +837,7 @@ class ReadWorker : public Napi::AsyncWorker {
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
 
-    // Keeps the file open until this worker is destroyed, even if the reader is closed or destroyed first
+    // Keeps the file open until Execute() is done with it, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
 
     // The Buffer that Execute() fills, and its memory
@@ -829,8 +851,10 @@ class ReadWorker : public Napi::AsyncWorker {
 // one read at a time. Each Derived constructor stores the Source it reads from in source_.
 //
 // Safety invariant: the reader and the read worker in flight each hold the Source, so it is
-// freed on the main thread only once neither does. Produce() never runs on a freed Source,
-// even if the reader is closed or destroyed mid-read.
+// freed only once neither does. Produce() never runs on a freed Source, even if the reader is
+// closed or destroyed mid-read. close() and the read worker both drop their references on the
+// thread pool; only a reader garbage collected without close() frees its Source on the main
+// thread, as Node.js does for a FileHandle that was never closed.
 template <typename Derived, typename Source>
 class ReaderBase : public Napi::ObjectWrap<Derived> {
    public:
@@ -850,9 +874,22 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     // close() or while another read is in flight.
     Napi::Value Read(const Napi::CallbackInfo& info);
 
-    // Release this reader's hold on the file. A read worker in flight holds it too, so the
-    // file closes once the worker thread is done with it.
-    void Close(const Napi::CallbackInfo& /*unused*/) { source_.reset(); }
+    // Release this reader's hold on the file, on the thread pool. A read worker in flight holds
+    // it too, so the file closes once the worker thread is done with it.
+    void Close(const Napi::CallbackInfo& info) {
+        if (!source_) {
+            return;
+        }
+        // Moved out first, so that the worker's reference is never the last one while this
+        // reader's is still being dropped here on the main thread
+        std::shared_ptr<Source> source = std::move(source_);
+        try {
+            QueueWorker<CloseWorker<Source>>(info.Env(), std::move(source));
+        } catch (...) {  // NOLINT(bugprone-empty-catch)
+            // The worker could not be created or queued, so the file closes here instead, on the
+            // main thread, when `source` goes out of scope
+        }
+    }
 
     // Mark the read as done. Called on the main thread by the read worker after Execute has returned.
     void FinishRead() {

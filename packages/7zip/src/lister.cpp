@@ -8,12 +8,12 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <thread>
 #include <utility>
 
 #include "7zip/PropID.h"
 #include "addon.h"
 #include "asyncSignal.h"
+#include "poolTask.h"
 #include "errors.h"
 #include "sevenZip.h"
 
@@ -35,11 +35,12 @@ struct Entry {
 };
 
 /**
- * Owns one detached listing worker and incrementally marshals results on the event loop.
+ * Owns one listing task and incrementally marshals results on the event loop.
  *
- * A dedicated thread prevents expensive solid-header decoding from occupying
- * libuv's small pool and stalling unrelated filesystem, DNS, or zlib work. The
- * job self-owns and uses one AsyncSignal for delivery.
+ * The archive is opened and its items read on the libuv thread pool, as Node.js
+ * runs its own fs calls; the listing never waits on JavaScript, so it cannot
+ * hold a pool thread hostage. The job self-owns and uses one AsyncSignal for
+ * delivery.
  */
 class ListJob {
    public:
@@ -81,8 +82,11 @@ class ListJob {
           formatIndex_(formatIndex),
           failure_(Napi::Persistent(Napi::Error::New(env, "failed to build the entry list").Value())) {}
 
-    /** Contains all worker exceptions to prevent std::terminate, records terminal state, and notifies the loop. */
+    /** Contains all worker exceptions, records terminal state, and notifies the loop. */
     void Run();
+
+    /** Closes the signal after queued batches drain and gives back the registration; the job's final action. */
+    static void Exit(std::shared_ptr<ListJob> job) noexcept;
 
     /** Opens the archive and copies item properties into native records, reporting failure by throwing to Run. */
     void List();
@@ -181,10 +185,32 @@ void ListJob::Run() {
         }
     } catch (...) {  // NOLINT(bugprone-empty-catch)
         // Assigning to error_ allocates, so the handlers above can throw in
-        // turn. Escaping this thread's entry point would call std::terminate().
+        // turn, and the pool task must not throw
         failed_ = true;
     }
     signal_->Notify();
+}
+
+void ListJob::Exit(std::shared_ptr<ListJob> job) noexcept {
+    // Request closure after queued batches drain. Teardown can also close the
+    // signal independently while cancelling the listing.
+    job->signal_->Release();
+
+    // Copied out before the reference is dropped, because dropping it may be
+    // what destroys the ListJob they are read from
+    std::shared_ptr<JobRegistry> const registry = job->registry_;
+    JobRegistry::Token const token = job->token_;
+
+    // Also before unregistering: letting the shared_ptr fall out of scope on
+    // its own would order ~ListJob after the Unregister() below, which
+    // teardown reads as "the listing is done"
+    job.reset();
+
+    // Dead last: teardown is then free to let the environment finish going
+    // away, so nothing may be ordered after it
+    if (registry) {
+        registry->Unregister(token);
+    }
 }
 
 bool ListJob::Emit(Napi::Env env) {
@@ -305,36 +331,25 @@ Napi::Promise ListJob::Start(Napi::Env env, std::string path, uint32_t formatInd
             }
         });
 
-        // Captured as its own non-const copy so that it can be released below;
-        // capturing the const `job` by copy would make the lambda's member const
-        // too, `mutable` or not
-        std::thread([job = std::shared_ptr<ListJob>(job)]() mutable {
-            job->Run();
-
-            // Request closure after queued batches drain. Teardown can also
-            // close the signal independently while cancelling the producer.
-            job->signal_->Release();
-
-            // Copied out before the reference is dropped, because dropping it
-            // may be what destroys the ListJob they are read from
-            std::shared_ptr<JobRegistry> const registry = job->registry_;
-            JobRegistry::Token const token = job->token_;
-
-            // Also before unregistering: letting the captured shared_ptr fall
-            // out of scope on its own would order ~ListJob after the
-            // Unregister() below, which teardown reads as "the thread is done"
-            job.reset();
-
-            // Dead last: teardown is then free to let the environment finish
-            // going away, so nothing may be ordered after it
-            if (registry) {
-                registry->Unregister(token);
-            }
-        }).detach();
+        // Captured as their own non-const copies so that they can be released
+        // by Exit(); capturing the const `job` by copy would make the lambdas'
+        // members const too, `mutable` or not
+        PoolTask::Queue(
+            env, "sevenzip::ListEntries",
+            [job = std::shared_ptr<ListJob>(job)]() mutable {
+                job->Run();
+                Exit(std::move(job));
+            },
+            [job = std::shared_ptr<ListJob>(job)]() mutable {
+                // The pool never ran the listing, which only teardown causes,
+                // so there is no promise left to settle
+                Exit(std::move(job));
+            });
     } catch (...) {
-        // Signal initialization or thread creation failed. Nothing started,
-        // so this is the only place the registration can be given back, and
-        // the promise must be rejected here since no thread will settle it.
+        // Signal initialization or queueing the task failed. Nothing ran, so
+        // the promise must be rejected here since no task will settle it.
+        // Unregister() and Release() are idempotent, so this is harmless after
+        // an abandoned task has already given both back.
         if (job->registry_) {
             job->registry_->Unregister(job->token_);
         }
