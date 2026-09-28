@@ -823,6 +823,14 @@ describe('openReader', () => {
     ).rejects.toThrow(RangeError);
   });
 
+  it('should reject a high-water mark past the largest request', async () => {
+    await expect(
+      BufferUtil.fromReadable(
+        maxcso.openReader({ inputFilename: CSO1_ZLIB, highWaterMark: Number.MAX_SAFE_INTEGER * 2 }),
+      ),
+    ).rejects.toThrow('maxBytes is too large');
+  });
+
   it('should reject a missing file', async () => {
     await expect(
       BufferUtil.fromReadable(

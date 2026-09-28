@@ -7,6 +7,7 @@
 #include <optional>
 #include <ostream>
 #include <regex>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -331,6 +332,19 @@ static bool BuildListing(const std::string& inputPath, int mode,
 
 // ---- shared pull-reader scaffolding ----
 
+// Create and queue a worker, which deletes itself once OnOK() or OnError() has run. A worker that
+// cannot be created or queued throws a Napi::Error instead, having been freed.
+template <typename Worker, typename... Args>
+static void QueueWorker(Args&&... args) {
+    auto* const worker = new Worker(std::forward<Args>(args)...);
+    try {
+        worker->Queue();
+    } catch (...) {
+        delete worker;
+        throw;
+    }
+}
+
 // Drives a Source's Produce() on a worker thread so the (blocking, possibly
 // decompressing) CHD reads never run on the V8 main thread, then tells the Reader
 // the read is done. One template covers all reader types; they must expose
@@ -474,20 +488,24 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     // which JavaScript cannot request an exact byte count
     constexpr double kMaxRequestBytes =
         std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
-    bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
-    if (!valid) {
+    // Also catches NaN, which fails every comparison
+    if (!(requested >= 1)) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
         return deferred.Promise();
     }
-    Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
-    if (buffer.IsEmpty()) {
-        // With C++ exceptions disabled a failed New() returns an empty value and leaves a JS
-        // exception pending
-        deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
-                                                 : Napi::Error::New(env, "failed to allocate the read buffer").Value());
+    if (requested > kMaxRequestBytes) {
+        // Too large to allocate, and reported as a failed allocation would be. On 32-bit targets
+        // that is anything past SIZE_MAX, far below Number.MAX_SAFE_INTEGER.
+        deferred.Reject(Napi::RangeError::New(env, "maxBytes is too large").Value());
         return deferred.Promise();
     }
-    (new ReadWorker<ReaderBase, Source>(env, deferred, self_, source_, buffer))->Queue();
+    try {
+        Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
+        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, buffer);
+    } catch (const Napi::Error& e) {
+        deferred.Reject(e.Value());
+        return deferred.Promise();
+    }
     // OnOK()/OnError() run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its CHD) alive while the worker thread reads
@@ -772,22 +790,36 @@ size_t TrackSource::Produce(uint8_t* out, size_t maxBytes) {
                 frameofs = static_cast<int>(frame_) - static_cast<int>(t.splitframes);
             }
             const cdrom_file::track_info& st = toc_.tracks[trk];
-            frameBuf_.assign(st.datasize, 0);
+            // A whole frame that fits is read straight into `out`, and only one that doesn't
+            // goes through frameBuf_
+            bool const direct = maxBytes - written >= st.datasize;
+            uint8_t* frame = out + written;
+            if (!direct) {
+                frameBuf_.resize(st.datasize);
+                frame = frameBuf_.data();
+            }
+            std::memset(frame, 0, st.datasize);
             // read_data's bool result is intentionally ignored, matching chdman's
             // do_extract_cd (chdman.cpp line 2991): on a read miss the pre-zeroed
             // buffer is emitted as silence rather than erroring, for byte parity.
-            cdrom_->read_data(cdrom_->get_track_start_phys(trk) + frameofs, frameBuf_.data(), st.trktype, true);
+            cdrom_->read_data(cdrom_->get_track_start_phys(trk) + frameofs, frame, st.trktype, true);
             // for CDRWin and GDI audio tracks must be reversed; for GDI with CHD
             // version < 5 the source CHD audio tracks are already reversed
             const bool swap = ((mode_ == MODE_GDI && chdVersion_ > 4) || mode_ == MODE_CUEBIN) &&
                               st.trktype == cdrom_file::CD_TRACK_AUDIO;
             if (swap) {
+                std::span<uint8_t> const bytes(frame, st.datasize);
                 for (uint32_t i = 0; i + 1 < st.datasize; i += 2) {
-                    std::swap(frameBuf_[i], frameBuf_[i + 1]);
+                    std::swap(bytes[i], bytes[i + 1]);
                 }
             }
-            frameBufPos_ = 0;
             frame_++;
+            if (direct) {
+                // frameBuf_ is already drained, so the next frame is loaded next
+                written += st.datasize;
+                continue;
+            }
+            frameBufPos_ = 0;
         }
         size_t const avail = frameBuf_.size() - frameBufPos_;
         size_t const n = std::min(maxBytes - written, avail);

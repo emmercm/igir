@@ -180,6 +180,14 @@ describe('openReader', () => {
     await expect(readable.toArray()).rejects.toThrow(RangeError);
   });
 
+  it('should reject a high-water mark past the largest request', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: Number.MAX_SAFE_INTEGER * 2,
+    });
+    await expect(readable.toArray()).rejects.toThrow('maxBytes is too large');
+  });
+
   it('should terminate workers with pending native reads', async () => {
     for (let i = 0; i < 20; i++) {
       const worker = new worker_threads.Worker(

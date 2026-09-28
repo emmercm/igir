@@ -190,6 +190,19 @@ void VolumeWii::DecryptBlockData(const u8* in, u8* out, Common::AES::Context* ae
 
 // ---- shared pull-reader scaffolding ----
 
+// Create and queue a worker, which deletes itself once OnOK() or OnError() has run. A worker that
+// cannot be created or queued throws a Napi::Error instead, having been freed.
+template <typename Worker, typename... Args>
+static void QueueWorker(Args&&... args) {
+    auto* const worker = new Worker(std::forward<Args>(args)...);
+    try {
+        worker->Queue();
+    } catch (...) {
+        delete worker;
+        throw;
+    }
+}
+
 // Runs a Source's Produce() on a worker thread so blocking/decompressing blob reads
 // never run on the V8 main thread, then tells the Reader the read is done. They must expose:
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
@@ -329,20 +342,24 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     // which JavaScript cannot request an exact byte count
     constexpr double kMaxRequestBytes =
         std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
-    bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
-    if (!valid) {
+    // Also catches NaN, which fails every comparison
+    if (!(requested >= 1)) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
         return deferred.Promise();
     }
-    Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
-    if (buffer.IsEmpty()) {
-        // With C++ exceptions disabled a failed New() returns an empty value and leaves a JS
-        // exception pending
-        deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
-                                                 : Napi::Error::New(env, "failed to allocate the read buffer").Value());
+    if (requested > kMaxRequestBytes) {
+        // Too large to allocate, and reported as a failed allocation would be. On 32-bit targets
+        // that is anything past SIZE_MAX, far below Number.MAX_SAFE_INTEGER.
+        deferred.Reject(Napi::RangeError::New(env, "maxBytes is too large").Value());
         return deferred.Promise();
     }
-    (new ReadWorker<ReaderBase, Source>(env, deferred, self_, source_, buffer))->Queue();
+    try {
+        Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
+        QueueWorker<ReadWorker<ReaderBase, Source>>(env, deferred, self_, source_, buffer);
+    } catch (const Napi::Error& e) {
+        deferred.Reject(e.Value());
+        return deferred.Promise();
+    }
     // OnOK()/OnError() run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its blob) alive while the worker thread reads

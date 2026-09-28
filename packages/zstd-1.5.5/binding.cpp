@@ -1,9 +1,9 @@
 #include <napi.h>
 
-#include <cstring>
 #include <deque>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -24,6 +24,33 @@ static Napi::String GetZstdVersion(const Napi::CallbackInfo& info) {
     return Napi::String::New(info.Env(), ZSTD_versionString());
 }
 
+// A std::allocator that default-initializes elements instead of value-initializing them, so that
+// sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
+// that is written before it is read.
+template <typename T>
+struct DefaultInitAllocator : std::allocator<T> {
+    template <typename U>
+    struct rebind {
+        using other = DefaultInitAllocator<U>;
+    };
+
+    DefaultInitAllocator() = default;
+    template <typename U>
+    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions): allocators must convert implicitly
+    DefaultInitAllocator(const DefaultInitAllocator<U>& /*unused*/) noexcept {}
+
+    template <typename U>
+    void construct(U* ptr) noexcept(std::is_nothrow_default_constructible_v<U>) {
+        ::new (static_cast<void*>(ptr)) U;
+    }
+    template <typename U, typename... Args>
+    void construct(U* ptr, Args&&... args) {
+        std::construct_at(ptr, std::forward<Args>(args)...);
+    }
+};
+
+using UninitBytes = std::vector<uint8_t, DefaultInitAllocator<uint8_t>>;
+
 // One compressChunk() or end() call. `deferred` has no default member initializer because Deferred
 // has no default constructor, constructing one creating a promise; Enqueue() always sets it.
 struct CompressOp {  // NOLINT(cppcoreguidelines-pro-type-member-init)
@@ -35,24 +62,27 @@ struct CompressOp {  // NOLINT(cppcoreguidelines-pro-type-member-init)
     std::shared_ptr<ZSTD_CCtx> cctx;
 };
 
-// Append everything in the output buffer written so far to result
-static void AppendOutput(const ZSTD_outBuffer& outBuff, std::vector<uint8_t>& result) {
-    if (outBuff.pos > 0) {
-        size_t const currentSize = result.size();
-        result.resize(currentSize + outBuff.pos);
-        std::memcpy(result.data() + currentSize, outBuff.dst, outBuff.pos);
-    }
+// Run one ZSTD_compressStream2() call that writes straight onto the end of result. It is given
+// exactly ZSTD_CStreamOutSize() bytes of output space every time, which zstd's output can depend
+// on, so the frame is the same as one compressed through a fixed buffer of that size.
+static size_t CompressInto(ZSTD_CCtx* cctx, ZSTD_inBuffer& inBuff, ZSTD_EndDirective op, UninitBytes& result) {
+    size_t const start = result.size();
+    result.resize(start + ZSTD_CStreamOutSize());
+    ZSTD_outBuffer outBuff = {.dst = result.data() + start, .size = ZSTD_CStreamOutSize(), .pos = 0};
+    size_t const remaining = ZSTD_compressStream2(cctx, &outBuff, &inBuff, op);
+    result.resize(start + outBuff.pos);
+    return remaining;
 }
 
 // Compress input, then end the frame if end, returning an error message or an empty string
-static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, bool end,
-                            std::vector<uint8_t>& result) {
-    // Preallocate the result buffer to minimize reallocations during runtime
+static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, bool end, UninitBytes& result) {
+    // Preallocate the result buffer to minimize reallocations during runtime. Each call needs a
+    // full ZSTD_CStreamOutSize() of room past what it has written so far.
     if (!input.empty()) {
         // The bound is an error code, not a size, for input past ZSTD_MAX_INPUT_SIZE; the
         // reservation is only a hint, so skip it then
         size_t const bound = ZSTD_compressBound(input.size());
-        result.reserve(ZSTD_isError(bound) ? 0 : bound);
+        result.reserve((ZSTD_isError(bound) ? 0 : bound) + ZSTD_CStreamOutSize());
     } else if (end) {
         result.reserve(ZSTD_CStreamOutSize());
     }
@@ -60,17 +90,12 @@ static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, 
     // Setup input buffer
     ZSTD_inBuffer inBuff = {.src = input.data(), .size = input.size(), .pos = 0};
 
-    // Use a fixed output buffer size that's efficient for zstd
-    std::vector<uint8_t> outBuffer(ZSTD_CStreamOutSize());
-
     // Regular compression operation
     while (inBuff.pos < inBuff.size) {
-        ZSTD_outBuffer outBuff = {.dst = outBuffer.data(), .size = outBuffer.size(), .pos = 0};
-        size_t const remaining = ZSTD_compressStream2(cctx, &outBuff, &inBuff, ZSTD_e_continue);
+        size_t const remaining = CompressInto(cctx, inBuff, ZSTD_e_continue, result);
         if (ZSTD_isError(remaining)) {
             return std::string("Compression error: ") + ZSTD_getErrorName(remaining);
         }
-        AppendOutput(outBuff, result);
     }
 
     if (!end) {
@@ -80,12 +105,10 @@ static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, 
     // First flush any pending data
     bool flushFinished = false;
     while (!flushFinished) {
-        ZSTD_outBuffer outBuff = {.dst = outBuffer.data(), .size = outBuffer.size(), .pos = 0};
-        size_t const flushRemaining = ZSTD_compressStream2(cctx, &outBuff, &inBuff, ZSTD_e_flush);
+        size_t const flushRemaining = CompressInto(cctx, inBuff, ZSTD_e_flush, result);
         if (ZSTD_isError(flushRemaining)) {
             return std::string("Flush error: ") + ZSTD_getErrorName(flushRemaining);
         }
-        AppendOutput(outBuff, result);
         // Flush is complete when remaining is 0
         flushFinished = (flushRemaining == 0);
     }
@@ -93,12 +116,10 @@ static std::string Compress(ZSTD_CCtx* cctx, const std::vector<uint8_t>& input, 
     // Now do the end operation
     bool endFinished = false;
     while (!endFinished) {
-        ZSTD_outBuffer outBuff = {.dst = outBuffer.data(), .size = outBuffer.size(), .pos = 0};
-        size_t const endRemaining = ZSTD_compressStream2(cctx, &outBuff, &inBuff, ZSTD_e_end);
+        size_t const endRemaining = CompressInto(cctx, inBuff, ZSTD_e_end, result);
         if (ZSTD_isError(endRemaining)) {
             return std::string("End error: ") + ZSTD_getErrorName(endRemaining);
         }
-        AppendOutput(outBuff, result);
         endFinished = (endRemaining == 0);
     }
     return {};
@@ -151,7 +172,7 @@ class CompressWorker : public Napi::AsyncWorker {
     // Cleared by the compressor's destructor
     std::shared_ptr<ThreadedCompressor*> compressor_;
     CompressOp op_;
-    std::vector<uint8_t> result_;
+    UninitBytes result_;
 };
 
 // A streaming context is stateful, so operations run one at a time, in the order they were
@@ -373,7 +394,7 @@ static Napi::Value CompressNonThreaded(const Napi::CallbackInfo& info) {
         Napi::RangeError::New(env, "Input buffer is too large").ThrowAsJavaScriptException();
         return env.Undefined();
     }
-    std::vector<uint8_t> compressed(bound);
+    UninitBytes compressed(bound);
 
     size_t const compressedSize =
         ZSTD_compress(compressed.data(), compressed.size(), inputBuffer.Data(), inputBuffer.Length(), compressionLevel);

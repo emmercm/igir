@@ -2,7 +2,10 @@
 
 #include <limits>
 #include <memory>
+#include <new>
 #include <sstream>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "deps/zlib/zlib.h"
@@ -15,6 +18,31 @@
 #define DEF_MEM_LEVEL MAX_MEM_LEVEL
 #endif
 #endif
+
+// A std::allocator that default-initializes elements instead of value-initializing them, so that
+// sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
+// that is written before it is read.
+template <typename T>
+struct DefaultInitAllocator : std::allocator<T> {
+    template <typename U>
+    struct rebind {
+        using other = DefaultInitAllocator<U>;
+    };
+
+    DefaultInitAllocator() = default;
+    template <typename U>
+    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions): allocators must convert implicitly
+    DefaultInitAllocator(const DefaultInitAllocator<U>& /*unused*/) noexcept {}
+
+    template <typename U>
+    void construct(U* ptr) noexcept(std::is_nothrow_default_constructible_v<U>) {
+        ::new (static_cast<void*>(ptr)) U;
+    }
+    template <typename U, typename... Args>
+    void construct(U* ptr, Args&&... args) {
+        ::new (static_cast<void*>(ptr)) U(std::forward<Args>(args)...);
+    }
+};
 
 static Napi::String GetZlibVersion(const Napi::CallbackInfo& info) {
     return Napi::String::New(info.Env(), zlibVersion());
@@ -58,8 +86,13 @@ class Deflater : public Napi::ObjectWrap<Deflater> {
     // Added chunk size as a member for consistency
     size_t chunkSize_ = 16384;  // 16KB default chunk size (better than 1KB)
 
-    std::vector<uint8_t> chunk_;   // intermediate output buffer; sized once in constructor
-    std::vector<uint8_t> output_;  // accumulation buffer; cleared at start of each call
+    // Accumulation buffer, which deflate writes to directly; cleared at start of each call
+    std::vector<uint8_t, DefaultInitAllocator<uint8_t>> output_;
+
+    // Run one deflate() call that writes straight onto the end of output_. It is given exactly
+    // chunkSize_ bytes of output space every time, which deflate's output can depend on, so the
+    // stream is the same as one deflated through a fixed buffer of that size.
+    int DeflateInto(int flush);
 
     Napi::Value CompressChunk(const Napi::CallbackInfo& info);
     Napi::Value End(const Napi::CallbackInfo& info);
@@ -156,7 +189,6 @@ Deflater::Deflater(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Deflater>(
     }
 
     initialized_ = true;
-    chunk_.resize(chunkSize_);
 }
 
 Deflater::~Deflater() {
@@ -164,6 +196,16 @@ Deflater::~Deflater() {
         deflateEnd(&stream_);
         initialized_ = false;
     }
+}
+
+int Deflater::DeflateInto(int flush) {
+    size_t const start = output_.size();
+    output_.resize(start + chunkSize_);
+    stream_.next_out = output_.data() + start;
+    stream_.avail_out = static_cast<uInt>(chunkSize_);
+    int const ret = deflate(&stream_, flush);
+    output_.resize(start + (chunkSize_ - stream_.avail_out));
+    return ret;
 }
 
 Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
@@ -213,20 +255,20 @@ Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
     stream_.avail_in = static_cast<uInt>(input.Length());
 
     // Pre-allocate output vector with estimated capacity
-    // For most data, deflate will reduce size, but for worst case we use input length. The
-    // reservation is only a hint, so the doubling is skipped when it cannot be represented.
+    // For most data, deflate will reduce size, but for worst case we use input length. Each
+    // deflate() call also needs a full chunk of room past what has been written. The reservation
+    // is only a hint, so the doubling and the extra chunk are skipped when they cannot be
+    // represented.
     output_.clear();
-    output_.reserve(flush == Z_FINISH && input.Length() <= std::numeric_limits<size_t>::max() / 2 ? input.Length() * 2
-                                                                                                  : input.Length());
+    size_t const estimate = flush == Z_FINISH && input.Length() <= std::numeric_limits<size_t>::max() / 2
+                                ? input.Length() * 2
+                                : input.Length();
+    output_.reserve(estimate <= std::numeric_limits<size_t>::max() - chunkSize_ ? estimate + chunkSize_ : estimate);
 
     // Process until all input is consumed and output is generated
     do {
-        // Set up output buffer
-        stream_.next_out = chunk_.data();
-        stream_.avail_out = chunk_.size();
-
         // Perform the compression
-        int const ret = deflate(&stream_, flush);
+        int const ret = DeflateInto(flush);
 
         // Handle errors
         if (ret != Z_OK && ret != Z_STREAM_END && ret != Z_BUF_ERROR) {
@@ -240,16 +282,6 @@ Napi::Value Deflater::CompressChunk(const Napi::CallbackInfo& info) {
 
             Napi::Error::New(env, msg.str()).ThrowAsJavaScriptException();
             return env.Null();
-        }
-
-        // Calculate how many bytes were written to the output buffer
-        size_t const have = chunk_.size() - stream_.avail_out;
-
-        if (have > 0) {
-            // More efficient append using resize + memcpy
-            size_t const currentSize = output_.size();
-            output_.resize(currentSize + have);
-            memcpy(output_.data() + currentSize, chunk_.data(), have);
         }
 
         // Break if we're done (Z_STREAM_END) or there's no more progress on input (Z_BUF_ERROR)
@@ -282,12 +314,8 @@ Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
     // Continue until Z_STREAM_END is returned
     int ret = Z_OK;
     do {
-        // Set up output buffer
-        stream_.next_out = chunk_.data();
-        stream_.avail_out = chunk_.size();
-
         // Force a final flush
-        ret = deflate(&stream_, Z_FINISH);
+        ret = DeflateInto(Z_FINISH);
 
         // Handle errors
         if (ret != Z_OK && ret != Z_STREAM_END) {
@@ -307,17 +335,6 @@ Napi::Value Deflater::End(const Napi::CallbackInfo& info) {
 
             return env.Null();
         }
-
-        // Calculate how many bytes were written
-        size_t const have = chunk_.size() - stream_.avail_out;
-
-        if (have > 0) {
-            // More efficient append
-            size_t const currentSize = output_.size();
-            output_.resize(currentSize + have);
-            memcpy(output_.data() + currentSize, chunk_.data(), have);
-        }
-
     } while (ret != Z_STREAM_END);
 
     // Clean up

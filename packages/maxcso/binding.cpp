@@ -14,6 +14,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -35,6 +36,34 @@ static_assert(sizeof(maxcso::DAXHeader) == 32, "DAXHeader must match the on-disk
 static_assert(sizeof(maxcso::DAXNCArea) == 8, "DAXNCArea must match the on-disk layout");
 // Headers and index tables are read straight into native integers
 static_assert(std::endian::native == std::endian::little, "only little-endian targets are supported");
+
+// A std::allocator that default-initializes elements instead of value-initializing them, so that
+// sizing a vector leaves trivial elements uninitialized instead of zeroing them. Only for storage
+// that is entirely written before it is read.
+template <typename T>
+struct DefaultInitAllocator : std::allocator<T> {
+    template <typename U>
+    struct rebind {
+        using other = DefaultInitAllocator<U>;
+    };
+
+    DefaultInitAllocator() = default;
+    template <typename U>
+    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions): allocators must convert implicitly
+    DefaultInitAllocator(const DefaultInitAllocator<U>& /*unused*/) noexcept {}
+
+    template <typename U>
+    void construct(U* ptr) noexcept(std::is_nothrow_default_constructible_v<U>) {
+        ::new (static_cast<void*>(ptr)) U;
+    }
+    template <typename U, typename... Args>
+    void construct(U* ptr, Args&&... args) {
+        std::construct_at(ptr, std::forward<Args>(args)...);
+    }
+};
+
+template <typename T>
+using UninitVector = std::vector<T, DefaultInitAllocator<T>>;
 
 // ---- file I/O ----
 
@@ -317,13 +346,14 @@ class Container {
 
     // Run upstream Input::ReadSector from the current position, including the calls it would make
     // next for the same index entry, and return the sectors they emit. It's empty at the end of the
-    // image, and valid until the next call.
-    std::span<const uint8_t> Next() {
+    // image. The sectors are written to the start of `dest` when it can hold them, and otherwise to
+    // this container's buffers, valid until the next call.
+    std::span<const uint8_t> Next(std::span<uint8_t> dest) {
         if (pos_ >= size_) {
             return {};
         }
         Block const block = Locate(pos_);
-        return block.codec == Codec::kStored ? NextStored(block) : NextCompressed(block);
+        return block.codec == Codec::kStored ? NextStored(block, dest) : NextCompressed(block, dest);
     }
 
    private:
@@ -406,7 +436,7 @@ class Container {
         format_ = Format::kDax;
         index_.resize(static_cast<size_t>(frames));
         daxSizes_.resize(static_cast<size_t>(frames));
-        std::vector<maxcso::DAXNCArea> ncAreas(static_cast<size_t>(areas));
+        UninitVector<maxcso::DAXNCArea> ncAreas(static_cast<size_t>(areas));
         file_.ReadAt(kDaxIndexOffset, std::as_writable_bytes(std::span(index_)));
         file_.ReadAt(kDaxIndexOffset + (frames * 4), std::as_writable_bytes(std::span(daxSizes_)));
         file_.ReadAt(kDaxIndexOffset + (frames * 6), std::as_writable_bytes(std::span(ncAreas)));
@@ -479,7 +509,7 @@ class Container {
     }
 
     // Upstream emits one sector per call from a stored entry, starting `skip` bytes into it
-    std::span<const uint8_t> NextStored(const Block& block) {
+    std::span<const uint8_t> NextStored(const Block& block, std::span<uint8_t> dest) {
         uint64_t const offset = block.offset + block.skip;
         uint32_t const length = block.length - block.skip;
         CheckRead(block.entry, offset, length);
@@ -491,7 +521,7 @@ class Container {
             // Upstream would fill the rest of the sector from stale memory
             ThrowTooFew(block.entry);
         }
-        std::span<uint8_t> const out = std::span(scratch_).first(run);
+        std::span<uint8_t> const out = run <= dest.size() ? dest.first(run) : std::span(scratch_).first(run);
         file_.ReadAt(offset, std::as_writable_bytes(out));
         pos_ += run;
         return out;
@@ -506,13 +536,17 @@ class Container {
 
     // Upstream decodes the whole entry, drops what's past the end of the image, and emits sectors
     // from `skip` bytes in until the decoded bytes run out
-    std::span<const uint8_t> NextCompressed(const Block& block) {
+    std::span<const uint8_t> NextCompressed(const Block& block, std::span<uint8_t> dest) {
         CheckRead(block.entry, block.offset, block.length);
         std::span<uint8_t> const in = std::span(scratch_).first(block.length);
         file_.ReadAt(block.offset, std::as_writable_bytes(in));
+        // Decoded straight into `dest` when the sectors start the entry and a whole block fits. The
+        // decoder gets exactly a block of space either way, so it behaves the same.
+        std::span<uint8_t> const decoded =
+            block.skip == 0 && dest.size() >= blockSize_ ? dest.first(blockSize_) : std::span(decoded_);
         size_t const produced = block.codec == Codec::kLz4
-                                    ? DecodeLz4(in, decoded_)
-                                    : DecodeDeflate(decompressor_.get(), in, decoded_, block.codec == Codec::kZlib);
+                                    ? DecodeLz4(in, decoded)
+                                    : DecodeDeflate(decompressor_.get(), in, decoded, block.codec == Codec::kZlib);
         if (produced == 0) {
             throw std::runtime_error("block " + std::to_string(block.entry) + " failed to decompress (" +
                                      CodecName(block.codec) + ")");
@@ -528,7 +562,7 @@ class Container {
             ThrowTooFew(block.entry);
         }
         pos_ += end - block.skip;
-        return std::span(decoded_).subspan(block.skip, static_cast<size_t>(end - block.skip));
+        return decoded.subspan(block.skip, static_cast<size_t>(end - block.skip));
     }
 
     File file_;
@@ -541,11 +575,13 @@ class Container {
     uint32_t shift_ = 0;
     uint32_t cacheSize_ = 0;
     uint64_t pos_ = 0;
-    std::vector<uint32_t> index_;
-    std::vector<uint16_t> daxSizes_;
+    // Uninitialized until read from the file
+    UninitVector<uint32_t> index_;
+    UninitVector<uint16_t> daxSizes_;
     std::vector<uint8_t> daxStored_;
-    std::vector<uint8_t> scratch_;
-    std::vector<uint8_t> decoded_;
+    // Only ever read after being written
+    UninitVector<uint8_t> scratch_;
+    UninitVector<uint8_t> decoded_;
 };
 
 // ---- shared pull-reader scaffolding ----
@@ -702,9 +738,15 @@ Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
     // which JavaScript cannot request an exact byte count
     constexpr double kMaxRequestBytes =
         std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
-    bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
-    if (!valid) {
+    // Also catches NaN, which fails every comparison
+    if (!(requested >= 1)) {
         deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
+        return deferred.Promise();
+    }
+    if (requested > kMaxRequestBytes) {
+        // Too large to allocate, and reported as a failed allocation would be. On 32-bit targets
+        // that is anything past SIZE_MAX, far below Number.MAX_SAFE_INTEGER.
+        deferred.Reject(Napi::RangeError::New(env, "maxBytes is too large").Value());
         return deferred.Promise();
     }
     try {
@@ -729,8 +771,9 @@ class MaxcsoSource {
    public:
     explicit MaxcsoSource(PathString path) : path_(std::move(path)) {}
 
-    // Emit up to maxBytes of decompressed bytes. Runs on the worker thread. What the container
-    // returns that doesn't fit stays in pending_, which the next read drains first.
+    // Emit up to maxBytes of decompressed bytes. Runs on the worker thread. The container writes
+    // straight into `out` where it can; what it returns in its own buffers that doesn't fit stays
+    // in pending_, which the next read drains first.
     size_t Produce(uint8_t* out, size_t maxBytes) {
         if (!container_) {
             container_ = std::make_unique<Container>(path_);
@@ -739,10 +782,17 @@ class MaxcsoSource {
         size_t written = 0;
         while (written < maxBytes) {
             if (pending_.empty()) {
-                pending_ = container_->Next();
-                if (pending_.empty()) {
+                std::span<uint8_t> const rest = dest.subspan(written);
+                std::span<const uint8_t> const next = container_->Next(rest);
+                if (next.empty()) {
                     break;
                 }
+                if (next.data() == rest.data()) {
+                    // Already in place
+                    written += next.size();
+                    continue;
+                }
+                pending_ = next;
             }
             size_t const count = std::min(pending_.size(), maxBytes - written);
             std::ranges::copy(pending_.first(count), dest.subspan(written).begin());
