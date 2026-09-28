@@ -13,12 +13,23 @@ namespace sevenzip {
 /**
  * Exposes one archive entry as a pull-based JavaScript reader backed by a decoder thread.
  *
- * Reads consume completed chunks without blocking the event loop. A read parks
- * only after catching the bounded producer, which wakes it through AsyncSignal;
- * only the producer may block, when the queue is full.
+ * Each read lends the producer a fresh JavaScript buffer to fill and resolves
+ * with it once it is full, without blocking the event loop. A read parks until
+ * the producer wakes it through AsyncSignal; only the producer may block, while
+ * no buffer is lent.
  */
 class EntryReader : public Napi::ObjectWrap<EntryReader> {
    public:
+    // The chunk size when the caller names none, matching the default
+    // highWaterMark of a Node.js byte stream
+    static constexpr size_t kDefaultChunkBytes = 1U << 16U;  // 64 KiB
+
+    // The largest chunk size a caller may ask for. Every read allocates a buffer
+    // of this size, so an unclamped value straight from JavaScript would be an
+    // allocation the caller controls; this is generous for a stream
+    // high-watermark and far short of a denial of service.
+    static constexpr size_t kMaxChunkBytes = 1U << 24U;  // 16 MiB
+
     /** Defines the JavaScript EntryReader class and its read and close methods. */
     static Napi::Function GetClass(Napi::Env env);
 
@@ -73,6 +84,11 @@ class EntryReader : public Napi::ObjectWrap<EntryReader> {
     void ReleasePending(Napi::Env env);
 
     std::shared_ptr<Pump> pump_;
+    size_t chunkBytes_ = kDefaultChunkBytes;
+    // The buffer lent to the producer for the read in flight, held so that V8
+    // cannot collect it while the producer is writing into it. Released only
+    // once the slot has handed it back, or after the Pump is cancelled.
+    Napi::Reference<Napi::Buffer<uint8_t>> lent_;
     Napi::ObjectReference readFailure_;
     std::shared_ptr<Bridge> bridge_;
     // The one outstanding read, if it could not be answered immediately. Also

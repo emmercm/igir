@@ -114,6 +114,33 @@ describe('openReader', () => {
     },
   );
 
+  it('should keep every chunk intact after later reads, including a short final chunk', async () => {
+    const readable = dolphin.openReader({
+      inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz'),
+      highWaterMark: 100_000,
+    });
+    const chunks: Buffer[] = [];
+    for await (const chunk of readable) {
+      if (!Buffer.isBuffer(chunk)) {
+        throw new TypeError('expected a Buffer chunk');
+      }
+      chunks.push(chunk);
+    }
+    expect(new Set(chunks.slice(0, -1).map((chunk) => chunk.length))).toEqual(new Set([100_000]));
+    expect(chunks.at(-1)?.length).toEqual(GAMECUBE_ISO_SIZE % 100_000);
+    expect(crypto.createHash('sha1').update(Buffer.concat(chunks)).digest('hex')).toEqual(
+      GAMECUBE_ISO_SHA1,
+    );
+  });
+
+  it('should throw on a missing file', () => {
+    expect(() =>
+      dolphin.openReader({
+        inputFilename: `${path.join(FIXTURES, '240pSuite-GameCube-1.20.gcz')}.missing`,
+      }),
+    ).toThrow('failed to open blob');
+  });
+
   it('should not leak a handle when destroyed mid-stream', async () => {
     const readable = dolphin.openReader({
       inputFilename: path.join(FIXTURES, '240pSuite-GameCube-1.20.bzip2.rvz'),

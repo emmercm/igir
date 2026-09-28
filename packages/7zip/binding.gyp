@@ -347,7 +347,7 @@
         "<(z7)/CPP/Common/XzCrc64Init.cpp",
         "binding.cpp",
         "src/addon.cpp",
-        "src/chunkQueue.cpp",
+        "src/outputSlot.cpp",
         "src/entryReader.cpp",
         "src/errors.cpp",
         "src/jobRegistry.cpp",

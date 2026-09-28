@@ -9,14 +9,14 @@
 #include <optional>
 #include <string>
 
-#include "chunkQueue.h"
 #include "jobRegistry.h"
+#include "outputSlot.h"
 #include "sevenZip.h"
 
 namespace sevenzip {
 
 /**
- * Runs 7-Zip's push extraction on a self-owning producer thread and exposes bounded, nonblocking reads.
+ * Runs 7-Zip's push extraction on a self-owning producer thread and exposes nonblocking reads into lent buffers.
  *
  * One pump owns one archive and entry. JavaScript cancellation only signals and
  * drops its reference; the detached producer retains the pump while unwinding,
@@ -24,33 +24,17 @@ namespace sevenzip {
  */
 class Pump {
    public:
-    // How much decompressed output may sit buffered ahead of the consumer. This
-    // is the back-pressure bound: past it the producer blocks in Write() until a
-    // read drains a chunk, so a caller that stops reading a 40 GiB entry costs a
-    // megabyte, not 40 GiB. A chunk larger than this still gets a floor of two
-    // queued chunks, so the consumer can be handed one while the next is
-    // already waiting.
-    static constexpr size_t kReadAheadBytes = 1U << 20U;  // 1 MiB
-
-    // The largest chunk size a caller may ask for. Every queued chunk is
-    // allocated at this size, so an unclamped value straight from JavaScript
-    // would be an allocation the caller controls; this is generous for a stream
-    // high-watermark and far short of a denial of service.
-    static constexpr size_t kMaxChunkBytes = 1U << 24U;  // 16 MiB
-
     /**
      * Constructs, registers, and starts a self-owning decoder pump.
      *
      * A validated `entryIndex` hints the scan for `entryPath`; without a path,
-     * the archive must contain exactly one item. `chunkBytes` controls every
-     * returned chunk except the last. Producer-thread callbacks `onReady` and
+     * the archive must contain exactly one item. Producer-thread callbacks `onReady` and
      * `onExit` must not throw. Startup throws if thread creation fails or the
      * environment registry is already draining, without leaving a live worker.
      */
     static std::shared_ptr<Pump> Start(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
-                                       std::optional<uint32_t> entryIndex, size_t chunkBytes,
-                                       std::shared_ptr<JobRegistry> registry, std::function<void()> onReady,
-                                       std::function<void()> onExit);
+                                       std::optional<uint32_t> entryIndex, std::shared_ptr<JobRegistry> registry,
+                                       std::function<void()> onReady, std::function<void()> onExit);
 
     /** Pump state belongs to one producer/consumer pair and cannot be copied. */
     Pump(const Pump&) = delete;
@@ -63,18 +47,26 @@ class Pump {
     /** Releases pump storage after its detached producer and consumer have both let go. */
     ~Pump() = default;
 
-    /** Takes one chunk without blocking; pending arms `onReady`, and terminal producer failure throws at end. */
-    ChunkQueue::Status TryRead(Chunk* out);
+    /** Lends the producer `capacity` bytes at `data` to fill; see OutputSlot::Lend. */
+    void Lend(uint8_t* data, size_t capacity);
 
-    /** Idempotently signals abort, releases queue backpressure, and returns without joining the producer. */
+    /** Takes back the lent buffer without blocking; pending arms `onReady`, and terminal producer failure throws at
+     * end. */
+    OutputSlot::Status TryRead(size_t* length);
+
+    /**
+     * Idempotently signals abort, unblocks the producer, and returns without joining it.
+     *
+     * Once it returns, the producer will not touch the lent buffer again.
+     */
     void Cancel() noexcept;
 
    private:
-    /** Stores immutable extraction arguments and constructs the bounded output queue. */
+    /** Stores immutable extraction arguments and constructs the output slot. */
     Pump(std::string path, uint32_t formatIndex, std::optional<std::string> entryPath,
-         std::optional<uint32_t> entryIndex, size_t chunkBytes, std::function<void()> onReady);
+         std::optional<uint32_t> entryIndex, std::function<void()> onReady);
 
-    /** Contains every extraction exception to prevent thread termination and always finishes the output queue. */
+    /** Contains every extraction exception to prevent thread termination and always finishes the output slot. */
     void Run();
 
     /** Opens the archive, resolves the item, and drives 7-Zip extraction, reporting failure by throwing to Run. */
@@ -89,14 +81,14 @@ class Pump {
     /** Describes the requested entry consistently in native error messages. */
     std::string EntryLabel() const;
 
-    /** Builds the allocation-failure message usable by either the unwinding producer or terminating consumer. */
-    std::string OutOfMemoryMessage() const;
+    /** Builds the output-failure message usable by either the unwinding producer or terminating consumer. */
+    std::string OutputFailureMessage() const;
 
     std::string path_;
     uint32_t formatIndex_;
     std::optional<std::string> entryPath_;
     std::optional<uint32_t> entryIndex_;
-    ChunkQueue queue_;
+    OutputSlot slot_;
     std::atomic<bool> abort_{false};
     std::mutex errorMutex_;
     std::string error_;

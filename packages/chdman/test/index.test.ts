@@ -248,6 +248,28 @@ describe('openTrackReader', () => {
       }),
     ).toThrow(/cannot be extracted as cue\/bin/);
   });
+
+  it('should throw a RangeError for a track index the CHD does not have', () => {
+    const open = (): void => {
+      chdman.openTrackReader({
+        inputFilename: path.join(FIXTURES, 'CD-ROM.chd'),
+        mode: 'cuebin',
+        trackIndex: 99,
+      });
+    };
+    expect(open).toThrow(RangeError);
+    expect(open).toThrow('track index out of range');
+  });
+
+  it('should throw on a missing file', () => {
+    expect(() =>
+      chdman.openTrackReader({
+        inputFilename: path.join(FIXTURES, 'missing.chd'),
+        mode: 'cuebin',
+        trackIndex: 0,
+      }),
+    ).toThrow('failed to open CHD');
+  });
 });
 
 describe('openRawReader', () => {
@@ -275,6 +297,12 @@ describe('openRawReader', () => {
       expect(bytes.length).toEqual(info.logicalSize);
       expect(sha1(bytes)).toEqual(info.dataSha1);
     }
+  });
+
+  it('should throw on a missing file', () => {
+    expect(() =>
+      chdman.openRawReader({ inputFilename: path.join(FIXTURES, 'missing.chd') }),
+    ).toThrow('failed to open CHD');
   });
 
   it('should reject a high-water mark of zero instead of ending early', async () => {

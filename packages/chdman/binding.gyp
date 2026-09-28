@@ -320,6 +320,12 @@
         "mame_utils", "mame_ocore",
         "zlib", "zstd", "flac", "lzma7z"
       ],
+      "defines": [
+        # A read worker can finish while its worker thread's environment is being torn
+        # down, when JS can no longer run. Without this, node-addon-api aborts the process
+        # instead of dropping the result nobody can receive.
+        "NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS"
+      ],
       "include_dirs": [
         "<!(node -p \"require('node-addon-api').include_dir\")",
         "<(mame)/src/lib/util",

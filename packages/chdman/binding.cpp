@@ -1,11 +1,9 @@
 #include <napi.h>
 
 #include <algorithm>
-#include <array>
 #include <cstring>
 #include <limits>
 #include <memory>
-#include <new>
 #include <optional>
 #include <ostream>
 #include <regex>
@@ -333,206 +331,81 @@ static bool BuildListing(const std::string& inputPath, int mode,
 
 // ---- shared pull-reader scaffolding ----
 
-// Reject a promise with JavaScript's pending exception, or else a new error from create, returning
-// whether JavaScript could receive it
-static bool Reject(napi_env env, napi_deferred deferred, const std::string& message,
-                   decltype(&napi_create_error) create = napi_create_error) {
-    bool pending = false;
-    napi_value error = nullptr;
-    if (napi_is_exception_pending(env, &pending) == napi_ok && pending) {
-        if (napi_get_and_clear_last_exception(env, &error) != napi_ok) {
-            return false;
-        }
-    } else {
-        napi_value text = nullptr;
-        if (napi_create_string_utf8(env, message.data(), message.size(), &text) != napi_ok ||
-            create(env, nullptr, text, &error) != napi_ok) {
-            return false;
-        }
-    }
-    return napi_reject_deferred(env, deferred, error) == napi_ok;
-}
-
-// Read a call's first N arguments, leaving any it wasn't passed undefined
-template <size_t N>
-static bool GetArgs(napi_env env, napi_callback_info info, std::array<napi_value, N>& args) {
-    size_t argc = N;
-    return napi_get_cb_info(env, info, &argc, args.data(), nullptr, nullptr) == napi_ok;
-}
-
-// Read a JavaScript string, returning whether value is one
-static bool GetString(napi_env env, napi_value value, std::string& out) {
-    napi_valuetype type = napi_undefined;
-    size_t length = 0;
-    if (napi_typeof(env, value, &type) != napi_ok || type != napi_string ||
-        napi_get_value_string_utf8(env, value, nullptr, 0, &length) != napi_ok) {
-        return false;
-    }
-    out.resize(length);
-    return napi_get_value_string_utf8(env, value, out.data(), length + 1, &length) == napi_ok;
-}
-
-// Read a JavaScript number as an int32, returning whether value is one
-static bool GetInt32(napi_env env, napi_value value, int32_t& out) {
-    napi_valuetype type = napi_undefined;
-    return napi_typeof(env, value, &type) == napi_ok && type == napi_number &&
-           napi_get_value_int32(env, value, &out) == napi_ok;
-}
-
-// Create a JavaScript string, or nullptr if JavaScript can't receive it
-static napi_value ToString(napi_env env, const std::string& value) {
-    napi_value result = nullptr;
-    napi_create_string_utf8(env, value.data(), value.size(), &result);
-    return result;
-}
-
-// Create a JavaScript number, or nullptr if JavaScript can't receive it
-static napi_value ToNumber(napi_env env, double value) {
-    napi_value result = nullptr;
-    napi_create_double(env, value, &result);
-    return result;
-}
-
-// Create JavaScript's undefined, or nullptr if JavaScript can't receive it
-static napi_value ToUndefined(napi_env env) {
-    napi_value result = nullptr;
-    napi_get_undefined(env, &result);
-    return result;
-}
-
-// Set an object's property, returning whether it was set, which it isn't for a value that failed
-// to be created
-static bool SetProperty(napi_env env, napi_value object, const char* key, napi_value value) {
-    return value != nullptr && napi_set_named_property(env, object, key, value) == napi_ok;
-}
-
-// Set an array's element, returning whether it was set, which it isn't for a value that failed to
-// be created
-static bool SetElement(napi_env env, napi_value array, uint32_t index, napi_value value) {
-    return value != nullptr && napi_set_element(env, array, index, value) == napi_ok;
-}
-
-// Runs Derived's Execute() on the thread pool, then its Complete() on the main thread unless the
-// environment cancelled the task. Uses the N-API C functions rather than Napi::AsyncWorker: with C++
-// exceptions disabled, node-addon-api aborts the process when a call fails, and every call can fail
-// once a terminated Worker's environment can no longer run JavaScript.
-template <typename Derived>
-class AsyncTask {
-   public:
-    // Queue a task on the thread pool, returning whether it was queued
-    static bool Queue(napi_env env, std::unique_ptr<Derived> task) {
-        napi_value name = nullptr;
-        if (napi_create_string_utf8(env, "chdman", NAPI_AUTO_LENGTH, &name) != napi_ok ||
-            napi_create_async_work(env, nullptr, name, Run, Finish, task.get(), &task->work_) != napi_ok) {
-            return false;
-        }
-        if (napi_queue_async_work(env, task->work_) != napi_ok) {
-            napi_delete_async_work(env, task->work_);
-            return false;
-        }
-        task.release();  // freed by Finish()
-        return true;
-    }
-
-   private:
-    static void Run(napi_env /*env*/, void* data) { static_cast<Derived*>(data)->Execute(); }
-
-    static void Finish(napi_env env, napi_status status, void* data) {
-        std::unique_ptr<Derived> const task(static_cast<Derived*>(data));
-        napi_delete_async_work(env, task->work_);
-        napi_handle_scope scope = nullptr;
-        if (status == napi_cancelled || napi_open_handle_scope(env, &scope) != napi_ok) {
-            return;
-        }
-        task->Complete(env);
-        napi_close_handle_scope(env, scope);
-    }
-
-    napi_async_work work_ = nullptr;
-};
-
 // Drives a Source's Produce() on a worker thread so the (blocking, possibly
 // decompressing) CHD reads never run on the V8 main thread, then tells the Reader
 // the read is done. One template covers all reader types; they must expose
 //   size_t Source::Produce(uint8_t* out, size_t maxBytes);  // worker thread
 //   void   Reader::FinishRead();                             // main thread, post-Execute
 template <typename Reader, typename Source>
-class ReadWorker : public AsyncTask<ReadWorker<Reader, Source>> {
+class ReadWorker : public Napi::AsyncWorker {
    public:
-    ReadWorker(napi_deferred deferred, std::shared_ptr<Reader*> reader, std::shared_ptr<Source> source, size_t maxBytes)
-        : deferred_(deferred),
+    // Fills buffer, which is V8's own allocation rather than an external one: freeing an external
+    // Buffer's memory posts its finalizer to the owning environment's thread, which races a
+    // terminating Worker closing that environment's handles. The reference keeps the Buffer alive
+    // while the worker thread writes to it; an environment tearing down waits for thread pool work
+    // to finish before it releases any reference.
+    ReadWorker(Napi::Env env, Napi::Promise::Deferred deferred, std::shared_ptr<Reader*> reader,
+               std::shared_ptr<Source> source, const Napi::Buffer<uint8_t>& buffer)
+        : Napi::AsyncWorker(env),
+          deferred_(std::move(deferred)),
           reader_(std::move(reader)),
           source_(std::move(source)),
-          // new[] rather than std::vector, deliberately: a vector would
-          // value-initialize every byte, and Produce() overwrites the only part
-          // of it anyone is ever shown. Zeroing a chunk per read just to memcpy
-          // over it is measurable on a multi-gigabyte image and buys nothing --
-          // n_ bounds what is exposed, and the bytes past it never leave here.
-          buf_(new uint8_t[maxBytes]),
-          cap_(maxBytes) {}
+          buffer_(Napi::Persistent(buffer)),
+          data_(buffer.Data()),
+          cap_(buffer.Length()) {}
 
-    // Read from the source on the thread pool
-    void Execute() {
+    void Execute() override {
         try {
-            n_ = source_->Produce(buf_.get(), cap_);
+            n_ = source_->Produce(data_, cap_);
         } catch (const std::exception& e) {
-            error_ = e.what();
+            SetError(e.what());
         } catch (...) {
-            error_ = "unknown CHD read error";
+            SetError("unknown CHD read error");
         }
     }
 
-    // Settle the read's promise and tell the reader the read is done, unless the reader was
-    // destroyed or JavaScript can't run. The reader holds a Ref() while it reads, so only an
-    // environment tearing down, such as a terminated Worker's, destroys it first: that finalizes
-    // every object before it runs the callbacks of reads still in flight, and nothing is left to
-    // receive their results.
-    void Complete(napi_env env) {
-        if (*reader_ != nullptr && Settle(env)) {
+    void OnOK() override {
+        Napi::Env const env = Env();
+        Napi::Buffer<uint8_t> const buffer = buffer_.Value();
+        if (n_ == 0) {
+            deferred_.Resolve(env.Null());
+        } else if (n_ == cap_) {
+            deferred_.Resolve(buffer);
+        } else {
+            // A view of the first n_ bytes, which shares the Buffer's memory rather than copying
+            // it. Only those bytes were written; the rest are uninitialized.
+            deferred_.Resolve(
+                buffer.Get("subarray")
+                    .As<Napi::Function>()
+                    .Call(buffer, {Napi::Number::New(env, 0), Napi::Number::New(env, static_cast<double>(n_))}));
+        }
+        NotifyReader();
+    }
+
+    void OnError(const Napi::Error& e) override {
+        deferred_.Reject(e.Value());
+        NotifyReader();
+    }
+
+   private:
+    // Tell the reader the read is done, unless it was destroyed. The reader holds a Ref() while it
+    // reads, so only an environment tearing down, such as a terminated Worker's, destroys it first.
+    void NotifyReader() {
+        if (*reader_ != nullptr) {
             (*reader_)->FinishRead();  // may release the reader
         }
     }
 
-   private:
-    // Resolve or reject the read's promise, returning whether JavaScript could receive it
-    bool Settle(napi_env env) {
-        if (!error_.empty()) {
-            return Reject(env, deferred_, error_);
-        }
-        napi_value result = nullptr;
-        if (n_ == 0) {
-            return napi_get_null(env, &result) == napi_ok && napi_resolve_deferred(env, deferred_, result) == napi_ok;
-        }
-        // Give JS the worker's own allocation as the Buffer's backing store
-        // rather than copying it: the finalizer frees it once JS is done.
-        // Only the first n_ bytes are exposed; the rest are uninitialized.
-        // `raw` is unowned between release() and a successful creation, which
-        // is what the failure path below cleans up.
-        uint8_t* raw = buf_.release();
-        if (napi_create_external_buffer(
-                env, n_, raw,
-                [](napi_env /*env*/, void* data, void* /*hint*/) { delete[] static_cast<uint8_t*>(data); }, nullptr,
-                &result) != napi_ok) {
-            // Reject rather than resolving with no value, which JavaScript would read as the end of
-            // the stream
-            delete[] raw;
-            return Reject(env, deferred_, "failed to allocate the read result");
-        }
-        return napi_resolve_deferred(env, deferred_, result) == napi_ok;
-    }
-
-    napi_deferred deferred_;
+    Napi::Promise::Deferred deferred_;
     // Cleared by the reader's destructor
     std::shared_ptr<Reader*> reader_;
     // Keeps the CHD open until this worker is destroyed, even if the reader is closed or destroyed first
     std::shared_ptr<Source> source_;
-    // A runtime-sized owning buffer, which is exactly what unique_ptr<T[]> is
-    // for; std::array would need the size at compile time.
-    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
-    std::unique_ptr<uint8_t[]> buf_;
-    size_t cap_ = 0;
+    // The Buffer that Execute() fills, and its memory
+    Napi::Reference<Napi::Buffer<uint8_t>> buffer_;
+    uint8_t* data_;
+    size_t cap_;
     size_t n_ = 0;
-    std::string error_;  // Empty on success
 };
 
 // CRTP base implementing the single audited copy of the async pull-reader
@@ -559,23 +432,16 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     ReaderBase& operator=(ReaderBase&&) = delete;
 
     // read(maxBytes): resolve up to maxBytes bytes, or null at the end
-    static napi_value Read(napi_env env, napi_callback_info info);
+    Napi::Value Read(const Napi::CallbackInfo& info);
 
-    // Release this reader's hold on the CHD. A read worker in flight holds it too,
-    // so the CHD closes once the worker thread is done with it.
-    static napi_value Close(napi_env env, napi_callback_info info);
-
-    // Describe a method that N-API calls directly. node-addon-api's instance methods abort the
-    // process when they can't unwrap the reader, which JavaScript can still call after a terminated
-    // Worker's environment has finalized it.
-    static Napi::ClassPropertyDescriptor<Derived> RawMethod(const char* name, napi_callback callback) {
-        return napi_property_descriptor{.utf8name = name, .method = callback, .attributes = napi_default};
-    }
+    // Release this reader's hold on the CHD. A read worker in flight holds it too, so the
+    // CHD closes once the worker thread is done with it.
+    void Close(const Napi::CallbackInfo& /*unused*/) { source_.reset(); }
 
     // Mark the read as done. Called on the main thread by the read worker after Execute has returned.
     void FinishRead() {
         reading_ = false;
-        this->Unref();  // balances the Ref() taken in StartRead(); may allow GC of this object
+        this->Unref();  // balances the Ref() taken in Read(); may allow GC of this object
     }
 
    protected:
@@ -583,97 +449,49 @@ class ReaderBase : public Napi::ObjectWrap<Derived> {
     std::shared_ptr<Source> source_;
 
    private:
-    // Start a read of up to maxBytes bytes that settles deferred
-    void StartRead(napi_env env, napi_deferred deferred, napi_value maxBytes);
-
     // Shared with every read worker so they know whether this reader still exists
     std::shared_ptr<ReaderBase*> self_;
     bool reading_ = false;
 };
 
-// Uses the N-API C functions rather than node-addon-api's, which abort the process when a call
-// fails: JavaScript can still call these while a terminated Worker's environment tears down, after
-// it has finalized every reader
-template <typename Derived, typename Source>
-napi_value ReaderBase<Derived, Source>::Read(napi_env env, napi_callback_info info) {
-    napi_deferred deferred = nullptr;
-    napi_value promise = nullptr;
-    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
-        return nullptr;
-    }
-    size_t argc = 1;
-    napi_value maxBytes = nullptr;
-    napi_value self = nullptr;
-    void* reader = nullptr;
-    if (napi_get_cb_info(env, info, &argc, &maxBytes, &self, nullptr) != napi_ok ||
-        napi_unwrap(env, self, &reader) != napi_ok) {
-        Reject(env, deferred, "read after finalization");
-        return promise;
-    }
-    ReaderBase* const base = static_cast<Derived*>(reader);
-    base->StartRead(env, deferred, maxBytes);
-    return promise;
-}
-
-template <typename Derived, typename Source>
-napi_value ReaderBase<Derived, Source>::Close(napi_env env, napi_callback_info info) {
-    napi_value self = nullptr;
-    void* reader = nullptr;
-    if (napi_get_cb_info(env, info, nullptr, nullptr, &self, nullptr) == napi_ok &&
-        napi_unwrap(env, self, &reader) == napi_ok) {
-        ReaderBase* const base = static_cast<Derived*>(reader);
-        base->source_.reset();
-    }
-    return nullptr;
-}
-
 // Defined out-of-line because it constructs a ReadWorker, whose full
 // definition must precede this. Shared by every ReaderBase subclass.
 template <typename Derived, typename Source>
-void ReaderBase<Derived, Source>::StartRead(napi_env env, napi_deferred deferred, napi_value maxBytes) {
+Napi::Value ReaderBase<Derived, Source>::Read(const Napi::CallbackInfo& info) {
+    Napi::Env const env = info.Env();
+    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
     if (!source_) {
-        Reject(env, deferred, "read after close");
-        return;
+        deferred.Reject(Napi::Error::New(env, "read after close").Value());
+        return deferred.Promise();
     }
     if (reading_) {
-        // Only one read worker may touch this reader's mutable state at a time.
-        Reject(env, deferred, "concurrent read not allowed");
-        return;
+        // Only one read worker may touch this reader's mutable state at a time
+        deferred.Reject(Napi::Error::New(env, "concurrent read not allowed").Value());
+        return deferred.Promise();
     }
-    // A zero-byte read would resolve null, which JavaScript reads as the end of the stream
-    double requested = 0;
-    napi_valuetype type = napi_undefined;
-    if (napi_typeof(env, maxBytes, &type) != napi_ok || type != napi_number ||
-        napi_get_value_double(env, maxBytes, &requested) != napi_ok) {
-        requested = 0;
-    }
+    double const requested = info[0].IsNumber() ? info[0].As<Napi::Number>().DoubleValue() : 0;
     // Bounded so the static_cast<size_t> below is defined, and to Number.MAX_SAFE_INTEGER, past
     // which JavaScript cannot request an exact byte count
     constexpr double kMaxRequestBytes =
         std::min(9007199254740991.0, static_cast<double>(std::numeric_limits<size_t>::max()));
     bool const valid = requested >= 1 && requested <= kMaxRequestBytes;
     if (!valid) {
-        Reject(env, deferred, "maxBytes must be a positive number", napi_create_type_error);
-        return;
+        deferred.Reject(Napi::TypeError::New(env, "maxBytes must be a positive number").Value());
+        return deferred.Promise();
     }
-    auto const count = static_cast<size_t>(requested);
-    // Allocate the worker (and its count-byte buffer) BEFORE mutating reader state:
-    // if that allocation throws, reading_/Ref() must not be left dangling
-    std::unique_ptr<ReadWorker<ReaderBase, Source>> worker;
-    try {
-        worker = std::make_unique<ReadWorker<ReaderBase, Source>>(deferred, self_, source_, count);
-    } catch (const std::bad_alloc&) {
-        Reject(env, deferred, "failed to allocate the read buffer");
-        return;
+    Napi::Buffer<uint8_t> const buffer = Napi::Buffer<uint8_t>::New(env, static_cast<size_t>(requested));
+    if (buffer.IsEmpty()) {
+        // With C++ exceptions disabled a failed New() returns an empty value and leaves a JS
+        // exception pending
+        deferred.Reject(env.IsExceptionPending() ? env.GetAndClearPendingException().Value()
+                                                 : Napi::Error::New(env, "failed to allocate the read buffer").Value());
+        return deferred.Promise();
     }
-    if (!ReadWorker<ReaderBase, Source>::Queue(env, std::move(worker))) {
-        // The worker will never run, so reader state must not be left marked as reading
-        Reject(env, deferred, "failed to queue the read");
-        return;
-    }
-    // Complete() runs later on this same thread, so setting these after Queue() is not a race
+    (new ReadWorker<ReaderBase, Source>(env, deferred, self_, source_, buffer))->Queue();
+    // OnOK()/OnError() run later on this same thread, so setting these after Queue() is not a race
     reading_ = true;
     this->Ref();  // keep this object (and its CHD) alive while the worker thread reads
+    return deferred.Promise();
 }
 
 // ---- chdman info ----
@@ -744,48 +562,44 @@ struct ChdInfo {
 
 // The single place that knows the JS-visible key names and value encodings. Keep
 // this adjacent to ChdInfo so the struct and its marshalling can be audited together.
-static napi_value ChdInfoToObject(napi_env env, const ChdInfo& info) {
-    napi_value out = nullptr;
-    napi_value compression = nullptr;
-    if (napi_create_object(env, &out) != napi_ok || napi_create_array(env, &compression) != napi_ok) {
-        return nullptr;
-    }
+static Napi::Object ChdInfoToObject(Napi::Env env, const ChdInfo& info) {
+    Napi::Object out = Napi::Object::New(env);
+    out.Set("inputFile", info.inputFile);
+    out.Set("type", info.type);
+    out.Set("fileVersion", Napi::Number::New(env, static_cast<double>(info.fileVersion)));
+    out.Set("logicalSize", Napi::Number::New(env, static_cast<double>(info.logicalSize)));
+    out.Set("hunkSize", Napi::Number::New(env, static_cast<double>(info.hunkSize)));
+    out.Set("totalHunks", Napi::Number::New(env, static_cast<double>(info.totalHunks)));
+    out.Set("unitSize", Napi::Number::New(env, static_cast<double>(info.unitSize)));
+    out.Set("totalUnits", Napi::Number::New(env, static_cast<double>(info.totalUnits)));
+    Napi::Array const compression = Napi::Array::New(env);
     for (uint32_t i = 0; i < info.compression.size(); i++) {
-        if (!SetElement(env, compression, i, ToString(env, info.compression[i]))) {
-            return nullptr;
-        }
+        compression.Set(i, info.compression[i]);
     }
-    bool const set =
-        SetProperty(env, out, "inputFile", ToString(env, info.inputFile)) &&
-        SetProperty(env, out, "type", ToString(env, info.type)) &&
-        SetProperty(env, out, "fileVersion", ToNumber(env, static_cast<double>(info.fileVersion))) &&
-        SetProperty(env, out, "logicalSize", ToNumber(env, static_cast<double>(info.logicalSize))) &&
-        SetProperty(env, out, "hunkSize", ToNumber(env, static_cast<double>(info.hunkSize))) &&
-        SetProperty(env, out, "totalHunks", ToNumber(env, static_cast<double>(info.totalHunks))) &&
-        SetProperty(env, out, "unitSize", ToNumber(env, static_cast<double>(info.unitSize))) &&
-        SetProperty(env, out, "totalUnits", ToNumber(env, static_cast<double>(info.totalUnits))) &&
-        SetProperty(env, out, "compression", compression) &&
-        SetProperty(env, out, "chdSize", ToNumber(env, static_cast<double>(info.chdSize))) &&
-        SetProperty(env, out, "sha1", info.sha1.has_value() ? ToString(env, *info.sha1) : ToUndefined(env)) &&
-        SetProperty(env, out, "dataSha1", info.dataSha1.has_value() ? ToString(env, *info.dataSha1) : ToUndefined(env));
-    return set ? out : nullptr;
+    out.Set("compression", compression);
+    out.Set("chdSize", Napi::Number::New(env, static_cast<double>(info.chdSize)));
+    out.Set("sha1",
+            info.sha1.has_value() ? Napi::Value(Napi::String::New(env, *info.sha1)) : Napi::Value(env.Undefined()));
+    out.Set("dataSha1", info.dataSha1.has_value() ? Napi::Value(Napi::String::New(env, *info.dataSha1))
+                                                  : Napi::Value(env.Undefined()));
+    return out;
 }
 
-static napi_value Info(napi_env env, napi_callback_info info) {
-    std::array<napi_value, 1> args{};
-    std::string inputPath;
-    if (!GetArgs(env, info, args) || !GetString(env, args[0], inputPath)) {
-        napi_throw_type_error(env, nullptr, "inputFilename (string) required");
-        return nullptr;
+static Napi::Value Info(const Napi::CallbackInfo& info) {
+    Napi::Env const env = info.Env();
+    if (info.Length() < 1 || !info[0].IsString()) {
+        Napi::TypeError::New(env, "inputFilename (string) required").ThrowAsJavaScriptException();
+        return env.Null();
     }
+    std::string const inputPath = info[0].As<Napi::String>();
 
     chd_file chd;
     // NOTE: this reads only the CHD header and runs synchronously on the V8 main
     // thread; it is fast enough that no AsyncWorker is needed.
     std::error_condition const err = chd.open(inputPath, false, nullptr);
     if (err) {
-        napi_throw_error(env, nullptr, ("failed to open CHD: " + err.message()).c_str());
-        return nullptr;
+        Napi::Error::New(env, "failed to open CHD: " + err.message()).ThrowAsJavaScriptException();
+        return env.Null();
     }
 
     ChdInfo data;
@@ -821,86 +635,61 @@ static napi_value Info(napi_env env, napi_callback_info info) {
 
     chd.close();
 
-    napi_deferred deferred = nullptr;
-    napi_value promise = nullptr;
-    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
-        return nullptr;
-    }
-    napi_value out = ChdInfoToObject(env, data);
-    if (out == nullptr || napi_resolve_deferred(env, deferred, out) != napi_ok) {
-        Reject(env, deferred, "failed to create the info result");
-    }
-    return promise;
+    Napi::Object const out = ChdInfoToObject(env, data);
+
+    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
+    deferred.Resolve(out);
+    return deferred.Promise();
 }
 
 // ---- chdman list tracks ----
 
-// Create the JavaScript object for a track listing, or nullptr if JavaScript can't receive it
-static napi_value TrackListingToObject(napi_env env, const std::string& tocText, const std::vector<TrackOut>& tracks) {
-    napi_value out = nullptr;
-    napi_value arr = nullptr;
-    if (napi_create_object(env, &out) != napi_ok ||
-        napi_create_array_with_length(env, tracks.size(), &arr) != napi_ok) {
-        return nullptr;
-    }
-    for (uint32_t i = 0; i < tracks.size(); i++) {
-        napi_value t = nullptr;
-        if (napi_create_object(env, &t) != napi_ok ||
-            !SetProperty(env, t, "index", ToNumber(env, static_cast<double>(tracks[i].index))) ||
-            !SetProperty(env, t, "filename", ToString(env, tracks[i].filename)) ||
-            !SetProperty(env, t, "type", ToString(env, tracks[i].type)) ||
-            !SetProperty(env, t, "size", ToNumber(env, static_cast<double>(tracks[i].size))) ||
-            !SetElement(env, arr, i, t)) {
-            return nullptr;
-        }
-    }
-    bool const set = SetProperty(env, out, "tocText", ToString(env, tocText)) && SetProperty(env, out, "tracks", arr);
-    return set ? out : nullptr;
-}
-
 // List the tracks of a CD-ROM/GD-ROM CHD: returns the in-memory TOC text plus a
 // per-track descriptor (index, output filename, type string, data-only size).
-static napi_value ListTracks(napi_env env, napi_callback_info info) {
-    std::array<napi_value, 4> args{};
-    std::string inputPath;
-    int32_t mode = 0;
-    std::string binArg;
-    std::string tocName;
-    if (!GetArgs(env, info, args) || !GetString(env, args[0], inputPath) || !GetInt32(env, args[1], mode) ||
-        !GetString(env, args[2], binArg) || !GetString(env, args[3], tocName)) {
-        napi_throw_type_error(env, nullptr, "listTracks(inputFilename, mode, binPatternOrBase, tocName) required");
-        return nullptr;
+static Napi::Value ListTracks(const Napi::CallbackInfo& info) {
+    Napi::Env const env = info.Env();
+    if (info.Length() < 4 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsString() || !info[3].IsString()) {
+        Napi::TypeError::New(env, "listTracks(inputFilename, mode, binPatternOrBase, tocName) required")
+            .ThrowAsJavaScriptException();
+        return env.Null();
     }
+    std::string const inputPath = info[0].As<Napi::String>();
+    int const mode = info[1].As<Napi::Number>().Int32Value();
+    std::string const binArg = info[2].As<Napi::String>();
+    std::string const tocName = info[3].As<Napi::String>();
 
-    napi_deferred deferred = nullptr;
-    napi_value promise = nullptr;
-    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
-        return nullptr;
-    }
     // No serialization needed: BuildListing uses its own chd_file/cdrom_file and
     // touches no shared state.
-    std::string tocText;
-    std::vector<TrackOut> tracks;
-    std::string error;
-    bool listed = false;
+    Napi::Promise::Deferred const deferred = Napi::Promise::Deferred::New(env);
     try {
-        listed = BuildListing(inputPath, mode, binArg, tocName, tocText, tracks, error);
+        std::string tocText;
+        std::vector<TrackOut> tracks;
+        std::string error;
+        if (!BuildListing(inputPath, mode, binArg, tocName, tocText, tracks, error)) {
+            deferred.Reject(Napi::Error::New(env, error).Value());
+            return deferred.Promise();
+        }
+        Napi::Object const out = Napi::Object::New(env);
+        out.Set("tocText", tocText);
+        Napi::Array const arr = Napi::Array::New(env, tracks.size());
+        for (uint32_t i = 0; i < tracks.size(); i++) {
+            Napi::Object const t = Napi::Object::New(env);
+            t.Set("index", Napi::Number::New(env, static_cast<double>(tracks[i].index)));
+            t.Set("filename", tracks[i].filename);
+            t.Set("type", tracks[i].type);
+            t.Set("size", Napi::Number::New(env, static_cast<double>(tracks[i].size)));
+            arr.Set(i, t);
+        }
+        out.Set("tracks", arr);
+        deferred.Resolve(out);
     } catch (const std::error_condition& e) {
-        error = e.message();
+        deferred.Reject(Napi::Error::New(env, e.message()).Value());
     } catch (const std::exception& e) {
-        error = e.what();
+        deferred.Reject(Napi::Error::New(env, e.what()).Value());
     } catch (...) {
-        error = "unknown error listing CHD tracks";
+        deferred.Reject(Napi::Error::New(env, "unknown error listing CHD tracks").Value());
     }
-    if (!listed) {
-        Reject(env, deferred, error);
-        return promise;
-    }
-    napi_value out = TrackListingToObject(env, tocText, tracks);
-    if (out == nullptr || napi_resolve_deferred(env, deferred, out) != napi_ok) {
-        Reject(env, deferred, "failed to create the track listing");
-    }
-    return promise;
+    return deferred.Promise();
 }
 
 // ---- chdman per-track pull reader ----
@@ -1015,28 +804,27 @@ class TrackReader : public ReaderBase<TrackReader, TrackSource> {
     static Napi::Function GetClass(Napi::Env env) {
         return DefineClass(env, "TrackReader",
                            {
-                               RawMethod("read", &TrackReader::Read),
-                               RawMethod("close", &TrackReader::Close),
+                               InstanceMethod("read", &TrackReader::Read),
+                               InstanceMethod("close", &TrackReader::Close),
                            });
     }
 
     explicit TrackReader(const Napi::CallbackInfo& info) : ReaderBase<TrackReader, TrackSource>(info) {
-        napi_env env = info.Env();
-        std::array<napi_value, 3> args{};
-        std::string inputPath;
-        int32_t mode = 0;
-        int32_t trackIndex = 0;
-        if (!GetArgs(env, static_cast<napi_callback_info>(info), args) || !GetString(env, args[0], inputPath) ||
-            !GetInt32(env, args[1], mode) || !GetInt32(env, args[2], trackIndex)) {
-            napi_throw_type_error(env, nullptr, "TrackReader(inputFilename, mode, trackIndex) required");
+        Napi::Env const env = info.Env();
+        if (info.Length() < 3 || !info[0].IsString() || !info[1].IsNumber() || !info[2].IsNumber()) {
+            Napi::TypeError::New(env, "TrackReader(inputFilename, mode, trackIndex) required")
+                .ThrowAsJavaScriptException();
             return;
         }
+        std::string const inputPath = info[0].As<Napi::String>();
+        int const mode = info[1].As<Napi::Number>().Int32Value();
+        int const trackIndex = info[2].As<Napi::Number>().Int32Value();
         try {
             source_ = std::make_shared<TrackSource>(inputPath, mode, trackIndex);
         } catch (const std::out_of_range& e) {
-            napi_throw_range_error(env, nullptr, e.what());
+            Napi::RangeError::New(env, e.what()).ThrowAsJavaScriptException();
         } catch (const std::exception& e) {
-            napi_throw_error(env, nullptr, e.what());
+            Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
         }
     }
 };
@@ -1081,23 +869,21 @@ class RawReader : public ReaderBase<RawReader, RawSource> {
     static Napi::Function GetClass(Napi::Env env) {
         return DefineClass(env, "RawReader",
                            {
-                               RawMethod("read", &RawReader::Read),
-                               RawMethod("close", &RawReader::Close),
+                               InstanceMethod("read", &RawReader::Read),
+                               InstanceMethod("close", &RawReader::Close),
                            });
     }
 
     explicit RawReader(const Napi::CallbackInfo& info) : ReaderBase<RawReader, RawSource>(info) {
-        napi_env env = info.Env();
-        std::array<napi_value, 1> args{};
-        std::string inputPath;
-        if (!GetArgs(env, static_cast<napi_callback_info>(info), args) || !GetString(env, args[0], inputPath)) {
-            napi_throw_type_error(env, nullptr, "RawReader(inputFilename) required");
+        Napi::Env const env = info.Env();
+        if (info.Length() < 1 || !info[0].IsString()) {
+            Napi::TypeError::New(env, "RawReader(inputFilename) required").ThrowAsJavaScriptException();
             return;
         }
         try {
-            source_ = std::make_shared<RawSource>(inputPath);
+            source_ = std::make_shared<RawSource>(info[0].As<Napi::String>());
         } catch (const std::exception& e) {
-            napi_throw_error(env, nullptr, e.what());
+            Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
         }
     }
 };
@@ -1110,54 +896,32 @@ struct Addon {
     Napi::FunctionReference rawReader;
 };
 
-// Construct the class the addon stored in member, passing it this call's first N arguments
-template <size_t N>
-static napi_value Construct(napi_env env, napi_callback_info info, Napi::FunctionReference Addon::* member) {
-    std::array<napi_value, N> args{};
-    void* data = nullptr;
-    napi_value ctor = nullptr;
-    napi_value instance = nullptr;
-    if (!GetArgs(env, info, args) || napi_get_instance_data(env, &data) != napi_ok || data == nullptr ||
-        napi_get_reference_value(env, static_cast<Addon*>(data)->*member, &ctor) != napi_ok ||
-        napi_new_instance(env, ctor, args.size(), args.data(), &instance) != napi_ok) {
-        return nullptr;
-    }
-    return instance;
-}
-
 // Factory: construct a TrackReader from the class constructor stored as the
 // addon's instance data.
-static napi_value OpenTrackReader(napi_env env, napi_callback_info info) {
-    return Construct<3>(env, info, &Addon::trackReader);
+static Napi::Value OpenTrackReader(const Napi::CallbackInfo& info) {
+    Napi::Env const env = info.Env();
+    Napi::Function const ctor = env.GetInstanceData<Addon>()->trackReader.Value();
+    return ctor.New({info[0], info[1], info[2]});
 }
 
 // Factory: construct a RawReader from the class constructor stored as the
 // addon's instance data.
-static napi_value OpenRawReader(napi_env env, napi_callback_info info) {
-    return Construct<1>(env, info, &Addon::rawReader);
+static Napi::Value OpenRawReader(const Napi::CallbackInfo& info) {
+    Napi::Env const env = info.Env();
+    Napi::Function const ctor = env.GetInstanceData<Addon>()->rawReader.Value();
+    return ctor.New({info[0]});
 }
 
-// Export a function that N-API calls directly, returning whether it was exported
-static bool Export(napi_env env, napi_value exports, const char* name, napi_callback callback) {
-    napi_value function = nullptr;
-    return napi_create_function(env, name, NAPI_AUTO_LENGTH, callback, nullptr, &function) == napi_ok &&
-           napi_set_named_property(env, exports, name, function) == napi_ok;
-}
-
-// Uses N-API's C functions for every function JavaScript calls, rather than node-addon-api's, which
-// abort the process when a call fails: JavaScript can still call these while a terminated Worker's
-// environment tears down
 static Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
     Napi::Function const trackReaderClass = TrackReader::GetClass(env);
     Napi::Function const rawReaderClass = RawReader::GetClass(env);
     env.SetInstanceData(
         new Addon{.trackReader = Napi::Persistent(trackReaderClass), .rawReader = Napi::Persistent(rawReaderClass)});
 
-    if (!Export(env, exports, "info", Info) || !Export(env, exports, "listTracks", ListTracks) ||
-        !Export(env, exports, "openTrackReader", OpenTrackReader) ||
-        !Export(env, exports, "openRawReader", OpenRawReader)) {
-        napi_throw_error(env, nullptr, "failed to export the chdman functions");
-    }
+    exports.Set("info", Napi::Function::New(env, Info));
+    exports.Set("listTracks", Napi::Function::New(env, ListTracks));
+    exports.Set("openTrackReader", Napi::Function::New(env, OpenTrackReader));
+    exports.Set("openRawReader", Napi::Function::New(env, OpenRawReader));
     return exports;
 }
 

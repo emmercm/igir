@@ -21,7 +21,7 @@
 // One compressChunk(), decompressChunk() or end() call
 template <typename Context>
 struct StreamOp {
-    napi_deferred deferred = nullptr;
+    Napi::Promise::Deferred deferred;
     std::vector<uint8_t> input;
     bool end = false;
     // Keeps the context alive until this operation is done, even if end() or the stream's
@@ -38,98 +38,47 @@ static void AppendOutput(const ZSTD_outBuffer& outBuff, std::vector<uint8_t>& re
     }
 }
 
-// Reject a promise with a new Error, returning whether JavaScript could receive it
-static bool RejectWithError(napi_env env, napi_deferred deferred, const std::string& message) {
-    napi_value text = nullptr;
-    napi_value error = nullptr;
-    return napi_create_string_utf8(env, message.data(), message.size(), &text) == napi_ok &&
-           napi_create_error(env, nullptr, text, &error) == napi_ok &&
-           napi_reject_deferred(env, deferred, error) == napi_ok;
-}
-
 // Runs one StreamOp on the thread pool with Derived's Process(), then tells the stream the
 // operation is done. Derived must expose:
 //   static std::string Derived::Process(Context*, const std::vector<uint8_t>& input, bool end,
 //                                       std::vector<uint8_t>& result);  // worker thread
-//
-// Uses the N-API C functions rather than Napi::AsyncWorker: with C++ exceptions disabled,
-// node-addon-api aborts the process when a call fails, and every call can fail once a terminated
-// Worker's environment can no longer run JavaScript.
 template <typename Stream, typename Derived, typename Context>
-class StreamWorker {
+class StreamWorker : public Napi::AsyncWorker {
    public:
-    ~StreamWorker() = default;
-    StreamWorker(const StreamWorker&) = delete;
-    StreamWorker& operator=(const StreamWorker&) = delete;
-    StreamWorker(StreamWorker&&) = delete;
-    StreamWorker& operator=(StreamWorker&&) = delete;
+    StreamWorker(Napi::Env env, std::shared_ptr<Stream*> stream, StreamOp<Context> op)
+        : Napi::AsyncWorker(env), stream_(std::move(stream)), op_(std::move(op)) {}
 
-    // Queue an operation on the thread pool, returning whether it was queued
-    static bool Queue(napi_env env, std::shared_ptr<Stream*> stream, StreamOp<Context> op) {
-        auto worker = std::unique_ptr<StreamWorker>(new StreamWorker(std::move(stream), std::move(op)));
-        napi_value name = nullptr;
-        if (napi_create_string_utf8(env, "zstd", NAPI_AUTO_LENGTH, &name) != napi_ok ||
-            napi_create_async_work(env, nullptr, name, Execute, Complete, worker.get(), &worker->work_) != napi_ok) {
-            return false;
+    void Execute() override {
+        std::string const error = Derived::Process(op_.context.get(), op_.input, op_.end, result_);
+        if (!error.empty()) {
+            SetError(error);
         }
-        if (napi_queue_async_work(env, worker->work_) != napi_ok) {
-            napi_delete_async_work(env, worker->work_);
-            return false;
-        }
-        worker.release();  // freed by Complete()
-        return true;
+    }
+
+    void OnOK() override {
+        op_.deferred.Resolve(Napi::Buffer<uint8_t>::Copy(Env(), result_.data(), result_.size()));
+        NotifyStream();
+    }
+
+    void OnError(const Napi::Error& e) override {
+        op_.deferred.Reject(e.Value());
+        NotifyStream();
     }
 
    private:
-    StreamWorker(std::shared_ptr<Stream*> stream, StreamOp<Context> op)
-        : stream_(std::move(stream)), op_(std::move(op)) {}
-
-    static void Execute(napi_env /*env*/, void* data) {
-        auto* worker = static_cast<StreamWorker*>(data);
-        worker->error_ =
-            Derived::Process(worker->op_.context.get(), worker->op_.input, worker->op_.end, worker->result_);
-    }
-
-    // Settle the operation's promise and tell the stream, unless the stream was destroyed or
-    // JavaScript can't run. The stream holds a Ref() while operations run, so only an environment
-    // tearing down, such as a terminated Worker's, destroys it first: that finalizes every object
-    // before it runs the callbacks of operations still in flight, and nothing is left to receive
-    // their results.
-    static void Complete(napi_env env, napi_status status, void* data) {
-        std::unique_ptr<StreamWorker> const worker(static_cast<StreamWorker*>(data));
-        napi_delete_async_work(env, worker->work_);
-        if (status == napi_cancelled || *worker->stream_ == nullptr || !worker->Settle(env)) {
-            return;
+    // Tell the stream the operation is done, unless it was destroyed. The stream holds a Ref()
+    // while operations run, so only an environment tearing down, such as a terminated Worker's,
+    // destroys it first.
+    void NotifyStream() {
+        if (*stream_ != nullptr) {
+            (*stream_)->FinishOp();  // may release the stream
         }
-        (*worker->stream_)->FinishOp();  // may release the stream
-    }
-
-    // Resolve or reject the operation's promise, returning whether JavaScript could receive it
-    bool Settle(napi_env env) {
-        napi_handle_scope scope = nullptr;
-        if (napi_open_handle_scope(env, &scope) != napi_ok) {
-            return false;
-        }
-        bool settled = false;
-        if (error_.empty()) {
-            void* copy = nullptr;
-            napi_value buffer = nullptr;
-            settled = napi_create_buffer_copy(env, result_.size(), result_.data(), &copy, &buffer) == napi_ok &&
-                      napi_resolve_deferred(env, op_.deferred, buffer) == napi_ok;
-        } else {
-            settled = RejectWithError(env, op_.deferred, error_);
-        }
-        napi_close_handle_scope(env, scope);
-        return settled;
     }
 
     // Cleared by the stream's destructor
     std::shared_ptr<Stream*> stream_;
     StreamOp<Context> op_;
-    napi_async_work work_ = nullptr;
     std::vector<uint8_t> result_;
-    // Empty on success
-    std::string error_;
 };
 
 // CRTP base for a compression or decompression stream. Each Derived constructor stores the
@@ -166,10 +115,10 @@ class StreamBase : public Napi::ObjectWrap<Derived> {
     // Queue an operation on the context, to run once every operation before it is done. end()
     // releases this stream's hold on the context, so the operation holding it last frees it.
     Napi::Value Enqueue(Napi::Env env, std::vector<uint8_t> input, bool end) {
-        napi_deferred deferred = nullptr;
-        napi_value promise = nullptr;
-        NAPI_THROW_IF_FAILED(env, napi_create_promise(env, &deferred, &promise), Napi::Value());
-        pending_.push_back(StreamOp<Context>{deferred, std::move(input), end, context_});
+        Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+        Napi::Promise const promise = deferred.Promise();
+        pending_.push_back(StreamOp<Context>{
+            .deferred = std::move(deferred), .input = std::move(input), .end = end, .context = context_});
         if (end) {
             context_.reset();
         }
@@ -178,26 +127,18 @@ class StreamBase : public Napi::ObjectWrap<Derived> {
             this->Ref();  // keep this object alive while operations run
             RunNext();
         }
-        return {env, promise};
+        return promise;
     }
 
     // Empty after end(), and after a constructor that threw, whose object JavaScript never receives
     std::shared_ptr<Context> context_;
 
    private:
-    // Queue the oldest pending operation, rejecting any that can't be queued
+    // Queue the oldest pending operation
     void RunNext() {
-        while (!pending_.empty()) {
-            StreamOp<Context> op = std::move(pending_.front());
-            pending_.pop_front();
-            napi_deferred deferred = op.deferred;
-            if (StreamWorker<StreamBase, Derived, Context>::Queue(this->Env(), self_, std::move(op))) {
-                return;
-            }
-            RejectWithError(this->Env(), deferred, "failed to queue the operation");
-        }
-        running_ = false;
-        this->Unref();
+        StreamOp<Context> op = std::move(pending_.front());
+        pending_.pop_front();
+        (new StreamWorker<StreamBase, Derived, Context>(this->Env(), self_, std::move(op)))->Queue();
     }
 
     // Shared with every worker so they know whether this stream still exists
