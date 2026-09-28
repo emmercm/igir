@@ -38,6 +38,7 @@ jobs:
         with:
           filters: |
             should-test:
+              - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-test.yml'
               - 'packages/**'
               - 'src/**'
@@ -50,6 +51,7 @@ jobs:
               - 'tsconfig.json'
               - 'vitest.config.json'
             should-delete-prebuilds:
+              - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-addon-prebuild.yml'
               - '.gitmodules'
               - 'packages/7zip/**'
@@ -113,13 +115,16 @@ jobs:
             node-version: 22
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
+    env:
+      JOBS: max # node-gyp: compile using all available CPUs
     steps:
       # Setup and install
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ env.ref }}
-          submodules: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' && 'recursive' || '' }}
+      - if: ${{ needs.path-filter.outputs.should-delete-prebuilds == 'true' }}
+        uses: ./.github/actions/checkout-submodules
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
           node-version: ${{ matrix.node-version }}

@@ -37,16 +37,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
-      - id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-            ${{ runner.os }}-
       - run: npm ci
 
       # Bump the version and commit to the default branch

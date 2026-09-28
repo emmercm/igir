@@ -97,10 +97,14 @@ jobs:
         with:
           bun-version-file: ".bun-version"
           bun-download-url: ${{ steps.bun-uri.outputs.BUN_URI }}
+          # Release builds are published, so they must never restore a (possibly poisoned) cache
+          no-cache: ${{ github.event_name != 'pull_request' }}
       - id: npm-cache-dir
+        if: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -111,6 +115,9 @@ jobs:
       # Compile and upload
       - if: ${{ startsWith(matrix.os, 'ubuntu') }}
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          # Release builds are published, so they must never restore a (possibly poisoned) cache
+          cache-image: ${{ github.event_name == 'pull_request' }}
       - id: linux-vars
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
@@ -220,16 +227,6 @@ jobs:
           persist-credentials: false
           ref: ${{ env.ref }}
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
-      - id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-            ${{ runner.os }}-
       - run: npm ci
       - run: echo "NPM_PKG_VERSION=$(npm pkg get version | sed 's/"//g')" >> "${GITHUB_ENV}"
       # Download and update
