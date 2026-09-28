@@ -561,3 +561,43 @@ describe('getOrComputeAnyKeys', () => {
     expect(computed).toEqual(0);
   });
 });
+
+describe('flush', () => {
+  it('should not write the cache on its own when no flush interval is set', async () => {
+    // Without `fileFlushMillis` there is no automatic flush: only an explicit save() writes.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const cache = new Cache<number>({ filePath: tempFile });
+
+    await cache.set('a', 1);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+
+    expect(await FsUtil.exists(tempFile)).toEqual(false);
+    await FsUtil.rm(tempFile, { force: true });
+  });
+
+  it('should write the cache once the flush interval has elapsed, without an explicit save', async () => {
+    // The flush is driven from set() on elapsed wall-clock, not from a timer: a scan can hold the
+    // event loop for hours, and a starved timer is how the cache stopped being written at all.
+    const tempFile = await FsUtil.mktemp(path.join(Temp.getTempDir(), 'cache'));
+    const cache = new Cache<number>({ filePath: tempFile, fileFlushMillis: 50 });
+
+    await cache.set('a', 1);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 120);
+    });
+    await cache.set('b', 2); // the interval has now elapsed, so this set() flushes
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50); // the flush is kicked off but not awaited by set()
+    });
+
+    expect(await FsUtil.exists(tempFile)).toEqual(true);
+
+    const reloaded = new Cache<number>({ filePath: tempFile });
+    await reloaded.load();
+    expect(await reloaded.get('a')).toEqual(1);
+
+    await FsUtil.rm(tempFile, { force: true });
+  });
+});
