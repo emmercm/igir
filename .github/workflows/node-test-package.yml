@@ -43,6 +43,7 @@ jobs:
               - 'postinstall.mjs'
               - 'tsconfig.json'
             package-changes:
+              - '.github/actions/checkout-submodules/**'
               - '.github/workflows/node-test-package.yml'
               - '.gitmodules'
               - 'packages/**'
@@ -66,7 +67,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          submodules: 'recursive'
+      - uses: ./.github/actions/checkout-submodules
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
       - id: npm-cache-dir
         shell: bash
@@ -165,14 +166,27 @@ jobs:
           - windows-11-arm
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    env:
+      JOBS: max # node-gyp: compile using all available CPUs
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          submodules: 'recursive'
+      - uses: ./.github/actions/checkout-submodules
       - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
         with:
           node-version: 22
+      - id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> "${GITHUB_OUTPUT}"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          # Only the root lockfile, so hashFiles() doesn't walk the submodules
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+            ${{ runner.os }}-
       - run: npm ci --ignore-scripts
       - name: Pack and compile the native addons from the packed sources
         shell: bash
