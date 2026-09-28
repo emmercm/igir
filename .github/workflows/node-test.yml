@@ -223,7 +223,7 @@ jobs:
       - id: repro
         shell: pwsh
         run: |
-          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
+          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\addon-maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
           $dumpPath = "${env:DUMP_DIR}\node.dmp" -replace '\\', '/'
           $onFailFast = ".echo FAIL-FAST; .ecxr; kn 50; ~*kn 50; .dump /ma /u ${dumpPath}; g"
           $cdbScript = Join-Path "${env:RUNNER_TEMP}" 'cdb-commands.txt'
@@ -266,13 +266,13 @@ jobs:
             Write-Output "No crash dumps were written"
             exit 0
           }
-          Copy-Item -Path packages\maxcso\build\Release\*.pdb -Destination "${env:DUMP_DIR}"
+          Copy-Item -Path packages\maxcso\addon-maxcso\build\Release\*.pdb -Destination "${env:DUMP_DIR}"
           Copy-Item -Path "${env:NODE_PDB_DIR}\*.pdb" -Destination "${env:DUMP_DIR}" -ErrorAction SilentlyContinue
           if (-not $env:CDB) {
             Write-Output "No arm64 cdb.exe is installed, download the crash-dumps artifact to symbolize it"
             exit 0
           }
-          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
+          $symbolPath = "${env:NODE_PDB_DIR};$(Resolve-Path packages\maxcso\addon-maxcso\build\Release);srv*${env:RUNNER_TEMP}\symbols*https://msdl.microsoft.com/download/symbols"
           foreach ($dump in $dumps) {
             Write-Output "::group::$($dump.Name)"
             & "${env:CDB}" -z $dump.FullName -y $symbolPath -c '.ecxr; kn 50; !analyze -v; ~*kn 50; q'
