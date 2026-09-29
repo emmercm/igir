@@ -365,8 +365,7 @@ bool Pump::Open() {
     }
 
     // ResolveEntryIndex() reports why when it fails
-    return ResolveEntryIndex(*opened_.archive, &resolvedIndex_) == S_OK &&
-           !abort_.load(std::memory_order_relaxed);
+    return ResolveEntryIndex(*opened_.archive, &resolvedIndex_) == S_OK && !abort_.load(std::memory_order_relaxed);
 }
 
 void Pump::Extract() {
@@ -375,7 +374,7 @@ void Pump::Extract() {
     OpenedArchive opened;
     opened.archive.Attach(opened_.archive.Detach());
     opened.stream.Attach(opened_.stream.Detach());
-    uint32_t index = resolvedIndex_;
+    uint32_t const index = resolvedIndex_;
 
     // Held through the interface pointer because the class macro makes
     // AddRef()/Release() private on the concrete class; `raw` stays valid for

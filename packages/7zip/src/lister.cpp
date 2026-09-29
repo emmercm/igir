@@ -13,8 +13,8 @@
 #include "7zip/PropID.h"
 #include "addon.h"
 #include "asyncSignal.h"
-#include "poolTask.h"
 #include "errors.h"
+#include "poolTask.h"
 #include "sevenZip.h"
 
 namespace sevenzip {
