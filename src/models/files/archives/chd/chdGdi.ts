@@ -3,7 +3,7 @@ import stream from 'node:stream';
 
 import async from 'async';
 
-import chdman, { CHDType } from '../../../../../packages/chdman/index.js';
+import chdman, { CHDType } from '../../../../../addons/chdman/index.js';
 import IgirException from '../../../../exceptions/igirException.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';

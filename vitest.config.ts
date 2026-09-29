@@ -35,11 +35,11 @@ export default defineConfig({
       (isDocker ? 2 * (process.arch.startsWith('arm') ? 2 : 1) : 1),
 
     // Only run the committed test files
-    exclude: [...configDefaults.exclude, '.*/**', 'dist/**', 'packages/*/deps/**'],
+    exclude: [...configDefaults.exclude, '.*/**', 'addons/*/deps/**', 'dist/**'],
 
     coverage: {
       provider: 'v8',
-      // include: ['{packages,src}/**/*.{js,cjs,mjs,ts}'],
+      // include: ['{addons,packages,src}/**/*.{js,cjs,mjs,ts}'],
       exclude: ['test/**'],
     },
   },

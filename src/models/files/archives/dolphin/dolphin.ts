@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import stream from 'node:stream';
 
-import dolphinTool from '../../../../../packages/dolphin-tool/index.js';
+import dolphinTool from '../../../../../addons/dolphin-tool/index.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import SkipBytesTransform from '../../../../streams/skipBytesTransform.js';

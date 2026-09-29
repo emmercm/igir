@@ -6,8 +6,8 @@ import stream from 'node:stream';
 
 import async from 'async';
 
-import type { SevenZipEntry, SevenZipFormat } from '../../../../../packages/7zip/index.js';
-import sevenZip from '../../../../../packages/7zip/index.js';
+import type { SevenZipEntry, SevenZipFormat } from '../../../../../addons/7zip/index.js';
+import sevenZip from '../../../../../addons/7zip/index.js';
 import Defaults from '../../../../globals/defaults.js';
 import type { FsReadCallback } from '../../../../streams/fsReadTransform.js';
 import FsReadTransform from '../../../../streams/fsReadTransform.js';
